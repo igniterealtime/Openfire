@@ -59,8 +59,8 @@ public class MUCRoleTest {
         // Setup test fixture.
         final JID userAddress = new JID("unittest@example.org");
         final String nickname = "nickname for test";
-        final MUCRole.Role role = MUCRole.Role.participant;
-        final MUCRole.Affiliation affiliation = MUCRole.Affiliation.admin;
+        final Role role = Role.participant;
+        final Affiliation affiliation = Affiliation.admin;
         final Presence presence = new Presence();
         presence.setFrom(userAddress);
         presence.setTo(mockRoom.getJID());

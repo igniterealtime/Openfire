@@ -34,6 +34,7 @@
 <%@ page import="org.jivesoftware.openfire.muc.NotAllowedException"%>
 <%@ page import="org.jivesoftware.openfire.muc.spi.MUCPersistenceManager" %>
 <%@ page import="org.jivesoftware.openfire.muc.MUCRole" %>
+<%@ page import="org.jivesoftware.openfire.muc.Role" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -226,13 +227,13 @@
 
             final FormField broadcastField = dataForm.addField("muc#roomconfig_presencebroadcast", null, null);
             if (broadcastModerator) {
-                broadcastField.addValue(MUCRole.Role.moderator);
+                broadcastField.addValue(Role.moderator);
             }
             if (broadcastParticipant) {
-                broadcastField.addValue(MUCRole.Role.participant);
+                broadcastField.addValue(Role.participant);
             }
             if (broadcastVisitor) {
-                broadcastField.addValue(MUCRole.Role.visitor);
+                broadcastField.addValue(Role.visitor);
             }
 
             dataForm.addField("muc#roomconfig_publicroom", null, null).addValue(publicRoom ? "1": "0");
@@ -321,9 +322,9 @@
             description = room.getDescription();
             roomSubject = room.getSubject();
             maxUsers = Integer.toString(room.getMaxUsers());
-            broadcastModerator = room.canBroadcastPresence(MUCRole.Role.moderator);
-            broadcastParticipant = room.canBroadcastPresence(MUCRole.Role.participant);
-            broadcastVisitor = room.canBroadcastPresence(MUCRole.Role.visitor);
+            broadcastModerator = room.canBroadcastPresence(Role.moderator);
+            broadcastParticipant = room.canBroadcastPresence(Role.participant);
+            broadcastVisitor = room.canBroadcastPresence(Role.visitor);
             password = room.getPassword();
             confirmPassword = room.getPassword();
             whois = (room.canAnyoneDiscoverJID() ? "anyone" : "moderator");

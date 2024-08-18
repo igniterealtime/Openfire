@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
  * Note that a MUCRole can exist only for a user that is currently an occupant of a room.
  *
  * The name 'MUCRole' can be confusing, as it clashes with the XEP-defined term 'role'. MUCRole is not an equivalent
- * of the XEP-defined term (although {@link MUCRole.Role} is).
+ * of the XEP-defined term (although {@link Role} is).
  *
  * @author Gaston Dombiak
  */
@@ -84,13 +84,13 @@ public class MUCRole implements Cacheable, Externalizable {
      * A temporary position or privilege level within a room, distinct from a user's long-lived affiliation with the
      * room. A role lasts only for the duration of an occupant's visit to a room.
      */
-    private MUCRole.Role role;
+    private Role role;
 
     /**
      * A long-lived association or connection with a room; affiliation is distinct from role. An affiliation lasts
      * across a user's visits to a room.
      */
-    private MUCRole.Affiliation affiliation;
+    private Affiliation affiliation;
 
     /**
      * Flag that indicates if the room occupant is in the room only to send messages or also
@@ -137,7 +137,7 @@ public class MUCRole implements Cacheable, Externalizable {
      * @param presence the presence sent by the user to join the room.
      */
     public MUCRole(MUCRoom chatroom, String nickname,
-                   MUCRole.Role role, MUCRole.Affiliation affiliation, JID userJid, Presence presence)
+                   Role role, Affiliation affiliation, JID userJid, Presence presence)
     {
         this.roomJid = chatroom.getJID();
         this.nick = nickname;
@@ -246,11 +246,11 @@ public class MUCRole implements Cacheable, Externalizable {
      *
      * @param newRole The new role that the user will play.
      */
-    void setRole(MUCRole.Role newRole)
+    void setRole(Role newRole)
     {
         role = newRole;
         synchronized (this) {
-            if (MUCRole.Role.none == role) {
+            if (Role.none == role) {
                 presence.setType(Presence.Type.unavailable);
                 presence.setStatus(null);
             }
@@ -266,7 +266,7 @@ public class MUCRole implements Cacheable, Externalizable {
      *
      * @return The role status of this user.
      */
-    public MUCRole.Role getRole() {
+    public Role getRole() {
         return role;
     }
 
@@ -277,7 +277,7 @@ public class MUCRole implements Cacheable, Externalizable {
      *
      * @param newAffiliation the new affiliation that the user will play.
      */
-    void setAffiliation(MUCRole.Affiliation newAffiliation) {
+    void setAffiliation(Affiliation newAffiliation) {
         affiliation = newAffiliation;
         // TODO The fragment is being calculated twice (1. setting the role & 2. setting the aff)
         synchronized (this) {
@@ -291,7 +291,7 @@ public class MUCRole implements Cacheable, Externalizable {
      *
      * @return The affiliation status of this user.
      */
-    public MUCRole.Affiliation getAffiliation() {
+    public Affiliation getAffiliation() {
         return affiliation;
     }
 
@@ -595,129 +595,6 @@ public class MUCRole implements Cacheable, Externalizable {
         }
     }
 
-    /**
-     * A temporary position or privilege level within a room, distinct from a user's long-lived affiliation with the
-     * room. A role lasts only for the duration of an occupant's visit to a room.
-     */
-    public enum Role {
-
-        /**
-         * Runs moderated discussions. Is allowed to kick users, grant and revoke voice, etc.
-         */
-        moderator(0),
-
-        /**
-         * A normal occupant of the room. An occupant who does not have administrative privileges; in
-         * a moderated room, a participant is further defined as having voice
-         */
-        participant(1),
-
-        /**
-         * An occupant who does not have voice  (can't speak in the room)
-         */
-        visitor(2),
-
-        /**
-         * An occupant who does not permission to stay in the room (was banned)
-         */
-        none(3);
-
-        private final int value;
-
-        Role(int value) {
-            this.value = value;
-        }
-
-        /**
-         * Returns the value for the role.
-         *
-         * @return the value.
-         */
-        public int getValue() {
-            return value;
-        }
-
-        /**
-         * Returns the affiliation associated with the specified value.
-         *
-         * @param value the value.
-         * @return the associated affiliation.
-         */
-        public static MUCRole.Role valueOf(int value) {
-            switch (value) {
-                case 0: return moderator;
-                case 1: return participant;
-                case 2: return visitor;
-                default: return none;
-            }
-        }
-    }
-
-    /**
-     * A long-lived association or connection with a room. Affiliation is distinct from role. An affiliation lasts
-     * across a user's visits to a room.
-     */
-    public enum Affiliation {
-
-        /**
-         * Owner of the room.
-         */
-        owner(10),
-
-        /**
-         * Administrator of the room.
-         */
-        admin(20),
-
-        /**
-         * A user who is on the "whitelist" for a members-only room or who is registered
-         * with an open room.
-         */
-        member(30),
-
-        /**
-         * A user who has been banned from a room.
-         */
-        outcast(40),
-
-        /**
-         * A user who doesn't have an affiliation. This kind of users can register with members-only
-         * rooms and may enter an open room.
-         */
-        none(50);
-
-        private final int value;
-
-        Affiliation(int value) {
-            this.value = value;
-        }
-
-        /**
-         * Returns the value for the affiliation.
-         *
-         * @return the value.
-         */
-        public int getValue() {
-            return value;
-        }
-
-        /**
-         * Returns the affiliation associated with the specified value.
-         *
-         * @param value the value.
-         * @return the associated affiliation.
-         */
-        public static MUCRole.Affiliation valueOf(int value) {
-            switch (value) {
-                case 10: return owner;
-                case 20: return admin;
-                case 30: return member;
-                case 40: return outcast;
-                default: return none;
-            }
-        }
-    }
-
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -847,8 +724,8 @@ public class MUCRole implements Cacheable, Externalizable {
                     presence = null;
                 }
             }
-            role = (MUCRole.Role) ExternalizableUtil.getInstance().readSerializable(in);
-            affiliation = (MUCRole.Affiliation) ExternalizableUtil.getInstance().readSerializable(in);
+            role = (Role) ExternalizableUtil.getInstance().readSerializable(in);
+            affiliation = (Affiliation) ExternalizableUtil.getInstance().readSerializable(in);
             voiceOnly = ExternalizableUtil.getInstance().readBoolean(in);
             occupantJID = new JID(ExternalizableUtil.getInstance().readSafeUTF(in), false);
             synchronized (this) { // Unlikely to be needed, as this should operate on a new instance. Will prevent static analyzers from complaining at negligible cost.

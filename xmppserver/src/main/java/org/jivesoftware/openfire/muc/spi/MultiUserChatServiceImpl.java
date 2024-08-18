@@ -3170,10 +3170,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             if (!allowToDiscoverMembersOnlyRooms && room.isMembersOnly()) {
                 return false;
             }
-            final MUCRole.Affiliation affiliation = room.getAffiliation(entity.asBareJID());
-            return affiliation == MUCRole.Affiliation.owner
-                || affiliation == MUCRole.Affiliation.admin
-                || affiliation == MUCRole.Affiliation.member;
+            final Affiliation affiliation = room.getAffiliation(entity.asBareJID());
+            return affiliation == Affiliation.owner
+                || affiliation == Affiliation.admin
+                || affiliation == Affiliation.member;
         }
         return true;
     }

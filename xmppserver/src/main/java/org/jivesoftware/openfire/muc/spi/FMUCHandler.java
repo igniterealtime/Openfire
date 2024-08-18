@@ -781,7 +781,7 @@ public class FMUCHandler
 
         // Don't include the occupant's JID if the room is semi-anon and the new occupant is not a moderator
         if (!room.canAnyoneDiscoverJID()) {
-            if (MUCRole.Role.moderator == occupantData.getRole()) {
+            if (Role.moderator == occupantData.getRole()) {
                 mucUserItem.addAttribute("jid", occupantData.getUserAddress().toString());
             }
             else {
@@ -1140,30 +1140,30 @@ public class FMUCHandler
 
         Log.debug( "(room: '{}'): Occupant on remote peer '{}' joins the room with nickname '{}'.", room.getJID(), remoteMUC, nickname );
 
-        MUCRole.Role role;
+        Role role;
         if ( mucUser != null && mucUser.element("item") != null && mucUser.element("item").attributeValue("role") != null ) {
             try {
-                role = MUCRole.Role.valueOf(mucUser.element("item").attributeValue("role"));
+                role = Role.valueOf(mucUser.element("item").attributeValue("role"));
             } catch ( IllegalArgumentException e ) {
                 Log.info( "Cannot parse role as received in FMUC join, using default role instead: {}", presence, e );
-                role = MUCRole.Role.participant;
+                role = Role.participant;
             }
         } else {
             Log.info( "Cannot parse role as received in FMUC join, using default role instead: {}", presence );
-            role = MUCRole.Role.participant;
+            role = Role.participant;
         }
 
-        MUCRole.Affiliation affiliation;
+        Affiliation affiliation;
         if ( mucUser != null && mucUser.element("item") != null && mucUser.element("item").attributeValue("affiliation") != null ) {
             try {
-                affiliation = MUCRole.Affiliation.valueOf(mucUser.element("item").attributeValue("affiliation"));
+                affiliation = Affiliation.valueOf(mucUser.element("item").attributeValue("affiliation"));
             } catch ( IllegalArgumentException e ) {
                 Log.info( "Cannot parse affiliation as received in FMUC join, using default role instead: {}", presence, e );
-                affiliation = MUCRole.Affiliation.none;
+                affiliation = Affiliation.none;
             }
         } else {
             Log.info( "Cannot parse affiliation as received in FMUC join, using default role instead: {}", presence );
-            affiliation = MUCRole.Affiliation.none;
+            affiliation = Affiliation.none;
         }
 
         final JID userJID = getFMUCFromJID( presence );

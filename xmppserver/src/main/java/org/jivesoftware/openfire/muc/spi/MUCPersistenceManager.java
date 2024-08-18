@@ -250,7 +250,7 @@ public class MUCPersistenceManager {
             room.setPublicRoom(rs.getInt("publicRoom") == 1);
             room.setModerated(rs.getInt("moderated") == 1);
             try {
-                room.setMembersOnly(rs.getInt("membersOnly") == 1, MUCRole.Affiliation.owner, null);
+                room.setMembersOnly(rs.getInt("membersOnly") == 1, Affiliation.owner, null);
             } catch (ForbiddenException e) {
                 Log.error("Unable to set members-only when loading room from database (this is likely a bug in Openfire). Room: {}", room.getJID(), e);
             }
@@ -259,16 +259,16 @@ public class MUCPersistenceManager {
             room.setCanAnyoneDiscoverJID(rs.getInt("canDiscoverJID") == 1);
             room.setLogEnabled(rs.getInt("logEnabled") == 1);
             room.setSubject(rs.getString("subject"));
-            List<MUCRole.Role> rolesToBroadcast = new ArrayList<>();
+            List<Role> rolesToBroadcast = new ArrayList<>();
             String roles = StringUtils.zeroPadString(Integer.toBinaryString(rs.getInt("rolesToBroadcast")), 3);
             if (roles.charAt(0) == '1') {
-                rolesToBroadcast.add(MUCRole.Role.moderator);
+                rolesToBroadcast.add(Role.moderator);
             }
             if (roles.charAt(1) == '1') {
-                rolesToBroadcast.add(MUCRole.Role.participant);
+                rolesToBroadcast.add(Role.participant);
             }
             if (roles.charAt(2) == '1') {
-                rolesToBroadcast.add(MUCRole.Role.visitor);
+                rolesToBroadcast.add(Role.visitor);
             }
             room.setRolesToBroadcastPresence(rolesToBroadcast);
             room.setLoginRestrictedToNickname(rs.getInt("useReservedNick") == 1);
@@ -324,7 +324,7 @@ public class MUCPersistenceManager {
             while (rs.next()) {
                 // might be a group JID
                 JID affiliationJID = GroupJID.fromString(rs.getString("jid"));
-                MUCRole.Affiliation affiliation = MUCRole.Affiliation.valueOf(rs.getInt("affiliation"));
+                Affiliation affiliation = Affiliation.valueOf(rs.getInt("affiliation"));
                 try {
                     switch (affiliation) {
                         case owner:
@@ -670,7 +670,7 @@ public class MUCPersistenceManager {
                     room.setPublicRoom(resultSet.getInt("publicRoom") == 1);
                     room.setModerated(resultSet.getInt("moderated") == 1);
                     try {
-                        room.setMembersOnly(resultSet.getInt("membersOnly") == 1, MUCRole.Affiliation.owner, null);
+                        room.setMembersOnly(resultSet.getInt("membersOnly") == 1, Affiliation.owner, null);
                     } catch (ForbiddenException e) {
                         Log.error("Unable to set members-only when loading room from database (this is likely a bug in Openfire). Room: {}", room.getJID(), e);
                     }
@@ -679,16 +679,16 @@ public class MUCPersistenceManager {
                     room.setCanAnyoneDiscoverJID(resultSet.getInt("canDiscoverJID") == 1);
                     room.setLogEnabled(resultSet.getInt("logEnabled") == 1);
                     room.setSubject(resultSet.getString("subject"));
-                    List<MUCRole.Role> rolesToBroadcast = new ArrayList<>();
+                    List<Role> rolesToBroadcast = new ArrayList<>();
                     String roles = StringUtils.zeroPadString(Integer.toBinaryString(resultSet.getInt("rolesToBroadcast")), 3);
                     if (roles.charAt(0) == '1') {
-                        rolesToBroadcast.add(MUCRole.Role.moderator);
+                        rolesToBroadcast.add(Role.moderator);
                     }
                     if (roles.charAt(1) == '1') {
-                        rolesToBroadcast.add(MUCRole.Role.participant);
+                        rolesToBroadcast.add(Role.participant);
                     }
                     if (roles.charAt(2) == '1') {
-                        rolesToBroadcast.add(MUCRole.Role.visitor);
+                        rolesToBroadcast.add(Role.visitor);
                     }
                     room.setRolesToBroadcastPresence(rolesToBroadcast);
                     room.setLoginRestrictedToNickname(resultSet.getInt("useReservedNick") == 1);
@@ -917,7 +917,7 @@ public class MUCPersistenceManager {
                         continue;
                     }
 
-                    final MUCRole.Affiliation affiliation = MUCRole.Affiliation.valueOf(resultSet.getInt("affiliation"));
+                    final Affiliation affiliation = Affiliation.valueOf(resultSet.getInt("affiliation"));
 
                     final String jidValue = resultSet.getString("jid");
                     final JID affiliationJID;
@@ -1091,14 +1091,14 @@ public class MUCPersistenceManager {
      * @param oldAffiliation the previous affiliation of the user in the room.
      */
     public static void saveAffiliationToDB(MUCRoom room, JID jid, String nickname,
-                                           MUCRole.Affiliation newAffiliation, MUCRole.Affiliation oldAffiliation)
+                                           Affiliation newAffiliation, Affiliation oldAffiliation)
     {
         final String affiliationJid = jid.toBareJID();
         if (!room.isPersistent() || !room.wasSavedToDB()) {
             return;
         }
-        if (MUCRole.Affiliation.none == oldAffiliation) {
-            if (MUCRole.Affiliation.member == newAffiliation) {
+        if (Affiliation.none == oldAffiliation) {
+            if (Affiliation.member == newAffiliation) {
                 // Add the user to the members table
                 Connection con = null;
                 PreparedStatement pstmt = null;
@@ -1138,8 +1138,8 @@ public class MUCPersistenceManager {
             }
         }
         else {
-            if (MUCRole.Affiliation.member == newAffiliation &&
-                    MUCRole.Affiliation.member == oldAffiliation)
+            if (Affiliation.member == newAffiliation &&
+                    Affiliation.member == oldAffiliation)
             {
                 // Update the member's data in the member table.
                 Connection con = null;
@@ -1159,7 +1159,7 @@ public class MUCPersistenceManager {
                     DbConnectionManager.closeConnection(pstmt, con);
                 }
             }
-            else if (MUCRole.Affiliation.member == newAffiliation) {
+            else if (Affiliation.member == newAffiliation) {
                 Connection con = null;
                 PreparedStatement pstmt = null;
                 boolean abortTransaction = false;
@@ -1188,7 +1188,7 @@ public class MUCPersistenceManager {
                     DbConnectionManager.closeTransactionConnection(con, abortTransaction);
                 }
             }
-            else if (MUCRole.Affiliation.member == oldAffiliation) {
+            else if (Affiliation.member == oldAffiliation) {
                 Connection con = null;
                 PreparedStatement pstmt = null;
                 boolean abortTransaction = false;
@@ -1245,11 +1245,11 @@ public class MUCPersistenceManager {
      * @param oldAffiliation the previous affiliation of the user in the room.
      */
     public static void removeAffiliationFromDB(MUCRoom room, JID jid,
-                                               MUCRole.Affiliation oldAffiliation)
+                                               Affiliation oldAffiliation)
     {
         final String affiliationJID = jid.toBareJID();
         if (room.isPersistent() && room.wasSavedToDB()) {
-            if (MUCRole.Affiliation.member == oldAffiliation) {
+            if (Affiliation.member == oldAffiliation) {
                 // Remove the user from the members table
                 Connection con = null;
                 PreparedStatement pstmt = null;
@@ -1371,9 +1371,9 @@ public class MUCPersistenceManager {
      */
     private static int marshallRolesToBroadcast(MUCRoom room) {
         final String buffer =
-            (room.canBroadcastPresence(MUCRole.Role.moderator) ? "1" : "0") +
-            (room.canBroadcastPresence(MUCRole.Role.participant) ? "1" : "0") +
-            (room.canBroadcastPresence(MUCRole.Role.visitor) ? "1" : "0");
+            (room.canBroadcastPresence(Role.moderator) ? "1" : "0") +
+            (room.canBroadcastPresence(Role.participant) ? "1" : "0") +
+            (room.canBroadcastPresence(Role.visitor) ? "1" : "0");
         return Integer.parseInt(buffer, 2);
     }
 

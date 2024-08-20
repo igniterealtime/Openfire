@@ -2066,7 +2066,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         try {
             final MUCRoom room = localMUCRoomManager.remove(roomName);
             if (room != null) {
-                Log.info("removing chat room:" + roomName + "|" + room.getClass().getName());
+                Log.debug("removing chat room:" + roomName + "|" + room.getClass().getName());
                 totalChatTime += room.getChatLength();
             } else {
                 Log.info("No chatroom {} during removal.", roomName);

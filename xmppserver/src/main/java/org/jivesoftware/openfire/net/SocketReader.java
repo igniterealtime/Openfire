@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -344,17 +344,6 @@ public abstract class SocketReader implements Runnable {
      * @return a name that identifies the type of reader and the unique instance.
      */
     abstract String getName();
-
-    /**
-     * Close the connection since TLS was mandatory and the entity never negotiated TLS. Before
-     * closing the connection a stream error will be sent to the entity.
-     *
-     * @deprecated Renamed. Use {@link #closeNeverEncryptedConnection()} instead.
-     */
-    @Deprecated // Remove in Openfire 4.9 or later.
-    void closeNeverSecuredConnection() {
-        closeNeverEncryptedConnection();
-    }
 
     /**
      * Close the connection since TLS was mandatory and the entity never negotiated TLS. Before

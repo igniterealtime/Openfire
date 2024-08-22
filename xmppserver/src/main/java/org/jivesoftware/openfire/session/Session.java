@@ -59,24 +59,6 @@ public interface Session extends RoutableChannelHandler {
     }
 
     /**
-     * @deprecated Use {@link Status#CLOSED} instead.
-     */
-    @Deprecated // Remove in or after Openfire 4.9.
-    Status STATUS_CLOSED = Status.CLOSED;
-
-    /**
-     * @deprecated Use {@link Status#CONNECTED} instead.
-     */
-    @Deprecated // Remove in or after Openfire 4.9.
-    Status STATUS_CONNECTED = Status.CONNECTED;
-
-    /**
-     * @deprecated Use {@link Status#AUTHENTICATED} instead.
-     */
-    @Deprecated // Remove in or after Openfire 4.9.
-    Status STATUS_AUTHENTICATED = Status.AUTHENTICATED;
-
-    /**
       * Obtain the address of the user. The address is used by services like the core
       * server packet router to determine if a packet should be sent to the handler.
       * Handlers that are working on behalf of the server should use the generic server
@@ -160,22 +142,11 @@ public interface Session extends RoutableChannelHandler {
     };
 
     /**
-     * Returns true if this connection is secure.
-     *
-     * @return true if the connection is secure (e.g. TLS)
-     * @deprecated Renamed. Use {@link #isEncrypted()} instead.
-     */
-    @Deprecated // Remove in Openfire 4.9 or later.
-    boolean isSecure();
-
-    /**
      * Returns true if this session uses encrypted connections.
      *
      * @return true if the session is encrypted (e.g. TLS)
      */
-    default boolean isEncrypted() {
-        return isSecure();
-    }
+    boolean isEncrypted();
 
     /**
      * Returns true if this session is authenticated (eg: SASL or Dialback authentication has completed successfully).

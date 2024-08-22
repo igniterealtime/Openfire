@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ public class SessionData {
         return owner;
     }
 
-    @Deprecated // replaced by getCreationInstant. Remove in Openfire 4.9.0 or later.
+    @Deprecated(since = "4.8.1", forRemoval = true) // replaced by getCreationInstant. Remove in Openfire 4.10.0 or later.
     public long getCreationStamp() {
         return creationStamp.toEpochMilli();
     }

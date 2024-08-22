@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,10 @@ package org.jivesoftware.openfire.net;
 
 import com.jcraft.jzlib.JZlib;
 import com.jcraft.jzlib.ZOutputStream;
-import org.jivesoftware.openfire.*;
+import org.jivesoftware.openfire.ConnectionManager;
+import org.jivesoftware.openfire.PacketDeliverer;
+import org.jivesoftware.openfire.PacketException;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.session.IncomingServerSession;
 import org.jivesoftware.openfire.session.Session;
@@ -43,7 +46,10 @@ import java.net.UnknownHostException;
 import java.nio.channels.Channels;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -290,12 +296,6 @@ public class SocketConnection extends AbstractConnection {
     }
 
     @Override
-    @Deprecated // Remove in Openfire 4.9 or later.
-    public boolean isSecure() {
-        return isEncrypted();
-    }
-
-    @Override
     public boolean isEncrypted() {
         return isEncrypted;
     }
@@ -374,16 +374,6 @@ public class SocketConnection extends AbstractConnection {
         return backupDeliverer;
     }
 
-    /**
-     * Closes the connection without sending any data (not even a stream end-tag).
-     *
-     * @deprecated replaced by {@link #close(StreamError, boolean)}
-     */
-    @Deprecated // Remove in or after Openfire 4.9.0
-    public void forceClose() {
-        close(null,false, true);
-    }
-
     public void close(@Nullable final StreamError error, final boolean networkInterruption) {
         close(error, networkInterruption, false);
     }
@@ -401,7 +391,7 @@ public class SocketConnection extends AbstractConnection {
                     // A 'clean' closure should never be resumed (see #onRemoteDisconnect for handling of unclean disconnects). OF-2752
                     session.getStreamManager().formalClose();
                 }
-                session.setStatus(Session.STATUS_CLOSED);
+                session.setStatus(Session.Status.CLOSED);
             }
 
             if (!force) {

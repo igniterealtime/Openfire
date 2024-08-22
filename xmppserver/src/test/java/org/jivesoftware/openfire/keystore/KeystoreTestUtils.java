@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2018-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,15 +32,15 @@ import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.ContentVerifierProvider;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.bouncycastle.operator.jcajce.JcaContentVerifierProviderBuilder;
-import org.jivesoftware.util.Base64;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.security.*;
-import java.security.cert.*;
+import java.security.cert.X509Certificate;
 import java.sql.Date;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 import java.util.zip.Adler32;
 
 /**
@@ -73,7 +73,7 @@ public class KeystoreTestUtils
      */
     public static String toPemFormat( X509Certificate certificate ) throws Exception {
         return String.valueOf(BEGIN_CERT) + '\n' +
-            Base64.encodeBytes(certificate.getEncoded()) + '\n' +
+            Base64.getMimeEncoder().encodeToString(certificate.getEncoded()) + '\n' +
             END_CERT + '\n';
     }
 

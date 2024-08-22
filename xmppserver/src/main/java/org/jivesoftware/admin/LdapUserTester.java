@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2020 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package org.jivesoftware.admin;
 
-import org.jivesoftware.util.Base64;
 import org.jivesoftware.openfire.ldap.LdapManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +24,10 @@ import org.xmpp.packet.JID;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.*;
-import javax.naming.ldap.*;
+import javax.naming.ldap.Control;
+import javax.naming.ldap.LdapContext;
+import javax.naming.ldap.Rdn;
+import javax.naming.ldap.SortControl;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.util.*;
@@ -198,7 +200,7 @@ public class LdapUserTester {
                 if (ob instanceof String) {
                     answer = (String) ob;
                 } else {
-                    answer = Base64.encodeBytes((byte[]) ob);
+                    answer = Base64.getEncoder().encodeToString((byte[]) ob);
                 }
                 if ( mapping.isFirstMatchOnly()) {
                     // find and use the first non-null value.

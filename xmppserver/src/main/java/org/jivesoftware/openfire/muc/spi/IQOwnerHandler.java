@@ -82,7 +82,7 @@ public class IQOwnerHandler {
      * @throws CannotBeInvitedException never
      * @throws NotAcceptableException if the room requires a password that was not supplied
      */
-    public void handleIQ(@Nonnull final IQ packet, @Nullable final MUCOccupant actorOccupant) throws ForbiddenException, ConflictException, CannotBeInvitedException, NotAcceptableException
+    public void handleIQ(@Nonnull final IQ packet, @Nullable final MUCOccupant actorOccupant) throws ForbiddenException, ConflictException, CannotBeInvitedException, NotAcceptableException, NotAllowedException
     {
         final Affiliation actorAffiliation = actorOccupant != null ? actorOccupant.getAffiliation() : room.getAffiliation(packet.getFrom());
 
@@ -150,7 +150,8 @@ public class IQOwnerHandler {
      * @throws NotAcceptableException if the room requires a password that was not supplied
      */
     private void handleDataFormElement(@Nonnull final Affiliation actorAffiliation, @Nullable final JID actorJid, @Nonnull final Element formElement)
-            throws ForbiddenException, ConflictException, NotAcceptableException {
+        throws ForbiddenException, ConflictException, NotAcceptableException, NotAllowedException
+    {
         DataForm completedForm = new DataForm(formElement);
 
         switch(completedForm.getType()) {
@@ -196,7 +197,7 @@ public class IQOwnerHandler {
      * @throws NotAcceptableException if the room requires a password that was not supplied
      */
     private void processConfigurationForm(@Nonnull final DataForm completedForm, @Nonnull final Affiliation actorAffiliation, @Nullable final JID actorJid)
-            throws ForbiddenException, ConflictException, NotAcceptableException
+        throws ForbiddenException, ConflictException, NotAcceptableException, NotAllowedException
     {
         List<String> values;
         FormField field;

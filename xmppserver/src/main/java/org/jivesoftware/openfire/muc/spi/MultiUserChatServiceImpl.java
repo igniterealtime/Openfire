@@ -1119,8 +1119,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             }
             catch ( NotAllowedException e )
             {
-                Log.debug("Unable to process IQ stanza: an owner or administrator cannot be banned from the room.", e);
-                sendErrorPacket(packet, PacketError.Condition.not_allowed, "An owner or administrator cannot be banned from the room.");
+                Log.debug("Unable to process IQ stanza: actor is not allowed to perform this action.", e);
+                sendErrorPacket(packet, PacketError.Condition.not_allowed, "You are not allowed to perform this action.");
             }
             catch ( CannotBeInvitedException e )
             {
@@ -1735,7 +1735,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
             // Ensure that other cluster nodes see any changes that might have been applied.
             syncChatRoom(room);
-        } catch (final ForbiddenException e) {
+        } catch (final ForbiddenException | NotAllowedException e) {
             // Do nothing since we cannot kick owners or admins
             Log.debug("Skip removing {}, because it's not allowed (this user likely is an owner of admin of the room).", occupant, e);
         } finally {

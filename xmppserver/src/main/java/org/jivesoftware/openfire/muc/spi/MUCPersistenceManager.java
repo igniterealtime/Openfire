@@ -251,7 +251,7 @@ public class MUCPersistenceManager {
             room.setModerated(rs.getInt("moderated") == 1);
             try {
                 room.setMembersOnly(rs.getInt("membersOnly") == 1, Affiliation.owner, null);
-            } catch (ForbiddenException e) {
+            } catch (ForbiddenException | NotAllowedException e) {
                 Log.error("Unable to set members-only when loading room from database (this is likely a bug in Openfire). Room: {}", room.getJID(), e);
             }
             room.setCanOccupantsInvite(rs.getInt("canInvite") == 1);
@@ -671,7 +671,7 @@ public class MUCPersistenceManager {
                     room.setModerated(resultSet.getInt("moderated") == 1);
                     try {
                         room.setMembersOnly(resultSet.getInt("membersOnly") == 1, Affiliation.owner, null);
-                    } catch (ForbiddenException e) {
+                    } catch (ForbiddenException | NotAllowedException e) {
                         Log.error("Unable to set members-only when loading room from database (this is likely a bug in Openfire). Room: {}", room.getJID(), e);
                     }
                     room.setCanOccupantsInvite(resultSet.getInt("canInvite") == 1);

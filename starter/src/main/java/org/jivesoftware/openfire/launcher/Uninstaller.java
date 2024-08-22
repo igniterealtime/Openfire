@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,44 +16,38 @@
 
 package org.jivesoftware.openfire.launcher;
 
-import com.install4j.api.Context;
-import com.install4j.api.ProgressInterface;
-import com.install4j.api.UninstallAction;
+import com.install4j.api.actions.AbstractUninstallAction;
+import com.install4j.api.context.UninstallerContext;
+import com.install4j.api.context.UserCanceledException;
 
 import java.io.File;
-import java.io.FilenameFilter;
 
 /**
  * Used with the Install4J installer to uninstall the remaining files within
  * the Openfire install.
  */
-public class Uninstaller extends UninstallAction {
-
+public class Uninstaller extends AbstractUninstallAction
+{
     @Override
-    public int getPercentOfTotalInstallation() {
-        return 0;
-    }
-
-    @Override
-    public boolean performAction(Context context, ProgressInterface progressInterface) {
+    public boolean uninstall(UninstallerContext context) throws UserCanceledException
+    {
         final File installationDirectory = context.getInstallationDirectory();
 
         File libDirectory = new File(installationDirectory, "lib");
 
         // If the directory still exists, remove all JAR files.
+        boolean result = true;
         if (libDirectory.exists() && libDirectory.isDirectory()) {
-            File[] jars = libDirectory.listFiles(new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String name) {
-                    return name.endsWith(".jar");
+            File[] jars = libDirectory.listFiles((dir, name) -> name.endsWith(".jar"));
+            if (jars != null) {
+                for (File jar : jars) {
+                    if (!jar.delete()) {
+                        result = false;
+                    }
                 }
-            });
-            for (File jar : jars) {
-                jar.delete();
             }
         }
 
-        return super.performAction(context, progressInterface);
+        return result;
     }
-
 }

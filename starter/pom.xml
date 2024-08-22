@@ -54,11 +54,18 @@
             <artifactId>log4j-slf4j2-impl</artifactId>
         </dependency>
         <dependency>
-            <groupId>install4j</groupId>
-            <artifactId>install4j</artifactId>
-            <version>1.0</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/libs/i4jruntime.jar</systemPath>
+            <groupId>com.install4j</groupId>
+            <artifactId>install4j-runtime</artifactId>
+            <version>10.0.3</version>
+            <scope>provided</scope>
         </dependency>
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>ej-technologies</id>
+            <url>https://maven.ej-technologies.com/repository/</url>
+        </repository>
+    </repositories>
+
 </project>

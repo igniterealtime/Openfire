@@ -334,7 +334,7 @@ public class MUCPersistenceManager {
                             room.addAdmin(affiliationJID, room.getSelfRepresentation().getAffiliation());
                             break;
                         case outcast:
-                            room.addOutcast(affiliationJID, null, room.getSelfRepresentation().getAffiliation(), room.getSelfRepresentation().getRole());
+                            room.addOutcast(affiliationJID, null, null, room.getSelfRepresentation().getAffiliation(), room.getSelfRepresentation().getRole());
                             break;
                         default:
                             Log.error("Unknown affiliation value {} for user {} in persistent room {}", affiliation, affiliationJID.toBareJID(), room.getID());
@@ -941,7 +941,7 @@ public class MUCPersistenceManager {
                                 room.addAdmin(affiliationJID, room.getSelfRepresentation().getAffiliation());
                                 break;
                             case outcast:
-                                room.addOutcast(affiliationJID, null, room.getSelfRepresentation().getAffiliation(), room.getSelfRepresentation().getRole());
+                                room.addOutcast(affiliationJID, null, null, room.getSelfRepresentation().getAffiliation(), room.getSelfRepresentation().getRole());
                                 break;
                             default:
                                 Log.error("Unknown affiliation value " + affiliation + " for user " + affiliationJID + " in persistent room " + room.getID());

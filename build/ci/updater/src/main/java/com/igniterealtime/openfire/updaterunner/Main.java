@@ -19,6 +19,8 @@ import org.jivesoftware.database.*;
 import org.jivesoftware.util.JiveGlobals;
 
 import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 
 public class Main {
@@ -44,8 +46,8 @@ public class Main {
             String parent = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParent();
             PropertiesReader reader = new PropertiesReader(parent + "/maven-archiver/pom.properties");
 
-            String distributionDir = new File(parent).toPath().resolve("../../../../distribution/target/distribution-base").toFile().getCanonicalPath();
-            JiveGlobals.setHomeDirectory(distributionDir);
+            Path distributionPath = Paths.get(parent).resolve("../../../../distribution/target/distribution-base").toAbsolutePath();
+            JiveGlobals.setHomePath(distributionPath);
 
             JiveGlobals.setXMLProperty("connectionProvider.className", "org.jivesoftware.database.DefaultConnectionProvider");
             JiveGlobals.setXMLProperty("database.defaultProvider.driver", connectionDriver);

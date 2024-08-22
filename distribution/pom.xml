@@ -10,6 +10,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>distribution</artifactId>
+    <packaging>pom</packaging>
 
     <name>Distribution</name>
     <description>Provides Openfire distributables.</description>
@@ -31,6 +32,7 @@
                     <descriptors>
                         <descriptor>src/assembly/basic-distribution.xml</descriptor>
                     </descriptors>
+                    <attach>false</attach>
                 </configuration>
                 <executions>
                     <execution>

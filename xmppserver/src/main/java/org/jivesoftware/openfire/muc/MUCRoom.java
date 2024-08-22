@@ -2259,7 +2259,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * @return the list of updated presences of all the client resources that the occupant has used to join the room.
      * @throws ForbiddenException Thrown if trying to ban an owner or an administrator.
      */
-    public List<Presence> kickOccupant(@Nonnull final JID userAddress, @Nonnull final Affiliation actorAffiliation, @Nullable final Role actorRole, @Nullable final JID actorJID, @Nullable final String actorNickname, @Nullable final String reason) throws ForbiddenException
+    public List<Presence> kickOccupant(@Nonnull final JID userAddress, @Nonnull final Affiliation actorAffiliation, @Nullable final Role actorRole, @Nullable final JID actorJID, @Nullable final String actorNickname, @Nullable final String reason) throws ForbiddenException, NotAllowedException
     {
         return kickOccupant(userAddress, actorAffiliation, actorRole, actorJID, actorNickname, reason, 307);
     }
@@ -2280,10 +2280,18 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * @return the list of updated presences of all the client resources that the occupant has used to join the room.
      * @throws ForbiddenException Thrown if trying to ban an owner or an administrator.
      */
-    public List<Presence> kickOccupant(@Nonnull final JID userAddress, @Nonnull final Affiliation actorAffiliation, @Nullable final Role actorRole, @Nullable final JID actorJID, @Nullable final String actorNickname, @Nullable final String reason, final int status) throws ForbiddenException
+    public List<Presence> kickOccupant(@Nonnull final JID userAddress, @Nonnull final Affiliation actorAffiliation, @Nullable final Role actorRole, @Nullable final JID actorJID, @Nullable final String actorNickname, @Nullable final String reason, final int status) throws ForbiddenException, NotAllowedException
     {
         if (Affiliation.admin != actorAffiliation && Affiliation.owner != actorAffiliation && Role.moderator != actorRole) {
             throw new ForbiddenException();
+        }
+
+        // A moderator SHOULD NOT be allowed to revoke moderation privileges from someone with a higher affiliation than
+        // themselves (i.e., an unaffiliated moderator SHOULD NOT be allowed to revoke moderation privileges from an
+        // admin or an owner, and an admin SHOULD NOT be allowed to revoke moderation privileges from an owner).
+        final Affiliation targetAffiliation = getAffiliation(userAddress);
+        if (targetAffiliation.getValue() < actorAffiliation.getValue()) { // note that Openfire's values are ordered the other way around.
+            throw new NotAllowedException();
         }
 
         // Update the presence with the new role and inform all occupants
@@ -2803,7 +2811,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * @throws ForbiddenException If the user is not allowed to grant participant privileges.
      */
     public List<Presence> addParticipant(@Nonnull final JID targetUserAddress, @Nullable final String reason,
-                                         @Nonnull final Affiliation actorAffiliation, @Nullable final Role actorRole) throws ForbiddenException
+                                         @Nonnull final Affiliation actorAffiliation, @Nullable final Role actorRole) throws ForbiddenException, NotAllowedException
     {
         // Moderator grants voice, or Admin or owner changes role to participant or revokes moderator status
         if (Affiliation.admin != actorAffiliation && Affiliation.owner != actorAffiliation && Role.moderator != actorRole) {
@@ -2813,6 +2821,16 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         // A moderator SHOULD NOT be allowed to revoke moderation privileges from someone with a higher affiliation than
         // themselves (i.e., an unaffiliated moderator SHOULD NOT be allowed to revoke moderation privileges from an
         // admin or an owner, and an admin SHOULD NOT be allowed to revoke moderation privileges from an owner).
+        final Affiliation targetAffiliation = getAffiliation(targetUserAddress);
+        if (targetAffiliation.getValue() < actorAffiliation.getValue()) { // note that Openfire's values are ordered the other way around.
+            throw new NotAllowedException();
+        }
+
+        // An admin might want to revoke a user's moderator status. An admin MAY revoke moderator status only from a
+        // user whose affiliation is "member" or "none" (i.e., not from an owner or admin).
+        if (actorAffiliation == Affiliation.admin && (targetAffiliation == Affiliation.owner || targetAffiliation == Affiliation.admin)) {
+            throw new NotAllowedException();
+        }
 
         // Update the presence with the new role and inform all occupants
         final List<Presence> updatedPresences = applyRoleChange(targetUserAddress, Role.participant);
@@ -2838,11 +2856,20 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * @return the list of updated presences of all the client resources that the occupant has used to join the room.
      * @throws ForbiddenException if the actor is allowed to change the role.
      */
-    public List<Presence> addVisitor(@Nonnull final JID targetUserAddress, @Nonnull final Affiliation actorAffiliation, @Nullable final Role actorRole) throws ForbiddenException
+    public List<Presence> addVisitor(@Nonnull final JID targetUserAddress, @Nonnull final Affiliation actorAffiliation, @Nullable final Role actorRole) throws ForbiddenException, NotAllowedException
     {
         if (Affiliation.admin != actorAffiliation && Affiliation.owner != actorAffiliation && Role.moderator != actorRole) {
             throw new ForbiddenException();
         }
+
+        // A moderator SHOULD NOT be allowed to revoke moderation privileges from someone with a higher affiliation than
+        // themselves (i.e., an unaffiliated moderator SHOULD NOT be allowed to revoke moderation privileges from an
+        // admin or an owner, and an admin SHOULD NOT be allowed to revoke moderation privileges from an owner).
+        final Affiliation targetAffiliation = getAffiliation(targetUserAddress);
+        if (targetAffiliation.getValue() < actorAffiliation.getValue()) { // note that Openfire's values are ordered the other way around.
+            throw new NotAllowedException();
+        }
+
         return applyRoleChange(targetUserAddress, Role.visitor);
     }
 
@@ -3055,7 +3082,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * @return the list of updated presences of all the occupants that aren't members of the room if
      *         the room is now members-only.
      */
-    public List<Presence> setMembersOnly(final boolean membersOnly, @Nonnull final Affiliation actorAffiliation, @Nullable final JID actorJid) throws ForbiddenException
+    public List<Presence> setMembersOnly(final boolean membersOnly, @Nonnull final Affiliation actorAffiliation, @Nullable final JID actorJid) throws ForbiddenException, NotAllowedException
     {
         if (actorAffiliation != Affiliation.owner) {
             throw new ForbiddenException();

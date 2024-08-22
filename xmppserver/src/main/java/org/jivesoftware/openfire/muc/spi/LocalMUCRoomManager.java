@@ -458,7 +458,7 @@ public class LocalMUCRoomManager
             }
 
             Log.debug("Kicked occupant '{}' out of room '{}'.", userToBeKicked, room.getName());
-        } catch (final ForbiddenException e) {
+        } catch (final ForbiddenException | NotAllowedException e) {
             // Do nothing since we cannot kick owners or admins
             Log.debug("Occupant '{}' not kicked out of room '{}' because of '{}'.", userToBeKicked, room.getName(), e.getMessage());
         }

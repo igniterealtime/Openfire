@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,10 +44,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Defines the permissions and actions that a MUCUser currently may use in a particular room. Each MUCRole defines the
- * relationship between a MUCRoom and a MUCUser.
+ * Defines the permissions and actions that a user currently may use in a particular room. Each MUCRole defines the
+ * relationship between a MUCRoom and a specific user that is joined to (is an occupant of) that room.
  *
- * MUCUsers can play different roles in different chat rooms.
+ * Note that a MUCRole can exist only for a user that is currently an occupant of a room.
+ *
+ * The name 'MUCRole' can be confusing, as it clashes with the XEP-defined term 'role'. MUCRole is not an equivalent
+ * of the XEP-defined term (although {@link MUCRole.Role} is).
  *
  * @author Gaston Dombiak
  */
@@ -56,12 +59,13 @@ public class MUCRole implements Cacheable, Externalizable {
     private static final Logger Log = LoggerFactory.getLogger(MUCRole.class);
 
     /**
-     * The (bare) JID of the room this role is valid in.
+     * The (bare) JID of the room (eg: 'room@service') in which this occupant is joined.
      */
     private JID roomJid;
 
     /**
-     * The (bare) JID of the user of the role.
+     * The JID of the user (the real JID, eg: 'user@domain/desktop`) that is the occupant of a room (as represented by
+     * this instance); contrast with {@link #occupantJID}
      */
     private JID userJid;
 
@@ -77,12 +81,14 @@ public class MUCRole implements Cacheable, Externalizable {
     private Presence presence;
 
     /**
-     * The role.
+     * A temporary position or privilege level within a room, distinct from a user's long-lived affiliation with the
+     * room. A role lasts only for the duration of an occupant's visit to a room.
      */
     private MUCRole.Role role;
 
     /**
-     * The affiliation.
+     * A long-lived association or connection with a room; affiliation is distinct from role. An affiliation lasts
+     * across a user's visits to a room.
      */
     private MUCRole.Affiliation affiliation;
 
@@ -93,9 +99,10 @@ public class MUCRole implements Cacheable, Externalizable {
     private boolean voiceOnly = false;
 
     /**
-     * The address of the person masquerading in this role.
+     * The 'room@service/nick' by which the occupant is identified within the context of the room; contrast with
+     * {@link #userJid}
      */
-    private JID rJID;
+    private JID occupantJID;
 
     /**
      * A fragment containing the x-extension for non-anonymous rooms.
@@ -120,17 +127,13 @@ public class MUCRole implements Cacheable, Externalizable {
     {}
 
     /**
-     * Create a new role.
+     * Create a new instance.
      *
-     * Note that whenever a new instance of MUCRole is created to reflect a new relation between an end-user and a MUC
-     * room, it is typically needed to register the same relation by adding the name of the chatroom to the collection
-     * of room names in MUCUser#roomNames. It is the responsibility of the caller to ensure that this is done.
-     *
-     * @param chatroom the room the role is valid in.
-     * @param nickname the nickname of the user in the role.
+     * @param chatroom the room the occupant is in.
+     * @param nickname the nickname of the user in the room.
      * @param role the role of the user in the room.
      * @param affiliation the affiliation of the user in the room.
-     * @param userJid the 'real' JID of the user in the role.
+     * @param userJid the 'real' JID of the user.
      * @param presence the presence sent by the user to join the room.
      */
     public MUCRole(MUCRoom chatroom, String nickname,
@@ -141,7 +144,7 @@ public class MUCRole implements Cacheable, Externalizable {
         this.userJid = userJid;
         this.role = role;
         this.affiliation = affiliation;
-        rJID = new JID(roomJid.getNode(), roomJid.getDomain(), nick);
+        occupantJID = new JID(roomJid.getNode(), roomJid.getDomain(), nick);
 
         synchronized (this) {
             extendedInformation = DocumentHelper.createElement(QName.get("x", "http://jabber.org/protocol/muc#user"));
@@ -159,9 +162,9 @@ public class MUCRole implements Cacheable, Externalizable {
     }
 
     /**
-     * Create a new role that is a 'Room role'. This should never be used to represent anything else than 'the room itself'.
+     * Create a new instance that is a 'Room self occupant'. This should never be used to represent anything else than 'the room itself'.
      *
-     * @param room the room the role is valid in.
+     * @param room the room the data is valid in.
      */
     private MUCRole(MUCRoom room)
     {
@@ -169,24 +172,40 @@ public class MUCRole implements Cacheable, Externalizable {
         this.role = Role.moderator;
         this.affiliation = Affiliation.owner;
 
-        rJID = new JID(roomJid.getNode(), roomJid.getDomain(), null);
+        occupantJID = new JID(roomJid.getNode(), roomJid.getDomain(), null);
     }
 
     /**
-     * An empty role that represents the room itself in the chatroom. Chatrooms need to be able to
-     * speak (server messages) and so must have their own role in the chatroom.
+     * An empty instance that represents the room itself in the chatroom. Chatrooms need to be able to
+     * speak (server messages) and so must have data representing their own 'occupancy' in the chatroom.
      *
-     * @param room The room for which to return a role.
-     * @return The role representing the room.
+     * Note that a method by this name was introduced in Openfire 4.9.0, but will be refactored as part of the 4.10.0
+     * release of Openfire, as the type of the returned class will be modified in that release.
+     *
+     * @param room The room for which to return an instance.
+     * @return The representation of the room.
      */
+    public static MUCRole createRoomSelfRepresentation(@Nonnull final MUCRoom room) {
+        return new MUCRole(room);
+    }
+
+    /**
+     * An empty instance that represents the room itself in the chatroom. Chatrooms need to be able to
+     * speak (server messages) and so must have data representing their own 'occupancy' in the chatroom.
+     *
+     * @param room The room for which to return an instance.
+     * @return The representation of the room.
+     * @deprecated Replaced by {@link #createRoomSelfRepresentation(MUCRoom)}
+     */
+    @Deprecated(since = "4.9.0", forRemoval = true) // TODO remove in or after 4.10.0
     public static MUCRole createRoomRole(@Nonnull final MUCRoom room) {
         return new MUCRole(room);
     }
 
     /**
-     * Obtains a copy of the current presence status of a user in a chatroom.
+     * Obtains a copy of the current presence status of an occupant of a chatroom.
      *
-     * The 'from' address of the presence stanza is guaranteed to reflect the room role of this role.
+     * The 'from' address of the presence stanza is guaranteed to reflect the room address (as opposed to the real address) of the occupant..
      *
      * @return The presence of the user in the room.
      */
@@ -209,7 +228,7 @@ public class MUCRole implements Cacheable, Externalizable {
 
         synchronized (this) {
             this.presence = newPresence;
-            this.presence.setFrom(getRoleAddress());
+            this.presence.setFrom(getOccupantJID());
             updatePresence();
         }
     }
@@ -319,9 +338,9 @@ public class MUCRole implements Cacheable, Externalizable {
     }
 
     /**
-     * Obtain the chat room that hosts this user's role.
+     * Obtain the chat room that hosts this occupant.
      *
-     * @return The chatroom hosting this role.
+     * @return The chatroom hosting this occupant.
      */
     protected MUCRoom getChatRoom() {
         final MultiUserChatService multiUserChatService = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(roomJid);
@@ -332,26 +351,41 @@ public class MUCRole implements Cacheable, Externalizable {
     }
 
     /**
-     * Obtain the XMPPAddress representing this role in a room: room@server/nickname
+     * Returns the 'room@service/nick' by which the occupant is identified within the context of the room; contrast with
+     * {@link #getUserAddress()}.
      *
-     * @return The Jabber ID that represents this role in the room.
+     * @return The Jabber ID that represents this occupant in the room.
      */
-    public JID getRoleAddress() {
-        return rJID;
+    public JID getOccupantJID() {
+        return occupantJID;
     }
 
     /**
-     * Obtain the XMPPAddress of the user that joined the room. A {@code null} null value
-     * represents the room's role.
+     * Returns the 'room@service/nick' by which the occupant is identified within the context of the room; contrast with
+     * {@link #getUserAddress()}.
      *
-     * @return The address of the user that joined the room or null if this role belongs to the room itself.
+     * @return The Jabber ID that represents this occupant in the room.
+     * @deprecated Replaced by {@link #getOccupantJID()}
+     */
+    @Deprecated(since = "4.9.0", forRemoval = true) // TODO remove in or after 4.10.0
+    public JID getRoleAddress() {
+        return occupantJID;
+    }
+
+    /**
+     * The JID of the user (the real JID, eg: 'user@domain/desktop`) that is the occupant of a room (as represented by
+     * this instance); contrast with {@link #getOccupantJID()}.
+     *
+     * A {@code null} null value is returned when this instance is a self-representation of the room.
+     *
+     * @return The address of the user that joined the room or null if this instance represents to the room itself.
      */
     public JID getUserAddress() {
         return userJid;
     }
 
     /**
-     * Obtain the XMPPAddress representing this role in a room in context of FMUC. This typically represents the
+     * Obtain the XMPPAddress representing this occupant in a room in context of FMUC. This typically represents the
      * XMPPAddress as it is known locally at the joining FMUC node.
      *
      * For users that are joined through FMUC from a remote node, this method will return the value as reported by the
@@ -385,7 +419,7 @@ public class MUCRole implements Cacheable, Externalizable {
     }
 
     private void setRoleAddress(JID jid) {
-        rJID = jid;
+        occupantJID = jid;
         // Set the new sender of the user presence in the room
         synchronized (this) {
             presence.setFrom(jid);
@@ -430,10 +464,10 @@ public class MUCRole implements Cacheable, Externalizable {
             return;
         }
 
-        Log.debug("Send packet {} to nickname {} and userJid {}", packet.toXML(), getNickname(), userJid);
+        Log.debug("Send stanza {} to nickname {} and userJid {}", packet.toXML(), getNickname(), userJid);
 
-        if (getNickname() == null) { // If this is a 'room role'.
-            Log.debug("Nickname is null, assuming room role");
+        if (getNickname() == null) { // If this is a 'room self-representing occupant'.
+            Log.debug("Nickname is null, assuming room is sender of the stanza");
             getChatRoom().send(packet, this);
             return;
         }
@@ -492,15 +526,15 @@ public class MUCRole implements Cacheable, Externalizable {
         final JID reportingFmucAddress;
         if (packet.getFrom().getResource() == null) {
             Log.trace( "Sender is the room itself: '{}'", packet.getFrom() );
-            reportingFmucAddress = this.getChatRoom().getRole().getRoleAddress();
+            reportingFmucAddress = this.getChatRoom().getSelfRepresentation().getOccupantJID();
         } else {
             Log.trace( "Sender is an occupant of the room: '{}'", packet.getFrom() );
 
-            // Determine the role of the entity that sent the message.
-            final Set<MUCRole> sender = new HashSet<>();
+            // Determine the occupant data of the entity that sent the message.
+            final Set<MUCRole> senders = new HashSet<>();
             try
             {
-                sender.addAll( this.getChatRoom().getOccupantsByNickname(packet.getFrom().getResource()) );
+                senders.addAll( this.getChatRoom().getOccupantsByNickname(packet.getFrom().getResource()) );
             }
             catch ( UserNotFoundException e )
             {
@@ -508,27 +542,27 @@ public class MUCRole implements Cacheable, Externalizable {
             }
 
             // If this user is joined through FMUC, use the FMUC-reported address, otherwise, use the local address.
-            switch ( sender.size() )
+            switch ( senders.size() )
             {
                 case 0:
-                    Log.warn("Cannot add required FMUC data to outbound stanza. Unable to determine the role of the sender of stanza sent over FMUC: {}", packet);
+                    Log.warn("Cannot add required FMUC data to outbound stanza. Unable to determine the occupant data of the sender of stanza sent over FMUC: {}", packet);
                     return;
 
                 case 1:
-                    final MUCRole role = sender.iterator().next();
-                    if ( role.isRemoteFmuc() ) {
-                        reportingFmucAddress = role.getReportedFmucAddress();
+                    final MUCRole sender = senders.iterator().next();
+                    if ( sender.isRemoteFmuc() ) {
+                        reportingFmucAddress = sender.getReportedFmucAddress();
                     } else {
-                        reportingFmucAddress = role.getUserAddress();
+                        reportingFmucAddress = sender.getUserAddress();
                     }
                     break;
 
                 default:
-                    // The user has more than one role, which probably means it joined the room from more than one device.
+                    // The user has more than one occupant, which probably means it joined the room from more than one device.
                     // At this point in the code flow, we can't determine anymore which full JID caused the stanza to be sent.
                     // As a fallback, send the _bare_ JID of the user (which should be equal for all its resources).
                     // TODO verify if the compromise is acceptable in the XEP.
-                    final Set<JID> bareJids = sender.stream()
+                    final Set<JID> bareJids = senders.stream()
                         .map(r -> {
                             if ( r.isRemoteFmuc() ) {
                                 return r.getReportedFmucAddress().asBareJID();
@@ -539,7 +573,7 @@ public class MUCRole implements Cacheable, Externalizable {
                         .collect(Collectors.toSet());
 
                     if ( bareJids.size() == 1 ) {
-                        Log.warn("Sender '{}' has more than one role in room '{}', indicating that the user joined the room from more than one device. Using its bare instead of full JID for FMUC reporting.",
+                        Log.warn("Sender '{}' has more than one occupant in room '{}', indicating that the user joined the room from more than one device. Using its bare instead of full JID for FMUC reporting.",
                             packet.getFrom(),
                             this.getChatRoom().getJID());
                         reportingFmucAddress = bareJids.iterator().next().asBareJID();
@@ -679,7 +713,7 @@ public class MUCRole implements Cacheable, Externalizable {
         }
 
         /**
-         * Returns the value for the role.
+         * Returns the value for the affiliation.
          *
          * @return the value.
          */
@@ -709,7 +743,7 @@ public class MUCRole implements Cacheable, Externalizable {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((nick == null) ? 0 : nick.hashCode());
-        result = prime * result + ((rJID == null) ? 0 : rJID.hashCode());
+        result = prime * result + ((occupantJID == null) ? 0 : occupantJID.hashCode());
         result = prime * result + ((roomJid == null) ? 0 : roomJid.hashCode());
         result = prime * result + ((userJid == null) ? 0 : userJid.hashCode());
         return result;
@@ -729,10 +763,10 @@ public class MUCRole implements Cacheable, Externalizable {
                 return false;
         } else if (!nick.equals(other.nick))
             return false;
-        if (rJID == null) {
-            if (other.rJID != null)
+        if (occupantJID == null) {
+            if (other.occupantJID != null)
                 return false;
-        } else if (!rJID.equals(other.rJID))
+        } else if (!occupantJID.equals(other.occupantJID))
             return false;
         if (roomJid == null) {
             if (other.roomJid != null)
@@ -757,7 +791,7 @@ public class MUCRole implements Cacheable, Externalizable {
             ", role=" + role +
             ", affiliation=" + affiliation +
             ", voiceOnly=" + voiceOnly +
-            ", rJID=" + rJID +
+            ", rJID=" + occupantJID +
             ", reportedFmucJID=" + reportedFmucJID +
             '}';
     }
@@ -776,7 +810,7 @@ public class MUCRole implements Cacheable, Externalizable {
             size += CacheSizes.sizeOfAnything(role);
             size += CacheSizes.sizeOfAnything(affiliation);
             size += CacheSizes.sizeOfBoolean(); // voiceOnly
-            size += CacheSizes.sizeOfAnything(rJID);
+            size += CacheSizes.sizeOfAnything(occupantJID);
             size += CacheSizes.sizeOfAnything(reportedFmucJID);
 
             cacheSize = size;
@@ -802,7 +836,7 @@ public class MUCRole implements Cacheable, Externalizable {
             ExternalizableUtil.getInstance().writeSerializable(out, role);
             ExternalizableUtil.getInstance().writeSerializable(out, affiliation);
             ExternalizableUtil.getInstance().writeBoolean(out, voiceOnly);
-            ExternalizableUtil.getInstance().writeSafeUTF(out, rJID.toString());
+            ExternalizableUtil.getInstance().writeSafeUTF(out, occupantJID.toString());
             synchronized (this) {
                 ExternalizableUtil.getInstance().writeSerializable(out, (DefaultElement) extendedInformation);
             }
@@ -836,7 +870,7 @@ public class MUCRole implements Cacheable, Externalizable {
             role = (MUCRole.Role) ExternalizableUtil.getInstance().readSerializable(in);
             affiliation = (MUCRole.Affiliation) ExternalizableUtil.getInstance().readSerializable(in);
             voiceOnly = ExternalizableUtil.getInstance().readBoolean(in);
-            rJID = new JID(ExternalizableUtil.getInstance().readSafeUTF(in), false);
+            occupantJID = new JID(ExternalizableUtil.getInstance().readSafeUTF(in), false);
             synchronized (this) { // Unlikely to be needed, as this should operate on a new instance. Will prevent static analyzers from complaining at negligible cost.
                 extendedInformation = (Element) ExternalizableUtil.getInstance().readSerializable(in);
             }

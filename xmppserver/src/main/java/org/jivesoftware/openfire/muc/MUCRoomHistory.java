@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public final class MUCRoomHistory implements Externalizable {
         // unless the message is changing the room's subject
         if (!isSubjectChangeRequest &&
             (fromJID == null || fromJID.toString().length() == 0 ||
-             fromJID.equals(getRoom().getRole().getRoleAddress()))) {
+             fromJID.equals(getRoom().getSelfRepresentation().getOccupantJID()))) {
             return;
         }
         // Do not store regular messages if there is no message strategy (keep subject change requests)
@@ -102,9 +102,9 @@ public final class MUCRoomHistory implements Externalizable {
                 if (getRoom().canAnyoneDiscoverJID()) {
                     // Set the Full JID as the "from" attribute // TODO: This is pretty dodgy, as it depends on the user still being in the room. JIDs _should_ have been stored with the message.
                     try {
-                        List<MUCRole> role = getRoom().getOccupantsByNickname(message.getFrom().getResource());
-                        if (!role.isEmpty()) {
-                            delayElement.addAttribute("from", role.get(0).getUserAddress().toString());
+                        List<MUCRole> occupants = getRoom().getOccupantsByNickname(message.getFrom().getResource());
+                        if (!occupants.isEmpty()) {
+                            delayElement.addAttribute("from", occupants.get(0).getUserAddress().toString());
                         }
                     }
                     catch (UserNotFoundException e) {
@@ -126,9 +126,9 @@ public final class MUCRoomHistory implements Externalizable {
         if (getRoom().canAnyoneDiscoverJID()) {
             // Set the Full JID as the "from" attribute // TODO: This is pretty dodgy, as it depends on the user still being in the room. JIDs _should_ have been stored with the message.
             try {
-                List<MUCRole> role = getRoom().getOccupantsByNickname(packet.getFrom().getResource());
-                if (!role.isEmpty()) {
-                    delayInformation.addAttribute("from", role.get(0).getUserAddress().toString());
+                List<MUCRole> occupants = getRoom().getOccupantsByNickname(packet.getFrom().getResource());
+                if (!occupants.isEmpty()) {
+                    delayInformation.addAttribute("from", occupants.get(0).getUserAddress().toString());
                 }
             }
             catch (UserNotFoundException e) {
@@ -230,13 +230,13 @@ public final class MUCRoomHistory implements Externalizable {
         message.setBody(body);
         // Set the sender of the message
         if (nickname != null && nickname.trim().length() > 0) {
-            JID roomJID = getRoom().getRole().getRoleAddress();
+            JID roomJID = getRoom().getSelfRepresentation().getOccupantJID();
             // Recreate the sender address based on the nickname and room's JID
             message.setFrom(new JID(roomJID.getNode(), roomJID.getDomain(), nickname, true));
         }
         else {
             // Set the room as the sender of the message
-            message.setFrom(getRoom().getRole().getRoleAddress());
+            message.setFrom(getRoom().getSelfRepresentation().getOccupantJID());
         }
 
         // Add the delay information to the message
@@ -248,7 +248,7 @@ public final class MUCRoomHistory implements Externalizable {
         }
         else {
             // Set the Room JID as the "from" attribute
-            delayInformation.addAttribute("from", getRoom().getRole().getRoleAddress().toString());
+            delayInformation.addAttribute("from", getRoom().getSelfRepresentation().getOccupantJID().toString());
         }
         return message;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -396,10 +396,11 @@ public final class StringUtils {
      *
      * @param data a String to encode.
      * @return a base64 encoded String.
+     * @deprecated Use java.util.Base64 instead.
      */
+    @Deprecated(forRemoval = true, since = "4.9.0") // Remove in or after Openfire 4.10.0
     public static String encodeBase64(String data) {
-        byte[] bytes = data.getBytes(StandardCharsets.UTF_8);
-        return encodeBase64(bytes);
+        return java.util.Base64.getEncoder().encodeToString(data.getBytes(StandardCharsets.UTF_8));
     }
 
     /**
@@ -407,13 +408,15 @@ public final class StringUtils {
      *
      * @param data a byte array to encode.
      * @return a base64 encode String.
+     * @deprecated Use java.util.Base64 instead.
      */
+    @Deprecated(forRemoval = true, since = "4.9.0") // Remove in or after Openfire 4.10.0
     public static String encodeBase64(byte[] data) {
         // Encode the String. We pass in a flag to specify that line
         // breaks not be added. This is consistent with our previous base64
         // implementation. Section 2.1 of 3548 (base64 spec) also specifies
         // no line breaks by default.
-        return Base64.encodeBytes(data, Base64.DONT_BREAK_LINES);
+        return java.util.Base64.getEncoder().encodeToString(data);
     }
 
     /**
@@ -421,9 +424,11 @@ public final class StringUtils {
      *
      * @param data a base64 encoded String to decode.
      * @return the decoded String.
+     * @deprecated Use java.util.Base64 instead.
      */
+    @Deprecated(forRemoval = true, since = "4.9.0") // Remove in or after Openfire 4.10.0
     public static byte[] decodeBase64(String data) {
-        return Base64.decode(data);
+        return java.util.Base64.getDecoder().decode(data);
     }
 
     /**

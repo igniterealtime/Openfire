@@ -1930,7 +1930,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
                 oldAffiliation);
         }
         // apply the affiliation change, assigning a new affiliation based on the group(s) of the affected user(s)
-        return applyAffiliationChange(targetUserAddressBare);
+        return applyAffiliationChange(targetUserAddressBare, null, null, null);
     }
 
     private boolean removeOwner(@Nonnull final JID userAddress, @Nonnull final Affiliation actorAffiliation) throws ForbiddenException
@@ -2023,7 +2023,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         }
         // apply the affiliation change, assigning a new affiliation
         // based on the group(s) of the affected user(s)
-        return applyAffiliationChange(targetUserAddressBare);
+        return applyAffiliationChange(targetUserAddressBare, null, null, null);
     }
 
     private boolean removeAdmin(@Nonnull final JID userAddress, @Nonnull final Affiliation actorAffiliation) throws ForbiddenException
@@ -2100,7 +2100,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
 
         // apply the affiliation change, assigning a new affiliation
         // based on the group(s) of the affected user(s)
-        return applyAffiliationChange(targetUserAddressBare);
+        return applyAffiliationChange(targetUserAddressBare, null, null, null);
     }
 
     private boolean removeMember(@Nonnull final JID userAddress, @Nonnull final Affiliation actorAffiliation, @Nullable final Role actorRole) throws ForbiddenException
@@ -2117,6 +2117,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      *
      * @param targetUserAddress The (real) JID of the user to add as an outcast.
      * @param reason an optional reason why the user was banned.
+     * @param actorUserAddress The (real) address of the user that initiated the ban.
      * @param actorAffiliation The room affiliation of the user that initiated the ban.
      * @param actorRole The room role of the user that initiated the ban (can be null when the user is currently not an occupant).
      * @return the list of updated presences of all the client resources that the client used to
@@ -2125,7 +2126,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * @throws ForbiddenException If the user is not allowed to modify the outcast list.
      * @throws ConflictException If the room was going to lose all its owners.
      */
-    public List<Presence> addOutcast(@Nonnull final JID targetUserAddress, @Nullable final String reason, @Nonnull final Affiliation actorAffiliation, @Nullable final Role actorRole) throws NotAllowedException, ForbiddenException, ConflictException
+    public List<Presence> addOutcast(@Nonnull final JID targetUserAddress, @Nullable final String reason, @Nullable final JID actorUserAddress, @Nonnull final Affiliation actorAffiliation, @Nullable final Role actorRole) throws NotAllowedException, ForbiddenException, ConflictException
     {
         if (Affiliation.admin != actorAffiliation && Affiliation.owner != actorAffiliation && Role.moderator != actorRole) {
             throw new ForbiddenException();
@@ -2171,7 +2172,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         }
         // apply the affiliation change, assigning a new affiliation
         // based on the group(s) of the affected user(s)
-        return applyAffiliationChange(targetUserAddressBare);
+        return applyAffiliationChange(targetUserAddressBare, actorUserAddress, null, reason);
     }
 
     private boolean removeOutcast(@Nonnull final JID userAddress, @Nonnull final Affiliation actorAffiliation, @Nullable final Role actorRole) throws ForbiddenException
@@ -2235,7 +2236,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         if (jidWasAffiliated) {
             // apply the affiliation change, assigning a new affiliation
             // based on the group(s) of the affected user(s)
-            return applyAffiliationChange(targetUserAddressBare);
+            return applyAffiliationChange(targetUserAddressBare, null, null, null);
         } else {
             // no presence updates needed
             return Collections.emptyList();
@@ -2317,13 +2318,8 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             // Add the status code that indicates why user was kicked
             frag.addElement("status").addAttribute("code", String.valueOf(status));
 
-            // Add the reason why the user was kicked
-            if (reason != null && !reason.trim().isEmpty()) {
-                frag.element("item").addElement("reason").setText(reason);
-            }
-
             // Effectively kick the occupant from the room
-            kickPresence(updatedPresence, actorJID, actorNickname);
+            kickPresence(updatedPresence, actorJID, actorNickname, reason);
 
             //Inform the other occupants that user has been kicked
             broadcastPresence(updatedPresence, false, sender);
@@ -2334,23 +2330,26 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
 
     /**
      * Updates the internal state of a given occupant after an affiliation change has been applied.
-     *
+     * <p>
      * Evaluate the given JID to determine what the appropriate affiliation should be
      * after a change has been made. Each affected user will be granted the highest
      * affiliation they now possess, either explicitly or implicitly via membership
      * in one or more groups.
-     *
+     * <p>
      * If the JID is a user, the effective affiliation is
      * applied to each presence corresponding to that user. If the given JID is a group,
      * each user in the group is evaluated to determine what their new affiliations will
      * be.
-     *
+     * <p>
      * The returned presence updates will be broadcast to the occupants of the room.
      *
-     * @param target The JID for the user or group for which the affiliation has been changed
+     * @param target           The JID for the user or group for which the affiliation has been changed
+     * @param actorUserAddress The (real) address of the user that initiated the ban.
+     * @param actorNickname    The actor nickname.
+     * @param reason           An optional reason why the user was kicked.
      * @return List of presence updates to be delivered to the room's occupants
      */
-    private List<Presence> applyAffiliationChange(@Nonnull final JID target)
+    private List<Presence> applyAffiliationChange(@Nonnull final JID target, @Nullable final JID actorUserAddress, @Nullable final String actorNickname, @Nullable final String reason)
     {
         // Update the presence(s) for the new affiliation and inform all occupants
         final List<JID> affectedOccupants = new ArrayList<>();
@@ -2367,7 +2366,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
                     }
                 }
             } catch (GroupNotFoundException gnfe) {
-                Log.error("Error updating group presences for " + target , gnfe);
+                Log.error("Error updating group presences for " + target, gnfe);
             }
         } else {
             if (hasOccupant(target)) {
@@ -2385,8 +2384,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             if (owners.includes(occupantJID)) {
                 newRole = Role.moderator;
                 newAffiliation = Affiliation.owner;
-            }
-            else if (admins.includes(occupantJID)) {
+            } else if (admins.includes(occupantJID)) {
                 newRole = Role.moderator;
                 newAffiliation = Affiliation.admin;
             }
@@ -2396,17 +2394,14 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
                 newRole = Role.none;
                 kickMember = true;
                 isOutcast = true;
-            }
-            else if (members.includesKey(occupantJID)) {
+            } else if (members.includesKey(occupantJID)) {
                 newRole = Role.participant;
                 newAffiliation = Affiliation.member;
-            }
-            else if (isMembersOnly()) {
+            } else if (isMembersOnly()) {
                 newRole = Role.none;
                 newAffiliation = Affiliation.none;
                 kickMember = true;
-            }
-            else {
+            } else {
                 newRole = isModerated() ? Role.visitor : Role.participant;
                 newAffiliation = Affiliation.none;
             }
@@ -2443,7 +2438,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
 
                     // This removes the kicked occupant from the room. The presenceUpdates returned by this method
                     // (that will be broadcast to all occupants by the caller) won't reach it.
-                    kickPresence(presence, null, null);
+                    kickPresence(presence, actorUserAddress, actorNickname, reason);
                 }
             }
             updatedPresences.addAll(presences);
@@ -2881,17 +2876,18 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * Note that the remaining occupants of the room are not informed by this implementation. It is the responsibility
      * of the caller to ensure that this occurs.
      *
-     * @param kickPresence the presence of the occupant to kick from the room.
-     * @param actorJID The (real) JID of the actor that initiated the kick.
-     * @param actorNickname The nickname in the room of the actor that initiated the kick.
+     * @param kickPresence     The presence of the occupant to kick from the room.
+     * @param actorUserAddress The (real) JID of the actor that initiated the kick.
+     * @param actorNickname    The nickname in the room of the actor that initiated the kick.
+     * @param reason           An optional reason why the user was kicked (can be {@code null}).
      */
-    private void kickPresence(@Nonnull final Presence kickPresence, @Nullable final JID actorJID, @Nullable String actorNickname)
+    private void kickPresence(@Nonnull final Presence kickPresence, @Nullable final JID actorUserAddress, @Nullable String actorNickname, @Nullable final String reason)
     {
         // When no nickname is provided, try to look it up.
-        final boolean hasActorJid = actorJID != null;
+        final boolean hasActorJid = actorUserAddress != null;
         boolean hasActorNick = actorNickname != null && !actorNickname.isEmpty();
         if (!hasActorNick && hasActorJid) {
-            actorNickname = findNickname(actorJID);
+            actorNickname = findNickname(actorUserAddress);
         }
         hasActorNick = actorNickname != null && !actorNickname.isEmpty();
 
@@ -2899,12 +2895,18 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         try {
             kickedOccupants = getOccupantsByNickname(kickPresence.getFrom().getResource());
             for (MUCOccupant kickedOccupant : kickedOccupants) {
+                final Element item =  kickPresence.getChildElement("x", "http://jabber.org/protocol/muc#user").element("item");
+
+                // Add the reason why the user was kicked
+                if (reason != null && !reason.trim().isEmpty()) {
+                    item.addElement("reason").setText(reason);
+                }
+
                 // Add the actor's JID that kicked this user from the room
                 if (hasActorJid || hasActorNick) {
-                    final Element frag = kickPresence.getChildElement("x", "http://jabber.org/protocol/muc#user");
-                    final Element actor = frag.element("item").addElement("actor");
+                    final Element actor = item.addElement("actor");
                     if (hasActorJid && canAnyoneDiscoverJID) {
-                        actor.addAttribute("jid", actorJID.toBareJID());
+                        actor.addAttribute("jid", actorUserAddress.toBareJID());
                     }
                     if (hasActorNick) {
                         actor.addAttribute("nick", actorNickname);
@@ -3890,7 +3892,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
                 } else if (admins.contains(originalJID)) {
                     addAdmin(newJID, getSelfRepresentation().getAffiliation());
                 } else if (outcasts.contains(originalJID)) {
-                    addOutcast(newJID, null, getSelfRepresentation().getAffiliation(), getSelfRepresentation().getRole());
+                    addOutcast(newJID, null, null, getSelfRepresentation().getAffiliation(), getSelfRepresentation().getRole());
                 } else if (members.containsKey(originalJID)) {
                     addMember(newJID, null, getSelfRepresentation().getAffiliation());
                 }
@@ -3922,7 +3924,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     }
 
     private void applyAffiliationChangeAndSendPresence(JID groupMember) {
-        final List<Presence> presences = applyAffiliationChange(groupMember);
+        final List<Presence> presences = applyAffiliationChange(groupMember, null, null, null);
         for (Presence presence : presences) {
             send(presence, this.getSelfRepresentation());
         }

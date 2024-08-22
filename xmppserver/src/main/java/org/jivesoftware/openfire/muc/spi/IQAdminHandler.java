@@ -364,7 +364,7 @@ public class IQAdminHandler {
                                     reply.getError().setText(LocaleUtils.getLocalizedString("muc.room.affiliations.error_banning_owner_by_admin", localeForSession), localeForSession != null ? localeForSession.getLanguage() : null);
                                 } else {
                                     // Add the user as an outcast of the room based on the bare JID
-                                    presences.addAll(room.addOutcast(jid, item.elementTextTrim("reason"), senderAffiliation, senderRole));
+                                    presences.addAll(room.addOutcast(jid, item.elementTextTrim("reason"), originator, senderAffiliation, senderRole));
                                 }
                                 break;
 

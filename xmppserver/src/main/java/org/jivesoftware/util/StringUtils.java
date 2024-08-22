@@ -398,7 +398,7 @@ public final class StringUtils {
      * @return a base64 encoded String.
      * @deprecated Use java.util.Base64 instead.
      */
-    @Deprecated(forRemoval = true, since = "4.8.4") // Remove in or after Openfire 4.9.0
+    @Deprecated(forRemoval = true, since = "4.9.0") // Remove in or after Openfire 4.10.0
     public static String encodeBase64(String data) {
         return java.util.Base64.getEncoder().encodeToString(data.getBytes(StandardCharsets.UTF_8));
     }
@@ -410,7 +410,7 @@ public final class StringUtils {
      * @return a base64 encode String.
      * @deprecated Use java.util.Base64 instead.
      */
-    @Deprecated(forRemoval = true, since = "4.8.4") // Remove in or after Openfire 4.9.0
+    @Deprecated(forRemoval = true, since = "4.9.0") // Remove in or after Openfire 4.10.0
     public static String encodeBase64(byte[] data) {
         // Encode the String. We pass in a flag to specify that line
         // breaks not be added. This is consistent with our previous base64
@@ -426,7 +426,7 @@ public final class StringUtils {
      * @return the decoded String.
      * @deprecated Use java.util.Base64 instead.
      */
-    @Deprecated(forRemoval = true, since = "4.8.4") // Remove in or after Openfire 4.9.0
+    @Deprecated(forRemoval = true, since = "4.9.0") // Remove in or after Openfire 4.10.0
     public static byte[] decodeBase64(String data) {
         return java.util.Base64.getDecoder().decode(data);
     }

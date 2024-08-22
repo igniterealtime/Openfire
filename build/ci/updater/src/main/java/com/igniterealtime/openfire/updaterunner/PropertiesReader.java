@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2021-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,22 @@
  */
 package com.igniterealtime.openfire.updaterunner;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Properties;
 
 public class PropertiesReader {
-    private Properties properties;
+    private final Properties properties;
 
-    public PropertiesReader(String propertyFileName) throws IOException, URISyntaxException {
-        //String propFilePath = new File(parent, propertyFileName).getAbsolutePath();
-        System.out.println(propertyFileName);
-        File f = new File(propertyFileName);
-        if(!f.exists()){
+    public PropertiesReader(Path propertyFile) throws IOException {
+        if(!Files.exists(propertyFile)){
             throw new IOException("Property file doesn't exist!");
         }
         this.properties = new Properties();
 
-        try (FileInputStream is = new FileInputStream(propertyFileName)) {
+        try (FileInputStream is = new FileInputStream(propertyFile.toFile())) {
             this.properties.load(is);
         }
     }

@@ -273,12 +273,6 @@ public class NettyConnection extends AbstractConnection
     }
 
     @Override
-    @Deprecated // Remove in Openfire 4.9 or later.
-    public boolean isSecure() {
-        return isEncrypted();
-    }
-
-    @Override
     public boolean isEncrypted() {
         return isEncrypted;
     }

@@ -30,7 +30,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.concurrent.GuardedBy;
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
@@ -390,7 +389,7 @@ public class PluginManager
      * @return the plugin.
      */
     // TODO: (2019-03-26) Remove with Openfire 5.0
-    @Deprecated
+    @Deprecated(since = "4.4", forRemoval = true)
     public synchronized Plugin getPlugin( String canonicalName )
     {
         return pluginsLoaded.get( canonicalName.toLowerCase() );
@@ -413,17 +412,6 @@ public class PluginManager
             .map(PluginMetadata::getCanonicalName)
             // Finally, find the plugin
             .flatMap(canonicalName -> Optional.ofNullable(pluginsLoaded.get(canonicalName)));
-    }
-
-    /**
-     * @deprecated Use #getPluginPath() instead.
-     * @param plugin the plugin to get the directory for
-     * @return the plugin's directory
-     */
-    @Deprecated
-    public File getPluginDirectory( Plugin plugin )
-    {
-        return getPluginPath( plugin ).toFile();
     }
 
     /**
@@ -1007,94 +995,6 @@ public class PluginManager
             loader = classloaders.get( plugin );
         }
         return loader.loadClass( className );
-    }
-
-    /**
-     * @deprecated Moved to {@link PluginMetadataHelper#getName(Plugin)}.
-     * @param plugin the plugin to get the name for
-     * @return the name of the plugin, as defined in the plugin.xml
-     */
-    @Deprecated
-    public String getName( Plugin plugin )
-    {
-        return PluginMetadataHelper.getName( plugin );
-    }
-
-    /**
-     * @deprecated Moved to {@link PluginMetadataHelper#getDescription(Plugin)}.
-     * @param plugin the plugin to get the description for
-     * @return the description of the plugin
-     */
-    @Deprecated
-    public String getDescription( Plugin plugin )
-    {
-        return PluginMetadataHelper.getDescription( plugin );
-    }
-
-    /**
-     * @deprecated Moved to {@link PluginMetadataHelper#getAuthor(Plugin)}.
-     * @param plugin the plugin to get the author for
-     * @return the author of the plugin
-     */
-    @Deprecated
-    public String getAuthor( Plugin plugin )
-    {
-        return PluginMetadataHelper.getAuthor( plugin );
-    }
-
-    /**
-     * @deprecated Moved to {@link PluginMetadataHelper#getVersion(Plugin)}.
-     * @param plugin the plugin to get the version for
-     * @return the version of the plugin
-     */
-    @Deprecated
-    public String getVersion( Plugin plugin )
-    {
-        return PluginMetadataHelper.getVersion( plugin ).getVersionString();
-    }
-
-    /**
-     * @deprecated Moved to {@link PluginMetadataHelper#getMinServerVersion(Plugin)}.
-     * @param plugin the plugin to get the minimum server version for
-     * @return the minimum server version for the plugin
-     */
-    @Deprecated
-    public String getMinServerVersion( Plugin plugin )
-    {
-        return PluginMetadataHelper.getMinServerVersion( plugin ).getVersionString();
-    }
-
-    /**
-     * @deprecated Moved to {@link PluginMetadataHelper#getDatabaseKey(Plugin)}.
-     * @param plugin the plugin to get the database key for
-     * @return the database key for the plugin
-     */
-    @Deprecated
-    public String getDatabaseKey( Plugin plugin )
-    {
-        return PluginMetadataHelper.getDatabaseKey( plugin );
-    }
-
-    /**
-     * @deprecated Moved to {@link PluginMetadataHelper#getDatabaseVersion(Plugin)}.
-     * @param plugin the plugin to get the database version for
-     * @return the database version for the plugin
-     */
-    @Deprecated
-    public int getDatabaseVersion( Plugin plugin )
-    {
-        return PluginMetadataHelper.getDatabaseVersion( plugin );
-    }
-
-    /**
-     * @deprecated Moved to {@link PluginMetadataHelper#getLicense(Plugin)}.
-     * @param plugin the plugin to get the licence for
-     * @return the licence for the plugin
-     */
-    @Deprecated
-    public String getLicense( Plugin plugin )
-    {
-        return PluginMetadataHelper.getLicense( plugin );
     }
 
     /**

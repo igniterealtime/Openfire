@@ -246,7 +246,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: false ## ${{ needs.check_branch.output.is_publishable_branch == 'true' }}
-          tags: openfire/${{ needs.check_branch.outputs.branch_tag }}
+          tags: openfire:${{ needs.check_branch.outputs.branch_tag }}
 
   sqlserver:
     name: Test SQL Server Upgrades

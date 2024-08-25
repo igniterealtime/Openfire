@@ -1,6 +1,7 @@
 # This stage extracts all the pom.xml files.
 # It'll get rebuilt with any source change, but that's OK.
-FROM eclipse-temurin:17 AS poms
+# It doesn't matter what image we're using, really, so we may as well use one of the same images as elsewhere.
+FROM eclipse-temurin:17-jre AS poms
 WORKDIR /usr/src
 COPY . .
 # Wipe any files not called pom.xml or *.jar
@@ -9,7 +10,7 @@ RUN find . -type f -and \! -name pom.xml -and \! -name '*.jar' -delete
 RUN find . -type d -empty -delete
 
 # Now we build:
-FROM openjdk:11-jdk AS build
+FROM eclipse-temurin:17 AS build
 WORKDIR /tmp/
 RUN mkdir /tmp/m2_home
 ENV M2_HOME=/tmp/m2_home
@@ -33,19 +34,29 @@ RUN ./mvnw -e -B dependency:go-offline
 COPY . .
 RUN ./mvnw -e -B package -Dmaven.test.skip
 
-# Final stage, build the runtime container:
-FROM eclipse-temurin:17
+# Might as well create the user in a different stage if only to eliminate
+# the ugly && chaining and increase parallelization
+FROM eclipse-temurin:17-jre AS skeleton-runtime
 
 ENV OPENFIRE_USER=openfire \
     OPENFIRE_DIR=/usr/local/openfire \
     OPENFIRE_DATA_DIR=/var/lib/openfire \
     OPENFIRE_LOG_DIR=/var/log/openfire
 
-RUN apt-get update -qq \
-    && apt-get install -yqq sudo \
-    && adduser --disabled-password --quiet --system --home $OPENFIRE_DATA_DIR --gecos "Openfire XMPP server" --group $OPENFIRE_USER \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -qq
+RUN apt-get install -yyq sudo adduser
+RUN adduser --disabled-password --quiet --system --home $OPENFIRE_DATA_DIR --gecos "Openfire XMPP server" --group $OPENFIRE_USER
 
+# Final stage, build the runtime container:
+FROM eclipse-temurin:17-jre AS runtime
+
+ENV OPENFIRE_USER=openfire \
+    OPENFIRE_DIR=/usr/local/openfire \
+    OPENFIRE_DATA_DIR=/var/lib/openfire \
+    OPENFIRE_LOG_DIR=/var/log/openfire
+
+COPY --from=skeleton-runtime /etc/passwd /etc/shadow /etc/
+COPY --chown=openfire::openfire --from=skeleton-runtime $OPENFIRE_DATA_DIR $OPENFIRE_DATA_DIR
 COPY --chmod=0755 --from=build /usr/src/build/docker/entrypoint.sh /sbin/entrypoint.sh
 COPY --chown=openfire:openfire --from=build /usr/src/distribution/target/distribution-base /usr/local/openfire
 RUN mv ${OPENFIRE_DIR}/conf ${OPENFIRE_DIR}/conf_org \

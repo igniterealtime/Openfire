@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2004-2010 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2010 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -25,11 +25,15 @@
 <%@ page import="org.jivesoftware.openfire.auth.*" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
-<%@ page import="org.jivesoftware.util.*" %>
 <%@ page import="org.jivesoftware.admin.LoginLimitManager" %>
 <%@ page import="java.net.URL" %>
 <%@ page import="java.lang.StringBuilder" %>
 <%@ page import="org.slf4j.LoggerFactory" %>
+<%@ page import="org.jivesoftware.util.ParamUtils" %>
+<%@ page import="org.jivesoftware.util.CookieUtils" %>
+<%@ page import="java.util.Base64" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="org.jivesoftware.util.LocaleUtils" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -123,7 +127,7 @@
         }
         try {
             if (secret != null && nodeID != null) {
-                if (StringUtils.hash(AdminConsolePlugin.secret).equals(secret) && ClusterManager.isClusterMember(Base64.decode(nodeID, Base64.URL_SAFE))) {
+                if (StringUtils.hash(AdminConsolePlugin.secret).equals(secret) && ClusterManager.isClusterMember(Base64.getUrlDecoder().decode(nodeID))) {
                     authToken = AuthToken.generateUserToken(loginUsername);
                 }
                 else {

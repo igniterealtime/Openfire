@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2005-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@
 <%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" errorPage="error.jsp" %>
 <%@ page import="org.jivesoftware.openfire.cluster.ClusterNodeInfo" %>
 <%@ page import="org.jivesoftware.openfire.cluster.GetBasicStatistics" %>
-<%@ page import="org.jivesoftware.util.Base64" %>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.JiveGlobals" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
@@ -346,7 +345,7 @@
                 for (ClusterNodeInfo nodeInfo : clusterNodesInfo) {
                     boolean isLocalMember =
                             XMPPServer.getInstance().getNodeID().equals(nodeInfo.getNodeID());
-                    String nodeID = Base64.encodeBytes(nodeInfo.getNodeID().toByteArray(), Base64.URL_SAFE);
+                    String nodeID = Base64.getUrlEncoder().encodeToString(nodeInfo.getNodeID().toByteArray());
                     Map<String, Object> nodeStats = null;
                     for (Map<String, Object> statsMap : statistics) {
                         if (statsMap == null) {

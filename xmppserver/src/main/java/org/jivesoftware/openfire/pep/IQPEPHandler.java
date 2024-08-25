@@ -341,18 +341,6 @@ public class IQPEPHandler extends IQHandler implements ServerIdentitiesProvider,
         return features.iterator();
     }
 
-
-    /**
-     * Returns true if the PEP service is enabled in the server.
-     *
-     * @return true if the PEP service is enabled in the server.
-     * @deprecated Replaced by {@link #ENABLED}.
-     */
-    @Deprecated // Can be removed in Openfire 4.9.0 or later.
-    public boolean isEnabled() {
-        return ENABLED.getValue();
-    }
-
     // *****************************************************************
     // *** Generic module management ends here. From this point on   ***
     // *** more specific PEP related implementation after this point ***

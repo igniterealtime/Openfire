@@ -24,10 +24,8 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.jivesoftware.util.cache.CacheFactory;
@@ -38,10 +36,7 @@ import org.xmpp.packet.*;
 import java.math.BigInteger;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
-import java.util.Deque;
-import java.util.LinkedList;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -253,7 +248,7 @@ public class StreamManager {
             this.resume = resume && offerResume;
             if ( this.resume ) {
                 // Create SM-ID.
-                smId = StringUtils.encodeBase64( session.getAddress().getResource() + "\0" + session.getStreamID().getID());
+                smId = Base64.getEncoder().encodeToString((session.getAddress().getResource() + "\0" + session.getStreamID().getID()).getBytes(StandardCharsets.UTF_8));
             }
         }
 
@@ -306,7 +301,7 @@ public class StreamManager {
         String resource;
         String streamId;
         try {
-            StringTokenizer toks = new StringTokenizer(new String(StringUtils.decodeBase64(previd), StandardCharsets.UTF_8), "\0");
+            StringTokenizer toks = new StringTokenizer(new String(Base64.getDecoder().decode(previd), StandardCharsets.UTF_8), "\0");
             resource = toks.nextToken();
             streamId = toks.nextToken();
         } catch (Exception e) {
@@ -605,7 +600,7 @@ public class StreamManager {
     public void onResume(JID serverAddress, long h) {
         Log.debug("Agreeing to resume");
         Element resumed = new DOMElement(QName.get("resumed", namespace));
-        resumed.addAttribute("previd", StringUtils.encodeBase64( session.getAddress().getResource() + "\0" + session.getStreamID().getID()));
+        resumed.addAttribute("previd", Base64.getEncoder().encodeToString((session.getAddress().getResource() + "\0" + session.getStreamID().getID()).getBytes(StandardCharsets.UTF_8)));
         resumed.addAttribute("h", Long.toString(serverProcessedStanzas.get()));
         final Connection connection = session.getConnection();
         assert connection != null; // While the client is resuming a session, the connection on which the session is resumed can't be null.

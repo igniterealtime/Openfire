@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.jivesoftware.openfire.vcard;
 
 import org.dom4j.Element;
-import org.jivesoftware.util.Base64;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +30,7 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.Base64;
 import java.util.Iterator;
 
 /**
@@ -88,7 +88,7 @@ public class PhotoResizer
         final ImageWriter iw = (ImageWriter) it.next();
 
         // Extract the original avatar from the VCard.
-        final byte[] original = Base64.decode( element.getTextTrim() );
+        final byte[] original = Base64.getDecoder().decode( element.getTextTrim() );
 
         // Crop and shrink, if needed.
         final int targetDimension = JiveGlobals.getIntProperty( PROPERTY_TARGETDIMENSION, PROPERTY_TARGETDIMENSION_DEFAULT );
@@ -98,7 +98,7 @@ public class PhotoResizer
         if ( resized != null )
         {
             Log.debug( "Replacing original avatar in vcard with a resized variant." );
-            vCardElement.element( "PHOTO" ).element( "BINVAL" ).setText( Base64.encodeBytes( resized ) );
+            vCardElement.element( "PHOTO" ).element( "BINVAL" ).setText( Base64.getEncoder().encodeToString( resized ) );
         }
     }
 

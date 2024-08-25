@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,16 @@
  */
 package org.jivesoftware.util;
 
-import java.nio.charset.StandardCharsets;
-import java.security.Key;
-import java.security.Security;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
+import java.security.Security;
 
 /**
  * Utility class providing symmetric AES encryption/decryption. To strengthen
@@ -84,7 +83,7 @@ public class AesEncryptor implements Encryptor {
     public String encrypt(String value, byte[] iv) {
         if (value == null) { return null; }
         byte [] bytes = value.getBytes(StandardCharsets.UTF_8);
-        return Base64.encodeBytes(cipher(bytes, getKey(), iv == null ? INIT_PARM : iv, Cipher.ENCRYPT_MODE));
+        return java.util.Base64.getEncoder().encodeToString(cipher(bytes, getKey(), iv == null ? INIT_PARM : iv, Cipher.ENCRYPT_MODE));
     }
 
     /* (non-Javadoc)
@@ -98,7 +97,7 @@ public class AesEncryptor implements Encryptor {
     @Override
     public String decrypt(String value, byte[] iv) {
         if (value == null) { return null; }
-        byte [] bytes = cipher(Base64.decode(value), getKey(), iv == null ? INIT_PARM : iv, Cipher.DECRYPT_MODE);
+        byte [] bytes = cipher(java.util.Base64.getDecoder().decode(value), getKey(), iv == null ? INIT_PARM : iv, Cipher.DECRYPT_MODE);
         if (bytes == null) { return null; }
         return new String(bytes, StandardCharsets.UTF_8);
     }

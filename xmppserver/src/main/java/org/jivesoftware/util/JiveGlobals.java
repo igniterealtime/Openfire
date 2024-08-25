@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -257,36 +257,12 @@ public class JiveGlobals {
      * Returns the location of the <code>home</code> directory.
      *
      * @return the location of the home dir.
-     * @deprecated Replaced by {@link #getHomePath()}
-     */
-    @Deprecated(since = "4.8.0") // Remove in or after Openfire 4.9.0.
-    public static String getHomeDirectory() {
-        return getHomePath().toString();
-    }
-
-    /**
-     * Returns the location of the <code>home</code> directory.
-     *
-     * @return the location of the home dir.
      */
     public static Path getHomePath() {
         if (openfireProperties == null) {
             loadOpenfireProperties();
         }
         return home;
-    }
-
-    /**
-     * Sets the location of the <code>home</code> directory. The directory must exist and the
-     * user running the application must have read and write permissions over the specified
-     * directory.
-     *
-     * @param homeDir the location of the home dir.
-     * @deprecated Replaced by {@link #setHomePath(Path)}
-     */
-    @Deprecated(since = "4.8.0") // Remove in or after Openfire 4.9.0.
-    public static void setHomeDirectory(String homeDir) {
-        setHomePath(new File(homeDir).toPath());
     }
 
     /**

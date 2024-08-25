@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2020 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,15 +127,15 @@ public class HistoryRequest {
     /**
      * Sends the smallest amount of traffic that meets any combination of the requested criteria.
      * 
-     * @param joinRole the user that will receive the history.
+     * @param occupant the user that will receive the history.
      * @param roomHistory the history of the room.
      */
-    public void sendHistory(MUCRole joinRole, MUCRoomHistory roomHistory) {
+    public void sendHistory(MUCRole occupant, MUCRoomHistory roomHistory) {
         if (!isConfigured()) {
             Iterator<Message> history = roomHistory.getMessageHistory();
             while (history.hasNext()) {
                 // OF-2163: Create a defensive copy of the message, to prevent the address that it is sent to to leak back into the archive.
-                joinRole.send(history.next().createCopy());
+                occupant.send(history.next().createCopy());
             }
         }
         else {
@@ -197,7 +197,7 @@ public class HistoryRequest {
             // Send the smallest amount of traffic to the user
             for (final Message aHistoryToSend : historyToSend) {
                 // OF-2163: Create a defensive copy of the message, to prevent the address that it is sent to to leak back into the archive.
-                joinRole.send(aHistoryToSend.createCopy());
+                occupant.send(aHistoryToSend.createCopy());
             }
         }
     }

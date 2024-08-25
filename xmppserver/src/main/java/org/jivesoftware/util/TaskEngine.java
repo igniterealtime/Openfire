@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,14 +137,6 @@ public class TaskEngine {
     }
 
     /**
-     * @deprecated Replaced by schedule({@link TimerTask, Duration}
-     */
-    @Deprecated // Remove in Openfire 4.9.0 or later.
-    public void schedule(TimerTask task, long delay) {
-        timer.schedule(new TimerTaskWrapper(task), delay);
-    }
-
-    /**
      * Schedules the specified task for execution after the specified delay.
      *
      * @param task  task to be scheduled.
@@ -159,14 +151,6 @@ public class TaskEngine {
     }
 
     /**
-     * @deprecated Replaced by schedule({@link TimerTask, Instant}
-     */
-    @Deprecated // Remove in Openfire 4.9.0 or later.
-    public void schedule(TimerTask task, Date time) {
-        timer.schedule(new TimerTaskWrapper(task), time);
-    }
-
-    /**
      * Schedules the specified task for execution at the specified time.  If
      * the time is in the past, the task is scheduled for immediate execution.
      *
@@ -178,16 +162,6 @@ public class TaskEngine {
      */
     public void schedule(TimerTask task, Instant time) {
         timer.schedule(new TimerTaskWrapper(task), Date.from(time));
-    }
-
-    /**
-     * @deprecated Replaced by schedule({@link TimerTask, Duration, Duration}
-     */
-    @Deprecated // Remove in Openfire 4.9.0 or later.
-    public void schedule(TimerTask task, long delay, long period) {
-        TimerTaskWrapper taskWrapper = new TimerTaskWrapper(task);
-        wrappedTasks.put(task, taskWrapper);
-        timer.schedule(taskWrapper, delay, period);
     }
 
     /**
@@ -228,16 +202,6 @@ public class TaskEngine {
     }
 
     /**
-     * @deprecated Replaced by schedule({@link TimerTask, Instant, Duration}
-     */
-    @Deprecated // Remove in Openfire 4.9.0 or later.
-    public void schedule(TimerTask task, Date firstTime, long period) {
-        TimerTaskWrapper taskWrapper = new TimerTaskWrapper(task);
-        wrappedTasks.put(task, taskWrapper);
-        timer.schedule(taskWrapper, firstTime, period);
-    }
-
-    /**
      * Schedules the specified task for repeated <i>fixed-delay execution</i>,
      * beginning at the specified time. Subsequent executions take place at
      * approximately regular intervals, separated by the specified period.
@@ -270,16 +234,6 @@ public class TaskEngine {
         TimerTaskWrapper taskWrapper = new TimerTaskWrapper(task);
         wrappedTasks.put(task, taskWrapper);
         timer.schedule(taskWrapper, Date.from(firstTime), period.toMillis());
-    }
-
-    /**
-     * @deprecated Replaced by scheduleAtFixedRate({@link TimerTask, Duration, Duration}
-     */
-    @Deprecated // Remove in Openfire 4.9.0 or later.
-    public void scheduleAtFixedRate(TimerTask task, long delay, long period) {
-        TimerTaskWrapper taskWrapper = new TimerTaskWrapper(task);
-        wrappedTasks.put(task, taskWrapper);
-        timer.scheduleAtFixedRate(taskWrapper, delay, period);
     }
 
     /**
@@ -317,16 +271,6 @@ public class TaskEngine {
         TimerTaskWrapper taskWrapper = new TimerTaskWrapper(task);
         wrappedTasks.put(task, taskWrapper);
         timer.scheduleAtFixedRate(taskWrapper, delay.toMillis(), period.toMillis());
-    }
-
-    /**
-     * @deprecated Replaced by scheduleAtFixedRate({@link TimerTask, Instant, Duration}
-     */
-    @Deprecated // Remove in Openfire 4.9.0 or later.
-    public void scheduleAtFixedRate(TimerTask task, Date firstTime, long period) {
-        TimerTaskWrapper taskWrapper = new TimerTaskWrapper(task);
-        wrappedTasks.put(task, taskWrapper);
-        timer.scheduleAtFixedRate(taskWrapper, firstTime, period);
     }
 
     /**

@@ -150,14 +150,6 @@ public interface RoutingTable {
     void routePacket(JID jid, Packet packet) throws PacketException;
 
     /**
-     * @deprecated Replaced by {@link #routePacket(JID, Packet)}
-     */
-    @Deprecated // Remove in or after Openfire 4.9.0.
-    default void routePacket(JID jid, Packet packet, boolean fromServer) throws PacketException {
-        routePacket(jid, packet);
-    }
-
-    /**
      * Returns true if a registered user or anonymous user with the specified full JID is
      * currently logged. When running inside of a cluster a true value will be returned
      * as long as the user is connected to any cluster node.

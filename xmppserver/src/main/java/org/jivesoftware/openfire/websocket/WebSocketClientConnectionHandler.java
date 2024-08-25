@@ -202,11 +202,6 @@ public class WebSocketClientConnectionHandler
         return wsSession != null && wsSession.isOpen();
     }
 
-    @Deprecated // Remove in Openfire 4.9 or later.
-    synchronized boolean isWebSocketSecure() {
-        return isWebSocketEncrypted();
-    }
-
     synchronized boolean isWebSocketEncrypted() {
         return wsSession != null && wsSession.isSecure();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2021-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -91,7 +91,7 @@ public class MUCRoleTest {
         assertEquals(input.getPresence().toXML(), ((MUCRole) result).getPresence().toXML());
         assertEquals(input.getReportedFmucAddress(), ((MUCRole) result).getReportedFmucAddress());
         assertEquals(input.getRole(), ((MUCRole) result).getRole());
-        assertEquals(input.getRoleAddress(), ((MUCRole) result).getRoleAddress());
+        assertEquals(input.getOccupantJID(), ((MUCRole) result).getOccupantJID());
         assertEquals(input.getUserAddress(), ((MUCRole) result).getUserAddress());
         assertEquals(input.isRemoteFmuc(), ((MUCRole) result).isRemoteFmuc());
         assertEquals(input.isVoiceOnly(), ((MUCRole) result).isVoiceOnly());

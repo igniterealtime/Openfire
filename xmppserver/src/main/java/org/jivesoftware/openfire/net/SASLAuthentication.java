@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,10 @@ import org.jivesoftware.openfire.sasl.JiveSharedSecretSaslServer;
 import org.jivesoftware.openfire.sasl.SaslFailureException;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.ConnectionType;
-import org.jivesoftware.util.*;
+import org.jivesoftware.util.CertificateManager;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.PropertyEventListener;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -415,7 +418,7 @@ public class SASLAuthentication {
                             throw new SaslFailureException( Failure.INCORRECT_ENCODING );
                         }
 
-                        decoded = StringUtils.decodeBase64( encoded );
+                        decoded = Base64.getDecoder().decode(encoded);
                     }
 
                     // Process client response.
@@ -510,7 +513,7 @@ public class SASLAuthentication {
     private static void sendElement(Session session, String element, byte[] data) {
         final Element reply = DocumentHelper.createElement(QName.get(element, "urn:ietf:params:xml:ns:xmpp-sasl"));
         if (data != null) {
-            String data_b64 = StringUtils.encodeBase64(data).trim();
+            String data_b64 = Base64.getEncoder().encodeToString(data).trim();
             if (data_b64.isEmpty()) {
                 data_b64 = "=";
             }

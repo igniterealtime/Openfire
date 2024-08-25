@@ -33,6 +33,7 @@ import javax.security.sasl.SaslException;
 import javax.xml.bind.DatatypeConverter;
 import java.nio.charset.StandardCharsets;
 import java.security.spec.KeySpec;
+import java.util.Base64;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -134,7 +135,7 @@ public class ScramSha1SaslServerTest
 
         final byte[] serverKey = new HmacUtils(HmacAlgorithms.HMAC_SHA_1, saltedPassword).hmac(hardCodedServerKey);
         final byte[] serverSignature = new HmacUtils(HmacAlgorithms.HMAC_SHA_1, serverKey).hmac(authMessage);
-        final String clientFinalMessage = clientFinalMessageBare + ",p=" + StringUtils.encodeBase64(clientProof);
+        final String clientFinalMessage = clientFinalMessageBare + ",p=" + Base64.getEncoder().encodeToString(clientProof);
 
         try {
             // Execute system under test: getting the final server message.

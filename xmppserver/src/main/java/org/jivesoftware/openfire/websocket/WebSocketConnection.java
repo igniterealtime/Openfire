@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Tom Evans, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2015 Tom Evans, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,12 +167,6 @@ public class WebSocketConnection extends VirtualConnection
     @Override
     public boolean validate() {
         return socket.isWebSocketOpen();
-    }
-
-    @Override
-    @Deprecated // Remove in Openfire 4.9 or later.
-    public boolean isSecure() {
-        return isEncrypted();
     }
 
     @Override

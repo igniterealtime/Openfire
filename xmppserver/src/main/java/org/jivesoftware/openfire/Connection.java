@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -239,22 +239,11 @@ public interface Connection extends Closeable {
     boolean isClosed();
 
     /**
-     * Returns true if this connection is secure.
-     *
-     * @return true if the connection is secure (e.g. TLS)
-     * @deprecated Renamed. Use {@link #isEncrypted()} instead.
-     */
-    @Deprecated // Remove in Openfire 4.9 or later.
-    boolean isSecure();
-
-    /**
      * Returns true if this connection is encrypted.
      *
      * @return true if the connection is encrypted (e.g. uses TLS)
      */
-    default boolean isEncrypted() {
-        return isSecure();
-    }
+    boolean isEncrypted();
 
     /**
      * Registers a listener for close event notification. Registrations after

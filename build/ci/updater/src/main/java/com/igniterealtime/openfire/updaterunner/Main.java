@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2021-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,8 @@ package com.igniterealtime.openfire.updaterunner;
 import org.jivesoftware.database.*;
 import org.jivesoftware.util.JiveGlobals;
 
-import java.io.File;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 
 public class Main {
@@ -41,11 +42,11 @@ public class Main {
         */
         
         try {
-            String parent = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getParent();
-            PropertiesReader reader = new PropertiesReader(parent + "/maven-archiver/pom.properties");
+            Path parent = Paths.get(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParent();
+            PropertiesReader reader = new PropertiesReader(parent.resolve("maven-archiver/pom.properties")); // TODO determine why we read properties but not use them. Is this an existence check only?
 
-            String distributionDir = new File(parent).toPath().resolve("../../../../distribution/target/distribution-base").toFile().getCanonicalPath();
-            JiveGlobals.setHomeDirectory(distributionDir);
+            Path distributionDir = parent.resolve("../../../../distribution/target/distribution-base");
+            JiveGlobals.setHomePath(distributionDir);
 
             JiveGlobals.setXMLProperty("connectionProvider.className", "org.jivesoftware.database.DefaultConnectionProvider");
             JiveGlobals.setXMLProperty("database.defaultProvider.driver", connectionDriver);

@@ -489,12 +489,6 @@ public abstract class LocalSession implements Session {
     }
 
     @Override
-    @Deprecated // Remove in Openfire 4.9 or later.
-    public boolean isSecure() {
-        return isEncrypted();
-    }
-
-    @Override
     public boolean isEncrypted() {
         return Optional.ofNullable(conn)
             .map(Connection::isEncrypted)
@@ -544,14 +538,6 @@ public abstract class LocalSession implements Session {
             ", isDetached=" + isDetached() +
             ", serverName='" + serverName + '\'' +
             '}';
-    }
-
-    /**
-     * @deprecated Replaced by {@link Session#decodeVersion(String)}
-     */
-    @Deprecated // Remove in or after Openfire 4.9.0
-    protected static int[] decodeVersion(String version) {
-        return Session.decodeVersion(version);
     }
 
     /**

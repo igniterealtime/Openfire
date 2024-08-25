@@ -24,7 +24,6 @@ import org.jivesoftware.openfire.vcard.DefaultVCardProvider;
 import org.jivesoftware.openfire.vcard.PhotoResizer;
 import org.jivesoftware.openfire.vcard.VCardManager;
 import org.jivesoftware.openfire.vcard.VCardProvider;
-import org.jivesoftware.util.Base64;
 import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,6 +32,7 @@ import org.xmpp.packet.JID;
 import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.ldap.Rdn;
+import java.util.Base64;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -200,7 +200,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
                     if(ob instanceof String) {
                         value = (String)ob;
                     } else {
-                        value = Base64.encodeBytes((byte[])ob);
+                        value = Base64.getEncoder().encodeToString((byte[])ob);
                     }
                 }
                 Log.debug("LdapVCardProvider: Ldap attribute '" + attribute + "'=>'" + value + "'");

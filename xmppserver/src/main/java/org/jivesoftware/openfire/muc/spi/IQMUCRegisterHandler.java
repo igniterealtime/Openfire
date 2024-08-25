@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,7 +176,7 @@ class IQMUCRegisterHandler {
 
                     if (ElementUtil.includesProperty(iq, "query.remove")) {
                         // The user is deleting his registration
-                        presences.addAll(room.addNone(packet.getFrom(), room.getRole()));
+                        presences.addAll(room.addNone(packet.getFrom(), room.getSelfRepresentation()));
                     }
                     else {
                         // The user is trying to register with a room
@@ -197,7 +197,7 @@ class IQMUCRegisterHandler {
                             // Add the new member to the members list
                             presences.addAll(room.addMember(packet.getFrom(),
                                     nickname,
-                                    room.getRole()));
+                                    room.getSelfRepresentation()));
                         }
                         else {
                             reply.setChildElement(packet.getChildElement().createCopy());
@@ -206,7 +206,7 @@ class IQMUCRegisterHandler {
                     }
                     // Send the updated presences to the room occupants
                     for (Presence presence : presences) {
-                        room.send(presence, room.getRole());
+                        room.send(presence, room.getSelfRepresentation());
                     }
 
                 }

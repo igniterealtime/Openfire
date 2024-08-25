@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import org.xmpp.packet.StreamError;
 
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -212,7 +213,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 if (SASLAuthentication.EXTERNAL_S2S_SKIP_SENDING_AUTHZID.getValue()) {
                     auth.addText("=");
                 } else {
-                    auth.addText(StringUtils.encodeBase64(domainPair.getLocal()));
+                    auth.addText(Base64.getEncoder().encodeToString(domainPair.getLocal().getBytes(StandardCharsets.UTF_8)));
                 }
                 connection.deliverRawText(auth.asXML());
                 startedSASL = true;

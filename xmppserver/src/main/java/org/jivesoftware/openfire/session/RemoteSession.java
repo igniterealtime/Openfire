@@ -151,11 +151,6 @@ public abstract class RemoteSession implements Session {
         return clusterTaskResult == null ? false : (Boolean) clusterTaskResult;
     }
 
-    @Deprecated // Remove in Openfire 4.9 or later.
-    public boolean isSecure() {
-        return isEncrypted();
-    }
-
     public boolean isEncrypted() {
         ClusterTask<Object> task = getRemoteSessionTask(RemoteSessionTask.Operation.isEncrypted);
         final Object clusterTaskResult = doSynchronousClusterTask(task);

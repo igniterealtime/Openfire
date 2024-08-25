@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
-import org.jivesoftware.util.Base64;
 
 import javax.net.ssl.*;
 import java.io.IOException;
@@ -38,6 +37,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.*;
 
@@ -603,7 +603,7 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
             final Document outbound = DocumentHelper.createDocument();
             final Element root = outbound.addElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"));
             root.addAttribute("mechanism", "EXTERNAL");
-            root.setText(Base64.encodeBytes(XMPP_DOMAIN.getBytes()));
+            root.setText(Base64.getEncoder().encodeToString(XMPP_DOMAIN.getBytes()));
             send(root.asXML());
         }
 

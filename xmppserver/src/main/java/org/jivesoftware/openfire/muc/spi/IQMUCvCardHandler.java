@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2020-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,10 @@ import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.openfire.vcard.VCardManager;
-import org.jivesoftware.util.*;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
@@ -36,6 +39,7 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 
+import java.util.Base64;
 import java.util.Iterator;
 import java.util.Locale;
 import java.util.concurrent.locks.Lock;
@@ -285,7 +289,7 @@ public class IQMUCvCardHandler extends IQHandler
             return "";
         }
 
-        final byte[] photo = Base64.decode(element.getTextTrim());
+        final byte[] photo = Base64.getDecoder().decode(element.getTextTrim());
         return StringUtils.hash(photo, "SHA-1");
     }
 

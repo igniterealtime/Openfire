@@ -365,7 +365,7 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
         // specified in Section 4 of RFC 4648 (note: the Base64 output
         // MUST NOT include whitespace and MUST set padding bits to zero).
         final String hashed = StringUtils.hash(s.toString(), algorithm);
-        return StringUtils.encodeBase64(StringUtils.decodeHex(hashed));
+        return Base64.getEncoder().encodeToString(StringUtils.decodeHex(hashed));
     }
 
     @Override

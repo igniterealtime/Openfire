@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,7 +139,7 @@ public class SessionPacketRouter implements PacketRouter {
     public static boolean isInvalidStanzaSentPriorToResourceBinding(final Packet stanza, final ClientSession session)
     {
         // Openfire sets 'authenticated' only after resource binding.
-        if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
+        if (session.getStatus() == Session.Status.AUTHENTICATED) {
             return false;
         }
 

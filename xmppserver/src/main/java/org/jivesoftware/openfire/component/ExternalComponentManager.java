@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,11 @@
 package org.jivesoftware.openfire.component;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.component.ExternalComponentConfiguration.Permission;
 import org.jivesoftware.openfire.session.ComponentSession;
 import org.jivesoftware.openfire.session.Session;
-import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.ModificationNotAllowedException;
 import org.slf4j.Logger;
@@ -66,64 +64,6 @@ public class ExternalComponentManager {
      */
     private static List<ExternalComponentManagerListener> listeners =
             new CopyOnWriteArrayList<>();
-
-    /**
-     * @param enabled enables or disables the service
-     * @deprecated Obtain and use the corresponding {@link org.jivesoftware.openfire.spi.ConnectionListener} instead.
-     * @throws ModificationNotAllowedException if the status of the service cannot be changed
-     */
-    @Deprecated
-    public static void setServiceEnabled(boolean enabled) throws ModificationNotAllowedException {
-        // Alert listeners about this event
-        for (ExternalComponentManagerListener listener : listeners) {
-            try {
-                listener.serviceEnabled(enabled);
-            } catch (Exception e) {
-                Log.warn("An exception occurred while dispatching a 'serviceEnabled' event!", e);
-            }
-        }
-        ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
-        connectionManager.enable(ConnectionType.COMPONENT, false, enabled);
-    }
-
-    /**
-     * @deprecated Obtain and use the corresponding {@link org.jivesoftware.openfire.spi.ConnectionListener} instead.
-     * @return {@code true} if the service is enabled, otherwise {@code false}
-     */
-    @Deprecated
-    public static boolean isServiceEnabled() {
-        ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
-        return connectionManager.isEnabled(ConnectionType.COMPONENT, false);
-    }
-
-    /**
-     * @param port The port to use
-     * @deprecated Obtain and use the corresponding {@link org.jivesoftware.openfire.spi.ConnectionListener} instead.
-     * @throws ModificationNotAllowedException if the server cannot be modified
-     */
-    @Deprecated
-    public static void setServicePort(int port) throws ModificationNotAllowedException {
-        // Alert listeners about this event
-        for (ExternalComponentManagerListener listener : listeners) {
-            try {
-                listener.portChanged(port);  
-            } catch (Exception e) {
-                Log.warn("An exception occurred while dispatching a 'portChanged' event!", e);
-            }
-        }
-        ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
-        connectionManager.setPort(ConnectionType.COMPONENT, false, port);
-    }
-
-    /**
-     * @deprecated Obtain and use the corresponding {@link org.jivesoftware.openfire.spi.ConnectionListener} instead.
-     * @return the port number
-     */
-    @Deprecated
-    public static int getServicePort() {
-        ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
-        return connectionManager.getPort(ConnectionType.COMPONENT, false);
-    }
 
     /**
      * Allows an external component to connect to the local server with the specified configuration.

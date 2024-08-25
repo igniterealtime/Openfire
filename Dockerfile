@@ -14,12 +14,10 @@ WORKDIR /tmp/
 RUN mkdir /tmp/m2_home
 ENV M2_HOME=/tmp/m2_home
 WORKDIR /usr/src
-COPY mvnw .
+COPY mvnw ./
 RUN chmod +x mvnw
-RUN /bin/sh -c 'echo Yes'
-RUN ls -l ./mvnw
-RUN ls -l /bin/sh
-RUN /bin/bash -x /usr/src/mvnw
+RUN mkdir -p .mvn
+COPY .mvn/wrapper .mvn/wrapper
 
 # First, copy in just the pom.xml files and fetch the dependencies:
 COPY --from=poms /usr/src/ .

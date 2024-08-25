@@ -24,3 +24,7 @@ documentation
 **/.settings
 **/*.iml
 **/*.class
+
+# Make sure mvn stuff is present though.
+!.mvn/wrapper
+!.mvn/wrapper/maven-wrapper.properties

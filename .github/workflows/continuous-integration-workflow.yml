@@ -143,10 +143,10 @@ jobs:
       - name: check branch ${{ github.ref }} is either main or a version number
         id: check-branch
         run: |
-          if [[ ${{ github.ref }} == 'refs/heads/main'; then
+          if [[ ${{ github.ref }} == 'refs/heads/main' ]]; then
             echo "is_publishable_branch=true" >> $GITHUB_OUTPUT
             echo "branch_tag=latest" >> $GITHUB_OUTPUT
-          elif ${{ github.ref }} =~ refs\/heads\/[0-9]+\.[0-9]+ ]]; then            
+          elif [[ ]${{ github.ref }} =~ refs\/heads\/[0-9]+\.[0-9]+ ]]; then            
             echo "is_publishable_branch=true" >> $GITHUB_OUTPUT
             echo -n "branch_tag=" >> $GITHUT_OUTPUT
             sed -e '!refs/heads/!!' >> $GITHUB_OUTPUT

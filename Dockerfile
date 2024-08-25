@@ -7,27 +7,33 @@ COPY . .
 RUN find . -type f -and \! -name pom.xml -and \! -name '*.jar' -delete
 # Clear up any (now) empty diretories
 RUN find . -type d -empty -delete
-# Just for debug:
-RUN find
 
 # Now we build:
 FROM openjdk:11-jdk AS build
-# Set up Maven. No need to clean caches, this doesn't end up in the runtime container
-RUN apt-get update -qq
-RUN apt-get install -qqy maven
 WORKDIR /tmp/
 RUN mkdir /tmp/m2_home
 ENV M2_HOME=/tmp/m2_home
 WORKDIR /usr/src
+COPY mvnw .
+RUN chmod +x mvnw
+RUN /bin/sh -c 'echo Yes'
+RUN ls -l ./mvnw
+RUN ls -l /bin/sh
+RUN /bin/bash -x /usr/src/mvnw
 
 # First, copy in just the pom.xml files and fetch the dependencies:
 COPY --from=poms /usr/src/ .
-RUN mvn -e -B dependency:go-offline
+RUN ./mvnw -e -B help:evaluate -Dexpression=project.modules -Doutput=/tmp/projects.xml
+RUN cat /tmp/projects.xml| grep '<string>' | sed -e 's/^.*string>\(.*\)<\/string.*$/\1/g' >/tmp/projects.txt
+RUN ./mvnw -pl plugins -e -B help:evaluate -Dexpression=project.modules -Doutput=/tmp/projects.xml
+RUN cat /tmp/projects.xml| grep '<string>' | sed -e 's/^.*string>\(.*\)<\/string.*$/plugins\/\1/g' >>/tmp/projects.txt
+RUN for project in $(cat /tmp/projects.txt); do ./mvnw -pl $project  -e -B dependency:go-offline; done
+RUN ./mvnw -e -B dependency:go-offline
 # Above here is only affected by the pom.xml files, so the cache is stable.
 
 # Now, copy in all the source, and actually build it, skipping the tests.
 COPY . .
-RUN mvn -e -B package -Dmaven.test.skip
+RUN ./mvnw -e -B package -Dmaven.test.skip
 
 # Final stage, build the runtime container:
 FROM eclipse-temurin:17

@@ -175,7 +175,7 @@
                     <input type="radio" name="localeCode" value="fr" <%= ("fr".equals(locale.toString()) ? "checked" : "") %> id="fr" />
                 </td>
                 <td colspan="2">
-                    <label for="loc05">Fran&ccedil;ais (fr)</label>
+                    <label for="fr">Fran&ccedil;ais (fr)</label>
                 </td>
             </tr>
             <tr>
@@ -265,11 +265,8 @@
                 <td>
                     <input type="radio" name="localeCode" value="fa_IR" <%= ("fa_IR".equals(locale.toString()) ? "checked" : "") %> id="fa_IR" />
                 </td>
-                <td>
-                    <a href="#" onclick="document.sform.localeCode[1].checked=true; return false;"></a>
-                </td>
-                <td>
-                    <label for="fa_IR">Persian (fa_IR)</label>
+                <td colspan="2">
+                    <label for="fa_IR">(fa_IR) فارسی</label>
                 </td>
             </tr>
         </tbody>

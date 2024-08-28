@@ -352,10 +352,10 @@ public class LocaleUtils {
      * @return true if the current locale uses right-to-left orientation.
      */
     public static boolean isLocalizedTextRTL() {
-    // This is obviously not something that's re-usable outside of Openfire. However, this includes all languages
-    // for which we provide translations.
-    String language = JiveGlobals.getLocale().getLanguage();
-    return "he".equals(language) || "fa".equals(language);
+        // This is obviously not something that's re-usable outside of Openfire. However, this includes all languages
+        // for which we provide translations.
+        String language = JiveGlobals.getLocale().getLanguage();
+        return language.equals(new Locale("he").getLanguage()) || language.equals(new Locale("fa").getLanguage());
     }
 
 

@@ -261,6 +261,17 @@
                     <label for="zh_CN">Simplified Chinese (zh_CN)</label>
                 </td>
             </tr>
+             <tr>
+                <td>
+                    <input type="radio" name="localeCode" value="fa_IR" <%= ("fa_IR".equals(locale.toString()) ? "checked" : "") %> id="fa_IR" />
+                </td>
+                <td>
+                    <a href="#" onclick="document.sform.localeCode[1].checked=true; return false;"><img src="images/language_fa_IR.gif" alt="" /></a>
+                </td>
+                <td>
+                    <label for="fa_IR">Persian (fa_IR)</label>
+                </td>
+            </tr>
         </tbody>
         </table>
 

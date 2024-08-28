@@ -266,7 +266,7 @@
                     <input type="radio" name="localeCode" value="fa" <%= ("fa".equals(locale.toString()) ? "checked" : "") %> id="fa" />
                 </td>
                 <td>
-                    <a href="#" onclick="document.sform.localeCode[1].checked=true; return false;"><img src="images/language_fa.gif" alt="" /></a>
+                    <a href="#" onclick="document.sform.localeCode[1].checked=true; return false;"></a>
                 </td>
                 <td>
                     <label for="fa">Persian (fa_IR)</label>

@@ -175,7 +175,7 @@
                     <input type="radio" name="localeCode" value="fr" <%= ("fr".equals(locale.toString()) ? "checked" : "") %> id="fr" />
                 </td>
                 <td colspan="2">
-                    <label for="loc05">Fran&ccedil;ais (fr)</label>
+                    <label for="fr">Fran&ccedil;ais (fr)</label>
                 </td>
             </tr>
             <tr>
@@ -259,6 +259,14 @@
                 </td>
                 <td>
                     <label for="zh_CN">Simplified Chinese (zh_CN)</label>
+                </td>
+            </tr>
+             <tr>
+                <td>
+                    <input type="radio" name="localeCode" value="fa_IR" <%= ("fa_IR".equals(locale.toString()) ? "checked" : "") %> id="fa_IR" />
+                </td>
+                <td colspan="2">
+                    <label for="fa_IR">(fa_IR) فارسی</label>
                 </td>
             </tr>
         </tbody>

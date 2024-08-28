@@ -299,7 +299,7 @@
 
                             <label for="he">
                                 <input type="radio" name="localeCode" value="he" ${locale eq 'he' ? 'checked' : ''} id="he" />
-                                <b>עברית</b> (he)
+                                (he) <b>עברית</b>
                             </label><br>
 
                             <label for="ja_JP">
@@ -346,6 +346,11 @@
                                 <input type="radio" name="localeCode" value="zh_CN" ${locale eq 'zh_CN' ? 'checked' : ''} id="zh_CN" />
                                 <img src="../images/setup_language_zh_CN.gif" align="top" />
                                 <b>Simplified Chinese</b> (zh_CN)
+                            </label><br>
+
+                            <label for="fa_IR">
+                                <input type="radio" name="localeCode" value="fa_IR" ${locale eq 'fa_IR' ? 'checked' : ''} id="fa_IR" />
+                                (fa_IR) <b>فارسی</b>
                             </label><br>
                         </p>
                     </div>

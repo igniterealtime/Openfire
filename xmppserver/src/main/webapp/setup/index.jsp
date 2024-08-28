@@ -16,12 +16,13 @@
 --%>
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
-<%@ page import="java.io.File,
-                 java.lang.reflect.Method" %>
+<%@ page import="java.lang.reflect.Method" %>
 <%@ page import="java.util.HashMap"%>
 <%@ page import="java.util.Locale"%>
 <%@ page import="java.util.Map"%>
 <%@ page import="org.jivesoftware.util.*" %>
+<%@ page import="java.nio.file.Path" %>
+<%@ page import="java.nio.file.Files" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -40,7 +41,7 @@
     boolean jsp11Installed = false;
     boolean jiveJarsInstalled = false;
     boolean openfireHomeExists = false;
-    File openfireHome = null;
+    Path openfireHome = null;
 
     // Check for JRE 1.8
     try {
@@ -71,13 +72,10 @@
     // Try to determine what the jiveHome directory is:
     try {
         Class jiveGlobalsClass = ClassUtils.forName("org.jivesoftware.util.JiveGlobals");
-        Method getOpenfireHomeMethod = jiveGlobalsClass.getMethod("getHomeDirectory", (Class[])null);
-        String openfireHomeProp = (String)getOpenfireHomeMethod.invoke(jiveGlobalsClass, (Object[])null);
-        if (openfireHomeProp != null) {
-            openfireHome = new File(openfireHomeProp);
-            if (openfireHome.exists()) {
-                openfireHomeExists = true;
-            }
+        Method getOpenfireHomeMethod = jiveGlobalsClass.getMethod("getHomePath", (Class[])null);
+        openfireHome = (Path)getOpenfireHomeMethod.invoke(jiveGlobalsClass, (Object[])null);
+        if (openfireHome != null) {
+            openfireHomeExists = Files.exists(openfireHome);
         }
     }
     catch (Exception e) {

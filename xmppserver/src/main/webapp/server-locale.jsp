@@ -263,13 +263,13 @@
             </tr>
              <tr>
                 <td>
-                    <input type="radio" name="localeCode" value="fa_IR" <%= ("fa_IR".equals(locale.toString()) ? "checked" : "") %> id="fa_IR" />
+                    <input type="radio" name="localeCode" value="fa" <%= ("fa".equals(locale.toString()) ? "checked" : "") %> id="fa" />
                 </td>
                 <td>
-                    <a href="#" onclick="document.sform.localeCode[1].checked=true; return false;"><img src="images/language_fa_IR.gif" alt="" /></a>
+                    <a href="#" onclick="document.sform.localeCode[1].checked=true; return false;"><img src="images/language_fa.gif" alt="" /></a>
                 </td>
                 <td>
-                    <label for="fa_IR">Persian (fa_IR)</label>
+                    <label for="fa">Persian (fa_IR)</label>
                 </td>
             </tr>
         </tbody>

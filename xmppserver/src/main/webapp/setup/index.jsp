@@ -347,6 +347,11 @@
                                 <img src="../images/setup_language_zh_CN.gif" align="top" />
                                 <b>Simplified Chinese</b> (zh_CN)
                             </label><br>
+
+                            <label for="fa">
+                                <input type="radio" name="localeCode" value="fa" ${locale eq 'fs' ? 'checked' : ''} id="fa" />
+                                <b>Persian</b> (de)
+                            </label><br>
                         </p>
                     </div>
 

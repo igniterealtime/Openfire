@@ -349,8 +349,8 @@
                             </label><br>
 
                             <label for="fa">
-                                <input type="radio" name="localeCode" value="fa" ${locale eq 'fs' ? 'checked' : ''} id="fa" />
-                                <b>Persian</b> (de)
+                                <input type="radio" name="localeCode" value="fa" ${locale eq 'fa' ? 'checked' : ''} id="fa" />
+                                <b>Persian</b> (fa)
                             </label><br>
                         </p>
                     </div>

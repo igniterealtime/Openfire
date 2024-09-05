@@ -1310,6 +1310,19 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * @param reason an optional reason why the room was destroyed (can be {@code null}).
      */
     public void destroyRoom(JID alternateJID, String reason) {
+        destroyRoom(alternateJID,  null, reason);
+    }
+
+    /**
+     * Destroys the room. Each occupant will be removed and will receive a presence stanza of type
+     * "unavailable" whose "from" attribute will be the occupant's nickname that the user knows he
+     * or she has been removed from the room.
+     *
+     * @param alternateJID an optional alternate JID. Commonly used to provide a replacement room. (can be {@code null})
+     * @param password an optional password to be used for accessing the replacement room (can be {@code null}).
+     * @param reason an optional reason why the room was destroyed (can be {@code null}).
+     */
+    public void destroyRoom(JID alternateJID, String password, String reason) {
         Collection<MUCOccupant> removedOccupants = new CopyOnWriteArrayList<>();
 
         fmucHandler.stop();
@@ -1343,6 +1356,9 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
                 final Element destroy = fragment.addElement("destroy");
                 if (alternateJID != null) {
                     destroy.addAttribute("jid", alternateJID.toString());
+                }
+                if (password != null) {
+                    destroy.addElement("password").setText(password);
                 }
                 if (reason != null && !reason.isBlank()) {
                     destroy.addElement("reason").setText(reason.trim());

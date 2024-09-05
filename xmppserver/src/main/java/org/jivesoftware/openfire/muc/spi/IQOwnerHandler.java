@@ -114,7 +114,8 @@ public class IQOwnerHandler {
                 if (jid != null) {
                     alternateJID = new JID(jid);
                 }
-                room.destroyRoom(alternateJID, destroyElement.elementTextTrim("reason"));
+                final String password = destroyElement.elementTextTrim("password");
+                room.destroyRoom(alternateJID, password, destroyElement.elementTextTrim("reason"));
             }
             else {
                 // If no element was included in the query element then answer the

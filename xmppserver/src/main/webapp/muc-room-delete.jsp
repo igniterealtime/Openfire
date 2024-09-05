@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@
         alternateJID = null;
     }
     String reason = ParamUtils.getParameter(request,"reason");
+    String password = ParamUtils.getParameter(request,"password");
     String roomName = roomJID.getNode();
 
     // Handle a cancel
@@ -77,7 +78,7 @@
         // Delete the room
         if (room != null) {
             // If the room still exists then destroy it
-            room.destroyRoom(alternateJID, reason);
+            room.destroyRoom(alternateJID, password, reason);
             webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).syncChatRoom(room);
 
             // Log the event
@@ -135,6 +136,14 @@
             </td>
             <td>
                 <input type="text" size="30" maxlength="350" id="alternateJID" name="alternateJID">
+            </td>
+        </tr>
+        <tr>
+            <td class="c1">
+                <label for="password"><fmt:message key="muc.room.delete.alternate_address_password" /></label>
+            </td>
+            <td>
+                <input type="text" size="30" maxlength="350" id="password" name="password">
             </td>
         </tr>
     </tbody>

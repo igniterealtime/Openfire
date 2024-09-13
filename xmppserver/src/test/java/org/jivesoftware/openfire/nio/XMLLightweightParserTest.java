@@ -341,4 +341,27 @@ public class XMLLightweightParserTest {
         assertEquals('\u308C', result[1]);
         assertEquals(6, in.readerIndex());
     }
+
+    /**
+     * Verifies that {@link XMLLightweightParser#decode(ByteBuf)} updates the reader index of the provided buffer,
+     * specifically when the provided byte buffer has a reader index that's higher than 0.
+     *
+     * <a href="https://igniterealtime.atlassian.net/browse/OF-2872">Issue OF-2872</a>
+     */
+    @Test
+    public void testReaderWriterIndices() throws Exception
+    {
+        // Setup test fixture
+        final XMLLightweightParser parser = new XMLLightweightParser();
+        final ByteBuf in = ByteBufAllocator.DEFAULT.buffer(10);
+        in.writeBytes("foo".getBytes(StandardCharsets.UTF_8));
+        in.readerIndex(3); // fake a read of the first three characters.
+
+        // Execute system under test.
+        in.writeBytes("bar".getBytes(StandardCharsets.UTF_8));
+        parser.decode(in);
+
+        // Verify result.
+        assertEquals(6, in.readerIndex());
+    }
 }

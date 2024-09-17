@@ -18,4 +18,5 @@ Description: High performance XMPP (Jabber) server.
  administration console, and a full plugin system. The server
  is 100% Java.
  .
- Openfire is a professional Open Source project, led by the Ignite Realtime Foundation.
+ Openfire is a professional Open Source project, led by
+ the Ignite Realtime Foundation.

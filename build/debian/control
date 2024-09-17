@@ -7,8 +7,6 @@ Standards-Version: 3.7.2
 Homepage: http://www.igniterealtime.org
 
 Package: openfire
-Section: net
-Priority: optional
 Pre-Depends: default-jre-headless (>= 11) | java-runtime (>= 11)
 Architecture: all
 Description: A high performance XMPP (Jabber) server.
@@ -18,5 +16,3 @@ Description: A high performance XMPP (Jabber) server.
  is 100% Java.
  .
  Openfire is a professional Open Source project, led by the Ignite Realtime Foundation.
-Homepage: http://www.igniterealtime.org
- 

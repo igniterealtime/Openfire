@@ -4,7 +4,10 @@ Priority: optional
 Maintainer: Ignite Realtime Community <admin@igniterealtime.org>
 Build-Depends: debhelper (>= 5), cdbs, patchutils, default-jdk (>= 11)
 Standards-Version: 3.7.2
-Homepage: http://www.igniterealtime.org
+Homepage: https://www.igniterealtime.org
+Vcs-Git: https://github.com/igniterealtime/Openfire.git
+Vcs-Browser: https://github.com/igniterealtime/Openfire
+Bugs: https://igniterealtime.atlassian.net/browse/OF
 
 Package: openfire
 Pre-Depends: default-jre-headless (>= 11) | java-runtime (>= 11)

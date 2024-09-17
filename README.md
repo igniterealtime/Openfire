@@ -4,9 +4,11 @@ Openfire ![alt tag](https://raw.githubusercontent.com/igniterealtime/IgniteRealt
 
 About
 -----
-[Openfire] is a real time collaboration (RTC) server licensed under the Open Source Apache License. It uses the only widely adopted open protocol for instant messaging, XMPP (also called Jabber). Openfire is incredibly easy to setup and administer, but offers rock-solid security and performance.
+[Openfire] is a real time collaboration (RTC) server licensed under the Open Source Apache License.
+It uses the only widely adopted open protocol for instant messaging, XMPP (also called Jabber).
+Openfire is incredibly easy to set up and administer, but offers rock-solid security and performance.
 
-[Openfire] is a XMPP server licensed under the Open Source Apache License.
+[Openfire] is an XMPP server licensed under the Open Source Apache License.
 
 [Openfire] - an [Ignite Realtime] community project.
 
@@ -26,10 +28,11 @@ Please search for your issues in the bug tracker before reporting.
 Resources
 ---------
 
-- Documentation: http://www.igniterealtime.org/projects/openfire/documentation.jsp
+- Documentation: https://www.igniterealtime.org/projects/openfire/documentation.jsp
 - Community: https://discourse.igniterealtime.org/c/openfire
 - Bug Tracker: https://igniterealtime.atlassian.net/browse/OF
-- Nightly Builds: http://www.igniterealtime.org/downloads/nightly_openfire.jsp
+- Nightly Builds: https://www.igniterealtime.org/downloads/nightly_openfire.jsp
+- Translations: https://explore.transifex.com/search/?q=openfire
 
 Ignite Realtime
 ===============
@@ -39,9 +42,9 @@ are interested in applying innovative, open-standards-based Real Time Collaborat
 We're aimed at disrupting proprietary, non-open standards-based systems and invite you to participate in what's already one 
 of the biggest and most active Open Source communities.
 
-[Openfire]: http://www.igniterealtime.org/projects/openfire/index.jsp
-[Ignite Realtime]: http://www.igniterealtime.org
-[XMPP (Jabber)]: http://xmpp.org/
+[Openfire]: https://www.igniterealtime.org/projects/openfire/
+[Ignite Realtime]: https://www.igniterealtime.org
+[XMPP (Jabber)]: https://xmpp.org/
 
 Making changes
 ==============
@@ -78,7 +81,7 @@ Testing your changes
 2. fill in following values
     1. Name: Openfire
     2. Use classpath of module: starter
-    3. Main class: org.jivesoftware.openfire.starter.ServerStarter
+    3. Main class: `org.jivesoftware.openfire.starter.ServerStarter`
     4. VM options (adapt accordingly):
         ````
         -DopenfireHome="-absolute path to your project folder-\distribution\target\distribution-base" 

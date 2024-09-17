@@ -160,6 +160,118 @@ hr {
     
     <div id="pageBody">
 
+<h2>4.9.0 -- <span style="font-weight: normal;">September 17, 2024</span></h2>
+<h2>Improvement</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2854">OF-2854</a>] - Do not build a distribution.jar</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2855">OF-2855</a>] - Avoid non-cross platform filesystem references in Maven assembly</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2856">OF-2856</a>] - Do not attempt to attach basic-distribution directory as a Maven artifact</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2857">OF-2857</a>] - Replace bundled install4j runtime with a Maven dependency</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2864">OF-2864</a>] - Deprecate custom Base64 class</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2869">OF-2869</a>] - Add support for Persian/Farsi</li>
+</ul>
+
+<h2>Task</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2867">OF-2867</a>] - Remove code marked for deprecation in 4.9.0 or later</li>
+</ul>
+
+<h2>Sub-task</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2860">OF-2860</a>] - Rename MUCRole, non-breaking changes</li>
+</ul>
+
+<h2>Bug</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2830">OF-2830</a>] - Plugin servlet mapping not precise</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2848">OF-2848</a>] - Presence sent after room destruction sometimes doesn't include required element</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2853">OF-2853</a>] - Admin console cluster overview bars are wrong</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2872">OF-2872</a>] - Unexpected disconnects (possibly involving cyrillic character usage)</li>
+</ul>
+
+
+
+<h2>4.8.3 -- <span style="font-weight: normal;">July 11, 2024</span></h2>
+<h2>Improvement</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2846">OF-2846</a>] - Update zh\_CN translation</li>
+</ul>
+
+<h2>Bug</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2843">OF-2843</a>] - When admin attempts to ban owner, incorrect error condition is returned</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2844">OF-2844</a>] - Admins and owners must not be able to ban themselves</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2845">OF-2845</a>] - Failing close listener can severely delay closure of connection</li>
+</ul>
+
+<h2>4.8.2 -- <span style="font-weight: normal;">July 3, 2024</span></h2>
+<h2>Improvement</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2818">OF-2818</a>] - Websocket buffers should not be 5MB</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2825">OF-2825</a>] - Implement XEP-0030's security considerations</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2827">OF-2827</a>] - Make handling of 'username' consistent between JdbcAuth- and JdbcUserProvider</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2834">OF-2834</a>] - Update Bouncy Castle to 1.78.1</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2835">OF-2835</a>] - Advertise XEP-0115 support</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2840">OF-2840</a>] - XMPPDateTimeFormat parsing improvements</li>
+</ul>
+
+<h2>Task</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2819">OF-2819</a>] - Update Netty to 4.1.108</li>
+</ul>
+
+<h2>Bug</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2824">OF-2824</a>] - RoutingTable cache inconsistency</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2832">OF-2832</a>] - Cannot set MUC avatar with LdapVCardProvider</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2833">OF-2833</a>] - Cannot serialize User instances</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2836">OF-2836</a>] - CapsManager ignores provided hash identifier</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2838">OF-2838</a>] - MUST return error when user updates someone else's vcard</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2839">OF-2839</a>] - MUST return error when requesting VCard from someone that doesn't have one</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2841">OF-2841</a>] - Capabilities offered by stream feature doesn't include features for registered users</li>
+</ul>
+
+
+<h2>4.8.1 -- <span style="font-weight: normal;">March 2, 2024</span></h2>
+
+<h2>Improvement</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2651">OF-2651</a>] - Give explict names to Netty's threads</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2788">OF-2788</a>] - Have distinct thread pools for each type of connection</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2791">OF-2791</a>] - Announce support for PubSub delete-item</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2798">OF-2798</a>] - Admin Console should warn end-user if plugin installation failed</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2800">OF-2800</a>] - Guard against a surplus of database connection errors being logged</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2802">OF-2802</a>] - Upgrade postgresql database driver for CVE-2024-1597</li>
+</ul>
+
+<h2>New Feature</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-284">OF-284</a>] - Add service administration support</li>
+</ul>
+
+<h2>Bug</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2166">OF-2166</a>] - When deleting a user, remove it from transient MUC rooms</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2310">OF-2310</a>] - Cache data inconsistency: MUC</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2758">OF-2758</a>] - Deleting an admin user does not remove the name from \`admin.authorizedJIDs\`</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2768">OF-2768</a>] - Do not use default value for user's creation / last modified date</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2774">OF-2774</a>] - 4.8.0 not counting "whitespace ping" as session activity</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2775">OF-2775</a>] - RSS News Feed appears empty</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2777">OF-2777</a>] - Misbehaving Shared-With-Group option for Contact List sharing</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2778">OF-2778</a>] - Duplicate \(group\)chat messages are received</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2781">OF-2781</a>] - SerializableCache appears to be unusable \(ClassCastException on creation\)</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2782">OF-2782</a>] - SerializableCache instances do not get recreated on cluster switch</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2792">OF-2792</a>] - Cache-summary page shows wrong stats when using Clustering</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2795">OF-2795</a>] - Delete MUC-based authorization when deleting user</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2799">OF-2799</a>] - OccupantManager doesn't remove all items when clustering</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2805">OF-2805</a>] - Session details shows 'resource' column, but does not show resources</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2806">OF-2806</a>] - Routing Servers cache inconsistency doesn't list the missing items</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2807">OF-2807</a>] - Contact List \(Roster\) Sharing changes are not immediately applied</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2808">OF-2808</a>] - Stream Management Resume fails</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2809">OF-2809</a>] - Disabling client idle time breaks websockets</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2810">OF-2810</a>] - Resumed stream is no longer resumable</li>
+</ul>
+
 <h2>4.8.0 -- <span style="font-weight: normal;">Jan 12, 2024</span></h2>
 
 <h2>Improvement</h2>

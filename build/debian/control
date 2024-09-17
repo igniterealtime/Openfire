@@ -10,7 +10,7 @@ Vcs-Browser: https://github.com/igniterealtime/Openfire
 Bugs: https://igniterealtime.atlassian.net/browse/OF
 
 Package: openfire
-Pre-Depends: default-jre-headless (>= 11) | java-runtime (>= 11)
+Depends: default-jre-headless (>= 11) | java-runtime (>= 11)
 Architecture: all
 Description: A high performance XMPP (Jabber) server.
  Openfire is an instant messaging server that implements the XMPP

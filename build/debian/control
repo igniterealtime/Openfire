@@ -12,7 +12,7 @@ Bugs: https://igniterealtime.atlassian.net/browse/OF
 Package: openfire
 Depends: default-jre-headless (>= 11) | java-runtime (>= 11)
 Architecture: all
-Description: A high performance XMPP (Jabber) server.
+Description: High performance XMPP (Jabber) server.
  Openfire is an instant messaging server that implements the XMPP
  (Jabber) protocol. It features high performance, a robust
  administration console, and a full plugin system. The server

@@ -10,6 +10,7 @@ Vcs-Browser: https://github.com/igniterealtime/Openfire
 Bugs: https://igniterealtime.atlassian.net/browse/OF
 
 Package: openfire
+Pre-Depends: adduser
 Depends: default-jre-headless (>= 11) | java-runtime (>= 11)
 Architecture: all
 Description: High performance XMPP (Jabber) server.

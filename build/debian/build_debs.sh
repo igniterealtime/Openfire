@@ -13,10 +13,8 @@ export OPENFIRE_VERSION=$(echo "${OPENFIRE_FULLVERSION}" | cut -d'-' -f1)
 export DEBIAN_BUILDDATE="$(date +'%a, %d %b %Y %H:%M:%S %z')"
 export WORKDIR=tmp/debian/openfire-${OPENFIRE_VERSION}
 
-if [ -d "tmp/debian" ]; then
-    echo "Removing previous workdir tmp/debian"
-    rm -rf tmp/debian
-fi
+echo "Removing previous workdir /tmp/debian/"
+rm -rf /tmp/debian/
 mkdir -p $WORKDIR
 
 cp -r distribution/target/distribution-base/. $WORKDIR/

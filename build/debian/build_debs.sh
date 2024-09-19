@@ -5,13 +5,13 @@
 pushd .
 # This allows us to pass in the Openfire version from the command-line.
 if [ $1 ]; then
-    export OPENFIRE_FULLVERSION=$1
+    OPENFIRE_FULLVERSION=$1
 else
-    export OPENFIRE_FULLVERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+    OPENFIRE_FULLVERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
 fi
-export OPENFIRE_VERSION=$(echo "${OPENFIRE_FULLVERSION}" | cut -d'-' -f1)
-export DEBIAN_BUILDDATE="$(date +'%a, %d %b %Y %H:%M:%S %z')"
-export WORKDIR=tmp/debian/openfire-${OPENFIRE_VERSION}
+OPENFIRE_VERSION=$(echo "${OPENFIRE_FULLVERSION}" | cut -d'-' -f1)
+DEBIAN_BUILDDATE="$(date +'%a, %d %b %Y %H:%M:%S %z')"
+WORKDIR=tmp/debian/openfire-${OPENFIRE_VERSION}
 
 if [ -d "tmp/debian" ]; then
     echo "Removing previous workdir tmp/debian"

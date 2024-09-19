@@ -26,9 +26,6 @@ cp build/debian/* $WORKDIR/debian/
 # HACK remove out this actual script
 rm -f $WORKDIR/debian/build_debs.sh
 
-# make rules executable
-chmod 755 $WORKDIR/debian/rules
-
 cd $WORKDIR/debian
 # Do some needed replacements
 sed -i.bak s/@version@/${OPENFIRE_VERSION}/g changelog

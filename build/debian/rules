@@ -1,15 +1,5 @@
 #!/usr/bin/make -f
 #export DH_VERBOSE=1
-DESTDIR := $(CURDIR)/debian/openfire
 
 %:
 	dh $@
-
-override_dh_install:
-	cp ./lib/*.jar $(DESTDIR)/usr/share/openfire/lib/
-	cp ./lib/log4j2.xml $(DESTDIR)/etc/openfire
-	cp -r ./resources/database $(DESTDIR)/usr/share/openfire/resources/database
-	cp ./conf/openfire.xml $(DESTDIR)/etc/openfire
-	cp ./conf/security.xml $(DESTDIR)/etc/openfire
-	cp -r ./resources/security $(DESTDIR)/etc/openfire/security
-	cp -r ./plugins $(DESTDIR)/var/lib/openfire/plugins

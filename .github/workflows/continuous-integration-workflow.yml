@@ -520,5 +520,7 @@ jobs:
         with:
           name: distribution-java11
           path: distribution/target/distribution-base
+      - name: Install build deps
+        run: sudo apt-get install -y debhelper-compat=13 default-jdk>=11
       - name: Run build script
         run: bash build/debian/build_debs.sh

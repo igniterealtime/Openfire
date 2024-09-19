@@ -22,7 +22,7 @@ mkdir -p $WORKDIR
 cp -r distribution/target/distribution-base/. $WORKDIR/
 
 mkdir -p $WORKDIR/debian
-cp build/debian/* $WORKDIR/debian/
+cp -r build/debian/* $WORKDIR/debian/
 # HACK remove out this actual script
 rm -f $WORKDIR/debian/build_debs.sh
 

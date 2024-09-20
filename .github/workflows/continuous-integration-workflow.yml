@@ -504,3 +504,25 @@ jobs:
           done
           echo "Openfire Admin is reachable."
           docker logs openfire
+
+  build-deb-artifact:
+    name: Generate DEB artifact
+    runs-on: ubuntu-latest
+    needs: [build]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Defend against another commit quickly following the first
+          # We want the one that's been tested, rather than the head of main
+          ref: ${{ github.event.push.after }}
+      - name: Download distribution artifact from build job.
+        uses: actions/download-artifact@v4
+        with:
+          name: distribution-java11
+          path: .
+      - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
+        run: tar -xf distribution-artifact.tar
+      - name: Install build deps
+        run: sudo apt-get install -y debhelper-compat=13 default-jdk>=11
+      - name: Run build script
+        run: bash build/debian/build_debs.sh

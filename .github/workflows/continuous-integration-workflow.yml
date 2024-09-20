@@ -519,14 +519,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: distribution-java11
-          path: distribution/target/dist
-      - name: untar distribution
-        run: |
-          ls -l distribution/target/
-          ls -l distribution/target/dist/
-          tar -xf distribution/target/dist/distribution-artifact.tar
-          mv distribution/target/dist/distribution-artifact distribution/target/distribution-base
-          ls -l distribution/target/distribution-base
+          path: .
+      - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
+        run: tar -xf distribution-artifact.tar
       - name: Install build deps
         run: sudo apt-get install -y debhelper-compat=13 default-jdk>=11
       - name: Run build script

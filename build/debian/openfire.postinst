@@ -32,9 +32,11 @@ case "$1" in
  
 		mkdir -p /var/log/openfire
 		mkdir -p /var/lib/openfire/embedded-db
+		chown -R openfire:openfire /usr/share/openfire
 		chown -R openfire:openfire /var/lib/openfire
 		chown -R openfire:openfire /var/log/openfire
 		chown -R openfire:openfire /etc/openfire
+		chmod -R o-rwx /usr/share/openfire
 		chmod -R o-rwx /var/lib/openfire
 		chmod -R o-rwx /var/log/openfire
 		chmod -R o-rwx /etc/openfire

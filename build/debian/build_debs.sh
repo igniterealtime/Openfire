@@ -7,7 +7,8 @@ pushd .
 if [ $1 ]; then
     OPENFIRE_FULLVERSION=$1
 else
-    OPENFIRE_FULLVERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+    # extract version from pom.xml
+    OPENFIRE_FULLVERSION=$(grep -oP "<version>(.*)</version>" -m 1 pom.xml | cut -d ">" -f 2 | cut -d "-" -f 1)
 fi
 OPENFIRE_VERSION=$(echo "${OPENFIRE_FULLVERSION}" | cut -d'-' -f1)
 DEBIAN_BUILDDATE="$(date +'%a, %d %b %Y %H:%M:%S %z')"
@@ -23,8 +24,6 @@ cp -r distribution/target/distribution-base/. $WORKDIR/
 
 mkdir -p $WORKDIR/debian
 cp -r build/debian/* $WORKDIR/debian/
-# HACK remove out this actual script
-rm -f $WORKDIR/debian/build_debs.sh
 
 cd $WORKDIR/debian
 # Do some needed replacements

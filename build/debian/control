@@ -3,6 +3,7 @@ Section: net
 Priority: optional
 Maintainer: Ignite Realtime Community <admin@igniterealtime.org>
 Build-Depends: debhelper-compat (= 13), default-jdk (>= 11)
+Rules-Requires-Root: no
 Standards-Version: 3.7.2
 Homepage: https://www.igniterealtime.org
 Vcs-Git: https://github.com/igniterealtime/Openfire.git

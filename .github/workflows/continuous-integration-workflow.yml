@@ -523,6 +523,6 @@ jobs:
       - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
         run: tar -xf distribution-artifact.tar
       - name: Install build deps
-        run: sudo apt-get install -y debhelper-compat=13 default-jdk>=11
+        run: sudo apt-get install -y debhelper-compat=13
       - name: Run build script
         run: bash build/debian/build_debs.sh

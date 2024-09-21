@@ -439,13 +439,13 @@ tr.lowerhalf > td:last-child {
             <td style="white-space: nowrap; vertical-align: top">
                 <c:if test="${not empty plugin.readme}">
                     <a href="plugin-showfile.jsp?plugin=${fn:escapeXml(plugin.canonicalName)}&showReadme=true&decorator=none"
-                        target="_blank" title="README">
+                        target="_blank" title="<fmt:message key="plugin.admin.documentation" />">
                         <img src="images/doc-readme-16x16.gif">
                     </a>
                 </c:if>
                 <c:if test="${not empty plugin.changelog}">
                     <a href="plugin-showfile.jsp?plugin=${fn:escapeXml(plugin.canonicalName)}&showChangelog=true&decorator=none"
-                        target="_blank" title="changelog">
+                        target="_blank" title="<fmt:message key="plugin.admin.changelog" />">
                         <img src="images/doc-changelog-16x16.gif">
                     </a>
                 </c:if>

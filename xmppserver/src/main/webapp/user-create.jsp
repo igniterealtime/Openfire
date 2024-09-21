@@ -241,7 +241,7 @@
             <td style="width: 1%; white-space: nowrap"><label for="nametf"><fmt:message key="user.create.name" />:</label> <%= UserManager.getUserProvider().isNameRequired() ? "*" : "" %></td>
             <td>
                 <input type="text" name="name" size="30" maxlength="75" value="<%= ((name!=null) ? StringUtils.escapeForXML(name) : "") %>"
-                 id="nametf">
+                 id="nametf" autocomplete="off">
             </td>
         </tr>
         <tr>
@@ -249,7 +249,7 @@
                 <label for="emailtf"><fmt:message key="user.create.email" />:</label> <%= UserManager.getUserProvider().isEmailRequired() ? "*" : "" %></td>
             <td>
                 <input type="text" name="email" size="30" maxlength="75" value="<%= ((email!=null) ? StringUtils.escapeForXML(email) : "") %>"
-                 id="emailtf">
+                 id="emailtf" autocomplete="off">
             </td>
         </tr>
         <tr>
@@ -258,7 +258,7 @@
             </td>
             <td>
                 <input type="password" name="password" value="" size="20" maxlength="75"
-                 id="passtf">
+                 id="passtf" autocomplete="off">
             </td>
         </tr>
         <tr>
@@ -267,7 +267,7 @@
             </td>
             <td>
                 <input type="password" name="passwordConfirm" value="" size="20" maxlength="75"
-                 id="confpasstf">
+                 id="confpasstf" autocomplete="off">
             </td>
         </tr>
         <% if (!AdminManager.getAdminProvider().isReadOnly()) { %>
@@ -288,7 +288,7 @@
             </td>
             <td>
                 <input type="text" name="group" size="30" maxlength="75" value="<%= ((group!=null) ? StringUtils.escapeForXML(group) : "") %>"
-                       id="grouptf">
+                       id="grouptf" autocomplete="off">
             </td>
         </tr>
         <%} %>

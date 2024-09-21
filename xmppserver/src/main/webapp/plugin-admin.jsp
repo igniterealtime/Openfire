@@ -379,9 +379,12 @@ tr.lowerhalf > td:last-child {
 <table style="width: 100%" class="update">
  <tr style="background:#eee;">
 
-    <td nowrap colspan="3" class="table-header-left"><fmt:message key="plugin.admin.name"/></td>
-    <td nowrap class="table-header"><fmt:message key="plugin.admin.description"/></td>
+    <td class="table-header-left">&nbsp;</td>
+    <td nowrap class="table-header"><fmt:message key="plugin.admin.name"/></td>
+    <td class="table-header"><fmt:message key="plugin.admin.description"/></td>
+    <td nowrap class="table-header"><fmt:message key="plugin.admin.documentation"/></td>
     <td nowrap class="table-header"><fmt:message key="plugin.admin.version"/></td>
+    <td nowrap class="table-header"><fmt:message key="plugin.admin.changelog"/></td>
     <td nowrap class="table-header"><fmt:message key="plugin.admin.author"/></td>
     <td nowrap class="table-header"><fmt:message key="plugin.admin.restart"/></td>
     <td nowrap class="table-header-right"><fmt:message key="global.delete"/></td>
@@ -443,12 +446,6 @@ tr.lowerhalf > td:last-child {
                         <img src="images/doc-readme-16x16.gif">
                     </a>
                 </c:if>
-                <c:if test="${not empty plugin.changelog}">
-                    <a href="plugin-showfile.jsp?plugin=${fn:escapeXml(plugin.canonicalName)}&showChangelog=true&decorator=none"
-                        target="_blank" title="<fmt:message key="plugin.admin.changelog" />">
-                        <img src="images/doc-changelog-16x16.gif">
-                    </a>
-                </c:if>
             </td>
             <td style="width: 60%; vertical-align: top">
                 <c:if test="${not empty plugin.description}">
@@ -456,10 +453,18 @@ tr.lowerhalf > td:last-child {
                 </c:if>
             </td>
             <td style="width: 5%; white-space: nowrap; vertical-align: top">
-                <c:if test="${not empty plugin.version}">
+                 <c:if test="${not empty plugin.version}">
                     <span <c:if test="${not empty update}">id="${update.hashCode()}-version"</c:if>>
                     <c:out value="${plugin.version}"/>
                     </span>
+                </c:if>
+            </td>
+            <td style="width: 5%; white-space: nowrap; vertical-align: top">
+                <c:if test="${not empty plugin.changelog}">
+                    <a href="plugin-showfile.jsp?plugin=${fn:escapeXml(plugin.canonicalName)}&showChangelog=true&decorator=none"
+                        target="_blank" title="<fmt:message key="plugin.admin.changelog" />">
+                        <img src="images/doc-changelog-16x16.gif">
+                    </a>
                 </c:if>
             </td>
             <td style="width: 15%; white-space: nowrap; vertical-align: top">

@@ -240,10 +240,13 @@
                     <thead>
                         <tr style="background:#eee;">
                             <td class="table-header-left">&nbsp;</td>
-                            <td nowrap colspan="2" class="table-header"><fmt:message key="plugin.available.open_source"/></td>
-                            <td nowrap class="table-header"><fmt:message key="plugin.available.description"/></td>
-                            <td nowrap class="table-header"><fmt:message key="plugin.available.version"/></td>
-                            <td nowrap class="table-header"><fmt:message key="plugin.available.author"/></td>
+                            <td nowrap class="table-header"><fmt:message key="plugin.admin.name"/></td>
+                            <td class="table-header"><fmt:message key="plugin.admin.description"/></td>
+                            <td nowrap class="table-header"><fmt:message key="plugin.admin.documentation"/></td>
+                            <td nowrap class="table-header"><fmt:message key="plugin.admin.version"/></td>
+                            <td nowrap class="table-header"><fmt:message key="plugin.admin.releaseDate"/></td>
+                            <td nowrap class="table-header"><fmt:message key="plugin.admin.changelog"/></td>
+                            <td nowrap class="table-header"><fmt:message key="plugin.admin.author"/></td>
                             <td nowrap class="table-header"><fmt:message key="plugin.available.file_size"/></td>
                             <td nowrap class="table-header-right"><fmt:message key="plugin.available.install"/></td>
                         </tr>
@@ -273,6 +276,11 @@
                                                 <c:out value="${notInstalledPlugin.name}"/>
                                             </c:if>
                                         </td>
+                                        <td style="width: 60%" class="line-bottom-border">
+                                            <c:if test="${not empty notInstalledPlugin.description}">
+                                                <c:out value="${notInstalledPlugin.description}"/>
+                                            </c:if>
+                                        </td>
                                         <td nowrap class="line-bottom-border">
                                             <c:if test="${not empty notInstalledPlugin.readme}">
                                                 <a href="${fn:escapeXml(notInstalledPlugin.readme)}"
@@ -280,24 +288,23 @@
                                                     <img src="images/doc-readme-16x16.gif">
                                                 </a>
                                             </c:if>
+                                        </td>
+                                        <td nowrap class="line-bottom-border">
+                                            <c:if test="${not empty notInstalledPlugin.version}">
+                                                <c:out value="${notInstalledPlugin.version}"/>
+                                            </c:if>
+                                        </td>
+                                        <td nowrap class="line-bottom-border">
+                                            <c:if test="${not empty notInstalledPlugin.releaseDate}">
+                                                <c:out value="${notInstalledPlugin.releaseDate}"/>
+                                            </c:if>
+                                        </td>
+                                        <td nowrap class="line-bottom-border">
                                             <c:if test="${not empty notInstalledPlugin.changelog}">
                                                 <a href="${fn:escapeXml(notInstalledPlugin.changelog)}"
                                                     target="_blank" title="<fmt:message key="plugin.admin.changelog" />">
                                                     <img src="images/doc-changelog-16x16.gif">
                                                 </a>
-                                            </c:if>
-                                        </td>
-                                        <td style="width: 60%" class="line-bottom-border">
-                                            <c:if test="${not empty notInstalledPlugin.description}">
-                                                <c:out value="${notInstalledPlugin.description}"/>
-                                            </c:if>
-                                        </td>
-                                        <td style="width: 5%" nowrap class="line-bottom-border">
-                                            <c:if test="${not empty notInstalledPlugin.version}">
-                                                <c:out value="${notInstalledPlugin.version}"/>
-                                            </c:if>
-                                            <c:if test="${not empty notInstalledPlugin.releaseDate}">
-                                                <br><c:out value="${notInstalledPlugin.releaseDate}"/>
                                             </c:if>
                                         </td>
                                         <td style="width: 15%" nowrap class="line-bottom-border">

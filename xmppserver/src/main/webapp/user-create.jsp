@@ -20,18 +20,23 @@
                  org.jivesoftware.openfire.user.*,
                  java.net.URLEncoder,
                  gnu.inet.encoding.Stringprep,
-                 gnu.inet.encoding.StringprepException"
+                 gnu.inet.encoding.StringprepException,
+                 java.util.stream.Collectors"
     errorPage="error.jsp"
 %>
+<%@ page import="java.util.List"%>
 <%@ page import="java.util.Map"%>
-<%@ page import="java.util.HashMap"%><%@ page import="org.xmpp.packet.JID"%>
+<%@ page import="java.util.HashMap"%>
+<%@ page import="org.xmpp.packet.JID"%>
 <%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
 <%@ page import="org.jivesoftware.openfire.admin.AdminManager" %>
 <%@ page import="org.jivesoftware.openfire.group.GroupNotFoundException" %>
+<%@ page import="org.jivesoftware.openfire.group.Group" %>
 <%@ page import="org.slf4j.LoggerFactory" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib prefix="admin" uri="admin" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
@@ -68,6 +73,10 @@
         return;
     }
 
+    List<String> groupNames = webManager.getGroupManager().getGroups()
+                           .stream()
+                           .map(Group::getName)
+                           .collect(Collectors.toList());
     // Handle a request to create a user:
     if (create) {
         // Validate
@@ -111,9 +120,7 @@
 
         //If a group name is entered and there is no matching group, add an error
         if (group != null && !group.trim().isEmpty()){
-            try{
-                webManager.getGroupManager().getGroup(group);
-            } catch (GroupNotFoundException e){
+            if (!groupNames.contains(group)) {
                 errors.put("groupNotFound","");
             }
         }
@@ -167,6 +174,7 @@
         }
     }
     pageContext.setAttribute("errors", errors);
+    pageContext.setAttribute("groupNames", groupNames);
     pageContext.setAttribute("success", request.getParameter("success") != null);
 %>
 
@@ -281,17 +289,24 @@
             </td>
         </tr>
         <% } %>
-        <% if (!webManager.getGroupManager().getGroups().isEmpty()){%>
+        <c:if test="${not empty groupNames}">
         <tr>
             <td class="c1">
                 <label for="grouptf"><fmt:message key="user.create.group"/>:</label>
             </td>
             <td>
                 <input type="text" name="group" size="30" maxlength="75" value="<%= ((group!=null) ? StringUtils.escapeForXML(group) : "") %>"
-                       id="grouptf" autocomplete="off">
+                       id="grouptf" autocomplete="off" list="groupNames" >
+                <datalist id="groupNames">
+                    <c:forEach var="groupName" items="${groupNames}">
+                        <option value="${fn:escapeXml(groupName)}">
+                            <c:out value="${groupName}"/>
+                        </option>
+                    </c:forEach>
+                </datalist>
             </td>
         </tr>
-        <%} %>
+        </c:if>
         <tr>
 
             <td colspan="2" style="padding-top: 10px;">

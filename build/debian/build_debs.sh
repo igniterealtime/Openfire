@@ -8,7 +8,7 @@ if [ $1 ]; then
     OPENFIRE_FULLVERSION=$1
 else
     # extract version from pom.xml
-    OPENFIRE_FULLVERSION=$(grep -oP "<version>(.*)</version>" -m 1 pom.xml | cut -d ">" -f 2 | cut -d "-" -f 1)
+    OPENFIRE_FULLVERSION=$(grep -oP "<version>(.*)</version>" -m 1 pom.xml | cut -d ">" -f 2 | cut -d "<" -f 1)
 fi
 OPENFIRE_VERSION=$(echo "${OPENFIRE_FULLVERSION}" | cut -d'-' -f1)
 DEBIAN_BUILDDATE="$(date +'%a, %d %b %Y %H:%M:%S %z')"

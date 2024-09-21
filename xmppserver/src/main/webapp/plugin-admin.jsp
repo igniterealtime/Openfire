@@ -438,10 +438,16 @@ tr.lowerhalf > td:last-child {
             </td>
             <td style="white-space: nowrap; vertical-align: top">
                 <c:if test="${not empty plugin.readme}">
-                    <a href="plugin-showfile.jsp?plugin=${fn:escapeXml(plugin.canonicalName)}&showReadme=true&decorator=none"><img src="images/doc-readme-16x16.gif" alt="README"></a>
+                    <a href="plugin-showfile.jsp?plugin=${fn:escapeXml(plugin.canonicalName)}&showReadme=true&decorator=none"
+                        target="_blank" title="README">
+                        <img src="images/doc-readme-16x16.gif">
+                    </a>
                 </c:if>
                 <c:if test="${not empty plugin.changelog}">
-                    <a href="plugin-showfile.jsp?plugin=${fn:escapeXml(plugin.canonicalName)}&showChangelog=true&decorator=none"><img src="images/doc-changelog-16x16.gif" alt="changelog"></a>
+                    <a href="plugin-showfile.jsp?plugin=${fn:escapeXml(plugin.canonicalName)}&showChangelog=true&decorator=none"
+                        target="_blank" title="changelog">
+                        <img src="images/doc-changelog-16x16.gif">
+                    </a>
                 </c:if>
             </td>
             <td style="width: 60%; vertical-align: top">

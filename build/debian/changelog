@@ -3,4 +3,4 @@ openfire (@version@) stable; urgency=medium
   * For full changelog, see
     https://www.igniterealtime.org/builds/openfire/docs/latest/changelog.html
 
- -- Ignite Realtime Community <admin@igniterealtime.org>>  @builddate@
+ -- Ignite Realtime Community <admin@igniterealtime.org>  @builddate@

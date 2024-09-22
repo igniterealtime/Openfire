@@ -115,6 +115,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Use static build timestamp for reproducible builds -->
+        <project.build.outputTimestamp>1980-02-01T00:00:00Z</project.build.outputTimestamp>
 
         <!-- Versions -->
         <!-- Note; the following jetty.version should be identical to the jetty.version in plugins/pom.xml -->
@@ -231,12 +233,14 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.1.1</version>
+                    <version>3.4.2</version>
                     <configuration>
                         <archive>
                             <manifest>
                                 <addClasspath>false</addClasspath>
                                 <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                                <!-- Don't add Created-By and Build-Jdk-Spec fields to manifest for reproducible builds -->
+                                <addDefaultEntries>false</addDefaultEntries>
                             </manifest>
                             <manifestEntries>
                                 <Built-By>Jive Software (www.igniterealtime.org)</Built-By>

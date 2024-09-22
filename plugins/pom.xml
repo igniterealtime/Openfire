@@ -110,6 +110,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- Use static build timestamp for reproducible builds -->
+        <project.build.outputTimestamp>1980-02-01T00:00:00Z</project.build.outputTimestamp>
 
         <!-- The name of the Openfire plugin (defaults to ${project.artifactId}. This value is somewhat particular:
            - * It is used as a Java package name (and thus, cannot contain characters like dashes and dots.
@@ -284,8 +286,14 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.1.1</version>
+                    <version>3.4.2</version>
                     <configuration>
+                        <archive>
+                            <manifest>
+                                <!-- Don't add Created-By and Build-Jdk-Spec fields to manifest for reproducible builds -->
+                                <addDefaultEntries>false</addDefaultEntries>
+                            </manifest>
+                        </archive>
                         <excludes>
                             <exclude>**/*_jsp.java</exclude>
                         </excludes>

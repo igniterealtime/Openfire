@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -511,6 +511,7 @@ public class AdminConsolePlugin implements Plugin {
         final List<ContainerInitializer> initializers = new ArrayList<>();
         initializers.add(new ContainerInitializer(new JasperInitializer(), null));
         context.setAttribute("org.eclipse.jetty.containerInitializers", initializers);
+        context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false");
         context.setClassLoader(Thread.currentThread().getContextClassLoader());
         context.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
         context.setConfigurations(new Configuration[]{

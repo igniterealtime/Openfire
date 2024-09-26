@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2018-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import java.net.Socket;
 import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Utility class to generate Socket instances.
@@ -59,7 +61,7 @@ public class SocketUtil
         Log.debug( "Creating a socket connection to XMPP domain '{}' ...", xmppDomain );
 
         Log.debug( "Use DNS to resolve remote hosts for the provided XMPP domain '{}' (default port: {}) ...", xmppDomain, port );
-        final List<DNSUtil.HostAddress> remoteHosts = DNSUtil.resolveXMPPDomain( xmppDomain, port );
+        final List<DNSUtil.HostAddress> remoteHosts = DNSUtil.resolveXMPPDomain( xmppDomain, port ).stream().flatMap(Set::stream).collect(Collectors.toList());
         Log.debug( "Found {} host(s) for XMPP domain '{}'.", remoteHosts.size(), xmppDomain );
         remoteHosts.forEach( remoteHost -> Log.debug( "- {} ({})", remoteHost.toString(), (remoteHost.isDirectTLS() ? "direct TLS" : "no direct TLS" ) ) );
 

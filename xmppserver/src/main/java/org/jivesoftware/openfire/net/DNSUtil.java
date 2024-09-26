@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import java.io.Serializable;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Utility class to perform DNS lookups for XMPP services.
@@ -77,7 +78,7 @@ public class DNSUtil {
     }
 
     /**
-     * Returns a sorted list of host names and ports that the specified XMPP
+     * Returns a collection of host names and ports that the specified XMPP
      * domain can be reached at for server-to-server communication.
      *
      * DNS lookups for a SRV records in the form "_xmpp-server._tcp.example.com"
@@ -90,9 +91,20 @@ public class DNSUtil {
      *
      * If that lookup fails as well, it's assumed that the XMPP server lives at
      * the host resolved by a DNS A lookup at the specified domain on the
-     * specified default port.<p>
+     * specified default port.
      *
      * As an example, a lookup for "example.com" may return "im.example.com:5269".
+     *
+     * The returned collection is a list of sets of host names. The 'inner'
+     * collection, the sets of host names, are grouping host names that have an
+     * equal 'priority' SRV value. The 'outer' collection, the list, defines the
+     * order that's defined by the 'priority' value (lowest first). Generally
+     * speaking, all values from the first set of the outer list should be
+     * processed, before elements from the next set of that list are to be processed.
+     *
+     * The Sets that are returned as elements of the list have a predictable
+     * iteration order. This order is based on a randomization based on the
+     * SRV 'weight' value of each host.
      *
      * @param domain the domain.
      * @param defaultPort default port to return if the DNS look up fails.
@@ -101,9 +113,9 @@ public class DNSUtil {
      * @see <a href="https://tools.ietf.org/html/rfc6120#section-3.2">XMPP CORE</a>
      * @see <a href="https://xmpp.org/extensions/xep-0368.html">XEP-0368</a>
      */
-    public static List<HostAddress> resolveXMPPDomain(String domain, int defaultPort) {
+    public static List<Set<WeightedHostAddress>> resolveXMPPDomain(String domain, int defaultPort) {
         // Check if there is an entry in the internal DNS for the specified domain
-        List<HostAddress> results = new LinkedList<>();
+        List<Set<WeightedHostAddress>> results = new LinkedList<>();
         if (dnsOverride != null) {
             HostAddress hostAddress = dnsOverride.get(domain);
             if (hostAddress == null) {
@@ -111,7 +123,7 @@ public class DNSUtil {
             }
             if (hostAddress != null) {
                 logger.debug("Answering lookup for domain '{}' from DNS override property. Returning: {}", domain, hostAddress);
-                results.add(hostAddress);
+                results.add(Set.of(WeightedHostAddress.from(hostAddress)));
                 return results;
             }
         }
@@ -132,18 +144,19 @@ public class DNSUtil {
         if (allowTLS) {
             srvLookups.addAll(srvLookup("xmpps-server", "tcp", domain));
         }
+
+        if (srvLookups.isEmpty()) {
+            srvLookups.addAll(srvLookup( "jabber", "tcp", domain ));
+        }
+
         if (!srvLookups.isEmpty()) {
             // we have to re-prioritize the combination of both lookups.
-            results.addAll( prioritize( srvLookups.toArray( new WeightedHostAddress[0] ) ) );
+            results.addAll( prioritize(srvLookups) );
         }
 
-        if (results.isEmpty()) {
-            results.addAll(srvLookup( "jabber", "tcp", domain ) );
-        }
-
-        // Use domain and default port as fallback.
-        if (results.isEmpty()) {
-            results.add(new HostAddress(domain, defaultPort, false));
+        // Use domain and default port as fallback, if that's not already in the list.
+        if (results.stream().flatMap(Set::stream).noneMatch(h -> h.getHost().equals(domain) && h.getPort() == defaultPort && !h.isDirectTLS())) {
+            results.add(Set.of(new WeightedHostAddress(domain, defaultPort, false, 0, 0)));
         }
         return results;
     }
@@ -208,7 +221,7 @@ public class DNSUtil {
      * @param service the symbolic name of the desired service.
      * @param proto the transport protocol of the desired service; this is usually either TCP or UDP.
      * @param name the domain name for which this record is valid.
-     * @return An ordered of results (possibly empty, never null).
+     * @return An ordered list of results (possibly empty, never null).
      */
     public static List<WeightedHostAddress> srvLookup(@Nonnull final String service, @Nonnull final String proto, @Nonnull final String name) {
         logger.trace("DNS SRV Lookup for service '{}', protocol '{}' and name '{}'", service, proto, name);
@@ -259,7 +272,7 @@ public class DNSUtil {
         }
 
         // Do not store _prioritized_ results in the cache, as there is a random element to the prioritization that needs to happen every time.
-        return prioritize(result);
+        return prioritize(result).stream().flatMap(Set::stream).collect(Collectors.toList());
     }
 
     /**
@@ -386,8 +399,12 @@ public class DNSUtil {
         }
     }
 
-    public static List<WeightedHostAddress> prioritize(WeightedHostAddress[] records) {
-        final List<WeightedHostAddress> result = new LinkedList<>();
+    public static List<Set<WeightedHostAddress>> prioritize(WeightedHostAddress[] records) {
+        return prioritize(Arrays.asList(records));
+    }
+
+    public static List<Set<WeightedHostAddress>> prioritize(final Collection<WeightedHostAddress> records) {
+        final List<Set<WeightedHostAddress>> result = new LinkedList<>();
 
         // sort by priority (ascending)
         SortedMap<Integer, Set<WeightedHostAddress>> byPriority = new TreeMap<>();
@@ -404,7 +421,8 @@ public class DNSUtil {
         // now, randomize each priority set by weight.
         for(Map.Entry<Integer, Set<WeightedHostAddress>> weights : byPriority.entrySet()) {
 
-            List<WeightedHostAddress> zeroWeights = new LinkedList<>();
+            final List<WeightedHostAddress> zeroWeights = new LinkedList<>();
+            final Set<WeightedHostAddress> priorityGroupResults = new LinkedHashSet<>(); // A set that retains order (which we'll randomize)
 
             int totalWeight = 0;
             final Iterator<WeightedHostAddress> i = weights.getValue().iterator();
@@ -429,7 +447,7 @@ public class DNSUtil {
                     final WeightedHostAddress record = iter.next();
                     needle -= record.getWeight();
                     if (needle <= 0) {
-                        result.add(record);
+                        priorityGroupResults.add(record);
                         iter.remove();
                         iterationWeight -= record.getWeight();
                         break;
@@ -438,9 +456,12 @@ public class DNSUtil {
                 iter = weights.getValue().iterator();
             }
 
-            // finally, append the hosts with zero priority (shuffled)
+            // Append the hosts with zero priority (shuffled)
             Collections.shuffle(zeroWeights);
-            result.addAll(zeroWeights);
+            priorityGroupResults.addAll(zeroWeights);
+
+            // Finally, add the entire priority group to the larger result.
+            result.add(priorityGroupResults);
         }
 
         return result;
@@ -452,6 +473,14 @@ public class DNSUtil {
 
         private final int priority;
         private final int weight;
+
+        static WeightedHostAddress from(HostAddress address) {
+            if (address instanceof WeightedHostAddress) {
+                return (WeightedHostAddress) address;
+            }
+
+            return new WeightedHostAddress(address.getHost(), address.getPort(), address.isDirectTLS(), 0, 0);
+        }
 
         private WeightedHostAddress(String[] srvRecordEntries, boolean directTLS) {
             super(srvRecordEntries[srvRecordEntries.length-1],

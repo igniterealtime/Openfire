@@ -156,7 +156,19 @@ public class DNSUtil {
 
         // Use domain and default port as fallback, if that's not already in the list.
         if (results.stream().flatMap(Set::stream).noneMatch(h -> h.getHost().equals(domain) && h.getPort() == defaultPort && !h.isDirectTLS())) {
-            results.add(Set.of(new WeightedHostAddress(domain, defaultPort, false, 0, 0)));
+            results.add(Set.of(new WeightedHostAddress(domain, defaultPort, false, Integer.MAX_VALUE, 0)));
+        }
+        if (logger.isDebugEnabled()) {
+            logger.debug("Answering lookup for domain '{}' from DNS responses. Returning:", domain);
+            for (final Set<WeightedHostAddress> srvLookup : results) {
+                for (final WeightedHostAddress hostAddress : srvLookup) {
+                    if (hostAddress.getPriority() != Integer.MAX_VALUE) {
+                        logger.debug(" - {} (based on a DNS lookup)", hostAddress);
+                    } else {
+                        logger.debug(" - {} (a fallback, based on the XMPP domain and default port)", hostAddress);
+                    }
+                }
+            }
         }
         return results;
     }
@@ -224,7 +236,7 @@ public class DNSUtil {
      * @return An ordered list of results (possibly empty, never null).
      */
     public static List<WeightedHostAddress> srvLookup(@Nonnull final String service, @Nonnull final String proto, @Nonnull final String name) {
-        logger.trace("DNS SRV Lookup for service '{}', protocol '{}' and name '{}'", service, proto, name);
+        logger.debug("DNS SRV Lookup for service '{}', protocol '{}' and name '{}'", service, proto, name);
 
         final String lookup = constructLookup(service, proto, name);
 
@@ -233,12 +245,12 @@ public class DNSUtil {
         if (optional != null) {
             // Return a cached result.
             if (optional.isAbsent()) {
-                logger.warn("DNS SRV lookup previously failed for '{}' (negative cache result)", lookup);
+                logger.debug("DNS SRV lookup previously failed for '{}' (negative cache result)", lookup);
                 result = new WeightedHostAddress[0];
             } else {
                 result = optional.get();
                 if ( result.length == 0 ) {
-                    logger.debug("No SRV record found for '{}' (cached result)", lookup);
+                    logger.info("No SRV record found for '{}' (cached result)", lookup);
                 } else {
                     logger.trace("{} SRV record(s) found for '{}' (cached result)", result.length, lookup);
                 }
@@ -249,7 +261,7 @@ public class DNSUtil {
                 final Attributes dnsLookup = context.getAttributes(lookup, new String[]{"SRV"});
                 final Attribute srvRecords = dnsLookup.get("SRV");
                 if (srvRecords == null) {
-                    logger.debug("No SRV record found for '{}'", lookup);
+                    logger.trace("No SRV record found for '{}'", lookup);
                     result = new WeightedHostAddress[0];
                 } else {
                     result = new WeightedHostAddress[srvRecords.size()];
@@ -257,15 +269,18 @@ public class DNSUtil {
                     for (int i = 0; i < srvRecords.size(); i++) {
                         result[i] = new WeightedHostAddress(((String) srvRecords.get(i)).split(" "), directTLS);
                     }
-                    logger.trace("{} SRV record(s) found for '{}'", result.length, lookup);
+                    logger.trace("{} SRV record(s) found for '{}':", result.length, lookup);
+                    for (WeightedHostAddress weightedHostAddress : result) {
+                        logger.trace(" - {}", weightedHostAddress);
+                    }
                 }
                 LOOKUP_CACHE.put(lookup, CacheableOptional.of(result));
             } catch (NameNotFoundException e) {
-                logger.debug("No SRV record found for '{}'", lookup, e);
+                logger.trace("No SRV record found for '{}'", lookup);
                 LOOKUP_CACHE.put(lookup, CacheableOptional.of(new WeightedHostAddress[0])); // Empty result (different from negative result!)
                 result = new WeightedHostAddress[0];
             } catch (NamingException e) {
-                logger.info("DNS SRV lookup was unsuccessful for '{}': {}", lookup, e.getMessage());
+                logger.info("DNS SRV lookup was unsuccessful for '{}': {}", lookup, e);
                 LOOKUP_CACHE.put(lookup, CacheableOptional.of(null)); // Negative result cache (different from empty result!)
                 result = new WeightedHostAddress[0];
             }
@@ -513,6 +528,11 @@ public class DNSUtil {
          */
         public int getWeight() {
             return weight;
+        }
+
+        @Override
+        public String toString() {
+            return "prio: " + priority + ", weight: " + weight + ", port: " + getPort() + ", host: " + getHost()  + ", isDirectTLS: " + isDirectTLS();
         }
     }
 }

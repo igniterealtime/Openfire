@@ -1,6 +1,23 @@
+/*
+ * Copyright (C) 2024 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.jivesoftware.openfire.net;
 
 import net.jcip.annotations.GuardedBy;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -14,6 +31,8 @@ import java.util.function.Supplier;
 
 public class HappyEyeballsResolver
 {
+    private static final Logger Log = LoggerFactory.getLogger(HappyEyeballsResolver.class);
+
     private final Duration resolutionDelay;
 
     private final ThreadPoolExecutor executor;
@@ -32,13 +51,9 @@ public class HappyEyeballsResolver
     @GuardedBy("this")
     private boolean preferredNextFamilyIsIpv4;
 
-    public HappyEyeballsResolver(final List<DNSUtil.HostAddress> hostAddresses)
-    {
-        this(hostAddresses, false, Duration.ofMillis(50));
-    }
-
     public HappyEyeballsResolver(final List<DNSUtil.HostAddress> hostAddresses, final boolean preferIpv4, final Duration resolutionDelay)
     {
+        Log.debug("Instantiating new instance for {} host address(es), preferring {} (rather than {}), using a resolution delay of {}", hostAddresses.size(), preferIpv4 ? "IPv4" : "IPv6", preferIpv4 ? "IPv6" : "IPv4", resolutionDelay);
         executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(hostAddresses.size());
         this.hostAddresses = hostAddresses;
         this.resolvedHosts = new PriorityQueue<>(hostAddresses.size()*3, Comparator.comparing(IndexedInetAddress::getIndex));
@@ -53,15 +68,23 @@ public class HappyEyeballsResolver
 
     public synchronized void start() throws ExecutionException, InterruptedException
     {
+        Log.debug("Start resolution of ({}) host addresses", hostAddresses.size());
         for (int i = 0; i < hostAddresses.size(); i++)
         {
+            Log.trace(" - Index {} : {}", i, hostAddresses.get(i));
             int index = i;
             // Happy Eyeballs dictates that first an AAAA and only then A query is sent out for each host. The Java API
             // that we're using doesn't give us granular control like that: it's requesting both at the same time.
             final Supplier<Set<IndexedInetAddress>> solve = () -> {
                 final DNSUtil.HostAddress hostAddress = hostAddresses.get(index);
                 try {
-                    return IndexedInetAddress.from(index, InetAddress.getAllByName(hostAddress.getHost()), hostAddress.getPort(), hostAddress.isDirectTLS());
+                    Log.trace("Start resolving address at index {} ...", index);
+                    final Set<IndexedInetAddress> from = IndexedInetAddress.from(index, InetAddress.getAllByName(hostAddress.getHost()), hostAddress.getPort(), hostAddress.isDirectTLS());
+                    if (Log.isTraceEnabled()) {
+                        Log.trace("Resolved address at index {} into:", index);
+                        from.forEach(e -> Log.trace(" - {}", e));
+                    }
+                    return from;
                 } catch (UnknownHostException e) {
                     throw new RuntimeException(e);
                 }
@@ -78,11 +101,12 @@ public class HappyEyeballsResolver
     }
 
     public synchronized boolean isDone() {
-        return executor.getCompletedTaskCount() == hostAddresses.size();
+        return executor.getCompletedTaskCount() == hostAddresses.size() && resolvedHosts.isEmpty();
     }
 
     public void shutdown() {
-        if (!isDone()) {
+        Log.trace("Shutting down");
+        if (executor.getCompletedTaskCount() != hostAddresses.size()) {
             // Happy Eyeballs tells us to keep resolving for a while, to populate caches.
             new Thread(() -> {
                 try {
@@ -98,6 +122,7 @@ public class HappyEyeballsResolver
     }
 
     public void shutdownNow() {
+        Log.trace("Shutting down immediately");
         executor.shutdownNow();
     }
 
@@ -115,6 +140,7 @@ public class HappyEyeballsResolver
 
     synchronized private XmppServiceAddress getPreferredImmediately()
     {
+        Log.trace("Attempting to get next (preferred) address immediately (preferred next index: {}, preferred next family: {}", preferredNextIndex, preferredNextFamilyIsIpv4 ? "IPv4" : "IPv6");
         final Iterator<IndexedInetAddress> iterator = resolvedHosts.iterator();
         while (iterator.hasNext()) {
             final IndexedInetAddress resolvedAddress = iterator.next();
@@ -131,14 +157,18 @@ public class HappyEyeballsResolver
                     while (resultCountByIndex.containsKey(preferredNextIndex) && resultCountByIndex.get(preferredNextIndex) == 0);
                 }
                 preferredNextFamilyIsIpv4 = resolvedAddress.isIPv6();
-                return XmppServiceAddress.from(resolvedAddress);
+                final XmppServiceAddress result = XmppServiceAddress.from(resolvedAddress);
+                Log.trace("Found preferred: {}", result);
+                return result;
             }
         }
+        Log.trace("No preferred result available.");
         return null;
     }
 
     synchronized private XmppServiceAddress getAlternativeImmediately()
     {
+        Log.trace("Attempting to get next (alternative) address immediately (preferred next index: {}, preferred next family: {}", preferredNextIndex, preferredNextFamilyIsIpv4 ? "IPv4" : "IPv6");
         IndexedInetAddress result = null;
         final Iterator<IndexedInetAddress> iterator = resolvedHosts.iterator(); // iterates over index order.
         while (iterator.hasNext()) {
@@ -147,6 +177,7 @@ public class HappyEyeballsResolver
             if (resolvedAddress.getIndex() == preferredNextIndex) {
                 result = resolvedAddress;
                 iterator.remove();
+                Log.trace("Found alternative by preferred next index ({}): {}", preferredNextIndex, result);
                 break;
             }
 
@@ -154,6 +185,8 @@ public class HappyEyeballsResolver
             if (resolvedAddress.isIPv6() != preferredNextFamilyIsIpv4) {
                 result = resolvedAddress;
                 iterator.remove();
+                Log.trace("Found alternative by preferred family ({}): {}", preferredNextFamilyIsIpv4 ? "IPv4" : "IPv6", result);
+                break;
             }
         }
 
@@ -161,6 +194,7 @@ public class HappyEyeballsResolver
         // prefer the first host by index.
         if (result == null && !resolvedHosts.isEmpty()) {
             result = resolvedHosts.poll();
+            Log.trace("Found alternative by first available index ({}): {}", result.index, result);
         }
 
         if (result != null) {
@@ -170,9 +204,12 @@ public class HappyEyeballsResolver
             while (resultCountByIndex.containsKey(preferredNextIndex) && resultCountByIndex.get(preferredNextIndex) == 0) {
                 preferredNextIndex++;
             }
-            return XmppServiceAddress.from(result);
+            final XmppServiceAddress alt = XmppServiceAddress.from(result);
+            Log.trace("Found alternative: {}", alt);
+            return alt;
         }
 
+        Log.trace("No preferred result available.");
         return null;
     }
 
@@ -187,6 +224,7 @@ public class HappyEyeballsResolver
             if (sleepTime <= 0) {
                 break;
             }
+            Log.trace("Resolution delay not over. Waiting up to {}ms for a preferred address to become available", sleepTime);
             wait(sleepTime);
         }
 

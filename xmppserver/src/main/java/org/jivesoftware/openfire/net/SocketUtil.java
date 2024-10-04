@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.channels.SocketChannel;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -84,35 +85,24 @@ public class SocketUtil
         .setDynamic(true)
         .build();
 
-    Socket solve(ScheduledThreadPoolExecutor e, List<Callable<Socket>> solvers, Duration delay) throws InterruptedException
-    {
-        final ScheduledExecutorCompletionService<Socket> cs = new ScheduledExecutorCompletionService<>(e);
-        final int n = solvers.size();
-        final List<Future<Socket>> futures = new ArrayList<>(n);
-        Socket result = null;
-        try {
-            solvers.forEach(solver -> futures.add(cs.schedule(solver, delay)));
-            for (int i = n; i > 0; i--) {
-                try {
-                    final Socket r = cs.take().get();
-                    if (r != null) {
-                        result = r;
-                        break;
-                    }
-                } catch (ExecutionException ignore) {
-                }
-            }
-        } finally {
-            futures.forEach(future -> future.cancel(true));
-        }
-        return result;
-    }
+    /**
+     * The maximum amount of worker threads attempting to set up a socket connection to a target remote XMPP domain. A
+     * value of '1' will effectively make 'Happy Eyeballs' impossible (as that requires concurrent connection attempts).
+     *
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc8305#section-5">RFC 8305, section 5</a>
+     */
+    public static final SystemProperty<Integer> MAX_CONNECTION_CONCURRENCY = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.server.connection-max-workers")
+        .setDefaultValue(8)
+        .setMinValue(1)
+        .setDynamic(true)
+        .build();
 
     /**
      * Creates a socket connection to an XMPP domain.
      *
      * This implementation uses DNS SRV records to find a list of remote hosts for the XMPP domain (as implemented by
-     * {@link DNSUtil#resolveXMPPDomain(String, int)}. It then iteratively tries to create a socket connection to each
+     * {@link DNSUtil#resolveXMPPDomain(String, int)}). It then iteratively tries to create a socket connection to each
      * of them, until one socket connection succeeds.
      *
      * Either the connected Socket instance is returned, or null if no connection could be established.
@@ -130,11 +120,11 @@ public class SocketUtil
         Log.debug( "Creating a socket connection to XMPP domain '{}' ...", xmppDomain );
 
         final Instant deadline = Instant.now().plus(RESOLUTION_TIMEOUT.getValue());
-        final List<Future<Map.Entry<Socket, Boolean>>> futures = new ArrayList<>();
-        final BlockingQueue<Future<Map.Entry<Socket, Boolean>>> resolvedHostsQueue = new LinkedBlockingQueue<>();
-        final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(8); // TODO make configurable
+        final List<Future<Map.Entry<SocketChannel, Boolean>>> futures = new ArrayList<>();
+        final BlockingQueue<Future<Map.Entry<SocketChannel, Boolean>>> resolvedHostsQueue = new LinkedBlockingQueue<>();
+        final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(MAX_CONNECTION_CONCURRENCY.getValue());
         executor.setRemoveOnCancelPolicy(true);
-        final ScheduledExecutorCompletionService<Map.Entry<Socket, Boolean>> completionService = new ScheduledExecutorCompletionService<>(executor, resolvedHostsQueue);
+        final ScheduledExecutorCompletionService<Map.Entry<SocketChannel, Boolean>> completionService = new ScheduledExecutorCompletionService<>(executor, resolvedHostsQueue);
 
         final Thread r = new Thread(() -> {
             Instant nextJobNotBefore = Instant.EPOCH;
@@ -143,7 +133,11 @@ public class SocketUtil
             final List<Set<DNSUtil.WeightedHostAddress>> remoteHosts = DNSUtil.resolveXMPPDomain(xmppDomain, port);
             for (final Set<DNSUtil.WeightedHostAddress> prioritySet : remoteHosts) {
                 if (executor.isTerminating() || executor.isTerminated() || executor.isShutdown()) {
-                    Log.trace("Aborting resolution, as the executor is being shut down (likely cause: we successfully identified a result).");
+                    Log.trace("Aborting resolution of '{}', as the executor is being shut down (likely cause: we successfully identified a result).", xmppDomain);
+                    return;
+                }
+                if (!Instant.now().isBefore(deadline)) {
+                    Log.debug("Aborting resolution of '{}', as it has been taking longer than the maximum amount of time.", xmppDomain);
                     return;
                 }
                 final boolean preferIpv4 = InetAddress.getLoopbackAddress() instanceof Inet4Address; // Follow the preference of the JVM.
@@ -167,28 +161,28 @@ public class SocketUtil
                             continue;
                         }
 
-                        final Callable<Map.Entry<Socket, Boolean>> callable = () -> {
+                        final Callable<Map.Entry<SocketChannel, Boolean>> callable = () -> {
                             final int socketTimeout = RemoteServerManager.getSocketTimeout();
-//                            SocketChannel socketChannel = null;
-                            Socket socket = null; // TODO migrate to SocketChannel so that a connection attempt can be interrupted (when another one was already successful).
+                            SocketChannel socketChannel = null;
                             try {
-//                                socketChannel = SocketChannel.open();
-//                                socketChannel.connect(resolvedAddress.getSocketAddress())
+                                socketChannel = SocketChannel.open();
 
-                                // (re)initialize the socket.
-                                socket = new Socket();
+                                Log.debug("Trying to create socket connection to XMPP domain '{}' using remote address: {}...", xmppDomain, resolvedAddress.getSocketAddress());
+                                socketChannel.configureBlocking(true);
+                                socketChannel.socket().connect(resolvedAddress.getSocketAddress(), socketTimeout);
 
-                                Log.debug("Trying to create socket connection to XMPP domain '{}' using remote address: {} (blocks up to {} ms) ...", xmppDomain, resolvedAddress.getSocketAddress(), socketTimeout);
-                                socket.connect(resolvedAddress.getSocketAddress(), socketTimeout);
                                 Log.debug("Successfully created socket connection to XMPP domain '{}' using remote address: {}!", xmppDomain, resolvedAddress.getSocketAddress());
 
-                                return new AbstractMap.SimpleEntry<>(socket, resolvedAddress.isDirectTLS());
-                            } catch (Exception e) {
-                                Log.debug("An exception occurred while trying to create a socket connection to XMPP domain '{}' using remote address {}", xmppDomain, resolvedAddress.getSocketAddress(), e);
-                                Log.warn("Unable to create a socket connection to XMPP domain '{}' using remote address: {}. Cause: {} (a full stacktrace is logged on debug level)", xmppDomain, resolvedAddress.getSocketAddress(), e.getMessage());
+                                return new AbstractMap.SimpleEntry<>(socketChannel, resolvedAddress.isDirectTLS());
+                            } catch (Throwable e) {
+                                if (e instanceof java.nio.channels.ClosedByInterruptException) {
+                                    Log.debug("Socket connection establishment to XMPP domain '{}' using remote address {} got interrupted. Likely, another connection already succeeded, making this one redundant.", xmppDomain, resolvedAddress.getSocketAddress());
+                                } else {
+                                    Log.debug("An exception occurred while trying to create a socket connection to XMPP domain '{}' using remote address {}", xmppDomain, resolvedAddress.getSocketAddress(), e);
+                                }
                                 try {
-                                    if (socket != null) {
-                                        socket.close();
+                                    if (socketChannel != null) {
+                                        socketChannel.close();
                                     }
                                 } catch (IOException ex) {
                                     Log.debug("An additional exception occurred while trying to close a socket when creating a connection to {} failed.", resolvedAddress.getSocketAddress(), ex);
@@ -219,6 +213,15 @@ public class SocketUtil
 
                         nextJobNotBefore = Instant.now().plus(delay).plus(CONNECTION_ATTEMPT_DELAY.getValue());
                     }
+
+                    Log.trace("Wait for all connection attempts to have finished, before moving to the next priority set.");
+                    for (Future<Map.Entry<SocketChannel, Boolean>> entryFuture : futures) {
+                        final Duration maxWait = Duration.between(Instant.now(), deadline);
+                        if (maxWait.isNegative()) {
+                            break;
+                        }
+                        entryFuture.get(maxWait.toMillis(), TimeUnit.MILLISECONDS);
+                    }
                     Log.trace("Done iterating over a priority set for '{}'", xmppDomain);
                 } catch (InterruptedException e) {
                     Log.debug("DNS resolution for '{}' got interrupted. Stopping...", xmppDomain);
@@ -232,11 +235,16 @@ public class SocketUtil
         }, "happy-eyeball-resolving-" + xmppDomain);
         r.start();
 
-        Map.Entry<Socket, Boolean> result = null;
+        Map.Entry<SocketChannel, Boolean> result = null;
         try {
-            while (result == null && r.isAlive() && Instant.now().isBefore(deadline)) {
+            while (result == null && r.isAlive()) {
                 try {
-                    result = completionService.poll(10, TimeUnit.SECONDS).get();
+                    final Duration maxWait = Duration.between(Instant.now(), deadline);
+                    if (maxWait.isNegative()) {
+                        break;
+                    }
+                    final Future<Map.Entry<SocketChannel, Boolean>> poll = completionService.poll(maxWait.toMillis(), TimeUnit.MILLISECONDS);
+                    result = poll == null ? null : poll.get();
                 } catch (ExecutionException e) {
                     Log.debug("Resolution of XMPP domain '{}' threw an exception (that is being ignored).", xmppDomain, e);
                 }
@@ -246,15 +254,16 @@ public class SocketUtil
         } finally {
             Log.debug("Finished resolving XMPP domain '{}'", xmppDomain);
             futures.forEach(future -> future.cancel(true));
-            executor.shutdown();
+            executor.shutdownNow();
         }
 
         r.interrupt();
         if (result == null) {
             Log.warn( "Unable to create a socket connection to XMPP domain '{}': Unable to connect to any of its remote hosts.", xmppDomain );
+            return null;
         } else {
-            Log.debug("Successfully created a socket connection to XMPP domain '{}', using: {} ({})", xmppDomain, result.getKey().getRemoteSocketAddress(), result.getValue() ? "directTLS" : "not directTLS" );
+            Log.debug("Successfully created a socket connection to XMPP domain '{}', using: {} ({})", xmppDomain, result.getKey().socket().getRemoteSocketAddress(), result.getValue() ? "directTLS" : "not directTLS" );
+            return new AbstractMap.SimpleEntry<>(result.getKey().socket(), result.getValue());
         }
-        return result;
     }
 }

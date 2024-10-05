@@ -16,7 +16,7 @@
 
 package org.jivesoftware.openfire.http;
 
-import javax.servlet.AsyncContext;
+import jakarta.servlet.AsyncContext;
 
 /**
  * Listens for HTTP binding session events.

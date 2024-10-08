@@ -16,6 +16,10 @@
 
 package org.jivesoftware.openfire.session;
 
+import com.github.jgonian.ipmath.Ipv4;
+import com.github.jgonian.ipmath.Ipv4Range;
+import com.github.jgonian.ipmath.Ipv6;
+import com.github.jgonian.ipmath.Ipv6Range;
 import org.dom4j.*;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
@@ -49,11 +53,15 @@ import org.xmpp.packet.Presence;
 import org.xmpp.packet.StreamError;
 
 import javax.annotation.Nonnull;
+import java.net.Inet4Address;
+import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStoreException;
 import java.time.Duration;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Represents a session between the server and a client.
@@ -350,13 +358,63 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
     }
 
-    // TODO Add IPv6 support (OF-2785)
     public static boolean isAddressInRange( byte[] address, Set<String> ranges ) {
-        final String range0 = (address[0] & 0xff) + "." + (address[1] & 0xff) + "." + (address[2] & 0xff) + "." + (address[3] & 0xff);
-        final String range1 = (address[0] & 0xff) + "." + (address[1] & 0xff) + "." + (address[2] & 0xff) + ".*";
-        final String range2 = (address[0] & 0xff) + "." + (address[1] & 0xff) + ".*.*";
-        final String range3 = (address[0] & 0xff) + ".*.*.*";
-        return ranges.contains(range0) || ranges.contains(range1) || ranges.contains(range2) || ranges.contains(range3);
+
+        final InetAddress inetAddress;
+        try {
+            inetAddress = InetAddress.getByAddress(address);
+        } catch (UnknownHostException e) {
+            throw new RuntimeException(e);
+        }
+
+        if (inetAddress instanceof Inet4Address)
+        {
+            final Ipv4 ipv4 = Ipv4.of(inetAddress.getHostAddress());
+
+            final Set<Ipv4> ipv4Addresses = ranges.stream()
+                .filter(v -> v.contains(".")) // Any IPv4 address or range will contain at least one dot.
+                .filter(v -> !v.contains("*") && !v.contains("/") && !v.contains("-")) // Any range will contain any of these characters.
+                .map(Ipv4::parse)
+                .collect(Collectors.toSet());
+
+            if (ipv4Addresses.contains(ipv4)) {
+                return true;
+            }
+
+            final Set<Ipv4Range> ipv4Ranges = ranges.stream()
+                .filter(v -> v.contains(".")) // Any IPv4 address or range will contain at least one dot.
+                .filter(v -> v.contains("*") || v.contains("/") || v.contains("-")) // Any range will contain any of these characters.
+                .map(range -> // Replace old 'wildcard' format, that was valid for IPv4 addresses prior to Openfire 4.10.0 with proper ranges.
+                    range.replace(".*.*.*", ".0.0.0/8")
+                        .replace(".*.*", ".0.0/16")
+                        .replace(".*", ".0/24"))
+                .map(Ipv4Range::parse)
+                .collect(Collectors.toSet());
+
+            return ipv4Ranges.stream().anyMatch(range -> range.contains(ipv4));
+        }
+        else if (inetAddress instanceof Inet6Address) {
+            final Ipv6 ipv6 = Ipv6.of(inetAddress.getHostAddress());
+
+            final Set<Ipv6> ipv6Addresses = ranges.stream()
+                .filter(v -> v.contains(":")) // Any IPv6 address or range will contain at least one colon.
+                .filter(v -> !v.contains("/") && !v.contains("-")) // Any range will contain any of these characters.
+                .map(Ipv6::parse)
+                .collect(Collectors.toSet());
+
+            if (ipv6Addresses.stream().anyMatch(a -> a.equals(ipv6))) {
+                return true;
+            }
+
+            final Set<Ipv6Range> ipv6Ranges = ranges.stream()
+                .filter(v -> v.contains(":")) // Any IPv6 address or range will contain at least one colon.
+                .filter(v -> v.contains("/") || v.contains("-")) // Any range will contain any of these characters.
+                .map(Ipv6Range::parse)
+                .collect(Collectors.toSet());
+
+            return ipv6Ranges.stream().anyMatch(range -> range.contains(ipv6));
+        }
+        throw new IllegalArgumentException("Provided value was not recognized as an IPv4 or IPv6 address: " + StringUtils.encodeHex(address));
     }
 
     /**

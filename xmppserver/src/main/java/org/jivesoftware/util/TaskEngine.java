@@ -137,6 +137,27 @@ public class TaskEngine {
     }
 
     /**
+     * Submits a Callable task for execution and returns a Future
+     * representing that task.
+     *
+     * @param task the task to submit.
+     * @return a Future representing pending completion of the task
+     */
+    public <V> Future<V> submit(Callable<V> task) {
+        try {
+            return executor.submit(task);
+        } catch (Throwable t) {
+            Log.warn("Failed to schedule task; will retry using caller's thread.", t);
+            try {
+                final V result = task.call();
+                return CompletableFuture.completedFuture(result);
+            } catch (Exception e) {
+                return CompletableFuture.failedFuture(e);
+            }
+        }
+    }
+
+    /**
      * Schedules the specified task for execution after the specified delay.
      *
      * @param task  task to be scheduled.

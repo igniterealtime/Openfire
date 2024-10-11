@@ -34,6 +34,7 @@ public class DNSUtilTest {
      * DNS SRV xmpp-server records for jabber.org (as they were last 2012).
      */
     @Test
+    @Deprecated // This tests a deprecated implementation. A test for the replacement code already exists. Simply delete this when the deprecated code gets removed.
     public void testJabberDotOrgMock() throws Exception {
         // setup
         final DNSUtil.WeightedHostAddress fallback = new DNSUtil.WeightedHostAddress("fallback.jabber.org", 5269, false, 31, 31);
@@ -56,6 +57,7 @@ public class DNSUtilTest {
      * A basic check that verifies that when one hosts exists, it gets returned in the output.
      */
     @Test
+    @Deprecated // This tests a deprecated implementation. A test for the replacement code already exists. Simply delete this when the deprecated code gets removed.
     public void testOneHost() throws Exception {
         // setup
         final DNSUtil.WeightedHostAddress host = new DNSUtil.WeightedHostAddress("host", 5222, false, 1, 1);
@@ -72,6 +74,7 @@ public class DNSUtilTest {
      * A check equal to {@link #testOneHost()}, but using (the edge-case) priority value of zero.
      */
     @Test
+    @Deprecated // This tests a deprecated implementation. A test for the replacement code already exists. Simply delete this when the deprecated code gets removed.
     public void testOneHostZeroPriority() throws Exception {
         // setup
         final DNSUtil.WeightedHostAddress host = new DNSUtil.WeightedHostAddress("host", 5222, false, 0, 1);
@@ -88,6 +91,7 @@ public class DNSUtilTest {
      * A check equal to {@link #testOneHost()}, but using (the edge-case) weight value of zero.
      */
     @Test
+    @Deprecated // This tests a deprecated implementation. A test for the replacement code already exists. Simply delete this when the deprecated code gets removed.
     public void testOneHostZeroWeight() throws Exception {
         // setup
         final DNSUtil.WeightedHostAddress host = new DNSUtil.WeightedHostAddress("host", 5222, false, 1, 0);
@@ -105,6 +109,7 @@ public class DNSUtilTest {
      * in the result, ordered (ascending) by their priority.
      */
     @Test
+    @Deprecated // This tests a deprecated implementation. A test for the replacement code already exists. Simply delete this when the deprecated code gets removed.
     public void testDifferentPriorities() throws Exception {
         // setup
         final DNSUtil.WeightedHostAddress hostA = new DNSUtil.WeightedHostAddress("hostA", 5222, false, 1, 1);
@@ -125,6 +130,7 @@ public class DNSUtilTest {
      * A test equal to {@link #testDifferentPriorities()}, but with one of the priorities set to zero.
      */
     @Test
+    @Deprecated // This tests a deprecated implementation. A test for the replacement code already exists. Simply delete this when the deprecated code gets removed.
     public void testZeroPriority() throws Exception {
         // setup
         final DNSUtil.WeightedHostAddress hostA = new DNSUtil.WeightedHostAddress("hostA", 5222, false, 0, 1);
@@ -148,6 +154,7 @@ public class DNSUtilTest {
      * record. This indicates that the returning list is at the very least not always ordered in the exact same way.
      */
     @Test
+    @Deprecated // This tests a deprecated implementation. A test for the replacement code already exists. Simply delete this when the deprecated code gets removed.
     public void testSameWeights() throws Exception {
         // setup
         final DNSUtil.WeightedHostAddress hostA = new DNSUtil.WeightedHostAddress("hostA", 5222, false, 1, 10);
@@ -186,6 +193,7 @@ public class DNSUtilTest {
      * A test equal to {@link #testSameWeights()}, but using records with a weight of zero.
      */
     @Test
+    @Deprecated // This tests a deprecated implementation. A test for the replacement code already exists. Simply delete this when the deprecated code gets removed.
     public void testZeroWeights() throws Exception {
         // setup
         final DNSUtil.WeightedHostAddress hostA = new DNSUtil.WeightedHostAddress("hostA", 5222, false, 1, 0);
@@ -195,8 +203,8 @@ public class DNSUtilTest {
         // do magic
         boolean hostAWasFirst = false;
         boolean hostBWasFirst = false;
-        final int maxTries = Integer.MAX_VALUE;
-        for (int i=0; i<maxTries; i++) {
+        final int maxTries = 1000000;
+        for (int i=0; i<=maxTries; i++) {
             final List<Set<DNSUtil.WeightedHostAddress>> result = DNSUtil.prioritize(hosts);
             if (hostA.equals(result.get(0).iterator().next())) {
                 hostAWasFirst = true;
@@ -210,7 +218,7 @@ public class DNSUtilTest {
                 break;
             }
 
-            if (i%1000000==0 && i>0) {
+            if (i%(maxTries/10)==0 && i>0) {
                 System.err.println("The last " + i + " iterations of this test all had the same result, which is very unlikely to occur (there should be an even distribution between two possible outcomes). We'll iterate up to "+ maxTries +" times, but you might want to abort the unit test at this point...");
             }
         }

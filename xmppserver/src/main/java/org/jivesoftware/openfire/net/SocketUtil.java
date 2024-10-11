@@ -130,8 +130,8 @@ public class SocketUtil
             Instant nextJobNotBefore = Instant.EPOCH;
 
             Log.debug( "Use DNS to resolve remote hosts for the provided XMPP domain '{}' (default port: {}) ...", xmppDomain, port );
-            final List<Set<DNSUtil.WeightedHostAddress>> remoteHosts = DNSUtil.resolveXMPPDomain(xmppDomain, port);
-            for (final Set<DNSUtil.WeightedHostAddress> prioritySet : remoteHosts) {
+            final List<Set<SrvRecord>> remoteHosts = DNSUtil.resolveXMPPDomain(xmppDomain, port);
+            for (final Set<SrvRecord> prioritySet : remoteHosts) {
                 if (executor.isTerminating() || executor.isTerminated() || executor.isShutdown()) {
                     Log.trace("Aborting resolution of '{}', as the executor is being shut down (likely cause: we successfully identified a result).", xmppDomain);
                     return;
@@ -145,7 +145,7 @@ public class SocketUtil
                 try {
                     resolver.start();
                     while (!resolver.isDone() && !executor.isTerminating() && !executor.isTerminated() && !executor.isShutdown() && Instant.now().isBefore(deadline)) {
-                        final HappyEyeballsResolver.XmppServiceAddress resolvedAddress = resolver.getNext(); // Blocks.
+                        final ResolvedServiceAddress resolvedAddress = resolver.getNext(); // Blocks.
                         Log.trace("Next resolved address for '{}': {}", xmppDomain, resolvedAddress);
                         if (resolvedAddress == null) {
                             continue;
@@ -167,25 +167,25 @@ public class SocketUtil
                             try {
                                 socketChannel = SocketChannel.open();
 
-                                Log.debug("Trying to create socket connection to XMPP domain '{}' using remote address: {}...", xmppDomain, resolvedAddress.getSocketAddress());
+                                Log.debug("Trying to create socket connection to XMPP domain '{}' using resolved address: {}...", xmppDomain, resolvedAddress);
                                 socketChannel.configureBlocking(true);
-                                socketChannel.socket().connect(resolvedAddress.getSocketAddress(), socketTimeout);
+                                socketChannel.socket().connect(resolvedAddress.generateSocketAddress(), socketTimeout);
 
-                                Log.debug("Successfully created socket connection to XMPP domain '{}' using remote address: {}!", xmppDomain, resolvedAddress.getSocketAddress());
+                                Log.debug("Successfully created socket connection to XMPP domain '{}' using resolved address: {}!", xmppDomain, resolvedAddress);
 
                                 return new AbstractMap.SimpleEntry<>(socketChannel, resolvedAddress.isDirectTLS());
                             } catch (Throwable e) {
                                 if (e instanceof java.nio.channels.ClosedByInterruptException) {
-                                    Log.debug("Socket connection establishment to XMPP domain '{}' using remote address {} got interrupted. Likely, another connection already succeeded, making this one redundant.", xmppDomain, resolvedAddress.getSocketAddress());
+                                    Log.debug("Socket connection establishment to XMPP domain '{}' using resolved address {} got interrupted. Likely, another connection already succeeded, making this one redundant.", xmppDomain, resolvedAddress);
                                 } else {
-                                    Log.debug("An exception occurred while trying to create a socket connection to XMPP domain '{}' using remote address {}", xmppDomain, resolvedAddress.getSocketAddress(), e);
+                                    Log.debug("An exception occurred while trying to create a socket connection to XMPP domain '{}' using resolved address {}", xmppDomain, resolvedAddress, e);
                                 }
                                 try {
                                     if (socketChannel != null) {
                                         socketChannel.close();
                                     }
                                 } catch (IOException ex) {
-                                    Log.debug("An additional exception occurred while trying to close a socket when creating a connection to {} failed.", resolvedAddress.getSocketAddress(), ex);
+                                    Log.debug("An additional exception occurred while trying to close a socket when creating a connection to resolved address {} failed.", resolvedAddress, ex);
                                 }
                             }
                             return null;

@@ -19,13 +19,14 @@ import net.jcip.annotations.GuardedBy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.Inet6Address;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.PriorityQueue;
+import java.util.Set;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
 
@@ -37,10 +38,10 @@ public class HappyEyeballsResolver
 
     private final ThreadPoolExecutor executor;
 
-    private final List<DNSUtil.HostAddress> hostAddresses;
+    private final List<SrvRecord> serviceRecords;
 
     @GuardedBy("this")
-    private final PriorityQueue<IndexedInetAddress> resolvedHosts;
+    private final PriorityQueue<IndexedResolvedServiceAddress> resolvedHosts;
 
     @GuardedBy("this")
     private final ConcurrentMap<Integer, Integer> resultCountByIndex = new ConcurrentHashMap<>();
@@ -51,12 +52,12 @@ public class HappyEyeballsResolver
     @GuardedBy("this")
     private boolean preferredNextFamilyIsIpv4;
 
-    public HappyEyeballsResolver(final List<DNSUtil.HostAddress> hostAddresses, final boolean preferIpv4, final Duration resolutionDelay)
+    public HappyEyeballsResolver(final List<SrvRecord> serviceRecords, final boolean preferIpv4, final Duration resolutionDelay)
     {
-        Log.debug("Instantiating new instance for {} host address(es), preferring {} (rather than {}), using a resolution delay of {}", hostAddresses.size(), preferIpv4 ? "IPv4" : "IPv6", preferIpv4 ? "IPv6" : "IPv4", resolutionDelay);
-        executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(hostAddresses.size());
-        this.hostAddresses = hostAddresses;
-        this.resolvedHosts = new PriorityQueue<>(hostAddresses.size()*3, Comparator.comparing(IndexedInetAddress::getIndex));
+        Log.debug("Instantiating new instance for {} service records, preferring {} (rather than {}), using a resolution delay of {}", serviceRecords.size(), preferIpv4 ? "IPv4" : "IPv6", preferIpv4 ? "IPv6" : "IPv4", resolutionDelay);
+        executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(serviceRecords.size());
+        this.serviceRecords = serviceRecords;
+        this.resolvedHosts = new PriorityQueue<>(serviceRecords.size()*3);
         this.preferredNextFamilyIsIpv4 = preferIpv4;
         this.resolutionDelay = resolutionDelay;
     }
@@ -68,18 +69,18 @@ public class HappyEyeballsResolver
 
     public synchronized void start() throws ExecutionException, InterruptedException
     {
-        Log.debug("Start resolution of ({}) host addresses", hostAddresses.size());
-        for (int i = 0; i < hostAddresses.size(); i++)
+        Log.debug("Start resolution of ({}) host addresses", serviceRecords.size());
+        for (int i = 0; i < serviceRecords.size(); i++)
         {
-            Log.trace(" - Index {} : {}", i, hostAddresses.get(i));
+            Log.trace(" - Index {} : {}", i, serviceRecords.get(i));
             int index = i;
             // Happy Eyeballs dictates that first an AAAA and only then A query is sent out for each host. The Java API
             // that we're using doesn't give us granular control like that: it's requesting both at the same time.
-            final Supplier<Set<IndexedInetAddress>> solve = () -> {
-                final DNSUtil.HostAddress hostAddress = hostAddresses.get(index);
+            final Supplier<Set<IndexedResolvedServiceAddress>> solve = () -> {
+                final SrvRecord hostAddress = serviceRecords.get(index);
                 try {
                     Log.trace("Start resolving address at index {} ...", index);
-                    final Set<IndexedInetAddress> from = IndexedInetAddress.from(index, InetAddress.getAllByName(hostAddress.getHost()), hostAddress.getPort(), hostAddress.isDirectTLS());
+                    final Set<IndexedResolvedServiceAddress> from = IndexedResolvedServiceAddress.from(index, InetAddress.getAllByName(hostAddress.getHostname()), hostAddress.getPort(), hostAddress.isDirectTLS());
                     if (Log.isTraceEnabled()) {
                         Log.trace("Resolved address at index {} into:", index);
                         from.forEach(e -> Log.trace(" - {}", e));
@@ -94,19 +95,19 @@ public class HappyEyeballsResolver
     }
 
     // Exposed for unit testing.
-    void solve(final Supplier<Set<IndexedInetAddress>> supplier, final int index) {
+    void solve(final Supplier<Set<IndexedResolvedServiceAddress>> supplier, final int index) {
         CompletableFuture.supplyAsync(supplier, executor)
             .exceptionally(t -> { addException(t, index); return null; })
             .thenAccept(results -> addResults(results, index));
     }
 
     public synchronized boolean isDone() {
-        return executor.getCompletedTaskCount() == hostAddresses.size() && resolvedHosts.isEmpty();
+        return executor.getCompletedTaskCount() == serviceRecords.size() && resolvedHosts.isEmpty();
     }
 
     public void shutdown() {
         Log.trace("Shutting down");
-        if (executor.getCompletedTaskCount() != hostAddresses.size()) {
+        if (executor.getCompletedTaskCount() != serviceRecords.size()) {
             // Happy Eyeballs tells us to keep resolving for a while, to populate caches.
             new Thread(() -> {
                 try {
@@ -126,7 +127,7 @@ public class HappyEyeballsResolver
         executor.shutdownNow();
     }
 
-    synchronized private void addResults(final Set<IndexedInetAddress> results, final int index)
+    synchronized private void addResults(final Set<IndexedResolvedServiceAddress> results, final int index)
     {
         resolvedHosts.addAll(results);
         resultCountByIndex.merge(index, results.size(), Integer::sum);
@@ -138,12 +139,12 @@ public class HappyEyeballsResolver
         notifyAll(); // prevents threads waiting forever, after a lookup fails.
     }
 
-    synchronized private XmppServiceAddress getPreferredImmediately()
+    synchronized private ResolvedServiceAddress getPreferredImmediately()
     {
         Log.trace("Attempting to get next (preferred) address immediately (preferred next index: {}, preferred next family: {}", preferredNextIndex, preferredNextFamilyIsIpv4 ? "IPv4" : "IPv6");
-        final Iterator<IndexedInetAddress> iterator = resolvedHosts.iterator();
+        final Iterator<IndexedResolvedServiceAddress> iterator = resolvedHosts.iterator();
         while (iterator.hasNext()) {
-            final IndexedInetAddress resolvedAddress = iterator.next();
+            final IndexedResolvedServiceAddress resolvedAddress = iterator.next();
             if (resolvedAddress.getIndex() == preferredNextIndex && (resolvedAddress.isIPv6() != preferredNextFamilyIsIpv4)) {
                 iterator.remove();
 
@@ -157,22 +158,21 @@ public class HappyEyeballsResolver
                     while (resultCountByIndex.containsKey(preferredNextIndex) && resultCountByIndex.get(preferredNextIndex) == 0);
                 }
                 preferredNextFamilyIsIpv4 = resolvedAddress.isIPv6();
-                final XmppServiceAddress result = XmppServiceAddress.from(resolvedAddress);
-                Log.trace("Found preferred: {}", result);
-                return result;
+                Log.trace("Found preferred: {}", resolvedAddress);
+                return resolvedAddress;
             }
         }
         Log.trace("No preferred result available.");
         return null;
     }
 
-    synchronized private XmppServiceAddress getAlternativeImmediately()
+    synchronized private ResolvedServiceAddress getAlternativeImmediately()
     {
         Log.trace("Attempting to get next (alternative) address immediately (preferred next index: {}, preferred next family: {}", preferredNextIndex, preferredNextFamilyIsIpv4 ? "IPv4" : "IPv6");
-        IndexedInetAddress result = null;
-        final Iterator<IndexedInetAddress> iterator = resolvedHosts.iterator(); // iterates over index order.
+        IndexedResolvedServiceAddress result = null;
+        final Iterator<IndexedResolvedServiceAddress> iterator = resolvedHosts.iterator(); // iterates over index order.
         while (iterator.hasNext()) {
-            final IndexedInetAddress resolvedAddress = iterator.next();
+            final IndexedResolvedServiceAddress resolvedAddress = iterator.next();
             // Preferably, use the index.
             if (resolvedAddress.getIndex() == preferredNextIndex) {
                 result = resolvedAddress;
@@ -204,20 +204,19 @@ public class HappyEyeballsResolver
             while (resultCountByIndex.containsKey(preferredNextIndex) && resultCountByIndex.get(preferredNextIndex) == 0) {
                 preferredNextIndex++;
             }
-            final XmppServiceAddress alt = XmppServiceAddress.from(result);
-            Log.trace("Found alternative: {}", alt);
-            return alt;
+            Log.trace("Found alternative: {}", result);
+            return result;
         }
 
         Log.trace("No preferred result available.");
         return null;
     }
 
-    public synchronized XmppServiceAddress getNext() throws InterruptedException
+    public synchronized ResolvedServiceAddress getNext() throws InterruptedException
     {
         final Instant deadline = Instant.now().plus(resolutionDelay);
 
-        XmppServiceAddress result;
+        ResolvedServiceAddress result;
         while ((result = getPreferredImmediately()) == null) {
             final Instant now = Instant.now();
             final long sleepTime = Duration.between(now, deadline).toMillis();
@@ -233,130 +232,5 @@ public class HappyEyeballsResolver
         }
 
         return result;
-    }
-
-    public static class XmppServiceAddress
-    {
-        private final InetSocketAddress socketAddress;
-        private final boolean isDirectTLS;
-
-        static XmppServiceAddress from(final IndexedInetAddress address)
-        {
-            return new XmppServiceAddress(new InetSocketAddress(address.getInetAddress(), address.getPort()), address.isDirectTLS());
-        }
-
-        public XmppServiceAddress(final InetSocketAddress socketAddress, final boolean isDirectTLS)
-        {
-            this.socketAddress = socketAddress;
-            this.isDirectTLS = isDirectTLS;
-        }
-
-        public InetSocketAddress getSocketAddress()
-        {
-            return socketAddress;
-        }
-
-        public boolean isDirectTLS()
-        {
-            return isDirectTLS;
-        }
-
-        @Override
-        public boolean equals(Object o)
-        {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            XmppServiceAddress that = (XmppServiceAddress) o;
-            return isDirectTLS == that.isDirectTLS && Objects.equals(socketAddress, that.socketAddress);
-        }
-
-        @Override
-        public int hashCode()
-        {
-            return Objects.hash(socketAddress, isDirectTLS);
-        }
-
-        @Override
-        public String toString()
-        {
-            return "XmppServiceAddress{" +
-                "socketAddress=" + socketAddress +
-                ", isDirectTLS=" + isDirectTLS +
-                '}';
-        }
-    }
-
-    static class IndexedInetAddress {
-        final int index;
-        final InetAddress inetAddress;
-        final int port;
-        final boolean isDirectTLS;
-
-        IndexedInetAddress(final int index, final InetAddress inetAddress, final int port, final boolean isDirectTLS)
-        {
-            this.index = index;
-            this.inetAddress = inetAddress;
-            this.port = port;
-            this.isDirectTLS = isDirectTLS;
-        }
-
-        public static Set<IndexedInetAddress> from(final int index, final InetAddress[] addresses, final int port, final boolean isDirectTLS)
-        {
-            final Set<IndexedInetAddress> result = new HashSet<>();
-            for (InetAddress address : addresses) {
-                result.add(new IndexedInetAddress(index, address, port, isDirectTLS));
-            }
-            return result;
-        }
-
-        public int getIndex()
-        {
-            return index;
-        }
-
-        public InetAddress getInetAddress()
-        {
-            return inetAddress;
-        }
-
-        public int getPort()
-        {
-            return port;
-        }
-
-        public boolean isDirectTLS()
-        {
-            return isDirectTLS;
-        }
-
-        public boolean isIPv6() {
-            return inetAddress instanceof Inet6Address;
-        }
-
-        @Override
-        public boolean equals(Object o)
-        {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            IndexedInetAddress that = (IndexedInetAddress) o;
-            return index == that.index && port == that.port && isDirectTLS == that.isDirectTLS && Objects.equals(inetAddress, that.inetAddress);
-        }
-
-        @Override
-        public int hashCode()
-        {
-            return Objects.hash(index, inetAddress, port, isDirectTLS);
-        }
-
-        @Override
-        public String toString()
-        {
-            return "IndexedInetAddress{" +
-                "index=" + index +
-                ", inetAddress=" + inetAddress +
-                ", port=" + port +
-                ", isDirectTLS=" + isDirectTLS +
-                '}';
-        }
     }
 }

@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.*;
 import org.jivesoftware.openfire.net.DNSUtil;
+import org.jivesoftware.openfire.net.SrvRecord;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionListener;
 import org.jivesoftware.openfire.spi.ConnectionType;
@@ -183,7 +184,7 @@ public class LocalOutgoingServerSessionTest
     {
         remoteReceivingServerDummy = new RemoteReceivingServerDummy();
         remoteReceivingServerDummy.open();
-        DNSUtil.setDnsOverride(Map.of(RemoteReceivingServerDummy.XMPP_DOMAIN, new DNSUtil.HostAddress("localhost", remoteReceivingServerDummy.getPort(), false)));
+        DNSUtil.setDnsOverride(Map.of(RemoteReceivingServerDummy.XMPP_DOMAIN, new SrvRecord("localhost", remoteReceivingServerDummy.getPort(), false)));
     }
 
     @AfterEach

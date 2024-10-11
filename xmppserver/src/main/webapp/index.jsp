@@ -48,6 +48,7 @@
 <%@ page import="org.jivesoftware.openfire.ConnectionManager" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionManagerImpl" %>
 <%@ page import="org.jivesoftware.admin.servlet.BlogPostServlet" %>
+<%@ page import="org.jivesoftware.openfire.net.SrvRecord" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -326,10 +327,10 @@
                         if ( !xmppDomain.equalsIgnoreCase( hostname ) )
                         {
                             dnsIssue = true;
-                            final List<DNSUtil.WeightedHostAddress> dnsSrvRecords = DNSUtil.srvLookup( "xmpp-client", "tcp", xmppDomain );
-                            for ( final DNSUtil.WeightedHostAddress dnsSrvRecord : dnsSrvRecords )
+                            final List<SrvRecord> dnsSrvRecords = DNSUtil.srvLookup( "xmpp-client", "tcp", xmppDomain );
+                            for ( final SrvRecord dnsSrvRecord : dnsSrvRecords )
                             {
-                                if ( hostname.equalsIgnoreCase( dnsSrvRecord.getHost() ) )
+                                if ( hostname.equalsIgnoreCase( dnsSrvRecord.getHostname() ) )
                                 {
                                     dnsIssue = false;
                                     break;

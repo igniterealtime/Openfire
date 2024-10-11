@@ -16,10 +16,6 @@
 
 package org.jivesoftware.openfire.session;
 
-import com.github.jgonian.ipmath.Ipv4;
-import com.github.jgonian.ipmath.Ipv4Range;
-import com.github.jgonian.ipmath.Ipv6;
-import com.github.jgonian.ipmath.Ipv6Range;
 import org.dom4j.*;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
@@ -39,6 +35,7 @@ import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.openfire.user.PresenceEventDispatcher;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.IpUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
@@ -53,15 +50,11 @@ import org.xmpp.packet.Presence;
 import org.xmpp.packet.StreamError;
 
 import javax.annotation.Nonnull;
-import java.net.Inet4Address;
-import java.net.Inet6Address;
-import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStoreException;
 import java.time.Duration;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Represents a session between the server and a client.
@@ -320,16 +313,15 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     {
         try
         {
-            final String hostAddress = connection.getHostAddress();
             final byte[] address = connection.getAddress();
 
             // Blacklist takes precedence over whitelist.
-            if ( blockedIPs.contains( hostAddress ) || isAddressInRange( address, blockedIPs ) ) {
+            if (IpUtils.isAddressInAnyOf(address, blockedIPs)) {
                 return false;
             }
 
             // When there's a whitelist (not empty), you must be on it to be allowed.
-            return allowedIPs.isEmpty() || allowedIPs.contains( hostAddress ) || isAddressInRange( address, allowedIPs );
+            return allowedIPs.isEmpty() || IpUtils.isAddressInAnyOf(address, allowedIPs);
         }
         catch ( UnknownHostException e )
         {
@@ -341,16 +333,15 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     {
         try
         {
-            final String hostAddress = connection.getHostAddress();
             final byte[] address = connection.getAddress();
 
             // Blacklist takes precedence over whitelist.
-            if ( blockedIPs.contains( hostAddress ) || isAddressInRange( address, blockedIPs ) ) {
+            if (IpUtils.isAddressInAnyOf(address, blockedIPs)) {
                 return false;
             }
 
             // When there's a whitelist (not empty), you must be on it to be allowed.
-            return allowedAnonymIPs.isEmpty() || allowedAnonymIPs.contains( hostAddress ) || isAddressInRange( address, allowedAnonymIPs );
+            return allowedAnonymIPs.isEmpty() || IpUtils.isAddressInAnyOf(address, allowedAnonymIPs);
         }
         catch ( UnknownHostException e )
         {
@@ -358,63 +349,9 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
     }
 
+    @Deprecated(forRemoval = true, since = "4.10.0") // Remove in Openfire 4.11 or later.
     public static boolean isAddressInRange( byte[] address, Set<String> ranges ) {
-
-        final InetAddress inetAddress;
-        try {
-            inetAddress = InetAddress.getByAddress(address);
-        } catch (UnknownHostException e) {
-            throw new RuntimeException(e);
-        }
-
-        if (inetAddress instanceof Inet4Address)
-        {
-            final Ipv4 ipv4 = Ipv4.of(inetAddress.getHostAddress());
-
-            final Set<Ipv4> ipv4Addresses = ranges.stream()
-                .filter(v -> v.contains(".")) // Any IPv4 address or range will contain at least one dot.
-                .filter(v -> !v.contains("*") && !v.contains("/") && !v.contains("-")) // Any range will contain any of these characters.
-                .map(Ipv4::parse)
-                .collect(Collectors.toSet());
-
-            if (ipv4Addresses.contains(ipv4)) {
-                return true;
-            }
-
-            final Set<Ipv4Range> ipv4Ranges = ranges.stream()
-                .filter(v -> v.contains(".")) // Any IPv4 address or range will contain at least one dot.
-                .filter(v -> v.contains("*") || v.contains("/") || v.contains("-")) // Any range will contain any of these characters.
-                .map(range -> // Replace old 'wildcard' format, that was valid for IPv4 addresses prior to Openfire 4.10.0 with proper ranges.
-                    range.replace(".*.*.*", ".0.0.0/8")
-                        .replace(".*.*", ".0.0/16")
-                        .replace(".*", ".0/24"))
-                .map(Ipv4Range::parse)
-                .collect(Collectors.toSet());
-
-            return ipv4Ranges.stream().anyMatch(range -> range.contains(ipv4));
-        }
-        else if (inetAddress instanceof Inet6Address) {
-            final Ipv6 ipv6 = Ipv6.of(inetAddress.getHostAddress());
-
-            final Set<Ipv6> ipv6Addresses = ranges.stream()
-                .filter(v -> v.contains(":")) // Any IPv6 address or range will contain at least one colon.
-                .filter(v -> !v.contains("/") && !v.contains("-")) // Any range will contain any of these characters.
-                .map(Ipv6::parse)
-                .collect(Collectors.toSet());
-
-            if (ipv6Addresses.stream().anyMatch(a -> a.equals(ipv6))) {
-                return true;
-            }
-
-            final Set<Ipv6Range> ipv6Ranges = ranges.stream()
-                .filter(v -> v.contains(":")) // Any IPv6 address or range will contain at least one colon.
-                .filter(v -> v.contains("/") || v.contains("-")) // Any range will contain any of these characters.
-                .map(Ipv6Range::parse)
-                .collect(Collectors.toSet());
-
-            return ipv6Ranges.stream().anyMatch(range -> range.contains(ipv6));
-        }
-        throw new IllegalArgumentException("Provided value was not recognized as an IPv4 or IPv6 address: " + StringUtils.encodeHex(address));
+        return IpUtils.isAddressInAnyOf(address, ranges);
     }
 
     /**

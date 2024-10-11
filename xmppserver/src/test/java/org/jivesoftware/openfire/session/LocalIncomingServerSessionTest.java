@@ -19,6 +19,7 @@ import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.keystore.*;
 import org.jivesoftware.openfire.net.DNSUtil;
+import org.jivesoftware.openfire.net.SrvRecord;
 import org.jivesoftware.openfire.spi.ConnectionListener;
 import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
@@ -246,7 +247,7 @@ public class LocalIncomingServerSessionTest
 
             remoteInitiatingServerDummy.init();
             if (remoteInitiatingServerDummy.getDialbackAuthoritativeServerPort() > 0) {
-                DNSUtil.setDnsOverride(Map.of(RemoteInitiatingServerDummy.XMPP_DOMAIN, new DNSUtil.HostAddress("localhost", remoteInitiatingServerDummy.getDialbackAuthoritativeServerPort(), false)));
+                DNSUtil.setDnsOverride(Map.of(RemoteInitiatingServerDummy.XMPP_DOMAIN, new SrvRecord("localhost", remoteInitiatingServerDummy.getDialbackAuthoritativeServerPort(), false)));
             }
 
             // execute system under test.

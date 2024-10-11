@@ -13,10 +13,10 @@
         </thead>
         <tbody>
         <c:forEach var="dnsSrvRecord" items="${dnsSrvRecords}" varStatus="varStatus">
-            <tr class="${dnsSrvRecord.host.toLowerCase() eq hostname.toLowerCase() ? 'jive-highlight' : ''}">
+            <tr class="${dnsSrvRecord.hostname.toLowerCase() eq hostname.toLowerCase() ? 'jive-highlight' : ''}">
                 <td style="width: 16px; white-space: nowrap; text-align: center">
                     <c:choose>
-                        <c:when test="${unknownHosts.contains(dnsSrvRecord.host)}">
+                        <c:when test="${unknownHosts.contains(dnsSrvRecord.hostname)}">
                             <img src="images/warning-16x16.gif" alt="<fmt:message key="system.dns.srv.check.tooltip-unknown-hostname" />">
                         </c:when>
                         <c:otherwise>
@@ -25,11 +25,11 @@
                     </c:choose>
                 </td>
                 <td style="width: 50%">
-                    <tt><c:out value="${dnsSrvRecord.host}"/></tt>
+                    <tt><c:out value="${dnsSrvRecord.hostname}"/></tt>
                 </td>
                 <td style="white-space: nowrap; text-align: center;">
                     <c:choose>
-                        <c:when test="${ipv4Capable.contains(dnsSrvRecord.host)}">
+                        <c:when test="${ipv4Capable.contains(dnsSrvRecord.hostname)}">
                             <img src="images/check-16x16.gif" alt="<fmt:message key="system.dns.srv.check.tooltip-ipv4-records-detected" />"/>
                         </c:when>
                         <c:otherwise>
@@ -39,7 +39,7 @@
                 </td>
                 <td style="white-space: nowrap; text-align: center;">
                     <c:choose>
-                        <c:when test="${ipv6Capable.contains(dnsSrvRecord.host)}">
+                        <c:when test="${ipv6Capable.contains(dnsSrvRecord.hostname)}">
                             <img src="images/check-16x16.gif" alt="<fmt:message key="system.dns.srv.check.tooltip-ipv6-records-detected" />"/>
                         </c:when>
                         <c:otherwise>

@@ -38,87 +38,87 @@ public class HappyEyeballsResolverTest
     static final Duration RESOLUTION_DELAY = Duration.ofMillis(50); // If this test is giving flappy results, try increasing this value. If it needs to increase over 50ms, then the implementation is not efficient enough on the server to comply with the specification.
 
     // Host 'prio0' configuration.
-    static final DNSUtil.HostAddress HOST_PRIO0 = new DNSUtil.HostAddress("prio0.example.org", 5269, false);
+    static final SrvRecord HOST_PRIO0 = new SrvRecord("prio0.example.org", 5269, false);
     static final InetAddress HOST_PRIO0_IPV4_ADDRESS;
     static final InetAddress HOST_PRIO0_IPV6_ADDRESS;
 
     static {
         try {
-            HOST_PRIO0_IPV4_ADDRESS = InetAddress.getByAddress(HOST_PRIO0.getHost(), new byte[] {(byte) 198, (byte) 51, (byte) 100, (byte) 1});
-            HOST_PRIO0_IPV6_ADDRESS = InetAddress.getByAddress(HOST_PRIO0.getHost(), new byte[] {(byte) 0x20, (byte) 0x01, (byte) 0x0d, (byte) 0xB8, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 1 });
+            HOST_PRIO0_IPV4_ADDRESS = InetAddress.getByAddress(HOST_PRIO0.getHostname(), new byte[] {(byte) 198, (byte) 51, (byte) 100, (byte) 1});
+            HOST_PRIO0_IPV6_ADDRESS = InetAddress.getByAddress(HOST_PRIO0.getHostname(), new byte[] {(byte) 0x20, (byte) 0x01, (byte) 0x0d, (byte) 0xB8, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 1 });
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);
         }
     }
 
-    static final Supplier<Set<HappyEyeballsResolver.IndexedInetAddress>> SOLVER_PRIO0_IPV4ONLY = () -> HappyEyeballsResolver.IndexedInetAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV4_ADDRESS}, 5269, false);
-    static final Supplier<Set<HappyEyeballsResolver.IndexedInetAddress>> SOLVER_PRIO0_IPV6ONLY = () -> HappyEyeballsResolver.IndexedInetAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV6_ADDRESS}, 5269, false);
-    static final Supplier<Set<HappyEyeballsResolver.IndexedInetAddress>> SOLVER_PRIO0_BOTHFAMS = () -> HappyEyeballsResolver.IndexedInetAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV4_ADDRESS, HOST_PRIO0_IPV6_ADDRESS}, 5269, false);
-    static final Supplier<Set<HappyEyeballsResolver.IndexedInetAddress>> SOLVER_PRIO0_IPV4ONLY_DELAYED_SHORT = () -> {
+    static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO0_IPV4ONLY = () -> IndexedResolvedServiceAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV4_ADDRESS}, 5269, false);
+    static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO0_IPV6ONLY = () -> IndexedResolvedServiceAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV6_ADDRESS}, 5269, false);
+    static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO0_BOTHFAMS = () -> IndexedResolvedServiceAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV4_ADDRESS, HOST_PRIO0_IPV6_ADDRESS}, 5269, false);
+    static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO0_IPV4ONLY_DELAYED_SHORT = () -> {
         try { Thread.sleep(RESOLUTION_DELAY.dividedBy(2).toMillis()); } catch (InterruptedException e) { throw new RuntimeException(e); }
-        return HappyEyeballsResolver.IndexedInetAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV4_ADDRESS}, 5269, false);
+        return IndexedResolvedServiceAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV4_ADDRESS}, 5269, false);
     };
-    static final Supplier<Set<HappyEyeballsResolver.IndexedInetAddress>> SOLVER_PRIO0_IPV4ONLY_DELAYED_LONG = () -> {
+    static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO0_IPV4ONLY_DELAYED_LONG = () -> {
         try { Thread.sleep(RESOLUTION_DELAY.multipliedBy(3).toMillis()); } catch (InterruptedException e) { throw new RuntimeException(e); }
-        return HappyEyeballsResolver.IndexedInetAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV4_ADDRESS}, 5269, false);
+        return IndexedResolvedServiceAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV4_ADDRESS}, 5269, false);
     };
-    static final Supplier<Set<HappyEyeballsResolver.IndexedInetAddress>> SOLVER_PRIO0_IPV6ONLY_DELAYED_SHORT = () -> {
+    static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO0_IPV6ONLY_DELAYED_SHORT = () -> {
         try { Thread.sleep(RESOLUTION_DELAY.dividedBy(2).toMillis()); } catch (InterruptedException e) { throw new RuntimeException(e); }
-        return HappyEyeballsResolver.IndexedInetAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV6_ADDRESS}, 5269, false);
+        return IndexedResolvedServiceAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV6_ADDRESS}, 5269, false);
     };
-    static final Supplier<Set<HappyEyeballsResolver.IndexedInetAddress>> SOLVER_PRIO0_IPV6ONLY_DELAYED_LONG = () -> {
+    static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO0_IPV6ONLY_DELAYED_LONG = () -> {
         try { Thread.sleep(RESOLUTION_DELAY.multipliedBy(3).toMillis()); } catch (InterruptedException e) { throw new RuntimeException(e); }
-        return HappyEyeballsResolver.IndexedInetAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV6_ADDRESS}, 5269, false);
+        return IndexedResolvedServiceAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV6_ADDRESS}, 5269, false);
     };
-    static final Supplier<Set<HappyEyeballsResolver.IndexedInetAddress>> SOLVER_PRIO0_BOTHFAMS_DELAYED_SHORT = () -> {
+    static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO0_BOTHFAMS_DELAYED_SHORT = () -> {
         try { Thread.sleep((RESOLUTION_DELAY.dividedBy(2)).toMillis()); } catch (InterruptedException e) { throw new RuntimeException(e); }
-        return HappyEyeballsResolver.IndexedInetAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV4_ADDRESS, HOST_PRIO0_IPV6_ADDRESS}, 5269, false);
+        return IndexedResolvedServiceAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV4_ADDRESS, HOST_PRIO0_IPV6_ADDRESS}, 5269, false);
     };
-    static final Supplier<Set<HappyEyeballsResolver.IndexedInetAddress>> SOLVER_PRIO0_BOTHFAMS_DELAYED_LONG = () -> {
+    static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO0_BOTHFAMS_DELAYED_LONG = () -> {
         try { Thread.sleep(RESOLUTION_DELAY.multipliedBy(3).toMillis()); } catch (InterruptedException e) { throw new RuntimeException(e); }
-        return HappyEyeballsResolver.IndexedInetAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV4_ADDRESS, HOST_PRIO0_IPV6_ADDRESS}, 5269, false);
+        return IndexedResolvedServiceAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV4_ADDRESS, HOST_PRIO0_IPV6_ADDRESS}, 5269, false);
     };
 
     // Host 'prio1' configuration.
-    static final DNSUtil.HostAddress HOST_PRIO1 = new DNSUtil.HostAddress("prio1.example.org", 5269, false);
+    static final SrvRecord HOST_PRIO1 = new SrvRecord("prio1.example.org", 5269, false);
     static final InetAddress HOST_PRIO1_IPV4_ADDRESS;
     static final InetAddress HOST_PRIO1_IPV6_ADDRESS;
 
     static {
         try {
-            HOST_PRIO1_IPV4_ADDRESS = InetAddress.getByAddress(HOST_PRIO1.getHost(), new byte[] {(byte) 198, (byte) 51, (byte) 100, (byte) 2});
-            HOST_PRIO1_IPV6_ADDRESS = InetAddress.getByAddress(HOST_PRIO1.getHost(), new byte[] {(byte) 0x20, (byte) 0x01, (byte) 0x0d, (byte) 0xB8, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 2 });
+            HOST_PRIO1_IPV4_ADDRESS = InetAddress.getByAddress(HOST_PRIO1.getHostname(), new byte[] {(byte) 198, (byte) 51, (byte) 100, (byte) 2});
+            HOST_PRIO1_IPV6_ADDRESS = InetAddress.getByAddress(HOST_PRIO1.getHostname(), new byte[] {(byte) 0x20, (byte) 0x01, (byte) 0x0d, (byte) 0xB8, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 0, (byte) 2 });
         } catch (UnknownHostException e) {
             throw new RuntimeException(e);
         }
     }
 
-    static final Supplier<Set<HappyEyeballsResolver.IndexedInetAddress>> SOLVER_PRIO1_IPV4ONLY = () -> HappyEyeballsResolver.IndexedInetAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV4_ADDRESS}, 5269, false);
-    static final Supplier<Set<HappyEyeballsResolver.IndexedInetAddress>> SOLVER_PRIO1_IPV6ONLY = () -> HappyEyeballsResolver.IndexedInetAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV6_ADDRESS}, 5269, false);
-    static final Supplier<Set<HappyEyeballsResolver.IndexedInetAddress>> SOLVER_PRIO1_BOTHFAMS = () -> HappyEyeballsResolver.IndexedInetAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV4_ADDRESS, HOST_PRIO1_IPV6_ADDRESS}, 5269, false);
-    static final Supplier<Set<HappyEyeballsResolver.IndexedInetAddress>> SOLVER_PRIO1_IPV4ONLY_DELAYED_SHORT = () -> {
+    static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO1_IPV4ONLY = () -> IndexedResolvedServiceAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV4_ADDRESS}, 5269, false);
+    static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO1_IPV6ONLY = () -> IndexedResolvedServiceAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV6_ADDRESS}, 5269, false);
+    static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO1_BOTHFAMS = () -> IndexedResolvedServiceAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV4_ADDRESS, HOST_PRIO1_IPV6_ADDRESS}, 5269, false);
+    static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO1_IPV4ONLY_DELAYED_SHORT = () -> {
         try { Thread.sleep(RESOLUTION_DELAY.dividedBy(2).toMillis()); } catch (InterruptedException e) { throw new RuntimeException(e); }
-        return HappyEyeballsResolver.IndexedInetAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV4_ADDRESS}, 5269, false);
+        return IndexedResolvedServiceAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV4_ADDRESS}, 5269, false);
     };
-    static final Supplier<Set<HappyEyeballsResolver.IndexedInetAddress>> SOLVER_PRIO1_IPV4ONLY_DELAYED_LONG = () -> {
+    static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO1_IPV4ONLY_DELAYED_LONG = () -> {
         try { Thread.sleep(RESOLUTION_DELAY.multipliedBy(3).toMillis()); } catch (InterruptedException e) { throw new RuntimeException(e); }
-        return HappyEyeballsResolver.IndexedInetAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV4_ADDRESS}, 5269, false);
+        return IndexedResolvedServiceAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV4_ADDRESS}, 5269, false);
     };
-    static final Supplier<Set<HappyEyeballsResolver.IndexedInetAddress>> SOLVER_PRIO1_IPV6ONLY_DELAYED_SHORT = () -> {
+    static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO1_IPV6ONLY_DELAYED_SHORT = () -> {
         try { Thread.sleep(RESOLUTION_DELAY.dividedBy(2).toMillis()); } catch (InterruptedException e) { throw new RuntimeException(e); }
-        return HappyEyeballsResolver.IndexedInetAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV6_ADDRESS}, 5269, false);
+        return IndexedResolvedServiceAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV6_ADDRESS}, 5269, false);
     };
-    static final Supplier<Set<HappyEyeballsResolver.IndexedInetAddress>> SOLVER_PRIO1_IPV6ONLY_DELAYED_LONG = () -> {
+    static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO1_IPV6ONLY_DELAYED_LONG = () -> {
         try { Thread.sleep(RESOLUTION_DELAY.multipliedBy(3).toMillis()); } catch (InterruptedException e) { throw new RuntimeException(e); }
-        return HappyEyeballsResolver.IndexedInetAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV6_ADDRESS}, 5269, false);
+        return IndexedResolvedServiceAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV6_ADDRESS}, 5269, false);
     };
-    static final Supplier<Set<HappyEyeballsResolver.IndexedInetAddress>> SOLVER_PRIO1_BOTHFAMS_DELAYED_SHORT = () -> {
+    static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO1_BOTHFAMS_DELAYED_SHORT = () -> {
         try { Thread.sleep(RESOLUTION_DELAY.dividedBy(2).toMillis()); } catch (InterruptedException e) { throw new RuntimeException(e); }
-        return HappyEyeballsResolver.IndexedInetAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV4_ADDRESS, HOST_PRIO1_IPV6_ADDRESS}, 5269, false);
+        return IndexedResolvedServiceAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV4_ADDRESS, HOST_PRIO1_IPV6_ADDRESS}, 5269, false);
     };
-    static final Supplier<Set<HappyEyeballsResolver.IndexedInetAddress>> SOLVER_PRIO1_BOTHFAMS_DELAYED_LONG = () -> {
+    static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO1_BOTHFAMS_DELAYED_LONG = () -> {
         try { Thread.sleep(RESOLUTION_DELAY.multipliedBy(3).toMillis()); } catch (InterruptedException e) { throw new RuntimeException(e); }
-        return HappyEyeballsResolver.IndexedInetAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV4_ADDRESS, HOST_PRIO1_IPV6_ADDRESS}, 5269, false);
+        return IndexedResolvedServiceAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV4_ADDRESS, HOST_PRIO1_IPV6_ADDRESS}, 5269, false);
     };
 
     @ParameterizedTest
@@ -126,18 +126,18 @@ public class HappyEyeballsResolverTest
     public void testFirstResultWhenSingleHostTwoRecords(final boolean preferIpv4) throws Exception
     {
         // Setup test fixture.
-        final List<DNSUtil.HostAddress> input = List.of(HOST_PRIO0);
+        final List<SrvRecord> input = List.of(HOST_PRIO0);
 
         // Execute system under test.
         final HappyEyeballsResolver systemUnderTest = new HappyEyeballsResolver(input, preferIpv4, RESOLUTION_DELAY);
         try {
             systemUnderTest.solve(SOLVER_PRIO0_BOTHFAMS, 0);
-            final HappyEyeballsResolver.XmppServiceAddress result = systemUnderTest.getNext();
+            final ResolvedServiceAddress result = systemUnderTest.getNext();
 
             // Verify results.
             assertNotNull(result);
             final InetAddress expected = preferIpv4 ? HOST_PRIO0_IPV4_ADDRESS : HOST_PRIO0_IPV6_ADDRESS;
-            assertEquals(expected, result.getSocketAddress().getAddress());
+            assertEquals(expected, result.getInetAddress());
         } finally {
             // Clean up test fixture.
             systemUnderTest.shutdownNow();
@@ -149,14 +149,14 @@ public class HappyEyeballsResolverTest
     public void testFirstResultWhenNoRecords(final boolean preferIpv4) throws Exception
     {
         // Setup test fixture.
-        final List<DNSUtil.HostAddress> input = List.of(HOST_PRIO0);
-        final Supplier<Set<HappyEyeballsResolver.IndexedInetAddress>> mockSolver = () -> { throw new RuntimeException("Exception thrown as part of unit testing.\"", new UnknownHostException("Nested exception thrown as part of unit testing.")); };
+        final List<SrvRecord> input = List.of(HOST_PRIO0);
+        final Supplier<Set<IndexedResolvedServiceAddress>> mockSolver = () -> { throw new RuntimeException("Exception thrown as part of unit testing.\"", new UnknownHostException("Nested exception thrown as part of unit testing.")); };
 
         // Execute system under test.
         final HappyEyeballsResolver systemUnderTest = new HappyEyeballsResolver(input, preferIpv4, RESOLUTION_DELAY);
         try {
             systemUnderTest.solve(mockSolver, 0);
-            final HappyEyeballsResolver.XmppServiceAddress result = systemUnderTest.getNext();
+            final ResolvedServiceAddress result = systemUnderTest.getNext();
 
             // Verify results.
             assertNull(result);
@@ -171,13 +171,13 @@ public class HappyEyeballsResolverTest
     public void testFirstResultWhenRecordsProvidedAfterResolutionDelay(final boolean preferIpv4) throws Exception
     {
         // Setup test fixture.
-        final List<DNSUtil.HostAddress> input = List.of(HOST_PRIO0);
+        final List<SrvRecord> input = List.of(HOST_PRIO0);
 
         // Execute system under test.
         final HappyEyeballsResolver systemUnderTest = new HappyEyeballsResolver(input, preferIpv4, RESOLUTION_DELAY);
         try {
             systemUnderTest.solve(SOLVER_PRIO0_BOTHFAMS_DELAYED_LONG, 0);
-            final HappyEyeballsResolver.XmppServiceAddress result = systemUnderTest.getNext();
+            final ResolvedServiceAddress result = systemUnderTest.getNext();
 
             // Verify results.
             assertNull(result);
@@ -192,13 +192,13 @@ public class HappyEyeballsResolverTest
     public void testFirstResultWhenOnlyIpv4Record(final boolean preferIpv4) throws Exception
     {
         // Setup test fixture.
-        final List<DNSUtil.HostAddress> input = List.of(HOST_PRIO0);
+        final List<SrvRecord> input = List.of(HOST_PRIO0);
 
         // Execute system under test.
         final HappyEyeballsResolver systemUnderTest = new HappyEyeballsResolver(input, preferIpv4, RESOLUTION_DELAY);
         try {
             systemUnderTest.solve(SOLVER_PRIO0_IPV4ONLY, 0);
-            final HappyEyeballsResolver.XmppServiceAddress result = systemUnderTest.getNext();
+            final ResolvedServiceAddress result = systemUnderTest.getNext();
 
             // Verify results.
             assertNotNull(result);
@@ -213,13 +213,13 @@ public class HappyEyeballsResolverTest
     public void testFirstResultWhenOnlyIpv6Record(final boolean preferIpv4) throws Exception
     {
         // Setup test fixture.
-        final List<DNSUtil.HostAddress> input = List.of(HOST_PRIO0);
+        final List<SrvRecord> input = List.of(HOST_PRIO0);
 
         // Execute system under test.
         final HappyEyeballsResolver systemUnderTest = new HappyEyeballsResolver(input, preferIpv4, RESOLUTION_DELAY);
         try {
             systemUnderTest.solve(SOLVER_PRIO0_IPV6ONLY, 0);
-            final HappyEyeballsResolver.XmppServiceAddress result = systemUnderTest.getNext();
+            final ResolvedServiceAddress result = systemUnderTest.getNext();
 
             // Verify results.
             assertNotNull(result);
@@ -234,19 +234,19 @@ public class HappyEyeballsResolverTest
     public void testFirstResultWhenTwoHostsFourRecords(final boolean preferIpv4) throws Exception
     {
         // Setup test fixture.
-        final List<DNSUtil.HostAddress> input = List.of(HOST_PRIO0, HOST_PRIO1);
+        final List<SrvRecord> input = List.of(HOST_PRIO0, HOST_PRIO1);
 
         // Execute system under test.
         final HappyEyeballsResolver systemUnderTest = new HappyEyeballsResolver(input, preferIpv4, RESOLUTION_DELAY);
         try {
             systemUnderTest.solve(SOLVER_PRIO0_BOTHFAMS, 0);
             systemUnderTest.solve(SOLVER_PRIO0_BOTHFAMS, 1);
-            final HappyEyeballsResolver.XmppServiceAddress result = systemUnderTest.getNext();
+            final ResolvedServiceAddress result = systemUnderTest.getNext();
 
             // Verify results.
             assertNotNull(result);
             final InetAddress expected = preferIpv4 ? HOST_PRIO0_IPV4_ADDRESS : HOST_PRIO0_IPV6_ADDRESS;
-            assertEquals(expected, result.getSocketAddress().getAddress());
+            assertEquals(expected, result.generateSocketAddress().getAddress());
         } finally {
             // Clean up test fixture.
             systemUnderTest.shutdownNow();
@@ -258,19 +258,19 @@ public class HappyEyeballsResolverTest
     public void testFirstResultWhenPreferredHostProvidedFirst(final boolean preferIpv4) throws Exception
     {
         // Setup test fixture.
-        final List<DNSUtil.HostAddress> input = List.of(HOST_PRIO0, HOST_PRIO1);
+        final List<SrvRecord> input = List.of(HOST_PRIO0, HOST_PRIO1);
 
         // Execute system under test.
         final HappyEyeballsResolver systemUnderTest = new HappyEyeballsResolver(input, preferIpv4, RESOLUTION_DELAY);
         try {
             systemUnderTest.solve(SOLVER_PRIO0_BOTHFAMS, 0);
             systemUnderTest.solve(SOLVER_PRIO1_BOTHFAMS_DELAYED_SHORT, 1);
-            final HappyEyeballsResolver.XmppServiceAddress result = systemUnderTest.getNext();
+            final ResolvedServiceAddress result = systemUnderTest.getNext();
 
             // Verify results.
             assertNotNull(result);
             final InetAddress expected = preferIpv4 ? HOST_PRIO0_IPV4_ADDRESS : HOST_PRIO0_IPV6_ADDRESS;
-            assertEquals(expected, result.getSocketAddress().getAddress());
+            assertEquals(expected, result.generateSocketAddress().getAddress());
         } finally {
             // Clean up test fixture.
             systemUnderTest.shutdownNow();
@@ -282,19 +282,19 @@ public class HappyEyeballsResolverTest
     public void testFirstResultWhenPreferredHostProvidedSecondButWithinResolutionDelay(final boolean preferIpv4) throws Exception
     {
         // Setup test fixture.
-        final List<DNSUtil.HostAddress> input = List.of(HOST_PRIO0, HOST_PRIO1);
+        final List<SrvRecord> input = List.of(HOST_PRIO0, HOST_PRIO1);
 
         // Execute system under test.
         final HappyEyeballsResolver systemUnderTest = new HappyEyeballsResolver(input, preferIpv4, RESOLUTION_DELAY);
         try {
             systemUnderTest.solve(SOLVER_PRIO0_BOTHFAMS_DELAYED_SHORT, 0);
             systemUnderTest.solve(SOLVER_PRIO1_BOTHFAMS, 1);
-            final HappyEyeballsResolver.XmppServiceAddress result = systemUnderTest.getNext();
+            final ResolvedServiceAddress result = systemUnderTest.getNext();
 
             // Verify results.
             assertNotNull(result);
             final InetAddress expected = preferIpv4 ? HOST_PRIO0_IPV4_ADDRESS : HOST_PRIO0_IPV6_ADDRESS;
-            assertEquals(expected, result.getSocketAddress().getAddress());
+            assertEquals(expected, result.generateSocketAddress().getAddress());
         } finally {
             // Clean up test fixture.
             systemUnderTest.shutdownNow();
@@ -306,19 +306,19 @@ public class HappyEyeballsResolverTest
     public void testFirstResultWhenPreferredHostProvidedSecondAfterResolutionDelay(final boolean preferIpv4) throws Exception
     {
         // Setup test fixture.
-        final List<DNSUtil.HostAddress> input = List.of(HOST_PRIO0, HOST_PRIO1);
+        final List<SrvRecord> input = List.of(HOST_PRIO0, HOST_PRIO1);
 
         // Execute system under test.
         final HappyEyeballsResolver systemUnderTest = new HappyEyeballsResolver(input, preferIpv4, RESOLUTION_DELAY);
         try {
             systemUnderTest.solve(SOLVER_PRIO0_BOTHFAMS_DELAYED_LONG, 0);
             systemUnderTest.solve(SOLVER_PRIO1_BOTHFAMS, 1);
-            final HappyEyeballsResolver.XmppServiceAddress result = systemUnderTest.getNext();
+            final ResolvedServiceAddress result = systemUnderTest.getNext();
 
             // Verify results.
             assertNotNull(result);
             final InetAddress expected = preferIpv4 ? HOST_PRIO1_IPV4_ADDRESS : HOST_PRIO1_IPV6_ADDRESS;
-            assertEquals(expected, result.getSocketAddress().getAddress());
+            assertEquals(expected, result.generateSocketAddress().getAddress());
         } finally {
             // Clean up test fixture.
             systemUnderTest.shutdownNow();
@@ -330,7 +330,7 @@ public class HappyEyeballsResolverTest
     public void testAllResults(final boolean preferIpv4) throws Exception
     {
         // Setup test fixture.
-        final List<DNSUtil.HostAddress> input = List.of(HOST_PRIO0, HOST_PRIO1);
+        final List<SrvRecord> input = List.of(HOST_PRIO0, HOST_PRIO1);
 
         // Execute system under test.
         final HappyEyeballsResolver systemUnderTest = new HappyEyeballsResolver(input, preferIpv4, RESOLUTION_DELAY);
@@ -338,9 +338,9 @@ public class HappyEyeballsResolverTest
             systemUnderTest.solve(SOLVER_PRIO0_BOTHFAMS, 0);
             systemUnderTest.solve(SOLVER_PRIO1_BOTHFAMS, 1);
 
-            final List<HappyEyeballsResolver.XmppServiceAddress> results = new LinkedList<>();
+            final List<ResolvedServiceAddress> results = new LinkedList<>();
             for (int i = 0; i < 10; i++) {
-                final HappyEyeballsResolver.XmppServiceAddress nextResult = systemUnderTest.getNext();
+                final ResolvedServiceAddress nextResult = systemUnderTest.getNext();
                 if (nextResult != null) {
                     results.add(nextResult);
                 }
@@ -351,10 +351,10 @@ public class HappyEyeballsResolverTest
 
             // Verify results.
             assertEquals(4, results.size());
-            assertEquals(preferIpv4 ? HOST_PRIO0_IPV4_ADDRESS : HOST_PRIO0_IPV6_ADDRESS, results.get(0).getSocketAddress().getAddress());
-            assertEquals(preferIpv4 ? HOST_PRIO0_IPV6_ADDRESS : HOST_PRIO0_IPV4_ADDRESS, results.get(1).getSocketAddress().getAddress());
-            assertEquals(preferIpv4 ? HOST_PRIO1_IPV4_ADDRESS : HOST_PRIO1_IPV6_ADDRESS, results.get(2).getSocketAddress().getAddress());
-            assertEquals(preferIpv4 ? HOST_PRIO1_IPV6_ADDRESS : HOST_PRIO1_IPV4_ADDRESS, results.get(3).getSocketAddress().getAddress());
+            assertEquals(preferIpv4 ? HOST_PRIO0_IPV4_ADDRESS : HOST_PRIO0_IPV6_ADDRESS, results.get(0).getInetAddress());
+            assertEquals(preferIpv4 ? HOST_PRIO0_IPV6_ADDRESS : HOST_PRIO0_IPV4_ADDRESS, results.get(1).getInetAddress());
+            assertEquals(preferIpv4 ? HOST_PRIO1_IPV4_ADDRESS : HOST_PRIO1_IPV6_ADDRESS, results.get(2).getInetAddress());
+            assertEquals(preferIpv4 ? HOST_PRIO1_IPV6_ADDRESS : HOST_PRIO1_IPV4_ADDRESS, results.get(3).getInetAddress());
         } finally {
             // Clean up test fixture.
             systemUnderTest.shutdownNow();
@@ -366,7 +366,7 @@ public class HappyEyeballsResolverTest
     public void testAllResultsWhenPreferredHostProvidedSecondButWithinResolutionDelay(final boolean preferIpv4) throws Exception
     {
         // Setup test fixture.
-        final List<DNSUtil.HostAddress> input = List.of(HOST_PRIO0, HOST_PRIO1);
+        final List<SrvRecord> input = List.of(HOST_PRIO0, HOST_PRIO1);
 
         // Execute system under test.
         final HappyEyeballsResolver systemUnderTest = new HappyEyeballsResolver(input, preferIpv4, RESOLUTION_DELAY);
@@ -374,9 +374,9 @@ public class HappyEyeballsResolverTest
             systemUnderTest.solve(SOLVER_PRIO0_BOTHFAMS_DELAYED_SHORT, 0);
             systemUnderTest.solve(SOLVER_PRIO1_BOTHFAMS, 1);
 
-            final List<HappyEyeballsResolver.XmppServiceAddress> results = new LinkedList<>();
+            final List<ResolvedServiceAddress> results = new LinkedList<>();
             for (int i = 0; i < 10; i++) {
-                final HappyEyeballsResolver.XmppServiceAddress nextResult = systemUnderTest.getNext();
+                final ResolvedServiceAddress nextResult = systemUnderTest.getNext();
                 if (nextResult != null) {
                     results.add(nextResult);
                 }
@@ -387,10 +387,10 @@ public class HappyEyeballsResolverTest
 
             // Verify results.
             assertEquals(4, results.size());
-            assertEquals(preferIpv4 ? HOST_PRIO0_IPV4_ADDRESS : HOST_PRIO0_IPV6_ADDRESS, results.get(0).getSocketAddress().getAddress());
-            assertEquals(preferIpv4 ? HOST_PRIO0_IPV6_ADDRESS : HOST_PRIO0_IPV4_ADDRESS, results.get(1).getSocketAddress().getAddress());
-            assertEquals(preferIpv4 ? HOST_PRIO1_IPV4_ADDRESS : HOST_PRIO1_IPV6_ADDRESS, results.get(2).getSocketAddress().getAddress());
-            assertEquals(preferIpv4 ? HOST_PRIO1_IPV6_ADDRESS : HOST_PRIO1_IPV4_ADDRESS, results.get(3).getSocketAddress().getAddress());
+            assertEquals(preferIpv4 ? HOST_PRIO0_IPV4_ADDRESS : HOST_PRIO0_IPV6_ADDRESS, results.get(0).getInetAddress());
+            assertEquals(preferIpv4 ? HOST_PRIO0_IPV6_ADDRESS : HOST_PRIO0_IPV4_ADDRESS, results.get(1).getInetAddress());
+            assertEquals(preferIpv4 ? HOST_PRIO1_IPV4_ADDRESS : HOST_PRIO1_IPV6_ADDRESS, results.get(2).getInetAddress());
+            assertEquals(preferIpv4 ? HOST_PRIO1_IPV6_ADDRESS : HOST_PRIO1_IPV4_ADDRESS, results.get(3).getInetAddress());
         } finally {
             // Clean up test fixture.
             systemUnderTest.shutdownNow();
@@ -402,7 +402,7 @@ public class HappyEyeballsResolverTest
     public void testAllResultsWhenPreferredFamilyProvidedSecondButWithinResolutionDelay(final boolean preferIpv4) throws Exception
     {
         // Setup test fixture.
-        final List<DNSUtil.HostAddress> input = List.of(HOST_PRIO0, HOST_PRIO1);
+        final List<SrvRecord> input = List.of(HOST_PRIO0, HOST_PRIO1);
 
         // Execute system under test.
         final HappyEyeballsResolver systemUnderTest = new HappyEyeballsResolver(input, preferIpv4, RESOLUTION_DELAY);
@@ -410,9 +410,9 @@ public class HappyEyeballsResolverTest
             systemUnderTest.solve(preferIpv4 ? SOLVER_PRIO0_IPV4ONLY_DELAYED_SHORT : SOLVER_PRIO0_IPV6ONLY_DELAYED_SHORT, 0);
             systemUnderTest.solve(preferIpv4 ? SOLVER_PRIO1_IPV6ONLY : SOLVER_PRIO1_IPV4ONLY, 1);
 
-            final List<HappyEyeballsResolver.XmppServiceAddress> results = new LinkedList<>();
+            final List<ResolvedServiceAddress> results = new LinkedList<>();
             for (int i = 0; i < 10; i++) {
-                final HappyEyeballsResolver.XmppServiceAddress nextResult = systemUnderTest.getNext();
+                final ResolvedServiceAddress nextResult = systemUnderTest.getNext();
                 if (nextResult != null) {
                     results.add(nextResult);
                 }
@@ -423,8 +423,8 @@ public class HappyEyeballsResolverTest
 
             // Verify results.
             assertEquals(2, results.size());
-            assertEquals(preferIpv4 ? HOST_PRIO0_IPV4_ADDRESS : HOST_PRIO0_IPV6_ADDRESS, results.get(0).getSocketAddress().getAddress());
-            assertEquals(preferIpv4 ? HOST_PRIO1_IPV6_ADDRESS : HOST_PRIO1_IPV4_ADDRESS, results.get(1).getSocketAddress().getAddress());
+            assertEquals(preferIpv4 ? HOST_PRIO0_IPV4_ADDRESS : HOST_PRIO0_IPV6_ADDRESS, results.get(0).getInetAddress());
+            assertEquals(preferIpv4 ? HOST_PRIO1_IPV6_ADDRESS : HOST_PRIO1_IPV4_ADDRESS, results.get(1).getInetAddress());
         } finally {
             // Clean up test fixture.
             systemUnderTest.shutdownNow();
@@ -436,7 +436,7 @@ public class HappyEyeballsResolverTest
     public void testAllResultsWhenPreferredFamilyProvidedSecondAfterResolutionDelay(final boolean preferIpv4) throws Exception
     {
         // Setup test fixture.
-        final List<DNSUtil.HostAddress> input = List.of(HOST_PRIO0, HOST_PRIO1);
+        final List<SrvRecord> input = List.of(HOST_PRIO0, HOST_PRIO1);
 
         // Execute system under test.
         final HappyEyeballsResolver systemUnderTest = new HappyEyeballsResolver(input, preferIpv4, RESOLUTION_DELAY);
@@ -444,9 +444,9 @@ public class HappyEyeballsResolverTest
             systemUnderTest.solve(preferIpv4 ? SOLVER_PRIO0_IPV4ONLY_DELAYED_LONG : SOLVER_PRIO0_IPV6ONLY_DELAYED_LONG, 0);
             systemUnderTest.solve(preferIpv4 ? SOLVER_PRIO1_IPV6ONLY : SOLVER_PRIO1_IPV4ONLY, 1);
 
-            final List<HappyEyeballsResolver.XmppServiceAddress> results = new LinkedList<>();
+            final List<ResolvedServiceAddress> results = new LinkedList<>();
             for (int i = 0; i < 10; i++) {
-                final HappyEyeballsResolver.XmppServiceAddress nextResult = systemUnderTest.getNext();
+                final ResolvedServiceAddress nextResult = systemUnderTest.getNext();
                 if (nextResult != null) {
                     results.add(nextResult);
                 }
@@ -457,8 +457,8 @@ public class HappyEyeballsResolverTest
 
             // Verify results.
             assertEquals(2, results.size());
-            assertEquals(preferIpv4 ? HOST_PRIO1_IPV6_ADDRESS : HOST_PRIO1_IPV4_ADDRESS, results.get(0).getSocketAddress().getAddress());
-            assertEquals(preferIpv4 ? HOST_PRIO0_IPV4_ADDRESS : HOST_PRIO0_IPV6_ADDRESS, results.get(1).getSocketAddress().getAddress());
+            assertEquals(preferIpv4 ? HOST_PRIO1_IPV6_ADDRESS : HOST_PRIO1_IPV4_ADDRESS, results.get(0).getInetAddress());
+            assertEquals(preferIpv4 ? HOST_PRIO0_IPV4_ADDRESS : HOST_PRIO0_IPV6_ADDRESS, results.get(1).getInetAddress());
         } finally {
             // Clean up test fixture.
             systemUnderTest.shutdownNow();
@@ -470,7 +470,7 @@ public class HappyEyeballsResolverTest
     public void testAllResultsFamilyInterleavedWhenPreferredFamilyProvidedSecondAfterResolutionDelay(final boolean preferIpv4) throws Exception
     {
         // Setup test fixture.
-        final List<DNSUtil.HostAddress> input = List.of(HOST_PRIO0, HOST_PRIO1);
+        final List<SrvRecord> input = List.of(HOST_PRIO0, HOST_PRIO1);
 
         // Execute system under test.
         final HappyEyeballsResolver systemUnderTest = new HappyEyeballsResolver(input, preferIpv4, RESOLUTION_DELAY);
@@ -478,9 +478,9 @@ public class HappyEyeballsResolverTest
             systemUnderTest.solve(SOLVER_PRIO0_BOTHFAMS_DELAYED_LONG, 0);
             systemUnderTest.solve(preferIpv4 ? SOLVER_PRIO1_IPV6ONLY : SOLVER_PRIO1_IPV4ONLY, 1);
 
-            final List<HappyEyeballsResolver.XmppServiceAddress> results = new LinkedList<>();
+            final List<ResolvedServiceAddress> results = new LinkedList<>();
             for (int i = 0; i < 10; i++) {
-                final HappyEyeballsResolver.XmppServiceAddress nextResult = systemUnderTest.getNext();
+                final ResolvedServiceAddress nextResult = systemUnderTest.getNext();
                 if (nextResult != null) {
                     results.add(nextResult);
                 }
@@ -491,9 +491,9 @@ public class HappyEyeballsResolverTest
 
             // Verify results.
             assertEquals(3, results.size());
-            assertEquals(preferIpv4 ? HOST_PRIO1_IPV6_ADDRESS : HOST_PRIO1_IPV4_ADDRESS, results.get(0).getSocketAddress().getAddress());
-            assertEquals(preferIpv4 ? HOST_PRIO0_IPV4_ADDRESS : HOST_PRIO0_IPV6_ADDRESS, results.get(1).getSocketAddress().getAddress());
-            assertEquals(preferIpv4 ? HOST_PRIO0_IPV6_ADDRESS : HOST_PRIO0_IPV4_ADDRESS, results.get(2).getSocketAddress().getAddress());
+            assertEquals(preferIpv4 ? HOST_PRIO1_IPV6_ADDRESS : HOST_PRIO1_IPV4_ADDRESS, results.get(0).getInetAddress());
+            assertEquals(preferIpv4 ? HOST_PRIO0_IPV4_ADDRESS : HOST_PRIO0_IPV6_ADDRESS, results.get(1).getInetAddress());
+            assertEquals(preferIpv4 ? HOST_PRIO0_IPV6_ADDRESS : HOST_PRIO0_IPV4_ADDRESS, results.get(2).getInetAddress());
         } finally {
             // Clean up test fixture.
             systemUnderTest.shutdownNow();

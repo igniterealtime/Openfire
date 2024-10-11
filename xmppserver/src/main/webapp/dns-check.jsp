@@ -23,6 +23,7 @@
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionConfiguration" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.openfire.ConnectionManager" %>
+<%@ page import="org.jivesoftware.openfire.net.SrvRecord" %>
 <%@ page import="java.util.stream.Collectors" %>
 <%@ page import="java.util.stream.Stream" %>
 <%@ page import="java.net.InetAddress" %>
@@ -41,16 +42,16 @@
 <%
     final String xmppDomain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
     final String hostname = XMPPServer.getInstance().getServerInfo().getHostname();
-    final List<DNSUtil.WeightedHostAddress> dnsSrvRecordsClient = DNSUtil.srvLookup( "xmpp-client", "tcp", xmppDomain );
-    final List<DNSUtil.WeightedHostAddress> dnsSrvRecordsServer = DNSUtil.srvLookup( "xmpp-server", "tcp", xmppDomain );
-    final List<DNSUtil.WeightedHostAddress> dnsSrvRecordsClientTLS = DNSUtil.srvLookup( "xmpps-client", "tcp", xmppDomain );
-    final List<DNSUtil.WeightedHostAddress> dnsSrvRecordsServerTLS = DNSUtil.srvLookup( "xmpps-server", "tcp", xmppDomain );
+    final List<SrvRecord> dnsSrvRecordsClient = DNSUtil.srvLookup( "xmpp-client", "tcp", xmppDomain );
+    final List<SrvRecord> dnsSrvRecordsServer = DNSUtil.srvLookup( "xmpp-server", "tcp", xmppDomain );
+    final List<SrvRecord> dnsSrvRecordsClientTLS = DNSUtil.srvLookup( "xmpps-client", "tcp", xmppDomain );
+    final List<SrvRecord> dnsSrvRecordsServerTLS = DNSUtil.srvLookup( "xmpps-server", "tcp", xmppDomain );
 
     // Check if A and AAAA records exist for each discovered hostname.
     final Set<String> unknownHosts = new HashSet<>();
     final Set<String> hostnames = Stream.of(dnsSrvRecordsClient, dnsSrvRecordsClientTLS, dnsSrvRecordsServer, dnsSrvRecordsServerTLS)
         .flatMap(Collection::stream)
-        .map(DNSUtil.HostAddress::getHost).collect(Collectors.toSet());
+        .map(SrvRecord::getHostname).collect(Collectors.toSet());
     final Set<String> ipv4Capable = hostnames.stream().filter(host -> {
         try {
             for (InetAddress i : InetAddress.getAllByName(host)) {
@@ -78,18 +79,18 @@
     }).collect(Collectors.toSet());
 
     boolean detectedRecordForHostname = false;
-    for ( final DNSUtil.WeightedHostAddress dnsSrvRecord : dnsSrvRecordsClient )
+    for ( final SrvRecord dnsSrvRecord : dnsSrvRecordsClient )
     {
-        if ( hostname.equalsIgnoreCase( dnsSrvRecord.getHost() ) )
+        if ( hostname.equalsIgnoreCase( dnsSrvRecord.getHostname() ) )
         {
             detectedRecordForHostname = true;
             break;
         }
     }
 
-    for ( final DNSUtil.WeightedHostAddress dnsSrvRecord : dnsSrvRecordsServer )
+    for ( final SrvRecord dnsSrvRecord : dnsSrvRecordsServer )
     {
-        if ( hostname.equalsIgnoreCase( dnsSrvRecord.getHost() ) )
+        if ( hostname.equalsIgnoreCase( dnsSrvRecord.getHostname() ) )
         {
             detectedRecordForHostname = true;
             break;

@@ -33,6 +33,7 @@
 <%@ page import="org.jivesoftware.openfire.ConnectionManager" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionManagerImpl" %>
 <%@ page import="org.jivesoftware.admin.servlet.BlogPostServlet" %>
+<%@ page import="org.jivesoftware.openfire.net.SrvRecord" %>
 <%@ page import="java.net.InetAddress" %>
 <%@ page import="java.net.UnknownHostException" %>
 <%@ page import="org.jivesoftware.util.*" %>
@@ -315,12 +316,12 @@
                             final String hostname = XMPPServer.getInstance().getServerInfo().getHostname();
                             boolean dnsIssue = false;
                             if (!xmppDomain.equalsIgnoreCase(hostname)) {
-                                final List<DNSUtil.WeightedHostAddress> dnsSrvRecords = DNSUtil.srvLookup("xmpp-client", "tcp", xmppDomain);
-                                dnsIssue = dnsSrvRecords.stream().anyMatch(r -> hostname.equalsIgnoreCase(r.getHost()));
+                                final List<SrvRecord> dnsSrvRecords = DNSUtil.srvLookup("xmpp-client", "tcp", xmppDomain);
+                                dnsIssue = dnsSrvRecords.stream().anyMatch(r -> hostname.equalsIgnoreCase(r.getHostname()));
                                 if (!dnsIssue) {
-                                    for (final DNSUtil.WeightedHostAddress dnsSrvRecord : dnsSrvRecords) {
+                                    for (final SrvRecord dnsSrvRecord : dnsSrvRecords) {
                                         try {
-                                            InetAddress.getAllByName(dnsSrvRecord.getHost());
+                                            InetAddress.getAllByName(dnsSrvRecord.getHostname());
                                         } catch (UnknownHostException e) {
                                             dnsIssue = true;
                                             break;

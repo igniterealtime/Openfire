@@ -578,16 +578,6 @@ public class Group implements Cacheable, Externalizable {
                     groupManager.memberAddedPostProcess(Group.this, user, alreadyGroupUser);
                 }
 
-                // If the user was a member that became an admin or vice versa then remove the
-                // user from the other collection
-                if (alreadyGroupUser) {
-                    if (adminCollection) {
-                        members.remove(user);
-                    }
-                    else {
-                        administrators.remove(user);
-                    }
-                }
                 return true;
             }
             return false;

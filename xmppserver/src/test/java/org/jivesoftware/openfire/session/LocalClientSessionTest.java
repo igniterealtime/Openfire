@@ -32,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class LocalClientSessionTest
 {
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv4NoRange() throws Exception
     {
         // Setup test fixture.
@@ -46,6 +47,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv4NoMatch() throws Exception
     {
         // Setup test fixture.
@@ -60,6 +62,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv4NoMatchWithWildcard() throws Exception
     {
         // Setup test fixture.
@@ -74,6 +77,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv4NoMatchMultipleRanges() throws Exception
     {
         // Setup test fixture.
@@ -88,6 +92,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv4ExactMatch() throws Exception
     {
         // Setup test fixture.
@@ -102,6 +107,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv4ExactMatchMultipleAddresses() throws Exception
     {
         // Setup test fixture.
@@ -116,6 +122,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv4WildcardRangeFourthByteMatch() throws Exception
     {
         // Setup test fixture.
@@ -130,6 +137,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPvWildcardRangeFourthByteMatchMultipleRanges() throws Exception
     {
         // Setup test fixture.
@@ -144,6 +152,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv4WildcardRangeThirdByteMatch() throws Exception
     {
         // Setup test fixture.
@@ -158,6 +167,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv4WildcardRangeThirdByteMatchMultipleRanges() throws Exception
     {
         // Setup test fixture.
@@ -172,6 +182,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv4WildcardRangeSecondByteMatch() throws Exception
     {
         // Setup test fixture.
@@ -186,6 +197,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv4CidrRangeNoMatch() throws Exception
     {
         // Setup test fixture.
@@ -200,6 +212,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv4CidrRangeFirstMatch() throws Exception
     {
         // Setup test fixture.
@@ -214,6 +227,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv4CidrRangeMiddleMatch() throws Exception
     {
         // Setup test fixture.
@@ -228,6 +242,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv4CidrRangeMiddleMatchMultipleRanges() throws Exception
     {
         // Setup test fixture.
@@ -242,6 +257,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv4CidrRangeLastMatch() throws Exception
     {
         // Setup test fixture.
@@ -256,6 +272,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv4DashRangeNoMatch() throws Exception
     {
         // Setup test fixture.
@@ -270,6 +287,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv4DashRangeFirstMatch() throws Exception
     {
         // Setup test fixture.
@@ -284,6 +302,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv4DashRangeMiddleMatch() throws Exception
     {
         // Setup test fixture.
@@ -298,6 +317,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv4DashRangeMiddleMatchMultipleRanges() throws Exception
     {
         // Setup test fixture.
@@ -312,6 +332,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv4DashRangeLastMatch() throws Exception
     {
         // Setup test fixture.
@@ -326,6 +347,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv6NoRange() throws Exception
     {
         // Setup test fixture.
@@ -340,6 +362,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv6NoMatchMultipleAddresses() throws Exception
     {
         // Setup test fixture.
@@ -354,6 +377,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv6ExactMatch() throws Exception
     {
         // Setup test fixture.
@@ -368,6 +392,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv6ExactMatchDifferentNotation() throws Exception
     {
         // Setup test fixture.
@@ -382,6 +407,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv6ExactMatchMultipleAddresses() throws Exception
     {
         // Setup test fixture.
@@ -396,6 +422,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv6CidrRangeNoMatch() throws Exception
     {
         // Setup test fixture.
@@ -410,6 +437,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv6CidrRangeFirstMatch() throws Exception
     {
         // Setup test fixture.
@@ -424,6 +452,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv6CidrRangeMiddleMatch() throws Exception
     {
         // Setup test fixture.
@@ -438,6 +467,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv6CidrRangeMiddleMatchMultipleRanges() throws Exception
     {
         // Setup test fixture.
@@ -452,6 +482,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv6CidrRangeLastMatch() throws Exception
     {
         // Setup test fixture.
@@ -466,6 +497,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv6DashRangeNoMatch() throws Exception
     {
         // Setup test fixture.
@@ -480,6 +512,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv6DashRangeFirstMatch() throws Exception
     {
         // Setup test fixture.
@@ -494,6 +527,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv6DashRangeMiddleMatch() throws Exception
     {
         // Setup test fixture.
@@ -508,6 +542,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv6DashRangeMiddleMatchMulitpleRanges() throws Exception
     {
         // Setup test fixture.
@@ -522,6 +557,7 @@ public class LocalClientSessionTest
     }
 
     @Test
+    @Deprecated(since = "4.10.0", forRemoval = true) // Remove when the system under test gets removed.
     public void testIPv6DashRangeLastMatch() throws Exception
     {
         // Setup test fixture.

@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2016-2023 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2016-2024 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -23,6 +23,12 @@
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionConfiguration" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.openfire.ConnectionManager" %>
+<%@ page import="java.util.stream.Collectors" %>
+<%@ page import="java.util.stream.Stream" %>
+<%@ page import="java.net.InetAddress" %>
+<%@ page import="java.net.Inet4Address" %>
+<%@ page import="java.net.UnknownHostException" %>
+<%@ page import="java.net.Inet6Address" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -39,6 +45,37 @@
     final List<DNSUtil.WeightedHostAddress> dnsSrvRecordsServer = DNSUtil.srvLookup( "xmpp-server", "tcp", xmppDomain );
     final List<DNSUtil.WeightedHostAddress> dnsSrvRecordsClientTLS = DNSUtil.srvLookup( "xmpps-client", "tcp", xmppDomain );
     final List<DNSUtil.WeightedHostAddress> dnsSrvRecordsServerTLS = DNSUtil.srvLookup( "xmpps-server", "tcp", xmppDomain );
+
+    // Check if A and AAAA records exist for each discovered hostname.
+    final Set<String> unknownHosts = new HashSet<>();
+    final Set<String> hostnames = Stream.of(dnsSrvRecordsClient, dnsSrvRecordsClientTLS, dnsSrvRecordsServer, dnsSrvRecordsServerTLS)
+        .flatMap(Collection::stream)
+        .map(DNSUtil.HostAddress::getHost).collect(Collectors.toSet());
+    final Set<String> ipv4Capable = hostnames.stream().filter(host -> {
+        try {
+            for (InetAddress i : InetAddress.getAllByName(host)) {
+                if (i instanceof Inet4Address) {
+                    return true;
+                }
+            }
+        } catch (UnknownHostException e) {
+            unknownHosts.add(host);
+        }
+        return false;
+    }).collect(Collectors.toSet());
+
+    final Set<String> ipv6Capable = hostnames.stream().filter(host -> {
+        try {
+            for (InetAddress i : InetAddress.getAllByName(host)) {
+                if (i instanceof Inet6Address) {
+                    return true;
+                }
+            }
+        } catch (UnknownHostException e) {
+            unknownHosts.add(host);
+        }
+        return false;
+    }).collect(Collectors.toSet());
 
     boolean detectedRecordForHostname = false;
     for ( final DNSUtil.WeightedHostAddress dnsSrvRecord : dnsSrvRecordsClient )
@@ -72,6 +109,9 @@
     pageContext.setAttribute( "dnsSrvRecordsServer", dnsSrvRecordsServer );
     pageContext.setAttribute( "dnsSrvRecordsClientTLS", dnsSrvRecordsClientTLS );
     pageContext.setAttribute( "dnsSrvRecordsServerTLS", dnsSrvRecordsServerTLS );
+    pageContext.setAttribute( "ipv4Capable", ipv4Capable );
+    pageContext.setAttribute( "ipv6Capable", ipv6Capable );
+    pageContext.setAttribute( "unknownHosts", unknownHosts );
     pageContext.setAttribute( "detectedRecordForHostname", detectedRecordForHostname );
     pageContext.setAttribute( "plaintextClientConfiguration", plaintextClientConfiguration );
     pageContext.setAttribute( "directtlsClientConfiguration", directtlsClientConfiguration );
@@ -113,6 +153,12 @@
     </c:otherwise>
 </c:choose>
 
+<c:if test="${not empty unknownHosts}">
+    <admin:infobox type="warning">
+        <fmt:message key="system.dns.srv.check.unknown-hosts.one-liner" />
+    </admin:infobox>
+</c:if>
+
 <p>
     <fmt:message key="system.dns.srv.check.info">
         <fmt:param value="${xmppDomain}" />
@@ -125,6 +171,15 @@
 <fmt:message key="system.dns.srv.check.name" var="plaintextboxtitle"/>
 <admin:contentBox title="${plaintextboxtitle}">
     <c:out value="${plaintextboxcontent}"/>
+
+    <c:if test="${not empty unknownHosts}">
+        <p><fmt:message key="system.dns.srv.check.unknown-hosts.description" /></p>
+        <ul style="margin-top: 1em">
+            <c:forEach items="${unknownHosts}" var="unknownHost">
+                <li><tt><c:out value="${unknownHost}"/></tt></li>
+            </c:forEach>
+        </ul>
+    </c:if>
 </admin:contentBox>
 
 <c:if test="${not empty dnsSrvRecordsClient or not empty dnsSrvRecordsServer or not empty dnsSrvRecordsClientTLS or not empty dnsSrvRecordsServerTLS}">
@@ -135,119 +190,28 @@
         <p><fmt:message key="system.dns.srv.check.recordbox.description"/></p>
 
         <c:if test="${not empty dnsSrvRecordsClient}">
-            <div class="jive-table">
-                <table>
-                    <thead>
-                    <tr>
-                        <th>&nbsp;</th>
-                        <th nowrap><fmt:message key="system.dns.srv.check.label.client-host" /></th>
-                        <th nowrap><fmt:message key="system.dns.srv.check.label.port" /></th>
-                        <th nowrap><fmt:message key="system.dns.srv.check.label.priority" /></th>
-                        <th nowrap><fmt:message key="system.dns.srv.check.label.weight" /></th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <c:forEach var="dnsSrvRecord" items="${dnsSrvRecordsClient}" varStatus="varStatus">
-                        <tr class="${dnsSrvRecord.host.toLowerCase() eq hostname ? 'jive-highlight' : ''}">
-                            <td style="width: 1%; white-space: nowrap"><c:out value="${varStatus.count}"/></td>
-                            <td nowrap><c:out value="${dnsSrvRecord.host}"/></td>
-                            <td nowrap><c:out value="${dnsSrvRecord.port}"/></td>
-                            <td nowrap><c:out value="${dnsSrvRecord.priority}"/></td>
-                            <td nowrap><c:out value="${dnsSrvRecord.weight}"/></td>
-                        </tr>
-                    </c:forEach>
-                    </tbody>
-                </table>
-            </div>
-
-            <br/>
+            <c:set var="resulttableTitle"><fmt:message key="system.dns.srv.check.label.client-host" /></c:set>
+            <c:set var="dnsSrvRecords" value="${dnsSrvRecordsClient}"/>
+            <%@ include file="dns-check-resulttable.jspf" %>
         </c:if>
 
         <c:if test="${not empty dnsSrvRecordsClientTLS}">
-            <div class="jive-table">
-                <table>
-                    <thead>
-                    <tr>
-                        <th>&nbsp;</th>
-                        <th nowrap><fmt:message key="system.dns.srv.check.label.client-host-tls" /></th>
-                        <th nowrap><fmt:message key="system.dns.srv.check.label.port" /></th>
-                        <th nowrap><fmt:message key="system.dns.srv.check.label.priority" /></th>
-                        <th nowrap><fmt:message key="system.dns.srv.check.label.weight" /></th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <c:forEach var="dnsSrvRecord" items="${dnsSrvRecordsClientTLS}" varStatus="varStatus">
-                        <tr class="${dnsSrvRecord.host.toLowerCase() eq hostname ? 'jive-highlight' : ''}">
-                            <td style="width: 1%; white-space: nowrap"><c:out value="${varStatus.count}"/></td>
-                            <td nowrap><c:out value="${dnsSrvRecord.host}"/></td>
-                            <td nowrap><c:out value="${dnsSrvRecord.port}"/></td>
-                            <td nowrap><c:out value="${dnsSrvRecord.priority}"/></td>
-                            <td nowrap><c:out value="${dnsSrvRecord.weight}"/></td>
-                        </tr>
-                    </c:forEach>
-                    </tbody>
-                </table>
-            </div>
-
-            <br/>
+            <c:set var="resulttableTitle"><fmt:message key="system.dns.srv.check.label.client-host-tls" /></c:set>
+            <c:set var="dnsSrvRecords" value="${dnsSrvRecordsClientTLS}"/>
+            <%@ include file="dns-check-resulttable.jspf" %>
         </c:if>
 
         <c:if test="${not empty dnsSrvRecordsServer}">
-            <div class="jive-table">
-                <table>
-                    <thead>
-                    <tr>
-                        <th>&nbsp;</th>
-                        <th nowrap><fmt:message key="system.dns.srv.check.label.server-host" /></th>
-                        <th nowrap><fmt:message key="system.dns.srv.check.label.port" /></th>
-                        <th nowrap><fmt:message key="system.dns.srv.check.label.priority" /></th>
-                        <th nowrap><fmt:message key="system.dns.srv.check.label.weight" /></th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <c:forEach var="dnsSrvRecord" items="${dnsSrvRecordsServer}" varStatus="varStatus">
-                        <tr class="${dnsSrvRecord.host.toLowerCase() eq hostname ? 'jive-highlight' : ''}">
-                            <td style="width: 1%; white-space: nowrap"><c:out value="${varStatus.count}"/></td>
-                            <td nowrap><c:out value="${dnsSrvRecord.host}"/></td>
-                            <td nowrap><c:out value="${dnsSrvRecord.port}"/></td>
-                            <td nowrap><c:out value="${dnsSrvRecord.priority}"/></td>
-                            <td nowrap><c:out value="${dnsSrvRecord.weight}"/></td>
-                        </tr>
-                    </c:forEach>
-                    </tbody>
-                </table>
-            </div>
-
-            <br/>
+            <c:set var="resulttableTitle"><fmt:message key="system.dns.srv.check.label.server-host" /></c:set>
+            <c:set var="dnsSrvRecords" value="${dnsSrvRecordsServer}"/>
+            <%@ include file="dns-check-resulttable.jspf" %>
         </c:if>
 
         <c:if test="${not empty dnsSrvRecordsServerTLS}">
-            <div class="jive-table">
-                <table>
-                    <thead>
-                    <tr>
-                        <th>&nbsp;</th>
-                        <th nowrap><fmt:message key="system.dns.srv.check.label.server-host-tls" /></th>
-                        <th nowrap><fmt:message key="system.dns.srv.check.label.port" /></th>
-                        <th nowrap><fmt:message key="system.dns.srv.check.label.priority" /></th>
-                        <th nowrap><fmt:message key="system.dns.srv.check.label.weight" /></th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <c:forEach var="dnsSrvRecord" items="${dnsSrvRecordsServerTLS}" varStatus="varStatus">
-                        <tr class="${dnsSrvRecord.host.toLowerCase() eq hostname ? 'jive-highlight' : ''}">
-                            <td style="width: 1%; white-space: nowrap"><c:out value="${varStatus.count}"/></td>
-                            <td nowrap><c:out value="${dnsSrvRecord.host}"/></td>
-                            <td nowrap><c:out value="${dnsSrvRecord.port}"/></td>
-                            <td nowrap><c:out value="${dnsSrvRecord.priority}"/></td>
-                            <td nowrap><c:out value="${dnsSrvRecord.weight}"/></td>
-                        </tr>
-                    </c:forEach>
-                    </tbody>
-                </table>
-            </div>
+            <c:set var="resulttableTitle"><fmt:message key="system.dns.srv.check.label.server-host-tls" /></c:set>
+            <c:set var="dnsSrvRecords" value="${dnsSrvRecordsServerTLS}"/>
+            <%@ include file="dns-check-resulttable.jspf" %>
         </c:if>
-
     </admin:contentBox>
 </c:if>
 

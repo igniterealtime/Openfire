@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.openfire.net;
 
+import com.google.common.annotations.VisibleForTesting;
 import net.jcip.annotations.GuardedBy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,7 +95,7 @@ public class HappyEyeballsResolver
         }
     }
 
-    // Exposed for unit testing.
+    @VisibleForTesting
     void solve(final Supplier<Set<IndexedResolvedServiceAddress>> supplier, final int index) {
         CompletableFuture.supplyAsync(supplier, executor)
             .exceptionally(t -> { addException(t, index); return null; })

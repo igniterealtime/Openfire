@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.openfire.streammanagement;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -454,7 +455,7 @@ public class StreamManager {
         return validateClientAcknowledgement(h, oldH, lastUnackedX);
     }
 
-    // Package protected to facilitate unit testing.
+    @VisibleForTesting
     static boolean validateClientAcknowledgement(final long h, final long oldH, final Long lastUnackedX) {
         if (lastUnackedX == null) {
             // No unacked stanzas.

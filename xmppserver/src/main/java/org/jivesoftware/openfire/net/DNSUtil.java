@@ -406,24 +406,18 @@ public class DNSUtil {
      * @deprecated Replaced by {@link SrvRecord#prioritize(SrvRecord[])}
      */
     @Deprecated(since = "4.10.0", forRemoval = true) // Remove in or after Openfire 4.11.0
-    public static List<Set<WeightedHostAddress>> prioritize(WeightedHostAddress[] records) {
-        return prioritize(Arrays.asList(records));
-    }
+    public static List<WeightedHostAddress> prioritize(WeightedHostAddress[] records) {
+        final List<WeightedHostAddress> result = new LinkedList<>();
 
-    /**
-     * @deprecated Replaced by {@link SrvRecord#prioritize(Collection)}
-     */
-    @Deprecated(since = "4.10.0", forRemoval = true) // Remove in or after Openfire 4.11.0
-    public static List<Set<WeightedHostAddress>> prioritize(final Collection<WeightedHostAddress> records) {
-        final Set<SrvRecord> delegates = records.stream().map(WeightedHostAddress::getDelegate).collect(Collectors.toSet());
+        // sort by priority (ascending)
+        final Set<SrvRecord> delegates = Arrays.stream(records).map(WeightedHostAddress::getDelegate).collect(Collectors.toSet());
         final List<Set<SrvRecord>> prioritized = SrvRecord.prioritize(delegates);
-        final List<Set<WeightedHostAddress>> result = new LinkedList<>();
         for (Set<SrvRecord> set : prioritized) {
             final LinkedHashSet<WeightedHostAddress> orderedSet = new LinkedHashSet<>(); // Retain the order in the set!
             for (final SrvRecord e : set) {
                 orderedSet.add(new WeightedHostAddress(e));
             }
-            result.add(orderedSet);
+            result.addAll(orderedSet);
         }
         return result;
     }

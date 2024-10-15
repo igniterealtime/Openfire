@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.container;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.dom4j.Document;
 import org.jivesoftware.admin.FlashMessageTag;
 import org.jivesoftware.admin.PluginFilter;
@@ -488,7 +489,7 @@ public class PluginServlet extends HttpServlet {
         return servlet;
     }
 
-    // Package protected to facilitate unit testing
+    @VisibleForTesting
     static <T> T getWildcardMappedObject(final Map<String, T> mapping, final String query) {
         T value = mapping.get(query);
         if (value == null) {

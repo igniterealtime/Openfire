@@ -108,7 +108,7 @@ public class DNSUtil {
      *
      * @param domain the domain.
      * @param defaultPort default port to return if the DNS look up fails.
-     * @return a list of  HostAddresses, which encompasses the hostname and port
+     * @return SRV records (grouped by priority) which encompasses the hostname and port
      *         that the XMPP server can be reached at for the specified domain.
      * @see <a href="https://tools.ietf.org/html/rfc6120#section-3.2">XMPP CORE</a>
      * @see <a href="https://xmpp.org/extensions/xep-0368.html">XEP-0368</a>

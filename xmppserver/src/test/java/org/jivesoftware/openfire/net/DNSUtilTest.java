@@ -42,15 +42,14 @@ public class DNSUtilTest {
         final DNSUtil.WeightedHostAddress hermes   = new DNSUtil.WeightedHostAddress("hermes.jabber.org",   5269, false, 30, 30);
 
         // do magic
-        final List<Set<DNSUtil.WeightedHostAddress>> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{fallback, hermes6, hermes});
+        final List<DNSUtil.WeightedHostAddress> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{fallback, hermes6, hermes});
 
         // verify
-        assertEquals(2, result.size(), "There are two distinct priority values in the input, so two priority groups should be part of the result.");
-        assertEquals(2, result.get(0).size(), "The priority group with the lowest priority value (30) should have two entries in it");
-        assertEquals(1, result.get(1).size(), "The priority group with the highest priority value (31) should have one entry in it");
-        assertTrue(result.get(0).contains(hermes), "The 'hermes' host should have been included somewhere in the first priority group.");
-        assertTrue(result.get(0).contains(hermes6), "The 'hermes6' host should have been included somewhere in the first priority group.");
-        assertTrue(result.get(1).contains(fallback), "The 'fallback' host should have been included somewhere in the second priority group.");
+        assertEquals(3, result.size(), "There were three records in the input, the output should have contained the same amount.");
+        assertTrue(result.contains(hermes), "The 'hermes' host should have been included somewhere in the output.");
+        assertTrue(result.contains(hermes6), "The 'hermes6' host should have been included somewhere in the output.");
+        assertTrue(result.contains(fallback), "The 'fallback' host should have been included somewhere in the output.");
+        assertEquals(fallback, result.get(2), "The 'fallback' host should have been the last record in the result.");
     }
 
     /**
@@ -63,11 +62,11 @@ public class DNSUtilTest {
         final DNSUtil.WeightedHostAddress host = new DNSUtil.WeightedHostAddress("host", 5222, false, 1, 1);
 
         // do magic
-        final List<Set<DNSUtil.WeightedHostAddress>> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{host});
+        final List<DNSUtil.WeightedHostAddress> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{host});
 
         // verify
         assertEquals( 1, result.size() );
-        assertEquals(host, result.get(0).iterator().next());
+        assertEquals(host, result.get(0));
     }
 
     /**
@@ -80,11 +79,11 @@ public class DNSUtilTest {
         final DNSUtil.WeightedHostAddress host = new DNSUtil.WeightedHostAddress("host", 5222, false, 0, 1);
 
         // do magic
-        final List<Set<DNSUtil.WeightedHostAddress>> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{host});
+        final List<DNSUtil.WeightedHostAddress> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{host});
 
         // verify
         assertEquals(1, result.size());
-        assertEquals(host, result.get(0).iterator().next());
+        assertEquals(host, result.get(0));
     }
 
     /**
@@ -97,11 +96,11 @@ public class DNSUtilTest {
         final DNSUtil.WeightedHostAddress host = new DNSUtil.WeightedHostAddress("host", 5222, false, 1, 0);
 
         // do magic
-        final List<Set<DNSUtil.WeightedHostAddress>> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{host});
+        final List<DNSUtil.WeightedHostAddress> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{host});
 
         // verify
         assertEquals(1, result.size());
-        assertEquals(host, result.get(0).iterator().next());
+        assertEquals(host, result.get(0));
     }
 
     /**
@@ -117,13 +116,13 @@ public class DNSUtilTest {
         final DNSUtil.WeightedHostAddress hostC = new DNSUtil.WeightedHostAddress("hostC", 5222, false, 2, 1);
 
         // do magic
-        final List<Set<DNSUtil.WeightedHostAddress>> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{hostA, hostB, hostC});
+        final List<DNSUtil.WeightedHostAddress> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{hostA, hostB, hostC});
 
         // verify
         assertEquals(3, result.size());
-        assertEquals(hostA, result.get(0).iterator().next());
-        assertEquals(hostC, result.get(1).iterator().next());
-        assertEquals(hostB, result.get(2).iterator().next());
+        assertEquals(hostA, result.get(0));
+        assertEquals(hostC, result.get( 1 ));
+        assertEquals(hostB, result.get(2));
     }
 
     /**
@@ -138,13 +137,13 @@ public class DNSUtilTest {
         final DNSUtil.WeightedHostAddress hostC = new DNSUtil.WeightedHostAddress("hostC", 5222, false, 1, 1);
 
         // do magic
-        final List<Set<DNSUtil.WeightedHostAddress>> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{hostA, hostB, hostC});
+        final List<DNSUtil.WeightedHostAddress> result = DNSUtil.prioritize(new DNSUtil.WeightedHostAddress[]{hostA, hostB, hostC});
 
         // verify
         assertEquals(3, result.size());
-        assertEquals(hostA, result.get(0).iterator().next());
-        assertEquals(hostC, result.get(1).iterator().next());
-        assertEquals(hostB, result.get(2).iterator().next());
+        assertEquals(hostA, result.get(0));
+        assertEquals(hostC, result.get(1));
+        assertEquals(hostB, result.get(2));
     }
 
     /**
@@ -166,12 +165,12 @@ public class DNSUtilTest {
         boolean hostBWasFirst = false;
         final int maxTries = Integer.MAX_VALUE;
         for (int i=0; i<maxTries; i++) {
-            final List<Set<DNSUtil.WeightedHostAddress>> result = DNSUtil.prioritize(hosts);
-            if (hostA.equals(result.get(0).iterator().next())) {
+            final List<DNSUtil.WeightedHostAddress> result = DNSUtil.prioritize(hosts);
+            if (hostA.equals(result.get(0))) {
                 hostAWasFirst = true;
             }
 
-            if (hostB.equals(result.get(0).iterator().next())) {
+            if (hostB.equals(result.get(0))) {
                 hostBWasFirst = true;
             }
 
@@ -205,12 +204,12 @@ public class DNSUtilTest {
         boolean hostBWasFirst = false;
         final int maxTries = 1000000;
         for (int i=0; i<=maxTries; i++) {
-            final List<Set<DNSUtil.WeightedHostAddress>> result = DNSUtil.prioritize(hosts);
-            if (hostA.equals(result.get(0).iterator().next())) {
+            final List<DNSUtil.WeightedHostAddress> result = DNSUtil.prioritize(hosts);
+            if (hostA.equals(result.get(0))) {
                 hostAWasFirst = true;
             }
 
-            if (hostB.equals(result.get(0).iterator().next())) {
+            if (hostB.equals(result.get(0))) {
                 hostBWasFirst = true;
             }
 

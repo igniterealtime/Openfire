@@ -593,10 +593,7 @@ document.acctform.newPassword.focus();
 
             <c:if test="${not empty xmppSettings['admin.authorizedJIDs']}">
                 <tr>
-                    <td>
-                       &nbsp;
-                    </td>
-                    <td>
+                    <td colspan="3">
                        &nbsp;
                     </td>
                     <td>

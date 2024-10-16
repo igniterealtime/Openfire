@@ -1,0 +1,59 @@
+<div class="jive-table">
+    <table>
+        <thead>
+        <tr>
+            <th>&nbsp;</th>
+            <th style="white-space: nowrap"><c:out value="${resulttableTitle}"/></th>
+            <th style="white-space: nowrap; text-align: center;"><fmt:message key="global.ipv4" /></th>
+            <th style="white-space: nowrap; text-align: center;"><fmt:message key="global.ipv6" /></th>
+            <th style="white-space: nowrap; text-align: center;"><fmt:message key="system.dns.srv.check.label.port" /></th>
+            <th style="white-space: nowrap; text-align: center;"><fmt:message key="system.dns.srv.check.label.priority" /></th>
+            <th style="white-space: nowrap; text-align: center;"><fmt:message key="system.dns.srv.check.label.weight" /></th>
+        </tr>
+        </thead>
+        <tbody>
+        <c:forEach var="dnsSrvRecord" items="${dnsSrvRecords}" varStatus="varStatus">
+            <tr class="${dnsSrvRecord.host.toLowerCase() eq hostname.toLowerCase() ? 'jive-highlight' : ''}">
+                <td style="width: 16px; white-space: nowrap; text-align: center">
+                    <c:choose>
+                        <c:when test="${unknownHosts.contains(dnsSrvRecord.host)}">
+                            <img src="images/warning-16x16.gif" alt="<fmt:message key="system.dns.srv.check.tooltip-unknown-hostname" />">
+                        </c:when>
+                        <c:otherwise>
+                            <c:out value="${varStatus.count}"/>
+                        </c:otherwise>
+                    </c:choose>
+                </td>
+                <td style="width: 50%">
+                    <tt><c:out value="${dnsSrvRecord.host}"/></tt>
+                </td>
+                <td style="white-space: nowrap; text-align: center;">
+                    <c:choose>
+                        <c:when test="${ipv4Capable.contains(dnsSrvRecord.host)}">
+                            <img src="images/check-16x16.gif" alt="<fmt:message key="system.dns.srv.check.tooltip-ipv4-records-detected" />"/>
+                        </c:when>
+                        <c:otherwise>
+                            <img src="images/x.gif" alt="<fmt:message key="system.dns.srv.check.tooltip-ipv4-records-not-detected" />"/>
+                        </c:otherwise>
+                    </c:choose>
+                </td>
+                <td style="white-space: nowrap; text-align: center;">
+                    <c:choose>
+                        <c:when test="${ipv6Capable.contains(dnsSrvRecord.host)}">
+                            <img src="images/check-16x16.gif" alt="<fmt:message key="system.dns.srv.check.tooltip-ipv6-records-detected" />"/>
+                        </c:when>
+                        <c:otherwise>
+                            <img src="images/x.gif" alt="<fmt:message key="system.dns.srv.check.tooltip-ipv6-records-not-detected" />"/>
+                        </c:otherwise>
+                    </c:choose>
+                </td>
+                <td style="white-space: nowrap; text-align: center;"><c:out value="${dnsSrvRecord.port}"/></td>
+                <td style="white-space: nowrap; text-align: center;"><c:out value="${dnsSrvRecord.priority}"/></td>
+                <td style="white-space: nowrap; text-align: center;"><c:out value="${dnsSrvRecord.weight}"/></td>
+            </tr>
+        </c:forEach>
+        </tbody>
+    </table>
+</div>
+
+<br/>

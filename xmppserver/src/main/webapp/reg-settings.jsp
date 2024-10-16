@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -16,18 +16,9 @@
   - limitations under the License.
 --%>
 
-<%@ page import="java.util.ArrayList,
-                 java.util.Enumeration,
-                 java.util.HashSet,
-                 java.util.Iterator,
-                 java.util.List,
-                 java.util.Set"
+<%@ page
     errorPage="error.jsp"
 %>
-<%@ page import="java.util.SortedSet" %>
-<%@ page import="java.util.StringTokenizer" %>
-<%@ page import="java.util.TreeSet" %>
-<%@ page import="java.util.regex.Pattern" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.handler.IQRegisterHandler" %>
 <%@ page import="org.jivesoftware.openfire.net.SASLAuthentication" %>
@@ -37,6 +28,9 @@
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="java.util.stream.Collectors" %>
+<%@ page import="org.jivesoftware.util.IpUtils" %>
+<%@ page import="java.util.*" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -60,9 +54,15 @@
     boolean canChangePassword = ParamUtils.getBooleanParameter(request, "canChangePassword");
     boolean anonLogin = ParamUtils.getBooleanParameter(request, "anonLogin");
     boolean futureUsersEnabled = ParamUtils.getBooleanParameter(request, "futureUsersEnabled");
-    String allowedIPs = request.getParameter("allowedIPs");
-    String allowedAnonymIPs = request.getParameter("allowedAnonymIPs");
-    String blockedIPs = request.getParameter("blockedIPs");
+    String deleteBlockedIP = request.getParameter("deleteBlockedIP");
+    String deleteAllowedIP = request.getParameter("deleteAllowedIP");
+    String deleteAllowedAnonymIP = request.getParameter("deleteAllowedAnonymIP");
+    String blockValue = request.getParameter("blockValue");
+    String allowValue = request.getParameter("allowValue");
+    String allowAnonymValue = request.getParameter("allowAnonymValue");
+
+    final Map<String, Object> errors = new HashMap<>();
+
     // Get an IQRegisterHandler:
     IQRegisterHandler regHandler = XMPPServer.getInstance().getIQRegisterHandler();
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
@@ -80,59 +80,92 @@
         }
     }
 
-    if (save) {
+    if (save || blockValue != null || deleteBlockedIP != null || allowValue != null || deleteAllowedIP != null || allowAnonymValue != null || deleteAllowedAnonymIP != null) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+            errors.put("csrf", "csrf");
             save = false;
+            deleteBlockedIP = null;
+            blockValue = null;
+            deleteAllowedIP = null;
+            allowValue = null;
+            deleteAllowedAnonymIP = null;
+            allowAnonymValue = null;
         }
     }
     csrfParam = StringUtils.randomString(15);
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
     pageContext.setAttribute("csrf", csrfParam);
 
-    if (save) {
+    if (deleteBlockedIP != null && errors.isEmpty())
+    {
+        final Set<String> blocklist = LocalClientSession.getBlacklistedIPs();
+        if (blocklist.remove(deleteBlockedIP) ) {
+            LocalClientSession.setBlacklistedIPs(blocklist);
+            webManager.logEvent("edited registration settings", "Removed value from list of blocked IP/IP-ranges: " + deleteBlockedIP);
+        }
+    }
+    if (blockValue != null && errors.isEmpty()) {
+        if (!IpUtils.isValidIpAddressOrRange(blockValue)) {
+            errors.put("blockValue", "invalid-syntax");
+        } else {
+            final Set<String> blocklist = LocalClientSession.getBlacklistedIPs();
+            if (blocklist.add(blockValue)) {
+                LocalClientSession.setBlacklistedIPs(blocklist);
+                webManager.logEvent("edited registration settings", "Added value to list of blocked IP/IP-ranges: " + blockValue);
+                blockValue = null;
+            }
+        }
+    }
+    if (deleteAllowedIP != null && errors.isEmpty())
+    {
+        final Set<String> allowlist = LocalClientSession.getWhitelistedIPs();
+        if (allowlist.remove(deleteAllowedIP) ) {
+            LocalClientSession.setWhitelistedIPs(allowlist);
+            webManager.logEvent("edited registration settings", "Removed value from list of allowed IP/IP-ranges: " + deleteAllowedIP);
+        }
+    }
+    if (allowValue != null && errors.isEmpty()) {
+        if (!IpUtils.isValidIpAddressOrRange(allowValue)) {
+            errors.put("allowValue", "invalid-syntax");
+        } else {
+            final Set<String> allowlist = LocalClientSession.getWhitelistedIPs();
+            if (allowlist.add(allowValue)) {
+                LocalClientSession.setWhitelistedIPs(allowlist);
+                webManager.logEvent("edited registration settings", "Added value to list of allowed IP/IP-ranges: " + blockValue);
+                allowValue = null;
+            }
+        }
+    }
+    if (deleteAllowedAnonymIP != null && errors.isEmpty())
+    {
+        final Set<String> allowlist = LocalClientSession.getWhitelistedAnonymousIPs();
+        if (allowlist.remove(deleteAllowedAnonymIP) ) {
+            LocalClientSession.setWhitelistedAnonymousIPs(allowlist);
+            webManager.logEvent("edited registration settings", "Removed value from list of allowed anonymous IP/IP-ranges: " + deleteAllowedIP);
+        }
+    }
+    if (allowAnonymValue != null && errors.isEmpty()) {
+        if (!IpUtils.isValidIpAddressOrRange(allowAnonymValue)) {
+            errors.put("allowAnonymValue", "invalid-syntax");
+        } else {
+            final Set<String> allowlist = LocalClientSession.getWhitelistedAnonymousIPs();
+            if (allowlist.add(allowAnonymValue)) {
+                LocalClientSession.setWhitelistedAnonymousIPs(allowlist);
+                webManager.logEvent("edited registration settings", "Added value to list of allowed anonymous IP/IP-ranges: " + blockValue);
+                allowAnonymValue = null;
+            }
+        }
+    }
+
+    if (save && errors.isEmpty()) {
         regHandler.setInbandRegEnabled(inbandEnabled);
         regHandler.setCanChangePassword(canChangePassword);
         AnonymousSaslServer.ENABLED.setValue(anonLogin);
         UserManager.ALLOW_FUTURE_USERS.setValue( futureUsersEnabled );
-
-        // Build a Map with the allowed IP addresses. // TODO Allow both IPv4 as well as IPv6 (OF-2784)
-        Pattern pattern = Pattern.compile("(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\." +
-                "(?:(?:\\*|25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){2}" +
-                "(?:\\*|25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)");
-        Set<String> allowedSet = new HashSet<>();
-        StringTokenizer tokens = new StringTokenizer(allowedIPs, ", ");
-        while (tokens.hasMoreTokens()) {
-            String address = tokens.nextToken().trim();
-            if (pattern.matcher(address).matches()) {
-                allowedSet.add( address );
-            }
-        }
-        
-
-        Set<String> allowedAnonymousSet = new HashSet<>();
-        StringTokenizer tokens1 = new StringTokenizer(allowedAnonymIPs, ", ");
-        while (tokens1.hasMoreTokens()) {
-            String address = tokens1.nextToken().trim();
-            if (pattern.matcher(address).matches()) {
-                allowedAnonymousSet.add( address );
-            }
-        }
-
-        Set<String> blockedSet = new HashSet<>();
-        StringTokenizer tokens2 = new StringTokenizer(blockedIPs, ", ");
-        while (tokens2.hasMoreTokens()) {
-            String address = tokens2.nextToken().trim();
-            if (pattern.matcher(address).matches()) {
-                blockedSet.add( address );
-            }
-        }
-        LocalClientSession.setWhitelistedIPs( allowedSet );
-        LocalClientSession.setWhitelistedAnonymousIPs( allowedAnonymousSet );
-        LocalClientSession.setBlacklistedIPs( blockedSet );
         SASLAuthentication.setEnabledMechanisms( mechsEnabled );
 
         // Log the event
-        webManager.logEvent("edited registration settings", "inband enabled = "+inbandEnabled+"\ncan change password = "+canChangePassword+"\nanon login = "+anonLogin+"\nallowed ips = "+allowedIPs+"\nblocked ips = "+blockedIPs+"\nFuture users enabled = "+futureUsersEnabled+"\nSASL mechanisms enabled = "+ mechsEnabled);
+        webManager.logEvent("edited registration settings", "inband enabled = "+inbandEnabled+"\ncan change password = "+canChangePassword+"\nanon login = "+anonLogin+"\nFuture users enabled = "+futureUsersEnabled+"\nSASL mechanisms enabled = "+ mechsEnabled);
     }
 
     // Reset the value of page vars:
@@ -140,48 +173,23 @@
     canChangePassword = regHandler.canChangePassword();
     anonLogin = AnonymousSaslServer.ENABLED.getValue();
     futureUsersEnabled = UserManager.ALLOW_FUTURE_USERS.getValue();
-    // Encode the allowed IP addresses
-    StringBuilder buf = new StringBuilder();
-    Iterator<String> iter = org.jivesoftware.openfire.session.LocalClientSession.getWhitelistedIPs().iterator();
-    if (iter.hasNext()) {
-        buf.append(iter.next());
-    }
-    while (iter.hasNext()) {
-        buf.append(", ").append(iter.next());
-    }
-    allowedIPs = buf.toString();
 
-    StringBuilder buf1 = new StringBuilder();
-    Iterator<String> iter1 = org.jivesoftware.openfire.session.LocalClientSession.getWhitelistedAnonymousIPs().iterator();
-    if (iter1.hasNext()) {
-        buf1.append(iter1.next());
-    }
-    while (iter1.hasNext()) {
-        buf1.append(", ").append(iter1.next());
-    }
-    allowedAnonymIPs = buf1.toString();
-
-    StringBuilder buf2 = new StringBuilder();
-    Iterator<String> iter2 = org.jivesoftware.openfire.session.LocalClientSession.getBlacklistedIPs().iterator();
-    if (iter2.hasNext()) {
-        buf2.append(iter2.next());
-    }
-    while (iter2.hasNext()) {
-        buf2.append(", ").append(iter2.next());
-    }
-    blockedIPs = buf2.toString();
-
+    pageContext.setAttribute( "errors",             errors );
     pageContext.setAttribute( "readOnly",           UserManager.getUserProvider().isReadOnly() );
     pageContext.setAttribute( "inbandEnabled",      inbandEnabled );
     pageContext.setAttribute( "canChangePassword",  canChangePassword );
     pageContext.setAttribute( "anonLogin",          anonLogin );
-    pageContext.setAttribute( "blockedIPs",         blockedIPs);
-    pageContext.setAttribute( "allowedIPs",         allowedIPs );
-    pageContext.setAttribute( "allowedAnonymIPs",   allowedAnonymIPs );
+    pageContext.setAttribute( "blockedIPs",         LocalClientSession.getBlacklistedIPs().stream().sorted().collect(Collectors.toList()));
+    pageContext.setAttribute( "allowedIPs",         LocalClientSession.getWhitelistedIPs().stream().sorted().collect(Collectors.toList()));
+    pageContext.setAttribute( "allowedAnonymIPs",   LocalClientSession.getWhitelistedAnonymousIPs().stream().sorted().collect(Collectors.toList()));
     pageContext.setAttribute( "futureUsersEnabled", futureUsersEnabled );
     pageContext.setAttribute( "saslEnabledMechanisms",     SASLAuthentication.getEnabledMechanisms() );
     pageContext.setAttribute( "saslImplementedMechanisms", SASLAuthentication.getImplementedMechanisms() );
     pageContext.setAttribute( "saslSupportedMechanisms",   SASLAuthentication.getSupportedMechanisms() );
+    pageContext.setAttribute( "blockValue", blockValue );
+    pageContext.setAttribute( "allowValue", allowValue );
+    pageContext.setAttribute( "allowAnonymValue", allowAnonymValue );
+    pageContext.setAttribute( "saveSuccess", save && errors.isEmpty());
 
     final SortedSet<String> union = new TreeSet<>();
     union.addAll( SASLAuthentication.getEnabledMechanisms() );
@@ -196,13 +204,31 @@
 <form action="reg-settings.jsp">
     <input type="hidden" name="csrf" value="${csrf}">
 
-<% if (save) { %>
-
-    <admin:infoBox type="success">
-        <fmt:message key="reg.settings.update" />
-    </admin:infoBox>
-
-<% } %>
+    <c:choose>
+        <c:when test="${not empty errors}">
+            <c:forEach var="err" items="${errors}">
+                <admin:infobox type="error">
+                    <c:choose>
+                        <c:when test="${err.key eq 'csrf'}"><fmt:message key="global.csrf.failed" /></c:when>
+                        <c:when test="${err.key eq 'blockValue'}"><fmt:message key="reg.settings.block-value.invalid" /></c:when>
+                        <c:when test="${err.key eq 'allowValue'}"><fmt:message key="reg.settings.allow-value.invalid" /></c:when>
+                        <c:when test="${err.key eq 'allowAnonymValue'}"><fmt:message key="reg.settings.allow-value.invalid" /></c:when>
+                        <c:otherwise>
+                            <c:if test="${not empty err.value}">
+                                <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
+                            </c:if>
+                            (<c:out value="${err.key}"/>)
+                        </c:otherwise>
+                    </c:choose>
+                </admin:infobox>
+            </c:forEach>
+        </c:when>
+        <c:when test="${saveSuccess}">
+            <admin:infoBox type="success">
+                <fmt:message key="reg.settings.update" />
+            </admin:infoBox>
+        </c:when>
+    </c:choose>
 
 <!-- BEGIN registration settings -->
 
@@ -260,24 +286,155 @@
     <fmt:message key="reg.settings.allowed_ips" var="allowed_ips_boxtitle"/>
     <admin:contentBox title="${allowed_ips_boxtitle}">
         <p><fmt:message key="reg.settings.allowed_ips_blocked_info" /></p>
-        <table>
+        <table class="jive-table">
             <tr>
-                <td style="vertical-align: top"><b><label for="blockedIPs"><fmt:message key="reg.settings.ips_blocked" /></label></b></td>
-                <td><textarea id="blockedIPs" name="blockedIPs" cols="40" rows="3" wrap="virtual"><c:if test="${not empty blockedIPs}"><c:out value="${blockedIPs}"/></c:if></textarea></td>
+                <th style="width: 1%; white-space: nowrap">&nbsp;</th>
+                <th style="width: 50%; white-space: nowrap"><fmt:message key="reg.settings.ips_blocked" /></th>
+                <th style="width: 1%; white-space: nowrap"><fmt:message key="global.delete" /></th>
             </tr>
+            <c:choose>
+                <c:when test="${empty blockedIPs}">
+                    <tr>
+                        <td style="text-align: center" colspan="3"><fmt:message key="global.list.empty" /></td>
+                    </tr>
+                </c:when>
+                <c:otherwise>
+                    <c:forEach var="blockedIP" varStatus="status" items="${blockedIPs}">
+                        <tr>
+                            <td></td>
+                            <td><c:out value="${blockedIP}"/></td>
+                            <td style="border-right:1px #ccc solid; text-align: center">
+                                <c:url var="deleteurl" value="reg-settings.jsp">
+                                    <c:param name="deleteBlockedIP" value="${admin:escapeHTMLTags(blockedIP)}"/>
+                                    <c:param name="csrf" value="${csrf}"/>
+                                </c:url>
+                                <a href="#" onclick="if (confirm('<fmt:message key="reg.settings.confirm_delete_ip"><fmt:param><c:out value="${blockedIP}"/></fmt:param></fmt:message>')) { location.replace('${deleteurl}'); } "
+                                   title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" alt=""></a>
+                            </td>
+                        </tr>
+                    </c:forEach>
+                </c:otherwise>
+            </c:choose>
         </table>
 
+        <br/>
+
+        <form action="reg-settings.jsp" method="post">
+            <input type="hidden" name="csrf" value="${csrf}">
+            <table>
+                <tr>
+                    <td style="width: 1%; white-space: nowrap">
+                        <b><label for="blockValue"><fmt:message key="reg.settings.block-value" /></label></b>
+                    </td>
+                    <td>
+                        <input type="text" size="40" name="blockValue" id="blockValue" value="${fn:escapeXml(blockValue)}" ${not empty errors.blockValue ? 'autofocus style=\'background-color: #ffdddd;\'' :''}/>
+                        <input type="submit" name="addBlockedIP" value="<fmt:message key="global.add" />">
+                    </td>
+                </tr>
+            </table>
+        </form>
+
+        <br>
+
         <p><fmt:message key="reg.settings.allowed_ips_info" /></p>
-        <table>
+        <table class="jive-table">
             <tr>
-                <td style="vertical-align: top"><b><label for="allowedIPs"><fmt:message key="reg.settings.ips_all" /></label></b></td>
-                <td><textarea id="allowedIPs" name="allowedIPs" cols="40" rows="3" wrap="virtual"><c:if test="${not empty allowedIPs}"><c:out value="${allowedIPs}"/></c:if></textarea></td>
+                <th style="width: 1%; white-space: nowrap">&nbsp;</th>
+                <th style="width: 50%; white-space: nowrap"><fmt:message key="reg.settings.ips_all" /></th>
+                <th style="width: 1%; white-space: nowrap"><fmt:message key="global.delete" /></th>
             </tr>
-            <tr>
-                <td style="vertical-align: top"><b><label for="allowedAnonymIPs"><fmt:message key="reg.settings.ips_anonymous" /></label></b></td>
-                <td><textarea id="allowedAnonymIPs" name="allowedAnonymIPs" cols="40" rows="3" wrap="virtual"><c:if test="${not empty allowedAnonymIPs}"><c:out value="${allowedAnonymIPs}"/></c:if></textarea></td>
-            </tr>
+            <c:choose>
+                <c:when test="${empty allowedIPs}">
+                    <tr>
+                        <td style="text-align: center" colspan="3"><fmt:message key="global.list.empty" /></td>
+                    </tr>
+                </c:when>
+                <c:otherwise>
+                    <c:forEach var="allowedIP" varStatus="status" items="${allowedIPs}">
+                        <tr>
+                            <td></td>
+                            <td><c:out value="${allowedIP}"/></td>
+                            <td style="border-right:1px #ccc solid; text-align: center">
+                                <c:url var="deleteurl" value="reg-settings.jsp">
+                                    <c:param name="deleteAllowedIP" value="${admin:escapeHTMLTags(allowedIP)}"/>
+                                    <c:param name="csrf" value="${csrf}"/>
+                                </c:url>
+                                <a href="#" onclick="if (confirm('<fmt:message key="reg.settings.confirm_delete_ip"><fmt:param><c:out value="${allowedIP}"/></fmt:param></fmt:message>')) { location.replace('${deleteurl}'); } "
+                                   title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" alt=""></a>
+                            </td>
+                        </tr>
+                    </c:forEach>
+                </c:otherwise>
+            </c:choose>
         </table>
+
+        <br/>
+
+        <form action="reg-settings.jsp" method="post">
+            <input type="hidden" name="csrf" value="${csrf}">
+            <table>
+                <tr>
+                    <td style="width: 1%; white-space: nowrap">
+                        <b><label for="allowValue"><fmt:message key="reg.settings.allow-value" /></label></b>
+                    </td>
+                    <td>
+                        <input type="text" size="40" name="allowValue" id="allowValue" value="${fn:escapeXml(allowValue)}" ${not empty errors.allowValue ? 'autofocus style=\'background-color: #ffdddd;\'' :''}/>
+                        <input type="submit" name="addAllowedIP" value="<fmt:message key="global.add" />">
+                    </td>
+                </tr>
+            </table>
+        </form>
+
+        <br/>
+
+        <table class="jive-table">
+            <tr>
+                <th style="width: 1%; white-space: nowrap">&nbsp;</th>
+                <th style="width: 50%; white-space: nowrap"><fmt:message key="reg.settings.ips_anonymous" /></th>
+                <th style="width: 1%; white-space: nowrap"><fmt:message key="global.delete" /></th>
+            </tr>
+            <c:choose>
+                <c:when test="${empty allowedAnonymIPs}">
+                    <tr>
+                        <td style="text-align: center" colspan="3"><fmt:message key="global.list.empty" /></td>
+                    </tr>
+                </c:when>
+                <c:otherwise>
+                    <c:forEach var="allowedAnonymIP" varStatus="status" items="${allowedAnonymIPs}">
+                        <tr>
+                            <td></td>
+                            <td><c:out value="${allowedAnonymIP}"/></td>
+                            <td style="border-right:1px #ccc solid; text-align: center">
+                                <c:url var="deleteurl" value="reg-settings.jsp">
+                                    <c:param name="deleteAllowedAnonymIP" value="${admin:escapeHTMLTags(allowedAnonymIP)}"/>
+                                    <c:param name="csrf" value="${csrf}"/>
+                                </c:url>
+                                <a href="#" onclick="if (confirm('<fmt:message key="reg.settings.confirm_delete_ip"><fmt:param><c:out value="${allowedAnonymIP}"/></fmt:param></fmt:message>')) { location.replace('${deleteurl}'); } "
+                                   title="<fmt:message key="global.click_delete" />"><img src="images/delete-16x16.gif" alt=""></a>
+                            </td>
+                        </tr>
+                    </c:forEach>
+                </c:otherwise>
+            </c:choose>
+        </table>
+
+        <br/>
+
+        <form action="reg-settings.jsp" method="post">
+            <input type="hidden" name="csrf" value="${csrf}">
+            <table>
+                <tr>
+                    <td style="width: 1%; white-space: nowrap">
+                        <b><label for="allowAnonymValue"><fmt:message key="reg.settings.allow-value" /></label></b>
+                    </td>
+                    <td>
+                        <input type="text" size="40" name="allowAnonymValue" id="allowAnonymValue" value="${fn:escapeXml(allowAnonymValue)}" ${not empty errors.allowAnonymValue ? 'autofocus style=\'background-color: #ffdddd;\'' :''}/>
+                        <input type="submit" name="addAllowedAnonymIP" value="<fmt:message key="global.add" />">
+                    </td>
+                </tr>
+            </table>
+        </form>
+
     </admin:contentBox>
 
     <fmt:message key="reg.settings.future_users" var="future_users_boxtitle"/>

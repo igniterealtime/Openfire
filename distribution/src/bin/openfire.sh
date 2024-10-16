@@ -132,7 +132,8 @@ case $arguments in
     sed "s/example.org/$HOSTNAME/g" $OPENFIRE_HOME/conf/openfire-demoboot.xml > $OPENFIRE_HOME/conf/openfire.xml
     ;;
     *)
-	# unknown option
+	# unknown option, pass through the Java command
+	JAVACMD="$JAVACMD $arguments"
     ;;
 esac
 done

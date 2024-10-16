@@ -21,6 +21,7 @@
 <%@ page import="java.net.URLDecoder" %>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="javax.naming.ldap.Rdn" %>
+<%@ page import="org.jivesoftware.util.StringUtils" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -35,19 +36,19 @@
         return;
     }
 
-    Cookie csrfCookie = CookieUtils.getCookie( request, "csrf");
-    String csrfParam = ParamUtils.getParameter(request, "csrf");
+    Object csrfSession = session.getAttribute("embeddedcsrf");
+    String csrfParam = ParamUtils.getParameter(request, "embeddedcsrf");
 
     String errorDetail = "";
     boolean success = false;
 
-    if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
+    if (request.getMethod().equals("POST") && (csrfSession == null || !csrfSession.equals(csrfParam))) {
         errorDetail = "CSRF failure!";
     }
 
-    // Used embedded in another page. Do not reset the csrf value. // csrfParam = StringUtils.randomString(15);
-    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
-    pageContext.setAttribute("csrf", csrfParam);
+    csrfParam = StringUtils.randomString(15);
+    session.setAttribute("embeddedcsrf", csrfParam);
+    pageContext.setAttribute("embeddedcsrf", csrfParam);
 
     Map<String, String> settings = (Map<String, String>) session.getAttribute("ldapSettings");
     Map<String, String> userSettings =
@@ -108,7 +109,7 @@
 
             <c:if test="${not success}">
             <form action="setup-admin-settings.jsp" name="testform" method="post">
-                <input type="hidden" name="csrf" value="${csrf}"/>
+                <input type="hidden" name="embeddedcsrf" value="${embeddedcsrf}"/>
                 <input type="hidden" name="ldap" value="true">
                 <input type="hidden" name="test" value="true">
                 <input type="hidden" name="username" value="${admin:urlEncode(username)}">

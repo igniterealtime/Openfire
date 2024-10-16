@@ -23,6 +23,7 @@
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionConfiguration" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.openfire.ConnectionManager" %>
+<%@ page import="org.jivesoftware.openfire.net.SrvRecord" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -35,24 +36,24 @@
 <%
     final String xmppDomain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
     final String hostname = XMPPServer.getInstance().getServerInfo().getHostname();
-    final List<DNSUtil.WeightedHostAddress> dnsSrvRecordsClient = DNSUtil.srvLookup( "xmpp-client", "tcp", xmppDomain );
-    final List<DNSUtil.WeightedHostAddress> dnsSrvRecordsServer = DNSUtil.srvLookup( "xmpp-server", "tcp", xmppDomain );
-    final List<DNSUtil.WeightedHostAddress> dnsSrvRecordsClientTLS = DNSUtil.srvLookup( "xmpps-client", "tcp", xmppDomain );
-    final List<DNSUtil.WeightedHostAddress> dnsSrvRecordsServerTLS = DNSUtil.srvLookup( "xmpps-server", "tcp", xmppDomain );
+    final List<SrvRecord> dnsSrvRecordsClient = DNSUtil.srvLookup( "xmpp-client", "tcp", xmppDomain );
+    final List<SrvRecord> dnsSrvRecordsServer = DNSUtil.srvLookup( "xmpp-server", "tcp", xmppDomain );
+    final List<SrvRecord> dnsSrvRecordsClientTLS = DNSUtil.srvLookup( "xmpps-client", "tcp", xmppDomain );
+    final List<SrvRecord> dnsSrvRecordsServerTLS = DNSUtil.srvLookup( "xmpps-server", "tcp", xmppDomain );
 
     boolean detectedRecordForHostname = false;
-    for ( final DNSUtil.WeightedHostAddress dnsSrvRecord : dnsSrvRecordsClient )
+    for ( final SrvRecord dnsSrvRecord : dnsSrvRecordsClient )
     {
-        if ( hostname.equalsIgnoreCase( dnsSrvRecord.getHost() ) )
+        if ( hostname.equalsIgnoreCase( dnsSrvRecord.getHostname() ) )
         {
             detectedRecordForHostname = true;
             break;
         }
     }
 
-    for ( final DNSUtil.WeightedHostAddress dnsSrvRecord : dnsSrvRecordsServer )
+    for ( final SrvRecord dnsSrvRecord : dnsSrvRecordsServer )
     {
-        if ( hostname.equalsIgnoreCase( dnsSrvRecord.getHost() ) )
+        if ( hostname.equalsIgnoreCase( dnsSrvRecord.getHostname() ) )
         {
             detectedRecordForHostname = true;
             break;
@@ -148,9 +149,9 @@
                     </thead>
                     <tbody>
                     <c:forEach var="dnsSrvRecord" items="${dnsSrvRecordsClient}" varStatus="varStatus">
-                        <tr class="${dnsSrvRecord.host.toLowerCase() eq hostname ? 'jive-highlight' : ''}">
+                        <tr class="${dnsSrvRecord.hostname.toLowerCase() eq hostname ? 'jive-highlight' : ''}">
                             <td style="width: 1%; white-space: nowrap"><c:out value="${varStatus.count}"/></td>
-                            <td nowrap><c:out value="${dnsSrvRecord.host}"/></td>
+                            <td nowrap><c:out value="${dnsSrvRecord.hostname}"/></td>
                             <td nowrap><c:out value="${dnsSrvRecord.port}"/></td>
                             <td nowrap><c:out value="${dnsSrvRecord.priority}"/></td>
                             <td nowrap><c:out value="${dnsSrvRecord.weight}"/></td>
@@ -177,9 +178,9 @@
                     </thead>
                     <tbody>
                     <c:forEach var="dnsSrvRecord" items="${dnsSrvRecordsClientTLS}" varStatus="varStatus">
-                        <tr class="${dnsSrvRecord.host.toLowerCase() eq hostname ? 'jive-highlight' : ''}">
+                        <tr class="${dnsSrvRecord.hostname.toLowerCase() eq hostname ? 'jive-highlight' : ''}">
                             <td style="width: 1%; white-space: nowrap"><c:out value="${varStatus.count}"/></td>
-                            <td nowrap><c:out value="${dnsSrvRecord.host}"/></td>
+                            <td nowrap><c:out value="${dnsSrvRecord.hostname}"/></td>
                             <td nowrap><c:out value="${dnsSrvRecord.port}"/></td>
                             <td nowrap><c:out value="${dnsSrvRecord.priority}"/></td>
                             <td nowrap><c:out value="${dnsSrvRecord.weight}"/></td>
@@ -206,9 +207,9 @@
                     </thead>
                     <tbody>
                     <c:forEach var="dnsSrvRecord" items="${dnsSrvRecordsServer}" varStatus="varStatus">
-                        <tr class="${dnsSrvRecord.host.toLowerCase() eq hostname ? 'jive-highlight' : ''}">
+                        <tr class="${dnsSrvRecord.hostname.toLowerCase() eq hostname ? 'jive-highlight' : ''}">
                             <td style="width: 1%; white-space: nowrap"><c:out value="${varStatus.count}"/></td>
-                            <td nowrap><c:out value="${dnsSrvRecord.host}"/></td>
+                            <td nowrap><c:out value="${dnsSrvRecord.hostname}"/></td>
                             <td nowrap><c:out value="${dnsSrvRecord.port}"/></td>
                             <td nowrap><c:out value="${dnsSrvRecord.priority}"/></td>
                             <td nowrap><c:out value="${dnsSrvRecord.weight}"/></td>
@@ -235,9 +236,9 @@
                     </thead>
                     <tbody>
                     <c:forEach var="dnsSrvRecord" items="${dnsSrvRecordsServerTLS}" varStatus="varStatus">
-                        <tr class="${dnsSrvRecord.host.toLowerCase() eq hostname ? 'jive-highlight' : ''}">
+                        <tr class="${dnsSrvRecord.hostname.toLowerCase() eq hostname ? 'jive-highlight' : ''}">
                             <td style="width: 1%; white-space: nowrap"><c:out value="${varStatus.count}"/></td>
-                            <td nowrap><c:out value="${dnsSrvRecord.host}"/></td>
+                            <td nowrap><c:out value="${dnsSrvRecord.hostname}"/></td>
                             <td nowrap><c:out value="${dnsSrvRecord.port}"/></td>
                             <td nowrap><c:out value="${dnsSrvRecord.priority}"/></td>
                             <td nowrap><c:out value="${dnsSrvRecord.weight}"/></td>

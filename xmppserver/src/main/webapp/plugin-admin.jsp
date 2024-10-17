@@ -458,7 +458,7 @@ tr.lowerhalf > td:last-child {
                     </a>
                 </c:if>
             </td>
-            <td style="width: 15%; white-space: nowrap; vertical-align: top">
+            <td style="width: 10%; white-space: nowrap; vertical-align: top">
                 <c:if test="${not empty plugin.author}">
                     <c:out value="${plugin.author}"/>
                 </c:if>

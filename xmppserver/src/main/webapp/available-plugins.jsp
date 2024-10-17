@@ -281,7 +281,7 @@
                                                 </a>
                                             </c:if>
                                         </td>
-                                        <td style="width: 5%" nowrap class="line-bottom-border">
+                                        <td style="width: 10%" nowrap class="line-bottom-border">
                                             <c:if test="${not empty notInstalledPlugin.version}">
                                                 <c:out value="${notInstalledPlugin.version}"/><br/>
                                             </c:if>
@@ -295,12 +295,12 @@
                                                 </a>
                                             </c:if>
                                         </td>
-                                        <td style="width: 15%" nowrap class="line-bottom-border">
+                                        <td style="width: 10%" nowrap class="line-bottom-border">
                                             <c:if test="${not empty notInstalledPlugin.author}">
                                                 <c:out value="${notInstalledPlugin.author}"/>
                                             </c:if>
                                         </td>
-                                        <td style="width: 15%; text-align: right" nowrap class="line-bottom-border">
+                                        <td style="width: 10%; text-align: right" nowrap class="line-bottom-border">
                                             <c:out value="${admin:byteFormat( notInstalledPlugin.fileSize )}"/>
                                         </td>
                                         <td style="width: 1%; text-align: center" class="line-bottom-border">

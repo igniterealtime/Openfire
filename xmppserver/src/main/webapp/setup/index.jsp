@@ -86,6 +86,10 @@
     pageContext.setAttribute( "servlet22Installed", servlet22Installed );
     pageContext.setAttribute( "jsp11Installed", jsp11Installed );
     pageContext.setAttribute( "jiveJarsInstalled", jiveJarsInstalled );
+    pageContext.setAttribute( "configLocation", JiveGlobals.getConfigLocation() );
+    pageContext.setAttribute( "configLocationExistsAndAccessible", Files.isWritable(JiveGlobals.getConfigLocation()) );
+    pageContext.setAttribute( "securityConfigLocation", JiveGlobals.getSecurityConfigLocation() );
+    pageContext.setAttribute( "securityConfigLocationExistsAndAccessible", Files.isWritable(JiveGlobals.getSecurityConfigLocation()) );
     pageContext.setAttribute( "openfireHomeExists", openfireHomeExists );
     pageContext.setAttribute( "openfireHome", openfireHome );
     pageContext.setAttribute( "localizedTitle", LocaleUtils.getLocalizedString("title") );
@@ -151,7 +155,7 @@
     </c:if>
 
     <c:choose>
-        <c:when test="${not jreVersionCompatible or not servlet22Installed or not jsp11Installed or not jiveJarsInstalled or not openfireHomeExists}">
+        <c:when test="${not jreVersionCompatible or not servlet22Installed or not jsp11Installed or not jiveJarsInstalled or not openfireHomeExists or not configFailedLoading}">
             <div class="error">
                 <fmt:message key="setup.env.check.error"/> <fmt:message key="title"/> <fmt:message key="setup.title"/>.
             </div>
@@ -235,6 +239,48 @@
                             </tr>
                         </c:otherwise>
                     </c:choose>
+                    <c:if test="${openfireHomeExists}">
+                        <c:choose>
+                            <c:when test="${configLocationExistsAndAccessible}">
+                                <tr>
+                                    <td><img src="../images/check.gif" width="13" height="13"></td>
+                                    <td><fmt:message key="setup.env.check.config_found">
+                                            <fmt:param><c:out value="${configLocation}"/></fmt:param>
+                                        </fmt:message>
+                                    </td>
+                                </tr>
+                            </c:when>
+                            <c:otherwise>
+                                <tr>
+                                    <td><img src="../images/x.gif" width="13" height="13"></td>
+                                    <td><fmt:message key="setup.env.check.config_not_loaded">
+                                            <fmt:param><c:out value="${configLocation}"/></fmt:param>
+                                        </fmt:message>
+                                    </td>
+                                </tr>
+                            </c:otherwise>
+                        </c:choose>
+                        <c:choose>
+                            <c:when test="${securityConfigLocationExistsAndAccessible}">
+                                <tr>
+                                    <td><img src="../images/check.gif" width="13" height="13"></td>
+                                    <td><fmt:message key="setup.env.check.config_found">
+                                        <fmt:param><c:out value="${configLocation}"/></fmt:param>
+                                    </fmt:message>
+                                    </td>
+                                </tr>
+                            </c:when>
+                            <c:otherwise>
+                                <tr>
+                                    <td><img src="../images/x.gif" width="13" height="13"></td>
+                                    <td><fmt:message key="setup.env.check.config_not_loaded">
+                                        <fmt:param><c:out value="${configLocation}"/></fmt:param>
+                                    </fmt:message>
+                                    </td>
+                                </tr>
+                            </c:otherwise>
+                        </c:choose>
+                    </c:if>
                 </table>
             </div>
 

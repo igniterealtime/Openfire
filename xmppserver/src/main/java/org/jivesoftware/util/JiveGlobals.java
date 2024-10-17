@@ -1201,8 +1201,25 @@ public class JiveGlobals {
      *
      * @return the name of the config file.
      */
-    static String getConfigName() {
+    public static String getConfigName() {
         return JIVE_CONFIG_FILENAME;
+    }
+
+    /**
+     * Returns the name of the local security config file.
+     *
+     * @return the name of the security config file.
+     */
+    public static String getSecurityConfigName() {
+        return JIVE_SECURITY_FILENAME;
+    }
+
+    public static Path getConfigLocation() {
+        return home.resolve(JIVE_CONFIG_FILENAME);
+    }
+
+    public static Path getSecurityConfigLocation() {
+        return home.resolve(JIVE_SECURITY_FILENAME);
     }
 
     /**

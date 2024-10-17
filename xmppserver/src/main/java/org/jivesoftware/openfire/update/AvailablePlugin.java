@@ -37,8 +37,6 @@ import org.slf4j.LoggerFactory;
 public class AvailablePlugin extends PluginMetadata
 {
     private static final Logger Log = LoggerFactory.getLogger( AvailablePlugin.class );
-    private static final DateFormat RELEASE_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
-    private static final DateFormat RELEASE_DATE_DISPLAY_FORMAT = DateFormat.getDateInstance(DateFormat.MEDIUM);
 
     /**
      * URL from where the latest version of the plugin can be downloaded.
@@ -141,15 +139,7 @@ public class AvailablePlugin extends PluginMetadata
             minJavaVersion = new JavaSpecVersion( minJavaVersionValue );
         }
 
-        String releaseDate = null;
-        final String releaseDateString = plugin.attributeValue("releaseDate");
-        if( releaseDateString!= null) {
-            try {
-                releaseDate = RELEASE_DATE_DISPLAY_FORMAT.format(RELEASE_DATE_FORMAT.parse(releaseDateString));
-            } catch (final ParseException e) {
-                Log.warn("Unexpected exception parsing release date: " + releaseDateString, e);
-            }
-        }
+        final String releaseDate = plugin.attributeValue("releaseDate");
 
         long fileSize = -1;
         String fileSizeValue = plugin.attributeValue("fileSize");

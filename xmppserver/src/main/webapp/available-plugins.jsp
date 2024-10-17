@@ -240,7 +240,7 @@
                     <thead>
                         <tr style="background:#eee;">
                             <td class="table-header-left">&nbsp;</td>
-                            <td nowrap colspan="2" class="table-header"><fmt:message key="plugin.available.open_source"/></td>
+                            <td nowrap colspan="2" class="table-header"><fmt:message key="plugin.available.name"/></td>
                             <td nowrap class="table-header"><fmt:message key="plugin.available.description"/></td>
                             <td nowrap class="table-header"><fmt:message key="plugin.available.version"/></td>
                             <td nowrap class="table-header"><fmt:message key="plugin.available.author"/></td>

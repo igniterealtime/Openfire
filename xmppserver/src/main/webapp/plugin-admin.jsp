@@ -463,13 +463,6 @@ tr.lowerhalf > td:last-child {
                     </a>
                 </c:if>
             </td>
-            <td style="width: 5%; white-space: nowrap; vertical-align: top">
-                <c:if test="${not empty plugin.version}">
-                    <span <c:if test="${not empty update}">id="${update.hashCode()}-version"</c:if>>
-                    <c:out value="${plugin.version}"/>
-                    </span>
-                </c:if>
-            </td>
             <td style="width: 15%; white-space: nowrap; vertical-align: top">
                 <c:if test="${not empty plugin.author}">
                     <c:out value="${plugin.author}"/>

@@ -386,7 +386,7 @@ tr.lowerhalf > td:last-child {
  <tr style="background:#eee;">
 
     <td nowrap colspan="3" class="table-header-left"><fmt:message key="plugin.admin.name"/></td>
-    <td nowrap class="table-header"><fmt:message key="plugin.admin.description"/></td>
+    <td class="table-header"><fmt:message key="plugin.admin.description"/></td>
     <td nowrap class="table-header"><fmt:message key="plugin.admin.version"/></td>
     <td nowrap class="table-header"><fmt:message key="plugin.admin.author"/></td>
     <td nowrap class="table-header"><fmt:message key="plugin.admin.restart"/></td>

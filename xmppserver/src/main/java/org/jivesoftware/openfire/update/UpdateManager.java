@@ -730,6 +730,7 @@ public class UpdateManager extends BasicModule {
             Element component = xml.addElement("plugin");
             component.addAttribute("name", plugin.getName());
             component.addAttribute("latest", plugin.getVersion() != null ? plugin.getVersion().getVersionString() : null);
+            component.addAttribute("releaseDate", plugin.getReleaseDate());
             component.addAttribute("changelog", plugin.getChangelog() != null ? plugin.getChangelog().toExternalForm() : null );
             component.addAttribute("url", plugin.getDownloadURL() != null ? plugin.getDownloadURL().toExternalForm() : null );
             component.addAttribute("author", plugin.getAuthor());

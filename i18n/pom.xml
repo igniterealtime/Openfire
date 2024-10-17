@@ -13,35 +13,4 @@
         <!-- Use static build timestamp for reproducible builds -->
         <project.build.outputTimestamp>1980-02-01T00:00:00Z</project.build.outputTimestamp>
     </properties>
-    <build>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-            </resource>
-        </resources>
-
-        <plugins>
-            <plugin>
-                <!--
-                    Java has trouble reading translations from UTF-8 files. To work around that,
-                    this plugin ensures that Java-compatible encoding is used.
-                    See https://stackoverflow.com/questions/4659929/how-to-use-utf-8-in-resource-properties-with-resourcebundle
-                  -->
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>native2ascii-maven-plugin</artifactId>
-                <version>2.0.1</version>
-                <executions>
-                    <execution>
-                        <id>utf8-to-latin1</id>
-                        <goals>
-                            <goal>inplace</goal>
-                        </goals>
-                        <configuration>
-                            <dir>${project.build.outputDirectory}</dir>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 </project>

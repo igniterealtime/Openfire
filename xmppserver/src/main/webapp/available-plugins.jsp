@@ -280,19 +280,19 @@
                                                     <fmt:message key="plugin.admin.documentation" />
                                                 </a>
                                             </c:if>
+                                        </td>
+                                        <td style="width: 5%" nowrap class="line-bottom-border">
+                                            <c:if test="${not empty notInstalledPlugin.version}">
+                                                <c:out value="${notInstalledPlugin.version}"/><br/>
+                                            </c:if>
+                                            <c:if test="${not empty notInstalledPlugin.releaseDate}">
+                                                <c:out value="${notInstalledPlugin.releaseDate}"/><br/>
+                                            </c:if>
                                             <c:if test="${not empty notInstalledPlugin.changelog}">
                                                 <a href="${fn:escapeXml(notInstalledPlugin.changelog)}"
                                                     target="_blank">
                                                     <fmt:message key="plugin.admin.changelog" />
                                                 </a>
-                                            </c:if>
-                                        </td>
-                                        <td style="width: 5%" nowrap class="line-bottom-border">
-                                            <c:if test="${not empty notInstalledPlugin.version}">
-                                                <c:out value="${notInstalledPlugin.version}"/>
-                                            </c:if>
-                                            <c:if test="${not empty notInstalledPlugin.releaseDate}">
-                                                <br><c:out value="${notInstalledPlugin.releaseDate}"/>
                                             </c:if>
                                         </td>
                                         <td style="width: 15%" nowrap class="line-bottom-border">

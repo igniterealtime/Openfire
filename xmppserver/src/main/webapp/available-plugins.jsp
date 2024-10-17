@@ -257,7 +257,7 @@
                             <c:otherwise>
                                 <c:forEach items="${notInstalledPlugins}" var="notInstalledPlugin">
                                     <tr id="${notInstalledPlugin.hashCode}">
-                                        <td style="width: 1%" class="line-bottom-border">
+                                        <td class="line-bottom-border" style="width: 1%">
                                             <c:choose>
                                                 <c:when test="${not empty notInstalledPlugin.icon}">
                                                     <img src="${fn:escapeXml(notInstalledPlugin.icon)}" width="16" height="16" alt="Plugin">
@@ -267,7 +267,7 @@
                                                 </c:otherwise>
                                             </c:choose>
                                         </td>
-                                        <td class="line-bottom-border">
+                                        <td class="line-bottom-border" style="width: 60%;">
                                             <c:if test="${not empty notInstalledPlugin.name}">
                                                 <b><c:out value="${notInstalledPlugin.name}"/></b><br/>
                                             </c:if>
@@ -281,7 +281,7 @@
                                                 </a>
                                             </c:if>
                                         </td>
-                                        <td style="width: 5%" nowrap class="line-bottom-border">
+                                        <td class="line-bottom-border" style="width: 10%; white-space: nowrap;">
                                             <c:if test="${not empty notInstalledPlugin.version}">
                                                 <c:out value="${notInstalledPlugin.version}"/><br/>
                                             </c:if>
@@ -295,15 +295,15 @@
                                                 </a>
                                             </c:if>
                                         </td>
-                                        <td style="width: 15%" nowrap class="line-bottom-border">
+                                        <td class="line-bottom-border" style="width: 10%;">
                                             <c:if test="${not empty notInstalledPlugin.author}">
                                                 <c:out value="${notInstalledPlugin.author}"/>
                                             </c:if>
                                         </td>
-                                        <td style="width: 15%; text-align: right" nowrap class="line-bottom-border">
+                                        <td class="line-bottom-border" style="width: 5%; white-space: nowrap; text-align: right;">
                                             <c:out value="${admin:byteFormat( notInstalledPlugin.fileSize )}"/>
                                         </td>
-                                        <td style="width: 1%; text-align: center" class="line-bottom-border">
+                                        <td class="line-bottom-border" style="width: 1%; text-align: center;">
                                             <a href="javascript:downloadPlugin('${fn:escapeXml(notInstalledPlugin.downloadURL)}', '${notInstalledPlugin.version}', '${notInstalledPlugin.hashCode}')">
                                                 <span id="${notInstalledPlugin.hashCode}-image">
                                                     <img src="images/add-16x16.gif" alt="<fmt:message key="plugin.available.download" />">

@@ -210,13 +210,34 @@ mv openfire /opt</code></pre>
                 A web-based, "wizard" driven setup and configuration tool is built into Openfire. Simply launch Openfire
                 (platform-specific instructions below) and use a web browser to connect to the admin console. The
                 default port for the web-based admin console is 9090. If you are on the same machine as Openfire, the
-                following URL will usually work: <a href="http://127.0.0.1:9090">http://127.0.0.1:9090</a>. Initial
-                setup and administration can also be done from a remote computer using LAN IP address instead or
-                hostname if it is resolvable by the remote computer. Windows Server administrators might need to add the
-                http://127.0.0.1 address to browser's Trusted Sites list, if Enhanced Security Configuration is enabled,
-                to prevent getting a blank screen.
+                following URL will usually work: <a href="http://127.0.0.1:9090">http://127.0.0.1:9090</a>. Windows
+                Server administrators might need to add the http://127.0.0.1 address to browser's Trusted Sites list, if
+                Enhanced Security Configuration is enabled, to prevent getting a blank screen.
+            </p>
+            <p>
+                As a security measure, the Openfire administration console is by default, only accessible from the server
+                itself ("localhost"). Openfire can be reconfigured to also allow this to become accessible from a remote
+                computer using LAN IP address instead or hostname if it is resolvable by the remote computer. To do so,
+                modify the <code>openfire.xml</code> configuration file, and remove the line that holds the
+                <code>interface</code> definition (or adjust it to an appropriate interface definition).
             </p>
 
+            <fieldset>
+                <legend>Admin console interface definition snippet of openfire.xml</legend>
+                <pre><code>&lt;jive&gt;
+  &lt;adminConsole&gt;
+    &lt;!-- Disable either port by setting the value to -1 --&gt;
+    &lt;port&gt;9090&lt;/port&gt;
+    &lt;securePort&gt;9091&lt;/securePort&gt;
+    &lt;interface&gt;127.0.0.1&lt;/interface&gt;
+  &lt;/adminConsole&gt;</code></pre>
+            </fieldset>
+
+            <p>
+                After initial setup has been performed, access lists based on IP addresses and ranges can be configured
+                for fine-grained control of access to the Admin Console. This configuration can be found on the page
+                called "Admin Console Access" (under the "Server" / "Server Manager" tab).
+            </p>
         </section>
 
         <section>

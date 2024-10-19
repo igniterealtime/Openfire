@@ -65,32 +65,41 @@
 
     <h2>Structure of a Plugin</h2>
     <p>
-        Plugins live in the <code>plugins</code> directory of <code>openfireHome</code>. When a plugin
-        is deployed as a JAR or WAR file, it is automatically expanded into a directory. The files in a
-        plugin directory are as follows:
+        Plugins live in the <code>plugins</code> directory of <code>openfireHome</code>.
+        When a plugin is deployed as a JAR or WAR file, it is automatically expanded into a directory.
+        The files in a plugin directory are as follows:
     </p>
 
     <fieldset>
         <legend>Plugin Structure</legend>
-        <pre>myplugin/
+        <pre>
+exampleplugin/
  |- pom.xml         &lt;- Plugin description/configuration file of the Maven project (allows you to define the POM (Project Object Model) used by Maven).
  |- plugin.xml      &lt;- Plugin definition file
  |- readme.html     &lt;- Optional readme file for plugin, which will be displayed to end users
  |- changelog.html  &lt;- Optional changelog file for plugin, which will be displayed to end users
- |- logo_small.gif  &lt;- Optional small (16x16) icon associated with the plugin (can also be a .png file)
- |- logo_large.gif  &lt;- Optional large (32x32) icon associated with the plugin (can also be a .png file)
- |- src   
+ |- logo_small.png  &lt;- Optional small (16x16) icon associated with the plugin (can also be a .gif file)
+ |- logo_large.png  &lt;- Optional large (32x32) icon associated with the plugin (can also be a .gif file)
+ |- src/main/       &lt;- This contains sources.
     |- classes/        &lt;- Resources your plugin needs (i.e., a properties file)
-    |- database/       &lt;- Optional database schema files that your plugin needs
+    |- database/       &lt;- Optional database schema files that your plugin needs and any upgrade scripts.
     |- i18n/           &lt;- Optional i18n files to allow for internationalization of plugins.
+       |- exampleplugin_i18n.properties       &lt;- the default language (expected to be English).
+       |- exampleplugin_i18n_fr.properties    &lt;- a French translation. A translation files may be incomplete.
+       |- exampleplugin_i18n_fr_CA.properties &lt;- a translation specific to a full locale of Quebecois.
     |- lib/            &lt;- Libraries (JAR files) your plugin needs
-    |- java/           &lt;- This is the directory containing the sources of the plugin application(.java files) and located in the package
-    |- web             &lt;- Resources for Admin Console integration, if any
-        |- WEB-INF/
-            |- web.xml           &lt;- Generated web.xml containing compiled JSP entries
-            |- web-custom.xml    &lt;- Optional user-defined web.xml for custom servlets
-        |- images/</pre>
-        </fieldset>
+    |- java/           &lt;- This is the directory containing the sources of the plugin application (.java files) and located in the package
+    |  |- com
+    |     |- example
+    |        |- ExamplePlugin.java &lt;- Java source code for your plugin
+    |- web                       &lt;- Resources for Admin Console integration, if any
+       |- WEB-INF/
+          |- web.xml             &lt;- Generated web.xml containing compiled JSP entries
+          |- web-custom.xml      &lt;- Optional user-defined web.xml for custom servlets
+       |- images/                &lt;- Any images assets your JSP pages need (optional)
+       |- exampleplugin-page.jsp &lt;- a JSP your plugin uses for the Admin Console
+        </pre>
+    </fieldset>
 
         <p>
             The <code>web</code> directory exists for plugins that need to add content to the Openfire Admin Console.
@@ -113,12 +122,12 @@
     <span class="comment">&lt;!-- Plugin meta-data --&gt;</span>
     &lt;name&gt;Example Plugin&lt;/name&gt;
     &lt;description&gt;This is an example plugin.&lt;/description&gt;
-    &lt;author&gt;Jive Software&lt;/author&gt;
+    &lt;author&gt;Your Name&lt;/author&gt;
 
-    &lt;version&gt;1.0&lt;/version&gt;
-    &lt;date&gt;07/21/2006&lt;/date&gt;
+    &lt;version&gt;1.0.0&lt;/version&gt;
+    &lt;date&gt;2006-07-21&lt;/date&gt;
     &lt;url&gt;https://www.igniterealtime.org/projects/openfire/plugins.jsp&lt;/url&gt;
-    &lt;minServerVersion&gt;3.0.0&lt;/minServerVersion&gt;
+    &lt;minServerVersion&gt;4.0.0&lt;/minServerVersion&gt;
     &lt;licenseType&gt;gpl&lt;/licenseType&gt;
 
     <span class="comment">&lt;!-- Admin console entries --&gt;</span>
@@ -129,7 +138,7 @@
         </fieldset>
 
         <p>
-            The meta-data fields that can be set in the plugin.xml file:
+            The meta-data fields that can be set in the <code>plugin.xml</code> file:
         </p>
 
         <dl>
@@ -152,7 +161,7 @@
             <dd>a URL where additional information about the plugin is available.</dd>
 
             <dt>minServerVersion</dt>
-            <dd>the minimum version of Openfire required to run the plugin (supported by Openfire 2.1.2 and later). If
+            <dd>the minimum version of Openfire required to run the plugin. If
                 the server version is less than the required value, the plugin will not be started.</dd>
 
             <dt>priorToServerVersion</dt>
@@ -162,11 +171,11 @@
             <dd>the minimum Java specification version the plugin needs to run.</dd>
 
             <dt>databaseKey</dt>
-            <dd>if the plugin requires it's own database tables, the databaseKey element should be set with a schema key
+            <dd>if the plugin requires its own database tables, the databaseKey element should be set with a schema key
                 name (often the same name as the plugin). Database schema files for each supported database should then
-                be placed in the <code>database</code> directory of the plugin. For example, given the key "foo", schema
-                files would be called "foo_mysql.sql", "foo_oracle.sql", etc.  We recommend that you prefix your tables
-                with "of" (openfire) to avoid conflicts with possible other applications installed in the same database.
+                be placed in the <code>database</code> directory of the plugin. For example, given the key <code>foo</code>, schema
+                files would be called <code>foo_mysql.sql</code>, <code>foo_oracle.sql</code>, etc.  We recommend that you prefix your tables
+                with <code>of</code> (openfire) to avoid conflicts with possible other applications installed in the same database.
                 The scripts should make an entry into the ofVersion table using the key so that schema version
                 information can be tracked, e.g.:
 
@@ -175,9 +184,9 @@
             <dt>databaseVersion</dt>
             <dd>the database schema version (if a database schema is defined). New plugins with a database schema should
                 start at version 0. If future versions of the plugin require updates to the schema, those updates can be
-                defined by creating sub-directories in the <code>database/upgrade</code> directory for each version
+                defined by creating subdirectories in the <code>database/upgrade</code> directory for each version
                 number. For example, the directories <code>database/upgrade/1</code> and <code>database/upgrade/2</code>
-                would contain scripts such as "foo_mysql.sql" and "foo_oracle.sql" that contain the relevant database
+                would contain scripts such as <code>foo_mysql.sql</code> and <code>foo_oracle.sql</code> that contain the relevant database
                 changes for each version. Each script should update version information in the ofVersion table, e.g.:
 
                 <pre>UPDATE ofVersion set version=1 where name='foo';</pre></dd>
@@ -212,7 +221,7 @@
         </dl>
 
         <p>
-            Your plugin class must be implement the <code><a href="javadoc/org/jivesoftware/openfire/container/Plugin.html">Plugin</a></code>
+            Your plugin class must implement the <code><a href="javadoc/org/jivesoftware/openfire/container/Plugin.html">Plugin</a></code>
             interface from the <a href="javadoc/index.html">Openfire API</a> as well as have a default (no argument)
             constructor. The Plugin interface has methods for initializing and destroying the plugin.
         </p>
@@ -231,9 +240,8 @@ import java.io.File;
  */
 public class ExamplePlugin implements Plugin {
 
-    public void initializePlugin(PluginManager manager, File pluginDirectory) {
+    public void initializePlugin(PluginManager pluginManager, File pluginDirectory) {
         // Your code goes here
-
     }
 
     public void destroyPlugin() {
@@ -324,7 +332,7 @@ public class ExamplePlugin implements Plugin {
         </p>
         <p>
             By default, the tabs, sidebars and pages will be presented in the order in which they are defined. You can,
-            however, define explicit ordering by adding an "order" attribute to each element. It's numeric value defines
+            however, define explicit ordering by adding an <code>order</code> attribute to each element. It's numeric value defines
             order. If no order is specified, the value 0 (zero) is used as a default. In the example above, the items
             are ordered using this construct. In the admin console, the "My Plugin Overview" page will be presented
             before the "My Plugin Admin" page, as its 'order' value is lower. If neither item had defined the 'order'
@@ -431,8 +439,8 @@ public class ExamplePlugin implements Plugin {
             procedure:
         <ul>
             <li>Create a "i18n" directory in the root directory of your plugin.</li>
-            <li>Add each resource file using the %[plugin_name]%_i18n "_" language ".properties" naming convention,
-                where [plugin_name] is the name of the plugin directory. See the
+        <li>Add each resource file using the <code>%[plugin_name]%_i18n "_" language ".properties"</code> naming convention,
+            where the <code>[plugin_name]</code> is the name of the plugin directory. See the
                 <a href="translator-guide.html">translator guide</a> for more information about resource bundles.</li>
             <li>Convert Strings in your JSP files to refer to the internationalized keys. For example:
 
@@ -460,7 +468,7 @@ public class ExamplePlugin implements Plugin {
         <h2>Building the plugin</h2>
 
         <p>
-            Your plugin project should define a Maven pom.xml file to build plugins. Your plugin can inherit from an
+            Your plugin project should define a Maven <code>pom.xml</code> file to build plugins. Your plugin can inherit from an
             Openfire provided parent pom. This can be obtained through Ignite's Maven repository. An example of such
             a pom file is shown below.
         </p>
@@ -515,42 +523,15 @@ public class ExamplePlugin implements Plugin {
 
 &lt;/project&gt;</code></pre>
         </fieldset>
-        <p>
-            The Maven pom.xml will help you build and develop plugins. It should look for plugin development directories
-            in the following format:
-        </p>
-
-        <fieldset>
-            <legend>Plugin Structure</legend>
-            <pre><code>myplugin/
- |- plugin.xml      &lt;- Plugin definition file
- |- readme.html     &lt;- Optional readme file for plugin
- |- changelog.html  &lt;- Optional changelog file for plugin
- |- logo_small.gif  &lt;- Optional small (16x16) icon associated with the plugin (can also be a .png file)
- |- logo_large.gif  &lt;- Optional large (32x32) icon associated with the plugin (can also be a .png file)
- |- classes/        &lt;- Resources your plugin needs (i.e., a properties file)
- |- lib/            &lt;- Libraries your plugin needs
- |- src/
-     |- database    &lt;- Optional database scripts for your plugin
-     |- java        &lt;- Java source code for your plugin
-     |   |- com
-     |       |- mycompany
-     |           |- *.java
-     |- web
-         |- *.jsp      &lt;- JSPs your plugin uses for the admin console
-         |- images/    &lt;- Any images your JSP pages need (optional)
-         |- WEB-INF
-             |- web.xml    &lt;- Optional file where custom servlets can be registered</code></pre>
-</fieldset>
 
         <p>
-            To build the plugin, build the maven 'package' goal. Typically, this is done as such:
+            To build the plugin, build the maven <code>package</code> goal. Typically, this is done as such:
         </p>
 
         <pre>./mvnw clean package</pre>
 
         <p>
-            When the build succeeds, the <code>target/</code> folder in your project will have serveral files. One file
+            When the build succeeds, the <code>target/</code> folder in your project will have several files. One file
             is named <code>PLUGINNAME-openfire-plugin-assembly.jar</code>. This is the Openfire plugin
         </p>
         <p>
@@ -560,9 +541,9 @@ public class ExamplePlugin implements Plugin {
         </p>
 
         <p>
-            If you create a src/web/WEB-INF/web.xml file, any servlets registered there will be initialized when the
-            plugin starts up. Only servlet registrations and servlet  mappings will be honored from the web.xml file.
-            Note: this feature is implemented by merging your custom web.xml file into the web.xml file generated by the
+            If you create a <code>src/web/WEB-INF/web.xml</code> file, any servlets registered there will be initialized when the
+            plugin starts up. Only servlet registrations and servlet  mappings will be honored from the <code>web.xml</code> file.
+            Note: this feature is implemented by merging your custom <code>web.xml</code> file into the <code>web.xml</code> file generated by the
             JSP compilation process.
         </p>
 

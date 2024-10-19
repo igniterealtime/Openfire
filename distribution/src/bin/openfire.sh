@@ -20,24 +20,34 @@ case "$(uname)" in
 esac
 
 if [ -z "$JAVA_HOME" ] ; then
+  echo "JAVA_HOME is empty, trying to find it"
   if $darwin ; then
     JAVA_HOME=/usr/libexec/java_home
   fi
   if $linux; then
-    # shellcheck disable=SC2039
-    shopt -s nullglob
-    jdks=$(ls -r1d /usr/java/j* /usr/lib/jvm/* 2>/dev/null)
-    for jdk in $jdks; do
-      if [ -f "$jdk/bin/java" ]; then
-        JAVA_HOME="$jdk"
-        break
-      fi
-    done
+    JAVA_HOME=$(LC_ALL=C update-alternatives --display java \
+       | grep best \
+       | grep -oe "\/.*\/bin\/java" \
+       | sed 's/\/bin\/java//g')
+    if [ -z "$JAVA_HOME" ] ; then
+      echo "Unable to get preferred JAVA_HOME from java alternative"
+      # shellcheck disable=SC2039
+      shopt -s nullglob
+      jdks=$(ls -r1d /usr/java/j* /usr/lib/jvm/* 2>/dev/null)
+      for jdk in $jdks; do
+        if [ -f "$jdk/bin/java" ]; then
+          JAVA_HOME="$jdk"
+          break
+        fi
+      done
+    fi
   fi
+  echo "JAVA_HOME is set to $JAVA_HOME"
 fi
 
 #if openfire home is not set or is not a directory
 if [ -z "$OPENFIRE_HOME" -o ! -d "$OPENFIRE_HOME" ]; then
+  echo "OPENFIRE_HOME is empty, trying to find it"
   if [ -d /opt/openfire ] ; then
     OPENFIRE_HOME="/opt/openfire"
   fi
@@ -69,6 +79,7 @@ if [ -z "$OPENFIRE_HOME" -o ! -d "$OPENFIRE_HOME" ]; then
 
   #make it fully qualified
   OPENFIRE_HOME=$(cd "$OPENFIRE_HOME" && pwd)
+  echo "OPENFIRE_HOME is set to $OPENFIRE_HOME"
 fi
 OPENFIRE_OPTS="${OPENFIRE_OPTS} -DopenfireHome=\"${OPENFIRE_HOME}\""
 

@@ -5,7 +5,7 @@
 cygwin=false
 darwin=false
 linux=false
-case "`uname`" in
+case "$(uname)" in
   CYGWIN*)
     cygwin=true
     ;;
@@ -50,24 +50,23 @@ if [ -z "$OPENFIRE_HOME" -o ! -d "$OPENFIRE_HOME" ]; then
 
   #resolve links - $0 may be a link in openfire's home
   PRG="$0"
-  progname=`basename "$0$"`
 
   # need this for relative symlinks
   while [ -h "$PRG" ] ; do
-    ls=`ls -ld "$PRG"`
-    link=`expr "$ls" : '.*-> \(.*\)$'`
+    ls=$(ls -ld "$PRG")
+    link=$(expr "$ls" : '.*-> \(.*\)$')
     if expr "$link" : '/.*' > /dev/null; then
       PRG="$link"
     else
-      PRG=`dirname "$PRG"`"/$link"
+      PRG=$(dirname "$PRG")"/$link"
     fi
   done
 
   #assumes we are in the bin directory
-  OPENFIRE_HOME=`dirname "$PRG"`/..
+  OPENFIRE_HOME=$(dirname "$PRG")/..
 
   #make it fully qualified
-  OPENFIRE_HOME=`cd "$OPENFIRE_HOME" && pwd`
+  OPENFIRE_HOME=$(cd "$OPENFIRE_HOME" && pwd)
 fi
 OPENFIRE_OPTS="${OPENFIRE_OPTS} -DopenfireHome=\"${OPENFIRE_HOME}\""
 
@@ -75,9 +74,9 @@ OPENFIRE_OPTS="${OPENFIRE_OPTS} -DopenfireHome=\"${OPENFIRE_HOME}\""
 # For Cygwin, ensure paths are in UNIX format before anything is touched
 if $cygwin ; then
   [ -n "$OPENFIRE_HOME" ] &&
-    OPENFIRE_HOME=`cygpath --unix "$OPENFIRE_HOME"`
+    OPENFIRE_HOME=$(cygpath --unix "$OPENFIRE_HOME")
   [ -n "$JAVA_HOME" ] &&
-    JAVA_HOME=`cygpath --unix "$JAVA_HOME"`
+    JAVA_HOME=$(cygpath --unix "$JAVA_HOME")
 fi
 
 #set the OPENFIRE_LIB location
@@ -99,7 +98,7 @@ if [ -z "$JAVACMD" ] ; then
       JAVACMD="$JAVA_HOME/bin/java"
     fi
   else
-    JAVACMD=`which java 2> /dev/null `
+    JAVACMD=$(which java 2> /dev/null )
     if [ -z "$JAVACMD" ] ; then
       JAVACMD=java
     fi
@@ -163,14 +162,14 @@ if $cygwin; then
     else
       format=windows
     fi
-    OPENFIRE_HOME=`cygpath --$format "$OPENFIRE_HOME"`
-    OPENFIRE_LIB=`cygpath --$format "$OPENFIRE_LIB"`
-    JAVA_HOME=`cygpath --$format "$JAVA_HOME"`
-    LOCALCLASSPATH=`cygpath --path --$format "$LOCALCLASSPATH"`
+    OPENFIRE_HOME=$(cygpath --$format "$OPENFIRE_HOME")
+    OPENFIRE_LIB=$(cygpath --$format "$OPENFIRE_LIB")
+    JAVA_HOME=$(cygpath --$format "$JAVA_HOME")
+    LOCALCLASSPATH=$(cygpath --path --$format "$LOCALCLASSPATH")
     if [ -n "$CLASSPATH" ] ; then
-      CLASSPATH=`cygpath --path --$format "$CLASSPATH"`
+      CLASSPATH=$(cygpath --path --$format "$CLASSPATH")
     fi
-    CYGHOME=`cygpath --$format "$HOME"`
+    CYGHOME=$(cygpath --$format "$HOME")
 fi
 
 # add a second backslash to variables terminated by a backslash under cygwin

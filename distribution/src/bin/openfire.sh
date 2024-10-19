@@ -2,33 +2,37 @@
 # tries to determine arguments to launch openfire
 
 # OS specific support
-cygwin=false;
-darwin=false;
-linux=false;
+cygwin=false
+darwin=false
+linux=false
 case "`uname`" in
   CYGWIN*)
     cygwin=true
     ;;
   Darwin*)
     darwin=true
-    if [ -z "$JAVA_HOME" ] ; then
-      JAVA_HOME=/usr/libexec/java_home
-    fi
     ;;
   Linux*)
     linux=true
-    if [ -z "$JAVA_HOME" ]; then
-      shopt -s nullglob
-      jdks=`ls -r1d /usr/java/j* /usr/lib/jvm/* 2>/dev/null`
-      for jdk in $jdks; do
-        if [ -f "$jdk/bin/java" ]; then
-          JAVA_HOME="$jdk"
-          break
-        fi
-      done
-    fi
     ;;
 esac
+
+if [ -z "$JAVA_HOME" ] ; then
+  if $darwin ; then
+    JAVA_HOME=/usr/libexec/java_home
+  fi
+  if $linux; then
+    # shellcheck disable=SC2039
+    shopt -s nullglob
+    jdks=$(ls -r1d /usr/java/j* /usr/lib/jvm/* 2>/dev/null)
+    for jdk in $jdks; do
+      if [ -f "$jdk/bin/java" ]; then
+        JAVA_HOME="$jdk"
+        break
+      fi
+    done
+  fi
+fi
 
 #if openfire home is not set or is not a directory
 if [ -z "$OPENFIRE_HOME" -o ! -d "$OPENFIRE_HOME" ]; then

@@ -23,6 +23,7 @@
                  org.apache.commons.fileupload.disk.DiskFileItemFactory,
                  org.apache.commons.fileupload.servlet.ServletFileUpload"
         %>
+<%@ page import="org.jivesoftware.admin.AuthCheckFilter" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.container.PluginManager" %>
 <%@ page import="org.jivesoftware.openfire.update.UpdateManager" %>
@@ -367,6 +368,11 @@ tr.lowerhalf > td:last-child {
     <c:if test="${ webManager.XMPPServer.pluginManager.monitorTaskRunning }">
         <admin:infobox type="info">
             <fmt:message key="plugin.admin.monitortask_running" />
+        </admin:infobox>
+    </c:if>
+    <c:if test="${ AuthCheckFilter.excludesIncludeWildcards() && !AuthCheckFilter.ALLOW_WILDCARDS_IN_EXCLUDES.getValue() }">
+        <admin:infobox type="warning">
+            <fmt:message key="plugin.admin.wildcards-exists" />
         </admin:infobox>
     </c:if>
     <p>

@@ -127,6 +127,7 @@ fi
 # Note: you can combine options, eg: -devboot -debug
 for arguments in "$@"
 do
+  echo "Option: $arguments"
   case $arguments in
     -debug)
       echo "Starting debug mode"

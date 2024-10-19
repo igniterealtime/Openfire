@@ -1,6 +1,8 @@
 #!/bin/sh
 # tries to determine arguments to launch openfire
 
+# shellcheck disable=SC2166
+
 # OS specific support
 cygwin=false
 darwin=false
@@ -44,7 +46,7 @@ if [ -z "$OPENFIRE_HOME" -o ! -d "$OPENFIRE_HOME" ]; then
     OPENFIRE_HOME="/usr/local/openfire"
   fi
 
-  if [ -d ${HOME}/opt/openfire ] ; then
+  if [ -d "${HOME}/opt/openfire" ] ; then
     OPENFIRE_HOME="${HOME}/opt/openfire"
   fi
 
@@ -125,11 +127,11 @@ do
       ;;
     -demoboot)
       echo "Starting demoboot"
-      cp $OPENFIRE_HOME/conf/openfire-demoboot.xml $OPENFIRE_HOME/conf/openfire.xml
+      cp "$OPENFIRE_HOME/conf/openfire-demoboot.xml" "$OPENFIRE_HOME/conf/openfire.xml"
       ;;
     -devboot)
       HOSTNAME=$(hostname)
-      sed "s/example.org/$HOSTNAME/g" $OPENFIRE_HOME/conf/openfire-demoboot.xml > $OPENFIRE_HOME/conf/openfire.xml
+      sed "s/example.org/$HOSTNAME/g" "$OPENFIRE_HOME/conf/openfire-demoboot.xml" > "$OPENFIRE_HOME/conf/openfire.xml"
       ;;
     *)
       # unknown option, pass through the Java command
@@ -195,4 +197,5 @@ if $cygwin; then
 fi
 
 openfire_exec_command="exec $JAVACMD -server $OPENFIRE_OPTS -classpath \"$LOCALCLASSPATH\" -jar \"$OPENFIRE_LIB/startup.jar\""
+# shellcheck disable=SC2086
 eval $openfire_exec_command

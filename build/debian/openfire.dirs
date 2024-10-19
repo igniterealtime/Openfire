@@ -1,4 +1,5 @@
 /etc/openfire
+/usr/share/openfire/bin
 /usr/share/openfire/lib
 /usr/share/openfire/resources
 /var/log/openfire

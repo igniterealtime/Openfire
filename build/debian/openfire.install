@@ -6,3 +6,4 @@ conf/openfire.xml etc/openfire
 conf/security.xml etc/openfire
 resources/security etc/openfire
 plugins var/lib/openfire
+dist/* /

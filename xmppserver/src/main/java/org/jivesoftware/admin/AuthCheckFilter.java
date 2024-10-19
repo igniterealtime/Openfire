@@ -175,6 +175,13 @@ public class AuthCheckFilter implements Filter {
     }
 
     /**
+     * Indicates to the caller whether any of the currently loaded exclusions contains a wildcard
+     */
+    public static boolean excludesIncludeWildcards() {
+        return excludes.stream().anyMatch(e -> e.contains("*"));
+    }
+
+    /**
      * Returns true if a URL passes an exclude rule.
      *
      * @param url the URL to test.

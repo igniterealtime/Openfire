@@ -1,11 +1,3 @@
-# Defaults for openfire initscript
-# sourced by /etc/init.d/openfire
-# installed at /etc/default/openfire by the maintainer scripts
-
-#
-# This is a POSIX shell fragment
-#
-
 # If you wish to override the auto-detected JAVA_HOME variable, uncomment
 # and change the following line.
 #JAVA_HOME=/usr/java/default

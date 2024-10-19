@@ -157,23 +157,21 @@ fi
 
 # For Cygwin, switch paths to appropriate format before running java
 if $cygwin; then
-    if [ "$OS" = "Windows_NT" ] && cygpath -m .>/dev/null 2>/dev/null ; then
-      format=mixed
-    else
-      format=windows
-    fi
-    OPENFIRE_HOME=$(cygpath --$format "$OPENFIRE_HOME")
-    OPENFIRE_LIB=$(cygpath --$format "$OPENFIRE_LIB")
-    JAVA_HOME=$(cygpath --$format "$JAVA_HOME")
-    LOCALCLASSPATH=$(cygpath --path --$format "$LOCALCLASSPATH")
-    if [ -n "$CLASSPATH" ] ; then
-      CLASSPATH=$(cygpath --path --$format "$CLASSPATH")
-    fi
-    CYGHOME=$(cygpath --$format "$HOME")
-fi
+  if [ "$OS" = "Windows_NT" ] && cygpath -m .>/dev/null 2>/dev/null ; then
+    format=mixed
+  else
+    format=windows
+  fi
+  OPENFIRE_HOME=$(cygpath --$format "$OPENFIRE_HOME")
+  OPENFIRE_LIB=$(cygpath --$format "$OPENFIRE_LIB")
+  JAVA_HOME=$(cygpath --$format "$JAVA_HOME")
+  LOCALCLASSPATH=$(cygpath --path --$format "$LOCALCLASSPATH")
+  if [ -n "$CLASSPATH" ] ; then
+    CLASSPATH=$(cygpath --path --$format "$CLASSPATH")
+  fi
+  CYGHOME=$(cygpath --$format "$HOME")
 
-# add a second backslash to variables terminated by a backslash under cygwin
-if $cygwin; then
+  # add a second backslash to variables terminated by a backslash under cygwin
   case "$OPENFIRE_HOME" in
     *\\ )
     OPENFIRE_HOME="$OPENFIRE_HOME\\"

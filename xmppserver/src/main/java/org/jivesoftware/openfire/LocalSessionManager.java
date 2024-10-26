@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 /**
  * A LocalSessionManager keeps track of sessions that are connected to this JVM and for
@@ -117,6 +119,9 @@ class LocalSessionManager {
         // Run through the server sessions every 3 minutes after a 3 minutes server startup delay (default values)
         Duration period = Duration.ofMinutes(3);
         TaskEngine.getInstance().scheduleAtFixedRate(new ServerCleanupTask(), period, period);
+
+        final Duration preAuthPeriod = ConnectionSettings.Client.PREAUTH_TIMEOUT_PROPERTY.getValue().compareTo(Duration.ofSeconds(5)) > 0 ? ConnectionSettings.Client.PREAUTH_TIMEOUT_PROPERTY.getValue() : Duration.ofSeconds(5);
+        TaskEngine.getInstance().scheduleAtFixedRate(new PreAuthenticatedSessionCleanupTask(), preAuthPeriod, preAuthPeriod);
     }
 
     public void stop() {
@@ -174,6 +179,35 @@ class LocalSessionManager {
                 }
                 catch (Throwable e) {
                     Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                }
+            }
+        }
+    }
+
+    /**
+     * Task that closes pre-authenticated sessions that have not negotiated SASL for a while.
+     */
+    private class PreAuthenticatedSessionCleanupTask extends TimerTask
+    {
+        @Override
+        public void run() {
+            // Do nothing if this feature is disabled
+            if (ConnectionSettings.Client.PREAUTH_TIMEOUT_PROPERTY.getValue().isNegative()) {
+                return;
+            }
+
+            final Instant deadline = Instant.now().minus(ConnectionSettings.Client.PREAUTH_TIMEOUT_PROPERTY.getValue());
+            final List<LocalClientSession> overdueSessions = preAuthenticatedSessions.values().stream()
+                .filter(session -> session.getCreationDate().toInstant().isBefore(deadline))
+                .collect(Collectors.toList());
+
+            for (final LocalClientSession session : overdueSessions) {
+                Log.debug( "PreAuthenticatedSessionCleanupTask is closing a local pre-authenticated client session that has remained unauthenticated for to long. Creation time: {}. Session to be closed: {}", session.getCreationDate(), session );
+                try {
+                    session.close();
+                }
+                catch (Throwable e) {
+                    Log.error("An exception occurred while trying to close a local pre-authenticated client session that has remained unauthenticated for to long: {}", session, e);
                 }
             }
         }

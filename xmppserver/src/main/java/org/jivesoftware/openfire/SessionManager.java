@@ -481,7 +481,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         conn.registerCloseListener(clientSessionListener, session);
 
         // Add to pre-authenticated sessions.
-        localSessionManager.getPreAuthenticatedSessions().put(session.getAddress().getResource(), session);
+        localSessionManager.addPreAuthenticatedSession(session);
         // Increment the counter of user sessions
         connectionsCounter.incrementAndGet();
         return session;
@@ -522,7 +522,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                                               maxPollingInterval, maxRequests, maxPause, defaultInactivityTimeout, majorVersion, minorVersion);
         vConnection.init(session);
         vConnection.registerCloseListener(clientSessionListener, session);
-        localSessionManager.getPreAuthenticatedSessions().put(session.getAddress().getResource(), session);
+        localSessionManager.addPreAuthenticatedSession(session);
         connectionsCounter.incrementAndGet();
         return session;
     }
@@ -695,7 +695,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // Add session to the routing table (routing table will know session is not available yet)
         routingTable.addClientRoute(session.getAddress(), session);
         // Remove the pre-Authenticated session but remember to use the temporary ID as the key
-        localSessionManager.getPreAuthenticatedSessions().remove(session.getStreamID().toString());
+        localSessionManager.removePreAuthenticatedSession(session);
         SessionEventDispatcher.EventType event = session.getAuthToken().isAnonymous() ?
                 SessionEventDispatcher.EventType.anonymous_session_created :
                 SessionEventDispatcher.EventType.session_created;
@@ -888,7 +888,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
 
         // Initially Check preAuthenticated Sessions
         if (from.getResource() != null) {
-            ClientSession session = localSessionManager.getPreAuthenticatedSessions().get(from.getResource());
+            ClientSession session = localSessionManager.findPreAuthenticatedSession(from);
             if (session != null) {
                 return session;
             }
@@ -1274,8 +1274,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         }
 
         // Remove the session from the pre-Authenticated sessions list (if present)
-        boolean preauth_removed =
-                localSessionManager.getPreAuthenticatedSessions().remove(fullJID.getResource()) != null;
+        boolean preauth_removed = session instanceof LocalClientSession && localSessionManager.removePreAuthenticatedSession((LocalClientSession) session);
         // If the user is still available then send an unavailable presence
         if (forceUnavailable || session.getPresence().isAvailable()) {
             Presence offline = new Presence();
@@ -1302,25 +1301,14 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     /**
-     * Returns the temporary keys used by the sessions that has not been authenticated yet. This
-     * is an utility method useful for debugging situations.
-     *
-     * @return the temporary keys used by the sessions that has not been authenticated yet.
-     */
-    public Collection<String> getPreAuthenticatedKeys() {
-        return localSessionManager.getPreAuthenticatedSessions().keySet();
-    }
-
-    /**
      * Returns true if the specified address belongs to a preauthenticated session. Preauthenticated
-     * sessions are only available to the local cluster node when running inside of a cluster.
+     * sessions are only available to the local cluster node when running inside a cluster.
      *
      * @param address the address of the session.
      * @return true if the specified address belongs to a preauthenticated session.
      */
     public boolean isPreAuthenticatedSession(JID address) {
-        return serverName.equals(address.getDomain()) &&
-                localSessionManager.getPreAuthenticatedSessions().containsKey(address.getResource());
+        return localSessionManager.findPreAuthenticatedSession(address) != null;
     }
 
     public void setConflictKickLimit(int limit) {

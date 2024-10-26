@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -164,11 +164,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         IQ reply = null;
         // If no session was found then answer an error (if possible)
         if (session == null) {
-            Log.error("Error during registration. Session not found in " +
-                    sessionManager.getPreAuthenticatedKeys() +
-                    " for key " +
-                    packet.getFrom());
-            // This error packet will probably won't make it through
+            Log.warn("Error during registration. No session found for '{}'", packet.getFrom());
+            // This error packet probably won't make it through
             reply = IQ.createResultIQ(packet);
             reply.setChildElement(packet.getChildElement().createCopy());
             reply.setError(PacketError.Condition.internal_server_error);

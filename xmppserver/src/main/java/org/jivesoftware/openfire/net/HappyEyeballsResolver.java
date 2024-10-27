@@ -149,7 +149,7 @@ public class HappyEyeballsResolver
             if (resolvedAddress.getIndex() == preferredNextIndex && (resolvedAddress.isIPv6() != preferredNextFamilyIsIpv4)) {
                 iterator.remove();
 
-                final int remainingCount = resultCountByIndex.merge(resolvedAddress.getIndex(), -1, Integer::sum);
+                final int remainingCount = resultCountByIndex.merge(resolvedAddress.getIndex(), 0, Integer::sum);
                 assert remainingCount >= 0 : "After completing a test, the amount of remaining tasks cannot be negative (but was for index '"+resolvedAddress.getIndex()+"': " + remainingCount + ").";
                 if (remainingCount == 0) {
                     do {

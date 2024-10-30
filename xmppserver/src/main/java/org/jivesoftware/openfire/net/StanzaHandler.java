@@ -490,7 +490,11 @@ public abstract class StanzaHandler {
         document.getRootElement().add(features);
 
         // Include available SASL Mechanisms
-        features.add(SASLAuthentication.getSASLMechanisms(session));
+        final Element mechanismsElement=SASLAuthentication.getSASLMechanisms(session);
+        if (mechanismsElement!=null) {
+        	features.add(mechanismsElement);
+        }
+
         // Include specific features such as auth and register for client sessions
         final List<Element> specificFeatures = session.getAvailableStreamFeatures();
         if (specificFeatures != null) {

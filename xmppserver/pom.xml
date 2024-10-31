@@ -149,8 +149,8 @@
 
             <!-- Compile the JSP pages -->
             <plugin>
-                <groupId>org.eclipse.jetty</groupId>
-                <artifactId>jetty-jspc-maven-plugin</artifactId>
+                <groupId>org.eclipse.jetty.ee8</groupId>
+                <artifactId>jetty-ee8-jspc-maven-plugin</artifactId>
                 <version>${jetty.version}</version>
                 <executions>
                     <execution>
@@ -159,8 +159,8 @@
                             <goal>jspc</goal>
                         </goals>
                         <configuration>
-                            <sourceVersion>11</sourceVersion>
-                            <targetVersion>11</targetVersion>
+                            <sourceVersion>17</sourceVersion>
+                            <targetVersion>17</targetVersion>
                             <webAppSourceDirectory>${warSourceDirectory}</webAppSourceDirectory>
                             <!-- Merge this web.xml with the generated servlet declarations -->
                             <webXml>${warSourceDirectory}/WEB-INF/web.xml</webXml>
@@ -209,6 +209,16 @@
     </dependencyManagement>
 
     <dependencies>
+        <dependency>
+            <groupId>xalan</groupId>
+            <artifactId>xalan</artifactId>
+            <version>2.7.3</version>
+        </dependency>
+        <dependency>
+            <groupId>xalan</groupId>
+            <artifactId>serializer</artifactId>
+            <version>2.7.3</version>
+        </dependency>
         <!-- Ignite Realtime -->
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -257,13 +267,13 @@
             <version>${jetty.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-servlets</artifactId>
+            <groupId>org.eclipse.jetty.ee8</groupId>
+            <artifactId>jetty-ee8-servlet</artifactId>
             <version>${jetty.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-webapp</artifactId>
+            <groupId>org.eclipse.jetty.ee8</groupId>
+            <artifactId>jetty-ee8-webapp</artifactId>
             <version>${jetty.version}</version>
         </dependency>
         <dependency>
@@ -272,23 +282,23 @@
             <version>${jetty.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-plus</artifactId>
+            <groupId>org.eclipse.jetty.ee8</groupId>
+            <artifactId>jetty-ee8-plus</artifactId>
             <version>${jetty.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-annotations</artifactId>
+            <groupId>org.eclipse.jetty.ee8</groupId>
+            <artifactId>jetty-ee8-annotations</artifactId>
             <version>${jetty.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty.websocket</groupId>
-            <artifactId>websocket-jetty-server</artifactId>
+            <groupId>org.eclipse.jetty.ee8.websocket</groupId>
+            <artifactId>jetty-ee8-websocket-jetty-server</artifactId>
             <version>${jetty.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>apache-jsp</artifactId>
+            <groupId>org.eclipse.jetty.ee8</groupId>
+            <artifactId>jetty-ee8-apache-jsp</artifactId>
             <version>${jetty.version}</version>
         </dependency>
         <dependency>
@@ -536,7 +546,6 @@
             <version>2.7.2</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <repositories>

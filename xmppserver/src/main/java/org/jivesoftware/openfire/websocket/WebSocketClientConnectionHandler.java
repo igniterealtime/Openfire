@@ -17,9 +17,9 @@ package org.jivesoftware.openfire.websocket;
 
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.dom4j.io.XMPPPacketReader;
-import org.eclipse.jetty.websocket.api.RemoteEndpoint;
-import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.annotations.*;
+import org.eclipse.jetty.ee8.websocket.api.RemoteEndpoint;
+import org.eclipse.jetty.ee8.websocket.api.Session;
+import org.eclipse.jetty.ee8.websocket.api.annotations.*;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.handler.IQPingHandler;

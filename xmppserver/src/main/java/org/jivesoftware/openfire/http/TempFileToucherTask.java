@@ -18,7 +18,7 @@ package org.jivesoftware.openfire.http;
 
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.webapp.WebAppContext;
+import org.eclipse.jetty.ee8.webapp.WebAppContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,7 +50,7 @@ public class TempFileToucherTask extends TimerTask
     public void run()
     {
         final FileTime now = FileTime.fromMillis( System.currentTimeMillis() );
-        for ( final Handler handler : this.server.getChildHandlersByClass( WebAppContext.class ) )
+        for ( final Handler handler : this.server.getHandlers() )
         {
             final File tempDirectory = ((WebAppContext) handler).getTempDirectory();
             try

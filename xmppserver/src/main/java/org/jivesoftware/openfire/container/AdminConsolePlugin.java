@@ -19,8 +19,11 @@ package org.jivesoftware.openfire.container;
 import org.apache.tomcat.InstanceManager;
 import org.apache.tomcat.SimpleInstanceManager;
 import org.eclipse.jetty.ee8.annotations.AnnotationConfiguration;
+import org.eclipse.jetty.ee8.annotations.AnnotationConfiguration.DiscoveredServletContainerInitializerHolder;
+import org.eclipse.jetty.ee8.servlet.Source;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.ee8.apache.jsp.JettyJasperInitializer;
+import org.eclipse.jetty.ee8.annotations.ContainerInitializerAnnotationHandler;
 import org.eclipse.jetty.ee8.plus.webapp.EnvConfiguration;
 import org.eclipse.jetty.ee8.plus.webapp.PlusConfiguration;
 import org.eclipse.jetty.server.*;
@@ -53,6 +56,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.TimerTask;
 
@@ -505,12 +510,22 @@ public class AdminConsolePlugin implements Plugin {
         WebAppContext context = new WebAppContext(contexts, pluginDir.getAbsoluteFile() + File.separator + "webapp", "/");
 
         // Ensure the JSP engine is initialized correctly (in order to be able to cope with Tomcat/Jasper precompiled JSPs).
-        context.addServletContainerInitializer(new JettyJasperInitializer());
+        final List<ContainerInitializerAnnotationHandler> initializers = new ArrayList<>();
+        initializers.add(
+            new ContainerInitializerAnnotationHandler(
+                new DiscoveredServletContainerInitializerHolder(
+                    Source.EMBEDDED,
+                    new JettyJasperInitializer()
+                ),
+                JettyJasperInitializer.class
+            )
+        );
+        context.setAttribute(AnnotationConfiguration.CONTAINER_INITIALIZERS, initializers);
         context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false");
         context.setClassLoader(Thread.currentThread().getContextClassLoader());
         context.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
         context.setConfigurations(new Configuration[]{
-            new AnnotationConfiguration(),
+            new WebAppConfiguration(),
             new WebInfConfiguration(),
             new WebXmlConfiguration(),
             new MetaInfConfiguration(),

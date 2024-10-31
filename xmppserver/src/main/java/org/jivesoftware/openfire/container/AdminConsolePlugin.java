@@ -16,17 +16,17 @@
 
 package org.jivesoftware.openfire.container;
 
-import org.apache.jasper.servlet.JasperInitializer;
 import org.apache.tomcat.InstanceManager;
 import org.apache.tomcat.SimpleInstanceManager;
 import org.eclipse.jetty.ee8.annotations.AnnotationConfiguration;
 import org.eclipse.jetty.http.HttpHeader;
-import org.eclipse.jetty.ee8.servlet.ServletContainerInitializerHolder;
+import org.eclipse.jetty.ee8.apache.jsp.JettyJasperInitializer;
 import org.eclipse.jetty.ee8.plus.webapp.EnvConfiguration;
 import org.eclipse.jetty.ee8.plus.webapp.PlusConfiguration;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.DefaultHandler;
+import org.eclipse.jetty.server.Handler.Sequence;
 import org.eclipse.jetty.util.resource.URLResourceFactory;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
@@ -53,9 +53,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.TimerTask;
 
 /**
@@ -269,7 +267,7 @@ public class AdminConsolePlugin implements Plugin {
 
         createWebAppContext();
 
-        ContextHandlerCollection collection = new ContextHandlerCollection();
+        Sequence collection = new Sequence();
         adminServer.setHandler(collection);
         collection.setHandlers(new Handler[] { contexts, new DefaultHandler() });
 
@@ -507,9 +505,7 @@ public class AdminConsolePlugin implements Plugin {
         WebAppContext context = new WebAppContext(contexts, pluginDir.getAbsoluteFile() + File.separator + "webapp", "/");
 
         // Ensure the JSP engine is initialized correctly (in order to be able to cope with Tomcat/Jasper precompiled JSPs).
-        final List<ServletContainerInitializerHolder> initializers = new ArrayList<>();
-        initializers.add(new ServletContainerInitializerHolder(new JasperInitializer()));
-        context.setAttribute("org.eclipse.jetty.containerInitializers", initializers);
+        context.addServletContainerInitializer(new JettyJasperInitializer());
         context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false");
         context.setClassLoader(Thread.currentThread().getContextClassLoader());
         context.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());

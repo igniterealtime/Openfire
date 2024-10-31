@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2018-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,8 @@
 
 package org.jivesoftware.openfire.http;
 
-import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.ee8.nested.ContextHandler;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.ee8.webapp.WebAppContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,9 +49,9 @@ public class TempFileToucherTask extends TimerTask
     public void run()
     {
         final FileTime now = FileTime.fromMillis( System.currentTimeMillis() );
-        for ( final Handler handler : this.server.getHandlers() )
+        for (final ContextHandler.CoreContextHandler handler: this.server.getDescendants(ContextHandler.CoreContextHandler.class))
         {
-            final File tempDirectory = ((WebAppContext) handler).getTempDirectory();
+            final File tempDirectory = handler.getTempDirectory();
             try
             {
                 Log.debug( "Updating the last modified timestamp of content in Jetty's temporary storage in: {}", tempDirectory);

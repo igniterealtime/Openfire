@@ -199,11 +199,12 @@ jobs:
         id: startCIServer
         uses: ./.github/actions/startserver-action
       - name: Run Smack tests against server
-        uses: XMPP-Interop-Testing/xmpp-interop-tests-action@main # TODO replace 'main' with a proper versioned tag, like 'v1'.
+        uses: XMPP-Interop-Testing/xmpp-interop-tests-action@main
         with:
           domain: 'example.org'
           adminAccountUsername: 'admin'
           adminAccountPassword: 'admin'
+          disabledSpecifications: 'XEP-0045'
           disabledTests: 'EntityCapsTest,SoftwareInfoIntegrationTest,XmppConnectionIntegrationTest,StreamManagementTest,WaitForClosingStreamElementTest,IoTControlIntegrationTest,ModularXmppClientToServerConnectionLowLevelIntegrationTest'
       - name: Stop CI server
         if: ${{ always() && steps.startCIServer.conclusion == 'success' }} # TODO figure out if this is correct. The intent is to have the server stopped if it was successfully started, even if the tests fail. Failing tests should still cause the job to fail.

@@ -16,7 +16,6 @@
 
 package org.jivesoftware.openfire.http;
 
-import org.apache.jasper.servlet.JasperInitializer;
 import org.apache.tomcat.InstanceManager;
 import org.apache.tomcat.SimpleInstanceManager;
 import org.eclipse.jetty.ee8.apache.jsp.JettyJasperInitializer;
@@ -25,7 +24,6 @@ import org.eclipse.jetty.http.HttpMethod;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.Handler.Sequence;
-import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
 import org.eclipse.jetty.ee8.servlet.ServletHolder;
@@ -386,9 +384,9 @@ public final class HttpBindManager implements CertificateEventListener {
             httpBindServer.start();
 
             if (handlerList.getHandlers() != null) {
-                Arrays.stream((Handler[]) handlerList.getHandlers().toArray()).forEach(handler  -> {
+                Arrays.stream(handlerList.getHandlers().toArray()).forEach(handler  -> {
                     try {
-                        handler.start();
+                        ((Handler)handler).start();
                     } catch (Exception e) {
                         Log.warn("An exception occurred while trying to start handler: {}", handler, e);
                     }
@@ -397,9 +395,9 @@ public final class HttpBindManager implements CertificateEventListener {
             handlerList.start();
 
             if ( extensionHandlers.getHandlers() != null ) {
-                Arrays.stream((Handler[]) handlerList.getHandlers().toArray()).forEach(handler  -> {
+                Arrays.stream(handlerList.getHandlers().toArray()).forEach(handler  -> {
                     try {
-                        handler.start();
+                        ((Handler)handler).start();
                     } catch (Exception e) {
                         Log.warn("An exception occurred while trying to start extension handler: {}", handler, e);
                     }
@@ -433,9 +431,9 @@ public final class HttpBindManager implements CertificateEventListener {
         if (httpBindServer != null) {
             try {
                 if ( extensionHandlers.getHandlers() != null ) {
-                    Arrays.stream((Handler[]) handlerList.getHandlers().toArray()).forEach((Handler handler) -> {
+                    Arrays.stream(handlerList.getHandlers().toArray()).forEach(handler-> {
                         try {
-                            handler.stop();
+                            ((Handler)handler).stop();
                         } catch (Exception e) {
                             Log.warn("An exception occurred while trying to stop extension handler: {}", handler, e);
                         }
@@ -444,9 +442,9 @@ public final class HttpBindManager implements CertificateEventListener {
                 extensionHandlers.stop();
 
                 if ( handlerList.getHandlers() != null ) {
-                    Arrays.stream((Handler[]) handlerList.getHandlers().toArray()).forEach(handler  -> {
+                    Arrays.stream(handlerList.getHandlers().toArray()).forEach(handler  -> {
                         try {
-                            handler.stop();
+                            ((Handler)handler).stop();
                         } catch (Exception e) {
                             Log.warn("An exception occurred while trying to stop handler: {}", handler, e);
                         }

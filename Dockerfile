@@ -1,4 +1,4 @@
-FROM openjdk:11-jre
+FROM eclipse-temurin:17
 
 ENV OPENFIRE_USER=openfire \
     OPENFIRE_DIR=/usr/local/openfire \

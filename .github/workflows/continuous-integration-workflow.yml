@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [ 11, 17 ]
+        java: [ 17, 21 ]
         distribution: [ zulu ] # We could add more here: temurin, adopt, liberica, microsoft, corretto
 
     steps:
@@ -46,13 +46,13 @@ jobs:
           name: distribution-java${{ matrix.java }}
           path: distribution-artifact.tar
       - name: Upload coverage report for 'xmppserver' module
-        if: ${{ matrix.distribution == 'zulu' && matrix.java == 11 && github.ref_name == 'main'}}
+        if: ${{ matrix.distribution == 'zulu' && matrix.java == 17 && github.ref_name == 'main'}}
         uses: actions/upload-artifact@v4
         with:
           name: Coverage Report for 'xmppserver' module
           path: xmppserver/target/site/jacoco/
       - name: Temporarily stash openfire artifacts from the mvn repo for later jobs
-        if: ${{ matrix.distribution == 'zulu' && matrix.java == 11 }}
+        if: ${{ matrix.distribution == 'zulu' && matrix.java == 17 }}
         uses: actions/upload-artifact@v4
         with:
           name: mvn-repo
@@ -75,7 +75,7 @@ jobs:
       - name: Download distribution artifact from build job.
         uses: actions/download-artifact@v4
         with:
-          name: distribution-java11
+          name: distribution-java17
           path: .
       - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
         run: tar -xf distribution-artifact.tar
@@ -164,7 +164,7 @@ jobs:
       - name: Download distribution artifact from build job.
         uses: actions/download-artifact@v4
         with:
-          name: distribution-java11
+          name: distribution-java17
           path: .
       - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
         run: tar -xf distribution-artifact.tar
@@ -191,7 +191,7 @@ jobs:
       - name: Download distribution artifact from build job.
         uses: actions/download-artifact@v4
         with:
-          name: distribution-java11
+          name: distribution-java17
           path: .
       - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
         run: tar -xf distribution-artifact.tar
@@ -238,10 +238,10 @@ jobs:
     steps:
       - name: Checkout Openfire
         uses: actions/checkout@v4
-      - name: Set up JDK 11 Zulu
+      - name: Set up JDK 17 Zulu
         uses: actions/setup-java@v4
         with:
-          java-version: 11
+          java-version: 17
           distribution: zulu
           cache: maven
       - name: Restore mvn repo artifacts from build job
@@ -257,7 +257,7 @@ jobs:
           echo "CONNECTION_PASSWORD=SecurePa55w0rd" >> $GITHUB_ENV
           OPENFIREVSN=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
-          echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
+          echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
       - name: Download old Openfire database script
         run: |
           mkdir olddb
@@ -279,10 +279,10 @@ jobs:
     steps:
       - name: Checkout Openfire
         uses: actions/checkout@v4
-      - name: Set up JDK 11 Zulu
+      - name: Set up JDK 17 Zulu
         uses: actions/setup-java@v4
         with:
-          java-version: 11
+          java-version: 17
           distribution: zulu
           cache: maven
       - name: Restore mvn repo artifacts from build job
@@ -298,7 +298,7 @@ jobs:
           echo "CONNECTION_PASSWORD=SecurePa55w0rd" >> $GITHUB_ENV
           OPENFIREVSN=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
-          echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
+          echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
       - name: Download old Openfire database script
         run: |
           mkdir olddb
@@ -320,10 +320,10 @@ jobs:
     steps:
       - name: Checkout Openfire
         uses: actions/checkout@v4
-      - name: Set up JDK 11 Zulu
+      - name: Set up JDK 17 Zulu
         uses: actions/setup-java@v4
         with:
-          java-version: 11
+          java-version: 17
           distribution: zulu
           cache: maven
       - name: Restore mvn repo artifacts from build job
@@ -339,7 +339,7 @@ jobs:
           echo "CONNECTION_PASSWORD=SecurePa55w0rd" >> $GITHUB_ENV
           OPENFIREVSN=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
-          echo "JAVA_HOME=$(echo $JAVA_HOME_11_X64)" >> $GITHUB_ENV
+          echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
       - name: Download old Openfire database script
         run: |
           mkdir olddb
@@ -367,7 +367,7 @@ jobs:
       - name: Set up Java for publishing
         uses: actions/setup-java@v4
         with:
-          java-version: 11
+          java-version: 17
           distribution: zulu
           cache: maven
           server-id: igniterealtime
@@ -428,7 +428,7 @@ jobs:
       - name: Download distribution artifact from build job.
         uses: actions/download-artifact@v4
         with:
-          name: distribution-java11
+          name: distribution-java17
           path: distribution/target/distribution-base
 
       - name: Fix file permissions
@@ -518,7 +518,7 @@ jobs:
       - name: Download distribution artifact from build job.
         uses: actions/download-artifact@v4
         with:
-          name: distribution-java11
+          name: distribution-java17
           path: .
       - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
         run: tar -xf distribution-artifact.tar

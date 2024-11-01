@@ -30,7 +30,7 @@ import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.DefaultHandler;
 import org.eclipse.jetty.server.Handler.Sequence;
-import org.eclipse.jetty.util.resource.URLResourceFactory;
+import org.eclipse.jetty.util.resource.ResourceFactory;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.ee8.webapp.*;
@@ -50,7 +50,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -526,6 +525,7 @@ public class AdminConsolePlugin implements Plugin {
         context.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
         context.setConfigurations(new Configuration[]{
             new WebAppConfiguration(),
+            new AnnotationConfiguration(),
             new WebInfConfiguration(),
             new WebXmlConfiguration(),
             new MetaInfConfiguration(),
@@ -535,11 +535,9 @@ public class AdminConsolePlugin implements Plugin {
             new JettyWebXmlConfiguration()
         });
         final URL classes = getClass().getProtectionDomain().getCodeSource().getLocation();
-        try {
-            context.getMetaData().setWebInfClassesResources(Collections.singletonList(new URLResourceFactory().newResource(classes.toURI())));
-        } catch (final URISyntaxException e) {
-            Log.error("URI syntax exception during WebApp context creation: ", e);
-        }
+        final ResourceFactory.Closeable resourceFactory = ResourceFactory.closeable();
+        context.getMetaData().setWebInfClassesResources(Collections.singletonList(resourceFactory.newResource(classes)));
+        resourceFactory.close();
 
         // Add CSP headers for all HTTP responses (errors, etc.)
         context.addFilter(AdminContentSecurityPolicyFilter.class, "/*", null);

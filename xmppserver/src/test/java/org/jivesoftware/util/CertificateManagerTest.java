@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,9 +59,9 @@ public class CertificateManagerTest
     public static final ASN1ObjectIdentifier XMPP_ADDR_OID = new ASN1ObjectIdentifier( "1.3.6.1.5.5.7.8.5" );
     public static final ASN1ObjectIdentifier DNS_SRV_OID = new ASN1ObjectIdentifier( "1.3.6.1.5.5.7.8.7" );
 
-    public static final int KEY_SIZE = 512;
+    public static final int KEY_SIZE = 2048;
     public static final String KEY_ALGORITHM = "RSA";
-    public static final String SIGNATURE_ALGORITHM = "SHA1withRSA";
+    public static final String SIGNATURE_ALGORITHM = "SHA256withRSA";
 
     private static KeyPairGenerator keyPairGenerator;
     private static KeyPair subjectKeyPair;

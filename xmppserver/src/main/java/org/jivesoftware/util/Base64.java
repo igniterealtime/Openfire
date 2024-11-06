@@ -82,7 +82,7 @@ package org.jivesoftware.util;
  * @version 2.2.1
  * @deprecated Use java.util.Base64 instead.
  */
-@Deprecated(forRemoval = true, since = "4.9.0") // Remove in or after Openfire 4.10.0
+@Deprecated(forRemoval = true, since = "4.9.0") // Remove in or after Openfire 5.0.0
 public class Base64
 {
 

@@ -375,7 +375,7 @@ public class DNSUtil {
      *
      * @deprecated Replaced by {@link SrvRecord}
      */
-    @Deprecated(since = "4.10.0", forRemoval = true) // Remove in or after Openfire 4.11.0
+    @Deprecated(since = "5.0.0", forRemoval = true) // Remove in or after Openfire 5.1.0
     public static class HostAddress implements Serializable {
 
         private final SrvRecord delegate;
@@ -405,7 +405,7 @@ public class DNSUtil {
     /**
      * @deprecated Replaced by {@link SrvRecord#prioritize(SrvRecord[])}
      */
-    @Deprecated(since = "4.10.0", forRemoval = true) // Remove in or after Openfire 4.11.0
+    @Deprecated(since = "5.0.0", forRemoval = true) // Remove in or after Openfire 5.1.0
     public static List<WeightedHostAddress> prioritize(WeightedHostAddress[] records) {
         final List<WeightedHostAddress> result = new LinkedList<>();
 
@@ -422,7 +422,7 @@ public class DNSUtil {
         return result;
     }
 
-    @Deprecated(since = "4.10.0", forRemoval = true) // Remove in or after Openfire 4.11.0
+    @Deprecated(since = "5.0.0", forRemoval = true) // Remove in or after Openfire 5.1.0
     public static class WeightedHostAddress extends HostAddress
     {
         private final SrvRecord delegate;

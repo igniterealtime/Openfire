@@ -16,16 +16,10 @@
 
 package org.jivesoftware.openfire.container;
 
+import org.eclipse.jetty.ee8.webapp.WebAppContext;
 import org.apache.tomcat.InstanceManager;
 import org.apache.tomcat.SimpleInstanceManager;
-import org.eclipse.jetty.ee8.annotations.AnnotationConfiguration;
-import org.eclipse.jetty.ee8.annotations.AnnotationConfiguration.DiscoveredServletContainerInitializerHolder;
-import org.eclipse.jetty.ee8.servlet.Source;
 import org.eclipse.jetty.http.HttpHeader;
-import org.eclipse.jetty.ee8.apache.jsp.JettyJasperInitializer;
-import org.eclipse.jetty.ee8.annotations.ContainerInitializerAnnotationHandler;
-import org.eclipse.jetty.ee8.plus.webapp.EnvConfiguration;
-import org.eclipse.jetty.ee8.plus.webapp.PlusConfiguration;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.DefaultHandler;
@@ -33,7 +27,6 @@ import org.eclipse.jetty.server.Handler.Sequence;
 import org.eclipse.jetty.util.resource.ResourceFactory;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.eclipse.jetty.ee8.webapp.*;
 import org.jivesoftware.admin.AdminContentSecurityPolicyFilter;
 import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.admin.AuthCheckFilter;
@@ -48,6 +41,7 @@ import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -55,10 +49,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.TimerTask;
 
 /**
  * The admin console plugin. It starts a Jetty instance on the configured
@@ -503,41 +493,16 @@ public class AdminConsolePlugin implements Plugin {
     }
 
     private void createWebAppContext() {
-
         contexts = new ContextHandlerCollection();
 
         WebAppContext context = new WebAppContext(contexts, pluginDir.getAbsoluteFile() + File.separator + "webapp", "/");
 
-        // Ensure the JSP engine is initialized correctly (in order to be able to cope with Tomcat/Jasper precompiled JSPs).
-        final List<ContainerInitializerAnnotationHandler> initializers = new ArrayList<>();
-        initializers.add(
-            new ContainerInitializerAnnotationHandler(
-                new DiscoveredServletContainerInitializerHolder(
-                    Source.EMBEDDED,
-                    new JettyJasperInitializer()
-                ),
-                JettyJasperInitializer.class
-            )
-        );
-        context.setAttribute(AnnotationConfiguration.CONTAINER_INITIALIZERS, initializers);
         context.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false");
         context.setClassLoader(Thread.currentThread().getContextClassLoader());
         context.setAttribute(InstanceManager.class.getName(), new SimpleInstanceManager());
-        context.setConfigurations(new Configuration[]{
-            new WebAppConfiguration(),
-            new AnnotationConfiguration(),
-            new WebInfConfiguration(),
-            new WebXmlConfiguration(),
-            new MetaInfConfiguration(),
-            new FragmentConfiguration(),
-            new EnvConfiguration(),
-            new PlusConfiguration(),
-            new JettyWebXmlConfiguration()
-        });
         final URL classes = getClass().getProtectionDomain().getCodeSource().getLocation();
-        final ResourceFactory.Closeable resourceFactory = ResourceFactory.closeable();
+        final ResourceFactory resourceFactory = ResourceFactory.of(context);
         context.getMetaData().setWebInfClassesResources(Collections.singletonList(resourceFactory.newResource(classes)));
-        resourceFactory.close();
 
         // Add CSP headers for all HTTP responses (errors, etc.)
         context.addFilter(AdminContentSecurityPolicyFilter.class, "/*", null);

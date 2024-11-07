@@ -65,6 +65,7 @@ public class OpenfireWebSocketServlet extends JettyWebSocketServlet {
         super.destroy();
     }
 
+    @Override
     protected void service(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
     {
         // add CORS headers for all HTTP responses (errors, etc.)
@@ -86,7 +87,6 @@ public class OpenfireWebSocketServlet extends JettyWebSocketServlet {
             response.setHeader("Access-Control-Allow-Headers", String.join(",", HttpBindManager.HTTP_BIND_CORS_ALLOW_HEADERS.getValue()));
             response.setHeader("Access-Control-Max-Age", String.valueOf(HttpBindManager.HTTP_BIND_CORS_MAX_AGE.getValue().toSeconds()));
         }
-
         super.service(request, response);
     }
 

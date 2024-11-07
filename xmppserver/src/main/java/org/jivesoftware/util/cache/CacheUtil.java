@@ -121,8 +121,9 @@ public class CacheUtil
      * @param <V> the type of value contained by the cache
      * @param <C> the type of collection contained by the cache
      * @param element The element to be removed (can be null only if the value-Collection supports null values).
+     * @return True if the collection was modified
      */
-    public static <K extends Serializable, V, C extends Collection<V> & Serializable> void removeValueFromMultiValuedCache( Cache<K, C> cache, K key, V element )
+    public static <K extends Serializable, V, C extends Collection<V> & Serializable> boolean removeValueFromMultiValuedCache( Cache<K, C> cache, K key, V element )
     {
         final Lock lock = cache.getLock( key );
         lock.lock();
@@ -131,7 +132,7 @@ public class CacheUtil
             final C elements = cache.get( key );
 
             if ( elements == null ) {
-                return;
+                return false;
             }
 
             // Remove all instances of the element from the entry value.
@@ -154,6 +155,7 @@ public class CacheUtil
                     cache.put( key, elements );
                 }
             }
+            return changed;
         }
         finally
         {

@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>StanzaJS: A Minimal Working Example (in Javascript/Typescript)</title>
+    <title>whixp: A Minimal Working Example (in Dart)</title>
     <link href="style.css" rel="stylesheet" type="text/css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/dart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/yaml.min.js"></script>
     <script>hljs.highlightAll();</script>
 </head>
 <body>
@@ -14,7 +16,7 @@
 
     <header>
         <img src="images/header_logo.gif" alt="Openfire Logo" />
-        <h1>StanzaJS: A Minimal Working Example (in Javascript/Typescript)</h1>
+        <h1>Whixp: A Minimal Working Example (in Dart)</h1>
     </header>
 
     <nav>
@@ -26,8 +28,8 @@
         <h2>Introduction</h2>
 
         <p>
-            This document provides a minimal working example of a client implementation using the StanzaJS library,
-            making it connect to a running Openfire server.
+            This document provides a minimal working example of a client implementation using the Whixp library, making
+            it connect to a running Openfire server.
         </p>
 
         <p>Topics that are covered in this document:</p>
@@ -48,12 +50,10 @@
         <h2>Background</h2>
 
         <p>
-            <a href="https://github.com/legastero/stanza">StanzaJS</a> is a JavaScript/TypeScript library for using
-            modern XMPP, and it does that by exposing everything as JSON. Unless you insist, you have no need to ever
-            see or touch any XML when using StanzaJS.
+            <a href="https://whixp.dosy.app/">Whixp</a> is an XMPP Client Library for Dart and Flutter
         </p>
         <p>
-            This guide describes how to use StanzaJS to connect to Openfire. It provides nothing more than a minimal
+            This guide describes how to use Whixp to connect to Openfire. It provides nothing more than a minimal
             working example, intended as a stepping stone to for client developers that get started with a new project.
         </p>
 
@@ -96,42 +96,66 @@
         <h2>Code</h2>
 
         <p>
-            Copy the following code in a fresh project.
+            To start the project, create a file named <code>pubspec.yaml</code> in an empty directory, and copy in the
+            code below.
         </p>
 
         <fieldset>
-            <legend>Echo client example</legend>
-            <pre><code class="language-javascript">import * as XMPP from 'stanza';
+            <legend>Example pubspec.yaml file</legend>
+            <pre><code class="language-yaml">name: example
+description: A Whixp sample for Openfire.
+version: 1.0.0
 
-const client = XMPP.createClient({
-    jid: 'john@example.org',
-    password: 'secret',
+environment:
+  sdk: ^3.4.0
 
-    transports: {
-        websocket: 'ws://example.org:7070/ws'
-    }
-});
-
-client.on('session:started', () => {
-    client.getRoster();
-    client.sendPresence();
-});
-
-client.on('chat', msg => {
-    client.sendMessage({
-        to: msg.from,
-        body: 'You sent: ' + msg.body
-    });
-});
-
-client.connect();
+dependencies:
+  whixp: ^2.1.2+1
 </code></pre>
         </fieldset>
 
         <p>
-            When this project is running, have a look at the Openfire Administrative Console: you should notice that the
-            user named 'john' is online! Use any other XMPP client to log in with the user 'jane', and send a message to
-            John. The code above will cause John to echo back the message that you have sent.
+            Next, create a file named <code>main.dart</code> in an empty directory, and copy in the code
+            below.
+        </p>
+
+        <fieldset>
+            <legend>Example main.dart file</legend>
+            <pre><code class="language-dart">import 'package:whixp/whixp.dart';
+
+void main() {
+  final whixp = Whixp(
+    jabberID: 'john@example.org/my-resource',
+    password: 'secret',
+    port: 5223,
+    useTLS: true,
+    onBadCertificateCallback: (_) => true,
+    logger: Log(enableWarning: true, enableError: true, includeTimestamp: true),
+    internalDatabasePath: 'whixp',
+    reconnectionPolicy: RandomBackoffReconnectionPolicy(1, 3),
+  );
+
+  /// Reconnect on disconnection.
+  whixp.addEventHandler<TransportState>('state', (state) {
+    if (state == TransportState.disconnected) whixp.connect();
+  });
+  whixp.connect();
+}
+</code></pre>
+        </fieldset>
+
+        <p>
+            Finally, build and run the test client, using the instructions below.
+        </p>
+
+        <fieldset>
+            <legend>Build and run Whixp test client</legend>
+            <pre><code class="language-bash">$ dart pub get
+$ dart run main.dart</code></pre>
+        </fieldset>
+
+        <p>
+            If all goes well, this will print a short exchange of XMPP data! Press control-c to end the application.
         </p>
 
         <p>
@@ -148,9 +172,8 @@ client.connect();
             Please use the links below to find more information.
         </p>
         <ul>
-            <li><a href="https://stanzajs.org">StanzaJS home page</a></li>
-            <li><a href="https://github.com/legastero/stanza">StanzaJS project page</a></li>
-            <li><a href="https://www.npmjs.com/package/stanza">StanzaJS on nodejs</a></li>
+            <li><a href="https://whixp.dosy.app/">Whixp documentation page</a></li>
+            <li><a href="https://pub.dev/packages/whixp">Whixp pub/dev repository page</a></li>
         </ul>
     </section>
 

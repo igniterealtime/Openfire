@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,9 @@ import java.io.Serializable;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 /**
@@ -98,6 +101,19 @@ public class LdapManager {
         .setDefaultValue(-1)
         .setDynamic(true)
         .build();
+
+    /**
+     * Openfire will log a warning when interacting with LDAP using an unencrypted connection. To prevent flooding of
+     * the logfiles, subsequent warnings are suppressed for the duration configured by this property.
+     */
+    public static final SystemProperty<Duration> UNENCRYPTED_WARNING_SUPPRESSION = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("ldap.unencrypted-warning-suppression")
+        .setChronoUnit(ChronoUnit.SECONDS)
+        .setDefaultValue(Duration.ofHours(1))
+        .setDynamic(true)
+        .build();
+
+    public static Instant lastUnencryptedWarning = Instant.EPOCH;
 
     private static LdapManager instance;
     static {
@@ -628,8 +644,9 @@ public class LdapManager {
      */
     public LdapContext getContext(LdapName baseDN) throws NamingException {
         Log.debug("Creating a DirContext in LdapManager.getContext() for baseDN '{}'...", baseDN);
-        if (!sslEnabled && !startTlsEnabled) {
-            Log.warn("Using unencrypted connection to LDAP service!");
+        if (!sslEnabled && !startTlsEnabled && lastUnencryptedWarning.isBefore(Instant.now().minus(UNENCRYPTED_WARNING_SUPPRESSION.getValue()))) {
+            Log.warn("Using unencrypted connection to LDAP service! Consider reconfiguring the connection between Openfire and your AD/LDAP server. This warning will be suppressed for {}", UNENCRYPTED_WARNING_SUPPRESSION.getValue());
+            lastUnencryptedWarning = Instant.now();
         }
 
         // Set up the environment for creating the initial context
@@ -756,9 +773,11 @@ public class LdapManager {
     public boolean checkAuthentication(Rdn[] userRDN, String password) {
         Log.debug("In LdapManager.checkAuthentication(userDN, password), userRDN is: " + Arrays.toString(userRDN) + "...");
 
-        if (!sslEnabled && !startTlsEnabled) {
-            Log.warn("Using unencrypted connection to LDAP service!");
+        if (!sslEnabled && !startTlsEnabled && lastUnencryptedWarning.isBefore(Instant.now().minus(UNENCRYPTED_WARNING_SUPPRESSION.getValue()))) {
+            Log.warn("Using unencrypted connection to LDAP service! Consider reconfiguring the connection between Openfire and your AD/LDAP server. This warning will be suppressed for {}", UNENCRYPTED_WARNING_SUPPRESSION.getValue());
+            lastUnencryptedWarning = Instant.now();
         }
+
 
         JiveInitialLdapContext ctx = null;
         try {

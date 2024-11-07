@@ -175,6 +175,13 @@ public class AuthCheckFilter implements Filter {
     }
 
     /**
+     * Indicates to the caller whether any of the currently loaded exclusions contains a wildcard
+     */
+    public static boolean excludesIncludeWildcards() {
+        return excludes.stream().anyMatch(e -> e.contains("*"));
+    }
+
+    /**
      * Returns true if a URL passes an exclude rule.
      *
      * @param url the URL to test.
@@ -383,7 +390,7 @@ public class AuthCheckFilter implements Filter {
      * @return <tt>true</tt> if the address is detected in the list, otherwise <tt>false</tt>.
      * @deprecated Replaced by {@link IpUtils#isAddressInAnyOf(String, Set)}
      */
-    @Deprecated(since = "4.10.0", forRemoval = true) // Remove in Openfire 4.11 or later.
+    @Deprecated(since = "5.0.0", forRemoval = true) // Remove in Openfire 5.1 or later.
     public static boolean isOnList(@Nonnull final Set<String> list, @Nonnull final String ipAddress) {
         return IpUtils.isAddressInAnyOf(ipAddress, list);
     }
@@ -398,7 +405,7 @@ public class AuthCheckFilter implements Filter {
      * @return the input value, stripped from brackets if applicable.
      * @deprecated Moved to {@link IpUtils#removeBracketsFromIpv6Address(String)}
      */
-    @Deprecated(since = "4.10.0", forRemoval = true) // Remove in Openfire 4.11 or later.
+    @Deprecated(since = "5.0.0", forRemoval = true) // Remove in Openfire 5.1 or later.
     @Nonnull
     public static String removeBracketsFromIpv6Address(@Nonnull final String address) {
         return IpUtils.removeBracketsFromIpv6Address(address);

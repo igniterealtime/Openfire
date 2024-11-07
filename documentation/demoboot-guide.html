@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Openfire: Demoboot Guide</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<article id="top">
+
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo"/>
+        <h1>Demoboot Guide</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </nav>
+
+    <section id="intro">
+
+        <h2>Introduction</h2>
+        <p>
+            Installing and configuring Openfire is not particularly difficult (see: <a href="./install-guide.html">Install Guide</a>.
+            It can, however, be a tad cumbersome, especially when it needs to be done repeatedly. In plenty of scenarios,
+            like a quick demo, or a verification that some change has the desired effect, it can be beneficial to be
+            able to quickly launch Openfire into a functional state, without having to manually go through its setup.
+        </p>
+        <p>
+            The 'demoboot' setup of Openfire allows one to start a fresh installation of Openfire into a certain
+            provisioned state, without running any of the setup steps. This guide describes how to use this mode.
+        </p>
+
+        <p>Topics that are covered in this document:</p>
+
+        <nav>
+            <ul>
+                <li><a href="#overview">Demoboot Overview</a>
+                <li><a href="#dev">Usage while Developing</a>
+                <li><a href="#customization">Customize Demoboot</a>
+            </ul>
+        </nav>
+
+    </section>
+
+    <section id="overview">
+
+        <h2>Demoboot Overview</h2>
+
+        <p>
+            The 'demoboot' setup of Openfire allows one to start a fresh installation of Openfire into a certain
+            provisioned state, without running any of the setup steps. When running in 'demoboot' mode:
+        </p>
+        <ul>
+            <li>Openfire is configured to use an embedded database, which requires no setup</li>
+            <li>an administrative account is created using the username 'admin' and password 'admin'</li>
+            <li>two users are automatically created: 'jane' and 'john', both using the value 'secret' as their password, and who are on each other's contact list</li>
+            <li>the XMPP domain name is configured to be 'example.org' (for ease of use, configure 'example.org' to be an alias of '127.0.0.1' in your hosts file!)</li>
+        </ul>
+        <p>
+            To start Openfire in 'demoboot' mode, you can invoke the Openfire executable using the <code>-demoboot</code>
+            argument, as shown below.
+        </p>
+        <fieldset>
+            <legend>Starting Openfire in 'demoboot' mode.</legend>
+            <pre><code>$ ./bin/openfire.sh -demoboot</code></pre>
+        </fieldset>
+        <p>
+            That is all! You should now be able to use Openfire! It's administrative console is accessible via a browser
+            on <a href="http://localhost:9090">http://localhost:9090</a> (the credentials are 'admin'/'admin'). An XMPP
+            client can be used to log into the server on the default ports (eg: 5222) using both the 'jane@example.org'
+            and 'john@example.org' accounts (password: 'secret').
+        </p>
+        <p>
+            There's one caveat: in demoboot-mode, the TLS certificates that are used are self-signed. Some software
+            requires special configuration to accept such a certificate when a connection to Openfire is being established.
+        </p>
+
+    </section>
+
+    <section id="dev">
+
+        <h2>Usage while Developing</h2>
+
+        <p>
+            Demoboot mode is particularly useful while modifying Openfire's source code. To quickly and repeatedly
+            compile, build and start Openfire, using demoboot in combination with the Maven wrapper allows for
+            a one-line instruction, executed from the root of Openfire's source code, does it all:
+        </p>
+        <fieldset>
+            <legend>Compile, build and start Openfire in 'demoboot' mode.</legend>
+            <pre><code>$ ./mvnw package && ./distribution/target/distribution-base/bin/openfire.sh -demoboot</code></pre>
+        </fieldset>
+        <p>
+            Demoboot can be combined with other options. In the following example, the Maven build is modified to
+            explicitly clean a previous build (to remove any lingering artifacts), and to skip unit testing (which can
+            take up time). Openfire is started in demoboot mode, but also in debug mode, allowing a remote debugger
+            to be attached.
+        </p>
+        <fieldset>
+            <legend>Compile, build and start Openfire in 'demoboot' mode.</legend>
+            <pre><code>$ ./mvnw clean package -Dmaven.test.skip && ./distribution/target/distribution-base/bin/openfire.sh -debug -demoboot</code></pre>
+        </fieldset>
+
+    </section>
+
+    <section id="customization">
+
+        <h2>Customize Demoboot</h2>
+
+        <p>
+            Demoboot mode can be very useful, but there are scenarios in which it is desirable to have a slightly
+            different provisioning take place. This section describes how to modify the demoboot mode.
+        </p>
+        <p>
+            Demoboot is only a very thin wrapper around the autosetup feature of Openfire, that's described in
+            <a href="./install-guide.html#autosetup">Openfire's Install Guide</a>. Because of this, the provisioning
+            that's performed by demoboot can easily be modified.
+        </p>
+        <p>
+            The provisioning that takes place in Demoboot mode is defined in the configuration file named
+            <code>openfire-demoboot.xml</code>. This file is found in the <code>conf</code> directory of an installed
+            version of Openfire, and in <code>distribution/src/conf</code> of Openfire's source code.
+        </p>
+        <p>
+            This file can be modified using the instructions in the 'autosetup' section of
+            <a href="./install-guide.html#autosetup">Openfire's Install Guide</a>, which will allow you to modify the
+            mode as you see fit!
+        </p>
+
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
+
+</body>
+</html>

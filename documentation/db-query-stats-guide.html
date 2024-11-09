@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Openfire: Database Query Statistics Guide</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+    <style>
+        img {
+            height: 250px;
+        }
+    </style>
+</head>
+<body>
+
+<article>
+
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
+        <h1>Database Query Statistics Guide</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </nav>
+
+    <section id="intro">
+
+        <h2>Introduction</h2>
+        <p>
+            Openfire uses a database for much of its persistent storage, as well as to store some state changes. Out of
+            the box, Openfire's database schema and usage is optimized for maximum performance. However, due environment
+            specific issues may limit the performance of individual instances. Furthermore, custom plugins are a
+            frequent source of inefficient database interaction.
+        </p>
+        <p>
+            When Openfire is suffering from database performance issues, user-perceived performance is often affected.
+            In extreme cases, errors cause data inconsistency, leading to a wide range of errors.
+        </p>
+        <p>
+            Openfire's admin console provides a basic analysis tool that can help identify problematic database queries.
+            This tool, the subject of this guide, can be used to supplement the diagnostic tooling made available by
+            the vendor of the database that is in use.
+        </p>
+        <p>
+            This document describes:
+        </p>
+
+        <nav>
+            <ul>
+                <li><a href="#enabling">Enabling Database Query Statistics</a></li>
+                <li><a href="#interpret">How to read the collected statistics</a></li>
+            </ul>
+        </nav>
+    </section>
+
+    <section id="enabling">
+
+        <h2>Enabling Database Query Statistics</h2>
+
+        <p>
+            The Database Query Statistics are controlled in the Openfire Admin Console. You can find the functionality
+            under "Server", "Server Manager" and "Database". On the bottom of that page, a link to the Database Query
+            Statistics is provided.
+        </p>
+        <p>
+            To enable collection of statistics, the radio button "Enabled" should be checked, and the "Update" button
+            be pressed. After that, statistics collection commences immediately until the feature is disabled again. Note
+            that the page does not automatically refresh to show changes in the statistics, unless the 'refresh' option
+            is used.
+        </p>
+        <figure>
+            <a href="images/db-stats-link.png"><img src="images/db-stats-link.png" alt="Database property page with highlighted link to Database Query Statistics page."></a>
+            <a href="images/db-stats-enable.png"><img src="images/db-stats-enable.png" alt="The controls to be used to enable or disable statistics collection."></a>
+            <figcaption>Enabling Database Query Statistics</figcaption>
+        </figure>
+        <p>
+            Please be aware that the collection of query statistics adds some overhead. Although this is mostly
+            negligible, it is not recommended leaving the statistics collections running for extended periods of time.
+        </p>
+
+    </section>
+
+    <section id="interpret">
+
+        <h2>How to read the collected statistics?</h2>
+
+        <p>
+            Once enabled, the Database Query Statistics will group the database queries that are executed by Openfire
+            For each query, the following information is collected.
+        </p>
+        <dl>
+            <dt>Count</dt>
+            <dd>The amount of invocations of the query</dd>
+
+            <dt>Total Time</dt>
+            <dd>The execution time of all invocations of the query combined (in milliseconds)</dd>
+
+            <dt>Average Time</dt>
+            <dd>The average execution time, in milliseconds, of the query (which equals the Total Time divided by the Count).</dd>
+        </dl>
+        <p>
+            The information describes the query statistics since the last time query statistics collection was enabled.
+        </p>
+        <figure>
+            <a href="images/db-stats-select-example.png"><img src="images/db-stats-select-example.png" alt="Database Query Statistics (for a collection of SELECT queries)."></a>
+            <a href="images/db-stats-select-example-zoom.png"><img src="images/db-stats-select-example-zoom.png" alt="A close-up of some Query Statistics."></a>
+            <figcaption>Database Query Statistics (for a collection of SELECT queries)</figcaption>
+        </figure>
+        <p>
+            Interpretation of the results can require some knowledge of the inner workings of Openfire and the database,
+            although some generic observations hold true for most queries:
+        </p>
+        <ul>
+            <li>As a rule of thumb, the Average Time for queries should be in the single digits (lower than 10).</li>
+            <li>Queries that have a higher Average Time are typically more problematic than queries with a higher Count.</li>
+            <li>A combination of a high Average Time and a high Count is particularly worrying.</li>
+        </ul>
+        <p>
+            Based on these guidelines, optimizations can be applied to your database. When badly-performing queries are
+            defined by Openfire itself (as opposed to Openfire customizations, such as plugins), then a resize of the
+            resources available to your database server may be in order. The Ignite Realtime community typically ensures
+            that the proper database indices are in place. If you do find that an addition database index is alleviating
+            issues, <a href="https://discourse.igniterealtime.org">we would love to hear from you</a>!
+        </p>
+        <p>
+            When queries with poor statistics originate from your proprietary code, consider the following:
+        </p>
+        <ul>
+            <li>Can the amount of invocations be reduced, for example by introducing a form of caching to your code?</li>
+            <li>Can the SQL of your queries be optimized?</li>
+            <li>Can database indices be added that speed up the execution time?</li>
+        </ul>
+        <p>
+            It is not always straight-forward to apply improvements to custom code. If you need professional support or
+            services, please see our <a href="https://www.igniterealtime.org/support/service_providers.jsp">directory of
+            professional partners</a>.
+        </p>
+
+    </section>
+
+    <section id="further-reading">
+        <h3>Further Reading</h3>
+        <ul>
+            <li><a href="db-clustering-guide.html">Database clustering guide</a></li>
+            <li><a href="database-guide.html">Database schema guide</a></li>
+        </ul>
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
+
+</body>
+</html>

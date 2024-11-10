@@ -66,7 +66,6 @@ public class CertificateManagerTest
     public static final String KEY_ALGORITHM = "RSA";
     public static final String SIGNATURE_ALGORITHM = "SHA256withRSA";
 
-    private static KeyPairGenerator keyPairGenerator;
     private static KeyPair subjectKeyPair;
     private static KeyPair issuerKeyPair;
     private static ContentSigner contentSigner;
@@ -74,7 +73,7 @@ public class CertificateManagerTest
     @BeforeAll
     public static void initialize() throws Exception
     {
-        keyPairGenerator = KeyPairGenerator.getInstance( KEY_ALGORITHM );
+        final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance(KEY_ALGORITHM);
         keyPairGenerator.initialize( KEY_SIZE );
 
         subjectKeyPair = keyPairGenerator.generateKeyPair();
@@ -100,11 +99,11 @@ public class CertificateManagerTest
         final String subjectCommonName = "MySubjectCommonName";
 
         final X509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(
-                new X500Name( "CN=MyIssuer" ),                                          // Issuer
-                BigInteger.valueOf( Math.abs( new SecureRandom().nextInt() ) ),         // Random serial number
-                new Date( System.currentTimeMillis() - ( 1000L * 60 * 60 * 24 * 30 ) ), // Not before 30 days ago
-                new Date( System.currentTimeMillis() + ( 1000L * 60 * 60 * 24 * 99 ) ), // Not after 99 days from now
-                new X500Name( "CN=" + subjectCommonName ),                              // Subject
+                new X500Name( "CN=MyIssuer" ),                          // Issuer
+                BigInteger.valueOf( Math.abs( new SecureRandom().nextInt() ) ), // Random serial number
+                Date.from( Instant.now().plus(Duration.ofDays(30)) ),           // Not before 30 days ago
+                Date.from( Instant.now().minus(Duration.ofDays(99)) ),          // Not after 99 days from now
+                new X500Name( "CN=" + subjectCommonName ),              // Subject
                 subjectKeyPair.getPublic()
         );
 
@@ -139,11 +138,11 @@ public class CertificateManagerTest
         final String subjectAltNameXmppAddr = "MySubjectAltNameXmppAddr";
 
         final X509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(
-                new X500Name( "CN=MyIssuer" ),                                          // Issuer
-                BigInteger.valueOf( Math.abs( new SecureRandom().nextInt() ) ),         // Random serial number
-                new Date( System.currentTimeMillis() - ( 1000L * 60 * 60 * 24 * 30 ) ), // Not before 30 days ago
-                new Date( System.currentTimeMillis() + ( 1000L * 60 * 60 * 24 * 99 ) ), // Not after 99 days from now
-                new X500Name( "CN=" + subjectCommonName ),                              // Subject
+                new X500Name( "CN=MyIssuer" ),                          // Issuer
+                BigInteger.valueOf( Math.abs( new SecureRandom().nextInt() ) ), // Random serial number
+                Date.from( Instant.now().plus(Duration.ofDays(30)) ),           // Not before 30 days ago
+                Date.from( Instant.now().minus(Duration.ofDays(99)) ),          // Not after 99 days from now
+                new X500Name( "CN=" + subjectCommonName ),              // Subject
                 subjectKeyPair.getPublic()
         );
 
@@ -188,11 +187,11 @@ public class CertificateManagerTest
         final String subjectAltNameDnsSrv = "MySubjectAltNameXmppAddr";
 
         final X509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(
-                new X500Name( "CN=MyIssuer" ),                                          // Issuer
-                BigInteger.valueOf( Math.abs( new SecureRandom().nextInt() ) ),         // Random serial number
-                new Date( System.currentTimeMillis() - ( 1000L * 60 * 60 * 24 * 30 ) ), // Not before 30 days ago
-                new Date( System.currentTimeMillis() + ( 1000L * 60 * 60 * 24 * 99 ) ), // Not after 99 days from now
-                new X500Name( "CN=" + subjectCommonName ),                              // Subject
+                new X500Name( "CN=MyIssuer" ),                          // Issuer
+                BigInteger.valueOf( Math.abs( new SecureRandom().nextInt() ) ), // Random serial number
+                Date.from( Instant.now().plus(Duration.ofDays(30)) ),           // Not before 30 days ago
+                Date.from( Instant.now().minus(Duration.ofDays(99)) ),          // Not after 99 days from now
+                new X500Name( "CN=" + subjectCommonName ),              // Subject
                 subjectKeyPair.getPublic()
         );
 
@@ -237,11 +236,11 @@ public class CertificateManagerTest
         final String subjectAltNameDNS = "MySubjectAltNameDNS";
 
         final X509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(
-                new X500Name( "CN=MyIssuer" ),                                          // Issuer
-                BigInteger.valueOf( Math.abs( new SecureRandom().nextInt() ) ),         // Random serial number
-                new Date( System.currentTimeMillis() - ( 1000L * 60 * 60 * 24 * 30 ) ), // Not before 30 days ago
-                new Date( System.currentTimeMillis() + ( 1000L * 60 * 60 * 24 * 99 ) ), // Not after 99 days from now
-                new X500Name( "CN=" + subjectCommonName ),                              // Subject
+                new X500Name( "CN=MyIssuer" ),                          // Issuer
+                BigInteger.valueOf( Math.abs( new SecureRandom().nextInt() ) ), // Random serial number
+                Date.from( Instant.now().plus(Duration.ofDays(30)) ),           // Not before 30 days ago
+                Date.from( Instant.now().minus(Duration.ofDays(99)) ),          // Not after 99 days from now
+                new X500Name( "CN=" + subjectCommonName ),              // Subject
                 subjectKeyPair.getPublic()
         );
 
@@ -289,11 +288,11 @@ public class CertificateManagerTest
         final String subjectAltNameDNS = "MySubjectAltNameDNS";
 
         final X509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(
-                new X500Name( "CN=MyIssuer" ),                                          // Issuer
-                BigInteger.valueOf( Math.abs( new SecureRandom().nextInt() ) ),         // Random serial number
-                new Date( System.currentTimeMillis() - ( 1000L * 60 * 60 * 24 * 30 ) ), // Not before 30 days ago
-                new Date( System.currentTimeMillis() + ( 1000L * 60 * 60 * 24 * 99 ) ), // Not after 99 days from now
-                new X500Name( "CN=" + subjectCommonName ),                              // Subject
+                new X500Name( "CN=MyIssuer" ),                          // Issuer
+                BigInteger.valueOf( Math.abs( new SecureRandom().nextInt() ) ), // Random serial number
+                Date.from( Instant.now().plus(Duration.ofDays(30)) ),           // Not before 30 days ago
+                Date.from( Instant.now().minus(Duration.ofDays(99)) ),          // Not after 99 days from now
+                new X500Name( "CN=" + subjectCommonName ),              // Subject
                 subjectKeyPair.getPublic()
         );
 

@@ -12,8 +12,7 @@ RUN find . -type d -empty -delete
 # Now we build:
 FROM eclipse-temurin:17 AS build
 WORKDIR /tmp/
-RUN mkdir /tmp/m2_home
-ENV M2_HOME=/tmp/m2_home
+RUN mkdir /tmp/m2_repo
 WORKDIR /usr/src
 COPY mvnw ./
 RUN chmod +x mvnw
@@ -22,17 +21,18 @@ COPY .mvn/wrapper .mvn/wrapper
 
 # First, copy in just the pom.xml files and fetch the dependencies:
 COPY --from=poms /usr/src/ .
-RUN ./mvnw -e -B help:evaluate -Dexpression=project.modules -Doutput=/tmp/projects.xml
-RUN cat /tmp/projects.xml| grep '<string>' | sed -e 's/^.*string>\(.*\)<\/string.*$/\1/g' >/tmp/projects.txt
-RUN ./mvnw -pl plugins -e -B help:evaluate -Dexpression=project.modules -Doutput=/tmp/projects.xml
-RUN cat /tmp/projects.xml| grep '<string>' | sed -e 's/^.*string>\(.*\)<\/string.*$/plugins\/\1/g' >>/tmp/projects.txt
-RUN for project in $(cat /tmp/projects.txt); do ./mvnw -pl $project  -e -B dependency:go-offline; done
-RUN ./mvnw -e -B dependency:go-offline
+# I don't know why we need all three either.
+RUN ./mvnw -e -B dependency:resolve-plugins -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo
+RUN ./mvnw -e -B dependency:go-offline -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo
+RUN ./mvnw -e -B de.qaware.maven:go-offline-maven-plugin:resolve-dependencies -Dmaven.repo.local=/tmp/m2_repo
+
 # Above here is only affected by the pom.xml files, so the cache is stable.
 
 # Now, copy in all the source, and actually build it, skipping the tests.
 COPY . .
-RUN ./mvnw -e -B package -Dmaven.test.skip
+RUN ./mvnw -o -e -B package -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo
+# In case of Windows, break glass.
+RUN sed -i 's/\r//g' /usr/src/distribution/target/distribution-base/bin/openfire.sh
 
 # Might as well create the user in a different stage if only to eliminate
 # the ugly && chaining and increase parallelization

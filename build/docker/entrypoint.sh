@@ -17,13 +17,14 @@ initialize_data_dir() {
 
   # initialize the data volume
   if [[ ! -d ${OPENFIRE_DATA_DIR}/conf ]]; then
-    sudo -HEu ${OPENFIRE_USER} cp -a ${OPENFIRE_DIR}/conf_org ${OPENFIRE_DATA_DIR}/conf
-    sudo -HEu ${OPENFIRE_USER} cp -a ${OPENFIRE_DIR}/plugins_org ${OPENFIRE_DATA_DIR}/plugins
-    sudo -HEu ${OPENFIRE_USER} cp -a ${OPENFIRE_DIR}/resources/security_org ${OPENFIRE_DATA_DIR}/conf/security
+    cp -a ${OPENFIRE_DIR}/conf_org ${OPENFIRE_DATA_DIR}/conf
+    cp -a ${OPENFIRE_DIR}/plugins_org ${OPENFIRE_DATA_DIR}/plugins
+    cp -a ${OPENFIRE_DIR}/resources/security_org ${OPENFIRE_DATA_DIR}/conf/security
   fi
-  sudo -HEu ${OPENFIRE_USER} mkdir -p ${OPENFIRE_DATA_DIR}/{plugins,embedded-db}
-  sudo -HEu ${OPENFIRE_USER} rm -rf ${OPENFIRE_DATA_DIR}/plugins/admin
-  sudo -HEu ${OPENFIRE_USER} ln -sf ${OPENFIRE_DIR}/plugins_org/admin ${OPENFIRE_DATA_DIR}/plugins/admin
+  mkdir -p ${OPENFIRE_DATA_DIR}/{plugins,embedded-db}
+  rm -rf ${OPENFIRE_DATA_DIR}/plugins/admin
+  ln -sf ${OPENFIRE_DIR}/plugins_org/admin ${OPENFIRE_DATA_DIR}/plugins/admin
+  chown -R ${OPENFIRE_USER}:${OPENFIRE_USER} ${OPENFIRE_DATA_DIR}
 
   # create version file
   CURRENT_VERSION=

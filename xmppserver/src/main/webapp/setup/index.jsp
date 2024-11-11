@@ -155,7 +155,7 @@
     </c:if>
 
     <c:choose>
-        <c:when test="${not jreVersionCompatible or not servlet22Installed or not jsp11Installed or not jiveJarsInstalled or not openfireHomeExists or not configFailedLoading}">
+        <c:when test="${not jreVersionCompatible or not servlet22Installed or not jsp11Installed or not jiveJarsInstalled or not openfireHomeExists or not configLocationExistsAndAccessible or not securityConfigLocationExistsAndAccessible}">
             <div class="error">
                 <fmt:message key="setup.env.check.error"/> <fmt:message key="title"/> <fmt:message key="setup.title"/>.
             </div>
@@ -265,7 +265,7 @@
                                 <tr>
                                     <td><img src="../images/check.gif" width="13" height="13"></td>
                                     <td><fmt:message key="setup.env.check.config_found">
-                                        <fmt:param><c:out value="${configLocation}"/></fmt:param>
+                                        <fmt:param><c:out value="${securityConfigLocation}"/></fmt:param>
                                     </fmt:message>
                                     </td>
                                 </tr>
@@ -274,7 +274,7 @@
                                 <tr>
                                     <td><img src="../images/x.gif" width="13" height="13"></td>
                                     <td><fmt:message key="setup.env.check.config_not_loaded">
-                                        <fmt:param><c:out value="${configLocation}"/></fmt:param>
+                                        <fmt:param><c:out value="${securityConfigLocation}"/></fmt:param>
                                     </fmt:message>
                                     </td>
                                 </tr>

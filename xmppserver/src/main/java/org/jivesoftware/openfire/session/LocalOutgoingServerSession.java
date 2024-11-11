@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.session;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Interner;
 import com.google.common.collect.Interners;
 import org.dom4j.Element;
@@ -245,7 +246,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
      * @param port default port to use to establish the connection.
      * @return new outgoing session to a remote domain, or null.
      */
-    // package-protected to facilitate unit testing..
+    @VisibleForTesting
     static LocalOutgoingServerSession createOutgoingSession(@Nonnull final DomainPair domainPair, int port) {
         final Logger log = LoggerFactory.getLogger(Log.getName() + "[Create outgoing session for: " + domainPair + "]");
 

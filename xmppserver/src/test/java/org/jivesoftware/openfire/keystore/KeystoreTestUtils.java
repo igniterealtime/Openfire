@@ -57,7 +57,7 @@ public class KeystoreTestUtils
     public static final int CHAIN_LENGTH = 4;
     public static final int KEY_SIZE = 2048;
     public static final String KEY_ALGORITHM = "RSA";
-    public static final String SIGNATURE_ALGORITHM = "SHA1withRSA";
+    public static final String SIGNATURE_ALGORITHM = "SHA256withRSA";
 
     static
     {

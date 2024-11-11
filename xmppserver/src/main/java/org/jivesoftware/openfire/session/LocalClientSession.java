@@ -35,6 +35,7 @@ import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.openfire.user.PresenceEventDispatcher;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.IpUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
@@ -294,7 +295,10 @@ public class LocalClientSession extends LocalSession implements ClientSession {
                 Log.warn("Unable to access the identity store for client connections. StartTLS is not being offered as a feature for this session.", e);
             }
             // Include available SASL Mechanisms
-            features.add(SASLAuthentication.getSASLMechanisms(session));
+            final Element saslMechanisms = SASLAuthentication.getSASLMechanisms(session);
+            if (saslMechanisms != null) {
+                features.add(saslMechanisms);
+            }
             // Include Stream features
             final List<Element> specificFeatures = session.getAvailableStreamFeatures();
             if (specificFeatures != null) {
@@ -312,16 +316,15 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     {
         try
         {
-            final String hostAddress = connection.getHostAddress();
             final byte[] address = connection.getAddress();
 
             // Blacklist takes precedence over whitelist.
-            if ( blockedIPs.contains( hostAddress ) || isAddressInRange( address, blockedIPs ) ) {
+            if (IpUtils.isAddressInAnyOf(address, blockedIPs)) {
                 return false;
             }
 
             // When there's a whitelist (not empty), you must be on it to be allowed.
-            return allowedIPs.isEmpty() || allowedIPs.contains( hostAddress ) || isAddressInRange( address, allowedIPs );
+            return allowedIPs.isEmpty() || IpUtils.isAddressInAnyOf(address, allowedIPs);
         }
         catch ( UnknownHostException e )
         {
@@ -333,16 +336,15 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     {
         try
         {
-            final String hostAddress = connection.getHostAddress();
             final byte[] address = connection.getAddress();
 
             // Blacklist takes precedence over whitelist.
-            if ( blockedIPs.contains( hostAddress ) || isAddressInRange( address, blockedIPs ) ) {
+            if (IpUtils.isAddressInAnyOf(address, blockedIPs)) {
                 return false;
             }
 
             // When there's a whitelist (not empty), you must be on it to be allowed.
-            return allowedAnonymIPs.isEmpty() || allowedAnonymIPs.contains( hostAddress ) || isAddressInRange( address, allowedAnonymIPs );
+            return allowedAnonymIPs.isEmpty() || IpUtils.isAddressInAnyOf(address, allowedAnonymIPs);
         }
         catch ( UnknownHostException e )
         {
@@ -350,13 +352,9 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
     }
 
-    // TODO Add IPv6 support (OF-2785)
+    @Deprecated(forRemoval = true, since = "5.0.0") // Remove in Openfire 5.1 or later.
     public static boolean isAddressInRange( byte[] address, Set<String> ranges ) {
-        final String range0 = (address[0] & 0xff) + "." + (address[1] & 0xff) + "." + (address[2] & 0xff) + "." + (address[3] & 0xff);
-        final String range1 = (address[0] & 0xff) + "." + (address[1] & 0xff) + "." + (address[2] & 0xff) + ".*";
-        final String range2 = (address[0] & 0xff) + "." + (address[1] & 0xff) + ".*.*";
-        final String range3 = (address[0] & 0xff) + ".*.*.*";
-        return ranges.contains(range0) || ranges.contains(range1) || ranges.contains(range2) || ranges.contains(range3);
+        return IpUtils.isAddressInAnyOf(address, ranges);
     }
 
     /**

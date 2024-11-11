@@ -2,21 +2,23 @@ Source: openfire
 Section: net
 Priority: optional
 Maintainer: Ignite Realtime Community <admin@igniterealtime.org>
-Build-Depends: debhelper (>= 5), cdbs, patchutils, default-jdk (>= 11)
+Build-Depends: debhelper-compat (= 13), default-jdk (>= 11)
+Rules-Requires-Root: no
 Standards-Version: 3.7.2
-Homepage: http://www.igniterealtime.org
+Homepage: https://www.igniterealtime.org
+Vcs-Git: https://github.com/igniterealtime/Openfire.git
+Vcs-Browser: https://github.com/igniterealtime/Openfire
+Bugs: https://igniterealtime.atlassian.net/browse/OF
 
 Package: openfire
-Section: net
-Priority: optional
-Pre-Depends: default-jre-headless (>= 11) | java11-runtime-headless | java11-runtime | java13-runtime-headless | java13-runtime | java16-runtime-headless | java16-runtime | java17-runtime-headless | java17-runtime
+Pre-Depends: adduser
+Depends: default-jre-headless (>= 11) | java-runtime (>= 11)
 Architecture: all
-Description: A high performance XMPP (Jabber) server.
+Description: High performance XMPP (Jabber) server.
  Openfire is an instant messaging server that implements the XMPP
  (Jabber) protocol. It features high performance, a robust
  administration console, and a full plugin system. The server
  is 100% Java.
  .
- Openfire is a professional Open Source project, led by the Ignite Realtime Foundation.
-Homepage: http://www.igniterealtime.org
- 
+ Openfire is a professional Open Source project, led by
+ the Ignite Realtime Foundation.

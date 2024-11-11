@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Openfire: Network Configuration Guide</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<article>
+
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
+        <h1>Network Configuration Guide</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </nav>
+
+    <section id="intro">
+
+        <h2>Introduction</h2>
+
+        <aside>
+            <p>
+                All roads lead to Rome.
+            </p>
+            <p>
+                There are many ways to configure a network to allow connectivity from end-users
+                to the servers running Openfire. This guide is not exhaustive, but aims to describe common setups.
+            </p>
+        </aside>
+
+        <p>
+            Having Openfire installed and running is one thing, but for users to make use of its services, they need to
+            be able to connect to the server! This guide describes common network configurations to optimize the
+            deployment of Openfire.
+        </p>
+
+        <p>This guide contains the following topics</p>
+
+        <nav>
+            <ul>
+                <li><a href="#dns">DNS Settings</a></li>
+                <li><a href="#ipv6">IPv6 support</a></li>
+            </ul>
+        </nav>
+
+    </section>
+
+    <section id="terminology">
+
+        <h2>Terminology</h2>
+
+        <dl>
+            <dt>XMPP Domain Name</dt>
+            <dd>The name of your Openfire/XMPP service (eg: <code>example.org)</code>). This identifies the <em>service</em>
+                (and is part of the identifiers of the users on the service), but not necessarily the <em>server</em> on
+                which Openfire is installed.</dd>
+
+            <dt>Server Host Name (FQDN)</dt>
+            <dd>The network hostname of the <em>server</em> on which Openfire is installed (eg: <code>xmpp.example.org)</code>).
+                This identifies the <em>server</em>, but not necessarily the <em>service</em>.</dd>
+        </dl>
+
+        <p>
+            The distinction between XMPP domain name and server host name is important, even when it is a common
+            occurrence for both values to be equal to each-other.
+        </p>
+        <p>
+            The XMPP domain name identifies the Openfire service, and thus is an important part of all identifiers.
+            This value <em>should be considered immutable</em>, as changing the value would cause
+            references to users or your server to break!
+        </p>
+        <p>
+            It is relatively easy, on the other hand, to change the address of the server on which Openfire is running.
+            That typically involves updating DNS records.
+        </p>
+    </section>
+
+    <section id="dns">
+
+        <h2>DNS Settings</h2>
+
+        <p>
+            Chat clients (and other XMPP entities, such as remote servers) to make use of your XMPP service need a way
+            to determine the address of the server on which Openfire is installed, so that they can initiate a network
+            connection. This process is based on DNS lookups.
+        </p>
+
+        <section id="dns-a-records">
+
+            <h3>Basic configuration: A/AAAA records</h3>
+
+            <p>
+                An essential class of DNS records in this respect are the <strong>A and AAAA records</strong>. These are
+                necessary to map the Server Host Name (FQDN) to the IP address on which it is reachable.
+            </p>
+
+            <p>
+                When the XMPP Domain Name and Server Host Name are equal to each-other (and Openfire is using standard
+                ports), then having only A/AAAA records may suffice. Generally speaking, clients and remote servers use
+                an A/AAAA lookup of the XMPP domain name as a fallback, when the more elaborate lookup (described below)
+                is not available.
+            </p>
+        </section>
+
+        <section id="dns-srv-records">
+
+            <h3>Full configuration: SRV records</h3>
+
+            <aside>
+                <p>
+                    This guide is not an exhaustive reference for DNS Service Records. Please refer to
+                    <a href="https://datatracker.ietf.org/doc/html/rfc2782">RFC 2782: A DNS RR for specifying the location
+                        of services (DNS SRV)</a> instead.
+                </p>
+            </aside>
+
+            <p>
+                If Openfire is running on a server that has a hostname that <em>does not</em> match the XMPP domain name,
+                or if non-standard ports are being used, then additional DNS records are typically required for
+                connectivity to be established. You may consider adding the following records even when you do not
+                strictly require them, to replace an implicit configuration with an explicit one, which has benefits for
+                long-term maintenance of the configuration.
+            </p>
+
+            <p>
+                To map between the XMPP Domain Name and Server Host Name (FQDN),
+                <a href="https://en.wikipedia.org/wiki/SRV_record">DNS SRV records</a> are used. These records allow for
+                a range of configuration options, such as basic <a href="load-balancing.html#dnssrv">load balancing</a>
+                functionality.
+            </p>
+
+            <p>
+                In DNS SRV terms, Openfire provides not one, but two 'services':
+            </p>
+            <aside>
+                <p>
+                    Another SRV service named <code>jabber</code> was used in ancient times. As it has been deprecated
+                    about two decades ago, there generally isn't a need to specify records for this service any longer.
+                    Unless you're dealing with exceptionally old software (eg: in retro computing communities), it is
+                    likely safe to ignore this service name.
+                </p>
+            </aside>
+            <dl>
+                <dt>xmpp-client</dt>
+                <dd>Defines the endpoint that is used by clients.</dd>
+
+                <dt>xmpp-server</dt>
+                <dd>Defines the endpoint that is used by (other) servers.</dd>
+            </dl>
+            <p>
+                Both of these have an equivalent that uses a different method of encryption negotiation (DirectTLS
+                rather than STARTTLS), which adds another two services:
+            </p>
+            <dl>
+                <dt>xmpps-client</dt>
+                <dd>Defines the endpoint that is used by clients, using DirectTLS.</dd>
+
+                <dt>xmpps-server</dt>
+                <dd>Defines the endpoint that is used by (other) servers, using DirectTLS.</dd>
+            </dl>
+            <p>
+                In all, four services are typically advertised through DNS SRV records. Following the DNS SRV syntax,
+                one would create the following DNS SRV records, for an Openfire instance that uses
+                <code>example.org</code> as its XMPP Domain Name, which is installed on a server whose Server Host Name
+                (FQDN) is <code>xmpp.example.org</code>:
+            </p>
+            <fieldset>
+                <legend>Example DNS SRV records</legend>
+                <pre><code>
+_xmpp-client._tcp.example.org. 86400 IN SRV 0 5 5222 xmpp.example.org.
+_xmpp-server._tcp.example.org. 86400 IN SRV 0 5 5269 xmpp.example.org.
+_xmpps-client._tcp.example.org. 86400 IN SRV 0 5 5223 xmpp.example.org.
+_xmpps-server._tcp.example.org. 86400 IN SRV 0 5 5270 xmpp.example.org.
+                </code></pre>
+            </fieldset>
+
+        </section>
+
+        <section id="dns-subdomains">
+
+            <h3>Configuration for additional services</h3>
+
+            <p>
+                Most Openfire instances expose additional XMPP services, such as the group-chat service typically called
+                'conference` (which is where chat rooms live) and a pub/sub service, which bears the name 'pubsub'. The
+                full XMPP domain name of these services are subdomains of the XMPP domain name. The XMPP domain name of
+                the default group chat service of Openfire thus is <code>conference.example.org</code>.
+            </p>
+            <p>
+                Clients connected directly to your Openfire instance will be able to make use of its services directly.
+                Users of federated XMPP domains (those on other Openfire, or even other brand of XMPP servers), cannot.
+                Their 'home' server will need a way to resolve the correct address of these services.
+            </p>
+            <p>
+                This again is achieved through DNS records. Often, A and AAAA records suffice. Complement the
+                pre-existing A/AAA records for <code>example.org</code> with a records for <code>conference.example.org</code>,
+                for example. Under similar conditions as described above, it is sometimes useful to have SRV records, as
+                shown below.
+            </p>
+            <fieldset>
+                <legend>Example DNS SRV records for a group chat service</legend>
+                <pre><code>
+_xmpp-server._tcp.conference.example.org. 86400 IN SRV 0 5 5269 xmpp.example.org.
+_xmpps-server._tcp.conference.example.org. 86400 IN SRV 0 5 5270 xmpp.example.org.
+                </code></pre>
+            </fieldset>
+            <p>
+                Note <code>xmpp-client</code> and <code>xmpps-client</code> records are not needed for these server-sided services - the user's server connects to remote services on their behalf.
+            </p>
+        </section>
+
+        <section id="dns-admin-console-hints">
+
+            <h3>Admin Console DNS hints</h3>
+
+            <p>
+                The Openfire admin console performs a basic check of the DNS configuration in your environment, and will
+                warn if it detects potential issues. When issues are detected, a suggested set of DNS SRV records is provided.
+            </p>
+
+            <figure>
+                <img src="images/dns-srv-details.png" alt="Admin console DNS SRV verification page, warning about missing records.">
+                <figcaption>Admin console DNS SRV verification page, warning about missing records.</figcaption>
+            </figure>
+
+            <p>
+                It is important to realize that DNS resolution might be affected by a number of factors, that can affect
+                the Admin Console's capability to detect the correct state of an environment. This can lead to both false
+                positive and false negative results, in regard to these DNS hints.
+            </p>
+        </section>
+
+    </section>
+
+    <section id="ipv6">
+
+        <h2>IPv6 support</h2>
+
+        <p>
+            Network connectivity is based on the Internet Protocol. Traditionally IPv4 support is widespread. Openfire
+            fully supports the newer IPv6 protocol, although some specific configuration may be required.
+        </p>
+        <p>
+            This section assumes that IPv6 is available on your network, and support is provided by your Operating System.
+        </p>
+        <p>
+            The most straightforward difference between IPv4 and IPv6 is its addressing. IPv4 addresses typically
+            are displayed in the form of four numbers (eg: <code>203.0.113.81</code>). IPv6 addresses are larger.
+            They are typically displayed as eight groups of four hexadecimal digits (eg:
+            <code>2001:0db8:0000:0000:0000:2b3e:3d80:61a1</code>).
+        </p>
+
+        <section id="ipv6-nic">
+
+            <h3>Network Interfaces</h3>
+
+            <p>
+                By default, Openfire will bind to all network interfaces, including IPv6 interfaces. When Openfire has
+                been configured to bind to a specific interface, this may exclude IPv6 connectivity. The configuration
+                can be found in the <code>openfire.xml</code> configuration file.
+            </p>
+
+            <fieldset>
+                <legend>Example <code>openfire.xml</code> configuration for XMPP binding interface</legend>
+                <pre><code>
+&lt;!-- Network settings. By default, Openfire will bind to all network interfaces.
+     Alternatively, you can specify a specific network interfaces that the server
+     will listen on. For example, 127.0.0.1. This setting is generally only useful
+     on multi-homed servers. --&gt;
+&lt;!--
+&lt;network&gt;
+    &lt;interface&gt;&lt;/interface&gt;
+&lt;/network&gt;
+--&gt;
+                </code></pre>
+            </fieldset>
+            
+            <p>
+                The <code>openfire.xml</code> configuration file can contain a similar element to define on what interface
+                the Admin Console is accessible.
+            </p>
+
+            <fieldset>
+                <legend>Example <code>openfire.xml</code> configuration for admin console binding interface</legend>
+                <pre><code>
+&lt;adminConsole&gt;
+    &lt;!-- Disable either port by setting the value to -1 --&gt;
+    &lt;port>9090&lt;/port&gt;
+    &lt;securePort>9091&lt;/securePort&gt;
+    &lt;interface>127.0.0.1&lt;/interface&gt;
+&lt;/adminConsole>
+                </code></pre>
+            </fieldset>
+
+            <p>
+                Both can be used to bind to an IPv6 network interface.
+            </p>
+        </section>
+
+        <section id="ipv6-dns">
+
+            <h3>DNS records</h3>
+
+            <p>
+                If the server on which Openfire is running can be connected to using IPv6, it will have an IPv6 address.
+                When that's the case, then a DNS AAAA record must be created to map the hostname of the server to its
+                address. This is analogous to an A record, that maps an IPv4 address to the hostname.
+            </p>
+
+        </section>
+
+        <section id="ipv6-java">
+
+            <h3>Java Networking Configuration</h3>
+
+            <p>
+                Openfire is an application that runs in a Java virtual machine. Openfire's IPv6 support is primarily
+                controlled by standard <a href="https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/net/doc-files/net-properties.html">Java Networking Properties</a>.
+                The following properties are typically provided. Please refer to the documentation of your version of
+                Java for details.
+            </p>
+
+            <dl>
+                <dt>java.net.preferIPv4Stack</dt>
+                <dd>If IPv6 is available on the operating system then sockets used by Openfire will, by default, be IPv6
+                    capable. This lets Openfire connect to, and accept connections from, both IPv4 and IPv6 hosts. In
+                    case that you would rather use IPv4 only sockets, then this property can be set to <code>true</code>.
+                    The implication is that it will not be possible for Openfire to communicate with IPv6 only clients
+                    and servers. Openfire's startup script does not include this property. It thus follows Java's default.
+                </dd>
+
+                <dt>java.net.preferIPv6Addresses</dt>
+                <dd>When dealing with a host which has both IPv4 and IPv6 addresses, this property defines the
+                    preferred behavior. When set to <code>false</code>, Openfire is configured to prefer using IPv4
+                    addresses over IPv6 ones. This property can be set to <code>true</code> to change that preference
+                    and use IPv6 addresses over IPv4 ones where possible, or <code>system</code> to preserve the order
+                    of the addresses as returned by the operating system. Openfire's startup script by default sets the
+                    value for this property to <code>system</code>, thus following the operating system.
+                </dd>
+            </dl>
+
+        </section>
+
+        <section id="ipv6-happy-eyeballs">
+
+            <h3>Happy Eyeballs</h3>
+
+            <p>
+                Most of the network connections over which XMPP data is transmitted are initiated by remote entities,
+                typically clients. There is, however, one particular type of connection that is initiated by Openfire
+                itself: an (outbound) server-to-server connection. These connections are established when users of the
+                local server wish to connect with those on another domain. This is commonly referred to as 'federating'.
+            </p>
+
+            <p>
+                When Openfire establishes an outbound connection to another XMPP server, it makes use of the
+                <a href="https://xmpp.org/extensions/xep-0495.html">Happy Eyeballs</a> approach. This approach aims to
+                reduce any user-visible delay when establishing server-to-server connections. It does so by starting
+                multiple connections in parallel, preferring IPv6 connectivity over IPv4 connectivity, and interleaving
+                IPv4 and IPv6 connection attempts.
+            </p>
+
+            <p>
+                The following properties are used to configure the behavior or the 'Happy Eyeballs' implementation:
+            </p>
+
+            <dl>
+                <dt>xmpp.server.connection-attempt-delay</dt>
+                <dd>A fixed delay for how long to wait before starting the next connection attempt. Defaults to 250ms.</dd>
+
+                <dt>xmpp.server.resolution-delay</dt>
+                <dd>The time to wait for a response for the 'preferred IP family' after receiving a response for another family. Defaults to 50ms.</dd>
+
+                <dt>xmpp.server.resolution-timeout</dt>
+                <dd>The maximum amount of time to wait for successful resolution of a host of a target domain. Defaults to 5 minutes.</dd>
+
+                <dt>xmpp.server.connection-max-workers</dt>
+                <dd>The maximum amount of worker threads attempting to set up a socket connection to a target remote XMPP domain. A value of '1' will effectively make 'Happy Eyeballs' impossible (as that requires concurrent connection attempts). Defaults to 8.</dd>
+            </dl>
+
+            <p>
+                Lastly, the family (IPv4 or IPv6) preferred by the Happy Eyeballs algorithm is based on
+                <a href="#ipv6-java">Java Networking Configuration</a>, and follows the preferences configured through
+                those settings.
+            </p>
+        </section>
+
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
+
+</body>
+</html>

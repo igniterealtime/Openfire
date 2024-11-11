@@ -441,7 +441,7 @@
                 </td>
             </tr>
             <tr style="text-align: center">
-                <td colspan="4">
+                    <td colspan="4">
                     <input type="submit" name="componentAllowed" value="<fmt:message key="component.settings.allow" />">
                 </td>
             </tr>
@@ -463,7 +463,7 @@
         <c:choose>
             <c:when test="${empty blockedComponents}">
                 <tr>
-                    <td style="text-align: center" colspan="7"><fmt:message key="component.settings.empty_list" /></td>
+                    <td style="text-align: center" colspan="4"><fmt:message key="component.settings.empty_list" /></td>
                 </tr>
             </c:when>
             <c:otherwise>

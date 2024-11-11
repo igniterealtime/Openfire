@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -278,11 +278,11 @@
                             <tr>
                                 <td style="width: 1%">
                                     <c:choose>
-                                        <c:when test="${session.secure}">
-                                            <img src="images/lock.gif" alt="A secure connection">
+                                        <c:when test="${session.encrypted}">
+                                            <img src="images/lock.gif" alt="An encrypted connection">
                                         </c:when>
                                         <c:otherwise>
-                                            <img src="images/blank.gif" width="1" height="1" alt="Not a secure connection">
+                                            <img src="images/blank.gif" width="1" height="1" alt="An unencrypted connection">
                                         </c:otherwise>
                                     </c:choose>
                                 </td>
@@ -343,11 +343,11 @@
                             <tr>
                                 <td style="width: 1%">
                                     <c:choose>
-                                        <c:when test="${session.secure}">
-                                            <img src="images/lock.gif" alt="A secure connection">
+                                        <c:when test="${session.encrypted}">
+                                            <img src="images/lock.gif" alt="An encrypted connection">
                                         </c:when>
                                         <c:otherwise>
-                                            <img src="images/blank.gif" width="1" height="1" alt="Not a secure connection">
+                                            <img src="images/blank.gif" width="1" height="1" alt="An unencrypted connection">
                                         </c:otherwise>
                                     </c:choose>
                                 </td>

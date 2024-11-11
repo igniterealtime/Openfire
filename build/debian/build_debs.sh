@@ -5,13 +5,14 @@
 pushd .
 # This allows us to pass in the Openfire version from the command-line.
 if [ $1 ]; then
-    export OPENFIRE_FULLVERSION=$1
+    OPENFIRE_FULLVERSION=$1
 else
-    export OPENFIRE_FULLVERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
+    # extract version from pom.xml
+    OPENFIRE_FULLVERSION=$(grep -oP "<version>(.*)</version>" -m 1 pom.xml | cut -d ">" -f 2 | cut -d "<" -f 1)
 fi
-export OPENFIRE_VERSION=$(echo "${OPENFIRE_FULLVERSION}" | cut -d'-' -f1)
-export DEBIAN_BUILDDATE="$(date +'%a, %d %b %Y %H:%M:%S %z')"
-export WORKDIR=tmp/debian/openfire-${OPENFIRE_VERSION}
+OPENFIRE_VERSION=$(echo "${OPENFIRE_FULLVERSION}" | cut -d'-' -f1)
+DEBIAN_BUILDDATE="$(date +'%a, %d %b %Y %H:%M:%S %z')"
+WORKDIR=tmp/debian/openfire-${OPENFIRE_VERSION}
 
 if [ -d "tmp/debian" ]; then
     echo "Removing previous workdir tmp/debian"
@@ -22,12 +23,7 @@ mkdir -p $WORKDIR
 cp -r distribution/target/distribution-base/. $WORKDIR/
 
 mkdir -p $WORKDIR/debian
-cp build/debian/* $WORKDIR/debian/
-# HACK remove out this actual script
-rm -f $WORKDIR/debian/build_debs.sh
-
-# make rules executable
-chmod 755 $WORKDIR/debian/rules
+cp -r build/debian/* $WORKDIR/debian/
 
 cd $WORKDIR/debian
 # Do some needed replacements

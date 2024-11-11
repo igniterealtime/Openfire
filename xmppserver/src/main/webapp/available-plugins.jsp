@@ -275,10 +275,16 @@
                                         </td>
                                         <td nowrap class="line-bottom-border">
                                             <c:if test="${not empty notInstalledPlugin.readme}">
-                                                <a href="${fn:escapeXml(notInstalledPlugin.readme)}"><img src="images/doc-readme-16x16.gif" alt="README"></a>
+                                                <a href="${fn:escapeXml(notInstalledPlugin.readme)}"
+                                                    target="_blank" title="<fmt:message key="plugin.admin.documentation" />">
+                                                    <img src="images/doc-readme-16x16.gif">
+                                                </a>
                                             </c:if>
                                             <c:if test="${not empty notInstalledPlugin.changelog}">
-                                                <a href="${fn:escapeXml(notInstalledPlugin.changelog)}"><img src="images/doc-changelog-16x16.gif" alt="changelog"></a>
+                                                <a href="${fn:escapeXml(notInstalledPlugin.changelog)}"
+                                                    target="_blank" title="<fmt:message key="plugin.admin.changelog" />">
+                                                    <img src="images/doc-changelog-16x16.gif">
+                                                </a>
                                             </c:if>
                                         </td>
                                         <td style="width: 60%" class="line-bottom-border">

@@ -52,7 +52,7 @@ if [ -n "$MAVENMAP" ]; then
 fi
 DOCKERCMD+=(
     -w /usr/src/openfire
-    eclipse-temurin:11-jdk \
+    eclipse-temurin:17-jdk \
     ./mvnw clean package
 )
 if [ $SKIPTESTS == true ]; then

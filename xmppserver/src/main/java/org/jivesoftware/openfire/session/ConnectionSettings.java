@@ -66,6 +66,14 @@ public final class ConnectionSettings {
 
         public static final String MAX_THREADS = "xmpp.client.processing.threads";
 
+        public static final SystemProperty<Duration> PREAUTH_TIMEOUT_PROPERTY = SystemProperty.Builder.ofType(Duration.class)
+            .setKey("xmpp.client.preauth.timeout")
+            .setDefaultValue(Duration.ofMinutes(5))
+            .setMinValue(Duration.ofMillis(-1))
+            .setChronoUnit(ChronoUnit.MILLIS)
+            .setDynamic(Boolean.TRUE)
+            .build();
+
         /**
          * Used to configure throttling at the network level
          *

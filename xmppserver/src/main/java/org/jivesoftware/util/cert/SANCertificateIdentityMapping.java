@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -157,8 +157,13 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
 
         try ( final ASN1InputStream decoder = new ASN1InputStream( item ) )
         {
+            ASN1Primitive object = decoder.readObject();
+            if (object instanceof DLTaggedObject) {
+                final DLTaggedObject taggedObject = (DLTaggedObject) object;
+                object = (ASN1Sequence) taggedObject.getBaseObject();
+            }
+
             // By specification, OtherName instances must always be an ASN.1 Sequence.
-            final ASN1Primitive object = decoder.readObject();
             final ASN1Sequence otherNameSeq = (ASN1Sequence) object;
 
             // By specification, an OtherName instance consists of:

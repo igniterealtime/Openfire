@@ -1,5 +1,6 @@
-openfire (@version@) unstable; urgency=medium
+openfire (@version@) stable; urgency=medium
 
-  * For full changelog, see http://www.igniterealtime.org/builds/openfire/docs/latest/changelog.html
+  * For full changelog, see
+    https://www.igniterealtime.org/builds/openfire/docs/latest/changelog.html
 
- -- Jive Software <webmaster@jivesoftware.com>  @builddate@
+ -- Ignite Realtime Community <admin@igniterealtime.org>  @builddate@

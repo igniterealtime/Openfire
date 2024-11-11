@@ -16,12 +16,13 @@
 --%>
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
-<%@ page import="java.io.File,
-                 java.lang.reflect.Method" %>
+<%@ page import="java.lang.reflect.Method" %>
 <%@ page import="java.util.HashMap"%>
 <%@ page import="java.util.Locale"%>
 <%@ page import="java.util.Map"%>
 <%@ page import="org.jivesoftware.util.*" %>
+<%@ page import="java.nio.file.Path" %>
+<%@ page import="java.nio.file.Files" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -40,7 +41,7 @@
     boolean jsp11Installed = false;
     boolean jiveJarsInstalled = false;
     boolean openfireHomeExists = false;
-    File openfireHome = null;
+    Path openfireHome = null;
 
     // Check for JRE 1.8
     try {
@@ -71,13 +72,10 @@
     // Try to determine what the jiveHome directory is:
     try {
         Class jiveGlobalsClass = ClassUtils.forName("org.jivesoftware.util.JiveGlobals");
-        Method getOpenfireHomeMethod = jiveGlobalsClass.getMethod("getHomeDirectory", (Class[])null);
-        String openfireHomeProp = (String)getOpenfireHomeMethod.invoke(jiveGlobalsClass, (Object[])null);
-        if (openfireHomeProp != null) {
-            openfireHome = new File(openfireHomeProp);
-            if (openfireHome.exists()) {
-                openfireHomeExists = true;
-            }
+        Method getOpenfireHomeMethod = jiveGlobalsClass.getMethod("getHomePath", (Class[])null);
+        openfireHome = (Path)getOpenfireHomeMethod.invoke(jiveGlobalsClass, (Object[])null);
+        if (openfireHome != null) {
+            openfireHomeExists = Files.exists(openfireHome);
         }
     }
     catch (Exception e) {
@@ -88,6 +86,10 @@
     pageContext.setAttribute( "servlet22Installed", servlet22Installed );
     pageContext.setAttribute( "jsp11Installed", jsp11Installed );
     pageContext.setAttribute( "jiveJarsInstalled", jiveJarsInstalled );
+    pageContext.setAttribute( "configLocation", JiveGlobals.getConfigLocation() );
+    pageContext.setAttribute( "configLocationExistsAndAccessible", Files.isWritable(JiveGlobals.getConfigLocation()) );
+    pageContext.setAttribute( "securityConfigLocation", JiveGlobals.getSecurityConfigLocation() );
+    pageContext.setAttribute( "securityConfigLocationExistsAndAccessible", Files.isWritable(JiveGlobals.getSecurityConfigLocation()) );
     pageContext.setAttribute( "openfireHomeExists", openfireHomeExists );
     pageContext.setAttribute( "openfireHome", openfireHome );
     pageContext.setAttribute( "localizedTitle", LocaleUtils.getLocalizedString("title") );
@@ -153,7 +155,7 @@
     </c:if>
 
     <c:choose>
-        <c:when test="${not jreVersionCompatible or not servlet22Installed or not jsp11Installed or not jiveJarsInstalled or not openfireHomeExists}">
+        <c:when test="${not jreVersionCompatible or not servlet22Installed or not jsp11Installed or not jiveJarsInstalled or not openfireHomeExists or not configFailedLoading}">
             <div class="error">
                 <fmt:message key="setup.env.check.error"/> <fmt:message key="title"/> <fmt:message key="setup.title"/>.
             </div>
@@ -237,6 +239,48 @@
                             </tr>
                         </c:otherwise>
                     </c:choose>
+                    <c:if test="${openfireHomeExists}">
+                        <c:choose>
+                            <c:when test="${configLocationExistsAndAccessible}">
+                                <tr>
+                                    <td><img src="../images/check.gif" width="13" height="13"></td>
+                                    <td><fmt:message key="setup.env.check.config_found">
+                                            <fmt:param><c:out value="${configLocation}"/></fmt:param>
+                                        </fmt:message>
+                                    </td>
+                                </tr>
+                            </c:when>
+                            <c:otherwise>
+                                <tr>
+                                    <td><img src="../images/x.gif" width="13" height="13"></td>
+                                    <td><fmt:message key="setup.env.check.config_not_loaded">
+                                            <fmt:param><c:out value="${configLocation}"/></fmt:param>
+                                        </fmt:message>
+                                    </td>
+                                </tr>
+                            </c:otherwise>
+                        </c:choose>
+                        <c:choose>
+                            <c:when test="${securityConfigLocationExistsAndAccessible}">
+                                <tr>
+                                    <td><img src="../images/check.gif" width="13" height="13"></td>
+                                    <td><fmt:message key="setup.env.check.config_found">
+                                        <fmt:param><c:out value="${configLocation}"/></fmt:param>
+                                    </fmt:message>
+                                    </td>
+                                </tr>
+                            </c:when>
+                            <c:otherwise>
+                                <tr>
+                                    <td><img src="../images/x.gif" width="13" height="13"></td>
+                                    <td><fmt:message key="setup.env.check.config_not_loaded">
+                                        <fmt:param><c:out value="${configLocation}"/></fmt:param>
+                                    </fmt:message>
+                                    </td>
+                                </tr>
+                            </c:otherwise>
+                        </c:choose>
+                    </c:if>
                 </table>
             </div>
 
@@ -292,6 +336,11 @@
                                 <b>Espa&ntilde;ol</b> (es)
                             </label><br>
 
+                            <label for="fa_IR">
+                                <input type="radio" name="localeCode" value="fa_IR" ${locale eq 'fa_IR' ? 'checked' : ''} id="fa_IR" />
+                                (fa_IR) <b>فارسی</b>
+                            </label><br>
+
                             <label for="fr">
                                 <input type="radio" name="localeCode" value="fr" ${locale eq 'fr' ? 'checked' : ''} id="fr" />
                                 <b>Fran&ccedil;ais</b> (fr)
@@ -299,7 +348,7 @@
 
                             <label for="he">
                                 <input type="radio" name="localeCode" value="he" ${locale eq 'he' ? 'checked' : ''} id="he" />
-                                <b>עברית</b> (he)
+                                (he) <b>עברית</b>
                             </label><br>
 
                             <label for="ja_JP">

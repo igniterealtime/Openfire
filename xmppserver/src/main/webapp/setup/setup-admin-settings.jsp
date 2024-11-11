@@ -154,7 +154,7 @@
     Cookie csrfCookie = CookieUtils.getCookie( request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
-    if (addAdmin || deleteAdmins)
+    if (!doTest && (addAdmin || deleteAdmins))
     {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
             errors.put( "csrf", "CSRF failure!");
@@ -593,10 +593,7 @@ document.acctform.newPassword.focus();
 
             <c:if test="${not empty xmppSettings['admin.authorizedJIDs']}">
                 <tr>
-                    <td>
-                       &nbsp;
-                    </td>
-                    <td>
+                    <td colspan="3">
                        &nbsp;
                     </td>
                     <td>

@@ -102,7 +102,7 @@ public final class MUCRoomHistory implements Externalizable {
                 if (getRoom().canAnyoneDiscoverJID()) {
                     // Set the Full JID as the "from" attribute // TODO: This is pretty dodgy, as it depends on the user still being in the room. JIDs _should_ have been stored with the message.
                     try {
-                        List<MUCRole> occupants = getRoom().getOccupantsByNickname(message.getFrom().getResource());
+                        List<MUCOccupant> occupants = getRoom().getOccupantsByNickname(message.getFrom().getResource());
                         if (!occupants.isEmpty()) {
                             delayElement.addAttribute("from", occupants.get(0).getUserAddress().toString());
                         }
@@ -126,7 +126,7 @@ public final class MUCRoomHistory implements Externalizable {
         if (getRoom().canAnyoneDiscoverJID()) {
             // Set the Full JID as the "from" attribute // TODO: This is pretty dodgy, as it depends on the user still being in the room. JIDs _should_ have been stored with the message.
             try {
-                List<MUCRole> occupants = getRoom().getOccupantsByNickname(packet.getFrom().getResource());
+                List<MUCOccupant> occupants = getRoom().getOccupantsByNickname(packet.getFrom().getResource());
                 if (!occupants.isEmpty()) {
                     delayInformation.addAttribute("from", occupants.get(0).getUserAddress().toString());
                 }

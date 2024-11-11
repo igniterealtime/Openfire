@@ -354,8 +354,10 @@ public class LocaleUtils {
     public static boolean isLocalizedTextRTL() {
         // This is obviously not something that's re-usable outside of Openfire. However, this includes all languages
         // for which we provide translations.
-        return JiveGlobals.getLocale().getLanguage().equals("he");
+        String language = JiveGlobals.getLocale().getLanguage();
+        return language.equals(new Locale("he").getLanguage()) || language.equals(new Locale("fa").getLanguage());
     }
+
 
     /**
      * Returns an internationalized string loaded from a resource bundle.

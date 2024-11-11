@@ -17,7 +17,8 @@ mkdir -p ${RPMBUILD_HOME}/SRPMS
 mkdir -p ${RPMBUILD_HOME}/RPMS
 
 # Define some variables
-export RPM_BUILDDATE=$(date +'%a %b %d %Y')
+# Ensure that date runs with English locale that rpmbuild requires
+export RPM_BUILDDATE=$(LC_TIME=en_US.UTF-8 date +'%a %b %d %Y')
 export OPENFIRE_REPOVERSION=$(git rev-parse --short HEAD)
 export OPENFIRE_FULLVERSION=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)
 export OPENFIRE_VERSION=$(echo "${OPENFIRE_FULLVERSION}" | cut -d'-' -f1)

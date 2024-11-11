@@ -81,7 +81,7 @@ public class SessionData {
         return owner;
     }
 
-    @Deprecated(since = "4.8.1", forRemoval = true) // replaced by getCreationInstant. Remove in Openfire 4.10.0 or later.
+    @Deprecated(since = "4.8.1", forRemoval = true) // replaced by getCreationInstant. Remove in Openfire 5.0.0 or later.
     public long getCreationStamp() {
         return creationStamp.toEpochMilli();
     }

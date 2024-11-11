@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>whixp: A Minimal Working Example (in Dart)</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/default.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/bash.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/dart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/yaml.min.js"></script>
+    <script>hljs.highlightAll();</script>
+</head>
+<body>
+
+<article>
+
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
+        <h1>Whixp: A Minimal Working Example (in Dart)</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </nav>
+
+    <section id="intro">
+
+        <h2>Introduction</h2>
+
+        <p>
+            This document provides a minimal working example of a client implementation using the Whixp library, making
+            it connect to a running Openfire server.
+        </p>
+
+        <p>Topics that are covered in this document:</p>
+
+        <nav>
+            <ul>
+                <li><a href="#background">Background</a>
+                <li><a href="#preparations">Preparations</a>
+                <li><a href="#code">Code</a>
+                <li><a href="#references">Further Reading</a>
+            </ul>
+        </nav>
+
+    </section>
+
+    <section id="background">
+
+        <h2>Background</h2>
+
+        <p>
+            <a href="https://whixp.dosy.app/">Whixp</a> is an XMPP Client Library for Dart and Flutter
+        </p>
+        <p>
+            This guide describes how to use Whixp to connect to Openfire. It provides nothing more than a minimal
+            working example, intended as a stepping stone to for client developers that get started with a new project.
+        </p>
+
+    </section>
+
+    <section id="preparations">
+
+        <h2>Preparations</h2>
+
+        <p>
+            In this example, a client connection will be made against a running Openfire server. For ease of
+            configuration, the 'demoboot' setup of Openfire is used.
+        </p>
+        <p>
+            The 'demoboot' setup of Openfire allows one to start a fresh installation of Openfire into a certain
+            provisioned state, without running any of the setup steps. When running in 'demoboot' mode:
+        </p>
+        <ul>
+            <li>an administrative account is created using the username 'admin' and password 'admin'</li>
+            <li>two users are automatically created: 'jane' and 'john' (both using the value 'secret' as their password)</li>
+            <li>the XMPP domain name is configured to be 'example.org' (for ease of use, configure 'example.org' to be an alias of '127.0.0.1' in your hosts file!)</li>
+        </ul>
+        <p>
+            To start Openfire in 'demoboot' mode, you can invoke the Openfire executable using the <code>-demoboot</code>
+            argument, as shown below.
+        </p>
+        <fieldset>
+            <legend>Starting Openfire in 'demoboot' mode.</legend>
+            <pre><code>$ ./bin/openfire.sh -demoboot</code></pre>
+        </fieldset>
+        <p>
+            That should be everything that you need to get Openfire running. Background information on the 'demoboot'
+            mode can be found in <a href="./demoboot-guide.html">Openfire's Demoboot Guide</a>.
+        </p>
+
+    </section>
+
+    <section id="code">
+
+        <h2>Code</h2>
+
+        <p>
+            To start the project, create a file named <code>pubspec.yaml</code> in an empty directory, and copy in the
+            code below.
+        </p>
+
+        <fieldset>
+            <legend>Example pubspec.yaml file</legend>
+            <pre><code class="language-yaml">name: example
+description: A Whixp sample for Openfire.
+version: 1.0.0
+
+environment:
+  sdk: ^3.4.0
+
+dependencies:
+  whixp: ^2.1.2+1
+</code></pre>
+        </fieldset>
+
+        <p>
+            Next, create a file named <code>main.dart</code> in an empty directory, and copy in the code
+            below.
+        </p>
+
+        <fieldset>
+            <legend>Example main.dart file</legend>
+            <pre><code class="language-dart">import 'package:whixp/whixp.dart';
+
+void main() {
+  final whixp = Whixp(
+    jabberID: 'john@example.org/my-resource',
+    password: 'secret',
+    port: 5223,
+    useTLS: true,
+    onBadCertificateCallback: (_) => true,
+    logger: Log(enableWarning: true, enableError: true, includeTimestamp: true),
+    internalDatabasePath: 'whixp',
+    reconnectionPolicy: RandomBackoffReconnectionPolicy(1, 3),
+  );
+
+  /// Reconnect on disconnection.
+  whixp.addEventHandler<TransportState>('state', (state) {
+    if (state == TransportState.disconnected) whixp.connect();
+  });
+  whixp.connect();
+}
+</code></pre>
+        </fieldset>
+
+        <p>
+            Finally, build and run the test client, using the instructions below.
+        </p>
+
+        <fieldset>
+            <legend>Build and run Whixp test client</legend>
+            <pre><code class="language-bash">$ dart pub get
+$ dart run main.dart</code></pre>
+        </fieldset>
+
+        <p>
+            If all goes well, this will print a short exchange of XMPP data! Press control-c to end the application.
+        </p>
+
+        <p>
+            Note that this example disables important security features. You should not use this for anything important!
+        </p>
+
+    </section>
+
+    <section id="references">
+
+        <h2>Further Reading</h2>
+
+        <p>
+            Please use the links below to find more information.
+        </p>
+        <ul>
+            <li><a href="https://whixp.dosy.app/">Whixp documentation page</a></li>
+            <li><a href="https://pub.dev/packages/whixp">Whixp pub/dev repository page</a></li>
+        </ul>
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
+
+</body>
+</html>

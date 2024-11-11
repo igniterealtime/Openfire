@@ -79,24 +79,24 @@ public class MUCRoomTest {
     {
         // Setup test fixture.
 
-        final MUCRole roomSelfOccupant = new MUCRole();
+        final MUCOccupant roomSelfOccupant = new MUCOccupant();
         populateField(roomSelfOccupant, "roomJid", new JID("room-test-role-jid@example.org"));
-        populateField(roomSelfOccupant, "role", MUCRole.Role.visitor);
-        populateField(roomSelfOccupant, "affiliation", MUCRole.Affiliation.member);
+        populateField(roomSelfOccupant, "role", Role.visitor);
+        populateField(roomSelfOccupant, "affiliation", Affiliation.member);
         populateField(roomSelfOccupant, "occupantJID", new JID("room-test-jid@conference.example.org"));
 
-        final List<MUCRole> occupants = new ArrayList<>();
-        final MUCRole occupantA = new MUCRole();
+        final List<MUCOccupant> occupants = new ArrayList<>();
+        final MUCOccupant occupantA = new MUCOccupant();
         populateField(occupantA, "roomJid", new JID("occupantA@example.org"));
-        populateField(occupantA, "role", MUCRole.Role.participant);
-        populateField(occupantA, "affiliation", MUCRole.Affiliation.member);
+        populateField(occupantA, "role", Role.participant);
+        populateField(occupantA, "affiliation", Affiliation.member);
         populateField(occupantA, "occupantJID", new JID("room-test-jid@conference.example.org/occupantA"));
         occupants.add(occupantA);
 
-        final MUCRole occupantB = new MUCRole();
+        final MUCOccupant occupantB = new MUCOccupant();
         populateField(occupantB, "roomJid", new JID("occupantBA@example.org"));
-        populateField(occupantB, "role", MUCRole.Role.none);
-        populateField(occupantB, "affiliation", MUCRole.Affiliation.member);
+        populateField(occupantB, "role", Role.none);
+        populateField(occupantB, "affiliation", Affiliation.member);
         populateField(occupantB, "occupantJID", new JID("room-test-jid@conference.example.org/occupantB"));
         occupants.add(occupantB);
 
@@ -116,10 +116,10 @@ public class MUCRoomTest {
         outcasts.add(new JID("unit-test-outcast-1@example.com"));
         outcasts.add(new JID("unit-test-outcast-2@example.org"));
 
-        final List<MUCRole.Role> rolesToBroadcastPresence = new ArrayList<>();
-        rolesToBroadcastPresence.add(MUCRole.Role.visitor);
-        rolesToBroadcastPresence.add(MUCRole.Role.none);
-        rolesToBroadcastPresence.add(MUCRole.Role.moderator);
+        final List<Role> rolesToBroadcastPresence = new ArrayList<>();
+        rolesToBroadcastPresence.add(Role.visitor);
+        rolesToBroadcastPresence.add(Role.none);
+        rolesToBroadcastPresence.add(Role.moderator);
 
         final MUCRoom input = new MUCRoom(); // Set all fields to a non-default value, for a more specific test!
         populateField(input, "mucService", mockService);
@@ -206,7 +206,7 @@ public class MUCRoomTest {
         assertEquals(input.canAnyoneDiscoverJID(), ((MUCRoom) result).canAnyoneDiscoverJID());
         assertEquals(input.canSendPrivateMessage(), ((MUCRoom) result).canSendPrivateMessage());
 
-        //assertEquals(input.getCachedSize(), ((MUCRole) result).getCachedSize());
+        //assertEquals(input.getCachedSize(), ((MUCOccupant) result).getCachedSize());
     }
 
     public static <E> void populateField(final E object, final String fieldName, final Object value) throws NoSuchFieldException, IllegalAccessException {

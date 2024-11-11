@@ -23,6 +23,7 @@
                  org.apache.commons.fileupload.disk.DiskFileItemFactory,
                  org.apache.commons.fileupload.servlet.ServletFileUpload"
         %>
+<%@ page import="org.jivesoftware.admin.AuthCheckFilter" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.container.PluginManager" %>
 <%@ page import="org.jivesoftware.openfire.update.UpdateManager" %>
@@ -369,6 +370,11 @@ tr.lowerhalf > td:last-child {
             <fmt:message key="plugin.admin.monitortask_running" />
         </admin:infobox>
     </c:if>
+    <c:if test="${ AuthCheckFilter.excludesIncludeWildcards() && !AuthCheckFilter.ALLOW_WILDCARDS_IN_EXCLUDES.getValue() }">
+        <admin:infobox type="warning">
+            <fmt:message key="plugin.admin.wildcards-exists" />
+        </admin:infobox>
+    </c:if>
     <p>
     <fmt:message key="plugin.admin.info"/>
 </p>
@@ -438,10 +444,16 @@ tr.lowerhalf > td:last-child {
             </td>
             <td style="white-space: nowrap; vertical-align: top">
                 <c:if test="${not empty plugin.readme}">
-                    <a href="plugin-showfile.jsp?plugin=${fn:escapeXml(plugin.canonicalName)}&showReadme=true&decorator=none"><img src="images/doc-readme-16x16.gif" alt="README"></a>
+                    <a href="plugin-showfile.jsp?plugin=${fn:escapeXml(plugin.canonicalName)}&showReadme=true&decorator=none"
+                        target="_blank" title="<fmt:message key="plugin.admin.documentation" />">
+                        <img src="images/doc-readme-16x16.gif">
+                    </a>
                 </c:if>
                 <c:if test="${not empty plugin.changelog}">
-                    <a href="plugin-showfile.jsp?plugin=${fn:escapeXml(plugin.canonicalName)}&showChangelog=true&decorator=none"><img src="images/doc-changelog-16x16.gif" alt="changelog"></a>
+                    <a href="plugin-showfile.jsp?plugin=${fn:escapeXml(plugin.canonicalName)}&showChangelog=true&decorator=none"
+                        target="_blank" title="<fmt:message key="plugin.admin.changelog" />">
+                        <img src="images/doc-changelog-16x16.gif">
+                    </a>
                 </c:if>
             </td>
             <td style="width: 60%; vertical-align: top">

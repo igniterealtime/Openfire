@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -413,6 +413,7 @@ public class IQRouter extends BasicModule {
                     && !XMPPServer.getInstance().isRemote(recipientJID)
                     && !userManager.isRegisteredUser(recipientJID, false)
                     && !UserManager.isPotentialFutureLocalUser(recipientJID)
+                    && !sessionManager.isAnonymousRoute(recipientJID.getNode())
                     && sessionManager.getSession(recipientJID) == null
                     && !(recipientJID.asBareJID().equals(packet.getFrom().asBareJID()) && sessionManager.isPreAuthenticatedSession(packet.getFrom())) // A pre-authenticated session queries the server about itself.
                 )

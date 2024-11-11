@@ -397,29 +397,13 @@ public interface MultiUserChatService extends Component {
     void removeChatRoom(String roomName);
 
     /**
-     * Returns the list of {@link org.jivesoftware.openfire.muc.MUCRole} in all rooms for the specified
+     * Returns the list of {@link org.jivesoftware.openfire.muc.MUCOccupant} in all rooms for the specified
      * user's session.
-     *
-     * Note that a method by this name was introduced in Openfire 4.9.0, but will be refactored as part of the 4.10.0
-     * release of Openfire, as the type of the returned class will be modified in that release.
      *
      * @param user the full JID that identifies the session of the user.
      * @return the list of occupants in all rooms for the specified user's session.
      */
-    Collection<MUCRole> getOccupants(JID user);
-
-    /**
-     * Returns the list of {@link org.jivesoftware.openfire.muc.MUCRole} in all rooms for the specified
-     * user's session.
-     *
-     * @param user the full JID that identifies the session of the user.
-     * @return the list of MUCRoles in all rooms for the specified user's session.
-     * @deprecated Replaced by {@link #getOccupants(JID)}
-     */
-    @Deprecated(since = "4.9.0", forRemoval = true) // Remove in Openfire 4.10.0 or later.
-    default Collection<MUCRole> getMUCRoles(JID user) {
-        return getOccupants(user);
-    }
+    Collection<MUCOccupant> getOccupants(JID user);
 
     /**
      * Returns the total chat time of all rooms combined.

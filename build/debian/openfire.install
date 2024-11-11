@@ -1,0 +1,7 @@
+lib/*.jar usr/share/openfire/lib
+lib/log4j2.xml etc/openfire
+resources/database usr/share/openfire/resources
+conf/openfire.xml etc/openfire
+conf/security.xml etc/openfire
+resources/security etc/openfire
+plugins var/lib/openfire

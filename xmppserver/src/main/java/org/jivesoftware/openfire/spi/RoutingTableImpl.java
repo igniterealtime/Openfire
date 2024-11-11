@@ -1033,7 +1033,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
 
         Log.debug("Removing client route {}", route);
-        boolean sessionRemoved = false;
+        boolean sessionRemoved;
         final Lock lock = usersSessionsCache.getLock(route.toBareJID());
         lock.lock();
         try {
@@ -1046,6 +1046,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                     Log.trace("Removed client route {} from anonymous users cache under key {}", route, clientRoute);
                 }
             }
+            sessionRemoved = clientRoute != null;
 
             if (usersSessionsCache.containsKey(route.toBareJID())) {
                 // The user session still needs to be removed
@@ -1055,7 +1056,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
                 Log.trace("Removing client full JID {} from users sessions cache under key {}", route.toFullJID(), route.toBareJID());
                 // Acquires the same lock, which should not be an issue as the lock implementation (both Openfire's and Hazelcast's) is reentrant.
-                CacheUtil.removeValueFromMultiValuedCache(usersSessionsCache, route.toBareJID(), route.toFullJID());
+                if (CacheUtil.removeValueFromMultiValuedCache(usersSessionsCache, route.toBareJID(), route.toFullJID())) {
+                    sessionRemoved = true;
+                }
             }
         } finally {
             lock.unlock();

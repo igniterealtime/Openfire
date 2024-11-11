@@ -130,7 +130,7 @@ public class HistoryRequest {
      * @param occupant the user that will receive the history.
      * @param roomHistory the history of the room.
      */
-    public void sendHistory(MUCRole occupant, MUCRoomHistory roomHistory) {
+    public void sendHistory(MUCOccupant occupant, MUCRoomHistory roomHistory) {
         if (!isConfigured()) {
             Iterator<Message> history = roomHistory.getMessageHistory();
             while (history.hasNext()) {

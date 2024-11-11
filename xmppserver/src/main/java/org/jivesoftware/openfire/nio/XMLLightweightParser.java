@@ -392,14 +392,14 @@ public class XMLLightweightParser {
     {
         final CharBuffer charBuffer = CharBuffer.allocate(in.capacity());
         encoder.reset();
-        final ByteBuffer nioBuffer = in.nioBuffer();
+        final ByteBuffer nioBuffer = in.nioBuffer(); // Note: this NIO buffer has its position initialized on 0, even if the ByteBuffer that it's obtained from has a read-index that is higher (see OF-2872).
         encoder.decode(nioBuffer, charBuffer, false);
         final char[] buf = new char[charBuffer.position()];
         charBuffer.flip();
         charBuffer.get(buf);
 
         // Netty won't update the reader-index of the original buffer when its nio-buffer representation is read from. Adjust the position of the original buffer.
-        in.readerIndex(nioBuffer.position());
+        in.readerIndex(in.readerIndex() + nioBuffer.position());
 
         return buf;
     }

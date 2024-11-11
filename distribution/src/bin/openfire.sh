@@ -132,13 +132,14 @@ case $arguments in
     sed "s/example.org/$HOSTNAME/g" $OPENFIRE_HOME/conf/openfire-demoboot.xml > $OPENFIRE_HOME/conf/openfire.xml
     ;;
     *)
-	# unknown option
+	# unknown option, pass through the Java command
+	JAVACMD="$JAVACMD $arguments"
     ;;
 esac
 done
 
 
-JAVACMD="${JAVACMD} -Dlog4j.configurationFile=${OPENFIRE_LIB}/log4j2.xml -Dlog4j2.formatMsgNoLookups=true -Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true"
+JAVACMD="${JAVACMD} -Dlog4j.configurationFile=${OPENFIRE_LIB}/log4j2.xml -Dlog4j2.formatMsgNoLookups=true -Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true -Djava.net.preferIPv6Addresses=system"
 
 if [ -z "$LOCALCLASSPATH" ] ; then
 	LOCALCLASSPATH=$OPENFIRE_LIB/startup.jar

@@ -24,7 +24,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 import org.jivesoftware.openfire.cluster.NodeID;
-import org.jivesoftware.openfire.muc.MUCRole;
+import org.jivesoftware.openfire.muc.MUCOccupant;
 import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.spi.OccupantManager;
 import org.jivesoftware.openfire.session.*;
@@ -736,13 +736,13 @@ public class ConsistencyChecks {
         allOccupantJids.addAll(allFederatedOccupantsJids);
         allOccupantJids.addAll(allNonFederatedOccupantsJids);
 
-        final List<MUCRole> allMucOccupants = cache.values().stream()
+        final List<MUCOccupant> allMucOccupants = cache.values().stream()
             .flatMap(room -> room.getOccupants().stream())
-            .sorted(Comparator.comparing(MUCRole::toString))
+            .sorted(Comparator.comparing(MUCOccupant::toString))
             .collect(Collectors.toList());
-        final List<String> allMucRolesOccupantsJids = allMucOccupants
+        final List<String> allMucOccupantsJids = allMucOccupants
             .stream()
-            .map(mucRole -> mucRole.getUserAddress().toFullJID() + " (in room '" + mucRole.getOccupantJID().getNode() + "' with nickname '" + mucRole.getNickname() + "')")
+            .map(occupant -> occupant.getUserAddress().toFullJID() + " (in room '" + occupant.getOccupantJID().getNode() + "' with nickname '" + occupant.getNickname() + "')")
             .sorted()
             .collect(Collectors.toList());
 
@@ -762,7 +762,7 @@ public class ConsistencyChecks {
             .collect(Collectors.joining("\n"))));
         result.put("data", String.format("All non-federated occupants from occupant registration :\n%s", String.join("\n", allNonFederatedOccupantsJids)));
         result.put("data", String.format("All federated occupants from occupant registration :\n%s", String.join("\n", allFederatedOccupantsJids)));
-        result.put("data", String.format("All occupants from rooms in cache :\n%s", String.join("\n", allMucRolesOccupantsJids)));
+        result.put("data", String.format("All occupants from rooms in cache :\n%s", String.join("\n", allMucOccupantsJids)));
 
         if (roomsOnlyInLocalCache.isEmpty()) {
             result.put("pass", "All locally known rooms exist in clustered room cache.");
@@ -782,10 +782,10 @@ public class ConsistencyChecks {
             result.put("fail", String.format("The registration of occupants by node is missing entries that are present in the registration of nodes by occupant. These %d entries are missing: %s", occupantsNotPresentInOccupantsByNode.size(), occupantsNotPresentInOccupantsByNode.stream().map(OccupantManager.Occupant::getNickname).collect(Collectors.joining(", "))));
         }
 
-        if (new HashSet<>(allOccupantJids).equals(new HashSet<>(allMucRolesOccupantsJids))) {
+        if (new HashSet<>(allOccupantJids).equals(new HashSet<>(allMucOccupantsJids))) {
             result.put("pass", "The list of occupants registered by node equals the list of occupants seen in rooms.");
         } else {
-            result.put("fail", String.format("The sum of the collection of non-federated (%d) and federated (%d) occupants is %d, which does not equal the list of occupants seen in rooms, which has %d elements", allNonFederatedOccupantsJids.size(), allFederatedOccupantsJids.size(), allOccupantJids.size(), allMucRolesOccupantsJids.size()));
+            result.put("fail", String.format("The sum of the collection of non-federated (%d) and federated (%d) occupants is %d, which does not equal the list of occupants seen in rooms, which has %d elements", allNonFederatedOccupantsJids.size(), allFederatedOccupantsJids.size(), allOccupantJids.size(), allMucOccupantsJids.size()));
         }
 
         return result;

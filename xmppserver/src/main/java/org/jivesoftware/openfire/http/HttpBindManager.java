@@ -16,22 +16,21 @@
 
 package org.jivesoftware.openfire.http;
 
-import org.apache.jasper.servlet.JasperInitializer;
 import org.apache.tomcat.InstanceManager;
 import org.apache.tomcat.SimpleInstanceManager;
+import org.eclipse.jetty.ee8.apache.jsp.JettyJasperInitializer;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
-import org.eclipse.jetty.plus.annotation.ContainerInitializer;
 import org.eclipse.jetty.server.*;
-import org.eclipse.jetty.server.handler.HandlerCollection;
-import org.eclipse.jetty.server.handler.HandlerList;
+import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.server.Handler.Sequence;
 import org.eclipse.jetty.server.handler.gzip.GzipHandler;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee8.servlet.ServletHolder;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.eclipse.jetty.webapp.WebAppContext;
-import org.eclipse.jetty.websocket.server.config.JettyWebSocketServletContainerInitializer;
+import org.eclipse.jetty.ee8.webapp.WebAppContext;
+import org.eclipse.jetty.ee8.websocket.server.config.JettyWebSocketServletContainerInitializer;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.JMXManager;
@@ -306,14 +305,14 @@ public final class HttpBindManager implements CertificateEventListener {
      * This collection should be regarded as immutable. When handlers are to be added/removed dynamically, this should
      * occur in {@link #extensionHandlers}, to which a reference is stored in this list by the constructor of this class.
      */
-    private final HandlerList handlerList = new HandlerList();
+    private final Sequence handlerList = new Sequence();
 
     /**
      * Contains all Jetty handlers that are added as an extension.
      *
      * This collection is mutable. Handlers can be added and removed at runtime.
      */
-    private final HandlerCollection extensionHandlers = new HandlerCollection( true );
+    private final ContextHandlerCollection extensionHandlers = new ContextHandlerCollection(true);
 
     /**
      * A task that, periodically, updates the 'last modified' date of all files in the Jetty 'tmp' directories. This
@@ -343,7 +342,7 @@ public final class HttpBindManager implements CertificateEventListener {
 
         // When everything else fails, use the static content handler. This one should be last, as it is mapping to the root context.
         // This means that it will catch everything and prevent the invocation of later handlers.
-        final Handler staticContentHandler = createStaticContentHandler();
+        final ServletContextHandler staticContentHandler = createStaticContentHandler();
         if ( staticContentHandler != null )
         {
             this.handlerList.addHandler( staticContentHandler );
@@ -385,9 +384,9 @@ public final class HttpBindManager implements CertificateEventListener {
             httpBindServer.start();
 
             if (handlerList.getHandlers() != null) {
-                Arrays.stream(handlerList.getHandlers()).forEach(handler -> {
+                Arrays.stream(handlerList.getHandlers().toArray()).forEach(handler  -> {
                     try {
-                        handler.start();
+                        ((Handler)handler).start();
                     } catch (Exception e) {
                         Log.warn("An exception occurred while trying to start handler: {}", handler, e);
                     }
@@ -396,9 +395,9 @@ public final class HttpBindManager implements CertificateEventListener {
             handlerList.start();
 
             if ( extensionHandlers.getHandlers() != null ) {
-                Arrays.stream(extensionHandlers.getHandlers()).forEach(handler -> {
+                Arrays.stream(handlerList.getHandlers().toArray()).forEach(handler  -> {
                     try {
-                        handler.start();
+                        ((Handler)handler).start();
                     } catch (Exception e) {
                         Log.warn("An exception occurred while trying to start extension handler: {}", handler, e);
                     }
@@ -432,9 +431,9 @@ public final class HttpBindManager implements CertificateEventListener {
         if (httpBindServer != null) {
             try {
                 if ( extensionHandlers.getHandlers() != null ) {
-                    Arrays.stream(extensionHandlers.getHandlers()).forEach(handler -> {
+                    Arrays.stream(handlerList.getHandlers().toArray()).forEach(handler  -> {
                         try {
-                            handler.stop();
+                            ((Handler)handler).stop();
                         } catch (Exception e) {
                             Log.warn("An exception occurred while trying to stop extension handler: {}", handler, e);
                         }
@@ -443,9 +442,9 @@ public final class HttpBindManager implements CertificateEventListener {
                 extensionHandlers.stop();
 
                 if ( handlerList.getHandlers() != null ) {
-                    Arrays.stream(handlerList.getHandlers()).forEach(handler -> {
+                    Arrays.stream(handlerList.getHandlers().toArray()).forEach(handler-> {
                         try {
-                            handler.stop();
+                            ((Handler)handler).stop();
                         } catch (Exception e) {
                             Log.warn("An exception occurred while trying to stop handler: {}", handler, e);
                         }
@@ -664,15 +663,13 @@ public final class HttpBindManager implements CertificateEventListener {
      *
      * @return A Jetty context handler (never null).
      */
-    protected Handler createBoshHandler()
+    protected ServletContextHandler createBoshHandler()
     {
         final int options = ServletContextHandler.SESSIONS;
         final ServletContextHandler context = new ServletContextHandler( null, "/http-bind", options );
 
         // Ensure the JSP engine is initialized correctly (in order to be able to cope with Tomcat/Jasper precompiled JSPs).
-        final List<ContainerInitializer> initializers = new ArrayList<>();
-        initializers.add( new ContainerInitializer( new JasperInitializer(), null ) );
-        context.setAttribute( "org.eclipse.jetty.containerInitializers", initializers );
+        context.addServletContainerInitializer(new JettyJasperInitializer());
         context.setAttribute( InstanceManager.class.getName(), new SimpleInstanceManager() );
 
         // Generic configuration of the context.
@@ -704,7 +701,7 @@ public final class HttpBindManager implements CertificateEventListener {
      *
      * @return A Jetty context handler (never null).
      */
-    protected Handler createWebsocketHandler()
+    protected ServletContextHandler createWebsocketHandler()
     {
         final ServletContextHandler context = new ServletContextHandler( null, "/ws", ServletContextHandler.SESSIONS );
         context.setAllowNullPathInfo(true);
@@ -734,7 +731,7 @@ public final class HttpBindManager implements CertificateEventListener {
      *
      * @return A Jetty context handler, or null when the static content could not be accessed.
      */
-    protected Handler createStaticContentHandler()
+    protected ServletContextHandler createStaticContentHandler()
     {
         final File spankDirectory = new File( JiveGlobals.getHomePath() + File.separator + "resources" + File.separator + "spank" );
         if ( spankDirectory.exists() )

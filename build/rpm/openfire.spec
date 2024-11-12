@@ -16,6 +16,10 @@ License: Apache license v2.0
 AutoReqProv: no
 URL: https://igniterealtime.org/projects/openfire/
 
+# OF-2907 default older compression, so to support older Linuxes
+%define _source_payload w9.gzdio
+%define _binary_payload w9.gzdio
+
 %define prefix /opt
 %define homedir %{prefix}/openfire
 # couldn't find another way to disable the brp-java-repack-jars which was called in __os_install_post

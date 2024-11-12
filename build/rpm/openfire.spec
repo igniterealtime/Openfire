@@ -7,7 +7,7 @@ Source0: %{OPENFIRE_SOURCE}
 %ifarch noarch
 # Note that epoch is set here to 1, this appears to be consistent with non-Redhat
 # jres as well due to an ancient problem with java-1.5.0-ibm jpackage RPM
-Requires: java >= 1:11.0.0
+Requires: java >= 1:17.0.0
 %endif
 Group: Applications/Communications
 Vendor: Igniterealtime Community

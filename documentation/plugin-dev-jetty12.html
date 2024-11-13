@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Plugin Development: Openfire 5.0.0's Jetty 12 upgrade</title>
+    <link type="text/css" rel="stylesheet" href="style.css">
+    <style>
+        dl {
+            display: unset;
+        }
+        dt {
+            margin-left: 4em;
+        }
+        dd {
+            margin-left: 6em;
+            margin-bottom: 1.5em;
+        }
+    </style>
+</head>
+<body>
+
+<article>
+
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
+        <h1>Plugin Development: Openfire 5.0.0's Jetty 12 upgrade</h1>
+    </header>
+
+    <h2>Overview</h2>
+    <p>
+        In Openfire 5.0.0, the embedded webserver (Jetty) was upgraded to version 12. Many plugins that are developed
+        against older versions of Openfire are known to be compatible, and will continue to work. That, however, is not
+        the case for <em>all</em> plugins. This guide describes the most common issues.
+    </p>
+    <p>
+        Note that many of the problems are caused by relatively simple package changes. Quite often, a class with the
+        same (or very similar) name than the one that's no longer available can be found in another Java package.
+    </p>
+    <p>
+        New in Jetty 12 is that the Servlet layer has been separated away from the Jetty Core layer. The Servlet layer
+        has been moved to the new Environments concept introduced with Jetty 12. Openfire 5.0.0 is using the Jakarta EE8
+        environment, which retains the <code>javax.servlet</code> packages known from earlier versions. The associated
+        Jetty GroupId is <code>org.eclipse.jetty.ee8</code>, which is commonly used as a (part of) a Jetty java package
+        name.
+    </p>
+
+    <h2>Known Error Details and Potential Solutions</h2>
+    <p>
+        This section provides further details on the errors observed and offers suggestions for addressing them.
+    </p>
+
+    <h3>java.lang.VerifyError: Bad type on operand stack</h3>
+    <section id="verify-error">
+    <fieldset>
+        <legend>Error found in openfire.log</legend>
+        <pre><code>java.lang.VerifyError: Bad type on operand stack
+Exception Details:
+  Location:
+    org/eclipse/jetty/servlet/ServletContextHandler.setGzipHandler(Lorg/eclipse/jetty/server/handler/gzip/GzipHandler;)V @6: invokespecial
+  Reason:
+    Type 'org/eclipse/jetty/server/handler/gzip/GzipHandler' (current frame, stack[2]) is not assignable to 'org/eclipse/jetty/server/handler/HandlerWrapper'
+  Current Frame:
+    bci: @6
+    flags: { }
+    locals: { 'org/eclipse/jetty/servlet/ServletContextHandler', 'org/eclipse/jetty/server/handler/gzip/GzipHandler' }
+    stack: { 'org/eclipse/jetty/servlet/ServletContextHandler', 'org/eclipse/jetty/server/handler/gzip/GzipHandler', 'org/eclipse/jetty/server/handler/gzip/GzipHandler' }
+  Bytecode:
+    0000000: 2a2a b400 352b b700 762a 2bb5 0035 2ab7
+    0000010: 0018 b1
+    at org.jivesoftware.openfire.plugin.MonitoringPlugin.loadPublicWeb(MonitoringPlugin.java:279) ~[monitoring-2.6.1.jar:?]
+    at org.jivesoftware.openfire.plugin.MonitoringPlugin.initializePlugin(MonitoringPlugin.java:186) ~[monitoring-2.6.1.jar:?]
+    at org.jivesoftware.openfire.container.PluginManager.loadPlugin(PluginManager.java:640) [xmppserver-4.10.0-SNAPSHOT.jar:4.10.0-SNAPSHOT]
+    at org.jivesoftware.openfire.container.PluginMonitor$MonitorTask$4.call(PluginMonitor.java:380) [xmppserver-4.10.0-SNAPSHOT.jar:4.10.0-SNAPSHOT]
+    at org.jivesoftware.openfire.container.PluginMonitor$MonitorTask$4.call(PluginMonitor.java:368) [xmppserver-4.10.0-SNAPSHOT.jar:4.10.0-SNAPSHOT]
+    at java.util.concurrent.FutureTask.run(FutureTask.java:264) [?:?]
+    at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) [?:?]
+    at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) [?:?]
+    at java.lang.Thread.run(Thread.java:840) [?:?]</code></pre>
+    </fieldset>
+    <p>Consider using <code>org.eclipse.jetty.server.Handler.Wrapper</code> (<a href="https://javadoc.jetty.org/jetty-12/org/eclipse/jetty/server/Handler.Wrapper.html">javadoc</a>) to replace <code>org.eclipse.jetty.server.handler.HandlerWrapper</code> usage.</p>
+    </section>
+
+    <h3>java.lang.NoClassDefFoundError: org/eclipse/jetty/webapp/WebAppContext</h3>
+    <section id="web-app-context">
+        <fieldset>
+            <legend>Error found in openfire.log</legend>
+            <pre><code>java.lang.NoClassDefFoundError: org/eclipse/jetty/webapp/WebAppContext
+    at org.igniterealtime.openfire.plugin.inverse.InversePlugin.initializePlugin(InversePlugin.java:63) ~[inverse-10.1.7.1.jar:?]
+    at org.jivesoftware.openfire.container.PluginManager.loadPlugin(PluginManager.java:640) [xmppserver-4.10.0-SNAPSHOT.jar:4.10.0-SNAPSHOT]
+    at org.jivesoftware.openfire.container.PluginMonitor$MonitorTask$4.call(PluginMonitor.java:380) [xmppserver-4.10.0-SNAPSHOT.jar:4.10.0-SNAPSHOT]
+    at org.jivesoftware.openfire.container.PluginMonitor$MonitorTask$4.call(PluginMonitor.java:368) [xmppserver-4.10.0-SNAPSHOT.jar:4.10.0-SNAPSHOT]
+    at java.util.concurrent.FutureTask.run(FutureTask.java:264) [?:?]
+    at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) [?:?]
+    at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) [?:?]
+    at java.lang.Thread.run(Thread.java:840) [?:?]
+Caused by: java.lang.ClassNotFoundException: org.eclipse.jetty.webapp.WebAppContext
+    at java.net.URLClassLoader.findClass(URLClassLoader.java:445) ~[?:?]
+    at java.lang.ClassLoader.loadClass(ClassLoader.java:592) ~[?:?]
+    at java.lang.ClassLoader.loadClass(ClassLoader.java:525) ~[?:?]
+    ... 8 more
+        </code></pre>
+        </fieldset>
+        <p>Consider using the EE8 WebAppContext from <code>org.eclipse.jetty.ee8.webapp.WebAppContext</code> to replace <code>org.eclipse.jetty.webapp.WebAppContext</code> usage.</p>
+    </section>
+
+    <h3>java.lang.NoClassDefFoundError: org/eclipse/jetty/security/ConstraintSecurityHandler</h3>
+    <section id="constraint-security-handler">
+        <fieldset>
+            <legend>Error found in openfire.log</legend>
+            <pre><code>java.lang.NoClassDefFoundError: org/eclipse/jetty/security/ConstraintSecurityHandler
+    at java.lang.Class.getDeclaredConstructors0(Native Method) ~[?:?]
+    at java.lang.Class.privateGetDeclaredConstructors(Class.java:3373) ~[?:?]
+    at java.lang.Class.getConstructor0(Class.java:3578) ~[?:?]
+    at java.lang.Class.newInstance(Class.java:626) ~[?:?]
+    at org.jivesoftware.openfire.container.PluginManager.loadPlugin(PluginManager.java:587) [xmppserver-4.10.0-SNAPSHOT.jar:4.10.0-SNAPSHOT]
+    at org.jivesoftware.openfire.container.PluginMonitor$MonitorTask$4.call(PluginMonitor.java:380) [xmppserver-4.10.0-SNAPSHOT.jar:4.10.0-SNAPSHOT]
+    at org.jivesoftware.openfire.container.PluginMonitor$MonitorTask$4.call(PluginMonitor.java:368) [xmppserver-4.10.0-SNAPSHOT.jar:4.10.0-SNAPSHOT]
+    at java.util.concurrent.FutureTask.run(FutureTask.java:264) [?:?]
+    at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) [?:?]
+    at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) [?:?]
+    at java.lang.Thread.run(Thread.java:840) [?:?]
+Caused by: java.lang.ClassNotFoundException: org.eclipse.jetty.security.ConstraintSecurityHandler
+    at java.net.URLClassLoader.findClass(URLClassLoader.java:445) ~[?:?]
+    at java.lang.ClassLoader.loadClass(ClassLoader.java:592) ~[?:?]
+    at java.lang.ClassLoader.loadClass(ClassLoader.java:525) ~[?:?]
+    ... 11 more
+        </code></pre>
+        </fieldset>
+        <p>Consider using the EE8 ConstraintSecurityHandler from <code>org.eclipse.jetty.ee8.security.ConstraintSecurityHandler</code> to replace <code>org.eclipse.jetty.security.ConstraintSecurityHandler</code>.</p>
+    </section>
+
+    <h3>java.lang.NoClassDefFoundError: org/eclipse/jetty/websocket/server/JettyWebSocketCreator</h3>
+    <section id="jetty-websocket-creator">
+        <fieldset>
+            <legend>Error found in openfire.log</legend>
+            <pre><code>java.lang.NoClassDefFoundError: org/eclipse/jetty/websocket/server/JettyWebSocketCreator
+    at uk.ifsoft.openfire.plugins.pade.PadePlugin.initializePlugin(PadePlugin.java:117) ~[pade-1.8.3.jar:?]
+    at org.jivesoftware.openfire.container.PluginManager.loadPlugin(PluginManager.java:640) [xmppserver-4.10.0-SNAPSHOT.jar:4.10.0-SNAPSHOT]
+    at org.jivesoftware.openfire.container.PluginMonitor$MonitorTask$4.call(PluginMonitor.java:380) [xmppserver-4.10.0-SNAPSHOT.jar:4.10.0-SNAPSHOT]
+    at org.jivesoftware.openfire.container.PluginMonitor$MonitorTask$4.call(PluginMonitor.java:368) [xmppserver-4.10.0-SNAPSHOT.jar:4.10.0-SNAPSHOT]
+    at java.util.concurrent.FutureTask.run(FutureTask.java:264) [?:?]
+    at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) [?:?]
+    at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) [?:?]
+    at java.lang.Thread.run(Thread.java:840) [?:?]
+Caused by: java.lang.ClassNotFoundException: org.eclipse.jetty.websocket.server.JettyWebSocketCreator
+    at java.net.URLClassLoader.findClass(URLClassLoader.java:445) ~[?:?]
+    at java.lang.ClassLoader.loadClass(ClassLoader.java:592) ~[?:?]
+    at java.lang.ClassLoader.loadClass(ClassLoader.java:525) ~[?:?]
+    ... 8 more
+        </code></pre>
+        </fieldset>
+        <p>Consider using the EE8 JettyWebSocketServlet from <code>org.eclipse.jetty.ee8.websocket.server.JettyWebSocketServlet</code> to replace <code>org.eclipse.jetty.websocket.server.JettyWebSocketCreator</code>.</p>
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
+
+</body>
+</html>

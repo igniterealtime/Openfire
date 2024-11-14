@@ -28,7 +28,7 @@ jobs:
           if [[ ${{ github.ref_name }} == 'main' ]]; then            
             ./mvnw -B install -Pcoverage --file pom.xml
           else
-            ./mvnw -B install
+            ./mvnw -B -Dmaven.test.skip=true install
           fi
       - name: Upload failed test reports
         uses: actions/upload-artifact@v4

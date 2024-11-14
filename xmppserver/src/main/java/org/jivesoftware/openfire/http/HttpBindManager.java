@@ -19,9 +19,18 @@ package org.jivesoftware.openfire.http;
 import org.apache.tomcat.InstanceManager;
 import org.apache.tomcat.SimpleInstanceManager;
 import org.eclipse.jetty.ee8.apache.jsp.JettyJasperInitializer;
+import org.eclipse.jetty.ee8.nested.ContextHandler;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
-import org.eclipse.jetty.server.*;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.ForwardedRequestCustomizer;
+import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.SecureRequestCustomizer;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.SslConnectionFactory;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.Handler.Sequence;
 import org.eclipse.jetty.server.handler.gzip.GzipHandler;
@@ -45,6 +54,7 @@ import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.servlet.DispatcherType;
 import java.io.File;
 import java.time.Duration;
@@ -757,12 +767,39 @@ public final class HttpBindManager implements CertificateEventListener {
     }
 
     /**
+     * Adds a Jetty handler to be added to the embedded web server that is used to expose Openfire's public
+     * web-bindings (eg: BOSH / HTTP-bind and websocket).
+     *
+     * @param handler The handler (cannot be null).
+     */
+    public void addJettyHandler(@Nonnull final ContextHandler handler)
+    {
+        if ( handler == null )
+        {
+            throw new IllegalArgumentException( "Argument 'handler' cannot be null." );
+        }
+
+        addJettyHandler(handler.get());
+    }
+
+    /**
+     * Removes a Jetty handler to be added to the embedded web server that is used to expose Openfire's public
+     * web-bindings (eg: BOSH / HTTP-bind and websocket).
+     *
+     * @param handler The handler (should not be null).
+     */
+    public void removeJettyHandler(@Nonnull final ContextHandler handler)
+    {
+        removeJettyHandler(handler.get());
+    }
+
+    /**
      * Adds a Jetty handler to be added to the embedded web server that is used to expose BOSH (HTTP-bind)
      * functionality.
      *
      * @param handler The handler (cannot be null).
      */
-    public void addJettyHandler( Handler handler )
+    public void addJettyHandler(@Nonnull final Handler handler )
     {
         if ( handler == null )
         {
@@ -793,7 +830,7 @@ public final class HttpBindManager implements CertificateEventListener {
      *
      * @param handler The handler (should not be null).
      */
-    public void removeJettyHandler( Handler handler )
+    public void removeJettyHandler(@Nonnull final Handler handler )
     {
         extensionHandlers.removeHandler( handler );
         if ( handler.isStarted() )

@@ -323,8 +323,8 @@
                 </plugin>
                 <!-- Compile the JSP pages -->
                 <plugin>
-                    <groupId>org.eclipse.jetty</groupId>
-                    <artifactId>jetty-jspc-maven-plugin</artifactId>
+                    <groupId>org.eclipse.jetty.ee8</groupId>
+                    <artifactId>jetty-ee8-jspc-maven-plugin</artifactId>
                     <version>${jetty.version}</version>
                     <configuration>
                         <webAppSourceDirectory>${project.build.sourceDirectory}/../web</webAppSourceDirectory>

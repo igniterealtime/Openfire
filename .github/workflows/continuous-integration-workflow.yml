@@ -25,7 +25,6 @@ jobs:
           cache: maven
       - name: Build with Maven # We install instead of package, because we want the result in the local mvn repo
         run: |
-          rm -rf ~/.m2/repository/* # For debugging purposes: ensure that nothing gets carried over from a previous build / cache.
           if [[ ${{ github.ref_name }} == 'main' ]]; then            
             ./mvnw -B install -Pcoverage --file pom.xml
           else

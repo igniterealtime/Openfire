@@ -302,6 +302,17 @@
             <version>${standard-taglib.version}</version>
         </dependency>
 
+        <dependency> <!-- The Xalan dependencies prevent stacktraces being logged during JSPC -->
+            <groupId>xalan</groupId>
+            <artifactId>xalan</artifactId>
+            <version>2.7.3</version>
+        </dependency>
+        <dependency> <!-- The Xalan dependencies prevent stacktraces being logged during JSPC -->
+            <groupId>xalan</groupId>
+            <artifactId>serializer</artifactId>
+            <version>2.7.3</version>
+        </dependency>
+
         <!-- Netty -->
         <dependency>
             <groupId>io.netty</groupId>

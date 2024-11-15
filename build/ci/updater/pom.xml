@@ -92,15 +92,11 @@
     </dependency>
   </dependencies>
 
-<repositories>
-        <repository>
-            <id>atlassian-public</id>
-            <url>https://maven.atlassian.com/repository/public</url>
-        </repository>
-        <repository>
-            <id>ej-technologies</id>
-            <url>https://maven.ej-technologies.com/repository</url>
-        </repository>
-    </repositories>
+  <repositories>
+    <repository>
+      <id>ej-technologies</id>
+      <url>https://maven.ej-technologies.com/repository</url>
+    </repository>
+  </repositories>
 
 </project>

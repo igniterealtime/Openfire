@@ -152,15 +152,15 @@ public class EncryptionArtifactFactory
 
         try
         {
-            Log.debug( "Attempting to instantiate '{}' using the three-argument constructor that is properietary to Openfire.", trustManagerClass );
-            final Constructor<TrustManager> constructor = trustManagerClass.getConstructor( KeyStore.class, Boolean.TYPE, Boolean.TYPE);
-            final TrustManager trustManager = constructor.newInstance( configuration.getTrustStore().getStore(), configuration.isAcceptSelfSignedCertificates(), configuration.isVerifyCertificateValidity() );
+            Log.debug( "Attempting to instantiate '{}' using the four-argument constructor that is proprietary to Openfire.", trustManagerClass );
+            final Constructor<TrustManager> constructor = trustManagerClass.getConstructor( KeyStore.class, Boolean.TYPE, Boolean.TYPE, Boolean.TYPE );
+            final TrustManager trustManager = constructor.newInstance( configuration.getTrustStore().getStore(), configuration.isAcceptSelfSignedCertificates(), configuration.isVerifyCertificateValidity(), configuration.isVerifyCertificateRevocation() );
             Log.debug( "Successfully instantiated '{}'.", trustManagerClass );
             return new TrustManager[] { trustManager };
         }
         catch ( Exception e )
         {
-            Log.debug( "Unable to instantiate '{}' using the three-argument constructor that is properietary to Openfire. Trying to use a no-arg constructor instead...", trustManagerClass );
+            Log.debug( "Unable to instantiate '{}' using the four-argument constructor that is proprietary to Openfire. Trying to use a no-arg constructor instead...", trustManagerClass );
             try
             {
                 final TrustManager trustManager = trustManagerClass.newInstance();
@@ -171,7 +171,7 @@ public class EncryptionArtifactFactory
             catch ( InstantiationException | IllegalAccessException ex )
             {
                 Log.warn( "Unable to instantiate an instance of the configured Trust Manager implementation '{}'. Using {} instead.", trustManagerClass, OpenfireX509TrustManager.class, ex );
-                return new TrustManager[] { new OpenfireX509TrustManager( configuration.getTrustStore().getStore(), configuration.isAcceptSelfSignedCertificates(), configuration.isVerifyCertificateValidity() )};
+                return new TrustManager[] { new OpenfireX509TrustManager( configuration.getTrustStore().getStore(), configuration.isAcceptSelfSignedCertificates(), configuration.isVerifyCertificateValidity(), configuration.isVerifyCertificateRevocation() )};
             }
         }
     }

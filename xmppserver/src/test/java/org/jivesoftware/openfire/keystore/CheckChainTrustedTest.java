@@ -39,14 +39,14 @@ public class CheckChainTrustedTest
      * iterable returned here (its values are passed to the constructor of this class). This allows us to execute the
      * same set of tests against a different configuration of the system under test.
      */
-    @Parameterized.Parameters(name = "acceptSelfSignedCertificates={0},checkValidity={1}" )
+    @Parameterized.Parameters(name = "acceptSelfSignedCertificates={0},checkValidity={1},checkRevocation={2}")
     public static Iterable<Object[]> constructorArguments()
     {
         final List<Object[]> constructorArguments = new ArrayList<>();
-        constructorArguments.add( new Object[] { false, true } );  // acceptSelfSignedCertificates = false, check validity = true
-        constructorArguments.add( new Object[] { false, false } ); // acceptSelfSignedCertificates = false, check validity = false
-        constructorArguments.add( new Object[] { true, true } );   // acceptSelfSignedCertificates = true, check validity = true
-        constructorArguments.add( new Object[] { true, false } );  // acceptSelfSignedCertificates = true, check validity = false
+        constructorArguments.add( new Object[] { false, true, false } );  // acceptSelfSignedCertificates = false, check validity = true
+        constructorArguments.add( new Object[] { false, false, false } ); // acceptSelfSignedCertificates = false, check validity = false
+        constructorArguments.add( new Object[] { true, true, false } );   // acceptSelfSignedCertificates = true, check validity = true
+        constructorArguments.add( new Object[] { true, false, false } );  // acceptSelfSignedCertificates = true, check validity = false
         return constructorArguments;
     }
 
@@ -59,6 +59,11 @@ public class CheckChainTrustedTest
      * Configuration for the system under test: does or does not check current validity (notBefore/notAfter).
      */
     private final boolean checkValidity;
+
+    /**
+     * Configuration for the system under test: does or does not check certificate revocation.
+     */
+    private final boolean checkRevocation;
 
     /**
      * The keystore that contains the certificates used by the system under test (refreshed before every test invocation).
@@ -93,10 +98,11 @@ public class CheckChainTrustedTest
      */
     private OpenfireX509TrustManager trustManager;
 
-    public CheckChainTrustedTest( boolean acceptSelfSigned, boolean checkValidity )
+    public CheckChainTrustedTest( boolean acceptSelfSigned, boolean checkValidity, boolean checkRevocation )
     {
         this.acceptSelfSigned = acceptSelfSigned;
         this.checkValidity = checkValidity;
+        this.checkRevocation = checkRevocation;
     }
 
     @BeforeClass
@@ -124,7 +130,7 @@ public class CheckChainTrustedTest
         trustStore.setCertificateEntry( getLast( expiredRootChain ).getSubjectDN().getName(), getLast( expiredRootChain ) );
 
         // Reset the system under test before each test.
-        trustManager = new OpenfireX509TrustManager( trustStore, acceptSelfSigned, checkValidity );
+        trustManager = new OpenfireX509TrustManager( trustStore, acceptSelfSigned, checkValidity, checkRevocation);
     }
 
     /**

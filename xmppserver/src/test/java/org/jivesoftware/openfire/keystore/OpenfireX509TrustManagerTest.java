@@ -87,7 +87,7 @@ public class OpenfireX509TrustManagerTest
         }
 
         // Create the Trust Manager that is subject of these tests.
-        systemUnderTest = new OpenfireX509TrustManager( trustStore, false, true );
+        systemUnderTest = new OpenfireX509TrustManager( trustStore, false, true, false);
     }
 
     /**

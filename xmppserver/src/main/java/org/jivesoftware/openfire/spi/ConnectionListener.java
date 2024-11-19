@@ -289,6 +289,7 @@ public class ConnectionListener
                 trustStoreConfiguration,
                 acceptSelfSignedCertificates(),
                 verifyCertificateValidity(),
+                verifyCertificateRevocation(),
                 getEncryptionProtocols(),
                 getEncryptionCipherSuites(),
                 getCompressionPolicy(),
@@ -800,6 +801,52 @@ public class ConnectionListener
         }
 
         Log.debug( "Changing certificate validity verification configuration from '{}' to '{}'.", oldValue, verify );
+        restart();
+    }
+
+    /**
+     * Returns whether certificate revocation checking is enabled.
+     * When enabled, certificates will be verified against Certificate Revocation Lists (CRL)
+     * and through Online Certificate Status Protocol (OCSP) to ensure they have not been revoked.
+     *
+     * @return true if certificate revocation checking is enabled, false otherwise
+     */
+    public boolean verifyCertificateRevocation()
+    {
+        final String propertyName = type.getPrefix() + "certificate.verify.revocation";
+        final boolean defaultValue = true;
+
+        if ( type.getFallback() == null )
+        {
+            return JiveGlobals.getBooleanProperty( propertyName, defaultValue );
+        }
+        else
+        {
+            return JiveGlobals.getBooleanProperty( propertyName, getConnectionListener( type.getFallback() ).verifyCertificateRevocation() );
+        }
+    }
+
+    /**
+     * Sets whether certificate revocation checking should be enabled.
+     * When enabled, certificates will be verified against Certificate Revocation Lists (CRL)
+     * and through Online Certificate Status Protocol (OCSP) to ensure they have not been revoked.
+     *
+     * @param verify true to enable certificate revocation checking, false to disable it
+     */
+    public void setVerifyCertificateRevocation( boolean verify )
+    {
+        final boolean oldValue = verifyCertificateRevocation();
+
+        // Always set the property explicitly even if it appears the equal to the old value (the old value might be a fallback value).
+        JiveGlobals.setProperty( type.getPrefix() + "certificate.verify.revocation", Boolean.toString( verify ) );
+
+        if ( oldValue == verify )
+        {
+            Log.debug( "Ignoring certificate revocation verification configuration change request (to '{}'): listener already in this state.", verify );
+            return;
+        }
+
+        Log.debug( "Changing certificate revocation verification configuration from '{}' to '{}'.", oldValue, verify );
         restart();
     }
 

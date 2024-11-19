@@ -814,7 +814,7 @@ public class ConnectionListener
     public boolean verifyCertificateRevocation()
     {
         final String propertyName = type.getPrefix() + "certificate.verify.revocation";
-        final boolean defaultValue = true;
+        final boolean defaultValue = false;
 
         if ( type.getFallback() == null )
         {

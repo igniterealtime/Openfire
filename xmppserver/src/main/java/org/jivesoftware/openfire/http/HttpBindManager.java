@@ -22,16 +22,7 @@ import org.eclipse.jetty.ee8.apache.jsp.JettyJasperInitializer;
 import org.eclipse.jetty.ee8.nested.ContextHandler;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.ForwardedRequestCustomizer;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.HttpConfiguration;
-import org.eclipse.jetty.server.HttpConnectionFactory;
-import org.eclipse.jetty.server.SecureRequestCustomizer;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.SslConnectionFactory;
-import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.Handler.Sequence;
 import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.ee8.servlet.ServletContextHandler;
@@ -322,7 +313,7 @@ public final class HttpBindManager implements CertificateEventListener {
      *
      * This collection is mutable. Handlers can be added and removed at runtime.
      */
-    private final ContextHandlerCollection extensionHandlers = new ContextHandlerCollection(true);
+    private final Sequence extensionHandlers = new Sequence();
 
     /**
      * A task that, periodically, updates the 'last modified' date of all files in the Jetty 'tmp' directories. This

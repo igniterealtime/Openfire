@@ -1,0 +1,2 @@
+# Permit client-driven OCSP (has no effect unless revocation checking is also enabled)
+ocsp.enable=true

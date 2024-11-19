@@ -138,6 +138,11 @@ case $arguments in
 esac
 done
 
+# Java security config
+OPENFIRE_OPTS="${OPENFIRE_OPTS} -Djava.security.properties=${OPENFIRE_HOME}/resources/security/java.security"
+
+# Enable OCSP Stapling
+OPENFIRE_OPTS="${OPENFIRE_OPTS} -Djdk.tls.server.enableStatusRequestExtension=true"
 
 JAVACMD="${JAVACMD} -Dlog4j.configurationFile=${OPENFIRE_LIB}/log4j2.xml -Dlog4j2.formatMsgNoLookups=true -Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true -Djava.net.preferIPv6Addresses=system"
 

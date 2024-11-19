@@ -105,6 +105,7 @@
         final int listenerMaxThreads = ParamUtils.getIntParameter( request, "maxThreads", configuration.getMaxThreadPoolSize() );
         final boolean acceptSelfSignedCertificates = ParamUtils.getBooleanParameter( request, "accept-self-signed-certificates" );
         final boolean verifyCertificateValidity = ParamUtils.getBooleanParameter( request, "verify-certificate-validity" );
+        final boolean verifyCertificateRevocation = ParamUtils.getBooleanParameter( request, "verify-certificate-revocation" );
         final boolean strictCertificateValidation = ParamUtils.getBooleanParameter( request, "strict-certificate-validation" );
 
 
@@ -122,6 +123,7 @@
         listener.setEncryptionCipherSuites( cipherSuites );
         listener.setAcceptSelfSignedCertificates( acceptSelfSignedCertificates );
         listener.setVerifyCertificateValidity( verifyCertificateValidity );
+        listener.setVerifyCertificateRevocation( verifyCertificateRevocation );
         listener.setStrictCertificateValidation( strictCertificateValidation );
 
         // Log the event
@@ -409,6 +411,11 @@
             <tr>
                 <td>
                     <input type="checkbox" name="verify-certificate-validity" id="verify-certificate-validity" ${configuration.verifyCertificateValidity ? 'checked' : ''}/><label for="verify-certificate-validity"><fmt:message key="connection.advanced.settings.certchain.label_validity"/></label>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="checkbox" name="verify-certificate-revocation" id="verify-certificate-revocation" ${configuration.verifyCertificateRevocation ? 'checked' : ''}/><label for="verify-certificate-revocation"><fmt:message key="connection.advanced.settings.certchain.label_revocation"/></label>
                 </td>
             </tr>
         </table>

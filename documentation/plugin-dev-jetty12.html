@@ -25,34 +25,129 @@
         <h1>Plugin Development: Openfire 5.0.0's Jetty 12 upgrade</h1>
     </header>
 
-    <h2>Overview</h2>
-    <p>
-        In Openfire 5.0.0, the embedded webserver (Jetty) was upgraded to version 12. Many plugins that are developed
-        against older versions of Openfire are known to be compatible, and will continue to work. That, however, is not
-        the case for <em>all</em> plugins. This guide describes the most common issues.
-    </p>
-    <p>
-        Note that many of the problems are caused by relatively simple package changes. Quite often, a class with the
-        same (or very similar) name than the one that's no longer available can be found in another Java package.
-    </p>
-    <p>
-        New in Jetty 12 is that the Servlet layer has been separated away from the Jetty Core layer. The Servlet layer
-        has been moved to the new Environments concept introduced with Jetty 12. Openfire 5.0.0 is using the Jakarta EE8
-        environment, which retains the <code>javax.servlet</code> packages known from earlier versions. The associated
-        Jetty GroupId is <code>org.eclipse.jetty.ee8</code>, which is commonly used as a (part of) a Jetty java package
-        name.
-    </p>
+    <section id="intro">
+        <h2>Overview</h2>
+        <p>
+            In Openfire 5.0.0, the embedded webserver (Jetty) was upgraded to version 12. Many plugins that are developed
+            against older versions of Openfire are known to be compatible, and will continue to work. That, however, is not
+            the case for <em>all</em> plugins. This guide describes the most common issues.
+        </p>
+        <p>
+            Note that many of the problems are caused by relatively simple package changes. Quite often, a class with the
+            same (or very similar) name than the one that's no longer available can be found in another Java package.
+        </p>
+        <p>
+            New in Jetty 12 is that the Servlet layer has been separated away from the Jetty Core layer. The Servlet layer
+            has been moved to the new Environments concept introduced with Jetty 12. Openfire 5.0.0 is using the Jakarta EE8
+            environment, which retains the <code>javax.servlet</code> packages known from earlier versions. The associated
+            Jetty GroupId is <code>org.eclipse.jetty.ee8</code>, which is commonly used as a (part of) a Jetty java package
+            name.
+        </p>
+    </section>
 
-    <h2>Known Error Details and Potential Solutions</h2>
-    <p>
-        This section provides further details on the errors observed and offers suggestions for addressing them.
-    </p>
+    <section id="maven">
+        <h2>Update parent POM and Admin Console page (JSP) compilation</h2>
+        <p>
+            Most Openfire plugins inherit from the parent pom provided by the <code>org.igniterealtime.org:plugins</code>
+            artifact. For version 5.0.0, this updates that Maven plugin used for compilation of the JSP pages that make up
+            the admin console. Be sure to modify the Maven plugin that's defined in your <code>pom.xml</code> when you
+            update parent plugin version to 5.0.0 (or later). The required changes are illustrated in the examples below.
+        </p>
 
-    <h3>java.lang.VerifyError: Bad type on operand stack</h3>
-    <section id="verify-error">
-    <fieldset>
-        <legend>Error found in openfire.log</legend>
-        <pre><code>java.lang.VerifyError: Bad type on operand stack
+        <div style="overflow: hidden;">
+            <fieldset style="float: left;">
+                <legend>Partial Plugin pom.xml content for older versions of Openfire</legend>
+                <pre><code>&lt;project&gt;
+    &lt;parent&gt;
+        &lt;artifactId&gt;plugins&lt;/artifactId&gt;
+        &lt;groupId&gt;org.igniterealtime.openfire&lt;/groupId&gt;
+        &lt;version&gt;4.9.2&lt;/version&gt;
+    &lt;/parent&gt;
+
+    &lt;build&gt;
+        &lt;plugins&gt;
+            &lt;!-- Compiles the Openfire Admin Console JSP pages. --&gt;
+            &lt;plugin&gt;
+                &lt;groupId&gt;org.eclipse.jetty&lt;/groupId&gt;
+                &lt;artifactId&gt;jetty-jspc-maven-plugin&lt;/artifactId&gt;
+            &lt;/plugin&gt;
+        &lt;/plugins&gt;
+    &lt;/build&gt;
+&lt;/project&gt;</code></pre>
+            </fieldset>
+
+            <fieldset style="float: left;">
+                <legend>Partial Plugin pom.xml content after updating to Openfire 5.0.0</legend>
+                <pre><code>&lt;project&gt;
+    &lt;parent&gt;
+        &lt;artifactId&gt;plugins&lt;/artifactId&gt;
+        &lt;groupId&gt;org.igniterealtime.openfire&lt;/groupId&gt;
+        &lt;version&gt;5.0.0&lt;/version&gt;
+    &lt;/parent&gt;
+
+    &lt;build&gt;
+        &lt;plugins&gt;
+            &lt;!-- Compiles the Openfire Admin Console JSP pages. --&gt;
+            &lt;plugin&gt;
+                &lt;groupId&gt;org.eclipse.jetty.ee8&lt;/groupId&gt;
+                &lt;artifactId&gt;jetty-ee8-jspc-maven-plugin&lt;/artifactId&gt;
+            &lt;/plugin&gt;
+        &lt;/plugins&gt;
+    &lt;/build&gt;
+&lt;/project&gt;</code></pre>
+            </fieldset>
+        </div>
+    </section>
+
+    <section id="context">
+
+        <h2>New WebAppContext</h2>
+        <p>
+            When a plugin uses a <code>org.eclipse.jetty.webapp.WebAppContext</code> that is registered with Openfire's
+            embedded webserver that serves public content through <code>org.jivesoftware.openfire.http.HttpBindManager.addJettyHandler(org.eclipse.jetty.server.Handler)</code>
+            then migration to <code>org.eclipse.jetty.ee8.webapp.WebAppContext</code> may cause runtime class cast errors.
+        </p>
+        <p>
+            Two solutions are available in Openfire 5.0.0:
+        </p>
+        <ol>
+            <li>In Openfire 5.0.0, an overloaded method <code>org.jivesoftware.openfire.http.HttpBindManager#addJettyHandler(org.eclipse.jetty.ee8.nested.ContextHandler)</code> was added. This can be used directly with your <code>org.eclipse.jetty.ee8.webapp.WebAppContext</code> instance.</li>
+            <li>The original method <code>org.jivesoftware.openfire.http.HttpBindManager#addJettyHandler(org.eclipse.jetty.server.Handler)</code> can be invoked with the 'core' context handler that can be obtained through <code>org.eclipse.jetty.ee8.nested.ContextHandler#get</code></li>
+        </ol>
+        <p>
+            By virtue of the new overloaded method described in the first option, it's likely that your implementation needs little change to register the context handler.
+        </p>
+
+    </section>
+
+    <section id="knownerrors">
+
+        <h2>Known Error Details and Potential Solutions</h2>
+        <p>
+            This section provides further details on the errors observed and offers suggestions for addressing them.
+        </p>
+
+        <section id="blankpages">
+            <h3>Partially blank Admin Console pages</h3>
+
+            <p>
+                When a plugin-provided admin console page is mostly blank, then there might have been a problem during compilation of the JSP file that makes up the page.
+            </p>
+            <p>
+                If this problem occurs in relation to the upgrade to Openfire 5.0.0, then <a href="#maven">check the Maven configuration</a> of your plugin. Ensure that both
+            </p>
+            <ul>
+                <li>the 'parent' pom that's being used is version 5.0.0 (or later)</li>
+                <li>the old JSPC compiler plugin has been replaced by the new one (note that both the groupId and artifactId have changed).</li>
+            </ul>
+        </section>
+
+        <section id="verify-error">
+            <h3>java.lang.VerifyError: Bad type on operand stack</h3>
+
+            <fieldset>
+                <legend>Error found in openfire.log</legend>
+                <pre><code>java.lang.VerifyError: Bad type on operand stack
 Exception Details:
   Location:
     org/eclipse/jetty/servlet/ServletContextHandler.setGzipHandler(Lorg/eclipse/jetty/server/handler/gzip/GzipHandler;)V @6: invokespecial
@@ -75,15 +170,15 @@ Exception Details:
     at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1136) [?:?]
     at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:635) [?:?]
     at java.lang.Thread.run(Thread.java:840) [?:?]</code></pre>
-    </fieldset>
-    <p>Consider using <code>org.eclipse.jetty.server.Handler.Wrapper</code> (<a href="https://javadoc.jetty.org/jetty-12/org/eclipse/jetty/server/Handler.Wrapper.html">javadoc</a>) to replace <code>org.eclipse.jetty.server.handler.HandlerWrapper</code> usage.</p>
-    </section>
+            </fieldset>
+            <p>Consider using <code>org.eclipse.jetty.server.Handler.Wrapper</code> (<a href="https://javadoc.jetty.org/jetty-12/org/eclipse/jetty/server/Handler.Wrapper.html">javadoc</a>) to replace <code>org.eclipse.jetty.server.handler.HandlerWrapper</code> usage.</p>
+        </section>
 
-    <h3>java.lang.NoClassDefFoundError: org/eclipse/jetty/webapp/WebAppContext</h3>
-    <section id="web-app-context">
-        <fieldset>
-            <legend>Error found in openfire.log</legend>
-            <pre><code>java.lang.NoClassDefFoundError: org/eclipse/jetty/webapp/WebAppContext
+        <section id="web-app-context">
+            <h3>java.lang.NoClassDefFoundError: org/eclipse/jetty/webapp/WebAppContext</h3>
+            <fieldset>
+                <legend>Error found in openfire.log</legend>
+                <pre><code>java.lang.NoClassDefFoundError: org/eclipse/jetty/webapp/WebAppContext
     at org.igniterealtime.openfire.plugin.inverse.InversePlugin.initializePlugin(InversePlugin.java:63) ~[inverse-10.1.7.1.jar:?]
     at org.jivesoftware.openfire.container.PluginManager.loadPlugin(PluginManager.java:640) [xmppserver-4.10.0-SNAPSHOT.jar:4.10.0-SNAPSHOT]
     at org.jivesoftware.openfire.container.PluginMonitor$MonitorTask$4.call(PluginMonitor.java:380) [xmppserver-4.10.0-SNAPSHOT.jar:4.10.0-SNAPSHOT]
@@ -96,17 +191,16 @@ Caused by: java.lang.ClassNotFoundException: org.eclipse.jetty.webapp.WebAppCont
     at java.net.URLClassLoader.findClass(URLClassLoader.java:445) ~[?:?]
     at java.lang.ClassLoader.loadClass(ClassLoader.java:592) ~[?:?]
     at java.lang.ClassLoader.loadClass(ClassLoader.java:525) ~[?:?]
-    ... 8 more
-        </code></pre>
-        </fieldset>
-        <p>Consider using the EE8 WebAppContext from <code>org.eclipse.jetty.ee8.webapp.WebAppContext</code> to replace <code>org.eclipse.jetty.webapp.WebAppContext</code> usage.</p>
-    </section>
+    ... 8 more</code></pre>
+            </fieldset>
+            <p>Consider using the EE8 WebAppContext from <code>org.eclipse.jetty.ee8.webapp.WebAppContext</code> to replace <code>org.eclipse.jetty.webapp.WebAppContext</code> usage.</p>
+        </section>
 
-    <h3>java.lang.NoClassDefFoundError: org/eclipse/jetty/security/ConstraintSecurityHandler</h3>
-    <section id="constraint-security-handler">
-        <fieldset>
-            <legend>Error found in openfire.log</legend>
-            <pre><code>java.lang.NoClassDefFoundError: org/eclipse/jetty/security/ConstraintSecurityHandler
+        <section id="constraint-security-handler">
+            <h3>java.lang.NoClassDefFoundError: org/eclipse/jetty/security/ConstraintSecurityHandler</h3>
+            <fieldset>
+                <legend>Error found in openfire.log</legend>
+                <pre><code>java.lang.NoClassDefFoundError: org/eclipse/jetty/security/ConstraintSecurityHandler
     at java.lang.Class.getDeclaredConstructors0(Native Method) ~[?:?]
     at java.lang.Class.privateGetDeclaredConstructors(Class.java:3373) ~[?:?]
     at java.lang.Class.getConstructor0(Class.java:3578) ~[?:?]
@@ -122,17 +216,16 @@ Caused by: java.lang.ClassNotFoundException: org.eclipse.jetty.security.Constrai
     at java.net.URLClassLoader.findClass(URLClassLoader.java:445) ~[?:?]
     at java.lang.ClassLoader.loadClass(ClassLoader.java:592) ~[?:?]
     at java.lang.ClassLoader.loadClass(ClassLoader.java:525) ~[?:?]
-    ... 11 more
-        </code></pre>
-        </fieldset>
-        <p>Consider using the EE8 ConstraintSecurityHandler from <code>org.eclipse.jetty.ee8.security.ConstraintSecurityHandler</code> to replace <code>org.eclipse.jetty.security.ConstraintSecurityHandler</code>.</p>
-    </section>
+    ... 11 more</code></pre>
+            </fieldset>
+            <p>Consider using the EE8 ConstraintSecurityHandler from <code>org.eclipse.jetty.ee8.security.ConstraintSecurityHandler</code> to replace <code>org.eclipse.jetty.security.ConstraintSecurityHandler</code>.</p>
+        </section>
 
-    <h3>java.lang.NoClassDefFoundError: org/eclipse/jetty/websocket/server/JettyWebSocketCreator</h3>
-    <section id="jetty-websocket-creator">
-        <fieldset>
-            <legend>Error found in openfire.log</legend>
-            <pre><code>java.lang.NoClassDefFoundError: org/eclipse/jetty/websocket/server/JettyWebSocketCreator
+        <section id="jetty-websocket-creator">
+            <h3>java.lang.NoClassDefFoundError: org/eclipse/jetty/websocket/server/JettyWebSocketCreator</h3>
+            <fieldset>
+                <legend>Error found in openfire.log</legend>
+                <pre><code>java.lang.NoClassDefFoundError: org/eclipse/jetty/websocket/server/JettyWebSocketCreator
     at uk.ifsoft.openfire.plugins.pade.PadePlugin.initializePlugin(PadePlugin.java:117) ~[pade-1.8.3.jar:?]
     at org.jivesoftware.openfire.container.PluginManager.loadPlugin(PluginManager.java:640) [xmppserver-4.10.0-SNAPSHOT.jar:4.10.0-SNAPSHOT]
     at org.jivesoftware.openfire.container.PluginMonitor$MonitorTask$4.call(PluginMonitor.java:380) [xmppserver-4.10.0-SNAPSHOT.jar:4.10.0-SNAPSHOT]
@@ -145,10 +238,10 @@ Caused by: java.lang.ClassNotFoundException: org.eclipse.jetty.websocket.server.
     at java.net.URLClassLoader.findClass(URLClassLoader.java:445) ~[?:?]
     at java.lang.ClassLoader.loadClass(ClassLoader.java:592) ~[?:?]
     at java.lang.ClassLoader.loadClass(ClassLoader.java:525) ~[?:?]
-    ... 8 more
-        </code></pre>
-        </fieldset>
-        <p>Consider using the EE8 JettyWebSocketServlet from <code>org.eclipse.jetty.ee8.websocket.server.JettyWebSocketServlet</code> to replace <code>org.eclipse.jetty.websocket.server.JettyWebSocketCreator</code>.</p>
+    ... 8 more</code></pre>
+            </fieldset>
+            <p>Consider using the EE8 JettyWebSocketServlet from <code>org.eclipse.jetty.ee8.websocket.server.JettyWebSocketServlet</code> to replace <code>org.eclipse.jetty.websocket.server.JettyWebSocketCreator</code>.</p>
+        </section>
     </section>
 
     <footer>

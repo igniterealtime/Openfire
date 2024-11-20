@@ -223,6 +223,8 @@ public class SocketUtil
                         entryFuture.get(maxWait.toMillis(), TimeUnit.MILLISECONDS);
                     }
                     Log.trace("Done iterating over a priority set for '{}'", xmppDomain);
+                } catch (CancellationException e) {
+                    Log.debug("DNS resolution for '{}' got cancelled. Stopping...", xmppDomain);
                 } catch (InterruptedException e) {
                     Log.debug("DNS resolution for '{}' got interrupted. Stopping...", xmppDomain);
                 } catch (Throwable e) {

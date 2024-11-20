@@ -46,6 +46,7 @@
             <ul>
                 <li><a href="#background">Background</a></li>
                 <li><a href="#tools">Oracle Java Development Kit security tools</a></li>
+                <li><a href="#revocation">Certificate Revocation Configuration</a></li>
                 <li><a href="#misc">Other options</a></li>
             </ul>
         </nav>
@@ -82,7 +83,7 @@
             If you only require light security, are deploying for internal use on
             trusted networks, etc. you can use "self-signed" certificates.
             Self-signed certificates encrypts the communication channel between
-            client and server. However the client must verify the legitimacy of the
+            client and server. However, the client must verify the legitimacy of the
             self-signed certificate through some other channel. The most common client
             reaction to a self-signed certificate is to ask the user whether
             to trust the certificate, or to silently trust the certificate is
@@ -182,7 +183,7 @@
                 to <b>complete with your server's name when asked for your first and last name</b>.
                 After you have entered all the required information, keytool will ask you to
                 verify the information and set a key password.
-                <b>You must use the same key password as the store password.</b> By default
+                <b>You must use the same key password as the store password.</b> By default,
                 you get this by simply hitting 'enter' when prompted for a key password.
             </p>
             <p>
@@ -297,13 +298,178 @@
 
     </section>
 
+
+    <section id="revocation">
+        <h2>Certificate Revocation</h2>
+
+        <p>This section covers the configuration of certificate revocation checking in Openfire, including OCSP
+            (Online Certificate Status Protocol) and CRL (Certificate Revocation List) mechanisms. This applies to
+            both roles that Openfire can assume in TLS connections:</p>
+
+        <ol>
+            <li>As a server when:
+                <ul>
+                    <li>Accepting client connections (C2S)</li>
+                    <li>Accepting incoming server-to-server (S2S) connections</li>
+                </ul>
+            </li>
+            <li>As a client when:
+                <ul>
+                    <li>Initiating outbound server-to-server (S2S) connections</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h3>Overview of Revocation Checking Methods</h3>
+
+        <p>Openfire supports three methods for checking certificate revocation status:</p>
+
+        <ol>
+            <li><strong>OCSP Stapling</strong>: The server attaches ("staples") the OCSP response to its certificate
+                during the TLS handshake.
+                <ul>
+                    <li>Most efficient method</li>
+                    <li>Reduces load on OCSP responders</li>
+                    <li>Supported in both client and server roles</li>
+                </ul>
+            </li>
+
+            <li><strong>Client-driven OCSP</strong>: Direct OCSP responder queries to verify certificate status.
+                <ul>
+                    <li>Real-time verification</li>
+                    <li>Higher network overhead</li>
+                    <li>Increased latency during TLS handshake</li>
+                </ul>
+            </li>
+
+            <li><strong>Certificate Revocation Lists (CRL)</strong>: Downloadable lists of revoked certificates.
+                <ul>
+                    <li>Periodic updates</li>
+                    <li>Can be cached locally</li>
+                    <li>Larger bandwidth requirements</li>
+                    <li>Can be used as a fallback method</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h3>Configuring Revocation Checking</h3>
+
+        <p>To enable certificate revocation checking:</p>
+
+        <ol>
+            <li>Go to the Openfire admin console.</li>
+            <li>Navigate to "Server / Server Settings / Server to Server" or "Server / Server Settings / Client Connections".</li>
+            <li>In the "Certificate chain checking" section, locate the option labelled "Verify that certificates have not been revoked (by checking Certificate Revocation Lists and OCSP)".</li>
+            <li>Enable the option to verify certificates against Certificate Revocation Lists (CRL) and through Online Certificate Status Protocol (OCSP).</li>
+        </ol>
+
+        <p>When this option is enabled, Openfire will check the revocation status of certificates used in server-to-server
+            (S2S) and client-to-server (C2S) connections to ensure they have not been revoked.</p>
+
+        <h4>Fallback behavior when Openfire is the Client (S2S Connections)</h4>
+
+        <p>When revocation checking is enabled, Openfire employs a multistep process to verify certificate validity
+            using both OCSP and CRLs. When Openfire acts as a client during the TLS handshake and receives certificates
+            from a server, it performs the following revocation checking process:</p>
+        <ol>
+            <li>Check OCSP stapled response (if available)</li>
+            <li>Attempt client-driven OCSP query if no stapled response is present</li>
+            <li>Check CRL (if OCSP is unavailable)</li>
+            <li>Fail the connection if all methods fail</li>
+        </ol>
+
+        <h4>OCSP Stapling</h4>
+
+        <p>Openfire, when operating as a TLS server and presenting its own certificate, will attempt to staple OCSP
+            responses when both of these conditions are met:</p>
+
+        <ul>
+            <li>The certificate includes an OCSP responder URL in its Authority Info Access (AIA) extension.</li>
+            <li>The specified OCSP responder returns a valid (non-error) response.</li>
+        </ul>
+
+        <p>If an OCSP response cannot be obtained, Openfire will present the certificate without an OCSP staple.
+            OCSP stapling improves performance by eliminating the need for clients to make separate requests to
+            verify certificate revocation status.</p>
+
+        <p>OCSP stapling is enabled by default. If you need to disable it for any reason, you can set the Java
+            system property <code>jdk.tls.server.enableStatusRequestExtension</code> to <code>false</code>.</p>
+
+        <p>
+            The following configuration options allow you to customise OCSP stapling behavior:
+        </p>
+        <table class="general">
+            <thead>
+            <tr>
+                <th>Property</th>
+                <th>Description</th>
+                <th>Openfire Default Value</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr>
+                <td><code>jdk.tls.server.enableStatusRequestExtension</code></td>
+                <td>Enables the server-side support for OCSP stapling.</td>
+                <td>True</td>
+            </tr>
+            <tr>
+                <td><code>jdk.tls.stapling.responseTimeout</code></td>
+                <td>
+                    <p>Controls the maximum amount of time the server will use to obtain OCSP responses, whether from the cache or by contacting an OCSP responder.</p>
+                    <p>The responses that are already received will be sent in a <code>CertificateStatus</code> message, if applicable based on the type of stapling being done.</p>
+                </td>
+                <td>5000 (integer value in milliseconds)</td>
+            </tr>
+            <tr>
+                <td><code>jdk.tls.stapling.cacheSize</code></td>
+                <td>
+                    <p>Controls the maximum cache size in entries.</p>
+                    <p>If the cache is full and a new response needs to be cached, then the least recently used cache entry will be replaced with the new one. A value of zero or less for this property means that the cache will have no upper bound on the number of responses it can contain.</p>
+                </td>
+                <td>256 objects</td>
+            </tr>
+            <tr>
+                <td><code>jdk.tls.stapling.cacheLifetime</code></td>
+                <td>
+                    <p>Controls the maximum life of a cached response.</p>
+                    <p>It is possible for responses to have shorter lifetimes than the value set with this property if the response has a <strong>nextUpdate</strong> field that expires sooner than the cache lifetime. A value of zero or less for this property disables the cache lifetime. If an object has no <strong>nextUpdate</strong> value and cache lifetimes are disabled, then the response will not be cached.</p>
+                </td>
+                <td>3600 seconds (1 hour)</td>
+            </tr>
+            <tr>
+                <td><code>jdk.tls.stapling.responderURI</code></td>
+                <td>
+                    <p>Enables the administrator to set a default URI in the event that certificates used for TLS do not have the Authority Info Access (AIA) extension.</p>
+                    <p>It will not override the Authority Info Access extension value unless the <code>jdk.tls.stapling.responderOverride</code> property is set.</p>
+                </td>
+                <td>Not set</td>
+            </tr>
+            <tr>
+                <td><code>jdk.tls.stapling.responderOverride</code></td>
+                <td>
+                    <p>Enables a URI provided through the <code>jdk.tls.stapling.responderURI</code> property to override any AIA extension value.</p>
+                </td>
+                <td>False</td>
+            </tr>
+            <tr>
+                <td><code>jdk.tls.stapling.ignoreExtensions</code></td>
+                <td>
+                    <p>Disables the forwarding of OCSP extensions specified in the <code>status_request</code> or <code>status_request_v2</code> TLS extensions.</p>
+                </td>
+                <td>False</td>
+            </tr>
+            </tbody>
+        </table>
+
+    </section>
+
     <section id="misc">
 
     <h2>Other options</h2>
     <p>
         You can also use OpenSSL to create new private keys and generate certificate requests for your CA to issue new certificates.
         Also, check out the new <a href="https://www.igniterealtime.org/projects/openfire/plugin-archive.jsp?plugin=certificatemanager">Certificate Manager</a> plugin,
-        which allows to setup a hotdeploy directory for new certificates deployment, which in turn combined with Let's Encrypt certbot
+        which allows to set up a hotdeploy directory for new certificates deployment, which in turn combined with Let's Encrypt certbot
         allows dynamic certificates renewal without administrator intervention.
     </p>
 

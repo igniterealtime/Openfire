@@ -338,6 +338,11 @@ fieldset {
     right: .5em;
 }
 
+table.general {
+    margin-top: 3em;
+    margin-left: 3em;
+    border : 1px #ccc solid;
+}
 
 table.dbtable {
     margin-top: 3em;

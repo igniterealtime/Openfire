@@ -170,6 +170,7 @@
         <th>&nbsp;</th>
         <th nowrap><fmt:message key="server.session.label.host" /></th>
         <th nowrap colspan="3"><fmt:message key="server.session.label.connection" /></th>
+        <th nowrap><fmt:message key="server.session.label.protocol" /></th>
         <th nowrap style="text-align: center;"><fmt:message key="server.session.label.creation" /></th>
         <th nowrap style="text-align: center;"><fmt:message key="server.session.label.last_active" /></th>
         <th nowrap style="text-align: center;"><fmt:message key="server.session.label.close_connect" /></th>
@@ -180,7 +181,7 @@
         if (domainNames.isEmpty()) {
     %>
         <tr>
-            <td colspan="9">
+            <td colspan="10">
 
                 <fmt:message key="server.session.summary.not_session" />
 

@@ -4,9 +4,9 @@
 <%@ page import="org.jivesoftware.openfire.session.IncomingServerSession,
                  org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.StringUtils,
-                 java.net.URLEncoder,
                  java.util.Calendar,
                  java.util.Date"%>
+ <%@ page import="java.net.*" %>
 
  <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
@@ -65,19 +65,44 @@
         <td style="width: 1%">
             <img src="images/incoming_32x16.gif" width="32" height="16" title="<fmt:message key='server.session.connection.incoming' />" alt="<fmt:message key='server.session.connection.incoming' />">
         </td>
-        <td style="width: 10%"><fmt:message key="server.session.connection.incoming" /></td>
+        <td><fmt:message key="server.session.connection.incoming" /></td>
     <% } else if (inSessions.isEmpty() && !outSessions.isEmpty()) { %>
         <td style="width: 1%">
             <img src="images/outgoing_32x16.gif" width="32" height="16" title="<fmt:message key='server.session.connection.outgoing' />" alt="<fmt:message key='server.session.connection.outgoing' />">
         </td>
-        <td style="width: 10%"><fmt:message key="server.session.connection.outgoing" /></td>
+        <td><fmt:message key="server.session.connection.outgoing" /></td>
     <% } else { %>
         <td style="width: 1%">
             <img src="images/both_32x16.gif" width="32" height="16" title="<fmt:message key='server.session.connection.both' />" alt="<fmt:message key='server.session.connection.both' />">
         </td>
-        <td style="width: 10%"><fmt:message key="server.session.connection.both" /></td>
+        <td><fmt:message key="server.session.connection.both" /></td>
     <% } %>
 
+    <%
+        final boolean hasIPv4 = inSessions.stream().anyMatch(s-> {
+            try {
+                return InetAddress.getByName(s.getHostAddress()) instanceof Inet4Address;
+            } catch (UnknownHostException e) {
+                return false;
+            }
+        });
+        final boolean hasIPv6 = inSessions.stream().anyMatch(s-> {
+            try {
+                return InetAddress.getByName(s.getHostAddress()) instanceof Inet6Address;
+            } catch (UnknownHostException e) {
+                return false;
+            }
+        });
+    %>
+    <% if (hasIPv4 && hasIPv6) { %>
+    <td><fmt:message key="server.session.connection.both" /></td>
+    <% } else if (hasIPv4) { %>
+    <td><fmt:message key="global.ipv4" /></td>
+    <% } else if (hasIPv6) { %>
+    <td><fmt:message key="global.ipv6" /></td>
+    <% } else { %>
+    <td></td>
+    <% } %>
     <%
         Date creationDate = null;
         Date lastActiveDate = null;
@@ -128,10 +153,10 @@
 
     %>
 
-    <td style="text-align: center; width: 20%" nowrap>
+    <td style="text-align: center;" nowrap>
         <%= creationDateString %>
     </td>
-    <td style="text-align: center; width: 20%" nowrap>
+    <td style="text-align: center;" nowrap>
         <%= lastActivityString %>
     </td>
 

@@ -261,22 +261,22 @@
                 <c:if test="${not empty inSessions}">
                     <table style="width: 100%">
                         <tr>
-                            <th style="width: 20%;" colspan="2"><fmt:message key="server.session.details.incoming_session" /> <fmt:message key="server.session.details.streamid" /></th>
+                            <th colspan="2"><fmt:message key="server.session.details.incoming_session" /> <fmt:message key="server.session.details.streamid" /></th>
                             <c:if test="${clusteringEnabled}">
-                                <th style="width: 1%; "><fmt:message key="server.session.details.node"/></th>
+                                <th><fmt:message key="server.session.details.node"/></th>
                             </c:if>
-                            <th style="width: 10%;"><fmt:message key="server.session.details.authentication"/></th>
-                            <th style="width: 10%;"><fmt:message key="server.session.details.tls_version"/></th>
-                            <th style="width: 10%;"><fmt:message key="server.session.details.cipher"/></th>
-                            <th style="width: 10%;"><fmt:message key="server.session.label.creation" /></th>
-                            <th style="width: 10%;"><fmt:message key="server.session.label.last_active" /></th>
-                            <th style="width: 1%;"><fmt:message key="server.session.details.incoming_statistics" /></th>
-                            <th style="width: 1%;"><fmt:message key="server.session.details.outgoing_statistics" /></th>
+                            <th><fmt:message key="server.session.details.authentication"/></th>
+                            <th><fmt:message key="server.session.details.tls_version"/></th>
+                            <th><fmt:message key="server.session.details.cipher"/></th>
+                            <th><fmt:message key="server.session.label.creation" /></th>
+                            <th><fmt:message key="server.session.label.last_active" /></th>
+                            <th><fmt:message key="server.session.details.incoming_statistics" /></th>
+                            <th><fmt:message key="server.session.details.outgoing_statistics" /></th>
                         </tr>
 
                         <c:forEach items="${inSessions}" var="session">
                             <tr>
-                                <td style="width: 1%">
+                                <td>
                                     <c:choose>
                                         <c:when test="${session.encrypted}">
                                             <img src="images/lock.gif" alt="An encrypted connection">
@@ -299,7 +299,7 @@
                                         </c:choose>
                                     </td>
                                 </c:if>
-                                <td >
+                                <td>
                                     <c:choose>
                                         <c:when test="${session.isUsingServerDialback()}">
                                             <fmt:message key="server.session.details.dialback"/>
@@ -326,17 +326,17 @@
                 <c:if test="${not empty outSessions}">
                     <table style="width: 100%">
                         <tr>
-                            <th style="width: 20%;" colspan="2"><fmt:message key="server.session.details.outgoing_session" /> <fmt:message key="server.session.details.streamid" /></th>
+                            <th colspan="2"><fmt:message key="server.session.details.outgoing_session" /> <fmt:message key="server.session.details.streamid" /></th>
                             <c:if test="${clusteringEnabled}">
-                                <th style="width: 1%; "><fmt:message key="server.session.details.node"/></th>
+                                <th><fmt:message key="server.session.details.node"/></th>
                             </c:if>
-                            <th style="width: 10%; "><fmt:message key="server.session.details.authentication"/></th>
-                            <th style="width: 10%; "><fmt:message key="server.session.details.tls_version"/></th>
-                            <th style="width: 10%; "><fmt:message key="server.session.details.cipher"/></th>
-                            <th style="width: 10%; "><fmt:message key="server.session.label.creation" /></th>
-                            <th style="width: 10%; "><fmt:message key="server.session.label.last_active" /></th>
-                            <th style="width: 1%; "><fmt:message key="server.session.details.incoming_statistics" /></th>
-                            <th style="width: 1%; "><fmt:message key="server.session.details.outgoing_statistics" /></th>
+                            <th><fmt:message key="server.session.details.authentication"/></th>
+                            <th><fmt:message key="server.session.details.tls_version"/></th>
+                            <th><fmt:message key="server.session.details.cipher"/></th>
+                            <th><fmt:message key="server.session.label.creation" /></th>
+                            <th><fmt:message key="server.session.label.last_active" /></th>
+                            <th><fmt:message key="server.session.details.incoming_statistics" /></th>
+                            <th><fmt:message key="server.session.details.outgoing_statistics" /></th>
                         </tr>
 
                         <c:forEach items="${outSessions}" var="session">

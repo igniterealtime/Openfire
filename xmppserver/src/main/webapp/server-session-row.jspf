@@ -79,20 +79,37 @@
     <% } %>
 
     <%
-        final boolean hasIPv4 = inSessions.stream().anyMatch(s-> {
+        final boolean hasInIPv4 = inSessions.stream().anyMatch(s-> {
             try {
                 return InetAddress.getByName(s.getHostAddress()) instanceof Inet4Address;
             } catch (UnknownHostException e) {
                 return false;
             }
         });
-        final boolean hasIPv6 = inSessions.stream().anyMatch(s-> {
+        final boolean hasOutIPv4 = outSessions.stream().anyMatch(s-> {
+            try {
+                return InetAddress.getByName(s.getHostAddress()) instanceof Inet4Address;
+            } catch (UnknownHostException e) {
+                return false;
+            }
+        });
+
+        final boolean hasInIPv6 = inSessions.stream().anyMatch(s-> {
             try {
                 return InetAddress.getByName(s.getHostAddress()) instanceof Inet6Address;
             } catch (UnknownHostException e) {
                 return false;
             }
         });
+        final boolean hasOutIPv6 = outSessions.stream().anyMatch(s-> {
+            try {
+                return InetAddress.getByName(s.getHostAddress()) instanceof Inet6Address;
+            } catch (UnknownHostException e) {
+                return false;
+            }
+        });
+        final boolean hasIPv4 = hasInIPv4 || hasOutIPv4;
+        final boolean hasIPv6 = hasInIPv6 || hasOutIPv6;
     %>
     <% if (hasIPv4 && hasIPv6) { %>
     <td><fmt:message key="server.session.connection.both" /></td>

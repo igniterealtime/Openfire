@@ -327,6 +327,8 @@
                                             break;
                                         }
                                     }
+                                } else {
+                                    dnsIssue = false;
                                 }
                             }
                             return dnsIssue;

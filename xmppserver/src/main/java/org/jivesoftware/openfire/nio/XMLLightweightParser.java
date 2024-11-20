@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
-import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
@@ -36,7 +35,7 @@ import java.util.List;
  * the channel.
  * When a message is complete you can retrieve messages invoking the method
  * getMsgs() and you can invoke the method areThereMsgs() to know if at least
- * an message is presents.
+ * a message is presents.
  *
  * @author Daniele Piras
  * @author Gaston Dombiak
@@ -113,7 +112,7 @@ public class XMLLightweightParser {
     * true if the parser has found some complete xml message.
     */
     public boolean areThereMsgs() {
-        return (msgs.size() > 0);
+        return (!msgs.isEmpty());
     }
 
     /*
@@ -133,7 +132,7 @@ public class XMLLightweightParser {
     * Method use to re-initialize the buffer
     */
     protected void invalidateBuffer() {
-        if (buffer.length() > 0) {
+        if (!buffer.isEmpty()) {
             String str = buffer.substring(startLastMsg);
             buffer.delete(0, buffer.length());
             buffer.append(str);
@@ -170,6 +169,9 @@ public class XMLLightweightParser {
     }
 
     public void read(ByteBuf in) throws Exception {
+        if (buffer == null) {
+            throw new IllegalStateException("Unable to parse any more data, as previous data was invalid. This is unrecoverable.");
+        }
         invalidateBuffer();
         // Check that the buffer is not bigger than 1 Megabyte. For security reasons
         // we will abort parsing when 1 Mega of queued chars was found.
@@ -347,7 +349,7 @@ public class XMLLightweightParser {
                     insideChildrenTag = false;
                     continue;
                 }
-                else if (ch == '/' && head.length() > 0) {
+                else if (ch == '/' && !head.isEmpty()) {
                     status = XMLLightweightParser.VERIFY_CLOSE_TAG;
                     depth--;
                 }

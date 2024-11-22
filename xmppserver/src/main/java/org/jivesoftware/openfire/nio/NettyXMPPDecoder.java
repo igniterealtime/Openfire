@@ -19,11 +19,12 @@ package org.jivesoftware.openfire.nio;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
-import io.netty.util.CharsetUtil;
+import io.netty.handler.codec.DecoderException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.StreamError;
 
+import javax.net.ssl.SSLHandshakeException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -67,7 +68,22 @@ public class NettyXMPPDecoder extends ByteToMessageDecoder {
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         final NettyConnection connection = ctx.channel().attr(CONNECTION).get();
+
+        if (isSslHandshakeError(cause)) {
+            connection.close();
+            return;
+        }
+
         Log.warn("Error occurred while decoding XMPP stanza, closing connection: {}", connection, cause);
         connection.close(new StreamError(StreamError.Condition.internal_server_error, "An error occurred in XMPP Decoder"), cause instanceof IOException);
+    }
+
+    private boolean isSslHandshakeError(Throwable t) {
+        // Unwrap DecoderException to check for potential SSLHandshakeException
+        if (t instanceof DecoderException) {
+            t = t.getCause();
+        }
+
+        return (t instanceof SSLHandshakeException);
     }
 }

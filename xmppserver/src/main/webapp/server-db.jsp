@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@
         <td class="c1">
             <fmt:message key="server.db.connect_url" />
         </td>
-        <td class="c2">
+        <td class="c2" style="word-break: break-all;">
             <%= metaData.getURL() %>
         </td>
     </tr>

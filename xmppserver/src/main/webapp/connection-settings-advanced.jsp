@@ -310,6 +310,12 @@
     </admin:infoBox>
 </c:if>
 
+<c:if test="${configuration.verifyCertificateRevocation && !configuration.ocspEnabled}">
+    <admin:infobox type="info">
+        <fmt:message key="connection.advanced.settings.certchain.ocsp.warning" />
+    </admin:infobox>
+</c:if>
+
 <!-- Introduction at the top of the page -->
 <p>
     <fmt:message key="connection.advanced.settings.info">

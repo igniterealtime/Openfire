@@ -20,6 +20,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.*;
 
 import java.net.InetAddress;
+import java.security.Security;
 import java.util.*;
 
 /**
@@ -50,6 +51,7 @@ public class ConnectionConfiguration
     private final Connection.CompressionPolicy compressionPolicy;
 
     // derived
+    private final boolean isOcspEnabled;
     private final IdentityStore identityStore;
     private final TrustStore trustStore;
 
@@ -100,6 +102,7 @@ public class ConnectionConfiguration
         this.compressionPolicy = compressionPolicy;
         this.strictCertificateValidation = strictCertificateValidation;
 
+        this.isOcspEnabled = Boolean.parseBoolean(Security.getProperty("ocsp.enable"));
         final CertificateStoreManager certificateStoreManager = XMPPServer.getInstance().getCertificateStoreManager();
         this.identityStore = certificateStoreManager.getIdentityStore( type );
         this.trustStore = certificateStoreManager.getTrustStore( type );
@@ -227,6 +230,19 @@ public class ConnectionConfiguration
     public TrustStore getTrustStore()
     {
         return trustStore;
+    }
+
+    /**
+     * Indicates if client-driven Online Certificate Status Protocol (OCSP) is enabled.
+     *
+     * This is a prerequisite to enable client-driven OCSP, it has no effect unless revocation
+     * checking is also enabled.
+     *
+     * @return true if client-driven OCSP is enabled, otherwise false.
+     */
+    public boolean isOcspEnabled()
+    {
+        return isOcspEnabled;
     }
 
     public boolean isEnabled()

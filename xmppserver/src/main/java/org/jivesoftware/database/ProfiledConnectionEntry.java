@@ -44,4 +44,38 @@ public class ProfiledConnectionEntry {
         count = 0;
         totalTime = Duration.ZERO;
     }
+
+    public String getSql()
+    {
+        return sql;
+    }
+
+    public void setSql(String sql)
+    {
+        this.sql = sql;
+    }
+
+    public int getCount()
+    {
+        return count;
+    }
+
+    public void setCount(int count)
+    {
+        this.count = count;
+    }
+
+    public Duration getTotalTime()
+    {
+        return totalTime;
+    }
+
+    public void setTotalTime(Duration totalTime)
+    {
+        this.totalTime = totalTime;
+    }
+
+    public Duration getAverageTime() {
+        return this.totalTime.dividedBy(count);
+    }
 }

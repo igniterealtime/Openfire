@@ -16,9 +16,10 @@
 package org.jivesoftware.database;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -47,12 +48,12 @@ public class ProfiledConnectionTest
         ProfiledConnection.start();
 
         // Execute system under test.
-        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", 4);
-        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", 6);
-        final double result = ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.select);
+        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", Duration.ofMillis(4));
+        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", Duration.ofMillis(6));
+        final Duration result = ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.select);
 
         // Verify results.
-        assertEquals(5, result);
+        assertEquals(Duration.ofMillis(5), result);
     }
 
     @Test
@@ -88,8 +89,8 @@ public class ProfiledConnectionTest
         ProfiledConnection.start();
 
         // Execute system under test.
-        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", 4);
-        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", 6);
+        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", Duration.ofMillis(4));
+        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", Duration.ofMillis(4));
         final double result = ProfiledConnection.getQueriesPerSecond(ProfiledConnection.Type.select);
 
         // Verify results.
@@ -103,8 +104,8 @@ public class ProfiledConnectionTest
         ProfiledConnection.start();
 
         // Execute system under test.
-        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", 4);
-        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", 6);
+        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", Duration.ofMillis(4));
+        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", Duration.ofMillis(6));
         final double result = ProfiledConnection.getQueriesPerSecond(ProfiledConnection.Type.select);
 
         // Verify results.
@@ -118,11 +119,11 @@ public class ProfiledConnectionTest
         ProfiledConnection.start();
 
         // Execute system under test.
-        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", 2);
-        final double result = ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.select);
+        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", Duration.ofMillis(2));
+        final Duration result = ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.select);
 
         // Verify results.
-        assertEquals(2, result);
+        assertEquals(Duration.ofMillis(2), result);
     }
 
     @Test
@@ -132,11 +133,11 @@ public class ProfiledConnectionTest
         ProfiledConnection.stop();
 
         // Execute system under test.
-        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", 2);
-        final double result = ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.select);
+        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", Duration.ofMillis(2));
+        final Duration result = ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.select);
 
         // Verify results.
-        assertEquals(0, result);
+        assertEquals(Duration.ZERO, result);
     }
 
     @Test
@@ -146,7 +147,7 @@ public class ProfiledConnectionTest
         ProfiledConnection.start();
 
         // Execute system under test.
-        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", 2);
+        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", Duration.ofMillis(2));
         final double result = ProfiledConnection.getQueriesPerSecond(ProfiledConnection.Type.select);
 
         // Verify results.
@@ -160,7 +161,7 @@ public class ProfiledConnectionTest
         ProfiledConnection.stop();
 
         // Execute system under test.
-        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", 2);
+        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", Duration.ofMillis(2));
         final double result = ProfiledConnection.getQueriesPerSecond(ProfiledConnection.Type.select);
 
         // Verify results.
@@ -174,7 +175,7 @@ public class ProfiledConnectionTest
         ProfiledConnection.start();
 
         // Execute system under test.
-        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", 2);
+        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", Duration.ofMillis(2));
         final double result = ProfiledConnection.getQueryCount(ProfiledConnection.Type.select);
 
         // Verify results.
@@ -188,7 +189,7 @@ public class ProfiledConnectionTest
         ProfiledConnection.stop();
 
         // Execute system under test.
-        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", 2);
+        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", Duration.ofMillis(2));
         final double result = ProfiledConnection.getQueryCount(ProfiledConnection.Type.select);
 
         // Verify results.
@@ -202,11 +203,11 @@ public class ProfiledConnectionTest
         ProfiledConnection.start();
 
         // Execute system under test.
-        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", 2);
-        final double result = ProfiledConnection.getTotalQueryTime(ProfiledConnection.Type.select);
+        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", Duration.ofMillis(2));
+        final Duration result = ProfiledConnection.getTotalQueryTime(ProfiledConnection.Type.select);
 
         // Verify results.
-        assertEquals(2, result);
+        assertEquals(Duration.ofMillis(2), result);
     }
 
     @Test
@@ -216,11 +217,11 @@ public class ProfiledConnectionTest
         ProfiledConnection.stop();
 
         // Execute system under test.
-        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", 2);
-        final double result = ProfiledConnection.getTotalQueryTime(ProfiledConnection.Type.select);
+        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", Duration.ofMillis(2));
+        final Duration result = ProfiledConnection.getTotalQueryTime(ProfiledConnection.Type.select);
 
         // Verify results.
-        assertEquals(0, result);
+        assertEquals(Duration.ZERO, result);
     }
 
     @Test
@@ -228,8 +229,8 @@ public class ProfiledConnectionTest
     {
         // Setup test fixture.
         ProfiledConnection.start();
-        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", 3);
-        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", 1);
+        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", Duration.ofMillis(3));
+        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", Duration.ofMillis(1));
         ProfiledConnection.stop();
 
         // Execute system under test.
@@ -244,13 +245,13 @@ public class ProfiledConnectionTest
     {
         // Setup test fixture.
         ProfiledConnection.start();
-        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", 3);
-        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", 1);
+        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", Duration.ofMillis(3));
+        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", Duration.ofMillis(1));
         ProfiledConnection.stop();
         ProfiledConnection.start();
 
         // Execute system under test.
-        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", 2);
+        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", Duration.ofMillis(2));
         final double result = ProfiledConnection.getQueryCount(ProfiledConnection.Type.select);
 
         // Verify results.
@@ -262,8 +263,8 @@ public class ProfiledConnectionTest
     {
         // Setup test fixture.
         ProfiledConnection.start();
-        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", 3);
-        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", 1);
+        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", Duration.ofMillis(3));
+        ProfiledConnection.addQuery(ProfiledConnection.Type.select, "SELECT 1", Duration.ofMillis(1));
         Thread.sleep(5); // To prevent 'infinity'
         final double expected = ProfiledConnection.getQueriesPerSecond(ProfiledConnection.Type.select);
         ProfiledConnection.stop();

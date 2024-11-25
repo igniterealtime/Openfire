@@ -187,11 +187,11 @@
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.total_time" /></td>
-        <td><%= intFormat.format(ProfiledConnection.getTotalQueryTime(ProfiledConnection.Type.select)) %></td>
+        <td><%= intFormat.format(ProfiledConnection.getTotalQueryTime(ProfiledConnection.Type.select).toMillis()) %></td>
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.avg_rate" /></td>
-        <td><%= decFormat.format(ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.select)) %></td>
+        <td><%= decFormat.format(ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.select).toMillis()) %></td>
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.total_rate" /></td>
@@ -228,8 +228,8 @@
                 ProfiledConnectionEntry pce = list[i];
                 out.println("<tr><td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + pce.sql + "</td>");
                 out.println("<td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.count) + "</td>");
-                out.println("<td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.totalTime) + "</td>");
-                out.println("<td bgcolor=\"" + ((rowColor++%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.totalTime/pce.count) + "</td></tr>");
+                out.println("<td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.totalTime.toMillis()) + "</td>");
+                out.println("<td bgcolor=\"" + ((rowColor++%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.totalTime.dividedBy(pce.count).toMillis()) + "</td></tr>");
             }
             out.println("</table>");
         }
@@ -254,11 +254,11 @@
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.total_time" /></td>
-        <td><%= intFormat.format(ProfiledConnection.getTotalQueryTime(ProfiledConnection.Type.insert)) %></td>
+        <td><%= intFormat.format(ProfiledConnection.getTotalQueryTime(ProfiledConnection.Type.insert).toMillis()) %></td>
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.avg_rate" /></td>
-        <td><%= decFormat.format(ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.insert)) %></td>
+        <td><%= decFormat.format(ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.insert).toMillis()) %></td>
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.total_rate" /></td>
@@ -295,8 +295,8 @@
                 ProfiledConnectionEntry pce = list[i];
                 out.println("<tr><td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + pce.sql + "</td>");
                 out.println("<td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.count) + "</td>");
-                out.println("<td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.totalTime) + "</td>");
-                out.println("<td bgcolor=\"" + ((rowColor++%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.totalTime/pce.count) + "</td></tr>");
+                out.println("<td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.totalTime.toMillis()) + "</td>");
+                out.println("<td bgcolor=\"" + ((rowColor++%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.totalTime.dividedBy(pce.count).toMillis()) + "</td></tr>");
             }
             out.println("</table>");
         }
@@ -321,11 +321,11 @@
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.total_time" /></td>
-        <td><%= intFormat.format(ProfiledConnection.getTotalQueryTime(ProfiledConnection.Type.update)) %></td>
+        <td><%= intFormat.format(ProfiledConnection.getTotalQueryTime(ProfiledConnection.Type.update).toMillis()) %></td>
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.avg_rate" /></td>
-        <td><%= decFormat.format(ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.update)) %></td>
+        <td><%= decFormat.format(ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.update).toMillis()) %></td>
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.total_rate" /></td>
@@ -362,8 +362,8 @@
                 ProfiledConnectionEntry pce = list[i];
                 out.println("<tr><td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + pce.sql + "</td>");
                 out.println("<td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.count) + "</td>");
-                out.println("<td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.totalTime) + "</td>");
-                out.println("<td bgcolor=\"" + ((rowColor++%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.totalTime/pce.count) + "</td></tr>");
+                out.println("<td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.totalTime.toMillis()) + "</td>");
+                out.println("<td bgcolor=\"" + ((rowColor++%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.totalTime.dividedBy(pce.count).toMillis()) + "</td></tr>");
             }
             out.println("</table>");
         }
@@ -388,11 +388,11 @@
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.total_time" /></td>
-        <td><%= intFormat.format(ProfiledConnection.getTotalQueryTime(ProfiledConnection.Type.delete)) %></td>
+        <td><%= intFormat.format(ProfiledConnection.getTotalQueryTime(ProfiledConnection.Type.delete).toMillis()) %></td>
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.avg_rate" /></td>
-        <td><%= decFormat.format(ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.delete)) %></td>
+        <td><%= decFormat.format(ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.delete).toMillis()) %></td>
     </tr>
     <tr bgcolor="#ffffff">
         <td><fmt:message key="server.db_stats.total_rate" /></td>
@@ -429,8 +429,8 @@
                 ProfiledConnectionEntry pce = list[i];
                 out.println("<tr><td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + pce.sql + "</td>");
                 out.println("<td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.count) + "</td>");
-                out.println("<td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.totalTime) + "</td>");
-                out.println("<td bgcolor=\"" + ((rowColor++%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.totalTime/pce.count) + "</td></tr>");
+                out.println("<td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.totalTime.toMillis()) + "</td>");
+                out.println("<td bgcolor=\"" + ((rowColor++%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.totalTime.dividedBy(pce.count).toMillis()) + "</td></tr>");
             }
             out.println("</table>");
         }

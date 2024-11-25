@@ -16,6 +16,8 @@
 
 package org.jivesoftware.database;
 
+import java.time.Duration;
+
 /**
  * Simple class for tracking profiling stats for individual SQL queries.
  *
@@ -33,13 +35,13 @@ public class ProfiledConnectionEntry {
     public int count;
 
     /**
-     * The total time spent executing the query (in milliseconds).
+     * The total time spent executing the query.
      */
-    public long totalTime;
+    public Duration totalTime;
 
     public ProfiledConnectionEntry(String sql) {
         this.sql = sql;
         count = 0;
-        totalTime = 0;
+        totalTime = Duration.ZERO;
     }
 }

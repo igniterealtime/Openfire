@@ -141,6 +141,7 @@ exit 0
 %config(noreplace) %{homedir}/resources/security/keystore
 %config(noreplace) %{homedir}/resources/security/truststore
 %config(noreplace) %{homedir}/resources/security/client.truststore
+%config(noreplace) %{homedir}/resources/security/java.security
 %doc %{homedir}/documentation
 %doc %{homedir}/LICENSE.html 
 %doc %{homedir}/README.html 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,15 +60,8 @@ public class ProfiledConnection extends AbstractConnection {
 
     }
 
-    private static long startInsertTime = 0;
-    private static long startUpdateTime = 0;
-    private static long startSelectTime = 0;
-    private static long startDeleteTime = 0;
-
-    private static long endInsertTime = 0;
-    private static long endUpdateTime = 0;
-    private static long endSelectTime = 0;
-    private static long endDeleteTime = 0;
+    private static long startTime = 0;
+    private static long endTime = 0;
 
     private static long insertCount = 0;
     private static long updateCount = 0;
@@ -93,15 +86,16 @@ public class ProfiledConnection extends AbstractConnection {
      * Start profiling.
      */
     public static void start() {
-        long now = System.currentTimeMillis();
-        startInsertTime = startUpdateTime = startSelectTime = startDeleteTime = now;
+        resetStatistics();
+        startTime = System.currentTimeMillis();
+        endTime = 0;
     }
 
     /**
      * Stop profiling.
      */
     public static void stop() {
-        endInsertTime = endUpdateTime = endSelectTime = endDeleteTime = 0;
+        endTime = System.currentTimeMillis();
     }
 
     /**
@@ -137,6 +131,10 @@ public class ProfiledConnection extends AbstractConnection {
     public static void addQuery(Type type, String sql, long time) {
         // Do nothing if we didn't receive a sql statement
         if (sql == null || sql.equals("")) {
+            return;
+        }
+
+        if (startTime == 0 || endTime > startTime) {
             return;
         }
 
@@ -203,28 +201,20 @@ public class ProfiledConnection extends AbstractConnection {
      *         second.
      */
     public static double getQueriesPerSecond(Type type) {
-        long count, start, end;
+        long count;
 
         switch (type) {
             case select:
                 count = selectCount;
-                start = startSelectTime;
-                end = endSelectTime;
                 break;
             case update:
                 count = updateCount;
-                start = startUpdateTime;
-                end = endUpdateTime;
                 break;
             case insert:
                 count = insertCount;
-                start = startInsertTime;
-                end = endInsertTime;
                 break;
             case delete:
                 count = deleteCount;
-                start = startDeleteTime;
-                end = endDeleteTime;
                 break;
             default:
                 throw new IllegalArgumentException("Invalid type");
@@ -235,11 +225,11 @@ public class ProfiledConnection extends AbstractConnection {
         }
         // If the profiling hasn't been stopped yet, we want to give
         // profiling values up to the current time instead.
-        if (end == 0) {
-            end = System.currentTimeMillis();
+        if (endTime == 0) {
+            endTime = System.currentTimeMillis();
         }
         // Compute the number of seconds
-        double time = (end - start) / 1000.0;
+        double time = (endTime - startTime) / 1000.0;
         // Finally, return the average.
         return count / time;
     }
@@ -353,8 +343,8 @@ public class ProfiledConnection extends AbstractConnection {
      * Reset all statistics.
      */
     public static void resetStatistics() {
-        startInsertTime = startUpdateTime = startSelectTime = startDeleteTime = 0;
-        endInsertTime = endUpdateTime = endSelectTime = endDeleteTime = 0;
+        startTime = 0;
+        endTime = 0;
         insertCount = updateCount = selectCount = deleteCount = 0;
         totalInsertTime = totalUpdateTime = totalSelectTime = totalDeleteTime = 0;
 

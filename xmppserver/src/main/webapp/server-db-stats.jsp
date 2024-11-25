@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2016-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 --%>
 
 <%@ page import="java.text.*"
-    errorPage="error.jsp"
+         errorPage="error.jsp"
 %>
 <%@ page import="org.jivesoftware.database.DbConnectionManager"%>
 <%@ page import="org.jivesoftware.util.JiveGlobals"%>
@@ -30,6 +30,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="admin" prefix="admin" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <% webManager.init(request, response, session, application, out ); %>
@@ -82,367 +83,424 @@
         }
     }
 
-    boolean showQueryStats = DbConnectionManager.isProfilingEnabled();
-
     // Number intFormat for pretty printing of large number values and decimals:
     NumberFormat intFormat = NumberFormat.getInstance(JiveGlobals.getLocale());
     DecimalFormat decFormat = new DecimalFormat("#,##0.00");
+
+    pageContext.setAttribute("refresh", refresh);
+    pageContext.setAttribute("profilingEnabled", DbConnectionManager.isProfilingEnabled());
+    pageContext.setAttribute("selectList", ProfiledConnection.getSortedQueries(ProfiledConnection.Type.select, doSortByTime));
+    pageContext.setAttribute("insertList", ProfiledConnection.getSortedQueries(ProfiledConnection.Type.insert, doSortByTime));
+    pageContext.setAttribute("updateList", ProfiledConnection.getSortedQueries(ProfiledConnection.Type.update, doSortByTime));
+    pageContext.setAttribute("deleteList", ProfiledConnection.getSortedQueries(ProfiledConnection.Type.delete, doSortByTime));
 %>
 
 <html>
-    <head>
-        <title><fmt:message key="server.db_stats.title" /></title>
-        <meta name="pageID" content="server-db"/>
+<head>
+    <title><fmt:message key="server.db_stats.title" /></title>
+    <meta name="pageID" content="server-db"/>
     <%  // Enable refreshing if specified
         if (refresh >= 10) {
     %>
-        <meta http-equiv="refresh" content="<%= refresh %>;URL=server-db-stats.jsp?refresh=<%= refresh %>">
+    <meta http-equiv="refresh" content="${admin:escapeHTMLTags(refresh)};URL=server-db-stats.jsp?refresh=${admin:escapeHTMLTags(refresh)}">
 
     <%  } %>
+    <style>
+        td.numVal {
+            text-align: right;
+            margin-right: 0.5em;
+        }
+
+        table.queries {
+            width: 100%;
+            background-color: #aaaaaa;
+            border: 0;
+        }
+        table.queries td,th {
+            padding: 3px;
+        }
+        table.queries > thead > tr > th {
+            background-color: #ffffff;
+            text-align: center;
+        }
+        table.queries > thead > tr > th:first-of-type {
+            text-align: left;
+        }
+        table.queries > tbody > tr:nth-child(even) {
+            background-color: #ffffff;
+        }
+        table.queries > tbody > tr:nth-child(odd) {
+            background-color: #efefef;
+        }
+    </style>
 </head>
 <body>
 
 <p>
-<fmt:message key="server.db_stats.description" />
+    <fmt:message key="server.db_stats.description" />
 </p>
 
-
-
-
 <div class="jive-contentBox jive-contentBoxGrey" style="width: 732px;">
-<h3><fmt:message key="server.db_stats.status" /></h3>
+    <h3><fmt:message key="server.db_stats.status" /></h3>
 
-<form action="server-db-stats.jsp">
-    <input type="hidden" name="csrf" value="${csrf}">
-    <table cellpadding="3" cellspacing="1">
-    <tr>
-        <td>
-            <input type="radio" name="enableStats" value="true" id="rb01" <%= ((showQueryStats) ? "checked":"") %>>
-            <label for="rb01"><%= ((showQueryStats) ? "<b>" +
-                    LocaleUtils.getLocalizedString("server.db_stats.enabled") + "</b>": LocaleUtils.getLocalizedString("server.db_stats.enabled")) %></label>
-        </td>
-        <td>
-            <input type="radio" name="enableStats" value="false" id="rb02" <%= ((!showQueryStats) ? "checked":"") %>>
-            <label for="rb02"><%= ((!showQueryStats) ? "<b>" +
-                     LocaleUtils.getLocalizedString("server.db_stats.disabled") + "</b>":  LocaleUtils.getLocalizedString("server.db_stats.disabled")) %></label>
-        </td>
-        <td>
-            <input type="submit" name="" value="<fmt:message key="server.db_stats.update" />">
-        </td>
-    </tr>
-    </table>
-</form>
+    <form action="server-db-stats.jsp">
+        <input type="hidden" name="csrf" value="${csrf}">
+        <table cellpadding="3" cellspacing="1">
+            <tr>
+                <td>
+                    <input type="radio" name="enableStats" value="true" id="rb01" ${profilingEnabled ? "checked" : ""}>
+                    <label for="rb01" style="font-weight: ${profilingEnabled ? 'strong' : 'normal'}">
+                        <fmt:message key="server.db_stats.enabled" />
+                    </label>
+                </td>
+                <td>
+                    <input type="radio" name="enableStats" value="false" id="rb02" ${profilingEnabled ? "" : "checked"}>
+                    <label for="rb02" style="font-weight: ${profilingEnabled ? 'normal' : 'strong'}">
+                        <fmt:message key="server.db_stats.disabled" />
+                    </label>
+                </td>
+                <td>
+                    <input type="submit" name="" value="<fmt:message key="server.db_stats.update" />">
+                </td>
+            </tr>
+        </table>
+    </form>
 
-<%  if (showQueryStats) { %>
+    <c:if test="${profilingEnabled}">
     <br>
     <h3><fmt:message key="server.db_stats.settings" /></h3>
 
     <form action="server-db-stats.jsp">
         <input type="hidden" name="csrf" value="${csrf}">
         <table cellpadding="3" cellspacing="5">
-        <tr>
-            <td>
-                <fmt:message key="server.db_stats.refresh" />:
-                <select size="1" name="refresh" onchange="this.form.submit();">
-                <option value="none"><fmt:message key="server.db_stats.none" />
+            <tr>
+                <td>
+                    <fmt:message key="server.db_stats.refresh" />:
+                    <select size="1" name="refresh" onchange="this.form.submit();">
+                        <option value="none"><fmt:message key="server.db_stats.none" />
 
-                <%  for(int aREFRESHES: REFRESHES){
+                                    <%  for(int aREFRESHES: REFRESHES){
                         String selected = ((aREFRESHES == refresh) ? " selected" : "");
                 %>
-                    <option value="<%= aREFRESHES %>"<%= selected %>
-                     ><%= aREFRESHES
+                        <option value="<%= aREFRESHES %>"<%= selected %>
+                        ><%= aREFRESHES
                             %> <fmt:message key="server.db_stats.seconds" />
 
-                <%  } %>
-                </select>
-            </td>
-            <td>
-                <input type="submit" name="" value="<fmt:message key="server.db_stats.set" />">
-            </td>
-            <td>|</td>
-            <td>
-                <input type="submit" name="" value="<fmt:message key="server.db_stats.update" />">
-            </td>
-            <td>|</td>
-            <td>
-                <input type="submit" name="doClear" value="<fmt:message key="server.db_stats.clear_stats" />">
-            </td>
-        </tr>
+                                    <%  } %>
+                    </select>
+                </td>
+                <td>|</td>
+                <td>
+                    <input type="submit" name="" value="<fmt:message key="server.db_stats.refresh_now" />">
+                </td>
+                <td>|</td>
+                <td>
+                    <input type="submit" name="doClear" value="<fmt:message key="server.db_stats.clear_stats" />">
+                </td>
+            </tr>
         </table>
     </form>
 
 </div>
 
 
-    <b><fmt:message key="server.db_stats.select_stats" /></b>
+<b><fmt:message key="server.db_stats.select_stats" /></b>
 
-    <ul>
-
-    <table bgcolor="#aaaaaa" width="600">
-    <tr><td>
-    <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="1" style="width: 100%">
-    <tr bgcolor="#ffffff">
-        <td><fmt:message key="server.db_stats.operations" /></td>
-        <td><%= intFormat.format(ProfiledConnection.getQueryCount(ProfiledConnection.Type.select)) %></td>
-    </tr>
-    <tr bgcolor="#ffffff">
-        <td><fmt:message key="server.db_stats.total_time" /></td>
-        <td><%= intFormat.format(ProfiledConnection.getTotalQueryTime(ProfiledConnection.Type.select).toMillis()) %></td>
-    </tr>
-    <tr bgcolor="#ffffff">
-        <td><fmt:message key="server.db_stats.avg_rate" /></td>
-        <td><%= decFormat.format(ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.select).toMillis()) %></td>
-    </tr>
-    <tr bgcolor="#ffffff">
-        <td><fmt:message key="server.db_stats.total_rate" /></td>
-        <td><%= decFormat.format(ProfiledConnection.getQueriesPerSecond(ProfiledConnection.Type.select)) %></td>
-    </tr>
-    <tr bgcolor="#ffffff">
-        <td><fmt:message key="server.db_stats.queries" /></td>
-        <td bgcolor="#ffffff"><%
-                    ProfiledConnectionEntry[] list = ProfiledConnection.getSortedQueries(ProfiledConnection.Type.select, doSortByTime);
-
-                    if (list == null || list.length < 1) {
-                        out.println(LocaleUtils.getLocalizedString("server.db_stats.no_queries"));
-                    }
-                    else { %>
-                &nbsp;
-         </td>
-    </tr>
-    </table>
-    </td></tr>
-    </table>
-
-    <br />
+<ul>
 
     <table bgcolor="#aaaaaa" width="600">
-    <tr><td>
-    <table bgcolor="#aaaaaa" style="width: 100%">
-    <tr bgcolor="#ffffff"><td>
-    <%      out.println("<table width=\"100%\" cellpadding=\"3\" cellspacing=\"1\" border=\"0\" bgcolor=\"#aaaaaa\"><tr><td bgcolor=\"#ffffff\" align=\"left\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.query") + "</b></td>");
-            out.println("<td bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=false&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.count") + "</a></b></td>");
-            out.println("<td nowrap bgcolor=\"#ffffff\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.time") + "</b></td>");
-            out.println("<td nowrap bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=true&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.average_time") + "</a></b></td></tr>");
-
-            for ( int i = 0; i < (Math.min(list.length, 20)); i++) {
-                ProfiledConnectionEntry pce = list[i];
-                out.println("<tr><td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + pce.sql + "</td>");
-                out.println("<td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.count) + "</td>");
-                out.println("<td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.totalTime.toMillis()) + "</td>");
-                out.println("<td bgcolor=\"" + ((rowColor++%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.totalTime.dividedBy(pce.count).toMillis()) + "</td></tr>");
-            }
-            out.println("</table>");
-        }
-     %></td>
-    </tr>
+        <tr><td>
+            <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="1" style="width: 100%">
+                <tr bgcolor="#ffffff">
+                    <td><fmt:message key="server.db_stats.operations" /></td>
+                    <td><%= intFormat.format(ProfiledConnection.getQueryCount(ProfiledConnection.Type.select)) %></td>
+                </tr>
+                <tr bgcolor="#ffffff">
+                    <td><fmt:message key="server.db_stats.total_time" /></td>
+                    <td><%= intFormat.format(ProfiledConnection.getTotalQueryTime(ProfiledConnection.Type.select).toMillis()) %></td>
+                </tr>
+                <tr bgcolor="#ffffff">
+                    <td><fmt:message key="server.db_stats.avg_rate" /></td>
+                    <td><%= decFormat.format(ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.select).toMillis()) %></td>
+                </tr>
+                <tr bgcolor="#ffffff">
+                    <td><fmt:message key="server.db_stats.total_rate" /></td>
+                    <td><%= decFormat.format(ProfiledConnection.getQueriesPerSecond(ProfiledConnection.Type.select)) %></td>
+                </tr>
+                <tr bgcolor="#ffffff">
+                    <td><fmt:message key="server.db_stats.queries" /></td>
+                    <td bgcolor="#ffffff">
+                        <c:choose>
+                            <c:when test="${empty selectList}">
+                                <fmt:message key="server.db_stats.no_queries" />
+                            </c:when>
+                            <c:otherwise>
+                                &nbsp;
+                            </c:otherwise>
+                        </c:choose>
+                    </td>
+                </tr>
+            </table>
+        </td></tr>
     </table>
-    </td></tr>
-    </table>
 
-    </ul>
+    <c:if test="${not empty selectList}">
+        <br />
 
-    <b><fmt:message key="server.db_stats.insert_stats" /></b>
+        <table bgcolor="#aaaaaa" style="width: 100%">
+            <tr><td>
+                <table bgcolor="#aaaaaa" style="width: 100%">
+                    <tr bgcolor="#ffffff"><td>
+                        <table class="queries">
+                            <thead>
+                            <tr>
+                                <th align=\"left\"><b><fmt:message key="server.db_stats.query"/></b></th>
+                                <th nowrap style="width: 1%"><b><a href="javascript:location.href='server-db-stats.jsp?doSortByTime=false&refresh=${admin:escapeHTMLTags(refresh)};'"><fmt:message key="server.db_stats.count" /></a></b></th>
+                                <th nowrap style="width: 1%"><b><fmt:message key="server.db_stats.time" /></b></th>
+                                <th nowrap style="width: 1%"><b><a href="javascript:location.href='server-db-stats.jsp?doSortByTime=true&refresh=${admin:escapeHTMLTags(refresh)};'"><fmt:message key="server.db_stats.average_time" /></a></b></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <c:forEach var="pce" items="${selectList}" end="20">
+                                <tr>
+                                    <td><c:out value="${pce.sql}"/></td>
+                                    <td class="numVal"><fmt:formatNumber value="${pce.count}"/></td>
+                                    <td class="numVal"><fmt:formatNumber value="${pce.totalTime.toMillis()}"/></td>
+                                    <td class="numVal"><fmt:formatNumber value="${pce.averageTime.toMillis()}"/></td>
+                                </tr>
+                            </c:forEach>
+                            </tbody>
+                        </table>
+                    </td></tr>
+                </table>
+            </td></tr>
+        </table>
+    </c:if>
+</ul>
 
-    <ul>
+<b><fmt:message key="server.db_stats.insert_stats" /></b>
+
+<ul>
 
     <table bgcolor="#aaaaaa" width="600">
-    <tr><td>
-    <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="1" style="width: 100%">
-    <tr bgcolor="#ffffff">
-        <td><fmt:message key="server.db_stats.operations" /></td>
-        <td><%= intFormat.format(ProfiledConnection.getQueryCount(ProfiledConnection.Type.insert)) %></td>
-    </tr>
-    <tr bgcolor="#ffffff">
-        <td><fmt:message key="server.db_stats.total_time" /></td>
-        <td><%= intFormat.format(ProfiledConnection.getTotalQueryTime(ProfiledConnection.Type.insert).toMillis()) %></td>
-    </tr>
-    <tr bgcolor="#ffffff">
-        <td><fmt:message key="server.db_stats.avg_rate" /></td>
-        <td><%= decFormat.format(ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.insert).toMillis()) %></td>
-    </tr>
-    <tr bgcolor="#ffffff">
-        <td><fmt:message key="server.db_stats.total_rate" /></td>
-        <td><%= decFormat.format(ProfiledConnection.getQueriesPerSecond(ProfiledConnection.Type.insert)) %></td>
-    </tr>
-    <tr bgcolor="#ffffff">
-        <td><fmt:message key="server.db_stats.queries" /></td>
-        <td bgcolor="#ffffff"><%
-                    list = ProfiledConnection.getSortedQueries(ProfiledConnection.Type.insert, doSortByTime);
-
-                    if (list == null || list.length < 1) {
-                        out.println(LocaleUtils.getLocalizedString("server.db_stats.no_queries"));
-                    }
-                    else { %>
-                &nbsp;
-         </td>
-    </tr>
+        <tr><td>
+            <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="1" style="width: 100%">
+                <tr bgcolor="#ffffff">
+                    <td><fmt:message key="server.db_stats.operations" /></td>
+                    <td><%= intFormat.format(ProfiledConnection.getQueryCount(ProfiledConnection.Type.insert)) %></td>
+                </tr>
+                <tr bgcolor="#ffffff">
+                    <td><fmt:message key="server.db_stats.total_time" /></td>
+                    <td><%= intFormat.format(ProfiledConnection.getTotalQueryTime(ProfiledConnection.Type.insert).toMillis()) %></td>
+                </tr>
+                <tr bgcolor="#ffffff">
+                    <td><fmt:message key="server.db_stats.avg_rate" /></td>
+                    <td><%= decFormat.format(ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.insert).toMillis()) %></td>
+                </tr>
+                <tr bgcolor="#ffffff">
+                    <td><fmt:message key="server.db_stats.total_rate" /></td>
+                    <td><%= decFormat.format(ProfiledConnection.getQueriesPerSecond(ProfiledConnection.Type.insert)) %></td>
+                </tr>
+                <tr bgcolor="#ffffff">
+                    <td><fmt:message key="server.db_stats.queries" /></td>
+                    <td bgcolor="#ffffff">
+                        <c:choose>
+                            <c:when test="${empty insertList}">
+                                <fmt:message key="server.db_stats.no_queries" />
+                            </c:when>
+                            <c:otherwise>
+                                &nbsp;
+                            </c:otherwise>
+                        </c:choose>
+                    </td>
+                </tr>
+            </table>
+        </td></tr>
     </table>
-    </td></tr>
-    </table>
 
-    <br />
+    <c:if test="${not empty insertList}">
+        <br />
+
+        <table bgcolor="#aaaaaa" style="width: 100%">
+            <tr><td>
+                <table bgcolor="#aaaaaa" style="width: 100%">
+                    <tr bgcolor="#ffffff"><td>
+                        <table class="queries">
+                            <thead>
+                            <tr>
+                                <th align=\"left\"><b><fmt:message key="server.db_stats.query"/></b></th>
+                                <th nowrap style="width: 1%"><b><a href="javascript:location.href='server-db-stats.jsp?doSortByTime=false&refresh=${admin:escapeHTMLTags(refresh)};'"><fmt:message key="server.db_stats.count" /></a></b></th>
+                                <th nowrap style="width: 1%"><b><fmt:message key="server.db_stats.time" /></b></th>
+                                <th nowrap style="width: 1%"><b><a href="javascript:location.href='server-db-stats.jsp?doSortByTime=true&refresh=${admin:escapeHTMLTags(refresh)};'"><fmt:message key="server.db_stats.average_time" /></a></b></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <c:forEach var="pce" items="${insertList}" end="20">
+                                <tr>
+                                    <td><c:out value="${pce.sql}"/></td>
+                                    <td class="numVal"><fmt:formatNumber value="${pce.count}"/></td>
+                                    <td class="numVal"><fmt:formatNumber value="${pce.totalTime.toMillis()}"/></td>
+                                    <td class="numVal"><fmt:formatNumber value="${pce.averageTime.toMillis()}"/></td>
+                                </tr>
+                            </c:forEach>
+                            </tbody>
+                        </table>
+                    </td></tr>
+                </table>
+            </td></tr>
+        </table>
+    </c:if>
+</ul>
+
+<b><fmt:message key="server.db_stats.update_stats" /></b>
+
+<ul>
 
     <table bgcolor="#aaaaaa" width="600">
-    <tr><td>
-    <table bgcolor="#aaaaaa" style="width: 100%">
-    <tr bgcolor="#ffffff"><td>
-    <%      out.println("<table width=\"100%\" cellpadding=\"3\" cellspacing=\"1\" border=\"0\" bgcolor=\"#aaaaaa\"><tr><td bgcolor=\"#ffffff\" align=\"middle\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.query") + "</b></td>");
-            out.println("<td bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=false&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.count") + "</a></b></td>");
-            out.println("<td nowrap bgcolor=\"#ffffff\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.time") + "</b></td>");
-            out.println("<td nowrap bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=true&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.average_time") + "</a></b></td></tr>");
-
-            for ( int i = 0; i < (Math.min(list.length, 10)); i++) {
-                ProfiledConnectionEntry pce = list[i];
-                out.println("<tr><td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + pce.sql + "</td>");
-                out.println("<td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.count) + "</td>");
-                out.println("<td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.totalTime.toMillis()) + "</td>");
-                out.println("<td bgcolor=\"" + ((rowColor++%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.totalTime.dividedBy(pce.count).toMillis()) + "</td></tr>");
-            }
-            out.println("</table>");
-        }
-     %></td>
-    </tr>
+        <tr><td>
+            <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="1" style="width: 100%">
+                <tr bgcolor="#ffffff">
+                    <td><fmt:message key="server.db_stats.operations" /></td>
+                    <td><%= intFormat.format(ProfiledConnection.getQueryCount(ProfiledConnection.Type.update)) %></td>
+                </tr>
+                <tr bgcolor="#ffffff">
+                    <td><fmt:message key="server.db_stats.total_time" /></td>
+                    <td><%= intFormat.format(ProfiledConnection.getTotalQueryTime(ProfiledConnection.Type.update).toMillis()) %></td>
+                </tr>
+                <tr bgcolor="#ffffff">
+                    <td><fmt:message key="server.db_stats.avg_rate" /></td>
+                    <td><%= decFormat.format(ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.update).toMillis()) %></td>
+                </tr>
+                <tr bgcolor="#ffffff">
+                    <td><fmt:message key="server.db_stats.total_rate" /></td>
+                    <td><%= decFormat.format(ProfiledConnection.getQueriesPerSecond(ProfiledConnection.Type.update)) %></td>
+                </tr>
+                <tr bgcolor="#ffffff">
+                    <td><fmt:message key="server.db_stats.queries" /></td>
+                    <td bgcolor="#ffffff">
+                        <c:choose>
+                            <c:when test="${empty updateList}">
+                                <fmt:message key="server.db_stats.no_queries" />
+                            </c:when>
+                            <c:otherwise>
+                                &nbsp;
+                            </c:otherwise>
+                        </c:choose>
+                    </td>
+                </tr>
+            </table>
+        </td></tr>
     </table>
-    </td></tr>
-    </table>
 
-    </ul>
+    <c:if test="${not empty updateList}">
+        <br />
 
-    <b><fmt:message key="server.db_stats.update_stats" /></b>
+        <table bgcolor="#aaaaaa" style="width: 100%">
+            <tr><td>
+                <table bgcolor="#aaaaaa" style="width: 100%">
+                    <tr bgcolor="#ffffff"><td>
+                        <table class="queries">
+                            <thead>
+                            <tr>
+                                <th align=\"left\"><b><fmt:message key="server.db_stats.query"/></b></th>
+                                <th nowrap style="width: 1%"><b><a href="javascript:location.href='server-db-stats.jsp?doSortByTime=false&refresh=${admin:escapeHTMLTags(refresh)};'"><fmt:message key="server.db_stats.count" /></a></b></th>
+                                <th nowrap style="width: 1%"><b><fmt:message key="server.db_stats.time" /></b></th>
+                                <th nowrap style="width: 1%"><b><a href="javascript:location.href='server-db-stats.jsp?doSortByTime=true&refresh=${admin:escapeHTMLTags(refresh)};'"><fmt:message key="server.db_stats.average_time" /></a></b></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <c:forEach var="pce" items="${updateList}" end="20">
+                                <tr>
+                                    <td><c:out value="${pce.sql}"/></td>
+                                    <td class="numVal"><fmt:formatNumber value="${pce.count}"/></td>
+                                    <td class="numVal"><fmt:formatNumber value="${pce.totalTime.toMillis()}"/></td>
+                                    <td class="numVal"><fmt:formatNumber value="${pce.averageTime.toMillis()}"/></td>
+                                </tr>
+                            </c:forEach>
+                            </tbody>
+                        </table>
+                    </td></tr>
+                </table>
+            </td></tr>
+        </table>
+    </c:if>
+</ul>
 
-    <ul>
+<b><fmt:message key="server.db_stats.delete_stats" /></b>
+
+<ul>
 
     <table bgcolor="#aaaaaa" width="600">
-    <tr><td>
-    <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="1" style="width: 100%">
-    <tr bgcolor="#ffffff">
-        <td><fmt:message key="server.db_stats.operations" /></td>
-        <td><%= intFormat.format(ProfiledConnection.getQueryCount(ProfiledConnection.Type.update)) %></td>
-    </tr>
-    <tr bgcolor="#ffffff">
-        <td><fmt:message key="server.db_stats.total_time" /></td>
-        <td><%= intFormat.format(ProfiledConnection.getTotalQueryTime(ProfiledConnection.Type.update).toMillis()) %></td>
-    </tr>
-    <tr bgcolor="#ffffff">
-        <td><fmt:message key="server.db_stats.avg_rate" /></td>
-        <td><%= decFormat.format(ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.update).toMillis()) %></td>
-    </tr>
-    <tr bgcolor="#ffffff">
-        <td><fmt:message key="server.db_stats.total_rate" /></td>
-        <td><%= decFormat.format(ProfiledConnection.getQueriesPerSecond(ProfiledConnection.Type.update)) %></td>
-    </tr>
-    <tr bgcolor="#ffffff">
-        <td><fmt:message key="server.db_stats.queries" /></td>
-        <td bgcolor="#ffffff"><%
-                    list = ProfiledConnection.getSortedQueries(ProfiledConnection.Type.update, doSortByTime);
-
-                    if (list == null || list.length < 1) {
-                        out.println(LocaleUtils.getLocalizedString("server.db_stats.no_queries"));
-                    }
-                    else { %>
-                &nbsp;
-         </td>
-    </tr>
-    </table>
-    </td></tr>
-    </table>
-
-    <br />
-
-    <table bgcolor="#aaaaaa" width="600">
-    <tr><td>
-    <table bgcolor="#aaaaaa" style="width: 100%">
-    <tr bgcolor="#ffffff"><td>
-    <%      out.println("<table width=\"100%\" cellpadding=\"3\" cellspacing=\"1\" border=\"0\" bgcolor=\"#aaaaaa\"><tr><td bgcolor=\"#ffffff\" align=\"middle\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.query") + "</b></td>");
-            out.println("<td bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=false&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.count") + "</a></b></td>");
-            out.println("<td nowrap bgcolor=\"#ffffff\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.time") + "</b></td>");
-            out.println("<td nowrap bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=true&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.average_time") + "</a></b></td></tr>");
-
-            for ( int i = 0; i < (Math.min(list.length, 10)); i++) {
-                ProfiledConnectionEntry pce = list[i];
-                out.println("<tr><td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + pce.sql + "</td>");
-                out.println("<td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.count) + "</td>");
-                out.println("<td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.totalTime.toMillis()) + "</td>");
-                out.println("<td bgcolor=\"" + ((rowColor++%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.totalTime.dividedBy(pce.count).toMillis()) + "</td></tr>");
-            }
-            out.println("</table>");
-        }
-     %></td>
-    </tr>
-    </table>
-    </td></tr>
+        <tr><td>
+            <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="1" style="width: 100%">
+                <tr bgcolor="#ffffff">
+                    <td><fmt:message key="server.db_stats.operations" /></td>
+                    <td><%= intFormat.format(ProfiledConnection.getQueryCount(ProfiledConnection.Type.delete)) %></td>
+                </tr>
+                <tr bgcolor="#ffffff">
+                    <td><fmt:message key="server.db_stats.total_time" /></td>
+                    <td><%= intFormat.format(ProfiledConnection.getTotalQueryTime(ProfiledConnection.Type.delete).toMillis()) %></td>
+                </tr>
+                <tr bgcolor="#ffffff">
+                    <td><fmt:message key="server.db_stats.avg_rate" /></td>
+                    <td><%= decFormat.format(ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.delete).toMillis()) %></td>
+                </tr>
+                <tr bgcolor="#ffffff">
+                    <td><fmt:message key="server.db_stats.total_rate" /></td>
+                    <td><%= decFormat.format(ProfiledConnection.getQueriesPerSecond(ProfiledConnection.Type.delete)) %></td>
+                </tr>
+                <tr bgcolor="#ffffff">
+                    <td><fmt:message key="server.db_stats.queries" /></td>
+                    <td bgcolor="#ffffff">
+                        <c:choose>
+                            <c:when test="${empty deleteList}">
+                                <fmt:message key="server.db_stats.no_queries" />
+                            </c:when>
+                            <c:otherwise>
+                                &nbsp;
+                            </c:otherwise>
+                        </c:choose>
+                    </td>
+                </tr>
+            </table>
+        </td></tr>
     </table>
 
-    </ul>
+    <c:if test="${not empty deleteList}">
+        <br />
 
-    <b><fmt:message key="server.db_stats.delete_stats" /></b>
+        <table bgcolor="#aaaaaa" style="width: 100%">
+            <tr><td>
+                <table bgcolor="#aaaaaa" style="width: 100%">
+                    <tr bgcolor="#ffffff"><td>
+                        <table class="queries">
+                            <thead>
+                            <tr>
+                                <th align=\"left\"><b><fmt:message key="server.db_stats.query"/></b></th>
+                                <th nowrap style="width: 1%"><b><a href="javascript:location.href='server-db-stats.jsp?doSortByTime=false&refresh=${admin:escapeHTMLTags(refresh)};'"><fmt:message key="server.db_stats.count" /></a></b></th>
+                                <th nowrap style="width: 1%"><b><fmt:message key="server.db_stats.time" /></b></th>
+                                <th nowrap style="width: 1%"><b><a href="javascript:location.href='server-db-stats.jsp?doSortByTime=true&refresh=${admin:escapeHTMLTags(refresh)};'"><fmt:message key="server.db_stats.average_time" /></a></b></th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <c:forEach var="pce" items="${deleteList}" end="20">
+                                <tr>
+                                    <td><c:out value="${pce.sql}"/></td>
+                                    <td class="numVal"><fmt:formatNumber value="${pce.count}"/></td>
+                                    <td class="numVal"><fmt:formatNumber value="${pce.totalTime.toMillis()}"/></td>
+                                    <td class="numVal"><fmt:formatNumber value="${pce.averageTime.toMillis()}"/></td>
+                                </tr>
+                            </c:forEach>
+                            </tbody>
+                        </table>
+                    </td></tr>
+                </table>
+            </td></tr>
+        </table>
+    </c:if>
 
-    <ul>
+</ul>
 
-    <table bgcolor="#aaaaaa" width="600">
-    <tr><td>
-    <table bgcolor="#aaaaaa" cellpadding="3" cellspacing="1" style="width: 100%">
-    <tr bgcolor="#ffffff">
-        <td><fmt:message key="server.db_stats.operations" /></td>
-        <td><%= intFormat.format(ProfiledConnection.getQueryCount(ProfiledConnection.Type.delete)) %></td>
-    </tr>
-    <tr bgcolor="#ffffff">
-        <td><fmt:message key="server.db_stats.total_time" /></td>
-        <td><%= intFormat.format(ProfiledConnection.getTotalQueryTime(ProfiledConnection.Type.delete).toMillis()) %></td>
-    </tr>
-    <tr bgcolor="#ffffff">
-        <td><fmt:message key="server.db_stats.avg_rate" /></td>
-        <td><%= decFormat.format(ProfiledConnection.getAverageQueryTime(ProfiledConnection.Type.delete).toMillis()) %></td>
-    </tr>
-    <tr bgcolor="#ffffff">
-        <td><fmt:message key="server.db_stats.total_rate" /></td>
-        <td><%= decFormat.format(ProfiledConnection.getQueriesPerSecond(ProfiledConnection.Type.delete)) %></td>
-    </tr>
-    <tr bgcolor="#ffffff">
-        <td><fmt:message key="server.db_stats.queries" /></td>
-        <td bgcolor="#ffffff"><%
-                    list = ProfiledConnection.getSortedQueries(ProfiledConnection.Type.delete, doSortByTime);
-
-                    if (list == null || list.length < 1) {
-                        out.println(LocaleUtils.getLocalizedString("server.db_stats.no_queries"));
-                    }
-                    else { %>
-                &nbsp;
-         </td>
-    </tr>
-    </table>
-    </td></tr>
-    </table>
-
-    <br />
-
-    <table bgcolor="#aaaaaa" width="600">
-    <tr><td>
-    <table bgcolor="#aaaaaa" style="width: 100%">
-    <tr bgcolor="#ffffff"><td>
-    <%      out.println("<table width=\"100%\" cellpadding=\"3\" cellspacing=\"1\" border=\"0\" bgcolor=\"#aaaaaa\"><tr><td bgcolor=\"#ffffff\" align=\"middle\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.query") + "</b></td>");
-            out.println("<td bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=false&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.count") + "</a></b></td>");
-            out.println("<td nowrap bgcolor=\"#ffffff\"><b>" + LocaleUtils.getLocalizedString("server.db_stats.time") + "</b></td>");
-            out.println("<td nowrap bgcolor=\"#ffffff\"><b><a href=\"javascript:location.href='server-db-stats.jsp?doSortByTime=true&refresh=" + refresh + ";'\">" + LocaleUtils.getLocalizedString("server.db_stats.average_time") + "</a></b></td></tr>");
-
-            for ( int i = 0; i < (Math.min(list.length, 10)); i++) {
-                ProfiledConnectionEntry pce = list[i];
-                out.println("<tr><td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + pce.sql + "</td>");
-                out.println("<td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.count) + "</td>");
-                out.println("<td bgcolor=\"" + ((rowColor%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.totalTime.toMillis()) + "</td>");
-                out.println("<td bgcolor=\"" + ((rowColor++%2 == 0) ? "#efefef" : "#ffffff") + "\">" + intFormat.format(pce.totalTime.dividedBy(pce.count).toMillis()) + "</td></tr>");
-            }
-            out.println("</table>");
-        }
-     %></td>
-    </tr>
-    </table>
-    </td></tr>
-    </table>
-
-    </ul>
-
-<% } %>
-
+</c:if>
 
 </body></html>

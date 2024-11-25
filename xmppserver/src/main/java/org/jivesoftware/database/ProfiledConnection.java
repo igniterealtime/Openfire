@@ -36,7 +36,7 @@ public class ProfiledConnection extends AbstractConnection {
 
     private static final Logger Log = LoggerFactory.getLogger(ProfiledConnection.class);
 
-    public static enum Type {
+    public enum Type {
 
         /**
          * Constant for SELECT database queries.
@@ -73,14 +73,10 @@ public class ProfiledConnection extends AbstractConnection {
     private static long totalSelectTime = 0;
     private static long totalDeleteTime = 0;
 
-    private static Map<String, ProfiledConnectionEntry> insertQueries =
-            new Hashtable<String, ProfiledConnectionEntry>();
-    private static Map<String, ProfiledConnectionEntry> updateQueries =
-            new Hashtable<String, ProfiledConnectionEntry>();
-    private static Map<String, ProfiledConnectionEntry> selectQueries =
-            new Hashtable<String, ProfiledConnectionEntry>();
-    private static Map<String, ProfiledConnectionEntry> deleteQueries =
-            new Hashtable<String, ProfiledConnectionEntry>();
+    private static final Map<String, ProfiledConnectionEntry> insertQueries = new Hashtable<>();
+    private static final Map<String, ProfiledConnectionEntry> updateQueries = new Hashtable<>();
+    private static final Map<String, ProfiledConnectionEntry> selectQueries = new Hashtable<>();
+    private static final Map<String, ProfiledConnectionEntry> deleteQueries = new Hashtable<>();
 
     /**
      * Start profiling.
@@ -107,18 +103,12 @@ public class ProfiledConnection extends AbstractConnection {
      * @return the number queries of type {@code type} performed.
      */
     public static long getQueryCount(Type type) {
-        switch (type) {
-            case select:
-                return selectCount;
-            case update:
-                return updateCount;
-            case insert:
-                return insertCount;
-            case delete:
-                return deleteCount;
-            default:
-                throw new IllegalArgumentException("Invalid type");
-        }
+        return switch (type) {
+            case select -> selectCount;
+            case update -> updateCount;
+            case insert -> insertCount;
+            case delete -> deleteCount;
+        };
     }
 
     /**
@@ -130,7 +120,7 @@ public class ProfiledConnection extends AbstractConnection {
      */
     public static void addQuery(Type type, String sql, long time) {
         // Do nothing if we didn't receive a sql statement
-        if (sql == null || sql.equals("")) {
+        if (sql == null || sql.isEmpty()) {
             return;
         }
 
@@ -201,24 +191,13 @@ public class ProfiledConnection extends AbstractConnection {
      *         second.
      */
     public static double getQueriesPerSecond(Type type) {
-        long count;
+        long count = switch (type) {
+            case select -> selectCount;
+            case update -> updateCount;
+            case insert -> insertCount;
+            case delete -> deleteCount;
+        };
 
-        switch (type) {
-            case select:
-                count = selectCount;
-                break;
-            case update:
-                count = updateCount;
-                break;
-            case insert:
-                count = insertCount;
-                break;
-            case delete:
-                count = deleteCount;
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid type");
-        }
         // if no queries yet, return 0;
         if (count == 0) {
             return 0;
@@ -284,18 +263,12 @@ public class ProfiledConnection extends AbstractConnection {
      *         query.
      */
     public static long getTotalQueryTime(Type type) {
-        switch (type) {
-            case select:
-                return totalSelectTime;
-            case update:
-                return totalUpdateTime;
-            case insert:
-                return totalInsertTime;
-            case delete:
-                return totalDeleteTime;
-            default:
-                throw new IllegalArgumentException("Invalid type");
-        }
+        return switch (type) {
+            case select -> totalSelectTime;
+            case update -> totalUpdateTime;
+            case insert -> totalInsertTime;
+            case delete -> totalDeleteTime;
+        };
     }
 
     /**
@@ -307,32 +280,19 @@ public class ProfiledConnection extends AbstractConnection {
      * @return an array of ProfiledConnectionEntry objects
      */
     public static ProfiledConnectionEntry[] getSortedQueries(Type type, boolean sortByTime) {
-        Map<String, ProfiledConnectionEntry> queries;
-
-        switch (type) {
-            case select:
-                queries = selectQueries;
-                break;
-            case update:
-                queries = updateQueries;
-                break;
-            case insert:
-                queries = insertQueries;
-                break;
-            case delete:
-                queries = deleteQueries;
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid type");
-        }
+        Map<String, ProfiledConnectionEntry> queries = switch (type) {
+            case select -> selectQueries;
+            case update -> updateQueries;
+            case insert -> insertQueries;
+            case delete -> deleteQueries;
+        };
 
         // No queries, return null
         if (queries.isEmpty()) {
             return null;
         }
 
-        ProfiledConnectionEntry [] result = queries.values().toArray(
-                new ProfiledConnectionEntry[queries.size()]);
+        ProfiledConnectionEntry[] result = queries.values().toArray(new ProfiledConnectionEntry[0]);
 
         quickSort(result, sortByTime, 0, result.length - 1);
         return result;
@@ -392,7 +352,7 @@ public class ProfiledConnection extends AbstractConnection {
     private static String removeQueryValues(String _sql) {
         int length = _sql.length();
 
-        if (_sql.indexOf("=") == -1) {
+        if (!_sql.contains("=")) {
             return _sql;
         }
 
@@ -440,100 +400,12 @@ public class ProfiledConnection extends AbstractConnection {
                     }
                     break;
                 }
-                case '-':
+                case '-', '9', '8', '7', '6', '5', '4', '3', '2', '1', '0', '+':
                 {
                     if (afterEquals && !inValue) {
                         startValue = x;
                         inValue = true;
 
-                    }
-                    break;
-                }
-                case '+':
-                {
-                    if (afterEquals && !inValue) {
-                        startValue = x;
-                        inValue = true;
-                    }
-                    break;
-                }
-                case '0':
-                {
-                    if (afterEquals && !inValue) {
-                        startValue = x;
-                        inValue = true;
-                    }
-                    break;
-                }
-                case '1':
-                {
-                    if (afterEquals && !inValue) {
-                        startValue = x;
-                        inValue = true;
-                    }
-                    break;
-                }
-                case '2':
-                {
-                    if (afterEquals && !inValue) {
-                        startValue = x;
-                        inValue = true;
-                    }
-                    break;
-                }
-                case '3':
-                {
-                    if (afterEquals && !inValue) {
-                        startValue = x;
-                        inValue = true;
-                    }
-                    break;
-                }
-                case '4':
-                {
-                    if (afterEquals && !inValue) {
-                        startValue = x;
-                        inValue = true;
-                    }
-                    break;
-                }
-                case '5':
-                {
-                    if (afterEquals && !inValue) {
-                        startValue = x;
-                        inValue = true;
-                    }
-                    break;
-                }
-                case '6':
-                {
-                    if (afterEquals && !inValue) {
-                        startValue = x;
-                        inValue = true;
-                    }
-                    break;
-                }
-                case '7':
-                {
-                    if (afterEquals && !inValue) {
-                        startValue = x;
-                        inValue = true;
-                    }
-                    break;
-                }
-                case '8':
-                {
-                    if (afterEquals && !inValue) {
-                        startValue = x;
-                        inValue = true;
-                    }
-                    break;
-                }
-                case '9':
-                {
-                    if (afterEquals && !inValue) {
-                        startValue = x;
-                        inValue = true;
                     }
                     break;
                 }
@@ -648,9 +520,9 @@ public class ProfiledConnection extends AbstractConnection {
      * Statement object and performs timings of the database queries. The class
      * does not handle batch queries but should generally work otherwise.
      */
-    class TimedStatement extends StatementWrapper {
+    static class TimedStatement extends StatementWrapper {
 
-        private Statement stmt;
+        private final Statement stmt;
 
         /**
          * Creates a new TimedStatement that wraps {@code stmt}.
@@ -738,10 +610,10 @@ public class ProfiledConnection extends AbstractConnection {
      * underlying PreparedStatement object and performs timings of the database
      * queries.
      */
-    class TimedPreparedStatement extends PreparedStatementWrapper {
+    static class TimedPreparedStatement extends PreparedStatementWrapper {
 
-        private String sql;
-        private Type type = Type.select;
+        private final String sql;
+        private final Type type;
 
         public TimedPreparedStatement(PreparedStatement pstmt, String sql) {
             super(pstmt);
@@ -943,10 +815,10 @@ public class ProfiledConnection extends AbstractConnection {
      * underlying CallableStatement object and performs timings of the database
      * queries.
      */
-    class TimedCallableStatement extends CallableStatementWrapper {
+    static class TimedCallableStatement extends CallableStatementWrapper {
 
-        private String sql;
-        private Type type = Type.select;
+        private final String sql;
+        private final Type type;
 
         public TimedCallableStatement(CallableStatement cstmt, String sql) {
             super(cstmt);

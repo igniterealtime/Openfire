@@ -61,7 +61,7 @@ public class MUCPersistenceManager {
     private static final String LOAD_ROOM =
         "SELECT roomID, creationDate, modificationDate, naturalName, description, lockedDate, " +
         "emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, canInvite, " +
-        "roomPassword, canDiscoverJID, logEnabled, subject, rolesToBroadcast, useReservedNick, " +
+        "roomPassword, canDiscoverJID, logEnabled, preserveHistOnRoomDeletion, subject, rolesToBroadcast, useReservedNick, " +
         "canChangeNick, canRegister, allowpm, fmucEnabled, fmucOutboundNode, fmucOutboundMode, " +
         "fmucInboundNodes " +
         " FROM ofMucRoom WHERE serviceID=? AND name=?";
@@ -75,14 +75,14 @@ public class MUCPersistenceManager {
     private static final String RELOAD_ALL_ROOMS_WITH_RECENT_ACTIVITY =
         "SELECT roomID, creationDate, modificationDate, name, naturalName, description, " +
         "lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, " +
-        "canInvite, roomPassword, canDiscoverJID, logEnabled, subject, rolesToBroadcast, " +
+        "canInvite, roomPassword, canDiscoverJID, logEnabled, preserveHistOnRoomDeletion, subject, rolesToBroadcast, " +
         "useReservedNick, canChangeNick, canRegister, allowpm, fmucEnabled, fmucOutboundNode, " +
         "fmucOutboundMode, fmucInboundNodes " +
         "FROM ofMucRoom WHERE serviceID=? AND (emptyDate IS NULL or emptyDate > ?)";
     private static final String LOAD_ALL_ROOMS =
         "SELECT roomID, creationDate, modificationDate, name, naturalName, description, " +
         "lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, " +
-        "canInvite, roomPassword, canDiscoverJID, logEnabled, subject, rolesToBroadcast, " +
+        "canInvite, roomPassword, canDiscoverJID, logEnabled, preserveHistOnRoomDeletion, subject, rolesToBroadcast, " +
         "useReservedNick, canChangeNick, canRegister, allowpm, fmucEnabled, fmucOutboundNode, " +
         "fmucOutboundMode, fmucInboundNodes " +
         "FROM ofMucRoom WHERE serviceID=?";
@@ -105,16 +105,16 @@ public class MUCPersistenceManager {
     private static final String UPDATE_ROOM =
         "UPDATE ofMucRoom SET modificationDate=?, naturalName=?, description=?, " +
         "canChangeSubject=?, maxUsers=?, publicRoom=?, moderated=?, membersOnly=?, " +
-        "canInvite=?, roomPassword=?, canDiscoverJID=?, logEnabled=?, rolesToBroadcast=?, " +
+        "canInvite=?, roomPassword=?, canDiscoverJID=?, logEnabled=?, preserveHistOnRoomDeletion=?, rolesToBroadcast=?, " +
         "useReservedNick=?, canChangeNick=?, canRegister=?, allowpm=?, fmucEnabled=?, " +
         "fmucOutboundNode=?, fmucOutboundMode=?, fmucInboundNodes=? " +
         "WHERE roomID=?";
     private static final String ADD_ROOM = 
         "INSERT INTO ofMucRoom (serviceID, roomID, creationDate, modificationDate, name, naturalName, " +
         "description, lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, " +
-        "membersOnly, canInvite, roomPassword, canDiscoverJID, logEnabled, subject, " +
+        "membersOnly, canInvite, roomPassword, canDiscoverJID, logEnabled, preserveHistOnRoomDeletion, subject, " +
         "rolesToBroadcast, useReservedNick, canChangeNick, canRegister, allowpm, fmucEnabled, fmucOutboundNode, " +
-        "fmucOutboundMode, fmucInboundNodes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+        "fmucOutboundMode, fmucInboundNodes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String UPDATE_SUBJECT =
         "UPDATE ofMucRoom SET subject=? WHERE roomID=?";
     private static final String UPDATE_LOCK =
@@ -145,6 +145,8 @@ public class MUCPersistenceManager {
         "DELETE FROM ofMucAffiliation WHERE jid=?";
     private static final String ADD_CONVERSATION_LOG =
         "INSERT INTO ofMucConversationLog (roomID,messageID,sender,nickname,logTime,subject,body,stanza) VALUES (?,?,?,?,?,?,?,?)";
+    private static final String DELETE_ROOM_HISTORY =
+        "DELETE FROM ofMucConversationLog WHERE roomID=?";
 
     /* Map of subdomains to their associated properties */
     private static ConcurrentHashMap<String,MUCServiceProperties> propertyMaps = new ConcurrentHashMap<>();
@@ -258,6 +260,7 @@ public class MUCPersistenceManager {
             room.setPassword(rs.getString("roomPassword"));
             room.setCanAnyoneDiscoverJID(rs.getInt("canDiscoverJID") == 1);
             room.setLogEnabled(rs.getInt("logEnabled") == 1);
+            room.setPreserveHistOnRoomDeletionEnabled(rs.getInt("preserveHistOnRoomDeletion") == 1);
             room.setSubject(rs.getString("subject"));
             List<Role> rolesToBroadcast = new ArrayList<>();
             String roles = StringUtils.zeroPadString(Integer.toBinaryString(rs.getInt("rolesToBroadcast")), 3);
@@ -402,38 +405,39 @@ public class MUCPersistenceManager {
                 pstmt.setString(10, room.getPassword());
                 pstmt.setInt(11, (room.canAnyoneDiscoverJID() ? 1 : 0));
                 pstmt.setInt(12, (room.isLogEnabled() ? 1 : 0));
-                pstmt.setInt(13, marshallRolesToBroadcast(room));
-                pstmt.setInt(14, (room.isLoginRestrictedToNickname() ? 1 : 0));
-                pstmt.setInt(15, (room.canChangeNickname() ? 1 : 0));
-                pstmt.setInt(16, (room.isRegistrationEnabled() ? 1 : 0));
+                pstmt.setInt(13, (room.isPreserveHistOnRoomDeletionEnabled() ? 1 : 0));
+                pstmt.setInt(14, marshallRolesToBroadcast(room));
+                pstmt.setInt(15, (room.isLoginRestrictedToNickname() ? 1 : 0));
+                pstmt.setInt(16, (room.canChangeNickname() ? 1 : 0));
+                pstmt.setInt(17, (room.isRegistrationEnabled() ? 1 : 0));
                 switch (room.canSendPrivateMessage())
                 {
                     default:
-                    case "anyone":       pstmt.setInt(17, 0); break;
-                    case "participants": pstmt.setInt(17, 1); break;
-                    case "moderators":   pstmt.setInt(17, 2); break;
-                    case "none":         pstmt.setInt(17, 3); break;
+                    case "anyone":       pstmt.setInt(18, 0); break;
+                    case "participants": pstmt.setInt(18, 1); break;
+                    case "moderators":   pstmt.setInt(18, 2); break;
+                    case "none":         pstmt.setInt(18, 3); break;
                 }
-                pstmt.setInt(18, (room.isFmucEnabled() ? 1 : 0 ));
+                pstmt.setInt(19, (room.isFmucEnabled() ? 1 : 0 ));
                 if ( room.getFmucOutboundNode() == null ) {
-                    pstmt.setNull(19, Types.VARCHAR);
+                    pstmt.setNull(20, Types.VARCHAR);
                 } else {
-                    pstmt.setString(19, room.getFmucOutboundNode().toString());
+                    pstmt.setString(20, room.getFmucOutboundNode().toString());
                 }
                 if ( room.getFmucOutboundMode() == null ) {
-                    pstmt.setNull(20, Types.INTEGER);
+                    pstmt.setNull(21, Types.INTEGER);
                 } else {
-                    pstmt.setInt(20, room.getFmucOutboundMode().equals(MasterMaster) ? 0 : 1);
+                    pstmt.setInt(21, room.getFmucOutboundMode().equals(MasterMaster) ? 0 : 1);
                 }
 
                 // Store a newline-separated collection, which is an 'allow only on list' configuration. Note that the list can be empty (effectively: disallow all), or null: this is an 'allow all' configuration.
                 if (room.getFmucInboundNodes() == null) {
-                    pstmt.setNull(21, Types.VARCHAR); // Null: allow all.
+                    pstmt.setNull(22, Types.VARCHAR); // Null: allow all.
                 } else {
                     final String content = room.getFmucInboundNodes().stream().map(JID::toString).collect(Collectors.joining("\n")); // result potentially is an empty String, but will not be null.
-                    pstmt.setString(21, content);
+                    pstmt.setString(22, content);
                 }
-                pstmt.setLong(22, room.getID());
+                pstmt.setLong(23, room.getID());
                 pstmt.executeUpdate();
             }
             else {
@@ -462,37 +466,38 @@ public class MUCPersistenceManager {
                 pstmt.setString(16, room.getPassword());
                 pstmt.setInt(17, (room.canAnyoneDiscoverJID() ? 1 : 0));
                 pstmt.setInt(18, (room.isLogEnabled() ? 1 : 0));
-                pstmt.setString(19, room.getSubject());
-                pstmt.setInt(20, marshallRolesToBroadcast(room));
-                pstmt.setInt(21, (room.isLoginRestrictedToNickname() ? 1 : 0));
-                pstmt.setInt(22, (room.canChangeNickname() ? 1 : 0));
-                pstmt.setInt(23, (room.isRegistrationEnabled() ? 1 : 0));
+                pstmt.setInt(19, (room.isPreserveHistOnRoomDeletionEnabled() ? 1 : 0));
+                pstmt.setString(20, room.getSubject());
+                pstmt.setInt(21, marshallRolesToBroadcast(room));
+                pstmt.setInt(22, (room.isLoginRestrictedToNickname() ? 1 : 0));
+                pstmt.setInt(23, (room.canChangeNickname() ? 1 : 0));
+                pstmt.setInt(24, (room.isRegistrationEnabled() ? 1 : 0));
                 switch (room.canSendPrivateMessage())
                 {
                     default:
-                    case "anyone":       pstmt.setInt(24, 0); break;
-                    case "participants": pstmt.setInt(24, 1); break;
-                    case "moderators":   pstmt.setInt(24, 2); break;
-                    case "none":         pstmt.setInt(24, 3); break;
+                    case "anyone":       pstmt.setInt(25, 0); break;
+                    case "participants": pstmt.setInt(25, 1); break;
+                    case "moderators":   pstmt.setInt(25, 2); break;
+                    case "none":         pstmt.setInt(25, 3); break;
                 }
-                pstmt.setInt(25, (room.isFmucEnabled() ? 1 : 0 ));
+                pstmt.setInt(26, (room.isFmucEnabled() ? 1 : 0 ));
                 if ( room.getFmucOutboundNode() == null ) {
-                    pstmt.setNull(26, Types.VARCHAR);
+                    pstmt.setNull(27, Types.VARCHAR);
                 } else {
-                    pstmt.setString(26, room.getFmucOutboundNode().toString());
+                    pstmt.setString(27, room.getFmucOutboundNode().toString());
                 }
                 if ( room.getFmucOutboundMode() == null ) {
-                    pstmt.setNull(27, Types.INTEGER);
+                    pstmt.setNull(28, Types.INTEGER);
                 } else {
-                    pstmt.setInt(27, room.getFmucOutboundMode().equals(MasterMaster) ? 0 : 1);
+                    pstmt.setInt(28, room.getFmucOutboundMode().equals(MasterMaster) ? 0 : 1);
                 }
 
                 // Store a newline-separated collection, which is an 'allow only on list' configuration. Note that the list can be empty (effectively: disallow all), or null: this is an 'allow all' configuration.
                 if (room.getFmucInboundNodes() == null) {
-                    pstmt.setNull(28, Types.VARCHAR); // Null: allow all.
+                    pstmt.setNull(29, Types.VARCHAR); // Null: allow all.
                 } else {
                     final String content = room.getFmucInboundNodes().stream().map(JID::toString).collect(Collectors.joining("\n")); // result potentially is an empty String, but will not be null.
-                    pstmt.setString(28, content);
+                    pstmt.setString(29, content);
                 }
                 pstmt.executeUpdate();
             }
@@ -534,6 +539,12 @@ public class MUCPersistenceManager {
             pstmt = con.prepareStatement(DELETE_ROOM);
             pstmt.setLong(1, room.getID());
             pstmt.executeUpdate();
+
+            if(!room.isPreserveHistOnRoomDeletionEnabled()) {
+                pstmt = con.prepareStatement(DELETE_ROOM_HISTORY);
+                pstmt.setLong(1, room.getID());
+                pstmt.executeUpdate();
+            }
 
             // Update the room (in memory) to indicate the it's no longer in the database.
             room.setSavedToDB(false);
@@ -678,6 +689,7 @@ public class MUCPersistenceManager {
                     room.setPassword(resultSet.getString("roomPassword"));
                     room.setCanAnyoneDiscoverJID(resultSet.getInt("canDiscoverJID") == 1);
                     room.setLogEnabled(resultSet.getInt("logEnabled") == 1);
+                    room.setPreserveHistOnRoomDeletionEnabled(resultSet.getInt("preserveHistOnRoomDeletion") == 1);
                     room.setSubject(resultSet.getString("subject"));
                     List<Role> rolesToBroadcast = new ArrayList<>();
                     String roles = StringUtils.zeroPadString(Integer.toBinaryString(resultSet.getInt("rolesToBroadcast")), 3);

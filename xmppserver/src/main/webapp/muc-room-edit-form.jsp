@@ -100,6 +100,7 @@
     boolean allowInvites = ParamUtils.getBooleanParameter(request, "roomconfig_allowinvites");
     boolean changeSubject = ParamUtils.getBooleanParameter(request, "roomconfig_changesubject");
     boolean enableLog = ParamUtils.getBooleanParameter(request, "roomconfig_enablelogging");
+    boolean preserveHistOnRoomDeletion = ParamUtils.getBooleanParameter(request, "roomconfig_preservehistondel");
     boolean reservedNick = ParamUtils.getBooleanParameter(request, "roomconfig_reservednick");
     boolean canchangenick = ParamUtils.getBooleanParameter(request, "roomconfig_canchangenick");
     boolean registration = ParamUtils.getBooleanParameter(request, "roomconfig_registration");
@@ -246,6 +247,7 @@
             dataForm.addField("muc#roomconfig_whois", null, null).addValue(whois);
             dataForm.addField("muc#roomconfig_allowpm", null, null).addValue(allowpm);
             dataForm.addField("muc#roomconfig_enablelogging", null, null).addValue(enableLog ? "1": "0");
+            dataForm.addField("muc#roomconfig_preservehistondel", null, null).addValue(preserveHistOnRoomDeletion ? "1": "0");
             dataForm.addField("x-muc#roomconfig_reservednick", null, null).addValue(reservedNick ? "1": "0");
             dataForm.addField("x-muc#roomconfig_canchangenick", null, null).addValue(canchangenick ? "1": "0");
             dataForm.addField("x-muc#roomconfig_registration", null, null).addValue(registration ? "1": "0");
@@ -313,6 +315,7 @@
             allowInvites = MUCPersistenceManager.getBooleanProperty(serviceName, "room.canOccupantsInvite", false);
             changeSubject = MUCPersistenceManager.getBooleanProperty(serviceName, "room.canOccupantsChangeSubject", false);
             enableLog = MUCPersistenceManager.getBooleanProperty(serviceName, "room.logEnabled", true);
+            preserveHistOnRoomDeletion = MUCPersistenceManager.getBooleanProperty(serviceName, "room.preserveHistOnRoomDeletion", true);
             reservedNick = MUCPersistenceManager.getBooleanProperty(serviceName, "room.loginRestrictedToNickname", false);
             canchangenick = MUCPersistenceManager.getBooleanProperty(serviceName, "room.canChangeNickname", true);
             registration = MUCPersistenceManager.getBooleanProperty(serviceName, "room.registrationEnabled", true);
@@ -336,6 +339,7 @@
             allowInvites = room.canOccupantsInvite();
             changeSubject = room.canOccupantsChangeSubject();
             enableLog = room.isLogEnabled();
+            preserveHistOnRoomDeletion = room.isPreserveHistOnRoomDeletionEnabled();
             reservedNick = room.isLoginRestrictedToNickname();
             canchangenick = room.canChangeNickname();
             registration = room.isRegistrationEnabled();
@@ -373,6 +377,7 @@
     pageContext.setAttribute("canchangenick", canchangenick);
     pageContext.setAttribute("registration", registration);
     pageContext.setAttribute("enableLog", enableLog);
+    pageContext.setAttribute("preserveHistOnRoomDeletion", preserveHistOnRoomDeletion);
 
 %>
 
@@ -650,6 +655,10 @@
                         <tr>
                             <td><input type="checkbox" name="roomconfig_enablelogging" value="true" id="enablelogging" ${enableLog ? 'checked' : ''}>
                                 <label for="enablelogging"><fmt:message key="muc.room.edit.form.log" /></label></td>
+                        </tr>
+                        <tr>
+                            <td><input type="checkbox" name="roomconfig_preservehistondel" value="true" id="preserveHistOnRoomDeletion" ${preserveHistOnRoomDeletion ? 'checked' : ''}>
+                                <label for="preserveHistOnRoomDeletion"><fmt:message key="muc.room.edit.form.preserve_hist_on_room_deletion" /></label></td>
                         </tr>
                     </tbody>
                     </table>

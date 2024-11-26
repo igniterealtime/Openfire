@@ -236,6 +236,12 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     private boolean logEnabled;
 
     /**
+     * Enables the preservation of chat history after a room is deleted. The chat history logged
+     * when logEnabled is true will be removed, on room deletion, if this is false.
+     */
+    private boolean preserveHistOnRoomDeletion;
+
+    /**
      * Enables the logging of the conversation. The conversation in the room will be saved to the
      * database.
      */
@@ -369,6 +375,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         this.canOccupantsInvite = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.canOccupantsInvite", false);
         this.canAnyoneDiscoverJID = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.canAnyoneDiscoverJID", true);
         this.logEnabled = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.logEnabled", true);
+        this.preserveHistOnRoomDeletion = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.preserveHistOnRoomDeletion", true);
         this.loginRestrictedToNickname = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.loginRestrictedToNickname", false);
         this.canChangeNickname = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.canChangeNickname", true);
         this.registrationEnabled = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.registrationEnabled", true);
@@ -3136,6 +3143,24 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     }
 
     /**
+     * Sets if the room's conversation will be preserved when the room is deleted.
+     *
+     * @param preserveHistOnRoomDeletion boolean that specified if the room's conversation will be preserved on deletion.
+     */
+    public void setPreserveHistOnRoomDeletionEnabled(boolean preserveHistOnRoomDeletion) {
+        this.preserveHistOnRoomDeletion = preserveHistOnRoomDeletion;
+    }
+
+    /**
+     * Returns true if the room's conversation will be preserved when the room is deleted.
+     *
+     * @return true if the room's conversation is being logged.
+     */
+    public boolean isPreserveHistOnRoomDeletionEnabled() {
+        return preserveHistOnRoomDeletion;
+    }
+
+    /**
      * Sets if the room's conversation is being logged. If logging is activated the room
      * conversation will be saved to the database every couple of minutes. The saving frequency is
      * the same for all the rooms and can be configured by changing the property
@@ -3633,6 +3658,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         size += CacheSizes.sizeOfBoolean();     // canAnyoneDiscoverJID
         size += CacheSizes.sizeOfString(canSendPrivateMessage);
         size += CacheSizes.sizeOfBoolean();     // logEnabled
+        size += CacheSizes.sizeOfBoolean();     // preserveHistOnRoomDeletion
         size += CacheSizes.sizeOfBoolean();     // loginRestrictedToNickname
         size += CacheSizes.sizeOfBoolean();     // canChangeNickname
         size += CacheSizes.sizeOfBoolean();     // registrationEnabled
@@ -3679,6 +3705,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         ExternalizableUtil.getInstance().writeBoolean(out, canAnyoneDiscoverJID);
         ExternalizableUtil.getInstance().writeSafeUTF(out, canSendPrivateMessage);
         ExternalizableUtil.getInstance().writeBoolean(out, logEnabled);
+        ExternalizableUtil.getInstance().writeBoolean(out, preserveHistOnRoomDeletion);
         ExternalizableUtil.getInstance().writeBoolean(out, loginRestrictedToNickname);
         ExternalizableUtil.getInstance().writeBoolean(out, canChangeNickname);
         ExternalizableUtil.getInstance().writeBoolean(out, registrationEnabled);
@@ -3737,6 +3764,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         canAnyoneDiscoverJID = ExternalizableUtil.getInstance().readBoolean(in);
         canSendPrivateMessage = ExternalizableUtil.getInstance().readSafeUTF(in);
         logEnabled = ExternalizableUtil.getInstance().readBoolean(in);
+        preserveHistOnRoomDeletion = ExternalizableUtil.getInstance().readBoolean(in);
         loginRestrictedToNickname = ExternalizableUtil.getInstance().readBoolean(in);
         canChangeNickname = ExternalizableUtil.getInstance().readBoolean(in);
         registrationEnabled = ExternalizableUtil.getInstance().readBoolean(in);
@@ -3801,6 +3829,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         password = otherRoom.password;
         canAnyoneDiscoverJID = otherRoom.canAnyoneDiscoverJID;
         logEnabled = otherRoom.logEnabled;
+        preserveHistOnRoomDeletion = otherRoom.preserveHistOnRoomDeletion;
         loginRestrictedToNickname = otherRoom.loginRestrictedToNickname;
         canChangeNickname = otherRoom.canChangeNickname;
         registrationEnabled = otherRoom.registrationEnabled;

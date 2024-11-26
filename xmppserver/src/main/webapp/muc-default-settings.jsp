@@ -47,6 +47,7 @@
     String canChangeNick = ParamUtils.getParameter(request, "roomconfig_canchangenick");
     String registrationEnabled = ParamUtils.getParameter(request, "roomconfig_registration");
     String enableLog = ParamUtils.getParameter(request, "roomconfig_enablelogging");
+    String preserveHistOnRoomDeletion = ParamUtils.getParameter(request, "roomconfig_preservehistondel");
     String maxUsers = ParamUtils.getParameter(request, "roomconfig_maxusers");
     String broadcastModerator = ParamUtils.getParameter(request, "roomconfig_broadcastmoderator");
     String broadcastParticipant = ParamUtils.getParameter(request, "roomconfig_broadcastparticipant");
@@ -156,6 +157,12 @@
             else {
                 MUCPersistenceManager.setProperty(mucname, "room.logEnabled", "false");
             }
+            if (preserveHistOnRoomDeletion != null && preserveHistOnRoomDeletion.trim().length() > 0) {
+                MUCPersistenceManager.setProperty(mucname, "room.preserveHistOnRoomDeletion", "true");
+            }
+            else {
+                MUCPersistenceManager.setProperty(mucname, "room.preserveHistOnRoomDeletion", "false");
+            }
             if (broadcastModerator != null && broadcastModerator.trim().length() > 0) {
                 MUCPersistenceManager.setProperty(mucname, "room.broadcastModerator", "true");
             }
@@ -194,6 +201,7 @@
     pageContext.setAttribute("canChangeNickname", MUCPersistenceManager.getBooleanProperty(mucname, "room.canChangeNickname", true));
     pageContext.setAttribute("registrationEnabled", MUCPersistenceManager.getBooleanProperty(mucname, "room.registrationEnabled", true));
     pageContext.setAttribute("logEnabled", MUCPersistenceManager.getBooleanProperty(mucname, "room.logEnabled", true));
+    pageContext.setAttribute("preserveHistOnRoomDeletion", MUCPersistenceManager.getBooleanProperty(mucname, "room.preserveHistOnRoomDeletion", true));
     pageContext.setAttribute("maxUsers", MUCPersistenceManager.getIntProperty(mucname, "room.maxUsers", 30));
     pageContext.setAttribute("broadcastModerator", MUCPersistenceManager.getBooleanProperty(mucname, "room.broadcastModerator", true));
     pageContext.setAttribute("broadcastParticipant", MUCPersistenceManager.getBooleanProperty(mucname, "room.broadcastParticipant", true));
@@ -297,6 +305,10 @@
             <tr>
                 <td><input name="roomconfig_enablelogging" value="true" id="enableLogging" type="checkbox" ${logEnabled ? 'checked' : ''}></td>
                 <td><label for="enableLogging"><fmt:message key="muc.default.settings.enable_logging" /></label></td>
+            </tr>
+            <tr>
+                <td><input name="roomconfig_preservehistondel" value="true" id="preserveHistOnRoomDeletion" type="checkbox" ${preserveHistOnRoomDeletion ? 'checked' : ''}></td>
+                <td><label for="preserveHistOnRoomDeletion"><fmt:message key="muc.default.settings.preserve_hist_on_room_deletion" /></label></td>
             </tr>
             <tr>
                 <td>&nbsp;</td>

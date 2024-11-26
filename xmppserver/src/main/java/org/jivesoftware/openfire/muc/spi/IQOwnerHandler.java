@@ -278,6 +278,12 @@ public class IQOwnerHandler {
             room.setPublicRoom( parseFirstValueAsBoolean( field, true ) );
         }
 
+        field = completedForm.getField("muc#roomconfig_preservehistondel");
+        if (field != null) {
+            final boolean newValue = parseFirstValueAsBoolean(field, true);
+            room.setPreserveHistOnRoomDeletionEnabled(newValue);
+        }
+
         field = completedForm.getField("muc#roomconfig_persistentroom");
         if (field != null) {
             boolean isPersistent = parseFirstValueAsBoolean( field, true );
@@ -570,6 +576,10 @@ public class IQOwnerHandler {
                 LocaleUtils.getLocalizedString("muc.form.conf.owner_enablelogging", preferredLocale),
                 Type.boolean_type);
 
+        configurationForm.addField("muc#roomconfig_preservehistondel",
+            LocaleUtils.getLocalizedString("muc.form.conf.owner_preservehistondel", preferredLocale),
+            Type.boolean_type);
+
         configurationForm.addField("x-muc#roomconfig_reservednick",
                 LocaleUtils.getLocalizedString("muc.form.conf.owner_reservednick", preferredLocale),
                 Type.boolean_type);
@@ -662,6 +672,10 @@ public class IQOwnerHandler {
             field = configurationForm.getField("muc#roomconfig_enablelogging");
             field.clearValues();
             field.addValue((room.isLogEnabled() ? "1" : "0"));
+
+            field = configurationForm.getField("muc#roomconfig_preservehistondel");
+            field.clearValues();
+            field.addValue((room.isPreserveHistOnRoomDeletionEnabled() ? "1" : "0"));
 
             field = configurationForm.getField("x-muc#roomconfig_reservednick");
             field.clearValues();

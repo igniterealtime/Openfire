@@ -17,7 +17,6 @@
 package org.jivesoftware.openfire.nio;
 
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.ssl.SslHandshakeCompletionEvent;
 import org.dom4j.*;
 import org.jivesoftware.openfire.Connection;
@@ -153,7 +152,6 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
             } else {
                 // SSL Handshake has failed
                 Log.debug("TLS negotiation with '{}' was unsuccessful", domainPair.getRemote(), event.cause());
-                ctx.pipeline().remove(SslHandler.class);
 
                 if (isCertificateException(event) && configRequiresStrictCertificateValidation()) {
                     String condition = "caused by an issue with its TLS certificate";

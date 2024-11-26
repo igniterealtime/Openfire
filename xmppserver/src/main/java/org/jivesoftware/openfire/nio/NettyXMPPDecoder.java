@@ -20,6 +20,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.DecoderException;
+import io.netty.handler.ssl.NotSslRecordException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.StreamError;
@@ -74,8 +75,25 @@ public class NettyXMPPDecoder extends ByteToMessageDecoder {
             return;
         }
 
+        if (isNotSslRecord(cause)) {
+            Log.warn("Closing connection with {}, as unencrypted data was received, while encrypted data was expected (A full stack trace will be logged on the ‘debug’ level).", connection.getPeer() == null ? "(unknown)" : connection.getPeer(), cause);
+            Log.debug("Error occurred while decoding XMPP stanza: {}", connection, cause);
+            connection.close(new StreamError(StreamError.Condition.internal_server_error, "Received unencrypted data while encrypted data was expected."), cause instanceof IOException);
+            return;
+        }
+
         Log.warn("Error occurred while decoding XMPP stanza, closing connection: {}", connection, cause);
         connection.close(new StreamError(StreamError.Condition.internal_server_error, "An error occurred in XMPP Decoder"), cause instanceof IOException);
+    }
+
+    private boolean isNotSslRecord(Throwable t)
+    {
+        // Unwrap DecoderException to check for potential SSLHandshakeException
+        if (t instanceof DecoderException) {
+            t = t.getCause();
+        }
+
+        return (t instanceof NotSslRecordException);
     }
 
     private boolean isSslHandshakeError(Throwable t) {

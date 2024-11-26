@@ -100,6 +100,10 @@ public class NettyConnection extends AbstractConnection
         return !isClosed();
     }
 
+    public SocketAddress getPeer() {
+        return channelHandlerContext.channel().remoteAddress();
+    }
+
     @Override
     public byte[] getAddress() throws UnknownHostException {
         final SocketAddress remoteAddress = channelHandlerContext.channel().remoteAddress();

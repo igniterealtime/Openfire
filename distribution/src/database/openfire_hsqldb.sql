@@ -188,35 +188,35 @@ CREATE TABLE ofMucServiceProp (
 );
 
 CREATE TABLE ofMucRoom (
-  serviceID                     BIGINT        NOT NULL,
-  roomID                        BIGINT        NOT NULL,
-  creationDate                  CHAR(15)      NOT NULL,
-  modificationDate              CHAR(15)      NOT NULL,
-  name                          VARCHAR(50)   NOT NULL,
-  naturalName                   VARCHAR(255)  NOT NULL,
-  description                   VARCHAR(255),
-  lockedDate                    CHAR(15)      NOT NULL,
-  emptyDate                     CHAR(15)      NULL,
-  canChangeSubject              INTEGER       NOT NULL,
-  maxUsers                      INTEGER       NOT NULL,
-  publicRoom                    INTEGER       NOT NULL,
-  moderated                     INTEGER       NOT NULL,
-  membersOnly                   INTEGER       NOT NULL,
-  canInvite                     INTEGER       NOT NULL,
-  roomPassword                  VARCHAR(50)   NULL,
-  canDiscoverJID                INTEGER       NOT NULL,
-  logEnabled                    INTEGER       NOT NULL,
-  preserveHistOnRoomDeletion    INTEGER       NOT NULL,
-  subject                       VARCHAR(100)  NULL,
-  rolesToBroadcast              INTEGER       NOT NULL,
-  useReservedNick               INTEGER       NOT NULL,
-  canChangeNick                 INTEGER       NOT NULL,
-  canRegister                   INTEGER       NOT NULL,
-  allowpm                       INTEGER       NULL,
-  fmucEnabled                   INTEGER       NULL,
-  fmucOutboundNode              VARCHAR(255)  NULL,
-  fmucOutboundMode              INTEGER       NULL,
-  fmucInboundNodes              VARCHAR(4000) NULL,
+  serviceID           BIGINT        NOT NULL,
+  roomID              BIGINT        NOT NULL,
+  creationDate        CHAR(15)      NOT NULL,
+  modificationDate    CHAR(15)      NOT NULL,
+  name                VARCHAR(50)   NOT NULL,
+  naturalName         VARCHAR(255)  NOT NULL,
+  description         VARCHAR(255),
+  lockedDate          CHAR(15)      NOT NULL,
+  emptyDate           CHAR(15)      NULL,
+  canChangeSubject    INTEGER       NOT NULL,
+  maxUsers            INTEGER       NOT NULL,
+  publicRoom          INTEGER       NOT NULL,
+  moderated           INTEGER       NOT NULL,
+  membersOnly         INTEGER       NOT NULL,
+  canInvite           INTEGER       NOT NULL,
+  roomPassword        VARCHAR(50)   NULL,
+  canDiscoverJID      INTEGER       NOT NULL,
+  logEnabled          INTEGER       NOT NULL,
+  preserveHistOnDel   INTEGER       NOT NULL,
+  subject             VARCHAR(100)  NULL,
+  rolesToBroadcast    INTEGER       NOT NULL,
+  useReservedNick     INTEGER       NOT NULL,
+  canChangeNick       INTEGER       NOT NULL,
+  canRegister         INTEGER       NOT NULL,
+  allowpm             INTEGER       NULL,
+  fmucEnabled         INTEGER       NULL,
+  fmucOutboundNode    VARCHAR(255)  NULL,
+  fmucOutboundMode    INTEGER       NULL,
+  fmucInboundNodes    VARCHAR(4000) NULL,
   CONSTRAINT ofMucRoom_pk PRIMARY KEY (serviceID, name)
 );
 CREATE INDEX ofMucRoom_roomid_idx ON ofMucRoom (roomID);
@@ -379,7 +379,7 @@ INSERT INTO ofID (idType, id) VALUES (23, 1);
 INSERT INTO ofID (idType, id) VALUES (26, 2);
 INSERT INTO ofID (idType, id) VALUES (27, 1);
 
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 34);
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 35);
 
 // Entry for admin user
 INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)

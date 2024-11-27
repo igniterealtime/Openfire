@@ -247,7 +247,7 @@
             dataForm.addField("muc#roomconfig_whois", null, null).addValue(whois);
             dataForm.addField("muc#roomconfig_allowpm", null, null).addValue(allowpm);
             dataForm.addField("muc#roomconfig_enablelogging", null, null).addValue(enableLog ? "1": "0");
-            dataForm.addField("muc#roomconfig_preservehistondel", null, null).addValue(preserveHistOnRoomDeletion ? "1": "0");
+            dataForm.addField("{http://igniterealtime.org}muc#roomconfig_preservehistondel", null, null).addValue(preserveHistOnRoomDeletion ? "1": "0");
             dataForm.addField("x-muc#roomconfig_reservednick", null, null).addValue(reservedNick ? "1": "0");
             dataForm.addField("x-muc#roomconfig_canchangenick", null, null).addValue(canchangenick ? "1": "0");
             dataForm.addField("x-muc#roomconfig_registration", null, null).addValue(registration ? "1": "0");

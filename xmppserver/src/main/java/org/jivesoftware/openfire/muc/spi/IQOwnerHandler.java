@@ -278,7 +278,7 @@ public class IQOwnerHandler {
             room.setPublicRoom( parseFirstValueAsBoolean( field, true ) );
         }
 
-        field = completedForm.getField("muc#roomconfig_preservehistondel");
+        field = completedForm.getField("{http://igniterealtime.org}muc#roomconfig_preservehistondel");
         if (field != null) {
             final boolean newValue = parseFirstValueAsBoolean(field, true);
             room.setPreserveHistOnRoomDeletionEnabled(newValue);
@@ -576,7 +576,7 @@ public class IQOwnerHandler {
                 LocaleUtils.getLocalizedString("muc.form.conf.owner_enablelogging", preferredLocale),
                 Type.boolean_type);
 
-        configurationForm.addField("muc#roomconfig_preservehistondel",
+        configurationForm.addField("{http://igniterealtime.org}muc#roomconfig_preservehistondel",
             LocaleUtils.getLocalizedString("muc.form.conf.owner_preservehistondel", preferredLocale),
             Type.boolean_type);
 
@@ -673,7 +673,7 @@ public class IQOwnerHandler {
             field.clearValues();
             field.addValue((room.isLogEnabled() ? "1" : "0"));
 
-            field = configurationForm.getField("muc#roomconfig_preservehistondel");
+            field = configurationForm.getField("{http://igniterealtime.org}muc#roomconfig_preservehistondel");
             field.clearValues();
             field.addValue((room.isPreserveHistOnRoomDeletionEnabled() ? "1" : "0"));
 

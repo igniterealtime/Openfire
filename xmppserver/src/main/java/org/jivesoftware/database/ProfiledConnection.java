@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.sql.*;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 
 /**
@@ -36,7 +38,7 @@ public class ProfiledConnection extends AbstractConnection {
 
     private static final Logger Log = LoggerFactory.getLogger(ProfiledConnection.class);
 
-    public static enum Type {
+    public enum Type {
 
         /**
          * Constant for SELECT database queries.
@@ -60,48 +62,38 @@ public class ProfiledConnection extends AbstractConnection {
 
     }
 
-    private static long startInsertTime = 0;
-    private static long startUpdateTime = 0;
-    private static long startSelectTime = 0;
-    private static long startDeleteTime = 0;
-
-    private static long endInsertTime = 0;
-    private static long endUpdateTime = 0;
-    private static long endSelectTime = 0;
-    private static long endDeleteTime = 0;
+    private static Instant startTime = null;
+    private static Instant endTime = null;
 
     private static long insertCount = 0;
     private static long updateCount = 0;
     private static long selectCount = 0;
     private static long deleteCount = 0;
 
-    private static long totalInsertTime = 0;
-    private static long totalUpdateTime = 0;
-    private static long totalSelectTime = 0;
-    private static long totalDeleteTime = 0;
+    private static Duration totalInsertTime = Duration.ZERO;
+    private static Duration totalUpdateTime = Duration.ZERO;
+    private static Duration totalSelectTime = Duration.ZERO;
+    private static Duration totalDeleteTime = Duration.ZERO;
 
-    private static Map<String, ProfiledConnectionEntry> insertQueries =
-            new Hashtable<String, ProfiledConnectionEntry>();
-    private static Map<String, ProfiledConnectionEntry> updateQueries =
-            new Hashtable<String, ProfiledConnectionEntry>();
-    private static Map<String, ProfiledConnectionEntry> selectQueries =
-            new Hashtable<String, ProfiledConnectionEntry>();
-    private static Map<String, ProfiledConnectionEntry> deleteQueries =
-            new Hashtable<String, ProfiledConnectionEntry>();
+    private static final Map<String, ProfiledConnectionEntry> insertQueries = new Hashtable<>();
+    private static final Map<String, ProfiledConnectionEntry> updateQueries = new Hashtable<>();
+    private static final Map<String, ProfiledConnectionEntry> selectQueries = new Hashtable<>();
+    private static final Map<String, ProfiledConnectionEntry> deleteQueries = new Hashtable<>();
 
     /**
      * Start profiling.
      */
     public static void start() {
-        long now = System.currentTimeMillis();
-        startInsertTime = startUpdateTime = startSelectTime = startDeleteTime = now;
+        resetStatistics();
+        startTime = Instant.now();
+        endTime = null;
     }
 
     /**
      * Stop profiling.
      */
     public static void stop() {
-        endInsertTime = endUpdateTime = endSelectTime = endDeleteTime = 0;
+        endTime = Instant.now();
     }
 
     /**
@@ -113,18 +105,12 @@ public class ProfiledConnection extends AbstractConnection {
      * @return the number queries of type {@code type} performed.
      */
     public static long getQueryCount(Type type) {
-        switch (type) {
-            case select:
-                return selectCount;
-            case update:
-                return updateCount;
-            case insert:
-                return insertCount;
-            case delete:
-                return deleteCount;
-            default:
-                throw new IllegalArgumentException("Invalid type");
-        }
+        return switch (type) {
+            case select -> selectCount;
+            case update -> updateCount;
+            case insert -> insertCount;
+            case delete -> deleteCount;
+        };
     }
 
     /**
@@ -134,9 +120,14 @@ public class ProfiledConnection extends AbstractConnection {
      * @param sql the insert sql string.
      * @param time the length of time the query took in milliseconds
      */
-    public static void addQuery(Type type, String sql, long time) {
+    public static void addQuery(Type type, String sql, Duration time) {
         // Do nothing if we didn't receive a sql statement
-        if (sql == null || sql.equals("")) {
+        if (sql == null || sql.isEmpty()) {
+            return;
+        }
+
+        // Do nothing if profiling has stopped.
+        if (startTime == null || (endTime != null && endTime.isAfter(startTime))) {
             return;
         }
 
@@ -150,7 +141,7 @@ public class ProfiledConnection extends AbstractConnection {
         switch (type) {
             case select:
                 selectCount++;
-                totalSelectTime += time;
+                totalSelectTime = totalSelectTime.plus(time);
                 entry = selectQueries.get(sql);
                 if (entry == null) {
                     entry = new ProfiledConnectionEntry(sql);
@@ -159,7 +150,7 @@ public class ProfiledConnection extends AbstractConnection {
                 break;
             case update:
                 updateCount++;
-                totalUpdateTime += time;
+                totalUpdateTime = totalUpdateTime.plus(time);
                 entry = updateQueries.get(sql);
                 if (entry == null) {
                     entry = new ProfiledConnectionEntry(sql);
@@ -168,7 +159,7 @@ public class ProfiledConnection extends AbstractConnection {
                 break;
             case insert:
                 insertCount++;
-                totalInsertTime += time;
+                totalInsertTime = totalInsertTime.plus(time);
                 entry = insertQueries.get(sql);
                 if (entry == null) {
                     entry = new ProfiledConnectionEntry(sql);
@@ -177,7 +168,7 @@ public class ProfiledConnection extends AbstractConnection {
                 break;
             case delete:
                 deleteCount++;
-                totalDeleteTime += time;
+                totalDeleteTime = totalDeleteTime.plus(time);
                 entry = deleteQueries.get(sql);
                 if (entry == null) {
                     entry = new ProfiledConnectionEntry(sql);
@@ -189,7 +180,7 @@ public class ProfiledConnection extends AbstractConnection {
         }
 
         entry.count++;
-        entry.totalTime += time;
+        entry.totalTime = entry.totalTime.plus(time);
     }
 
     /**
@@ -203,43 +194,29 @@ public class ProfiledConnection extends AbstractConnection {
      *         second.
      */
     public static double getQueriesPerSecond(Type type) {
-        long count, start, end;
+        long count = switch (type) {
+            case select -> selectCount;
+            case update -> updateCount;
+            case insert -> insertCount;
+            case delete -> deleteCount;
+        };
 
-        switch (type) {
-            case select:
-                count = selectCount;
-                start = startSelectTime;
-                end = endSelectTime;
-                break;
-            case update:
-                count = updateCount;
-                start = startUpdateTime;
-                end = endUpdateTime;
-                break;
-            case insert:
-                count = insertCount;
-                start = startInsertTime;
-                end = endInsertTime;
-                break;
-            case delete:
-                count = deleteCount;
-                start = startDeleteTime;
-                end = endDeleteTime;
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid type");
-        }
         // if no queries yet, return 0;
         if (count == 0) {
             return 0;
         }
+
+        if (startTime == null) {
+            return 0;
+        }
+
         // If the profiling hasn't been stopped yet, we want to give
         // profiling values up to the current time instead.
-        if (end == 0) {
-            end = System.currentTimeMillis();
-        }
+        Instant end = endTime == null ? Instant.now() : endTime;
+
         // Compute the number of seconds
-        double time = (end - start) / 1000.0;
+        double time = Duration.between(startTime, end).toMillis() / 1000.0;
+
         // Finally, return the average.
         return count / time;
     }
@@ -252,8 +229,9 @@ public class ProfiledConnection extends AbstractConnection {
      * @return a double representing the average time spent executing the type
      *         of query.
      */
-    public static double getAverageQueryTime(Type type) {
-        long time, count;
+    public static Duration getAverageQueryTime(Type type) {
+        Duration time;
+        long count;
 
         switch (type) {
             case select:
@@ -277,10 +255,10 @@ public class ProfiledConnection extends AbstractConnection {
         }
 
         if (count != 0) {
-            return time / (double)count;
+            return time.dividedBy(count);
         }
         else {
-            return 0.0;
+            return Duration.ZERO;
         }
     }
 
@@ -293,19 +271,13 @@ public class ProfiledConnection extends AbstractConnection {
      * @return the number of milliseconds spent executing the specified type of
      *         query.
      */
-    public static long getTotalQueryTime(Type type) {
-        switch (type) {
-            case select:
-                return totalSelectTime;
-            case update:
-                return totalUpdateTime;
-            case insert:
-                return totalInsertTime;
-            case delete:
-                return totalDeleteTime;
-            default:
-                throw new IllegalArgumentException("Invalid type");
-        }
+    public static Duration getTotalQueryTime(Type type) {
+        return switch (type) {
+            case select -> totalSelectTime;
+            case update -> totalUpdateTime;
+            case insert -> totalInsertTime;
+            case delete -> totalDeleteTime;
+        };
     }
 
     /**
@@ -317,32 +289,19 @@ public class ProfiledConnection extends AbstractConnection {
      * @return an array of ProfiledConnectionEntry objects
      */
     public static ProfiledConnectionEntry[] getSortedQueries(Type type, boolean sortByTime) {
-        Map<String, ProfiledConnectionEntry> queries;
-
-        switch (type) {
-            case select:
-                queries = selectQueries;
-                break;
-            case update:
-                queries = updateQueries;
-                break;
-            case insert:
-                queries = insertQueries;
-                break;
-            case delete:
-                queries = deleteQueries;
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid type");
-        }
+        Map<String, ProfiledConnectionEntry> queries = switch (type) {
+            case select -> selectQueries;
+            case update -> updateQueries;
+            case insert -> insertQueries;
+            case delete -> deleteQueries;
+        };
 
         // No queries, return null
         if (queries.isEmpty()) {
             return null;
         }
 
-        ProfiledConnectionEntry [] result = queries.values().toArray(
-                new ProfiledConnectionEntry[queries.size()]);
+        ProfiledConnectionEntry[] result = queries.values().toArray(new ProfiledConnectionEntry[0]);
 
         quickSort(result, sortByTime, 0, result.length - 1);
         return result;
@@ -353,10 +312,14 @@ public class ProfiledConnection extends AbstractConnection {
      * Reset all statistics.
      */
     public static void resetStatistics() {
-        startInsertTime = startUpdateTime = startSelectTime = startDeleteTime = 0;
-        endInsertTime = endUpdateTime = endSelectTime = endDeleteTime = 0;
+        final boolean isRunning = startTime != null && (endTime == null || startTime.isAfter(endTime));
+        startTime = isRunning ? Instant.now() : null;
+        endTime = null;
         insertCount = updateCount = selectCount = deleteCount = 0;
-        totalInsertTime = totalUpdateTime = totalSelectTime = totalDeleteTime = 0;
+        totalInsertTime = Duration.ZERO;
+        totalUpdateTime = Duration.ZERO;
+        totalSelectTime = Duration.ZERO;
+        totalDeleteTime = Duration.ZERO;
 
         insertQueries.clear();
         updateQueries.clear();
@@ -381,7 +344,7 @@ public class ProfiledConnection extends AbstractConnection {
 
         int index = first;
         for (int i = first + 1; i <= last; i++) {
-            if (sortByTime && ((entries[first].totalTime / entries[first].count) < (entries[i].totalTime / entries[i].count))) {
+            if (sortByTime && ((entries[first].totalTime.dividedBy(entries[first].count)).compareTo(entries[i].totalTime.dividedBy(entries[i].count))) < 0) {
                 swap(entries, ++index, i);
             }
             else if (!sortByTime && entries[first].count < entries[i].count) {
@@ -402,7 +365,7 @@ public class ProfiledConnection extends AbstractConnection {
     private static String removeQueryValues(String _sql) {
         int length = _sql.length();
 
-        if (_sql.indexOf("=") == -1) {
+        if (!_sql.contains("=")) {
             return _sql;
         }
 
@@ -450,100 +413,12 @@ public class ProfiledConnection extends AbstractConnection {
                     }
                     break;
                 }
-                case '-':
+                case '-', '9', '8', '7', '6', '5', '4', '3', '2', '1', '0', '+':
                 {
                     if (afterEquals && !inValue) {
                         startValue = x;
                         inValue = true;
 
-                    }
-                    break;
-                }
-                case '+':
-                {
-                    if (afterEquals && !inValue) {
-                        startValue = x;
-                        inValue = true;
-                    }
-                    break;
-                }
-                case '0':
-                {
-                    if (afterEquals && !inValue) {
-                        startValue = x;
-                        inValue = true;
-                    }
-                    break;
-                }
-                case '1':
-                {
-                    if (afterEquals && !inValue) {
-                        startValue = x;
-                        inValue = true;
-                    }
-                    break;
-                }
-                case '2':
-                {
-                    if (afterEquals && !inValue) {
-                        startValue = x;
-                        inValue = true;
-                    }
-                    break;
-                }
-                case '3':
-                {
-                    if (afterEquals && !inValue) {
-                        startValue = x;
-                        inValue = true;
-                    }
-                    break;
-                }
-                case '4':
-                {
-                    if (afterEquals && !inValue) {
-                        startValue = x;
-                        inValue = true;
-                    }
-                    break;
-                }
-                case '5':
-                {
-                    if (afterEquals && !inValue) {
-                        startValue = x;
-                        inValue = true;
-                    }
-                    break;
-                }
-                case '6':
-                {
-                    if (afterEquals && !inValue) {
-                        startValue = x;
-                        inValue = true;
-                    }
-                    break;
-                }
-                case '7':
-                {
-                    if (afterEquals && !inValue) {
-                        startValue = x;
-                        inValue = true;
-                    }
-                    break;
-                }
-                case '8':
-                {
-                    if (afterEquals && !inValue) {
-                        startValue = x;
-                        inValue = true;
-                    }
-                    break;
-                }
-                case '9':
-                {
-                    if (afterEquals && !inValue) {
-                        startValue = x;
-                        inValue = true;
                     }
                     break;
                 }
@@ -658,9 +533,9 @@ public class ProfiledConnection extends AbstractConnection {
      * Statement object and performs timings of the database queries. The class
      * does not handle batch queries but should generally work otherwise.
      */
-    class TimedStatement extends StatementWrapper {
+    static class TimedStatement extends StatementWrapper {
 
-        private Statement stmt;
+        private final Statement stmt;
 
         /**
          * Creates a new TimedStatement that wraps {@code stmt}.
@@ -674,70 +549,70 @@ public class ProfiledConnection extends AbstractConnection {
 
         public boolean execute(String sql) throws SQLException {
 
-            long t1 = System.currentTimeMillis();
+            Instant start = Instant.now();
             boolean result = stmt.execute(sql);
-            long t2 = System.currentTimeMillis();
+            Instant end = Instant.now();
 
             // determine the type of query
             String sqlL = sql.toLowerCase().trim();
 
             if (sqlL.startsWith("insert")) {
-                addQuery(Type.insert, sql, t2 - t1);
+                addQuery(Type.insert, sql, Duration.between(start, end));
             }
             else if (sqlL.startsWith("update")) {
-                addQuery(Type.update, sql, t2 - t1);
+                addQuery(Type.update, sql, Duration.between(start, end));
             }
             else if (sqlL.startsWith("delete")) {
-                addQuery(Type.delete, sql, t2 - t1);
+                addQuery(Type.delete, sql, Duration.between(start, end));
             }
             else {
-                addQuery(Type.select, sql, t2 - t1);
+                addQuery(Type.select, sql, Duration.between(start, end));
             }
             return result;
         }
 
         public ResultSet executeQuery(String sql) throws SQLException {
-            long t1 = System.currentTimeMillis();
+            Instant start = Instant.now();
             ResultSet result = stmt.executeQuery(sql);
-            long t2 = System.currentTimeMillis();
+            Instant end = Instant.now();
 
             // determine the type of query
             String sqlL = sql.toLowerCase().trim();
 
             if (sqlL.startsWith("insert")) {
-                addQuery(Type.insert, sql, t2 - t1);
+                addQuery(Type.insert, sql, Duration.between(start, end));
             }
             else if (sqlL.startsWith("update")) {
-                addQuery(Type.update, sql, t2 - t1);
+                addQuery(Type.update, sql, Duration.between(start, end));
             }
             else if (sqlL.startsWith("delete")) {
-                addQuery(Type.delete, sql, t2 - t1);
+                addQuery(Type.delete, sql, Duration.between(start, end));
             }
             else {
-                addQuery(Type.select, sql, t2 - t1);
+                addQuery(Type.select, sql, Duration.between(start, end));
             }
             return result;
         }
 
         public int executeUpdate(String sql) throws SQLException {
-            long t1 = System.currentTimeMillis();
+            Instant start = Instant.now();
             int result = stmt.executeUpdate(sql);
-            long t2 = System.currentTimeMillis();
+            Instant end = Instant.now();
 
             // determine the type of query
             String sqlL = sql.toLowerCase().trim();
 
             if (sqlL.startsWith("insert")) {
-                addQuery(Type.insert, sql, t2 - t1);
+                addQuery(Type.insert, sql, Duration.between(start, end));
             }
             else if (sqlL.startsWith("update")) {
-                addQuery(Type.update, sql, t2 - t1);
+                addQuery(Type.update, sql, Duration.between(start, end));
             }
             else if (sqlL.startsWith("delete")) {
-                addQuery(Type.delete, sql, t2 - t1);
+                addQuery(Type.delete, sql, Duration.between(start, end));
             }
             else {
-                addQuery(Type.select, sql, t2 - t1);
+                addQuery(Type.select, sql, Duration.between(start, end));
             }
             return result;
         }
@@ -748,10 +623,10 @@ public class ProfiledConnection extends AbstractConnection {
      * underlying PreparedStatement object and performs timings of the database
      * queries.
      */
-    class TimedPreparedStatement extends PreparedStatementWrapper {
+    static class TimedPreparedStatement extends PreparedStatementWrapper {
 
-        private String sql;
-        private Type type = Type.select;
+        private final String sql;
+        private final Type type;
 
         public TimedPreparedStatement(PreparedStatement pstmt, String sql) {
             super(pstmt);
@@ -776,22 +651,22 @@ public class ProfiledConnection extends AbstractConnection {
 
         public boolean execute() throws SQLException {
             // Perform timing of this method.
-            long t1 = System.currentTimeMillis();
+            Instant start = Instant.now();
             boolean result = pstmt.execute();
-            long t2 = System.currentTimeMillis();
+            Instant end = Instant.now();
 
             switch (type) {
                 case select:
-                    addQuery(Type.select, sql, t2 - t1);
+                    addQuery(Type.select, sql, Duration.between(start, end));
                     break;
                 case update:
-                    addQuery(Type.update, sql, t2 - t1);
+                    addQuery(Type.update, sql, Duration.between(start, end));
                     break;
                 case insert:
-                    addQuery(Type.insert, sql, t2 - t1);
+                    addQuery(Type.insert, sql, Duration.between(start, end));
                     break;
                 case delete:
-                    addQuery(Type.delete, sql, t2 - t1);
+                    addQuery(Type.delete, sql, Duration.between(start, end));
                     break;
             }
             return result;
@@ -802,22 +677,22 @@ public class ProfiledConnection extends AbstractConnection {
          */
         public ResultSet executeQuery() throws SQLException {
 
-            long t1 = System.currentTimeMillis();
+            Instant start = Instant.now();
             ResultSet result = pstmt.executeQuery();
-            long t2 = System.currentTimeMillis();
+            Instant end = Instant.now();
 
             switch (type) {
                 case select:
-                    addQuery(Type.select, sql, t2 - t1);
+                    addQuery(Type.select, sql, Duration.between(start, end));
                     break;
                 case update:
-                    addQuery(Type.update, sql, t2 - t1);
+                    addQuery(Type.update, sql, Duration.between(start, end));
                     break;
                 case insert:
-                    addQuery(Type.insert, sql, t2 - t1);
+                    addQuery(Type.insert, sql, Duration.between(start, end));
                     break;
                 case delete:
-                    addQuery(Type.delete, sql, t2 - t1);
+                    addQuery(Type.delete, sql, Duration.between(start, end));
                     break;
             }
             return result;
@@ -828,22 +703,22 @@ public class ProfiledConnection extends AbstractConnection {
          */
         public int executeUpdate() throws SQLException {
 
-            long t1 = System.currentTimeMillis();
+            Instant start = Instant.now();
             int result = pstmt.executeUpdate();
-            long t2 = System.currentTimeMillis();
+            Instant end = Instant.now();
 
             switch (type) {
                 case select:
-                    addQuery(Type.select, sql, t2 - t1);
+                    addQuery(Type.select, sql, Duration.between(start, end));
                     break;
                 case update:
-                    addQuery(Type.update, sql, t2 - t1);
+                    addQuery(Type.update, sql, Duration.between(start, end));
                     break;
                 case insert:
-                    addQuery(Type.insert, sql, t2 - t1);
+                    addQuery(Type.insert, sql, Duration.between(start, end));
                     break;
                 case delete:
-                    addQuery(Type.delete, sql, t2 - t1);
+                    addQuery(Type.delete, sql, Duration.between(start, end));
                     break;
             }
             return result;
@@ -855,94 +730,94 @@ public class ProfiledConnection extends AbstractConnection {
 
         public boolean execute(String _sql) throws SQLException {
 
-            long t1 = System.currentTimeMillis();
+            Instant start = Instant.now();
             boolean result = pstmt.execute(_sql);
-            long t2 = System.currentTimeMillis();
+            Instant end = Instant.now();
 
             // determine the type of query
             String sqlL = _sql.toLowerCase().trim();
 
             if (sqlL.startsWith("insert")) {
-                addQuery(Type.insert, _sql, t2 - t1);
+                addQuery(Type.insert, _sql, Duration.between(start, end));
             }
             else if (sqlL.startsWith("update")) {
-                addQuery(Type.update, _sql, t2 - t1);
+                addQuery(Type.update, _sql, Duration.between(start, end));
             }
             else if (sqlL.startsWith("delete")) {
-                addQuery(Type.delete, _sql, t2 - t1);
+                addQuery(Type.delete, _sql, Duration.between(start, end));
             }
             else {
-                addQuery(Type.select, _sql, t2 - t1);
+                addQuery(Type.select, _sql, Duration.between(start, end));
             }
             return result;
         }
 
         public int[] executeBatch() throws SQLException {
 
-            long t1 = System.currentTimeMillis();
+            Instant start = Instant.now();
             int[] result = pstmt.executeBatch();
-            long t2 = System.currentTimeMillis();
+            Instant end = Instant.now();
 
             switch (type) {
                 case select:
-                    addQuery(Type.select, sql, t2 - t1);
+                    addQuery(Type.select, sql, Duration.between(start, end));
                     break;
                 case update:
-                    addQuery(Type.update, sql, t2 - t1);
+                    addQuery(Type.update, sql, Duration.between(start, end));
                     break;
                 case insert:
-                    addQuery(Type.insert, sql, t2 - t1);
+                    addQuery(Type.insert, sql, Duration.between(start, end));
                     break;
                 case delete:
-                    addQuery(Type.delete, sql, t2 - t1);
+                    addQuery(Type.delete, sql, Duration.between(start, end));
                     break;
             }
             return result;
         }
 
         public ResultSet executeQuery(String _sql) throws SQLException {
-            long t1 = System.currentTimeMillis();
+            Instant start = Instant.now();
             ResultSet result = pstmt.executeQuery(_sql);
-            long t2 = System.currentTimeMillis();
+            Instant end = Instant.now();
 
             // determine the type of query
             String sqlL = _sql.toLowerCase().trim();
 
             if (sqlL.startsWith("insert")) {
-                addQuery(Type.insert, _sql, t2 - t1);
+                addQuery(Type.insert, _sql, Duration.between(start, end));
             }
             else if (sqlL.startsWith("update")) {
-                addQuery(Type.update, _sql, t2 - t1);
+                addQuery(Type.update, _sql, Duration.between(start, end));
             }
             else if (sqlL.startsWith("delete")) {
-                addQuery(Type.delete, _sql, t2 - t1);
+                addQuery(Type.delete, _sql, Duration.between(start, end));
             }
             else {
-                addQuery(Type.select, _sql, t2 - t1);
+                addQuery(Type.select, _sql, Duration.between(start, end));
             }
             return result;
         }
 
         public int executeUpdate(String _sql) throws SQLException {
 
-            long t1 = System.currentTimeMillis();
+            Instant start = Instant.now();
             int result = pstmt.executeUpdate(_sql);
-            long t2 = System.currentTimeMillis();
+            Instant end = Instant.now();
 
             // determine the type of query
             String sqlL = _sql.toLowerCase().trim();
 
             if (sqlL.startsWith("insert")) {
-                addQuery(Type.insert, _sql, t2 - t1);
+                addQuery(Type.insert, _sql, Duration.between(start, end));
             }
             else if (sqlL.startsWith("update")) {
-                addQuery(Type.update, _sql, t2 - t1);
+                addQuery(Type.update, _sql, Duration.between(start, end));
             }
             else if (sqlL.startsWith("delete")) {
-                addQuery(Type.delete, _sql, t2 - t1);
+                addQuery(Type.delete, _sql, Duration.between(start, end));
             }
             else {
-                addQuery(Type.select, _sql, t2 - t1);
+                addQuery(Type.select, _sql, Duration.between(start, end));
             }
             return result;
         }
@@ -953,10 +828,10 @@ public class ProfiledConnection extends AbstractConnection {
      * underlying CallableStatement object and performs timings of the database
      * queries.
      */
-    class TimedCallableStatement extends CallableStatementWrapper {
+    static class TimedCallableStatement extends CallableStatementWrapper {
 
-        private String sql;
-        private Type type = Type.select;
+        private final String sql;
+        private final Type type;
 
         public TimedCallableStatement(CallableStatement cstmt, String sql) {
             super(cstmt);
@@ -979,24 +854,24 @@ public class ProfiledConnection extends AbstractConnection {
             }
         }
 
-        public boolean execute() throws SQLException {
-            // Perform timing of this method.
-            long t1 = System.currentTimeMillis();
+        public boolean execute() throws SQLException
+        {
+            Instant start = Instant.now();
             boolean result = cstmt.execute();
-            long t2 = System.currentTimeMillis();
+            Instant end = Instant.now();
 
             switch (type) {
                 case select:
-                    addQuery(Type.select, sql, t2 - t1);
+                    addQuery(Type.select, sql, Duration.between(start, end));
                     break;
                 case update:
-                    addQuery(Type.update, sql, t2 - t1);
+                    addQuery(Type.update, sql, Duration.between(start, end));
                     break;
                 case insert:
-                    addQuery(Type.insert, sql, t2 - t1);
+                    addQuery(Type.insert, sql, Duration.between(start, end));
                     break;
                 case delete:
-                    addQuery(Type.delete, sql, t2 - t1);
+                    addQuery(Type.delete, sql, Duration.between(start, end));
                     break;
             }
             return result;
@@ -1005,24 +880,24 @@ public class ProfiledConnection extends AbstractConnection {
         /*
          * This is one of the methods that we wish to time
          */
-        public ResultSet executeQuery() throws SQLException {
-
-            long t1 = System.currentTimeMillis();
+        public ResultSet executeQuery() throws SQLException
+        {
+            Instant start = Instant.now();
             ResultSet result = cstmt.executeQuery();
-            long t2 = System.currentTimeMillis();
+            Instant end = Instant.now();
 
             switch (type) {
                 case select:
-                    addQuery(Type.select, sql, t2 - t1);
+                    addQuery(Type.select, sql, Duration.between(start, end));
                     break;
                 case update:
-                    addQuery(Type.update, sql, t2 - t1);
+                    addQuery(Type.update, sql, Duration.between(start, end));
                     break;
                 case insert:
-                    addQuery(Type.insert, sql, t2 - t1);
+                    addQuery(Type.insert, sql, Duration.between(start, end));
                     break;
                 case delete:
-                    addQuery(Type.delete, sql, t2 - t1);
+                    addQuery(Type.delete, sql, Duration.between(start, end));
                     break;
             }
             return result;
@@ -1031,24 +906,24 @@ public class ProfiledConnection extends AbstractConnection {
         /*
          * This is one of the methods that we wish to time
          */
-        public int executeUpdate() throws SQLException {
-
-            long t1 = System.currentTimeMillis();
+        public int executeUpdate() throws SQLException
+        {
+            Instant start = Instant.now();
             int result = cstmt.executeUpdate();
-            long t2 = System.currentTimeMillis();
+            Instant end = Instant.now();
 
             switch (type) {
                 case select:
-                    addQuery(Type.select, sql, t2 - t1);
+                    addQuery(Type.select, sql, Duration.between(start, end));
                     break;
                 case update:
-                    addQuery(Type.update, sql, t2 - t1);
+                    addQuery(Type.update, sql, Duration.between(start, end));
                     break;
                 case insert:
-                    addQuery(Type.insert, sql, t2 - t1);
+                    addQuery(Type.insert, sql, Duration.between(start, end));
                     break;
                 case delete:
-                    addQuery(Type.delete, sql, t2 - t1);
+                    addQuery(Type.delete, sql, Duration.between(start, end));
                     break;
             }
             return result;
@@ -1058,96 +933,97 @@ public class ProfiledConnection extends AbstractConnection {
         // SuperInterface of PreparedStatement
         // without these this class won't compile
 
-        public boolean execute(String _sql) throws SQLException {
-
-            long t1 = System.currentTimeMillis();
+        public boolean execute(String _sql) throws SQLException
+        {
+            Instant start = Instant.now();
             boolean result = cstmt.execute(_sql);
-            long t2 = System.currentTimeMillis();
+            Instant end = Instant.now();
 
             // determine the type of query
             String sqlL = _sql.toLowerCase().trim();
 
             if (sqlL.startsWith("insert")) {
-                addQuery(Type.insert, _sql, t2 - t1);
+                addQuery(Type.insert, _sql, Duration.between(start, end));
             }
             else if (sqlL.startsWith("update")) {
-                addQuery(Type.update, _sql, t2 - t1);
+                addQuery(Type.update, _sql, Duration.between(start, end));
             }
             else if (sqlL.startsWith("delete")) {
-                addQuery(Type.delete, _sql, t2 - t1);
+                addQuery(Type.delete, _sql, Duration.between(start, end));
             }
             else {
-                addQuery(Type.select, _sql, t2 - t1);
+                addQuery(Type.select, _sql, Duration.between(start, end));
             }
             return result;
         }
 
-        public int[] executeBatch() throws SQLException {
-
-            long t1 = System.currentTimeMillis();
+        public int[] executeBatch() throws SQLException
+        {
+            Instant start = Instant.now();
             int[] result = cstmt.executeBatch();
-            long t2 = System.currentTimeMillis();
+            Instant end = Instant.now();
 
             switch (type) {
                 case select:
-                    addQuery(Type.select, sql, t2 - t1);
+                    addQuery(Type.select, sql, Duration.between(start, end));
                     break;
                 case update:
-                    addQuery(Type.update, sql, t2 - t1);
+                    addQuery(Type.update, sql, Duration.between(start, end));
                     break;
                 case insert:
-                    addQuery(Type.insert, sql, t2 - t1);
+                    addQuery(Type.insert, sql, Duration.between(start, end));
                     break;
                 case delete:
-                    addQuery(Type.delete, sql, t2 - t1);
+                    addQuery(Type.delete, sql, Duration.between(start, end));
                     break;
             }
             return result;
         }
 
-        public ResultSet executeQuery(String _sql) throws SQLException {
-            long t1 = System.currentTimeMillis();
+        public ResultSet executeQuery(String _sql) throws SQLException
+        {
+            Instant start = Instant.now();
             ResultSet result = cstmt.executeQuery(_sql);
-            long t2 = System.currentTimeMillis();
+            Instant end = Instant.now();
 
             // determine the type of query
             String sqlL = _sql.toLowerCase().trim();
 
             if (sqlL.startsWith("insert")) {
-                addQuery(Type.insert, _sql, t2 - t1);
+                addQuery(Type.insert, _sql, Duration.between(start, end));
             }
             else if (sqlL.startsWith("update")) {
-                addQuery(Type.update, _sql, t2 - t1);
+                addQuery(Type.update, _sql, Duration.between(start, end));
             }
             else if (sqlL.startsWith("delete")) {
-                addQuery(Type.delete, _sql, t2 - t1);
+                addQuery(Type.delete, _sql, Duration.between(start, end));
             }
             else {
-                addQuery(Type.select, _sql, t2 - t1);
+                addQuery(Type.select, _sql, Duration.between(start, end));
             }
             return result;
         }
 
-        public int executeUpdate(String _sql) throws SQLException {
-
-            long t1 = System.currentTimeMillis();
+        public int executeUpdate(String _sql) throws SQLException
+        {
+            Instant start = Instant.now();
             int result = cstmt.executeUpdate(_sql);
-            long t2 = System.currentTimeMillis();
+            Instant end = Instant.now();
 
             // determine the type of query
             String sqlL = _sql.toLowerCase().trim();
 
             if (sqlL.startsWith("insert")) {
-                addQuery(Type.insert, _sql, t2 - t1);
+                addQuery(Type.insert, _sql, Duration.between(start, end));
             }
             else if (sqlL.startsWith("update")) {
-                addQuery(Type.update, _sql, t2 - t1);
+                addQuery(Type.update, _sql, Duration.between(start, end));
             }
             else if (sqlL.startsWith("delete")) {
-                addQuery(Type.delete, _sql, t2 - t1);
+                addQuery(Type.delete, _sql, Duration.between(start, end));
             }
             else {
-                addQuery(Type.select, _sql, t2 - t1);
+                addQuery(Type.select, _sql, Duration.between(start, end));
             }
             return result;
         }

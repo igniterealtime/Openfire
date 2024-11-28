@@ -114,6 +114,30 @@ public final class ConnectionSettings {
         public static final String TLS_CERTIFICATE_CHAIN_VERIFY = "xmpp.server.certificate.verify.chain";
         public static final String TLS_ON_PLAIN_DETECTION_ALLOW_NONDIRECTTLS_FALLBACK = "xmpp.server.tls.on-plain-detection-allow-nondirecttls-fallback";
 
+        /**
+         * Only verify revocation status of end-entity (leaf) certificates.
+         *
+         * This avoids issues with chains where the root certificate isn't included
+         * in the chain (e.g. Let's Encrypt) and its CRL distribution point isn't accessible.
+         */
+        public static final SystemProperty<Boolean> REVOCATION_CHECK_ONLY_END_ENTITY = SystemProperty.Builder.ofType(Boolean.class)
+            .setKey("xmpp.socket.ssl.certificate.revocation.only-end-entity")
+            .setDefaultValue(true)
+            .setDynamic(true)
+            .build();
+
+        /**
+         * Allow validation to continue if revocation information is unavailable.
+         *
+         * This prevents failures when OCSP/CRL servers are unreachable or when revocation
+         * information isn't available for some certificates.
+         */
+        public static final SystemProperty<Boolean> REVOCATION_SOFT_FAIL = SystemProperty.Builder.ofType(Boolean.class)
+            .setKey("xmpp.socket.ssl.certificate.revocation.soft-fail")
+            .setDefaultValue(true)
+            .setDynamic(true)
+            .build();
+
         public static final String COMPRESSION_SETTINGS = "xmpp.server.compression.policy";
 
         public static final String PERMISSION_SETTINGS = "xmpp.server.permission";

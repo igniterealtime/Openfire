@@ -274,6 +274,23 @@ public class OpenfireX509TrustManager implements X509TrustManager
             pathBuilder = CertPathBuilder.getInstance( "PKIX" );
         }
 
+        if (checkRevocation) {
+            // Configure revocation checking - using default OCSP preference (OCSP before CRL)
+            PKIXRevocationChecker revChecker = (PKIXRevocationChecker)pathBuilder.getRevocationChecker();
+            revChecker.setOptions(EnumSet.of(
+                // Only verify revocation status of end-entity (leaf) certificates
+                // This avoids issues with chains where the root certificate isn't included
+                // in the chain (e.g. Let's Encrypt) and its CRL distribution point isn't accessible
+                PKIXRevocationChecker.Option.ONLY_END_ENTITY,
+
+                // Continue validation if revocation information is unavailable
+                // This prevents failures when OCSP/CRL servers are unreachable or
+                // when revocation information isn't available for some certificates
+                PKIXRevocationChecker.Option.SOFT_FAIL
+            ));
+            parameters.addCertPathChecker(revChecker);
+        }
+
         try
         {
             // Finally, construct (and implicitly validate) the certificate path.

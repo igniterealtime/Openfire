@@ -25,6 +25,9 @@ import java.security.cert.*;
 import java.security.cert.Certificate;
 import java.util.*;
 
+import static org.jivesoftware.openfire.session.ConnectionSettings.Server.REVOCATION_CHECK_ONLY_END_ENTITY;
+import static org.jivesoftware.openfire.session.ConnectionSettings.Server.REVOCATION_SOFT_FAIL;
+
 /**
  * A Trust Manager implementation that adds Openfire-proprietary functionality.
  * 
@@ -277,17 +280,24 @@ public class OpenfireX509TrustManager implements X509TrustManager
         if (checkRevocation) {
             // Configure revocation checking - using default OCSP preference (OCSP before CRL)
             PKIXRevocationChecker revChecker = (PKIXRevocationChecker)pathBuilder.getRevocationChecker();
-            revChecker.setOptions(EnumSet.of(
-                // Only verify revocation status of end-entity (leaf) certificates
-                // This avoids issues with chains where the root certificate isn't included
-                // in the chain (e.g. Let's Encrypt) and its CRL distribution point isn't accessible
-                PKIXRevocationChecker.Option.ONLY_END_ENTITY,
 
-                // Continue validation if revocation information is unavailable
-                // This prevents failures when OCSP/CRL servers are unreachable or
-                // when revocation information isn't available for some certificates
-                PKIXRevocationChecker.Option.SOFT_FAIL
-            ));
+            EnumSet<PKIXRevocationChecker.Option> options = EnumSet.noneOf(PKIXRevocationChecker.Option.class);
+
+            // Only verify revocation status of end-entity (leaf) certificates if configured
+            // This avoids issues with chains where the root certificate isn't included
+            // in the chain (e.g. Let's Encrypt) and its CRL distribution point isn't accessible
+            if (REVOCATION_CHECK_ONLY_END_ENTITY.getValue()) {
+                options.add(PKIXRevocationChecker.Option.ONLY_END_ENTITY);
+            }
+
+            // Allow validation to continue if revocation information is unavailable, if configured
+            // This prevents failures when OCSP/CRL servers are unreachable or
+            // when revocation information isn't available for some certificates
+            if (REVOCATION_SOFT_FAIL.getValue()) {
+                options.add(PKIXRevocationChecker.Option.SOFT_FAIL);
+            }
+
+            revChecker.setOptions(options);
             parameters.addCertPathChecker(revChecker);
         }
 

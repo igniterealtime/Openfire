@@ -374,9 +374,20 @@
         <ol>
             <li>Check OCSP stapled response (if available)</li>
             <li>Attempt client-driven OCSP query if no stapled response is present</li>
-            <li>Check CRL (if OCSP is unavailable)</li>
-            <li>Fail the connection if all methods fail</li>
+            <li>Check CRL (if OCSP is unavailable, and CRL is available)</li>
+            <li>Allow the connection to succeed if the revocation status cannot be determined</li>
         </ol>
+
+        <p>The system property <code>xmpp.socket.ssl.certificate.revocation.soft-fail</code> controls the behavior when
+            revocation status cannot be determined. By default, this property is set to <code>true</code>, which allows
+            the connection to succeed if the revocation status cannot be determined. If you want to enforce strict
+            revocation checking, you can set this property to <code>false</code>. When set to <code>false</code>, the
+            connection will fail if the revocation status cannot be determined.</p>
+
+        <p>By default, revocation checking only checks the leaf certificate in a chain. This avoids issues with chains
+            where the root certificate isn't included in the chain (e.g. Let's Encrypt) and its CRL distribution
+            point isn't accessible. If you want to enforce checking the entire chain, you can set the system
+            property <code>xmpp.socket.ssl.certificate.revocation.check-chain</code> to <code>true</code>.</p>
 
         <h4>OCSP Stapling</h4>
 

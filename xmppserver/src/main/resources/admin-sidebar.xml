@@ -505,6 +505,11 @@
                           url="muc-room-federation.jsp"
                           description="${sidebar.muc-room-federation.descr}"/>
 
+                    <!-- Clear Chat History -->
+                    <item id="muc-room-clear-chat" name="${sidebar.muc-room-clear-chat}"
+                          url="muc-room-clear-chat.jsp"
+                          description="${sidebar.muc-room-clear-chat.descr}"/>
+
                     <!-- Delete Room -->
                     <item id="muc-room-delete" name="${sidebar.muc-room-delete}"
                           url="muc-room-delete.jsp"

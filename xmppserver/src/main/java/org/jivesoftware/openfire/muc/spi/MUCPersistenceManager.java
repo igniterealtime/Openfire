@@ -150,6 +150,9 @@ public class MUCPersistenceManager {
         "INSERT INTO ofMucConversationLog (roomID,messageID,sender,nickname,logTime,subject,body,stanza) VALUES (?,?,?,?,?,?,?,?)";
     private static final String DELETE_ROOM_HISTORY =
         "DELETE FROM ofMucConversationLog WHERE roomID=?";
+    // Clear the chat history for a room but don't clear the messages that set the room's subject
+    private static final String CLEAR_ROOM_CHAT_HISTORY =
+        "DELETE FROM ofMucConversationLog WHERE roomID=? AND subject IS NULL";
 
     /* Map of subdomains to their associated properties */
     private static ConcurrentHashMap<String,MUCServiceProperties> propertyMaps = new ConcurrentHashMap<>();
@@ -596,6 +599,39 @@ public class MUCPersistenceManager {
                 pstmt.executeUpdate();
                 DbConnectionManager.fastcloseStmt(pstmt);
             }
+        }
+        catch (SQLException sqle) {
+            Log.error("A database error occurred while trying to delete room: {}", room.getName(), sqle);
+            abortTransaction = true;
+        }
+        finally {
+            DbConnectionManager.closeStatement(pstmt);
+            DbConnectionManager.closeTransactionConnection(con, abortTransaction);
+        }
+    }
+
+    /**
+     * Clears the chat history for a room
+     *
+     * @param room the room to cleaer chat history from
+     */
+    public static void clearRoomChatFromDB(MUCRoom room) {
+        Log.debug("Attempting to clear the chat history of room '{}' from the database.", room.getName());
+
+        if (!room.isPersistent() || !room.wasSavedToDB()) {
+            return;
+        }
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        boolean abortTransaction = false;
+        try {
+            con = DbConnectionManager.getTransactionConnection();
+            pstmt = con.prepareStatement(CLEAR_ROOM_CHAT_HISTORY);
+            pstmt.setLong(1, room.getID());
+            pstmt.executeUpdate();
+
+            // Update the room (in memory) to indicate the it's no longer in the database.
+            room.setSavedToDB(false);
         }
         catch (SQLException sqle) {
             Log.error("A database error occurred while trying to delete room: {}", room.getName(), sqle);

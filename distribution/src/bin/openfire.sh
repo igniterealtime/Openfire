@@ -144,6 +144,9 @@ OPENFIRE_OPTS="${OPENFIRE_OPTS} -Djava.security.properties=${OPENFIRE_HOME}/reso
 # Enable OCSP Stapling
 OPENFIRE_OPTS="${OPENFIRE_OPTS} -Djdk.tls.server.enableStatusRequestExtension=true"
 
+# Enable the CRL Distribution Points extension
+OPENFIRE_OPTS="${OPENFIRE_OPTS} -Dcom.sun.security.enableCRLDP=true"
+
 JAVACMD="${JAVACMD} -Dlog4j.configurationFile=${OPENFIRE_LIB}/log4j2.xml -Dlog4j2.formatMsgNoLookups=true -Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true -Djava.net.preferIPv6Addresses=system"
 
 if [ -z "$LOCALCLASSPATH" ] ; then

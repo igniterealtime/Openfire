@@ -1,2 +1,5 @@
 # Permit client-driven OCSP (has no effect unless revocation checking is also enabled)
 ocsp.enable=true
+
+# Enable CRL Distribution Points extension in certificates (download CRL from URL in certificate)
+org.bouncycastle.x509.enableCRLDP=true

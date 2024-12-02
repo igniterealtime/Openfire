@@ -379,15 +379,14 @@
         </ol>
 
         <p>The system property <code>xmpp.socket.ssl.certificate.revocation.soft-fail</code> controls the behavior when
-            revocation status cannot be determined. By default, this property is set to <code>true</code>, which allows
-            the connection to succeed if the revocation status cannot be determined. If you want to enforce strict
-            revocation checking, you can set this property to <code>false</code>. When set to <code>false</code>, the
-            connection will fail if the revocation status cannot be determined.</p>
+            revocation status cannot be determined. The default value of this property is <code>false</code> which fails
+            the connection if the revocation status of a certificate cannot be determined. If you want to relax
+            revocation checking, you can set this property to <code>true</code>. When set to <code>true</code>, the
+            connection will be allowed if a certificate's revocation status cannot be established.</p>
 
-        <p>By default, revocation checking only checks the leaf certificate in a chain. This avoids issues with chains
-            where the root certificate isn't included in the chain (e.g. Let's Encrypt) and its CRL distribution
-            point isn't accessible. If you want to enforce checking the entire chain, you can set the system
-            property <code>xmpp.socket.ssl.certificate.revocation.check-chain</code> to <code>true</code>.</p>
+        <p>By default, revocation checking considers the entire certificate chain. If you want to limit revocation
+            checking to only the leaf certificate in a chain you can set the system
+            property <code>xmpp.socket.ssl.certificate.revocation.only-end-entity</code> to <code>true</code>.</p>
 
         <h4>OCSP Stapling</h4>
 

@@ -122,7 +122,7 @@ public final class ConnectionSettings {
          */
         public static final SystemProperty<Boolean> REVOCATION_CHECK_ONLY_END_ENTITY = SystemProperty.Builder.ofType(Boolean.class)
             .setKey("xmpp.socket.ssl.certificate.revocation.only-end-entity")
-            .setDefaultValue(true)
+            .setDefaultValue(false)
             .setDynamic(true)
             .build();
 
@@ -134,7 +134,7 @@ public final class ConnectionSettings {
          */
         public static final SystemProperty<Boolean> REVOCATION_SOFT_FAIL = SystemProperty.Builder.ofType(Boolean.class)
             .setKey("xmpp.socket.ssl.certificate.revocation.soft-fail")
-            .setDefaultValue(true)
+            .setDefaultValue(false)
             .setDynamic(true)
             .build();
 

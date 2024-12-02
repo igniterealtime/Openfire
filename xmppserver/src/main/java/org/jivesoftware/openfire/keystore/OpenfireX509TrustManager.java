@@ -283,16 +283,17 @@ public class OpenfireX509TrustManager implements X509TrustManager
 
             EnumSet<PKIXRevocationChecker.Option> options = EnumSet.noneOf(PKIXRevocationChecker.Option.class);
 
-            // Only verify revocation status of end-entity (leaf) certificates if configured
-            // This avoids issues with chains where the root certificate isn't included
-            // in the chain (e.g. Let's Encrypt) and its CRL distribution point isn't accessible
+            // When enabled, only validates revocation status for end-entity (leaf) certificates
+            // and skips intermediate/root certificate checks. This helps avoid validation failures
+            // when Certificate Revocation Lists (CRLs) or OCSP responders are unavailable or unreachable
+            // for CA certificates in the chain.
             if (REVOCATION_CHECK_ONLY_END_ENTITY.getValue()) {
                 options.add(PKIXRevocationChecker.Option.ONLY_END_ENTITY);
             }
 
             // Allow validation to continue if revocation information is unavailable, if configured
-            // This prevents failures when OCSP/CRL servers are unreachable or
-            // when revocation information isn't available for some certificates
+            // This prevents failures when OCSP/CRL servers are unreachable or when revocation
+            // information isn't available for some certificates
             if (REVOCATION_SOFT_FAIL.getValue()) {
                 options.add(PKIXRevocationChecker.Option.SOFT_FAIL);
             }

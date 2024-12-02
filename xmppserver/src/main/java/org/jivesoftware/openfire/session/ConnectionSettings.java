@@ -117,8 +117,8 @@ public final class ConnectionSettings {
         /**
          * Only verify revocation status of end-entity (leaf) certificates.
          *
-         * This avoids issues with chains where the root certificate isn't included
-         * in the chain (e.g. Let's Encrypt) and its CRL distribution point isn't accessible.
+         * This avoids issues with chains where CRL information isn't accessible
+         * for intermediate certificates.
          */
         public static final SystemProperty<Boolean> REVOCATION_CHECK_ONLY_END_ENTITY = SystemProperty.Builder.ofType(Boolean.class)
             .setKey("xmpp.socket.ssl.certificate.revocation.only-end-entity")

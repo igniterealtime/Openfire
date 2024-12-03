@@ -629,9 +629,6 @@ public class MUCPersistenceManager {
             pstmt = con.prepareStatement(CLEAR_ROOM_CHAT_HISTORY);
             pstmt.setLong(1, room.getID());
             pstmt.executeUpdate();
-
-            // Update the room (in memory) to indicate the it's no longer in the database.
-            room.setSavedToDB(false);
         }
         catch (SQLException sqle) {
             Log.error("A database error occurred while trying to delete room: {}", room.getName(), sqle);

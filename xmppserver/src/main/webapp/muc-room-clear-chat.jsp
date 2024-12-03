@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2024 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -60,9 +60,13 @@
     if (clear) {
         // Clear the room
         if (room != null) {
-            room.clearChatHistory();
-            // Log the event
-            webManager.logEvent("clear chat history of MUC room ", roomName);
+            webManager.logEvent("Making a request to clear chat history of MUC room ", roomJID.toString());
+            // finalWebManager is a final variable that references webManager
+            // allowing webManager to be used inside the lambda expression without causing a compilation error
+            final WebManager finalWebManager = webManager;
+            room.clearChatHistory().thenRun(() -> {
+                finalWebManager.logEvent("Cleared the chat history of MUC room ", roomJID.toString());
+            });
         }
         // Done, so redirect to the room edit form
         response.sendRedirect("muc-room-edit-form.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8")+"&clearchatsuccess=true");

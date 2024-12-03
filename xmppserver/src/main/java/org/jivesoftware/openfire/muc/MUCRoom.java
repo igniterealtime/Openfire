@@ -65,6 +65,7 @@ import java.util.stream.Collectors;
  */
 @JiveID(JiveConstants.MUC_ROOM)
 public class MUCRoom implements GroupEventListener, UserEventListener, Externalizable, Result, Cacheable {
+    public static final boolean BULK_MSG_RETRACTION_ENABLED = JiveGlobals.getBooleanProperty("chatManagement.bulkMsgRetractionEnabled", true);
 
     private static final Logger Log = LoggerFactory.getLogger(MUCRoom.class);
 
@@ -1315,45 +1316,50 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     }
 
     /**
-     * Clears the chat history of a room. Sends out message retraction stanzas to all occupants, for all the message in the chat history.
+     * Asynchronously remove the chat history of a room from run-time memory and database storage.
+     * If bulk message retraction is enabled, it sends message retraction stanzas to all occupants.
      */
-    public void clearChatHistory() {
-        Iterator<Message> history = roomHistory.getMessageHistory();
-        while (history.hasNext()) {
-            Message originalMsg = history.next();
-            Message retractionMsg = new Message();
+    public CompletableFuture<Void> clearChatHistory() {
+        return CompletableFuture.runAsync(() -> {
+            if(MUCRoom.BULK_MSG_RETRACTION_ENABLED) {
+                ListIterator<Message> reverseMessageHistory = roomHistory.getReverseMessageHistory();
+                while (reverseMessageHistory.hasPrevious()) {
+                    Message originalMsg = reverseMessageHistory.previous();
+                    Message retractionMsg = new Message();
 
-            // Sets a unique ID for the retraction message by prefixing the original message ID with "retract-"
-            retractionMsg.setID("retract-" + originalMsg.getID());
-            // Sets the sender of the retraction message to be the chat room itself
-            retractionMsg.setFrom(selfOccupantData.getOccupantJID());
-            // Sets the recipient of the retraction message to be the chat room itself to send to all occupants
-            retractionMsg.setTo(new JID(getName(), getMUCService().getServiceDomain(), null).toBareJID());
-            retractionMsg.setType(Message.Type.groupchat);
-            // An XML element is added to the message to indicate that it is a retraction, with an attribute specifying
-            // the ID of the message being retracted
-            retractionMsg.addChildElement("retract", "urn:xmpp:message-retract:1").addAttribute(
-                "id",
-                new JID(getName(), getMUCService().getServiceDomain(), null).toBareJID()
-            );
-            // A fallback element is added to provide a fallback message for clients that do not support message retraction
-            retractionMsg.addChildElement("fallback", "urn:xmpp:fallback:0").addAttribute(
-                "for",
-                "urn:xmpp:message-retract:1"
-            );
-            retractionMsg.setBody("A request was received to retract a previous message as part of clearing the chat room history, but this is not supported by your client.");
-            // Finally, a hint is added to the message to indicate that it should be stored by the client.
-            // This ensures that the retraction event is recorded and can be referenced later.
-            retractionMsg.addChildElement("store", "urn:xmpp:hints");
+                    // Sets a unique ID for the retraction message by prefixing the original message ID with "retract-"
+                    retractionMsg.setID("retract-" + originalMsg.getID());
+                    // Sets the sender of the retraction message to be the chat room itself
+                    retractionMsg.setFrom(selfOccupantData.getOccupantJID());
+                    // Sets the recipient of the retraction message to be the chat room itself to send to all occupants
+                    retractionMsg.setTo(new JID(getName(), getMUCService().getServiceDomain(), null).toBareJID());
+                    retractionMsg.setType(Message.Type.groupchat);
+                    // An XML element is added to the message to indicate that it is a retraction, with an attribute specifying
+                    // the ID of the message being retracted
+                    retractionMsg.addChildElement("retract", "urn:xmpp:message-retract:1").addAttribute(
+                        "id",
+                        new JID(getName(), getMUCService().getServiceDomain(), null).toBareJID()
+                    );
+                    // A fallback element is added to provide a fallback message for clients that do not support message retraction
+                    retractionMsg.addChildElement("fallback", "urn:xmpp:fallback:0").addAttribute(
+                        "for",
+                        "urn:xmpp:message-retract:1"
+                    );
+                    retractionMsg.setBody(LocaleUtils.getLocalizedString("muc.room.clear_chat.retraction_fallback_msg"));
+                    // Finally, a hint is added to the message to indicate that it should be stored by the client.
+                    // This ensures that the retraction event is recorded and can be referenced later.
+                    retractionMsg.addChildElement("store", "urn:xmpp:hints");
 
-            // Broadcast the retraction message but don't store it in the history
-            broadcast(retractionMsg, false);
-        }
+                    // Broadcast the retraction message but don't store it in the history
+                    broadcast(retractionMsg, false);
+                }
+            }
 
-        // Clear the history of the room from the DB if the room was persistent
-        MUCPersistenceManager.clearRoomChatFromDB(this);
-        // Remove the history of the room from memory (preventing it to pop up in a new room by the same name).
-        roomHistory.purge();
+            // Clear the history of the room from the DB if the room was persistent
+            MUCPersistenceManager.clearRoomChatFromDB(this);
+            // Remove the history of the room from memory (preventing it to pop up in a new room by the same name).
+            roomHistory.purge();
+        });
     }
 
     /**

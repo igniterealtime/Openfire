@@ -17,13 +17,35 @@ TEMPDIR=$(mktemp -d)
 curl -o $TEMPDIR/cacerts.txt https://ccadb.my.salesforce-sites.com/mozilla/IncludedRootsPEMTxt?TrustBitsInclude=Websites
 
 # Parse the certificates into individual files
-csplit --prefix "$TEMPDIR/cert" --suffix-format %02d.pem "$TEMPDIR/cacerts.txt" '/-----BEGIN CERTIFICATE-----/' '{*}' --elide-empty-files --quiet
+# Detect OS and use appropriate csplit command
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    # Count the number of certificates (number of BEGIN CERTIFICATE markers minus 1)
+    NUM_CERTS=$(($(grep -c "BEGIN CERTIFICATE" "$TEMPDIR/cacerts.txt") - 1))
+    # macOS (BSD) version of csplit
+    csplit -s -n 3 -k -f "$TEMPDIR/cert" "$TEMPDIR/cacerts.txt" '/-----BEGIN CERTIFICATE-----/' "{$NUM_CERTS}"
+    # Rename the split files to .pem extension
+    for f in "$TEMPDIR"/cert*; do
+        if [ -f "$f" ]; then
+            mv "$f" "$f.pem"
+        fi
+    done
+else
+    # GNU version (Linux and others)
+    csplit --prefix "$TEMPDIR/cert" --suffix-format %02d.pem "$TEMPDIR/cacerts.txt" '/-----BEGIN CERTIFICATE-----/' '{*}' --elide-empty-files --quiet
+fi
 
-# Remove the existing trust store
-rm "$TRUSTSTOREPATH"
+# Remove the existing trust store if it exists
+if [ -f "$TRUSTSTOREPATH" ]; then
+    rm "$TRUSTSTOREPATH"
+fi
 
 # Import the certificates into the trust store
-for CERTFILE in $TEMPDIR/cert*.pem; do
+for CERTFILE in "$TEMPDIR"/cert*.pem; do
+    if [ ! -f "$CERTFILE" ]; then
+        echo "No certificate files found in $TEMPDIR"
+        exit 1
+    fi
+
     # Get the certificate name from some properties
     CERTNAME_CN=$(openssl x509 -noout -subject -nameopt lname,sep_multiline,utf8 -in "$CERTFILE" | grep commonName | sed 's/.*commonName=//')
     CERTNAME_OUN=$(openssl x509 -noout -subject -nameopt lname,sep_multiline,utf8 -in "$CERTFILE" | grep organizationalUnitName | sed 's/.*organizationalUnitName=//')

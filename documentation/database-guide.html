@@ -91,6 +91,7 @@
                 <li><a href="#ofMucRoom">ofMucRoom</a></li>
 
                 <li><a href="#ofMucRoomProp">ofMucRoomProp</a></li>
+                <li><a href="#ofMucRoomTombstone">ofMucRoomTombstone</a></li>
                 <li><a href="#ofMucAffiliation">ofMucAffiliation</a></li>
                 <li><a href="#ofMucMember">ofMucMember</a></li>
                 <li><a href="#ofMucConversationLog">ofMucConversationLog</a></li>
@@ -984,6 +985,12 @@
                 <td>Flag indicating whether room conversations are logged or not</td>
             </tr>
             <tr>
+                <td>tombstone</td>
+                <td>NUMBER</td>
+                <td>n/a</td>
+                <td>Flag indicating whether room name should be tomb-stoned on deletion (prevented from future use)</td>
+            </tr>
+            <tr>
                 <td>subject</td>
                 <td>VARCHAR</td>
                 <td>100</td>
@@ -1045,6 +1052,33 @@
                 <td>VARCHAR</td>
                 <td>4000</td>
                 <td>Property Value</td>
+            </tr>
+            </tbody>
+        </table>
+        &nbsp;<a href="#top" class="top">top of page</a>
+
+        <table id="ofMucRoomTombstone" class="dbtable">
+            <tbody>
+            <tr>
+                <th colspan="4">ofMucRoomTombstone (Groupchat room name tombstones)</th>
+            </tr>
+            <tr>
+                <th>Column Name</th>
+                <th>Type</th>
+                <th>Length</th>
+                <th>Description</th>
+            </tr>
+            <tr class="primary-key">
+                <td>serviceID</td>
+                <td>NUMBER</td>
+                <td>n/a</td>
+                <td>ID of associated MUC service (Primary Key)</td>
+            </tr>
+            <tr class="primary-key">
+                <td>name</td>
+                <td>VARCHAR</td>
+                <td>50</td>
+                <td>Name of the tomb-stoned room (Primary Key)</td>
             </tr>
             </tbody>
         </table>

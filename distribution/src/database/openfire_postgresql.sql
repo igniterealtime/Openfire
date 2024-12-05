@@ -211,6 +211,7 @@ CREATE TABLE ofMucRoom (
   roomPassword        VARCHAR(50)   NULL,
   canDiscoverJID      INTEGER       NOT NULL,
   logEnabled          INTEGER       NOT NULL,
+  tombstone           INTEGER       NOT NULL,
   preserveHistOnDel   INTEGER       NOT NULL,
   subject             VARCHAR(100)  NULL,
   rolesToBroadcast    INTEGER       NOT NULL,
@@ -232,6 +233,12 @@ CREATE TABLE ofMucRoomProp (
   name                  VARCHAR(100)    NOT NULL,
   propValue             TEXT            NOT NULL,
   CONSTRAINT ofMucRoomProp_pk PRIMARY KEY (roomID, name)
+);
+
+CREATE TABLE ofMucRoomTombstone (
+  serviceID           INTEGER       NOT NULL,
+  name                VARCHAR(50)   NOT NULL,
+  CONSTRAINT ofMucRoomTombstone_pk PRIMARY KEY (serviceID, name)
 );
 
 CREATE TABLE ofMucAffiliation (
@@ -385,7 +392,7 @@ INSERT INTO ofID (idType, id) VALUES (23, 1);
 INSERT INTO ofID (idType, id) VALUES (26, 2);
 INSERT INTO ofID (idType, id) VALUES (27, 1);
 
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 35);
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 36);
 
 -- Entry for admin user
 INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)

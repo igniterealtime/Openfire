@@ -196,6 +196,11 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     private boolean persistent;
 
     /**
+     * Prevent the room name from being re-used after the room has been destroyed.
+     */
+    private boolean tombstone;
+
+    /**
      * Moderated rooms enable only participants to speak. Users that join the room and aren't
      * participants can't speak (they are just visitors).
      */
@@ -370,6 +375,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         this.maxUsers = MUCPersistenceManager.getIntProperty(mucService.getServiceName(), "room.maxUsers", 30);
         this.publicRoom = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.publicRoom", true);
         this.persistent = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.persistent", false);
+        this.tombstone = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.tombstone", false);
         this.moderated = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.moderated", false);
         this.membersOnly = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.membersOnly", false);
         this.canOccupantsInvite = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.canOccupantsInvite", false);
@@ -3384,6 +3390,30 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      */
     public void setModerated(boolean moderated) {
         this.moderated = moderated;
+    }
+
+
+    /**
+     * Returns whether the room should be tomb-stoned on deletion.
+     *
+     * Tomb-stoning a room means that this room's name is retired on room deletion and cannot be used again.
+     * This is useful when a room is deleted, but the room's name should not be re-used.
+     *
+     * @return true if the room should be tomb-stoned on deletion
+     */
+    public boolean isTombstone() {
+        return tombstone;
+    }
+
+    /**
+     * Sets whether the room should be tomb-stoned on deletion.
+     *
+     * Tomb-stoning a room means that this room's name is retired on room deletion and cannot be used again.
+     *
+     * @param tombstone true if the room should be tomb-stoned on deletion
+     */
+    public void setTombstone(boolean tombstone) {
+        this.tombstone = tombstone;
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,11 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 
 /**
- * Exception used for representing that the user is not allowed to perform the requested operation 
- * in the MUCRoom. There are many reasons why a not-allowed error could occur such as: a user tries 
- * to join a room that has reached its limit of max number of occupants. A 405 error code is 
- * returned to the user that requested the invalid operation.
+ * Exception used for representing that the user is not allowed to perform the requested operation
+ * in the MUCRoom. There are many reasons why a not-allowed error could occur such as: a user tries
+ * to join a room that has reached its limit of max number of occupants, or attempts to create a
+ * room that has been tomb-stoned. A 405 error code is returned to the user that requested the
+ * invalid operation.
  *
  * @author Gaston Dombiak
  */
@@ -31,23 +32,54 @@ public class NotAllowedException extends Exception {
 
     private static final long serialVersionUID = 1L;
 
+    public enum Reason {
+        INSUFFICIENT_PERMISSIONS,  // Default reason
+        ROOM_TOMBSTONED
+    }
+
+    private final Reason reason;
+
     private Throwable nestedThrowable = null;
 
     public NotAllowedException() {
-        super();
+        this(Reason.INSUFFICIENT_PERMISSIONS);
     }
 
     public NotAllowedException(String msg) {
-        super(msg);
+        this(msg, Reason.INSUFFICIENT_PERMISSIONS);
     }
 
     public NotAllowedException(Throwable nestedThrowable) {
-        this.nestedThrowable = nestedThrowable;
+        this(Reason.INSUFFICIENT_PERMISSIONS, nestedThrowable);
     }
 
     public NotAllowedException(String msg, Throwable nestedThrowable) {
+        this(msg, Reason.INSUFFICIENT_PERMISSIONS, nestedThrowable);
+    }
+
+    public NotAllowedException(Reason reason) {
+        super();
+        this.reason = reason;
+    }
+
+    public NotAllowedException(String msg, Reason reason) {
         super(msg);
+        this.reason = reason;
+    }
+
+    public NotAllowedException(Reason reason, Throwable nestedThrowable) {
+        this.reason = reason;
         this.nestedThrowable = nestedThrowable;
+    }
+
+    public NotAllowedException(String msg, Reason reason, Throwable nestedThrowable) {
+        super(msg);
+        this.reason = reason;
+        this.nestedThrowable = nestedThrowable;
+    }
+
+    public Reason getReason() {
+        return reason;
     }
 
     @Override

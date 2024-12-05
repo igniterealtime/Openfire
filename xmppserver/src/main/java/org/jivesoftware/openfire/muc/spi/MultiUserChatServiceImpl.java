@@ -65,6 +65,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static org.jivesoftware.openfire.muc.NotAllowedException.Reason.ROOM_TOMBSTONED;
+
 /**
  * Implements the chat server as a cached memory resident chat server. The server is also
  * responsible for responding Multi-User Chat disco requests as well as removing inactive users from
@@ -1268,8 +1270,14 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 // Create the room
                 room = getChatRoom(roomName, packet.getFrom());
             } catch (NotAllowedException e) {
-                Log.debug("Request from '{}' to join room '{}' rejected: user does not have permission to create a new room.", packet.getFrom(), roomName, e);
-                sendErrorPacket(packet, PacketError.Condition.not_allowed, "You do not have permission to create a new room.");
+                String errorMessage = switch (e.getReason()) {
+                    case ROOM_TOMBSTONED -> "This room name cannot be used as it has been retired.";
+                    case INSUFFICIENT_PERMISSIONS -> "You do not have permission to create a new room.";
+                };
+
+                Log.debug("Request from '{}' to join room '{}' rejected: {}", packet.getFrom(), roomName, errorMessage, e);
+
+                sendErrorPacket(packet, PacketError.Condition.not_allowed, errorMessage);
                 return null;
             }
         }
@@ -1907,6 +1915,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         try {
             room = localMUCRoomManager.get(roomName);
             if (room == null) {
+
+                // Has the room been deleted and tomb-stoned?
+                if (MUCPersistenceManager.isRoomTombstoned(roomName, this)) {
+                    throw new NotAllowedException(ROOM_TOMBSTONED);
+                }
+
                 room = new MUCRoom(this, roomName);
                 // If the room is persistent load the configuration values from the DB
                 try {

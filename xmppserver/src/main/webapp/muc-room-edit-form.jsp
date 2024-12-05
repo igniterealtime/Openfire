@@ -95,6 +95,7 @@
     String allowpm = ParamUtils.getParameter(request, "roomconfig_allowpm");
     boolean publicRoom = ParamUtils.getBooleanParameter(request, "roomconfig_publicroom");
     boolean persistentRoom = ParamUtils.getBooleanParameter(request, "roomconfig_persistentroom");
+    boolean tombstone = ParamUtils.getBooleanParameter(request, "roomconfig_tombstone");
     boolean moderatedRoom = ParamUtils.getBooleanParameter(request, "roomconfig_moderatedroom");
     boolean membersOnly = ParamUtils.getBooleanParameter(request, "roomconfig_membersonly");
     boolean allowInvites = ParamUtils.getBooleanParameter(request, "roomconfig_allowinvites");
@@ -210,8 +211,13 @@
                         }
                     }
                     catch (NotAllowedException e) {
-                        // This user is not allowed to create rooms
-                        errors.put("not_enough_permissions", "not_enough_permissions");
+                        // This user is not allowed to create rooms, or it has been tomb-stoned
+                        String cause = switch(e.getReason()) {
+                            case ROOM_TOMBSTONED -> "room_tombstoned";
+                            case INSUFFICIENT_PERMISSIONS -> "not_enough_permissions";
+                        };
+
+                        errors.put(cause, cause);
                     }
                 }
             }
@@ -239,6 +245,7 @@
 
             dataForm.addField("muc#roomconfig_publicroom", null, null).addValue(publicRoom ? "1": "0");
             dataForm.addField("muc#roomconfig_persistentroom", null, null).addValue(persistentRoom ? "1": "0");
+            dataForm.addField("{http://igniterealtime.org}muc#roomconfig_tombstone", null, null).addValue(tombstone ? "1": "0");
             dataForm.addField("muc#roomconfig_moderatedroom", null, null).addValue(moderatedRoom ? "1": "0");
             dataForm.addField("muc#roomconfig_membersonly", null, null).addValue(membersOnly ? "1": "0");
             dataForm.addField("muc#roomconfig_allowinvites", null, null).addValue(allowInvites ? "1": "0");
@@ -310,6 +317,7 @@
             allowpm = MUCPersistenceManager.getProperty(serviceName, "room.allowpm", "anyone");
             publicRoom = MUCPersistenceManager.getBooleanProperty(serviceName, "room.publicRoom", true);
             persistentRoom = true; // Rooms created from the admin console are always persistent
+            tombstone = MUCPersistenceManager.getBooleanProperty(serviceName, "room.tombstone", false);
             moderatedRoom = MUCPersistenceManager.getBooleanProperty(serviceName, "room.moderated", false);
             membersOnly = MUCPersistenceManager.getBooleanProperty(serviceName, "room.membersOnly", false);
             allowInvites = MUCPersistenceManager.getBooleanProperty(serviceName, "room.canOccupantsInvite", false);
@@ -334,6 +342,7 @@
             allowpm = room.canSendPrivateMessage();
             publicRoom = room.isPublicRoom();
             persistentRoom = room.isPersistent();
+            tombstone = room.isTombstone();
             moderatedRoom = room.isModerated();
             membersOnly = room.isMembersOnly();
             allowInvites = room.canOccupantsInvite();
@@ -369,6 +378,7 @@
     pageContext.setAttribute("whois", whois);
     pageContext.setAttribute("allowpm", allowpm);
     pageContext.setAttribute("publicRoom", publicRoom);
+    pageContext.setAttribute("tombstone", tombstone);
     pageContext.setAttribute("moderatedRoom", moderatedRoom);
     pageContext.setAttribute("membersonly", membersOnly);
     pageContext.setAttribute("allowInvites", allowInvites);
@@ -414,6 +424,7 @@
                         <c:when test="${err.key eq 'roomName'}"><fmt:message key="muc.room.edit.form.valid_hint" /></c:when>
                         <c:when test="${err.key eq 'room_already_exists'}"><fmt:message key="muc.room.edit.form.error_created_id" /></c:when>
                         <c:when test="${err.key eq 'not_enough_permissions'}"><fmt:message key="muc.room.edit.form.error_created_privileges" /></c:when>
+                        <c:when test="${err.key eq 'room_tombstoned'}"><fmt:message key="muc.room.edit.form.error_room_tombstoned" /></c:when>
                         <c:when test="${err.key eq 'room_topic'}"><fmt:message key="muc.room.edit.form.valid_hint_subject" /></c:when>
                         <c:when test="${err.key eq 'room_topic_longer'}"><fmt:message key="muc.room.edit.form.valid_hint_subject_too_long" /></c:when>
                         <c:otherwise>
@@ -623,6 +634,10 @@
                         <tr>
                             <td><input type="checkbox" name="roomconfig_publicroom" value="true" id="public" ${publicRoom ? 'checked' : ''}>
                                 <label for="public"><fmt:message key="muc.room.edit.form.list_room" /></label></td>
+                        </tr>
+                        <tr>
+                            <td><input name="roomconfig_tombstone" value="true" id="tombstone" type="checkbox" ${tombstone ? 'checked' : ''}>
+                            <label for="tombstone"><fmt:message key="muc.default.settings.tombstone" /></label></td>
                         </tr>
                         <tr>
                             <td><input type="checkbox" name="roomconfig_moderatedroom" value="true" id="moderated" ${moderatedRoom ? 'checked' : ''}>

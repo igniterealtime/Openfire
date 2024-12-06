@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.muc;
 
+import org.eclipse.jetty.ee8.servlet.listener.IntrospectorCleaner;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
@@ -40,6 +41,13 @@ public interface MUCEventListener {
      * @param roomJID JID of the room that was destroyed.
      */
     void roomDestroyed(JID roomJID);
+
+    /**
+     * Event triggered when a clear chat history command was issued.
+     *
+     * @param roomJID JID of the room to clear chat history.
+     */
+    void roomClearChatHistory(JID roomJID);
 
     /**
      * Event triggered when a new occupant joins a room.

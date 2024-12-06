@@ -1353,6 +1353,8 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             MUCPersistenceManager.clearRoomChatFromDB(this);
             // Remove the history of the room from memory (preventing it to pop up in a new room by the same name).
             roomHistory.purge();
+            // Fire event to clear chat room history
+            MUCEventDispatcher.roomClearChatHistory(getSelfRepresentation().getOccupantJID());
         });
     }
 
@@ -1432,6 +1434,9 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         MUCPersistenceManager.deleteFromDB(this);
         // Remove the history of the room from memory (preventing it to pop up in a new room by the same name).
         roomHistory.purge();
+        // If we are not preserving room history on deletion, fire event to clear chat room history
+        if(!preserveHistOnRoomDeletion)
+            MUCEventDispatcher.roomClearChatHistory(getSelfRepresentation().getOccupantJID());
         // Fire event that the room has been destroyed
         MUCEventDispatcher.roomDestroyed(getSelfRepresentation().getOccupantJID());
     }

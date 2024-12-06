@@ -122,6 +122,16 @@ public class MUCEventDispatcher {
         }
     }
 
+    public static void roomClearChatHistory(JID roomJID) {
+        for (MUCEventListener listener : listeners) {
+            try {
+                listener.roomClearChatHistory(roomJID);
+            } catch (Exception e) {
+                Log.warn("An exception occurred while dispatching a 'roomClearChatHistory' event!", e);
+            }
+        }
+    }
+
     public static void roomSubjectChanged(JID roomJID, JID user, String newSubject) {
         for (MUCEventListener listener : listeners) {
             try {

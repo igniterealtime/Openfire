@@ -77,6 +77,45 @@ public class SequenceManager {
     }
 
     private static final Cache<Integer, Data> sequenceBlocks = CacheFactory.createCache("Sequences");
+    private static final Map<String, Integer> uniqueNameToType = new ConcurrentHashMap<>();
+
+    /**
+     * Returns a SequenceManager instance for a given unique name with a default block size of 5.
+     * If a SequenceManager for the unique name already exists, it returns the existing instance.
+     * Otherwise, it creates a new SequenceManager with a unique type and the default block size.
+     *
+     * @param uniqueName the unique name for which to get the SequenceManager.
+     * @return the SequenceManager instance associated with the unique name.
+     */
+    public static SequenceManager getSequenceManagerByUniqueName(String uniqueName) {
+        return getSequenceManagerByUniqueName(uniqueName, 5);
+    }
+
+    /**
+     * Returns a SequenceManager instance for a given unique name. If a SequenceManager
+     * for the unique name already exists, it returns the existing instance. Otherwise,
+     * it creates a new SequenceManager with a unique type and the specified size.
+     *
+     * @param uniqueName the unique name for which to get the SequenceManager.
+     * @param size the block size for the SequenceManager if a new one is created.
+     * @return the SequenceManager instance associated with the unique name.
+     */
+    public static SequenceManager getSequenceManagerByUniqueName(String uniqueName, int size) {
+        // Return an existing SequenceManager if one exists for the unique name.
+        if (uniqueNameToType.containsKey(uniqueName)) {
+            return managers.get(uniqueNameToType.get(uniqueName));
+        }
+
+        // Otherwise, create a new SequenceManager for the unique name.
+        int type = 1;
+        while (true) {
+            if (!managers.containsKey(type)) {
+                uniqueNameToType.put(uniqueName, type);
+                return new SequenceManager(type, size);
+            }
+            type++;
+        }
+    }
 
     /**
      * Returns the next ID of the specified type.

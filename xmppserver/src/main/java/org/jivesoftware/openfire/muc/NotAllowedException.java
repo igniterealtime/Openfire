@@ -23,7 +23,7 @@ import java.io.PrintWriter;
  * Exception used for representing that the user is not allowed to perform the requested operation
  * in the MUCRoom. There are many reasons why a not-allowed error could occur such as: a user tries
  * to join a room that has reached its limit of max number of occupants, or attempts to create a
- * room that has been tomb-stoned. A 405 error code is returned to the user that requested the
+ * room that has been retired. A 405 error code is returned to the user that requested the
  * invalid operation.
  *
  * @author Gaston Dombiak
@@ -34,7 +34,7 @@ public class NotAllowedException extends Exception {
 
     public enum Reason {
         INSUFFICIENT_PERMISSIONS,  // Default reason
-        ROOM_TOMBSTONED
+        ROOM_RETIRED
     }
 
     private final Reason reason;

@@ -209,7 +209,7 @@ CREATE TABLE ofMucRoom (
   roomPassword        NVARCHAR(50)  NULL,
   canDiscoverJID      INT           NOT NULL,
   logEnabled          INT           NOT NULL,
-  tombstone           INT           NOT NULL,
+  retireOnDeletion    INT           NOT NULL,
   preserveHistOnDel   INT           NOT NULL,
   subject             NVARCHAR(100) NULL,
   rolesToBroadcast    INT           NOT NULL,
@@ -233,10 +233,10 @@ CREATE TABLE ofMucRoomProp (
   CONSTRAINT ofMucRoomProp_pk PRIMARY KEY (roomID, name)
 );
 
-CREATE TABLE ofMucRoomTombstone (
+CREATE TABLE ofMucRoomRetiree (
   serviceID           INT           NOT NULL,
   name                NVARCHAR(50)  NOT NULL,
-  CONSTRAINT ofMucRoomTombstone_pk PRIMARY KEY (serviceID, name)
+  CONSTRAINT ofMucRoomRetiree_pk PRIMARY KEY (serviceID, name)
 );
 
 CREATE TABLE ofMucAffiliation (

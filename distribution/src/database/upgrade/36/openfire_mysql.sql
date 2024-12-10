@@ -1,6 +1,6 @@
-ALTER TABLE ofMucRoom ADD COLUMN tombstone TINYINT NOT NULL DEFAULT 0;
+ALTER TABLE ofMucRoom ADD COLUMN retireOnDeletion TINYINT NOT NULL DEFAULT 0;
 
-CREATE TABLE ofMucRoomTombstone (
+CREATE TABLE ofMucRoomRetiree (
   serviceID           BIGINT        NOT NULL,
   name                VARCHAR(50)   NOT NULL,
   PRIMARY KEY (serviceID,name)

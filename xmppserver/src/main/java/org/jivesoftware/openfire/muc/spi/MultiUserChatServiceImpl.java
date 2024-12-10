@@ -65,7 +65,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.jivesoftware.openfire.muc.NotAllowedException.Reason.ROOM_TOMBSTONED;
+import static org.jivesoftware.openfire.muc.NotAllowedException.Reason.ROOM_RETIRED;
 
 /**
  * Implements the chat server as a cached memory resident chat server. The server is also
@@ -1271,7 +1271,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 room = getChatRoom(roomName, packet.getFrom());
             } catch (NotAllowedException e) {
                 String errorMessage = switch (e.getReason()) {
-                    case ROOM_TOMBSTONED -> "This room name cannot be used as it has been retired.";
+                    case ROOM_RETIRED -> "This room name cannot be used as it has been retired.";
                     case INSUFFICIENT_PERMISSIONS -> "You do not have permission to create a new room.";
                 };
 
@@ -1916,9 +1916,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             room = localMUCRoomManager.get(roomName);
             if (room == null) {
 
-                // Has the room been deleted and tomb-stoned?
-                if (MUCPersistenceManager.isRoomTombstoned(roomName, this)) {
-                    throw new NotAllowedException(ROOM_TOMBSTONED);
+                // Has the room been deleted and retired?
+                if (MUCPersistenceManager.isRoomRetired(roomName, this)) {
+                    throw new NotAllowedException(ROOM_RETIRED);
                 }
 
                 room = new MUCRoom(this, roomName);

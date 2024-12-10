@@ -196,7 +196,7 @@ CREATE TABLE ofMucRoom (
   roomPassword        VARCHAR(50)   NULL,
   canDiscoverJID      TINYINT       NOT NULL,
   logEnabled          TINYINT       NOT NULL,
-  tombstone           TINYINT       NOT NULL,
+  retireOnDeletion    TINYINT       NOT NULL,
   preserveHistOnDel   TINYINT       NOT NULL,
   subject             VARCHAR(100)  NULL,
   rolesToBroadcast    TINYINT       NOT NULL,
@@ -220,7 +220,7 @@ CREATE TABLE ofMucRoomProp (
   PRIMARY KEY (roomID, name)
 );
 
-CREATE TABLE ofMucRoomTombstone (
+CREATE TABLE ofMucRoomRetiree (
    serviceID           BIGINT        NOT NULL,
    name                VARCHAR(50)   NOT NULL,
    PRIMARY KEY (serviceID,name)

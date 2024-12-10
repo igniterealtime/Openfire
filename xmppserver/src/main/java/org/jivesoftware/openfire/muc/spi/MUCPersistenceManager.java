@@ -61,7 +61,7 @@ public class MUCPersistenceManager {
     private static final String LOAD_ROOM =
         "SELECT roomID, creationDate, modificationDate, naturalName, description, lockedDate, " +
         "emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, canInvite, " +
-        "roomPassword, canDiscoverJID, logEnabled, tombstone, preserveHistOnDel, subject, rolesToBroadcast, " +
+        "roomPassword, canDiscoverJID, logEnabled, retireOnDeletion, preserveHistOnDel, subject, rolesToBroadcast, " +
         "useReservedNick, canChangeNick, canRegister, allowpm, fmucEnabled, fmucOutboundNode, fmucOutboundMode, " +
         "fmucInboundNodes " +
         " FROM ofMucRoom WHERE serviceID=? AND name=?";
@@ -75,14 +75,14 @@ public class MUCPersistenceManager {
     private static final String RELOAD_ALL_ROOMS_WITH_RECENT_ACTIVITY =
         "SELECT roomID, creationDate, modificationDate, name, naturalName, description, " +
         "lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, " +
-        "canInvite, roomPassword, canDiscoverJID, logEnabled, tombstone, preserveHistOnDel, subject, " +
+        "canInvite, roomPassword, canDiscoverJID, logEnabled, retireOnDeletion, preserveHistOnDel, subject, " +
         "rolesToBroadcast, useReservedNick, canChangeNick, canRegister, allowpm, fmucEnabled, fmucOutboundNode, " +
         "fmucOutboundMode, fmucInboundNodes " +
         "FROM ofMucRoom WHERE serviceID=? AND (emptyDate IS NULL or emptyDate > ?)";
     private static final String LOAD_ALL_ROOMS =
         "SELECT roomID, creationDate, modificationDate, name, naturalName, description, " +
         "lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, " +
-        "canInvite, roomPassword, canDiscoverJID, logEnabled, tombstone, preserveHistOnDel, subject, " +
+        "canInvite, roomPassword, canDiscoverJID, logEnabled, retireOnDeletion, preserveHistOnDel, subject, " +
         "rolesToBroadcast, useReservedNick, canChangeNick, canRegister, allowpm, fmucEnabled, fmucOutboundNode, " +
         "fmucOutboundMode, fmucInboundNodes " +
         "FROM ofMucRoom WHERE serviceID=?";
@@ -105,20 +105,19 @@ public class MUCPersistenceManager {
     private static final String UPDATE_ROOM =
         "UPDATE ofMucRoom SET modificationDate=?, naturalName=?, description=?, " +
         "canChangeSubject=?, maxUsers=?, publicRoom=?, moderated=?, membersOnly=?, " +
-        "canInvite=?, roomPassword=?, canDiscoverJID=?, logEnabled=?, tombstone=?, preserveHistOnDel=?, " +
+        "canInvite=?, roomPassword=?, canDiscoverJID=?, logEnabled=?, retireOnDeletion=?, preserveHistOnDel=?, " +
         "rolesToBroadcast=?, useReservedNick=?, canChangeNick=?, canRegister=?, allowpm=?, fmucEnabled=?, " +
         "fmucOutboundNode=?, fmucOutboundMode=?, fmucInboundNodes=? " +
         "WHERE roomID=?";
     private static final String ADD_ROOM = 
         "INSERT INTO ofMucRoom (serviceID, roomID, creationDate, modificationDate, name, naturalName, " +
         "description, lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, " +
-        "membersOnly, canInvite, roomPassword, canDiscoverJID, logEnabled, tombstone, preserveHistOnDel, subject, " +
+        "membersOnly, canInvite, roomPassword, canDiscoverJID, logEnabled, retireOnDeletion, preserveHistOnDel, subject, " +
         "rolesToBroadcast, useReservedNick, canChangeNick, canRegister, allowpm, fmucEnabled, fmucOutboundNode, " +
-        "fmucOutboundMode, fmucInboundNodes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
         "fmucOutboundMode, fmucInboundNodes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-    private static final String CHECK_TOMBSTONE = "SELECT 1 FROM ofMucRoomTombstone WHERE serviceID=? AND name=?";
-    private static final String ADD_TOMBSTONE =
-        "INSERT INTO ofMucRoomTombstone (serviceID, name) VALUES (?,?)";
+    private static final String CHECK_RETIREES = "SELECT 1 FROM ofMucRoomRetiree WHERE serviceID=? AND name=?";
+    private static final String ADD_RETIREE =
+        "INSERT INTO ofMucRoomRetiree (serviceID, name) VALUES (?,?)";
     private static final String UPDATE_SUBJECT =
         "UPDATE ofMucRoom SET subject=? WHERE roomID=?";
     private static final String UPDATE_LOCK =
@@ -264,7 +263,7 @@ public class MUCPersistenceManager {
             room.setPassword(rs.getString("roomPassword"));
             room.setCanAnyoneDiscoverJID(rs.getInt("canDiscoverJID") == 1);
             room.setLogEnabled(rs.getInt("logEnabled") == 1);
-            room.setTombstone(rs.getInt("tombstone") == 1);
+            room.setRetireOnDeletion(rs.getInt("retireOnDeletion") == 1);
             room.setPreserveHistOnRoomDeletionEnabled(rs.getInt("preserveHistOnDel") == 1);
             room.setSubject(rs.getString("subject"));
             List<Role> rolesToBroadcast = new ArrayList<>();
@@ -410,7 +409,7 @@ public class MUCPersistenceManager {
                 pstmt.setString(10, room.getPassword());
                 pstmt.setInt(11, (room.canAnyoneDiscoverJID() ? 1 : 0));
                 pstmt.setInt(12, (room.isLogEnabled() ? 1 : 0));
-                pstmt.setInt(13, (room.isTombstone() ? 1 : 0));
+                pstmt.setInt(13, (room.isRetireOnDeletion() ? 1 : 0));
                 pstmt.setInt(14, (room.isPreserveHistOnRoomDeletionEnabled() ? 1 : 0));
                 pstmt.setInt(15, marshallRolesToBroadcast(room));
                 pstmt.setInt(16, (room.isLoginRestrictedToNickname() ? 1 : 0));
@@ -472,7 +471,7 @@ public class MUCPersistenceManager {
                 pstmt.setString(16, room.getPassword());
                 pstmt.setInt(17, (room.canAnyoneDiscoverJID() ? 1 : 0));
                 pstmt.setInt(18, (room.isLogEnabled() ? 1 : 0));
-                pstmt.setInt(19, (room.isTombstone() ? 1 : 0));
+                pstmt.setInt(19, (room.isRetireOnDeletion() ? 1 : 0));
                 pstmt.setInt(20, (room.isPreserveHistOnRoomDeletionEnabled() ? 1 : 0));
                 pstmt.setString(21, room.getSubject());
                 pstmt.setInt(22, marshallRolesToBroadcast(room));
@@ -555,8 +554,8 @@ public class MUCPersistenceManager {
                 DbConnectionManager.fastcloseStmt(pstmt);
             }
 
-            if (room.isTombstone()) {
-                pstmt = con.prepareStatement(ADD_TOMBSTONE);
+            if (room.isRetireOnDeletion()) {
+                pstmt = con.prepareStatement(ADD_RETIREE);
                 pstmt.setLong(1, XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(room.getMUCService().getServiceName()));
                 pstmt.setString(2, room.getName());
                 pstmt.executeUpdate();
@@ -706,7 +705,7 @@ public class MUCPersistenceManager {
                     room.setPassword(resultSet.getString("roomPassword"));
                     room.setCanAnyoneDiscoverJID(resultSet.getInt("canDiscoverJID") == 1);
                     room.setLogEnabled(resultSet.getInt("logEnabled") == 1);
-                    room.setTombstone(resultSet.getInt("tombstone") == 1);
+                    room.setRetireOnDeletion(resultSet.getInt("retireOnDeletion") == 1);
                     room.setPreserveHistOnRoomDeletionEnabled(resultSet.getInt("preserveHistOnDel") == 1);
                     room.setSubject(resultSet.getString("subject"));
                     List<Role> rolesToBroadcast = new ArrayList<>();
@@ -1647,27 +1646,27 @@ public class MUCPersistenceManager {
     }
 
     /**
-     * Check if a room name is tomb-stoned for a given service.
+     * Check if a room name is retired for a given service.
      *
      * @param roomName the name of the room to check.
      * @param multiUserChatService the service to check the room name against.
-     * @return true if the room name is tomb-stoned for the supplied service, false otherwise.
+     * @return true if the room name is retired for the supplied service, false otherwise.
      */
-    public static boolean isRoomTombstoned(String roomName, MultiUserChatService multiUserChatService) {
+    public static boolean isRoomRetired(String roomName, MultiUserChatService multiUserChatService) {
         Connection connection = null;
         PreparedStatement statement = null;
         ResultSet resultSet = null;
         try {
             connection = DbConnectionManager.getConnection();
-            statement = connection.prepareStatement(CHECK_TOMBSTONE);
+            statement = connection.prepareStatement(CHECK_RETIREES);
             statement.setLong(1, XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(multiUserChatService.getServiceName()));
             statement.setString(2, roomName);
             resultSet = statement.executeQuery();
             return resultSet.next();
         }
         catch (SQLException sqle) {
-            Log.error("A database error prevented checking MUC room tombstone state.", sqle);
-            return true; // Assume tomb-stoned if we can't check.
+            Log.error("A database error prevented checking MUC room retired state.", sqle);
+            return true; // Assume retired if we can't check.
         }
         finally {
             DbConnectionManager.closeConnection(resultSet, statement, connection);

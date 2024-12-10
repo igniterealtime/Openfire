@@ -47,10 +47,7 @@ import org.xmpp.packet.JID;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -71,6 +68,9 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
     private static final String DELETE_SERVICE = "DELETE FROM ofMucService WHERE serviceID=?";
     private static final String LOAD_SERVICE_ID = "SELECT serviceID FROM ofMucService WHERE subdomain=?";
     private static final String LOAD_SUBDOMAIN = "SELECT subdomain FROM ofMucService WHERE serviceID=?";
+    private static final String GET_RETIREES = "SELECT serviceID, name FROM ofMucRoomRetiree WHERE serviceID = ? ORDER BY name ASC";
+    private static final String DELETE_RETIREE = "DELETE FROM ofMucRoomRetiree WHERE serviceID=? AND name=?";
+    private static final String COUNT_RETIREE = "SELECT COUNT(name) FROM ofMucRoomRetiree WHERE serviceID = ?";
 
     /**
      * Statistics keys
@@ -991,4 +991,114 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
                 mucService.getServiceName()
             )).collect(Collectors.toList());
     }
+
+    /**
+     * Gets the number of MUC room retirees.
+     *
+     * @return the number of MUC room retirees.
+     */
+    public int getRetireeCount(String mucServiceName) {
+        Long serviceID = getMultiUserChatServiceID(mucServiceName);
+
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        int count = 0;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(COUNT_RETIREE);
+            pstmt.setLong(1, serviceID);
+            rs = pstmt.executeQuery();
+            if (rs.next()) {
+                count = rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            Log.error("An unexpected exception occurred while trying to count the number of MUC room retirees.", e);
+        } finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+        return count;
+    }
+
+
+    /**
+     * Gets the retirees for a MUC service.
+     *
+     * @param mucServiceName the name of the MUC service.
+     * @param startIndex the index of the first result to return.
+     * @param numResults the maximum number of results to return.
+     * @return a map of retirees.
+     */
+    public Collection<String> getRetirees(String mucServiceName, int startIndex, int numResults) {
+
+        Long serviceID = getMultiUserChatServiceID(mucServiceName);
+        List<String> retirees = new ArrayList<>();
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            con = DbConnectionManager.getConnection();
+
+            if ((startIndex == 0) && (numResults == Integer.MAX_VALUE)) {
+                pstmt = con.prepareStatement(GET_RETIREES);
+                pstmt.setLong(1, serviceID);
+                // Set the fetch size. This will prevent some JDBC drivers from trying
+                // to load the entire result set into memory.
+                DbConnectionManager.setFetchSize(pstmt, 500);
+                rs = pstmt.executeQuery();
+                while (rs.next()) {
+                    retirees.add(rs.getString("name"));
+                }
+            } else {
+                pstmt = DbConnectionManager.createScrollablePreparedStatement(con, GET_RETIREES);
+                pstmt.setLong(1, serviceID);
+                // This handles the paging at the database level
+                DbConnectionManager.limitRowsAndFetchSize(pstmt, startIndex, numResults);
+                rs = pstmt.executeQuery();
+                // This positions the cursor at the start of the requested page
+                DbConnectionManager.scrollResultSet(rs, startIndex);
+                int count = 0;
+                while (rs.next() && count < numResults) {
+                    retirees.add(rs.getString("name"));
+                    count++;
+                }
+            }
+
+            if (Log.isDebugEnabled()) {
+                Log.debug("Retired rooms found: {}", retirees.size());
+            }
+        } catch (SQLException e) {
+            Log.error(e.getMessage(), e);
+        } finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+
+        return retirees;
+    }
+
+    /**
+     * Deletes a retiree for a MUC room.
+     *
+     * @param mucServiceName the name of the MUC service.
+     * @param retireeName the name of the retired room.
+     */
+    public void deleteRetiree(String mucServiceName, String retireeName) {
+        Long serviceID = getMultiUserChatServiceID(mucServiceName);
+        Connection con = null;
+        PreparedStatement pstmt = null;
+
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(DELETE_RETIREE);
+            pstmt.setLong(1, serviceID);
+            pstmt.setString(2, retireeName);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            Log.error(e.getMessage(), e);
+        } finally {
+            DbConnectionManager.closeConnection(pstmt, con);
+        }
+    }
+
 }

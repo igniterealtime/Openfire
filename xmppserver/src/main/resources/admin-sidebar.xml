@@ -512,6 +512,11 @@
                 </sidebar>
             </item>
 
+            <!-- MUC Room Name retirees (retired room names) -->
+            <item id="muc-room-retirees" name="${sidebar.muc-room-retirees}"
+                  url="muc-room-retirees.jsp"
+                  description="${sidebar.muc-room-retirees.descr}"/>
+
             <!-- Create New Room -->
             <item id="muc-room-create" name="${sidebar.muc-room-create}"
                   url="muc-room-create.jsp"

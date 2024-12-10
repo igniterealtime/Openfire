@@ -91,7 +91,7 @@
                 <li><a href="#ofMucRoom">ofMucRoom</a></li>
 
                 <li><a href="#ofMucRoomProp">ofMucRoomProp</a></li>
-                <li><a href="#ofMucRoomTombstone">ofMucRoomTombstone</a></li>
+                <li><a href="#ofMucRoomRetiree">ofMucRoomRetiree</a></li>
                 <li><a href="#ofMucAffiliation">ofMucAffiliation</a></li>
                 <li><a href="#ofMucMember">ofMucMember</a></li>
                 <li><a href="#ofMucConversationLog">ofMucConversationLog</a></li>
@@ -985,10 +985,10 @@
                 <td>Flag indicating whether room conversations are logged or not</td>
             </tr>
             <tr>
-                <td>tombstone</td>
+                <td>retireOnDeletion</td>
                 <td>NUMBER</td>
                 <td>n/a</td>
-                <td>Flag indicating whether room name should be tomb-stoned on deletion (prevented from future use)</td>
+                <td>Flag indicating whether room name should be retired on deletion (prevented from future use)</td>
             </tr>
             <tr>
                 <td>subject</td>
@@ -1057,10 +1057,10 @@
         </table>
         &nbsp;<a href="#top" class="top">top of page</a>
 
-        <table id="ofMucRoomTombstone" class="dbtable">
+        <table id="ofMucRoomRetiree" class="dbtable">
             <tbody>
             <tr>
-                <th colspan="4">ofMucRoomTombstone (Groupchat room name tombstones)</th>
+                <th colspan="4">ofMucRoomRetiree (Retired Groupchat room names)</th>
             </tr>
             <tr>
                 <th>Column Name</th>
@@ -1078,7 +1078,7 @@
                 <td>name</td>
                 <td>VARCHAR</td>
                 <td>50</td>
-                <td>Name of the tomb-stoned room (Primary Key)</td>
+                <td>Name of the retired room (Primary Key)</td>
             </tr>
             </tbody>
         </table>

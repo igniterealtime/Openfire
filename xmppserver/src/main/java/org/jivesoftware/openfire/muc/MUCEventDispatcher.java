@@ -127,7 +127,7 @@ public class MUCEventDispatcher {
             try {
                 listener.roomClearChatHistory(roomJID);
             } catch (Exception e) {
-                Log.warn("An exception occurred while dispatching a 'roomClearChatHistory' event!", e);
+                Log.warn("An exception occurred while dispatching a 'roomClearChatHistory' event for room {}!", roomJID, e);
             }
         }
     }

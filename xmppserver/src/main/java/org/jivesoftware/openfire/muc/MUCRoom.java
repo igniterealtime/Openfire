@@ -65,8 +65,6 @@ import java.util.stream.Collectors;
  */
 @JiveID(JiveConstants.MUC_ROOM)
 public class MUCRoom implements GroupEventListener, UserEventListener, Externalizable, Result, Cacheable {
-    public static final boolean BULK_MSG_RETRACTION_ENABLED = JiveGlobals.getBooleanProperty("chatManagement.bulkMsgRetractionEnabled", true);
-
     private static final Logger Log = LoggerFactory.getLogger(MUCRoom.class);
 
     public static final SystemProperty<Boolean> JOIN_PRESENCE_ENABLE = SystemProperty.Builder.ofType(Boolean.class)
@@ -86,6 +84,12 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         .setKey("xmpp.muc.allowpm.blockall")
         .setDefaultValue(false)
         .setDynamic(true)
+        .build();
+
+    public static final SystemProperty<Boolean> BULK_MSG_RETRACTION_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.muc.bulkretraction")
+        .setDynamic(true)
+        .setDefaultValue(false)
         .build();
 
     /**
@@ -1321,7 +1325,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      */
     public CompletableFuture<Void> clearChatHistory() {
         return CompletableFuture.runAsync(() -> {
-            if(MUCRoom.BULK_MSG_RETRACTION_ENABLED) {
+            if(BULK_MSG_RETRACTION_ENABLED.getValue()) {
                 ListIterator<Message> reverseMessageHistory = roomHistory.getReverseMessageHistory();
                 while (reverseMessageHistory.hasPrevious()) {
                     Message originalMsg = reverseMessageHistory.previous();
@@ -1441,10 +1445,11 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         // Remove the history of the room from memory (preventing it to pop up in a new room by the same name).
         roomHistory.purge();
         // If we are not preserving room history on deletion, fire event to clear chat room history
-        if(!preserveHistOnRoomDeletion)
-            MUCEventDispatcher.roomClearChatHistory(getSelfRepresentation().getOccupantJID());
+        if(!preserveHistOnRoomDeletion) {
+            MUCEventDispatcher.roomClearChatHistory(getJID());
+        }
         // Fire event that the room has been destroyed
-        MUCEventDispatcher.roomDestroyed(getSelfRepresentation().getOccupantJID());
+        MUCEventDispatcher.roomDestroyed(getJID());
     }
 
     /**

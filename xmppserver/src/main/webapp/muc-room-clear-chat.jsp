@@ -60,7 +60,6 @@
     if (clear) {
         // Clear the room
         if (room != null) {
-            webManager.logEvent("Making a request to clear chat history of MUC room ", roomJID.toString());
             // finalWebManager is a final variable that references webManager
             // allowing webManager to be used inside the lambda expression without causing a compilation error
             final WebManager finalWebManager = webManager;

@@ -1364,7 +1364,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             // Remove the history of the room from memory (preventing it to pop up in a new room by the same name).
             roomHistory.purge();
             // Fire event to clear chat room history
-            MUCEventDispatcher.roomClearChatHistory(getSelfRepresentation().getOccupantJID());
+            MUCEventDispatcher.roomClearChatHistory(getJID());
         });
     }
 

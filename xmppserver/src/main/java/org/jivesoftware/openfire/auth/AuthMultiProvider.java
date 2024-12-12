@@ -118,32 +118,17 @@ public abstract class AuthMultiProvider implements AuthProvider
     @Override
     public boolean supportsPasswordRetrieval()
     {
-        // TODO Make calls concurrent for improved throughput.
-        for (final AuthProvider provider : getAuthProviders())
-        {
-            // If at least one provider supports password retrieval, so does this proxy.
-            if (provider.supportsPasswordRetrieval()) {
-                return true;
-            }
-        }
-
-        return false;
+        // If at least one provider supports password retrieval, so does this proxy.
+        return getAuthProviders().parallelStream()
+            .anyMatch(AuthProvider::supportsPasswordRetrieval);
     }
 
     @Override
     public boolean isScramSupported()
     {
-        // TODO Make calls concurrent for improved throughput.
-        for (final AuthProvider provider : getAuthProviders())
-        {
-            // If at least one provider supports SCRAM, so does this proxy.
-            if ( provider.isScramSupported() )
-            {
-                return true;
-            }
-        }
-
-        return false;
+        // If at least one provider supports SCRAM, so does this proxy.
+        return getAuthProviders().parallelStream()
+            .anyMatch(AuthProvider::isScramSupported);
     }
 
     @Override

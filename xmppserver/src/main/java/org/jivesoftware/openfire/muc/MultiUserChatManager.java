@@ -1013,7 +1013,7 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
                 count = rs.getInt(1);
             }
         } catch (SQLException e) {
-            Log.error("An unexpected exception occurred while trying to count the number of MUC room retirees.", e);
+            Log.error("An unexpected exception occurred while trying to count the number of MUC room retirees for serviceID '{}'", serviceID , e);
         } finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }

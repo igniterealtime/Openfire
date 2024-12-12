@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 IgniteRealtime.org, 2018 Ignite Realtime Foundation. All rights reserved
+ * Copyright (C) 2016 IgniteRealtime.org, 2018-2024 Ignite Realtime Foundation. All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import java.util.*;
 /**
  * A {@link UserProvider} that delegates to one or more 'backing' UserProvider.
  *
- * @author GUus der Kinderen, guus@goodbytes.nl
+ * @author Guus der Kinderen, guus@goodbytes.nl
  */
 public abstract class UserMultiProvider implements UserProvider
 {
@@ -39,7 +39,7 @@ public abstract class UserMultiProvider implements UserProvider
      *
      * UserProvider classes are required to have a public, no-argument constructor.
      *
-     * @param propertyName A property name (cannot ben ull).
+     * @param propertyName A property name (cannot be null).
      * @return A user provider (can be null).
      */
     public static UserProvider instantiate( String propertyName )
@@ -369,5 +369,101 @@ public abstract class UserMultiProvider implements UserProvider
         }
 
         return true;
+    }
+
+    @Override
+    public User loadUser(String username) throws UserNotFoundException
+    {
+        final UserProvider userProvider;
+        try {
+            userProvider = getUserProvider( username );
+        } catch (RuntimeException e){
+            throw new UserNotFoundException("Unable to identify user provider for username " + username, e);
+        }
+        return userProvider.loadUser( username );
+    }
+
+    @Override
+    public User createUser(String username, String password, String name, String email) throws UserAlreadyExistsException
+    {
+        return getUserProvider(username).createUser(username, password, name, email);
+    }
+
+    /**
+     * Removes a user from all non-read-only providers.
+     *
+     * @param username the username to delete.
+     */
+    @Override
+    public void deleteUser(String username)
+    {
+        // all providers are read-only
+        if (isReadOnly()) {
+            throw new UnsupportedOperationException();
+        }
+
+        for (final UserProvider provider : getUserProviders())
+        {
+            if (provider.isReadOnly()) {
+                continue;
+            }
+            provider.deleteUser(username);
+        }
+    }
+
+    /**
+     * Changes the creation date of a user in the first provider that contains the user.
+     *
+     * @param username the identifier of the user.
+     * @param creationDate the date the user was created.
+     * @throws UserNotFoundException when the user was not found in any provider.
+     * @throws UnsupportedOperationException when the provider is read-only.
+     */
+    @Override
+    public void setCreationDate(String username, Date creationDate) throws UserNotFoundException
+    {
+        getUserProvider(username).setCreationDate(username, creationDate);
+    }
+
+    /**
+     * Changes the modification date of a user in the first provider that contains the user.
+     *
+     * @param username the identifier of the user.
+     * @param modificationDate the date the user was (last) modified.
+     * @throws UserNotFoundException when the user was not found in any provider.
+     * @throws UnsupportedOperationException when the provider is read-only.
+     */
+    @Override
+    public void setModificationDate(String username, Date modificationDate) throws UserNotFoundException
+    {
+        getUserProvider(username).setModificationDate(username, modificationDate);
+    }
+
+    /**
+     * Changes the full name of a user in the first provider that contains the user.
+     *
+     * @param username the identifier of the user.
+     * @param name the new full name a user.
+     * @throws UserNotFoundException when the user was not found in any provider.
+     * @throws UnsupportedOperationException when the provider is read-only.
+     */
+    @Override
+    public void setName(String username, String name) throws UserNotFoundException
+    {
+        getUserProvider(username).setEmail(username, name);
+    }
+
+    /**
+     * Changes the email address of a user in the first provider that contains the user.
+     *
+     * @param username the identifier of the user.
+     * @param email the new email address of a user.
+     * @throws UserNotFoundException when the user was not found in any provider.
+     * @throws UnsupportedOperationException when the provider is read-only.
+     */
+    @Override
+    public void setEmail(String username, String email) throws UserNotFoundException
+    {
+        getUserProvider(username).setEmail(username, email);
     }
 }

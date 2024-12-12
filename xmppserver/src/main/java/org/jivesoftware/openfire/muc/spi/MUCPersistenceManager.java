@@ -117,7 +117,7 @@ public class MUCPersistenceManager {
         "fmucOutboundMode, fmucInboundNodes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String CHECK_RETIREES = "SELECT 1 FROM ofMucRoomRetiree WHERE serviceID=? AND name=?";
     private static final String ADD_RETIREE =
-        "INSERT INTO ofMucRoomRetiree (serviceID, name) VALUES (?,?)";
+        "INSERT INTO ofMucRoomRetiree (serviceID, name, alternateJID, reason) VALUES (?,?,?,?)";
     private static final String UPDATE_SUBJECT =
         "UPDATE ofMucRoom SET subject=? WHERE roomID=?";
     private static final String UPDATE_LOCK =
@@ -518,10 +518,21 @@ public class MUCPersistenceManager {
 
     /**
      * Removes the room configuration and its affiliates from the database.
-     * 
+     *
      * @param room the room to remove from the database.
      */
     public static void deleteFromDB(MUCRoom room) {
+        deleteFromDB(room, null, null);
+    }
+
+    /**
+     * Removes the room configuration and its affiliates from the database.
+     * 
+     * @param room the room to remove from the database.
+     * @param alternateJID an optional alternate JID. Commonly used to provide a replacement room. (can be {@code null})
+     * @param reason an optional reason why the room was destroyed (can be {@code null}).
+     */
+    public static void deleteFromDB(MUCRoom room, JID alternateJID, String reason) {
         Log.debug("Attempting to delete room '{}' from the database.", room.getName());
 
         if (!room.isPersistent() || !room.wasSavedToDB()) {
@@ -558,6 +569,19 @@ public class MUCPersistenceManager {
                 pstmt = con.prepareStatement(ADD_RETIREE);
                 pstmt.setLong(1, XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(room.getMUCService().getServiceName()));
                 pstmt.setString(2, room.getName());
+
+                if (alternateJID == null) {
+                    pstmt.setNull(3, Types.VARCHAR);
+                } else {
+                    pstmt.setString(3, alternateJID.toString());
+                }
+
+                if (reason == null || reason.isBlank()) {
+                    pstmt.setNull(4, Types.VARCHAR);
+                } else {
+                    pstmt.setString(4, reason.trim());
+                }
+
                 pstmt.executeUpdate();
                 DbConnectionManager.fastcloseStmt(pstmt);
             }

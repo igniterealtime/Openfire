@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.naming.*;
 import javax.naming.directory.*;
 import javax.naming.ldap.*;
@@ -42,7 +43,7 @@ import java.util.*;
 
 /**
  * Centralized administration of LDAP connections. The {@link #getInstance()} method
- * should be used to get an instace. The following properties configure this manager:
+ * should be used to get an instance. The following properties configure this manager:
  *
  * <ul>
  *      <li>ldap.host</li>
@@ -94,7 +95,7 @@ import java.util.*;
  */
 public class LdapManager {
 
-    private static final Logger Log = LoggerFactory.getLogger(LdapManager.class);
+    private final Logger Log;
     private static final String DEFAULT_LDAP_CONTEXT_FACTORY = "com.sun.jndi.ldap.LdapCtxFactory";
     public static final SystemProperty<Integer> LDAP_PAGE_SIZE = SystemProperty.Builder.ofType(Integer.class)
         .setKey("ldap.pagedResultsSize")
@@ -115,83 +116,8 @@ public class LdapManager {
 
     public static Instant lastUnencryptedWarning = Instant.EPOCH;
 
-    private static LdapManager instance;
-    static {
-        // Create a special Map implementation to wrap XMLProperties. We only implement
-        // the get, put, and remove operations, since those are the only ones used. Using a Map
-        // makes it easier to perform LdapManager testing.
-        Map<String, String> properties = new Map<String, String>() {
-
-            @Override
-            public String get(Object key) {
-                return JiveGlobals.getProperty((String)key);
-            }
-
-            @Override
-            public String put(String key, String value) {
-                JiveGlobals.setProperty(key, value);
-                // Always return null since XMLProperties doesn't support the normal semantics.
-                return null;
-            }
-
-            @Override
-            public String remove(Object key) {
-                JiveGlobals.deleteProperty((String)key);
-                // Always return null since XMLProperties doesn't support the normal semantics.
-                return null;
-            }
-
-
-            @Override
-            public int size() {
-                return 0;
-            }
-
-            @Override
-            public boolean isEmpty() {
-                return false;
-            }
-
-            @Override
-            public boolean containsKey(Object key) {
-                return false;
-            }
-
-            @Override
-            public boolean containsValue(Object value) {
-                return false;
-            }
-
-            @Override
-            public void putAll(Map<? extends String, ? extends String> t) {
-            }
-
-            @Override
-            public void clear() {
-            }
-
-            @Override
-            public Set<String> keySet() {
-                return null;
-            }
-
-            @Override
-            public Collection<String> values() {
-                return null;
-            }
-
-            @Override
-            public Set<Entry<String, String>> entrySet() {
-                return null;
-            }
-        };
-        instance = new LdapManager(properties);
-    }
-
-    /** Exposed for test use only */
-    public static void setInstance(LdapManager instance) {
-        LdapManager.instance = instance;
-    }
+    private static final Map<String, LdapManager> instances = new HashMap<>();
+    private final String propertyPrefix;
 
     private Collection<String> hosts = new ArrayList<>();
     private int port;
@@ -233,8 +159,119 @@ public class LdapManager {
      * @return an LdapManager instance.
      */
     public static LdapManager getInstance() {
-        return instance;
+        return getInstance(null);
     }
+
+    /**
+     * Provides singleton access to a named instance of the LdapManager class.
+     *
+     * This constructor is useful when several, different LDAP configurations are used (eg: A Hybrid Provider that
+     * uses more than one LDAP server).
+     *
+     * @param name The name of the ldap instance.
+     * @return an LdapManager instance.
+     */
+    public synchronized static LdapManager getInstance(final String name) {
+        if (instances.containsKey(name)) {
+            return instances.get(name);
+        } else {
+            // the get, put, and remove operations, since those are the only ones used. Using a Map
+            // makes it easier to perform LdapManager testing.
+            Map<String, String> properties = new Map<String, String>()
+            {
+                String getKey(Object key) {
+                    return getPrefixedPropertyName(name, (String) key);
+                }
+
+                @Override
+                public String get(Object key)
+                {
+                    return JiveGlobals.getProperty(getKey(key));
+                }
+
+                @Override
+                public String put(String key, String value)
+                {
+                    JiveGlobals.setProperty(getKey(key), value);
+                    // Always return null since XMLProperties doesn't support the normal semantics.
+                    return null;
+                }
+
+                @Override
+                public String remove(Object key)
+                {
+                    JiveGlobals.deleteProperty(getKey(key));
+                    // Always return null since XMLProperties doesn't support the normal semantics.
+                    return null;
+                }
+
+
+                @Override
+                public int size()
+                {
+                    return 0;
+                }
+
+                @Override
+                public boolean isEmpty()
+                {
+                    return false;
+                }
+
+                @Override
+                public boolean containsKey(Object key)
+                {
+                    return false;
+                }
+
+                @Override
+                public boolean containsValue(Object value)
+                {
+                    return false;
+                }
+
+                @Override
+                public void putAll(Map<? extends String, ? extends String> t)
+                {
+                }
+
+                @Override
+                public void clear()
+                {
+                }
+
+                @Override
+                public Set<String> keySet()
+                {
+                    return null;
+                }
+
+                @Override
+                public Collection<String> values()
+                {
+                    return null;
+                }
+
+                @Override
+                public Set<Entry<String, String>> entrySet()
+                {
+                    return null;
+                }
+            };
+            LdapManager instance = new LdapManager(properties, name);
+            instances.put(name, instance);
+            return instance;
+        }
+    }
+
+    static String getPrefixedPropertyName(@Nullable final String prefix, @Nonnull final String propertyName) {
+        return prefix == null ? propertyName : prefix + "." + propertyName.substring("ldap.".length());
+    }
+
+    String getPrefixedPropertyName(@Nonnull final String propertyName) {
+        return propertyPrefix == null ? propertyName : propertyPrefix + "." + propertyName.substring("ldap.".length());
+    }
+    
 
     /**
      * Constructs a new LdapManager instance. Typically, {@link #getInstance()} should be
@@ -245,44 +282,50 @@ public class LdapManager {
      *      LDAP host and base DN.
      */
     public LdapManager(Map<String, String> properties) {
+        this(properties, null);
+    }
+
+    public LdapManager(Map<String, String> properties, String propertyPrefix) {
+        this.propertyPrefix = propertyPrefix;
+        Log = LoggerFactory.getLogger(LdapManager.class.getName() + (propertyPrefix == null ? "" : ("["+propertyPrefix+"]")));
         this.properties = properties;
 
         // Convert XML based provider setup to Database based
-        JiveGlobals.migrateProperty("ldap.host");
-        JiveGlobals.migrateProperty("ldap.port");
-        JiveGlobals.migrateProperty("ldap.readTimeout");
-        JiveGlobals.migrateProperty("ldap.usernameField");
-        JiveGlobals.migrateProperty("ldap.usernameSuffix");
-        JiveGlobals.migrateProperty("ldap.baseDN");
-        JiveGlobals.migrateProperty("ldap.alternateBaseDN");
-        JiveGlobals.migrateProperty("ldap.nameField");
-        JiveGlobals.migrateProperty("ldap.emailField");
-        JiveGlobals.migrateProperty("ldap.connectionPoolEnabled");
-        JiveGlobals.migrateProperty("ldap.searchFilter");
-        JiveGlobals.migrateProperty("ldap.subTreeSearch");
-        JiveGlobals.migrateProperty("ldap.groupNameField");
-        JiveGlobals.migrateProperty("ldap.groupMemberField");
-        JiveGlobals.migrateProperty("ldap.groupDescriptionField");
-        JiveGlobals.migrateProperty("ldap.posixMode");
-        JiveGlobals.migrateProperty("ldap.groupSearchFilter");
-        JiveGlobals.migrateProperty("ldap.flattenNestedGroups");
-        JiveGlobals.migrateProperty("ldap.adminDN");
-        JiveGlobals.migrateProperty("ldap.adminPassword");
-        JiveGlobals.migrateProperty("ldap.debugEnabled");
-        JiveGlobals.migrateProperty("ldap.sslEnabled");
-        JiveGlobals.migrateProperty("ldap.startTlsEnabled");
-        JiveGlobals.migrateProperty("ldap.autoFollowReferrals");
-        JiveGlobals.migrateProperty("ldap.autoFollowAliasReferrals");
-        JiveGlobals.migrateProperty("ldap.encloseUserDN");
-        JiveGlobals.migrateProperty("ldap.encloseGroupDN");
-        JiveGlobals.migrateProperty("ldap.encloseDNs");
-        JiveGlobals.migrateProperty("ldap.initialContextFactory");
-        JiveGlobals.migrateProperty("ldap.clientSideSorting");
-        JiveGlobals.migrateProperty("ldap.ldapDebugEnabled");
-        JiveGlobals.migrateProperty("ldap.encodeMultibyteCharacters");
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.host"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.port"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.readTimeout"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.usernameField"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.usernameSuffix"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.baseDN"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.alternateBaseDN"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.nameField"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.emailField"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.connectionPoolEnabled"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.searchFilter"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.subTreeSearch"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.groupNameField"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.groupMemberField"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.groupDescriptionField"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.posixMode"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.groupSearchFilter"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.flattenNestedGroups"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.adminDN"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.adminPassword"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.debugEnabled"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.sslEnabled"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.startTlsEnabled"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.autoFollowReferrals"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.autoFollowAliasReferrals"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.encloseUserDN"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.encloseGroupDN"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.encloseDNs"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.initialContextFactory"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.clientSideSorting"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.ldapDebugEnabled"));
+        JiveGlobals.migrateProperty(getPrefixedPropertyName("ldap.encodeMultibyteCharacters"));
 
-        if (JiveGlobals.getBooleanProperty("ldap.userDNCache.enabled", true)) {
-            String cacheName = "LDAP UserDN";
+        if (JiveGlobals.getBooleanProperty(getPrefixedPropertyName("ldap.userDNCache.enabled"), true)) {
+            String cacheName = "LDAP UserDN" + (propertyPrefix == null ? "" : (" (" + propertyPrefix + ")"));
             userDNCache = CacheFactory.createCache( cacheName );
         }
 
@@ -295,6 +338,10 @@ public class LdapManager {
                 hosts.add(st.nextToken());
             }
         }
+        if (host == null || host.isEmpty()) {
+            Log.warn("No host value found in property '{}'", getPrefixedPropertyName("ldap.host"));
+        }
+
         String portStr = properties.get("ldap.port");
         port = 389;
         if (portStr != null) {
@@ -533,7 +580,7 @@ public class LdapManager {
      * @return A relative distinguished name from the answer.
      * @throws NamingException When the search result value cannot be used to form a valid RDN value.
      */
-    public static Rdn[] getRelativeDNFromResult( SearchResult answer ) throws NamingException
+    public Rdn[] getRelativeDNFromResult( SearchResult answer ) throws NamingException
     {
         // All other methods assume that UserDN is a relative distinguished name,
         // not a (full) distinguished name. However if a referral was followed,
@@ -1400,8 +1447,23 @@ public class LdapManager {
         {
             for ( String host : hosts )
             {
+                // If a host-definition contains a port (eg: example.org:389 vs example.org) then use that port, rather than the port that's configured in ldap.port
+                final String[] split = host.split(":");
+                String specificHost = host;
+                int specificPort = this.port;
+                if (split.length == 2) {
+                    try {
+                        final int number = Integer.parseInt(split[1]);
+                        if (number > 0 && number < 65535) {
+                            specificHost = split[0];
+                            specificPort = number;
+                        }
+                    } catch (NumberFormatException e) {
+                        Log.trace("Unable to determine port number from value '{}'. Expected format: 'hostname' or 'hostname:port'", host);
+                    }
+                }
                 // Create a correctly-encoded ldap URL for the PROVIDER_URL
-                final URI uri = new URI(sslEnabled ? "ldaps" : "ldap", null, host, port, "/" + baseDN.toString(), null, null);
+                final URI uri = new URI(sslEnabled ? "ldaps" : "ldap", null, specificHost, specificPort, "/" + baseDN.toString(), null, null);
                 ldapURL.append(uri.toASCIIString());
                 ldapURL.append(" ");
             }

@@ -25,7 +25,7 @@ import javax.naming.directory.BasicAttributes;
 import javax.naming.directory.SearchResult;
 import javax.naming.ldap.Rdn;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Daniel Henninger
@@ -128,7 +128,7 @@ public class LDAPTest {
         final SearchResult input = new SearchResult( "cn=bender", null, new BasicAttributes(), true );
 
         // Execute system under test.
-        final Rdn[] result = LdapManager.getRelativeDNFromResult( input );
+        final Rdn[] result = LdapManager.getInstance().getRelativeDNFromResult( input );
 
         // Verify result.
         assertEquals( 1, result.length );
@@ -147,7 +147,7 @@ public class LDAPTest {
         final SearchResult input = new SearchResult( "cn=bender,ou=people", null, new BasicAttributes(), true );
 
         // Execute system under test.
-        final Rdn[] result = LdapManager.getRelativeDNFromResult( input );
+        final Rdn[] result = LdapManager.getInstance().getRelativeDNFromResult( input );
 
         // Verify result.
         assertEquals( 2, result.length );
@@ -170,7 +170,7 @@ public class LDAPTest {
         final SearchResult input = new SearchResult( "\"cn=ship crew/cooks\"", null, new BasicAttributes(), true );
 
         // Execute system under test.
-        final Rdn[] result = LdapManager.getRelativeDNFromResult( input );
+        final Rdn[] result = LdapManager.getInstance().getRelativeDNFromResult( input );
 
         // Verify result.
         assertEquals( 1, result.length );

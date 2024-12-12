@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ import javax.naming.ldap.Rdn;
  *  <li>{@code ldap.authCache.size} -- size in bytes of the auth cache. If property is
  *      not set, the default value is 524288 (512 K).</li>
  *  <li>{@code ldap.authCache.maxLifetime} -- maximum amount of time a hashed password
- *      can be cached in milleseconds. If property is not set, the default value is
+ *      can be cached in milliseconds. If property is not set, the default value is
  *      7200000 (2 hours).</li>
  * </ul>
  *
@@ -52,18 +52,23 @@ import javax.naming.ldap.Rdn;
  */
 public class LdapAuthProvider implements AuthProvider {
 
-    private static final Logger Log = LoggerFactory.getLogger(LdapAuthProvider.class);
+    private final Logger Log;
 
-    private LdapManager manager;
+    private final LdapManager manager;
     private Cache<String, String> authCache = null;
 
     public LdapAuthProvider() {
+        this(null);
         // Convert XML based provider setup to Database based
         JiveGlobals.migrateProperty("ldap.authCache.enabled");
+    }
 
-        manager = LdapManager.getInstance();
+    public LdapAuthProvider(final String ldapConfigPropertyName) {
+        Log = LoggerFactory.getLogger(LdapAuthProvider.class.getName() + (ldapConfigPropertyName == null ? "" : ( "[" + ldapConfigPropertyName + "]" )));
+
+        manager = LdapManager.getInstance(ldapConfigPropertyName);
         if (JiveGlobals.getBooleanProperty("ldap.authCache.enabled", false)) {
-            String cacheName = "LDAP Authentication";
+            String cacheName = "LDAP Authentication" + (ldapConfigPropertyName == null ? "" : ( " (" + ldapConfigPropertyName + ")" ) );
             authCache = CacheFactory.createCache(cacheName);
         }
     }

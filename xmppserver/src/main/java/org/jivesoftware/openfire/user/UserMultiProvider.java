@@ -18,9 +18,13 @@ package org.jivesoftware.openfire.user;
 
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.lang.reflect.Constructor;
 import java.util.*;
 
 /**
@@ -41,7 +45,9 @@ public abstract class UserMultiProvider implements UserProvider
      *
      * @param propertyName A property name (cannot be null).
      * @return A user provider (can be null).
+     * @deprecated Use {@link #instantiate(SystemProperty)} or {@link #instantiate(SystemProperty, SystemProperty)} instead.
      */
+    @Deprecated(forRemoval = true, since = "5.0.0") // TODO Remove in or after Openfire 5.1.0
     public static UserProvider instantiate( String propertyName )
     {
         final String className = JiveGlobals.getProperty( propertyName );
@@ -61,6 +67,68 @@ public abstract class UserMultiProvider implements UserProvider
         catch ( Exception e )
         {
             Log.error( "Unable to load UserProvider '{}'. Users in this provider will be disabled.", className, e );
+            return null;
+        }
+    }
+
+    /**
+     * Instantiates a UserProvider based on Class-based system property. When the property is not set, this
+     * method returns null. When the property is set, but an exception occurs while instantiating the class, this method
+     * logs the error and returns null.
+     *
+     * UserProvider classes are required to have a public, no-argument constructor.
+     *
+     * @param implementationProperty A property that defines the class of the instance to be returned.
+     * @return A user provider (can be null).
+     */
+    public static UserProvider instantiate(@Nonnull final SystemProperty<Class> implementationProperty)
+    {
+        return instantiate(implementationProperty, null);
+    }
+
+    /**
+     * Instantiates a UserProvider based on Class-based system property. When the property is not set, this
+     * method returns null. When the property is set, but an exception occurs while instantiating the class, this method
+     * logs the error and returns null.
+     *
+     * UserProvider classes are required to have a public, no-argument constructor, but can have an optional additional
+     * constructor that takes a single String argument. If such constructor is defined, then it is invoked with the
+     * value of the second argument of this method. This is typically used to (but needs not) identify a property
+     * (by name) that holds additional configuration for the to be instantiated UserProvider. This
+     * implementation will pass on any non-empty value to the constructor. When a configuration argument is provided,
+     * but no constructor exists in the implementation that accepts a single String value, this method will log a
+     * warning and attempt to return an instance based on the no-arg constructor of the class.
+     *
+     * @param implementationProperty A property that defines the class of the instance to be returned.
+     * @param configProperty an opaque string value passed to the constructor.
+     * @return A user provider (can be null).
+     */
+    public static UserProvider instantiate(@Nonnull final SystemProperty<Class> implementationProperty, @Nullable final SystemProperty<String> configProperty)
+    {
+        final Class<? extends UserProvider> implementationClass = implementationProperty.getValue();
+        if (implementationClass == null) {
+            Log.debug( "Property '{}' is undefined or has no value. Skipping.", implementationProperty.getKey() );
+            return null;
+        }
+        Log.debug("About to to instantiate an UserProvider '{}' based on the value of property '{}'.", implementationClass, implementationProperty.getKey());
+
+        try {
+            if (configProperty != null && configProperty.getValue() != null && !configProperty.getValue().isEmpty()) {
+                try {
+                    final Constructor<? extends UserProvider> constructor = implementationClass.getConstructor(String.class);
+                    final UserProvider result = constructor.newInstance(configProperty.getValue());
+                    Log.debug("Instantiated UserProvider '{}' with configuration: '{}'", implementationClass.getName(), configProperty.getValue());
+                    return result;
+                } catch (NoSuchMethodException e) {
+                    Log.warn("Custom configuration is defined for the a provider but the configured class ('{}') does not provide a constructor that takes a String argument. Custom configuration will be ignored. Ignored configuration: '{}'", implementationProperty.getValue().getName(), configProperty);
+                }
+            }
+
+            final UserProvider result = implementationClass.getDeclaredConstructor().newInstance();
+            Log.debug("Instantiated UserProvider '{}'", implementationClass.getName());
+            return result;
+        } catch (Exception e) {
+            Log.error("Unable to load UserProvider '{}'. Data from this provider will not be available.", implementationClass.getName(), e);
             return null;
         }
     }

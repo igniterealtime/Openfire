@@ -54,100 +54,88 @@ import java.util.*;
  * an override list, authentication will only be attempted with the associated provider
  * (bypassing the chaining logic).<p>
  *
+ * The primary provider is required, but all other properties are optional. Each provider should be configured as it is
+ * normally, using whatever XML configuration options it specifies.
+ *
+ * When using multiple providers of the same type, it typically is desirable to have distinct configuration for each
+ * provider. To do so, a property with the name 'config' can be used. If used, the value of this property is passed as a
+ * string to the constructor of the provider (for this to work, the provider must have a constructor that takes exactly
+ * one argument: a string). Typically, this value is used to reference another property name that the provider can use
+ * to obtain its information for, but the value is treated as an opaque string by this implementation.
+ *
  * The full list of properties:
  * <ul>
- *      <li>{@code hybridAuthProvider.primaryProvider.className} (required) -- the class name
- *          of the auth provider.
- *      <li>{@code hybridAuthProvider.primaryProvider.overrideList} -- a comma-delimitted list
- *          of usernames for which authentication will only be tried with this provider.
- *      <li>{@code hybridAuthProvider.secondaryProvider.className} -- the class name
- *          of the auth provider.
- *      <li>{@code hybridAuthProvider.secondaryProvider.overrideList} -- a comma-delimitted list
- *          of usernames for which authentication will only be tried with this provider.
- *      <li>{@code hybridAuthProvider.tertiaryProvider.className} -- the class name
- *          of the auth provider.
- *      <li>{@code hybridAuthProvider.tertiaryProvider.overrideList} -- a comma-delimitted list
- *          of usernames for which authentication will only be tried with this provider.
+ *      <li>{@code hybridAuthProvider.primaryProvider.className} (required) -- the class name of the auth provider.
+ *      <li>{@code hybridAuthProvider.primaryProvider.config} -- A value used by the auth provider for configuration (typically the name of another property).
+ *      <li>{@code hybridAuthProvider.primaryProvider.overrideList} -- a comma-delimited list of usernames for which authentication will only be tried with this provider.
+ *      <li>{@code hybridAuthProvider.secondaryProvider.className} -- the class name of the auth provider.
+ *      <li>{@code hybridAuthProvider.secondaryProvider.config} -- A value used by the auth provider for configuration (typically the name of another property).
+ *      <li>{@code hybridAuthProvider.secondaryProvider.overrideList} -- a comma-delimited list of usernames for which authentication will only be tried with this provider.
+ *      <li>{@code hybridAuthProvider.tertiaryProvider.className} -- the class name of the auth provider.
+ *      <li>{@code hybridAuthProvider.tertiaryProvider.config} -- A value used by the auth provider for configuration (typically the name of another property).
+ *      <li>{@code hybridAuthProvider.tertiaryProvider.overrideList} -- a comma-delimited list of usernames for which authentication will only be tried with this provider.
  * </ul>
- *
- * The primary provider is required, but all other properties are optional. Each provider
- * should be configured as it is normally, using whatever XML configuration options it specifies.
  *
  * @author Matt Tucker
  */
 public class HybridAuthProvider extends AuthMultiProvider {
 
     private static final Logger Log = LoggerFactory.getLogger(HybridAuthProvider.class);
-    private static final SystemProperty<Class> PRIMARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+    public static final SystemProperty<Class> PRIMARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
         .setKey("hybridAuthProvider.primaryProvider.className")
         .setBaseClass(AuthProvider.class)
         .setDefaultValue(DefaultAuthProvider.class)
         .setDynamic(false)
         .build();
-    private static final SystemProperty<Class> SECONDARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+
+    public static final SystemProperty<String> PRIMARY_PROVIDER_CONFIG = SystemProperty.Builder.ofType(String.class)
+        .setKey("hybridAuthProvider.primaryProvider.config")
+        .setDynamic(false)
+        .build();
+
+    public static final SystemProperty<Class> SECONDARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
         .setKey("hybridAuthProvider.secondaryProvider.className")
         .setBaseClass(AuthProvider.class)
         .setDynamic(false)
         .build();
-    private static final SystemProperty<Class> TERTIARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+
+    public static final SystemProperty<String> SECONDARY_PROVIDER_CONFIG = SystemProperty.Builder.ofType(String.class)
+        .setKey("hybridAuthProvider.secondaryProvider.config")
+        .setDynamic(false)
+        .build();
+
+    public static final SystemProperty<Class> TERTIARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
         .setKey("hybridAuthProvider.tertiaryProvider.className")
         .setBaseClass(AuthProvider.class)
         .setDynamic(false)
         .build();
 
-    private AuthProvider primaryProvider;
-    private AuthProvider secondaryProvider;
-    private AuthProvider tertiaryProvider;
+    public static final SystemProperty<String> TERTIARY_PROVIDER_CONFIG = SystemProperty.Builder.ofType(String.class)
+        .setKey("hybridAuthProvider.tertiaryProvider.config")
+        .setDynamic(false)
+        .build();
+
+    private final AuthProvider primaryProvider;
+    private final AuthProvider secondaryProvider;
+    private final AuthProvider tertiaryProvider;
 
     private final Set<String> primaryOverrides = new HashSet<>();
     private final Set<String> secondaryOverrides = new HashSet<>();
     private final Set<String> tertiaryOverrides = new HashSet<>();
 
     public HybridAuthProvider() {
-        // Convert XML based provider setup to Database based
-        JiveGlobals.migrateProperty(PRIMARY_PROVIDER.getKey());
-        JiveGlobals.migrateProperty(SECONDARY_PROVIDER.getKey());
-        JiveGlobals.migrateProperty(TERTIARY_PROVIDER.getKey());
         JiveGlobals.migrateProperty("hybridAuthProvider.primaryProvider.overrideList");
         JiveGlobals.migrateProperty("hybridAuthProvider.secondaryProvider.overrideList");
         JiveGlobals.migrateProperty("hybridAuthProvider.tertiaryProvider.overrideList");
 
         // Load primary, secondary, and tertiary auth providers.
-        final Class primaryClass = PRIMARY_PROVIDER.getValue();
-        if (primaryClass == null) {
+        primaryProvider = instantiate(PRIMARY_PROVIDER, PRIMARY_PROVIDER_CONFIG);
+        secondaryProvider = instantiate(SECONDARY_PROVIDER, SECONDARY_PROVIDER_CONFIG);
+        tertiaryProvider = instantiate(TERTIARY_PROVIDER, TERTIARY_PROVIDER_CONFIG);
+
+        if (primaryProvider == null) {
             Log.error("A primary AuthProvider must be specified. Authentication will be disabled.");
             return;
-        }
-        try {
-            primaryProvider = (AuthProvider)primaryClass.newInstance();
-            Log.debug("Primary auth provider: " + primaryClass.getName());
-        }
-        catch (Exception e) {
-            Log.error("Unable to load primary auth provider: " + primaryClass.getName() +
-                    ". Authentication will be disabled.", e);
-            return;
-        }
-
-        final Class secondaryClass = SECONDARY_PROVIDER.getValue();
-        if (secondaryClass != null) {
-            try {
-                secondaryProvider = (AuthProvider)secondaryClass.newInstance();
-                Log.debug("Secondary auth provider: " + secondaryClass.getName());
-            }
-            catch (Exception e) {
-                Log.error("Unable to load secondary auth provider: " + secondaryClass.getName(), e);
-            }
-        }
-
-        final Class tertiaryClass = TERTIARY_PROVIDER.getValue();
-        if (tertiaryClass != null) {
-            try {
-                tertiaryProvider = (AuthProvider)tertiaryClass.newInstance();
-                Log.debug("Tertiary auth provider: " + tertiaryClass.getName());
-            }
-            catch (Exception e) {
-                Log.error("Unable to load tertiary auth provider: " + tertiaryClass.getName(), e);
-            }
         }
 
         // Now, load any overrides.
@@ -246,7 +234,7 @@ public class HybridAuthProvider extends AuthMultiProvider {
 
     @Override
     public String getPassword(String username)
-            throws UserNotFoundException, UnsupportedOperationException
+        throws UserNotFoundException, UnsupportedOperationException
     {
         // Check overrides first.
         try {

@@ -19,7 +19,6 @@
 <%@ page import="org.jivesoftware.util.ParamUtils, org.jivesoftware.openfire.ldap.LdapManager, org.jivesoftware.openfire.user.UserNotFoundException, org.xmpp.packet.JID" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="java.net.URLDecoder" %>
-<%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="javax.naming.ldap.Rdn" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 

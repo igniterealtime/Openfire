@@ -17,6 +17,7 @@
     String host;
     int port;
     LdapName baseDN;
+    LdapName alternateBaseDN;
     String adminDN;
     String adminPassword;
     boolean connectionPoolEnabled;
@@ -64,6 +65,16 @@
             errors.put("baseDN", LocaleUtils.getLocalizedString("setup.ldap.server.basedn_error"));
             baseDN = null;
         }
+        if (ParamUtils.getParameter(request, "alternatebasedn") != null) {
+            try {
+                alternateBaseDN = new LdapName(ParamUtils.getParameter(request, "alternatebasedn"));
+            } catch (Exception e) {
+                errors.put("baseDN", LocaleUtils.getLocalizedString("setup.ldap.server.alternatebasedn_error"));
+                alternateBaseDN = null;
+            }
+        } else {
+            alternateBaseDN = null;
+        }
 
         adminDN = ParamUtils.getParameter(request, "admindn");
         adminPassword = ParamUtils.getParameter(request, "adminpwd");
@@ -81,6 +92,11 @@
             settings.put("ldap.host", host);
             settings.put("ldap.port", Integer.toString(port));
             settings.put("ldap.baseDN", baseDN.toString());
+            if (alternateBaseDN != null) {
+                settings.put("ldap.alternateBaseDN", alternateBaseDN.toString());
+            } else {
+                settings.remove("ldap.alternateBaseDN");
+            }
             if (adminDN != null) {
                 settings.put("ldap.adminDN", adminDN);
             }
@@ -108,6 +124,11 @@
                 manager.setHosts(hosts);
                 manager.setPort(port);
                 manager.setBaseDN(baseDN);
+                if (alternateBaseDN != null) {
+                    manager.setAlternateBaseDN(alternateBaseDN);
+                } else {
+                    manager.setAlternateBaseDN(null);
+                }
                 manager.setAdminDN(adminDN);
                 if ( adminPassword != null ) { // Only store a password if it was changed.
                     manager.setAdminPassword( adminPassword );
@@ -124,6 +145,11 @@
                     xmppSettings.put("ldap.host", host);
                     xmppSettings.put("ldap.port", Integer.toString(port));
                     xmppSettings.put("ldap.baseDN", baseDN.toString());
+                    if (alternateBaseDN != null) {
+                        xmppSettings.put("ldap.alternateBaseDN", alternateBaseDN.toString());
+                    } else {
+                        xmppSettings.remove("ldap.alternateBaseDN");
+                    }
                     xmppSettings.put("ldap.adminDN", adminDN);
                     if ( adminPassword != null ) { // Only store a password if it was changed.
                         xmppSettings.put( "ldap.adminPassword", adminPassword );
@@ -167,6 +193,7 @@
         }
         port = manager.getPort();
         baseDN = manager.getBaseDN();
+        alternateBaseDN = manager.getAlternateBaseDN();
         adminDN = manager.getAdminDN();
         connectionPoolEnabled = manager.isConnectionPoolEnabled();
         sslEnabled = manager.isSslEnabled();
@@ -180,6 +207,7 @@
     pageContext.setAttribute("host", host);
     pageContext.setAttribute("port", port);
     pageContext.setAttribute("baseDN", baseDN);
+    pageContext.setAttribute("alternateBaseDN", alternateBaseDN);
     pageContext.setAttribute("adminDN", adminDN );
     // Only show password if it was set in this session (used for testing the password).
     if ( session.getAttribute("ldapSettings") != null ) {
@@ -443,6 +471,18 @@
                         <input type="radio" name="aliasreferrals" value="false" ${followAliasReferralsEnabled ? "" : "checked"}>
                     </td>
                 </tr>
+                <tr>
+                    <td class="jive-advancedLabel" nowrap>
+                        <fmt:message key="setup.ldap.server.alternatebasedn" />:
+                    </td>
+                    <td class="jive-advancedDesc jive-advancedBorderBottom jive-advancedBorderRight">
+                        <fmt:message key="setup.ldap.server.alternatebasedn" />
+                    </td>
+                    <td class="jive-advancedBorderBottom" colspan="2" style="text-align: center">
+                        <input type="text" name="alternatebasedn" value="${empty alternateBaseDN ? '' : fn:escapeXml(alternateBaseDN)}">
+                    </td>
+                </tr>
+
                 </tbody>
                 </table>
             </div>

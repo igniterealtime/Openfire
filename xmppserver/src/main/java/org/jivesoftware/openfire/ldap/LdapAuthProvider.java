@@ -20,8 +20,8 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthProvider;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -30,6 +30,8 @@ import org.xmpp.packet.JID;
 
 import javax.naming.CommunicationException;
 import javax.naming.ldap.Rdn;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 
 /**
  * Implementation of auth provider interface for LDAP authentication service plug-in.
@@ -54,28 +56,49 @@ public class LdapAuthProvider implements AuthProvider {
 
     private final Logger Log;
 
+    public static final SystemProperty<Boolean> AUTH_CACHE_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("ldap.authCache.enabled")
+        .setDefaultValue(false)
+        .setDynamic(false)
+        .build();
+
+    public static final SystemProperty<Long> AUTH_CACHE_SIZE = SystemProperty.Builder.ofType(Long.class)
+        .setKey("ldap.authCache.size")
+        .setDefaultValue(524_288L)
+        .setDynamic(false)
+        .build();
+
+    public static final SystemProperty<Duration> AUTH_CACHE_MAX_LIFETIME = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("ldap.authCache.maxLifetime")
+        .setChronoUnit(ChronoUnit.MILLIS)
+        .setDefaultValue(Duration.ofHours(2))
+        .setDynamic(false)
+        .build();
+
     private final LdapManager manager;
-    private Cache<String, String> authCache = null;
+    private final Cache<String, String> authCache;
 
     public LdapAuthProvider() {
         this(null);
-        // Convert XML based provider setup to Database based
-        JiveGlobals.migrateProperty("ldap.authCache.enabled");
     }
 
     public LdapAuthProvider(final String ldapConfigPropertyName) {
         Log = LoggerFactory.getLogger(LdapAuthProvider.class.getName() + (ldapConfigPropertyName == null ? "" : ( "[" + ldapConfigPropertyName + "]" )));
 
         manager = LdapManager.getInstance(ldapConfigPropertyName);
-        if (JiveGlobals.getBooleanProperty("ldap.authCache.enabled", false)) {
+        if (AUTH_CACHE_ENABLED.getValue()) {
             String cacheName = "LDAP Authentication" + (ldapConfigPropertyName == null ? "" : ( " (" + ldapConfigPropertyName + ")" ) );
             authCache = CacheFactory.createCache(cacheName);
+            authCache.setMaxCacheSize(AUTH_CACHE_SIZE.getValue());
+            authCache.setMaxLifetime(AUTH_CACHE_MAX_LIFETIME.getValue().toMillis());
+        } else {
+            authCache = null;
         }
     }
 
     @Override
     public void authenticate(String username, String password) throws UnauthorizedException {
-        if (username == null || password == null || "".equals(password.trim())) {
+        if (username == null || password == null || password.trim().isEmpty()) {
             throw new UnauthorizedException();
         }
 
@@ -140,7 +163,7 @@ public class LdapAuthProvider implements AuthProvider {
 
     @Override
     public String getPassword(String username) throws UserNotFoundException,
-            UnsupportedOperationException
+        UnsupportedOperationException
     {
         throw new UnsupportedOperationException();
     }

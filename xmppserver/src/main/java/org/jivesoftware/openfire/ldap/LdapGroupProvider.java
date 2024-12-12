@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupNotFoundException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -44,8 +45,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.jivesoftware.util.SystemProperty;
-
 /**
  * LDAP implementation of the GroupProvider interface.  All data in the directory is treated as
  * read-only so any set operations will result in an exception.
@@ -54,7 +53,7 @@ import org.jivesoftware.util.SystemProperty;
  */
 public class LdapGroupProvider extends AbstractGroupProvider {
 
-    private static final Logger Log = LoggerFactory.getLogger(LdapGroupProvider.class);
+    private final Logger Log;
 
     private LdapManager manager;
     private UserManager userManager;
@@ -72,8 +71,15 @@ public class LdapGroupProvider extends AbstractGroupProvider {
      * Constructs a new LDAP group provider.
      */
     public LdapGroupProvider() {
+        this(null);
+    }
+
+    public LdapGroupProvider(String ldapConfigPropertyName)
+    {
         super();
-        manager = LdapManager.getInstance();
+        Log = LoggerFactory.getLogger(LdapGroupProvider.class.getName() + (ldapConfigPropertyName == null ? "" : ( "[" + ldapConfigPropertyName + "]" )));
+
+        manager = LdapManager.getInstance(ldapConfigPropertyName);
         userManager = UserManager.getInstance();
         standardAttributes = new String[3];
         standardAttributes[0] = manager.getGroupNameField();

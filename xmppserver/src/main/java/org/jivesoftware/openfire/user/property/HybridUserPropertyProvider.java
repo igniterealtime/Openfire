@@ -16,7 +16,7 @@
 package org.jivesoftware.openfire.user.property;
 
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,27 +52,55 @@ public class HybridUserPropertyProvider extends UserPropertyMultiProvider
 {
     private static final Logger Log = LoggerFactory.getLogger( HybridUserPropertyProvider.class );
 
+    private static final SystemProperty<Class> PRIMARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+        .setKey("hybridUserPropertyProvider.primaryProvider.className")
+        .setBaseClass(UserPropertyProvider.class)
+        .setDynamic(false)
+        .build();
+
+    public static final SystemProperty<String> PRIMARY_PROVIDER_CONFIG = SystemProperty.Builder.ofType(String.class)
+        .setKey("hybridUserPropertyProvider.primaryProvider.config")
+        .setDynamic(false)
+        .build();
+
+    private static final SystemProperty<Class> SECONDARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+        .setKey("hybridUserPropertyProvider.secondaryProvider.className")
+        .setBaseClass(UserPropertyProvider.class)
+        .setDynamic(false)
+        .build();
+
+    public static final SystemProperty<String> SECONDARY_PROVIDER_CONFIG = SystemProperty.Builder.ofType(String.class)
+        .setKey("hybridUserPropertyProvider.secondaryProvider.config")
+        .setDynamic(false)
+        .build();
+
+    private static final SystemProperty<Class> TERTIARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+        .setKey("hybridUserPropertyProvider.tertiaryProvider.className")
+        .setBaseClass(UserPropertyProvider.class)
+        .setDynamic(false)
+        .build();
+
+    public static final SystemProperty<String> TERTIARY_PROVIDER_CONFIG = SystemProperty.Builder.ofType(String.class)
+        .setKey("hybridUserPropertyProvider.tertiaryProvider.config")
+        .setDynamic(false)
+        .build();
+
     private final List<UserPropertyProvider> providers = new ArrayList<>();
 
     public HybridUserPropertyProvider()
     {
-        // Migrate user provider properties
-        JiveGlobals.migrateProperty( "hybridUserPropertyProvider.primaryProvider.className" );
-        JiveGlobals.migrateProperty( "hybridUserPropertyProvider.secondaryProvider.className" );
-        JiveGlobals.migrateProperty( "hybridUserPropertyProvider.tertiaryProvider.className" );
-
         // Load primary, secondary, and tertiary user providers.
-        final UserPropertyProvider primary = MappedUserPropertyProvider.instantiate( "hybridUserPropertyProvider.primaryProvider.className" );
+        final UserPropertyProvider primary = MappedUserPropertyProvider.instantiate(PRIMARY_PROVIDER, PRIMARY_PROVIDER_CONFIG);
         if ( primary != null )
         {
             providers.add( primary );
         }
-        final UserPropertyProvider secondary = MappedUserPropertyProvider.instantiate( "hybridUserPropertyProvider.secondaryProvider.className" );
+        final UserPropertyProvider secondary = MappedUserPropertyProvider.instantiate(SECONDARY_PROVIDER, SECONDARY_PROVIDER_CONFIG);
         if ( secondary != null )
         {
             providers.add( secondary );
         }
-        final UserPropertyProvider tertiary = MappedUserPropertyProvider.instantiate( "hybridUserPropertyProvider.tertiaryProvider.className" );
+        final UserPropertyProvider tertiary = MappedUserPropertyProvider.instantiate(TERTIARY_PROVIDER, TERTIARY_PROVIDER_CONFIG);
         if ( tertiary != null )
         {
             providers.add( tertiary );

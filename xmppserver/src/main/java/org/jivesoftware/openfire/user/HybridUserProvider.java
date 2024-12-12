@@ -16,12 +16,11 @@
 
 package org.jivesoftware.openfire.user;
 
-import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -40,30 +39,55 @@ public class HybridUserProvider extends UserMultiProvider
 {
     private static final Logger Log = LoggerFactory.getLogger( HybridUserProvider.class );
 
+    private static final SystemProperty<Class> PRIMARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+        .setKey("hybridUserProvider.primaryProvider.className")
+        .setBaseClass(UserProvider.class)
+        .setDynamic(false)
+        .build();
+
+    public static final SystemProperty<String> PRIMARY_PROVIDER_CONFIG = SystemProperty.Builder.ofType(String.class)
+        .setKey("hybridUserProvider.primaryProvider.config")
+        .setDynamic(false)
+        .build();
+
+    private static final SystemProperty<Class> SECONDARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+        .setKey("hybridUserProvider.secondaryProvider.className")
+        .setBaseClass(UserProvider.class)
+        .setDynamic(false)
+        .build();
+
+    public static final SystemProperty<String> SECONDARY_PROVIDER_CONFIG = SystemProperty.Builder.ofType(String.class)
+        .setKey("hybridUserProvider.secondaryProvider.config")
+        .setDynamic(false)
+        .build();
+
+    private static final SystemProperty<Class> TERTIARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+        .setKey("hybridUserProvider.tertiaryProvider.className")
+        .setBaseClass(UserProvider.class)
+        .setDynamic(false)
+        .build();
+
+    public static final SystemProperty<String> TERTIARY_PROVIDER_CONFIG = SystemProperty.Builder.ofType(String.class)
+        .setKey("hybridUserProvider.tertiaryProvider.config")
+        .setDynamic(false)
+        .build();
+
     private final List<UserProvider> userProviders = new ArrayList<>();
 
     public HybridUserProvider()
     {
-        // Migrate user provider properties
-        JiveGlobals.migrateProperty( "hybridUserProvider.primaryProvider.className" );
-        JiveGlobals.migrateProperty( "hybridUserProvider.secondaryProvider.className" );
-        JiveGlobals.migrateProperty( "hybridUserProvider.tertiaryProvider.className" );
-
         // Load primary, secondary, and tertiary user providers.
-        final UserProvider primary = instantiate( "hybridUserProvider.primaryProvider.className" );
-        if ( primary != null )
-        {
-            userProviders.add( primary );
+        final UserProvider primary = instantiate(PRIMARY_PROVIDER, PRIMARY_PROVIDER_CONFIG);
+        if (primary != null) {
+            userProviders.add(primary);
         }
-        final UserProvider secondary = instantiate( "hybridUserProvider.secondaryProvider.className" );
-        if ( secondary != null )
-        {
-            userProviders.add( secondary );
+        final UserProvider secondary = instantiate(SECONDARY_PROVIDER, SECONDARY_PROVIDER_CONFIG);
+        if (secondary != null) {
+            userProviders.add(secondary);
         }
-        final UserProvider tertiary = instantiate( "hybridUserProvider.tertiaryProvider.className" );
-        if ( tertiary != null )
-        {
-            userProviders.add( tertiary );
+        final UserProvider tertiary = instantiate(TERTIARY_PROVIDER, TERTIARY_PROVIDER_CONFIG);
+        if (tertiary != null) {
+            userProviders.add(tertiary);
         }
 
         // Verify that there's at least one provider available.

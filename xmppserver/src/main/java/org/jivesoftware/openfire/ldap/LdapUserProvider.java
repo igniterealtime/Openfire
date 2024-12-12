@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2020 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
  */
 public class LdapUserProvider implements UserProvider {
 
-    private static final Logger Log = LoggerFactory.getLogger(LdapUserProvider.class);
+    private final Logger Log;
 
     // LDAP date format parser.
     private static final SimpleDateFormat ldapDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -59,13 +59,19 @@ public class LdapUserProvider implements UserProvider {
     private Collection<User> allUsers = null;
 
     public LdapUserProvider() {
+        this(null);
+    }
+
+    public LdapUserProvider(String ldapConfigPropertyName) {
+        Log = LoggerFactory.getLogger(LdapUserProvider.class.getName() + (ldapConfigPropertyName == null ? "" : ( "[" + ldapConfigPropertyName + "]" )));
+
         // Convert XML based provider setup to Database based
         JiveGlobals.migrateProperty("ldap.searchFields");
 
-        manager = LdapManager.getInstance();
+        manager = LdapManager.getInstance(ldapConfigPropertyName);
         searchFields = new LinkedHashMap<>();
         String fieldList = JiveGlobals.getProperty("ldap.searchFields");
-        // If the value isn't present, default to to username, name, and email.
+        // If the value isn't present, default to the username, name, and email.
         if (fieldList == null) {
             searchFields.put("Username", manager.getUsernameField());
             int i = 0;
@@ -412,7 +418,7 @@ public class LdapUserProvider implements UserProvider {
             date = ldapDateFormat.parse(dateText);
         }
         catch (Exception e) {
-            Log.error(e.getMessage(), e);
+            LoggerFactory.getLogger(LdapUserProvider.class).error(e.getMessage(), e);
         }
         return date;
     }

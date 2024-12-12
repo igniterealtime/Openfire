@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 IgniteRealtime.org, 2018-2019 Ignite Realtime Foundation. All rights reserved
+ * Copyright (C) 2016 IgniteRealtime.org, 2018-2024 Ignite Realtime Foundation. All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
 
 import java.util.Collection;
-import java.util.Date;
 
 /**
  * A {@link UserProvider} that delegates to a user-specific UserProvider.
@@ -89,53 +88,5 @@ public class MappedUserProvider extends UserMultiProvider
     public UserProvider getUserProvider( String username )
     {
         return mapper.getUserProvider( username );
-    }
-
-    @Override
-    public User loadUser( String username ) throws UserNotFoundException
-    {
-        final UserProvider userProvider;
-        try{
-            userProvider = getUserProvider( username );
-        } catch (RuntimeException e){
-            throw new UserNotFoundException("Unable to identify user provider for username "+username, e);
-        }
-        return userProvider.loadUser( username );
-    }
-
-    @Override
-    public User createUser( String username, String password, String name, String email ) throws UserAlreadyExistsException
-    {
-        return getUserProvider( username ).createUser( username, password, name, email );
-    }
-
-    @Override
-    public void deleteUser( String username )
-    {
-        getUserProvider( username ).deleteUser( username );
-    }
-
-    @Override
-    public void setName( String username, String name ) throws UserNotFoundException
-    {
-        getUserProvider( username ).setName( username, name );
-    }
-
-    @Override
-    public void setEmail( String username, String email ) throws UserNotFoundException
-    {
-        getUserProvider( username ).setEmail( username, email );
-    }
-
-    @Override
-    public void setCreationDate( String username, Date creationDate ) throws UserNotFoundException
-    {
-        getUserProvider( username ).setCreationDate( username, creationDate );
-    }
-
-    @Override
-    public void setModificationDate( String username, Date modificationDate ) throws UserNotFoundException
-    {
-        getUserProvider( username ).setModificationDate( username, modificationDate );
     }
 }

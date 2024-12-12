@@ -1387,7 +1387,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         }
 
         // Remove the room from the DB if the room was persistent
-        MUCPersistenceManager.deleteFromDB(this);
+        MUCPersistenceManager.deleteFromDB(this, alternateJID, reason);
         // Remove the history of the room from memory (preventing it to pop up in a new room by the same name).
         roomHistory.purge();
         // Fire event that the room has been destroyed

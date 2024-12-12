@@ -94,7 +94,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
             return getGroupByDN(groupDN, new HashSet<>(Collections.singleton(groupDN.toString())));
         }
         catch (Exception e) {
-            Log.error("Unable to load group: {}", groupName, e);
+            Log.debug("Unable to load group: {}", groupName, e);
             throw new GroupNotFoundException("Group with name " + groupName + " not found.", e);
         }
     }
@@ -256,7 +256,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                         }
                         catch (Exception e)
                         {
-                            Log.debug("error while reading the ldap group with range retrival",e); // no next found, cause of missing attribute
+                            Log.debug("error while reading the ldap group with range retrieval",e); // no next found, cause of missing attribute
                             break;
                         }
                     }while (rangehigh!=-1);  //The last part was received
@@ -331,7 +331,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                 username = relativePart + "," + manager.getUsersBaseDN(username);
             }
             catch (Exception e) {
-                Log.error("Could not find user in LDAP " + username);
+                Log.debug("Unable to find groups for a user that was not recognized in LDAP: {}", username);
                 return Collections.emptyList();
             }
         }
@@ -339,7 +339,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
             username = server.isLocal(user) ? JID.unescapeNode(user.getNode()) : user.toBareJID();
         }
         // Do nothing if the user is empty or null
-        if (username == null || "".equals(username)) {
+        if (username == null || username.isEmpty()) {
             return Collections.emptyList();
         }
 
@@ -580,8 +580,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                         }
                     }
                     catch (Exception e) {
-                        // TODO: A NPE is occuring here
-                        Log.error(e.getMessage(), e);
+                        Log.error("An unexpected exception occurred while processing an LDAP group {}, while iterating over user {}", name, username, e);
                     }
                 }
                 // A search filter may have been defined in the LdapUserProvider.

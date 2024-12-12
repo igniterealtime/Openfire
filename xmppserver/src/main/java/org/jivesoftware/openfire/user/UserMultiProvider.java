@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.user;
 
+import org.jivesoftware.openfire.group.GroupProvider;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;
@@ -26,6 +27,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 /**
  * A {@link UserProvider} that delegates to one or more 'backing' UserProvider.
@@ -159,40 +162,27 @@ public abstract class UserMultiProvider implements UserProvider
     @Override
     public int getUserCount()
     {
-        int total = 0;
-        // TODO Make calls concurrent for improved throughput.
-        for ( final UserProvider provider : getUserProviders() )
-        {
-            total += provider.getUserCount();
-        }
-
-        return total;
+        return getUserProviders().parallelStream()
+            .map(UserProvider::getUserCount)
+            .reduce(0, Integer::sum);
     }
 
     @Override
     public Collection<User> getUsers()
     {
-        final Collection<User> result = new ArrayList<>();
-        for ( final UserProvider provider : getUserProviders() )
-        {
-            // TODO Make calls concurrent for improved throughput.
-            result.addAll( provider.getUsers() );
-        }
-
-        return result;
+        return getUserProviders().parallelStream()
+            .map(UserProvider::getUsers)
+            .flatMap(Collection::stream)
+            .collect(Collectors.toSet());
     }
 
     @Override
     public Collection<String> getUsernames()
     {
-        final Collection<String> result = new ArrayList<>();
-        for ( final UserProvider provider : getUserProviders() )
-        {
-            // TODO Make calls concurrent for improved throughput.
-            result.addAll( provider.getUsernames() );
-        }
-
-        return result;
+        return getUserProviders().parallelStream()
+            .map(UserProvider::getUsernames)
+            .flatMap(Collection::stream)
+            .collect(Collectors.toSet());
     }
 
     @Override
@@ -237,32 +227,27 @@ public abstract class UserMultiProvider implements UserProvider
     @Override
     public Collection<User> findUsers( Set<String> fields, String query ) throws UnsupportedOperationException
     {
-        final List<User> userList = new ArrayList<>();
-        int supportSearch = getUserProviders().size();
+        final AtomicLong supportSearch = new AtomicLong(getUserProviders().size());
+        final Set<User> result = getUserProviders().parallelStream()
+            .map(provider -> {
+                try {
+                    // Use only those fields that are supported by the provider.
+                    final Set<String> supportedFields = new HashSet<>(fields);
+                    supportedFields.retainAll(provider.getSearchFields());
+                    return provider.findUsers(supportedFields, query);
+                } catch (UnsupportedOperationException uoe) {
+                    Log.warn("UserProvider.findUsers is not supported by this UserProvider: {}. Its users are not returned as part of search queries.", provider.getClass().getName());
+                    supportSearch.decrementAndGet();
+                    return new HashSet<User>();
+                }
+            })
+            .flatMap(Collection::stream)
+            .collect(Collectors.toSet());
 
-        // TODO Make calls concurrent for improved throughput.
-        for ( final UserProvider provider : getUserProviders() )
-        {
-            try
-            {
-                // Use only those fields that are supported by the provider.
-                final Set<String> supportedFields = new HashSet<>( fields );
-                supportedFields.retainAll( provider.getSearchFields() );
-
-                userList.addAll( provider.findUsers( supportedFields, query ) );
-            }
-            catch ( UnsupportedOperationException uoe )
-            {
-                Log.warn( "UserProvider.findUsers is not supported by this UserProvider: {}. Its users are not returned as part of search queries.", provider.getClass().getName() );
-                supportSearch--;
-            }
+        if (supportSearch.longValue() == 0) {
+            throw new UnsupportedOperationException("None of the backing providers support this operation.");
         }
-
-        if ( supportSearch == 0 )
-        {
-            throw new UnsupportedOperationException( "None of the backing providers support this operation." );
-        }
-        return userList;
+        return result;
     }
 
     /**
@@ -349,24 +334,20 @@ public abstract class UserMultiProvider implements UserProvider
     @Override
     public Set<String> getSearchFields() throws UnsupportedOperationException
     {
-        int supportSearch = getUserProviders().size();
-        final Set<String> result = new HashSet<>();
+        final AtomicLong supportSearch = new AtomicLong(getUserProviders().size());
+        final Set<String> result = getUserProviders().parallelStream()
+            .map(userProvider -> {
+                try {
+                    return userProvider.getSearchFields();
+                } catch ( UnsupportedOperationException uoe ) {
+                    supportSearch.decrementAndGet();
+                    return new HashSet<String>();
+                }
+            })
+            .flatMap(Collection::stream)
+            .collect(Collectors.toSet());
 
-        // TODO Make calls concurrent for improved throughput.
-        for ( final UserProvider provider : getUserProviders() )
-        {
-            try
-            {
-                result.addAll( provider.getSearchFields() );
-            }
-            catch ( UnsupportedOperationException uoe )
-            {
-                Log.warn( "getSearchFields is not supported by this UserProvider: " + provider.getClass().getName() );
-                supportSearch--;
-            }
-        }
-
-        if ( supportSearch == 0 )
+        if (supportSearch.longValue() == 0)
         {
             throw new UnsupportedOperationException( "None of the backing providers support this operation." );
         }
@@ -382,17 +363,9 @@ public abstract class UserMultiProvider implements UserProvider
     @Override
     public boolean isReadOnly()
     {
-        // TODO Make calls concurrent for improved throughput.
-        for ( final UserProvider provider : getUserProviders() )
-        {
-            // If at least one provider is not readonly, neither is this proxy.
-            if ( !provider.isReadOnly() )
-            {
-                return false;
-            }
-        }
-
-        return true;
+        // If at least one provider is not readonly, neither is this proxy.
+        return getUserProviders().parallelStream()
+            .allMatch(UserProvider::isReadOnly);
     }
 
     /**
@@ -404,39 +377,23 @@ public abstract class UserMultiProvider implements UserProvider
     @Override
     public boolean isNameRequired()
     {
-        // TODO Make calls concurrent for improved throughput.
-        for ( final UserProvider provider : getUserProviders() )
-        {
-            // If at least one provider does not require a name, neither is this proxy.
-            if ( !provider.isNameRequired() )
-            {
-                return false;
-            }
-        }
-
-        return true;
+        // If at least one provider does not require a name, neither is this proxy.
+        return getUserProviders().parallelStream()
+            .anyMatch(UserProvider::isNameRequired);
     }
 
     /**
      * Returns whether <em>all</em> backing providers require an email address to be set on User objects. If at least
-     * one proivder does not, this method returns false.
+     * one provider does not, this method returns false.
      *
      * @return true when all backing providers require an email address to be set on User objects, otherwise false.
      */
     @Override
     public boolean isEmailRequired()
     {
-        // TODO Make calls concurrent for improved throughput.
-        for ( final UserProvider provider : getUserProviders() )
-        {
-            // If at least one provider does not require an email, neither is this proxy.
-            if ( !provider.isEmailRequired() )
-            {
-                return false;
-            }
-        }
-
-        return true;
+        // If at least one provider does not require an email, neither is this proxy.
+        return getUserProviders().parallelStream()
+            .anyMatch(UserProvider::isEmailRequired);
     }
 
     @Override

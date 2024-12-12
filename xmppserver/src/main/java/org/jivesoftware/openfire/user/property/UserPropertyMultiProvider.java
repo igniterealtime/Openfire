@@ -15,6 +15,8 @@
  */
 package org.jivesoftware.openfire.user.property;
 
+import org.jivesoftware.openfire.auth.AuthProvider;
+import org.jivesoftware.openfire.group.GroupProvider;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
@@ -166,17 +168,9 @@ public abstract class UserPropertyMultiProvider implements UserPropertyProvider
     @Override
     public boolean isReadOnly()
     {
-        // TODO Make calls concurrent for improved throughput.
-        for ( final UserPropertyProvider provider : getUserPropertyProviders() )
-        {
-            // If at least one provider is not readonly, neither is this proxy.
-            if ( !provider.isReadOnly() )
-            {
-                return false;
-            }
-        }
-
-        return true;
+        // If at least one provider is not readonly, neither is this proxy.
+        return getUserPropertyProviders().parallelStream()
+            .allMatch(UserPropertyProvider::isReadOnly);
     }
 
     @Override

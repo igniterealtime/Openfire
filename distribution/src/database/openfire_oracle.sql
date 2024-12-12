@@ -230,6 +230,7 @@ CREATE TABLE ofMucRoomProp (
 CREATE TABLE ofMucRoomRetiree(
   serviceID           INT           NOT NULL,
   name                VARCHAR2(50)  NOT NULL,
+  retiredAt           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT ofMucRoomRetiree_pk PRIMARY KEY (serviceID, name)
 );
 

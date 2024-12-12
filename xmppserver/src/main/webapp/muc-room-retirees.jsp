@@ -16,50 +16,56 @@
   - limitations under the License.
 --%>
 
-<%@ page import="org.jivesoftware.openfire.muc.MultiUserChatService"
-%>
+<%@ page import="org.jivesoftware.openfire.muc.MultiUserChatService" %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.Collection" %>
 <%@ page import="org.jivesoftware.util.*" %>
+<%@ page import="java.util.ArrayList" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib prefix="admin" uri="admin" %>
 
-<%!
+<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
+
+<%
+    // Initialize paging
     final int DEFAULT_RANGE = 100;
-    final int[] RANGE_PRESETS = {25, 50, 75, 100, 500, 1000, -1};
-%>
+    final int[] RANGE_PRESETS = {25, 50, 75, 100, 500, 1000};
 
-<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
-<% webManager.init(request, response, session, application, out ); %>
+    webManager.init(request, response, session, application, out);
 
-<html>
-    <head>
-        <title><fmt:message key="muc.room.retirees.title"/></title>
-        <meta name="pageID" content="muc-room-retirees"/>
-    </head>
-    <body>
-
-<%  // Get parameters
-    String mucname = ParamUtils.getParameter(request,"mucname");
-
-    int start = ParamUtils.getIntParameter(request,"start",0);
-    int range = ParamUtils.getIntParameter(request,"range",webManager.getRowsPerPage("retirees-summary", DEFAULT_RANGE));
-    boolean delete = ParamUtils.getBooleanParameter(request,"delete");
+    // Get parameters
+    String mucname = ParamUtils.getParameter(request, "mucname");
+    int start = ParamUtils.getIntParameter(request, "start", 0);
+    int range = ParamUtils.getIntParameter(request, "range", webManager.getRowsPerPage("retirees-summary", DEFAULT_RANGE));
+    boolean delete = ParamUtils.getBooleanParameter(request, "delete");
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
+    // Validate range is one of the allowed presets, reset to default if invalid
+    boolean validRange = false;
+    for (int preset : RANGE_PRESETS) {
+        if (preset == range) {
+            validRange = true;
+            break;
+        }
+    }
+    if (!validRange) {
+        range = DEFAULT_RANGE;
+    }
+
+    // CSRF check
     if (delete) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
             delete = false;
         }
     }
 
-    // Delete retiree if requested
+    // Handle deletion
     if (delete) {
-        String service = ParamUtils.getParameter(request,"service");
-        String name = ParamUtils.getParameter(request,"name");
+        String service = ParamUtils.getParameter(request, "service");
+        String name = ParamUtils.getParameter(request, "name");
 
         if (service != null && name != null) {
             webManager.getMultiUserChatManager().deleteRetiree(service, name);
@@ -68,235 +74,214 @@
         }
     }
 
+    // Set up CSRF protection for subsequent requests
     csrfParam = StringUtils.randomString(15);
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
 
+    // Handle range parameter
     if (request.getParameter("range") != null) {
         webManager.setRowsPerPage("retirees-summary", range);
     }
 
+    // Get MUC service
     MultiUserChatService mucService = null;
     if (mucname != null && webManager.getMultiUserChatManager().isServiceRegistered(mucname)) {
         mucService = webManager.getMultiUserChatManager().getMultiUserChatService(mucname);
-    }
-    else {
+    } else {
         for (MultiUserChatService muc : webManager.getMultiUserChatManager().getMultiUserChatServices()) {
-            if (muc.isHidden()) {
-                // Private and hidden, skip it.
-                continue;
+            if (!muc.isHidden()) {
+                mucService = muc;
+                break;
             }
-            mucService = muc;
-            break;
         }
     }
 
+    // Redirect if no service exists
     if (mucService == null) {
-        // No services exist, so redirect to where one can configure the services
         response.sendRedirect("muc-service-summary.jsp");
         return;
     }
 
-    // Get the retirees manager
+    // Get retiree information
     int retireeCount = webManager.getMultiUserChatManager().getRetireeCount(mucService.getServiceName());
-
-    // paginator vars
-    int numPages = (int)Math.ceil((double) retireeCount /(double)range);
+    int numPages = (int)Math.ceil((double) retireeCount / (double)range);
     int curPage = (start/range) + 1;
 
+    // Get list of services for dropdown
+    Collection<MultiUserChatService> mucServices = new ArrayList<>();
+    for (MultiUserChatService service : webManager.getMultiUserChatManager().getMultiUserChatServices()) {
+        if (!service.isHidden()) {
+            mucServices.add(service);
+        }
+    }
+
+    // Get retirees for current page
+    Collection<String> retirees = webManager.getMultiUserChatManager().getRetirees(mucService.getServiceName(), start, range);
+
+    // Set attributes for JSTL
+    request.setAttribute("mucService", mucService);
+    request.setAttribute("mucServices", mucServices);
+    request.setAttribute("retireeCount", retireeCount);
+    request.setAttribute("numPages", numPages);
+    request.setAttribute("curPage", curPage);
+    request.setAttribute("start", start);
+    request.setAttribute("range", range);
+    request.setAttribute("rangePresets", RANGE_PRESETS);
+    request.setAttribute("retirees", retirees);
+    request.setAttribute("csrf", csrfParam);
 %>
+
+<html>
+<head>
+    <title><fmt:message key="muc.room.retirees.title"/></title>
+    <meta name="pageID" content="muc-room-retirees"/>
+</head>
+<body>
 
 <p>
     <fmt:message key="muc.room.retirees.info" />
-    <a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucService.getServiceName(), "UTF-8")%>"><%= StringUtils.escapeHTMLTags(mucService.getServiceDomain()) %></a>
+    <a href="muc-service-edit-form.jsp?mucname=${mucService.serviceName}"><c:out value="${mucService.serviceDomain}"/></a>
     <fmt:message key="muc.room.retirees.info2" />
 </p>
 
-<%  if (request.getParameter("deletesuccess") != null) { %>
-
+<c:if test="${param.deletesuccess != null}">
     <admin:infoBox type="success">
         <fmt:message key="muc.room.retirees.deleted" />
     </admin:infoBox>
-
-<%  } %>
+</c:if>
 
 <p>
-<fmt:message key="muc.room.retirees.total" />:
-<b><%= LocaleUtils.getLocalizedNumber(retireeCount) %></b>
+    <fmt:message key="muc.room.retirees.total" />:
+    <b><fmt:formatNumber value="${retireeCount}"/></b>
 
-<%  if (numPages > 1) { %>
-    --
-    <fmt:message key="global.showing" />
-    <%= LocaleUtils.getLocalizedNumber(start+1) %>-<%= LocaleUtils.getLocalizedNumber(Math.min(start + range, retireeCount)) %>,
+    <c:if test="${numPages > 1}">
+        --
+        <fmt:message key="global.showing" />
+        <fmt:formatNumber value="${start + 1}"/>-<fmt:formatNumber value="${Math.min(start + range, retireeCount.intValue())}"/>,
+    </c:if>
 
-<%  } %>
+    <c:if test="${retireeCount > 0}">
+        <fmt:message key="muc.room.retirees.sorted" />
+    </c:if>
 
-<% if (retireeCount > 0) { %>
-<fmt:message key="muc.room.retirees.sorted" />
-<% } %>
+    <c:if test="${mucServices.size() > 1}">
+        -- <fmt:message key="muc.room.summary.service" />:
+        <select name="mucname" id="mucname" onchange="location.href='muc-room-retirees.jsp?mucname=' + this.options[this.selectedIndex].value;">
+            <c:forEach items="${mucServices}" var="service">
+                <option value="<c:out value="${service.serviceName}"/>"
+                    ${service.serviceName eq mucService.serviceName ? 'selected' : ''}>
+                    <c:out value="${service.serviceDomain}"/>
+                </option>
+            </c:forEach>
+        </select>
+    </c:if>
 
-
-<% if (webManager.getMultiUserChatManager().getMultiUserChatServicesCount() > 1) { %>
--- <fmt:message key="muc.room.summary.service" />:
-<select name="mucname" id="mucname" onchange="location.href='muc-room-retirees.jsp?mucname=' + this.options[this.selectedIndex].value;">
-    <% for (MultiUserChatService service : webManager.getMultiUserChatManager().getMultiUserChatServices()) {
-        if (service.isHidden()) {
-            // Private and hidden, skip it.
-            continue;
-        }
-    %>
-    <option value="<%= StringUtils.escapeForXML(service.getServiceName()) %>"<%= mucService.getServiceName().equals(service.getServiceName()) ? " selected='selected'" : "" %>><%= StringUtils.escapeHTMLTags(service.getServiceDomain()) %></option>
-    <% } %>
-</select>
-<% } %>
-
-<% if (retireeCount > 0) { %>
--- <fmt:message key="muc.room.retirees.per_page" />:
-<select size="1" onchange="location.href='muc-room-retirees.jsp?start=0&range=' + this.options[this.selectedIndex].value;">
-
-    <% for (int aRANGE_PRESETS : RANGE_PRESETS) { %>
-
-    <option value="<%  if (aRANGE_PRESETS > 0) { %><%= aRANGE_PRESETS %><%  }else{ %><%= retireeCount %><%}%>"
-            <%= (aRANGE_PRESETS == range ? "selected" : "") %>><%  if (aRANGE_PRESETS > 0) { %><%= aRANGE_PRESETS %><%  }else{ %><%= retireeCount %><%}%>
-    </option>
-
-    <% } %>
-
-</select>
-<% } %>
-
+    <c:if test="${retireeCount > 0}">
+        -- <fmt:message key="muc.room.retirees.per_page" />:
+        <select size="1" onchange="location.href='muc-room-retirees.jsp?start=0&range=' + this.options[this.selectedIndex].value;">
+            <c:forEach items="${rangePresets}" var="preset">
+                <option value="${preset}" ${preset eq range ? 'selected' : ''}>
+                        ${preset}
+                </option>
+            </c:forEach>
+        </select>
+    </c:if>
 </p>
 
-<%  if (numPages > 1) { %>
-
+<c:if test="${numPages > 1}">
     <p>
-    <fmt:message key="global.pages" />:
-    [
-    <%  int num = 15 + curPage;
-        int s = curPage-1;
-        if (s > 5) {
-            s -= 5;
-        }
-        if (s < 5) {
-            s = 0;
-        }
-        if (s > 2) {
-    %>
-        <a href="muc-room-retirees.jsp?start=0&range=<%= range %>">1</a> ...
+        <fmt:message key="global.pages" />:
+        [
+        <c:set var="num" value="${15 + curPage}"/>
+        <c:set var="s" value="${curPage - 1}"/>
+        <c:if test="${s > 5}"><c:set var="s" value="${s - 5}"/></c:if>
+        <c:if test="${s < 5}"><c:set var="s" value="0"/></c:if>
 
-    <%
-        }
-        int i;
-        for (i=s; i<numPages && i<num; i++) {
-            String sep = ((i+1)<numPages) ? " " : "";
-            boolean isCurrent = (i+1) == curPage;
-    %>
-        <a href="muc-room-retirees.jsp?start=<%= (i*range) %>&range=<%= range %>"
-         class="<%= ((isCurrent) ? "jive-current" : "") %>"
-         ><%= (i+1) %></a><%= sep %>
+        <c:if test="${s > 2}">
+            <a href="muc-room-retirees.jsp?start=0&range=${range}">1</a> ...
+        </c:if>
 
-    <%  } %>
+        <c:forEach begin="${s}" end="${numPages-1}" var="i" varStatus="status">
+            <c:if test="${i < num}">
+                <c:set var="isCurrent" value="${(i+1) == curPage}"/>
+                <a href="muc-room-retirees.jsp?start=${i*range}&range=${range}"
+                   class="${isCurrent ? 'jive-current' : ''}">${i+1}</a>
+                ${!status.last ? ' ' : ''}
+            </c:if>
+        </c:forEach>
 
-    <%  if (i < numPages) { %>
-
-        ... <a href="muc-room-retirees.jsp?start=<%= ((numPages-1)*range) %>&range=<%= range %>"><%= numPages %></a>
-
-    <%  } %>
-
-    ]
-
+        <c:if test="${num < numPages}">
+            ... <a href="muc-room-retirees.jsp?start=${(numPages-1)*range}&range=${range}">${numPages}</a>
+        </c:if>
+        ]
     </p>
-
-<%  } %>
+</c:if>
 
 <div class="jive-table">
-<table>
-<thead>
-    <tr>
-        <th>&nbsp;</th>
-        <th nowrap><fmt:message key="user.create.name" /></th>
-        <th nowrap><fmt:message key="global.delete" /></th>
-    </tr>
-</thead>
-<tbody>
-
-<%  // Print the list of retirees
-    Collection<String> retirees = webManager.getMultiUserChatManager().getRetirees(mucService.getServiceName(), start, range);
-    if (retirees.isEmpty()) {
-%>
-    <tr>
-        <td style="text-align: center" colspan="7">
-            <fmt:message key="muc.room.retirees.no_retirees" />
-        </td>
-    </tr>
-
-<%
-    }
-
-    int i = start;
-    for (String retiree : retirees) {
-        i++;
-%>
-    <tr>
-        <td style="width: 1%">
-            <%= i %>
-        </td>
-        <td style="width: 20%">
-            <%= StringUtils.escapeHTMLTags(retiree) %> &nbsp;
-        </td>
-        <td style="width: 1%; text-align: center; border-right:1px #ccc solid;">
-            <a href="muc-room-retirees.jsp?delete=true&service=<%= URLEncoder.encode(mucService.getServiceName(), "UTF-8") %>&name=<%= URLEncoder.encode(retiree, "UTF-8") %>&csrf=<%= csrfParam %>"
-             title="<fmt:message key="global.click_delete" />"
-             ><img src="images/delete-16x16.gif" alt="<fmt:message key="global.click_delete" />"></a>
-        </td>
-    </tr>
-
-<%
-    }
-%>
-</tbody>
-</table>
+    <table>
+        <thead>
+        <tr>
+            <th>&nbsp;</th>
+            <th nowrap><fmt:message key="user.create.name" /></th>
+            <th nowrap><fmt:message key="global.delete" /></th>
+        </tr>
+        </thead>
+        <tbody>
+        <c:choose>
+            <c:when test="${empty retirees}">
+                <tr>
+                    <td style="text-align: center" colspan="7">
+                        <fmt:message key="muc.room.retirees.no_retirees" />
+                    </td>
+                </tr>
+            </c:when>
+            <c:otherwise>
+                <c:forEach items="${retirees}" var="retiree" varStatus="status">
+                    <tr>
+                        <td style="width: 1%">${start + status.count}</td>
+                        <td style="width: 20%"><c:out value="${retiree}"/> &nbsp;</td>
+                        <td style="width: 1%; text-align: center; border-right:1px #ccc solid;">
+                            <a href="muc-room-retirees.jsp?delete=true&service=${mucService.serviceName}&name=${retiree}&csrf=${csrf}"
+                               title="<fmt:message key="global.click_delete" />">
+                                <img src="images/delete-16x16.gif" alt="<fmt:message key="global.click_delete" />">
+                            </a>
+                        </td>
+                    </tr>
+                </c:forEach>
+            </c:otherwise>
+        </c:choose>
+        </tbody>
+    </table>
 </div>
 
-<%  if (numPages > 1) { %>
-
+<c:if test="${numPages > 1}">
     <p>
-    <fmt:message key="global.pages" />:
-    [
-    <%  int num = 15 + curPage;
-        int s = curPage-1;
-        if (s > 5) {
-            s -= 5;
-        }
-        if (s < 5) {
-            s = 0;
-        }
-        if (s > 2) {
-    %>
-        <a href="muc-room-retirees.jsp?start=0&range=<%= range %>">1</a> ...
+        <fmt:message key="global.pages" />:
+        [
+        <c:set var="num" value="${15 + curPage}"/>
+        <c:set var="s" value="${curPage - 1}"/>
+        <c:if test="${s > 5}"><c:set var="s" value="${s - 5}"/></c:if>
+        <c:if test="${s < 5}"><c:set var="s" value="0"/></c:if>
 
-    <%
-        }
-        for (i=s; i<numPages && i<num; i++) {
-            String sep = ((i+1)<numPages) ? " " : "";
-            boolean isCurrent = (i+1) == curPage;
-    %>
-        <a href="muc-room-retirees.jsp?start=<%= (i*range) %>&range=<%= range %>"
-         class="<%= ((isCurrent) ? "jive-current" : "") %>"
-         ><%= (i+1) %></a><%= sep %>
+        <c:if test="${s > 2}">
+            <a href="muc-room-retirees.jsp?start=0&range=${range}">1</a> ...
+        </c:if>
 
-    <%  } %>
+        <c:forEach begin="${s}" end="${numPages-1}" var="i" varStatus="status">
+            <c:if test="${i < num}">
+                <c:set var="isCurrent" value="${(i+1) == curPage}"/>
+                <a href="muc-room-retirees.jsp?start=${i*range}&range=${range}"
+                   class="${isCurrent ? 'jive-current' : ''}">${i+1}</a>
+                ${!status.last ? ' ' : ''}
+            </c:if>
+        </c:forEach>
 
-    <%  if (i < numPages) { %>
-
-        ... <a href="muc-room-retirees.jsp?start=<%= ((numPages-1)*range) %>&range=<%= range %>"><%= numPages %></a>
-
-    <%  } %>
-
-    ]
-
+        <c:if test="${num < numPages}">
+            ... <a href="muc-room-retirees.jsp?start=${(numPages-1)*range}&range=${range}">${numPages}</a>
+        </c:if>
+        ]
     </p>
+</c:if>
 
-<%  } %>
-
-    </body>
+</body>
 </html>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Ignite Realtime Foundation. All rights reserved
+ * Copyright (C) 2017-2024 Ignite Realtime Foundation. All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Delegate UserPropertyProvider operations among up to three configurable provider implementation classes.
@@ -50,7 +48,7 @@ import java.util.Map;
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
-public class HybridUserPropertyProvider implements UserPropertyProvider
+public class HybridUserPropertyProvider extends UserPropertyMultiProvider
 {
     private static final Logger Log = LoggerFactory.getLogger( HybridUserPropertyProvider.class );
 
@@ -87,194 +85,44 @@ public class HybridUserPropertyProvider implements UserPropertyProvider
         }
     }
 
-    /**
-     * Returns the properties from the first provider that returns a non-empty collection.
-     *
-     * When none of the providers provide properties an empty collection is returned.
-     *
-     * @param username The identifier of the user (cannot be null or empty).
-     * @return A collection, possibly empty, never null.
-     */
     @Override
-    public Map<String, String> loadProperties( String username )
+    protected List<UserPropertyProvider> getUserPropertyProviders()
     {
-        for ( final UserPropertyProvider provider : providers )
-        {
-            try
-            {
-                final Map<String, String> properties = provider.loadProperties( username );
-                if ( !properties.isEmpty() )
-                {
-                    return properties;
-                }
-            }
-            catch ( UserNotFoundException e )
-            {
-                // User not in this provider. Try other providers;
-            }
-        }
-        return Collections.emptyMap();
+        return providers;
     }
 
     /**
-     * Returns a property from the first provider that returns a non-null value.
+     * Returns the first provider that contains the user, or the first provider that is not read-only when the user
+     * does not exist in any provider.
      *
-     * This method will return null when the desired property was not defined in any provider.
-     *
-     * @param username The identifier of the user (cannot be null or empty).
-     * @param propName The property name (cannot be null or empty).
-     * @return The property value (possibly null).
+     * @param username the username (cannot be null or empty).
+     * @return The user property provider (never null)
      */
     @Override
-    public String loadProperty( String username, String propName )
+    public UserPropertyProvider getUserPropertyProvider(String username)
     {
-        for ( final UserPropertyProvider provider : providers )
+        UserPropertyProvider nonReadOnly = null;
+        for (final UserPropertyProvider provider : getUserPropertyProviders())
         {
             try
             {
-                final String property = provider.loadProperty( username, propName );
-                if ( property != null )
-                {
-                    return property;
-                }
+                provider.loadProperties(username);
             }
-            catch ( UserNotFoundException e )
+            catch (UserNotFoundException unfe)
             {
-                // User not in this provider. Try other providers;
-            }
-        }
-        return null;
-    }
+                Log.debug("User {} not found by UserPropertyProvider {}", username, provider.getClass().getName());
 
-    /**
-     * Adds a new property, updating a previous property value if one already exists.
-     *
-     * Note that the implementation of this method is equal to that of {@link #updateProperty(String, String, String)}.
-     *
-     * First, tries to find a provider that has the property for the provided user. If that provider is read-only, an
-     * UnsupportedOperationException is thrown. If the provider is not read-only, the existing property value will be
-     * updated.
-     *
-     * When the property is not defined in any provider, it will be added in the first non-read-only provider.
-     *
-     * When all providers are read-only, an UnsupportedOperationException is thrown.
-     *
-     * @param username  The identifier of the user (cannot be null or empty).
-     * @param propName  The property name (cannot be null or empty).
-     * @param propValue The property value (cannot be null).
-     */
-    @Override
-    public void insertProperty( String username, String propName, String propValue ) throws UnsupportedOperationException
-    {
-        updateProperty( username, propName, propValue );
-    }
-
-    /**
-     * Updates a property (or adds a new property when the property does not exist).
-     *
-     * Note that the implementation of this method is equal to that of {@link #insertProperty(String, String, String)}.
-     *
-     * First, tries to find a provider that has the property for the provided user. If that provider is read-only, an
-     * UnsupportedOperationException is thrown. If the provider is not read-only, the existing property value will be
-     * updated.
-     *
-     * When the property is not defined in any provider, it will be added in the first non-read-only provider.
-     *
-     * When all providers are read-only, an UnsupportedOperationException is thrown.
-     *
-     * @param username  The identifier of the user (cannot be null or empty).
-     * @param propName  The property name (cannot be null or empty).
-     * @param propValue The property value (cannot be null).
-     */
-    @Override
-    public void updateProperty( String username, String propName, String propValue ) throws UnsupportedOperationException
-    {
-        for ( final UserPropertyProvider provider : providers )
-        {
-            try
-            {
-                if ( provider.loadProperty( username, propName ) != null )
-                {
-                    provider.updateProperty( username, propName, propValue );
-                    return;
+                if (nonReadOnly == null && !provider.isReadOnly()) {
+                    nonReadOnly = provider;
                 }
-            }
-            catch ( UserNotFoundException e )
-            {
-                // User not in this provider. Try other providers;
             }
         }
 
-        for ( final UserPropertyProvider provider : providers )
-        {
-            try
-            {
-                if ( !provider.isReadOnly() )
-                {
-                    provider.insertProperty( username, propName, propValue );
-                    return;
-                }
-            }
-            catch ( UserNotFoundException e )
-            {
-                // User not in this provider. Try other providers;
-            }
-        }
-        throw new UnsupportedOperationException();
-    }
-
-    /**
-     * Removes a property from all non-read-only providers.
-     *
-     * @param username The identifier of the user (cannot be null or empty).
-     * @param propName The property name (cannot be null or empty).
-     */
-    @Override
-    public void deleteProperty( String username, String propName ) throws UnsupportedOperationException
-    {
-        // all providers are read-only
-        if ( isReadOnly() )
-        {
+        // User does not exist. Return a provider suitable for creating user properties.
+        if (nonReadOnly == null) {
             throw new UnsupportedOperationException();
         }
 
-        for ( final UserPropertyProvider provider : providers )
-        {
-            if ( provider.isReadOnly() )
-            {
-                continue;
-            }
-
-            try
-            {
-                provider.deleteProperty( username, propName );
-            }
-            catch ( UserNotFoundException e )
-            {
-                // User not in this provider. Try other providers;
-            }
-        }
-    }
-
-    /**
-     * Returns whether <em>all</em> backing providers are read-only. When read-only, properties can not be created,
-     * deleted, or modified. If at least one provider is not read-only, this method returns false.
-     *
-     * @return true when all backing providers are read-only, otherwise false.
-     */
-    @Override
-    public boolean isReadOnly()
-    {
-        // TODO Make calls concurrent for improved throughput.
-        for ( final UserPropertyProvider provider : providers )
-        {
-            // If at least one provider is not readonly, neither is this proxy.
-            if ( !provider.isReadOnly() )
-            {
-                return false;
-            }
-        }
-
-        return true;
+        return nonReadOnly;
     }
 }

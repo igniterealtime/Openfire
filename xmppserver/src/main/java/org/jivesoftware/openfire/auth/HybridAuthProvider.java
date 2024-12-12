@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,13 @@
 
 package org.jivesoftware.openfire.auth;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.*;
 
 /**
  * The hybrid auth provider allows up to three AuthProvider implementations to
@@ -76,7 +75,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Matt Tucker
  */
-public class HybridAuthProvider implements AuthProvider {
+public class HybridAuthProvider extends AuthMultiProvider {
 
     private static final Logger Log = LoggerFactory.getLogger(HybridAuthProvider.class);
     private static final SystemProperty<Class> PRIMARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
@@ -100,9 +99,9 @@ public class HybridAuthProvider implements AuthProvider {
     private AuthProvider secondaryProvider;
     private AuthProvider tertiaryProvider;
 
-    private Set<String> primaryOverrides = new HashSet<>();
-    private Set<String> secondaryOverrides = new HashSet<>();
-    private Set<String> tertiaryOverrides = new HashSet<>();
+    private final Set<String> primaryOverrides = new HashSet<>();
+    private final Set<String> secondaryOverrides = new HashSet<>();
+    private final Set<String> tertiaryOverrides = new HashSet<>();
 
     public HybridAuthProvider() {
         // Convert XML based provider setup to Database based
@@ -176,49 +175,99 @@ public class HybridAuthProvider implements AuthProvider {
     }
 
     @Override
-    public void authenticate(String username, String password) throws UnauthorizedException, ConnectionException, InternalUnauthenticatedException {
-        // Check overrides first.
-        if (primaryOverrides.contains(username.toLowerCase())) {
-            primaryProvider.authenticate(username, password);
-            return;
+    Collection<AuthProvider> getAuthProviders() {
+        final List<AuthProvider> result = new ArrayList<>();
+        if (primaryProvider != null) {
+            result.add(primaryProvider);
         }
-        else if (secondaryOverrides != null && secondaryOverrides.contains(username.toLowerCase())) {
-            secondaryProvider.authenticate(username, password);
-            return;
+        if (secondaryProvider != null) {
+            result.add(secondaryProvider);
         }
-        else if (tertiaryOverrides != null && tertiaryOverrides.contains(username.toLowerCase())) {
-            tertiaryProvider.authenticate(username, password);
-            return;
+        if (tertiaryProvider != null) {
+            result.add(tertiaryProvider);
         }
 
-        // Now perform normal
+        return result;
+    }
+
+    /**
+     * Returns an auth provider for the provided username, but only if the username is in the 'override' list for that
+     * provider.
+     *
+     * When this method returns null, all providers should be attempted. When this method returns a non-null value, then
+     * only the returned provider is to be used for the provided user.
+     *
+     * @param username A user identifier (cannot be null or empty).
+     * @return an auth provider that MUST be used for this user.
+     */
+    @Override
+    AuthProvider getAuthProvider(String username)
+    {
+        if (primaryOverrides.contains(username.toLowerCase())) {
+            return primaryProvider;
+        }
+        if (secondaryOverrides.contains(username.toLowerCase())) {
+            return secondaryProvider;
+        }
+        if (tertiaryOverrides.contains(username.toLowerCase())) {
+            return tertiaryProvider;
+        }
+        return null;
+    }
+
+    boolean hasOverride(String username) {
+        return getAuthProvider(username) != null;
+    }
+
+    @Override
+    public void authenticate(String username, String password) throws UnauthorizedException, ConnectionException, InternalUnauthenticatedException {
+        // Check overrides first.
         try {
-            primaryProvider.authenticate(username, password);
-        }
-        catch (UnauthorizedException ue) {
-            if (secondaryProvider != null) {
-                try {
-                    secondaryProvider.authenticate(username, password);
-                }
-                catch (UnauthorizedException ue2) {
-                    if (tertiaryProvider != null) {
-                        tertiaryProvider.authenticate(username, password);
-                    }
-                    else {
-                        throw ue2;
-                    }
-                }
-            }
-            else {
-                throw ue;
+            super.authenticate(username, password);
+            return;
+        } catch (UnauthorizedException e) {
+            if (hasOverride(username)) {
+                // An override was used. Must not try other providers.
+                throw e;
             }
         }
+
+        // When there's no override, try all providers in order.
+        for (final AuthProvider provider: getAuthProviders()) {
+            try {
+                provider.authenticate(username, password);
+                return;
+            } catch (UnauthorizedException e) {
+                Log.trace("Could not authenticate user {} with auth provider {}. Will try remaining providers (if any)", username, provider.getClass().getName(), e);
+            }
+        }
+        throw new UnauthorizedException();
     }
 
     @Override
     public String getPassword(String username)
             throws UserNotFoundException, UnsupportedOperationException
     {
+        // Check overrides first.
+        try {
+            return super.getPassword(username);
+        } catch (UserNotFoundException e) {
+            if (hasOverride(username)) {
+                // An override was used. Must not try other providers.
+                throw e;
+            }
+        }
+
+        // When there's no override, try all providers in order.
+        for (final AuthProvider provider: getAuthProviders()) {
+            try {
+                if (provider.supportsPasswordRetrieval()) {
+                    return provider.getPassword(username);
+                }
+            } catch (UserNotFoundException | UnsupportedOperationException e) {
+                Log.trace("Could find user {} with auth provider {}. Will try remaining providers (if any)", username, provider.getClass().getName(), e);
+            }
+        }
         throw new UnsupportedOperationException();
     }
 
@@ -226,72 +275,121 @@ public class HybridAuthProvider implements AuthProvider {
     public void setPassword(String username, String password)
             throws UserNotFoundException, UnsupportedOperationException
     {
-      // Check overrides first.
-      if (primaryOverrides.contains(username.toLowerCase())) {
-          primaryProvider.setPassword(username, password);
-          return;
-      }
-      else if (secondaryOverrides.contains(username.toLowerCase())) {
-          secondaryProvider.setPassword(username, password);
-          return;
-      }
-      else if (tertiaryOverrides.contains(username.toLowerCase())) {
-          tertiaryProvider.setPassword(username, password);
-          return;
-      }
+        // Check overrides first.
+        try {
+            super.setPassword(username, password);
+            return;
+        } catch (UserNotFoundException e) {
+            if (hasOverride(username)) {
+                // An override was used. Must not try other providers.
+                throw e;
+            }
+        }
 
-      // Now perform normal
-      try {
-          primaryProvider.setPassword(username, password);
-      }
-      catch (UserNotFoundException | UnsupportedOperationException ue) {
-          if (secondaryProvider != null) {
-              try {
-                  secondaryProvider.setPassword(username, password);
-              }
-              catch (UserNotFoundException | UnsupportedOperationException ue2) {
-                  if (tertiaryProvider != null) {
-                      tertiaryProvider.setPassword(username, password);
-                  }
-                  else {
-                      throw ue2;
-                  }
-              }
-          }
-          else {
-              throw ue;
-          }
-      }
-    }
-
-    @Override
-    public boolean supportsPasswordRetrieval() {
-        return false;
-    }
-
-    @Override
-    public boolean isScramSupported() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
-    @Override
-    public String getSalt(String username) throws UnsupportedOperationException, UserNotFoundException {
+        // When there's no override, try all providers in order.
+        for (final AuthProvider provider: getAuthProviders()) {
+            try {
+                provider.setPassword(username, password);
+            } catch (UserNotFoundException | UnsupportedOperationException e) {
+                Log.trace("Could set password for user {} with auth provider {}. Will try remaining providers (if any)", username, provider.getClass().getName(), e);
+            }
+        }
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public int getIterations(String username) throws UnsupportedOperationException, UserNotFoundException {
+    public String getSalt(String username) throws UnsupportedOperationException, UserNotFoundException
+    {
+        // Check overrides first.
+        try {
+            return super.getSalt(username);
+        } catch (UserNotFoundException e) {
+            if (hasOverride(username)) {
+                // An override was used. Must not try other providers.
+                throw e;
+            }
+        }
+
+        // When there's no override, try all providers in order.
+        for (final AuthProvider provider: getAuthProviders()) {
+            try {
+                provider.getSalt(username);
+            } catch (UserNotFoundException | UnsupportedOperationException e) {
+                Log.trace("Could get salt for user {} with auth provider {}. Will try remaining providers (if any)", username, provider.getClass().getName(), e);
+            }
+        }
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public String getServerKey(String username) throws UnsupportedOperationException, UserNotFoundException {
+    public int getIterations(String username) throws UnsupportedOperationException, UserNotFoundException
+    {
+        // Check overrides first.
+        try {
+            return super.getIterations(username);
+        } catch (UserNotFoundException e) {
+            if (hasOverride(username)) {
+                // An override was used. Must not try other providers.
+                throw e;
+            }
+        }
+
+        // When there's no override, try all providers in order.
+        for (final AuthProvider provider: getAuthProviders()) {
+            try {
+                provider.getIterations(username);
+            } catch (UserNotFoundException | UnsupportedOperationException e) {
+                Log.trace("Could get iterations for user {} with auth provider {}. Will try remaining providers (if any)", username, provider.getClass().getName(), e);
+            }
+        }
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public String getStoredKey(String username) throws UnsupportedOperationException, UserNotFoundException {
+    public String getServerKey(String username) throws UnsupportedOperationException, UserNotFoundException
+    {
+        // Check overrides first.
+        try {
+            return super.getServerKey(username);
+        } catch (UserNotFoundException e) {
+            if (hasOverride(username)) {
+                // An override was used. Must not try other providers.
+                throw e;
+            }
+        }
+
+        // When there's no override, try all providers in order.
+        for (final AuthProvider provider: getAuthProviders()) {
+            try {
+                provider.getServerKey(username);
+            } catch (UserNotFoundException | UnsupportedOperationException e) {
+                Log.trace("Could get serverkey for user {} with auth provider {}. Will try remaining providers (if any)", username, provider.getClass().getName(), e);
+            }
+        }
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getStoredKey(String username) throws UnsupportedOperationException, UserNotFoundException
+    {
+        // Check overrides first.
+        try {
+            return super.getStoredKey(username);
+        } catch (UserNotFoundException e) {
+            if (hasOverride(username)) {
+                // An override was used. Must not try other providers.
+                throw e;
+            }
+        }
+
+        // When there's no override, try all providers in order.
+        for (final AuthProvider provider: getAuthProviders()) {
+            try {
+                provider.getStoredKey(username);
+            } catch (UserNotFoundException | UnsupportedOperationException e) {
+                Log.trace("Could get storedkey for user {} with auth provider {}. Will try remaining providers (if any)", username, provider.getClass().getName(), e);
+            }
+        }
         throw new UnsupportedOperationException();
     }
 

@@ -65,7 +65,6 @@ import java.util.stream.Collectors;
  */
 @JiveID(JiveConstants.MUC_ROOM)
 public class MUCRoom implements GroupEventListener, UserEventListener, Externalizable, Result, Cacheable {
-
     private static final Logger Log = LoggerFactory.getLogger(MUCRoom.class);
 
     public static final SystemProperty<Boolean> JOIN_PRESENCE_ENABLE = SystemProperty.Builder.ofType(Boolean.class)
@@ -85,6 +84,12 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         .setKey("xmpp.muc.allowpm.blockall")
         .setDefaultValue(false)
         .setDynamic(true)
+        .build();
+
+    public static final SystemProperty<Boolean> BULK_MSG_RETRACTION_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.muc.bulkretraction")
+        .setDynamic(true)
+        .setDefaultValue(false)
         .build();
 
     /**
@@ -1309,6 +1314,55 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     }
 
     /**
+     * Asynchronously remove the chat history of a room from run-time memory and database storage.
+     * If bulk message retraction is enabled, it sends message retraction stanzas to all occupants.
+     */
+    public CompletableFuture<Void> clearChatHistory() {
+        return CompletableFuture.runAsync(() -> {
+            if(BULK_MSG_RETRACTION_ENABLED.getValue()) {
+                ListIterator<Message> reverseMessageHistory = roomHistory.getReverseMessageHistory();
+                while (reverseMessageHistory.hasPrevious()) {
+                    Message originalMsg = reverseMessageHistory.previous();
+                    Message retractionMsg = new Message();
+
+                    // Sets a unique ID for the retraction message by prefixing the original message ID with "retract-"
+                    retractionMsg.setID("retract-" + originalMsg.getID());
+                    // Sets the sender of the retraction message to be the chat room itself
+                    retractionMsg.setFrom(selfOccupantData.getOccupantJID());
+                    // Sets the recipient of the retraction message to be the chat room itself to send to all occupants
+                    retractionMsg.setTo(new JID(getName(), getMUCService().getServiceDomain(), null).toBareJID());
+                    retractionMsg.setType(Message.Type.groupchat);
+                    // An XML element is added to the message to indicate that it is a retraction, with an attribute specifying
+                    // the ID of the message being retracted
+                    retractionMsg.addChildElement("retract", "urn:xmpp:message-retract:1").addAttribute(
+                        "id",
+                        new JID(getName(), getMUCService().getServiceDomain(), null).toBareJID()
+                    );
+                    // A fallback element is added to provide a fallback message for clients that do not support message retraction
+                    retractionMsg.addChildElement("fallback", "urn:xmpp:fallback:0").addAttribute(
+                        "for",
+                        "urn:xmpp:message-retract:1"
+                    );
+                    retractionMsg.setBody(LocaleUtils.getLocalizedString("muc.room.clear_chat.retraction_fallback_msg"));
+                    // Finally, a hint is added to the message to indicate that it should be stored by the client.
+                    // This ensures that the retraction event is recorded and can be referenced later.
+                    retractionMsg.addChildElement("store", "urn:xmpp:hints");
+
+                    // Broadcast the retraction message but don't store it in the history
+                    broadcast(retractionMsg, false);
+                }
+            }
+
+            // Clear the history of the room from the DB if the room was persistent
+            MUCPersistenceManager.clearRoomChatFromDB(this);
+            // Remove the history of the room from memory (preventing it to pop up in a new room by the same name).
+            roomHistory.purge();
+            // Fire event to clear chat room history
+            MUCEventDispatcher.roomClearChatHistory(getJID());
+        });
+    }
+
+    /**
      * Destroys the room. Each occupant will be removed and will receive a presence stanza of type
      * "unavailable" whose "from" attribute will be the occupant's nickname that the user knows he
      * or she has been removed from the room.
@@ -1384,8 +1438,12 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         MUCPersistenceManager.deleteFromDB(this);
         // Remove the history of the room from memory (preventing it to pop up in a new room by the same name).
         roomHistory.purge();
+        // If we are not preserving room history on deletion, fire event to clear chat room history
+        if(!preserveHistOnRoomDeletion) {
+            MUCEventDispatcher.roomClearChatHistory(getJID());
+        }
         // Fire event that the room has been destroyed
-        MUCEventDispatcher.roomDestroyed(getSelfRepresentation().getOccupantJID());
+        MUCEventDispatcher.roomDestroyed(getJID());
     }
 
     /**
@@ -1757,6 +1815,11 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      */
     public void broadcast(@Nonnull final Message message)
     {
+        broadcast(message, true);
+    }
+
+    private void broadcast(@Nonnull final Message message, final boolean storeMsgInRoomHistory)
+    {
         Log.debug("Broadcasting message in room {} for occupant {}", this.getName(), message.getFrom() );
 
         if (!message.getFrom().asBareJID().equals(this.getJID())) {
@@ -1768,7 +1831,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         }
 
         // Add message to the room history
-        roomHistory.addMessage(message);
+        if (storeMsgInRoomHistory) roomHistory.addMessage(message);
         // Send message to occupants connected to this JVM
 
         // Create a defensive copy of the message that will be broadcast, as the broadcast will modify it ('to' addresses
@@ -1789,7 +1852,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
                 Log.warn("An unexpected exception prevented a message from {} to be broadcast to {}.", message.getFrom(), occupant.getUserAddress(), e);
             }
         }
-        if (isLogEnabled()) {
+        if (isLogEnabled() && storeMsgInRoomHistory) {
             JID senderAddress = getSelfRepresentation().getOccupantJID(); // default to the room being the sender of the message.
 
             // convert the MUC nickname/role JID back into a real user JID

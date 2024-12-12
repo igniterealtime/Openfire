@@ -961,6 +961,11 @@ public class OccupantManager implements MUCEventListener
     }
 
     @Override
+    public void roomClearChatHistory(JID roomJID) {
+        // Not used.
+    }
+
+    @Override
     public void messageReceived(JID roomJID, JID user, String nickname, Message message) {
         // Not used.
     }

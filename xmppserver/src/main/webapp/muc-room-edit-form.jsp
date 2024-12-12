@@ -448,6 +448,12 @@
         </admin:infobox>
     </c:if>
 
+    <%  if (request.getParameter("clearchatsuccess") != null) { %>
+            <admin:infoBox type="success">
+                <fmt:message key="muc.room.summary.cleared_chat" />
+            </admin:infoBox>
+    <%  } %>
+
     <c:choose>
         <c:when test="${not create}">
             <p>

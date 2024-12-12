@@ -196,6 +196,11 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     private boolean persistent;
 
     /**
+     * Prevent the room name from being re-used after the room has been destroyed.
+     */
+    private boolean retireOnDeletion;
+
+    /**
      * Moderated rooms enable only participants to speak. Users that join the room and aren't
      * participants can't speak (they are just visitors).
      */
@@ -370,6 +375,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         this.maxUsers = MUCPersistenceManager.getIntProperty(mucService.getServiceName(), "room.maxUsers", 30);
         this.publicRoom = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.publicRoom", true);
         this.persistent = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.persistent", false);
+        this.retireOnDeletion = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.retireOnDeletion", false);
         this.moderated = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.moderated", false);
         this.membersOnly = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.membersOnly", false);
         this.canOccupantsInvite = MUCPersistenceManager.getBooleanProperty(mucService.getServiceName(), "room.canOccupantsInvite", false);
@@ -1381,7 +1387,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         }
 
         // Remove the room from the DB if the room was persistent
-        MUCPersistenceManager.deleteFromDB(this);
+        MUCPersistenceManager.deleteFromDB(this, alternateJID, reason);
         // Remove the history of the room from memory (preventing it to pop up in a new room by the same name).
         roomHistory.purge();
         // Fire event that the room has been destroyed
@@ -3384,6 +3390,29 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      */
     public void setModerated(boolean moderated) {
         this.moderated = moderated;
+    }
+
+
+    /**
+     * Returns whether the room should be retired on deletion.
+     *
+     * Retiring a room means that this room's name cannot be used again on room deletion
+     *
+     * @return true if the room should be retired on deletion
+     */
+    public boolean isRetireOnDeletion() {
+        return retireOnDeletion;
+    }
+
+    /**
+     * Sets whether the room should be retired on deletion.
+     *
+     * Retiring a room means that this room's name cannot be used again after room deletion.
+     *
+     * @param retire true if the room should be retired on deletion
+     */
+    public void setRetireOnDeletion(boolean retire) {
+        this.retireOnDeletion = retire;
     }
 
     /**

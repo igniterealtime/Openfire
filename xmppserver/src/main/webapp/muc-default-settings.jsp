@@ -38,6 +38,7 @@
 
     String publicRoom = ParamUtils.getParameter(request, "roomconfig_publicroom");
     String persistentRoom = ParamUtils.getParameter(request, "roomconfig_persistentroom");
+    String retireOnDeletion = ParamUtils.getParameter(request, "roomconfig_retireondel");
     String moderatedRoom = ParamUtils.getParameter(request, "roomconfig_moderatedroom");
     String membersOnly = ParamUtils.getParameter(request, "roomconfig_membersonly");
     String nonanonymous = ParamUtils.getParameter(request, "roomconfig_nonanonymous");
@@ -102,6 +103,12 @@
             }
             else {
                 MUCPersistenceManager.setProperty(mucname, "room.persistent", "false");
+            }
+            if (retireOnDeletion != null && retireOnDeletion.trim().length() > 0) {
+                MUCPersistenceManager.setProperty(mucname, "room.retireOnDeletion", "true");
+            }
+            else {
+                MUCPersistenceManager.setProperty(mucname, "room.retireOnDeletion", "false");
             }
             if (moderatedRoom != null && moderatedRoom.trim().length() > 0) {
                 MUCPersistenceManager.setProperty(mucname, "room.moderated", "true");
@@ -192,6 +199,7 @@
     pageContext.setAttribute("mucname", mucname);
     pageContext.setAttribute("publicRoom", MUCPersistenceManager.getBooleanProperty(mucname, "room.publicRoom", true));
     pageContext.setAttribute("persistent", MUCPersistenceManager.getBooleanProperty(mucname, "room.persistent", false));
+    pageContext.setAttribute("retireOnDeletion", MUCPersistenceManager.getBooleanProperty(mucname, "room.retireOnDeletion", false));
     pageContext.setAttribute("moderated", MUCPersistenceManager.getBooleanProperty(mucname, "room.moderated", false));
     pageContext.setAttribute("membersOnly", MUCPersistenceManager.getBooleanProperty(mucname, "room.membersOnly", false));
     pageContext.setAttribute("canAnyoneDiscoverJID", MUCPersistenceManager.getBooleanProperty(mucname, "room.canAnyoneDiscoverJID", true));
@@ -269,6 +277,10 @@
             <tr>
                 <td><input name="roomconfig_persistentroom" value="true" id="persistentRoom" type="checkbox" ${persistent ? 'checked' : ''}></td>
                 <td><label for="persistentRoom"><fmt:message key="muc.default.settings.persistent_room" /></label></td>
+            </tr>
+            <tr>
+                <td><input name="roomconfig_retireondel" value="true" id="retireOnDeletion" type="checkbox" ${retireOnDeletion ? 'checked' : ''}></td>
+                <td><label for="retireOnDeletion"><fmt:message key="muc.default.settings.retire" /></label></td>
             </tr>
             <tr>
                 <td><input name="roomconfig_moderatedroom" value="true" id="moderated" type="checkbox" ${moderated ? 'checked' : ''}></td>

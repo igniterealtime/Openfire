@@ -249,10 +249,15 @@ public class DefaultUserProvider implements UserProvider {
             con = DbConnectionManager.getConnection();
             if ((startIndex==0) && (numResults==Integer.MAX_VALUE))
             {
-                pstmt = con.prepareStatement(ALL_USERS);
+                // MSSQL differentiates between client-cursored and server-cursored result sets. For server-cursored result
+                // sets, the fetch buffer and scroll window are the same size (as opposed to fetch buffer containing all
+                // the rows). To hint that a server-cursored result set is desired, it should be configured to be 'forward
+                // only' as well as 'read only'.
+                pstmt = con.prepareStatement(ALL_USERS, ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
                 // Set the fetch size. This will prevent some JDBC drivers from trying
                 // to load the entire result set into memory.
                 DbConnectionManager.setFetchSize(pstmt, 500);
+                pstmt.setFetchDirection(ResultSet.FETCH_FORWARD);
                 rs = pstmt.executeQuery();
                 while (rs.next()) {
                     usernames.add(rs.getString(1));

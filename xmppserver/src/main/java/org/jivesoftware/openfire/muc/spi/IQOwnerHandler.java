@@ -278,6 +278,12 @@ public class IQOwnerHandler {
             room.setPublicRoom( parseFirstValueAsBoolean( field, true ) );
         }
 
+        field = completedForm.getField("{http://igniterealtime.org}muc#roomconfig_retireondel");
+        if (field != null) {
+            final boolean newValue = parseFirstValueAsBoolean(field, true);
+            room.setRetireOnDeletion(newValue);
+        }
+
         field = completedForm.getField("{http://igniterealtime.org}muc#roomconfig_preservehistondel");
         if (field != null) {
             final boolean newValue = parseFirstValueAsBoolean(field, true);

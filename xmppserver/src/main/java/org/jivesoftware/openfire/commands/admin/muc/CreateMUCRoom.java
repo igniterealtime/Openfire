@@ -135,7 +135,11 @@ public class CreateMUCRoom extends AdHocCommand {
             }
             catch (NotAllowedException e) {
                 note.addAttribute("type", "error");
-                note.setText(LocaleUtils.getLocalizedString("commands.admin.muc.createmucroom.note.no-permission", preferredLocale));
+                String localeKey = switch(e.getReason()) {
+                    case ROOM_RETIRED -> "commands.admin.muc.createmucroom.note.retired";
+                    case INSUFFICIENT_PERMISSIONS -> "commands.admin.muc.createmucroom.note.no-permission";
+                };
+                note.setText(LocaleUtils.getLocalizedString(localeKey, preferredLocale));
                 return;
             }
 

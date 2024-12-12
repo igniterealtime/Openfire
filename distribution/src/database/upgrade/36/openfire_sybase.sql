@@ -3,6 +3,7 @@ ALTER TABLE ofMucRoom ADD retireOnDeletion INT DEFAULT 0 NOT NULL;
 CREATE TABLE ofMucRoomRetiree (
   serviceID           INT           NOT NULL,
   name                NVARCHAR(50)  NOT NULL,
+  retiredAt           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT ofMucRoomRetiree_pk PRIMARY KEY (serviceID, name)
 )
 

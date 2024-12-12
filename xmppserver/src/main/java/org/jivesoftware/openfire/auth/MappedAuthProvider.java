@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 IgniteRealtime.org, 2016-2019 Ignite Realtime Foundation. All rights reserved
+ * Copyright (C) 2016 IgniteRealtime.org, 2016-2024 Ignite Realtime Foundation. All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
 
+import java.util.Collection;
+import java.util.List;
+
 /**
  * A {@link AuthProvider} that delegates to a user-specific AuthProvider.
  *
@@ -39,7 +42,7 @@ import org.jivesoftware.util.JiveGlobals;
  *
  * @author Guus der Kinderen, guus@goodbytes.nl
  */
-public class MappedAuthProvider implements AuthProvider
+public class MappedAuthProvider extends AuthMultiProvider
 {
     /**
      * Name of the property of which the value is expected to be the classname of the AuthProviderMapper instance to be
@@ -76,111 +79,13 @@ public class MappedAuthProvider implements AuthProvider
     }
 
     @Override
-    public void authenticate( String username, String password ) throws UnauthorizedException, ConnectionException, InternalUnauthenticatedException
-    {
-        final AuthProvider provider = mapper.getAuthProvider( username );
-        if ( provider == null )
-        {
-            throw new UnauthorizedException();
-        }
-        provider.authenticate( username, password );
+    Collection<AuthProvider> getAuthProviders() {
+        return mapper.getAuthProviders();
     }
 
     @Override
-    public String getPassword( String username ) throws UserNotFoundException, UnsupportedOperationException
+    AuthProvider getAuthProvider(String username)
     {
-        final AuthProvider provider = mapper.getAuthProvider( username );
-        if ( provider == null )
-        {
-            throw new UserNotFoundException();
-        }
-        return provider.getPassword( username );
-    }
-
-    @Override
-    public void setPassword( String username, String password ) throws UserNotFoundException, UnsupportedOperationException
-    {
-        final AuthProvider provider = mapper.getAuthProvider( username );
-        if ( provider == null )
-        {
-            throw new UserNotFoundException();
-        }
-        provider.setPassword( username, password );
-    }
-
-    @Override
-    public boolean supportsPasswordRetrieval()
-    {
-        // TODO Make calls concurrent for improved throughput.
-        for ( final AuthProvider provider : mapper.getAuthProviders() )
-        {
-            // If at least one provider supports password retrieval, so does this proxy.
-            if ( provider.supportsPasswordRetrieval() )
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    @Override
-    public boolean isScramSupported()
-    {
-        // TODO Make calls concurrent for improved throughput.
-        for ( final AuthProvider provider : mapper.getAuthProviders() )
-        {
-            // If at least one provider supports SCRAM, so does this proxy.
-            if ( provider.isScramSupported() )
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    @Override
-    public String getSalt(String username) throws UserNotFoundException
-    {
-        final AuthProvider provider = mapper.getAuthProvider( username );
-        if ( provider == null )
-        {
-            throw new UserNotFoundException();
-        }
-        return provider.getSalt( username );
-    }
-
-    @Override
-    public int getIterations(String username) throws UserNotFoundException
-    {
-        final AuthProvider provider = mapper.getAuthProvider( username );
-        if ( provider == null )
-        {
-            throw new UserNotFoundException();
-        }
-        return provider.getIterations( username );
-    }
-
-    @Override
-    public String getServerKey(String username) throws UserNotFoundException
-    {
-        final AuthProvider provider = mapper.getAuthProvider( username );
-        if ( provider == null )
-        {
-            throw new UserNotFoundException();
-        }
-        return provider.getServerKey( username );
-    }
-
-    @Override
-    public String getStoredKey(String username) throws UserNotFoundException
-    {
-        final AuthProvider provider = mapper.getAuthProvider( username );
-        if ( provider == null )
-        {
-            throw new UserNotFoundException();
-        }
-        return provider.getStoredKey( username );
+        return mapper.getAuthProvider(username);
     }
 }

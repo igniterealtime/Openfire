@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Openfire: Integrating with more than one External Data Source</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<article>
+
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
+        <h1>Integrating with more than one External Data Source</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </nav>
+
+    <section id="intro">
+
+        <h2>Introduction</h2>
+
+        <p>
+            Openfire can be configured to use a variety of external sources for authentication, users and groups. This is useful
+            when your users already have accounts in an external system, and you do not wish to duplicate those accounts. More
+            information on this subject is available in the <a href="db-integration-guide.html">Custom Database Integration
+            Guide</a>, as well as the <a href="ldap-guide.html">LDAP guide</a>. You can even develop your own, custom
+            connectivity to external data sources, as described in the <a href="implementing-userprovider-guide.html">Custom User Provider Guide</a>,
+            <a href="implementing-authprovider-guide.html">Custom Authentication Provider Guide</a> and
+            <a href="implementing-groupprovider-guide.html">Custom Group Provider Guide</a>.
+        </p>
+        <p>
+            This document takes the concept one step further, and provides instructions on how to configure Openfire to obtain
+            its users from multiple backend systems.
+        </p>
+
+        <p>Topics that are covered in this document:</p>
+
+        <nav>
+            <ul>
+                <li><a href="#mapped-providers">Mapped Providers</a></li>
+                <li><a href="#hybrid-providers">Hybrid Providers</a></li>
+            </ul>
+        </nav>
+
+    </section>
+
+    <section id="mapped-providers">
+
+        <h2>Mapped Providers</h2>
+
+        <aside>
+            <p>
+                A <em>Mapped</em> provider differs from a <em>Hybrid</em> provider in that it uses a Mapper to select exactly
+                one provider from which data is obtained, whereas a Hybrid provider will iteratively run over all configured
+                providers until one is found that is able to fulfill the data demand.
+            </p>
+        </aside>
+        <p>
+            A Mapped Provider is a provider that based on a particular characteristic of a user, uses a different provider
+            to perform the actual operations.
+        </p>
+        <p>
+            Openfire provides mapped providers for the following types of data:
+        </p>
+        <dl>
+            <dt>Authentication</dt>
+            <dd><code><a href="javadoc/org/jivesoftware/openfire/auth/MappedAuthProvider.html">org.jivesoftware.openfire.auth.MappedAuthProvider</a></code></dd>
+
+            <dt>Users</dt>
+            <dd><code><a href="javadoc/org/jivesoftware/openfire/user/MappedUserProvider.html">org.jivesoftware.openfire.user.MappedUserProvider</a></code></dd>
+
+            <dt>Groups</dt>
+            <dd><code><a href="javadoc/org/jivesoftware/openfire/group/MappedGroupProvider.html">org.jivesoftware.openfire.group.MappedGroupProvider</a></code></dd>
+
+            <dt>User Properties</dt>
+            <dd><code><a href="javadoc/org/jivesoftware/openfire/user/property/MappedUserPropertyProvider.html">org.jivesoftware.openfire.user.property.MappedUserPropertyProvider</a></code></dd>
+        </dl>
+        <p>
+            A Mapped Provider is configured with a Mapper. The Mapper will determine
+            which secondary provider to use for a particular user. Openfire provides the following types of Mappers:
+        </p>
+        <ul>
+            <li><code>Authorization Based Mapper</code> -- to draw administrative users from another source than the regular, non-administrative users.</li>
+            <li><code>Property Based Mapper</code> -- uses properties to define sets of usernames and a corresponding provider.</li>
+        </ul>
+        <p>
+            For each type of data, these Mappers are available
+        </p>
+        <table>
+            <tr>
+                <th></th>
+                <th>Authorization Based</th>
+                <th>Property Based</th>
+            </tr>
+            <tr>
+                <th>Authentication</th>
+                <td><code><a href="javadoc/org/jivesoftware/openfire/auth/AuthorizationBasedAuthProviderMapper.html">org.jivesoftware.openfire.auth.AuthorizationBasedAuthProviderMapper</a></code></td>
+                <td><code><a href="javadoc/org/jivesoftware/openfire/auth/PropertyBasedAuthProviderMapper.html">org.jivesoftware.openfire.auth.PropertyBasedAuthProviderMapper</a></code></td>
+            </tr>
+            <tr>
+                <th>Users</th>
+                <td><code><a href="javadoc/org/jivesoftware/openfire/user/AuthorizationBasedUserProviderMapper.html">org.jivesoftware.openfire.user.AuthorizationBasedUserProviderMapper</a></code></td>
+                <td><code><a href="javadoc/org/jivesoftware/openfire/user/PropertyBasedUserProviderMapper.html">org.jivesoftware.openfire.user.PropertyBasedUserProviderMapper</a></code></td>
+            </tr>
+            <tr>
+                <th>Groups</th>
+                <td><code><a href="javadoc/org/jivesoftware/openfire/group/AuthorizationBasedGroupProviderMapper.html">org.jivesoftware.openfire.group.AuthorizationBasedGroupProviderMapper</a></code></td>
+                <td><code><a href="javadoc/org/jivesoftware/openfire/group/PropertyBasedGroupProviderMapper.html">org.jivesoftware.openfire.group.PropertyBasedGroupProviderMapper</a></code></td>
+            </tr>
+            <tr>
+                <th>User Properties</th>
+                <td><code><a href="javadoc/org/jivesoftware/openfire/user/properts/AuthorizationBasedUserPropertyProviderMapper.html">org.jivesoftware.openfire.user.property.AuthorizationBasedUserPropertyProviderMapper</a></code></td>
+                <td><code><a href="javadoc/org/jivesoftware/openfire/user/property/PropertyBasedUserPropertyProviderMapper.html">org.jivesoftware.openfire.user.property.PropertyBasedUserPropertyProviderMapper</a></code></td>
+            </tr>
+        </table>
+
+        <h3>Example Configuration</h3>
+
+        <p>
+            An elaborate example, including configuration examples, of how Mapped Providers can be used is provided in the
+            <a href="separating-admin-users-guide.html">Separating Administrative Users Guide</a>. This is a guide to
+            setting up Openfire to work with different user stores for admins and non-administrative users, by utilizing Mapped Providers.
+        </p>
+
+    </section>
+
+    <section id="hybrid-providers">
+
+        <h2>Hybrid Providers</h2>
+
+        <aside>
+            <p>
+                A <em>Hybrid</em> provider differs from a <em>Mapped</em> provider in that it will iteratively run over
+                all configured providers until one is found that is able to fulfill the data demand, whereas a Hybrid
+                provider uses a Mapper to select exactly one provider from which data is obtained.
+            </p>
+        </aside>
+        <p>
+            The Hybrid variant of the providers iterates over its backing providers, operating on the first applicable
+            instance.
+        </p>
+        <p>
+            Openfire provides hybrid providers for the following types of data:
+        </p>
+        <dl>
+            <dt>Authentication</dt>
+            <dd><code><a href="javadoc/org/jivesoftware/openfire/auth/HybridAuthProvider.html">org.jivesoftware.openfire.auth.HybridAuthProvider</a></code></dd>
+
+            <dt>Users</dt>
+            <dd><code><a href="javadoc/org/jivesoftware/openfire/user/HybridUserProvider.html">org.jivesoftware.openfire.user.HybridUserProvider</a></code></dd>
+
+            <dt>Groups</dt>
+            <dd><code><a href="javadoc/org/jivesoftware/openfire/group/HybridGroupProvider.html">org.jivesoftware.openfire.group.HybridGroupProvider</a></code></dd>
+
+            <dt>User Properties</dt>
+            <dd><code><a href="javadoc/org/jivesoftware/openfire/user/property/HybridUserPropertyProvider.html">org.jivesoftware.openfire.user.property.HybridUserPropertyProvider</a></code></dd>
+        </dl>
+        <p>
+            Each Hybrid provider is configured to use up to three backing providers. These are configured through properties like these for the <code>HybridAuthProvider</code>:
+        </p>
+        <ul>
+            <li><code>hybridAuthProvider.primaryProvider.className</code></li>
+            <li><code>hybridAuthProvider.secondaryProvider.className</code></li>
+            <li><code>hybridAuthProvider.tertiaryProvider.className</code></li>
+        </ul>
+        <p>
+            The property value for each of these will be the canoncial class name of the desired backing provider. Please refer to the documentation of each Hybrid provider for the names of the properties used by that provider.
+        </p>
+
+        <h3>Example Configuration</h3>
+
+        <p>
+            Below is a sample config file section that illustrates the usage of Hybrid providers. For brevity, this
+            example is limited to User and Auth providers (note: the "..." sections in the examples indicate areas where
+            the rest of the config file would exist).
+        </p>
+
+        <p>
+            First, Openfire is configured to use the Hybrid providers:
+        </p>
+
+        <fieldset>
+            <legend>openfire.xml configuration: enable 'Hybrid Providers'</legend>
+            <pre><code>&lt;jive&gt;
+    ...
+    &lt;provider&gt;
+        &lt;auth&gt;
+            &lt;className&gt;org.jivesoftware.openfire.auth.HybridAuthProvider&lt;/className&gt;
+        &lt;/auth&gt;
+        &lt;user&gt;
+            &lt;className&gt;org.jivesoftware.openfire.user.HybridUserProvider&lt;/className&gt;
+        &lt;/user&gt;
+    &lt;/provider&gt;
+    ...
+&lt;/jive&gt;</code></pre>
+        </fieldset>
+
+        <p>
+            Next, each Hybrid provider is configured with a set of providers to use to interact with data stores. In the
+            example below, both an LDAP store and the default Openfire data stores are used.
+        </p>
+
+        <fieldset>
+            <legend>openfire.xml configuration: Adding specific providers</legend>
+            <pre><code>&lt;jive&gt;
+    ...
+    &lt;hybridAuthProvider&gt;
+        &lt;primaryProvider&gt;
+            &lt;className&gt;org.jivesoftware.openfire.ldap.LdapAuthProvider&lt;/className&gt;
+        &lt;/primaryProvider&gt;
+        &lt;secondaryProvider&gt;
+            &lt;className&gt;org.jivesoftware.openfire.auth.DefaultAuthProvider&lt;/className&gt;
+        &lt;/secondaryProvider&gt;
+    &lt;/hybridAuthProvider&gt;
+
+    &lt;hybridUserProvider&gt;
+        &lt;primaryProvider&gt;
+            &lt;className&gt;org.jivesoftware.openfire.ldap.LdapUserProvider&lt;/className&gt;
+        &lt;/primaryProvider&gt;
+        &lt;secondaryProvider&gt;
+            &lt;className&gt;org.jivesoftware.openfire.user.DefaultUserProvider&lt;/className&gt;
+        &lt;/secondaryProvider&gt;
+    &lt;/hybridUserProvider&gt;
+    ...
+&lt;/jive&gt;</code></pre>
+        </fieldset>
+
+        <p>
+            The above completes the configuration of the Hybrid providers. When backing providers require additional
+            configuration, that should be added too. Shown below is the LDAP connection configuration which will be
+            used by the LDAP user and auth Provider. For good measure, a commonly-used property is used that defines
+            what usernames are considered to be administrators.
+        </p>
+
+        <fieldset>
+            <legend>openfire.xml configuration: Wrapping up configuration</legend>
+            <pre><code>&lt;jive&gt;
+    ...
+    &lt;ldap&gt;
+        &lt;host&gt;localhost&lt;/host&gt;
+        &lt;port&gt;389&lt;/port&gt;
+        &lt;baseDN&gt;ou=people,dc=springfield,dc=com&lt;/baseDN&gt;
+        &lt;adminDN&gt;cn=admin,dc=springfield,dc=com&lt;/adminDN&gt;
+        &lt;adminPassword&gt;Anytown&lt;/adminPassword&gt;
+        &lt;startTlsEnabled&gt;false&lt;/startTlsEnabled&gt;
+        &lt;sslEnabled&gt;false&lt;/sslEnabled&gt;
+    &lt;/ldap&gt;
+
+    &lt;admin&gt;
+        &lt;authorizedUsernames&gt;bart&lt;/authorizedUsernames&gt;
+    &lt;/admin&gt;
+    ...
+&lt;/jive&gt;</code></pre>
+        </fieldset>
+
+        <h3>Using more than one provider of the same type</h3>
+
+        <p>
+            The example above shows how a Hybrid provider is used to delegate access to two data stores of different
+            types: an LDAP store, and Openfire's own store. What if you'd like to use two LDAP services, each on a
+            separate host?
+        </p>
+        <p>
+            In the configuration example above, both the <code>LdapAuthProvider</code> and <code>LdapUserProvider</code>
+            use the same LDAP connectivity configuration. All LDAP providers by default will use LDAP connectivity
+            configuration as defined in the <code>ldap</code> properties. How can you configure multiple LDAP providers
+            that each connect to a different LDAP host?
+        </p>
+        <p>
+            The configuration of each backing provider configured in a Hybrid provider can include an optional
+            <code>config</code> element. This element is used to point at the property that holds the connection
+            configuration for the provider.
+        </p>
+        <p>
+            In the example below, Hybrid providers are configured for both Auth and Users. Each Hybrid provider is
+            configured to use two backing providers, that are both LDAP-based. Note how for each provider, a <code>config</code>
+            value is provided that refers to another property, in which the LDAP connection information that's applicable
+            to that provider is defined.
+        </p>
+
+        <fieldset>
+            <legend>openfire.xml configuration: Using two different LDAP servers</legend>
+            <pre><code>&lt;jive&gt;
+    ...
+    &lt;provider&gt;
+        &lt;auth&gt;
+            &lt;className&gt;org.jivesoftware.openfire.auth.HybridAuthProvider&lt;/className&gt;
+        &lt;/auth&gt;
+        &lt;user&gt;
+            &lt;className&gt;org.jivesoftware.openfire.user.HybridUserProvider&lt;/className&gt;
+        &lt;/user&gt;
+    &lt;/provider&gt;
+
+    &lt;hybridAuthProvider&gt;
+        &lt;primaryProvider&gt;
+            &lt;className&gt;org.jivesoftware.openfire.ldap.LdapAuthProvider&lt;/className&gt;
+            &lt;config&gt;ldapPrimary&lt;/config&gt;
+        &lt;/primaryProvider&gt;
+        &lt;secondaryProvider&gt;
+            &lt;className&gt;org.jivesoftware.openfire.ldap.LdapAuthProvider&lt;/className&gt;
+            &lt;config&gt;ldapSecondary&lt;/config&gt;
+        &lt;/secondaryProvider&gt;
+    &lt;/hybridAuthProvider&gt;
+
+    &lt;hybridUserProvider&gt;
+        &lt;primaryProvider&gt;
+            &lt;className&gt;org.jivesoftware.openfire.ldap.LdapUserProvider&lt;/className&gt;
+            &lt;config&gt;ldapPrimary&lt;/config&gt;
+        &lt;/primaryProvider&gt;
+        &lt;secondaryProvider&gt;
+            &lt;className&gt;org.jivesoftware.openfire.ldap.LdapUserProvider&lt;/className&gt;
+            &lt;config&gt;ldapSecondary&lt;/config&gt;
+        &lt;/secondaryProvider&gt;
+    &lt;/hybridUserProvider&gt;
+
+    &lt;ldapPrimary&gt;
+        &lt;host&gt;dc.springfieldcom&lt;/host&gt;
+        &lt;port&gt;10389&lt;/port&gt;
+        &lt;baseDN&gt;dc=springfield,dc=com&lt;/baseDN&gt;
+        &lt;adminDN&gt;cn=admin,dc=springfield,dc=com&lt;/adminDN&gt;
+        &lt;adminPassword&gt;Anytown&lt;/adminPassword&gt;
+        &lt;startTlsEnabled&gt;false&lt;/startTlsEnabled&gt;
+        &lt;sslEnabled&gt;false&lt;/sslEnabled&gt;
+    &lt;/ldapPrimary&gt;
+
+    &lt;ldapSecondary&gt;
+        &lt;host&gt;ldap.planetexpress.com&lt;/host&gt;
+        &lt;port&gt;389&lt;/port&gt;
+        &lt;baseDN&gt;ou=people,dc=planetexpress,dc=com&lt;/baseDN&gt;
+        &lt;adminDN&gt;cn=admin,dc=planetexpress,dc=com&lt;/adminDN&gt;
+        &lt;adminPassword&gt;GoodNewsEveryone&lt;/adminPassword&gt;
+        &lt;startTlsEnabled&gt;false&lt;/startTlsEnabled&gt;
+        &lt;sslEnabled&gt;false&lt;/sslEnabled&gt;
+        &lt;groupSearchFilter&gt;(objectClass=Group)&lt;/groupSearchFilter&gt;
+    &lt;/ldapSecondary&gt;
+    ...
+&lt;/jive&gt;</code></pre>
+        </fieldset>
+    </section>
+
+    <section id="faq">
+
+        <h2>Frequently Asked Questions</h2>
+
+        <h4>Can I add my own Mapper?</h4>
+        <p>
+            Absolutely. You can implement your custom implementation and place the new custom library in the Openfire lib
+            directory. This will ensure it is automatically available at startup. You can then reference it in Openfire's
+            configuration by its canonical class name.
+        </p>
+
+        <h4>Can I use my custom auth/user/group provider in a Mapped or Hybrid provider?</h4>
+        <p>
+            Yes! If you've impelmented custom code (as described in the <a href="implementing-userprovider-guide.html">Custom User Provider Guide</a>,
+            <a href="implementing-authprovider-guide.html">Custom Authentication Provider Guide</a> and
+            <a href="implementing-groupprovider-guide.html">Custom Group Provider Guide</a>) then you can use reference
+            these implementations by their canonical class name in Openfire's configuration.
+        </p>
+
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
+
+</body>
+</html>

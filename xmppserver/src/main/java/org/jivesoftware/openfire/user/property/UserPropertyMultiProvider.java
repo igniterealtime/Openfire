@@ -15,8 +15,6 @@
  */
 package org.jivesoftware.openfire.user.property;
 
-import org.jivesoftware.openfire.auth.AuthProvider;
-import org.jivesoftware.openfire.group.GroupProvider;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;

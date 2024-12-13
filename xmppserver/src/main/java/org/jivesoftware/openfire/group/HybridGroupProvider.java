@@ -16,16 +16,13 @@
 package org.jivesoftware.openfire.group;
 
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.PersistableMap;
 import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xmpp.packet.JID;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Delegate GroupProvider operations among up to three configurable provider implementation classes.
@@ -40,7 +37,7 @@ public class HybridGroupProvider extends GroupMultiProvider
 {
     private static final Logger Log = LoggerFactory.getLogger(HybridGroupProvider.class);
 
-    private static final SystemProperty<Class> PRIMARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+    public static final SystemProperty<Class> PRIMARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
         .setKey("hybridGroupProvider.primaryProvider.className")
         .setBaseClass(GroupProvider.class)
         .setDynamic(false)
@@ -51,7 +48,7 @@ public class HybridGroupProvider extends GroupMultiProvider
         .setDynamic(false)
         .build();
 
-    private static final SystemProperty<Class> SECONDARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+    public static final SystemProperty<Class> SECONDARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
         .setKey("hybridGroupProvider.secondaryProvider.className")
         .setBaseClass(GroupProvider.class)
         .setDynamic(false)
@@ -62,7 +59,7 @@ public class HybridGroupProvider extends GroupMultiProvider
         .setDynamic(false)
         .build();
 
-    private static final SystemProperty<Class> TERTIARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+    public static final SystemProperty<Class> TERTIARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
         .setKey("hybridGroupProvider.tertiaryProvider.className")
         .setBaseClass(GroupProvider.class)
         .setDynamic(false)

@@ -39,7 +39,7 @@ public class HybridUserProvider extends UserMultiProvider
 {
     private static final Logger Log = LoggerFactory.getLogger( HybridUserProvider.class );
 
-    private static final SystemProperty<Class> PRIMARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+    public static final SystemProperty<Class> PRIMARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
         .setKey("hybridUserProvider.primaryProvider.className")
         .setBaseClass(UserProvider.class)
         .setDynamic(false)
@@ -50,7 +50,7 @@ public class HybridUserProvider extends UserMultiProvider
         .setDynamic(false)
         .build();
 
-    private static final SystemProperty<Class> SECONDARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+    public static final SystemProperty<Class> SECONDARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
         .setKey("hybridUserProvider.secondaryProvider.className")
         .setBaseClass(UserProvider.class)
         .setDynamic(false)
@@ -61,7 +61,7 @@ public class HybridUserProvider extends UserMultiProvider
         .setDynamic(false)
         .build();
 
-    private static final SystemProperty<Class> TERTIARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+    public static final SystemProperty<Class> TERTIARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
         .setKey("hybridUserProvider.tertiaryProvider.className")
         .setBaseClass(UserProvider.class)
         .setDynamic(false)

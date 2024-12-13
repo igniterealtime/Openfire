@@ -180,7 +180,14 @@
                     <dt>ldap.host <span style="color: red; "><b>*</b></span></dt>
                     <dd>LDAP server host; e.g. localhost or machine.example.com, etc. It is possible to use many LDAP
                         servers but all of them <b>should share the same configuration</b> (e.g. SSL, baseDN, admin account,
-                        etc). To specify many LDAP servers use the comma or the white space character as delimiter.</dd>
+                        etc). Openfire will prefer the first server, but will connect to the next server in case the first
+                        server is unavailable.
+                        <p>To specify many LDAP servers use the comma or the white space character as delimiter. When
+                        a server does not use the port number that's configured below, a port for each server can be configured
+                        by separating them from the hostname with a colon-character. In this example, two servers are configured,
+                        that each use a distinct port: <code>primary.example.org:10389 secondary.example.com:20389</code></p>
+                        <p>When a host defines a port in this format, it overrides the port defined in the property below.</p>
+                    </dd>
 
                     <dt>ldap.port</dt>
                     <dd>LDAP server port number. If this property is not set, the default value is 389.</dd>

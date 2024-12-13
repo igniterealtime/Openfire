@@ -236,6 +236,10 @@ public class HybridAuthProvider extends AuthMultiProvider {
     public String getPassword(String username)
         throws UserNotFoundException, UnsupportedOperationException
     {
+        if (!supportsPasswordRetrieval()) {
+            throw new UnsupportedOperationException();
+        }
+
         // Check overrides first.
         try {
             return super.getPassword(username);
@@ -256,7 +260,7 @@ public class HybridAuthProvider extends AuthMultiProvider {
                 Log.trace("Could find user {} with auth provider {}. Will try remaining providers (if any)", username, provider.getClass().getName(), e);
             }
         }
-        throw new UnsupportedOperationException();
+        throw new UserNotFoundException();
     }
 
     @Override
@@ -282,12 +286,16 @@ public class HybridAuthProvider extends AuthMultiProvider {
                 Log.trace("Could set password for user {} with auth provider {}. Will try remaining providers (if any)", username, provider.getClass().getName(), e);
             }
         }
-        throw new UnsupportedOperationException();
+        throw new UserNotFoundException();
     }
 
     @Override
     public String getSalt(String username) throws UnsupportedOperationException, UserNotFoundException
     {
+        if (!isScramSupported()) {
+            throw new UnsupportedOperationException();
+        }
+
         // Check overrides first.
         try {
             return super.getSalt(username);
@@ -306,12 +314,16 @@ public class HybridAuthProvider extends AuthMultiProvider {
                 Log.trace("Could get salt for user {} with auth provider {}. Will try remaining providers (if any)", username, provider.getClass().getName(), e);
             }
         }
-        throw new UnsupportedOperationException();
+        throw new UserNotFoundException();
     }
 
     @Override
     public int getIterations(String username) throws UnsupportedOperationException, UserNotFoundException
     {
+        if (!isScramSupported()) {
+            throw new UnsupportedOperationException();
+        }
+
         // Check overrides first.
         try {
             return super.getIterations(username);
@@ -330,12 +342,16 @@ public class HybridAuthProvider extends AuthMultiProvider {
                 Log.trace("Could get iterations for user {} with auth provider {}. Will try remaining providers (if any)", username, provider.getClass().getName(), e);
             }
         }
-        throw new UnsupportedOperationException();
+        throw new UserNotFoundException();
     }
 
     @Override
     public String getServerKey(String username) throws UnsupportedOperationException, UserNotFoundException
     {
+        if (!isScramSupported()) {
+            throw new UnsupportedOperationException();
+        }
+
         // Check overrides first.
         try {
             return super.getServerKey(username);
@@ -354,12 +370,16 @@ public class HybridAuthProvider extends AuthMultiProvider {
                 Log.trace("Could get serverkey for user {} with auth provider {}. Will try remaining providers (if any)", username, provider.getClass().getName(), e);
             }
         }
-        throw new UnsupportedOperationException();
+        throw new UserNotFoundException();
     }
 
     @Override
     public String getStoredKey(String username) throws UnsupportedOperationException, UserNotFoundException
     {
+        if (!isScramSupported()) {
+            throw new UnsupportedOperationException();
+        }
+
         // Check overrides first.
         try {
             return super.getStoredKey(username);
@@ -378,7 +398,7 @@ public class HybridAuthProvider extends AuthMultiProvider {
                 Log.trace("Could get storedkey for user {} with auth provider {}. Will try remaining providers (if any)", username, provider.getClass().getName(), e);
             }
         }
-        throw new UnsupportedOperationException();
+        throw new UserNotFoundException();
     }
 
     boolean isProvider(final Class<? extends AuthProvider> clazz) {

@@ -52,7 +52,7 @@ public class HybridUserPropertyProvider extends UserPropertyMultiProvider
 {
     private static final Logger Log = LoggerFactory.getLogger( HybridUserPropertyProvider.class );
 
-    private static final SystemProperty<Class> PRIMARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+    public static final SystemProperty<Class> PRIMARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
         .setKey("hybridUserPropertyProvider.primaryProvider.className")
         .setBaseClass(UserPropertyProvider.class)
         .setDynamic(false)
@@ -63,7 +63,7 @@ public class HybridUserPropertyProvider extends UserPropertyMultiProvider
         .setDynamic(false)
         .build();
 
-    private static final SystemProperty<Class> SECONDARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+    public static final SystemProperty<Class> SECONDARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
         .setKey("hybridUserPropertyProvider.secondaryProvider.className")
         .setBaseClass(UserPropertyProvider.class)
         .setDynamic(false)
@@ -74,7 +74,7 @@ public class HybridUserPropertyProvider extends UserPropertyMultiProvider
         .setDynamic(false)
         .build();
 
-    private static final SystemProperty<Class> TERTIARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+    public static final SystemProperty<Class> TERTIARY_PROVIDER = SystemProperty.Builder.ofType(Class.class)
         .setKey("hybridUserPropertyProvider.tertiaryProvider.className")
         .setBaseClass(UserPropertyProvider.class)
         .setDynamic(false)
@@ -135,6 +135,7 @@ public class HybridUserPropertyProvider extends UserPropertyMultiProvider
             try
             {
                 provider.loadProperties(username);
+                return provider;
             }
             catch (UserNotFoundException unfe)
             {

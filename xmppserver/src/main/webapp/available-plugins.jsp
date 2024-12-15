@@ -251,7 +251,7 @@
                         <c:choose>
                             <c:when test="${empty notInstalledPlugins}">
                                 <tr>
-                                    <td colspan="8" style="text-align: center"><fmt:message key="plugin.available.no_plugin"/></td>
+                                    <td colspan="6" style="text-align: center"><fmt:message key="plugin.available.no_plugin"/></td>
                                 </tr>
                             </c:when>
                             <c:otherwise>
@@ -315,7 +315,7 @@
                                         <td style="width: 1%" class="line-bottom-border">
                                             <img src="${fn:escapeXml(notInstalledPlugin.icon)}" width="16" height="16" alt=""/>
                                         </td>
-                                        <td colspan="6" nowrap class="line-bottom-border">${admin:escapeHTMLTags(notInstalledPlugin.name)} <fmt:message key="plugin.available.installation.success" /></td>
+                                        <td colspan="4" nowrap class="line-bottom-border">${admin:escapeHTMLTags(notInstalledPlugin.name)} <fmt:message key="plugin.available.installation.success" /></td>
                                         <td class="line-bottom-border" style="text-align: center">
                                             <img src="images/success-16x16.gif" alt=""/>
                                         </td>

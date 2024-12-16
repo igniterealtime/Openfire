@@ -1080,6 +1080,24 @@
                 <td>50</td>
                 <td>Name of the retired room (Primary Key)</td>
             </tr>
+            <tr>
+                <td>alternateJID</td>
+                <td>VARCHAR</td>
+                <td>2000</td>
+                <td>Optional JID specified on room deletion</td>
+            </tr>
+            <tr>
+                <td>reason</td>
+                <td>VARCHAR</td>
+                <td>1024</td>
+                <td>Optional text explaining why the room was retired</td>
+            </tr>
+            <tr>
+                <td>retiredAt</td>
+                <td>TIMESTAMP</td>
+                <td>n/a</td>
+                <td>When the room was retired (defaults to current timestamp)</td>
+            </tr>
             </tbody>
         </table>
         &nbsp;<a href="#top" class="top">top of page</a>

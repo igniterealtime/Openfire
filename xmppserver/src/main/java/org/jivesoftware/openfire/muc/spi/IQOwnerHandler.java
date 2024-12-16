@@ -536,6 +536,10 @@ public class IQOwnerHandler {
                 LocaleUtils.getLocalizedString("muc.form.conf.owner_persistentroom", preferredLocale),
                 Type.boolean_type);
 
+        configurationForm.addField("{http://igniterealtime.org}muc#roomconfig_retireondel",
+            LocaleUtils.getLocalizedString("muc.form.conf.owner_retireondel", preferredLocale),
+            Type.boolean_type);
+
         configurationForm.addField("muc#roomconfig_moderatedroom",
                 LocaleUtils.getLocalizedString("muc.form.conf.owner_moderatedroom", preferredLocale),
                 Type.boolean_type);
@@ -650,6 +654,10 @@ public class IQOwnerHandler {
             field = configurationForm.getField("muc#roomconfig_moderatedroom");
             field.clearValues();
             field.addValue((room.isModerated() ? "1" : "0"));
+
+            field = configurationForm.getField("{http://igniterealtime.org}muc#roomconfig_retireondel");
+            field.clearValues();
+            field.addValue((room.isRetireOnDeletion() ? "1" : "0"));
 
             field = configurationForm.getField("muc#roomconfig_membersonly");
             field.clearValues();

@@ -30,6 +30,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 
+import org.jivesoftware.database.bugfix.Issue369and370;
 import org.jivesoftware.database.bugfix.OF1515;
 import org.jivesoftware.database.bugfix.OF33;
 import org.jivesoftware.openfire.XMPPServer;
@@ -274,6 +275,9 @@ public class SchemaManager {
                         }
                         if (i == 28 && schemaKey.equals("openfire")) {
                             OF1515.executeFix();
+                        }
+                        if (i == 9 && schemaKey.equals("monitoring")) {
+                            Issue369and370.executeMigration();
                         }
                     } catch (Exception e) {
                         Log.error(e.getMessage(), e);

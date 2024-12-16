@@ -535,34 +535,45 @@ public class MUCPersistenceManager {
     public static void deleteFromDB(MUCRoom room, JID alternateJID, String reason) {
         Log.debug("Attempting to delete room '{}' from the database.", room.getName());
 
-        if (!room.isPersistent() || !room.wasSavedToDB()) {
+        boolean shouldDeleteFromDB = room.isPersistent() && room.wasSavedToDB();
+
+        // If the room should be retired but isn't persistent/saved, we still need to create a retiree entry
+        if (!shouldDeleteFromDB && !room.isRetireOnDeletion()) {
             return;
         }
+
         Connection con = null;
         PreparedStatement pstmt = null;
         boolean abortTransaction = false;
         try {
             con = DbConnectionManager.getTransactionConnection();
-            pstmt = con.prepareStatement(DELETE_AFFILIATIONS);
-            pstmt.setLong(1, room.getID());
-            pstmt.executeUpdate();
-            DbConnectionManager.fastcloseStmt(pstmt);
 
-            pstmt = con.prepareStatement(DELETE_MEMBERS);
-            pstmt.setLong(1, room.getID());
-            pstmt.executeUpdate();
-            DbConnectionManager.fastcloseStmt(pstmt);
-
-            pstmt = con.prepareStatement(DELETE_ROOM);
-            pstmt.setLong(1, room.getID());
-            pstmt.executeUpdate();
-            DbConnectionManager.fastcloseStmt(pstmt);
-
-            if(!room.isPreserveHistOnRoomDeletionEnabled()) {
-                pstmt = con.prepareStatement(DELETE_ROOM_HISTORY);
+            if (shouldDeleteFromDB) {
+                // Delete existing data only if the room was actually in the DB
+                pstmt = con.prepareStatement(DELETE_AFFILIATIONS);
                 pstmt.setLong(1, room.getID());
                 pstmt.executeUpdate();
                 DbConnectionManager.fastcloseStmt(pstmt);
+
+                pstmt = con.prepareStatement(DELETE_MEMBERS);
+                pstmt.setLong(1, room.getID());
+                pstmt.executeUpdate();
+                DbConnectionManager.fastcloseStmt(pstmt);
+
+                pstmt = con.prepareStatement(DELETE_ROOM);
+                pstmt.setLong(1, room.getID());
+                pstmt.executeUpdate();
+                DbConnectionManager.fastcloseStmt(pstmt);
+
+                if(!room.isPreserveHistOnRoomDeletionEnabled()) {
+                    pstmt = con.prepareStatement(DELETE_ROOM_HISTORY);
+                    pstmt.setLong(1, room.getID());
+                    pstmt.executeUpdate();
+                    DbConnectionManager.fastcloseStmt(pstmt);
+                }
+
+                // Update the room (in memory) to indicate that it's no longer in the database.
+                room.setSavedToDB(false);
             }
 
             if (room.isRetireOnDeletion()) {
@@ -585,9 +596,6 @@ public class MUCPersistenceManager {
                 pstmt.executeUpdate();
                 DbConnectionManager.fastcloseStmt(pstmt);
             }
-
-            // Update the room (in memory) to indicate that it's no longer in the database.
-            room.setSavedToDB(false);
         }
         catch (SQLException sqle) {
             Log.error("A database error occurred while trying to delete room: {}", room.getName(), sqle);

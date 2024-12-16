@@ -68,8 +68,7 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
     private static final String DELETE_SERVICE = "DELETE FROM ofMucService WHERE serviceID=?";
     private static final String LOAD_SERVICE_ID = "SELECT serviceID FROM ofMucService WHERE subdomain=?";
     private static final String LOAD_SUBDOMAIN = "SELECT subdomain FROM ofMucService WHERE serviceID=?";
-    private static final String GET_RETIREES = "SELECT serviceID, name FROM ofMucRoomRetiree WHERE serviceID = ? ORDER BY name ASC";
-    private static final String DELETE_RETIREE = "DELETE FROM ofMucRoomRetiree WHERE serviceID=? AND name=?";
+    private static final String GET_RETIREES = "SELECT serviceID, name, alternateJID, reason, retiredAt FROM ofMucRoomRetiree WHERE serviceID = ? ORDER BY name ASC";    private static final String DELETE_RETIREE = "DELETE FROM ofMucRoomRetiree WHERE serviceID=? AND name=?";
     private static final String COUNT_RETIREE = "SELECT COUNT(name) FROM ofMucRoomRetiree WHERE serviceID = ?";
 
     /**
@@ -1027,12 +1026,12 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
      * @param mucServiceName the name of the MUC service.
      * @param startIndex the index of the first result to return.
      * @param numResults the maximum number of results to return.
-     * @return a map of retirees.
+     * @return a collection of MUCRoomRetiree objects.
      */
-    public Collection<String> getRetirees(String mucServiceName, int startIndex, int numResults) {
+    public Collection<MUCRoomRetiree> getRetirees(String mucServiceName, int startIndex, int numResults) {
 
         Long serviceID = getMultiUserChatServiceID(mucServiceName);
-        List<String> retirees = new ArrayList<>();
+        List<MUCRoomRetiree> retirees = new ArrayList<>();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -1053,7 +1052,12 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
                 pstmt.setFetchDirection(ResultSet.FETCH_FORWARD);
                 rs = pstmt.executeQuery();
                 while (rs.next()) {
-                    retirees.add(rs.getString("name"));
+                    retirees.add(new MUCRoomRetiree(
+                        rs.getString("name"),
+                        rs.getString("alternateJID"),
+                        rs.getString("reason"),
+                        rs.getTimestamp("retiredAt")
+                    ));
                 }
             } else {
                 pstmt = DbConnectionManager.createScrollablePreparedStatement(con, GET_RETIREES);
@@ -1065,7 +1069,12 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
                 DbConnectionManager.scrollResultSet(rs, startIndex);
                 int count = 0;
                 while (rs.next() && count < numResults) {
-                    retirees.add(rs.getString("name"));
+                    retirees.add(new MUCRoomRetiree(
+                        rs.getString("name"),
+                        rs.getString("alternateJID"),
+                        rs.getString("reason"),
+                        rs.getTimestamp("retiredAt")
+                    ));
                     count++;
                 }
             }

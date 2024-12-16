@@ -21,6 +21,7 @@
 <%@ page import="java.util.Collection" %>
 <%@ page import="org.jivesoftware.util.*" %>
 <%@ page import="java.util.ArrayList" %>
+<%@ page import="org.jivesoftware.openfire.muc.MUCRoomRetiree" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -116,7 +117,7 @@
     }
 
     // Get retirees for current page
-    Collection<String> retirees = webManager.getMultiUserChatManager().getRetirees(mucService.getServiceName(), start, range);
+    Collection<MUCRoomRetiree> retirees = webManager.getMultiUserChatManager().getRetirees(mucService.getServiceName(), start, range);
 
     // Set attributes for JSTL
     request.setAttribute("mucService", mucService);
@@ -223,6 +224,9 @@
         <tr>
             <th>&nbsp;</th>
             <th nowrap><fmt:message key="user.create.name" /></th>
+            <th nowrap><fmt:message key="muc.room.retirees.alternate_jid" /></th>
+            <th nowrap><fmt:message key="muc.room.retirees.reason" /></th>
+            <th nowrap><fmt:message key="muc.room.retirees.retired_at" /></th>
             <th nowrap><fmt:message key="global.delete" /></th>
         </tr>
         </thead>
@@ -230,7 +234,7 @@
         <c:choose>
             <c:when test="${empty retirees}">
                 <tr>
-                    <td style="text-align: center" colspan="7">
+                    <td style="text-align: center" colspan="6">
                         <fmt:message key="muc.room.retirees.no_retirees" />
                     </td>
                 </tr>
@@ -239,9 +243,28 @@
                 <c:forEach items="${retirees}" var="retiree" varStatus="status">
                     <tr>
                         <td style="width: 1%">${start + status.count}</td>
-                        <td style="width: 20%"><c:out value="${retiree}"/> &nbsp;</td>
+                        <td style="width: 20%"><c:out value="${retiree.name}"/></td>
+                        <td style="width: 20%">
+                            <c:if test="${not empty retiree.alternateJID}">
+                                <c:out value="${retiree.alternateJID}"/>
+                            </c:if>
+                            <c:if test="${empty retiree.alternateJID}">
+                                &nbsp;
+                            </c:if>
+                        </td>
+                        <td style="width: 30%">
+                            <c:if test="${not empty retiree.reason}">
+                                <c:out value="${retiree.reason}"/>
+                            </c:if>
+                            <c:if test="${empty retiree.reason}">
+                                &nbsp;
+                            </c:if>
+                        </td>
+                        <td style="width: 20%">
+                            <fmt:formatDate value="${retiree.retiredAt}" pattern="yyyy-MM-dd HH:mm:ss"/>
+                        </td>
                         <td style="width: 1%; text-align: center; border-right:1px #ccc solid;">
-                            <a href="muc-room-retirees.jsp?delete=true&service=${mucService.serviceName}&name=${retiree}&csrf=${csrf}"
+                            <a href="muc-room-retirees.jsp?delete=true&service=${mucService.serviceName}&name=${retiree.name}&csrf=${csrf}"
                                title="<fmt:message key="global.click_delete" />">
                                 <img src="images/delete-16x16.gif" alt="<fmt:message key="global.click_delete" />">
                             </a>

@@ -52,8 +52,6 @@ public class Issue369and370 {
                 conversationIDToRoomIDMap.put(conversationID, roomID);
             }
 
-            pstmt.setFetchSize(250);
-            pstmt.setFetchDirection(ResultSet.FETCH_FORWARD);
             Log.debug("1 of 7. Generated room IDs for unique rooms");
         } catch (SQLException e) {
             Log.error("Error querying ofConversation to generate room IDs for unique rooms", e);

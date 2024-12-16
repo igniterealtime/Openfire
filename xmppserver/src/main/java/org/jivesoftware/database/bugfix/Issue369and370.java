@@ -1,6 +1,7 @@
 package org.jivesoftware.database.bugfix;
 
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.database.SchemaManager;
 import org.jivesoftware.database.SequenceManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +16,17 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Class to handle the migration of data for the monitoring plugin to obtain roomIDs so chat history can be cleared.
+ * This class to handle the migration of data for the monitoring plugin to obtain roomIDs so chat history can be cleared.
+ * This is for the features identified as issue 369 and 370 for the Monitoring plugin.
+ * <p>
+ * The code in this class is intended to be executed only once, under very
+ * strict circumstances. The only class responsible for calling this code should
+ * be an instance of {@link SchemaManager}. The Monitoring database update version
+ * corresponding to this fix is 9.
+ *
+ * @author Huy Vu
+ * @see <a href="https://github.com/igniterealtime/openfire-monitoring-plugin/issues/369">Monitoring plugin issue 369</a>
+ * @see <a href="https://github.com/igniterealtime/openfire-monitoring-plugin/issues/370">Monitoring plugin issue 370</a>
  */
 public class Issue369and370 {
     private static final Logger Log = LoggerFactory.getLogger(Issue369and370.class);
@@ -29,29 +40,34 @@ public class Issue369and370 {
 
         // For conversations that are not external, assign a unique roomID based on roomJID using information from the ofConversation table
         try (Connection con = DbConnectionManager.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT room, conversationID FROM ofConversation WHERE isExternal = 0 ORDER BY startDate ASC");
+             PreparedStatement pstmt = con.prepareStatement("SELECT room, conversationID FROM ofConversation WHERE isExternal = 0 ORDER BY startDate ASC", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
              ResultSet rs = pstmt.executeQuery()) {
 
+            pstmt.setFetchSize(250);
+            pstmt.setFetchDirection(ResultSet.FETCH_FORWARD);
             while (rs.next()) {
                 String roomJID = rs.getString("room");
                 long conversationID = rs.getLong("conversationID");
                 long roomID = roomJIDToRoomIDMap.computeIfAbsent(roomJID, k -> roomIDSequenceManager.nextUniqueID());
                 conversationIDToRoomIDMap.put(conversationID, roomID);
             }
-            Log.info("1 of 7. Generated room IDs for unique rooms");
+
+            pstmt.setFetchSize(250);
+            pstmt.setFetchDirection(ResultSet.FETCH_FORWARD);
+            Log.debug("1 of 7. Generated room IDs for unique rooms");
         } catch (SQLException e) {
             Log.error("Error querying ofConversation to generate room IDs for unique rooms", e);
         }
 
         // Update ofConversation table with roomIDs from conversationIDToRoomIDMap
         updateTable("UPDATE ofConversation SET roomID = ? WHERE conversationID = ?", conversationIDToRoomIDMap);
-        Log.info("2 of 7. Updated room IDs in ofConversation table");
+        Log.debug("2 of 7. Updated room IDs in ofConversation table");
         // Update the roomIDs in ofMessageArchive using conversationIDToRoomIDMap
         updateTable("UPDATE ofMessageArchive SET roomID = ? WHERE conversationID = ?", conversationIDToRoomIDMap);
-        Log.info("3 of 7. Updated room IDs in ofMessageArchive table");
+        Log.debug("3 of 7. Updated room IDs in ofMessageArchive table");
         // Update the roomIDs in ofConParticipant using conversationIDToRoomIDMap
         updateTable("UPDATE ofConParticipant SET roomID = ? WHERE conversationID = ?", conversationIDToRoomIDMap);
-        Log.info("4 of 7. Updated room IDs in ofConParticipant table");
+        Log.debug("4 of 7. Updated room IDs in ofConParticipant table");
 
         // Insert room information into ofMucRoomStatus table from roomJIDToRoomIDMap
         try (Connection con = DbConnectionManager.getConnection();
@@ -63,7 +79,7 @@ public class Issue369and370 {
                 pstmt.addBatch();
             }
             pstmt.executeBatch();
-            Log.info("5 of 7. Inserted room information into ofMucRoomStatus table");
+            Log.debug("5 of 7. Inserted room information into ofMucRoomStatus table");
         } catch (SQLException e) {
             Log.error("Error inserting room information into ofMucRoomStatus table", e);
         }
@@ -72,16 +88,19 @@ public class Issue369and370 {
         List<String> activeMUCs = new ArrayList<>();
         // Join the tables ofMucRoom and ofMucService based on serviceID so we can get the 'name' and 'subdomain' fields
         try (Connection con = DbConnectionManager.getConnection();
-             PreparedStatement pstmt = con.prepareStatement("SELECT ofMucRoom.name, ofMucService.subdomain FROM ofMucRoom JOIN ofMucService ON ofMucRoom.serviceID = ofMucService.serviceID");
+             PreparedStatement pstmt = con.prepareStatement("SELECT ofMucRoom.name, ofMucService.subdomain FROM ofMucRoom JOIN ofMucService ON ofMucRoom.serviceID = ofMucService.serviceID", ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
              ResultSet rs = pstmt.executeQuery()) {
+
+            pstmt.setFetchSize(250);
+            pstmt.setFetchDirection(ResultSet.FETCH_FORWARD);
             while (rs.next()) {
                 String roomName = rs.getString("name");
                 String subdomain = rs.getString("subdomain");
 
                 activeMUCs.add(roomName + "@" + subdomain);
-                Log.info("Active MUC: {}", roomName + "@" + subdomain);
+                Log.debug("Active MUC: {}", roomName + "@" + subdomain);
             }
-            Log.info("6 of 7. Created list of active MUCs so we can determine which room is destroyed");
+            Log.debug("6 of 7. Created list of active MUCs so we can determine which room is destroyed");
         } catch (SQLException e) {
             Log.error("Error joining ofMucRoom and ofMucService tables", e);
         }
@@ -97,7 +116,7 @@ public class Issue369and370 {
                         break;
                     }
                 }
-                Log.info("roomJID={} destroyed={}", roomJID, roomDestroyed);
+                Log.debug("roomJID={} destroyed={}", roomJID, roomDestroyed);
                 if (roomDestroyed) {
                     long roomID = roomJIDToRoomIDMap.get(roomJID);
                     pstmt.setLong(1, roomID);
@@ -105,7 +124,7 @@ public class Issue369and370 {
                 }
             }
             pstmt.executeBatch();
-            Log.info("7 of 7. Updated roomDestroyed status in ofMucRoomStatus table");
+            Log.debug("7 of 7. Updated roomDestroyed status in ofMucRoomStatus table");
         } catch (SQLException e) {
             Log.error("Error updating roomDestroyed status in ofMucRoomStatus table", e);
         }

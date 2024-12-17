@@ -3727,6 +3727,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         ExternalizableUtil.getInstance().writeStringList(out, rolesToBroadcastPresence.stream().map(Enum::name).collect(Collectors.toList())); // This uses stringlist for compatibility with Openfire 4.6.0. Can be replaced the next major release.
         ExternalizableUtil.getInstance().writeBoolean(out, publicRoom);
         ExternalizableUtil.getInstance().writeBoolean(out, persistent);
+        ExternalizableUtil.getInstance().writeBoolean(out, retireOnDeletion);
         ExternalizableUtil.getInstance().writeBoolean(out, moderated);
         ExternalizableUtil.getInstance().writeBoolean(out, membersOnly);
         ExternalizableUtil.getInstance().writeBoolean(out, canOccupantsInvite);
@@ -3786,6 +3787,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         rolesToBroadcastPresence.addAll(ExternalizableUtil.getInstance().readStringList(in).stream().map(Role::valueOf).collect(Collectors.toSet())); // This uses stringlist for compatibility with Openfire 4.6.0. Can be replaced the next major release.
         publicRoom = ExternalizableUtil.getInstance().readBoolean(in);
         persistent = ExternalizableUtil.getInstance().readBoolean(in);
+        retireOnDeletion = ExternalizableUtil.getInstance().readBoolean(in);
         moderated = ExternalizableUtil.getInstance().readBoolean(in);
         membersOnly = ExternalizableUtil.getInstance().readBoolean(in);
         canOccupantsInvite = ExternalizableUtil.getInstance().readBoolean(in);
@@ -3852,6 +3854,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         rolesToBroadcastPresence = otherRoom.rolesToBroadcastPresence;
         publicRoom = otherRoom.publicRoom;
         persistent = otherRoom.persistent;
+        retireOnDeletion = otherRoom.retireOnDeletion;
         moderated = otherRoom.moderated;
         membersOnly = otherRoom.membersOnly;
         canOccupantsInvite = otherRoom.canOccupantsInvite;

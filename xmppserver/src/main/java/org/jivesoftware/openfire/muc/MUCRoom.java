@@ -3680,6 +3680,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         size += CacheSizes.sizeOfCollection(rolesToBroadcastPresence);
         size += CacheSizes.sizeOfBoolean();     // publicRoom
         size += CacheSizes.sizeOfBoolean();     // persistent
+        size += CacheSizes.sizeOfBoolean();     // retireOnDeletion
         size += CacheSizes.sizeOfBoolean();     // moderated
         size += CacheSizes.sizeOfBoolean();     // membersOnly
         size += CacheSizes.sizeOfBoolean();     // canOccupantsInvite

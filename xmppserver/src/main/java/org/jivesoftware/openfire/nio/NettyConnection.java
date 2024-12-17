@@ -237,8 +237,7 @@ public class NettyConnection extends AbstractConnection
                             latch.countDown();
                         }
                     })
-                    .addListener(e -> Log.trace("Finished closing connection."))
-                    .sync(); // TODO: OF-2811 Remove this blocking operation (which may have been made redundant by the fix for OF-2808 anyway).
+                    .addListener(e -> Log.trace("Finished closing connection."));
             } catch (Throwable t) {
                 Log.error("Problem during connection close or cleanup", t);
                 latch.countDown(); // Ensure we're not kept waiting! OF-2845

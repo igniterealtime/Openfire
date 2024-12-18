@@ -402,6 +402,7 @@ public abstract class GroupMultiProvider implements GroupProvider
      * @return the newly created group.
      * @throws GroupAlreadyExistsException if a group with the same name already exists.
      * @throws UnsupportedOperationException if the provider does not support the operation.
+     * @throws GroupNameInvalidException if the provided new name is an unacceptable value.
      */
     @Override
     public Group createGroup(String name) throws GroupAlreadyExistsException, GroupNameInvalidException
@@ -437,6 +438,8 @@ public abstract class GroupMultiProvider implements GroupProvider
      * @param newName the desired new name of the group.
      * @throws GroupAlreadyExistsException if a group with the same name already exists.
      * @throws UnsupportedOperationException if the provider does not support the operation.
+     * @throws GroupNotFoundException if the provided old name does not refer to an existing group.
+     * @throws GroupNameInvalidException if the provided new name is an unacceptable value.
      */
     @Override
     public void setName(String oldName, String newName) throws GroupAlreadyExistsException, GroupNameInvalidException, GroupNotFoundException
@@ -466,6 +469,7 @@ public abstract class GroupMultiProvider implements GroupProvider
      * @param user the (bare) JID of the entity to add
      * @param administrator True if the member is an administrator of the group
      * @throws UnsupportedOperationException if the provider does not support the operation.
+     * @throws GroupNotFoundException if the provided group name does not refer to an existing group.
      */
     @Override
     public void addMember(String groupName, JID user, boolean administrator) throws GroupNotFoundException
@@ -482,6 +486,7 @@ public abstract class GroupMultiProvider implements GroupProvider
      * @param user the (bare) JID of the entity with new privileges
      * @param administrator True if the member is an administrator of the group
      * @throws UnsupportedOperationException if the provider does not support the operation.
+     * @throws GroupNotFoundException if the provided group name does not refer to an existing group.
      */
     @Override
     public void updateMember(String groupName, JID user, boolean administrator) throws GroupNotFoundException

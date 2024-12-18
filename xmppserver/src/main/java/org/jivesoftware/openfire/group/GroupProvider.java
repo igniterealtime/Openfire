@@ -58,6 +58,7 @@ public interface GroupProvider {
      *      exists.
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation.
+     * @throws GroupNameInvalidException if the provided new name is an unacceptable value.
      */
     Group createGroup(String name) throws GroupAlreadyExistsException, GroupNameInvalidException;
 
@@ -88,6 +89,8 @@ public interface GroupProvider {
      *      exists.
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation.
+     * @throws GroupNotFoundException if the provided old name does not refer to an existing group.
+     * @throws GroupNameInvalidException if the provided new name is an unacceptable value.
      */
     void setName(String oldName, String newName) throws GroupAlreadyExistsException, GroupNameInvalidException, GroupNotFoundException;
 
@@ -186,6 +189,7 @@ public interface GroupProvider {
      * @param administrator True if the member is an administrator of the group
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation.
+     * @throws GroupNotFoundException if the provided group name does not refer to an existing group.
      */
     void addMember(String groupName, JID user, boolean administrator) throws GroupNotFoundException;
 
@@ -199,6 +203,7 @@ public interface GroupProvider {
      * @param administrator True if the member is an administrator of the group
      * @throws UnsupportedOperationException if the provider does not
      *      support the operation.
+     * @throws GroupNotFoundException if the provided group name does not refer to an existing group.
      */
     void updateMember(String groupName, JID user, boolean administrator) throws GroupNotFoundException;
 

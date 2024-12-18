@@ -83,7 +83,7 @@
         </p>
         <ul>
             <li><code>Authorization Based Mapper</code> -- to draw administrative users from another source than the regular, non-administrative users.</li>
-            <li><code>Property Based Mapper</code> -- uses properties to define sets of usernames and a corresponding provider.</li>
+            <li><code>Property Based Mapper</code> -- uses Openfire system properties (that hold a list of usernames) to relate specific users to specific providers.</li>
         </ul>
         <p>
             For each type of data, these Mappers are available
@@ -316,7 +316,7 @@
     &lt;/hybridUserProvider&gt;
 
     &lt;ldapPrimary&gt;
-        &lt;host&gt;dc.springfieldcom&lt;/host&gt;
+        &lt;host&gt;dc.springfield.com&lt;/host&gt;
         &lt;port&gt;10389&lt;/port&gt;
         &lt;baseDN&gt;dc=springfield,dc=com&lt;/baseDN&gt;
         &lt;adminDN&gt;cn=admin,dc=springfield,dc=com&lt;/adminDN&gt;

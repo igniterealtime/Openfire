@@ -154,7 +154,7 @@ public class HybridGroupProvider extends GroupMultiProvider
     @Override
     public Group getGroup(String name) throws GroupNotFoundException
     {
-        // Override the implementation in the superclass to prevent obtaining the griyo twice.
+        // Override the implementation in the superclass to prevent obtaining the group twice.
         for (final GroupProvider provider : groupProviders) {
             try {
                 return provider.getGroup(name);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package org.jivesoftware.openfire.muc;
 
-import org.eclipse.jetty.ee8.servlet.listener.IntrospectorCleaner;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 

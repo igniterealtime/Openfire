@@ -26,6 +26,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="admin" prefix="admin" %>
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 <% webManager.init(request, response, session, application, out ); %>
 
@@ -71,24 +72,26 @@
         response.sendRedirect("muc-room-edit-form.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8")+"&clearchatsuccess=true");
         return;
     }
+
+    pageContext.setAttribute("roomBareJid", roomJID.toBareJID());
 %>
 
 <html>
     <head>
         <title><fmt:message key="muc.room.clear_chat.title"/></title>
         <meta name="subPageID" content="muc-room-clear-chat"/>
-        <meta name="extraParams" content="<%= "roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>"/>
+        <meta name="extraParams" content="roomJID=${admin:escapeHTMLTags(roomBareJid)}"/>
     </head>
     <body>
         <p>
         <fmt:message key="muc.room.clear_chat.info" />
-        <b><a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"><%= StringUtils.escapeHTMLTags(room.getJID().toBareJID()) %></a></b>
+        <b><a href="muc-room-edit-form.jsp?roomJID=${admin:urlEncode(roomBareJid)}"><c:out value="${roomBareJid}"/></a></b>
         <fmt:message key="muc.room.clear_chat.detail" />
         </p>
 
         <form action="muc-room-clear-chat.jsp">
-            <input type="hidden" name="csrf" value="${csrf}">
-            <input type="hidden" name="roomJID" value="<%= StringUtils.escapeForXML(roomJID.toBareJID()) %>">
+            <input type="hidden" name="csrf" value="${admin:escapeHTMLTags(csrf)}">
+            <input type="hidden" name="roomJID" value="${admin:escapeHTMLTags(roomBareJid)}">
 
             <br>
 

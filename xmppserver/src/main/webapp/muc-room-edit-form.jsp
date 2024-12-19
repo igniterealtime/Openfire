@@ -33,7 +33,6 @@
 %>
 <%@ page import="org.jivesoftware.openfire.muc.NotAllowedException"%>
 <%@ page import="org.jivesoftware.openfire.muc.spi.MUCPersistenceManager" %>
-<%@ page import="org.jivesoftware.openfire.muc.MUCOccupant" %>
 <%@ page import="org.jivesoftware.openfire.muc.Role" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
@@ -50,6 +49,7 @@
     boolean save = ParamUtils.getBooleanParameter(request,"save");
     boolean success = ParamUtils.getBooleanParameter(request,"success");
     boolean addsuccess = ParamUtils.getBooleanParameter(request,"addsuccess");
+    boolean clearchatsuccess = ParamUtils.getBooleanParameter(request,"clearchatsuccess");
     String roomName = ParamUtils.getParameter(request,"roomName");
     String mucName = ParamUtils.getParameter(request,"mucName");
     String roomJIDStr = ParamUtils.getParameter(request,"roomJID");
@@ -360,6 +360,7 @@
     pageContext.setAttribute("create", create);
     pageContext.setAttribute("success", success);
     pageContext.setAttribute("addsuccess", addsuccess);
+    pageContext.setAttribute("clearchatsuccess", clearchatsuccess);
     pageContext.setAttribute("room", room);
     pageContext.setAttribute("roomJID", roomJID);
     pageContext.setAttribute("roomJIDBare", roomJID != null ? roomJID.toBareJID() : null);
@@ -447,6 +448,11 @@
                 <fmt:message key="muc.room.edit.form.created" />
             </admin:infobox>
         </c:when>
+        <c:when test="${clearchatsuccess}">
+            <admin:infoBox type="success">
+                <fmt:message key="muc.room.summary.cleared_chat" />
+            </admin:infoBox>
+        </c:when>
     </c:choose>
 
     <c:if test="${room.locked}">
@@ -458,12 +464,6 @@
             </fmt:message>
         </admin:infobox>
     </c:if>
-
-    <%  if (request.getParameter("clearchatsuccess") != null) { %>
-            <admin:infoBox type="success">
-                <fmt:message key="muc.room.summary.cleared_chat" />
-            </admin:infoBox>
-    <%  } %>
 
     <c:choose>
         <c:when test="${not create}">

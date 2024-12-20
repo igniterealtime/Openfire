@@ -1,0 +1,5 @@
+[Slice]
+#MemoryAccounting=yes
+#MemoryMax=95%
+#CPUQuota=95%
+#CPUAccounting=yes

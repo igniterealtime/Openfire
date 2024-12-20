@@ -438,6 +438,12 @@
         </implements>
         <implements>
             <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0431.html"/>
+                <xmpp:note xml:lang='en'>Provided by the 'Monitoring Service' plugin</xmpp:note>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0478.html"/>
                 <xmpp:status>partial</xmpp:status>
                 <xmpp:version>0.1.0</xmpp:version>

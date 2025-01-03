@@ -63,7 +63,7 @@ RUN mv ${OPENFIRE_DIR}/conf ${OPENFIRE_DIR}/conf_org \
     && mv ${OPENFIRE_DIR}/plugins ${OPENFIRE_DIR}/plugins_org \
     && mv ${OPENFIRE_DIR}/resources/security ${OPENFIRE_DIR}/resources/security_org
 
-LABEL maintainer="florian.kinder@fankserver.com"
+LABEL org.opencontainers.image.authors="dave@cridland.net,dan@caseley.me.uk"
 WORKDIR /usr/local/openfire
 
 EXPOSE 3478 3479 5005 5222 5223 5229 5262 5263 5275 5276 7070 7443 7777 9090 9091

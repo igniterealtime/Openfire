@@ -2,6 +2,8 @@ name: Openfire CI
 
 env:
   CI: true
+  REGISTRY: ghcr.io
+  IMAGE_NAME: openfire
 
 on: [push, pull_request]
 
@@ -237,18 +239,6 @@ jobs:
               - '.github/workflows/continuous-integration-workflow.yml'
               - 'xmppserver/pom.xml'
 
-  docker:
-    name: Build (and maybe push) Docker image
-    needs:
-      - check_branch
-    runs-on: ubuntu-latest
-    steps: # could log into docker hub here, so we can push the image.
-      - name: Build docker image
-        uses: docker/build-push-action@v6
-        with:
-          push: false ## ${{ needs.check_branch.output.is_publishable_branch == 'true' }}
-          tags: openfire:${{ needs.check_branch.outputs.branch_tag }}
-
   sqlserver:
     name: Test SQL Server Upgrades
     needs: [build, should-do-database-upgrade-tests, check_branch]
@@ -398,131 +388,52 @@ jobs:
           IGNITE_REALTIME_MAVEN_USERNAME: ${{ secrets.IGNITE_REALTIME_MAVEN_USERNAME }}
           IGNITE_REALTIME_MAVEN_PASSWORD: ${{ secrets.IGNITE_REALTIME_MAVEN_PASSWORD }}
 
-  can-publish-docker:
-
-    # Based on https://github.com/GabLeRoux/github-actions-examples/blob/e0468ce2731b08bd8b1f7cd09d0b94c541310693/.github/workflows/secret_based_conditions.yml
-    name: Check if Docker Hub secrets exist
+  build-and-push-docker:
+    name: Publish to GitHub's Docker registry
     runs-on: ubuntu-latest
-    needs: [build, aioxmpp, connectivity, smack]
-    outputs:
-      is_DOCKERHUB_SECRET_set: ${{ steps.checksecret_job.outputs.is_DOCKERHUB_SECRET_set }}
-    steps:
-      - name: Check whether Docker Publish should be done
-        id: checksecret_job
-        env:
-            DOCKERHUB_SECRET: ${{ secrets.DOCKERHUB_TOKEN }}
-        run: |
-            echo "is_DOCKERHUB_SECRET_set: ${{ env.DOCKERHUB_SECRET != '' }}"
-            echo "is_DOCKERHUB_SECRET_set=${{ env.DOCKERHUB_SECRET != '' }}" >> $GITHUB_OUTPUT
-
-
-  publish-docker:
-
-    name: Publish to Docker Hub
-    runs-on: ubuntu-latest
-    needs: [can-publish-docker]
+    needs: [aioxmpp, connectivity, smack, check_branch, sqlserver, postgres, mysql]
     if: |
-      needs.can-publish-docker.outputs.is_DOCKERHUB_SECRET_set == 'true' && 
       github.event_name == 'push' && 
       (contains(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
 
-    outputs:
-      imagedigest: ${{ steps.docker_build.outputs.digest }}
-    
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
     steps:
-      - name: Set up variables if we're on main
-        if: ${{ github.ref == 'refs/heads/main' }}
-        run: echo "SOURCE_TAG=alpha" >> $GITHUB_ENV
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Set up variables if we're on a tag
-        if: ${{ contains(github.ref, 'refs/tags/') }}
-        run: echo "SOURCE_TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
-
-      - uses: actions/checkout@v4
+      - name: Log in to the Container registry
+        uses: docker/login-action@65b78e6e13532edd9afa3aa52ac7964289d1a9c1
         with:
-          # Defend against another commit quickly following the first
-          # We want the one that's been tested, rather than the head of main
-          ref: ${{ github.event.push.after }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v4
+      - name: Extract metadata (tags, labels) for image registry
+        id: meta
+        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
         with:
-          name: distribution-java17
-          path: distribution/target/distribution-base
+          images: ${{ env.REGISTRY }}/Openfire/${{ env.IMAGE_NAME }}
 
-      - name: Fix file permissions
-        run: find . -type f -name '*.sh' -exec chmod +x {} \;
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-      
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Cache Docker layers # TODO: Validate that caches are faster than no caches
-        uses: actions/cache@v4
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-
-      - name: Login to DockerHub
-        uses: docker/login-action@v3 
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Build and push to Docker Hub
-        id: docker_build
-        uses: docker/build-push-action@v6
+      - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKERHUB_OPENFIREIMAGE }}:${{ env.SOURCE_TAG }}
-          platforms: linux/amd64,linux/arm64
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
-      - name: Move cache
-        # Temp fix
-        # https://github.com/docker/build-push-action/issues/252
-        # https://github.com/moby/buildkit/issues/1896
-        run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-
-      - name: Image digest
-        run: |
-          echo Images published:
-          echo ${{ secrets.DOCKERHUB_OPENFIREIMAGE }}:${{ steps.docker_build.outputs.digest }}
-          echo ${{ secrets.DOCKERHUB_OPENFIREIMAGE }}:${{ env.SOURCE_TAG }}
-
-  test-published-docker:
-    name: Test tagged images published to Docker Hub
-    runs-on: ubuntu-latest
-    needs: [publish-docker]
-    if: contains(github.ref, 'refs/tags/')
-
-    steps:
-      - name: Launch & Check Openfire
-        run: |
-          docker run --name openfire -d -p 9090:9090 ${{ secrets.DOCKERHUB_OPENFIREIMAGE }}@${{needs.publish-docker.outputs.imagedigest}}
-          
-          attempt_counter=0
-          max_attempts=30
-          until $(curl --output /dev/null --silent --head --fail http://127.0.0.1:9090); do
-              if [ ${attempt_counter} -eq ${max_attempts} ];then
-                echo "Max attempts reached. Openfire failed to launch."
-                exit 1
-              fi
-
-              printf '.'
-              attempt_counter=$(($attempt_counter+1))
-              sleep 1
-          done
-          echo "Openfire Admin is reachable."
-          docker logs openfire
+      - name: Generate artifact attestation
+        uses: actions/attest-build-provenance@v1
+        with:
+          subject-name: ${{ env.REGISTRY }}/Openfire/${{ env.IMAGE_NAME}}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
 
   build-deb-artifact:
     name: Generate DEB artifact

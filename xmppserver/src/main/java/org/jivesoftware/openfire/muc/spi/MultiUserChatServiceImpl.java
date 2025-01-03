@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1963,7 +1963,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
         if (created) {
             // Fire event that a new room has been created
-            MUCEventDispatcher.roomCreated(room.getSelfRepresentation().getOccupantJID());
+            MUCEventDispatcher.roomCreated(room.getID(), room.getSelfRepresentation().getOccupantJID());
         }
         if (loaded || created) {
             // Initiate FMUC, when enabled.
@@ -3325,6 +3325,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 Log.info("Room '{}' was lost from the data structure that's shared in the cluster (the cache). This room is now considered 'gone' for this cluster node. Occupants will be informed.", lostRoomName);
                 final Set<OccupantManager.Occupant> occupants = occupantManager.occupantsForRoomByNode(lostRoomName, XMPPServer.getInstance().getNodeID(), true);
                 final JID roomJID = new JID(lostRoomName, fullServiceName, null);
+                final long roomID = -1; // As this value is currently not used by OccupantManager, we can avoid the complexity in having it looked up.
                 for (final OccupantManager.Occupant occupant : occupants) {
                     try {
                         // Send a presence stanza of type "unavailable" to the occupant
@@ -3349,7 +3350,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     }
                 }
                 // Clean up the locally maintained bookkeeping.
-                occupantManager.roomDestroyed(roomJID);
+                occupantManager.roomDestroyed(roomID, roomJID);
                 removeChatRoom(lostRoomName);
             } catch (Exception e) {
                 Log.warn("Unable to inform occupants on local cluster node that they are being removed from room '{}' because of a (cluster) error.", lostRoomName, e);

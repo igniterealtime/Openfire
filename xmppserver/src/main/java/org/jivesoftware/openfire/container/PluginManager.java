@@ -450,9 +450,6 @@ public class PluginManager
      */
     synchronized boolean loadPlugin( String canonicalName, Path pluginDir )
     {
-        // Clean up any warnings that were recorded during a previous attempt to load the plugin.
-        lastLoadWarnings.remove(canonicalName);
-
         final PluginMetadata metadata = PluginMetadata.getInstance( pluginDir );
         pluginMetadata.put( canonicalName, metadata );
 
@@ -468,6 +465,9 @@ public class PluginManager
             Log.debug("The unloaded file for plugin '{}' is silently ignored, as it has failed to load repeatedly.", canonicalName);
             return false;
         }
+
+        // Clean up any warnings that were recorded during a previous attempt to load the plugin.
+        lastLoadWarnings.remove(canonicalName);
 
         Log.debug( "Loading plugin '{}'...", canonicalName );
         try

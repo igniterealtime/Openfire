@@ -375,7 +375,7 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
                             log(read);
                             log("");
 
-                            if (read.startsWith("<stream:error ")) {
+                            if (read.contains("<stream:error")) {
                                 log("Peer sends a stream error. Can't use this connection anymore.");
                                 return;
                             }

@@ -151,7 +151,7 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
                 try {
                     log("Waiting for new socket.");
 
-                    server.setSoTimeout((int)SO_TIMEOUT.multipliedBy(10).toMillis());
+                    server.setSoTimeout((int)SO_TIMEOUT.toMillis());
                     final Socket socket = server.accept(); // This cannot be interrupted, which makes the entire test run very slow.
                     log("Accepted new socket connection.");
 

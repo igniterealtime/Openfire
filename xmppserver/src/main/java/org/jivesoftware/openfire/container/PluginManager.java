@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -450,9 +450,6 @@ public class PluginManager
      */
     synchronized boolean loadPlugin( String canonicalName, Path pluginDir )
     {
-        // Clean up any warnings that were recorded during a previous attempt to load the plugin.
-        lastLoadWarnings.remove(canonicalName);
-
         final PluginMetadata metadata = PluginMetadata.getInstance( pluginDir );
         pluginMetadata.put( canonicalName, metadata );
 
@@ -468,6 +465,9 @@ public class PluginManager
             Log.debug("The unloaded file for plugin '{}' is silently ignored, as it has failed to load repeatedly.", canonicalName);
             return false;
         }
+
+        // Clean up any warnings that were recorded during a previous attempt to load the plugin.
+        lastLoadWarnings.remove(canonicalName);
 
         Log.debug( "Loading plugin '{}'...", canonicalName );
         try

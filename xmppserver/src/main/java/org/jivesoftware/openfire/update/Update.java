@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package org.jivesoftware.openfire.update;
 
+import org.jivesoftware.util.Version;
+
 /**
  * An Update represents a component that needs to be updated. By component we can refer
  * to the Openfire server itself or to any of the installed plugins.
@@ -28,19 +30,19 @@ public class Update {
      * Name of the component that is outdated. The name could be of the server
      * (i.e. "Openfire") or of installed plugins.
      */
-    private String componentName;
+    private final String componentName;
     /**
      * Latest version of the component that was found.
      */
-    private String latestVersion;
+    private final Version latestVersion;
     /**
      * URL from where the latest version of the component can be downloaded.
      */
-    private String url;
+    private final String url;
     /**
      * Changelog URL of the latest version of the component.
      */
-    private String changelog;
+    private final String changelog;
 
     /**
      * Flag that indicates if the plugin was downloaded. This flag only makes sense for
@@ -48,7 +50,15 @@ public class Update {
      */
     private boolean downloaded;
 
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.1.0
     public Update(String componentName, String latestVersion, String changelog, String url) {
+        this.componentName = componentName;
+        this.latestVersion = new Version(latestVersion);
+        this.changelog = changelog;
+        this.url = url;
+    }
+
+    public Update(String componentName, Version latestVersion, String changelog, String url) {
         this.componentName = componentName;
         this.latestVersion = latestVersion;
         this.changelog = changelog;
@@ -72,6 +82,15 @@ public class Update {
      * @return the latest version of the component that was found.
      */
     public String getLatestVersion() {
+        return latestVersion.getVersionString();
+    }
+
+    /**
+     * Returns the latest version of the component that was found.
+     *
+     * @return the latest version of the component that was found.
+     */
+    public Version getLatest() {
         return latestVersion;
     }
 

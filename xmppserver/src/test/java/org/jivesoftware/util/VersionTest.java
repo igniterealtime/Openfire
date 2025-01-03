@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -167,5 +167,45 @@ public class VersionTest {
         assertThat(test.getStatusVersion(), is(4));
         assertThat(test.getStatus(), is(ReleaseStatus.Release));
         assertThat(test.getVersionString(),is("1.2.3 Release 4"));
+    }
+
+    @Test // OF-2941
+    public void testSnapshotCompareToRelease() {
+        final Version snapshotVersion = new Version(10,1,7, ReleaseStatus.Snapshot, 3);
+        final Version olderReleaseVersion = new Version(10,1,7, ReleaseStatus.Release, 2);
+
+        assertTrue(snapshotVersion.isNewerThan(olderReleaseVersion));
+    }
+
+    @Test // OF-2941
+    public void testAlphaCompareToRelease() {
+        final Version alphaVersion = new Version(10,1,7, ReleaseStatus.Alpha, 3);
+        final Version newerReleaseVersion = new Version(10,1,7, ReleaseStatus.Release, 2);
+
+        assertTrue(newerReleaseVersion.isNewerThan(alphaVersion));
+    }
+
+    @Test // OF-2941
+    public void testBetaCompareToRelease() {
+        final Version betaVersion = new Version(10,1,7, ReleaseStatus.Beta, 3);
+        final Version newerReleaseVersion = new Version(10,1,7, ReleaseStatus.Release, 2);
+
+        assertTrue(newerReleaseVersion.isNewerThan(betaVersion));
+    }
+
+    @Test // OF-2941
+    public void testReleaseCandidateCompareToRelease() {
+        final Version releaseCandidateVersion = new Version(10,1,7, ReleaseStatus.Release_Candidate, 3);
+        final Version newerReleaseVersion = new Version(10,1,7, ReleaseStatus.Release, 2);
+
+        assertTrue(newerReleaseVersion.isNewerThan(releaseCandidateVersion));
+    }
+
+    @Test // OF-2941
+    public void testReleaseCompareToRelease() {
+        final Version releaseVersion = new Version(10,1,7, ReleaseStatus.Release, 3);
+        final Version olderReleaseVersion = new Version(10,1,7, ReleaseStatus.Release, 2);
+
+        assertTrue(releaseVersion.isNewerThan(olderReleaseVersion));
     }
 }

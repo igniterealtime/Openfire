@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -529,7 +529,7 @@ public class UpdateManager extends BasicModule {
             // Check if this is the requested plugin
             if (update.getComponentName().equals(pluginName)) {
                 // Check if the plugin version is right
-                if (new Version(update.getLatestVersion()).isNewerThan( currentVersion ) ) {
+                if (update.getLatest().isNewerThan( currentVersion ) ) {
                     return update;
                 }
             }
@@ -585,7 +585,7 @@ public class UpdateManager extends BasicModule {
                     Log.warn( "Unable to parse URL from openfire download url value '{}'.", openfire.attributeValue("url"), e );
                 }
                 // Keep information about the available server update
-                serverUpdate = new Update("Openfire", latestVersion.getVersionString(), String.valueOf(changelog), String.valueOf(url));
+                serverUpdate = new Update("Openfire", latestVersion, String.valueOf(changelog), String.valueOf(url));
             }
         }
         // Check if we need to send notifications to admins
@@ -670,7 +670,7 @@ public class UpdateManager extends BasicModule {
                     continue;
                 }
 
-                final Update update = new Update( plugin.getName(), latestPlugin.getVersion().getVersionString(), latestPlugin.getChangelog().toExternalForm(), latestPlugin.getDownloadURL().toExternalForm() );
+                final Update update = new Update( plugin.getName(), latestPlugin.getVersion(), latestPlugin.getChangelog().toExternalForm(), latestPlugin.getDownloadURL().toExternalForm() );
                 pluginUpdates.add(update);
             }
         }
@@ -832,7 +832,7 @@ public class UpdateManager extends BasicModule {
             // Check if current server version is correct
             Version currentServerVersion = XMPPServer.getInstance().getServerInfo().getVersion();
             if (latestVersion.isNewerThan(currentServerVersion)) {
-                serverUpdate = new Update("Openfire", latestVersion.getVersionString(), String.valueOf(changelog), String.valueOf(url) );
+                serverUpdate = new Update("Openfire", latestVersion, String.valueOf(changelog), String.valueOf(url) );
             }
         }
     }

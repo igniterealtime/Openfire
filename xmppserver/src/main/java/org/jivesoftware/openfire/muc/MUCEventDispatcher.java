@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,32 +102,32 @@ public class MUCEventDispatcher {
         }
     }
 
-    public static void roomCreated(JID roomJID) {
+    public static void roomCreated(long roomID, JID roomJID) {
         for (MUCEventListener listener : listeners) {
             try {
-                listener.roomCreated(roomJID);   
+                listener.roomCreated(roomID, roomJID);
             } catch (Exception e) {
-                Log.warn("An exception occurred while dispatching a 'roomCreated' event!", e);
+                Log.warn("An exception occurred while dispatching a 'roomCreated' event for room {} ({})!", roomJID, roomID, e);
             }
         }
     }
 
-    public static void roomDestroyed(JID roomJID) {
+    public static void roomDestroyed(long roomID, JID roomJID) {
         for (MUCEventListener listener : listeners) {
             try {
-                listener.roomDestroyed(roomJID);
+                listener.roomDestroyed(roomID, roomJID);
             } catch (Exception e) {
-                Log.warn("An exception occurred while dispatching a 'roomDestroyed' event!", e);
+                Log.warn("An exception occurred while dispatching a 'roomDestroyed' event for room {} ({})!", roomJID, roomID, e);
             }
         }
     }
 
-    public static void roomClearChatHistory(JID roomJID) {
+    public static void roomClearChatHistory(long roomID, JID roomJID) {
         for (MUCEventListener listener : listeners) {
             try {
-                listener.roomClearChatHistory(roomJID);
+                listener.roomClearChatHistory(roomID, roomJID);
             } catch (Exception e) {
-                Log.warn("An exception occurred while dispatching a 'roomClearChatHistory' event for room {}!", roomJID, e);
+                Log.warn("An exception occurred while dispatching a 'roomClearChatHistory' event for room {} ({})!",  roomJID, roomID, e);
             }
         }
     }

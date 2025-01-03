@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1364,7 +1364,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
             // Remove the history of the room from memory (preventing it to pop up in a new room by the same name).
             roomHistory.purge();
             // Fire event to clear chat room history
-            MUCEventDispatcher.roomClearChatHistory(getJID());
+            MUCEventDispatcher.roomClearChatHistory(getID(), getJID());
         });
     }
 
@@ -1446,10 +1446,10 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         roomHistory.purge();
         // If we are not preserving room history on deletion, fire event to clear chat room history
         if(!preserveHistOnRoomDeletion) {
-            MUCEventDispatcher.roomClearChatHistory(getJID());
+            MUCEventDispatcher.roomClearChatHistory(getID(), getJID());
         }
         // Fire event that the room has been destroyed
-        MUCEventDispatcher.roomDestroyed(getJID());
+        MUCEventDispatcher.roomDestroyed(getID(), getJID());
     }
 
     /**

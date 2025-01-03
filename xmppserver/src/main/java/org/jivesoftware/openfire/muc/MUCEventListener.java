@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ package org.jivesoftware.openfire.muc;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
+import javax.annotation.Nonnull;
+
 /**
  * Interface to listen for MUC events. Use the {@link MUCEventDispatcher#addListener(MUCEventListener)}
  * method to register for events.
@@ -32,21 +34,21 @@ public interface MUCEventListener {
      *
      * @param roomJID JID of the room that was created.
      */
-    void roomCreated(JID roomJID);
+    void roomCreated(final long roomID, final @Nonnull JID roomJID);
 
     /**
      * Event triggered when a room was destroyed.
      *
      * @param roomJID JID of the room that was destroyed.
      */
-    void roomDestroyed(JID roomJID);
+    void roomDestroyed(final long roomID, final @Nonnull JID roomJID);
 
     /**
      * Event triggered when a clear chat history command was issued.
      *
      * @param roomJID JID of the room to clear chat history.
      */
-    void roomClearChatHistory(JID roomJID);
+    void roomClearChatHistory(final long roomID, final @Nonnull JID roomJID);
 
     /**
      * Event triggered when a new occupant joins a room.

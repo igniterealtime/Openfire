@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -402,7 +402,8 @@ public class LocalMUCRoomManager
                 localRooms.remove(key);
                 final MultiUserChatService service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName);
                 if (service != null) {
-                    service.getOccupantManager().roomDestroyed(new JID(key, service.getServiceDomain(), null));
+                    final long roomID = -1; // Unused by OccupantManager.
+                    service.getOccupantManager().roomDestroyed(roomID, new JID(key, service.getServiceDomain(), null));
                 }
             }
 
@@ -415,7 +416,8 @@ public class LocalMUCRoomManager
                 localRooms.remove(key);
                 final MultiUserChatService service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName);
                 if (service != null) {
-                    service.getOccupantManager().roomDestroyed(new JID(key, service.getServiceDomain(), null));
+                    final long roomID = -1; // Unused by OccupantManager.
+                    service.getOccupantManager().roomDestroyed(roomID, new JID(key, service.getServiceDomain(), null));
                 }
             }
 

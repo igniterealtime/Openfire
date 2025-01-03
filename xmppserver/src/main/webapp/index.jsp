@@ -42,6 +42,7 @@
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
+<%@ taglib uri="admin" prefix="admin" %>
 
 <%-- Define page bean for header and sidebar --%>
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
@@ -116,7 +117,10 @@
 <%
     UpdateManager updateManager = XMPPServer.getInstance().getUpdateManager();
     Update serverUpdate = updateManager.getServerUpdate();
-    pageContext.setAttribute( "serverUpdate", serverUpdate ); %>
+    pageContext.setAttribute( "serverUpdate", serverUpdate );
+
+    pageContext.setAttribute( "hasPluginWarnings", XMPPServer.getInstance().getPluginManager().hasLoadWarnings());
+%>
 
     <c:if test="${not empty serverUpdate}">
         <div class="warning">
@@ -144,6 +148,14 @@
         <br>
     </c:if>
 
+    <c:if test="${hasPluginWarnings}">
+        <admin:infoBox type="warning">
+            <fmt:message key="index.plugin.load-warning">
+                <fmt:param value="<a href=\"./plugin-admin.jsp\">" />
+                <fmt:param value="</a>"/>
+            </fmt:message>
+        </admin:infoBox>
+    </c:if>
 <style>
 .bar TD {
     padding : 0;

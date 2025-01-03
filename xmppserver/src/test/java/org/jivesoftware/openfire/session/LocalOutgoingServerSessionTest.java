@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -232,12 +232,13 @@ public class LocalOutgoingServerSessionTest
         throws Exception
     {
         final ExpectedOutcome expected = ExpectedOutcome.generateExpectedOutcome(localServerSettings, remoteServerSettings);
-        if (RemoteReceivingServerDummy.doLog) System.out.println("Executing test:\n - Local Server (Openfire, System under test) Settings: " + localServerSettings + "\n - Remote Server (dummy/mock server) Settings: " + remoteServerSettings + "\nExpected outcome: " + expected.getConnectionState());
+        AbstractRemoteServerDummy.log("Executing test:\n - Local Server (Initiator, Openfire, System under test) Settings: " + localServerSettings + "\n - Remote Server (Recipient, dummy/mock server) Settings: " + remoteServerSettings + "\nExpected outcome: " + expected.getConnectionState());
 
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
         JiveGlobals.setProperty("xmpp.server.session.initialise-timeout", Long.toString(1));
 
         try {
+            AbstractRemoteServerDummy.log("Setup fixture: (start setting up fixture)");
             // Setup test fixture.
 
             // Remote server TLS policy.
@@ -288,12 +289,16 @@ public class LocalOutgoingServerSessionTest
 
             final DomainPair domainPair = new DomainPair(Fixtures.XMPP_DOMAIN, RemoteReceivingServerDummy.XMPP_DOMAIN);
             final int port = remoteReceivingServerDummy.getPort();
+            AbstractRemoteServerDummy.log("Setup fixture: (done with setting up fixture)");
 
             // Execute system under test.
+            AbstractRemoteServerDummy.log("Execute system under test: (start with execution)");
             final LocalOutgoingServerSession result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port);
+            AbstractRemoteServerDummy.log("Execute system under test: (done with execution)");
 
             // Verify results
-            if (RemoteReceivingServerDummy.doLog) System.out.println("Expect: " + expected.getConnectionState() + ", Result: " + result);
+            AbstractRemoteServerDummy.log("Verify results (start)");
+            AbstractRemoteServerDummy.log("Expect: " + expected.getConnectionState() + ", Result: " + result);
             switch (expected.getConnectionState())
             {
                 case NO_CONNECTION:
@@ -323,9 +328,12 @@ public class LocalOutgoingServerSessionTest
                     assertEquals( "TLSv1.3", result.getConnection().getTLSProtocolName().get());
                     break;
             }
+            AbstractRemoteServerDummy.log("Verify results (done)");
         } finally {
             // Teardown test fixture.
+            AbstractRemoteServerDummy.log("Teardown test fixture (start)");
             trustStore.delete("unit-test");
+            AbstractRemoteServerDummy.log("Teardown test fixture (start)");
         }
     }
 
@@ -363,7 +371,7 @@ public class LocalOutgoingServerSessionTest
         // failed test case.
         int i = 1;
         for (Arguments arguments : result) {
-            System.out.println("Test [" + i++ + "]: " + arguments.get()[0] + ", " + arguments.get()[1]);
+            AbstractRemoteServerDummy.log("Test [" + i++ + "]: " + arguments.get()[0] + ", " + arguments.get()[1]);
         }
         return result;
     }

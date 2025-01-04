@@ -1,6 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
-  - Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -267,6 +267,10 @@ tr.regular td {
     border-color: #e3e3e3;
 }
 
+tr.regular:hover {
+    background-color: white;
+}
+
 tr.update td {
     font-size: 8pt;
     background: #E7FBDE;
@@ -313,6 +317,9 @@ tr.lowerhalf > td:first-child {
 tr.lowerhalf > td:last-child {
     border-right-width: 1px;
     border-bottom-width: 1px;
+}
+.table-data:hover {
+    background-color: white;
 }
 </style>
 

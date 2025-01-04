@@ -949,14 +949,25 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         if (stanzasToPush.isEmpty()) {
             return;
         }
-        synchronized (streamManager)
-        {
+
+        // When stream management is enabled, deliver and record stanzas under a mutex. If it's not enabled, don't
+        // acquire the lock to reduce lock contention (OF-2921).
+        if (!streamManager.isEnabled()) {
             // Push stanzas to the client.
             for (final Packet stanzaToPush : stanzasToPush) {
                 if (conn != null) {
                     conn.deliver(stanzaToPush);
                 }
-                streamManager.sentStanza(stanzaToPush);
+            }
+        } else {
+            synchronized (streamManager) {
+                // Push stanzas to the client.
+                for (final Packet stanzaToPush : stanzasToPush) {
+                    if (conn != null) {
+                        conn.deliver(stanzaToPush);
+                    }
+                    streamManager.sentStanza(stanzaToPush);
+                }
             }
         }
     }

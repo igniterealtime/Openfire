@@ -225,8 +225,8 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
             log("Start accepting socket connections (as Server Dialback Authoritative Server).");
             while (!shouldStop) {
                 try {
-                    dialbackAuthoritativeServer.setSoTimeout((int)SO_TIMEOUT.multipliedBy(10).toMillis());
-                    final Socket socket = dialbackAuthoritativeServer.accept();
+                    dialbackAuthoritativeServer.setSoTimeout((int)SO_TIMEOUT.toMillis());
+                    final Socket socket = dialbackAuthoritativeServer.accept(); // This cannot be interrupted, which makes the entire test run very slow.
                     final InputStream is = socket.getInputStream();
                     final OutputStream os = socket.getOutputStream();
                     log("DIALBACK AUTH SERVER: Accepted new socket connection.");

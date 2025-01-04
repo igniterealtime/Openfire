@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -193,19 +193,20 @@ public class LocalIncomingServerSessionTest
         throws Exception
     {
         final ExpectedOutcome expected = ExpectedOutcome.generateExpectedOutcome(remoteServerSettings, localServerSettings);
-        if (RemoteInitiatingServerDummy.doLog) System.out.println("Executing test:\n - Local Server, Recipient, System Under Test Settings: " + localServerSettings + "\n - Remote Server, Initiator, dummy/mock server Settings: " + remoteServerSettings + "\nExpected outcome: " + expected.getConnectionState());
+        AbstractRemoteServerDummy.log("Executing test:\n - Local Server (Recipient, System Under Test) Settings: " + localServerSettings + "\n - Remote Server (Initiator, dummy/mock server) Settings: " + remoteServerSettings + "\nExpected outcome: " + expected.getConnectionState());
 
         ConnectionListener connectionListener = null;
         try {
-            // Setup test fixture.
+            AbstractRemoteServerDummy.log("Setup fixture: (start setting up fixture)");
 
-            // Remote server TLS policy.
+            // Setup test fixture.
+            AbstractRemoteServerDummy.log("Setup fixture: remote server TLS policy.");
             remoteInitiatingServerDummy.setEncryptionPolicy(remoteServerSettings.encryptionPolicy);
 
-            // Remote server dialback
+            AbstractRemoteServerDummy.log("Setup fixture: remote server dialback.");
             remoteInitiatingServerDummy.setDisableDialback(!remoteServerSettings.dialbackSupported);
 
-            // Remote server certificate state
+            AbstractRemoteServerDummy.log("Setup fixture: remote server certificate state.");
             switch (remoteServerSettings.certificateState) {
                 case INVALID:
                     remoteInitiatingServerDummy.setUseExpiredEndEntityCertificate(true);
@@ -224,13 +225,13 @@ public class LocalIncomingServerSessionTest
                     throw new IllegalStateException("Unsupported remote certificate state");
             }
 
-            // Local server TLS policy.
+            AbstractRemoteServerDummy.log("Setup fixture: local server TLS policy.");
             JiveGlobals.setProperty(ConnectionSettings.Server.TLS_POLICY, localServerSettings.encryptionPolicy.toString());
 
-            // Local server dialback.
+            AbstractRemoteServerDummy.log("Setup fixture: local server dialback.");
             JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, localServerSettings.dialbackSupported ? "true" : "false");
 
-            // Local server certificate state
+            AbstractRemoteServerDummy.log("Setup fixture: local server certificate state.");
             switch (localServerSettings.certificateState) {
                 case MISSING:
                     // Do not install domain certificate.
@@ -245,12 +246,15 @@ public class LocalIncomingServerSessionTest
                     break;
             }
 
+            AbstractRemoteServerDummy.log("Setup fixture: remote server init");
             remoteInitiatingServerDummy.init();
             if (remoteInitiatingServerDummy.getDialbackAuthoritativeServerPort() > 0) {
                 DNSUtil.setDnsOverride(Map.of(RemoteInitiatingServerDummy.XMPP_DOMAIN, new SrvRecord("localhost", remoteInitiatingServerDummy.getDialbackAuthoritativeServerPort(), false)));
             }
+            AbstractRemoteServerDummy.log("Setup fixture: (done with setting up fixture)");
 
             // execute system under test.
+            AbstractRemoteServerDummy.log("Execute system under test: (start with execution)");
             JiveGlobals.setProperty(ConnectionSettings.Server.OLD_SSLPORT, String.valueOf(findFreeLocalPort()));
             connectionListener = new ConnectionListener(ConnectionType.SOCKET_S2S,
                 ConnectionSettings.Server.OLD_SSLPORT,
@@ -264,18 +268,22 @@ public class LocalIncomingServerSessionTest
                 identityStore.getConfiguration(),
                 trustStore.getConfiguration(),
                 ConnectionSettings.Server.COMPRESSION_SETTINGS);
+            AbstractRemoteServerDummy.log("Execute system under test: starting connection listener");
             connectionListener.start();
 
+            AbstractRemoteServerDummy.log("Execute system under test: mocking connection manager");
             final ConnectionManager connectionManager = Fixtures.mockConnectionManager();
             doReturn(Set.of(connectionListener)).when(connectionManager).getListeners(any(ConnectionType.class));
             doReturn(connectionListener).when(connectionManager).getListener(any(ConnectionType.class), anyBoolean());
             doReturn(connectionManager).when(XMPPServer.getInstance()).getConnectionManager();
 
-            // now, make the remote server connect.
+            AbstractRemoteServerDummy.log("Execute system under test: make the remote server connect.");
             remoteInitiatingServerDummy.connect(connectionListener.getPort());
+            AbstractRemoteServerDummy.log("Execute system under test: start connecting, block until done.");
             remoteInitiatingServerDummy.blockUntilDone(1, TimeUnit.MINUTES);
+            AbstractRemoteServerDummy.log("Execute system under test: done connecting.");
 
-            // get the incoming server session object.
+            AbstractRemoteServerDummy.log("Execute system under test: get the incoming server session object.");
             final LocalIncomingServerSession result;
             if (remoteInitiatingServerDummy.getReceivedStreamIDs().isEmpty()) {
                 result = null;
@@ -284,9 +292,11 @@ public class LocalIncomingServerSessionTest
                 final StreamID lastReceivedID = remoteInitiatingServerDummy.getReceivedStreamIDs().get(remoteInitiatingServerDummy.getReceivedStreamIDs().size()-1);
                 result = XMPPServer.getInstance().getSessionManager().getIncomingServerSession( lastReceivedID );
             }
+            AbstractRemoteServerDummy.log("Execute system under test: (done with execution)");
 
             // Verify results
-            if (RemoteInitiatingServerDummy.doLog) System.out.println("Expect: " + expected.getConnectionState() + ", Result: " + result);
+            AbstractRemoteServerDummy.log("Verify results (start)");
+            AbstractRemoteServerDummy.log("Expect: " + expected.getConnectionState() + ", Result: " + result);
             switch (expected.getConnectionState())
             {
                 case NO_CONNECTION:
@@ -332,13 +342,16 @@ public class LocalIncomingServerSessionTest
                     assertEquals(2, remoteInitiatingServerDummy.getReceivedStreamFromValues().size());
                     break;
             }
-            if (RemoteInitiatingServerDummy.doLog) System.out.println("Expectation met.");
+            AbstractRemoteServerDummy.log("Expectation met.");
+            AbstractRemoteServerDummy.log("Verify results (done)");
         } finally {
             // Teardown test fixture.
+            AbstractRemoteServerDummy.log("Teardown test fixture (start)");
             trustStore.delete("unit-test");
             if (connectionListener != null) {
                 connectionListener.stop();
             }
+            AbstractRemoteServerDummy.log("Teardown test fixture (done)");
         }
     }
 
@@ -376,7 +389,7 @@ public class LocalIncomingServerSessionTest
         // failed test case.
         int i = 1;
         for (Arguments arguments : result) {
-            System.out.println("Test [" + i++ + "]: " + arguments.get()[0] + ", " + arguments.get()[1]);
+            AbstractRemoteServerDummy.log("Test [" + i++ + "]: " + arguments.get()[0] + ", " + arguments.get()[1]);
         }
         return result;
     }

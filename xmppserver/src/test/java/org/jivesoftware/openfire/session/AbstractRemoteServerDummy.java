@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,12 @@ import java.util.regex.Pattern;
 
 public class AbstractRemoteServerDummy
 {
+    /**
+     * When switched to 'true', most XMPP interaction will be printed to standard-out.
+     */
+    public static final boolean doLog = false;
+    public static long lastLog = System.currentTimeMillis();
+
     public static final String XMPP_DOMAIN = "remote-dummy.example.org";
 
     private final static KeystoreTestUtils.ResultHolder SELF_SIGNED_CERTIFICATE;
@@ -61,6 +67,19 @@ public class AbstractRemoteServerDummy
             EXPIRED_CERTIFICATE_CHAIN = KeystoreTestUtils.generateCertificateChainWithExpiredEndEntityCert(XMPP_DOMAIN);
         } catch (Throwable t) {
             throw new IllegalStateException("Unable to setup certificates used by the test implementation.", t);
+        }
+    }
+
+    /**
+     * Logs a message, but only if logging is enabled (which is controlled by the {@link #doLog} field).
+     *
+     * @param message The message to be logged.
+     */
+    public static void log(final String message) {
+        if (doLog) {
+            long delta = System.currentTimeMillis() - lastLog;
+            System.out.println(delta + "ms: " + message);
+            lastLog = System.currentTimeMillis();
         }
     }
 

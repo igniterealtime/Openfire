@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +70,10 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
     private static boolean remoteFeaturesContainsStartTLS(Element doc) {
         return doc.element("starttls") != null;
+    }
+
+    private static boolean remoteFeaturesRequiresStartTLS(Element doc) {
+        return remoteFeaturesContainsStartTLS(doc) && doc.element("starttls").element("required") != null;
     }
 
     private static boolean isSaslExternalOfferred(Element doc) {
@@ -194,6 +198,10 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 LOG.debug("I MUST use TLS but I have no StartTLS in features.");
                 abandonSessionInitiation();
                 return false;
+            } else if (cannotUseTls() && remoteFeaturesRequiresStartTLS(doc)) {
+                LOG.debug("I CANNOT use TLS but remote server requires the STARTTLS feature.");
+                abandonSessionInitiation();
+                return false;
             }
 
             // Authentication ------
@@ -227,6 +235,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 return true;
             } else {
                 LOG.debug("No authentication mechanism available.");
+                abandonSessionInitiation();
                 return false;
             }
         }
@@ -330,6 +339,10 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
     private boolean mustUseTls() {
         return connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required;
+    }
+
+    private boolean cannotUseTls() {
+        return connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.disabled;
     }
 
     @Override

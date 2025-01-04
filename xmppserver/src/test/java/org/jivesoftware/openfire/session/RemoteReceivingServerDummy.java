@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,11 +50,6 @@ import java.util.concurrent.Executors;
  */
 public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implements AutoCloseable
 {
-    /**
-     * When switched to 'true', most XMPP interaction will be printed to standard-out.
-     */
-    public static final boolean doLog = false;
-
     private ServerSocket server;
 
     private Thread acceptThread;
@@ -144,32 +139,42 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
         boolean shouldStop = false;
 
         void stop() {
+            log("Start stopping accepting connections.");
             shouldStop = true;
+            try {
+                server.close();
+                log("Closed server accepting connections.");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         @Override
         public void run()
         {
-            if (doLog) System.out.println("Start accepting socket connections.");
+            log("Start accepting socket connections.");
             while (!shouldStop) {
                 try {
-                    server.setSoTimeout((int)SO_TIMEOUT.multipliedBy(10).toMillis());
+                    log("Waiting for new socket.");
+
+                    server.setSoTimeout((int)SO_TIMEOUT.toMillis());
                     final Socket socket = server.accept();
-                    if (doLog) System.out.println("Accepted new socket connection.");
+                    log("Accepted new socket connection.");
 
                     processingService.submit(new SocketProcessor(socket));
                 } catch (Throwable t) {
                     // Log exception only when not cleanly closed.
-                    if (acceptThread != null && !acceptThread.isInterrupted()) {
-                        if (!(t instanceof SocketTimeoutException)) {
+                    if (acceptThread != null && !acceptThread.isInterrupted() && !shouldStop) {
+                        if (!(t instanceof SocketTimeoutException)) { // Ignore SO_TIMEOUT when not stopping.
                             t.printStackTrace();
                         }
                     } else {
+                        log("Stop accepting (interrupted?).");
                         break;
                     }
                 }
             }
-            if (doLog) System.out.println("Stopped socket accepting connections.");
+            log("Stopped socket accepting connections.");
         }
     }
 
@@ -190,7 +195,7 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
 
         private SocketProcessor(Socket socket) throws IOException
         {
-            if (doLog) System.out.println("New session on socket.");
+            log("New session on socket.");
 
             if (socket instanceof SSLSocket) {
                 allowableSocketTimeouts = 10; // A new TLS-connection has been observed to require some extra time (when Dialback-over-TLS is happening).
@@ -202,9 +207,9 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
 
         public synchronized void send(final String data) throws IOException
         {
-            if (doLog) System.out.println("# send from remote to Openfire" + (socket instanceof SSLSocket ? " (encrypted)" : ""));
-            if (doLog) System.out.println(data);
-            if (doLog) System.out.println();
+            log("# send from remote to Openfire" + (socket instanceof SSLSocket ? " (encrypted)" : ""));
+            log(data);
+            log("");
             os.write(data.getBytes());
             os.flush();
         }
@@ -212,7 +217,7 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
         @Override
         public void run()
         {
-            if (doLog) System.out.println("Start reading from socket.");
+            log("Start reading from socket.");
             try {
                 final ByteBuffer buffer = ByteBuffer.allocate(1024*16);
                 ReadableByteChannel channel = Channels.newChannel(is);
@@ -225,16 +230,16 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
                             // Ugly hack to get Dialback to work.
                             if (read.startsWith("<db:") && !read.contains("xmlns:db=")) {
                                 read = read.replaceFirst(" ", " xmlns:db=\"jabber:server:dialback\" ");
-                                if (doLog) System.out.println("# recv (Hacked inbound stanza to include Dialback namespace declaration)" + (socket instanceof SSLSocket ? " (encrypted)" : ""));
+                                log("# recv (Hacked inbound stanza to include Dialback namespace declaration)" + (socket instanceof SSLSocket ? " (encrypted)" : ""));
                             } else {
-                                if (doLog) System.out.println("# recv from Openfire" + (socket instanceof SSLSocket ? " (encrypted)" : ""));
+                                log("# recv from Openfire" + (socket instanceof SSLSocket ? " (encrypted)" : ""));
                             }
-                            if (doLog) System.out.println(read);
-                            if (doLog) System.out.println();
+                            log(read);
+                            log("");
 
                             // THIS CONTROLS THE REMOTE SERVER TLS / AUTH RESPONSES
                             if (read.startsWith("<stream:error ") && read.endsWith("</stream:stream>")) {
-                                if (doLog) System.out.println("Peer sends a stream error. Can't use this connection anymore.");
+                                log("Peer sends a stream error. Can't use this connection anymore.");
                                 return;
                             }
                             if (!read.equals("</stream:stream>")) {
@@ -254,7 +259,7 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
                                         processDialback(inbound);
                                         break;
                                     default:
-                                        if (doLog) System.out.println("Received stanza '" + inbound.getName() + "' that I don't know how to respond to.");
+                                        log("Received stanza '" + inbound.getName() + "' that I don't know how to respond to.");
                                 }
                             }
                         }
@@ -265,14 +270,14 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
                         }
                     }
                 } while (!processingService.isShutdown() && allowableSocketTimeouts > 0);
-                if (doLog) System.out.println("Ending read loop." + (socket instanceof SSLSocket ? " (encrypted)" : ""));
+                log("Ending read loop." + (socket instanceof SSLSocket ? " (encrypted)" : ""));
             } catch (Throwable t) {
                 // Log exception only when not cleanly closed.
                 if (doLog && !processingService.isShutdown()) {
                     t.printStackTrace();
                 }
             } finally {
-                if (doLog) System.out.println("Stopped reading from socket");
+                log("Stopped reading from socket");
             }
         }
 
@@ -320,23 +325,23 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
                     allowableSocketTimeouts = 10; // It's possible that the peer will start dialback. If that's happening, we need to be more forgiving in regard to socket timeouts.
                 }
                 final Element mechanisms = features.addElement(QName.get("mechanisms", "urn:ietf:params:xml:ns:xmpp-sasl"));
-                if (doLog) System.out.println(((SSLSocket) socket).getSession().getProtocol());
-                if (doLog) System.out.println(((SSLSocket) socket).getSession().getCipherSuite());
+                log(((SSLSocket) socket).getSession().getProtocol());
+                log(((SSLSocket) socket).getSession().getCipherSuite());
 
                 try {
                     // Throws an exception if the peer (local server) doesn't send a certificate
-                    if (doLog) System.out.println(((SSLSocket) socket).getSession().getPeerPrincipal());
+                    log("" + ((SSLSocket) socket).getSession().getPeerPrincipal());
                     Certificate[] certificates = ((SSLSocket) socket).getSession().getPeerCertificates();
                     if (certificates != null && encryptionPolicy != Connection.TLSPolicy.disabled) {
                         try {
                             ((X509Certificate) certificates[0]).checkValidity(); // first peer certificate will belong to the local server
                             mechanisms.addElement("mechanism").addText("EXTERNAL");
                         } catch (CertificateExpiredException | CertificateNotYetValidException e) {
-                            if (doLog) System.out.println("local certificate is invalid");
+                            log("local certificate is invalid");
                         }
                     }
                 } catch (SSLPeerUnverifiedException e) {
-                    if (doLog) System.out.println("local certificate is missing/unverified");
+                    log("local certificate is missing/unverified");
                 }
             }
 
@@ -363,7 +368,7 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
 
             send(outbound.getRootElement().asXML());
 
-            if (doLog) System.out.println("Replace the socket with one that will do TLS on the next inbound and outbound data");
+            log("Replace the socket with one that will do TLS on the next inbound and outbound data");
 
             final SSLContext sc = SSLContext.getInstance("TLSv1.3");
 

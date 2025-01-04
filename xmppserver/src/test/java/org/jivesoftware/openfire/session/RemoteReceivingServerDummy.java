@@ -141,6 +141,12 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
         void stop() {
             log("Start stopping accepting connections.");
             shouldStop = true;
+            try {
+                server.close();
+                log("Closed server accepting connections.");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         @Override
@@ -152,14 +158,14 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
                     log("Waiting for new socket.");
 
                     server.setSoTimeout((int)SO_TIMEOUT.toMillis());
-                    final Socket socket = server.accept(); // This cannot be interrupted, which makes the entire test run very slow.
+                    final Socket socket = server.accept();
                     log("Accepted new socket connection.");
 
                     processingService.submit(new SocketProcessor(socket));
                 } catch (Throwable t) {
                     // Log exception only when not cleanly closed.
-                    if (acceptThread != null && !acceptThread.isInterrupted()) {
-                        if (!(t instanceof SocketTimeoutException)) {
+                    if (acceptThread != null && !acceptThread.isInterrupted() && !shouldStop) {
+                        if (!(t instanceof SocketTimeoutException)) { // Ignore SO_TIMEOUT when not stopping.
                             t.printStackTrace();
                         }
                     } else {

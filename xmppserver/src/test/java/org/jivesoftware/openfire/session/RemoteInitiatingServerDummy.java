@@ -216,7 +216,14 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
         boolean shouldStop = false;
 
         void stop() {
+            log("Start stopping accepting connections (as Server Dialback Authoritative Server).");
             shouldStop = true;
+            try {
+                dialbackAuthoritativeServer.close();
+                log("Closed server accepting connections (as Server Dialback Authoritative Server)");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         @Override
@@ -226,7 +233,7 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
             while (!shouldStop) {
                 try {
                     dialbackAuthoritativeServer.setSoTimeout((int)SO_TIMEOUT.toMillis());
-                    final Socket socket = dialbackAuthoritativeServer.accept(); // This cannot be interrupted, which makes the entire test run very slow.
+                    final Socket socket = dialbackAuthoritativeServer.accept();
                     final InputStream is = socket.getInputStream();
                     final OutputStream os = socket.getOutputStream();
                     log("DIALBACK AUTH SERVER: Accepted new socket connection.");
@@ -287,11 +294,12 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
                     }
                 } catch (Throwable t) {
                     // Log exception only when not cleanly closed.
-                    if (dialbackAcceptThread != null && !dialbackAcceptThread.isInterrupted()) {
-                        if (!(t instanceof SocketTimeoutException) && !shouldStop) {
+                    if (dialbackAcceptThread != null && !dialbackAcceptThread.isInterrupted() && !shouldStop) {
+                        if (!(t instanceof SocketTimeoutException)) { // Ignore SO_TIMEOUT when not stopping.
                             t.printStackTrace();
                         }
                     } else {
+                        log("Stop accepting (as Server Dialback Authoritative Server) (interrupted/closed).");
                         break;
                     }
                 }

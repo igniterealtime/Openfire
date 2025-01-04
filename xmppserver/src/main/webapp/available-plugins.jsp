@@ -1,6 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
-  - Copyright (C) 2017-2023 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -112,6 +112,10 @@
     border-style: solid;
     border-width: 1px 1px 1px 0;
     padding: 5px;
+}
+
+.regular:hover {
+    background-color: white;
 }
 
 .line-bottom-border {
@@ -256,7 +260,7 @@
                             </c:when>
                             <c:otherwise>
                                 <c:forEach items="${notInstalledPlugins}" var="notInstalledPlugin">
-                                    <tr id="${notInstalledPlugin.hashCode}">
+                                    <tr class="regular" id="${notInstalledPlugin.hashCode}">
                                         <td class="line-bottom-border" style="width: 1%">
                                             <c:choose>
                                                 <c:when test="${not empty notInstalledPlugin.icon}">

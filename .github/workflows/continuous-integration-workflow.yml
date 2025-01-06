@@ -61,8 +61,9 @@ jobs:
           path: ~/.m2/repository/org/igniterealtime/openfire/
           retention-days: 1
 
-  integration-tests:
-    name: Run Integration Tests
+
+  integration:
+    name: Execute Integration CI tests
     runs-on: ubuntu-latest
     needs: build
     permissions:
@@ -70,20 +71,14 @@ jobs:
       packages: read
 
     steps:
+      # The first 2 steps (checking out, and building from Openfire Dockerfile)
+      # can be removed when the docker image is published to a registry.
+      # This 'integration' job should then need the 'build-and-push-docker' job as a dependency.
       - uses: actions/checkout@v4
 
-      # Get the built distribution from previous job
-      - name: Download distribution artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: distribution-java17
-          path: .
-
-      - name: Prepare for Docker build
+      - name: Build Docker Image
         run: |
-          tar -xf distribution-artifact.tar
-          # Move the distribution contents where the Dockerfile expects them
-          cp -r distribution/target/distribution-base/* .
+          docker build -t openfire:latest .
 
       - name: Checkout Integration Tests
         uses: actions/checkout@v4
@@ -102,10 +97,6 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
           cache: 'maven'
-
-      - name: Build Docker Image
-        run: |
-          docker build -t openfire:latest .
 
       - name: Run Integration Tests
         working-directory: openfire-integration-tests

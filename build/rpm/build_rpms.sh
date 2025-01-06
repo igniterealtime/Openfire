@@ -24,14 +24,20 @@ export OPENFIRE_FULLVERSION=$(mvn help:evaluate -Dexpression=project.version -q 
 export OPENFIRE_VERSION=$(echo "${OPENFIRE_FULLVERSION}" | cut -d'-' -f1)
 
 # Setup the RPM versioning correctly, so one can update from 
-# a alpha,beta,rc build to GA 
+# a snapshot,alpha,beta,rc build to GA
 # For General Releases we get x.y.z-1
-# For Alpha builds we get     x.y.z-0.1.{YYYYMMDD}alpha
-# For Beta/RC builds we get   x.y.z-0.2.(beta|rc)
+# For Snapshot builds we get     x.y.z-0.1.{YYYYMMDD}snapshot
+# For alpha builds we get   x.y.z-0.2.alpha
+# For beta builds we get   x.y.z-0.2.beta
+# For rc builds we get   x.y.z-0.2.rc
 if [[ $OPENFIRE_FULLVERSION = *"SNAPSHOT"* ]]; then
-    export OPENFIRE_RELEASE="0.1.$(date +'%Y%m%d')alpha"
+    export OPENFIRE_RELEASE="0.1.$(date +'%Y%m%d')snapshot"
+elif [[ $OPENFIRE_FULLVERSION = *"alpha"* ]]; then
+    export OPENFIRE_RELEASE="0.2.alpha"
 elif [[ $OPENFIRE_FULLVERSION = *"beta"* ]]; then
     export OPENFIRE_RELEASE="0.2.beta"
+elif [[ $OPENFIRE_FULLVERSION = *"rc"* ]]; then
+    export OPENFIRE_RELEASE="0.2.rc"
 else
     export OPENFIRE_RELEASE="1"
 fi

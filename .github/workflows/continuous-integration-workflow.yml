@@ -59,6 +59,62 @@ jobs:
           path: ~/.m2/repository/org/igniterealtime/openfire/
           retention-days: 1
 
+  integration-tests:
+    name: Run Integration Tests
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Get the built distribution from previous job
+      - name: Download distribution artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: distribution-java17
+          path: .
+
+      - name: Prepare for Docker build
+        run: |
+          tar -xf distribution-artifact.tar
+          # Move the distribution contents where the Dockerfile expects them
+          cp -r distribution/target/distribution-base/* .
+
+      - name: Checkout Integration Tests
+        uses: actions/checkout@v4
+        with:
+          repository: surevine/openfire-integration-tests
+          path: openfire-integration-tests
+
+      - name: Initialize Integration Tests Submodules
+        working-directory: openfire-integration-tests
+        run: |
+          git submodule update --init
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'maven'
+
+      - name: Build Docker Image
+        run: |
+          docker build -t openfire:latest .
+
+      - name: Run Integration Tests
+        working-directory: openfire-integration-tests
+        run: ./mvnw -B verify
+
+      - name: Upload test reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-test-reports
+          path: openfire-integration-tests/target/failsafe-reports
 
   aioxmpp:
 

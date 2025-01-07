@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,7 @@ package org.jivesoftware.openfire.net;
 
 import org.dom4j.Element;
 import org.dom4j.Namespace;
-import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.PacketRouter;
-import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.session.ComponentSession;
@@ -34,6 +32,9 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
+
+import javax.annotation.Nullable;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Handler of XML stanzas sent by external components connected directly to the server. Received packet will
@@ -103,7 +104,12 @@ public class ComponentStanzaHandler extends StanzaHandler {
                             subdomain = extraDomain;
                         }
                         InternalComponentManager.getInstance().addComponent(subdomain, component);
-                        componentSession.getConnection().registerCloseListener( handback -> InternalComponentManager.getInstance().removeComponent( subdomain, (ComponentSession.ExternalComponent) handback ), component );
+                        componentSession.getConnection().registerCloseListener(new ConnectionCloseListener() {
+                            @Override
+                            public CompletableFuture<Void> onConnectionClosing(@Nullable Object handback) {
+                                return CompletableFuture.runAsync(() -> InternalComponentManager.getInstance().removeComponent(subdomain, (ComponentSession.ExternalComponent) handback));
+                            }
+                        }, component);
                         // Send confirmation that the new domain has been registered
                         connection.deliverRawText("<bind/>");
                     }

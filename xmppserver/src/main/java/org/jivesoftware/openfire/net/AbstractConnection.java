@@ -23,10 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * A partial implementation of the {@link org.jivesoftware.openfire.Connection} interface, implementing functionality
@@ -134,7 +132,7 @@ public abstract class AbstractConnection implements Connection
     @Override
     public void registerCloseListener(ConnectionCloseListener listener, Object callback) {
         if (isClosed()) {
-            listener.onConnectionClose(callback);
+            listener.onConnectionClosing(callback).join();
         }
         else {
             closeListeners.put( listener, callback );
@@ -149,17 +147,23 @@ public abstract class AbstractConnection implements Connection
     /**
      * Notifies all close listeners that the connection has been closed. Used by subclasses to properly finish closing
      * the connection.
+     *
+     * @return A Future that represents the state of the close listeners invocations.
      */
-    protected void notifyCloseListeners() {
-        for( final Map.Entry<ConnectionCloseListener, Object> entry : closeListeners.entrySet() )
+    protected CompletableFuture<?> notifyCloseListeners()
+    {
+        Log.debug("Notifying close listeners of connection {}", this);
+        final ArrayList<CompletableFuture<?>> futures = new ArrayList<>();
+
+        for (final Map.Entry<ConnectionCloseListener, Object> entry : closeListeners.entrySet() )
         {
-            if (entry.getKey() != null) {
-                try {
-                    entry.getKey().onConnectionClose(entry.getValue());
-                } catch (Exception e) {
-                    Log.error("Error notifying listener: " + entry.getKey(), e);
-                }
+            final ConnectionCloseListener listener = entry.getKey();
+            if (listener != null) {
+                final Object handback = entry.getValue();
+                futures.add(listener.onConnectionClosing(handback));
             }
         }
+
+        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
     }
 }

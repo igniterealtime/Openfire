@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,6 +51,7 @@ import javax.annotation.Nonnull;
 import java.net.UnknownHostException;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -1332,107 +1333,131 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         return session.getLanguage();
     }
 
-    private class ClientSessionListener implements ConnectionCloseListener {
+    private class ClientSessionListener implements ConnectionCloseListener
+    {
         /**
-         * Handle a session that just closed.
+         * Handle a client session that just closed.
          *
          * @param handback The session that just closed
+         * @return a Future representing pending completion of the event listener invocation.
          */
         @Override
-        public void onConnectionClose(Object handback) {
-            try {
-                LocalClientSession session = (LocalClientSession) handback;
-                if (session.isDetached()) {
-                    Log.debug("Closing session with address {} and streamID {} is detached already.", session.getAddress(), session.getStreamID());
-                    return;
-                }
-                if (session.getStreamManager().getResume()) {
-                    Log.debug("Closing session with address {} and streamID {} has SM enabled; detaching.", session.getAddress(), session.getStreamID());
-                    session.setDetached();
-                    return;
-                } else {
-                    Log.debug("Closing session with address {} and streamID {} does not have SM enabled.", session.getAddress(), session.getStreamID());
-                }
+        public CompletableFuture<Void> onConnectionClosing(Object handback)
+        {
+            final LocalClientSession session = (LocalClientSession) handback;
+            if (session.isDetached()) {
+                Log.debug("Closing client session with address {} and streamID {} is detached already; this is a no-op.", session.getAddress(), session.getStreamID());
+                return CompletableFuture.completedFuture(null);
+            }
+            if (session.getStreamManager().getResume()) {
+                Log.debug("Closing client session with address {} and streamID {} has SM enabled; detaching.", session.getAddress(), session.getStreamID());
+                session.setDetached();
+                return CompletableFuture.completedFuture(null);
+            }
+
+            CompletableFuture<Void> result = CompletableFuture.runAsync(() -> Log.debug("Closing client session with address {} and streamID {} that does not have SM resume.", session.getAddress(), session.getStreamID()));
+
+            if ((session.getPresence().isAvailable() || !session.wasAvailable()) && routingTable.hasClientRoute(session.getAddress())) {
+                // Send an unavailable presence to the user's subscribers. This gives us a chance to send an
+                // unavailable presence to the entities that the user sent directed presences
+                final Presence presence = new Presence();
+                presence.setType(Presence.Type.unavailable);
+                presence.setFrom(session.getAddress());
+
+                result = result.thenRunAsync(() -> router.route(presence));
+            }
+
+            // In the completion stage remove the session (which means it'll be removed no matter if the previous stage had exceptions).
+            return result.whenComplete((v,t) -> {
                 try {
-                    if ((session.getPresence().isAvailable() || !session.wasAvailable()) &&
-                            routingTable.hasClientRoute(session.getAddress())) {
-                        // Send an unavailable presence to the user's subscribers
-                        // Note: This gives us a chance to send an unavailable presence to the
-                        // entities that the user sent directed presences
-                        Presence presence = new Presence();
-                        presence.setType(Presence.Type.unavailable);
-                        presence.setFrom(session.getAddress());
-
-                        // Broadcast asynchronously, to reduce the likelihood of the broadcast introducing a deadlock (OF-2921).
-                        TaskEngine.getInstance().submit(() -> router.route(presence));
-                    }
-
                     session.getStreamManager().onClose(router, serverAddress);
-                }
-                finally {
-                    // Remove the session
+                } finally {
+                    // Note that the session can't be removed before the unavailable presence has been sent (as session-provided data is used by the broadcast).
                     removeSession(session);
                 }
-            }
-            catch (Exception e) {
-                // Can't do anything about this problem...
-                Log.error(LocaleUtils.getLocalizedString("admin.error.close"), e);
-            }
+            });
         }
     }
 
-    private class IncomingServerSessionListener implements ConnectionCloseListener {
+    private class IncomingServerSessionListener implements ConnectionCloseListener
+    {
         /**
-         * Handle a session that just closed.
+         * Handle an incoming server-to-server session that just closed.
          *
          * @param handback The session that just closed
+         * @return a Future representing pending completion of the event listener invocation.
          */
         @Override
-        public void onConnectionClose(Object handback) {
-            LocalIncomingServerSession session = (LocalIncomingServerSession)handback;
+        public CompletableFuture<Void> onConnectionClosing(Object handback)
+        {
+            final LocalIncomingServerSession session = (LocalIncomingServerSession)handback;
+
+            CompletableFuture<Void> result = CompletableFuture.runAsync(() -> Log.debug("Closing incoming server session with address {} and streamID {}.", session.getAddress(), session.getStreamID()));
+
             // Remove all the domains that were registered for this server session.
+            final Collection<CompletableFuture<Void>> tasks = new ArrayList<>();
             for (String domain : session.getValidatedDomains()) {
-                unregisterIncomingServerSession(domain, session);
+                tasks.add(CompletableFuture.runAsync(() -> unregisterIncomingServerSession(domain, session)));
             }
+
+            return result.thenCompose(e -> CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])));
         }
     }
 
-    private class OutgoingServerSessionListener implements ConnectionCloseListener {
+    private class OutgoingServerSessionListener implements ConnectionCloseListener
+    {
         /**
-         * Handle a session that just closed.
+         * Handle an outgoing server-to-server session that just closed.
          *
          * @param handback The session that just closed
+         * @return a Future representing pending completion of the event listener invocation.
          */
         @Override
-        public void onConnectionClose(Object handback) {
-            OutgoingServerSession session = (OutgoingServerSession)handback;
+        public CompletableFuture<Void> onConnectionClosing(Object handback)
+        {
+            final OutgoingServerSession session = (OutgoingServerSession)handback;
+
+            CompletableFuture<Void> result = CompletableFuture.runAsync(() -> Log.debug("Closing outgoing server session with address {} and streamID {}.", session.getAddress(), session.getStreamID()));
+
             // Remove all the domains that were registered for this server session.
+            final Collection<CompletableFuture<Void>> tasks = new ArrayList<>();
             for (DomainPair domainPair : session.getOutgoingDomainPairs()) {
-                // Remove the route to the session using the domain.
-                server.getRoutingTable().removeServerRoute(domainPair);
+                tasks.add(CompletableFuture.runAsync(() -> server.getRoutingTable().removeServerRoute(domainPair)));
             }
+
+            return result.thenCompose(e -> CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])));
         }
     }
 
-    private class ConnectionMultiplexerSessionListener implements ConnectionCloseListener {
+    private class ConnectionMultiplexerSessionListener implements ConnectionCloseListener
+    {
         /**
-         * Handle a session that just closed.
+         * Handle a multiplexer session that just closed.
          *
          * @param handback The session that just closed
+         * @return a Future representing pending completion of the event listener invocation.
          */
         @Override
-        public void onConnectionClose(Object handback) {
-            ConnectionMultiplexerSession session = (ConnectionMultiplexerSession)handback;
+        public CompletableFuture<Void> onConnectionClosing(Object handback)
+        {
+            final ConnectionMultiplexerSession session = (ConnectionMultiplexerSession)handback;
+            final String domain = session.getAddress().getDomain();
+
+            CompletableFuture<Void> result = CompletableFuture.runAsync(() -> Log.debug("Closing multiplexer session with address {} and streamID {}.", session.getAddress(), session.getStreamID()));
+
             // Remove all the domains that were registered for this server session
-            String domain = session.getAddress().getDomain();
-            localSessionManager.getConnnectionManagerSessions().remove(session.getAddress().toString());
+            result = result.thenRunAsync(() -> localSessionManager.getConnnectionManagerSessions().remove(session.getAddress().toString()));
+
             // Remove track of the cluster node hosting the CM connection
-            multiplexerSessionsCache.remove(session.getAddress().toString());
+            result = result.thenRunAsync(() -> multiplexerSessionsCache.remove(session.getAddress().toString()));
+
             if (getConnectionMultiplexerSessions(domain).isEmpty()) {
                 // Terminate ClientSessions originated from this connection manager
                 // that are still active since the connection manager has gone down
-                ConnectionMultiplexerManager.getInstance().multiplexerUnavailable(domain);
+                result = result.thenRunAsync(() -> ConnectionMultiplexerManager.getInstance().multiplexerUnavailable(domain));
             }
+
+            return result;
         }
     }
 

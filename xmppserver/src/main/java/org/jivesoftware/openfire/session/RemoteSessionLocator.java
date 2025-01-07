@@ -37,7 +37,7 @@ public interface RemoteSessionLocator {
      *
      * @param nodeID the ID of the node hosting the session.
      * @param address the address that uniquely identifies the session.
-     * @return a session surrogate of a client session hosted by a remote cluster node.
+     * @return a session surrogate of a client session hosted by a remote cluster node, or null if no such session was found.
      */
     ClientSession getClientSession(byte[] nodeID, JID address);
 
@@ -49,7 +49,7 @@ public interface RemoteSessionLocator {
      *
      * @param nodeID the ID of the node hosting the session.
      * @param address the address that uniquely identifies the session.
-     * @return a session surrogate of a component session hosted by a remote cluster node.
+     * @return a session surrogate of a component session hosted by a remote cluster node, or null if no such session was found.
      */
     ComponentSession getComponentSession(byte[] nodeID, JID address);
 
@@ -61,7 +61,7 @@ public interface RemoteSessionLocator {
      *
      * @param nodeID the ID of the node hosting the session.
      * @param address the address that uniquely identifies the session.
-     * @return a session surrogate of a ConnectionMultiplexer session hosted by a remote cluster node.
+     * @return a session surrogate of a ConnectionMultiplexer session hosted by a remote cluster node, or null if no such session was found.
      */
     ConnectionMultiplexerSession getConnectionMultiplexerSession(byte[] nodeID, JID address);
 
@@ -73,7 +73,7 @@ public interface RemoteSessionLocator {
      *
      * @param nodeID the ID of the node hosting the session.
      * @param streamID the stream ID that uniquely identifies the session.
-     * @return a session surrogate of an incoming server session hosted by a remote cluster node.
+     * @return a session surrogate of an incoming server session hosted by a remote cluster node, or null if no such session was found.
      */
     IncomingServerSession getIncomingServerSession(byte[] nodeID, StreamID streamID);
 
@@ -85,7 +85,7 @@ public interface RemoteSessionLocator {
      *
      * @param nodeID the ID of the node hosting the session.
      * @param address the address that uniquely identifies the session.
-     * @return a session surrogate of an incoming server session hosted by a remote cluster node.
+     * @return a session surrogate of an incoming server session hosted by a remote cluster node, or null if no such session was found.
      */
     OutgoingServerSession getOutgoingServerSession(byte[] nodeID, DomainPair address);
 }

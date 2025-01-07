@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -225,23 +225,21 @@ public class NettyConnection extends AbstractConnection
             // method, otherwise stream management's "resume" functionality breaks (the 'close' listeners have been
             // observed to act on a newly attached stream/connection, instead of the old one).
             final CountDownLatch latch = new CountDownLatch(1);
-            try {
-                    f.addListener(e -> Log.trace("Flushed any final bytes, closing connection."))
-                    .addListener(ChannelFutureListener.CLOSE)
-                    .addListener(e -> {
-                        Log.trace("Notifying close listeners.");
-                        try {
-                            notifyCloseListeners();
+            f.addListener(e -> Log.trace("Flushed any final bytes, closing connection."))
+                .addListener(ChannelFutureListener.CLOSE)
+                .addListener(e -> {
+                    Log.trace("Notifying close listeners.");
+                    notifyCloseListeners()
+                        .whenComplete((v,t) -> {
                             closeListeners.clear();
-                        } finally {
-                            latch.countDown();
-                        }
-                    })
-                    .addListener(e -> Log.trace("Finished closing connection."));
-            } catch (Throwable t) {
-                Log.error("Problem during connection close or cleanup", t);
-                latch.countDown(); // Ensure we're not kept waiting! OF-2845
-            }
+                            if (t != null) {
+                                Log.warn("Exception while invoking close listeners for {}", this, t);
+                            }
+                            latch.countDown(); // Ensure we're not kept waiting! OF-2845
+                        });
+                })
+                .addListener(e -> Log.trace("Finished closing connection."));
+
             try {
                 // TODO: OF-2811 Remove this blocking operation, by allowing the invokers of this method to use a Future.
                 if (!latch.await(10, TimeUnit.MINUTES)) {

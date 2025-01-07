@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -141,14 +141,18 @@ public abstract class VirtualConnection extends AbstractConnection
             // This fixes a very visible bug where MUC users would remain in the MUC room long after
             // their session was closed. Effectively, the bug prevents the MUC room from getting a
             // presence update to notify it that the user logged off.
-            notifyCloseListeners();
-            closeListeners.clear();
+            notifyCloseListeners().whenComplete((v,t) -> {
+                closeListeners.clear();
+                if (t != null) {
+                    Log.warn("Exception while invoking close listeners for {}", this, t);
+                }
 
-            try {
-                closeVirtualConnection(error);
-            } catch (Exception e) {
-                Log.error(LocaleUtils.getLocalizedString("admin.error.close") + "\n" + toString(), e);
-            }
+                try {
+                    closeVirtualConnection(error);
+                } catch (Exception e) {
+                    Log.error(LocaleUtils.getLocalizedString("admin.error.close") + "\n" + toString(), e);
+                }
+            });
         }
     }
 

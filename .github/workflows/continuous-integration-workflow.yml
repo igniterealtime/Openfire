@@ -81,7 +81,7 @@ jobs:
       - name: Checkout Integration Tests
         uses: actions/checkout@v4
         with:
-          repository: surevine/openfire-integration-tests
+          repository: igniterealtime/openfire-integration-tests
           path: openfire-integration-tests
 
       - name: Initialize Integration Tests Submodules

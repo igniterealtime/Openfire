@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2015 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2015 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
+import javax.annotation.Nonnull;
+
 /**
  * Fallback method used by {@link org.jivesoftware.openfire.nio.NettyConnection} when a
  * connection fails to send a {@link Packet} (likely because it was closed). Message packets
@@ -39,25 +41,24 @@ public class OfflinePacketDeliverer implements PacketDeliverer {
 
     private static final Logger Log = LoggerFactory.getLogger(OfflinePacketDeliverer.class);
 
-    private OfflineMessageStrategy messageStrategy;
+    private final OfflineMessageStrategy messageStrategy;
 
     public OfflinePacketDeliverer() {
         this.messageStrategy = XMPPServer.getInstance().getOfflineMessageStrategy();
     }
 
     @Override
-    public void deliver(Packet packet) throws UnauthorizedException, PacketException {
-        
-        if (packet instanceof Message) {
-            messageStrategy.storeOffline((Message) packet);
+    public void deliver(final @Nonnull Packet stanza) throws UnauthorizedException, PacketException
+    {
+        if (stanza instanceof Message) {
+            messageStrategy.storeOffline((Message) stanza);
         }
-        else if (packet instanceof Presence) {
-            // presence packets are dropped silently
+        else if (stanza instanceof Presence) {
+            Log.trace("Silently dropping a presence stanza.");
         }
-        else if (packet instanceof IQ) {
+        else if (stanza instanceof IQ) {
             // IQ packets are logged before being dropped
-            Log.warn(LocaleUtils.getLocalizedString("admin.error.routing") + "\n" + packet.toString());
+            Log.warn(LocaleUtils.getLocalizedString("admin.error.routing") + "\n" + stanza);
         }
     }
-
 }

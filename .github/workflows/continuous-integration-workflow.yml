@@ -415,7 +415,7 @@ jobs:
 
       - name: Extract metadata (tags, labels) for image registry
         id: meta
-        uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
+        uses: docker/metadata-action@8e1d5461f02b7886d3c1a774bfbd873650445aa2
         with:
           images: ${{ env.REGISTRY }}/igniterealtime/${{ env.IMAGE_NAME }}
 

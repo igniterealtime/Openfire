@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -414,7 +414,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                         routed = remotePacketRouter
                                 .routePacket(clientRoute.getNodeID().toByteArray(), jid, packet);
                         if (!routed) {
-                            removeClientRoute(jid); // drop invalid client route
+                            Log.warn("Dropping invalid client route for {}", jid);
+                            removeClientRoute(jid);
                         }
                     }
                 }

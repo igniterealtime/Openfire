@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
+import javax.annotation.Nonnull;
+
 /**
  * Fallback method used by {@link org.jivesoftware.openfire.nio.NettyConnection} when
  * connected to a connection manager. The fallback method will be used when a connection
@@ -49,9 +51,9 @@ public class MultiplexerPacketDeliverer implements PacketDeliverer {
 
     private static final Logger Log = LoggerFactory.getLogger(MultiplexerPacketDeliverer.class);
 
-    private OfflineMessageStrategy messageStrategy;
+    private final OfflineMessageStrategy messageStrategy;
     private String connectionManagerDomain;
-    private ConnectionMultiplexerManager multiplexerManager;
+    private final ConnectionMultiplexerManager multiplexerManager;
 
     public MultiplexerPacketDeliverer() {
         this.messageStrategy = XMPPServer.getInstance().getOfflineMessageStrategy();
@@ -63,11 +65,11 @@ public class MultiplexerPacketDeliverer implements PacketDeliverer {
     }
 
     @Override
-    public void deliver(Packet packet) throws UnauthorizedException, PacketException {
+    public void deliver(@Nonnull final Packet stanza) throws UnauthorizedException, PacketException {
         // Check if we can send the packet using another session
         if (connectionManagerDomain == null) {
             // Packet deliverer has not yet been configured so handle unprocessed packet
-            handleUnprocessedPacket(packet);
+            handleUnprocessedPacket(stanza);
         }
         else {
             // Try getting another session to the same connection manager 
@@ -75,11 +77,11 @@ public class MultiplexerPacketDeliverer implements PacketDeliverer {
                     multiplexerManager.getMultiplexerSession(connectionManagerDomain);
             if (session == null || session.isClosed()) {
                 // No other session was found so handle unprocessed packet
-                handleUnprocessedPacket(packet);
+                handleUnprocessedPacket(stanza);
             }
             else {
                 // Send the packet using this other session to the same connection manager
-                session.process(packet);
+                session.process(stanza);
             }
         }
     }
@@ -93,8 +95,7 @@ public class MultiplexerPacketDeliverer implements PacketDeliverer {
             messageStrategy.storeOffline((Message) packet);
         }
         else if (packet instanceof Presence) {
-            // presence packets are dropped silently
-            //dropPacket(packet);
+            Log.trace("Silently dropping presence stanza: {}", packet);
         }
         else if (packet instanceof IQ) {
             IQ iq = (IQ) packet;
@@ -106,7 +107,7 @@ public class MultiplexerPacketDeliverer implements PacketDeliverer {
                 Element send = child.element("send");
                 if (send != null) {
                     // Unwrap packet
-                    Element wrappedElement = (Element) send.elements().get(0);
+                    Element wrappedElement = send.elements().get(0);
                     if ("message".equals(wrappedElement.getName())) {
                         handleUnprocessedPacket(new Message(wrappedElement));
                     }
@@ -114,8 +115,7 @@ public class MultiplexerPacketDeliverer implements PacketDeliverer {
             }
             else {
                 // IQ packets are logged but dropped
-                Log.warn(LocaleUtils.getLocalizedString("admin.error.routing") + "\n" +
-                        packet.toString());
+                Log.warn(LocaleUtils.getLocalizedString("admin.error.routing") + "\n" + packet);
             }
         }
     }

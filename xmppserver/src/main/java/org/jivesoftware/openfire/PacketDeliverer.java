@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,10 @@ package org.jivesoftware.openfire;
 import org.xmpp.packet.Packet;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 
+import javax.annotation.Nonnull;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+
 /**
  * Delivers packets to locally connected streams. This is the opposite
  * of the packet transporter.
@@ -28,15 +32,40 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 public interface PacketDeliverer {
 
     /**
-     * Delivers the given packet based on packet recipient and sender. The
-     * deliverer defers actual routing decisions to other classes.
-     * <h2>Warning</h2>
-     * Be careful to enforce concurrency DbC of concurrent by synchronizing
-     * any accesses to class resources.
+     * Delivers the given stanza based on its recipient and sender.
      *
-     * @param packet the packet to route
+     * Invocation of this method blocks until the deliverer finishes processing the stanza.
+     *
+     * The deliverer defers actual routing decisions to other classes.
+     *
+     * @param stanza the stanza to route
      * @throws PacketException if the packet is null or the packet could not be routed.
      * @throws UnauthorizedException if the user is not authorised
      */
-    void deliver( Packet packet ) throws UnauthorizedException, PacketException;
+    void deliver(@Nonnull final Packet stanza) throws UnauthorizedException, PacketException;
+
+    /**
+     /**
+     * Delivers the given stanza based on its recipient and sender.
+     *
+     * Invocation of this method blocks until the deliverer finishes processing the stanza.
+     *
+     * The deliverer defers actual routing decisions to other classes.
+     *
+     * @param stanza the stanza to route
+     * @return A future from which any exception thrown while processing the stanza can be obtained.
+     */
+    default CompletableFuture<Void> deliverAsync(@Nonnull final Packet stanza) {
+        try {
+            return CompletableFuture.runAsync(() -> {
+                try {
+                    deliver(stanza);
+                } catch (UnauthorizedException e) {
+                    throw new CompletionException(e);
+                }
+            });
+        } catch (Throwable t) {
+            return CompletableFuture.failedFuture(t);
+        }
+    }
 }

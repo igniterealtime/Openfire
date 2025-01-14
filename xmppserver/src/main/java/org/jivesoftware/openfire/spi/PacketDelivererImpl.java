@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,8 @@ import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.net.SocketPacketWriteHandler;
 import org.xmpp.packet.Packet;
 
+import javax.annotation.Nonnull;
+
 /**
  * In-memory implementation of the packet deliverer service
  *
@@ -41,12 +43,12 @@ public class PacketDelivererImpl extends BasicModule implements PacketDeliverer 
     }
 
     @Override
-    public void deliver(Packet packet) throws UnauthorizedException, PacketException {
+    public void deliver(@Nonnull final Packet packet) throws UnauthorizedException, PacketException {
         if (packet == null) {
             throw new PacketException("Packet was null");
         }
         if (deliverHandler == null) {
-            throw new PacketException("Could not send packet - no route" + packet.toString());
+            throw new PacketException("Could not send packet - no route: " + packet.toString());
         }
         // Let the SocketPacketWriteHandler process the packet. SocketPacketWriteHandler may send
         // it over the socket or store it when user is offline or drop it.

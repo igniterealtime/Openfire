@@ -84,7 +84,7 @@ public class StanzaIDUtil
 
         // Stanza ID generating entities, which encounter a <stanza-id/> element where the 'by' attribute matches the 'by'
         // attribute they would otherwise set, MUST delete that element even if they are not adding their own stanza ID.
-        final Iterator<Element> existingElementIterator = parentElement.elementIterator( QName.get( "stanza-id", "urn:xmpp:sid:0" ) );
+        final Iterator<Element> existingElementIterator = parentElement.elementIterator( QName.get( StanzaID.ELEMENT_NAME, StanzaID.NAMESPACE ) );
         while (existingElementIterator.hasNext()) {
             final Element element = existingElementIterator.next();
 
@@ -94,12 +94,9 @@ public class StanzaIDUtil
             }
         }
 
-        final String id = UUID.randomUUID().toString();
-        Log.debug( "Using newly generated value '{}' for stanza that has id '{}'.", id, packet.getID() );
-
-        final Element stanzaIdElement = parentElement.addElement( QName.get( "stanza-id", "urn:xmpp:sid:0" ) );
-        stanzaIdElement.addAttribute( "id", id );
-        stanzaIdElement.addAttribute( "by", self.toString() );
+        final StanzaID stanzaID = StanzaID.generate(self);
+        Log.debug( "Using newly generated value '{}' for stanza that has id '{}'.", stanzaID.getId(), packet.getID() );
+        stanzaID.addAsChildElementTo(parentElement);
 
         return packet;
     }
@@ -125,24 +122,11 @@ public class StanzaIDUtil
             throw new IllegalArgumentException( "Argument 'by' cannot be null or an empty string." );
         }
 
-        final List<Element> sids = packet.getElement().elements( QName.get( "stanza-id", "urn:xmpp:sid:0" ) );
-        if ( sids == null )
-        {
-            return null;
-        }
-
-        for ( final Element sid : sids )
-        {
-            if ( by.equals( sid.attributeValue( "by" ) ) )
-            {
-                final String result = sid.attributeValue( "id" );
-                if ( result != null && !result.isEmpty() )
-                {
-                    return result;
-                }
-            }
-        }
-
-        return null;
+        final List<StanzaID> sids = StanzaID.allFromChildren(packet.getElement());
+        return sids.stream()
+            .filter(stanzaID -> stanzaID.getBy().toString().equals(by))
+            .findFirst()
+            .map(StanzaID::getId)
+            .orElse(null);
     }
 }

@@ -29,6 +29,8 @@ import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
 import org.jivesoftware.openfire.privacy.PrivacyListProvider;
 import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.spamreporting.SpamReport;
+import org.jivesoftware.openfire.spamreporting.SpamReportManager;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -39,6 +41,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 
+import java.time.Instant;
 import java.util.*;
 
 /**
@@ -69,7 +72,7 @@ public class IQBlockingHandler extends IQHandler implements ServerFeaturesProvid
     @Override
     public Iterator<String> getFeatures()
     {
-        return Collections.singletonList( NAMESPACE ).iterator();
+        return List.of(NAMESPACE, SpamReport.NAMESPACE).iterator();
     }
 
     @Override
@@ -130,13 +133,18 @@ public class IQBlockingHandler extends IQHandler implements ServerFeaturesProvid
                 }
 
                 final List<JID> toBlocks = new ArrayList<>();
+                final Set<SpamReport> reports = new HashSet<>();
+                final Instant now = Instant.now();
                 for ( final Element item : items )
                 {
-                    toBlocks.add( new JID( item.attributeValue( "jid" ) ) );
+                    final JID offender = new JID(item.attributeValue( "jid" ));
+                    reports.addAll(SpamReport.allFromChildren(now, requester.asBareJID(), offender, item));
+                    toBlocks.add(offender);
                 }
 
                 addToBlockList( user, toBlocks );
                 pushBlocklistUpdates( user, toBlocks );
+                SpamReportManager.getInstance().process(reports);
 
                 return IQ.createResultIQ( iq );
             }

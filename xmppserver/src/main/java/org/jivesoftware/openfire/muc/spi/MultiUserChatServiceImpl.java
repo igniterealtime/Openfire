@@ -33,6 +33,7 @@ import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.handler.IQPingHandler;
 import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.openfire.muc.cluster.SyncLocalOccupantsAndSendJoinPresenceTask;
+import org.jivesoftware.openfire.stanzaid.StanzaID;
 import org.jivesoftware.openfire.stanzaid.StanzaIDUtil;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
@@ -3019,7 +3020,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 if ( IQMUCvCardHandler.PROPERTY_ENABLED.getValue() ) {
                     features.add( IQMUCvCardHandler.NAMESPACE );
                 }
-                features.add( "urn:xmpp:sid:0" );
+                features.add(StanzaID.NAMESPACE);
                 features.add( "urn:xmpp:occupant-id:0" );
             }
         }

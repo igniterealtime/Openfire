@@ -18,13 +18,14 @@ package org.jivesoftware.openfire.spamreporting;
 import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.time.Instant;
 import java.util.List;
 
 /**
  * A data access object definition for entities that manage storage of spam rapports
  *
- * @author Guus der Kinderen, guus.der.kinderen@mgail.com
+ * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
 public interface SpamReportProvider
 {
@@ -34,6 +35,15 @@ public interface SpamReportProvider
      * @param spamReport the spam report to persist.
      */
     void store(@Nonnull final SpamReport spamReport);
+
+    /**
+     * Retrieves a spam report.
+     *
+     * @param id the unique identifier of the spam report.
+     * @return the spam report, or null when no spam report is found.
+     */
+    @Nullable
+    SpamReport retrieve(@Nonnull final long id);
 
     /**
      * Retrieves all persisted spam reports, ordered by timestamp.

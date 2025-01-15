@@ -20,7 +20,7 @@ import javax.annotation.Nonnull;
 /**
  * An event listener that is invoked when Openfire processes a spam report.
  *
- * @author Guus der Kinderen, guus.der.kinderen@mgail.com
+ * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
 public interface SpamReportEventListener
 {

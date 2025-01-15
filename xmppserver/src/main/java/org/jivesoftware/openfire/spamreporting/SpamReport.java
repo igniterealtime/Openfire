@@ -68,7 +68,7 @@ public class SpamReport
         this.timestamp = timestamp;
         this.reportingAddress = reportingAddress;
         this.reportedAddress = reportedAddress;
-        this.reportElement = reportElement;
+        this.reportElement = (Element) reportElement.createCopy().detach();
     }
 
     public Instant getTimestamp()
@@ -88,7 +88,7 @@ public class SpamReport
 
     public Element getReportElement()
     {
-        return reportElement;
+        return (Element) reportElement.createCopy().detach();
     }
 
     public synchronized String getReason()

@@ -29,6 +29,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.DateFormat;
+import java.time.Instant;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -189,6 +190,16 @@ public class JiveGlobals {
     }
 
     /**
+     * Formats an Instant object to return a time using the global locale.
+     *
+     * @param instant the instant to format.
+     * @return a String representing the time.
+     */
+    public static String formatTime(Instant instant) {
+        return formatTime(Date.from(instant));
+    }
+
+    /**
      * Formats a Date object to return a time using the global locale.
      *
      * @param date the Date to format.
@@ -210,6 +221,15 @@ public class JiveGlobals {
     }
 
     /**
+     * Formats an Instant object to return a date using the global locale.
+     *
+     * @param instant the Instant to format.
+     * @return a String representing the date.
+     */
+    public static String formatDate(Instant instant) {
+        return formatDate(Date.from(instant));
+    }
+    /**
      * Formats a Date object to return a date using the global locale.
      *
      * @param date the Date to format.
@@ -228,6 +248,16 @@ public class JiveGlobals {
             }
         }
         return dateFormat.format(date);
+    }
+
+    /**
+     * Formats an Instant object to return a date and time using the global locale.
+     *
+     * @param instant the Instant to format.
+     * @return a String representing the date and time.
+     */
+    public static String formatDateTime(Instant instant) {
+        return formatDateTime(Date.from(instant));
     }
 
     /**

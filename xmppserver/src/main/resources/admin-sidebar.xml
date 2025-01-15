@@ -65,6 +65,12 @@
             <item id="security-audit-viewer" name="${sidebar.security-audit-viewer}"
                   url="security-audit-viewer.jsp"
                   description="${sidebar.security-audit-viewer.descr}"/>
+
+            <!-- Spam Report Viewer -->
+            <item id="spam-report-viewer" name="${sidebar.spam-report-viewer}"
+                  url="spam-report-viewer.jsp"
+                  description="${sidebar.spam-report-viewer.descr}"/>
+
         </sidebar>
 
         <!-- Server Settings -->

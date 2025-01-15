@@ -458,5 +458,12 @@
                 <xmpp:note xml:lang='en'>Implements most features, except for much of the Destination Address Selection as defined in RFC 6724, Section 6.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0377.html"/>
+                <xmpp:status>complete</xmpp:status>
+                <xmpp:version>0.3.1</xmpp:version>
+            </xmpp:SupportedXep>
+        </implements>
     </Project>
 </rdf:RDF>

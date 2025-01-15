@@ -371,6 +371,16 @@ CREATE TABLE ofPubsubDefaultConf (
   PRIMARY KEY (serviceID, leaf)
 );
 
+CREATE TABLE ofSpamReport (
+  reporter            VARCHAR(1024) NOT NULL,
+  reported            VARCHAR(1024) NOT NULL,
+  reason              VARCHAR(255)  NOT NULL,
+  created             BIGINT        NOT NULL,
+  raw                 TEXT          NOT NULL,
+  INDEX ofSpamReport_created_reporter_id (created, reporter),
+  INDEX ofSpamReport_created_reported_id (created, reported)
+);
+
 # Finally, insert default table values.
 
 INSERT INTO ofID (idType, id) VALUES (18, 1);
@@ -379,7 +389,7 @@ INSERT INTO ofID (idType, id) VALUES (23, 1);
 INSERT INTO ofID (idType, id) VALUES (26, 2);
 INSERT INTO ofID (idType, id) VALUES (27, 1);
 
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 36);
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 37);
 
 # Entry for admin user
 INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)

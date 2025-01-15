@@ -21,12 +21,13 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
  * A manager object of processes related to spam rapports.
  *
- * @author Guus der Kinderen, guus.der.kinderen@mgail.com
+ * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
 public class SpamReportManager
 {
@@ -107,6 +108,7 @@ public class SpamReportManager
 
         // Store the spam report.
         try {
+            Log.info("User {} reports that they received spam from: {}. See admin console for more details.", spamReport.getReportingAddress(), spamReport.getReportedAddress());
             spamReportProvider.store(spamReport);
         } catch (Throwable t) {
             Log.warn("An exception occurred while storing spam report {}", spamReport, t);
@@ -114,5 +116,9 @@ public class SpamReportManager
 
         // Invoke the event listeners
         dispatchEvents(spamReport);
+    }
+
+    public List<SpamReport> getSpamReports() {
+        return spamReportProvider.getSpamReports();
     }
 }

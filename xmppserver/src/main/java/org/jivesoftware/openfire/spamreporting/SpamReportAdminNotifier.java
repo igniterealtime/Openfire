@@ -32,7 +32,7 @@ import java.util.List;
  * An event listener that will send an XMPP message to the configured administrators of the server when a spam report
  * has been filed.
  *
- * @author Guus der Kinderen, guus.der.kinderen@mgail.com
+ * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
 public class SpamReportAdminNotifier implements SpamReportEventListener
 {
@@ -44,7 +44,7 @@ public class SpamReportAdminNotifier implements SpamReportEventListener
     private static final SystemProperty<Boolean> NOTIFY_ADMINS_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
         .setKey("spamreport.notify-admins.enabled")
         .setDynamic(true)
-        .setDefaultValue(false)
+        .setDefaultValue(true)
         .build();
 
 
@@ -55,20 +55,23 @@ public class SpamReportAdminNotifier implements SpamReportEventListener
             return;
         }
 
-        final String body = LocaleUtils.getLocalizedString("spamreport.notify-admins.notification-message", List.of(spamReport.getReportingAddress(), spamReport.getReportedAddress()));
+        final String body = LocaleUtils.getLocalizedString("spamreport.notify-admins.notification-message",
+            List.of(
+                spamReport.getReportingAddress(),
+                spamReport.getReportedAddress(),
+                LocaleUtils.getLocalizedString("tab.server"),
+                LocaleUtils.getLocalizedString("sidebar.server-manager"),
+                LocaleUtils.getLocalizedString("sidebar.spam-report-viewer")
+        ));
 
         TaskEngine.getInstance().submit(() -> {
             final MessageRouter messageRouter = XMPPServer.getInstance().getMessageRouter();
 
-            final Element reportElement = spamReport.getReportElement();
-
-            // As suggested by https://xmppbl.org/dev
-            reportElement.addElement("jid", "urn:xmpp:jid:0").setText(spamReport.getReportedAddress().toString());
+            // TODO add the report in a child element.
 
             final Message notification = new Message();
             notification.setFrom(XMPPServer.getInstance().getServerInfo().getXMPPDomain());
             notification.setBody(body);
-            notification.getElement().add(reportElement);
 
             XMPPServer.getInstance().getAdmins().forEach(jid -> {
                 Log.debug("Sending spam report notification message to admin [jid={}]]", jid);

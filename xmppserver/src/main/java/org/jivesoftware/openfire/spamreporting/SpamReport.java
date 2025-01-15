@@ -16,8 +16,12 @@
 package org.jivesoftware.openfire.spamreporting;
 
 import org.dom4j.*;
+import org.jivesoftware.database.JiveID;
+import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.openfire.stanzaid.StanzaID;
+import org.jivesoftware.util.JiveConstants;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Packet;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -27,13 +31,15 @@ import java.util.*;
 /**
  * Representation of a report of spam.
  *
- * @author Guus der Kinderen, guus.der.kinderen@mgail.com
- * @see <a href="https://xmpp.org/extensions/xep-0377.html">XEP-0377: Spam Reporting</a>
+ * Note that this is <em>not</em> an exact representation of a XEP-0377-defined spam report. That definition is specific
+ * to IQ-Block, while the definition here is intended to be re-usable for other purposes.
+ *
+ * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
+@JiveID(JiveConstants.SPAM_REPORT_ID)
 public class SpamReport
 {
-    public static final String ELEMENT_NAME = "report";
-    public static final String NAMESPACE = "urn:xmpp:reporting:1";
+    private final long id;
 
     private final Instant timestamp;
 
@@ -41,34 +47,48 @@ public class SpamReport
 
     private final JID reportedAddress;
 
-    private final Element reportElement;
+    private final String reason;
 
-    private transient String reason;
+    private final Set<Text> context;
 
-    private transient Set<Text> context;
+    private final Map<StanzaID, Optional<Packet>> reportedStanzas;
 
-    private transient Set<StanzaID> stanzaIDs;
-
-    public static List<SpamReport> allFromChildren(final Instant timestamp, final JID reportingAddress, final JID reportedAddress, final Element parentElement)
+    public static SpamReport generate(final Instant timestamp, final JID reportingAddress, final JID reportedAddress, final String reason, final Set<Text> context, final Set<StanzaID> reportedStanzaIDs)
     {
-        final List<SpamReport> result = new ArrayList<>();
-        final List<Element> reports = parentElement.elements( QName.get(ELEMENT_NAME, NAMESPACE) );
-
-        if (reports != null) {
-            for (final Element report : reports) {
-                result.add(new SpamReport(timestamp, reportingAddress, reportedAddress, report));
-            }
+        final Map<StanzaID, Optional<Packet>> reportedStanzas = new HashMap<>();
+        for (final StanzaID stanzaID : reportedStanzaIDs) {
+            // TODO query MAM for offending stanzas based on any provided stanza-id. Be careful to only include stanzas that are owned by the reporter, to prevent abuse.
+            reportedStanzas.put(stanzaID, Optional.empty());
         }
 
-        return result;
+        return new SpamReport(timestamp, reportingAddress, reportedAddress, reason, context, reportedStanzas);
     }
 
-    public SpamReport(final Instant timestamp, final JID reportingAddress, final JID reportedAddress, final Element reportElement)
+    public SpamReport(final Instant timestamp, final JID reportingAddress, final JID reportedAddress, final String reason, final Set<Text> context, final Map<StanzaID, Optional<Packet>> reportedStanzas)
     {
+        this.id = SequenceManager.nextID(this);
         this.timestamp = timestamp;
         this.reportingAddress = reportingAddress;
         this.reportedAddress = reportedAddress;
-        this.reportElement = (Element) reportElement.createCopy().detach();
+        this.reason = reason;
+        this.context = context;
+        this.reportedStanzas = reportedStanzas;
+    }
+
+    public SpamReport(final long id, final Instant timestamp, final JID reportingAddress, final JID reportedAddress, final String reason, final Set<Text> context, final Map<StanzaID, Optional<Packet>> reportedStanzas)
+    {
+        this.id = id;
+        this.timestamp = timestamp;
+        this.reportingAddress = reportingAddress;
+        this.reportedAddress = reportedAddress;
+        this.reason = reason;
+        this.context = context;
+        this.reportedStanzas = reportedStanzas;
+    }
+
+    public long getId()
+    {
+        return id;
     }
 
     public Instant getTimestamp()
@@ -86,42 +106,30 @@ public class SpamReport
         return reportedAddress;
     }
 
-    public Element getReportElement()
+    public String getReason()
     {
-        return (Element) reportElement.createCopy().detach();
-    }
-
-    public synchronized String getReason()
-    {
-        if (reason == null) {
-            reason = reportElement.attributeValue("reason");
-        }
         return reason;
     }
 
-    public synchronized Set<Text> getContext()
+    public Set<Text> getContext()
     {
-        if (context == null) {
-            context = new HashSet<>(Text.allFromChildren(reportElement));
-        }
         return context;
     }
 
-    public synchronized Set<StanzaID> getStanzaIDs()
+    public Map<StanzaID, Optional<Packet>> getReportedStanzas()
     {
-        if (stanzaIDs == null) {
-            stanzaIDs = new HashSet<>(StanzaID.allFromChildren(reportElement));
-        }
-        return stanzaIDs;
+        return reportedStanzas;
     }
 
     @Override
     public String toString()
     {
         return "SpamReport{" +
-            "timestamp=" + timestamp +
+            "id=" + id +
+            ", timestamp=" + timestamp +
             ", reportingAddress=" + reportingAddress +
             ", reportedAddress=" + reportedAddress +
+            ", reportedStanzaCount=" + reportedStanzas.size() +
             '}';
     }
 
@@ -133,10 +141,10 @@ public class SpamReport
         @Nullable
         private final String lang;
 
-        public static List<Text> allFromChildren(final Element parentElement)
+        public static Set<Text> allFromChildren(final Element parentElement)
         {
-            final List<Text> result = new ArrayList<>();
-            final List<Element> texts = parentElement.elements( "text" );
+            final Set<Text> result = new HashSet<>();
+            final Collection<Element> texts = parentElement.elements( "text" );
 
             if (texts != null) {
                 for (final Element text : texts) {

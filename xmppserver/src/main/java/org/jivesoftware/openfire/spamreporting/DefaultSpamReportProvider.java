@@ -15,58 +15,175 @@
  */
 package org.jivesoftware.openfire.spamreporting;
 
-import org.dom4j.Document;
-import org.dom4j.DocumentException;
-import org.dom4j.DocumentHelper;
+import org.dom4j.*;
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.stanzaid.StanzaID;
+import org.jivesoftware.util.SAXReaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xmpp.packet.JID;
+import org.xmpp.packet.*;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.sql.*;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * A data access object stores spam rapports in an Openfire-provided database structure.
  *
- * @author Guus der Kinderen, guus.der.kinderen@mgail.com
+ * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
 public class DefaultSpamReportProvider implements SpamReportProvider
 {
+    protected static final DocumentFactory docFactory = DocumentFactory.getInstance();
+
     private static final Logger Log = LoggerFactory.getLogger(DefaultSpamReportProvider.class);
 
-    private static final String STORE_REPORT = "INSERT INTO ofSpamReport (reporter, reported, reason, created, raw) VALUES (?,?,?,?,?)";
-    private static final String GET_REPORTS_SINCE = "SELECT (reporter, reported, created, raw) FROM ofSpamReport WHERE created >= ? ORDER BY created ASC, reporter, reported, reason";
-    private static final String GET_REPORTS_BY = "SELECT (reporter, reported, created, raw) FROM ofSpamReport WHERE reporter = ? ORDER BY created ASC, reported, reason";
-    private static final String GET_REPORTS_ABOUT = "SELECT (reporter, reported, created, raw) FROM ofSpamReport WHERE reported = ? ORDER BY created ASC, reporter, reason";
+    private static final String STORE_REPORT = "INSERT INTO ofSpamReport (reportID, reporter, reported, reason, created, context) VALUES (?,?,?,?,?,?)";
+    private static final String STORE_REPORTED_STANZA = "INSERT INTO ofSpamStanza (reportID, stanzaIDValue, stanzaIDBy, stanza) VALUES (?,?,?,?)";
+    private static final String GET_REPORT = "SELECT (reportID, reporter, reported, reason, created, context) FROM ofSpamReport WHERE reportID = ?";
+    private static final String GET_REPORTED_STANZAS = "SELECT reportID, reporter, reported, reason, created, context FROM ofSpamStanza r WHERE reportID = ?";
+    private static final String GET_REPORTS_SINCE = "SELECT reportID, reporter, reported, reason, created, context FROM ofSpamReport WHERE created >= ? ORDER BY created ASC, reportID ASC";
+    private static final String GET_REPORTS_BY = "SELECT reportID, reporter, reported, reason, created, context FROM ofSpamReport WHERE reporter = ? ORDER BY created ASC, reportID ASC";
+    private static final String GET_REPORTS_ABOUT = "SELECT reportID, reporter, reported, reason, created, context FROM ofSpamReport WHERE reported = ? ORDER BY created ASC, reportID ASC";
 
     @Override
     public void store(@Nonnull final SpamReport spamReport)
     {
         Log.trace("Storing spam report: {}", spamReport);
 
+        boolean abort = false;
         Connection con = null;
-        PreparedStatement pstmt = null;
+        PreparedStatement psmttReport = null;
+        PreparedStatement pstmtStanza = null;
         try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(STORE_REPORT);
-            pstmt.setString(1, spamReport.getReportingAddress().toString());
-            pstmt.setString(2, spamReport.getReportedAddress().toString());
-            pstmt.setString(3, spamReport.getReason());
-            pstmt.setLong(4, spamReport.getTimestamp().toEpochMilli());
-            DbConnectionManager.setLargeTextField(pstmt, 5, spamReport.getReportElement().asXML());
+            con = DbConnectionManager.getTransactionConnection();
 
-            pstmt.executeUpdate();
+            // Storing the report itself.
+            psmttReport = con.prepareStatement(STORE_REPORT);
+            psmttReport.setLong(1, spamReport.getId());
+            psmttReport.setString(2, spamReport.getReportingAddress().toString());
+            psmttReport.setString(3, spamReport.getReportedAddress().toString());
+            psmttReport.setString(4, spamReport.getReason());
+            psmttReport.setLong(5, spamReport.getTimestamp().toEpochMilli());
+            if (!spamReport.getContext().isEmpty()) {
+                DbConnectionManager.setLargeTextField(psmttReport, 6, spamReport.getContext().stream().map(t -> t.getValue() + (t.getLang() != null ? " (lang: " + t.getLang() + ")" : "")).collect(Collectors.joining("|+|"))); // TODO properly serialize this.
+            } else {
+                psmttReport.setNull(6, Types.VARCHAR);
+            }
+            psmttReport.executeUpdate();
+
+            // Storing associated stanzas.
+            final Map<StanzaID, Optional<Packet>> reportedStanzas = spamReport.getReportedStanzas();
+            if (!reportedStanzas.isEmpty()) {
+                pstmtStanza = con.prepareStatement(STORE_REPORTED_STANZA);
+                for (final Map.Entry<StanzaID, Optional<Packet>> reportedStanza : spamReport.getReportedStanzas().entrySet()) {
+                    pstmtStanza.setLong(1, spamReport.getId());
+                    pstmtStanza.setString(2, reportedStanza.getKey().getId());
+                    pstmtStanza.setString(3, reportedStanza.getKey().getId());
+                    if (reportedStanza.getValue().isPresent()) {
+                        DbConnectionManager.setLargeTextField(pstmtStanza, 4, reportedStanza.getValue().get().toXML());
+                    } else {
+                        psmttReport.setNull(4, Types.VARCHAR);
+                    }
+                    pstmtStanza.addBatch();
+                }
+                pstmtStanza.executeBatch();
+            }
+
         } catch (SQLException e) {
             Log.error("A database error prevented successful storage of a spam report: {}", spamReport, e);
+            abort = true;
         } finally {
-            DbConnectionManager.closeConnection(pstmt, con);
+            DbConnectionManager.closeStatement(pstmtStanza);
+            DbConnectionManager.closeStatement(psmttReport);
+            DbConnectionManager.closeTransactionConnection(con, abort);
         }
+    }
+
+    @Nullable
+    @Override
+    public SpamReport retrieve(final long reportID)
+    {
+        Log.trace("Retrieving spam report with ID {}", reportID);
+
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(GET_REPORT);
+            pstmt.setLong(1, reportID);
+            rs = pstmt.executeQuery();
+
+            return parse(rs).stream().findFirst().orElse(null);
+        } catch (SQLException e) {
+            Log.error("A database error prevented successful retrieval of a spam report (with ID: {})", reportID, e);
+        } finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+        return null;
+    }
+
+    @Nonnull
+    public Map<StanzaID, Optional<Packet>> retrieveStanzas(final long reportID)
+    {
+        Log.trace("Retrieving reported stanzas for report with ID {}", reportID);
+        final Map<StanzaID, Optional<Packet>> result = new HashMap<>();
+
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(GET_REPORTED_STANZAS);
+            pstmt.setLong(1, reportID);
+            rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                final String stanzaIDValue = rs.getString("stanzaIDValue");
+                final String stanzaIDBy = rs.getString("stanzaIDBy");
+                final String stanza = DbConnectionManager.getLargeTextField(rs, 1);
+                try {
+                    final StanzaID stanzaID = new StanzaID(stanzaIDValue, new JID(stanzaIDBy));
+                    final Packet packet;
+
+                    if (stanza != null) {
+                        final Element root = SAXReaderUtil.readRootElement(stanza);
+                        switch (root.getName()) {
+                            case "presence":
+                                packet = new Presence(root);
+                                break;
+                            case "iq":
+                                packet = new IQ(root);
+                                break;
+                            case "message":
+                                packet = new Message(root);
+                                break;
+                            default:
+                                Log.warn("Unable to serialize database-stored stanza (for report with ID {}) to an XMPP stanza: {}", reportID, stanza);
+                                packet = null;
+                        }
+                    } else {
+                        packet = null;
+                    }
+
+                    result.put(stanzaID, Optional.ofNullable(packet));
+                } catch (Throwable t) {
+                    Log.warn("Unable to serialize database-stored stanza ID or stanza for report with ID {}) to XMPP: {}", reportID, stanza, t);
+                }
+            }
+        } catch (SQLException e) {
+            Log.error("A database error prevented successful retrieval of a reported stanzas (for stanza report with id: {})", reportID, e);
+        } finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+        return result;
     }
 
     @Nonnull
@@ -101,14 +218,15 @@ public class DefaultSpamReportProvider implements SpamReportProvider
         } catch (SQLException e) {
             Log.error("A database error prevented successful retrieval of a spam reports (since: {})", created, e);
         } finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
+            DbConnectionManager.closeResultSet(rs);
+            DbConnectionManager.closeTransactionConnection(pstmt, con, false); // Only doing SELECTs, so transaction rollback does not seem important.
         }
         return Collections.emptyList();
     }
 
     @Nonnull
     @Override
-    public List<SpamReport> getSpamReportsByReporter(@Nonnull JID reporter)
+    public List<SpamReport> getSpamReportsByReporter(@Nonnull final JID reporter)
     {
         Log.trace("Retrieving spam reports by {}", reporter);
 
@@ -138,14 +256,15 @@ public class DefaultSpamReportProvider implements SpamReportProvider
         } catch (SQLException e) {
             Log.error("A database error prevented successful retrieval of a spam reports (by: {})", reporter, e);
         } finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
+            DbConnectionManager.closeResultSet(rs);
+            DbConnectionManager.closeTransactionConnection(pstmt, con, false); // Only doing SELECTs, so transaction rollback does not seem important.
         }
         return Collections.emptyList();
     }
 
     @Nonnull
     @Override
-    public List<SpamReport> getSpamReportsByReported(@Nonnull JID reported)
+    public List<SpamReport> getSpamReportsByReported(@Nonnull final JID reported)
     {
         Log.trace("Retrieving spam reports about {}", reported);
 
@@ -175,12 +294,13 @@ public class DefaultSpamReportProvider implements SpamReportProvider
         } catch (SQLException e) {
             Log.error("A database error prevented successful retrieval of a spam reports (about: {})", reported, e);
         } finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
+            DbConnectionManager.closeResultSet(rs);
+            DbConnectionManager.closeTransactionConnection(pstmt, con, false); // Only doing SELECTs, so transaction rollback does not seem important.
         }
         return Collections.emptyList();
     }
 
-    protected static List<SpamReport> parse(@Nonnull final ResultSet rs) throws SQLException
+    protected List<SpamReport> parse(@Nonnull final ResultSet rs) throws SQLException
     {
         final List<SpamReport> result = new LinkedList<>();
 
@@ -188,22 +308,39 @@ public class DefaultSpamReportProvider implements SpamReportProvider
         Instant lastProgressReport = Instant.now();
         while (rs.next())
         {
+            final long reportID = rs.getLong("reportID");
             final String reporter = rs.getString("reporter");
             final String reported = rs.getString("reported");
-            final long reportcreated = rs.getLong("created");
-            final String raw = DbConnectionManager.getLargeTextField(rs, 4);
+            final String reason = rs.getString("reason");
+            final long created = rs.getLong("created");
+            final String contextRaw = DbConnectionManager.getLargeTextField(rs, 6);
 
-            try {
-                if (raw == null) {
-                    Log.warn("Unable to parse raw data from the database (record created: {}) as spam report: raw data was missing", reportcreated);
-                } else {
-                    final Document document = DocumentHelper.parseText(raw);
-                    final SpamReport spamReport = new SpamReport(Instant.ofEpochMilli(reportcreated), new JID(reporter), new JID(reported), document.getRootElement());
-                    result.add(spamReport);
+            final Set<SpamReport.Text> context = new HashSet<>();
+            // TODO replace this terrible serialization of texts into one column.
+            if (contextRaw != null) {
+                final String regex = "\\W\\(lang\\:\\W?(\\w*)\\)$"; // checks for trailing " (lang: XYZ)"
+                final Pattern pattern = Pattern.compile(regex);
+                for (final String part : contextRaw.split("\\|\\+\\|")) {
+                    final Matcher matcher = pattern.matcher(part);
+                    final String text;
+                    final String language;
+                    if (matcher.find()) {
+                        final String fullMatch = matcher.group(0);
+                        language = matcher.group(1);
+                        text = part.substring(0, part.length() - fullMatch.length());
+                    } else {
+                        text = part;
+                        language = null;
+                    }
+                    context.add(new SpamReport.Text(text, language));
                 }
-            } catch (DocumentException e) {
-                Log.warn("Unable to parse raw data from the database (record created: {}) as spam report: {} ", reportcreated, raw, e);
             }
+
+            // TODO Improve on this, as it is not ideal to have another query for each row that is being parsed. On the other hand, a simple JOIN would possibly pull in a lot of duplicated data, which isn't ideal either.
+            final Map<StanzaID, Optional<Packet>> reportedStanzas = retrieveStanzas(reportID);
+
+            final SpamReport spamReport = new SpamReport(reportID, Instant.ofEpochMilli(created), new JID(reporter), new JID(reported), reason, context, reportedStanzas);
+            result.add(spamReport);
 
             // When there are _many_ rows to be processed, log an occasional progress indicator, to let admins know that things are still churning.
             ++progress;

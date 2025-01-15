@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.openfire.spamreporting;
 
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,14 +32,36 @@ public class SpamReportManager
 {
     private static final Logger Log = LoggerFactory.getLogger(SpamReportManager.class);
 
+    public static final SystemProperty<Class> SPAM_REPORT_PROVIDER = SystemProperty.Builder.ofType(Class.class)
+        .setKey("provider.spamReport.className")
+        .setBaseClass(SpamReportProvider.class)
+        .setDefaultValue(DefaultSpamReportProvider.class)
+        .setDynamic(true)
+        .addListener(SpamReportManager::initProvider)
+        .build();
+
+    private static SpamReportProvider spamReportProvider;
+
+    private static void initProvider(final Class<SpamReportProvider> clazz)
+    {
+        if (spamReportProvider == null || !clazz.equals(spamReportProvider.getClass())) {
+            try {
+                spamReportProvider = clazz.getDeclaredConstructor().newInstance();
+            }
+            catch (Exception e) {
+                Log.error("Error loading spam report provider: {}", clazz.getName(), e);
+                spamReportProvider = new DefaultSpamReportProvider();
+            }
+        }
+    }
     private final Set<SpamReportEventListener> listeners = new HashSet<>();
 
-    private SpamReportProvider spamReportProvider = new DefaultSpamReportProvider();
-
     private static SpamReportManager instance = null;
+
     public synchronized static SpamReportManager getInstance() {
         if (instance == null) {
             instance = new SpamReportManager();
+            initProvider(SPAM_REPORT_PROVIDER.getValue());
             instance.addListener(new SpamReportAdminNotifier());
         }
         return instance;

@@ -376,11 +376,11 @@ CREATE TABLE ofPubsubDefaultConf (
 );
 
 CREATE TABLE ofSpamReport (
-    reporter VARCHAR(1024)  NOT NULL,
-    reported VARCHAR(1024)  NOT NULL,
-    reason   VARCHAR(255)   NOT NULL,
-    created  BIGINT         NOT NULL,
-    raw      LONGVARCHAR    NOT NULL
+    reporter          VARCHAR(1024) NOT NULL,
+    reported          VARCHAR(1024) NOT NULL,
+    reason            VARCHAR(255)  NOT NULL,
+    created           BIGINT        NOT NULL,
+    raw               LONGVARCHAR   NOT NULL
 );
 CREATE INDEX ofSpamReport_created_reporter_id ON ofSpamReport (created, reporter);
 CREATE INDEX ofSpamReport_created_reported_id ON ofSpamReport (created, reported);

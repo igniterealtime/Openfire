@@ -373,6 +373,16 @@ CREATE TABLE ofPubsubDefaultConf (
   CONSTRAINT ofPubsubDefaultConf_pk PRIMARY KEY (serviceID, leaf)
 );
 
+CREATE TABLE ofSpamReport (
+  reporter            VARCHAR2(1024) NOT NULL,
+  reported            VARCHAR2(1024) NOT NULL,
+  reason              VARCHAR2(255)  NOT NULL,
+  created             INTEGER        NOT NULL,
+  "raw"               CLOB           NOT NULL
+);
+CREATE INDEX ofSpamReport_created_reporter_id ON ofSpamReport (created, reporter);
+CREATE INDEX ofSpamReport_created_reported_id ON ofSpamReport (created, reported);
+
 -- Finally, insert default table values.
 
 INSERT INTO ofID (idType, id) VALUES (18, 1);
@@ -389,6 +399,6 @@ INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modifica
 INSERT INTO ofMucService (serviceID, subdomain, isHidden) VALUES (1, 'conference', 0);
 
 -- Do this last, as it is used by a continuous integration check to verify that the entire script was executed successfully.
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 37);
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 38);
 
 commit;

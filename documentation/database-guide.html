@@ -86,10 +86,10 @@
                 <li><a href="#ofExtComponentConf">ofExtComponentConf</a></li>
                 <li><a href="#ofRemoteServerConf">ofRemoteServerConf</a></li>
                 <li><a href="#ofSecurityAuditLog">ofSecurityAuditLog</a></li>
+
                 <li><a href="#ofMucService">ofMucService</a></li>
                 <li><a href="#ofMucServiceProp">ofMucServiceProp</a></li>
                 <li><a href="#ofMucRoom">ofMucRoom</a></li>
-
                 <li><a href="#ofMucRoomProp">ofMucRoomProp</a></li>
                 <li><a href="#ofMucRoomRetiree">ofMucRoomRetiree</a></li>
                 <li><a href="#ofMucAffiliation">ofMucAffiliation</a></li>
@@ -101,9 +101,10 @@
                 <li><a href="#ofPubsubNodeGroups">ofPubsubNodeGroups</a></li>
                 <li><a href="#ofPubsubAffiliation">ofPubsubAffiliation</a></li>
                 <li><a href="#ofPubsubItem">ofPubsubItem</a></li>
-
                 <li><a href="#ofPubsubSubscription">ofPubsubSubscription</a></li>
                 <li><a href="#ofPubsubDefaultConf">ofPubsubDefaultConf</a></li>
+
+                <li><a href="#ofSpamReport">ofSpamReport</a></li>
             </ul>
         </nav>
 
@@ -1801,6 +1802,53 @@
         </table>
 
         &nbsp;<a href="#top" class="top">top of page</a>
+
+        <table id="ofSpamReport" class="dbtable">
+            <tbody>
+            <tr>
+                <th colspan="4">ofSpamReport (spam rapportage)</th>
+            </tr>
+            <tr>
+                <th>Column Name</th>
+                <th>Type</th>
+                <th>Length</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>reporter</td>
+                <td>VARCHAR</td>
+                <td>1024</td>
+                <td>JID of entity that is reporting the spam</td>
+            </tr>
+            <tr>
+                <td>reported</td>
+                <td>VARCHAR</td>
+                <td>1024</td>
+                <td>JID of entity that is being reported (the 'offender')</td>
+            </tr>
+            <tr>
+                <td>reason</td>
+                <td>VARCHAR</td>
+                <td>255</td>
+                <td>Identifier (typically a namespace) for the type of spam report</td>
+            </tr>
+            <tr>
+                <td>created</td>
+                <td>NUMBER</td>
+                <td></td>
+                <td>Epoch millis of the creation time of the report</td>
+            </tr>
+            <tr>
+                <td>raw</td>
+                <td>CLOB</td>
+                <td></td>
+                <td>XML representation of the report</td>
+            </tr>
+            </tbody>
+
+            &nbsp;<a href="#top" class="top">top of page</a>
+
+        </table>
 
     </section>
 

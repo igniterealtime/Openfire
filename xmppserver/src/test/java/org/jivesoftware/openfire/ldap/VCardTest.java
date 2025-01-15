@@ -18,6 +18,8 @@ package org.jivesoftware.openfire.ldap;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.jivesoftware.openfire.vcard.VCard;
+import org.jivesoftware.openfire.vcard.VCardTemplate;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -27,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
- * Unit tests that verify the implementation of {@link LdapVCardProvider.VCard}
+ * Unit tests that verify the implementation of {@link VCard}
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
@@ -41,12 +43,12 @@ public class VCardTest
     {
         // Setup fixture.
         final Document doc = DocumentHelper.parseText("<vcard><el>{placeholder}</el></vcard>");
-        final LdapVCardProvider.VCardTemplate template = new LdapVCardProvider.VCardTemplate(doc);
+        final VCardTemplate template = new VCardTemplate(doc);
         final Map<String, String> attributes = new HashMap<>();
         attributes.put("placeholder", "value");
 
         // Execute system under test.
-        final LdapVCardProvider.VCard vCard = new LdapVCardProvider.VCard(template);
+        final VCard vCard = new VCard(template);
         final Element result = vCard.getVCard(attributes);
 
         // Verify result.
@@ -63,12 +65,12 @@ public class VCardTest
     {
         // Setup fixture.
         final Document doc = DocumentHelper.parseText("<vcard><el>foo{placeholder}bar</el></vcard>");
-        final LdapVCardProvider.VCardTemplate template = new LdapVCardProvider.VCardTemplate(doc);
+        final VCardTemplate template = new VCardTemplate(doc);
         final Map<String, String> attributes = new HashMap<>();
         attributes.put("placeholder", "value");
 
         // Execute system under test.
-        final LdapVCardProvider.VCard vCard = new LdapVCardProvider.VCard(template);
+        final VCard vCard = new VCard(template);
         final Element result = vCard.getVCard(attributes);
 
         // Verify result.
@@ -85,12 +87,12 @@ public class VCardTest
     {
         // Setup fixture.
         final Document doc = DocumentHelper.parseText("<vcard><el>foo, {placeholder} bar</el></vcard>");
-        final LdapVCardProvider.VCardTemplate template = new LdapVCardProvider.VCardTemplate(doc);
+        final VCardTemplate template = new VCardTemplate(doc);
         final Map<String, String> attributes = new HashMap<>();
         attributes.put("placeholder", "value");
 
         // Execute system under test.
-        final LdapVCardProvider.VCard vCard = new LdapVCardProvider.VCard(template);
+        final VCard vCard = new VCard(template);
         final Element result = vCard.getVCard(attributes);
 
         // Verify result.
@@ -107,13 +109,13 @@ public class VCardTest
     {
         // Setup fixture.
         final Document doc = DocumentHelper.parseText("<vcard><el>{placeholderA}, {placeholderB}</el></vcard>");
-        final LdapVCardProvider.VCardTemplate template = new LdapVCardProvider.VCardTemplate(doc);
+        final VCardTemplate template = new VCardTemplate(doc);
         final Map<String, String> attributes = new HashMap<>();
         attributes.put("placeholderA", "valueA");
         attributes.put("placeholderB", "valueB");
 
         // Execute system under test.
-        final LdapVCardProvider.VCard vCard = new LdapVCardProvider.VCard(template);
+        final VCard vCard = new VCard(template);
         final Element result = vCard.getVCard(attributes);
 
         // Verify result.
@@ -132,14 +134,14 @@ public class VCardTest
     {
         // Setup fixture.
         final Document doc = DocumentHelper.parseText("<vcard><el>(|({placeholderA})({placeholderB})({placeholderC}))</el></vcard>");
-        final LdapVCardProvider.VCardTemplate template = new LdapVCardProvider.VCardTemplate(doc);
+        final VCardTemplate template = new VCardTemplate(doc);
         final Map<String, String> attributes = new HashMap<>();
         attributes.put("placeholderA", "");
         attributes.put("placeholderB", "valueB");
         attributes.put("placeholderC", "valueC");
 
         // Execute system under test.
-        final LdapVCardProvider.VCard vCard = new LdapVCardProvider.VCard(template);
+        final VCard vCard = new VCard(template);
         final Element result = vCard.getVCard(attributes);
 
         // Verify result.
@@ -158,14 +160,14 @@ public class VCardTest
     {
         // Setup fixture.
         final Document doc = DocumentHelper.parseText("<vcard><el>(|({placeholderA})({placeholderB})({placeholderC}))</el></vcard>");
-        final LdapVCardProvider.VCardTemplate template = new LdapVCardProvider.VCardTemplate(doc);
+        final VCardTemplate template = new VCardTemplate(doc);
         final Map<String, String> attributes = new HashMap<>();
         attributes.put("placeholderA", "valueA");
         attributes.put("placeholderB", "valueB");
         attributes.put("placeholderC", "valueC");
 
         // Execute system under test.
-        final LdapVCardProvider.VCard vCard = new LdapVCardProvider.VCard(template);
+        final VCard vCard = new VCard(template);
         final Element result = vCard.getVCard(attributes);
 
         // Verify result.
@@ -184,14 +186,14 @@ public class VCardTest
     {
         // Setup fixture.
         final Document doc = DocumentHelper.parseText("<vcard><el>(|({placeholderA})({placeholderB})({placeholderC}))</el></vcard>");
-        final LdapVCardProvider.VCardTemplate template = new LdapVCardProvider.VCardTemplate(doc);
+        final VCardTemplate template = new VCardTemplate(doc);
         final Map<String, String> attributes = new HashMap<>();
         attributes.put("placeholderA", "valueA");
         attributes.put("placeholderB", "");
         attributes.put("placeholderC", "");
 
         // Execute system under test.
-        final LdapVCardProvider.VCard vCard = new LdapVCardProvider.VCard(template);
+        final VCard vCard = new VCard(template);
         final Element result = vCard.getVCard(attributes);
 
         // Verify result.
@@ -210,14 +212,14 @@ public class VCardTest
     {
         // Setup fixture.
         final Document doc = DocumentHelper.parseText("<vcard><el>(|({placeholderA})({placeholderB})({placeholderC}))</el></vcard>");
-        final LdapVCardProvider.VCardTemplate template = new LdapVCardProvider.VCardTemplate(doc);
+        final VCardTemplate template = new VCardTemplate(doc);
         final Map<String, String> attributes = new HashMap<>();
         attributes.put("placeholderA", "");
         attributes.put("placeholderB", "");
         attributes.put("placeholderC", "valueC");
 
         // Execute system under test.
-        final LdapVCardProvider.VCard vCard = new LdapVCardProvider.VCard(template);
+        final VCard vCard = new VCard(template);
         final Element result = vCard.getVCard(attributes);
 
         // Verify result.
@@ -236,14 +238,14 @@ public class VCardTest
     {
         // Setup fixture.
         final Document doc = DocumentHelper.parseText("<vcard><el>(|({placeholderA})({placeholderB})({placeholderC}))</el></vcard>");
-        final LdapVCardProvider.VCardTemplate template = new LdapVCardProvider.VCardTemplate(doc);
+        final VCardTemplate template = new VCardTemplate(doc);
         final Map<String, String> attributes = new HashMap<>();
         attributes.put("placeholderA", "");
         attributes.put("placeholderB", "");
         attributes.put("placeholderC", "");
 
         // Execute system under test.
-        final LdapVCardProvider.VCard vCard = new LdapVCardProvider.VCard(template);
+        final VCard vCard = new VCard(template);
         final Element result = vCard.getVCard(attributes);
 
         // Verify result.
@@ -260,13 +262,13 @@ public class VCardTest
     {
         // Setup fixture.
         final Document doc = DocumentHelper.parseText("<vcard><el>foo {placeholderA}, {placeholderB} bar</el></vcard>");
-        final LdapVCardProvider.VCardTemplate template = new LdapVCardProvider.VCardTemplate(doc);
+        final VCardTemplate template = new VCardTemplate(doc);
         final Map<String, String> attributes = new HashMap<>();
         attributes.put("placeholderA", "valueA");
         attributes.put("placeholderB", "valueB");
 
         // Execute system under test.
-        final LdapVCardProvider.VCard vCard = new LdapVCardProvider.VCard(template);
+        final VCard vCard = new VCard(template);
         final Element result = vCard.getVCard(attributes);
 
         // Verify result.
@@ -282,12 +284,12 @@ public class VCardTest
     {
         // Setup fixture.
         final Document doc = DocumentHelper.parseText("<vcard><el>placeholder</el></vcard>");
-        final LdapVCardProvider.VCardTemplate template = new LdapVCardProvider.VCardTemplate(doc);
+        final VCardTemplate template = new VCardTemplate(doc);
         final Map<String, String> attributes = new HashMap<>();
         attributes.put("placeholder", "value");
 
         // Execute system under test.
-        final LdapVCardProvider.VCard vCard = new LdapVCardProvider.VCard(template);
+        final VCard vCard = new VCard(template);
         final Element result = vCard.getVCard(attributes);
 
         // Verify result.
@@ -306,11 +308,11 @@ public class VCardTest
     {
         // Setup fixture.
         final Document doc = DocumentHelper.parseText("<vcard><el>{placeholder}</el></vcard>");
-        final LdapVCardProvider.VCardTemplate template = new LdapVCardProvider.VCardTemplate(doc);
+        final VCardTemplate template = new VCardTemplate(doc);
         final Map<String, String> attributes = new HashMap<>();
 
         // Execute system under test.
-        final LdapVCardProvider.VCard vCard = new LdapVCardProvider.VCard(template);
+        final VCard vCard = new VCard(template);
         final Element result = vCard.getVCard(attributes);
 
         // Verify result.
@@ -330,13 +332,13 @@ public class VCardTest
     {
         // Setup fixture.
         final Document doc = DocumentHelper.parseText("<vcard><el>place/holder</el></vcard>");
-        final LdapVCardProvider.VCardTemplate template = new LdapVCardProvider.VCardTemplate(doc);
+        final VCardTemplate template = new VCardTemplate(doc);
         final Map<String, String> attributes = new HashMap<>();
         attributes.put("place", "value");
         attributes.put("holder", "value");
 
         // Execute system under test.
-        final LdapVCardProvider.VCard vCard = new LdapVCardProvider.VCard(template);
+        final VCard vCard = new VCard(template);
         final Element result = vCard.getVCard(attributes);
 
         // Verify result.

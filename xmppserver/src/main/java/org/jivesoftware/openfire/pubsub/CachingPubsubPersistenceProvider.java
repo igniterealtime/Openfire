@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2020-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.openfire.pubsub;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.pep.PEPService;
 import org.jivesoftware.openfire.pubsub.cluster.FlushTask;
@@ -47,7 +48,11 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         .setDynamic(false)
         .build();
 
-    private PubSubPersistenceProvider delegate;
+    /**
+     * The delegate instance, used by this instance to interact with persistent data storage.
+     */
+    @VisibleForTesting
+    PubSubPersistenceProvider delegate;
 
     /**
      * Pseudo-random number generator is used to offset timing for scheduled tasks
@@ -69,20 +74,24 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
     /**
      * Queue that holds the (wrapped) items that need to be added to the database.
      */
-    private Deque<PublishedItem> itemsToAdd = new ConcurrentLinkedDeque<>();
+    @VisibleForTesting
+    Deque<PublishedItem> itemsToAdd = new ConcurrentLinkedDeque<>();
 
     /**
      * Queue that holds the items that need to be deleted from the database.
      */
-    private Deque<PublishedItem> itemsToDelete = new ConcurrentLinkedDeque<>();
+    @VisibleForTesting
+    Deque<PublishedItem> itemsToDelete = new ConcurrentLinkedDeque<>();
 
     /**
      * Keeps reference to published items that haven't been persisted yet so they
      * can be removed before being deleted.
      */
-    private final HashMap<PublishedItem.UniqueIdentifier, PublishedItem> itemsPending = new HashMap<>();
+    @VisibleForTesting
+    final HashMap<PublishedItem.UniqueIdentifier, PublishedItem> itemsPending = new HashMap<>();
 
-    private ConcurrentMap<Node.UniqueIdentifier, List<NodeOperation>> nodesToProcess = new ConcurrentHashMap<>();
+    @VisibleForTesting
+    final ConcurrentMap<Node.UniqueIdentifier, List<NodeOperation>> nodesToProcess = new ConcurrentHashMap<>();
 
     /**
      * Cache name for recently accessed published items.

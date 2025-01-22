@@ -291,9 +291,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                     Presence presence = new Presence();
                     presence.setType(Presence.Type.unavailable);
                     presence.setFrom(session.getAddress());
-
-                    // Broadcast asynchronously, to reduce the likelihood of the broadcast introducing a deadlock (OF-2921).
-                    TaskEngine.getInstance().submit(() -> router.route(presence));
+                    router.route(presence);
                 }
 
                 session.getStreamManager().onClose(router, serverAddress);
@@ -1362,9 +1360,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                         Presence presence = new Presence();
                         presence.setType(Presence.Type.unavailable);
                         presence.setFrom(session.getAddress());
-
-                        // Broadcast asynchronously, to reduce the likelihood of the broadcast introducing a deadlock (OF-2921).
-                        TaskEngine.getInstance().submit(() -> router.route(presence));
+                        router.route(presence);
                     }
 
                     session.getStreamManager().onClose(router, serverAddress);

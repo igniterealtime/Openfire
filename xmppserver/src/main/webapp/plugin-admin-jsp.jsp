@@ -14,148 +14,18 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
 --%>
-
-<%@ page import="java.io.InputStream,
-                 java.util.List,
-                 org.apache.commons.fileupload.FileItem,
-                 org.apache.commons.fileupload.FileItemFactory,
-                 org.apache.commons.fileupload.FileUploadException,
-                 org.apache.commons.fileupload.disk.DiskFileItemFactory,
-                 org.apache.commons.fileupload.servlet.ServletFileUpload"
-        %>
+<%--@elvariable id="webManager" type="org.jivesoftware.util.WebManager"--%>
+<%--@elvariable id="pluginManager" type="org.jivesoftware.openfire.container.PluginManager"--%>
+<%--@elvariable id="updateManager" type="org.jivesoftware.openfire.update.UpdateManager"--%>
+<%--@elvariable id="plugins" type="java.util.Map<java.lang.String, org.jivesoftware.openfire.container.PluginMetadata>"--%>
+<%--@elvariable id="uploadEnabled" type="java.lang.Boolean"--%>
+<%--@elvariable id="csrf" type="java.lang.String"--%>
 <%@ page import="org.jivesoftware.admin.AuthCheckFilter" %>
-<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
-<%@ page import="org.jivesoftware.openfire.container.PluginManager" %>
-<%@ page import="org.jivesoftware.openfire.update.UpdateManager" %>
-<%@ page import="org.slf4j.Logger" %>
-<%@ page import="org.slf4j.LoggerFactory" %>
-<%@ page import="org.jivesoftware.util.*" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
-
-<jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
-<% webManager.init(request, response, session, application, out ); %>
-
-<%
-    final Logger Log = LoggerFactory.getLogger("plugin-admin.jsp");
-    String deletePlugin = ParamUtils.getParameter(request, "deleteplugin");
-    String reloadPlugin = ParamUtils.getParameter(request, "reloadplugin");
-    boolean downloadRequested = request.getParameter("download") != null;
-    boolean uploadPlugin = request.getParameter("uploadplugin") != null;
-    String url = request.getParameter("url");
-    boolean uploadEnabled = JiveGlobals.getBooleanProperty("plugins.upload.enabled", true);
-    boolean contentTypeCheckEnabled = JiveGlobals.getBooleanProperty("plugins.upload.content-type-check.enabled", false);
-    String expectedContentType = JiveGlobals.getProperty("plugins.upload.content-type-check.expected-value", "application/x-java-archive");
-    boolean csrf_check = true;
-
-    final PluginManager pluginManager = webManager.getXMPPServer().getPluginManager();
-    final UpdateManager updateManager = XMPPServer.getInstance().getUpdateManager();
-
-    pageContext.setAttribute( "plugins", pluginManager.getMetadataExtractedPlugins() );
-    pageContext.setAttribute( "pluginManager", pluginManager );
-    pageContext.setAttribute( "updateManager", updateManager );
-    pageContext.setAttribute( "uploadEnabled", uploadEnabled );
-    pageContext.setAttribute( "serverVersion", XMPPServer.getInstance().getServerInfo().getVersion() );
-
-    Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
-    String csrfParam = ParamUtils.getParameter(request, "csrf");
-
-    if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
-        csrf_check = false;
-    }
-    csrfParam = StringUtils.randomString(15);
-    CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
-    pageContext.setAttribute("csrf", csrfParam);
-
-    if (csrf_check && downloadRequested) {
-        // Download and install new version of plugin
-        updateManager.downloadPlugin(url);
-        // Log the event
-        webManager.logEvent("downloaded plugin from "+url, null);
-    }
-
-    if (csrf_check && deletePlugin != null) {
-        pluginManager.deletePlugin( deletePlugin );
-        // Log the event
-        webManager.logEvent("deleted plugin "+deletePlugin, null);
-        response.sendRedirect("plugin-admin.jsp?deletesuccess=true");
-        return;
-    }
-
-    if (csrf_check && reloadPlugin != null) {
-        if ( pluginManager.reloadPlugin(reloadPlugin) ) {
-            // Log the event
-            webManager.logEvent("reloaded plugin "+reloadPlugin, null);
-            response.sendRedirect("plugin-admin.jsp?reloadsuccess=true");
-            return;
-        } else {
-            response.sendRedirect( "plugin-admin.jsp?reloadsuccess=false" );
-            return;
-        }
-    }
-
-    if (csrf_check && uploadEnabled && uploadPlugin) {
-        boolean installed = false;
-
-        // Create a factory for disk-based file items
-        FileItemFactory factory = new DiskFileItemFactory();
-
-        // Create a new file upload handler
-        ServletFileUpload upload = new ServletFileUpload(factory);
-        // I'm not sure that the file count can exceed 1, but limiting is good practice under CVE-2023-24998
-        upload.setFileCountMax(20);
-
-        try {
-            // Parse the request
-            List<FileItem> items = upload.parseRequest(request);
-
-            for (FileItem item : items) {
-                String fileName = item.getName();
-                String contentType = item.getContentType();
-                Log.debug("Uploaded plugin '{}' content type: '{}'.", fileName, contentType );
-                if (fileName == null) {
-                    Log.error( "Ignoring uploaded file: No filename specified for file upload." );
-                    continue;
-                }
-
-                if (contentTypeCheckEnabled && !expectedContentType.equalsIgnoreCase( contentType )) {
-                    Log.error( "Ignoring uploaded file: Content type '{}' of uploaded file '{}' does not match expected content type '{}'", contentType, fileName, expectedContentType );
-                    continue;
-                }
-
-                InputStream is = item.getInputStream();
-                if (is != null) {
-                    installed = XMPPServer.getInstance().getPluginManager().installPlugin(is, fileName);
-                    if (!installed) {
-                        Log.error("Plugin manager failed to install plugin: " + fileName);
-                    }
-                    is.close();
-                    // Log the event
-                    webManager.logEvent("uploaded plugin "+fileName, null);
-                }
-                else {
-                    Log.error("Unable to open file stream for uploaded file: " + fileName);
-                }
-            }
-        }
-        catch (FileUploadException e) {
-            Log.error("Unable to upload plugin file.", e);
-        }
-        if (installed) {
-            response.sendRedirect("plugin-admin.jsp?uploadsuccess=true");
-            return;
-        } else {
-            response.sendRedirect("plugin-admin.jsp?uploadsuccess=false");
-            return;
-        }
-    }
-%>
-
-
-
 <html>
 <head>
 <title><fmt:message key="plugin.admin.title"/></title>
@@ -342,6 +212,11 @@ tr.lowerhalf > td:last-child {
 </head>
 
 <body>
+    <c:if test="${param.csrfError eq 'true'}">
+        <admin:infobox type="error">
+            <fmt:message key="global.csrf.failed" />
+        </admin:infobox>
+    </c:if>
     <c:if test="${param.deletesuccess eq 'true'}">
         <admin:infobox type="success">
             <fmt:message key="plugin.admin.deleted_success" />
@@ -477,15 +352,19 @@ tr.lowerhalf > td:last-child {
             </td>
             <td style="width: 1%; text-align: center;">
                 <c:if test="${pluginManager.isLoaded(plugin.canonicalName)}">
-                    <a href="plugin-admin.jsp?csrf=${csrf}&reloadplugin=${admin:urlEncode( plugin.canonicalName )}"
-                       title="<fmt:message key="plugin.admin.click_reload" />"
-                    ><img src="images/refresh-16x16.gif" alt="<fmt:message key="global.refresh" /> ${plugin.name}"></a>
+                    <form action="plugin-admin.jsp" method="post">
+                        <input type="hidden" name="csrf" value="${admin:escapeHTMLTags(csrf)}"/>
+                        <input type="hidden" name="reloadplugin" value="${admin:escapeHTMLTags(plugin.canonicalName)}"/>
+                        <input type="image" src="images/refresh-16x16.gif" alt="<fmt:message key="global.refresh" /> ${plugin.name}"/>
+                    </form>
                 </c:if>
             </td>
             <td style="width: 1%; text-align: center;">
-                <a href="#" onclick="if (confirm('<fmt:message key="plugin.admin.confirm" />')) { location.replace('plugin-admin.jsp?csrf=${csrf}&deleteplugin=${admin:urlEncode( plugin.canonicalName )}'); } "
-                   title="<fmt:message key="global.click_delete" />"
-                        ><img src="images/delete-16x16.gif" alt="<fmt:message key="global.delete" /> ${plugin.name}"></a>
+                <form action="plugin-admin.jsp" method="post">
+                    <input type="hidden" name="csrf" value="${admin:escapeHTMLTags(csrf)}"/>
+                    <input type="hidden" name="deleteplugin" value="${admin:escapeHTMLTags(plugin.canonicalName)}"/>
+                    <input type="image" src="images/delete-16x16.gif" alt="<fmt:message key="global.delete" /> ${plugin.name}" onclick="return confirm('<fmt:message key="plugin.admin.confirm" />')"/>
+                </form>
             </td>
         </tr>
 
@@ -562,7 +441,7 @@ tr.lowerhalf > td:last-child {
     <div>
         <h3><fmt:message key="plugin.admin.upload_plugin" /></h3>
         <p><fmt:message key="plugin.admin.upload_plugin.info" /></p>
-        <form action="plugin-admin.jsp?uploadplugin&amp;csrf=${csrf}" enctype="multipart/form-data" method="post">
+        <form action="plugin-admin.jsp?uploadplugin&amp;csrf=${admin:escapeHTMLTags(csrf)}" enctype="multipart/form-data" method="post">
             <input type="file" name="uploadfile" />
             <input type="submit" value="<fmt:message key="plugin.admin.upload_plugin" />" />
         </form>

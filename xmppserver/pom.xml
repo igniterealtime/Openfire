@@ -438,11 +438,6 @@
             <version>2.4.2</version>
         </dependency>
         <dependency>
-            <groupId>commons-fileupload</groupId>
-            <artifactId>commons-fileupload</artifactId>
-            <version>1.5</version>
-        </dependency>
-        <dependency>
             <groupId>org.directwebremoting</groupId>
             <artifactId>dwr</artifactId>
         </dependency>

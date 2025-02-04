@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013 Florian Schmaus, 2017-2024 Ignite Realtime Foundation. All rights reserved
+ * Copyright (C) 2013 Florian Schmaus, 2017-2025 Ignite Realtime Foundation. All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@ package org.jivesoftware.util;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.regex.Matcher;
@@ -61,8 +64,7 @@ public class XMPPDateTimeFormat {
     @SuppressWarnings("unused")
     private static final Pattern xep91Pattern = Pattern.compile("^\\d+T\\d+:\\d+:\\d+$");
 
-    private static final FastDateFormat FAST_FORMAT = FastDateFormat.getInstance(
-            XMPP_DATETIME_FORMAT, TimeZone.getTimeZone("UTC"));
+    private static final DateTimeFormatter FAST_FORMAT = DateTimeFormatter.ofPattern(XMPP_DATETIME_FORMAT).withZone(ZoneOffset.UTC);
 
     private final DateFormat dateTimeFormat = new SimpleDateFormat(XMPP_DATETIME_FORMAT_WO_TIMEZONE + 'Z');
     private final DateFormat dateTimeFormatWoMillies = new SimpleDateFormat(XMPP_DATETIME_FORMAT_WO_MILLIS_WO_TIMEZONE + 'Z');
@@ -137,6 +139,19 @@ public class XMPPDateTimeFormat {
      * @return the formatted date
      */
     public static String format(Date date) {
-        return FAST_FORMAT.format(date);
+        return FAST_FORMAT.format(date.toInstant());
+    }
+
+    /**
+     * Formats a Date object to String as defined in XEP-0082.
+     *
+     * The resulting String will have the timezone set to UTC ('Z') and includes milliseconds:
+     * CCYY-MM-DDThh:mm:ss.sssZ
+     *
+     * @param instant the date to format
+     * @return the formatted date
+     */
+    public static String format(Instant instant) {
+        return FAST_FORMAT.format(instant);
     }
 }

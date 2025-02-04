@@ -50,8 +50,6 @@
  * For more information about Tea, please see http://opensource.go.com/.
  */
 
-//TODO: https://igniterealtime.atlassian.net/browse/OF-2754
-
 package org.jivesoftware.util;
 
 import java.util.Date;
@@ -75,7 +73,9 @@ import java.text.SimpleDateFormat;
  * <p>Note, this class is from the open source Tea project (http://sourceforge.net/projects/teatrove/).</p>
  *
  * @author Brian S O'Neill
+ * @deprecated Use instead thread-safe implementations provided by Java, such as {@link java.time.format.DateTimeFormatter}
  */
+@Deprecated(forRemoval = true) // Remove in or after Openfire 5.1.0
 public class FastDateFormat {
     /** Style pattern */
     public static final Object

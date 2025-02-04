@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@ import org.xmpp.packet.Presence;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.Instant;
+import java.time.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -41,7 +41,7 @@ public class AuditorImpl implements Auditor {
 
     private static final Logger Log = LoggerFactory.getLogger(AuditorImpl.class);
 
-    private AuditManager auditManager;
+    private final AuditManager auditManager;
     private File currentAuditFile;
     private Writer writer;
     private org.jivesoftware.util.XMLWriter xmlWriter;
@@ -49,10 +49,10 @@ public class AuditorImpl implements Auditor {
      * Limit date used to detect when we need to rollover files. This date will be
      * configured as the last second of the day.
      */
-    private Date currentDateLimit;
+    private LocalDateTime currentDateLimit;
     /**
      * Max size in bytes that all audit log files may have. When the limit is reached
-     * oldest audit log files will be removed until total size is under the limit.
+     * the oldest audit log files will be removed until total size is under the limit.
      */
     private long maxTotalSize;
     /**
@@ -81,7 +81,7 @@ public class AuditorImpl implements Auditor {
     /**
      * Queue that holds the audited packets that will be later saved to an XML file.
      */
-    private BlockingQueue<AuditPacket> logQueue = new LinkedBlockingQueue<>();
+    private final BlockingQueue<AuditPacket> logQueue = new LinkedBlockingQueue<>();
 
     /**
      * Allow only a limited number of files for each day, max. three digits (000-999)
@@ -95,13 +95,13 @@ public class AuditorImpl implements Auditor {
      * Timer to save queued logs to the XML file.
      */
     private SaveQueuedPacketsTask saveQueuedPacketsTask;
-    private FastDateFormat dateFormat;
-    private static FastDateFormat auditFormat;
+    private final DateTimeFormatter dateFormat;
+    private static DateTimeFormatter auditFormat;
 
     public AuditorImpl(AuditManager manager) {
         auditManager = manager;
-        dateFormat = FastDateFormat.getInstance("yyyyMMdd", TimeZone.getTimeZone("UTC"));
-        auditFormat = FastDateFormat.getInstance("MMM dd, yyyy hh:mm:ss:SSS a", JiveGlobals.getLocale());
+        dateFormat = DateTimeFormatter.ofPattern("yyyyMMdd").withZone(ZoneOffset.UTC);
+        auditFormat = DateTimeFormatter.ofPattern("MMM dd, yyyy hh:mm:ss:SSS a", JiveGlobals.getLocale()).withZone(JiveGlobals.getTimeZone().toZoneId());
     }
 
     protected void setMaxValues(int totalSize, int fileSize, Duration duration) {
@@ -190,12 +190,12 @@ public class AuditorImpl implements Auditor {
         }
     }
 
-    private void prepareAuditFile(Date auditDate) throws IOException {
+    private void prepareAuditFile(Instant auditDate) throws IOException {
         ensureMaxTotalSize();
 
         // Rotate file if: we just started, current file size exceeded limit or date has changed
         if (currentAuditFile == null || currentAuditFile.length() > maxFileSize ||
-                xmlWriter == null || currentDateLimit == null || auditDate.after(currentDateLimit))
+                xmlWriter == null || currentDateLimit == null || auditDate.isAfter(currentDateLimit.atZone(JiveGlobals.getTimeZone().toZoneId()).toInstant()))
         {
             createAuditFile(auditDate);
         }
@@ -211,7 +211,7 @@ public class AuditorImpl implements Auditor {
         FilenameFilter filter = (dir, name) -> name.startsWith("jive.audit-") && name.endsWith(".log");
         File[] files = baseFolder.listFiles(filter);
         if (files == null) {
-            Log.debug( "Path '{}' does not denote a directory, or an IO exception occured while trying to list its content.", baseFolder );
+            Log.debug( "Path '{}' does not denote a directory, or an IO exception occurred while trying to list its content.", baseFolder );
             return;
         }
         long totalLength = 0;
@@ -252,7 +252,7 @@ public class AuditorImpl implements Auditor {
         // Set limit date after which we need to delete old audit files
         Instant cutoff = Instant.now().minus(retention);
 
-        final String oldestFile = "jive.audit-" + dateFormat.format(Date.from(cutoff)) + "-000.log";
+        final String oldestFile = "jive.audit-" + dateFormat.format(cutoff) + "-000.log";
 
         // Get list of audit files to delete
         FilenameFilter filter = (dir, name) -> name.startsWith("jive.audit-") && name.endsWith(".log") &&
@@ -292,17 +292,12 @@ public class AuditorImpl implements Auditor {
     * @param auditDate The date for which to write an audit file
     * @throws IOException On any problem writing the file.
     */
-    private void createAuditFile(Date auditDate) throws IOException {
+    private void createAuditFile(Instant auditDate) throws IOException {
         final String filePrefix = "jive.audit-" + dateFormat.format(auditDate) + "-";
-        if (currentDateLimit == null || auditDate.after(currentDateLimit)) {
-        // Set limit date after which we need to rollover the audit file (based on the date)
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(auditDate);
-        calendar.set(Calendar.HOUR_OF_DAY, 23);
-        calendar.set(Calendar.MINUTE, 59);
-        calendar.set(Calendar.SECOND, 59);
-        calendar.set(Calendar.MILLISECOND, 999);
-        currentDateLimit = calendar.getTime();
+        if (currentDateLimit == null || auditDate.isAfter(currentDateLimit.atZone(JiveGlobals.getTimeZone().toZoneId()).toInstant())) {
+        // Set limit date after which we need to roll over the audit file (based on the date)
+        currentDateLimit = auditDate.atZone(JiveGlobals.getTimeZone().toZoneId()).toLocalDate().atTime(LocalTime.MAX);
+
         filesIndex = 0;
     }
     // Get list of existing audit files
@@ -310,7 +305,7 @@ public class AuditorImpl implements Auditor {
     File[] files = baseFolder.listFiles(filter);
     // if some daily files were already deleted then files.length will be smaller than filesIndex
     // see also WARNING above
-    filesIndex = Math.max(files.length, filesIndex);
+    filesIndex = Math.max(files == null ? 0 : files.length, filesIndex);
         if (filesIndex >= maxTotalFilesDay)
         {
             // don't close this file, continue auditing to it
@@ -358,7 +353,7 @@ public class AuditorImpl implements Auditor {
         logQueue.drainTo(packets);
         for (AuditPacket auditPacket : packets) {
             try {
-                prepareAuditFile(auditPacket.getCreationDate());
+                prepareAuditFile(auditPacket.getCreation());
                 Element element = auditPacket.getElement();
                 // Protect against null elements.
                 if (element != null) {
@@ -392,14 +387,14 @@ public class AuditorImpl implements Auditor {
      */
     private static class AuditPacket {
 
-        private static DocumentFactory docFactory = DocumentFactory.getInstance();
+        private static final DocumentFactory docFactory = DocumentFactory.getInstance();
 
-        private Element element;
-        private Date creationDate;
+        private final Element element;
+        private final Instant creation;
 
         public AuditPacket(Packet packet, Session session) {
             element = docFactory.createElement("packet", "http://www.jivesoftware.org");
-            creationDate = new Date();
+            creation = Instant.now();
             if (session != null && session.getStreamID() != null) {
                 element.addAttribute("streamID", session.getStreamID().toString());
             }
@@ -426,7 +421,7 @@ public class AuditorImpl implements Auditor {
                         break;
                 }
             }
-            element.addAttribute("timestamp", auditFormat.format(creationDate));
+            element.addAttribute("timestamp", auditFormat.format(creation));
             element.add(packet.getElement());
         }
 
@@ -445,8 +440,8 @@ public class AuditorImpl implements Auditor {
          *
          * @return the date when the packet was audited.
          */
-        public Date getCreationDate() {
-            return creationDate;
+        public Instant getCreation() {
+            return creation;
         }
     }
 }

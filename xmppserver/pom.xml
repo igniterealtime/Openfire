@@ -461,6 +461,16 @@
             <artifactId>json</artifactId>
             <version>20231013</version>
         </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>32.0.1-jre</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.jgonian</groupId>
+            <artifactId>commons-ip-math</artifactId>
+            <version>1.32</version>
+        </dependency>
 
         <!-- Database Drivers -->
         <dependency>
@@ -495,15 +505,19 @@
             <version>9.4.1.jre11</version>
         </dependency>
         <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>32.0.1-jre</version>
+            <groupId>com.oracle.database.jdbc</groupId>
+            <artifactId>ojdbc11-production</artifactId>
+            <version>23.7.0.25.01</version>
+            <type>pom</type>
+            <exclusions>
+                <exclusion>
+                    <!-- This dependency causes the JSPC compilation to fail.-->
+                    <groupId>com.oracle.database.xml</groupId>
+                    <artifactId>xmlparserv2</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
-        <dependency>
-            <groupId>com.github.jgonian</groupId>
-            <artifactId>commons-ip-math</artifactId>
-            <version>1.32</version>
-        </dependency>
+
         <!-- Test Scope -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

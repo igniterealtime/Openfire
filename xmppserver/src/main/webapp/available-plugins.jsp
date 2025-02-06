@@ -32,16 +32,9 @@
 <% webManager.init(request, response, session, application, out ); %>
 
 <%
-    boolean downloadRequested = request.getParameter("download") != null;
-    String url = request.getParameter("url");
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
-    if (downloadRequested) {
-        if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
-            downloadRequested = false;
-        }
-    }
     csrfParam = StringUtils.randomString(15);
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
     pageContext.setAttribute("csrf", csrfParam);
@@ -53,14 +46,6 @@
     pageContext.setAttribute( "lastCheck", value != null ? new Date( Long.parseLong( value ) ) : null );
     pageContext.setAttribute( "updateServiceEnabled", updateManager.isServiceEnabled() );
     pageContext.setAttribute( "notInstalledPlugins", updateManager.getNotInstalledPlugins() );
-
-    if (downloadRequested) {
-        // Download and install new plugin
-        updateManager.downloadPlugin(url);
-        // Log the event
-        webManager.logEvent("downloaded new plugin from "+url, null);
-    }
-
 %>
 
 <html>

@@ -101,14 +101,11 @@ public class PluginServlet extends HttpServlet
 
         final WebManager webManager = (WebManager) request.getAttribute("webManager"); // set in doCommon()
         final PluginManager pluginManager = (PluginManager) request.getAttribute("pluginManager"); // set in doCommon()
-        final UpdateManager updateManager = (UpdateManager) request.getAttribute("updateManager"); // set in doCommon()
         final boolean uploadEnabled = (boolean) request.getAttribute("uploadEnabled");
 
         final String deletePlugin = ParamUtils.getParameter(request, "deleteplugin");
         final String reloadPlugin = ParamUtils.getParameter(request, "reloadplugin");
-        final boolean downloadRequested = request.getParameter("download") != null;
         final boolean uploadPlugin = request.getParameter("uploadplugin") != null;
-        final String url = request.getParameter("url");
 
         final Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
         final String csrfParam = ParamUtils.getParameter(request, "csrf");
@@ -123,12 +120,6 @@ public class PluginServlet extends HttpServlet
         if (csrfError) {
             response.sendRedirect("plugin-admin.jsp?csrfError=true");
             return;
-        }
-
-        if (downloadRequested) {
-            // Download and install new version of plugin
-            updateManager.downloadPlugin(url);
-            webManager.logEvent("downloaded plugin from "+url, null);
         }
 
         if (deletePlugin != null) {

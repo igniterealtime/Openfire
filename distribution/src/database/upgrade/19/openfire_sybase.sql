@@ -109,6 +109,7 @@ CREATE INDEX ofPrivacyList_default_idx ON ofPrivacyList (username, isDefault);
 
 /* Rename jiveSASLAuthorized to ofSASLAuthorized */
 ALTER TABLE jiveSASLAuthorized DROP CONSTRAINT jiveSASLAuthoirzed_pk;
+ALTER TABLE jiveSASLAuthorized MODIFY principal NVARCHAR(3000) NOT NULL;
 sp_rename 'jiveSASLAuthorized', 'ofSASLAuthorized';
 ALTER TABLE ofSASLAuthorized ADD CONSTRAINT ofSASLAuthorized_pk PRIMARY KEY (username, principal);
 

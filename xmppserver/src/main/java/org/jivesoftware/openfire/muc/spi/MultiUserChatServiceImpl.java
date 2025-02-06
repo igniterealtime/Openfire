@@ -2178,13 +2178,13 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
     private void rescheduleUserTimeoutTask()
     {
-        // Use the 25% of the smallest of 'userIdleKick' or 'userIdlePing', or 5 minutes if both are unset.
+        // Use the 25% of the smallest of 'userIdleKick' or 'userIdlePing', or 20 minutes if both are unset.
         Duration recalculated = Stream.of(userIdleKick, userIdlePing)
             .filter(Objects::nonNull)
             .filter(duration -> duration.compareTo(Duration.ofSeconds(30)) > 0) // Not faster than every so often.
             .sorted()
             .findFirst()
-            .orElse(Duration.ofMinutes(5*4))
+            .orElse(Duration.ofMinutes(20*4))
             .dividedBy(4);
 
         // But if the property is set, use that.
@@ -2528,7 +2528,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             }
         }
         value = MUCPersistenceManager.getProperty(chatServiceName, "tasks.user.ping");
-        userIdlePing = Duration.ofMinutes(60);
+        userIdlePing = Duration.ofHours(4);
         if (value != null) {
             try {
                 final long millis = Long.parseLong(value);

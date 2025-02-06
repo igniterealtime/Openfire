@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2021-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,7 +87,7 @@ public class MUCRoomTest {
 
         final List<MUCRole> occupants = new ArrayList<>();
         final MUCRole occupantA = new MUCRole();
-        populateField(occupantA, "roomJid", new JID("occupantA@example.org"));
+        populateField(occupantA, "roomJid", new JID("occupantA@example.org/Ψ+"));
         populateField(occupantA, "role", MUCRole.Role.participant);
         populateField(occupantA, "affiliation", MUCRole.Affiliation.member);
         populateField(occupantA, "occupantJID", new JID("room-test-jid@conference.example.org/occupantA"));

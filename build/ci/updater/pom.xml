@@ -90,6 +90,19 @@
       <artifactId>mssql-jdbc</artifactId>
       <version>9.4.1.jre11</version>
     </dependency>
+    <dependency>
+      <groupId>com.oracle.database.jdbc</groupId>
+      <artifactId>ojdbc11-production</artifactId>
+      <version>23.7.0.25.01</version>
+      <type>pom</type>
+        <exclusions>
+            <exclusion>
+                <!-- This dependency causes the JSPC compilation to fail.-->
+                <groupId>com.oracle.database.xml</groupId>
+                <artifactId>xmlparserv2</artifactId>
+            </exclusion>
+        </exclusions>
+    </dependency>
   </dependencies>
 
   <repositories>

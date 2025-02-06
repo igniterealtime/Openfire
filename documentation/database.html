@@ -27,8 +27,8 @@
         </p>
         <p>
             JDBC drivers are required for Openfire to communicate with your database. Suggested drivers for particular
-            databases are noted below where applicable. Openfire bundles JDBC drivers for MySQL, Postgres, Microsoft
-            SQL Server, and HSQLDB.
+            databases are noted below where applicable. Openfire bundles JDBC drivers for MySQL, Oracle, PostgreSQL,
+            Microsoft SQL Server, and HSQLDB.
         </p>
         <p>
             All supported database schemas can be found in the <code>resources/database</code> directory of the
@@ -159,11 +159,8 @@
             <h3>JDBC Drivers</h3>
 
             <p>
-                The Oracle JDBC drivers cannot readily be distributed with Openfire, so must be manually downloaded
-                from <a href="https://www.oracle.com/technetwork/database/application-development/jdbc/downloads/index.html">Oracle's website</a>.
-                Various versions of the drivers are available, but the most recent driver compatible with your version
-                of Oracle is recommended for use with Openfire. Copy the JDBC driver to the <code>lib/</code> directory
-                of your Openfire installation.
+                Openfire bundles Oracle 'production' JDBC drivers, as described on
+                <a href="https://www.oracle.com/database/technologies/maven-central-guide.html">Oracle's website</a>.
             </p>
 
             <p>

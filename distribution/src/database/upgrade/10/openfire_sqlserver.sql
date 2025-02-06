@@ -1,7 +1,7 @@
 
 CREATE TABLE jiveSASLAuthorized (
   username        NVARCHAR(64)     NOT NULL,
-  principal       NVARCHAR(2000)   NOT NULL,
+  principal       NVARCHAR(1500)   NOT NULL,
   CONSTRAINT jiveSASLAuthoirzed_pk PRIMARY KEY (username, principal)
 );
 

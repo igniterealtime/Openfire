@@ -153,12 +153,6 @@ CREATE TABLE ofPrivacyList (
 )
 CREATE INDEX ofPrivacyList_default_idx ON ofPrivacyList (username, isDefault)
 
-CREATE TABLE ofSASLAuthorized (
-  username            NVARCHAR(64)   NOT NULL,
-  principal           NVARCHAR(4000) NOT NULL,
-  CONSTRAINT ofSASLAuthorized_pk PRIMARY KEY (username, principal)
-)
-
 CREATE TABLE ofSecurityAuditLog (
   msgID                 INTEGER         NOT NULL,
   username              NVARCHAR(64)    NOT NULL,
@@ -392,7 +386,7 @@ INSERT INTO ofID (idType, id) VALUES (23, 1)
 INSERT INTO ofID (idType, id) VALUES (26, 2)
 INSERT INTO ofID (idType, id) VALUES (27, 1)
 
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 36)
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 37)
 
 /* Entry for admin user */
 INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)

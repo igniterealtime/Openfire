@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.update;
 import java.time.Instant;
 
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.security.SecurityAuditManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,15 +56,22 @@ public class PluginDownloadManager {
     /**
      * Installs a new plugin into Openfire.
      *
+     * @param username The user that triggered the install.
      * @param url the url of the plugin to install.
      * @param version the version of the new plugin
      * @param hashCode the matching hashcode of the <code>AvailablePlugin</code>.
      * @return the hashCode.
      */
-    public DownloadStatus installPlugin(String url, String version, int hashCode) {
+    public DownloadStatus installPlugin(String username, String url, String version, int hashCode) {
+
         UpdateManager updateManager = XMPPServer.getInstance().getUpdateManager();
 
         boolean worked = updateManager.downloadPlugin(url);
+
+        if (worked) {
+            final String name = url.substring(url.lastIndexOf('/') + 1);
+            SecurityAuditManager.getInstance().logEvent(username, "downloaded plugin " + name, "Downloaded from: " + url);
+        }
 
         final DownloadStatus status = new DownloadStatus();
         status.setHashCode(hashCode);

@@ -198,7 +198,7 @@ tr.lowerhalf > td:last-child {
     function download(url, version, hashCode) {
         document.getElementById(hashCode + "-row").style.display = 'none';
         document.getElementById(hashCode + "-update").style.display = '';
-        downloader.installPlugin(url, version, hashCode, downloadComplete);
+        downloader.installPlugin('${admin:escapeHTMLTags(webManager.user.username).replaceAll("'", "&quot;")}', url, version, hashCode, downloadComplete);
     }
 
     function downloadComplete(status) {

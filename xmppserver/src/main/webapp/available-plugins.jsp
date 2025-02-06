@@ -129,7 +129,7 @@
     }
 
     function startDownload(url, version, id) {
-        downloader.installPlugin(url, version, id, downloadComplete);
+        downloader.installPlugin('${admin:escapeHTMLTags(webManager.user.username).replaceAll("'", "&quot;")}', url, version, id, downloadComplete);
     }
 
     function downloadComplete(status) {

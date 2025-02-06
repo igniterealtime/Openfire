@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2021-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class MUCRoleTest {
     public void testExternalizedEquals() throws Exception
     {
         // Setup test fixture.
-        final JID userAddress = new JID("unittest@example.org");
+        final JID userAddress = new JID("unittest@example.org/Ψ+");
         final String nickname = "nickname for test";
         final MUCRole.Role role = MUCRole.Role.participant;
         final MUCRole.Affiliation affiliation = MUCRole.Affiliation.admin;

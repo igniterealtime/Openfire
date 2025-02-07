@@ -206,7 +206,7 @@ public class CachingPubsubPersistenceProviderNodeOperationsTest
         assertEquals(1, pending.size());
 
         final CachingPubsubPersistenceProvider.NodeOperation nodeOperation = pending.get(0);
-        assertEquals(mockOrigNode.getUniqueIdentifier(), nodeOperation.node.getUniqueIdentifier());
+        assertEquals(mockReplaceNode.getUniqueIdentifier(), nodeOperation.node.getUniqueIdentifier());
         assertNotEquals(new Date(0), nodeOperation.node.getCreationDate());
         assertEquals(CachingPubsubPersistenceProvider.NodeOperation.Action.UPDATE, nodeOperation.action);
         assertNull(nodeOperation.subscription);

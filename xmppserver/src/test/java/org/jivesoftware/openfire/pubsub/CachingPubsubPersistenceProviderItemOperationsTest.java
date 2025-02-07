@@ -304,8 +304,17 @@ public class CachingPubsubPersistenceProviderItemOperationsTest
     }
 
     /**
-     * Asserts that an invocation of {@link CachingPubsubPersistenceProvider#removePublishedItem(PublishedItem)} causes a
-     * corresponding item to be scheduled for processing.
+     * Executes a test that, through {@link CachingPubsubPersistenceProvider#removePublishedItem(PublishedItem)}
+     * and {@link CachingPubsubPersistenceProvider#removeNode(Node)} attempts to remove an item from a node, after
+     * which the node is removed.
+     *
+     * When a node is deleted, all its associated data (including items, affiliations and affiliations) are removed.
+     * Any pending operations on that node can thus be removed.
+     *
+     * The caching provider can optimize the operations, where the 'net effect' of them is to have only the remove-node
+     * operation.
+     *
+     * Therefor, this test asserts that after both invocations, one operation is scheduled.
      */
     @Test
     public void testDeleteNodeVoidsRemovePublishedItem() throws Exception

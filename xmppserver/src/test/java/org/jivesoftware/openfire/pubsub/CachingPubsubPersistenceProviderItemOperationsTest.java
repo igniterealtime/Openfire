@@ -178,7 +178,7 @@ public class CachingPubsubPersistenceProviderItemOperationsTest
      * and the delegate provider should (possibly) thrown an exception (or silently ignore the duplcate).
      */
     @Test
-    public void testRemoveTwoPublishedItemsDistinctIdentifier() throws Exception
+    public void testRemoveTwoPublishedItemsSameIdentifier() throws Exception
     {
         // Setup test fixture.
         final CachingPubsubPersistenceProvider provider = new CachingPubsubPersistenceProvider();

@@ -543,7 +543,7 @@ public class CachingPubsubPersistenceProviderAffiliationOperationsTest
      * then removes a different affiliation.
      *
      * As these operations relate to two different affiliations, the caching provider MUST NOT optimize these two
-     * operations (where the 'net effect' of them is to have no operation).
+     * operations (where the 'net effect' of them would be to have no operation).
      *
      * Therefor, this test asserts that after both invocations, two operations are scheduled.
      */

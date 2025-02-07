@@ -595,7 +595,7 @@ public class CachingPubsubPersistenceProviderAffiliationOperationsTest
      * attempts to update two different affiliations (with a different user but same node).
      *
      * As these operations relate to two different affiliations, the caching provider MUST NOT optimize these two
-     * operations (where the 'net effect' of them is to have no operation).
+     * operations (where the 'net effect' of them would be to have one operation).
      *
      * Therefor, this test asserts that after both invocations, two operations are scheduled.
      */

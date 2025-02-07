@@ -504,11 +504,45 @@
             <artifactId>mssql-jdbc</artifactId>
             <version>9.4.1.jre11</version>
         </dependency>
-        <dependency>
+        <dependency> <!-- OF-2960: Including dependencies of ojdbc11-production rather than ojdbc11-production itself. -->
             <groupId>com.oracle.database.jdbc</groupId>
-            <artifactId>ojdbc11-production</artifactId>
-            <version>23.7.0.25.01</version>
-            <type>pom</type>
+            <artifactId>ojdbc11</artifactId>
+            <version>${ojdbc.version}</version>
+        </dependency>
+        <dependency> <!-- OF-2960: Including dependencies of ojdbc11-production rather than ojdbc11-production itself. -->
+            <groupId>com.oracle.database.jdbc</groupId>
+            <artifactId>ucp</artifactId>
+            <version>${ojdbc.version}</version>
+        </dependency>
+        <dependency> <!-- OF-2960: Including dependencies of ojdbc11-production rather than ojdbc11-production itself. -->
+            <groupId>com.oracle.database.jdbc</groupId>
+            <artifactId>rsi</artifactId>
+            <version>${ojdbc.version}</version>
+        </dependency>
+        <dependency> <!-- OF-2960: Including dependencies of ojdbc11-production rather than ojdbc11-production itself. -->
+            <groupId>com.oracle.database.security</groupId>
+            <artifactId>oraclepki</artifactId>
+            <version>${ojdbc.version}</version>
+        </dependency>
+        <dependency> <!-- OF-2960: Including dependencies of ojdbc11-production rather than ojdbc11-production itself. -->
+            <groupId>com.oracle.database.ha</groupId>
+            <artifactId>simplefan</artifactId>
+            <version>${ojdbc.version}</version>
+        </dependency>
+        <dependency> <!-- OF-2960: Including dependencies of ojdbc11-production rather than ojdbc11-production itself. -->
+            <groupId>com.oracle.database.ha</groupId>
+            <artifactId>ons</artifactId>
+            <version>${ojdbc.version}</version>
+        </dependency>
+        <dependency> <!-- OF-2960: Including dependencies of ojdbc11-production rather than ojdbc11-production itself. -->
+            <groupId>com.oracle.database.nls</groupId>
+            <artifactId>orai18n</artifactId>
+            <version>${ojdbc.version}</version>
+        </dependency>
+        <dependency> <!-- OF-2960: Including dependencies of ojdbc11-production rather than ojdbc11-production itself. -->
+            <groupId>com.oracle.database.xml</groupId>
+            <artifactId>xdb</artifactId>
+            <version>${ojdbc.version}</version>
             <exclusions>
                 <exclusion>
                     <!-- This dependency causes the JSPC compilation to fail.-->

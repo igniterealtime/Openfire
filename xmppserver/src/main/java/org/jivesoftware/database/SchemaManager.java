@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ public class SchemaManager {
                                 return null;
                             }
                         }
-                    });
+                    }, true); // Recursion shouldn't be needed, as the Openfire devs are in control of both the installation and upgrade scripts. Then again, it doesn't hurt to check (OF-2940).
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("upgrade.database.failure"), e);
@@ -138,7 +138,7 @@ public class SchemaManager {
                         return null;
                     }
                 }
-            });
+            }, true); // Recursion is advisable, as third-party plugin developers may not keep the database install and upgrade scripts 'in sync' (OF-2940).
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("upgrade.database.failure"), e);
@@ -158,11 +158,12 @@ public class SchemaManager {
      * @param schemaKey the database schema key (name).
      * @param requiredVersion the version that the schema should be at.
      * @param resourceLoader a resource loader that knows how to load schema files.
-     * @throws Exception if an error occured.
+     * @param allowRecursion controls if the method is allowed to recursively call itself.
+     * @throws Exception if an error occurred.
      * @return True if the schema update was successful.
      */
     private boolean checkSchema(Connection con, String schemaKey, int requiredVersion,
-            ResourceLoader resourceLoader) throws Exception
+            ResourceLoader resourceLoader, boolean allowRecursion) throws Exception
     {
         int currentVersion = -1;
         PreparedStatement pstmt = null;
@@ -240,6 +241,12 @@ public class SchemaManager {
                 Log.error(e.getMessage(), e);
                 return false;
             }
+
+            // OF-2940: If the original installation doesn't include all upgrades, the individual upgrades need to be executed, too.
+            if (allowRecursion) {
+                checkSchema(con, schemaKey, requiredVersion, resourceLoader, false);
+            }
+
             Log.info(LocaleUtils.getLocalizedString("upgrade.database.success"));
             System.out.println(LocaleUtils.getLocalizedString("upgrade.database.success"));
             return true;

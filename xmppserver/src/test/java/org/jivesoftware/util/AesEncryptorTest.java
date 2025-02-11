@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,4 +101,43 @@ public class AesEncryptorTest {
 
     }
 
+    /**
+     * Tests decoding a Base64 value stored as would be stored in security.xml by versions of Openfire prior to 4.9.0.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2883">OF-2883: Base64 decoding issue preventing startup (after upgrade to 4.9.0)</a>
+     */
+    @Test
+    public void testBase64DecodeValuePriorTo490()
+    {
+        // Setup text fixture.
+        final String unencoded = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod";
+        final String base64encoded = "PwwA2Ejt1HDS0xwbEg4qMzk/E9fDA1aA6TdL2zBPMVtwW9C2UnUafAmm/twRZxY89euheVg0rxoQ Vfo5to825asMcx/bJNPY136oZstULDU=";
+
+        // Execute system under test.
+        final AesEncryptor encryptor = new AesEncryptor();
+        final String result = encryptor.decrypt(base64encoded);
+
+        // Verify results.
+        assertEquals(unencoded, result);
+    }
+
+    /**
+     * Tests decoding a Base64 value stored as would be stored in security.xml by versions of Openfire 4.9.0 and later.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2883">OF-2883: Base64 decoding issue preventing startup (after upgrade to 4.9.0)</a>
+     */
+    @Test
+    public void testBase64DecodeValuePastTo490()
+    {
+        // Setup test fixture.
+        final String unencoded = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod";
+        final String base64encoded = "PwwA2Ejt1HDS0xwbEg4qMzk/E9fDA1aA6TdL2zBPMVtwW9C2UnUafAmm/twRZxY89euheVg0rxoQVfo5to825asMcx/bJNPY136oZstULDU=";
+
+        // Execute system under test.
+        final AesEncryptor encryptor = new AesEncryptor();
+        final String result = encryptor.decrypt(base64encoded);
+
+        // Verify results.
+        assertEquals(unencoded, result);
+    }
 }

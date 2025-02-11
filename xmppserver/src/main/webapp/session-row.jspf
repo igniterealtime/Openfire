@@ -22,7 +22,11 @@
    -     * 'linkURL', a String representing the JSP page to link to
  --%>
 
-<%  if (current) { %>
+<%  Session.Status _status = sess.getStatus();
+    boolean isDetached = sess instanceof LocalSession && ((LocalSession) sess).isDetached();
+%>
+
+ <%  if (current) { %>
 
     <tr class="jive-current">
 
@@ -33,67 +37,74 @@
 <%  } %>
 
     <td style="width: 1%; white-space: nowrap"><%= count %></td>
-    <td style="width: 10%; white-space: nowrap">
-        <%  String name = sess.getAddress().getNode(); %>
+    <c:if test="${showName}">
+        <td style="width: 10%; white-space: nowrap">
+            <%  String name = sess.getAddress().getNode(); %>
             <a href="session-details.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), "UTF-8") %>" title="<fmt:message key='session.row.click' />"
             ><%= ((!sessionManager.isAnonymousRoute(sess.getUsername())) ? JID.unescapeNode(name): "<i>"+LocaleUtils.getLocalizedString("session.details.anonymous")+"</i>") %></a>
-    </td>
-    <td style="width: 15%; white-space: nowrap">
-        <% if (sess.getSoftwareVersion() != null) {
-            final String softwareName = sess.getSoftwareVersion().get("name");
-            final String softwareVersion = sess.getSoftwareVersion().get("version");
+        </td>
+    </c:if>
+    <c:if test="${showResource}">
+        <td style="width: 15%; white-space: nowrap">
+            <%= StringUtils.escapeHTMLTags(sess.getAddress().getResource()) %>
+        </td>
+    </c:if>
+    <c:if test="${showVersion}">
+        <td style="width: 15%; white-space: nowrap">
+            <% if (sess.getSoftwareVersion() != null) {
+                final String softwareName = sess.getSoftwareVersion().get("name");
+                final String softwareVersion = sess.getSoftwareVersion().get("version");
 
-            String softwareString = "";
-            if(softwareName != null && !softwareName.isBlank()){
-                softwareString += softwareName;
-            }
-            if(softwareVersion != null && !softwareVersion.isBlank()) {
-                if (!softwareString.isBlank()) {
-                    softwareString += " - ";
+                String softwareString = "";
+                if(softwareName != null && !softwareName.isBlank()){
+                    softwareString += softwareName;
                 }
-                softwareString += softwareVersion;
-            };
+                if(softwareVersion != null && !softwareVersion.isBlank()) {
+                    if (!softwareString.isBlank()) {
+                        softwareString += " - ";
+                    }
+                    softwareString += softwareVersion;
+                };
 
-            if (!softwareString.isBlank()) { %>
-                <%= StringUtils.escapeHTMLTags(softwareString) %>
-            <% }
-        } %>
-    </td>
-    <% if (ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting()) { %>
-    <td nowrap>
+                if (!softwareString.isBlank()) { %>
+                    <%= StringUtils.escapeHTMLTags(softwareString) %>
+                <% }
+            } %>
+        </td>
+    </c:if>
+    <c:if test="${clusteringEnabled and showClusterNode}">
+        <td nowrap>
             <% if (sess instanceof LocalClientSession) { %>
              <fmt:message key="session.details.local" />
             <% } else { %>
              <fmt:message key="session.details.remote" />
             <% } %>
-    </td>
-    <% } %>
-    <td>
-        <%  Session.Status _status = sess.getStatus();
-            boolean isDetached = sess instanceof LocalSession && ((LocalSession) sess).isDetached();
-            if (isDetached) { %>
+        </td>
+    </c:if>
+    <c:if test="${showStatus}">
+        <td>
+            <%  if (isDetached) { %>
+                <fmt:message key="session.details.sm-detached" />
+            <%
+                } else if (_status == Session.Status.CLOSED) {
+            %>
+                <fmt:message key="session.details.close" />
 
-            <fmt:message key="session.details.sm-detached" />
-        <%
-            } else if (_status == Session.Status.CLOSED) {
-        %>
-            <fmt:message key="session.details.close" />
+            <%  } else if (_status == Session.Status.CONNECTED) { %>
 
-        <%  } else if (_status == Session.Status.CONNECTED) { %>
+                <fmt:message key="session.details.connect" />
 
-            <fmt:message key="session.details.connect" />
+            <% } else if (_status == Session.Status.AUTHENTICATED) { %>
 
-        <% } else if (_status == Session.Status.AUTHENTICATED) { %>
+                <fmt:message key="session.details.authenticated" />
 
-            <fmt:message key="session.details.authenticated" />
+            <%  } else { %>
 
-        <%  } else { %>
+                <fmt:message key="session.details.unknown" />
 
-            <fmt:message key="session.details.unknown" />
-
-        <%  } %>
-    </td>
-    <td style="width: 1%">
+            <%  } %>
+        </td>
+        <td style="width: 1%">
         <%  if (isDetached) { %>
                     <img src="images/working-16x16.gif" width="1" height="1" alt="">
         <%  } else if (sess.isEncrypted()) {
@@ -105,8 +116,10 @@
             } else { %>
                     <img src="images/blank.gif" width="1" height="1" alt="">
      <%     } %>
-    </td>
-    <%  Presence.Show _show = sess.getPresence().getShow();
+       </td>
+    </c:if>
+    <c:if test="${showPresence}">
+     <%  Presence.Show _show = sess.getPresence().getShow();
         String _stat = sess.getPresence().getStatus();
         if (!sess.getPresence().isAvailable()) {
      %>
@@ -191,15 +204,17 @@
         </td>
 
     <%  } %>
-
-    <td style="width: 1%; white-space: nowrap">
-        <%= NumberFormat.getNumberInstance().format(sess.getNumClientPackets()) %>
-    </td>
-    <td style="width: 1%; white-space: nowrap">
-        <%= NumberFormat.getNumberInstance().format(sess.getNumServerPackets()) %>
-    </td>
-
-    <td style="width: 1%; white-space: nowrap">
+    </c:if>
+    <c:if test="${showRxTx}">
+        <td style="width: 1%; white-space: nowrap">
+            <%= NumberFormat.getNumberInstance().format(sess.getNumClientPackets()) %>
+        </td>
+        <td style="width: 1%; white-space: nowrap">
+            <%= NumberFormat.getNumberInstance().format(sess.getNumServerPackets()) %>
+        </td>
+    </c:if>
+    <c:if test="${showIp}">
+        <td style="width: 1%; white-space: nowrap">
         <%
             if (isDetached) { %>
                 <fmt:message key="session.details.sm-detached"/>
@@ -211,7 +226,8 @@
             <% }
             } %>
 
-    </td>
+        </td>
+    </c:if>
 
     <td style="width: 1%; white-space: nowrap; text-align: center;">
         <a href="session-summary.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), "UTF-8") %>&close=true&csrf=${csrf}"

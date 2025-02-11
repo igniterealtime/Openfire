@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -115,6 +115,11 @@
         final String searchCriteria = searchName.trim();
         filter = filter.and(clientSession -> StringUtils.containsIgnoringCase(clientSession.getAddress().getNode(), searchCriteria));
     }
+    final String searchResource = ParamUtils.getStringParameter(request, "searchResource", "");
+    if(!searchResource.trim().isEmpty()) {
+        final String searchCriteria = searchResource.trim();
+        filter = filter.and(clientSession -> StringUtils.containsIgnoringCase(clientSession.getAddress().getResource(), searchCriteria));
+    }
     final String searchVersion = ParamUtils.getStringParameter(request, "searchVersion", "");
         if(!searchVersion.trim().isEmpty()) {
             final String searchCriteria = searchVersion.trim();
@@ -195,16 +200,58 @@
         });
     }
 
-    final ListPager<ClientSession> listPager = new ListPager<>(request, response, sessions, filter, sessionResultFilter.getSortField(), sessionResultFilter.getSortOrder() == SessionResultFilter.DESCENDING,
-        "refresh", "searchName", "searchVersion", "searchNode", "searchStatus", "searchPresence", "searchHostAddress");
+    final boolean showName = webManager.getPageProperty("session-summary", "console.showNameColumn", 1) == 1;
+    final boolean showResource = webManager.getPageProperty("session-summary", "console.showResourceColumn", 0) == 1;
+    final boolean showVersion = webManager.getPageProperty("session-summary", "console.showVersionColumn", 1) == 1;
+    final boolean showClusterNode = webManager.getPageProperty("session-summary", "console.showClusterNodeColumn", 1) == 1;
+    final boolean showStatus = webManager.getPageProperty("session-summary", "console.showStatusColumn", 1) == 1;
+    final boolean showPresence = webManager.getPageProperty("session-summary", "console.showPresenceColumn", 1) == 1;
+    final boolean showRxTx = webManager.getPageProperty("session-summary", "console.showRxTxColumn", 1) == 1;
+    final boolean showIp = webManager.getPageProperty("session-summary", "console.ShowIpColumn", 1) == 1;
+
+    int totalColumns = 2;
+    if (showName) totalColumns++;
+    if (showResource) totalColumns++;
+    if (showVersion) totalColumns++;
+    if (showClusterNode && (ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting())) totalColumns++;
+    if (showStatus) { totalColumns++; totalColumns++; }
+    if (showPresence) { totalColumns++; totalColumns++; }
+    if (showRxTx) { totalColumns++; totalColumns++; }
+    if (showIp) totalColumns++;
+
+    final ArrayList<String> additionalFormFields = new ArrayList<>();
+    additionalFormFields.add("refresh");
+    if (showName) additionalFormFields.add("searchName");
+    if (showResource) additionalFormFields.add("searchResource");
+    if (showVersion) additionalFormFields.add("searchVersion");
+    if (showClusterNode) additionalFormFields.add("searchNode");
+    if (showStatus) additionalFormFields.add("searchStatus");
+    if (showPresence) additionalFormFields.add("searchPresence");
+    if (showIp) additionalFormFields.add("searchHostAddress");
+
+
+    final ListPager<ClientSession> listPager = new ListPager<>(request, response, sessions, filter, sessionResultFilter.getSortField(), sessionResultFilter.getSortOrder() == SessionResultFilter.DESCENDING, additionalFormFields.toArray(new String[0]));
     pageContext.setAttribute("listPager", listPager);
     pageContext.setAttribute("searchName", searchName);
+    pageContext.setAttribute("searchResource", searchResource);
     pageContext.setAttribute("searchVersion", searchVersion);
     pageContext.setAttribute("searchNode", searchNode);
     pageContext.setAttribute("searchStatus", searchStatus);
     pageContext.setAttribute("searchPresence", searchPresence);
     pageContext.setAttribute("searchHostAddress", searchHostAddress);
     pageContext.setAttribute("clusteringEnabled", ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting() );
+
+    pageContext.setAttribute("showName", showName);
+    pageContext.setAttribute("showVersion", showVersion);
+    pageContext.setAttribute("showResource", showResource);
+    pageContext.setAttribute("showClusterNode", showClusterNode);
+    pageContext.setAttribute("showStatus", showStatus);
+    pageContext.setAttribute("showPresence", showPresence);
+    pageContext.setAttribute("showRxTx", showRxTx);
+    pageContext.setAttribute("showIp", showIp);
+
+    pageContext.setAttribute("totalColumns", totalColumns);
+
 %>
 <html>
     <head>
@@ -240,7 +287,7 @@
             -- <fmt:message key="session.summary.sessions_per_page" />:
             ${listPager.pageSizeSelection}
         </td>
-        <td style="width: 1%; white-space: nowrap">
+        <td style="width: 1%; white-space: nowrap; text-align: right">
             <label for="refresh"><fmt:message key="global.refresh" />:</label>
             <select size="1" id="refresh" name="refresh" onchange="submitForm();">
             <%  for (int j=0; j<REFRESHES.length; j++) {
@@ -250,7 +297,8 @@
 
             <%  } %>
             </select>
-            (<fmt:message key="global.seconds" />)
+            (<fmt:message key="global.seconds" />)<br>
+            <a href="session-summary-config.jsp"><fmt:message key="session.summary.column-config" /></a>
 
         </td>
     </tr>
@@ -264,110 +312,151 @@
 <thead>
     <tr>
         <th>&nbsp;</th>
-        <th nowrap>
-            <a href="session-summary.jsp" onclick='return toggleColumnOrder(${SessionResultFilter.SORT_USER})'>
-                <fmt:message key="session.details.name" />
-                <c:if test="${listPager.sortColumnNumber == SessionResultFilter.SORT_USER}">
-                    <img src="images/sort_${listPager.sortDescending ? "descending" : "ascending"}.gif" alt="The sort order in this column is ${listPager.sortDescending ? "descending" : "ascending"} (click to toggle).">
-                </c:if>
-            </a>
-        </th>
-        <th nowrap><fmt:message key="session.details.version" /></th>
-        <c:if test="${clusteringEnabled}">
-        <th nowrap><fmt:message key="session.details.node" /></th>
+        <c:if test="${showName}">
+            <th nowrap>
+                <a href="session-summary.jsp" onclick='return toggleColumnOrder(${SessionResultFilter.SORT_USER})'>
+                    <fmt:message key="session.details.name" />
+                    <c:if test="${listPager.sortColumnNumber == SessionResultFilter.SORT_USER}">
+                        <img src="images/sort_${listPager.sortDescending ? "descending" : "ascending"}.gif" alt="The sort order in this column is ${listPager.sortDescending ? "descending" : "ascending"} (click to toggle).">
+                    </c:if>
+                </a>
+            </th>
         </c:if>
-        <th nowrap colspan="2"><fmt:message key="session.details.status" /></th>
-        <th nowrap colspan="2"><fmt:message key="session.details.presence" /></th>
-        <th nowrap title="<fmt:message key="session.details.received" />">
-            <a href="session-summary.jsp" onclick='return toggleColumnOrder(${SessionResultFilter.SORT_NUM_CLIENT_PACKETS})'>
-                <fmt:message key="session.details.received-abbreviation" />
-                <c:if test="${listPager.sortColumnNumber == SessionResultFilter.SORT_NUM_CLIENT_PACKETS}">
-                    <img src="images/sort_${listPager.sortDescending ? "descending" : "ascending"}.gif" alt="The sort order in this column is ${listPager.sortDescending ? "descending" : "ascending"} (click to toggle).">
-                </c:if>
-            </a>
-        </th>
-        <th nowrap title="<fmt:message key="session.details.transmitted" />">
-            <a href="session-summary.jsp" onclick='return toggleColumnOrder(${SessionResultFilter.SORT_NUM_SERVER_PACKETS})'>
-                <fmt:message key="session.details.transmitted-abbreviation" />
-                <c:if test="${listPager.sortColumnNumber == SessionResultFilter.SORT_NUM_SERVER_PACKETS }">
-                    <img src="images/sort_${listPager.sortDescending ? "descending" : "ascending"}.gif" alt="The sort order in this column is ${listPager.sortDescending ? "descending" : "ascending"} (click to toggle).">
-                </c:if>
-            </a>
-        </th>
-        <th nowrap><fmt:message key="session.details.clientip" /></th>
+        <c:if test="${showResource}">
+            <th nowrap><fmt:message key="session.details.resource" /></th>
+        </c:if>
+        <c:if test="${showVersion}">
+            <th nowrap><fmt:message key="session.details.version" /></th>
+        </c:if>
+        <c:if test="${clusteringEnabled and showClusterNode}">
+            <th nowrap><fmt:message key="session.details.node" /></th>
+        </c:if>
+        <c:if test="${showStatus}">
+            <th nowrap colspan="2"><fmt:message key="session.details.status" /></th>
+        </c:if>
+        <c:if test="${showPresence}">
+            <th nowrap colspan="2"><fmt:message key="session.details.presence" /></th>
+        </c:if>
+        <c:if test="${showRxTx}">
+            <th nowrap title="<fmt:message key="session.details.received" />">
+                <a href="session-summary.jsp" onclick='return toggleColumnOrder(${SessionResultFilter.SORT_NUM_CLIENT_PACKETS})'>
+                    <fmt:message key="session.details.received-abbreviation" />
+                    <c:if test="${listPager.sortColumnNumber == SessionResultFilter.SORT_NUM_CLIENT_PACKETS}">
+                        <img src="images/sort_${listPager.sortDescending ? "descending" : "ascending"}.gif" alt="The sort order in this column is ${listPager.sortDescending ? "descending" : "ascending"} (click to toggle).">
+                    </c:if>
+                </a>
+            </th>
+            <th nowrap title="<fmt:message key="session.details.transmitted" />">
+                <a href="session-summary.jsp" onclick='return toggleColumnOrder(${SessionResultFilter.SORT_NUM_SERVER_PACKETS})'>
+                    <fmt:message key="session.details.transmitted-abbreviation" />
+                    <c:if test="${listPager.sortColumnNumber == SessionResultFilter.SORT_NUM_SERVER_PACKETS }">
+                        <img src="images/sort_${listPager.sortDescending ? "descending" : "ascending"}.gif" alt="The sort order in this column is ${listPager.sortDescending ? "descending" : "ascending"} (click to toggle).">
+                    </c:if>
+                </a>
+            </th>
+        </c:if>
+        <c:if test="${showIp}">
+            <th nowrap><fmt:message key="session.details.clientip" /></th>
+        </c:if>
         <th nowrap><fmt:message key="session.details.close_connect" /></th>
     </tr>
     <tr>
         <td nowrap></td>
-        <td nowrap>
-            <input type="search"
-                   id="searchName"
-                   size="20"
-                   value="<c:out value="${searchName}"/>"/>
-            <img src="images/search-16x16.png"
-                 width="16" height="16"
-                 alt="search" title="search"
-                 style="vertical-align: middle;"
-                 onclick="submitForm();"
-            >
-        </td>
-        <td nowrap>
-            <input type="search"
-                   id="searchVersion"
-                   size="20"
-                   value="<c:out value="${searchVersion}"/>"/>
-            <img src="images/search-16x16.png"
-                 width="16" height="16"
-                 alt="search" title="search"
-                 style="vertical-align: middle;"
-                 onclick="submitForm();"
-            >
-        </td>
-        <c:if test="${clusteringEnabled}">
-        <td nowrap>
-            <select id="searchNode" onchange="submitForm();">
-                <option <c:if test='${searchNode eq ""}'>selected</c:if> value=""></option>
-                <option <c:if test='${searchNode eq "local"}'>selected </c:if>value="local"><fmt:message key="session.details.local"/></option>
-                <option <c:if test='${searchNode eq "remote"}'>selected </c:if>value="remote"><fmt:message key="session.details.remote"/></option>
-            </select>
-        </td>
+        <c:if test="${showName}">
+            <td nowrap>
+                <input type="search"
+                       id="searchName"
+                       size="20"
+                       value="<c:out value="${searchName}"/>"/>
+                <img src="images/search-16x16.png"
+                     width="16" height="16"
+                     alt="search" title="search"
+                     style="vertical-align: middle;"
+                     onclick="submitForm();"
+                >
+            </td>
         </c:if>
-        <td nowrap colspan="2">
-            <select id="searchStatus" onchange="submitForm();">
-                <option <c:if test='${searchStatus eq ""}'>selected</c:if> value=""></option>
-                <option <c:if test='${searchStatus eq "closed"}'>selected</c:if> value="closed"><fmt:message key="session.details.close"/></option>
-                <option <c:if test='${searchStatus eq "connected"}'>selected</c:if> value="connected"><fmt:message key="session.details.connect"/></option>
-                <option <c:if test='${searchStatus eq "authenticated"}'>selected</c:if> value="authenticated"><fmt:message key="session.details.authenticated"/></option>
-                <option <c:if test='${searchStatus eq "detached"}'>selected</c:if> value="detached"><fmt:message key="session.details.local"/> & <fmt:message key="session.details.sm-detached"/></option>
-                <option <c:if test='${searchStatus eq "unknown"}'>selected</c:if> value="unknown"><fmt:message key="session.details.unknown"/></option>
-            </select>
-        </td>
-        <td nowrap colspan="2">
-            <select id="searchPresence" onchange="submitForm();">
-                <option <c:if test='${searchPresence eq ""}'>selected</c:if> value=""></option>
-                <option <c:if test='${searchPresence eq "online"}'>selected</c:if> value="online"><fmt:message key="session.details.online"/></option>
-                <option <c:if test='${searchPresence eq "away"}'>selected</c:if> value="away"><fmt:message key="session.details.away"/></option>
-                <option <c:if test='${searchPresence eq "xa"}'>selected</c:if> value="xa"><fmt:message key="session.details.extended"/></option>
-                <option <c:if test='${searchPresence eq "offline"}'>selected</c:if> value="offline"><fmt:message key="user.properties.offline"/></option>
-                <option <c:if test='${searchPresence eq "chat"}'>selected</c:if> value="chat"><fmt:message key="session.details.chat_available"/></option>
-                <option <c:if test='${searchPresence eq "dnd"}'>selected</c:if> value="dnd"><fmt:message key="session.details.not_disturb"/></option>
-                <option <c:if test='${searchPresence eq "unknown"}'>selected</c:if> value="unknown"><fmt:message key="session.details.unknown"/></option>
-            </select>
-        </td>
-        <td nowrap colspan="2">
-        </td>
-        <td nowrap>
-            <input type="search"
-                   id="searchHostAddress"
-                   size="20"
-                   value="<c:out value="${searchHostAddress}"/>"/>
-            <img src="images/search-16x16.png"
-                 width="16" height="16"
-                 alt="search" title="search"
-                 style="vertical-align: middle;"
-                 onclick="submitForm();"
-            >
-        </td>
+        <c:if test="${showResource}">
+            <td nowrap>
+                <input type="search"
+                       id="searchResource"
+                       size="20"
+                       value="<c:out value="${searchResource}"/>"/>
+                <img src="images/search-16x16.png"
+                     width="16" height="16"
+                     alt="search" title="search"
+                     style="vertical-align: middle;"
+                     onclick="submitForm();"
+                >
+            </td>
+        </c:if>
+        <c:if test="${showVersion}">
+            <td nowrap>
+                <input type="search"
+                       id="searchVersion"
+                       size="20"
+                       value="<c:out value="${searchVersion}"/>"/>
+                <img src="images/search-16x16.png"
+                     width="16" height="16"
+                     alt="search" title="search"
+                     style="vertical-align: middle;"
+                     onclick="submitForm();"
+                >
+            </td>
+        </c:if>
+        <c:if test="${clusteringEnabled and showClusterNode}">
+            <td nowrap>
+                <select id="searchNode" onchange="submitForm();">
+                    <option <c:if test='${searchNode eq ""}'>selected</c:if> value=""></option>
+                    <option <c:if test='${searchNode eq "local"}'>selected </c:if>value="local"><fmt:message key="session.details.local"/></option>
+                    <option <c:if test='${searchNode eq "remote"}'>selected </c:if>value="remote"><fmt:message key="session.details.remote"/></option>
+                </select>
+            </td>
+        </c:if>
+        <c:if test="${showStatus}">
+            <td nowrap colspan="2">
+                <select id="searchStatus" onchange="submitForm();">
+                    <option <c:if test='${searchStatus eq ""}'>selected</c:if> value=""></option>
+                    <option <c:if test='${searchStatus eq "closed"}'>selected</c:if> value="closed"><fmt:message key="session.details.close"/></option>
+                    <option <c:if test='${searchStatus eq "connected"}'>selected</c:if> value="connected"><fmt:message key="session.details.connect"/></option>
+                    <option <c:if test='${searchStatus eq "authenticated"}'>selected</c:if> value="authenticated"><fmt:message key="session.details.authenticated"/></option>
+                    <option <c:if test='${searchStatus eq "detached"}'>selected</c:if> value="detached"><fmt:message key="session.details.local"/> & <fmt:message key="session.details.sm-detached"/></option>
+                    <option <c:if test='${searchStatus eq "unknown"}'>selected</c:if> value="unknown"><fmt:message key="session.details.unknown"/></option>
+                </select>
+            </td>
+        </c:if>
+        <c:if test="${showPresence}">
+            <td nowrap colspan="2">
+                <select id="searchPresence" onchange="submitForm();">
+                    <option <c:if test='${searchPresence eq ""}'>selected</c:if> value=""></option>
+                    <option <c:if test='${searchPresence eq "online"}'>selected</c:if> value="online"><fmt:message key="session.details.online"/></option>
+                    <option <c:if test='${searchPresence eq "away"}'>selected</c:if> value="away"><fmt:message key="session.details.away"/></option>
+                    <option <c:if test='${searchPresence eq "xa"}'>selected</c:if> value="xa"><fmt:message key="session.details.extended"/></option>
+                    <option <c:if test='${searchPresence eq "offline"}'>selected</c:if> value="offline"><fmt:message key="user.properties.offline"/></option>
+                    <option <c:if test='${searchPresence eq "chat"}'>selected</c:if> value="chat"><fmt:message key="session.details.chat_available"/></option>
+                    <option <c:if test='${searchPresence eq "dnd"}'>selected</c:if> value="dnd"><fmt:message key="session.details.not_disturb"/></option>
+                    <option <c:if test='${searchPresence eq "unknown"}'>selected</c:if> value="unknown"><fmt:message key="session.details.unknown"/></option>
+                </select>
+            </td>
+        </c:if>
+        <c:if test="${showRxTx}">
+            <td nowrap colspan="2">
+            </td>
+        </c:if>
+        <c:if test="${showIp}">
+            <td nowrap>
+                <input type="search"
+                       id="searchHostAddress"
+                       size="20"
+                       value="<c:out value="${searchHostAddress}"/>"/>
+                <img src="images/search-16x16.png"
+                     width="16" height="16"
+                     alt="search" title="search"
+                     style="vertical-align: middle;"
+                     onclick="submitForm();"
+                >
+            </td>
+        </c:if>
         <td nowrap></td>
     </tr>
 </thead>
@@ -376,7 +465,7 @@
         if (sessions.isEmpty()) {
     %>
         <tr>
-            <td colspan="12">
+            <td colspan="${totalColumns}">
 
                 <fmt:message key="session.summary.not_session" />
 

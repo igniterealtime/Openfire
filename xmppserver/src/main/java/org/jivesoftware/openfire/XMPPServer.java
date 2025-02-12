@@ -70,6 +70,7 @@ import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.vcard.VCardManager;
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.util.cert.CertificateExpiryChecker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -801,6 +802,7 @@ public class XMPPServer {
         loadModule(EntityCapabilitiesManager.class.getName());
         loadModule(SoftwareVersionManager.class.getName());
         loadModule(SoftwareServerVersionManager.class.getName());
+        loadModule(CertificateExpiryChecker.class.getName());
 
         // Load this module always last since we don't want to start listening for clients
         // before the rest of the modules have been started
@@ -1728,6 +1730,18 @@ public class XMPPServer {
     public CertificateStoreManager getCertificateStoreManager() {
         return (CertificateStoreManager) modules.get( CertificateStoreManager.class );
     }
+
+    /**
+     * Returns the <code>CertificateExpiryChecker</code> registered with this server. The
+     * <code>CertificateExpiryChecker</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>CertificateExpiryChecker</code> registered with this server.
+     */
+    public CertificateExpiryChecker getCertificateExpiryChecker() {
+        return (CertificateExpiryChecker) modules.get(CertificateExpiryChecker.class);
+    }
+
     /**
      * Returns the locator to use to find sessions hosted in other cluster nodes. When not running
      * in a cluster a {@code null} value is returned.

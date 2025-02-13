@@ -1,0 +1,39 @@
+[Openfire C2S]
+title=Openfire XMPP Server - Client to Server (C2S) connections
+description=Allow for XMPP clients to connect to the server and also use File Transfers
+ports=5222|5223|8010|7777
+
+[Openfire Web]
+title=Openfire XMPP Server - Web Binding for WebSocket and BOSH
+description=Allow for XMPP web clients to connect to the server
+ports=7070|7443
+
+[Openfire S2S]
+title=Openfire XMPP Server - Server to Server (S2S) connections
+description=This allows users from your server to talk with users from other servers in internet (federation). If your server used for internal company communication you should disable this.
+ports=5269|5270
+
+[Openfire External Components]
+title=Openfire XMPP Server - External Components
+description=This allows to connect for XEP-0114 Jabber Component Protocol
+ports=5275|5276
+
+[Openfire Proxy]
+title=Openfire XMPP Server - TURN Proxy and STUN server
+description=This allows users to use calls and file transfer between each others when they are behind NAT.
+ports=3478|5349
+
+[Openfire Connection Manager]
+title=Openfire XMPP Server - Connection Manager
+description=Openfire Connection Manager improves the scalability of server by handling a portion of the client connections
+ports=5262|5263
+
+[Openfire Admin Console]
+title=Openfire XMPP Server - Admin Console
+description=You can manage the XMPP server from a web admin console
+ports=9090|9091
+
+[Openfire Full]
+title=Openfire XMPP Server - All components (C2S + S2S + External Components + Proxy + Connection Manager + Admin Console)
+description=Open all ports that are exposed by the Openfire
+ports=5222|5223|8010|7777|7070|7443|5269|5270|5275|5276|3478|5349|5262|5263|9090|9091

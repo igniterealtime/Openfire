@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,8 +90,8 @@ public enum BoshBindingError {
      */
     undefinedCondition(Type.terminate, "undefined-condition");
 
-    private Type errorType;
-    private String condition;
+    private final Type errorType;
+    private final String condition;
     private int legacyErrorCode = HttpServletResponse.SC_BAD_REQUEST;
 
     BoshBindingError(Type errorType, String condition, int legacyErrorCode) {
@@ -143,7 +143,7 @@ public enum BoshBindingError {
          * due to a communication failure.
          */
         recoverable("error");
-        private String type;
+        private final String type;
 
         Type(String type) {
             this.type = type;

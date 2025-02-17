@@ -141,14 +141,14 @@ public class HttpBindServlet extends HttpServlet {
         try {
             body = HttpBindBody.from( content );
         } catch (Exception ex) {
-            Log.warn("Error parsing request data from [" + remoteAddress + "]", ex);
+            Log.warn("Error parsing request data from [{}]", remoteAddress, ex);
             sendLegacyError(context, BoshBindingError.badRequest);
             return;
         }
 
         final Long rid = body.getRid();
         if (rid == null || rid <= 0) {
-            Log.info("Root element 'body' does not contain a valid RID attribute value in parsed request data from [" + remoteAddress + "]");
+            Log.info("Root element 'body' does not contain a valid RID attribute value in parsed request data from [{}]", remoteAddress);
             sendLegacyError(context, BoshBindingError.badRequest, "Body-element is missing a RID (Request ID) value, or the provided value is a non-positive integer.");
             return;
         }
@@ -159,7 +159,7 @@ public class HttpBindServlet extends HttpServlet {
             // something is wrong.
             if (!body.isEmpty()) {
                 // invalid session request; missing sid
-                Log.info("Root element 'body' does not contain a SID attribute value in parsed request data from [" + remoteAddress + "]");
+                Log.info("Root element 'body' does not contain a SID attribute value in parsed request data from [{}]", remoteAddress);
                 sendLegacyError(context, BoshBindingError.badRequest);
                 return;
             }
@@ -184,7 +184,7 @@ public class HttpBindServlet extends HttpServlet {
             connection.setSession(session);
 
             if (HttpBindManager.LOG_HTTPBIND_ENABLED.getValue()) {
-                Log.info("HTTP RECV(" + session.getStreamID().getID() + "): " + body.asXML());
+                Log.info("HTTP RECV({}): {}", session.getStreamID().getID(), body.asXML());
             }
 
             SessionEventDispatcher.dispatchEvent( connection.getSession(), SessionEventDispatcher.EventType.post_session_created, connection, context );
@@ -200,15 +200,12 @@ public class HttpBindServlet extends HttpServlet {
     {
         final String sid = body.getSid();
         if (HttpBindManager.LOG_HTTPBIND_ENABLED.getValue()) {
-            Log.info("HTTP RECV(" + sid + "): " + body.asXML());
+            Log.info("HTTP RECV({}): {}", sid, body.asXML());
         }
 
         HttpSession session = sessionManager.getSession(sid);
         if (session == null) {
-            if (Log.isDebugEnabled()) {
-                Log.debug("Client provided invalid session: " + sid + ". [" +
-                    context.getRequest().getRemoteAddr() + "]");
-            }
+            Log.debug("Client provided invalid session: {}. [{}]", sid, context.getRequest().getRemoteAddr());
             sendLegacyError(context, BoshBindingError.itemNotFound, "Invalid SID value.");
             return;
         }
@@ -247,7 +244,7 @@ public class HttpBindServlet extends HttpServlet {
         }
         
         if (HttpBindManager.LOG_HTTPBIND_ENABLED.getValue()) {
-            Log.info("HTTP SENT(" + session.getStreamID().getID() + "): " + content);
+            Log.info("HTTP SENT({}): {}", session.getStreamID().getID(), content);
         }
 
         final byte[] byteContent = content.getBytes(StandardCharsets.UTF_8);
@@ -339,9 +336,7 @@ public class HttpBindServlet extends HttpServlet {
 
         @Override
         public void onDataAvailable() throws IOException {
-            if( Log.isTraceEnabled() ) {
-                Log.trace("Data is available to be read from [" + remoteAddress + "]");
-            }
+            Log.trace("Data is available to be read from [{}]", remoteAddress);
 
             final ServletInputStream inputStream = context.getRequest().getInputStream();
 
@@ -354,21 +349,17 @@ public class HttpBindServlet extends HttpServlet {
 
         @Override
         public void onAllDataRead() throws IOException {
-            if( Log.isTraceEnabled() ) {
-                Log.trace("All data has been read from [" + remoteAddress + "]");
-            }
+            Log.trace("All data has been read from [{}]", remoteAddress);
             processContent(context, outStream.toString(StandardCharsets.UTF_8.name()));
         }
 
         @Override
         public void onError(Throwable throwable) {
-            if( Log.isWarnEnabled() ) {
-                Log.warn("Error reading request data from [" + remoteAddress + "]", throwable);
-            }
+            Log.warn("Error reading request data from [{}]", remoteAddress, throwable);
             try {
                 sendLegacyError(context, BoshBindingError.badRequest);
             } catch (IOException ex) {
-                Log.debug("Error while sending an error to ["+remoteAddress +"] in response to an earlier data-read failure.", ex);
+                Log.debug("Error while sending an error to [{}] in response to an earlier data-read failure.", remoteAddress, ex);
             }
         }
     }
@@ -390,9 +381,7 @@ public class HttpBindServlet extends HttpServlet {
             // This method may be invoked multiple times and by different threads, e.g. when writing large byte arrays.
             // Make sure a write/complete operation is only done, if no other write is pending, i.e. if isReady() == true
             // Otherwise WritePendingException is thrown.
-            if( Log.isTraceEnabled() ) {
-                Log.trace("Data can be written to [" + remoteAddress + "]");
-            }
+            Log.trace("Data can be written to [{}]", remoteAddress);
             synchronized ( context )
             {
                 final ServletOutputStream servletOutputStream = context.getResponse().getOutputStream();
@@ -419,9 +408,7 @@ public class HttpBindServlet extends HttpServlet {
 
         @Override
         public void onError(Throwable throwable) {
-            if( Log.isWarnEnabled() ) {
-                Log.warn("Error writing response data to [" + remoteAddress + "]", throwable);
-            }
+            Log.warn("Error writing response data to [{}]", remoteAddress, throwable);
             synchronized ( context )
             {
                 context.complete();

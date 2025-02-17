@@ -554,7 +554,8 @@ public class HttpSession extends LocalClientSession {
 
         // Schedule in-order.
         synchronized (router) {
-            HttpBindManager.getInstance().getSessionManager().execute(() -> {
+            HttpBindManager.getInstance().getSessionManager().execute(this, () -> {
+                Log.trace("Stream {}: sending {} packet(s)", streamID, packetsToSend.size());
                 for (Element packet : packetsToSend) {
                     try {
                         router.route(packet);
@@ -973,8 +974,9 @@ public class HttpSession extends LocalClientSession {
         }
 
         // OF-2444: deliver asynchronously, to avoid deadlocking issues.
-        HttpBindManager.getInstance().getSessionManager().execute(() -> {
+        HttpBindManager.getInstance().getSessionManager().execute(this, () -> {
             try {
+                Log.trace("Stream {}: Immediate delivery of {} deliverable(s)", streamID, deliverables.size());
                 deliver(connection.get(), deliverables, true);
             } catch (HttpConnectionClosedException e) {
                 /* Connection was closed, try the next one. Indicates a (concurrency?) bug. */

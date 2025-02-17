@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public class ResourceServlet extends HttpServlet {
     private static final Logger Log = LoggerFactory.getLogger(ResourceServlet.class);
 
     //    private static String suffix = "";    // Set to "_src" to use source version
-    private static final Duration expiresOffset = Duration.ofDays(10);	// This long until client cache expires
+    private static final Duration expiresOffset = Duration.ofDays(10);	// How long until client cache expires
     private boolean debug = false;
     private boolean disableCompression = false;
     private static final Cache<String, byte[]> cache = CacheFactory.createCache("Javascript Cache");

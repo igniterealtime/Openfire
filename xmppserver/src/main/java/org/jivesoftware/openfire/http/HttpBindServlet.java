@@ -78,7 +78,7 @@ public class HttpBindServlet extends HttpServlet {
                 response.setHeader("Access-Control-Allow-Origin", HttpBindManager.HTTP_BIND_CORS_ALLOW_ORIGIN_ALL);
             } else {
                 // Get the Origin header from the request and check if it is in the allowed Origin Map.
-                // If it is allowed write it back to the Access-Control-Allow-Origin header of the respond.
+                // If it is allowed write it back to the Access-Control-Allow-Origin header of the response.
                 final String origin = request.getHeader("Origin");
                 if (boshManager.isThisOriginAllowed(origin)) {
                     response.setHeader("Access-Control-Allow-Origin", origin);
@@ -114,7 +114,7 @@ public class HttpBindServlet extends HttpServlet {
             context.complete();
             return;
         }
-        queryString = URLDecoder.decode(queryString, "UTF-8");
+        queryString = URLDecoder.decode(queryString, StandardCharsets.UTF_8);
 
         processContent(context, queryString);
     }
@@ -288,7 +288,7 @@ public class HttpBindServlet extends HttpServlet {
             throws IOException
     {
         final HttpServletResponse response = (HttpServletResponse) context.getResponse();
-        if (message == null || message.trim().length() == 0) {
+        if (message == null || message.trim().isEmpty()) {
             response.sendError(error.getLegacyErrorCode());
         } else {
             response.sendError(error.getLegacyErrorCode(), message);
@@ -316,7 +316,7 @@ public class HttpBindServlet extends HttpServlet {
             remoteAddress = context.getRequest().getRemoteAddr();
         }
 
-        if (remoteAddress == null || remoteAddress.trim().length() == 0) {
+        if (remoteAddress == null || remoteAddress.trim().isEmpty()) {
             remoteAddress = "<UNKNOWN ADDRESS>";
         }
 
@@ -350,7 +350,7 @@ public class HttpBindServlet extends HttpServlet {
         @Override
         public void onAllDataRead() throws IOException {
             Log.trace("All data has been read from [{}]", remoteAddress);
-            processContent(context, outStream.toString(StandardCharsets.UTF_8.name()));
+            processContent(context, outStream.toString(StandardCharsets.UTF_8));
         }
 
         @Override

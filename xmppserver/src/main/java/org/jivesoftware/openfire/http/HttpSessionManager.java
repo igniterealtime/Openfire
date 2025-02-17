@@ -355,6 +355,18 @@ public class HttpSessionManager {
 
         @Override
         public void run() {
+            Log.trace("Running HTTP Session Reaper");
+
+            dispatchQueues.forEach((streamID, future) -> {
+                if (!sessionMap.containsKey(streamID.getID())) {
+                    if (dispatchQueues.remove(streamID) != null) {
+                        Log.warn("Removed scheduled, non-executed task for stream {} for which a session does not (no longer?) exist.", streamID);
+                    }
+                }
+            });
+
+            // Session reaping can cause new events being dispatched. Let's run this reaper _after_ the dispatchQueues
+            // have been cleaned, to reduce the chance that both operations act on #dispatchQueues concurrently.
             Instant currentTime = Instant.now();
             for (HttpSession session : sessionMap.values()) {
                 try {

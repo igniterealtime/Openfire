@@ -807,6 +807,22 @@ public class HttpSession extends LocalClientSession {
         }
     }
 
+    @Override
+    public void close()
+    {
+        // Make the worker pool process this, to help ensure that the 'close' event is being processed in order (eg: not prior to the processing of other data, such as any pending processing of data).
+        synchronized (router) {
+            try {
+                HttpBindManager.getInstance().getSessionManager().execute(this, () -> {
+                    Log.trace("Stream {}: Closing", streamID);
+                    super.close();
+                });
+            } catch (Throwable t) {
+                Log.warn("Unable to close session", t);
+            }
+        }
+    }
+
     /**
      * Attempts to process a request for redelivery of data that was sent earlier.
      *

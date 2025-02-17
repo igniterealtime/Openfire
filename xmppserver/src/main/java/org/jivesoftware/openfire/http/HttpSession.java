@@ -1471,7 +1471,7 @@ public class HttpSession extends LocalClientSession {
             ", isInitialized=" + isInitialized() +
             ", hasAuthToken=" + (getAuthToken() != null) +
             ", peer address='" + peerAddress +'\'' +
-            ", presence='" + getPresence().toString() + '\'' +
+            ", presence='" + getPresence().toXML() + '\'' +
             ", hold='" + getHold() + '\'' +
             ", wait='" + getWait() + '\'' +
             ", maxRequests='" + getMaxRequests() + '\'' +

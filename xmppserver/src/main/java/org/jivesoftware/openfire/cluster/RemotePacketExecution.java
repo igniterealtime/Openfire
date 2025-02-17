@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2009 Jive Software, 2021-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 1999-2009 Jive Software, 2021-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,6 +89,6 @@ public class RemotePacketExecution implements ClusterTask<Void> {
     }
 
     public String toString() {
-        return super.toString() + " recipient: " + recipient + "packet: " + packet;
+        return super.toString() + " recipient: " + recipient + "packet: " + (packet == null ? "(null)" : packet.toXML());
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,10 +44,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Locale;
 import java.util.Map;
 import java.util.TimerTask;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * Manages sessions for all users connecting to Openfire using the HTTP binding protocol,
@@ -66,6 +63,7 @@ public class HttpSessionManager {
     private final Map<String, HttpSession> sessionMap = new ConcurrentHashMap<>();
     private TimerTask inactivityTask;
     private ThreadPoolExecutor stanzaWorkerPool;
+    private final ConcurrentMap<StreamID, CompletableFuture<Void>> dispatchQueues = new ConcurrentHashMap<>();
     private final SessionListener sessionListener = new SessionListener() {
         @Override
         public void sessionClosed(HttpSession session) {
@@ -388,9 +386,28 @@ public class HttpSessionManager {
     /**
      * Executes a Runnable in the thread pool that is used for processing stanzas received over BOSH.
      *
-     * @param runnable The task to run
+     * Tasks can be executed in parallel, but tasks for the same httpSession are executed serially (in the order in
+     * which they were provided).
+     *
+     * @param httpSession The session for which to execute a task
+     * @param runnable The task to execute.
+     * @see <a href="https://stackoverflow.com/a/29893297/189203">Based on this approach by Ben Manes</a>
      */
-    public void execute(@Nonnull final Runnable runnable) {
-        this.stanzaWorkerPool.execute(runnable);
+    public void execute(@Nonnull final HttpSession httpSession, @Nonnull final Runnable runnable)
+    {
+        final StreamID key = httpSession.getStreamID();
+
+        Log.trace("Scheduling runnable for session {}", key);
+        final CompletableFuture<Void> future = dispatchQueues.compute(key, (streamID, queue) -> (queue == null)
+            ? CompletableFuture.runAsync(runnable, this.stanzaWorkerPool)
+            : queue.thenRunAsync(runnable, this.stanzaWorkerPool));
+
+        // Clean up the dispatch queue after execution.
+        future.whenComplete((r,e) -> {
+            // Optimistic check to avoid locking if not a match.
+            if (dispatchQueues.get(key) == future) {
+                dispatchQueues.remove(key);
+            }
+        });
     }
 }

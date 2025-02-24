@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -68,23 +68,6 @@
         <link rel="stylesheet" type="text/css" href="<%= path %>/style/global.css">
         <script src="<%= path %>/js/cookies.js"></script>
         <script src="<%= path %>/js/behaviour.js"></script>
-        <script>
-        // Add a nice little rollover effect to any row in a jive-table object. This will help
-        // visually link left and right columns.
-        /*
-        var myrules = {
-            '.jive-table TBODY TR' : function(el) {
-                el.onmouseover = function() {
-                    this.style.backgroundColor = '#ffffee';
-                }
-                el.onmouseout = function() {
-                    this.style.backgroundColor = '#ffffff';
-                }
-            }
-        };
-        Behaviour.register(myrules);
-        */
-        </script>
         <decorator:head />
     </head>
 

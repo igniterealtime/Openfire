@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2017-2023 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -203,74 +203,7 @@
         </c:when>
     </c:choose>
     <%--<meta name="subPageID" content="connection-settings-advanced"/>--%>
-    <script>
-        // Displays or hides the configuration blocks, based on the status of selected settings.
-        function applyDisplayable()
-        {
-            let tlsConfigs, displayValue, i, len;
-
-            displayValue = ( document.getElementById( "tlspolicy-disabled" ).checked ? "none" : "block" );
-
-            // Select the right configuration block and enable or disable it as defined by the corresponding checkbox.
-            tlsConfigs = document.getElementsByClassName( "tlsconfig" );
-            for ( i = 0, len = tlsConfigs.length; i < len; i++ )
-            {
-                // Hide or show the info block (as well as it's title, which is the previous sibling element)
-                tlsConfigs[ i ].parentElement.style.display = displayValue;
-                tlsConfigs[ i ].parentElement.previousSibling.style.display = displayValue;
-            }
-        }
-
-        // Marks all options in a select element as 'selected' (useful prior to form submission)
-        function selectAllOptions( selectedId )
-        {
-            let select, i, len;
-
-            select = document.getElementById( selectedId );
-
-            for ( i = 0, len = select.options.length; i < len; i++ )
-            {
-                select.options[ i ].selected = true;
-            }
-        }
-
-        // Moves selected option values from one select element to another.
-        function moveSelectedFromTo( from, to )
-        {
-            let selected, i, len;
-
-            selected = getSelectValues( document.getElementById( from ) );
-
-            for ( i = 0, len = selected.length; i < len; i++ )
-            {
-                document.getElementById( to ).appendChild( selected[ i ] );
-            }
-        }
-
-        // Return an array of the selected options. argument is an HTML select element
-        function getSelectValues( select )
-        {
-            let i, len, result;
-
-            result = [];
-
-            for ( i = 0, len = select.options.length; i < len; i++ )
-            {
-                if ( select.options[ i ].selected )
-                {
-                    result.push( select.options[ i ] );
-                }
-            }
-            return result;
-        }
-
-        // Ensure that the various elements are set properly when the page is loaded.
-        window.onload = function()
-        {
-            applyDisplayable();
-        };
-    </script>
-
+    <script src="js/connection-settings-advanced.js"></script>
 </head>
 <body>
 
@@ -323,7 +256,7 @@
     </fmt:message>
 </p>
 
-<form action="connection-settings-advanced.jsp?connectionType=${connectionType}&connectionMode=${connectionMode}" onsubmit="selectAllOptions('cipherSuitesEnabled')" method="post">
+<form action="connection-settings-advanced.jsp?connectionType=${connectionType}&connectionMode=${connectionMode}" id="settingsForm" method="post">
     <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="update" value="true" />
 
@@ -349,22 +282,22 @@
     <c:if test="${connectionMode eq 'plain'}">
         <fmt:message key="connection.advanced.settings.starttls.boxtitle" var="starttlsboxtitle"/>
         <admin:contentBox title="${starttlsboxtitle}">
-            <table>
+            <table class="connectionConfig">
                 <tr>
                     <td>
-                        <input type="radio" name="tlspolicy" value="disabled" id="tlspolicy-disabled" ${configuration.tlsPolicy.name() eq 'disabled' ? 'checked' : ''} onclick="applyDisplayable()"/>&nbsp;
+                        <input type="radio" name="tlspolicy" value="disabled" id="tlspolicy-disabled" ${configuration.tlsPolicy.name() eq 'disabled' ? 'checked' : ''}/>&nbsp;
                         <label for="tlspolicy-disabled"><fmt:message key="connection.advanced.settings.starttls.label_disabled"/></label>
                     </td>
                 </tr>
                 <tr>
                     <td>
-                        <input type="radio" name="tlspolicy" value="optional" id="tlspolicy-optional" ${configuration.tlsPolicy.name() eq 'optional' ? 'checked' : ''} onclick="applyDisplayable()"/>&nbsp;
+                        <input type="radio" name="tlspolicy" value="optional" id="tlspolicy-optional" ${configuration.tlsPolicy.name() eq 'optional' ? 'checked' : ''}/>&nbsp;
                         <label for="tlspolicy-optional"><fmt:message key="connection.advanced.settings.starttls.label_optional"/></label>
                     </td>
                 </tr>
                 <tr>
                     <td>
-                        <input type="radio" name="tlspolicy" value="required" id="tlspolicy-required" ${configuration.tlsPolicy.name() eq 'required' ? 'checked' : ''} onclick="applyDisplayable()"/>&nbsp;
+                        <input type="radio" name="tlspolicy" value="required" id="tlspolicy-required" ${configuration.tlsPolicy.name() eq 'required' ? 'checked' : ''}/>&nbsp;
                         <label for="tlspolicy-required"><fmt:message key="connection.advanced.settings.starttls.label_required"/></label>
                     </td>
                 </tr>
@@ -475,8 +408,8 @@
                     </select>
                 </td>
                 <td>
-                    <input type="button" onclick="moveSelectedFromTo('cipherSuitesEnabled','cipherSuitesSupported')" value="&gt;&gt;" /><br/>
-                    <input type="button" onclick="moveSelectedFromTo('cipherSuitesSupported','cipherSuitesEnabled')" value="&lt;&lt;" />
+                    <input id="moveToSupported" type="button" value="&gt;&gt;" /><br/>
+                    <input id="moveToEnabled" type="button" value="&lt;&lt;" />
                 </td>
                 <td>
                     <select name="cipherSuitesSupported" id="cipherSuitesSupported" size="10" multiple>
@@ -493,7 +426,7 @@
 
     <fmt:message key="connection.advanced.settings.misc.boxtitle" var="miscboxtitle"/>
     <admin:contentBox title="${miscboxtitle}">
-        <table>
+        <table class="connectionConfig">
             <tr>
                 <td style="width: 1%; white-space: nowrap"><label for="maxThreads"><fmt:message key="connection.advanced.settings.misc.label_workers"/></label></td>
                 <td><input type="text" name="maxThreads" id="maxThreads" value="${configuration.maxThreadPoolSize}" readonly/></td>

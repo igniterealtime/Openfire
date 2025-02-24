@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2017-2023 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -229,37 +229,7 @@
 <head>
     <title><fmt:message key="component.settings.title"/></title>
     <meta name="pageID" content="external-components-settings"/>
-    <script>
-        // Displays or hides the configuration block for a particular connection type, based on the status of the
-        // 'enable' checkbox for that connection type.
-        function applyDisplayable( connectionType )
-        {
-            let configBlock, enabled;
-
-            // Select the right configuration block and enable or disable it as defined by the the corresponding checkbox.
-            configBlock = document.getElementById( connectionType + "-config" );
-            enabled     = document.getElementById( connectionType + "-enabled" ).checked;
-
-            if ( ( configBlock != null ) && ( enabled != null ) )
-            {
-                if ( enabled )
-                {
-                    configBlock.style.display = "block";
-                }
-                else
-                {
-                    configBlock.style.display = "none";
-                }
-            }
-        }
-
-        // Ensure that the various elements are set properly when the page is loaded.
-        window.onload = function()
-        {
-            applyDisplayable( "plaintext" );
-            applyDisplayable( "directtls" );
-        };
-    </script>
+    <script src="js/connection-settings.js"></script>
 </head>
 <body>
 
@@ -310,9 +280,9 @@
 
         <table>
             <tr>
-                <td colspan="2"><input type="checkbox" name="plaintext-enabled" id="plaintext-enabled" onclick="applyDisplayable('plaintext')" ${plaintextConfiguration.enabled ? 'checked' : ''}/><label for="plaintext-enabled"><fmt:message key="component.settings.plaintext.label_enable"/></label></td>
+                <td colspan="2"><input type="checkbox" name="plaintext-enabled" id="plaintext-enabled" ${plaintextConfiguration.enabled ? 'checked' : ''}/><label for="plaintext-enabled"><fmt:message key="component.settings.plaintext.label_enable"/></label></td>
             </tr>
-            <tr>
+            <tr id="plaintext-config">
                 <td style="width: 1%; white-space: nowrap"><label for="plaintext-tcpPort"><fmt:message key="ports.port"/></label></td>
                 <td><input type="text" name="plaintext-tcpPort" id="plaintext-tcpPort" value="${plaintextConfiguration.port}"/></td>
             </tr>
@@ -330,9 +300,9 @@
 
         <table>
             <tr>
-                <td colspan="2"><input type="checkbox" name="directtls-enabled" id="directtls-enabled" onclick="applyDisplayable('directtls')" ${directtlsConfiguration.enabled ? 'checked' : ''}/><label for="directtls-enabled"><fmt:message key="component.settings.directtls.label_enable"/></label></td>
+                <td colspan="2"><input type="checkbox" name="directtls-enabled" id="directtls-enabled" ${directtlsConfiguration.enabled ? 'checked' : ''}/><label for="directtls-enabled"><fmt:message key="component.settings.directtls.label_enable"/></label></td>
             </tr>
-            <tr>
+            <tr id="directtls-config">
                 <td style="width: 1%; white-space: nowrap"><label for="directtls-tcpPort"><fmt:message key="ports.port"/></label></td>
                 <td><input type="text" name="directtls-tcpPort" id="directtls-tcpPort" value="${directtlsConfiguration.port}"></td>
             </tr>

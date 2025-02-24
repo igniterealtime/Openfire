@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2004-2007 Jive Software, 2016-2023 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2007 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -223,7 +223,7 @@
         <label for="domain"><fmt:message key="setup.host.settings.domain" /></label>
     </td>
     <td>
-        <input type="text" size="30" maxlength="150" name="domain" id="domain" value="${not empty domain ? fn:escapeXml(domain) : ''}">
+        <input type="text" size="30" maxlength="150" name="domain" id="domain" value="${not empty domain ? fn:escapeXml(domain) : ''}" autofocus>
         <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.host.settings.domain.help" /></span></div>
         <c:if test="${not empty errors['domain']}">
             <span class="jive-error-text">
@@ -324,13 +324,6 @@
 
     </div>
     <!-- END jive-contentBox -->
-
-
-<script>
-// give focus to domain field
-document.f.domain.focus();
-</script>
-
 
 </body>
 </html>

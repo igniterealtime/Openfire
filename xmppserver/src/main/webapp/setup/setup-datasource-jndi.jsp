@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -156,7 +156,7 @@
 <c:choose>
     <c:when test="${isLookupNames}">
         <label for="jndiName">fmt:message key="setup.datasource.jndi.name" /></label>
-        <input type="text" name="jndiName" id="jndiName" size="30" maxlength="100" value="${not empty jndiName ? fn:escapeXml(jndiName) : ''}">
+        <input type="text" name="jndiName" id="jndiName" size="30" maxlength="100" value="${not empty jndiName ? fn:escapeXml(jndiName) : ''}" autofocus>
     </c:when>
     <c:otherwise>
 
@@ -164,9 +164,9 @@
     <tr>
         <td><input type="radio" name="jndiNameMode" value="custom"></td>
         <td>
-            <span onclick="document.jndiform.jndiName.focus();"><label for="jndiName"><fmt:message key="setup.datasource.jndi.custom" /></label></span>
+            <label for="jndiName"><fmt:message key="setup.datasource.jndi.custom" /></label>
             &nbsp;
-            <input type="text" name="jndiName" id="jndiName" size="30" maxlength="100" value="${not empty jndiName ? fn:escapeXml(jndiName) : ''}" onfocus="this.form.jndiNameMode[0].checked=true;">
+            <input type="text" name="jndiName" id="jndiName" size="30" maxlength="100" value="${not empty jndiName ? fn:escapeXml(jndiName) : ''}">
             <c:if test="${not empty errors['jndiName']}">
                 <span class="jive-error-text"><br>
                     <fmt:message key="setup.datasource.jndi.valid_name" />
@@ -201,12 +201,6 @@
 </div>
 
 </form>
-
-<script>
-<!--
-document.jndiform.jndiName.focus();
-//-->
-</script>
 
 </body>
 </html>

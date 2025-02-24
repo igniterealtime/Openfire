@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2005-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -172,7 +172,7 @@
             <td style="width: 1%; white-space: nowrap"><label for="jidtf"><fmt:message key="user.roster.jid" />:</label> *</td>
             <td>
                 <input type="text" name="jid" size="30" maxlength="255" value="<%= ((jid!=null) ? StringUtils.escapeForXML(jid) : "") %>"
-                 id="jidtf">
+                 id="jidtf" autofocus>
             </td>
         </tr>
         <tr>
@@ -208,10 +208,6 @@
     </span>
 
 </form>
-
-    <script>
-    document.f.jid.focus();
-    </script>
 
     </body>
 </html>

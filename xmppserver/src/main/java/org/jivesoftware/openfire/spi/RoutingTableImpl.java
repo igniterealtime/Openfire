@@ -1037,7 +1037,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
 
         Log.debug("Removing client route {}", route);
-        final DomainPair domainPair = new DomainPair("", route.toString());
+        final DomainPair domainPair = new DomainPair("", route.toFullJID());
 
         boolean sessionRemoved;
         final Lock lock = usersSessionsCache.getLock(route.toBareJID());

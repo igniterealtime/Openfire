@@ -19,14 +19,7 @@ package org.jivesoftware.openfire.spi;
 import com.google.common.collect.Multimap;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.openfire.IQRouter;
-import org.jivesoftware.openfire.MessageRouter;
-import org.jivesoftware.openfire.PacketException;
-import org.jivesoftware.openfire.PresenceRouter;
-import org.jivesoftware.openfire.RemotePacketRouter;
-import org.jivesoftware.openfire.RoutableChannelHandler;
-import org.jivesoftware.openfire.RoutingTable;
-import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.carbons.Received;
 import org.jivesoftware.openfire.cluster.ClusterEventListener;
@@ -39,14 +32,10 @@ import org.jivesoftware.openfire.forward.Forwarded;
 import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
 import org.jivesoftware.openfire.server.OutgoingSessionPromise;
 import org.jivesoftware.openfire.server.RemoteServerManager;
-import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.openfire.session.ConnectionSettings;
-import org.jivesoftware.openfire.session.DomainPair;
-import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
-import org.jivesoftware.openfire.session.OutgoingServerSession;
-import org.jivesoftware.openfire.session.RemoteSessionLocator;
+import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.CacheUtil;
@@ -61,6 +50,7 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -100,7 +90,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * Cache (unlimited, never expire) that holds outgoing sessions to remote servers from this server.
      * Key: server domain pair, Value: nodeID
      *
-     * @see LocalRoutingTable#getServerRoutes() which holds content added by the local cluster node.
+     * @see #localServerRoutingTable which holds content added by the local cluster node.
      * @see #s2sDomainPairsByClusterNode which holds content added by cluster nodes other than the local node.
      */
     // TODO OF-2301: having a DomainPair point to only a singular node implies that only one cluster node can have an outgoing server session.
@@ -130,7 +120,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * Cache (unlimited, never expire) that holds components connected to the server.
      * Key: component domain, Value: list of nodeIDs hosting the component
      *
-     * @see LocalRoutingTable#getComponentRoute() which holds content added by the local cluster node.
+     * @see #localComponentRoutingTable which holds content added by the local cluster node.
      * @see #componentsByClusterNode which holds content added by cluster nodes other than the local node.
      */
     private final Cache<String, HashSet<NodeID>> componentsCache;
@@ -161,7 +151,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * <em>Note:</em> access to this cache is to be guarded by a lock acquired from {@link #usersSessionsCache}, using
      * the <em>bare JID</em> representation of the key.
      *
-     * @see LocalRoutingTable#getClientRoutes() which holds content added by the local cluster node.
+     * @see #localClientRoutingTable which holds content added by the local cluster node.
      * @see #routeOwnersByClusterNode which holds content added by cluster nodes other than the local node.
      */
     private final Cache<String, ClientRoute> usersCache;
@@ -173,7 +163,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * <em>Note:</em> access to this cache is to be guarded by a lock acquired from {@link #usersSessionsCache}, using
      * the <em>bare JID</em> representation of the key.
      *
-     * @see LocalRoutingTable#getClientRoutes() which holds content added by the local cluster node.
+     * @see #localClientRoutingTable which holds content added by the local cluster node.
      * @see #routeOwnersByClusterNode which holds content added by cluster nodes other than the local node.
      */
     private final Cache<String, ClientRoute> anonymousUsersCache;
@@ -212,12 +202,15 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
     private String serverName;
     private XMPPServer server;
-    private final LocalRoutingTable localRoutingTable;
+    private final LocalRoutingTable<LocalClientSession> localClientRoutingTable = new LocalRoutingTable<>();
+    private final LocalRoutingTable<LocalOutgoingServerSession> localServerRoutingTable = new LocalRoutingTable<>();
+    private final LocalRoutingTable<RoutableChannelHandler> localComponentRoutingTable = new LocalRoutingTable<>(); // TODO see if the type can be made more specific.
     private RemotePacketRouter remotePacketRouter;
     private IQRouter iqRouter;
     private MessageRouter messageRouter;
     private PresenceRouter presenceRouter;
     private PresenceUpdateHandler presenceUpdateHandler;
+    private ServerCleanupTask serverCleanupTask = null;
 
     public RoutingTableImpl() {
         super("Routing table");
@@ -226,7 +219,6 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         usersCache = CacheFactory.createCache(C2S_CACHE_NAME);
         anonymousUsersCache = CacheFactory.createCache(ANONYMOUS_C2S_CACHE_NAME);
         usersSessionsCache = CacheFactory.createCache(C2S_SESSION_NAME);
-        localRoutingTable = new LocalRoutingTable();
     }
 
     @Override
@@ -243,14 +235,14 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         finally {
             lock.unlock();
         }
-        localRoutingTable.addRoute(address, destination);
+        localServerRoutingTable.addRoute(address, destination);
     }
 
     @Override
     public void addComponentRoute(JID route, RoutableChannelHandler destination) {
         DomainPair pair = new DomainPair("", route.getDomain());
         String address = route.getDomain();
-        localRoutingTable.addRoute(pair, destination);
+        localComponentRoutingTable.addRoute(pair, destination);
         Lock lock = componentsCache.getLock(address);
         lock.lock();
         try {
@@ -273,7 +265,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         Log.debug("Adding client route {}", route);
 
         Log.trace("Adding client route {} to local routing table", route);
-        localRoutingTable.addRoute(new DomainPair("", route.toFullJID()), destination);
+        localClientRoutingTable.addRoute(new DomainPair("", route.toFullJID()), destination);
 
         final ClientRoute newClientRoute = new ClientRoute(server.getNodeID(), destination.getPresence().isAvailable());
         final Lock lock = usersSessionsCache.getLock(route.toBareJID());
@@ -299,7 +291,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     @Override
     public void broadcastPacket(Message packet, boolean onlyLocal) {
         // Send the message to client sessions connected to this JVM
-        for(ClientSession session : localRoutingTable.getClientRoutes()) {
+        for(ClientSession session : localClientRoutingTable.getRoutes()) {
             session.process(packet);
         }
 
@@ -395,17 +387,17 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             ClientRoute clientRoute = getClientRouteForLocalUser(jid);
             if (clientRoute != null) {
                 // RFC-6121 section 8.5.3.1. Resource Matches
-                if (localRoutingTable.isLocalRoute(jid)) {
+                if (localClientRoutingTable.isLocalRoute(jid)) {
                     if (packet instanceof Message) {
                         ccMessage(jid, (Message) packet);
                     }
 
                     // This is a route to a local user hosted in this node
                     try {
-                        localRoutingTable.getRoute(jid).process(packet);
+                        localClientRoutingTable.getRoute(jid).process(packet);
                         routed = true;
-                    } catch (UnauthorizedException e) {
-                        Log.error("Unable to route packet " + packet.toXML(), e);
+                    } catch (Throwable e) {
+                        Log.error("Unable to route packet {}", packet.toXML(), e);
                     }
                 }
                 else {
@@ -446,7 +438,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                     carbon.addExtension(new Received(new Forwarded(message)));
 
                     try {
-                        final RoutableChannelHandler localRoute = localRoutingTable.getRoute(ccJid);
+                        final LocalClientSession localRoute = localClientRoutingTable.getRoute(ccJid);
                         if (localRoute != null) {
                             // This session is on a local cluster node
                             localRoute.process(carbon);
@@ -462,7 +454,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                                 Log.warn("Unable to find route to CC remote user {}", ccJid);
                             }
                         }
-                    } catch (UnauthorizedException e) {
+                    } catch (Throwable e) {
                         Log.error("Unable to route packet {}", message, e);
                     }
                 }
@@ -511,7 +503,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         
         // First check if the component is being hosted in this JVM
         boolean routed = false;
-        RoutableChannelHandler route = localRoutingTable.getRoute(new JID(null, jid.getDomain(), null, true));
+        RoutableChannelHandler route = localComponentRoutingTable.getRoute(new JID(null, jid.getDomain(), null, true));
         if (route != null) {
             try {
                 route.process(packet);
@@ -529,7 +521,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                         // This is a route to a local component hosted in this node (route
                         // could have been added after our previous check)
                         try {
-                            RoutableChannelHandler localRoute = localRoutingTable.getRoute(new JID(null, jid.getDomain(), null, true));
+                            RoutableChannelHandler localRoute = localComponentRoutingTable.getRoute(new JID(null, jid.getDomain(), null, true));
                             if (localRoute != null) {
                                 localRoute.process(packet);
                                 routed = true;
@@ -611,10 +603,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                     if (server.getNodeID().equals(nodeID)) {
                         Log.trace("An outgoing session for {} is available on the local cluster node. Delivering stanza.", domainPair);
                         try {
-                            localRoutingTable.getRoute(domainPair).process(packet);
+                            localServerRoutingTable.getRoute(domainPair).process(packet);
                             return true;
-                        } catch (UnauthorizedException e) {
-                            Log.error("Unable to route packet " + packet.toXML(), e);
+                        } catch (Throwable e) {
+                            Log.error("Unable to route packet {}", packet.toXML(), e);
                             return false;
                         }
                     } else {
@@ -832,7 +824,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     @Override
     public ClientSession getClientRoute(JID jid) {
         // Check if this session is hosted by this cluster node
-        ClientSession session = (ClientSession) localRoutingTable.getRoute(jid);
+        ClientSession session = localClientRoutingTable.getRoute(jid);
         if (session == null) {
             // The session is not in this JVM so assume remote
             RemoteSessionLocator locator = server.getRemoteSessionLocator();
@@ -850,7 +842,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     @Override
     public Collection<ClientSession> getClientsRoutes(boolean onlyLocal) {
         // Add sessions hosted by this cluster node
-        Collection<ClientSession> sessions = new ArrayList<>(localRoutingTable.getClientRoutes());
+        Collection<ClientSession> sessions = new ArrayList<>(localClientRoutingTable.getRoutes());
         if (!onlyLocal) {
             // Add sessions not hosted by this JVM
             RemoteSessionLocator locator = server.getRemoteSessionLocator();
@@ -877,7 +869,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     @Override
     public OutgoingServerSession getServerRoute(DomainPair jids) {
         // Check if this session is hosted by this cluster node
-        OutgoingServerSession session = (OutgoingServerSession) localRoutingTable.getRoute(jids);
+        OutgoingServerSession session = localServerRoutingTable.getRoute(jids);
         if (session == null) {
             // The session is not in this JVM so assume remote
             RemoteSessionLocator locator = server.getRemoteSessionLocator();
@@ -908,7 +900,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
     @Override
     public int getServerSessionsCount() {
-        return localRoutingTable.getServerRoutes().size();
+        return localServerRoutingTable.size();
     }
 
     @Override
@@ -955,7 +947,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
     @Override
     public boolean isLocalRoute(JID jid) {
-        return localRoutingTable.isLocalRoute(jid);
+        return localClientRoutingTable.isLocalRoute(jid) || localServerRoutingTable.isLocalRoute(jid) || localComponentRoutingTable.isLocalRoute(jid);
     }
 
     @Override
@@ -1066,7 +1058,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
 
         Log.trace("Removing client route {} from local routing table", route);
-        localRoutingTable.removeRoute(new DomainPair("", route.toString()));
+        localClientRoutingTable.removeRoute(new DomainPair("", route.toString()));
         return sessionRemoved;
     }
 
@@ -1081,7 +1073,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         finally {
             lock.unlock();
         }
-        localRoutingTable.removeRoute(route);
+        localServerRoutingTable.removeRoute(route);
         return removed;
     }
 
@@ -1118,7 +1110,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
 
         if (removed || XMPPServer.getInstance().getNodeID().equals(nodeID)) {
-            localRoutingTable.removeRoute(new DomainPair("", address));
+            localComponentRoutingTable.removeRoute(new DomainPair("", address));
         }
 
         return removed;
@@ -1150,13 +1142,25 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     @Override
     public void start() throws IllegalStateException {
         super.start();
-        localRoutingTable.start();
+        localClientRoutingTable.start();
+        localServerRoutingTable.start();
+        localComponentRoutingTable.start();
+
+        // Run through the server sessions every 3 minutes after a 3 minutes server startup delay (default values)
+        serverCleanupTask = new ServerCleanupTask();
+        Duration period = Duration.ofMinutes(3);
+        TaskEngine.getInstance().scheduleAtFixedRate(serverCleanupTask, period, period);
     }
 
     @Override
     public void stop() {
         super.stop();
-        localRoutingTable.stop();
+
+        TaskEngine.getInstance().cancelScheduledTask(serverCleanupTask);
+
+        localComponentRoutingTable.stop();
+        localServerRoutingTable.stop();
+        localClientRoutingTable.stop();
 
         try
         {
@@ -1170,7 +1174,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     /**
-     * Verifies that {@link #serversCache}, {@link #localRoutingTable#getServerRoutes} and {@link #s2sDomainPairsByClusterNode}
+     * Verifies that {@link #serversCache}, {@link #localServerRoutingTable} and {@link #s2sDomainPairsByClusterNode}
      * are in a consistent state.
      *
      * Note that this operation can be costly in terms of resource usage. Use with caution in large / busy systems.
@@ -1180,18 +1184,18 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      *
      * @return A consistency state report.
      * @see #serversCache which is the cache that is used tho share data with other cluster nodes.
-     * @see LocalRoutingTable#getServerRoutes() which holds content added to the cache by the local cluster node.
+     * @see #localServerRoutingTable which holds content added to the cache by the local cluster node.
      * @see #s2sDomainPairsByClusterNode which holds content added to the cache by cluster nodes other than the local node.
      */
     public Multimap<String, String> clusteringStateConsistencyReportForServerRoutes() {
         // Pass through defensive copies, that both prevent the diagnostics from affecting cache usage, as well as
         // give a better chance of representing a stable / snapshot-like representation of the state while diagnostics
         // are being performed.
-        return ConsistencyChecks.generateReportForRoutingTableServerRoutes(serversCache, localRoutingTable.getServerRoutes(), new HashMap<>(s2sDomainPairsByClusterNode));
+        return ConsistencyChecks.generateReportForRoutingTableServerRoutes(serversCache, localServerRoutingTable.getRoutes(), new HashMap<>(s2sDomainPairsByClusterNode));
     }
 
     /**
-     * Verifies that {@link #componentsCache}, {@link #localRoutingTable#getComponentRoute()} and {@link #componentsByClusterNode}
+     * Verifies that {@link #componentsCache}, {@link #localComponentRoutingTable} and {@link #componentsByClusterNode}
      * are in a consistent state.
      *
      * Note that this operation can be costly in terms of resource usage. Use with caution in large / busy systems.
@@ -1201,18 +1205,18 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      *
      * @return A consistency state report.
      * @see #componentsCache which is the cache that is used tho share data with other cluster nodes.
-     * @see LocalRoutingTable#getComponentRoute() which holds content added to the cache by the local cluster node.
+     * @see #localComponentRoutingTable which holds content added to the cache by the local cluster node.
      * @see #componentsByClusterNode which holds content added to the cache by cluster nodes other than the local node.
      */
     public Multimap<String, String> clusteringStateConsistencyReportForComponentRoutes() {
         // Pass through defensive copies, that both prevent the diagnostics from affecting cache usage, as well as
         // give a better chance of representing a stable / snapshot-like representation of the state while diagnostics
         // are being performed.
-        return ConsistencyChecks.generateReportForRoutingTableComponentRoutes(componentsCache, localRoutingTable.getComponentRoute(), new HashMap<>(componentsByClusterNode));
+        return ConsistencyChecks.generateReportForRoutingTableComponentRoutes(componentsCache, localComponentRoutingTable.getRoutes(), new HashMap<>(componentsByClusterNode));
     }
 
     /**
-     * Verifies that {@link #usersCache}, {@link #anonymousUsersCache}, {@link #localRoutingTable#getClientsRoutes(boolean)}
+     * Verifies that {@link #usersCache}, {@link #anonymousUsersCache}, {@link #localClientRoutingTable}
      * and {@link #routeOwnersByClusterNode} are in a consistent state.
      *
      * Note that this operation can be costly in terms of resource usage. Use with caution in large / busy systems.
@@ -1223,14 +1227,14 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * @return A consistency state report.
      * @see #usersCache which is one of the two caches that is used tho share data with other cluster nodes.
      * @see #anonymousUsersCache which is one of the two caches that is used tho share data with other cluster nodes.
-     * @see LocalRoutingTable#getClientRoutes() which holds content added to the caches by the local cluster node.
+     * @see #localClientRoutingTable which holds content added to the caches by the local cluster node.
      * @see #routeOwnersByClusterNode which holds content added to the caches by cluster nodes other than the local node.
      */
     public Multimap<String, String> clusteringStateConsistencyReportForClientRoutes() {
         // Pass through defensive copies, that both prevent the diagnostics from affecting cache usage, as well as
         // give a better chance of representing a stable / snapshot-like representation of the state while diagnostics
         // are being performed.
-        return ConsistencyChecks.generateReportForRoutingTableClientRoutes(usersCache, anonymousUsersCache, localRoutingTable.getClientRoutes(), new HashMap<>(routeOwnersByClusterNode));
+        return ConsistencyChecks.generateReportForRoutingTableClientRoutes(usersCache, anonymousUsersCache, localClientRoutingTable.getRoutes(), new HashMap<>(routeOwnersByClusterNode));
     }
 
     /**
@@ -1314,7 +1318,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         // Deliver offline messages sent to local sessions that were unavailable in other nodes.
         // Send available presences of local sessions to other resources of the same user.
         PresenceUpdateHandler presenceUpdateHandler = XMPPServer.getInstance().getPresenceUpdateHandler();
-        for (LocalClientSession session : localRoutingTable.getClientRoutes()) {
+        for (LocalClientSession session : localClientRoutingTable.getRoutes()) {
             // Simulate that the local session has just become available
             session.setInitialized(false);
             // Simulate that current session presence has just been received
@@ -1493,7 +1497,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         // Ensure that 'serversCache' has content that reflects the locally available s2s connections (we do not need to
         // restore the s2s connections on other nodes, as those will be dropped right after invoking this method anyway).
         Log.info("Looking for local server routes that have 'dropped out' of the cache (likely as a result of a network failure).");
-        final Collection<LocalOutgoingServerSession> localServerRoutes = localRoutingTable.getServerRoutes();
+        final Collection<LocalOutgoingServerSession> localServerRoutes = localServerRoutingTable.getRoutes();
         final Set<DomainPair> cachesServerRoutes = serversCache.keySet();
         final Set<DomainPair> serverRoutesNotInCache = localServerRoutes.stream().map(LocalOutgoingServerSession::getOutgoingDomainPairs).flatMap(Collection::stream).collect(Collectors.toSet());
         serverRoutesNotInCache.removeAll(cachesServerRoutes);
@@ -1518,12 +1522,12 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
         });
         // Restore cache from 'local' data structure
-        localRoutingTable.getComponentRoute().forEach(route -> CacheUtil.addValueToMultiValuedCache(componentsCache, route.getAddress().getDomain(), server.getNodeID(), HashSet::new));
+        localComponentRoutingTable.getRoutes().forEach(route -> CacheUtil.addValueToMultiValuedCache(componentsCache, route.getAddress().getDomain(), server.getNodeID(), HashSet::new));
 
         // Ensure that 'usersCache' has content that reflects the locally available client connections (we do not need
         // to restore the client connections on other nodes, as those will be dropped right after invoking this method anyway).
         Log.info("Looking for local (non-anonymous) client routes that have 'dropped out' of the cache (likely as a result of a network failure).");
-        final Collection<LocalClientSession> localClientRoutes = localRoutingTable.getClientRoutes();
+        final Collection<LocalClientSession> localClientRoutes = localClientRoutingTable.getRoutes();
         final Map<String, LocalClientSession> localUserRoutes = localClientRoutes.stream().filter(r -> !r.isAnonymousUser()).collect(Collectors.toMap((LocalClientSession localClientSession) -> localClientSession.getAddress().toString(), Function.identity()));
         final Set<String> cachedUsersRoutes = usersCache.keySet();
         final Set<String> userRoutesNotInCache = localUserRoutes.values().stream().map(LocalClientSession::getAddress).map(JID::toString).collect(Collectors.toSet());
@@ -1572,7 +1576,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
         // First remove all elements from users sessions cache that are not present in user caches
         final Set<String> existingUserRoutes = routeOwnersByClusterNode.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
-        existingUserRoutes.addAll(localRoutingTable.getClientRoutes().stream().map(LocalClientSession::getAddress).map(JID::toFullJID).collect(Collectors.toSet()));
+        existingUserRoutes.addAll(localClientRoutingTable.getRoutes().stream().map(LocalClientSession::getAddress).map(JID::toFullJID).collect(Collectors.toSet()));
         final Set<String> entriesToRemove = usersSessionsCache.values().stream()
             .flatMap(Collection::stream)
             .filter(fullJid -> !existingUserRoutes.contains(fullJid))
@@ -1603,7 +1607,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
         // Check if there are local s2s connections that are already in the cache for remote nodes
         Set<DomainPair> localServerRoutesToRemove = new HashSet<>();
-        localRoutingTable.getServerRoutes().forEach(
+        localServerRoutingTable.getRoutes().forEach(
             route -> route.getOutgoingDomainPairs().forEach(
                 address -> {
                     final Lock lock = serversCache.getLock(address);
@@ -1621,22 +1625,18 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 })
         );
         for (DomainPair localServerRouteToRemove : localServerRoutesToRemove) {
-            final RoutableChannelHandler route = localRoutingTable.getRoute(localServerRouteToRemove);
-            if (route instanceof LocalOutgoingServerSession) {
-                // Terminating the connection should also trigger the OutgoingServerSessionListener#onConnectionClose in SessionManagerImpl.
-                // That will result in the s2s connection actually being removed from the LocalRoutingTable.
-                try {
-                    LocalOutgoingServerSession.class.cast(route).close();
-                } catch (Exception e) {
-                    Log.warn("Failed to terminate the local s2s connection for " + localServerRouteToRemove + ".", e);
-                }
-            } else {
-                Log.warn("Failed to terminate the local s2s connection for {} because it is a {} instead of a LocalOutgoingServerSession.", localServerRouteToRemove, route.getClass());
+            final LocalOutgoingServerSession route = localServerRoutingTable.getRoute(localServerRouteToRemove);
+            // Terminating the connection should also trigger the OutgoingServerSessionListener#onConnectionClose in SessionManagerImpl.
+            // That will result in the s2s connection actually being removed from the LocalRoutingTable.
+            try {
+                route.close();
+            } catch (Exception e) {
+                Log.warn("Failed to terminate the local s2s connection for {}.", route, e);
             }
         }
 
         Log.debug( "Restoring cache content for cache '{}' by adding all component routes that are connected to the local cluster node.", componentsCache.getName() );
-        localRoutingTable.getComponentRoute().forEach( route -> CacheUtil.addValueToMultiValuedCache( componentsCache, route.getAddress().getDomain(), server.getNodeID(), HashSet::new ));
+        localComponentRoutingTable.getRoutes().forEach( route -> CacheUtil.addValueToMultiValuedCache( componentsCache, route.getAddress().getDomain(), server.getNodeID(), HashSet::new ));
 
         addLocalClientRoutesToCache();
     }
@@ -1644,9 +1644,38 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     public void addLocalClientRoutesToCache() {
         Log.debug( "Restoring cache content for cache '{}', '{}' and '{}' by adding all client routes that are connected to the local cluster node.", usersCache.getName(), anonymousUsersCache.getName(), usersSessionsCache.getName() );
         // Add client sessions hosted locally to the cache (using new nodeID)
-        for (LocalClientSession session : localRoutingTable.getClientRoutes()) {
+        for (LocalClientSession session : localClientRoutingTable.getRoutes()) {
             addClientRoute(session.getAddress(), session);
         }
     }
 
+    /**
+     * Task that closes idle server sessions.
+     */
+    private class ServerCleanupTask extends TimerTask {
+        /**
+         * Close outgoing server sessions that have been idle for a long time.
+         */
+        @Override
+        public void run() {
+            // Do nothing if this feature is disabled
+            int idleTime = SessionManager.getInstance().getServerSessionIdleTime();
+            if (idleTime == -1) {
+                return;
+            }
+            final long deadline = System.currentTimeMillis() - idleTime;
+            for (OutgoingServerSession session : localServerRoutingTable.getRoutes()) {
+                // Check outgoing server sessions
+                try {
+                    if (session.getLastActiveDate().getTime() < deadline) {
+                        Log.debug("ServerCleanupTask is closing an outgoing server session that has been idle for a long time. Last active: {}. Session to be closed: {}", session.getLastActiveDate(), session);
+                        session.close();
+                    }
+                }
+                catch (Throwable e) {
+                    Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
+                }
+            }
+        }
+    }
 }

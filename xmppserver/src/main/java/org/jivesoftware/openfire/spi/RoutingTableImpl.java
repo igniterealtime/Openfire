@@ -202,9 +202,16 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
     private String serverName;
     private XMPPServer server;
+
+    // Modifications should be made only after obtained a lock from #usersSessionsCache
     private final LocalRoutingTable<LocalClientSession> localClientRoutingTable = new LocalRoutingTable<>();
+
+    // Modifications should be made only after obtained a lock from #serversCache
     private final LocalRoutingTable<LocalOutgoingServerSession> localServerRoutingTable = new LocalRoutingTable<>();
+
+    // Modifications should be made only after obtained a lock from #componentsCache
     private final LocalRoutingTable<RoutableChannelHandler> localComponentRoutingTable = new LocalRoutingTable<>(); // TODO see if the type can be made more specific.
+
     private RemotePacketRouter remotePacketRouter;
     private IQRouter iqRouter;
     private MessageRouter messageRouter;
@@ -231,21 +238,23 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 // Existing implementation assumes that only one node has an outgoing server connection for a domain. Fail if that's not the case. See: OF-2280
                 throw new IllegalStateException("The local cluster node attempts to established a new S2S connection to '"+address+"', but such a connection already exists on cluster node '"+oldValue+"'.");
             }
+
+            localServerRoutingTable.addRoute(address, destination);
         }
         finally {
             lock.unlock();
         }
-        localServerRoutingTable.addRoute(address, destination);
     }
 
     @Override
     public void addComponentRoute(JID route, RoutableChannelHandler destination) {
         DomainPair pair = new DomainPair("", route.getDomain());
         String address = route.getDomain();
-        localComponentRoutingTable.addRoute(pair, destination);
         Lock lock = componentsCache.getLock(address);
         lock.lock();
         try {
+            localComponentRoutingTable.addRoute(pair, destination);
+
             HashSet<NodeID> nodes = componentsCache.get(address);
             if (nodes == null) {
                 nodes = new HashSet<>();
@@ -264,13 +273,15 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
         Log.debug("Adding client route {}", route);
 
-        Log.trace("Adding client route {} to local routing table", route);
-        localClientRoutingTable.addRoute(new DomainPair("", route.toFullJID()), destination);
+        final DomainPair domainPair = new DomainPair("", route.toFullJID());
 
         final ClientRoute newClientRoute = new ClientRoute(server.getNodeID(), destination.getPresence().isAvailable());
         final Lock lock = usersSessionsCache.getLock(route.toBareJID());
         lock.lock();
         try {
+            Log.trace("Adding client route {} to local routing table", route);
+            localClientRoutingTable.addRoute(domainPair, destination);
+
             if (destination.getAuthToken().isAnonymous()) {
                 Log.trace("Adding client route {} to anonymous users cache under key {}", newClientRoute, route);
                 anonymousUsersCache.put(route.toFullJID(), newClientRoute);
@@ -1026,6 +1037,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
 
         Log.debug("Removing client route {}", route);
+        final DomainPair domainPair = new DomainPair("", route.toString());
+
         boolean sessionRemoved;
         final Lock lock = usersSessionsCache.getLock(route.toBareJID());
         lock.lock();
@@ -1053,12 +1066,13 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                     sessionRemoved = true;
                 }
             }
+
+            Log.trace("Removing client route {} from local routing table", route);
+            localClientRoutingTable.removeRoute(domainPair);
         } finally {
             lock.unlock();
         }
 
-        Log.trace("Removing client route {} from local routing table", route);
-        localClientRoutingTable.removeRoute(new DomainPair("", route.toString()));
         return sessionRemoved;
     }
 
@@ -1069,11 +1083,11 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         lock.lock();
         try {
             removed = serversCache.remove(route) != null;
+            localServerRoutingTable.removeRoute(route);
         }
         finally {
             lock.unlock();
         }
-        localServerRoutingTable.removeRoute(route);
         return removed;
     }
 
@@ -1105,12 +1119,12 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                     componentsCache.put(address, nodes);
                 }
             }
+
+            if (removed || XMPPServer.getInstance().getNodeID().equals(nodeID)) {
+                localComponentRoutingTable.removeRoute(new DomainPair("", address));
+            }
         } finally {
             lock.unlock();
-        }
-
-        if (removed || XMPPServer.getInstance().getNodeID().equals(nodeID)) {
-            localComponentRoutingTable.removeRoute(new DomainPair("", address));
         }
 
         return removed;

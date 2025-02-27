@@ -350,6 +350,8 @@ public class StreamManager {
         // OF-2811: Cannot resume a session that's already closed. That session is likely busy firing its 'closeListeners'.
         if (route.isClosed()) {
             Log.debug("Not allowing a client of '{}' to resume a session, as the preexisting session is already in process of being closed.", fullJid);
+            sendError(new PacketError(PacketError.Condition.unexpected_request));
+            return;
         }
 
         // Previd identifies proper session. Now check SM status

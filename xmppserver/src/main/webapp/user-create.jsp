@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@
         // Trim the password. This means we don't accept spaces as passwords. We don't
         // trim the passwordConfirm as well since not trimming will ensure the user doesn't
         // think space is an ok password character.
-        if (password == null || password.trim().equals("")) {
+        if (password == null || password.trim().isEmpty()) {
             errors.put("password","");
         }
         if (passwordConfirm == null) {
@@ -113,7 +113,7 @@
         }
         // If provider requires name, validate
         if (UserManager.getUserProvider().isNameRequired()) {
-            if (name == null || name.equals("")) {
+            if (name == null || name.isEmpty()) {
                 errors.put("name","");
             }
         }

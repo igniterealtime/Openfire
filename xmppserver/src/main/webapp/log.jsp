@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@
     static final SimpleDateFormat formatter = new SimpleDateFormat("yyyy.MM.dd kk:mm:ss");
 
     private static String parseDate(String input) {
-        if (input == null || "".equals(input)) {
+        if (input == null || input.isEmpty()) {
             return input;
         }
         if (input.length() < 19) {
@@ -77,7 +77,7 @@
     }
 
     private static String leadingWhitespaceNonBreaking(String input) {
-        if (input == null || "".equals(input)) {
+        if (input == null || input.isEmpty()) {
             return input;
         }
         int i = 0;
@@ -92,7 +92,7 @@
     }
 
     private static String hilite(String input) {
-        if (input == null || "".equals(input)) {
+        if (input == null || input.isEmpty()) {
             return input;
         }
         if (input.contains("org.jivesoftware.")) {

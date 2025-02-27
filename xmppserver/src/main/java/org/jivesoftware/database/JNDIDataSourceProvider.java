@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ public class JNDIDataSourceProvider implements ConnectionProvider {
 
     @Override
     public void start() {
-        if (dataSourceName == null || dataSourceName.equals("")) {
+        if (dataSourceName == null || dataSourceName.isEmpty()) {
             Log.error("No name specified for DataSource. JNDI lookup will fail", new Throwable());
             return;
         }

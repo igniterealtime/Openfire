@@ -74,7 +74,7 @@ public class ComponentStanzaHandler extends StanzaHandler {
             String initialDomain = component.getInitialSubdomain();
             String extraDomain = doc.attributeValue("name");
             String allowMultiple = doc.attributeValue("allowMultiple");
-            if (extraDomain == null || "".equals(extraDomain)) {
+            if (extraDomain == null || extraDomain.isEmpty()) {
                 // No new bind domain was specified so return a bad_request error
                 Element reply = doc.createCopy();
                 reply.add(new PacketError(PacketError.Condition.bad_request).getElement());

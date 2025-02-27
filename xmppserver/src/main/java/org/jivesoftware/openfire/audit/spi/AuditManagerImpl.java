@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -364,7 +364,7 @@ public class AuditManagerImpl extends BasicModule implements AuditManager, Prope
                 break;
             case "xmpp.audit.logdir":
                 File d = null;
-                if (!"".equals(value.trim())) {
+                if (!value.trim().isEmpty()) {
                     d = new File(value);
                 }
                 logDir = (d == null || !d.exists() || !d.canRead() || !d.canWrite() || !d

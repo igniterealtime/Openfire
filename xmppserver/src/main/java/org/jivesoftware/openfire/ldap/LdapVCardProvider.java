@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -545,7 +545,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
         private Element treeWalk(Element rootElement, Map<String, String> map) {
             for ( final Element element : rootElement.elements() ) {
                 String elementText = element.getTextTrim();
-                if (elementText != null && !"".equals(elementText)) {
+                if (elementText != null && !elementText.isEmpty()) {
                     String format = element.getStringValue();
 
                     // A map that will hold all replacements for placeholders

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,11 +110,11 @@ public class User implements Cacheable, Externalizable, Result {
             throw new NullPointerException("Username cannot be null");
         }
         this.username = username;
-        if (UserManager.getUserProvider().isNameRequired() && (name == null || "".equals(name.trim()))) {
+        if (UserManager.getUserProvider().isNameRequired() && (name == null || name.trim().isEmpty())) {
             throw new IllegalArgumentException("Invalid or empty name specified with provider that requires name");
         }
         this.name = name;
-        if (UserManager.getUserProvider().isEmailRequired() && (email == null || "".equals(email.trim()))) {
+        if (UserManager.getUserProvider().isEmailRequired() && (email == null || email.trim().isEmpty())) {
             throw new IllegalArgumentException("Empty email address specified with provider that requires email address. User: "
                                                 + username + " Email: " + email);
         }

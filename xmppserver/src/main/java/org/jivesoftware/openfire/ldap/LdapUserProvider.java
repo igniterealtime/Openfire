@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,12 +125,12 @@ public class LdapUserProvider implements UserProvider {
             }
             Date creationDate = null;
             Attribute creationDateField = attrs.get("createTimestamp");
-            if (creationDateField != null && "".equals(((String) creationDateField.get()).trim())) {
+            if (creationDateField != null && ((String) creationDateField.get()).trim().isEmpty()) {
                 creationDate = parseLDAPDate((String) creationDateField.get());
             }
             Date modificationDate = null;
             Attribute modificationDateField = attrs.get("modifyTimestamp");
-            if (modificationDateField != null && "".equals(((String) modificationDateField.get()).trim())) {
+            if (modificationDateField != null && ((String) modificationDateField.get()).trim().isEmpty()) {
                 modificationDate = parseLDAPDate((String)modificationDateField.get());
             }
             // Escape the username so that it can be used as a JID.
@@ -320,7 +320,7 @@ public class LdapUserProvider implements UserProvider {
     public Collection<User> findUsers(Set<String> fields, String query, int startIndex,
             int numResults) throws UnsupportedOperationException
     {
-        if (fields.isEmpty() || query == null || "".equals(query)) {
+        if (fields.isEmpty() || query == null || query.isEmpty()) {
             return Collections.emptyList();
         }
         

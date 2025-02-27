@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2006-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2006-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@
     Map<String, String> userSettings =
             (Map<String, String>) session.getAttribute("ldapUserSettings");
     // Run the test if password was provided and we have the ldap information
-    if (errorDetail.equals( "" ) && settings != null && password != null) {
+    if (errorDetail.isEmpty() && settings != null && password != null) {
         LdapManager manager = new LdapManager(settings);
         manager.setUsernameField(userSettings.get("ldap.usernameField"));
         manager.setSearchFilter(userSettings.get("ldap.searchFilter"));

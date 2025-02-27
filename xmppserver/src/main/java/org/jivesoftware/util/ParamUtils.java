@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2020 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class ParamUtils {
     {
         String temp = request.getParameter(name);
         if (temp != null) {
-            if (temp.equals("") && !emptyStringsOK) {
+            if (temp.isEmpty() && !emptyStringsOK) {
                 return null;
             }
             else {
@@ -165,7 +165,7 @@ public class ParamUtils {
     public static int getIntParameter(HttpServletRequest request,
                                       String name, int defaultNum) {
         String temp = request.getParameter(name);
-        if (temp != null && !temp.equals("")) {
+        if (temp != null && !temp.isEmpty()) {
             int num = defaultNum;
             try {
                 num = Integer.parseInt(temp);
@@ -220,7 +220,7 @@ public class ParamUtils {
      */
     public static double getDoubleParameter(HttpServletRequest request, String name, double defaultNum) {
         String temp = request.getParameter(name);
-        if (temp != null && !temp.equals("")) {
+        if (temp != null && !temp.isEmpty()) {
             double num = defaultNum;
             try {
                 num = Double.parseDouble(temp);
@@ -248,7 +248,7 @@ public class ParamUtils {
      */
     public static long getLongParameter(HttpServletRequest request, String name, long defaultNum) {
         String temp = request.getParameter(name);
-        if (temp != null && !temp.equals("")) {
+        if (temp != null && !temp.isEmpty()) {
             long num = defaultNum;
             try {
                 num = Long.parseLong(temp);
@@ -318,7 +318,7 @@ public class ParamUtils {
     {
         String temp = (String)request.getAttribute(name);
         if (temp != null) {
-            if (temp.equals("") && !emptyStringsOK) {
+            if (temp.isEmpty() && !emptyStringsOK) {
                 return null;
             }
             else {
@@ -358,7 +358,7 @@ public class ParamUtils {
      */
     public static int getIntAttribute(HttpServletRequest request, String name, int defaultNum) {
         String temp = (String)request.getAttribute(name);
-        if (temp != null && !temp.equals("")) {
+        if (temp != null && !temp.isEmpty()) {
             int num = defaultNum;
             try {
                 num = Integer.parseInt(temp);
@@ -384,7 +384,7 @@ public class ParamUtils {
      */
     public static long getLongAttribute(HttpServletRequest request, String name, long defaultNum) {
         String temp = (String)request.getAttribute(name);
-        if (temp != null && !temp.equals("")) {
+        if (temp != null && !temp.isEmpty()) {
             long num = defaultNum;
             try {
                 num = Long.parseLong(temp);

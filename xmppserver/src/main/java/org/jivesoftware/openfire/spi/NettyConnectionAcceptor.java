@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
      * <p>
      * The parent 'boss' accepts an incoming connection.
      */
-    private final EventLoopGroup parentGroup = new NioEventLoopGroup();
+    private final EventLoopGroup parentGroup;
 
     /**
      * A multithreaded event loop that handles I/O operation
@@ -96,10 +96,13 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
     public NettyConnectionAcceptor(ConnectionConfiguration configuration) {
         super(configuration);
 
-        String name = configuration.getType().toString().toLowerCase() + (isDirectTLSConfigured() ? "_ssl" : "");
+        final String name = configuration.getType().toString().toLowerCase() + (isDirectTLSConfigured() ? "_ssl" : "");
 
-        final ThreadFactory threadFactory = new NamedThreadFactory( name + "-thread-", null, true, null );
-        childGroup = new NioEventLoopGroup(configuration.getMaxThreadPoolSize(), threadFactory);
+        final ThreadFactory parentGroupthreadFactory = new NamedThreadFactory(name + "-acceptor-", null, false, 5);
+        parentGroup = new NioEventLoopGroup(parentGroupthreadFactory);
+
+        final ThreadFactory childGroupthreadFactory = new NamedThreadFactory( name + "-worker-", null, true, null );
+        childGroup = new NioEventLoopGroup(configuration.getMaxThreadPoolSize(), childGroupthreadFactory);
 
         Log = LoggerFactory.getLogger( NettyConnectionAcceptor.class.getName() + "[" + name + "]" );
     }

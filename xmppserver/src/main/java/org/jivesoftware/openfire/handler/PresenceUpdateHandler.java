@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -315,7 +315,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
             // Local updates can simply run through the roster of the local user
             String name = update.getFrom().getNode();
             try {
-                if (name != null && !"".equals(name)) {
+                if (name != null && !name.isEmpty()) {
                     Roster roster = rosterManager.getRoster(name);
                     roster.broadcastPresence(update);
                 }
@@ -353,7 +353,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
         if (localServer.isLocal(update.getFrom())) {
             boolean keepTrack = false;
             String name = update.getFrom().getNode();
-            if (name != null && !"".equals(name)) {
+            if (name != null && !name.isEmpty()) {
                 // Keep track of all directed presences if roster service is disabled
                 if (!RosterManager.isRosterServiceEnabled()) {
                     keepTrack = true;

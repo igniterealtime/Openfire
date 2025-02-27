@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2019-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,7 +126,7 @@ public class HttpBindBody
     {
         // Default language is English ("en").
         final String language = document.getRootElement().attributeValue( QName.get( "lang", XMLConstants.XML_NS_URI ) );
-        if ( language == null || "".equals( language ) )
+        if ( language == null || language.isEmpty())
         {
             return "en";
         }
@@ -156,7 +156,7 @@ public class HttpBindBody
     public String getVersion()
     {
         final String version = document.getRootElement().attributeValue( "ver" );
-        if ( version == null || "".equals( version ) )
+        if ( version == null || version.isEmpty())
         {
             return "1.5";
         }
@@ -207,7 +207,7 @@ public class HttpBindBody
     }
 
     protected static long getLongAttribute(String value, long defaultValue) {
-        if (value == null || "".equals(value)) {
+        if (value == null || value.isEmpty()) {
             return defaultValue;
         }
         try {
@@ -219,7 +219,7 @@ public class HttpBindBody
     }
 
     protected static int getIntAttribute(String value, int defaultValue) {
-        if (value == null || "".equals(value)) {
+        if (value == null || value.isEmpty()) {
             return defaultValue;
         }
         try {

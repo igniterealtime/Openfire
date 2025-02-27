@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2021-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,7 +105,7 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
     @Nullable
     private Object unmarshall(@Nullable final String object)
     {
-        if (object == null || "".equals(object)) {
+        if (object == null || object.isEmpty()) {
             return null;
         } else {
             final Reader reader = new StringReader(object);

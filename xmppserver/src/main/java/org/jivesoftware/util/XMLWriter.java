@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2006 Jive Software, 2017-2020 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2006 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1165,13 +1165,13 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
 
         writer.write("<!DOCTYPE ");
         writer.write(name);
-        if ((publicID != null) && (!publicID.equals(""))) {
+        if ((publicID != null) && (!publicID.isEmpty())) {
             writer.write(" PUBLIC \"");
             writer.write(publicID);
             writer.write("\"");
             hasPublic = true;
         }
-        if ((systemID != null) && (!systemID.equals(""))) {
+        if ((systemID != null) && (!systemID.isEmpty())) {
             if (!hasPublic) {
                 writer.write(" SYSTEM");
             }

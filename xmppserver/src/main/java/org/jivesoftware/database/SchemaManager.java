@@ -374,7 +374,7 @@ public class SchemaManager {
                     }
                 }
                 // Send command to database.
-                if (!done && !command.toString().equals("")) {
+                if (!done && !command.toString().isEmpty()) {
                     // Remove last semicolon when using Oracle or DB2 to prevent "invalid character error"
                     if (DbConnectionManager.getDatabaseType() == DbConnectionManager.DatabaseType.oracle ||
                             DbConnectionManager.getDatabaseType() == DbConnectionManager.DatabaseType.db2) {
@@ -421,7 +421,7 @@ public class SchemaManager {
      */
     private static boolean isSQLCommandPart(String line) {
         line = line.trim();
-        if (line.equals("")) {
+        if (line.isEmpty()) {
             return false;
         }
         // Check to see if the line is a comment. Valid comment types:

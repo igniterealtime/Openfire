@@ -437,7 +437,7 @@ public class XMPPPacketReader {
                         dropNamespace = true;
                         for (Element el = parent; el != null; el = el.getParent()) {
                             final String defaultNS = el.getNamespaceForPrefix("").getURI();
-                            if (defaultNS.equals("")) {
+                            if (defaultNS.isEmpty()) {
                                 // We've cleared this one already, just bail.
                                 break;
                             }

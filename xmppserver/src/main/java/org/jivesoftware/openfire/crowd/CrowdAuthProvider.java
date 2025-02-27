@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Issa Gorissen <issa-gorissen@usa.net>, 2016-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2012 Issa Gorissen <issa-gorissen@usa.net>, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public class CrowdAuthProvider implements AuthProvider {
             throw new ConnectionException("Unable to connect to Crowd");
         }
 
-        if (username == null || password == null || "".equals(password.trim())) {
+        if (username == null || password == null || password.trim().isEmpty()) {
             throw new UnauthorizedException();
         }
 

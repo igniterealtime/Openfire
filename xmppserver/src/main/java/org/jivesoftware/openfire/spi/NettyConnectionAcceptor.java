@@ -98,10 +98,11 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
 
         final String name = configuration.getType().toString().toLowerCase() + (isDirectTLSConfigured() ? "_ssl" : "");
 
-        final ThreadFactory parentGroupthreadFactory = new NamedThreadFactory(name + "-acceptor-", null, false, 5);
+        // The configuration of threads is based on defaults used by io.netty.util.concurrent.DefaultThreadFactory (OF-3028)
+        final ThreadFactory parentGroupthreadFactory = new NamedThreadFactory(name + "-acceptor-", null, false, Thread.NORM_PRIORITY);
         parentGroup = new NioEventLoopGroup(parentGroupthreadFactory);
 
-        final ThreadFactory childGroupthreadFactory = new NamedThreadFactory( name + "-worker-", null, true, null );
+        final ThreadFactory childGroupthreadFactory = new NamedThreadFactory(name + "-worker-", null, false, Thread.NORM_PRIORITY);
         childGroup = new NioEventLoopGroup(configuration.getMaxThreadPoolSize(), childGroupthreadFactory);
 
         Log = LoggerFactory.getLogger( NettyConnectionAcceptor.class.getName() + "[" + name + "]" );

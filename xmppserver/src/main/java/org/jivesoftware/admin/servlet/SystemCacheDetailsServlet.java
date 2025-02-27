@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2019-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class SystemCacheDetailsServlet extends HttpServlet {
             .findAny()
             .map(cache -> (Cache<?, ?>) cache);
 
-        if (!optionalCache.isPresent()) {
+        if (optionalCache.isEmpty()) {
             request.setAttribute("warningMessage", LocaleUtils.getLocalizedString("system.cache-details.cache_not_found", Collections.singletonList(StringUtils.escapeHTMLTags(cacheName))));
         }
 

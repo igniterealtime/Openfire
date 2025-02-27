@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2019-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public class SecurityAuditViewerServlet extends HttpServlet {
         Optional<Date> from;
         if (!search.from.isEmpty()) {
             from = parseSearchDate(search.from);
-            if (!from.isPresent()) {
+            if (from.isEmpty()) {
                 // Nothing matches a bad date!
                 predicate = auditEvent -> false;
             }
@@ -81,7 +81,7 @@ public class SecurityAuditViewerServlet extends HttpServlet {
         Optional<Date> to;
         if (!search.to.isEmpty()) {
             to = parseSearchDate(search.to);
-            if (!to.isPresent()) {
+            if (to.isEmpty()) {
                 // Nothing matches a bad date!
                 predicate = auditEvent -> false;
             }

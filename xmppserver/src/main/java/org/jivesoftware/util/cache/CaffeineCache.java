@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2019-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,17 +73,17 @@ public class CaffeineCache<K extends Serializable, V extends Serializable> imple
     private CaffeineCache( com.github.benmanes.caffeine.cache.Cache<K,V> cache, String name )
     {
         // Asserts that the configuration of the class is compatible with Jive's Cache interface contract.
-        if (!cache.policy().eviction().isPresent() )
+        if (cache.policy().eviction().isEmpty())
         {
             throw new IllegalArgumentException( "This class can only be used with cache implementations that have an eviction policy (that is weight-based)." );
         }
 
-        if (!cache.policy().eviction().get().weightedSize().isPresent())
+        if (cache.policy().eviction().get().weightedSize().isEmpty())
         {
             throw new IllegalArgumentException( "This class can only be used with cache implementations that have an eviction policy that is weight-based." );
         }
 
-        if (!cache.policy().expireAfterWrite().isPresent())
+        if (cache.policy().expireAfterWrite().isEmpty())
         {
             throw new IllegalArgumentException( "This class can only be used with cache implementations that have an expire-after-write policy." );
         }

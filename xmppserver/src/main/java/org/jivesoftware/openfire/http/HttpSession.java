@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -823,7 +823,7 @@ public class HttpSession extends LocalClientSession {
     {
         Log.debug("Session {} requesting a retransmission for rid {}", getStreamID(), connection.getRequestId());
         final Optional<Delivered> deliverable = retrieveDeliverable(connection.getRequestId());
-        if (!deliverable.isPresent()) {
+        if (deliverable.isEmpty()) {
             Log.warn("Deliverable unavailable for " + connection.getRequestId() + " in session " + getStreamID());
             throw new HttpBindException("Unexpected RID error.", BoshBindingError.itemNotFound);
         }
@@ -965,7 +965,7 @@ public class HttpSession extends LocalClientSession {
 
         final Optional<HttpConnection> connection = getConnectionReadyForOutboundDelivery();
 
-        if (!connection.isPresent()) {
+        if (connection.isEmpty()) {
             Log.trace("Immediate delivery of pending data to the client on session {} was requested, but no connection is available. The data ({} deliverables) will be re-queued.", getStreamID(), deliverables.size());
             // place pending deliverables back on queue. // FIXME: if other threads have placed pending elements, this will cause a re-order, which might be undesirable.
             pendingElements.addAll(deliverables);

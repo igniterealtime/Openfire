@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2020 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public class ModifySubscriptionTask extends SubscriptionTask
         // in this case since any changes that might have been applied here will also have been applied to the database
         // by the cluster node where this task originated, meaning that those changes get loaded from the database when
         // the pubsub node is retrieved from the database in the future (OF-2077)
-        if (!optNode.isPresent()) {
+        if (optNode.isEmpty()) {
             return;
         }
 

@@ -47,8 +47,6 @@ import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.jcraft.jzlib.JZlib.Z_BEST_COMPRESSION;
@@ -221,10 +219,6 @@ public class NettyConnection extends AbstractConnection
                 f = channelHandlerContext.newSucceededFuture();
             }
 
-            // OF-2808: Ensure that the connection is done invoking its 'close' listeners before returning from this
-            // method, otherwise stream management's "resume" functionality breaks (the 'close' listeners have been
-            // observed to act on a newly attached stream/connection, instead of the old one).
-            final CountDownLatch latch = new CountDownLatch(1);
             f.addListener(e -> Log.trace("Flushed any final bytes, closing connection."))
                 .addListener(ChannelFutureListener.CLOSE)
                 .addListener(e -> {
@@ -235,19 +229,9 @@ public class NettyConnection extends AbstractConnection
                             if (t != null) {
                                 Log.warn("Exception while invoking close listeners for {}", this, t);
                             }
-                            latch.countDown(); // Ensure we're not kept waiting! OF-2845
                         });
                 })
                 .addListener(e -> Log.trace("Finished closing connection."));
-
-            try {
-                // TODO: OF-2811 Remove this blocking operation, by allowing the invokers of this method to use a Future.
-                if (!latch.await(10, TimeUnit.MINUTES)) {
-                    Log.warn("Timed out waiting for close listeners to complete.");
-                }
-            } catch (InterruptedException e) {
-                Log.debug("Stopped waiting on connection being closed, as an interrupt happened.", e);
-            }
         }
     }
 

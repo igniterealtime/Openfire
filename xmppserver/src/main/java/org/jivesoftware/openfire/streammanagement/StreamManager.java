@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -346,6 +346,12 @@ public class StreamManager {
             return;
         }
         Log.debug("Found existing session for '{}', checking status", fullJid);
+
+        // OF-2811: Cannot resume a session that's already closed. That session is likely busy firing its 'closeListeners'.
+        if (route.isClosed()) {
+            Log.debug("Not allowing a client of '{}' to resume a session, as the preexisting session is already in process of being closed.", fullJid);
+        }
+
         // Previd identifies proper session. Now check SM status
         if (!otherSession.getStreamManager().resume) {
             Log.debug("Not allowing a client of '{}' to resume a session, the session to be resumed does not have the stream management resumption feature enabled.", fullJid);

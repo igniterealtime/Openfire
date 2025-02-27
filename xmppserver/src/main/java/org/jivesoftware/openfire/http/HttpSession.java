@@ -52,6 +52,7 @@ import java.io.StringReader;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.security.cert.X509Certificate;
+import java.text.MessageFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -870,15 +871,8 @@ public class HttpSession extends LocalClientSession {
                 }
             }
             lastPoll = time;
-            Log.debug("Updated session " + getStreamID() +
-                    " lastPoll to " + lastPoll +
-                    " with rid " + connection.getRequestId() +
-                    " lastResponseEmpty = " + lastResponseEmpty  +
-                    " overactivity = " + overactivity +
-                    " deltaFromLastPoll = " + deltaFromLastPoll +
-                    " isPollingSession() = " + localIsPollingSession +
-                    " maxRequests = " + maxRequests +
-                    " pendingConnections = " + pendingConnections);
+            Log.debug("Updated session {} lastPoll to {} with rid {} lastResponseEmpty = {} overactivity = {} deltaFromLastPoll = {} isPollingSession() = {} maxRequests = {} pendingConnections = {}",
+                      getStreamID(), lastPoll, connection.getRequestId(), lastResponseEmpty, overactivity, deltaFromLastPoll, localIsPollingSession, maxRequests, pendingConnections);
         }
         setLastResponseEmpty(false);
 

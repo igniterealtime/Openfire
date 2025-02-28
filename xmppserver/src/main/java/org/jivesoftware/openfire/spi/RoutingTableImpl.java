@@ -1056,14 +1056,14 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
             if (usersSessionsCache.containsKey(route.toBareJID())) {
                 // The user session still needs to be removed
-                if (clientRoute == null) {
-                    Log.warn("Client route not found for route {}, while user session still exists, Current content of users cache: {}. Current content of anonymous users cache: {}", route.toBareJID(), usersCache, anonymousUsersCache);
-                }
-
                 Log.trace("Removing client full JID {} from users sessions cache under key {}", route.toFullJID(), route.toBareJID());
                 // Acquires the same lock, which should not be an issue as the lock implementation (both Openfire's and Hazelcast's) is reentrant.
                 if (CacheUtil.removeValueFromMultiValuedCache(usersSessionsCache, route.toBareJID(), route.toFullJID())) {
                     sessionRemoved = true;
+                }
+
+                if (clientRoute == null && sessionRemoved) {
+                    Log.warn("Client route not found for route {}, while user session still existed. This is indicative of a data inconsistency, which is likely a bug in Openfire.", route);
                 }
             }
 

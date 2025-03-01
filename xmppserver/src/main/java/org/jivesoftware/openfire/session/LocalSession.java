@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2009 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -500,13 +500,6 @@ public abstract class LocalSession implements Session {
         return Optional.ofNullable(conn)
                 .map(Connection::getPeerCertificates)
                 .orElse(new Certificate[0]);
-    }
-
-    @Override
-    public boolean isClosed() {
-        return Optional.ofNullable(conn)
-                .map(Connection::isClosed)
-                .orElse(Boolean.TRUE);
     }
 
     @Override

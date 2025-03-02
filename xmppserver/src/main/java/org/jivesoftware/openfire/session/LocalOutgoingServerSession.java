@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.event.ServerSessionEventDispatcher;
 import org.jivesoftware.openfire.nio.NettySessionInitializer;
+import org.jivesoftware.openfire.nio.NetworkEntityUnreachableException;
 import org.jivesoftware.openfire.server.OutgoingServerSocketReader;
 import org.jivesoftware.openfire.server.RemoteServerManager;
 import org.jivesoftware.openfire.server.ServerDialback;
@@ -261,6 +262,11 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             // Wait for the future to give us a session...
             // Set a read timeout so that we don't keep waiting forever
             return (LocalOutgoingServerSession) sessionInitialiser.init(listener).get(INITIALISE_TIMEOUT_SECONDS.getValue().getSeconds(), TimeUnit.SECONDS);
+        } catch (NetworkEntityUnreachableException e) {
+            Log.warn("Cannot connect to XMPP domain '{}' (from '{}'): Unable to create a socket connection to a host that associated " +
+                "to the domain. This is typically caused by an outage (the remote server may be turned off) or a network configuration " +
+                "issue (eg: missing or invalid DNS records, restrictive firewalls, etc.).", domainPair.getRemote(), domainPair.getLocal());
+            sessionInitialiser.stop();
         } catch (Exception e) {
             // This might be RFC6120, section 5.4.2.2 "Failure Case" or even an unrelated problem. Handle 'normally'.
             log.warn("An exception occurred while creating a session. Closing connection.", e);

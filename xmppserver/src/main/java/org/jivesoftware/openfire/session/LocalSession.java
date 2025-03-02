@@ -25,6 +25,7 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -500,6 +501,18 @@ public abstract class LocalSession implements Session {
         return Optional.ofNullable(conn)
                 .map(Connection::getPeerCertificates)
                 .orElse(new Certificate[0]);
+    }
+
+    // TODO: Remove this override. The override (and the boolean property) serves as a emergency fallback for the change in OF-3031 and _should not_ be needed. It should be desirable to use #getStatus() only.
+    @Override
+    public boolean isClosed() {
+        if (JiveGlobals.getBooleanProperty("xmpp.session.isclose.connectionbased", false)) {
+            return Optional.ofNullable(conn)
+                .map(Connection::isClosed)
+                .orElse(Boolean.TRUE);
+        } else {
+            return getStatus() == Status.CLOSED;
+        }
     }
 
     @Override

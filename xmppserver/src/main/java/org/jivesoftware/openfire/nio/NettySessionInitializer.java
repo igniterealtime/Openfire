@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@ public class NettySessionInitializer {
         final Map.Entry<Socket, Boolean> socketToXmppDomain = SocketUtil.createSocketToXmppDomain(domainPair.getRemote(), port );
 
         if ( socketToXmppDomain == null ) {
-            throw new RuntimeException("Unable to create new session: Cannot create a plain socket connection with any applicable remote host.");
+            throw new NetworkEntityUnreachableException("Cannot establish connection to any host in the XMPP domain '" + domainPair.getRemote() + "'.");
         }
         Socket socket = socketToXmppDomain.getKey();
         this.directTLS = socketToXmppDomain.getValue();

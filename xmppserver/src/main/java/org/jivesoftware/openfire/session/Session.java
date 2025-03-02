@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,6 +140,14 @@ public interface Session extends RoutableChannelHandler {
     default boolean isClosed() {
         return getStatus() == Status.CLOSED;
     };
+
+    /**
+     * Returns true if the session is detached (that is, if the underlying connection
+     * has been closed while the session instance itself has not been closed).
+     *
+     * @return true if session detached
+     */
+    boolean isDetached();
 
     /**
      * Returns true if this session uses encrypted communication paths when exchanging data with the remote XMPP entity.

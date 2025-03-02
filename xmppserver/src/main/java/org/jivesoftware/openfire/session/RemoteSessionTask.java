@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2009 Jive Software, 2021-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2007-2009 Jive Software, 2021-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,21 +114,32 @@ public abstract class RemoteSessionTask implements ClusterTask<Object> {
         else if (operation == Operation.isClosed) {
             result = getSession().isClosed();
         }
+        else if (operation == Operation.isDetached) {
+            result = getSession().isDetached();
+        }
         else if (operation == Operation.isEncrypted) {
             result = getSession().isEncrypted();
         }
         else if (operation == Operation.getHostAddress) {
             try {
-                result = getSession().getHostAddress();
+                if (getSession().isDetached()) {
+                    Log.debug("Unable to get host-address of detached session: {}", getSession());
+                } else {
+                    result = getSession().getHostAddress();
+                }
             } catch (UnknownHostException e) {
-                Log.error("Error getting address of session: " + getSession(), e);
+                Log.error("Error getting address of session: {}", getSession(), e);
             }
         }
         else if (operation == Operation.getHostName) {
             try {
-                result = getSession().getHostName();
+                if (getSession().isDetached()) {
+                    Log.debug("Unable to get hostname of detached session: {}", getSession());
+                } else {
+                    result = getSession().getHostName();
+                }
             } catch (UnknownHostException e) {
-                Log.error("Error getting address of session: " + getSession(), e);
+                Log.error("Error getting address of session: {}", getSession(), e);
             }
         }
         else if (operation == Operation.validate) {
@@ -186,6 +197,7 @@ public abstract class RemoteSessionTask implements ClusterTask<Object> {
         getSoftwareVersion,
         close,
         isClosed,
+        isDetached,
         isEncrypted,
         getHostAddress,
         getHostName,

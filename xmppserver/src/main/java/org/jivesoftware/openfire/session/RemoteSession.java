@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2009 Jive Software, 2021-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2007-2009 Jive Software, 2021-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,6 +147,13 @@ public abstract class RemoteSession implements Session {
 
     public boolean isClosed() {
         ClusterTask<Object> task = getRemoteSessionTask(RemoteSessionTask.Operation.isClosed);
+        final Object clusterTaskResult = doSynchronousClusterTask(task);
+        return clusterTaskResult == null ? false : (Boolean) clusterTaskResult;
+    }
+
+    @Override
+    public boolean isDetached() {
+        ClusterTask<Object> task = getRemoteSessionTask(RemoteSessionTask.Operation.isDetached);
         final Object clusterTaskResult = doSynchronousClusterTask(task);
         return clusterTaskResult == null ? false : (Boolean) clusterTaskResult;
     }

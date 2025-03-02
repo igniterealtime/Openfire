@@ -134,12 +134,7 @@ public abstract class LocalSession implements Session {
 
     }
 
-    /**
-     * Returns true if the session is detached (that is, if the underlying connection
-     * has been closed while the session instance itself has not been closed).
-     *
-     * @return true if session detached
-     */
+    @Override
     public boolean isDetached() {
         return this.sessionManager.isDetached(this);
     }

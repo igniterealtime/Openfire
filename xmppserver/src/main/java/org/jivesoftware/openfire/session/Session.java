@@ -33,9 +33,9 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * The session represents a connection between the server and a client (c2s) or
- * another server (s2s) as well as a connection with a component. Authentication and
- * user accounts are associated with c2s connections while s2s has an optional authentication
+ * The session represents a link (often a socket connection) between the server and a remote XMPP entity. Examples of
+ * such entities include clients (c2s), other servers (s2s) as well as (external) components. Authentication and
+ * user accounts are associated with c2s links while s2s has an optional authentication
  * association but no single user.
  *
  * Obtain object managers from the session in order to access server resources.
@@ -121,28 +121,28 @@ public interface Session extends RoutableChannelHandler {
     long getNumServerPackets();
     
     /**
-     * Close this session including associated socket connection. The order of
+     * Close this session, including associated (socket) connection(s) where appropriate. The order of
      * events for closing the session is:
      * <ul>
      *      <li>Set closing flag to prevent redundant shutdowns.
      *      <li>Call notifyEvent all listeners that the channel is shutting down.
-     *      <li>Close the socket.
+     *      <li>Close the underlying connection(s) (eg: socket).
      * </ul>
      * Implementations should ensure that after invocation, the result of {@link #getStatus()} will be CLOSED.
      */
     void close();
 
     /**
-     * Returns true if the connection/session is closed.
+     * Returns true if the link to the remote XMPP entity (the session) is closed.
      *
-     * @return true if the connection is closed.
+     * @return true if the session is closed.
      */
     default boolean isClosed() {
         return getStatus() == Status.CLOSED;
     };
 
     /**
-     * Returns true if this session uses encrypted connections.
+     * Returns true if this session uses encrypted communication paths when exchanging data with the remote XMPP entity.
      *
      * @return true if the session is encrypted (e.g. TLS)
      */
@@ -204,7 +204,7 @@ public interface Session extends RoutableChannelHandler {
     void process( Packet packet );
 
     /**
-     * Delivers raw text to this connection. This is a very low level way for sending
+     * Delivers raw text to the remote XMPP entity. This is a very low level way for sending
      * XML stanzas to the client. This method should not be used unless you have very
      * good reasons for not using {@link #process(Packet)}.<p>
      *
@@ -217,7 +217,7 @@ public interface Session extends RoutableChannelHandler {
     void deliverRawText( String text );
 
     /**
-     * Verifies that the connection is still live. Typically this is done by
+     * Verifies that the session is still live. Typically this is done by
      * sending a whitespace character between packets.
      *
      * // TODO No one is sending this message now. Delete it?
@@ -227,7 +227,7 @@ public interface Session extends RoutableChannelHandler {
     boolean validate();
 
     /**
-     * Returns the TLS protocol name used by the connection of the session, if any.
+     * Returns the TLS protocol name used by the underlying connection(s) of the session, if any.
      *
      * Always returns a valid string, though the string may be "NONE"
      *
@@ -237,7 +237,7 @@ public interface Session extends RoutableChannelHandler {
     String getTLSProtocolName();
 
     /**
-     * Returns the TLS cipher suite name used by the connection of the session, if any.
+     * Returns the TLS cipher suite name used by the underlying connection(s) of the session, if any.
      *
      * Always returns a valid string, though the string may be "NONE"
      *
@@ -254,7 +254,7 @@ public interface Session extends RoutableChannelHandler {
     Locale getLanguage();
 
     /**
-     * Returns all Software Version data as reported by the peer on this connection,
+     * Returns all Software Version data as reported by the remote XMPP entity,
      * as obtained through XEP-0092.
      *
      * @return The Software Version information (never null, possibly empty)

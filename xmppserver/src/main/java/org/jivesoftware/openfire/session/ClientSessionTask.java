@@ -61,7 +61,11 @@ public class ClientSessionTask extends RemoteSessionTask {
 
     public void run() {
         if (getSession() == null || getSession().isClosed()) {
-            logger.error("Unable to execute task for JID {}: {}", address, this, new IllegalStateException("Session not found for JID: " + address));
+            if (this.operation == Operation.removeDetached) {
+                logger.debug("Asked to remove detached sessions for JID {}, but no such sessions exist.", address); // This is a rather likely scenario. Don't log an error for this (OF-3034).
+            } else {
+                logger.error("Unable to execute task for JID {}: {}", address, this, new IllegalStateException("Session not found for JID: " + address));
+            }
             return;
         }
         super.run();

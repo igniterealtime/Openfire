@@ -8,7 +8,6 @@
                  org.xmpp.packet.JID,
                  org.xmpp.packet.Presence"%>
  <%@ page import="java.net.URLEncoder"%>
- <%@ page import="org.jivesoftware.openfire.session.LocalSession" %>
  <%@ page import="java.text.NumberFormat" %>
 
  <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -23,7 +22,7 @@
  --%>
 
 <%  Session.Status _status = sess.getStatus();
-    boolean isDetached = sess instanceof LocalSession && ((LocalSession) sess).isDetached();
+    boolean isDetached = sess.isDetached();
 %>
 
  <%  if (current) { %>

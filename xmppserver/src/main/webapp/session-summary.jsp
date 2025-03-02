@@ -149,7 +149,7 @@
     if(!searchStatus.isEmpty()) {
         filter = filter.and(clientSession -> {
             if (searchStatus.equals("detached")) {
-                return clientSession instanceof LocalSession && ((LocalSession) clientSession).isDetached();
+                return clientSession.isDetached();
             }
             switch (clientSession.getStatus()) {
                 case CLOSED:

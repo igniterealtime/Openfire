@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public class DNSUtil {
             String property = JiveGlobals.getProperty("dnsutil.dnsOverride");
             if (property != null) {
                 dnsOverride = decode(property);
-                dnsOverride.forEach((domain, override) -> logger.info("Detected DNS override configuration for {} to {}", domain, override));
+                dnsOverride.forEach((domain, override) -> logger.debug("Detected DNS override configuration for {} to {}", domain, override));
             }
         }
         catch (Exception e) {
@@ -256,7 +256,7 @@ public class DNSUtil {
             } else {
                 result = optional.get();
                 if ( result.length == 0 ) {
-                    logger.info("No SRV record found for '{}' (cached result)", lookup);
+                    logger.debug("No SRV record found for '{}' (cached result)", lookup);
                 } else {
                     logger.trace("{} SRV record(s) found for '{}' (cached result)", result.length, lookup);
                 }
@@ -286,7 +286,7 @@ public class DNSUtil {
                 LOOKUP_CACHE.put(lookup, CacheableOptional.of(new SrvRecord[0])); // Empty result (different from negative result!)
                 result = new SrvRecord[0];
             } catch (NamingException e) {
-                logger.info("DNS SRV lookup was unsuccessful for '{}': {}", lookup, e);
+                logger.debug("DNS SRV lookup was unsuccessful for '{}': {}", lookup, e);
                 LOOKUP_CACHE.put(lookup, CacheableOptional.of(null)); // Negative result cache (different from empty result!)
                 result = new SrvRecord[0];
             }

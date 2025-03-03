@@ -119,6 +119,11 @@
             <filtered>true</filtered>
         </fileSet>
 
+        <!-- Copy supplementary files -->
+        <fileSet>
+            <directory>${project.basedir}/src/dist</directory>
+            <outputDirectory>dist</outputDirectory>
+        </fileSet>
     </fileSets>
 
 </assembly>

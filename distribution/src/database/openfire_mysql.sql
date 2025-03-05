@@ -219,7 +219,7 @@ CREATE TABLE ofMucRoomRetiree (
   name                VARCHAR(50)   NOT NULL,
   alternateJID        VARCHAR(2000),
   reason              VARCHAR(1024),
-  retiredAt           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  retiredAt           CHAR(15)      NOT NULL,
   PRIMARY KEY (serviceID,name)
 );
 

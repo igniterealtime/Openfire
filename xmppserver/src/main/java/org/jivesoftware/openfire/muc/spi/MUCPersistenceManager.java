@@ -117,7 +117,7 @@ public class MUCPersistenceManager {
         "fmucOutboundMode, fmucInboundNodes) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
     private static final String CHECK_RETIREES = "SELECT 1 FROM ofMucRoomRetiree WHERE serviceID=? AND name=?";
     private static final String ADD_RETIREE =
-        "INSERT INTO ofMucRoomRetiree (serviceID, name, alternateJID, reason) VALUES (?,?,?,?)";
+        "INSERT INTO ofMucRoomRetiree (serviceID, name, alternateJID, reason, retiredAt) VALUES (?,?,?,?,?)";
     private static final String UPDATE_SUBJECT =
         "UPDATE ofMucRoom SET subject=? WHERE roomID=?";
     private static final String UPDATE_LOCK =
@@ -595,6 +595,7 @@ public class MUCPersistenceManager {
                 } else {
                     pstmt.setString(4, reason.trim());
                 }
+                pstmt.setString(5, StringUtils.dateToMillis(new Date()));
 
                 pstmt.executeUpdate();
                 DbConnectionManager.fastcloseStmt(pstmt);

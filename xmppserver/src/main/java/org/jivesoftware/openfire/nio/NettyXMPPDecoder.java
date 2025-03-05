@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import org.xmpp.packet.StreamError;
 
 import javax.net.ssl.SSLHandshakeException;
 import java.io.IOException;
+import java.net.SocketException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -82,7 +83,17 @@ public class NettyXMPPDecoder extends ByteToMessageDecoder {
             return;
         }
 
-        Log.warn("Error occurred while decoding XMPP stanza, closing connection: {}", connection, cause);
+        if (isConnectionReset(cause)) {
+            if (connection.getConfiguration().getType().isClientOriented()) {
+                // For clients, a connection reset is very common (eg: network connectivity issue, mobile app killed in the background). Don't log as a warning (OF-3038)
+                Log.debug("Closing client connection, as the socket connection was reset: {}", connection, cause);
+            } else {
+                // For non-clients, a connection reset is less common. They're expected to be connected to more reliable network configuration. Log at a higher level.
+                Log.warn("Closing (non-client) connection, as the socket connection was reset: {}", connection, cause);
+            }
+        } else {
+            Log.warn("Error occurred while decoding XMPP stanza, closing connection: {}", connection, cause);
+        }
         connection.close(new StreamError(StreamError.Condition.internal_server_error, "An error occurred in XMPP Decoder"), cause instanceof IOException);
     }
 
@@ -103,5 +114,10 @@ public class NettyXMPPDecoder extends ByteToMessageDecoder {
         }
 
         return (t instanceof SSLHandshakeException);
+    }
+
+    private boolean isConnectionReset(Throwable t) {
+        return (t instanceof SocketException)
+            && "Connection reset".equalsIgnoreCase(t.getMessage());
     }
 }

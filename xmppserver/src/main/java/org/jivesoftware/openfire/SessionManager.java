@@ -35,6 +35,7 @@ import org.jivesoftware.openfire.server.OutgoingSessionPromise;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.spi.ConnectionType;
+import org.jivesoftware.openfire.streammanagement.TerminationDelegate;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.SystemProperty;
@@ -50,6 +51,7 @@ import org.xmpp.packet.Presence;
 import javax.annotation.Nonnull;
 import java.net.UnknownHostException;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -1947,24 +1949,33 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      */
     private class DetachedCleanupTask extends TimerTask {
         /**
-         * Close detached client sessions that haven't seen activity in more than
-         * 30 minutes by default.
+         * Close detached client sessions that haven't seen activity.
          */
         @Override
         public void run() {
-            int idleTime = getSessionDetachTime();
+            final int idleTime = getSessionDetachTime();
             if (idleTime == -1) {
                 return;
             }
-            final long deadline = System.currentTimeMillis() - idleTime;
+            final Duration allowableInactivity = Duration.ofMillis(idleTime);
+            final Instant deadline = Instant.now().minus(allowableInactivity);
             for (LocalSession session : detachedSessions.values()) {
                 try {
-                    Log.trace("Iterating over detached session '{}' ({}) to determine if it needs to be cleaned up.", session.getAddress(), session.getStreamID());
-                    if (session.getLastActiveDate().getTime() < deadline) {
-                        Log.debug("Detached session '{}' ({}) has been detached for longer than {} and will be cleaned up.", session.getAddress(), session.getStreamID(), Duration.ofMillis(idleTime));
-                        terminateDetached(session);
+                    final Set<TerminationDelegate> delegates = session.getStreamManager().getTerminationDelegates();
+                    if (!delegates.isEmpty()) {
+                        if (delegates.stream().allMatch(terminationDelegate -> terminationDelegate.shouldTerminate(allowableInactivity))) {
+                            Log.debug("Detached session '{}' ({}) uses termination delegation, that does wants to have this session cleaned up. Terminating session now.", session.getAddress(), session.getStreamID());
+                            terminateDetached(session);
+                        } else {
+                            Log.trace("Detached session '{}' ({}) uses termination delegation, that does not want to have this session cleaned up yet.", session.getAddress(), session.getStreamID());
+                        }
                     } else {
-                        Log.trace("Detached session '{}' ({}) has been detached for {}, which is not longer than the configured maximum of {}. It will not (yet) be cleaned up.", session.getAddress(), session.getStreamID(), Duration.ofMillis(System.currentTimeMillis()-session.getLastActiveDate().getTime()), Duration.ofMillis(idleTime));
+                        if (session.getLastActiveDate().toInstant().isBefore(deadline)) {
+                            Log.debug("Detached session '{}' ({}) has been detached for longer than {} and will be cleaned up.", session.getAddress(), session.getStreamID(), Duration.ofMillis(idleTime));
+                            terminateDetached(session);
+                        } else {
+                            Log.trace("Detached session '{}' ({}) has been detached for {}, which is not longer than the configured maximum of {}. It will not (yet) be cleaned up.", session.getAddress(), session.getStreamID(), Duration.ofMillis(System.currentTimeMillis()-session.getLastActiveDate().getTime()), Duration.ofMillis(idleTime));
+                        }
                     }
                 }
                 catch (Throwable e) {

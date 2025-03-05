@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,7 +112,7 @@ public class IQBindHandler extends IQHandler {
             // If a session already exists with the requested JID, then check to see
             // if we should kick it off or refuse the new connection
             ClientSession oldSession = routingTable.getClientRoute(new JID(username, serverName, resource, true));
-            if (oldSession != null) {
+            if (oldSession != null && !oldSession.isClosed()) {
                 try {
                     int conflictLimit = sessionManager.getConflictKickLimit();
                     if (conflictLimit == SessionManager.NEVER_KICK) {

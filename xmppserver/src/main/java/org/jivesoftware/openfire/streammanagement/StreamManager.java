@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.*;
 
+import javax.annotation.Nonnull;
 import java.math.BigInteger;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
@@ -74,6 +75,7 @@ public class StreamManager {
 
     private final Logger Log;
     private boolean resume = false;
+
     public static class UnackedPacket {
         public final long x;
         public final Date timestamp = new Date();
@@ -126,6 +128,11 @@ public class StreamManager {
      * Collection of stanzas/packets sent to client that haven't been acknowledged.
      */
     private Deque<UnackedPacket> unacknowledgedServerStanzas = new LinkedList<>();
+
+    /**
+     * Delegates that can determine if a detached session can be terminated.
+     */
+    private final Set<TerminationDelegate> terminationDelegates = new HashSet<>();
 
     public StreamManager(LocalSession session) {
         String address;
@@ -677,5 +684,42 @@ public class StreamManager {
     private int getMaximumUnacknowledgedStanzas()
     {
         return JiveGlobals.getIntProperty( "stream.management.max-unacked", 10000 );
+    }
+
+    /**
+     * Returns a defensive copy of all delegates that can determine if a detached session can be terminated.
+     *
+     * @return all delegates that can determine if a detached session can be terminated.
+     */
+    public Set<TerminationDelegate> getTerminationDelegates()
+    {
+        return new HashSet<>(terminationDelegates);
+    }
+
+    /**
+     * Adds a new delegate that can determine if a detached session can be terminated. When no such delegate is
+     * registered for a session, the server default behavior will determine if a detached session can be terminated.
+     *
+     * This method will add delegates, unless the new delegate is equal to a previously registered delegate. In such
+     * case, this method will silently ignore the invocation.
+     *
+     * @param delegate the delegate to register with the session
+     */
+    public void addTerminationDelegate(@Nonnull final TerminationDelegate delegate)
+    {
+        terminationDelegates.add(delegate);
+    }
+
+    /**
+     * Removes a delegate that can determine if a detached session can be terminated. When no such delegate is
+     * registered for a session, the server default behavior will determine if a detached session can be terminated.
+     *
+     * This method will silently ignore an invocation to remove a delegate that was not registered with the session.
+     *
+     * @param delegate the delegate to register with the session
+     */
+    public void removeTerminationDelegate(@Nonnull final TerminationDelegate delegate)
+    {
+        terminationDelegates.remove(delegate);
     }
 }

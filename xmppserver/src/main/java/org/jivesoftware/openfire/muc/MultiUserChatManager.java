@@ -48,6 +48,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.sql.*;
 import java.util.*;
+import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -1056,7 +1057,7 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
                         rs.getString("name"),
                         rs.getString("alternateJID"),
                         rs.getString("reason"),
-                        rs.getTimestamp("retiredAt")
+                        new Date(Long.parseLong(rs.getString("retiredAt").trim()))
                     ));
                 }
             } else {
@@ -1073,7 +1074,7 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
                         rs.getString("name"),
                         rs.getString("alternateJID"),
                         rs.getString("reason"),
-                        rs.getTimestamp("retiredAt")
+                        new Date(Long.parseLong(rs.getString("retiredAt").trim()))
                     ));
                     count++;
                 }

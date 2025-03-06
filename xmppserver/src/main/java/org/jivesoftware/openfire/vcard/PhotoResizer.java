@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,17 @@ public class PhotoResizer
         final ImageWriter iw = (ImageWriter) it.next();
 
         // Extract the original avatar from the VCard.
-        final byte[] original = Base64.getDecoder().decode( element.getTextTrim() );
+        final String value = element.getTextTrim();
+        final Base64.Decoder decoder;
+        final Base64.Encoder encoder;
+        if (value.length() > 76 && Character.isWhitespace(value.charAt(76))) {
+            decoder = Base64.getMimeDecoder();
+            encoder = Base64.getMimeEncoder();
+        } else {
+            decoder = Base64.getDecoder();
+            encoder = Base64.getEncoder();
+        }
+        final byte[] original = decoder.decode(value);
 
         // Crop and shrink, if needed.
         final int targetDimension = JiveGlobals.getIntProperty( PROPERTY_TARGETDIMENSION, PROPERTY_TARGETDIMENSION_DEFAULT );
@@ -98,7 +108,7 @@ public class PhotoResizer
         if ( resized != null )
         {
             Log.debug( "Replacing original avatar in vcard with a resized variant." );
-            vCardElement.element( "PHOTO" ).element( "BINVAL" ).setText( Base64.getEncoder().encodeToString( resized ) );
+            vCardElement.element( "PHOTO" ).element( "BINVAL" ).setText( encoder.encodeToString( resized ) );
         }
     }
 

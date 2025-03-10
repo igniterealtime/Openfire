@@ -395,7 +395,7 @@ public abstract class LocalSession implements Session {
     @Override
     public void process(Packet packet) {
         // Check that the requested packet can be processed
-        if (canProcess(packet)) {
+        if (canDeliver(packet)) {
             // Perform the actual processing of the packet. This usually implies sending
             // the packet to the entity
             try {
@@ -407,36 +407,13 @@ public abstract class LocalSession implements Session {
             }
             catch (PacketRejectedException e) {
                 // An interceptor rejected the packet so do nothing
+                Log.trace("Packet rejected by interceptor: {}", packet, e);
             }
             catch (Exception e) {
                 Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
             }
         } else {
-            // http://xmpp.org/extensions/xep-0016.html#protocol-error
-            if (packet instanceof Message) {
-                // For message stanzas, the server SHOULD return an error, which SHOULD be <service-unavailable/>.
-                if (((Message)packet).getType() == Message.Type.error){
-                    Log.debug("Avoid generating an error in response to a stanza that itself is an error (to avoid the chance of entering an endless back-and-forth of exchanging errors). Suppress sending an {} error in response to: {}", PacketError.Condition.service_unavailable, packet);
-                    return;
-                }
-                Message message = (Message) packet;
-                Message result = message.createCopy();
-                result.setTo(message.getFrom());
-                result.setFrom(message.getTo());
-                result.setError(PacketError.Condition.service_unavailable);
-                Log.trace("Responding with 'service-unavailable' as message cannot be processed to: {}", packet);
-                XMPPServer.getInstance().getPacketRouter().route(result);
-            } else if (packet instanceof IQ) {
-                // For IQ stanzas of type "get" or "set", the server MUST return an error, which SHOULD be <service-unavailable/>.
-                // IQ stanzas of other types MUST be silently dropped by the server.
-                IQ iq = (IQ) packet;
-                if (iq.getType() == IQ.Type.get || iq.getType() == IQ.Type.set) {
-                    Log.trace("Responding with 'service-unavailable' as IQ request cannot be processed to: {}", packet);
-                    IQ result = IQ.createResultIQ(iq);
-                    result.setError(PacketError.Condition.service_unavailable);
-                    XMPPServer.getInstance().getPacketRouter().route(result);
-                }
-            }
+            Log.debug("Unable to deliver stanza: {}", packet);
         }
     }
 
@@ -446,9 +423,37 @@ public abstract class LocalSession implements Session {
      * privacy lists while outgoing server sessions will always allow this action.
      *
      * @param packet the packet to analyze if it must be blocked.
-     * @return true if the specified packet must be blocked.
+     * @return false if the specified packet must be blocked.
      */
-    abstract boolean canProcess(Packet packet);
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.1.0.
+    boolean canProcess(Packet packet) {
+        return true;
+    }
+
+    /**
+     * Returns true if the specified stanza can be delivered to the entity.
+     *
+     * Subclasses will use different criteria to determine of processing is allowed or not. For instance, client
+     * sessions will use privacy lists while component sessions will always allow this action.
+     *
+     * When a stanza is cannot be delivered, an implementation must take responsibility for error handling. If, for
+     * example, an error stanza is to be sent back to the sender, this is to be performed by the implementation.
+     *
+     * @param stanza the stanza to analyze if it must be blocked.
+     * @return false if the specified stanza must be blocked.
+     */
+    boolean canDeliver(@Nonnull final Packet stanza) {
+        // This implementation exists only for backwards compatibility purposes. When #canProcess() is removed, this
+        // implementation will also be removed (every subclass is then expected to provide its own implementation of
+        // the #canDeliver interface method).
+        final boolean canProcess = canProcess(stanza);
+
+        if (!canProcess) {
+            LocalClientSession.returnPrivacyListErrorToSender(stanza);
+        }
+
+        return canProcess;
+    }
 
     abstract void deliver(Packet packet) throws UnauthorizedException;
 

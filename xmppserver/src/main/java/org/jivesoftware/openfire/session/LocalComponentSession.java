@@ -194,7 +194,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
     }
 
     @Override
-    boolean canProcess(Packet packet) {
+    boolean canDeliver(@Nonnull final Packet stanza) {
         return true;
     }
 

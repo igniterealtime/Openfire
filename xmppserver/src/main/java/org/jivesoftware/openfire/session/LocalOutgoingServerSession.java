@@ -291,8 +291,8 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     }
 
     @Override
-    boolean canProcess(Packet packet) {
-        final DomainPair domainPair = new DomainPair(packet.getFrom().getDomain(), packet.getTo().getDomain());
+    boolean canDeliver(@Nonnull final Packet stanza) {
+        final DomainPair domainPair = new DomainPair(stanza.getFrom().getDomain(), stanza.getTo().getDomain());
         boolean processed = true;
         synchronized (remoteAuthMutex.intern(new JID(null, domainPair.getRemote(), null))) {
             if (!checkOutgoingDomainPair(domainPair) && !authenticateSubdomain(domainPair)) {
@@ -301,7 +301,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             }
         }
         if (!processed) {
-            returnErrorToSenderAsync(packet);
+            returnErrorToSenderAsync(stanza);
         }
         return processed;
     }

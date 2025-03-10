@@ -44,10 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.Presence;
-import org.xmpp.packet.StreamError;
+import org.xmpp.packet.*;
 
 import javax.annotation.Nonnull;
 import java.net.UnknownHostException;
@@ -916,22 +913,56 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * default list is going to be used. If no default list was defined for this user then
      * allow the packet to flow.
      *
-     * @param packet the packet to analyze if it must be blocked.
+     * @param stanza the packet to analyze if it must be blocked.
      * @return true if the specified packet must *not* be blocked.
      */
     @Override
-    public boolean canProcess(Packet packet) {
-
+    public boolean canDeliver(@Nonnull final Packet stanza)
+    {
+        final boolean result;
         PrivacyList list = getActiveList();
         if (list != null) {
             // If a privacy list is active then make sure that the packet is not blocked
-            return !list.shouldBlockPacket(packet);
+            result = !list.shouldBlockPacket(stanza);
         }
         else {
             list = getDefaultList();
             // There is no active list so check if there exists a default list and make
             // sure that the packet is not blocked
-            return list == null || !list.shouldBlockPacket(packet);
+            result = list == null || !list.shouldBlockPacket(stanza);
+        }
+
+        if (!result) {
+            returnPrivacyListErrorToSender(stanza);
+        }
+        return result;
+    }
+
+    static void returnPrivacyListErrorToSender(Packet packet) {
+        // http://xmpp.org/extensions/xep-0016.html#protocol-error
+        if (packet instanceof Message) {
+            // For message stanzas, the server SHOULD return an error, which SHOULD be <service-unavailable/>.
+            if (((Message)packet).getType() == Message.Type.error){
+                Log.debug("Avoid generating an error in response to a stanza that itself is an error (to avoid the chance of entering an endless back-and-forth of exchanging errors). Suppress sending an {} error in response to: {}", PacketError.Condition.service_unavailable, packet);
+                return;
+            }
+            final Message message = (Message) packet;
+            Message result = message.createCopy();
+            result.setTo(message.getFrom());
+            result.setFrom(message.getTo());
+            result.setError(PacketError.Condition.service_unavailable);
+            Log.trace("Responding with 'service-unavailable' as message cannot be processed to: {}", packet);
+            XMPPServer.getInstance().getPacketRouter().route(result);
+        } else if (packet instanceof IQ) {
+            // For IQ stanzas of type "get" or "set", the server MUST return an error, which SHOULD be <service-unavailable/>.
+            // IQ stanzas of other types MUST be silently dropped by the server.
+            final IQ iq = (IQ) packet;
+            if (iq.getType() == IQ.Type.get || iq.getType() == IQ.Type.set) {
+                Log.trace("Responding with 'service-unavailable' as IQ request cannot be processed to: {}", packet);
+                IQ result = IQ.createResultIQ(iq);
+                result.setError(PacketError.Condition.service_unavailable);
+                XMPPServer.getInstance().getPacketRouter().route(result);
+            }
         }
     }
 

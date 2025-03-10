@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2009 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -283,7 +283,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
     }
 
     @Override
-    boolean canProcess(Packet packet) {
+    boolean canDeliver(@Nonnull final Packet stanza) {
         return true;
     }
 

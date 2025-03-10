@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.jivesoftware.openfire.server;
 
 import com.google.common.collect.Interner;
 import com.google.common.collect.Interners;
-import org.jivesoftware.openfire.RoutableChannelHandler;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.NodeID;
@@ -239,7 +238,7 @@ public class OutgoingSessionPromise {
         @Override
         public void run() {
             Log.debug("Start for {}", domainPair);
-            RoutableChannelHandler channel;
+            LocalOutgoingServerSession channel;
             try {
                 channel = establishConnection();
             } catch (Exception e) {
@@ -277,7 +276,7 @@ public class OutgoingSessionPromise {
             Log.trace("Finished processing {}", domainPair);
         }
 
-        private RoutableChannelHandler establishConnection() throws Exception {
+        private LocalOutgoingServerSession establishConnection() throws Exception {
             Log.debug("Start establishing a connection for {}", domainPair);
             // Create a connection to the remote server from the domain where the packet has been sent
             boolean created;
@@ -291,14 +290,16 @@ public class OutgoingSessionPromise {
             }
             if (created) {
                 final OutgoingServerSession serverRoute = routingTable.getServerRoute(domainPair);
-                if (serverRoute == null || !(serverRoute instanceof LocalOutgoingServerSession)) {
-                    throw new Exception("Route created but not found!!!");
+                if (serverRoute == null) {
+                    throw new Exception("Route created for " + domainPair + " but not found in routing table! This is likely a concurrency issue within Openfire.");
+                } else if (!(serverRoute instanceof LocalOutgoingServerSession)) {
+                    throw new Exception("Route created for " + domainPair + " but was not of the expected type " + LocalOutgoingServerSession.class + ", but of " + serverRoute.getClass() + "! This is likely a concurrency issue within Openfire.");
                 } else {
-                    return serverRoute;
+                    return (LocalOutgoingServerSession) serverRoute;
                 }
             }
             else {
-                throw new Exception("Failed to create connection to remote server");
+                throw new Exception("Failed to create connection to remote server: " + domainPair);
             }
         }
 

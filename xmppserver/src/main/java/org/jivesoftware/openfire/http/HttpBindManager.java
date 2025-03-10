@@ -18,7 +18,6 @@ package org.jivesoftware.openfire.http;
 
 import org.apache.tomcat.InstanceManager;
 import org.apache.tomcat.SimpleInstanceManager;
-import org.eclipse.jetty.ee8.apache.jsp.JettyJasperInitializer;
 import org.eclipse.jetty.ee8.nested.ContextHandler;
 import org.eclipse.jetty.http.HttpHeader;
 import org.eclipse.jetty.http.HttpMethod;
@@ -669,8 +668,6 @@ public final class HttpBindManager implements CertificateEventListener {
         final int options = ServletContextHandler.SESSIONS;
         final ServletContextHandler context = new ServletContextHandler( null, "/http-bind", options );
 
-        // Ensure the JSP engine is initialized correctly (in order to be able to cope with Tomcat/Jasper precompiled JSPs).
-        context.addServletContainerInitializer(new JettyJasperInitializer());
         context.setAttribute( InstanceManager.class.getName(), new SimpleInstanceManager() );
 
         // Generic configuration of the context.

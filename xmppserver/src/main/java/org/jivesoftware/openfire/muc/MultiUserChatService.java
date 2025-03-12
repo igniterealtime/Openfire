@@ -502,6 +502,13 @@ public interface MultiUserChatService extends Component {
      */
     boolean isHidden();
 
+    /**
+     * Returns a private key for this service.
+     *
+     * @return a private key
+     */
+    String getPrivateKey();
+
     @Nonnull
     OccupantManager getOccupantManager();
 

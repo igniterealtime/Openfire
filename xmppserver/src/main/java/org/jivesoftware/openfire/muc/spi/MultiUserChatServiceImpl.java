@@ -254,6 +254,11 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     private boolean serviceEnabled = true;
 
     /**
+     * A private key for the MUC service. A value is considered immutable, and should never be changed.
+     */
+    private final String privateKey;
+
+    /**
      * Flag that indicates if MUC service is hidden from services views.
      */
     private boolean isHidden;
@@ -299,7 +304,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      *             if the provided subdomain is an invalid, according to the JID
      *             domain definition.
      */
-    public MultiUserChatServiceImpl(final String subdomain, final String description, final Boolean isHidden) {
+    public MultiUserChatServiceImpl(final String subdomain, final String description, final Boolean isHidden, final String privateKey) {
         // Check subdomain and throw an IllegalArgumentException if its invalid
         new JID(null,subdomain + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null);
 
@@ -311,6 +316,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             this.chatDescription = LocaleUtils.getLocalizedString("muc.service-name");
         }
         this.isHidden = isHidden;
+        this.privateKey = privateKey;
         historyStrategy = new HistoryStrategy(getAddress(), null);
 
         localMUCRoomManager = new LocalMUCRoomManager(this);
@@ -3233,6 +3239,11 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         return isHidden;
     }
 
+    @Override
+    public String getPrivateKey()
+    {
+        return privateKey;
+    }
 
     @Override
     public void joinedCluster() {

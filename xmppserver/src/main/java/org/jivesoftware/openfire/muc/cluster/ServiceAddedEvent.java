@@ -40,14 +40,16 @@ public class ServiceAddedEvent implements ClusterTask<Void> {
     private String subdomain;
     private String description;
     private Boolean isHidden;
+    private String privateKey;
 
     public ServiceAddedEvent() {
     }
 
-    public ServiceAddedEvent(String subdomain, String description, Boolean isHidden) {
+    public ServiceAddedEvent(String subdomain, String description, Boolean isHidden, String privateKey) {
         this.subdomain = subdomain;
         this.description = description;
         this.isHidden = isHidden;
+        this.privateKey = privateKey;
     }
 
     @Override
@@ -61,7 +63,7 @@ public class ServiceAddedEvent implements ClusterTask<Void> {
         // is provided by an internal component that registered at startup.  This scenario, however,
         // should really never occur.
         if (!XMPPServer.getInstance().getMultiUserChatManager().isServiceRegistered(subdomain)) {
-            MultiUserChatService service = new MultiUserChatServiceImpl(subdomain, description, isHidden);
+            MultiUserChatService service = new MultiUserChatServiceImpl(subdomain, description, isHidden, privateKey);
             XMPPServer.getInstance().getMultiUserChatManager().registerMultiUserChatService(service, false);
         }
     }
@@ -72,6 +74,7 @@ public class ServiceAddedEvent implements ClusterTask<Void> {
         externalizableUtil.writeSafeUTF(out, subdomain);
         externalizableUtil.writeSafeUTF(out, description);
         externalizableUtil.writeBoolean(out, isHidden);
+        externalizableUtil.writeSafeUTF(out, privateKey);
     }
 
     @Override
@@ -80,5 +83,6 @@ public class ServiceAddedEvent implements ClusterTask<Void> {
         subdomain = externalizableUtil.readSafeUTF(in);
         description = externalizableUtil.readSafeUTF(in);
         isHidden = externalizableUtil.readBoolean(in);
+        privateKey = externalizableUtil.readSafeUTF(in);
     }
 }

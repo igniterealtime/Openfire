@@ -160,6 +160,7 @@ CREATE TABLE ofMucService (
   subdomain           VARCHAR(255)  NOT NULL,
   description         VARCHAR(255),
   isHidden            TINYINT       NOT NULL,
+  privateKey          VARCHAR(255)  NOT NULL,
   PRIMARY KEY (subdomain),
   INDEX ofMucService_serviceid_idx (serviceID)
 );
@@ -378,7 +379,28 @@ INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modifica
     VALUES ('admin', 'admin', 'Administrator', 'admin@example.com', '0', '0');
 
 # Entry for default conference service
-INSERT INTO ofMucService (serviceID, subdomain, isHidden) VALUES (1, 'conference', 0);
+INSERT INTO ofMucService (serviceID, subdomain, isHidden, privateKey) VALUES (1, 'conference', 0, CONCAT(
+    SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', RAND() * 62 + 1, 1),
+    SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', RAND() * 62 + 1, 1),
+    SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', RAND() * 62 + 1, 1),
+    SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', RAND() * 62 + 1, 1),
+    SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', RAND() * 62 + 1, 1),
+    SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', RAND() * 62 + 1, 1),
+    SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', RAND() * 62 + 1, 1),
+    SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', RAND() * 62 + 1, 1),
+    SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', RAND() * 62 + 1, 1),
+    SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', RAND() * 62 + 1, 1),
+    SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', RAND() * 62 + 1, 1),
+    SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', RAND() * 62 + 1, 1),
+    SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', RAND() * 62 + 1, 1),
+    SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', RAND() * 62 + 1, 1),
+    SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', RAND() * 62 + 1, 1),
+    SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', RAND() * 62 + 1, 1),
+    SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', RAND() * 62 + 1, 1),
+    SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', RAND() * 62 + 1, 1),
+    SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', RAND() * 62 + 1, 1),
+    SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', RAND() * 62 + 1, 1),
+    SUBSTRING('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789', RAND() * 62 + 1, 1)));
 
 # Do this last, as it is used by a continuous integration check to verify that the entire script was executed successfully.
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 37);
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 38);

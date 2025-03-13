@@ -65,7 +65,7 @@ public class Main {
             SchemaManager sm = new SchemaManager();
             boolean fixed = sm.checkOpenfireSchema(conn);
             if(!fixed){
-                throw new Exception("Failed to upgrade database");
+                throw new Exception("Failed to install or upgrade the database! It is likely that the installation or upgrade SQL scripts contain a bug.");
             }
         } catch (Exception e) {
             System.out.println(e.getClass() + "\n" + e.getMessage());

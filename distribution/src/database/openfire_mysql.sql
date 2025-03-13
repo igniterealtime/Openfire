@@ -380,7 +380,5 @@ INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modifica
 # Entry for default conference service
 INSERT INTO ofMucService (serviceID, subdomain, isHidden) VALUES (1, 'conference', 0);
 
-INSERT INTO doesNotExist (foo) VALUES ('bar');
-
-// Do this last, as it is used by a continuous integration check to verify that the entire script was executed successfully.
+# Do this last, as it is used by a continuous integration check to verify that the entire script was executed successfully.
 INSERT INTO ofVersion (name, version) VALUES ('openfire', 37);

@@ -30,6 +30,10 @@ public class Main {
         String connectionDriver = System.getenv("CONNECTION_DRIVER");
         String connectionUsername = System.getenv("CONNECTION_USERNAME");
         String connectionPassword = System.getenv("CONNECTION_PASSWORD");
+        System.out.println("Connection String: " + connectionString);
+        System.out.println("Connection Driver: " + connectionDriver);
+        System.out.println("Connection Username: " + connectionUsername);
+        System.out.println("Connection Password: " + connectionPassword);
 
         /*
         DATABASE DRIVERS AND EXAMPLE QUERY STRINGS

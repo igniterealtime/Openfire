@@ -394,3 +394,5 @@ INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modifica
 
 /* Entry for default conference service */
 INSERT INTO ofMucService (serviceID, subdomain, isHidden) VALUES (1, 'conference', 0);
+
+INSERT INTO doesNotExist (foo) VALUES ('bar');

@@ -265,8 +265,8 @@ jobs:
         if: ${{ always() && steps.startCIServer.conclusion == 'success' }} # TODO figure out if this is correct. The intent is to have the server stopped if it was successfully started, even if the tests fail. Failing tests should still cause the job to fail.
         uses: ./.github/actions/stopserver-action
 
-  should-do-database-upgrade-tests:
-    name: Check if database upgrade tests should be run
+  should-do-database-tests:
+    name: Check if database install/upgrade tests should be run
     runs-on: ubuntu-latest
     permissions:
       pull-requests: read
@@ -286,11 +286,47 @@ jobs:
               - '.github/workflows/continuous-integration-workflow.yml'
               - 'xmppserver/pom.xml'
 
-  sqlserver:
-    name: Test SQL Server Upgrades
-    needs: [build, should-do-database-upgrade-tests, check_branch]
+  sqlserver-install:
+    name: Test MS SQL Server install script
+    needs: [build, should-do-database-tests, check_branch]
     runs-on: ubuntu-latest
-    if: ${{ needs.should-do-database-upgrade-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
+    if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
+    steps:
+      - name: Checkout Openfire
+        uses: actions/checkout@v4
+      - name: Set up JDK 17 Zulu
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: zulu
+          cache: maven
+      - name: Restore mvn repo artifacts from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: mvn-repo
+          path: ~/.m2/repository/org/igniterealtime/openfire/
+      - name: Set environment variables
+        run: |
+          echo "CONNECTION_STRING=jdbc:sqlserver://localhost:1433;databaseName=openfire;applicationName=Openfire" >> $GITHUB_ENV
+          echo "CONNECTION_DRIVER=com.microsoft.sqlserver.jdbc.SQLServerDriver" >> $GITHUB_ENV
+          echo "CONNECTION_USERNAME=sa" >> $GITHUB_ENV
+          echo "CONNECTION_PASSWORD=SecurePa55w0rd" >> $GITHUB_ENV
+          OPENFIREVSN=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
+          echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
+      - name: Copy the Openfire database installation script
+        run: |
+          mkdir olddb
+          cp $GITHUB_WORKSPACE/distribution/src/database/openfire_sqlserver.sql $GITHUB_WORKSPACE/olddb/openfire_sqlserver.sql
+      - name: Start database server and install database
+        run: docker compose -f ./build/ci/compose/mssql.yml up --detach
+
+
+  sqlserver-upgrade:
+    name: Test MS SQL Server upgrade scripts
+    needs: [build, should-do-database-tests, check_branch]
+    runs-on: ubuntu-latest
+    if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
         uses: actions/checkout@v4
@@ -327,11 +363,47 @@ jobs:
           java -jar ./target/updaterunner-1.0.0-jar-with-dependencies.jar
 
 
-  postgres:
-    name: Test Postgres Upgrades
-    needs: [build, should-do-database-upgrade-tests, check_branch]
+  postgres-install:
+    name: Test Postgres install script
+    needs: [build, should-do-database-tests, check_branch]
     runs-on: ubuntu-latest
-    if: ${{ needs.should-do-database-upgrade-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
+    if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
+    steps:
+      - name: Checkout Openfire
+        uses: actions/checkout@v4
+      - name: Set up JDK 17 Zulu
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: zulu
+          cache: maven
+      - name: Restore mvn repo artifacts from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: mvn-repo
+          path: ~/.m2/repository/org/igniterealtime/openfire/
+      - name: Set environment variables
+        run: |
+          echo "CONNECTION_STRING=jdbc:postgresql://localhost:5432/openfire" >> $GITHUB_ENV
+          echo "CONNECTION_DRIVER=org.postgresql.Driver" >> $GITHUB_ENV
+          echo "CONNECTION_USERNAME=openfire" >> $GITHUB_ENV
+          echo "CONNECTION_PASSWORD=SecurePa55w0rd" >> $GITHUB_ENV
+          OPENFIREVSN=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
+          echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
+      - name: Copy the Openfire database installation script
+        run: |
+          mkdir olddb
+          cp $GITHUB_WORKSPACE/distribution/src/database/openfire_postgresql.sql $GITHUB_WORKSPACE/olddb/openfire_postgresql.sql
+      - name: Start database server and install database
+        run: docker compose -f ./build/ci/compose/postgresql.yml up --detach
+
+
+  postgres-upgrade:
+    name: Test Postgres upgrade scripts
+    needs: [build, should-do-database-tests, check_branch]
+    runs-on: ubuntu-latest
+    if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
         uses: actions/checkout@v4
@@ -368,11 +440,47 @@ jobs:
           java -jar ./target/updaterunner-1.0.0-jar-with-dependencies.jar
 
 
-  mysql:
-    name: Test MySQL Upgrades
-    needs: [build, should-do-database-upgrade-tests, check_branch]
+  mysql-install:
+    name: Test MySQL install script
+    needs: [build, should-do-database-tests, check_branch]
     runs-on: ubuntu-latest
-    if: ${{ needs.should-do-database-upgrade-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
+    if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
+    steps:
+      - name: Checkout Openfire
+        uses: actions/checkout@v4
+      - name: Set up JDK 17 Zulu
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: zulu
+          cache: maven
+      - name: Restore mvn repo artifacts from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: mvn-repo
+          path: ~/.m2/repository/org/igniterealtime/openfire/
+      - name: Set environment variables
+        run: |
+          echo "CONNECTION_STRING=jdbc:mysql://localhost:3306/openfire?rewriteBatchedStatements=true&characterEncoding=UTF-8&characterSetResults=UTF-8&serverTimezone=UTC" >> $GITHUB_ENV
+          echo "CONNECTION_DRIVER=com.mysql.cj.jdbc.Driver" >> $GITHUB_ENV
+          echo "CONNECTION_USERNAME=root" >> $GITHUB_ENV
+          echo "CONNECTION_PASSWORD=SecurePa55w0rd" >> $GITHUB_ENV
+          OPENFIREVSN=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
+          echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
+      - name: Copy the Openfire database installation script
+        run: |
+          mkdir olddb
+          cp $GITHUB_WORKSPACE/distribution/src/database/openfire_mysql.sql $GITHUB_WORKSPACE/olddb/openfire_mysql.sql
+      - name: Start database server and install database
+        run: docker compose -f ./build/ci/compose/mysql.yml up --detach
+
+
+  mysql-upgrade:
+    name: Test MySQL upgrade scripts
+    needs: [build, should-do-database-tests, check_branch]
+    runs-on: ubuntu-latest
+    if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
         uses: actions/checkout@v4
@@ -411,7 +519,7 @@ jobs:
   publish-maven:
     name: Publish to Maven
     runs-on: ubuntu-latest
-    needs: [aioxmpp, connectivity, smack, check_branch, sqlserver, postgres, mysql]
+    needs: [aioxmpp, connectivity, smack, check_branch, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade]
     if: ${{github.repository == 'igniterealtime/Openfire' && github.event_name == 'push' && needs.check_branch.outputs.is_publishable_branch == 'true'}}
 
     steps:
@@ -438,7 +546,7 @@ jobs:
   build-and-push-docker:
     name: Publish to GitHub's Docker registry
     runs-on: ubuntu-latest
-    needs: [aioxmpp, connectivity, smack, check_branch, sqlserver, postgres, mysql]
+    needs: [aioxmpp, connectivity, smack, check_branch, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade]
     if: |
       github.event_name == 'push' && 
       (contains(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')

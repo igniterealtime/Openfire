@@ -531,10 +531,51 @@ jobs:
           ./mvnw package
           java -jar ./target/updaterunner-1.0.0-jar-with-dependencies.jar
 
+
+  oracle-upgrade:
+    name: Test Oracle upgrade scripts
+    needs: [build, should-do-database-tests, check_branch]
+    runs-on: ubuntu-latest
+    if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
+    steps:
+      - name: Checkout Openfire
+        uses: actions/checkout@v4
+      - name: Set up JDK 17 Zulu
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: zulu
+          cache: maven
+      - name: Restore mvn repo artifacts from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: mvn-repo
+          path: ~/.m2/repository/org/igniterealtime/openfire/
+      - name: Set environment variables
+        run: |
+          echo "CONNECTION_STRING=jdbc:oracle:thin:@localhost:1521/openfire" >> $GITHUB_ENV
+          echo "CONNECTION_DRIVER=oracle.jdbc.driver.OracleDriver" >> $GITHUB_ENV
+          echo "CONNECTION_USERNAME=SYSTEM" >> $GITHUB_ENV
+          echo "CONNECTION_PASSWORD=SecurePa55w0rd" >> $GITHUB_ENV
+          OPENFIREVSN=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
+          echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
+      - name: Download old Openfire database script
+        run: |
+          mkdir olddb
+          curl https://raw.githubusercontent.com/igniterealtime/Openfire/v3.9.3/src/database/openfire_oracle.sql > $GITHUB_WORKSPACE/olddb/openfire_oracle.sql
+      - name: Start database server and install database
+        run: docker compose -f ./build/ci/compose/oracle.yml up --detach
+      - name: Build & run database tester
+        run: |
+          pushd ./build/ci/updater
+          ./mvnw -B package
+          java -jar ./target/updaterunner-1.0.0-jar-with-dependencies.jar
+
   publish-maven:
     name: Publish to Maven
     runs-on: ubuntu-latest
-    needs: [aioxmpp, connectivity, smack, check_branch, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade]
+    needs: [aioxmpp, connectivity, smack, check_branch, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
     if: ${{github.repository == 'igniterealtime/Openfire' && github.event_name == 'push' && needs.check_branch.outputs.is_publishable_branch == 'true'}}
 
     steps:
@@ -561,7 +602,7 @@ jobs:
   build-and-push-docker:
     name: Publish to GitHub's Docker registry
     runs-on: ubuntu-latest
-    needs: [aioxmpp, connectivity, smack, check_branch, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade]
+    needs: [aioxmpp, connectivity, smack, check_branch, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
     if: |
       github.event_name == 'push' && 
       (contains(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')

@@ -318,6 +318,7 @@ jobs:
         run: |
           mkdir olddb
           curl https://raw.githubusercontent.com/igniterealtime/Openfire/v4.3.0/distribution/src/database/openfire_hsqldb.sql > $GITHUB_WORKSPACE/olddb/openfire_hsqldb.sql
+          sed -i '/^\/\//d' $GITHUB_WORKSPACE/olddb/openfire_hsqldb.sql
       - name: Start database server and install database
         run: |
           docker compose -f ./build/ci/compose/hsqldb.yml up --detach

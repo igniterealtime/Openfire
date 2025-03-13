@@ -6,7 +6,6 @@ services:
     ports:
       - "1521:1521"
     environment:
-      - ORACLE_PDB=openfire
       - ORACLE_PWD=${CONNECTION_PASSWORD}
     volumes:
       - ${GITHUB_WORKSPACE}/olddb:/opt/oracle/scripts/startup

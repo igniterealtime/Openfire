@@ -1,5 +1,3 @@
-version: '3.7'
-
 services:
   db:
     image: blacklabelops/hsqldb
@@ -13,3 +11,5 @@ services:
       - HSQLDB_PASSWORD=${CONNECTION_PASSWORD}
     volumes:
       - ${GITHUB_WORKSPACE}/olddb:/olddb
+    extra_hosts:
+      - "hsqldb:127.0.0.1"

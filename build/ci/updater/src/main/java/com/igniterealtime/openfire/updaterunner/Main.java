@@ -66,6 +66,8 @@ public class Main {
             JiveGlobals.setXMLProperty("database.defaultProvider.password", connectionPassword);
             JiveGlobals.setXMLProperty("database.defaultProvider.testSQL", DbConnectionManager.getTestSQL(connectionDriver));
 
+            Thread.sleep(30_000L);
+
             //Try connecting
             DefaultConnectionProvider cp = new DefaultConnectionProvider();
             cp.start();

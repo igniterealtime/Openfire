@@ -364,8 +364,7 @@ jobs:
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
-          ./mvnw package
-          java -jar ./target/updaterunner-1.0.0-jar-with-dependencies.jar
+          ./mvnw -B clean package exec:java
 
 
   postgres-install:
@@ -446,8 +445,7 @@ jobs:
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
-          ./mvnw package
-          java -jar ./target/updaterunner-1.0.0-jar-with-dependencies.jar
+          ./mvnw -B clean package exec:java
 
 
   mysql-install:
@@ -528,8 +526,7 @@ jobs:
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
-          ./mvnw package
-          java -jar ./target/updaterunner-1.0.0-jar-with-dependencies.jar
+          ./mvnw -B clean package exec:java
 
 
   oracle-upgrade:
@@ -569,8 +566,7 @@ jobs:
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
-          ./mvnw -B package
-          java -jar ./target/updaterunner-1.0.0-jar-with-dependencies.jar
+          ./mvnw -B clean package exec:java
 
   publish-maven:
     name: Publish to Maven

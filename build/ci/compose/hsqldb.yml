@@ -1,0 +1,15 @@
+services:
+  db:
+    image: blacklabelops/hsqldb
+    ports:
+      - "9001:9001"
+    environment:
+      - HSQLDB_DATABASE_NAME=hsqldb
+      - HSQLDB_DATABASE_ALIAS=openfire
+      - HSQLDB_DATABASE_HOST=localhost
+      - HSQLDB_USER=${CONNECTION_USERNAME}
+      - HSQLDB_PASSWORD=${CONNECTION_PASSWORD}
+    volumes:
+      - ${GITHUB_WORKSPACE}/olddb:/olddb
+    extra_hosts:
+      - "hsqldb:127.0.0.1"

@@ -389,8 +389,6 @@ INSERT INTO ofID (idType, id) VALUES (23, 1);
 INSERT INTO ofID (idType, id) VALUES (26, 2);
 INSERT INTO ofID (idType, id) VALUES (27, 1);
 
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 37);
-
 -- Entry for admin user
 INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)
     VALUES ('admin', 'admin', 'Administrator', 'admin@example.com', '0', '0');
@@ -399,3 +397,6 @@ INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modifica
 INSERT INTO ofMucService (serviceID, subdomain, isHidden) VALUES (1, 'conference', 0);
 
 INSERT INTO doesNotExist (foo) VALUES ('bar');
+
+-- Do this last, as it is used by a continuous integration check to verify that the entire script was executed successfully.
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 37);

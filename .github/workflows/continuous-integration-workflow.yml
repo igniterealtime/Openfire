@@ -320,6 +320,11 @@ jobs:
           cp $GITHUB_WORKSPACE/distribution/src/database/openfire_sqlserver.sql $GITHUB_WORKSPACE/olddb/openfire_sqlserver.sql
       - name: Start database server and install database
         run: docker compose -f ./build/ci/compose/mssql.yml up --detach
+      - name: Build & run database tester
+        run: |
+          pushd ./build/ci/updater
+          ./mvnw package
+          java -jar ./target/updaterunner-1.0.0-jar-with-dependencies.jar
 
 
   sqlserver-upgrade:
@@ -356,7 +361,7 @@ jobs:
           curl https://raw.githubusercontent.com/igniterealtime/Openfire/v3.9.3/src/database/openfire_sqlserver.sql > $GITHUB_WORKSPACE/olddb/openfire_sqlserver.sql
       - name: Start database server and install database
         run: docker compose -f ./build/ci/compose/mssql.yml up --detach
-      - name: Build & run update tester
+      - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
           ./mvnw package
@@ -397,6 +402,11 @@ jobs:
           cp $GITHUB_WORKSPACE/distribution/src/database/openfire_postgresql.sql $GITHUB_WORKSPACE/olddb/openfire_postgresql.sql
       - name: Start database server and install database
         run: docker compose -f ./build/ci/compose/postgresql.yml up --detach
+      - name: Build & run database tester
+        run: |
+          pushd ./build/ci/updater
+          ./mvnw package
+          java -jar ./target/updaterunner-1.0.0-jar-with-dependencies.jar
 
 
   postgres-upgrade:
@@ -433,7 +443,7 @@ jobs:
           curl https://raw.githubusercontent.com/igniterealtime/Openfire/v3.9.3/src/database/openfire_postgresql.sql > $GITHUB_WORKSPACE/olddb/openfire_postgresql.sql
       - name: Start database server and install database
         run: docker compose -f ./build/ci/compose/postgresql.yml up --detach
-      - name: Build & run update tester
+      - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
           ./mvnw package
@@ -474,6 +484,11 @@ jobs:
           cp $GITHUB_WORKSPACE/distribution/src/database/openfire_mysql.sql $GITHUB_WORKSPACE/olddb/openfire_mysql.sql
       - name: Start database server and install database
         run: docker compose -f ./build/ci/compose/mysql.yml up --detach
+      - name: Build & run database tester
+        run: |
+          pushd ./build/ci/updater
+          ./mvnw package
+          java -jar ./target/updaterunner-1.0.0-jar-with-dependencies.jar
 
 
   mysql-upgrade:
@@ -510,7 +525,7 @@ jobs:
           curl https://raw.githubusercontent.com/igniterealtime/Openfire/v3.9.3/src/database/openfire_mysql.sql > $GITHUB_WORKSPACE/olddb/openfire_mysql.sql
       - name: Start database server and install database
         run: docker compose -f ./build/ci/compose/mysql.yml up --detach
-      - name: Build & run update tester
+      - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
           ./mvnw package

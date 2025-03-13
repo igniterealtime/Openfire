@@ -22,6 +22,7 @@ import org.dom4j.QName;
 import org.jivesoftware.database.JiveID;
 import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.auth.ScramUtils;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.event.GroupEventListener;
 import org.jivesoftware.openfire.event.UserEventListener;
@@ -42,10 +43,12 @@ import org.xmpp.resultsetmanagement.Result;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.security.sasl.SaslException;
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -4117,4 +4120,22 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     @Override
     public void userModified(User user, Map<String, Object> params)
     {}
+
+    /**
+     * Creates an Occupant ID based on the generation specification defined in XEP-0421.
+     *
+     * @param userJid The JID for which to generate an Occupant ID
+     * @return a hexadecimal representation of the Occupant ID
+     * @see <a href="https://xmpp.org/extensions/xep-0421.html#id-generation">XEP-0421: Occupant ID generation</a>
+     */
+    public String generateOccupantId(@Nonnull final JID userJid)
+    {
+        final String serviceKey = mucService.getPrivateKey();
+        final String occupantId = this.getJID().toBareJID() + '\0' + userJid.toBareJID();
+        try {
+            return StringUtils.encodeHex(ScramUtils.computeHmac(serviceKey.getBytes(StandardCharsets.UTF_8), occupantId));
+        } catch (SaslException e) {
+            throw new RuntimeException("Unable to compute HMAC for user '" + userJid + "' in room '" + this.getJID() + "' while generating an Occupant ID.");
+        }
+    }
 }

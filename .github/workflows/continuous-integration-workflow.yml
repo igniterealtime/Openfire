@@ -358,7 +358,7 @@ jobs:
       - name: Download old Openfire database script
         run: |
           mkdir olddb
-          curl https://raw.githubusercontent.com/igniterealtime/Openfire/v3.9.3/src/database/openfire_sqlserver.sql > $GITHUB_WORKSPACE/olddb/openfire_sqlserver.sql
+          curl https://raw.githubusercontent.com/igniterealtime/Openfire/v4.2.0/src/database/openfire_sqlserver.sql > $GITHUB_WORKSPACE/olddb/openfire_sqlserver.sql
       - name: Start database server and install database
         run: docker compose -f ./build/ci/compose/mssql.yml up --detach
       - name: Build & run database tester
@@ -439,7 +439,7 @@ jobs:
       - name: Download old Openfire database script
         run: |
           mkdir olddb
-          curl https://raw.githubusercontent.com/igniterealtime/Openfire/v3.9.3/src/database/openfire_postgresql.sql > $GITHUB_WORKSPACE/olddb/openfire_postgresql.sql
+          curl https://raw.githubusercontent.com/igniterealtime/Openfire/v4.2.0/src/database/openfire_postgresql.sql > $GITHUB_WORKSPACE/olddb/openfire_postgresql.sql
       - name: Start database server and install database
         run: docker compose -f ./build/ci/compose/postgresql.yml up --detach
       - name: Build & run database tester
@@ -520,7 +520,7 @@ jobs:
       - name: Download old Openfire database script
         run: |
           mkdir olddb
-          curl https://raw.githubusercontent.com/igniterealtime/Openfire/v3.9.3/src/database/openfire_mysql.sql > $GITHUB_WORKSPACE/olddb/openfire_mysql.sql
+          curl https://raw.githubusercontent.com/igniterealtime/Openfire/v4.2.0/src/database/openfire_mysql.sql > $GITHUB_WORKSPACE/olddb/openfire_mysql.sql
       - name: Start database server and install database
         run: docker compose -f ./build/ci/compose/mysql.yml up --detach
       - name: Build & run database tester
@@ -560,7 +560,7 @@ jobs:
       - name: Download old Openfire database script
         run: |
           mkdir olddb
-          curl https://raw.githubusercontent.com/igniterealtime/Openfire/v3.9.3/src/database/openfire_oracle.sql > $GITHUB_WORKSPACE/olddb/openfire_oracle.sql
+          curl https://raw.githubusercontent.com/igniterealtime/Openfire/v4.2.0/src/database/openfire_oracle.sql > $GITHUB_WORKSPACE/olddb/openfire_oracle.sql
       - name: Start database server and install database
         run: docker compose -f ./build/ci/compose/oracle.yml up --detach
       - name: Build & run database tester

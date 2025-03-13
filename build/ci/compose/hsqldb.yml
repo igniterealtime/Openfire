@@ -6,10 +6,10 @@ services:
     ports:
       - "9001:9001"
     environment:
-      - ENV HSQLDB_DATABASE_NAME=hsqldb
-      - ENV HSQLDB_DATABASE_ALIAS=openfire
-      - ENV HSQLDB_DATABASE_HOST=localhost
-      - ENV HSQLDB_USER=${CONNECTION_USERNAME}
-      - ENV HSQLDB_PASSWORD=${CONNECTION_PASSWORD}
+      - HSQLDB_DATABASE_NAME=hsqldb
+      - HSQLDB_DATABASE_ALIAS=openfire
+      - HSQLDB_DATABASE_HOST=localhost
+      - HSQLDB_USER=${CONNECTION_USERNAME}
+      - HSQLDB_PASSWORD=${CONNECTION_PASSWORD}
     volumes:
       - ${GITHUB_WORKSPACE}/olddb:/olddb

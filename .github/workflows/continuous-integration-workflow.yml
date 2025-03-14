@@ -368,6 +368,49 @@ jobs:
           java -jar ./target/updaterunner-1.0.0-jar-with-dependencies.jar
 
 
+  db2-upgrade:
+    name: Test DB2 upgrade script
+    needs: [build, should-do-database-tests, check_branch]
+    runs-on: ubuntu-latest
+    if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
+    steps:
+      - name: Checkout Openfire
+        uses: actions/checkout@v4
+      - name: Set up JDK 17 Zulu
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: zulu
+          cache: maven
+      - name: Restore mvn repo artifacts from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: mvn-repo
+          path: ~/.m2/repository/org/igniterealtime/openfire/
+      - name: Set environment variables
+        run: |
+          echo "CONNECTION_STRING=jdbc:db2://localhost:50000/openfire" >> $GITHUB_ENV
+          echo "CONNECTION_DRIVER=com.ibm.db2.jcc.DB2Driver" >> $GITHUB_ENV
+          echo "CONNECTION_USERNAME=sa" >> $GITHUB_ENV
+          echo "CONNECTION_PASSWORD=SecurePa55w0rd" >> $GITHUB_ENV
+          OPENFIREVSN=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
+          echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
+      - name: Download old Openfire database script
+        run: |
+          mkdir olddb
+          curl https://raw.githubusercontent.com/igniterealtime/Openfire/v4.3.0/distribution/src/database/openfire_db2.sql > $GITHUB_WORKSPACE/olddb/openfire_db2.sql
+      - name: Start database server and install database
+        run: |
+          docker compose -f ./build/ci/compose/db2.yml up --detach
+          sleep 1000
+      - name: Build & run database tester
+        run: |
+          pushd ./build/ci/updater
+          ./mvnw package
+          java -jar ./target/updaterunner-1.0.0-jar-with-dependencies.jar
+
+
   postgres-install:
     name: Test Postgres install script
     needs: [build, should-do-database-tests, check_branch]
@@ -534,7 +577,7 @@ jobs:
   publish-maven:
     name: Publish to Maven
     runs-on: ubuntu-latest
-    needs: [aioxmpp, connectivity, smack, check_branch, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade]
+    needs: [aioxmpp, connectivity, smack, check_branch, sqlserver-install, sqlserver-upgrade, db2-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade]
     if: ${{github.repository == 'igniterealtime/Openfire' && github.event_name == 'push' && needs.check_branch.outputs.is_publishable_branch == 'true'}}
 
     steps:
@@ -561,7 +604,7 @@ jobs:
   build-and-push-docker:
     name: Publish to GitHub's Docker registry
     runs-on: ubuntu-latest
-    needs: [aioxmpp, connectivity, smack, check_branch, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade]
+    needs: [aioxmpp, connectivity, smack, check_branch, sqlserver-install, sqlserver-upgrade, db2-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade]
     if: |
       github.event_name == 'push' && 
       (contains(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')

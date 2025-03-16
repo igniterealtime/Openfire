@@ -192,55 +192,66 @@ public class AdHocCommandHandler extends IQHandler
     }
 
     private void addDefaultCommands() {
+        //org.jivesoftware.openfire.commands.admin
         addCommand(new EditAdminList());
-        addCommand(new GetNumberRegisteredUsers());
-        addCommand(new GetNumberDisabledUsers());
-        addCommand(new GetNumberActiveUsers());
-        addCommand(new GetNumberOnlineUsers());
-        addCommand(new GetNumberIdleUsers());
-        addCommand(new GetNumberUserSessions());
-        addCommand(new GetListRegisteredUsers());
+        addCommand(new EditAllowedList());
+        addCommand(new EditBlockedList());
+        addCommand(new GetAdminConsoleInfo());
         addCommand(new GetListActiveUsers());
         addCommand(new GetListDisabledUsers());
         addCommand(new GetListOnlineUsers());
+        addCommand(new GetListRegisteredUsers());
+        addCommand(new GetNumberActiveUsers());
+        addCommand(new GetNumberDisabledUsers());
+        addCommand(new GetNumberIdleUsers());
+        addCommand(new GetNumberOnlineUsers());
+        addCommand(new GetNumberRegisteredUsers());
+        addCommand(new GetNumberUserSessions());
+        addCommand(new GetServerStats());
         addCommand(new GetUsersPresence());
+        addCommand(new HttpBindStatus());
+        addCommand(new PacketsNotification());
+        addCommand(new SendAnnouncementToOnlineUsers());
+
+        //org.jivesoftware.openfire.commands.admin.group
+        addCommand(new AddGroup());
+        addCommand(new AddGroupUsers());
+        addCommand(new DeleteGroup());
+        addCommand(new DeleteGroupUsers());
         addCommand(new GetListGroups());
         addCommand(new GetListGroupUsers());
-        addCommand(new AddGroupUsers());
-        addCommand(new DeleteGroupUsers());
-        addCommand(new AddGroup());
         addCommand(new UpdateGroup());
-        addCommand(new DeleteGroup());
+
+        //org.jivesoftware.openfire.commands.admin.muc
+        
+        //org.jivesoftware.openfire.commands.admin.user
         addCommand(new AddUser());
-        addCommand(new DeleteUser());
-        addCommand(new DisableUser());
-        addCommand(new ReEnableUser());
-        addCommand(new EndUserSession());
-        addCommand(new GetUserRoster());
         addCommand(new AuthenticateUser());
         addCommand(new ChangeUserPassword());
+        addCommand(new DeleteUser());
+        addCommand(new DisableUser());
+        addCommand(new EndUserSession());
+        addCommand(new GetUserRoster());
+        addCommand(new ReEnableUser());
         addCommand(new UserProperties());
-        addCommand(new PacketsNotification());
-        addCommand(new GetServerStats());
-        addCommand(new HttpBindStatus());
-        addCommand(new UserCreated());
-        addCommand(new UserModified());
-        addCommand(new UserDeleting());
-        addCommand(new GroupCreated());
-        addCommand(new GroupDeleting());
-        addCommand(new GroupModified());
-        addCommand(new GroupMemberAdded());
-        addCommand(new GroupMemberRemoved());
+
+        //org.jivesoftware.openfire.commands.event
         addCommand(new GroupAdminAdded());
         addCommand(new GroupAdminRemoved());
+        addCommand(new GroupCreated());
+        addCommand(new GroupDeleting());
+        addCommand(new GroupMemberAdded());
+        addCommand(new GroupMemberRemoved());
+        addCommand(new GroupModified());
+        addCommand(new UserCreated());
+        addCommand(new UserDeleting());
+        addCommand(new UserModified());
         addCommand(new VCardCreated());
         addCommand(new VCardDeleting());
         addCommand(new VCardModified());
-        addCommand(new GetAdminConsoleInfo());
+
+        //org.jivesoftware.openfire.commands.generic
         addCommand(new Ping());
-        addCommand(new EditBlockedList());
-        addCommand(new EditAllowedList());
-        addCommand(new SendAnnouncementToOnlineUsers());
     }
 
     private void startCommand(AdHocCommand command) {

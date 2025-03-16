@@ -78,6 +78,7 @@ public class Main {
             if(!fixed){
                 throw new Exception("Failed to install or upgrade the database! It is likely that the installation or upgrade SQL scripts contain a bug.");
             }
+            System.out.println("Database schema check complete.");
         } catch (Exception e) {
             System.out.println(e.getClass() + "\n" + e.getMessage());
             e.printStackTrace();

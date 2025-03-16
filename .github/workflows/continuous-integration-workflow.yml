@@ -399,7 +399,7 @@ jobs:
           mkdir olddb
           cp $GITHUB_WORKSPACE/distribution/src/database/openfire_postgresql.sql $GITHUB_WORKSPACE/olddb/openfire_postgresql.sql
       - name: Start database server and install database
-        run: docker compose -f ./build/ci/compose/postgresql.yml up --detach
+        run: docker compose -f ./build/ci/compose/postgresql.yml up --wait
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
@@ -439,7 +439,7 @@ jobs:
           mkdir olddb
           curl https://raw.githubusercontent.com/igniterealtime/Openfire/v4.3.0/distribution/src/database/openfire_postgresql.sql > $GITHUB_WORKSPACE/olddb/openfire_postgresql.sql
       - name: Start database server and install database
-        run: docker compose -f ./build/ci/compose/postgresql.yml up --detach
+        run: docker compose -f ./build/ci/compose/postgresql.yml up --wait
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater

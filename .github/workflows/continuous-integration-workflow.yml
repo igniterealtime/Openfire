@@ -562,8 +562,7 @@ jobs:
       - name: Start database server and install database
         run: |
           cat ./build/ci/compose/scripts/1.oracle-init.sql $GITHUB_WORKSPACE/openfire_oracle.sql > $GITHUB_WORKSPACE/olddb/1.install-db.sql
-          docker compose -f ./build/ci/compose/oracle.yml up --detach
-          while [ "`docker inspect -f {{.State.Health.Status}} compose-db-1`" != "healthy" ]; do sleep 2; done
+          docker compose -f ./build/ci/compose/oracle.yml up --wait
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
@@ -605,8 +604,7 @@ jobs:
       - name: Start database server and install database
         run: |
           cat ./build/ci/compose/scripts/1.oracle-init.sql $GITHUB_WORKSPACE/openfire_oracle.sql > $GITHUB_WORKSPACE/olddb/1.install-db.sql
-          docker compose -f ./build/ci/compose/oracle.yml up --detach
-          while [ "`docker inspect -f {{.State.Health.Status}} compose-db-1`" != "healthy" ]; do sleep 2; done
+          docker compose -f ./build/ci/compose/oracle.yml up --wait
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater

@@ -199,6 +199,7 @@ public class AdHocCommandHandler extends IQHandler
         addCommand(new GetAdminConsoleInfo());
         addCommand(new GetListActiveUsers());
         addCommand(new GetListDisabledUsers());
+        addCommand(new GetListIdleUsers());
         addCommand(new GetListOnlineUsers());
         addCommand(new GetListRegisteredUsers());
         addCommand(new GetNumberActiveUsers());

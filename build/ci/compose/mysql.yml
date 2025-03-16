@@ -8,5 +8,10 @@ services:
     environment:
       - MYSQL_ROOT_PASSWORD=${CONNECTION_PASSWORD}
       - MYSQL_DATABASE=openfire
+    healthcheck:
+      test: [ "CMD-SHELL", "exit | mysql -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD openfire -e 'select * from ofVersion'" ]
+      interval: 5s
+      timeout: 20s
+      retries: 30
     volumes:
       - ${GITHUB_WORKSPACE}/olddb:/docker-entrypoint-initdb.d

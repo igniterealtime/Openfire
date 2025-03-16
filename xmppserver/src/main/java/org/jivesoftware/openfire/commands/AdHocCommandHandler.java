@@ -23,6 +23,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.commands.admin.*;
 import org.jivesoftware.openfire.commands.admin.group.*;
+import org.jivesoftware.openfire.commands.admin.muc.CreateMUCRoom;
 import org.jivesoftware.openfire.commands.admin.user.*;
 import org.jivesoftware.openfire.commands.event.*;
 import org.jivesoftware.openfire.commands.generic.Ping;
@@ -224,7 +225,8 @@ public class AdHocCommandHandler extends IQHandler
         addCommand(new UpdateGroup());
 
         //org.jivesoftware.openfire.commands.admin.muc
-        
+        addCommand(new CreateMUCRoom());
+
         //org.jivesoftware.openfire.commands.admin.user
         addCommand(new AddUser());
         addCommand(new AuthenticateUser());

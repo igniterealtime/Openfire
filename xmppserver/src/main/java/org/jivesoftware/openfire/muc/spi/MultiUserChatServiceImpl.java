@@ -686,15 +686,29 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             {
                 process((IQ) packet, room, preExistingOccupantData);
             }
-            else if ( packet instanceof Message )
-            {
-                process((Message) packet, room, preExistingOccupantData);
-            }
-            else if ( packet instanceof Presence )
-            {
-                // Return value is non-null while argument is, in case this is a request to create a new room.
-                room = process((Presence) packet, roomName, room, preExistingOccupantData);
+            else {
+                // See if it's possible to add an occupant-id (XEP-0421). Add the occupant-id not to the original packet
+                // instance (as that might unexpectedly become visible 'by reference' in unrelated code). Even when not
+                // adding an occupant-ID, generate a copy of the packet, for consistency.
+                final Packet modified = packet.createCopy();
+                if (preExistingOccupantData != null) {
+                    final Element oldOccupantId = modified.getElement().element(QName.get("occupant-id", "urn:xmpp:occupant-id:0"));
+                    if (oldOccupantId != null) {
+                        // Remove any previous value (to prevent spoofing)
+                        modified.getElement().remove(oldOccupantId);
+                    }
+                    modified.getElement().addElement("occupant-id", "urn:xmpp:occupant-id:0").addAttribute("id", preExistingOccupantData.getOccupantId());
+                }
 
+                if ( modified instanceof Message )
+                {
+                    process((Message) modified, room, preExistingOccupantData);
+                }
+                else if ( modified instanceof Presence )
+                {
+                    // Return value is non-null while argument is, in case this is a request to create a new room.
+                    room = process((Presence) modified, roomName, room, preExistingOccupantData);
+                }
             }
 
             // Ensure that other cluster nodes see any changes that might have been applied.
@@ -2993,6 +3007,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     features.add( IQMUCvCardHandler.NAMESPACE );
                 }
                 features.add( "urn:xmpp:sid:0" );
+                features.add( "urn:xmpp:occupant-id:0" );
             }
         }
         return features.iterator();

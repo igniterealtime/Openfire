@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,6 +72,11 @@ public class MUCOccupant implements Cacheable, Externalizable {
     private String nick;
 
     /**
+     * The user's occupant-id (as specified in XEP-0421).
+     */
+    private String occupantId;
+
+    /**
      * The user's presence in the room.
      */
     @GuardedBy("this")
@@ -142,15 +147,25 @@ public class MUCOccupant implements Cacheable, Externalizable {
         this.role = role;
         this.affiliation = affiliation;
         occupantJID = new JID(roomJid.getNode(), roomJid.getDomain(), nick);
+        this.occupantId = chatroom.generateOccupantId(userJid);
 
         synchronized (this) {
             extendedInformation = DocumentHelper.createElement(QName.get("x", "http://jabber.org/protocol/muc#user"));
             calculateExtendedInformation();
 
-            setPresence(presence);
+            // Add occupant-id to the presence stanza of the new occupant.
+            final Presence modified = presence.createCopy();
+            final Element oldOccupantId = modified.getElement().element(QName.get("occupant-id", "urn:xmpp:occupant-id:0"));
+            if (oldOccupantId != null) {
+                // Remove any previous value (to prevent spoofing)
+                modified.getElement().remove(oldOccupantId);
+            }
+            modified.getElement().addElement("occupant-id", "urn:xmpp:occupant-id:0").addAttribute("id", occupantId);
+
+            setPresence(modified);
 
             // Check if new occupant wants to be a deaf occupant
-            Element element = presence.getElement()
+            Element element = modified.getElement()
                 .element(QName.get("x", "http://jivesoftware.org/protocol/muc"));
             if (element != null) {
                 voiceOnly = element.element("deaf-occupant") != null;
@@ -170,6 +185,7 @@ public class MUCOccupant implements Cacheable, Externalizable {
         this.affiliation = Affiliation.owner;
 
         occupantJID = new JID(roomJid.getNode(), roomJid.getDomain(), null);
+        this.occupantId = room.generateOccupantId(occupantJID);
     }
 
     /**
@@ -283,6 +299,15 @@ public class MUCOccupant implements Cacheable, Externalizable {
      */
     public String getNickname() {
         return nick;
+    }
+
+    /**
+     * Obtain The user's occupant-id (as specified in XEP-0421).
+     *
+     * @return the user's occupant-id.
+     */
+    public String getOccupantId() {
+        return occupantId;
     }
 
     /**
@@ -653,6 +678,7 @@ public class MUCOccupant implements Cacheable, Externalizable {
                 ExternalizableUtil.getInstance().writeSafeUTF(out, userJid.toString());
             }
             ExternalizableUtil.getInstance().writeSafeUTF(out, nick);
+            ExternalizableUtil.getInstance().writeSafeUTF(out, occupantId);
             synchronized (this) {
                 ExternalizableUtil.getInstance().writeBoolean(out, presence != null);
                 if (presence != null) {
@@ -686,6 +712,7 @@ public class MUCOccupant implements Cacheable, Externalizable {
                 userJid = null;
             }
             nick = ExternalizableUtil.getInstance().readSafeUTF(in);
+            occupantId = ExternalizableUtil.getInstance().readSafeUTF(in);
             synchronized (this) { // Unlikely to be needed, as this should operate on a new instance. Will prevent static analyzers from complaining at negligible cost.
                 if (ExternalizableUtil.getInstance().readBoolean(in)) {
                     presence = new Presence((Element) ExternalizableUtil.getInstance().readSerializable(in));

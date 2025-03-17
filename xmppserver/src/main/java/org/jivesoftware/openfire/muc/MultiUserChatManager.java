@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,10 +32,7 @@ import org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl;
 import org.jivesoftware.openfire.stats.Statistic;
 import org.jivesoftware.openfire.stats.StatisticsManager;
 import org.jivesoftware.openfire.user.User;
-import org.jivesoftware.util.AlreadyExistsException;
-import org.jivesoftware.util.JiveConstants;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.NotFoundException;
+import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.jivesoftware.util.cache.ConsistencyChecks;
 import org.slf4j.Logger;
@@ -61,6 +58,15 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
 
     private static final Logger Log = LoggerFactory.getLogger(MultiUserChatManager.class);
 
+    /**
+     * A secret that is shared with all MUC services in the Openfire cluster. This value should never be changed after it has initially been generated.
+     */
+    public static final SystemProperty<String> MASTER_KEY = SystemProperty.Builder.ofType(String.class)
+        .setKey("xmpp.muc.masterkey")
+        .setDynamic(true)
+        .setEncrypted(true)
+        .build();
+
     private static final String LOAD_SERVICES = "SELECT subdomain,description,isHidden FROM ofMucService";
     private static final String LOAD_SERVICE = "SELECT description,isHidden FROM ofMucService WHERE subdomain =?";
     private static final String CREATE_SERVICE = "INSERT INTO ofMucService(serviceID,subdomain,description,isHidden) VALUES(?,?,?,?)";
@@ -68,7 +74,8 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
     private static final String DELETE_SERVICE = "DELETE FROM ofMucService WHERE serviceID=?";
     private static final String LOAD_SERVICE_ID = "SELECT serviceID FROM ofMucService WHERE subdomain=?";
     private static final String LOAD_SUBDOMAIN = "SELECT subdomain FROM ofMucService WHERE serviceID=?";
-    private static final String GET_RETIREES = "SELECT serviceID, name, alternateJID, reason, retiredAt FROM ofMucRoomRetiree WHERE serviceID = ? ORDER BY name ASC";    private static final String DELETE_RETIREE = "DELETE FROM ofMucRoomRetiree WHERE serviceID=? AND name=?";
+    private static final String GET_RETIREES = "SELECT serviceID, name, alternateJID, reason, retiredAt FROM ofMucRoomRetiree WHERE serviceID = ? ORDER BY name ASC";
+    private static final String DELETE_RETIREE = "DELETE FROM ofMucRoomRetiree WHERE serviceID=? AND name=?";
     private static final String COUNT_RETIREE = "SELECT COUNT(name) FROM ofMucRoomRetiree WHERE serviceID = ?";
 
     /**
@@ -88,6 +95,17 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
      */
     public MultiUserChatManager() {
         super("Multi user chat manager");
+    }
+
+    @Override
+    public void initialize(XMPPServer server)
+    {
+        super.initialize(server);
+
+        // OF-2607: Generate a site-wide secret. This should be generated only once, and never change.
+        if (MASTER_KEY.getValue() == null) {
+            MASTER_KEY.setValue(StringUtils.randomString(97));
+        }
     }
 
     /**

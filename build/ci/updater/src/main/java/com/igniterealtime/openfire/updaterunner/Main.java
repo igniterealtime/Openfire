@@ -26,6 +26,12 @@ public class Main {
     
     public static void main(String[] args) {
 
+        if (args.length == 0) {
+            throw new IllegalArgumentException("Invoke with one argument: the path to the compiled distribution (eg: 'distribution/target/distribution-base/'");
+        }
+        for (String arg : args) {
+            System.out.println("Passed argument: " + arg);
+        }
         String connectionString = System.getenv("CONNECTION_STRING");
         String connectionDriver = System.getenv("CONNECTION_DRIVER");
         String connectionUsername = System.getenv("CONNECTION_USERNAME");
@@ -45,21 +51,21 @@ public class Main {
         "Microsoft SQL Server","com.microsoft.sqlserver.jdbc.SQLServerDriver","jdbc:sqlserver://HOSTNAME:1433;databaseName=DATABASENAME;applicationName=Openfire"
         */
 
+        final Path distributionDir = Paths.get(args[0]);
+        if (!distributionDir.toFile().exists()) {
+            throw new IllegalArgumentException("Distribution directory does not exist: " + distributionDir);
+        }
+        JiveGlobals.setHomePath(distributionDir);
+
+        JiveGlobals.setXMLProperty("connectionProvider.className", "org.jivesoftware.database.DefaultConnectionProvider");
+        JiveGlobals.setXMLProperty("database.defaultProvider.driver", connectionDriver);
+        JiveGlobals.setXMLProperty("database.defaultProvider.serverURL", connectionString);
+        JiveGlobals.setXMLProperty("database.defaultProvider.username", connectionUsername);
+        JiveGlobals.setXMLProperty("database.defaultProvider.password", connectionPassword);
+        JiveGlobals.setXMLProperty("database.defaultProvider.testSQL", DbConnectionManager.getTestSQL(connectionDriver));
+
         Connection conn = null;
         try {
-            Path parent = Paths.get(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParent();
-            PropertiesReader reader = new PropertiesReader(parent.resolve("maven-archiver/pom.properties")); // TODO determine why we read properties but not use them. Is this an existence check only?
-
-            Path distributionDir = parent.resolve("../../../../distribution/target/distribution-base");
-            JiveGlobals.setHomePath(distributionDir);
-
-            JiveGlobals.setXMLProperty("connectionProvider.className", "org.jivesoftware.database.DefaultConnectionProvider");
-            JiveGlobals.setXMLProperty("database.defaultProvider.driver", connectionDriver);
-            JiveGlobals.setXMLProperty("database.defaultProvider.serverURL", connectionString);
-            JiveGlobals.setXMLProperty("database.defaultProvider.username", connectionUsername);
-            JiveGlobals.setXMLProperty("database.defaultProvider.password", connectionPassword);
-            JiveGlobals.setXMLProperty("database.defaultProvider.testSQL", DbConnectionManager.getTestSQL(connectionDriver));
-
             //Try connecting
             DefaultConnectionProvider cp = new DefaultConnectionProvider();
             cp.start();

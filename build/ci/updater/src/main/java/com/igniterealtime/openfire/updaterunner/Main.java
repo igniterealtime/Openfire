@@ -18,7 +18,6 @@ package com.igniterealtime.openfire.updaterunner;
 import org.jivesoftware.database.*;
 import org.jivesoftware.util.JiveGlobals;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -51,13 +50,8 @@ public class Main {
             Path parent = Paths.get(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParent();
             PropertiesReader reader = new PropertiesReader(parent.resolve("maven-archiver/pom.properties")); // TODO determine why we read properties but not use them. Is this an existence check only?
 
-            // Create a dummy OPENFIRE_HOME, in which the config files are created where XML properties will be stored.
-            final Path confDir = Files.createDirectory(parent.resolve("conf"));
-            final Path propertyFile = Files.createFile(confDir.resolve("openfire.xml"));
-            Files.writeString(propertyFile, "<jive/>");
-            final Path securityFile = Files.createFile(confDir.resolve("security.xml"));
-            Files.writeString(securityFile, "<security/>");
-            JiveGlobals.setHomePath(parent);
+            Path distributionDir = parent.resolve("../../../../distribution/target/distribution-base");
+            JiveGlobals.setHomePath(distributionDir);
 
             JiveGlobals.setXMLProperty("connectionProvider.className", "org.jivesoftware.database.DefaultConnectionProvider");
             JiveGlobals.setXMLProperty("database.defaultProvider.driver", connectionDriver);

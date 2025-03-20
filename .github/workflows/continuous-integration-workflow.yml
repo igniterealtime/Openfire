@@ -327,7 +327,7 @@ jobs:
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
-          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE/distribution/target/distribution-base/"
+          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
 
 
   hsqldb-upgrade:
@@ -372,7 +372,7 @@ jobs:
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
-          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE/distribution/target/distribution-base/"
+          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
 
 
   sqlserver-install:
@@ -412,7 +412,7 @@ jobs:
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
-          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE/distribution/target/distribution-base/"
+          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
 
 
   sqlserver-upgrade:
@@ -452,7 +452,7 @@ jobs:
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
-          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE/distribution/target/distribution-base/"
+          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
 
 
   postgres-install:
@@ -492,7 +492,7 @@ jobs:
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
-          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE/distribution/target/distribution-base/"
+          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
 
 
   postgres-upgrade:
@@ -532,7 +532,7 @@ jobs:
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
-          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE/distribution/target/distribution-base/"
+          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
 
 
   mysql-install:
@@ -573,7 +573,7 @@ jobs:
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
-          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE/distribution/target/distribution-base/"
+          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
 
 
   mysql-upgrade:
@@ -614,7 +614,7 @@ jobs:
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
-          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE/distribution/target/distribution-base/"
+          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
 
   oracle-install:
     name: Test Oracle install scripts
@@ -655,7 +655,7 @@ jobs:
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
-          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE/distribution/target/distribution-base/"
+          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
 
 
   oracle-upgrade:
@@ -697,7 +697,7 @@ jobs:
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
-          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE/distribution/target/distribution-base/"
+          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
 
   publish-maven:
     name: Publish to Maven

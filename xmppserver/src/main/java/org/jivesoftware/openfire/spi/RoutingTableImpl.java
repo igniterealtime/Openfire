@@ -1285,8 +1285,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         Log.debug("Add the entry listeners to the corresponding caches.");
         // Register a cache entry event listeners that will collect data for entries added by all other cluster nodes,
         // which is intended to be used (only) in the event of a cluster split.
-        final ClusteredCacheEntryListener<String, ClientRoute> userCacheEntryListener = new ReverseLookupUpdatingCacheEntryListener<>(routeOwnersByClusterNode);
-        final ClusteredCacheEntryListener<DomainPair, NodeID> serversCacheEntryListener = new ReverseLookupUpdatingCacheEntryListener<>(s2sDomainPairsByClusterNode);
+        final ClusteredCacheEntryListener<String, ClientRoute> userCacheEntryListener = new ReverseLookupUpdatingCacheEntryListener<>(routeOwnersByClusterNode, true);
+        final ClusteredCacheEntryListener<DomainPair, NodeID> serversCacheEntryListener = new ReverseLookupUpdatingCacheEntryListener<>(s2sDomainPairsByClusterNode, false);
         final ClusteredCacheEntryListener<String, HashSet<NodeID>> componentsCacheEntryListener = new ReverseLookupComputingCacheEntryListener<>(componentsByClusterNode,
             nodeIDS -> nodeIDS.stream().filter(n->!n.equals(XMPPServer.getInstance().getNodeID())).collect(Collectors.toSet())
         );

@@ -1693,7 +1693,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
 
         // Register a cache entry event listener that will collect data for entries added by all other cluster nodes,
         // which is intended to be used (only) in the event of a cluster split.
-        final ClusteredCacheEntryListener<StreamID, IncomingServerSessionInfo> incomingServerSessionsCacheEntryListener = new ReverseLookupUpdatingCacheEntryListener<>(incomingServerSessionInfoByClusterNode);
+        final ClusteredCacheEntryListener<StreamID, IncomingServerSessionInfo> incomingServerSessionsCacheEntryListener = new ReverseLookupUpdatingCacheEntryListener<>(incomingServerSessionInfoByClusterNode, true);
 
         // Simulate 'entryAdded' for all data that already exists elsewhere in the cluster.
         incomingServerSessionInfoCache.entrySet().stream()
@@ -1703,7 +1703,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
 
         // Register a cache entry event listener that will collect data for entries added by all other cluster nodes,
         // which is intended to be used (only) in the event of a cluster split.
-        final ClusteredCacheEntryListener<String, ClientSessionInfo> sessionInfoKeysClusterNodeCacheEntryListener = new ReverseLookupUpdatingCacheEntryListener<>(sessionInfoKeysByClusterNode);
+        final ClusteredCacheEntryListener<String, ClientSessionInfo> sessionInfoKeysClusterNodeCacheEntryListener = new ReverseLookupUpdatingCacheEntryListener<>(sessionInfoKeysByClusterNode, true);
 
         // Simulate 'entryAdded' for all data that already exists elsewhere in the cluster.
         sessionInfoCache.entrySet().stream()

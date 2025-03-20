@@ -165,57 +165,8 @@ public class SchemaManager {
     private boolean checkSchema(Connection con, String schemaKey, int requiredVersion,
             ResourceLoader resourceLoader, boolean allowRecursion) throws Exception
     {
-        int currentVersion = -1;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        try {
-            pstmt = con.prepareStatement(CHECK_VERSION);
-            pstmt.setString(1, schemaKey);
-            rs = pstmt.executeQuery();
-            if (rs.next()) {
-                currentVersion = rs.getInt(1);
-            }
-        }
-        catch (SQLException sqle) {
-            // The database schema must not be installed.
-            Log.debug("SchemaManager: Error verifying "+schemaKey+" version, probably ignorable.", sqle);
-            DbConnectionManager.closeStatement(rs, pstmt);
-            if (schemaKey.equals("openfire")) {
-                try {
-                    // Releases of Openfire before 3.6.0 stored the version in a jiveVersion table.
-                    pstmt = con.prepareStatement(CHECK_VERSION_JIVE);
-                    pstmt.setString(1, schemaKey);
-                    rs = pstmt.executeQuery();
-                    if (rs.next()) {
-                        currentVersion = rs.getInt(1);
-                    }
-                }
-                catch (SQLException sqlea) {
-                    // The database schema must not be installed.
-                    Log.debug("SchemaManager: Error verifying "+schemaKey+" version, probably ignorable.", sqlea);
-                    DbConnectionManager.closeStatement(rs, pstmt);
+        final int currentVersion = getCurrentVersion(con, schemaKey);
 
-                    // Releases of Openfire before 2.6.0 stored a major and minor version
-                    // number so the normal check for version can fail. Check for the
-                    // version using the old format in that case.
-                    try {
-
-                        pstmt = con.prepareStatement(CHECK_VERSION_OLD);
-                        rs = pstmt.executeQuery();
-                        if (rs.next()) {
-                            currentVersion = rs.getInt(1);
-                        }
-                    }
-                    catch (SQLException sqle2) {
-                        // The database schema must not be installed.
-                        Log.debug("SchemaManager: Error verifying "+schemaKey+" version, probably ignorable", sqle2);
-                    }
-                }
-            }
-        }
-        finally {
-            DbConnectionManager.closeStatement(rs, pstmt);
-        }
         // If already up to date, return.
         if (currentVersion >= requiredVersion) {
             return true;
@@ -243,13 +194,10 @@ public class SchemaManager {
             }
 
             // OF-2940: If the original installation doesn't include all upgrades, the individual upgrades need to be executed, too.
-            if (allowRecursion) {
-                checkSchema(con, schemaKey, requiredVersion, resourceLoader, false);
+            final int updatedVersion = getCurrentVersion(con, schemaKey);
+            if (updatedVersion < requiredVersion && allowRecursion) {
+                return checkSchema(con, schemaKey, requiredVersion, resourceLoader, false);
             }
-
-            Log.info(LocaleUtils.getLocalizedString("upgrade.database.success"));
-            System.out.println(LocaleUtils.getLocalizedString("upgrade.database.success"));
-            return true;
         }
         // Must have a version of the schema that needs to be upgraded.
         else {
@@ -295,10 +243,78 @@ public class SchemaManager {
                     return false;
                 }
             }
+        }
+
+        // Explicitly check if the database upgrade was successful (OF-3045)
+        final int finalVersion = getCurrentVersion(con, schemaKey);
+        if (finalVersion >= requiredVersion) {
             Log.info(LocaleUtils.getLocalizedString("upgrade.database.success"));
             System.out.println(LocaleUtils.getLocalizedString("upgrade.database.success"));
             return true;
+        } else {
+            Log.error(LocaleUtils.getLocalizedString("upgrade.database.failure"));
+            System.out.println(LocaleUtils.getLocalizedString("upgrade.database.failure"));
+            return false;
         }
+    }
+
+    /**
+     * Retrieves the version of the schema that is currently installed, or -1 if nothing is installed.
+     */
+    private static int getCurrentVersion(Connection con, String schemaKey)
+    {
+        int currentVersion = -1;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            pstmt = con.prepareStatement(CHECK_VERSION);
+            pstmt.setString(1, schemaKey);
+            rs = pstmt.executeQuery();
+            if (rs.next()) {
+                currentVersion = rs.getInt(1);
+            }
+        }
+        catch (SQLException sqle) {
+            // The database schema must not be installed.
+            Log.debug("SchemaManager: Error verifying "+ schemaKey +" version, probably ignorable.", sqle);
+            DbConnectionManager.closeStatement(rs, pstmt);
+            if (schemaKey.equals("openfire")) {
+                try {
+                    // Releases of Openfire before 3.6.0 stored the version in a jiveVersion table.
+                    pstmt = con.prepareStatement(CHECK_VERSION_JIVE);
+                    pstmt.setString(1, schemaKey);
+                    rs = pstmt.executeQuery();
+                    if (rs.next()) {
+                        currentVersion = rs.getInt(1);
+                    }
+                }
+                catch (SQLException sqlea) {
+                    // The database schema must not be installed.
+                    Log.debug("SchemaManager: Error verifying "+ schemaKey +" version, probably ignorable.", sqlea);
+                    DbConnectionManager.closeStatement(rs, pstmt);
+
+                    // Releases of Openfire before 2.6.0 stored a major and minor version
+                    // number so the normal check for version can fail. Check for the
+                    // version using the old format in that case.
+                    try {
+
+                        pstmt = con.prepareStatement(CHECK_VERSION_OLD);
+                        rs = pstmt.executeQuery();
+                        if (rs.next()) {
+                            currentVersion = rs.getInt(1);
+                        }
+                    }
+                    catch (SQLException sqle2) {
+                        // The database schema must not be installed.
+                        Log.debug("SchemaManager: Error verifying "+ schemaKey +" version, probably ignorable", sqle2);
+                    }
+                }
+            }
+        }
+        finally {
+            DbConnectionManager.closeStatement(rs, pstmt);
+        }
+        return currentVersion;
     }
 
     private InputStream getUpgradeResource(ResourceLoader resourceLoader, int upgradeVersion,

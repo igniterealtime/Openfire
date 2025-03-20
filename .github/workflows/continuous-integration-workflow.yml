@@ -290,7 +290,7 @@ jobs:
     name: Test HSQLDB install script
     needs: [build, should-do-database-tests, check_branch]
     runs-on: ubuntu-latest
-    if: ${{ needs.should-do-database-upgrade-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
+    if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
         uses: actions/checkout@v4
@@ -334,7 +334,7 @@ jobs:
     name: Test HSQLDB upgrade scripts
     needs: [build, should-do-database-tests, check_branch]
     runs-on: ubuntu-latest
-    if: ${{ needs.should-do-database-upgrade-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
+    if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
         uses: actions/checkout@v4

@@ -324,7 +324,6 @@ jobs:
         run: |
           docker compose -f ./build/ci/compose/hsqldb.yml up --detach
           docker exec -i compose-db-1 bash -c "sed -i 's/password/password '"$CONNECTION_PASSWORD"'/' ~/sqltool.rc"
-          docker exec -i compose-db-1 bash -c "java -jar /opt/hsqldb/sqltool.jar db /olddb/openfire_hsqldb.sql"
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater

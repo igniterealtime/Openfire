@@ -18,7 +18,6 @@ package com.igniterealtime.openfire.updaterunner;
 import org.jivesoftware.database.*;
 import org.jivesoftware.util.JiveGlobals;
 
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -46,7 +45,8 @@ public class Main {
         "IBM DB2","com.ibm.db2.jcc.DB2Driver","jdbc:db2://HOSTNAME:50000/DATABASENAME"
         "Microsoft SQL Server","com.microsoft.sqlserver.jdbc.SQLServerDriver","jdbc:sqlserver://HOSTNAME:1433;databaseName=DATABASENAME;applicationName=Openfire"
         */
-        
+
+        Connection conn = null;
         try {
             Path parent = Paths.get(Main.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParent();
             PropertiesReader reader = new PropertiesReader(parent.resolve("maven-archiver/pom.properties")); // TODO determine why we read properties but not use them. Is this an existence check only?
@@ -70,7 +70,7 @@ public class Main {
             DefaultConnectionProvider cp = new DefaultConnectionProvider();
             cp.start();
             DbConnectionManager.setConnectionProvider(cp);
-            Connection conn = DbConnectionManager.getConnection();
+            conn = DbConnectionManager.getConnection();
 
             //Try updating explicitly. It'll already have happened once as a byproduct of the above, but we need to trap the result
             SchemaManager sm = new SchemaManager();
@@ -83,6 +83,8 @@ public class Main {
             System.out.println(e.getClass() + "\n" + e.getMessage());
             e.printStackTrace();
             System.exit(1);
+        } finally {
+            DbConnectionManager.closeConnection(conn);
         }
     }
     

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.text.BreakIterator;
-import java.text.MessageFormat;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -1119,7 +1118,7 @@ public final class StringUtils {
             // no conversion; validate again via USE_STD3_ASCII_RULES
             IDN.toASCII(domain, IDN.USE_STD3_ASCII_RULES);
         } else {
-            Log.info(MessageFormat.format("Converted domain name: from '{0}' to '{1}'",  domain, result));
+            Log.info("Converted domain name: from '{}' to '{}'", domain, result);
         }
         return result;
     }

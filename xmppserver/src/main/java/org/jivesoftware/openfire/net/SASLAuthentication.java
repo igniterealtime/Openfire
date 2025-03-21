@@ -131,7 +131,7 @@ public class SASLAuthentication {
     /**
      * Java's SaslServer does not allow for null values. This makes it hard to distinguish between an empty (initial)
      * responses (represented in XMPP as a single equals sign character '=', as per RFC-6120 section 6.4.2), and a
-     * missing/absent response. This can be problematic when a SASL mechanism implemention is to act differently on each
+     * missing/absent response. This can be problematic when a SASL mechanism implementation is to act differently on each
      * scenario (like the EXTERNAL mechanism, that is to challenge for an authzid when no initial response is provided,
      * but which is to use the stream's 'from' attribute value when the initial response is empty). To work around this
      * shortcoming in Java's SASL implementation, this class will add a session attribute using a key that has the name

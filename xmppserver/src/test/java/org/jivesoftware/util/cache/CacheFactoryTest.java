@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests that verify the implemention of {@link CacheFactory}
+ * Unit tests that verify the implementation of {@link CacheFactory}
  *
  * @author Guus der Kinderen, guus@goodbytes.nl
  */

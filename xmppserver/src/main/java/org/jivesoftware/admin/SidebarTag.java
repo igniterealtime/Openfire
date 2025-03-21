@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -210,12 +210,11 @@ public class SidebarTag extends BodyTagSupport {
                     if (hcss == null) {
                         hcss = "";
                     }
-                    Collection items = subnav.elements();
+                    Collection<Element> items = subnav.elements();
                     if (items.size() > 0) {
                         buf.append("<ul>");
                         // Now print all items:
-                        for (Object itemObj : items) {
-                            Element item = (Element)itemObj;
+                        for (Element item : items) {
                             String subitemID = item.attributeValue("id");
                             String subitemName = item.attributeValue("name");
                             String subitemURL = item.attributeValue("url");
@@ -240,7 +239,7 @@ public class SidebarTag extends BodyTagSupport {
                             if (isSubmenu && isCurrent) {
                                 // Get the parent of the current item so we can get its
                                 // items - those will be siblings of the current item:
-                                Iterator siblings = subcurrent.getParent().elementIterator();
+                                Iterator<Element> siblings = subcurrent.getParent().elementIterator();
                                 boolean hadNext = siblings.hasNext();
                                 if (hadNext) {
                                     // Print out beginning UL
@@ -253,7 +252,7 @@ public class SidebarTag extends BodyTagSupport {
                                 }
                                 String extraParams = (String)request.getAttribute("extraParams");
                                 while (siblings.hasNext()) {
-                                    Element sibling = (Element)siblings.next();
+                                    Element sibling = siblings.next();
                                     String sibID = sibling.attributeValue("id");
                                     String sibName = sibling.attributeValue("name");
                                     String sibDescr = sibling.attributeValue("description");

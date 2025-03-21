@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2020 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -340,7 +340,7 @@ public final class GraphicUtils {
      * @see Class#getResource(String)
      * @see Toolkit#createImage(URL)
      */
-    public static Image loadFromResource(String imageName, Class cls) {
+    public static Image loadFromResource(String imageName, Class<?> cls) {
         try {
             final URL url = cls.getResource(imageName);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,13 +71,13 @@ public class Route extends Packet {
      * @return the wrapped stanza.
      */
     public Element getChildElement() {
-        List elements = element.elements();
+        List<Element> elements = element.elements();
         if (elements.isEmpty()) {
             return null;
         }
         else {
             // Return the first child element
-            return (Element) elements.get(0);
+            return elements.get(0);
         }
     }
 
@@ -89,8 +89,8 @@ public class Route extends Packet {
      * @param childElement the child element.
      */
     public void setChildElement(Element childElement) {
-        for (Iterator i=element.elementIterator(); i.hasNext(); ) {
-            element.remove((Element)i.next());
+        for (Iterator<Element> i=element.elementIterator(); i.hasNext(); ) {
+            element.remove(i.next());
         }
         element.add(childElement);
     }

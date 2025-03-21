@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009 Jive Software, 2017-2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2009 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@
 package org.jivesoftware.util;
 
 import org.dom4j.Element;
-import org.dom4j.Node;
 
 import java.util.*;
 
@@ -178,10 +177,10 @@ public class ElementUtil {
             }
         }
         // We found matching property, return names of children.
-        Iterator iter = element.elementIterator(propName[propName.length - 1]);
+        Iterator<Element> iter = element.elementIterator(propName[propName.length - 1]);
         ArrayList<String> props = new ArrayList<>();
         while (iter.hasNext()) {
-            Element e = (Element) iter.next();
+            Element e = iter.next();
             props.add(e.getName());
         }
         String[] childrenNames = new String[props.size()];
@@ -224,9 +223,9 @@ public class ElementUtil {
         }
         String childName = propName[propName.length - 1];
         // We found matching property, clear all children.
-        Iterator iter = element.elementIterator(childName);
+        Iterator<Element> iter = element.elementIterator(childName);
         while (iter.hasNext()) {
-            ((Node) iter.next()).detach();
+            iter.next().detach();
         }
         for (int j = 0; i < values.length; i++) {
             if (values[j] != null) {

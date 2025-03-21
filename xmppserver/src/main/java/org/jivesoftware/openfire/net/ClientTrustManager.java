@@ -350,7 +350,7 @@ public class ClientTrustManager implements X509TrustManager {
                     X509Certs = new X509Certificate[numberOfEntry];
 
                     // Get all of the certificate alias out of the keystore.
-                    Enumeration aliases = trustStore.aliases();
+                    Enumeration<String> aliases = trustStore.aliases();
 
                     // Retrieve all of the certificates out of the keystore
                     // via the alias name.
@@ -358,7 +358,7 @@ public class ClientTrustManager implements X509TrustManager {
                     while (aliases.hasMoreElements()) {
                         X509Certs[i] =
                                 (X509Certificate) trustStore.
-                                        getCertificate((String) aliases.nextElement());
+                                        getCertificate(aliases.nextElement());
                         i++;
                     }
 

@@ -145,7 +145,7 @@ public class LdapUserProvider implements UserProvider {
             if (authPassword != null) {
                 // The authPassword attribute can be multivalued.
                 // Not sure if this is the right API to loop through them.
-                NamingEnumeration values = authPassword.getAll();
+                NamingEnumeration<?> values = authPassword.getAll();
                 while (values.hasMore()) {
                     Attribute authPasswordValue = (Attribute) values.next();
                     String[] parts = ((String) authPasswordValue.get()).split("$");

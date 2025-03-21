@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,13 +92,13 @@ public class AuthCheckFilter implements Filter {
 
     private static ServletRequestAuthenticator servletRequestAuthenticator;
 
-    private static void initAuthenticator(final Class clazz) {
+    private static void initAuthenticator(final Class<? extends ServletRequestAuthenticator> clazz) {
         // Check if we need to reset the auth provider class
         if(clazz == null && servletRequestAuthenticator != null) {
             servletRequestAuthenticator = null;
         } else if (clazz != null && (servletRequestAuthenticator == null || !clazz.equals(servletRequestAuthenticator.getClass()))) {
             try {
-                servletRequestAuthenticator = (ServletRequestAuthenticator)clazz.newInstance();
+                servletRequestAuthenticator = clazz.newInstance();
             }
             catch (final Exception e) {
                 Log.error("Error loading ServletRequestAuthenticator {}", clazz.getName(), e);

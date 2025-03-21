@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ public class LdapAuthorizationPolicy implements AuthorizationPolicy {
             Attributes attrs = ctx.getAttributes(LdapManager.escapeForJNDI(userRDN), attributes);
             Attribute authorizeField_a = attrs.get(authorizeField);
             if (authorizeField_a != null) {
-                for (Enumeration e = authorizeField_a.getAll(); e.hasMoreElements();) {
+                for (Enumeration<?> e = authorizeField_a.getAll(); e.hasMoreElements();) {
                     authorized.add((String)e.nextElement());
                 }
             }

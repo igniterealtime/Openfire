@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -192,10 +192,10 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         currentRegistration.element("name").setText(user.getName());
 
                         Element form = currentRegistration.element(QName.get("x", "jabber:x:data"));
-                        Iterator fields = form.elementIterator("field");
+                        Iterator<Element> fields = form.elementIterator("field");
                         Element field;
                         while (fields.hasNext()) {
-                            field = (Element) fields.next();
+                            field = fields.next();
                             if ("username".equals(field.attributeValue("var"))) {
                                 field.addElement("value").addText(user.getUsername());
                             }

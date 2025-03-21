@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ import org.xmpp.packet.Presence;
  * @author Iain Shigeoka
  * @see PacketRouter
  */
-public class SocketPacketWriteHandler implements ChannelHandler {
+public class SocketPacketWriteHandler implements ChannelHandler<Packet> {
 
     private static final Logger Log = LoggerFactory.getLogger(SocketPacketWriteHandler.class);
 

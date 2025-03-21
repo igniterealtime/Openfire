@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -132,17 +132,17 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
 
         PropertyEventDispatcher.addListener(new PropertyEventListener() {
             @Override
-            public void propertySet(String property, Map params) {
+            public void propertySet(String property, Map<String, Object> params) {
                 if (property.equals("provider.roster.className")) {
                     initProvider();
                 }
             }
             @Override
-            public void propertyDeleted(String property, Map params) {}
+            public void propertyDeleted(String property, Map<String, Object> params) {}
             @Override
-            public void xmlPropertySet(String property, Map params) {}
+            public void xmlPropertySet(String property, Map<String, Object> params) {}
             @Override
-            public void xmlPropertyDeleted(String property, Map params) {}
+            public void xmlPropertyDeleted(String property, Map<String, Object> params) {}
         });
 
     }
@@ -327,12 +327,12 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
     }
 
     @Override
-    public void groupCreated(Group group, Map params) {
+    public void groupCreated(Group group, Map<String, ?> params) {
         //Do nothing
     }
 
     @Override
-    public void groupDeleting(Group group, Map params) {
+    public void groupDeleting(Group group, Map<String, ?> params) {
         // Get group members
         Collection<JID> users = new HashSet<>(group.getMembers());
         users.addAll(group.getAdmins());
@@ -345,7 +345,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
     }
 
     @Override
-    public void groupModified(final Group group, Map params) {
+    public void groupModified(final Group group, Map<String, ?> params) {
         // Do nothing if no group property has been modified
         if ("propertyDeleted".equals(params.get("type"))) {
              return;
@@ -513,7 +513,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
     }
 
     @Override
-    public void memberAdded(Group group, Map params) {
+    public void memberAdded(Group group, Map<String, ?> params) {
         JID addedUser = new JID((String) params.get("member"));
         // Do nothing if the user was an admin that became a member
         if (group.getAdmins().contains(addedUser)) {
@@ -533,7 +533,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
     }
 
     @Override
-    public void memberRemoved(Group group, Map params) {
+    public void memberRemoved(Group group, Map<String, ?> params) {
         String member = (String) params.get("member");
         if (member == null) {
             return;
@@ -557,7 +557,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
     }
 
     @Override
-    public void adminAdded(Group group, Map params) {
+    public void adminAdded(Group group, Map<String, ?> params) {
         JID addedUser = new JID((String) params.get("admin"));
         // Do nothing if the user was a member that became an admin
         if (group.getMembers().contains(addedUser)) {
@@ -577,7 +577,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
     }
 
     @Override
-    public void adminRemoved(Group group, Map params) {
+    public void adminRemoved(Group group, Map<String, ?> params) {
         JID deletedUser = new JID((String) params.get("admin"));
         // Do nothing if the user is still a member
         if (group.getMembers().contains(deletedUser)) {

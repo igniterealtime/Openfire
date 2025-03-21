@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2020 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,10 +84,10 @@ public class LdapGroupTester {
             searchControls.setCountLimit(maxGroups);
 
             String filter = MessageFormat.format(manager.getGroupSearchFilter(), "*");
-            NamingEnumeration answer = ctx.search("", filter, searchControls);
+            NamingEnumeration<SearchResult> answer = ctx.search("", filter, searchControls);
             while (answer.hasMoreElements()) {
                 // Get the next group.
-                Attributes attributes = ((SearchResult) answer.next()).getAttributes();
+                Attributes attributes = answer.next().getAttributes();
                 String groupName = (String) attributes.get(manager.getGroupNameField()).get();
                 String description = "";
                 int elements = 0;
@@ -101,7 +101,7 @@ public class LdapGroupTester {
 
                 Attribute memberField = attributes.get(manager.getGroupMemberField());
                 if (memberField != null) {
-                    NamingEnumeration ne = memberField.getAll();
+                    NamingEnumeration<?> ne = memberField.getAll();
                     while (ne.hasMore()) {
                         ne.next();
                         elements = elements + 1;

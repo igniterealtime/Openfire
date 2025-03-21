@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,11 +117,11 @@ public class LdapUserTester {
             // Limit results to those we'll need to process
             searchControls.setCountLimit(maxSample);
             String filter = MessageFormat.format(manager.getSearchFilter(), "*");
-            NamingEnumeration answer = ctx.search("", filter, searchControls);
+            NamingEnumeration<SearchResult> answer = ctx.search("", filter, searchControls);
 
             while (answer.hasMoreElements()) {
                 // Get the next userID.
-                String username = (String) ((SearchResult) answer.next()).getAttributes().get(
+                String username = (String) answer.next().getAttributes().get(
                         manager.getUsernameField()).get();
                 // Escape username and add to results.
                 usernames.add(JID.escapeNode(username));

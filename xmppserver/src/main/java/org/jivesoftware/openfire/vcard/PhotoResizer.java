@@ -79,13 +79,13 @@ public class PhotoResizer
 
         // Get a writer (check if we can generate a new image for the type of the original).
         final String type = vCardElement.element( "PHOTO" ).element( "TYPE" ).getTextTrim();
-        final Iterator it = ImageIO.getImageWritersByMIMEType( type );
+        final Iterator<ImageWriter> it = ImageIO.getImageWritersByMIMEType( type );
         if ( !it.hasNext() )
         {
             Log.debug( "Cannot resize avatar. No writers available for MIME type {}.", type );
             return;
         }
-        final ImageWriter iw = (ImageWriter) it.next();
+        final ImageWriter iw = it.next();
 
         // Extract the original avatar from the VCard.
         final String value = element.getTextTrim();

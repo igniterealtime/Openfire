@@ -21,6 +21,7 @@ import org.apache.logging.log4j.spi.LoggerContext;
 import org.dom4j.Attribute;
 import org.dom4j.Document;
 import org.dom4j.Element;
+import org.dom4j.Node;
 import org.jivesoftware.admin.AdminConsole;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -667,8 +668,8 @@ public class PluginManager
                 }
 
                 // Modify all the URL's in the XML so that they are passed through the plugin servlet correctly.
-                final List urls = adminElement.selectNodes( "//@url" );
-                for ( final Object url : urls )
+                final List<Node> urls = adminElement.selectNodes( "//@url" );
+                for ( final Node url : urls )
                 {
                     final Attribute attr = (Attribute) url;
                     attr.setValue( "plugins/" + canonicalName + "/" + attr.getValue() );
@@ -679,8 +680,8 @@ public class PluginManager
                 final String[] elementNames = new String[]{ "tab", "sidebar", "item" };
                 for ( final String elementName : elementNames )
                 {
-                    final List values = adminElement.selectNodes( "//" + elementName );
-                    for ( final Object value : values )
+                    final List<Node> values = adminElement.selectNodes( "//" + elementName );
+                    for ( final Node value : values )
                     {
                         final Element element = (Element) value;
                         // Make sure there's a name or description. Otherwise, no need to i18n settings.
@@ -998,7 +999,7 @@ public class PluginManager
      * @return the class.
      * @throws ClassNotFoundException if the class was not found.
      */
-    public Class loadClass( Plugin plugin, String className ) throws ClassNotFoundException {
+    public Class<?> loadClass( Plugin plugin, String className ) throws ClassNotFoundException {
         final PluginClassLoader loader;
         synchronized ( this ) {
             loader = classloaders.get( plugin );

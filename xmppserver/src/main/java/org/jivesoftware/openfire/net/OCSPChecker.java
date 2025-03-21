@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -150,7 +150,7 @@ public class OCSPChecker extends PKIXCertPathChecker {
                 }
 
                 // Extract the anchor certs
-                Iterator anchors = pkixParams.getTrustAnchors().iterator();
+                Iterator<TrustAnchor> anchors = pkixParams.getTrustAnchors().iterator();
                 if (!anchors.hasNext()) {
                     throw new CertPathValidatorException(
                             "Must specify at least one trust anchor");
@@ -161,7 +161,7 @@ public class OCSPChecker extends PKIXCertPathChecker {
                 while (anchors.hasNext() &&
                         (!haveIssuerCert || !haveResponderCert)) {
 
-                    TrustAnchor anchor = (TrustAnchor) anchors.next();
+                    TrustAnchor anchor = anchors.next();
                     X509Certificate anchorCert = anchor.getTrustedCert();
                     X500Principal anchorSubjectName =
                             anchorCert.getSubjectX500Principal();
@@ -205,7 +205,7 @@ public class OCSPChecker extends PKIXCertPathChecker {
 
                         List<CertStore> certStores = pkixParams.getCertStores();
                         for (CertStore certStore : certStores) {
-                            Iterator i = certStore.getCertificates(filter).iterator();
+                            Iterator<? extends Certificate> i = certStore.getCertificates(filter).iterator();
                             if (i.hasNext()) {
                                 responderCert = (X509Certificate) i.next();
                                 haveResponderCert = true;

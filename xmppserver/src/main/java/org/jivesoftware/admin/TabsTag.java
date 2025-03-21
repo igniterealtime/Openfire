@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.jivesoftware.admin;
 
 import org.dom4j.Element;
+import org.dom4j.Node;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
@@ -157,7 +158,7 @@ public class TabsTag extends BodyTagSupport {
         }
         
         // Get tabs from the model:
-        List tabs = AdminConsole.getModel().selectNodes("//tab");
+        List<Node> tabs = AdminConsole.getModel().selectNodes("//tab");
         if (tabs.size() > 0) {
             JspWriter out = pageContext.getOut();
             // Build up the output in a buffer (is probably faster than a bunch of out.write's)

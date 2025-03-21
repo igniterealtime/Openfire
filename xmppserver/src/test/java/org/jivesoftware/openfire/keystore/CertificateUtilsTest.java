@@ -218,7 +218,7 @@ public class CertificateUtilsTest
      * - another valid (duplicated from the first)
      * - a third valid (no duplicate)
      * - and one invalid valid certificate
-     * returns an collection that contains the two distinc valid certificates.
+     * returns an collection that contains the two distinct valid certificates.
      */
     @Test
     public void testFilterValidWithMixOfValidityAndDuplicates() throws Exception

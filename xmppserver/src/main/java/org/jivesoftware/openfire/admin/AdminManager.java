@@ -122,7 +122,7 @@ public class AdminManager {
     }
 
     /**
-     * Refreshs the list of admin users from the provider.
+     * Refreshes the list of admin users from the provider.
      */
     public void refreshAdminAccounts() {
         loadAdminList();

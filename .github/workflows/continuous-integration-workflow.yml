@@ -243,7 +243,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           sparse-checkout: |
-           .github
+            .github
       - name: Download distribution artifact from build job.
         uses: actions/download-artifact@v4
         with:
@@ -324,7 +324,7 @@ jobs:
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
-          ./mvnw -B clean package exec:java
+          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
 
 
   sqlserver-upgrade:
@@ -376,7 +376,7 @@ jobs:
           ./mvnw -B clean package 
           mkdir -p target/resources
           cp -R ../../../dist/distribution/target/distribution-base/resources/database ./target/resources
-          ./mvnw -B exec:java
+          ./mvnw -B exec:java -Dexec.args="$GITHUB_WORKSPACE"
 
 
   postgres-install:
@@ -416,7 +416,7 @@ jobs:
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
-          ./mvnw -B clean package exec:java
+          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
 
 
   postgres-upgrade:
@@ -468,7 +468,7 @@ jobs:
           ./mvnw -B clean package 
           mkdir -p target/resources
           cp -R ../../../dist/distribution/target/distribution-base/resources/database ./target/resources
-          ./mvnw -B exec:java
+          ./mvnw -B exec:java -Dexec.args="$GITHUB_WORKSPACE"
 
 
   mysql-install:
@@ -509,7 +509,7 @@ jobs:
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
-          ./mvnw -B clean package exec:java
+          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
 
 
   mysql-upgrade:
@@ -562,7 +562,7 @@ jobs:
           ./mvnw -B clean package 
           mkdir -p target/resources
           cp -R ../../../dist/distribution/target/distribution-base/resources/database ./target/resources
-          ./mvnw -B exec:java
+          ./mvnw -B exec:java -Dexec.args="$GITHUB_WORKSPACE"
 
   oracle-install:
     name: Test Oracle install scripts
@@ -603,7 +603,7 @@ jobs:
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
-          ./mvnw -B clean package exec:java
+          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
 
 
   oracle-upgrade:
@@ -657,7 +657,7 @@ jobs:
           ./mvnw -B clean package 
           mkdir -p target/resources
           cp -R ../../../dist/distribution/target/distribution-base/resources/database ./target/resources
-          ./mvnw -B exec:java
+          ./mvnw -B exec:java -Dexec.args="$GITHUB_WORKSPACE"
 
   publish-maven:
     name: Publish to Maven

@@ -67,7 +67,7 @@ public class CertificateUtilsTest
 
     /**
      * Test for {@link CertificateUtils#filterValid(Collection)}. Verifies that an input argument that
-     * contains one valid certificate returns an collection that contains that certificate.
+     * contains one valid certificate returns a collection that contains that certificate.
      */
     @Test
     public void testFilterValidWithOneValidCert() throws Exception
@@ -87,7 +87,7 @@ public class CertificateUtilsTest
 
     /**
      * Test for {@link CertificateUtils#filterValid(Collection)}. Verifies that an input argument that
-     * contains one invalid certificate returns an collection that is empty.
+     * contains one invalid certificate returns a collection that is empty.
      */
     @Test
     public void testFilterValidWithOneInvalidCert() throws Exception
@@ -106,7 +106,7 @@ public class CertificateUtilsTest
 
     /**
      * Test for {@link CertificateUtils#filterValid(Collection)}. Verifies that an input argument that
-     * contains two duplicate, valid certificates returns an collection that contains that certificate once.
+     * contains two duplicate, valid certificates returns a collection that contains that certificate once.
      */
     @Test
     public void testFilterValidWithTwoDuplicateValidCerts() throws Exception
@@ -127,7 +127,7 @@ public class CertificateUtilsTest
 
     /**
      * Test for {@link CertificateUtils#filterValid(Collection)}. Verifies that an input argument that
-     * contains two distinct, valid certificates returns an collection that contains both certificates.
+     * contains two distinct, valid certificates returns a collection that contains both certificates.
      */
     @Test
     public void testFilterValidWithTwoDistinctValidCerts() throws Exception
@@ -150,7 +150,7 @@ public class CertificateUtilsTest
 
     /**
      * Test for {@link CertificateUtils#filterValid(Collection)}. Verifies that an input argument that
-     * contains two duplicate, invalid certificate returns an collection that is empty.
+     * contains two duplicate, invalid certificate returns a collection that is empty.
      */
     @Test
     public void testFilterValidWithTwoDuplicateInvalidCerts() throws Exception
@@ -170,7 +170,7 @@ public class CertificateUtilsTest
 
     /**
      * Test for {@link CertificateUtils#filterValid(Collection)}. Verifies that an input argument that
-     * contains two distinct, invalid certificate returns an collection that is empty.
+     * contains two distinct, invalid certificate returns a collection that is empty.
      */
     @Test
     public void testFilterValidWithTwoDistinctInvalidCerts() throws Exception
@@ -191,7 +191,7 @@ public class CertificateUtilsTest
 
     /**
      * Test for {@link CertificateUtils#filterValid(Collection)}. Verifies that an input argument that
-     * contains one valid and one invalid valid certificate returns an collection that contains one valid certificate.
+     * contains one valid and one invalid valid certificate returns a collection that contains one valid certificate.
      */
     @Test
     public void testFilterValidWithValidAndInvalidCerts() throws Exception
@@ -218,7 +218,7 @@ public class CertificateUtilsTest
      * - another valid (duplicated from the first)
      * - a third valid (no duplicate)
      * - and one invalid valid certificate
-     * returns an collection that contains the two distinct valid certificates.
+     * returns a collection that contains the two distinct valid certificates.
      */
     @Test
     public void testFilterValidWithMixOfValidityAndDuplicates() throws Exception

@@ -63,7 +63,7 @@ public interface FileTransferProgress {
     void setSessionID( String streamID );
 
     /**
-     * When the file transfer is being caried out by another thread this will set the Future
+     * When the file transfer is being carried out by another thread this will set the Future
      * relating to the thread that is carrying out the transfer.
      *
      * @param future the furute that is carrying out the transfer

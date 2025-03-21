@@ -212,7 +212,7 @@ public class DefaultNodeConfiguration implements Cacheable {
     }
 
     /**
-     * Returnes the publisher model that specifies who is allowed to publish items to the node.
+     * Returns the publisher model that specifies who is allowed to publish items to the node.
      *
      * @return the publisher model that specifies who is allowed to publish items to the node.
      */

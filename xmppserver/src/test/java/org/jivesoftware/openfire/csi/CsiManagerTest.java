@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,14 +48,15 @@ public class CsiManagerTest
     public void testJinglePropose() throws Exception
     {
         // Setup test fixture.
-        final Packet input = parse("<message type=\"chat\" id=\"jm-propose-LE3clSJQobTiFcrAoSD52\" to=\"user@example.com\">\n" +
-            "   <propose xmlns=\"urn:xmpp:jingle-message:0\" id=\"LE3clSJQobTiFcrAoNLR2A\">\n" +
-            "      <description xmlns=\"urn:xmpp:jingle:apps:rtp:1\" media=\"audio\" />\n" +
-            "      <description xmlns=\"urn:xmpp:jingle:apps:rtp:1\" media=\"video\" />\n" +
-            "   </propose>\n" +
-            "   <request xmlns=\"urn:xmpp:receipts\" />\n" +
-            "   <store xmlns=\"urn:xmpp:hints\" />\n" +
-            "</message>");
+        final Packet input = parse("""
+            <message type="chat" id="jm-propose-LE3clSJQobTiFcrAoSD52" to="user@example.com">
+               <propose xmlns="urn:xmpp:jingle-message:0" id="LE3clSJQobTiFcrAoNLR2A">
+                  <description xmlns="urn:xmpp:jingle:apps:rtp:1" media="audio" />
+                  <description xmlns="urn:xmpp:jingle:apps:rtp:1" media="video" />
+               </propose>
+               <request xmlns="urn:xmpp:receipts" />
+               <store xmlns="urn:xmpp:hints" />
+            </message>""");
 
         // Execute system under test.
         final boolean result = CsiManager.canDelay(input);

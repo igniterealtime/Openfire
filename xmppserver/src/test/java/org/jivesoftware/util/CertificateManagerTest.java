@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -375,34 +375,35 @@ public class CertificateManagerTest
     {
         // Setup test fixture.
         final Collection<X509Certificate> chain = CertificateManager.parseCertificates(
-            "-----BEGIN CERTIFICATE-----\n" +
-                "MIIErTCCA5WgAwIBAgIULIC8uiTUXMHADnhPH6YH2BoFcOIwDQYJKoZIhvcNAQEL\n" +
-                "BQAwezELMAkGA1UEBhMCVVMxEjAQBgNVBAgMCVlvdXJTdGF0ZTERMA8GA1UEBwwI\n" +
-                "WW91ckNpdHkxGTAXBgNVBAoMEFlvdXJPcmdhbml6YXRpb24xETAPBgNVBAsMCFlv\n" +
-                "dXJVbml0MRcwFQYDVQQDDA55b3VyZG9tYWluLmNvbTAeFw0yNDExMTAxNjI4MzZa\n" +
-                "Fw0yNTExMTAxNjI4MzZaMHsxCzAJBgNVBAYTAlVTMRIwEAYDVQQIDAlZb3VyU3Rh\n" +
-                "dGUxETAPBgNVBAcMCFlvdXJDaXR5MRkwFwYDVQQKDBBZb3VyT3JnYW5pemF0aW9u\n" +
-                "MREwDwYDVQQLDAhZb3VyVW5pdDEXMBUGA1UEAwwOeW91cmRvbWFpbi5jb20wggEi\n" +
-                "MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDMDg2nLepMRS6o3F5oSiP/U4yh\n" +
-                "5lOWSE24VQE4R0EMbTiQ1lATIA0AbYU0MbVfu2EU+6rcyml7wSwekVBdRq/KLcvH\n" +
-                "5mJjmQ25qHzJIFzxqNtUygY790job51zpOsIaFfg+MZkCdCWQK5G4qUr5bkfCKCN\n" +
-                "VCiFcTi1nJo/PIP5Cx+/NCq3iFUL//Dt4+UxADUhD9mdXODIFUYGAP0IDD5hL58g\n" +
-                "0IPNAAECky1fx4oSP1G0I8IYEnZ7V3RXvO82WZOlthJTtyysVTlIt6vy2cyG6WIg\n" +
-                "iuBYOyl3Uf1S//TAMQwDF6oBO43EkqJqEODe4HTdMODd+72LY/4HSbikyBvRAgMB\n" +
-                "AAGjggEnMIIBIzCB5gYDVR0RBIHeMIHboC4GCCsGAQUFBwgHoCIWIF94bXBwLXNl\n" +
-                "cnZlci5zZXJ2aWNlLmV4YW1wbGUuY29toCYGCCsGAQUFBwgHoBoWGF9kbnMuc2Vy\n" +
-                "dmljZS5leGFtcGxlLm5ldKAeBggrBgEFBQcIBaASDBB1c2VyQGV4YW1wbGUuY29t\n" +
-                "oCQGCCsGAQUFBwgFoBgMFm5vdC1hLXVzZXIuZXhhbXBsZS5jb22GEnhtcHA6dGhp\n" +
-                "cmQtb25lLm5ldIIOeW91cmRvbWFpbi5jb22CEWFub3RoZXJkb21haW4uY29thwTA\n" +
-                "qAEBMAwGA1UdEwQFMAMBAf8wCwYDVR0PBAQDAgWgMB0GA1UdJQQWMBQGCCsGAQUF\n" +
-                "BwMBBggrBgEFBQcDAjANBgkqhkiG9w0BAQsFAAOCAQEADrekbzSNviLTvI8DXqBD\n" +
-                "JnNPPS98nzWgABscB5Xups+G7Jrj4aibNHonePXW8B6rOqEYeBBbIzCYRRRPbuGl\n" +
-                "kqksCmGa0/CWYX0uf4RoLaGy5BzZndJWYNPe/Hj5GbyLbFCFNyBOMDz0NyrwfVoH\n" +
-                "Yq0W2rkve2SWKp7iiiUc80qKj4tcTX25x5h8oLgv7Lh4OAGKXFr6TYk23wdDPjiC\n" +
-                "zZlXLN8TFw+RT7LQQc/Xi8XC/1ULbLalTEwh/xIaKju5P5CBTZO9xnVDc9LJ3hww\n" +
-                "TN04BDlf3U02OCoSr0SxiLmmDRJOLbzGJK2AEQPpHUM5URcd98Tf2GzyUvxfhHUc\n" +
-                "7A==\n" +
-                "-----END CERTIFICATE-----");
+            """
+                -----BEGIN CERTIFICATE-----
+                MIIErTCCA5WgAwIBAgIULIC8uiTUXMHADnhPH6YH2BoFcOIwDQYJKoZIhvcNAQEL
+                BQAwezELMAkGA1UEBhMCVVMxEjAQBgNVBAgMCVlvdXJTdGF0ZTERMA8GA1UEBwwI
+                WW91ckNpdHkxGTAXBgNVBAoMEFlvdXJPcmdhbml6YXRpb24xETAPBgNVBAsMCFlv
+                dXJVbml0MRcwFQYDVQQDDA55b3VyZG9tYWluLmNvbTAeFw0yNDExMTAxNjI4MzZa
+                Fw0yNTExMTAxNjI4MzZaMHsxCzAJBgNVBAYTAlVTMRIwEAYDVQQIDAlZb3VyU3Rh
+                dGUxETAPBgNVBAcMCFlvdXJDaXR5MRkwFwYDVQQKDBBZb3VyT3JnYW5pemF0aW9u
+                MREwDwYDVQQLDAhZb3VyVW5pdDEXMBUGA1UEAwwOeW91cmRvbWFpbi5jb20wggEi
+                MA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDMDg2nLepMRS6o3F5oSiP/U4yh
+                5lOWSE24VQE4R0EMbTiQ1lATIA0AbYU0MbVfu2EU+6rcyml7wSwekVBdRq/KLcvH
+                5mJjmQ25qHzJIFzxqNtUygY790job51zpOsIaFfg+MZkCdCWQK5G4qUr5bkfCKCN
+                VCiFcTi1nJo/PIP5Cx+/NCq3iFUL//Dt4+UxADUhD9mdXODIFUYGAP0IDD5hL58g
+                0IPNAAECky1fx4oSP1G0I8IYEnZ7V3RXvO82WZOlthJTtyysVTlIt6vy2cyG6WIg
+                iuBYOyl3Uf1S//TAMQwDF6oBO43EkqJqEODe4HTdMODd+72LY/4HSbikyBvRAgMB
+                AAGjggEnMIIBIzCB5gYDVR0RBIHeMIHboC4GCCsGAQUFBwgHoCIWIF94bXBwLXNl
+                cnZlci5zZXJ2aWNlLmV4YW1wbGUuY29toCYGCCsGAQUFBwgHoBoWGF9kbnMuc2Vy
+                dmljZS5leGFtcGxlLm5ldKAeBggrBgEFBQcIBaASDBB1c2VyQGV4YW1wbGUuY29t
+                oCQGCCsGAQUFBwgFoBgMFm5vdC1hLXVzZXIuZXhhbXBsZS5jb22GEnhtcHA6dGhp
+                cmQtb25lLm5ldIIOeW91cmRvbWFpbi5jb22CEWFub3RoZXJkb21haW4uY29thwTA
+                qAEBMAwGA1UdEwQFMAMBAf8wCwYDVR0PBAQDAgWgMB0GA1UdJQQWMBQGCCsGAQUF
+                BwMBBggrBgEFBQcDAjANBgkqhkiG9w0BAQsFAAOCAQEADrekbzSNviLTvI8DXqBD
+                JnNPPS98nzWgABscB5Xups+G7Jrj4aibNHonePXW8B6rOqEYeBBbIzCYRRRPbuGl
+                kqksCmGa0/CWYX0uf4RoLaGy5BzZndJWYNPe/Hj5GbyLbFCFNyBOMDz0NyrwfVoH
+                Yq0W2rkve2SWKp7iiiUc80qKj4tcTX25x5h8oLgv7Lh4OAGKXFr6TYk23wdDPjiC
+                zZlXLN8TFw+RT7LQQc/Xi8XC/1ULbLalTEwh/xIaKju5P5CBTZO9xnVDc9LJ3hww
+                TN04BDlf3U02OCoSr0SxiLmmDRJOLbzGJK2AEQPpHUM5URcd98Tf2GzyUvxfhHUc
+                7A==
+                -----END CERTIFICATE-----""");
         final SANCertificateIdentityMapping mapper = new SANCertificateIdentityMapping();
 
         // Execute system under test.

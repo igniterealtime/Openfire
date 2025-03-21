@@ -483,7 +483,7 @@ public class ConsistencyChecks {
         }
 
         if (nonCachedRemoteIncomingServerSessions.isEmpty()) {
-            result.put("pass", String.format("All elements inincomingServerSessionsByClusterNode exist in %s.", incomingServerSessionsCache.getName()));
+            result.put("pass", String.format("All elements in incomingServerSessionsByClusterNode exist in %s.", incomingServerSessionsCache.getName()));
         } else {
             result.put("fail", String.format("Not all elements in incomingServerSessionsByClusterNode exist in %s. These %d entries do not: %s", incomingServerSessionsCache.getName(), nonCachedRemoteIncomingServerSessions.size(), nonCachedRemoteIncomingServerSessions.stream().map(StreamID::getID).collect(Collectors.joining(", "))));
         }

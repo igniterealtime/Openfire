@@ -34,7 +34,7 @@ import java.util.*;
 
 /**
  * Notifies the that a member was added to the group. It can be used by user providers to notify Openfire of the
- * aditon of a member to a group.
+ * addition of a member to a group.
  *
  * @author Gabriel Guarincerri
  */

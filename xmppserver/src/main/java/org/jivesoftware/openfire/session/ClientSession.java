@@ -86,7 +86,7 @@ public interface ClientSession extends Session {
      * and presence statuses to the client. Initialization occurs only once
      * following the first available presence transition.
      *
-     * @return True if the session has already been initializsed
+     * @return True if the session has already been initialized
      */
     boolean isInitialized();
 

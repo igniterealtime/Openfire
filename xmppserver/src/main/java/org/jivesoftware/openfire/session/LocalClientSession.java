@@ -631,7 +631,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * and presence statuses to the client. Initialization occurs only once
      * following the first available presence transition.
      *
-     * @return True if the session has already been initializsed
+     * @return True if the session has already been initialized
      */
     @Override
     public boolean isInitialized() {

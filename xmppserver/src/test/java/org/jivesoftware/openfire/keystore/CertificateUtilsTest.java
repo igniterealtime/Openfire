@@ -191,7 +191,7 @@ public class CertificateUtilsTest
 
     /**
      * Test for {@link CertificateUtils#filterValid(Collection)}. Verifies that an input argument that
-     * contains one valid and one invalid valid certificatereturns an collection that contains one valid certificate.
+     * contains one valid and one invalid valid certificate returns an collection that contains one valid certificate.
      */
     @Test
     public void testFilterValidWithValidAndInvalidCerts() throws Exception

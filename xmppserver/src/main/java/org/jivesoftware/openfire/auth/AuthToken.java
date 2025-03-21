@@ -43,7 +43,7 @@ public class AuthToken {
 
     /**
      * Constructs a new AuthToken that represents an authenticated, but anonymous user.
-     * @return an anonymouse auth token
+     * @return an anonymous auth token
      */
     public static AuthToken generateAnonymousToken()
     {

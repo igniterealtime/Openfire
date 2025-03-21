@@ -63,10 +63,10 @@ public interface CacheFactoryStrategy {
     void destroyCache(Cache cache);
 
     /**
-     * Returns true if this node is the maste node of the cluster. When not running
+     * Returns true if this node is the master node of the cluster. When not running
      * in cluster mode a value of true should be returned.
      *
-     * @return true if this node is the maste node of the cluster.
+     * @return true if this node is the master node of the cluster.
      */
     boolean isSeniorClusterMember();
 

@@ -51,7 +51,7 @@ public class XMPPPPacketReaderFactory extends BasePooledObjectFactory<XMPPPacket
 
     @Override
     public PooledObject<XMPPPacketReader> wrap(XMPPPacketReader reader) {
-        return new DefaultPooledObject<XMPPPacketReader>(reader);
+        return new DefaultPooledObject<>(reader);
     }
 
     @Override

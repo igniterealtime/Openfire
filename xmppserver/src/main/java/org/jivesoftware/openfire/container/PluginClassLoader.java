@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
 public class PluginClassLoader extends URLClassLoader {
 
     private static final Logger Log = LoggerFactory.getLogger(PluginClassLoader.class);
-    private List<JarURLConnection> cachedJarFiles = new ArrayList<JarURLConnection>();
+    private List<JarURLConnection> cachedJarFiles = new ArrayList<>();
     public PluginClassLoader() {
         super(new URL[] {}, findParentClassLoader());
     }

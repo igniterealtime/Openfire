@@ -72,9 +72,11 @@ public class PrivacyList implements Cacheable, Externalizable {
             Log.error("Error creating a parser factory", e);
         }
         // Create xmpp parser to keep in each thread
-        localParser = new ThreadLocal<XMPPPacketReader>() {
+        localParser = new ThreadLocal<>()
+        {
             @Override
-            protected XMPPPacketReader initialValue() {
+            protected XMPPPacketReader initialValue()
+            {
                 XMPPPacketReader parser = new XMPPPacketReader();
                 factory.setNamespaceAware(true);
                 parser.setXPPFactory(factory);

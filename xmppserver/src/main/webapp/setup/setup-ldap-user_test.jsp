@@ -47,7 +47,7 @@
 
         // Build the tester with the recreated LdapManager and vcard mapping information
         LdapUserTester tester = new LdapUserTester(manager, vCardSettings);
-        List<String> usernames = new ArrayList<String>();
+        List<String> usernames = new ArrayList<>();
         try {
             usernames = tester.getSample(40);
         }

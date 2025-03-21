@@ -255,7 +255,7 @@
     // entries.
     if (!ldap && !doTest) {
         String currentAdminList = xmppSettings.get("admin.authorizedJIDs");
-        List<String> adminCollection = new ArrayList<String>(StringUtils.stringToCollection(currentAdminList));
+        List<String> adminCollection = new ArrayList<>(StringUtils.stringToCollection(currentAdminList));
         if ((!adminCollection.isEmpty() && !adminCollection.contains("admin")) ||
                 xmppSettings.get("admin.authorizedJIDs") != null) {
             adminCollection.add(new JID("admin", domain, null).toBareJID());

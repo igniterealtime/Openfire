@@ -109,7 +109,7 @@
 
     if (save || test) {
         // Save information in the session so we can use it in testing pages during setup
-        Map<String, String> settings = new HashMap<String, String>();
+        Map<String, String> settings = new HashMap<>();
         settings.put("ldap.groupNameField", groupNameField);
         settings.put("ldap.groupMemberField", groupMemberField);
         settings.put("ldap.groupDescriptionField", groupDescriptionField);

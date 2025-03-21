@@ -110,7 +110,7 @@ public class AuthCheckFilter implements Filter {
     private static final Logger Log = LoggerFactory.getLogger(AuthCheckFilter.class);
     private static AuthCheckFilter instance;
 
-    private static Set<String> excludes = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+    private static Set<String> excludes = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
     private final AdminManager adminManager;
     private final LoginLimitManager loginLimitManager;
@@ -316,7 +316,7 @@ public class AuthCheckFilter implements Filter {
     @Override
     public void destroy() {
         // reset excludes to an empty set to prevent state carry over
-        excludes = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+        excludes = Collections.newSetFromMap(new ConcurrentHashMap<>());
     }
 
     private String getRedirectURL(HttpServletRequest request, String loginPage,

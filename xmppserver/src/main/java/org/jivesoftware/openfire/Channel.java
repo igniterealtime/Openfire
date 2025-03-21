@@ -66,7 +66,7 @@ public class Channel<T extends Packet> {
         this.name = name;
         this.channelHandler = channelHandler;
 
-        executor = new ThreadPoolExecutor(1, 8, 15, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>(), new NamedThreadFactory("Channel-" + name + "-", Executors.defaultThreadFactory(), false, Thread.NORM_PRIORITY));
+        executor = new ThreadPoolExecutor(1, 8, 15, TimeUnit.SECONDS, new LinkedBlockingQueue<>(), new NamedThreadFactory("Channel-" + name + "-", Executors.defaultThreadFactory(), false, Thread.NORM_PRIORITY));
     }
 
     /**

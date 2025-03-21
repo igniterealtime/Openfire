@@ -126,7 +126,7 @@ public class CheckChainTrustedTest
         // Add root certificate of a chain with an expired intermediate certificate to the trust store.
         trustStore.setCertificateEntry( getLast( expiredIntChain ).getSubjectDN().getName(), getLast( expiredIntChain ) );
 
-        // Add root certificate of a chain wwith an expired root certificate to the trust store.
+        // Add root certificate of a chain with an expired root certificate to the trust store.
         trustStore.setCertificateEntry( getLast( expiredRootChain ).getSubjectDN().getName(), getLast( expiredRootChain ) );
 
         // Reset the system under test before each test.

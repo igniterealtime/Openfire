@@ -70,7 +70,7 @@ public class AuditorImpl implements Auditor {
      */
     private boolean closed = false;
     /**
-     * Directoty (absolute path) where the audit files will be saved.
+     * Directory (absolute path) where the audit files will be saved.
      */
     private String logDir;
     /**

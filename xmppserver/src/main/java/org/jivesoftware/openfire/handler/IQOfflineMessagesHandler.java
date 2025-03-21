@@ -114,11 +114,11 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
         return reply;
     }
 
-    private void sendOfflineMessage(JID receipient, OfflineMessage offlineMessage) {
+    private void sendOfflineMessage(JID recipient, OfflineMessage offlineMessage) {
         Element offlineInfo = offlineMessage.addChildElement("offline", NAMESPACE);
         offlineInfo.addElement("item").addAttribute("node",
                 XMPPDateTimeFormat.format(offlineMessage.getCreationDate()));
-        routingTable.routePacket(receipient, offlineMessage);
+        routingTable.routePacket(recipient, offlineMessage);
     }
 
     @Override

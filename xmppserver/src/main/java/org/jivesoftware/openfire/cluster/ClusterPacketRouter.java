@@ -37,10 +37,10 @@ public class ClusterPacketRouter implements RemotePacketRouter {
 
     private static Logger logger = LoggerFactory.getLogger(ClusterPacketRouter.class);
 
-    public boolean routePacket(byte[] nodeID, JID receipient, Packet packet) {
+    public boolean routePacket(byte[] nodeID, JID recipient, Packet packet) {
         // Send the packet to the specified node and let the remote node deliver the packet to the recipient
         try {
-            CacheFactory.doClusterTask(new RemotePacketExecution(receipient, packet), nodeID);
+            CacheFactory.doClusterTask(new RemotePacketExecution(recipient, packet), nodeID);
             return true;
         } catch (IllegalStateException  e) {
             logger.warn("Error while routing packet to remote node: " + e);

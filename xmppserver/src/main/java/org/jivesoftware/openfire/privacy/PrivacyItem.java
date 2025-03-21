@@ -184,7 +184,7 @@ public class PrivacyItem implements Cacheable, Comparable<PrivacyItem> {
         boolean matches = false;
         if (isPresence && !incoming && (filterEverything || filterPresence_out)) {
             // If this is an outgoing presence and we are filtering by outgoing presence
-            // notification then use the receipient of the packet in the analysis
+            // notification then use the recipient of the packet in the analysis
             matches = verifyJID(packet.getTo(), roster);
         }
         if (!matches && incoming &&

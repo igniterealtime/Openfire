@@ -47,7 +47,7 @@ public class GroupJIDTest {
         String test123 = "123";
         assertTrue(StringUtils.isBase32(test123));
 
-        // should be case insensitve
+        // should be case insensitive
         String testabc = "abc";
         assertTrue(StringUtils.isBase32(testabc));
 

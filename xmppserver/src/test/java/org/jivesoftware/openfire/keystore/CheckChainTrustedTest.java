@@ -499,7 +499,7 @@ public class CheckChainTrustedTest
 
     /**
      * Verifies that self-signed certificates that expired are accepted only when both self-signed certificates are
-     * explicitly accepted, as well as validation is explictly skipped.
+     * explicitly accepted, as well as validation is explicitly skipped.
      */
     @Test
     public void testSelfSignedExpired() throws Exception

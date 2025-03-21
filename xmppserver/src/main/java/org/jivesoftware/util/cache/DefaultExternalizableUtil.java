@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -416,13 +416,10 @@ public class DefaultExternalizableUtil implements ExternalizableUtilStrategy {
             int len = in.readInt();
             byte[] buf = new byte[len];
             in.readFully(buf);
-            ObjectInputStream oin = newObjectInputStream(classLoader, new ByteArrayInputStream(buf));
-            try {
+            try (ObjectInputStream oin = newObjectInputStream(classLoader, new ByteArrayInputStream(buf))) {
                 return oin.readObject();
             } catch (ClassNotFoundException e) {
                 throw new IOException(e);
-            } finally {
-                oin.close();
             }
         } else {
             throw new IOException("Unknown object type=" + type);

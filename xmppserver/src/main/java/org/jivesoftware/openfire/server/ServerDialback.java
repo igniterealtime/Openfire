@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -843,23 +843,14 @@ public class ServerDialback {
         // Set a read timeout
         socket.setSoTimeout(RemoteServerManager.getSocketTimeout());
         VerifyResult result = VerifyResult.error;
-        try {
+        try (socket) {
             reader = new XMPPPacketReader();
             reader.setXPPFactory(FACTORY);
 
             reader.getXPPParser().setInput(new InputStreamReader(socket.getInputStream(), CHARSET));
             // Get a writer for sending the open stream tag
             writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream(), CHARSET));
-            result = sendVerifyKey(key, streamID, recipient, remoteDomain, writer, reader, socket, skipTLS, directTLS );
-        }
-        finally {
-            try {
-                // Close the TCP connection
-                socket.close();
-            }
-            catch (IOException ioe) {
-                // Do nothing
-            }
+            result = sendVerifyKey(key, streamID, recipient, remoteDomain, writer, reader, socket, skipTLS, directTLS);
         }
 
         switch ( result ) {

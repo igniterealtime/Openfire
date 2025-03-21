@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2007 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2006-2007 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1072,23 +1072,12 @@ public class Base64
     public static boolean encodeToFile( byte[] dataToEncode, String filename )
     {
         boolean success = false;
-        Base64.OutputStream bos = null;
-        try
-        {
-            bos = new Base64.OutputStream(
-                      new java.io.FileOutputStream( filename ), Base64.ENCODE );
-            bos.write( dataToEncode );
+        try (OutputStream bos = new OutputStream(new java.io.FileOutputStream(filename), Base64.ENCODE)) {
+            bos.write(dataToEncode);
             success = true;
-        }   // end try
-        catch( java.io.IOException e )
-        {
-
+        } catch (java.io.IOException e) {
             success = false;
-        }   // end catch: IOException
-        finally
-        {
-            try{ if (bos != null) bos.close(); } catch( Exception e ){}
-        }   // end finally
+        }
 
         return success;
     }   // end encodeToFile
@@ -1106,22 +1095,12 @@ public class Base64
     public static boolean decodeToFile( String dataToDecode, String filename )
     {
         boolean success = false;
-        Base64.OutputStream bos = null;
-        try
-        {
-                bos = new Base64.OutputStream(
-                          new java.io.FileOutputStream( filename ), Base64.DECODE );
-                bos.write( dataToDecode.getBytes( PREFERRED_ENCODING ) );
-                success = true;
-        }   // end try
-        catch( java.io.IOException e )
-        {
+        try (OutputStream bos = new OutputStream(new java.io.FileOutputStream(filename), Base64.DECODE)) {
+            bos.write(dataToDecode.getBytes(PREFERRED_ENCODING));
+            success = true;
+        } catch (java.io.IOException e) {
             success = false;
-        }   // end catch: IOException
-        finally
-        {
-                try{ if (bos != null) bos.close(); } catch( Exception e ){}
-        }   // end finally
+        }
 
         return success;
     }   // end decodeToFile
@@ -1242,19 +1221,11 @@ public class Base64
     public static void encodeFileToFile( String infile, String outfile )
     {
         String encoded = Base64.encodeFromFile( infile );
-        java.io.OutputStream out = null;
-        try{
-            out = new java.io.BufferedOutputStream(
-                  new java.io.FileOutputStream( outfile ) );
-            out.write( encoded.getBytes("US-ASCII") ); // Strict, 7-bit output.
-        }   // end try
-        catch( java.io.IOException ex ) {
+        try (java.io.OutputStream out = new java.io.BufferedOutputStream(new java.io.FileOutputStream(outfile))) {
+            out.write(encoded.getBytes("US-ASCII")); // Strict, 7-bit output.
+        } catch (java.io.IOException ex) {
             ex.printStackTrace();
-        }   // end catch
-        finally {
-            try { if (out != null) out.close(); }
-            catch( Exception ex ){}
-        }   // end finally
+        }
     }   // end encodeFileToFile
 
 
@@ -1268,19 +1239,11 @@ public class Base64
     public static void decodeFileToFile( String infile, String outfile )
     {
         byte[] decoded = Base64.decodeFromFile( infile );
-        java.io.OutputStream out = null;
-        try{
-            out = new java.io.BufferedOutputStream(
-                  new java.io.FileOutputStream( outfile ) );
-            out.write( decoded );
-        }   // end try
-        catch( java.io.IOException ex ) {
+        try (java.io.OutputStream out = new java.io.BufferedOutputStream(new java.io.FileOutputStream(outfile))) {
+            out.write(decoded);
+        } catch (java.io.IOException ex) {
             ex.printStackTrace();
-        }   // end catch
-        finally {
-            try { if (out != null) out.close(); }
-            catch( Exception ex ){}
-        }   // end finally
+        }
     }   // end decodeFileToFile
 
 

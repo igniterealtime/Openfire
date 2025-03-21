@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -63,38 +63,29 @@
 
     boolean testConnection(Map<String,String> errors) {
         boolean success = true;
-        Connection con = null;
-        try {
-            con = DbConnectionManager.getConnection();
+        try (Connection con = DbConnectionManager.getConnection()) {
             if (con == null) {
                 success = false;
-                errors.put("general","A connection to the database could not be "
-                    + "made. View the error message by opening the "
-                    + "\"" + File.separator + "logs" + File.separator + "openfire.log\" log "
-                    + "file, then go back to fix the problem.");
-            }
-            else {
+                errors.put("general", "A connection to the database could not be "
+                        + "made. View the error message by opening the "
+                        + "\"" + File.separator + "logs" + File.separator + "openfire.log\" log "
+                        + "file, then go back to fix the problem.");
+            } else {
                 // See if the Jive db schema is installed.
                 try {
                     Statement stmt = con.createStatement();
                     // Pick an arbitrary table to see if it's there.
                     stmt.executeQuery("SELECT * FROM ofID");
                     stmt.close();
-                }
-                catch (SQLException sqle) {
+                } catch (SQLException sqle) {
                     success = false;
                     sqle.printStackTrace();
-                    errors.put("general","The Openfire database schema does not "
-                        + "appear to be installed. Follow the installation guide to "
-                        + "fix this error.");
+                    errors.put("general", "The Openfire database schema does not "
+                            + "appear to be installed. Follow the installation guide to "
+                            + "fix this error.");
                 }
             }
-        }
-        catch (Exception ignored) {}
-        finally {
-            try {
-                con.close();
-            } catch (Exception ignored) {}
+        } catch (Exception ignored) {
         }
         return success;
     }

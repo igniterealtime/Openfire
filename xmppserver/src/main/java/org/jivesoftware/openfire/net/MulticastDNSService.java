@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class MulticastDNSService extends BasicModule {
         PropertyEventDispatcher.addListener(new PropertyEventListener() {
 
             @Override
-            public void propertySet(String property, Map params) {
+            public void propertySet(String property, Map<String, Object> params) {
                 // Restart the service if component settings changes.
                 if (property.equals("xmpp.component.socket.active") ||
                         property.equals(" xmpp.component.socket.port"))
@@ -69,7 +69,7 @@ public class MulticastDNSService extends BasicModule {
             }
 
             @Override
-            public void propertyDeleted(String property, Map params) {
+            public void propertyDeleted(String property, Map<String, Object> params) {
                 // Restart the service if component settings changes.
                 if (property.equals("xmpp.component.socket.active") ||
                         property.equals(" xmpp.component.socket.port"))
@@ -80,11 +80,11 @@ public class MulticastDNSService extends BasicModule {
             }
 
             @Override
-            public void xmlPropertySet(String property, Map params) {
+            public void xmlPropertySet(String property, Map<String, Object> params) {
             }
 
             @Override
-            public void xmlPropertyDeleted(String property, Map params) {
+            public void xmlPropertyDeleted(String property, Map<String, Object> params) {
             }
         });
     }

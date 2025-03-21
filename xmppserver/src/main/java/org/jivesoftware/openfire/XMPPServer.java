@@ -159,7 +159,7 @@ public class XMPPServer {
     /**
      * All modules loaded by this server
      */
-    private Map<Class, Module> modules = new LinkedHashMap<>();
+    private Map<Class<Module>, Module> modules = new LinkedHashMap<>();
 
     /**
      * Listeners that will be notified when the server has started or is about to be stopped.
@@ -1254,10 +1254,10 @@ public class XMPPServer {
         // This ensures that the 'most important' / core modules are shut down last, giving other modules the
         // opportunity to make use of their functionality during their shutdown (eg: MUC wants to send messages during
         // shutdown).
-        final List<Class> reverseInsertionOrder = new ArrayList<>( modules.keySet() );
+        final List<Class<Module>> reverseInsertionOrder = new ArrayList<>( modules.keySet() );
         Collections.reverse( reverseInsertionOrder );
 
-        for( final Class moduleClass : reverseInsertionOrder ) {
+        for( final Class<Module> moduleClass : reverseInsertionOrder ) {
             final Module module = modules.get( moduleClass );
             try {
                 // OF-1607: Apply a configurable timeout to the duration of stop/destroy invocation.

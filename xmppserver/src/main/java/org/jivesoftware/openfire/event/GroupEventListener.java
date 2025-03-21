@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public interface GroupEventListener {
      * @param group the group.
      * @param params event parameters.
      */
-    void groupCreated( Group group, Map params );
+    void groupCreated( Group group, Map<String, ?> params );
 
     /**
      * A group is being deleted.
@@ -43,7 +43,7 @@ public interface GroupEventListener {
      * @param group the group.
      * @param params event parameters.
      */
-    void groupDeleting( Group group, Map params );
+    void groupDeleting( Group group, Map<String, ?> params );
 
     /**
      * A group's name, description, or an extended property was changed.
@@ -51,7 +51,7 @@ public interface GroupEventListener {
      * @param group the group.
      * @param params event parameters.
      */
-    void groupModified( Group group, Map params );
+    void groupModified( Group group, Map<String, ?> params );
 
     /**
      * A member was added to a group.
@@ -59,7 +59,7 @@ public interface GroupEventListener {
      * @param group the group.
      * @param params event parameters.
      */
-    void memberAdded( Group group, Map params );
+    void memberAdded( Group group, Map<String, ?> params );
 
     /**
      * A member was removed from a group.
@@ -67,7 +67,7 @@ public interface GroupEventListener {
      * @param group the group.
      * @param params event parameters.
      */
-    void memberRemoved( Group group, Map params );
+    void memberRemoved( Group group, Map<String, ?> params );
 
     /**
      * An administrator was added to a group.
@@ -75,7 +75,7 @@ public interface GroupEventListener {
      * @param group the group.
      * @param params event parameters.
      */
-    void adminAdded( Group group, Map params );
+    void adminAdded( Group group, Map<String, ?> params );
 
     /**
      * An administrator was removed from a group.
@@ -83,5 +83,5 @@ public interface GroupEventListener {
      * @param group the group.
      * @param params event parameters.
      */
-    void adminRemoved( Group group, Map params );
+    void adminRemoved( Group group, Map<String, ?> params );
 }

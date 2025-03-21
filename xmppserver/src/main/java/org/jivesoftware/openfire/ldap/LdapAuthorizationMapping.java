@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -95,7 +95,7 @@ public class LdapAuthorizationMapping implements AuthorizationMapping {
             }
             constraints.setReturningAttributes(new String[] { usernameField });
 
-            NamingEnumeration answer = ctx.search("", princSearchFilter, 
+            NamingEnumeration<SearchResult> answer = ctx.search("", princSearchFilter,
                     new String[] {LdapManager.sanitizeSearchFilter(authcid)},
                     constraints);
             Log.debug("LdapAuthorizationMapping: ... search finished");
@@ -103,7 +103,7 @@ public class LdapAuthorizationMapping implements AuthorizationMapping {
                 Log.debug("LdapAuthorizationMapping: Username based on principal '" + authcid + "' not found.");
                 return authcid;
             }
-            Attributes atrs = ((SearchResult)answer.next()).getAttributes();
+            Attributes atrs = answer.next().getAttributes();
             Attribute usernameAttribute = atrs.get(usernameField);
             authzid = (String) usernameAttribute.get();
         }

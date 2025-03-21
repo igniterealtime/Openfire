@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2006-2007 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2006-2007 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@
         LdapContext context = null;
         try {
             context = manager.getContext();
-            NamingEnumeration list = context.list("");
+            NamingEnumeration<NameClassPair> list = context.list("");
             list.close();
             // We were able to successfully connect to the LDAP server
             success = true;

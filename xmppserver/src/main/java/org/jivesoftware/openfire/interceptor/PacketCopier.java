@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,7 +122,7 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
         // Queue intercepted packet only if there are subscribers interested
         if (!subscribers.isEmpty()) {
             boolean queue = false;
-            Class packetClass = packet.getClass();
+            Class<? extends Packet> packetClass = packet.getClass();
             for (Subscription subscription : subscribers.values()) {
                 if (subscription.isPresenceEnabled() && packetClass == Presence.class) {
                     queue = true;
@@ -168,7 +168,7 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
 
                 if (subscription.isIncoming() == interceptedPacket.isIncoming() &&
                         subscription.isProcessed() == interceptedPacket.isProcessed()) {
-                    Class packetClass = interceptedPacket.getPacketClass();
+                    Class<? extends Packet> packetClass = interceptedPacket.getPacketClass();
                     if (subscription.isPresenceEnabled() && packetClass == Presence.class) {
                         notify = true;
                     }
@@ -301,7 +301,7 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
 
     private static class InterceptedPacket {
         private Element element;
-        private Class packetClass;
+        private Class<? extends Packet> packetClass;
         private Date creationDate;
         private boolean incoming;
         private boolean processed;
@@ -315,7 +315,7 @@ public class PacketCopier implements PacketInterceptor, ComponentEventListener {
         }
 
 
-        public Class getPacketClass() {
+        public Class<? extends Packet> getPacketClass() {
             return packetClass;
         }
 

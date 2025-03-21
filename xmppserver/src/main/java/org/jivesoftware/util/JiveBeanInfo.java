@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,7 @@ public abstract class JiveBeanInfo implements BeanInfo {
      *
      * @return the Class of the JavaBean that the BeanInfo is for.
      */
-    public abstract Class getBeanClass();
+    public abstract Class<?> getBeanClass();
 
     /**
      * Returns the name of the class that the bean info applies to (which
@@ -94,9 +94,9 @@ public abstract class JiveBeanInfo implements BeanInfo {
                 descriptor.setShortDescription(shortDescription);
             }
             // Add any other properties that are specified.
-            Enumeration enumeration = bundle.getKeys();
+            Enumeration<String> enumeration = bundle.getKeys();
             while (enumeration.hasMoreElements()) {
-                String key = (String)enumeration.nextElement();
+                String key = enumeration.nextElement();
                 String value = bundle.getString(key);
                 if (value != null) {
                     descriptor.setValue(key, value);
@@ -112,7 +112,7 @@ public abstract class JiveBeanInfo implements BeanInfo {
 
     @Override
     public PropertyDescriptor[] getPropertyDescriptors() {
-        Class beanClass = getBeanClass();
+        Class<?> beanClass = getBeanClass();
         String[] properties = getPropertyNames();
 
         PropertyDescriptor[] descriptors = new PropertyDescriptor[properties.length];

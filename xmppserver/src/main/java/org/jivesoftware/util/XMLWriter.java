@@ -1004,10 +1004,10 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
      */
     protected void writeNamespaces() throws IOException {
         if ( namespacesMap != null ) {
-            for ( Iterator iter = namespacesMap.entrySet().iterator(); iter.hasNext(); ) {
-                Map.Entry entry = (Map.Entry) iter.next();
-                String prefix = (String) entry.getKey();
-                String uri = (String) entry.getValue();
+            for ( Iterator<Map.Entry<String, String>> iter = namespacesMap.entrySet().iterator(); iter.hasNext(); ) {
+                Map.Entry<String, String> entry = iter.next();
+                String prefix = entry.getKey();
+                String uri = entry.getValue();
                 writeNamespace(prefix, uri);
             }
             namespacesMap = null;

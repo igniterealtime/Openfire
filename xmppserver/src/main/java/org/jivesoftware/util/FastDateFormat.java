@@ -384,7 +384,7 @@ public class FastDateFormat {
     /**
      * Returns a list of Rules.
      */
-    private static List parse(String pattern, TimeZone timeZone, Locale locale,
+    private static List<Rule> parse(String pattern, TimeZone timeZone, Locale locale,
                               DateFormatSymbols symbols) {
         List<Rule> rules = new ArrayList<>();
 
@@ -665,8 +665,8 @@ public class FastDateFormat {
             symbols = new DateFormatSymbols(locale);
         }
 
-        List rulesList = parse(pattern, timeZone, locale, symbols);
-        mRules = (Rule[])rulesList.toArray(new Rule[rulesList.size()]);
+        List<Rule> rulesList = parse(pattern, timeZone, locale, symbols);
+        mRules = rulesList.toArray(new Rule[rulesList.size()]);
 
         int len = 0;
         for (int i=mRules.length; --i >= 0; ) {
@@ -1147,7 +1147,7 @@ public class FastDateFormat {
         }
     }
 
-    private static class Pair implements Comparable, java.io.Serializable {
+    private static class Pair implements Comparable<Pair>, java.io.Serializable {
         private final Object mObj1;
         private final Object mObj2;
 
@@ -1157,12 +1157,10 @@ public class FastDateFormat {
         }
 
         @Override
-        public int compareTo(Object obj) {
-            if (this == obj) {
+        public int compareTo(Pair other) {
+            if (this == other) {
                 return 0;
             }
-
-            Pair other = (Pair)obj;
 
             Object a = mObj1;
             Object b = other.mObj1;

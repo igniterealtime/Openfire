@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2008 Jive Software, 2016-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 1999-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -402,7 +402,7 @@ public class FileTransferProxy extends BasicModule
 
     private class FileTransferPropertyListener implements PropertyEventListener {
         @Override
-        public void propertySet(String property, Map params)
+        public void propertySet(String property, Map<String, Object> params)
         {
             if ( isEnabled() )
             {
@@ -422,7 +422,7 @@ public class FileTransferProxy extends BasicModule
         }
 
         @Override
-        public void propertyDeleted(String property, Map params) {
+        public void propertyDeleted(String property, Map<String, Object> params) {
             if(JIVEPROPERTY_PROXY_ENABLED.equalsIgnoreCase(property)) {
                 setEnabled(DEFAULT_IS_PROXY_ENABLED);
             }
@@ -439,11 +439,11 @@ public class FileTransferProxy extends BasicModule
         }
 
         @Override
-        public void xmlPropertySet(String property, Map params) {
+        public void xmlPropertySet(String property, Map<String, Object> params) {
         }
 
         @Override
-        public void xmlPropertyDeleted(String property, Map params) {
+        public void xmlPropertyDeleted(String property, Map<String, Object> params) {
         }
     }
 }

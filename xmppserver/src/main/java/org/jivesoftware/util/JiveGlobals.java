@@ -474,7 +474,7 @@ public class JiveGlobals {
      * @param parent the name of the parent property to return the children for.
      * @return all child property values for the given parent.
      */
-    public static List getXMLProperties(String parent) {
+    public static List<String> getXMLProperties(String parent) {
         if (openfireProperties == null) {
             loadOpenfireProperties();
         }

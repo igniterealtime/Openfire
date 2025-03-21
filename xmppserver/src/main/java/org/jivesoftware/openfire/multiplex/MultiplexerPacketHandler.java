@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,7 @@ public class MultiplexerPacketHandler {
                         else if (child.element("failed") != null) {
                             // Connection Manager failed to deliver a message
                             // Connection Manager wrapped a packet from a Client Session.
-                            List wrappedElements = child.element("failed").elements();
+                            List<Element> wrappedElements = child.element("failed").elements();
                             if (wrappedElements.size() != 1) {
                                 // Wrapper element is wrapping 0 or many items
                                 Element extraError = DocumentHelper.createElement(QName.get(
@@ -125,7 +125,7 @@ public class MultiplexerPacketHandler {
                                 sendErrorPacket(iq, PacketError.Condition.bad_request, extraError);
                             }
                             else {
-                                Element wrappedElement = (Element) wrappedElements.get(0);
+                                Element wrappedElement = wrappedElements.get(0);
                                 String tag = wrappedElement.getName();
                                 if ("message".equals(tag)) {
                                     XMPPServer.getInstance().getOfflineMessageStrategy()

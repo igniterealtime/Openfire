@@ -486,7 +486,7 @@ public class ConnectionListener
     }
 
     /**
-     * Returns the applicable TLS policy, but only when it is hardcoded (and inconfigurable).
+     * Returns the applicable TLS policy, but only when it is hardcoded (and unconfigurable).
      * @return a policy or null.
      */
     private Connection.TLSPolicy getHardcodedTLSPolicy()

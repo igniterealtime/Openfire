@@ -18,9 +18,6 @@ package org.jivesoftware.openfire.update;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 
 import org.dom4j.Element;
 import org.jivesoftware.openfire.container.PluginMetadata;

@@ -19,8 +19,6 @@ package org.jivesoftware.openfire.pubsub.cluster;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.pubsub.Node;
 import org.jivesoftware.openfire.pubsub.NodeSubscription;
-import org.jivesoftware.openfire.pubsub.PubSubPersistenceProviderManager;
-import org.jivesoftware.openfire.pubsub.PubSubService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

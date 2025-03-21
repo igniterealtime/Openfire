@@ -15,7 +15,6 @@
  */
 package org.jivesoftware.openfire.pubsub;
 
-import org.jivesoftware.util.StringUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;

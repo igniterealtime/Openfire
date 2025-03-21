@@ -21,7 +21,6 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.XMPPServerListener;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.jivesoftware.openfire.muc.spi.MUCPersistenceManager;
 import org.jivesoftware.openfire.muc.spi.MultiUserChatServiceImpl;

@@ -23,13 +23,10 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
 import org.dom4j.Document;
-import org.dom4j.DocumentException;
 import org.dom4j.Node;
-import org.dom4j.io.SAXReader;
 import org.jivesoftware.util.SAXReaderUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
 /**
  * A helper class to read cache configuration data for a plugin and register the defined caches with

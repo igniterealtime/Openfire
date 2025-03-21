@@ -15,7 +15,6 @@
  */
 package org.jivesoftware.admin;
 
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;
 
 import javax.servlet.http.HttpSessionEvent;

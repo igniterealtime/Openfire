@@ -15,7 +15,6 @@
  */
 package org.jivesoftware.openfire.pubsub;
 
-import org.checkerframework.checker.units.qual.N;
 import org.jivesoftware.util.StringUtils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,7 +23,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.xmpp.packet.JID;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;

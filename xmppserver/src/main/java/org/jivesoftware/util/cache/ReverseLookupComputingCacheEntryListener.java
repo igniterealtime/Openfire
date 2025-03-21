@@ -17,8 +17,6 @@ package org.jivesoftware.util.cache;
 
 import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
 import org.jivesoftware.openfire.cluster.NodeID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -26,9 +24,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Cache entry listener implementation that maintains a reverse lookup map for the cache that is being observed, which

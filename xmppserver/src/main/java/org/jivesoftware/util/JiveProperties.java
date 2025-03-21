@@ -353,13 +353,13 @@ public class JiveProperties implements Map<String, String> {
     }
 
     public boolean getBooleanProperty(String name) {
-        return Boolean.valueOf(get(name));
+        return Boolean.parseBoolean(get(name));
     }
 
     public boolean getBooleanProperty(String name, boolean defaultValue) {
         String value = get(name);
         if (value != null) {
-            return Boolean.valueOf(value);
+            return Boolean.parseBoolean(value);
         }
         else {
             return defaultValue;

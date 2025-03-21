@@ -92,20 +92,20 @@ public class POP3AuthProvider implements AuthProvider {
         JiveGlobals.migrateProperty("pop3.domain");
         JiveGlobals.migrateProperty("pop3.port");
 
-        if (Boolean.valueOf(JiveGlobals.getProperty("pop3.authCache.enabled"))) {
+        if (Boolean.parseBoolean(JiveGlobals.getProperty("pop3.authCache.enabled"))) {
             String cacheName = "POP3 Authentication";
             authCache = CacheFactory.createCache(cacheName);
         }
 
-        useSSL = Boolean.valueOf(JiveGlobals.getProperty("pop3.ssl"));
-        authRequiresDomain = Boolean.valueOf(JiveGlobals.getProperty("pop3.authRequiresDomain"));
+        useSSL = Boolean.parseBoolean(JiveGlobals.getProperty("pop3.ssl"));
+        authRequiresDomain = Boolean.parseBoolean(JiveGlobals.getProperty("pop3.authRequiresDomain"));
 
         host = JiveGlobals.getProperty("pop3.host");
         if (host == null || host.length() < 1) {
             throw new IllegalArgumentException("pop3.host is null or empty");
         }
 
-        debugEnabled = Boolean.valueOf(JiveGlobals.getProperty("pop3.debug"));
+        debugEnabled = Boolean.parseBoolean(JiveGlobals.getProperty("pop3.debug"));
 
         domain = JiveGlobals.getProperty("pop3.domain");
 

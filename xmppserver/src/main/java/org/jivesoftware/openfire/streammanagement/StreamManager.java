@@ -527,7 +527,7 @@ public class StreamManager {
     private void processClientAcknowledgement(Element ack) {
         if(isEnabled()) {
             if (ack.attribute("h") != null) {
-                final long h = Long.valueOf(ack.attributeValue("h"));
+                final long h = Long.parseLong(ack.attributeValue("h"));
                 if (h < 0) {
                     Log.warn( "Closing client session. Client sends negative value for SM 'h': {}, affected session: {}", h, session );
                     final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a negative value (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );

@@ -229,7 +229,7 @@ public class User implements Cacheable, Externalizable, Result {
      * @return true if name is visible to everyone, false if not.
      */
     public boolean isNameVisible() {
-        return !getProperties().containsKey(NAME_VISIBLE_PROPERTY) || Boolean.valueOf(getProperties().get(NAME_VISIBLE_PROPERTY));
+        return !getProperties().containsKey(NAME_VISIBLE_PROPERTY) || Boolean.parseBoolean(getProperties().get(NAME_VISIBLE_PROPERTY));
     }
 
     /**
@@ -285,7 +285,7 @@ public class User implements Cacheable, Externalizable, Result {
      * @return true if email is visible to everyone, false if not.
      */
     public boolean isEmailVisible() {
-        return !getProperties().containsKey(EMAIL_VISIBLE_PROPERTY) || Boolean.valueOf(getProperties().get(EMAIL_VISIBLE_PROPERTY));
+        return !getProperties().containsKey(EMAIL_VISIBLE_PROPERTY) || Boolean.parseBoolean(getProperties().get(EMAIL_VISIBLE_PROPERTY));
     }
 
     /**

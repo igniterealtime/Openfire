@@ -238,8 +238,7 @@ public class IQMUCSearchHandler
                     }
                     else
                     {
-                        if (room.getNaturalLanguageName().toLowerCase().indexOf(
-                            name.toLowerCase()) != -1)
+                        if (room.getNaturalLanguageName().toLowerCase().contains(name.toLowerCase()))
                         {
                             find = true;
                             break;
@@ -249,8 +248,7 @@ public class IQMUCSearchHandler
             }
 
             if (subject != null && subject.trim().length()>0
-                    && room.getSubject().toLowerCase().indexOf(
-                        subject.toLowerCase()) != -1)
+                    && room.getSubject().toLowerCase().contains(subject.toLowerCase()))
             {
                 find = true;
             }

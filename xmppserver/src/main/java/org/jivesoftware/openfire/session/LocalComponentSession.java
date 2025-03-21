@@ -53,7 +53,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
     private LocalExternalComponent component;
     /**
      * When using XEP-114 (the old spec) components will include in the TO attribute
-     * of the intial stream header the domain they would like to have. The requested
+     * of the initial stream header the domain they would like to have. The requested
      * domain is used only after the authentication was successful so we need keep track
      * of this information until the handshake is done.  
      */

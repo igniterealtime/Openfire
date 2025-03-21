@@ -57,7 +57,7 @@ public class DefaultNodeConfiguration implements Cacheable {
     /**
      * Maximum number of published items to persist. Note that all nodes are going to persist
      * their published items. The only difference is the number of the last published items
-     * to be persisted. Even nodes that are configured to not use persitent items are going
+     * to be persisted. Even nodes that are configured to not use persistent items are going
      * to save the last published item.
      */
     private int maxPublishedItems;
@@ -157,7 +157,7 @@ public class DefaultNodeConfiguration implements Cacheable {
     /**
      * Returns the maximum number of published items to persist. Note that all nodes are going
      * to persist their published items. The only difference is the number of the last published
-     * items to be persisted. Even nodes that are configured to not use persitent items are going
+     * items to be persisted. Even nodes that are configured to not use persistent items are going
      * to save the last published item.
      *
      * @return the maximum number of published items to persist.
@@ -308,7 +308,7 @@ public class DefaultNodeConfiguration implements Cacheable {
     /**
      * Sets the maximum number of published items to persist. Note that all nodes are going
      * to persist their published items. The only difference is the number of the last published
-     * items to be persisted. Even nodes that are configured to not use persitent items are going
+     * items to be persisted. Even nodes that are configured to not use persistent items are going
      * to save the last published item.
      *
      * @param maxPublishedItems the maximum number of published items to persist.

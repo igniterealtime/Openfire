@@ -262,7 +262,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
     // TODO search on group attributes in Crowd
     @Override
     public Collection<String> search(String key, String value) {
-        LOG.info("Search groups on attibutes not implemented yet");
+        LOG.info("Search groups on attributes not implemented yet");
         return Collections.emptyList();
     }
 

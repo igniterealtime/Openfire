@@ -298,7 +298,7 @@ public class PluginMonitor implements PropertyEventListener
                     // Load all plugins that need to be loaded. Make sure that the admin plugin is loaded first (as that
                     // should be available as soon as possible), followed by all other plugins. Ensure that parent plugins
                     // are loaded before their children.
-                    try ( final DirectoryStream<Path> ds = Files.newDirectoryStream(pluginsDirectory, Files::isDirectory) )
+                    try ( final DirectoryStream<Path> ds = Files.newDirectoryStream( pluginsDirectory, Files::isDirectory) )
                     {
                         // Look for extra plugin directories specified as a system property.
                         final Set<Path> devPlugins = new HashSet<>();

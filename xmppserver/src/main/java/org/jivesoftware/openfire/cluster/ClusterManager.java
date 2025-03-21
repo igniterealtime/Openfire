@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,16 +71,13 @@ public class ClusterManager {
             @Override
             public void xmlPropertySet(final String property, final Map<String, Object> params) {
                 if (ClusterManager.CLUSTER_PROPERTY_NAME.equals(property)) {
-                    TaskEngine.getInstance().submit(new Runnable() {
-                        @Override
-                        public void run() {
-                            if (Boolean.parseBoolean((String) params.get("value"))) {
-                                // Reload/sync all Jive properties
-                                JiveProperties.getInstance().init();
-                                ClusterManager.startup();
-                            } else {
-                                ClusterManager.shutdown();
-                            }
+                    TaskEngine.getInstance().submit(() -> {
+                        if (Boolean.parseBoolean((String) params.get("value"))) {
+                            // Reload/sync all Jive properties
+                            JiveProperties.getInstance().init();
+                            ClusterManager.startup();
+                        } else {
+                            ClusterManager.shutdown();
                         }
                     });
                 }

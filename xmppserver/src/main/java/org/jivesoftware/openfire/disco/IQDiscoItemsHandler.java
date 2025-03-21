@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -585,45 +585,42 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
     }
 
     private DiscoItemsProvider getServerItemsProvider() {
-        return new DiscoItemsProvider() {
-            @Override
-            public Iterator<DiscoItem> getItems(String name, String node, JID senderJID) {
-                if (node != null) {
-                    // Check if there is a provider for the requested node
-                    if (serverNodeProviders.get(node) != null) {
-                        return serverNodeProviders.get(node).getItems(name, node, senderJID);
-                    }
+        return (name, node, senderJID) -> {
+            if (node != null) {
+                // Check if there is a provider for the requested node
+                if (serverNodeProviders.get(node) != null) {
+                    return serverNodeProviders.get(node).getItems(name, node, senderJID);
+                }
+                return null;
+            }
+            if (name == null) {
+                return getServerItems().iterator();
+            }
+            else {
+                // If addressed to user@domain, add items from UserItemsProviders to
+                // the reply.
+                if ( userItemsProviders.isEmpty()) {
+                    // If we didn't find any UserItemsProviders, then answer a not found error
                     return null;
                 }
-                if (name == null) {
-                    return getServerItems().iterator();
-                }
-                else {
-                    // If addressed to user@domain, add items from UserItemsProviders to
-                    // the reply.
-                    if ( userItemsProviders.isEmpty()) {
-                        // If we didn't find any UserItemsProviders, then answer a not found error
-                        return null;
-                    }
-                    List<DiscoItem> answer = new ArrayList<>();
-                    for (UserItemsProvider itemsProvider : userItemsProviders ) {
-                        // Check if we have items associated with the requested name
-                        Iterator<Element> itemsItr = itemsProvider.getUserItems(name, senderJID);
-                        if (itemsItr != null) {
-                            // Add to the reply all the items provided by the UserItemsProvider
-                            Element item;
-                            while (itemsItr.hasNext()) {
-                                item = itemsItr.next();
-                                JID itemJid = new JID(item.attributeValue("jid"));
-                                String itemName = item.attributeValue("name");
-                                String itemNode = item.attributeValue("node");
-                                String itemAction = item.attributeValue("action");
-                                answer.add(new DiscoItem(itemJid, itemName, itemNode, itemAction));
-                            }
+                List<DiscoItem> answer = new ArrayList<>();
+                for (UserItemsProvider itemsProvider : userItemsProviders ) {
+                    // Check if we have items associated with the requested name
+                    Iterator<Element> itemsItr = itemsProvider.getUserItems(name, senderJID);
+                    if (itemsItr != null) {
+                        // Add to the reply all the items provided by the UserItemsProvider
+                        Element item;
+                        while (itemsItr.hasNext()) {
+                            item = itemsItr.next();
+                            JID itemJid = new JID(item.attributeValue("jid"));
+                            String itemName = item.attributeValue("name");
+                            String itemNode = item.attributeValue("node");
+                            String itemAction = item.attributeValue("action");
+                            answer.add(new DiscoItem(itemJid, itemName, itemNode, itemAction));
                         }
                     }
-                    return answer.iterator();
                 }
+                return answer.iterator();
             }
         };
     }

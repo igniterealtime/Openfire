@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,11 +82,7 @@ public class PluginClassLoader extends URLClassLoader {
 
             // Add lib directory to classpath.
             File libDir = new File(directory, "lib");
-            File[] jars = libDir.listFiles(new FilenameFilter() {
-                public boolean accept(File dir, String name) {
-                    return name.endsWith(".jar") || name.endsWith(".zip");
-                }
-            });
+            File[] jars = libDir.listFiles((dir, name) -> name.endsWith(".jar") || name.endsWith(".zip"));
             if (jars != null) {
                 for (int i = 0; i < jars.length; i++) {
                     if (jars[i] != null && jars[i].isFile()) {

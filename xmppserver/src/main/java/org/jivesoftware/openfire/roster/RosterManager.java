@@ -370,23 +370,19 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
             // Simulate that the group users has been added to the group. This will cause to push
             // roster items to the "affected" users for the group users
 
-            executor.submit(new Callable<Boolean>()
-            {
-                public Boolean call() throws Exception
-                {
-                    // Remove the group members from the affected rosters
-                    for (JID deletedUser : users) {
-                        groupUserDeleted(group, affectedUsers, deletedUser);
-                    }
-
-                    // Simulate that the group users has been added to the group. This will cause to push
-                    // roster items to the "affected" users for the group users
-
-                    for (JID user : users) {
-                        groupUserAdded(group, user);
-                    }
-                    return true;
+            executor.submit(() -> {
+                // Remove the group members from the affected rosters
+                for (JID deletedUser : users) {
+                    groupUserDeleted(group, affectedUsers, deletedUser);
                 }
+
+                // Simulate that the group users has been added to the group. This will cause to push
+                // roster items to the "affected" users for the group users
+
+                for (JID user : users) {
+                    groupUserAdded(group, user);
+                }
+                return true;
             });
         }
         else if (Group.SHARED_ROSTER_GROUP_LIST_PROPERTY_KEY.equals(keyChanged)) {
@@ -402,24 +398,20 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
             final Collection<JID> affectedUsers = getAffectedUsers(group,
                     group.getSharedWith(), parseGroupNames(originalValue));
 
-            executor.submit(new Callable<Boolean>()
-            {
-                public Boolean call() throws Exception
-                {
-                    // Remove the group members from the affected rosters
+            executor.submit(() -> {
+                // Remove the group members from the affected rosters
 
-                    for (JID deletedUser : users) {
-                        groupUserDeleted(group, affectedUsers, deletedUser);
-                    }
-
-                    // Simulate that the group users has been added to the group. This will cause to push
-                    // roster items to the "affected" users for the group users
-
-                    for (JID user : users) {
-                        groupUserAdded(group, user);
-                    }
-                    return true;
+                for (JID deletedUser : users) {
+                    groupUserDeleted(group, affectedUsers, deletedUser);
                 }
+
+                // Simulate that the group users has been added to the group. This will cause to push
+                // roster items to the "affected" users for the group users
+
+                for (JID user : users) {
+                    groupUserAdded(group, user);
+                }
+                return true;
             });
         }
         else if (Group.SHARED_ROSTER_DISPLAY_NAME_PROPERTY_KEY.equals(keyChanged)) {

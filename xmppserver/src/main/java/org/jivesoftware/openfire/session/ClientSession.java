@@ -70,10 +70,10 @@ public interface ClientSession extends Session {
     String getUsername() throws UserNotFoundException;
 
     /**
-     * Returns true if the authetnicated user is an anonymous user or if
+     * Returns true if the authenticated user is an anonymous user or if
      * the use has not authenticated yet.
      *
-     * @return true if the authetnicated user is an anonymous user or if
+     * @return true if the authenticated user is an anonymous user or if
      * the use has not authenticated yet.
      */
     boolean isAnonymousUser();

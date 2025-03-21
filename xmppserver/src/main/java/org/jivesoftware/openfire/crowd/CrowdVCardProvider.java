@@ -97,7 +97,7 @@ public class CrowdVCardProvider extends DefaultVCardProvider {
             return vcard;
 
         } catch (RuntimeException re) {
-            LOG.error("Failure occured when loading a vcard for user:" + username, re);
+            LOG.error("Failure occurred when loading a vcard for user:" + username, re);
             throw re;
         } finally {
             MUTEX.remove(username);

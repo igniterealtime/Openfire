@@ -40,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * <li>A set containing values that are no character references at all (but do resemble them)</li>
  * </ol>
  * 
- * The first and second set consist of lines in which each line contains both the decimal as well as the hexidecimal
+ * The first and second set consist of lines in which each line contains both the decimal as well as the hexadecimal
  * representation of the same numeric character reference. The remainder of the line is filled with zero-padded copies
  * of the same values. The various values (on each new line) are picked from the edges of each of the ranges that make
  * up the complete set of valid characters.

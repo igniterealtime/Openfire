@@ -175,7 +175,7 @@ public class CachingPubsubPersistenceProviderItemOperationsTest
     /**
      * Asserts that an invocations {@link CachingPubsubPersistenceProvider#removePublishedItem(PublishedItem)} to
      * remove two items with the same identifier DOES NOT cause the provider to optimize: this is an erroneous invocation,
-     * and the delegate provider should (possibly) thrown an exception (or silently ignore the duplcate).
+     * and the delegate provider should (possibly) thrown an exception (or silently ignore the duplicate).
      */
     @Test
     public void testRemoveTwoPublishedItemsSameIdentifier() throws Exception

@@ -37,7 +37,7 @@ import java.util.Locale;
 public class DefaultNodeConfiguration implements Cacheable {
 
     /**
-     * Flag indicating whether this default configutation belongs to a leaf node or not.
+     * Flag indicating whether this default configuration belongs to a leaf node or not.
      */
     private boolean leaf;
     /**
@@ -57,7 +57,7 @@ public class DefaultNodeConfiguration implements Cacheable {
     /**
      * Maximum number of published items to persist. Note that all nodes are going to persist
      * their published items. The only difference is the number of the last published items
-     * to be persisted. Even nodes that are configured to not use persitent items are going
+     * to be persisted. Even nodes that are configured to not use persistent items are going
      * to save the last published item.
      */
     private int maxPublishedItems;
@@ -117,9 +117,9 @@ public class DefaultNodeConfiguration implements Cacheable {
     }
 
     /**
-     * Returns true if this default configutation belongs to a leaf node.
+     * Returns true if this default configuration belongs to a leaf node.
      *
-     * @return true if this default configutation belongs to a leaf node.
+     * @return true if this default configuration belongs to a leaf node.
      */
     public boolean isLeaf() {
         return leaf;
@@ -157,7 +157,7 @@ public class DefaultNodeConfiguration implements Cacheable {
     /**
      * Returns the maximum number of published items to persist. Note that all nodes are going
      * to persist their published items. The only difference is the number of the last published
-     * items to be persisted. Even nodes that are configured to not use persitent items are going
+     * items to be persisted. Even nodes that are configured to not use persistent items are going
      * to save the last published item.
      *
      * @return the maximum number of published items to persist.
@@ -212,7 +212,7 @@ public class DefaultNodeConfiguration implements Cacheable {
     }
 
     /**
-     * Returnes the publisher model that specifies who is allowed to publish items to the node.
+     * Returns the publisher model that specifies who is allowed to publish items to the node.
      *
      * @return the publisher model that specifies who is allowed to publish items to the node.
      */
@@ -308,7 +308,7 @@ public class DefaultNodeConfiguration implements Cacheable {
     /**
      * Sets the maximum number of published items to persist. Note that all nodes are going
      * to persist their published items. The only difference is the number of the last published
-     * items to be persisted. Even nodes that are configured to not use persitent items are going
+     * items to be persisted. Even nodes that are configured to not use persistent items are going
      * to save the last published item.
      *
      * @param maxPublishedItems the maximum number of published items to persist.

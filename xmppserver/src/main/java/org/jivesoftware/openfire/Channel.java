@@ -79,7 +79,7 @@ public class Channel<T extends Packet> {
     }
 
     /**
-     * Enqueus a message to be handled by this channel. After the ChannelHandler is done
+     * Enqueues a message to be handled by this channel. After the ChannelHandler is done
      * processing the message, it will be sent to the next channel. Messages with a higher
      * priority will be handled first.
      *

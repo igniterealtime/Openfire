@@ -41,7 +41,7 @@ import java.net.UnknownHostException;
 import java.util.*;
 
 /**
- * Manages the transfering of files between two remote entities on the jabber network.
+ * Manages the transferring of files between two remote entities on the jabber network.
  * This class acts independently as a Jabber component from the rest of the server, according to
  * the Jabber <a href="http://www.jabber.org/jeps/jep-0065.html">SOCKS5 bytestreams protocol</a>.
  *
@@ -54,7 +54,7 @@ public class FileTransferProxy extends BasicModule
     private static final Logger Log = LoggerFactory.getLogger( FileTransferProxy.class);
 
     /**
-     * The JiveProperty relating to whether or not the file treansfer proxy is enabled.
+     * The JiveProperty relating to whether or not the file transfer proxy is enabled.
      */
     public static final String JIVEPROPERTY_PROXY_ENABLED = "xmpp.proxy.enabled";
 

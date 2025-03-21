@@ -502,7 +502,7 @@ public abstract class SocketReader implements Runnable {
      * @return the created session or null.
      * @throws UnauthorizedException if the connection required encryption but was not encrypted.
      * @throws XmlPullParserException if there was an XML error while creating the session.
-     * @throws IOException if an IO error occured while creating the session.
+     * @throws IOException if an IO error occurred while creating the session.
      */
     abstract boolean createSession(String namespace) throws UnauthorizedException,
             XmlPullParserException, IOException;

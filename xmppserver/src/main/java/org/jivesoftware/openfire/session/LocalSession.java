@@ -549,7 +549,7 @@ public abstract class LocalSession implements Session {
     /**
      * Returns true if the other peer of this session presented a self-signed certificate. When
      * using self-signed certificate for server-2-server sessions then SASL EXTERNAL will not be
-     * used and instead server-dialback will be preferred for vcerifying the identify of the remote
+     * used and instead server-dialback will be preferred for verifying the identify of the remote
      * server.
      *
      * @return true if the other peer of this session presented a self-signed certificate.

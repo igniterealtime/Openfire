@@ -48,7 +48,7 @@
         // There was an error opening the pipe. Alert the user.
         NSAlert *alert = [[NSAlert alloc] init];
         alert.alertStyle = NSAlertStyleWarning;
-        alert.messageText = @"An error occured while detecting a running Openfire process.";
+        alert.messageText = @"An error occurred while detecting a running Openfire process.";
         [alert runModal];
         
         return NO;

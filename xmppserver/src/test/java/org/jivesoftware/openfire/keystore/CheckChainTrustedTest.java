@@ -126,7 +126,7 @@ public class CheckChainTrustedTest
         // Add root certificate of a chain with an expired intermediate certificate to the trust store.
         trustStore.setCertificateEntry( getLast( expiredIntChain ).getSubjectDN().getName(), getLast( expiredIntChain ) );
 
-        // Add root certificate of a chain wwith an expired root certificate to the trust store.
+        // Add root certificate of a chain with an expired root certificate to the trust store.
         trustStore.setCertificateEntry( getLast( expiredRootChain ).getSubjectDN().getName(), getLast( expiredRootChain ) );
 
         // Reset the system under test before each test.
@@ -499,7 +499,7 @@ public class CheckChainTrustedTest
 
     /**
      * Verifies that self-signed certificates that expired are accepted only when both self-signed certificates are
-     * explicitly accepted, as well as validation is explictly skipped.
+     * explicitly accepted, as well as validation is explicitly skipped.
      */
     @Test
     public void testSelfSignedExpired() throws Exception

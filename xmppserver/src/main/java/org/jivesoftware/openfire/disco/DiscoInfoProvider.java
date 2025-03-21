@@ -31,7 +31,7 @@ import java.util.Set;
  * <p>
  * The information to provide has to include the entity's identity and the features offered and
  * protocols supported by the target entity. The identity will be provided as an Element that will
- * include the categoty, type and name attributes. Whilst the features will be just plain Strings.
+ * include the category, type and name attributes. Whilst the features will be just plain Strings.
  * </p>
  *
  * @author Gaston Dombiak
@@ -40,7 +40,7 @@ public interface DiscoInfoProvider {
 
     /**
      * Returns an Iterator (of Element) with the target entity's identities. Each Element must
-     * include the categoty, type and name attributes of the entity.
+     * include the category, type and name attributes of the entity.
      *
      * @param name the recipient JID's name.
      * @param node the requested disco node.

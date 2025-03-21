@@ -372,8 +372,8 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
                             PrivacyList list = PrivacyListManager.getInstance()
                                     .getDefaultPrivacyList(probee.getNode());
                             // Send presence to all prober's resources
-                            for (JID receipient : proberFullJIDs) {
-                                presencePacket.setTo(receipient);
+                            for (JID recipient : proberFullJIDs) {
+                                presencePacket.setTo(recipient);
                                 if (list == null || !list.shouldBlockPacket(presencePacket)) {
                                     // Send the presence to the prober
                                     deliverer.deliver(presencePacket);
@@ -396,8 +396,8 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
                         PrivacyList list = session.getActiveList();
                         list = list == null ? session.getDefaultList() : list;
                         // Send presence to all prober's resources
-                        for (JID receipient : proberFullJIDs) {
-                            presencePacket.setTo(receipient);
+                        for (JID recipient : proberFullJIDs) {
+                            presencePacket.setTo(recipient);
                             if (list != null) {
                                 if (list.shouldBlockPacket(presencePacket)) {
                                     // Default list blocked outgoing presence so skip this session
@@ -462,7 +462,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
                 Presence presencePacket = new Presence();
                 presencePacket.setType(Presence.Type.unavailable);
                 presencePacket.setFrom(session.getAddress());
-                // Ensure that unavailable presence is sent to all receipient's resources
+                // Ensure that unavailable presence is sent to all recipient's resources
                 Collection<JID> recipientFullJIDs = new ArrayList<>();
                 if (server.isLocal(recipientJID)) {
                     for (ClientSession targetSession : sessionManager

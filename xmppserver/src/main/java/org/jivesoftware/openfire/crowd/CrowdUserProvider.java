@@ -283,7 +283,7 @@ public class CrowdUserProvider implements UserProvider {
         
         @Override
         public void run() {
-            LOG.info("running synch with crowd...");
+            LOG.info("running sync with crowd...");
             CrowdManager manager;
             try {
                 manager = CrowdManager.getInstance();
@@ -316,7 +316,7 @@ public class CrowdUserProvider implements UserProvider {
                 }
             }
             
-            LOG.info("crowd synch done, returned " + (allUsers == null ? "no" : allUsers.size()) + " users");
+            LOG.info("crowd sync done, returned " + (allUsers == null ? "no" : allUsers.size()) + " users");
             
         }
         

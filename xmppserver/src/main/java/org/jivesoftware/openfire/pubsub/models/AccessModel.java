@@ -41,7 +41,7 @@ public abstract class AccessModel implements Serializable {
      * model name. If an unknown name is specified then an IllegalArgumentException
      * is going to be thrown.
      *
-     * @param name the name of the subsclass.
+     * @param name the name of the subclass.
      * @return the specific subclass of AccessModel as specified by the access
      *         model name.
      */

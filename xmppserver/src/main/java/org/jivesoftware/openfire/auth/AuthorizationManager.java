@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
  *
  * If no classes authorize the authentication identity, false is returned, which traces all the way back to give the
  * client an unauthorized message. It's important to note that the message the client receives will give no indication
- * if the authentiation identity authenticated successfully. You will need to check the server logs for that information.
+ * if the authentication identity authenticated successfully. You will need to check the server logs for that information.
  *
  * @author Jay Kline
  */

@@ -125,7 +125,7 @@ public class SecurityAuditEvent {
     }
 
     /**
-     * Sets the detailed information about what occured in the event.
+     * Sets the detailed information about what occurred in the event.
      * @param details The possibly long details of the event.  Can be null.
      */
     public void setDetails(String details) {

@@ -344,7 +344,7 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
      *
      * @param update  the directed Presence sent by the user to an entity.
      * @param handlerJID the JID of the handler that will receive/handle/process the sent packet.
-     * @param jid     the receipient specified in the packet to handle.
+     * @param jid     the recipient specified in the packet to handle.
      */
     public void directedPresenceSent(Presence update, JID handlerJID, String jid) {
         if (update.getFrom() == null) {

@@ -44,7 +44,7 @@ public class BeanUtils {
     private static final Logger Log = LoggerFactory.getLogger(BeanUtils.class);
 
     /**
-     * The date format recognized for parsing/formattig dates.
+     * The date format recognized for parsing/formatting dates.
      */
     public static final String DATE_FORMAT = "MM/dd/yyyy";
 
@@ -52,7 +52,7 @@ public class BeanUtils {
 
     /**
      * Sets the properties of a Java Bean based on the String name/value pairs in
-     * the specifieed Map. Because this method has to know how to convert a
+     * the specified Map. Because this method has to know how to convert a
      * String value into the correct type for the bean, only a few bean property
      * types are supported. They are: String, boolean, int, long, float, double,
      * Color, and Class.<p>

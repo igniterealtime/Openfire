@@ -181,7 +181,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
      * Returns the username used to connect to the database. In some cases,
      * a username is not needed so this method will return null.
      *
-     * @return the username used to connect to the datbase.
+     * @return the username used to connect to the database.
      */
     public String getUsername() {
         return username;

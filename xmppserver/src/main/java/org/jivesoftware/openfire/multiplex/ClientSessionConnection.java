@@ -67,7 +67,7 @@ public class ClientSessionConnection extends VirtualConnection {
      * special IQ packet. The wrapper IQ packet will be sent to the Connection Manager
      * and the stream ID of this Client Session will be used for identifying that the wrapped
      * packet must be sent to the connected user. Since some packets can be exchanged before
-     * the user has a binded JID we need to use the stream ID as the unique identifier.
+     * the user has a bound JID we need to use the stream ID as the unique identifier.
      *
      * @param packet the packet to send to the user.
      */

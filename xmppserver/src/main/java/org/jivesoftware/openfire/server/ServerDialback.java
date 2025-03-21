@@ -474,7 +474,7 @@ public class ServerDialback {
                 }
             }
             catch (Exception e) {
-                Log.error("An error occured while creating a server session", e);
+                Log.error("An error occurred while creating a server session", e);
                 // Close the underlying connection
                 connection.close();
                 return null;

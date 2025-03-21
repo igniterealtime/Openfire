@@ -179,7 +179,7 @@ public class DefaultUserProvider implements UserProvider {
         PreparedStatement pstmt = null;
         boolean abortTransaction = false;
         try {
-            // Delete all of the users's extended properties
+            // Delete all of the user's extended properties
             con = DbConnectionManager.getTransactionConnection();
             pstmt = con.prepareStatement(DELETE_USER_PROPS);
             pstmt.setString(1, username);

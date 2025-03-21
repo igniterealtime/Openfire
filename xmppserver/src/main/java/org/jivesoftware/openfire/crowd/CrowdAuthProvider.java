@@ -50,7 +50,7 @@ public class CrowdAuthProvider implements AuthProvider {
      * @param password the password
      * @throws UnauthorizedException if the username and password do
      *      not match any existing user.
-     * @throws ConnectionException it there is a problem connecting to user and group sytem
+     * @throws ConnectionException it there is a problem connecting to user and group system
      * @throws InternalUnauthenticatedException if there is a problem authentication Openfire itself into the user and group system
      */
     @Override

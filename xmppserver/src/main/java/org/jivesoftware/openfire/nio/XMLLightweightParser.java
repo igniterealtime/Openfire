@@ -408,7 +408,7 @@ public class XMLLightweightParser {
 
     /**
      * This method verifies if the provided argument contains at least one numeric character reference (
-     * <code>CharRef	   ::=   	'&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';</code>) for which the decimal or hexidecimal
+     * <code>CharRef	   ::=   	'&#' [0-9]+ ';' | '&#x' [0-9a-fA-F]+ ';</code>) for which the decimal or hexadecimal
      * character value refers to an invalid XML 1.0 character.
      * 
      * @param string

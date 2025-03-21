@@ -30,7 +30,7 @@ import java.util.Enumeration;
 /**
  * Task that will return the bind interface and ports being used by the admin
  * console of the node where the task will be executed. When the admin console
- * is binded to all network interfaces this task will try to find a valid IP
+ * is bound to all network interfaces this task will try to find a valid IP
  * address that will work for the remote node.<p>
  *
  * A {@code null} bindInterface in the result of this task means that the task

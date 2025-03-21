@@ -29,14 +29,14 @@ import org.xmpp.packet.Packet;
 public interface RemotePacketRouter {
 
     /**
-     * Routes packet to specified receipient hosted in the specified node.
+     * Routes packet to specified recipient hosted in the specified node.
      *
-     * @param nodeID the ID of the node hosting the receipient.
-     * @param receipient the target entity that will get the packet.
+     * @param nodeID the ID of the node hosting the recipient.
+     * @param recipient the target entity that will get the packet.
      * @param packet the packet to send.
      * @return true if the remote node was found.
      */
-    boolean routePacket(byte[] nodeID, JID receipient, Packet packet);
+    boolean routePacket(byte[] nodeID, JID recipient, Packet packet);
 
     /**
      * Brodcasts the specified message to all local client sessions of each cluster node.

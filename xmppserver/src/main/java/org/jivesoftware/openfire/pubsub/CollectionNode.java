@@ -513,7 +513,7 @@ public class CollectionNode extends Node {
             return isAdmin(user);
         }
         else {
-            // Owners, sysadmins and a whitelist of usres are allowed to
+            // Owners, sysadmins and a whitelist of users are allowed to
             // associate leaf nodes with this node
             return isAdmin(user) || associationTrusted.contains(user);
         }

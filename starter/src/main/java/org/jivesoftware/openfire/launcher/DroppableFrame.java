@@ -38,7 +38,7 @@ public class DroppableFrame extends JFrame implements DropTargetListener, DragSo
     private DragSource dragSource = DragSource.getDefaultDragSource();
 
     /**
-     * Creates a droppable rame.
+     * Creates a droppable frame.
      */
     public DroppableFrame() {
         new DropTarget(this, this);

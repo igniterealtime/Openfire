@@ -212,7 +212,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 ConnectionSettings.Component.COMPRESSION_SETTINGS
         );
 
-        // Multiplexers (our propertietary connection manager implementation)
+        // Multiplexers (our proprietary connection manager implementation)
         connectionManagerListener = new ConnectionListener(
                 ConnectionType.CONNECTION_MANAGER,
                 ConnectionSettings.Multiplex.PORT,

@@ -548,7 +548,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
 
     /**
      * Sets the new Authorization Token for this session. The session is not yet considered fully
-     * authenticated (i.e. active) since a resource has not been binded at this point. This
+     * authenticated (i.e. active) since a resource has not been bound at this point. This
      * message will be sent after SASL authentication was successful but yet resource binding
      * is required.
      *
@@ -631,7 +631,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * and presence statuses to the client. Initialization occurs only once
      * following the first available presence transition.
      *
-     * @return True if the session has already been initializsed
+     * @return True if the session has already been initialized
      */
     @Override
     public boolean isInitialized() {

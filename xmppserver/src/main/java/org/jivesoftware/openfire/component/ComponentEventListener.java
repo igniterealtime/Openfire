@@ -41,7 +41,7 @@ public interface ComponentEventListener {
 
     /**
      * A component was registered with the Component Manager. At this point the
-     * component has been intialized and started. XMPP entities can exchange packets
+     * component has been initialized and started. XMPP entities can exchange packets
      * with the component. However, the component is still not listed as a disco#items
      * of the server since the component has not answered the disco#info request sent
      * by the server.

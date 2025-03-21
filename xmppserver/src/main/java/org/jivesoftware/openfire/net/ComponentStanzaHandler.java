@@ -125,7 +125,7 @@ public class ComponentStanzaHandler extends StanzaHandler {
                 }
             }
             else {
-                // Return forbidden error since we only allow subdomains of the intial domain
+                // Return forbidden error since we only allow subdomains of the initial domain
                 // to be used by the same external component
                 Element reply = doc.createCopy();
                 reply.add(new PacketError(PacketError.Condition.forbidden).getElement());

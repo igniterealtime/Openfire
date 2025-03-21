@@ -66,7 +66,7 @@ public interface PresenceManager {
      * Returns all presences for the user, or {@code null} if the user is unavailable.
      *
      * @param username the name of the user.
-     * @return the Presence packets for all the users's connected sessions.
+     * @return the Presence packets for all the user's connected sessions.
      */
     Collection<Presence> getPresences( String username );
 

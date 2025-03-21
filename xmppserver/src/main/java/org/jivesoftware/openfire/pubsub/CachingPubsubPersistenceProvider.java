@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
  * A persistence provider for Pub/Sub functionality that adds caching behavior. Instead of 'writing through' to the
  * persistence layer, the caching implementation will create batches of operations (optimizing away redundant actions).
  * Additionally, recently accessed published data items are cached. This improves performance when processing many
- * pub/sub operations (node modifiations, item publications, etc).
+ * pub/sub operations (node modifications, item publications, etc).
  *
  * This provider itself does not persist data. Instead, it uses a different persistence provider as a delegate to
  * perform these actions.

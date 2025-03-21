@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -320,12 +320,12 @@ public class Group implements Cacheable, Externalizable {
         if (value == null) {
             return null;
         }
-        switch (value) {
-            case "nobody": return SharedGroupVisibility.nobody;
-            case "everybody": return SharedGroupVisibility.everybody;
-            case "onlyGroup": return SharedGroupVisibility.usersOfGroups;
-            default: return SharedGroupVisibility.nobody;
-        }
+        return switch (value) {
+            case "nobody"    -> SharedGroupVisibility.nobody;
+            case "everybody" -> SharedGroupVisibility.everybody;
+            case "onlyGroup" -> SharedGroupVisibility.usersOfGroups;
+            default -> SharedGroupVisibility.nobody;
+        };
     }
 
     /**

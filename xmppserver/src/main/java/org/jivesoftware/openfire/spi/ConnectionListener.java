@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -592,24 +592,13 @@ public class ConnectionListener
     public Connection.CompressionPolicy getCompressionPolicy()
     {
         // Depending on the connection type, define a good default value.
-        final Connection.CompressionPolicy defaultPolicy;
-        switch ( getType() )
-        {
+        final Connection.CompressionPolicy defaultPolicy = switch (getType()) {
             // More likely to have good bandwidth. Compression on high-volume data gobbles CPU.
-            case COMPONENT:
-            case CONNECTION_MANAGER:
-            case SOCKET_S2S:
-                defaultPolicy = Connection.CompressionPolicy.disabled;
-                break;
+            case COMPONENT, CONNECTION_MANAGER, SOCKET_S2S -> Connection.CompressionPolicy.disabled;
 
             // At least *offer* compression functionality.
-            case SOCKET_C2S:
-            case BOSH_C2S:
-            case WEBADMIN:
-            default:
-                defaultPolicy = Connection.CompressionPolicy.optional;
-                break;
-        }
+            default -> Connection.CompressionPolicy.optional;
+        };
 
         if ( compressionPolicyPropertyName == null )
         {

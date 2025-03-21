@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -265,14 +265,12 @@ public class OfflineMessageStrategy extends BasicModule implements ServerFeature
 
     @Override
     public Iterator<String> getFeatures() {
-        switch (type) {
-            case store:
-            case store_and_bounce:
-            case store_and_drop:
+        return switch (type) {
+            case store, store_and_bounce, store_and_drop ->
                 // http://xmpp.org/extensions/xep-0160.html#disco
-                return Collections.singleton("msgoffline").iterator();
-        }
-        return Collections.emptyIterator();
+                Collections.singleton("msgoffline").iterator();
+            default -> Collections.emptyIterator();
+        };
     }
 
     /**

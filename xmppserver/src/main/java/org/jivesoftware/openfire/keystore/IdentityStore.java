@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -523,21 +523,17 @@ public class IdentityStore extends CertificateStore
 
         final int keySize;
         final String signAlgorithm;
-
-        switch ( algorithm.toUpperCase() )
-        {
-            case "RSA":
-                keySize = JiveGlobals.getIntProperty( "cert.rsa.keysize", 2048 );
-                signAlgorithm = JiveGlobals.getProperty( "cert.rsa.algorithm", "SHA256WITHRSAENCRYPTION" );
-                break;
-
-            case "DSA":
-                keySize = JiveGlobals.getIntProperty( "cert.dsa.keysize", 1024 );
-                signAlgorithm = JiveGlobals.getProperty( "cert.dsa.algorithm", "SHA256withDSA" );
-                break;
-
-            default:
-                throw new IllegalArgumentException( "Unsupported algorithm '" + algorithm + "'. Use 'RSA' or 'DSA'." );
+        switch (algorithm.toUpperCase()) {
+            case "RSA" -> {
+                keySize = JiveGlobals.getIntProperty("cert.rsa.keysize", 2048);
+                signAlgorithm = JiveGlobals.getProperty("cert.rsa.algorithm", "SHA256WITHRSAENCRYPTION");
+            }
+            case "DSA" -> {
+                keySize = JiveGlobals.getIntProperty("cert.dsa.keysize", 1024);
+                signAlgorithm = JiveGlobals.getProperty("cert.dsa.algorithm", "SHA256withDSA");
+            }
+            default ->
+                throw new IllegalArgumentException("Unsupported algorithm '" + algorithm + "'. Use 'RSA' or 'DSA'.");
         }
 
         final String name = XMPPServerInfo.XMPP_DOMAIN.getValue().toLowerCase();

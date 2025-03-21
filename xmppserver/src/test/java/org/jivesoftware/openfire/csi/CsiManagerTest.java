@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,15 +74,11 @@ public class CsiManagerTest
     {
         final XMPPPacketReader reader = new XMPPPacketReader();
         final Element element = reader.read(new StringReader(input)).getRootElement();
-        switch (element.getName()) {
-            case "presence":
-                return new Presence(element, true);
-            case "iq":
-                return new IQ(element, true);
-            case "message":
-                return new Message(element, true);
-            default:
-                throw new IllegalStateException("Unexpected element name: " + element.asXML());
-        }
+        return switch (element.getName()) {
+            case "presence" -> new Presence(element, true);
+            case "iq"       -> new IQ(element, true);
+            case "message"  -> new Message(element, true);
+            default -> throw new IllegalStateException("Unexpected element name: " + element.asXML());
+        };
     }
 }

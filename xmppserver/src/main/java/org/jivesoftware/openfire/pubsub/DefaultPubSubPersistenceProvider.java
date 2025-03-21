@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1899,22 +1899,14 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 
 	private static String getPurgeStatement(DatabaseType type)
 	{
-		switch (type)
-		{
-		case postgresql:
-			return PURGE_FOR_SIZE_POSTGRESQL;
-		case mysql:
-			return PURGE_FOR_SIZE_MYSQL;
-		case hsqldb:
-			return PURGE_FOR_SIZE_HSQLDB;
-        case oracle:
-            return PURGE_FOR_SIZE_ORACLE;
-        case sqlserver:
-            return PURGE_FOR_SIZE_SQLSERVER;
-
-		default:
-			return PURGE_FOR_SIZE;
-		}
+        return switch (type) {
+            case postgresql -> PURGE_FOR_SIZE_POSTGRESQL;
+            case mysql      -> PURGE_FOR_SIZE_MYSQL;
+            case hsqldb     -> PURGE_FOR_SIZE_HSQLDB;
+            case oracle     -> PURGE_FOR_SIZE_ORACLE;
+            case sqlserver  -> PURGE_FOR_SIZE_SQLSERVER;
+            default         -> PURGE_FOR_SIZE;
+        };
 	}
 
 	@Override

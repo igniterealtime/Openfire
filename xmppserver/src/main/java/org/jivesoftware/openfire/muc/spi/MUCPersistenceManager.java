@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -296,13 +296,11 @@ public class MUCPersistenceManager {
 
             if ( rs.getString("fmucOutboundNode") != null ) {
                 final JID fmucOutboundNode = new JID(rs.getString("fmucOutboundNode"));
-                final FMUCMode fmucOutboundJoinMode;
-                switch (rs.getInt("fmucOutboundMode")) // null returns 0.
+                final FMUCMode fmucOutboundJoinMode = switch (rs.getInt("fmucOutboundMode")) // null returns 0.
                 {
-                    default:
-                    case 0: fmucOutboundJoinMode = MasterMaster; break;
-                    case 1: fmucOutboundJoinMode = FMUCMode.MasterSlave; break;
-                }
+                    case 1  -> FMUCMode.MasterSlave;
+                    default -> MasterMaster;
+                };
                 room.setFmucOutboundNode( fmucOutboundNode );
                 room.setFmucOutboundMode( fmucOutboundJoinMode );
             } else {
@@ -800,13 +798,11 @@ public class MUCPersistenceManager {
                     room.setFmucEnabled(resultSet.getInt("fmucEnabled") == 1);
                     if ( resultSet.getString("fmucOutboundNode") != null ) {
                         final JID fmucOutboundNode = new JID(resultSet.getString("fmucOutboundNode"));
-                        final FMUCMode fmucOutboundJoinMode;
-                        switch (resultSet.getInt("fmucOutboundMode")) // null returns 0.
+                        final FMUCMode fmucOutboundJoinMode = switch (resultSet.getInt("fmucOutboundMode")) // null returns 0.
                         {
-                            default:
-                            case 0: fmucOutboundJoinMode = MasterMaster; break;
-                            case 1: fmucOutboundJoinMode = FMUCMode.MasterSlave; break;
-                        }
+                            case 1  -> FMUCMode.MasterSlave;
+                            default -> MasterMaster;
+                        };
                         room.setFmucOutboundNode( fmucOutboundNode );
                         room.setFmucOutboundMode( fmucOutboundJoinMode );
                     } else {

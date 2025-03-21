@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2019-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -192,16 +192,10 @@ public class IQMuclumbusSearchHandler
         // Search for chatrooms matching the request params.
         List<MUCRoomSearchInfo> mucs = searchForChatrooms( params );
 
-        switch ( params.getKey() )
-        {
-            case nusers:
-                mucs = sortByUserAmount( mucs );
-                break;
-
-            case address:
-                mucs = sortByAddress( mucs );
-                break;
-        }
+        mucs = switch (params.getKey()) {
+            case nusers  -> sortByUserAmount(mucs);
+            case address -> sortByAddress(mucs);
+        };
 
         final ResultSet<MUCRoomSearchInfo> searchResults = new ResultSetImpl<>( mucs );
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,31 +102,21 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         super("XMPP Disco Info Handler");
         info = new IQHandlerInfo("query", NAMESPACE_DISCO_INFO);
 
-        anonymousUserIdentityProviders.add( new UserIdentitiesProvider()
-        {
-            @Override
-            public Iterator<Element> getIdentities()
-            {
-                final Element userIdentity = DocumentHelper.createElement( "identity" );
-                userIdentity.addAttribute( "category", "account" );
-                userIdentity.addAttribute( "type", "anonymous" );
+        anonymousUserIdentityProviders.add(() -> {
+            final Element userIdentity = DocumentHelper.createElement( "identity" );
+            userIdentity.addAttribute( "category", "account" );
+            userIdentity.addAttribute( "type", "anonymous" );
 
-                return Collections.singleton( userIdentity ).iterator();
-            }
-        } );
+            return Collections.singleton( userIdentity ).iterator();
+        });
 
-        registeredUserIdentityProviders.add( new UserIdentitiesProvider()
-        {
-            @Override
-            public Iterator<Element> getIdentities()
-            {
-                final Element userIdentity = DocumentHelper.createElement( "identity" );
-                userIdentity.addAttribute( "category", "account" );
-                userIdentity.addAttribute( "type", "registered" );
+        registeredUserIdentityProviders.add(() -> {
+            final Element userIdentity = DocumentHelper.createElement( "identity" );
+            userIdentity.addAttribute( "category", "account" );
+            userIdentity.addAttribute( "type", "registered" );
 
-                return Collections.singleton( userIdentity ).iterator();
-            }
-        } );
+            return Collections.singleton( userIdentity ).iterator();
+        });
     }
 
     @Override

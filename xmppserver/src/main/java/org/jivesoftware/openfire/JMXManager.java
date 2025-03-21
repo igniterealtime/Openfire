@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -164,38 +164,35 @@ public class JMXManager {
         String jmxUrl = "/jndi/rmi://localhost:" + jmxPort + "/jmxrmi";
         Map<String, Object> env = new HashMap<>();
         if (JMXManager.isSecure()) {
-            env.put("jmx.remote.authenticator", new JMXAuthenticator() {
-                @Override
-                public Subject authenticate(Object credentials) {
-                    if (!(credentials instanceof String[])) {
-                        if (credentials == null) {
-                            throw new SecurityException("Credentials required");
-                        }
-                        throw new SecurityException("Credentials should be String[]");
+            env.put("jmx.remote.authenticator", (JMXAuthenticator) credentials -> {
+                if (!(credentials instanceof String[])) {
+                    if (credentials == null) {
+                        throw new SecurityException("Credentials required");
                     }
-                    final String[] aCredentials = (String[]) credentials;
-                    if (aCredentials.length < 2) {
-                        throw new SecurityException("Credentials should have at least two elements");
-                    }
-                    String username = aCredentials[0];
-                    String password = aCredentials[1];
+                    throw new SecurityException("Credentials should be String[]");
+                }
+                final String[] aCredentials = (String[]) credentials;
+                if (aCredentials.length < 2) {
+                    throw new SecurityException("Credentials should have at least two elements");
+                }
+                String username = aCredentials[0];
+                String password = aCredentials[1];
 
-                    try {
-                        AuthFactory.authenticate(username, password);
-                    } catch (Exception ex) {
-                        Log.error("Authentication failed for " + username);
-                        throw new SecurityException();
-                    }
+                try {
+                    AuthFactory.authenticate(username, password);
+                } catch (Exception ex) {
+                    Log.error("Authentication failed for " + username);
+                    throw new SecurityException();
+                }
 
-                    if (AdminManager.getInstance().isUserAdmin(username, true)) {
-                        return new Subject(true,
-                                           Collections.singleton(new JMXPrincipal(username)),
-                                           Collections.EMPTY_SET,
-                                           Collections.EMPTY_SET);
-                    } else {
-                        Log.error("Authorization failed for " + username);
-                        throw new SecurityException();
-                    }
+                if (AdminManager.getInstance().isUserAdmin(username, true)) {
+                    return new Subject(true,
+                                       Collections.singleton(new JMXPrincipal(username)),
+                                       Collections.EMPTY_SET,
+                                       Collections.EMPTY_SET);
+                } else {
+                    Log.error("Authorization failed for " + username);
+                    throw new SecurityException();
                 }
             });
         }

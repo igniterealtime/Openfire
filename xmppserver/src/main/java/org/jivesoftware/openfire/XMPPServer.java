@@ -616,38 +616,35 @@ public class XMPPServer {
             // Iterate through all the provided XML properties and set the ones that haven't
             // already been touched by setup prior to this method being called.
 
-            Thread finishSetup = new Thread() {
-                @Override
-                public void run() {
-                    try {
-                        if (isStandAlone()) {
-                            // Always restart the HTTP server manager. This covers the case
-                            // of changing the ports, as well as generating self-signed certificates.
-                        
-                            // Wait a short period before shutting down the admin console.
-                            // Otherwise, the page that requested the setup finish won't
-                            // render properly!
-                            Thread.sleep(1000);
-                            ((AdminConsolePlugin) pluginManager.getPlugin("admin")).restart();
-                        }
+            Thread finishSetup = new Thread(() -> {
+                try {
+                    if (isStandAlone()) {
+                        // Always restart the HTTP server manager. This covers the case
+                        // of changing the ports, as well as generating self-signed certificates.
 
-                        verifyDataSource();
-                        // First load all the modules so that modules may access other modules while
-                        // being initialized
-                        loadModules();
-                        // Initize all the modules
-                        initModules();
-                        // Start all the modules
-                        startModules();
-                        scanForSystemPropertyClasses();
+                        // Wait a short period before shutting down the admin console.
+                        // Otherwise, the page that requested the setup finish won't
+                        // render properly!
+                        Thread.sleep(1000);
+                        ((AdminConsolePlugin) pluginManager.getPlugin("admin")).restart();
                     }
-                    catch (Exception e) {
-                        e.printStackTrace();
-                        logger.error(e.getMessage(), e);
-                        shutdownServer();
-                    }
+
+                    verifyDataSource();
+                    // First load all the modules so that modules may access other modules while
+                    // being initialized
+                    loadModules();
+                    // Initize all the modules
+                    initModules();
+                    // Start all the modules
+                    startModules();
+                    scanForSystemPropertyClasses();
                 }
-            };
+                catch (Exception e) {
+                    e.printStackTrace();
+                    logger.error(e.getMessage(), e);
+                    shutdownServer();
+                }
+            });
             // Use the correct class loader.
             finishSetup.setContextClassLoader(loader);
             finishSetup.start();
@@ -917,24 +914,21 @@ public class XMPPServer {
      * restart to fully render its content.
      */
     public void restartHTTPServer() {
-        Thread restartThread = new Thread() {
-            @Override
-            public void run() {
-                if (isStandAlone()) {
-                    // Restart the HTTP server manager. This covers the case
-                    // of changing the ports, as well as generating self-signed certificates.
+        Thread restartThread = new Thread(() -> {
+            if (isStandAlone()) {
+                // Restart the HTTP server manager. This covers the case
+                // of changing the ports, as well as generating self-signed certificates.
 
-                    // Wait a short period before shutting down the admin console.
-                    // Otherwise, this page won't render properly!
-                    try {
-                        Thread.sleep(1000);
-                        ((AdminConsolePlugin) pluginManager.getPlugin("admin")).restart();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                // Wait a short period before shutting down the admin console.
+                // Otherwise, this page won't render properly!
+                try {
+                    Thread.sleep(1000);
+                    ((AdminConsolePlugin) pluginManager.getPlugin("admin")).restart();
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
-        };
+        });
         restartThread.setContextClassLoader(loader);
         restartThread.start();
     }
@@ -1261,9 +1255,7 @@ public class XMPPServer {
             final Module module = modules.get( moduleClass );
             try {
                 // OF-1607: Apply a configurable timeout to the duration of stop/destroy invocation.
-                timeLimiter.runWithTimeout(() -> {
-                    stopAndDestroyModule(module);
-                }, JiveGlobals.getLongProperty("shutdown.modules.timeout-millis", Long.MAX_VALUE), TimeUnit.MILLISECONDS);
+                timeLimiter.runWithTimeout(() -> stopAndDestroyModule(module), JiveGlobals.getLongProperty("shutdown.modules.timeout-millis", Long.MAX_VALUE), TimeUnit.MILLISECONDS);
             } catch ( Exception e ) {
                 logger.warn("An exception occurred while stopping / destroying module '{}'.", module.getName(), e);
                 System.err.println(e);

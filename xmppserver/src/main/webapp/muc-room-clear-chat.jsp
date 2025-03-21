@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2024 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2024-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -64,9 +64,7 @@
             // finalWebManager is a final variable that references webManager
             // allowing webManager to be used inside the lambda expression without causing a compilation error
             final WebManager finalWebManager = webManager;
-            room.clearChatHistory().thenRun(() -> {
-                finalWebManager.logEvent("Cleared the chat history of MUC room ", roomJID.toString());
-            });
+            room.clearChatHistory().thenRun(() -> finalWebManager.logEvent("Cleared the chat history of MUC room ", roomJID.toString()));
         }
         // Done, so redirect to the room edit form
         response.sendRedirect("muc-room-edit-form.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8")+"&clearchatsuccess=true");

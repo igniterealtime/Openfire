@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,85 +69,80 @@ public class CertificateStoreWatcher
 
             storeWatcher = FileSystems.getDefault().newWatchService();
 
-            executorService.submit( new Runnable()
-            {
-                @Override
-                public void run()
+            executorService.submit(() -> {
+                while ( !executorService.isShutdown() )
                 {
-                    while ( !executorService.isShutdown() )
+                    final WatchKey key;
+                    try
                     {
-                        final WatchKey key;
-                        try
+                        key = storeWatcher.poll( 5, TimeUnit.SECONDS );
+                    }
+                    catch ( InterruptedException e )
+                    {
+                        // Interrupted. Stop waiting
+                        continue;
+                    }
+
+                    if ( key == null )
+                    {
+                        continue;
+                    }
+
+                    for ( final WatchEvent<?> event : key.pollEvents() )
+                    {
+                        final WatchEvent.Kind<?> kind = event.kind();
+
+                        // An OVERFLOW event can occur regardless of what kind of events the watcher was configured for.
+                        if ( kind == StandardWatchEventKinds.OVERFLOW )
                         {
-                            key = storeWatcher.poll( 5, TimeUnit.SECONDS );
-                        }
-                        catch ( InterruptedException e )
-                        {
-                            // Interrupted. Stop waiting
                             continue;
                         }
 
-                        if ( key == null )
+                        synchronized ( watchedStores )
                         {
-                            continue;
-                        }
+                            // The filename is the context of the event.
+                            final WatchEvent<Path> ev = (WatchEvent<Path>) event;
+                            final Path changedFile = ((Path) key.watchable()).resolve( ev.context() );
 
-                        for ( final WatchEvent<?> event : key.pollEvents() )
-                        {
-                            final WatchEvent.Kind<?> kind = event.kind();
-
-                            // An OVERFLOW event can occur regardless of what kind of events the watcher was configured for.
-                            if ( kind == StandardWatchEventKinds.OVERFLOW )
+                            // Can't use the value from the 'watchedStores' map, as that's the parent dir, not the keystore file!
+                            for ( final CertificateStore store : watchedStores.keySet() )
                             {
-                                continue;
-                            }
-
-                            synchronized ( watchedStores )
-                            {
-                                // The filename is the context of the event.
-                                final WatchEvent<Path> ev = (WatchEvent<Path>) event;
-                                final Path changedFile = ((Path) key.watchable()).resolve( ev.context() );
-
-                                // Can't use the value from the 'watchedStores' map, as that's the parent dir, not the keystore file!
-                                for ( final CertificateStore store : watchedStores.keySet() )
+                                final Path storeFile = store.getConfiguration().getFile().toPath().normalize();
+                                if ( storeFile.equals( changedFile ) )
                                 {
-                                    final Path storeFile = store.getConfiguration().getFile().toPath().normalize();
-                                    if ( storeFile.equals( changedFile ) )
+                                    // Check if the modified file is usable.
+                                    try ( final FileInputStream is = new FileInputStream( changedFile.toFile() ) )
                                     {
-                                        // Check if the modified file is usable.
-                                        try ( final FileInputStream is = new FileInputStream( changedFile.toFile() ) )
-                                        {
-                                            final KeyStore tmpStore = KeyStore.getInstance( store.getConfiguration().getType() );
-                                            tmpStore.load( is, store.getConfiguration().getPassword() );
-                                        }
-                                        catch ( EOFException e )
-                                        {
-                                            Log.debug( "The keystore is still being modified. Ignore for now. A new event should be thrown later.", e );
-                                            break;
-                                        }
-                                        catch ( Exception e )
-                                        {
-                                            Log.debug( "Can't read the modified keystore with this config. Continue iterating over configs.", e );
-                                            continue;
-                                        }
+                                        final KeyStore tmpStore = KeyStore.getInstance( store.getConfiguration().getType() );
+                                        tmpStore.load( is, store.getConfiguration().getPassword() );
+                                    }
+                                    catch ( EOFException e )
+                                    {
+                                        Log.debug( "The keystore is still being modified. Ignore for now. A new event should be thrown later.", e );
+                                        break;
+                                    }
+                                    catch ( Exception e )
+                                    {
+                                        Log.debug( "Can't read the modified keystore with this config. Continue iterating over configs.", e );
+                                        continue;
+                                    }
 
-                                        Log.info( "A file system change was detected. A(nother) certificate store that is backed by file '{}' will be reloaded.", storeFile );
-                                        try
-                                        {
-                                            store.reload();
-                                        }
-                                        catch ( CertificateStoreConfigException e )
-                                        {
-                                            Log.warn( "An unexpected exception occurred while trying to reload a certificate store that is backed by file '{}'!", storeFile, e );
-                                        }
+                                    Log.info( "A file system change was detected. A(nother) certificate store that is backed by file '{}' will be reloaded.", storeFile );
+                                    try
+                                    {
+                                        store.reload();
+                                    }
+                                    catch ( CertificateStoreConfigException e )
+                                    {
+                                        Log.warn( "An unexpected exception occurred while trying to reload a certificate store that is backed by file '{}'!", storeFile, e );
                                     }
                                 }
                             }
                         }
-
-                        // Reset the key to receive further events.
-                        key.reset();
                     }
+
+                    // Reset the key to receive further events.
+                    key.reset();
                 }
             });
         }

@@ -65,9 +65,7 @@
             // finalWebManager is a final variable that references webManager
             // allowing webManager to be used inside the lambda expression without causing a compilation error
             final WebManager finalWebManager = webManager;
-            room.clearChatHistory().thenRun(() -> {
-                finalWebManager.logEvent("Cleared the chat history of MUC room ", roomJID.toString());
-            });
+            room.clearChatHistory().thenRun(() -> finalWebManager.logEvent("Cleared the chat history of MUC room ", roomJID.toString()));
         }
         // Done, so redirect to the room edit form
         response.sendRedirect("muc-room-edit-form.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), StandardCharsets.UTF_8)+"&clearchatsuccess=true");

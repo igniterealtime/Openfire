@@ -35,7 +35,7 @@ import org.xmpp.packet.StreamError;
 
 /**
  * Binds a resource to the stream so that the client's address becomes a full JID. Once a resource
- * has been binded to the session the entity (i.e. client) is considered a "connected resource".
+ * has been bound to the session the entity (i.e. client) is considered a "connected resource".
  * <p>
  * Clients may specify a desired resource but if none was specified then the server will create
  * a random resource for the session. The new resource should be in accordance with ResourcePrep.

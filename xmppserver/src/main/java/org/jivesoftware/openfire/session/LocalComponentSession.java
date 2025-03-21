@@ -63,7 +63,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
      * Returns a newly created session between the server and a component. The session will be
      * created and returned only if all the checkings were correct.<p>
      *
-     * A domain will be binded for the new connecting component. This method is following
+     * A domain will be bound for the new connecting component. This method is following
      * the JEP-114 where the domain to bind is sent in the TO attribute of the stream header.
      *
      * @param serverName the name of the server where the session is connecting to.
@@ -279,7 +279,7 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         private String type = "";
         private String category = "";
         /**
-         * List of subdomains that were binded for this component. The list will include
+         * List of subdomains that were bound for this component. The list will include
          * the initial subdomain.
          */
         private List<String> subdomains = new ArrayList<>();

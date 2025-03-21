@@ -257,13 +257,14 @@ public class PluginManager
      */
     public boolean isInstalled( final String canonicalName )
     {
-        final DirectoryStream.Filter<Path> filter = new DirectoryStream.Filter<Path>()
+        final DirectoryStream.Filter<Path> filter = new DirectoryStream.Filter<>()
         {
             @Override
-            public boolean accept( Path entry ) {
+            public boolean accept(Path entry)
+            {
                 final String name = entry.getFileName().toString();
-                return Files.exists( entry ) && !Files.isDirectory( entry ) &&
-                        ( name.equalsIgnoreCase( canonicalName + ".jar" ) || name.equalsIgnoreCase( canonicalName + ".war" ) );
+                return Files.exists(entry) && !Files.isDirectory(entry) &&
+                    (name.equalsIgnoreCase(canonicalName + ".jar") || name.equalsIgnoreCase(canonicalName + ".war"));
             }
         };
 
@@ -746,17 +747,17 @@ public class PluginManager
     {
         Log.debug( "Deleting plugin '{}'...", pluginName );
 
-        try ( final DirectoryStream<Path> ds = Files.newDirectoryStream( getPluginsDirectory(), new DirectoryStream.Filter<Path>()
+        try ( final DirectoryStream<Path> ds = Files.newDirectoryStream( getPluginsDirectory(), new DirectoryStream.Filter<>()
         {
             @Override
-            public boolean accept( final Path path ) {
-                if ( Files.isDirectory( path ) )
-                {
+            public boolean accept(final Path path)
+            {
+                if (Files.isDirectory(path)) {
                     return false;
                 }
 
                 final String fileName = path.getFileName().toString().toLowerCase();
-                return ( fileName.equals( pluginName + ".jar" ) || fileName.equals( pluginName + ".war" ) );
+                return (fileName.equals(pluginName + ".jar") || fileName.equals(pluginName + ".war"));
             }
         } ) )
         {
@@ -1073,33 +1074,27 @@ public class PluginManager
         {
             if ( Files.isDirectory( dir ) )
             {
-                Files.walkFileTree( dir, new SimpleFileVisitor<Path>()
+                Files.walkFileTree( dir, new SimpleFileVisitor<>()
                 {
                     @Override
-                    public FileVisitResult visitFile( Path file, BasicFileAttributes attrs ) throws IOException
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException
                     {
-                        try
-                        {
-                            Files.deleteIfExists( file );
-                        }
-                        catch ( IOException e )
-                        {
-                            Log.debug( "Plugin removal: could not delete: {}", file );
+                        try {
+                            Files.deleteIfExists(file);
+                        } catch (IOException e) {
+                            Log.debug("Plugin removal: could not delete: {}", file);
                             throw e;
                         }
                         return FileVisitResult.CONTINUE;
                     }
 
                     @Override
-                    public FileVisitResult postVisitDirectory( Path dir, IOException exc ) throws IOException
+                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException
                     {
-                        try
-                        {
-                            Files.deleteIfExists( dir );
-                        }
-                        catch ( IOException e )
-                        {
-                            Log.debug( "Plugin removal: could not delete: {}", dir );
+                        try {
+                            Files.deleteIfExists(dir);
+                        } catch (IOException e) {
+                            Log.debug("Plugin removal: could not delete: {}", dir);
                             throw e;
                         }
                         return FileVisitResult.CONTINUE;

@@ -484,24 +484,28 @@ public class User implements Cacheable, Externalizable, Result {
 
         @Override
         public Iterator<Map.Entry<String, String>> iterator() {
-            return new Iterator<Map.Entry<String, String>>() {
+            return new Iterator<>()
+            {
 
                 Iterator<Map.Entry<String, String>> iter = properties.entrySet().iterator();
-                Map.Entry<String,String> current = null;
+                Map.Entry<String, String> current = null;
 
                 @Override
-                public boolean hasNext() {
+                public boolean hasNext()
+                {
                     return iter.hasNext();
                 }
 
                 @Override
-                public Map.Entry<String, String> next() {
+                public Map.Entry<String, String> next()
+                {
                     current = iter.next();
                     return current;
                 }
 
                 @Override
-                public void remove() {
+                public void remove()
+                {
                     if (current == null) {
                         throw new IllegalStateException();
                     }
@@ -510,13 +514,13 @@ public class User implements Cacheable, Externalizable, Result {
                         UserManager.getUserPropertyProvider().deleteProperty(username, key);
                         iter.remove();
                         // Fire event.
-                        Map<String,Object> params = new HashMap<>();
+                        Map<String, Object> params = new HashMap<>();
                         params.put("type", "propertyDeleted");
                         params.put("propertyKey", key);
                         UserEventDispatcher.dispatchEvent(User.this,
-                                                          UserEventDispatcher.EventType.user_modified, params);
-                    } catch (UserNotFoundException e ) {
-                        Log.error( "Unable to delete property for user " + username, e );
+                            UserEventDispatcher.EventType.user_modified, params);
+                    } catch (UserNotFoundException e) {
+                        Log.error("Unable to delete property for user " + username, e);
                     }
                 }
             };

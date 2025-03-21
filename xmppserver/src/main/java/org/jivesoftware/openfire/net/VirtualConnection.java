@@ -41,7 +41,7 @@ public abstract class VirtualConnection extends AbstractConnection
 {
     private static final Logger Log = LoggerFactory.getLogger(VirtualConnection.class);
 
-    private final AtomicReference<State> state = new AtomicReference<State>(State.OPEN);
+    private final AtomicReference<State> state = new AtomicReference<>(State.OPEN);
 
     @Override
     public Certificate[] getLocalCertificates() {

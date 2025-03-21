@@ -58,16 +58,16 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
     public static final AttributeKey<Boolean> IDLE_FLAG = AttributeKey.valueOf("IDLE_FLAG");
 
 
-    protected static final ThreadLocal<XMPPPacketReader> PARSER_CACHE = new ThreadLocal<XMPPPacketReader>()
-            {
-               @Override
-               protected XMPPPacketReader initialValue()
-               {
-                  final XMPPPacketReader parser = new XMPPPacketReader();
-                  parser.setXPPFactory( factory );
-                  return parser;
-               }
-            };
+    protected static final ThreadLocal<XMPPPacketReader> PARSER_CACHE = new ThreadLocal<>()
+    {
+        @Override
+        protected XMPPPacketReader initialValue()
+        {
+            final XMPPPacketReader parser = new XMPPPacketReader();
+            parser.setXPPFactory(factory);
+            return parser;
+        }
+    };
     /**
      * Reuse the same factory for all the connections.
      */

@@ -84,7 +84,7 @@ public class SocketConnection extends AbstractConnection {
 
     private Writer writer;
     private final AtomicBoolean writing = new AtomicBoolean(false);
-    private final AtomicReference<State> state = new AtomicReference<State>(State.OPEN);
+    private final AtomicReference<State> state = new AtomicReference<>(State.OPEN);
 
     /**
      * Deliverer to use when the connection is closed or was closed when delivering

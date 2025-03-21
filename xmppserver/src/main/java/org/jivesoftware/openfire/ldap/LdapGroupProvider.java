@@ -176,7 +176,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                 else
                 {
                     //retrieve first part with attributes that came from AD
-                    ArrayList<String> stdAttr=new ArrayList<String>();
+                    ArrayList<String> stdAttr= new ArrayList<>();
                     for (int n=0;n<standardAttributes.length;n++)
                     {
                         if (!standardAttributes[n].contains(manager.getGroupMemberField()))

@@ -343,56 +343,52 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
 
     @Override
     public String addClusteredCacheEntryListener(@Nonnull final ClusteredCacheEntryListener<K, V> listener, final boolean includeValues, final boolean includeEventsFromLocalNode) {
-        return delegate.addClusteredCacheEntryListener(new ClusteredCacheEntryListener<String, String>() {
+        return delegate.addClusteredCacheEntryListener(new ClusteredCacheEntryListener<>()
+        {
             @Override
             public void entryAdded(@Nonnull String key, @Nullable String newValue, @Nonnull NodeID nodeID)
             {
-                @SuppressWarnings("unchecked")
-                final K unmarshalledKey = (K) unmarshall(key);
-                @SuppressWarnings("unchecked")
-                final V unmarshalledNewValue = (V) unmarshall(newValue);
+                @SuppressWarnings("unchecked") final K unmarshalledKey = (K) unmarshall(key);
+                @SuppressWarnings("unchecked") final V unmarshalledNewValue = (V) unmarshall(newValue);
                 listener.entryAdded(unmarshalledKey, unmarshalledNewValue, nodeID);
             }
 
             @Override
             public void entryRemoved(@Nonnull String key, @Nullable String oldValue, @Nonnull NodeID nodeID)
             {
-                @SuppressWarnings("unchecked")
-                final K unmarshalledKey = (K) unmarshall(key);
-                @SuppressWarnings("unchecked")
-                final V unmarshalledOldValue = (V) unmarshall(oldValue);
+                @SuppressWarnings("unchecked") final K unmarshalledKey = (K) unmarshall(key);
+                @SuppressWarnings("unchecked") final V unmarshalledOldValue = (V) unmarshall(oldValue);
 
                 listener.entryRemoved(unmarshalledKey, unmarshalledOldValue, nodeID);
             }
 
             @Override
-            public void entryUpdated(@Nonnull String key, @Nullable String oldValue, @Nullable String newValue, @Nonnull NodeID nodeID) {
-                @SuppressWarnings("unchecked")
-                final K unmarshalledKey = (K) unmarshall(key);
-                @SuppressWarnings("unchecked")
-                final V unmarshalledNewValue = (V) unmarshall(newValue);
-                @SuppressWarnings("unchecked")
-                final V unmarshalledOldValue = (V) unmarshall(oldValue);
+            public void entryUpdated(@Nonnull String key, @Nullable String oldValue, @Nullable String newValue, @Nonnull NodeID nodeID)
+            {
+                @SuppressWarnings("unchecked") final K unmarshalledKey = (K) unmarshall(key);
+                @SuppressWarnings("unchecked") final V unmarshalledNewValue = (V) unmarshall(newValue);
+                @SuppressWarnings("unchecked") final V unmarshalledOldValue = (V) unmarshall(oldValue);
                 listener.entryUpdated(unmarshalledKey, unmarshalledOldValue, unmarshalledNewValue, nodeID);
             }
 
             @Override
-            public void entryEvicted(@Nonnull String key, @Nullable String oldValue, @Nonnull NodeID nodeID) {
-                @SuppressWarnings("unchecked")
-                final K unmarshalledKey = (K) unmarshall(key);
-                @SuppressWarnings("unchecked")
-                final V unmarshalledOldValue = (V) unmarshall(oldValue);
+            public void entryEvicted(@Nonnull String key, @Nullable String oldValue, @Nonnull NodeID nodeID)
+            {
+                @SuppressWarnings("unchecked") final K unmarshalledKey = (K) unmarshall(key);
+                @SuppressWarnings("unchecked") final V unmarshalledOldValue = (V) unmarshall(oldValue);
 
                 listener.entryEvicted(unmarshalledKey, unmarshalledOldValue, nodeID);
             }
 
             @Override
-            public void mapCleared(@Nonnull NodeID nodeID) {
+            public void mapCleared(@Nonnull NodeID nodeID)
+            {
                 listener.mapCleared(nodeID);
             }
 
             @Override
-            public void mapEvicted(@Nonnull NodeID nodeID) {
+            public void mapEvicted(@Nonnull NodeID nodeID)
+            {
                 listener.mapEvicted(nodeID);
             }
         }, includeValues, includeEventsFromLocalNode);

@@ -67,7 +67,7 @@ public class PubSubServiceInfo {
     }
 
     public List<Node> getLeafNodes() {
-        List<Node> leafNodes = new ArrayList<Node>();
+        List<Node> leafNodes = new ArrayList<>();
         for (Node node : pubSubService.getNodes()) {
             if (!node.isCollectionNode()) {
                 leafNodes.add(node);

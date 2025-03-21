@@ -221,18 +221,17 @@ public class PluginMonitor implements PropertyEventListener
                     final Set<String> jarSet = new HashSet<>();
 
                     // Explode all plugin files that have not yet been exploded (or need to be re-exploded).
-                    try ( final DirectoryStream<Path> ds = Files.newDirectoryStream( pluginsDirectory, new DirectoryStream.Filter<Path>()
+                    try ( final DirectoryStream<Path> ds = Files.newDirectoryStream( pluginsDirectory, new DirectoryStream.Filter<>()
                     {
                         @Override
-                        public boolean accept( final Path path ) throws IOException
+                        public boolean accept(final Path path) throws IOException
                         {
-                            if ( Files.isDirectory( path ) )
-                            {
+                            if (Files.isDirectory(path)) {
                                 return false;
                             }
 
                             final String fileName = path.getFileName().toString().toLowerCase();
-                            return ( fileName.endsWith( ".jar" ) || fileName.endsWith( ".war" ) );
+                            return (fileName.endsWith(".jar") || fileName.endsWith(".war"));
                         }
                     } ) )
                     {
@@ -284,18 +283,17 @@ public class PluginMonitor implements PropertyEventListener
                     // See if any currently running plugins need to be unloaded due to the JAR file being deleted. Note
                     // that unloading a parent plugin might cause more than one plugin to disappear. Don't reuse the
                     // directory stream afterwards!
-                    try ( final DirectoryStream<Path> ds = Files.newDirectoryStream( pluginsDirectory, new DirectoryStream.Filter<Path>()
+                    try ( final DirectoryStream<Path> ds = Files.newDirectoryStream( pluginsDirectory, new DirectoryStream.Filter<>()
                     {
                         @Override
-                        public boolean accept( final Path path ) throws IOException
+                        public boolean accept(final Path path) throws IOException
                         {
-                            if ( !Files.isDirectory( path ) )
-                            {
+                            if (!Files.isDirectory(path)) {
                                 return false;
                             }
 
-                            final String pluginName = PluginMetadataHelper.getCanonicalName( path );
-                            return !pluginName.equals( "admin" ) && !jarSet.contains( pluginName );
+                            final String pluginName = PluginMetadataHelper.getCanonicalName(path);
+                            return !pluginName.equals("admin") && !jarSet.contains(pluginName);
                         }
                     } ) )
                     {
@@ -310,12 +308,12 @@ public class PluginMonitor implements PropertyEventListener
                     // Load all plugins that need to be loaded. Make sure that the admin plugin is loaded first (as that
                     // should be available as soon as possible), followed by all other plugins. Ensure that parent plugins
                     // are loaded before their children.
-                    try ( final DirectoryStream<Path> ds = Files.newDirectoryStream( pluginsDirectory, new DirectoryStream.Filter<Path>()
+                    try ( final DirectoryStream<Path> ds = Files.newDirectoryStream( pluginsDirectory, new DirectoryStream.Filter<>()
                     {
                         @Override
-                        public boolean accept( final Path path ) throws IOException
+                        public boolean accept(final Path path) throws IOException
                         {
-                            return Files.isDirectory( path );
+                            return Files.isDirectory(path);
                         }
                     } ) )
                     {
@@ -365,21 +363,18 @@ public class PluginMonitor implements PropertyEventListener
                             final Collection<Callable<Integer>> parallelProcesses = new ArrayList<>();
                             for ( final List<Path> hierarchy : dirs )
                             {
-                                parallelProcesses.add( new Callable<Integer>()
+                                parallelProcesses.add(new Callable<>()
                                 {
 
                                     @Override
                                     public Integer call() throws Exception
                                     {
                                         int loaded = 0;
-                                        for ( final Path path : hierarchy )
-                                        {
+                                        for (final Path path : hierarchy) {
                                             // If the plugin hasn't already been started, start it.
-                                            final String canonicalName = PluginMetadataHelper.getCanonicalName( path );
-                                            if ( pluginManager.getPlugin( canonicalName ) == null )
-                                            {
-                                                if ( pluginManager.loadPlugin( canonicalName, path ) )
-                                                {
+                                            final String canonicalName = PluginMetadataHelper.getCanonicalName(path);
+                                            if (pluginManager.getPlugin(canonicalName) == null) {
+                                                if (pluginManager.loadPlugin(canonicalName, path)) {
                                                     loaded++;
                                                 }
                                             }
@@ -528,7 +523,7 @@ public class PluginMonitor implements PropertyEventListener
                     final String parent = PluginMetadataHelper.getParentPlugin( dir );
                     if ( !byParent.containsKey( parent ) )
                     {
-                        byParent.put( parent, new HashSet<Path>() );
+                        byParent.put( parent, new HashSet<>() );
                     }
                     byParent.get( parent ).add( dir );
                 }
@@ -618,12 +613,12 @@ public class PluginMonitor implements PropertyEventListener
         class Node
         {
             Path path;
-            SortedSet<Node> children = new TreeSet<>( new Comparator<Node>()
+            SortedSet<Node> children = new TreeSet<>(new Comparator<>()
             {
                 @Override
-                public int compare( Node o1, Node o2 )
+                public int compare(Node o1, Node o2)
                 {
-                    return o1.getName().compareToIgnoreCase( o2.getName() );
+                    return o1.getName().compareToIgnoreCase(o2.getName());
                 }
             } );
 

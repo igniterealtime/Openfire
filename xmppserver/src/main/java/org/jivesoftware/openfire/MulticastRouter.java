@@ -208,7 +208,7 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
             iq.setTo(domain);
             iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
             // Indicate that we are searching for info of the specified domain
-            nodes.put(domain, new CopyOnWriteArrayList<String>());
+            nodes.put(domain, new CopyOnWriteArrayList<>());
             // Send the disco#info request to the remote server or component. The reply will be
             // processed by the IQResultListener (interface that this class implements)
             iqRouter.addIQResultListener(iq.getID(), this);

@@ -16,7 +16,6 @@
 
 package org.jivesoftware.openfire.user;
 
-import org.jivesoftware.openfire.group.GroupProvider;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;

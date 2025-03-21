@@ -18,7 +18,6 @@ package org.jivesoftware.openfire.muc.spi;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.openfire.muc.MUCRoom;
 import org.jivesoftware.openfire.muc.MultiUserChatService;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;

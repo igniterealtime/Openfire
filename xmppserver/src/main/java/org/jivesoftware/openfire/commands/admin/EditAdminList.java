@@ -21,8 +21,6 @@ import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.component.InternalComponentManager;
-import org.jivesoftware.openfire.server.RemoteServerConfiguration;
-import org.jivesoftware.openfire.server.RemoteServerManager;
 import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;

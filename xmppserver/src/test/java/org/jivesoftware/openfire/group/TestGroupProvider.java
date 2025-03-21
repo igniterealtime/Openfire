@@ -15,7 +15,6 @@
  */
 package org.jivesoftware.openfire.group;
 
-import org.jivesoftware.openfire.user.TestUserProvider;
 import org.jivesoftware.util.PersistableMap;
 import org.xmpp.packet.JID;
 

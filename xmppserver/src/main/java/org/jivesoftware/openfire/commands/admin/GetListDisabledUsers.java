@@ -29,7 +29,6 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 
 import javax.annotation.Nonnull;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;

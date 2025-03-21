@@ -16,12 +16,10 @@
 
 package org.jivesoftware.openfire.auth;
 
-import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
 
 import java.util.Collection;
-import java.util.List;
 
 /**
  * A {@link AuthProvider} that delegates to a user-specific AuthProvider.

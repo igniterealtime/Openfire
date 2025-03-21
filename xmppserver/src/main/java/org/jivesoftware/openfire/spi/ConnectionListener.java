@@ -130,7 +130,7 @@ public class ConnectionListener
         this.bindAddress = bindAddress;
         this.identityStoreConfiguration = identityStoreConfiguration;
         this.trustStoreConfiguration = trustStoreConfiguration;
-        this.compressionPolicyPropertyName = compressionPolicyPropertyName;
+        this.compressionPolicyPropertyName = compressionPolicyPropertyName; 
 
         // A listener cannot be changed into or from Direct TLS mode. That fact is safe to use in the name of the logger..
         final String name = getType().toString().toLowerCase() + ( getTLSPolicy().equals( Connection.TLSPolicy.directTLS) ? "-directTLS" : "" );
@@ -738,7 +738,7 @@ public class ConnectionListener
     }
 
     /**
-     * Configuresif self-signed peer certificates can be used to establish an encrypted connection.
+     * Configures if self-signed peer certificates can be used to establish an encrypted connection.
      *
      * @param accept true when self-signed certificates are accepted, otherwise false.
      */

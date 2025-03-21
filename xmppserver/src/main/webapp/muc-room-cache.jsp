@@ -70,7 +70,7 @@
     final List<String> allRoomNames = new ArrayList<>(allRooms.keySet());
     Collections.sort(allRoomNames);
 
-    final Set<String> roomsInBothCaches = roomsClustered.keySet().stream().filter(jid -> roomsLocal.containsKey(jid)).collect(Collectors.toSet());
+    final Set<String> roomsInBothCaches = roomsClustered.keySet().stream().filter(roomsLocal::containsKey).collect(Collectors.toSet());
     final Set<String> roomsOnlyInClusteredCache = roomsClustered.keySet().stream().filter(jid -> !roomsLocal.containsKey(jid)).collect(Collectors.toSet());
     final Set<String> roomsOnlyInLocalCache = roomsLocal.keySet().stream().filter(jid -> !roomsClustered.containsKey(jid)).collect(Collectors.toSet());
 

@@ -148,7 +148,7 @@ public class LdapUserProvider implements UserProvider {
                 NamingEnumeration values = authPassword.getAll();
                 while (values.hasMore()) {
                     Attribute authPasswordValue = (Attribute) values.next();
-                    String[] parts = ((String) authPasswordValue.get()).split("$");
+                    String[] parts = ((String) authPasswordValue.get()).split("\\$");
                     String[] authInfo = parts[1].split(":");
                     String[] authValue = parts[2].split(":");
     

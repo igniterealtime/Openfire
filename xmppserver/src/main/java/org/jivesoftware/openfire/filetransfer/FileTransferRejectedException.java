@@ -78,7 +78,7 @@ public class FileTransferRejectedException extends Exception {
     }
 
     /**
-     * Returns the text to include in a message that will be sent to the intitiator and target
+     * Returns the text to include in a message that will be sent to the initiator and target
      * of the file transfer that got rejected or {@code null} if none was defined. If no text was
      * specified then no message will be sent to the parties of the rejected file transfer.
      *

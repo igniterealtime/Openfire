@@ -90,12 +90,7 @@ public class PubSubEngine
                 // Entity publishes an item
                 // Complete this asynchronously, as UserManager::isRegisteredUser(JID) blocks, waiting for a result which may come in on this thread
                 final Element finalAction = action;
-                return TaskEngine.getInstance().submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        publishItemsToNode(service, iq, finalAction);
-                    }
-                });
+                return TaskEngine.getInstance().submit(() -> publishItemsToNode(service, iq, finalAction));
             }
             action = childElement.element("subscribe");
             if (action != null) {
@@ -119,12 +114,7 @@ public class PubSubEngine
                 // Entity is requesting to create a new node
                 final Element finalAction = action;
                 // Complete this asynchronously, as UserManager::isRegisteredUser(JID) blocks, waiting for a result which may come in on this thread
-                return TaskEngine.getInstance().submit(new Runnable() {
-                    @Override
-                    public void run() {
-                        createNode(service, iq, childElement, finalAction, getPublishOptions( iq ));
-                    }
-                });
+                return TaskEngine.getInstance().submit(() -> createNode(service, iq, childElement, finalAction, getPublishOptions( iq )));
             }
             action = childElement.element("unsubscribe");
             if (action != null) {
@@ -673,12 +663,7 @@ public class PubSubEngine
         }
 
         // Complete this asynchronously, as UserManager::isRegisteredUser(JID) blocks, waiting for a result which may come in on this thread
-        return TaskEngine.getInstance().submit(new Runnable() {
-            @Override
-            public void run() {
-                subscribeNodeAsync(iq, subscriberJID, node, owner, service, from, childElement, accessModel);
-            }
-        });
+        return TaskEngine.getInstance().submit(() -> subscribeNodeAsync(iq, subscriberJID, node, owner, service, from, childElement, accessModel));
     }
 
     private void subscribeNodeAsync(final IQ iq, final JID subscriberJID, final Node node, final JID owner, final PubSubService service, final JID from, final Element childElement, final AccessModel accessModel) {

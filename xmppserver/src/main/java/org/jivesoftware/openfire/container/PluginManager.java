@@ -257,15 +257,10 @@ public class PluginManager
      */
     public boolean isInstalled( final String canonicalName )
     {
-        final DirectoryStream.Filter<Path> filter = new DirectoryStream.Filter<>()
-        {
-            @Override
-            public boolean accept(Path entry)
-            {
-                final String name = entry.getFileName().toString();
-                return Files.exists(entry) && !Files.isDirectory(entry) &&
-                    (name.equalsIgnoreCase(canonicalName + ".jar") || name.equalsIgnoreCase(canonicalName + ".war"));
-            }
+        final DirectoryStream.Filter<Path> filter = entry -> {
+            final String name = entry.getFileName().toString();
+            return Files.exists(entry) && !Files.isDirectory(entry) &&
+                (name.equalsIgnoreCase(canonicalName + ".jar") || name.equalsIgnoreCase(canonicalName + ".war"));
         };
 
         try ( final DirectoryStream<Path> paths = Files.newDirectoryStream( pluginDirectory, filter ) )
@@ -747,19 +742,14 @@ public class PluginManager
     {
         Log.debug( "Deleting plugin '{}'...", pluginName );
 
-        try ( final DirectoryStream<Path> ds = Files.newDirectoryStream( getPluginsDirectory(), new DirectoryStream.Filter<>()
-        {
-            @Override
-            public boolean accept(final Path path)
-            {
-                if (Files.isDirectory(path)) {
-                    return false;
-                }
-
-                final String fileName = path.getFileName().toString().toLowerCase();
-                return (fileName.equals(pluginName + ".jar") || fileName.equals(pluginName + ".war"));
+        try ( final DirectoryStream<Path> ds = Files.newDirectoryStream( getPluginsDirectory(), path -> {
+            if (Files.isDirectory(path)) {
+                return false;
             }
-        } ) )
+
+            final String fileName = path.getFileName().toString().toLowerCase();
+            return (fileName.equals(pluginName + ".jar") || fileName.equals(pluginName + ".war"));
+        }) )
         {
             for ( final Path pluginFile : ds )
             {

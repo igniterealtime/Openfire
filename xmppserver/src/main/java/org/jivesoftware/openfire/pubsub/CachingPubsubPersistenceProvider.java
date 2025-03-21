@@ -517,10 +517,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         }
 
         if (itemsPending.size() > MAX_ITEMS_FLUSH) {
-            TaskEngine.getInstance().submit(new Runnable() {
-                @Override
-                public void run() { flushPendingChanges(false); }
-            });
+            TaskEngine.getInstance().submit(() -> flushPendingChanges(false));
         }
     }
 

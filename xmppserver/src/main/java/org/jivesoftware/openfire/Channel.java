@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,32 +87,27 @@ public class Channel<T extends Packet> {
      */
     public void add( final T packet )
     {
-        Runnable r = new Runnable()
-        {
-            @Override
-            public void run()
+        Runnable r = () -> {
+            try
             {
+                channelHandler.process( packet );
+            }
+            catch ( Exception e )
+            {
+                Log.error( LocaleUtils.getLocalizedString( "admin.error" ), e );
+
                 try
                 {
-                    channelHandler.process( packet );
+                    Session session = SessionManager.getInstance().getSession( packet.getFrom() );
+                    if ( session != null )
+                    {
+                        Log.debug( "Closing session of '{}': {}", packet.getFrom(), session );
+                        session.close();
+                    }
                 }
-                catch ( Exception e )
+                catch ( Exception e1 )
                 {
-                    Log.error( LocaleUtils.getLocalizedString( "admin.error" ), e );
-
-                    try
-                    {
-                        Session session = SessionManager.getInstance().getSession( packet.getFrom() );
-                        if ( session != null )
-                        {
-                            Log.debug( "Closing session of '{}': {}", packet.getFrom(), session );
-                            session.close();
-                        }
-                    }
-                    catch ( Exception e1 )
-                    {
-                        Log.error( "Unexpected exception while trying to close session of '{}'.", packet.getFrom(), e1 );
-                    }
+                    Log.error( "Unexpected exception while trying to close session of '{}'.", packet.getFrom(), e1 );
                 }
             }
         };

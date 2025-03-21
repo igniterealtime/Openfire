@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -225,68 +225,65 @@ public class Launcher {
         browserMenuItem.setEnabled(false);
         stopMenuItem.setEnabled(false);
 
-        ActionListener actionListener = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if ("Start".equals(e.getActionCommand())) {
-                    frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-                    // Adjust button and menu items.
-                    startButton.setEnabled(false);
-                    stopButton.setEnabled(true);
-                    startMenuItem.setEnabled(false);
-                    stopMenuItem.setEnabled(true);
+        ActionListener actionListener = e -> {
+            if ("Start".equals(e.getActionCommand())) {
+                frame.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+                // Adjust button and menu items.
+                startButton.setEnabled(false);
+                stopButton.setEnabled(true);
+                startMenuItem.setEnabled(false);
+                stopMenuItem.setEnabled(true);
 
-                    // Startup Application
-                    startApplication();
+                // Startup Application
+                startApplication();
 
-                    // Change to the "on" icon.
-                    frame.setIconImage(onIcon.getImage());
-                    trayIcon.setImage(onIcon.getImage());
+                // Change to the "on" icon.
+                frame.setIconImage(onIcon.getImage());
+                trayIcon.setImage(onIcon.getImage());
 
-                    // Start a thread to enable the admin button after 8 seconds.
-                    Thread thread = new Thread() {
-                        @Override
-                        public void run() {
-                            try {
-                                sleep(8000);
-                            }
-                            catch (InterruptedException ie) {
-                                // Ignore.
-                            }
-                            // Enable the Launch Admin button/menu item only if the
-                            // server has started.
-                            if (stopButton.isEnabled()) {
-                                browserButton.setEnabled(true);
-                                browserMenuItem.setEnabled(true);
-                                frame.setCursor(Cursor.getDefaultCursor());
-                            }
+                // Start a thread to enable the admin button after 8 seconds.
+                Thread thread = new Thread() {
+                    @Override
+                    public void run() {
+                        try {
+                            sleep(8000);
                         }
-                    };
-                    thread.start();
-                }
-                else if ("Stop".equals(e.getActionCommand())) {
-                    stopApplication();
-                    // Change to the "off" button.
-                    frame.setIconImage(offIcon.getImage());
-                    trayIcon.setImage(offIcon.getImage());
-                    // Adjust buttons and menu items.
-                    frame.setCursor(Cursor.getDefaultCursor());
-                    browserButton.setEnabled(false);
-                    startButton.setEnabled(true);
-                    stopButton.setEnabled(false);
-                    browserMenuItem.setEnabled(false);
-                    startMenuItem.setEnabled(true);
-                    stopMenuItem.setEnabled(false);
-                }
-                else if ("Launch Admin".equals(e.getActionCommand())) {
-                    launchBrowser();
-                } else if ("Quit".equals(e.getActionCommand())) {
-                    stopApplication();
-                    System.exit(0);
-                }
-                else if ("Hide/Show".equals(e.getActionCommand()) || "PressAction".equals(e.getActionCommand())) {
-                    toggleVisibility(showMenuItem);
-                }
+                        catch (InterruptedException ie) {
+                            // Ignore.
+                        }
+                        // Enable the Launch Admin button/menu item only if the
+                        // server has started.
+                        if (stopButton.isEnabled()) {
+                            browserButton.setEnabled(true);
+                            browserMenuItem.setEnabled(true);
+                            frame.setCursor(Cursor.getDefaultCursor());
+                        }
+                    }
+                };
+                thread.start();
+            }
+            else if ("Stop".equals(e.getActionCommand())) {
+                stopApplication();
+                // Change to the "off" button.
+                frame.setIconImage(offIcon.getImage());
+                trayIcon.setImage(offIcon.getImage());
+                // Adjust buttons and menu items.
+                frame.setCursor(Cursor.getDefaultCursor());
+                browserButton.setEnabled(false);
+                startButton.setEnabled(true);
+                stopButton.setEnabled(false);
+                browserMenuItem.setEnabled(false);
+                startMenuItem.setEnabled(true);
+                stopMenuItem.setEnabled(false);
+            }
+            else if ("Launch Admin".equals(e.getActionCommand())) {
+                launchBrowser();
+            } else if ("Quit".equals(e.getActionCommand())) {
+                stopApplication();
+                System.exit(0);
+            }
+            else if ("Hide/Show".equals(e.getActionCommand()) || "PressAction".equals(e.getActionCommand())) {
+                toggleVisibility(showMenuItem);
             }
         };
 

@@ -221,19 +221,14 @@ public class PluginMonitor implements PropertyEventListener
                     final Set<String> jarSet = new HashSet<>();
 
                     // Explode all plugin files that have not yet been exploded (or need to be re-exploded).
-                    try ( final DirectoryStream<Path> ds = Files.newDirectoryStream( pluginsDirectory, new DirectoryStream.Filter<>()
-                    {
-                        @Override
-                        public boolean accept(final Path path) throws IOException
-                        {
-                            if (Files.isDirectory(path)) {
-                                return false;
-                            }
-
-                            final String fileName = path.getFileName().toString().toLowerCase();
-                            return (fileName.endsWith(".jar") || fileName.endsWith(".war"));
+                    try ( final DirectoryStream<Path> ds = Files.newDirectoryStream( pluginsDirectory, path -> {
+                        if (Files.isDirectory(path)) {
+                            return false;
                         }
-                    } ) )
+
+                        final String fileName = path.getFileName().toString().toLowerCase();
+                        return ( fileName.endsWith( ".jar" ) || fileName.endsWith( ".war" ) );
+                    }) )
                     {
                         for ( final Path jarFile : ds )
                         {
@@ -282,20 +277,15 @@ public class PluginMonitor implements PropertyEventListener
 
                     // See if any currently running plugins need to be unloaded due to the JAR file being deleted. Note
                     // that unloading a parent plugin might cause more than one plugin to disappear. Don't reuse the
-                    // directory stream afterwards!
-                    try ( final DirectoryStream<Path> ds = Files.newDirectoryStream( pluginsDirectory, new DirectoryStream.Filter<>()
-                    {
-                        @Override
-                        public boolean accept(final Path path) throws IOException
-                        {
-                            if (!Files.isDirectory(path)) {
-                                return false;
-                            }
-
-                            final String pluginName = PluginMetadataHelper.getCanonicalName(path);
-                            return !pluginName.equals("admin") && !jarSet.contains(pluginName);
+                    // directory stream afterward!
+                    try ( final DirectoryStream<Path> ds = Files.newDirectoryStream( pluginsDirectory, path -> {
+                        if (!Files.isDirectory(path)) {
+                            return false;
                         }
-                    } ) )
+
+                        final String pluginName = PluginMetadataHelper.getCanonicalName( path );
+                        return !pluginName.equals( "admin" ) && !jarSet.contains( pluginName );
+                    }) )
                     {
                         for ( final Path path : ds )
                         {
@@ -308,14 +298,7 @@ public class PluginMonitor implements PropertyEventListener
                     // Load all plugins that need to be loaded. Make sure that the admin plugin is loaded first (as that
                     // should be available as soon as possible), followed by all other plugins. Ensure that parent plugins
                     // are loaded before their children.
-                    try ( final DirectoryStream<Path> ds = Files.newDirectoryStream( pluginsDirectory, new DirectoryStream.Filter<>()
-                    {
-                        @Override
-                        public boolean accept(final Path path) throws IOException
-                        {
-                            return Files.isDirectory(path);
-                        }
-                    } ) )
+                    try ( final DirectoryStream<Path> ds = Files.newDirectoryStream(pluginsDirectory, Files::isDirectory) )
                     {
                         // Look for extra plugin directories specified as a system property.
                         final Set<Path> devPlugins = new HashSet<>();
@@ -363,26 +346,20 @@ public class PluginMonitor implements PropertyEventListener
                             final Collection<Callable<Integer>> parallelProcesses = new ArrayList<>();
                             for ( final List<Path> hierarchy : dirs )
                             {
-                                parallelProcesses.add(new Callable<>()
-                                {
-
-                                    @Override
-                                    public Integer call() throws Exception
-                                    {
-                                        int loaded = 0;
-                                        for (final Path path : hierarchy) {
-                                            // If the plugin hasn't already been started, start it.
-                                            final String canonicalName = PluginMetadataHelper.getCanonicalName(path);
-                                            if (pluginManager.getPlugin(canonicalName) == null) {
-                                                if (pluginManager.loadPlugin(canonicalName, path)) {
-                                                    loaded++;
-                                                }
+                                parallelProcesses.add(() -> {
+                                    int loaded = 0;
+                                    for (final Path path : hierarchy) {
+                                        // If the plugin hasn't already been started, start it.
+                                        final String canonicalName = PluginMetadataHelper.getCanonicalName(path);
+                                        if (pluginManager.getPlugin(canonicalName) == null) {
+                                            if (pluginManager.loadPlugin(canonicalName, path)) {
+                                                loaded++;
                                             }
                                         }
-
-                                        return loaded;
                                     }
-                                } );
+
+                                    return loaded;
+                                });
                             }
 
                             // Hierarchies could be processed in parallel. This is likely to be beneficial during the first
@@ -613,14 +590,7 @@ public class PluginMonitor implements PropertyEventListener
         class Node
         {
             Path path;
-            SortedSet<Node> children = new TreeSet<>(new Comparator<>()
-            {
-                @Override
-                public int compare(Node o1, Node o2)
-                {
-                    return o1.getName().compareToIgnoreCase(o2.getName());
-                }
-            } );
+            SortedSet<Node> children = new TreeSet<>((o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
 
             String getName()
             {

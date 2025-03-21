@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -418,14 +418,7 @@ public class WebManager extends WebBean {
 
     public Cache[] getCaches() {
         Cache[] caches =CacheFactory.getAllCaches();
-        Arrays.sort(caches, new Comparator<>()
-        {
-            @Override
-            public int compare(Cache cache1, Cache cache2)
-            {
-                return cache1.getName().toLowerCase().compareTo(cache2.getName().toLowerCase());
-            }
-        });
+        Arrays.sort(caches, (cache1, cache2) -> cache1.getName().toLowerCase().compareTo(cache2.getName().toLowerCase()));
         return caches;
     }
 }

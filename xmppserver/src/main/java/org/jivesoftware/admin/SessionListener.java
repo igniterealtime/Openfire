@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2021-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,9 +46,4 @@ public class SessionListener implements HttpSessionListener {
      public void sessionCreated(HttpSessionEvent event){
          event.getSession().setMaxInactiveInterval((int) SESSION_TIMEOUT.getValue().toSeconds());
      }
-
-
-     public void sessionDestroyed(HttpSessionEvent event) {
-     }
-
 }

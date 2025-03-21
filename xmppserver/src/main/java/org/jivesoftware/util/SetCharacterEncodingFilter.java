@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,23 +19,12 @@ package org.jivesoftware.util;
 import javax.servlet.*;
 import java.io.IOException;
 
-
 /**
  * Sets the character encoding to UTF-8.
  *
  * @author Matt Tucker
  */
 public class SetCharacterEncodingFilter implements Filter {
-
-    @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
-
-    }
-
-    @Override
-    public void destroy() {
-        
-    }
 
     /**
      * Sets the character encoding to be used for any content passing out of this filter.

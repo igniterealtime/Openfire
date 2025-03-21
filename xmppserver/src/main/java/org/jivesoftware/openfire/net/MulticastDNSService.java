@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,11 +87,6 @@ public class MulticastDNSService extends BasicModule {
             public void xmlPropertyDeleted(String property, Map params) {
             }
         });
-    }
-
-    @Override
-    public void initialize(XMPPServer server) {
-       
     }
 
     @Override

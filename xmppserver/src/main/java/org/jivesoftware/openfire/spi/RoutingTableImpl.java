@@ -725,10 +725,12 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             // Many sessions have the highest priority (be smart now) :)
             if (!JiveGlobals.getBooleanProperty("route.all-resources", false)) {
                 // Sort sessions by show value (e.g. away, xa)
-                highestPrioritySessions.sort(new Comparator<ClientSession>() {
+                highestPrioritySessions.sort(new Comparator<>()
+                {
 
                     @Override
-                    public int compare(ClientSession o1, ClientSession o2) {
+                    public int compare(ClientSession o1, ClientSession o2)
+                    {
                         int thisVal = getShowValue(o1);
                         int anotherVal = getShowValue(o2);
                         return (Integer.compare(thisVal, anotherVal));
@@ -737,7 +739,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                     /**
                      * Priorities are: chat, available, away, xa, dnd.
                      */
-                    private int getShowValue(ClientSession session) {
+                    private int getShowValue(ClientSession session)
+                    {
                         Presence.Show show = session.getPresence().getShow();
                         if (show == Presence.Show.chat) {
                             return 1;

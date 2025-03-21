@@ -43,7 +43,7 @@
     String currentPage = "setup-ldap-server.jsp";
     String testPage = "setup-ldap-server_test.jsp?serverType="+ serverType;
     String nextPage = "setup-ldap-user.jsp?serverType=" + serverType;
-    Map<String, String> meta = new HashMap<String, String>();
+    Map<String, String> meta = new HashMap<>();
     meta.put("currentStep", "3");
 
     pageContext.setAttribute( "serverType", serverType );

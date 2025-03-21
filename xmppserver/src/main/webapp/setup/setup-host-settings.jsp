@@ -122,14 +122,14 @@
         }
         // Continue if there were no errors
         if (errors.size() == 0) {
-            Map<String, String> xmppSettings = new HashMap<String, String>();
+            Map<String, String> xmppSettings = new HashMap<>();
 
             xmppSettings.put(XMPPServerInfo.XMPP_DOMAIN.getKey(), domain);
             xmppSettings.put(ConnectionSettings.Client.ENABLE_OLD_SSLPORT_PROPERTY.getKey(), "" + sslEnabled);
             xmppSettings.put(AnonymousSaslServer.ENABLED.getKey(), "" + anonymousAuthentication);
             session.setAttribute("xmppSettings", xmppSettings);
 
-            Map<String, String> xmlSettings = new HashMap<String, String>();
+            Map<String, String> xmlSettings = new HashMap<>();
             xmlSettings.put("adminConsole.port", Integer.toString(embeddedPort));
             xmlSettings.put("adminConsole.securePort", Integer.toString(securePort));
             xmlSettings.put("fqdn", fqdn);

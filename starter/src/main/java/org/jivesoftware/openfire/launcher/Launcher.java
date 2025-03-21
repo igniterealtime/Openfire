@@ -242,24 +242,21 @@ public class Launcher {
                 trayIcon.setImage(onIcon.getImage());
 
                 // Start a thread to enable the admin button after 8 seconds.
-                Thread thread = new Thread() {
-                    @Override
-                    public void run() {
-                        try {
-                            sleep(8000);
-                        }
-                        catch (InterruptedException ie) {
-                            // Ignore.
-                        }
-                        // Enable the Launch Admin button/menu item only if the
-                        // server has started.
-                        if (stopButton.isEnabled()) {
-                            browserButton.setEnabled(true);
-                            browserMenuItem.setEnabled(true);
-                            frame.setCursor(Cursor.getDefaultCursor());
-                        }
+                Thread thread = new Thread(() -> {
+                    try {
+                        Thread.sleep(8000);
                     }
-                };
+                    catch (InterruptedException ie) {
+                        // Ignore.
+                    }
+                    // Enable the Launch Admin button/menu item only if the
+                    // server has started.
+                    if (stopButton.isEnabled()) {
+                        browserButton.setEnabled(true);
+                        browserMenuItem.setEnabled(true);
+                        frame.setCursor(Cursor.getDefaultCursor());
+                    }
+                });
                 thread.start();
             }
             else if ("Stop".equals(e.getActionCommand())) {
@@ -541,17 +538,14 @@ public class Launcher {
                     out.write("exit\n");
                 }
                 final Thread waiting = Thread.currentThread();
-                Thread waiter = new Thread() {
-                    @Override
-                    public void run() {
-                        try {
-                            // wait for the openfire server to stop
-                            openfired.waitFor();
-                            waiting.interrupt();
-                        }
-                        catch (InterruptedException ie) { /* ignore */ }
+                Thread waiter = new Thread(() -> {
+                    try {
+                        // wait for the openfire server to stop
+                        openfired.waitFor();
+                        waiting.interrupt();
                     }
-                };
+                    catch (InterruptedException ie) { /* ignore */ }
+                });
                 waiter.start();
                 try {
                     // wait for a maximum of ten seconds

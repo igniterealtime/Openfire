@@ -84,7 +84,7 @@ public class AdminManager {
     private static AdminProvider provider;
 
     /**
-     * Constructs a AdminManager, propery listener, and setting up the provider.
+     * Constructs a AdminManager, property listener, and setting up the provider.
      */
     private AdminManager() {
         // Load an admin provider.

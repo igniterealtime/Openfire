@@ -87,7 +87,7 @@ public class LockOutManager {
     private static LockOutProvider provider;
 
     /**
-     * Constructs a LockOutManager, setting up it's cache, propery listener, and setting up the provider.
+     * Constructs a LockOutManager, setting up it's cache, property listener, and setting up the provider.
      */
     private LockOutManager() {
         // Initialize the lockout cache.

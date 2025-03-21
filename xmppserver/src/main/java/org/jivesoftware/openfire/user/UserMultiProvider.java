@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 IgniteRealtime.org, 2018-2024 Ignite Realtime Foundation. All rights reserved
+ * Copyright (C) 2016 IgniteRealtime.org, 2018-2025 Ignite Realtime Foundation. All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -286,7 +286,7 @@ public abstract class UserMultiProvider implements UserProvider
                 supportedFields.retainAll( provider.getSearchFields() );
 
                 // Query the provider for sub-results.
-                final Collection<User> providerResults = provider.findUsers( fields, query );
+                final Collection<User> providerResults = provider.findUsers( supportedFields, query );
 
                 // Keep track of how many hits we have had so far.
                 totalMatchedUserCount += providerResults.size();

@@ -299,7 +299,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
                 }
             }
             
-            LOG.info("crowd synch done, returned " + (allGroups == null ? "no" : allGroups.size()) + " groups");
+            LOG.info("crowd sync done, returned " + (allGroups == null ? "no" : allGroups.size()) + " groups");
         }
     }
 

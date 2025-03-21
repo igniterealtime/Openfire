@@ -24,7 +24,7 @@ import java.util.*;
 /**
  * <p>We use a simple
  * naming convention of meta-data key names: data is stored
- * heirarchically separated by dots. The last name may contain
+ * hierarchically separated by dots. The last name may contain
  * a colon ':' character that is read as name:attribute.
  * For example setting X.Y.Z to someValue, would map to an XML snippet of:</p>
  * <pre>

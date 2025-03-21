@@ -45,8 +45,8 @@ public class AuditEvent {
      *
      * @param eventSession the session that triggered the event or null
      *      if no session is associated with this event.
-     * @param timestamp the date/time the event occured.
-     * @param eventCode a code indicating the type of event that occured.
+     * @param timestamp the date/time the event occurred.
+     * @param eventCode a code indicating the type of event that occurred.
      * @param eventReason a second code indicating more details about the event type.
      * @param eventData arbitrary string data associated with the event or null.
      */
@@ -133,18 +133,18 @@ public class AuditEvent {
     }
 
     /**
-     * Obtain the timestamp of when the event occured.
+     * Obtain the timestamp of when the event occurred.
      *
-     * @return the time the event occured.
+     * @return the time the event occurred.
      */
     public Date getTimestamp() {
         return time;
     }
 
     /**
-     * Set the timestamp of when the event occured.
+     * Set the timestamp of when the event occurred.
      *
-     * @param time the time the event occured.
+     * @param time the time the event occurred.
      */
     public void setTimestamp(Date time) {
         this.time = time;

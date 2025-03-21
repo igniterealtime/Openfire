@@ -160,7 +160,7 @@ public class CertificateStoreWatcher
         catch ( IOException e )
         {
             storeWatcher = null;
-            Log.warn( "An exception occured while trying to create a service that monitors the Openfire certificate stores for changes. Changes to Openfire certificate stores made outside of Openfire might not be detected. A restart of Openfire might be required for these to be applied.", e );
+            Log.warn( "An exception occurred while trying to create a service that monitors the Openfire certificate stores for changes. Changes to Openfire certificate stores made outside of Openfire might not be detected. A restart of Openfire might be required for these to be applied.", e );
         }
     }
 

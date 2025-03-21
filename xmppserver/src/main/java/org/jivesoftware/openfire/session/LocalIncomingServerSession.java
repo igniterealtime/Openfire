@@ -99,7 +99,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      * @param xpp XML parse that is providing data from the new established connection with the remote server.
      * @param connection the new established connection with the remote server.
      * @param directTLS true of connections are immediately encrypted (as opposed to plain text / startls).
-     * @return a new session that will receive packets or null if a problem occured while
+     * @return a new session that will receive packets or null if a problem occurred while
      *         authenticating the remote server or when acting as the Authoritative Server during
      *         a Server Dialback authentication process.
      * @throws org.xmlpull.v1.XmlPullParserException if an error occurs while parsing the XML.

@@ -453,7 +453,7 @@ public class CrowdManager {
     }
     
     private void handleError(Exception e) throws RemoteException {
-        LOG.error("Error occured while consuming Crowd REST service", e);
+        LOG.error("Error occurred while consuming Crowd REST service", e);
         throw new RemoteException(e.getMessage());
     }
 

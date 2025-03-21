@@ -602,7 +602,7 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
 
             final SSLSocket sslSocket = (SSLSocket) ((SSLSocketFactory) SSLSocketFactory.getDefault()).createSocket(socket, null, socket.getPort(), true);
             sslSocket.setSoTimeout((int) SO_TIMEOUT.multipliedBy(10).toMillis()); // TLS handshaking is resource intensive. Relax the SO_TIMEOUT value a bit, to prevent test failures in constraint environments.
-            sslSocket.addHandshakeCompletedListener(event -> { log("SSL handshake completed: " + event); });
+            sslSocket.addHandshakeCompletedListener(event -> log("SSL handshake completed: " + event));
                 sslSocket.startHandshake();
 
             // Just indicate that we would like to authenticate the client but if client

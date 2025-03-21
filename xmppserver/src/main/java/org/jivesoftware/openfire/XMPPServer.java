@@ -1255,9 +1255,7 @@ public class XMPPServer {
             final Module module = modules.get( moduleClass );
             try {
                 // OF-1607: Apply a configurable timeout to the duration of stop/destroy invocation.
-                timeLimiter.runWithTimeout(() -> {
-                    stopAndDestroyModule(module);
-                }, JiveGlobals.getLongProperty("shutdown.modules.timeout-millis", Long.MAX_VALUE), TimeUnit.MILLISECONDS);
+                timeLimiter.runWithTimeout(() -> stopAndDestroyModule(module), JiveGlobals.getLongProperty("shutdown.modules.timeout-millis", Long.MAX_VALUE), TimeUnit.MILLISECONDS);
             } catch ( Exception e ) {
                 logger.warn("An exception occurred while stopping / destroying module '{}'.", module.getName(), e);
                 System.err.println(e);

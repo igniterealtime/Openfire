@@ -37,7 +37,7 @@ import java.util.Locale;
 public class DefaultNodeConfiguration implements Cacheable {
 
     /**
-     * Flag indicating whether this default configutation belongs to a leaf node or not.
+     * Flag indicating whether this default configuration belongs to a leaf node or not.
      */
     private boolean leaf;
     /**
@@ -117,9 +117,9 @@ public class DefaultNodeConfiguration implements Cacheable {
     }
 
     /**
-     * Returns true if this default configutation belongs to a leaf node.
+     * Returns true if this default configuration belongs to a leaf node.
      *
-     * @return true if this default configutation belongs to a leaf node.
+     * @return true if this default configuration belongs to a leaf node.
      */
     public boolean isLeaf() {
         return leaf;

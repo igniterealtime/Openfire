@@ -44,7 +44,7 @@ public class BeanUtils {
     private static final Logger Log = LoggerFactory.getLogger(BeanUtils.class);
 
     /**
-     * The date format recognized for parsing/formattig dates.
+     * The date format recognized for parsing/formatting dates.
      */
     public static final String DATE_FORMAT = "MM/dd/yyyy";
 

@@ -931,7 +931,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             }
 
             // Sort list.
-            Collections.sort(filteredResults, filter.getSortComparator());
+            filteredResults.sort(filter.getSortComparator());
 
             int maxResults = filter.getNumResults();
             if (maxResults == SessionResultFilter.NO_RESULT_LIMIT) {

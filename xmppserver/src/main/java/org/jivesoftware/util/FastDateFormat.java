@@ -570,14 +570,11 @@ public class FastDateFormat {
     }
 
     private static NumberRule selectNumberRule(int field, int padding) {
-        switch (padding) {
-        case 1:
-            return new UnpaddedNumberField(field);
-        case 2:
-            return new TwoDigitNumberField(field);
-        default:
-            return new PaddedNumberField(field, padding);
-        }
+        return switch (padding) {
+            case 1  -> new UnpaddedNumberField(field);
+            case 2  -> new TwoDigitNumberField(field);
+            default -> new PaddedNumberField(field, padding);
+        };
     }
 
     private final String mPattern;

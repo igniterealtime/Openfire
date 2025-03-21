@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,17 +31,13 @@ public class NettyConnectionHandlerFactory {
      * @return a new NettyConnectionHandler
      */
     public static NettyConnectionHandler createConnectionHandler(ConnectionConfiguration configuration) {
-        switch (configuration.getType()) {
-            case SOCKET_S2S:
-                return new NettyServerConnectionHandler(configuration);
-            case SOCKET_C2S:
-                return new NettyClientConnectionHandler(configuration);
-            case COMPONENT:
-                return new NettyComponentConnectionHandler(configuration);
-            case CONNECTION_MANAGER:
-                return new NettyMultiplexerConnectionHandler(configuration);
-            default:
+        return switch (configuration.getType()) {
+            case SOCKET_S2S -> new NettyServerConnectionHandler(configuration);
+            case SOCKET_C2S -> new NettyClientConnectionHandler(configuration);
+            case COMPONENT  -> new NettyComponentConnectionHandler(configuration);
+            case CONNECTION_MANAGER -> new NettyMultiplexerConnectionHandler(configuration);
+            default ->
                 throw new IllegalStateException("This implementation does not support the connection type as defined in the provided configuration: " + configuration.getType());
-        }
+        };
     }
 }

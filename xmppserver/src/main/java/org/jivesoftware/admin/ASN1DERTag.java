@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,12 +105,10 @@ public class ASN1DERTag extends BodyTagSupport {
             return ((DERGeneralizedTime) primitive).getTime();
         }
         if (primitive instanceof ASN1ObjectIdentifier) {
-            switch (((ASN1ObjectIdentifier) primitive).getId()) {
-                case "1.3.6.1.5.5.7.8.5":
-                    return "xmppAddr";
-                default:
-                    return primitive.toString();
-            }
+            return switch (((ASN1ObjectIdentifier) primitive).getId()) {
+                case "1.3.6.1.5.5.7.8.5" -> "xmppAddr";
+                default -> primitive.toString();
+            };
         }
         return primitive.toString();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software and Artur Hefczyc, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software and Artur Hefczyc, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -200,14 +200,11 @@ public class TLSWrapper {
             if (tlsEngineResult != null && tlsEngineResult.getStatus() == Status.CLOSED) {
                 return TLSStatus.CLOSED;
             } else {
-                switch (tlsEngine.getHandshakeStatus()) {
-                case NEED_WRAP:
-                    return TLSStatus.NEED_WRITE;
-                case NEED_UNWRAP:
-                    return TLSStatus.NEED_READ;
-                default:
-                    return TLSStatus.OK;
-                }
+                return switch (tlsEngine.getHandshakeStatus()) {
+                    case NEED_WRAP   -> TLSStatus.NEED_WRITE;
+                    case NEED_UNWRAP -> TLSStatus.NEED_READ;
+                    default          -> TLSStatus.OK;
+                };
             }
         }
     }

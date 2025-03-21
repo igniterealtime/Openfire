@@ -75,15 +75,11 @@ public class CsiManagerTest
     {
         final XMPPPacketReader reader = new XMPPPacketReader();
         final Element element = reader.read(new StringReader(input)).getRootElement();
-        switch (element.getName()) {
-            case "presence":
-                return new Presence(element, true);
-            case "iq":
-                return new IQ(element, true);
-            case "message":
-                return new Message(element, true);
-            default:
-                throw new IllegalStateException("Unexpected element name: " + element.asXML());
-        }
+        return switch (element.getName()) {
+            case "presence" -> new Presence(element, true);
+            case "iq"       -> new IQ(element, true);
+            case "message"  -> new Message(element, true);
+            default -> throw new IllegalStateException("Unexpected element name: " + element.asXML());
+        };
     }
 }

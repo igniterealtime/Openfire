@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,26 +90,16 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
             {
                 final Integer type = (Integer) item.get( 0 );
                 final Object value = item.get( 1 ); // this is either a string, or a byte-array that represents the ASN.1 DER encoded form.
-                final String result;
-                switch ( type )
-                {
-                    case 0:
-                        // OtherName: search for "id-on-xmppAddr" or 'sRVName' or 'userPrincipalName'
-                        result = parseOtherName( (byte[]) value );
-                        break;
-                    case 2:
-                        // DNS
-                        result = (String) value;
-                        break;
-                    case 6:
-                        // URI
-                        result = (String) value;
-                        break;
-                    default:
-                        // Not applicable to XMPP, so silently ignore them
-                        result = null;
-                        break;
-                }
+                final String result = switch (type) {
+                    case 0 -> // OtherName: search for "id-on-xmppAddr" or 'sRVName' or 'userPrincipalName'
+                        parseOtherName((byte[]) value);
+                    case 2 -> // DNS
+                        (String) value;
+                    case 6 -> // URI
+                        (String) value;
+                    default -> // Not applicable to XMPP, so silently ignore them
+                        null;
+                };
 
                 if ( result != null )
                 {

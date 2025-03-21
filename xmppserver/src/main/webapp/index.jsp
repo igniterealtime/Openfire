@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -479,30 +479,15 @@
         </td>
         <td>
             <%
-                final String typeName;
-                switch ( connectionListener.getType() ) {
-                    case SOCKET_C2S:
-                        typeName = LocaleUtils.getLocalizedString("ports.client_to_server");
-                        break;
-                    case SOCKET_S2S:
-                        typeName = LocaleUtils.getLocalizedString("ports.server_to_server");
-                        break;
-                    case COMPONENT:
-                        typeName = LocaleUtils.getLocalizedString("ports.external_components");
-                        break;
-                    case CONNECTION_MANAGER:
-                        typeName = LocaleUtils.getLocalizedString("ports.connection_manager");
-                        break;
-                    case WEBADMIN:
-                        typeName = LocaleUtils.getLocalizedString("ports.admin_console");
-                        break;
-                    case BOSH_C2S:
-                        typeName = LocaleUtils.getLocalizedString("ports.http_bind");
-                        break;
-                    default:
-                        typeName = "(unspecified)";
-                        break;
-                }
+                final String typeName = switch (connectionListener.getType()) {
+                    case SOCKET_C2S -> LocaleUtils.getLocalizedString("ports.client_to_server");
+                    case SOCKET_S2S -> LocaleUtils.getLocalizedString("ports.server_to_server");
+                    case COMPONENT  -> LocaleUtils.getLocalizedString("ports.external_components");
+                    case WEBADMIN   -> LocaleUtils.getLocalizedString("ports.admin_console");
+                    case BOSH_C2S   -> LocaleUtils.getLocalizedString("ports.http_bind");
+                    case CONNECTION_MANAGER -> LocaleUtils.getLocalizedString("ports.connection_manager");
+                    default -> "(unspecified)";
+                };
             %>
             <%=typeName%>
         </td>

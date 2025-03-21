@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -234,25 +234,24 @@ public class ProfiledConnection extends AbstractConnection {
         long count;
 
         switch (type) {
-            case select:
+            case select -> {
                 count = selectCount;
                 time = totalSelectTime;
-                break;
-            case update:
+            }
+            case update -> {
                 count = updateCount;
                 time = totalUpdateTime;
-                break;
-            case insert:
+            }
+            case insert -> {
                 count = insertCount;
                 time = totalInsertTime;
-                break;
-            case delete:
+            }
+            case delete -> {
                 count = deleteCount;
                 time = totalDeleteTime;
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid type");
-        }
+            }
+            default -> throw new IllegalArgumentException("Invalid type");
+        };
 
         if (count != 0) {
             return time.dividedBy(count);

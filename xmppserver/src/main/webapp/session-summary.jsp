@@ -151,16 +151,12 @@
             if (searchStatus.equals("detached")) {
                 return clientSession.isDetached();
             }
-            switch (clientSession.getStatus()) {
-                case CLOSED:
-                    return "closed".equals(searchStatus);
-                case CONNECTED:
-                    return "connected".equals(searchStatus);
-                case AUTHENTICATED:
-                    return "authenticated".equals(searchStatus);
-                default:
-                    return "unknown".equals(searchStatus);
-            }
+            return switch (clientSession.getStatus()) {
+                case CLOSED        -> "closed".equals(searchStatus);
+                case CONNECTED     -> "connected".equals(searchStatus);
+                case AUTHENTICATED -> "authenticated".equals(searchStatus);
+                default            -> "unknown".equals(searchStatus);
+            };
         });
     }
     final String searchPresence = ParamUtils.getStringParameter(request, "searchPresence", "");
@@ -174,18 +170,13 @@
             if (show == null) {
                 return "online".equals(searchPresence);
             }
-            switch (show) {
-                case away:
-                    return "away".equals(searchPresence);
-                case chat:
-                    return "chat".equals(searchPresence);
-                case dnd:
-                    return "dnd".equals(searchPresence);
-                case xa:
-                    return "xa".equals(searchPresence);
-                default:
-                    return "unknown".equals(searchPresence);
-            }
+            return switch (show) {
+                case away -> "away".equals(searchPresence);
+                case chat -> "chat".equals(searchPresence);
+                case dnd  -> "dnd".equals(searchPresence);
+                case xa   -> "xa".equals(searchPresence);
+                default   -> "unknown".equals(searchPresence);
+            };
         });
     }
     final String searchHostAddress = ParamUtils.getStringParameter(request, "searchHostAddress", "");

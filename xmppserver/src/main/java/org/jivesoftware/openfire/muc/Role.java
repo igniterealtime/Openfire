@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,15 +69,11 @@ public enum Role
      */
     public static Role valueOf(int value)
     {
-        switch (value) {
-            case 0:
-                return moderator;
-            case 1:
-                return participant;
-            case 2:
-                return visitor;
-            default:
-                return none;
-        }
+        return switch (value) {
+            case 0 -> moderator;
+            case 1 -> participant;
+            case 2 -> visitor;
+            default -> none;
+        };
     }
 }

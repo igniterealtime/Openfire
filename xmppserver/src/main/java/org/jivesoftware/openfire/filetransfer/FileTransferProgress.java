@@ -66,7 +66,7 @@ public interface FileTransferProgress {
      * When the file transfer is being carried out by another thread this will set the Future
      * relating to the thread that is carrying out the transfer.
      *
-     * @param future the furute that is carrying out the transfer
+     * @param future the future that is carrying out the transfer
      */
     void setTransferFuture( Future<?> future );
 

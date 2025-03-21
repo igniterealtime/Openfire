@@ -780,18 +780,19 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                         for ( final JID admin : admins )
                         {
                             fieldAdminAddresses.addValue( "xmpp:" + admin.asBareJID() );
-                            if ( admin.getDomain().equals( XMPPServer.getInstance().getServerInfo().getXMPPDomain() ) )
-                            try
-                            {
-                                final String email = userManager.getUser( admin.getNode() ).getEmail();
-                                if ( email != null && !email.trim().isEmpty() )
+                            if ( admin.getDomain().equals( XMPPServer.getInstance().getServerInfo().getXMPPDomain() ) ) {
+                                try
                                 {
-                                    fieldAdminAddresses.addValue( "mailto:" + email );
+                                    final String email = userManager.getUser( admin.getNode() ).getEmail();
+                                    if ( email != null && !email.trim().isEmpty() )
+                                    {
+                                        fieldAdminAddresses.addValue( "mailto:" + email );
+                                    }
                                 }
-                            }
-                            catch (Exception e)
-                            {
-                                continue;
+                                catch (Exception e)
+                                {
+                                    continue;
+                                }
                             }
                         }
 

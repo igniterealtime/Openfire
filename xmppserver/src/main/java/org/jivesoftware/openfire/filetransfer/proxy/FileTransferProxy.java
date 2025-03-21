@@ -54,7 +54,7 @@ public class FileTransferProxy extends BasicModule
     private static final Logger Log = LoggerFactory.getLogger( FileTransferProxy.class);
 
     /**
-     * The JiveProperty relating to whether or not the file treansfer proxy is enabled.
+     * The JiveProperty relating to whether or not the file transfer proxy is enabled.
      */
     public static final String JIVEPROPERTY_PROXY_ENABLED = "xmpp.proxy.enabled";
 

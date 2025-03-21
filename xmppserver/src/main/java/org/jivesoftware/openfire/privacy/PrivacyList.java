@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,17 +72,12 @@ public class PrivacyList implements Cacheable, Externalizable {
             Log.error("Error creating a parser factory", e);
         }
         // Create xmpp parser to keep in each thread
-        localParser = new ThreadLocal<>()
-        {
-            @Override
-            protected XMPPPacketReader initialValue()
-            {
-                XMPPPacketReader parser = new XMPPPacketReader();
-                factory.setNamespaceAware(true);
-                parser.setXPPFactory(factory);
-                return parser;
-            }
-        };
+        localParser = ThreadLocal.withInitial(() -> {
+            XMPPPacketReader parser = new XMPPPacketReader();
+            factory.setNamespaceAware(true);
+            parser.setXPPFactory(factory);
+            return parser;
+        });
     }
 
     private JID userJID;

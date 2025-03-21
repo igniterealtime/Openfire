@@ -394,7 +394,7 @@ public final class GraphicUtils {
     }
 
     /**
-     * Return the hexidecimal color from a java.awt.Color
+     * Return the hexadecimal color from a java.awt.Color
      *
      * @param c the colour
      * @return hexadecimal string

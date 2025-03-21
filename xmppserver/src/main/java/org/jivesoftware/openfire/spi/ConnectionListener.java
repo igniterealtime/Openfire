@@ -111,7 +111,7 @@ public class ConnectionListener
      * @param maxPoolSizePropertyName Property name (of an int) that defines maximum IO processing threads. Null causes an unconfigurable default amount to be used.
      * @param maxReadBufferPropertyName Property name (of an int) that defines maximum amount (in bytes) of IO data can be cached, pending processing. Null to indicate boundless caches.
      * @param tlsPolicyPropertyName Property name (of a string) that defines the applicable TLS Policy. Or, the value {@link org.jivesoftware.openfire.Connection.TLSPolicy} to indicate unconfigurable TLS Policy. Cannot be null.
-     * @param clientAuthPolicyPropertyName Property name (of an string) that defines maximum IO processing threads. Null causes a unconfigurabel value of 'wanted' to be used.
+     * @param clientAuthPolicyPropertyName Property name (of an string) that defines maximum IO processing threads. Null causes a unconfigurable value of 'wanted' to be used.
      * @param bindAddress the address to bind to
      * @param identityStoreConfiguration the certificates the server identify as
      * @param trustStoreConfiguration the certificates the server trusts

@@ -254,7 +254,7 @@ public class MediaProxyService extends BasicModule
     private void initMediaProxy() {
         try {
             long idleTime =
-                    Long.valueOf(JiveGlobals.getProperty("mediaproxy.idleTimeout"));
+                    Long.parseLong(JiveGlobals.getProperty("mediaproxy.idleTimeout"));
             mediaProxy.setIdleTime(idleTime);
         }
         catch (NumberFormatException e) {
@@ -262,14 +262,14 @@ public class MediaProxyService extends BasicModule
         }
         try {
             long lifetime =
-                    Long.valueOf(JiveGlobals.getProperty("mediaproxy.lifetime"));
+                    Long.parseLong(JiveGlobals.getProperty("mediaproxy.lifetime"));
             mediaProxy.setLifetime(lifetime);
         }
         catch (NumberFormatException e) {
             // Do nothing let the default values to be used.
         }
         try {
-            int minPort = Integer.valueOf(JiveGlobals.getProperty("mediaproxy.portMin"));
+            int minPort = Integer.parseInt(JiveGlobals.getProperty("mediaproxy.portMin"));
             mediaProxy.setMinPort(minPort);
         }
         catch (NumberFormatException e) {

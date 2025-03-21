@@ -1556,7 +1556,7 @@ public class MUCPersistenceManager {
      *      Otherwise {@code false} is returned.
      */
     public static boolean getBooleanProperty(String subdomain, String name) {
-        return Boolean.valueOf(getProperty(subdomain, name));
+        return Boolean.parseBoolean(getProperty(subdomain, name));
     }
 
     /**
@@ -1575,7 +1575,7 @@ public class MUCPersistenceManager {
     public static boolean getBooleanProperty(String subdomain, String name, boolean defaultValue) {
         String value = getProperty(subdomain, name);
         if (value != null) {
-            return Boolean.valueOf(value);
+            return Boolean.parseBoolean(value);
         }
         else {
             return defaultValue;

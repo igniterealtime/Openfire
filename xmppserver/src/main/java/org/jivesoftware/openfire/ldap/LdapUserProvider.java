@@ -156,7 +156,7 @@ public class LdapUserProvider implements UserProvider {
     
                     // We only support SCRAM-SHA-1 at the moment.
                     if ("SCRAM-SHA-1".equals(scheme)) {
-                        int iterations = Integer.valueOf(authInfo[0].trim());
+                        int iterations = Integer.parseInt(authInfo[0].trim());
                         String salt = authInfo[1].trim();
                         String storedKey = authValue[0].trim();
                         String serverKey = authValue[1].trim();

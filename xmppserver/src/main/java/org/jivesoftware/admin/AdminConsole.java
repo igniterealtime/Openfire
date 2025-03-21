@@ -499,8 +499,8 @@ public class AdminConsole {
         {
             try
             {
-                final int p1 = o1 instanceof Element ? Integer.valueOf( ((Element)o1).attributeValue( "order", "0" ) ) : 0;
-                final int p2 = o2 instanceof Element ? Integer.valueOf( ((Element)o2).attributeValue( "order", "0" ) ) : 0;
+                final int p1 = o1 instanceof Element ? Integer.parseInt( ((Element)o1).attributeValue( "order", "0" ) ) : 0;
+                final int p2 = o2 instanceof Element ? Integer.parseInt( ((Element)o2).attributeValue( "order", "0" ) ) : 0;
                 return Integer.compare( p1, p2 );
             }
             catch ( NumberFormatException e )

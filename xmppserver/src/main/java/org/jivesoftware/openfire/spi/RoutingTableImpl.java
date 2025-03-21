@@ -1317,17 +1317,15 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             .filter(entry -> !entry.getValue().equals(XMPPServer.getInstance().getNodeID()))
             .forEach(entry -> serversCacheEntryListener.entryAdded(entry.getKey(), entry.getValue(), entry.getValue()));
 
-        componentsCache.entrySet().forEach(entry -> {
-            entry.getValue().forEach(nodeIdForComponent -> { // Iterate over all node ids on which the component is known
-                    if (!nodeIdForComponent.equals(XMPPServer.getInstance().getNodeID())) {
-                        // Here we pretend that the component has been added by the node id on which it is reported to
-                        // be available. This might not have been the case, but it is probably accurate. An alternative
-                        // approach is not easily available.
-                        componentsCacheEntryListener.entryAdded(entry.getKey(), entry.getValue(), nodeIdForComponent);
-                    }
+        componentsCache.entrySet().forEach(entry -> entry.getValue().forEach(nodeIdForComponent -> { // Iterate over all node ids on which the component is known
+                if (!nodeIdForComponent.equals(XMPPServer.getInstance().getNodeID())) {
+                    // Here we pretend that the component has been added by the node id on which it is reported to
+                    // be available. This might not have been the case, but it is probably accurate. An alternative
+                    // approach is not easily available.
+                    componentsCacheEntryListener.entryAdded(entry.getKey(), entry.getValue(), nodeIdForComponent);
                 }
-            );
-        });
+            }
+        ));
 
         // Broadcast presence of local sessions to remote sessions when subscribed to presence.
         // Probe presences of remote sessions when subscribed to presence of local session.

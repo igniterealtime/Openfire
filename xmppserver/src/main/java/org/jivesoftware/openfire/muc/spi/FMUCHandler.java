@@ -42,25 +42,23 @@ public class FMUCHandler
         .setKey("xmpp.muc.room.fmuc.enabled")
         .setDynamic(true)
         .setDefaultValue(false)
-        .addListener( isEnabled -> {
-            XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServices().forEach(
-                service -> service.getAllRoomNames().forEach(
-                    name -> {
-                        final Lock lock = service.getChatRoomLock(name);
-                        lock.lock();
-                        try {
-                            final MUCRoom room = service.getChatRoom(name);
-                            room.getFmucHandler().applyConfigurationChanges();
+        .addListener( isEnabled -> XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServices().forEach(
+            service -> service.getAllRoomNames().forEach(
+                name -> {
+                    final Lock lock = service.getChatRoomLock(name);
+                    lock.lock();
+                    try {
+                        final MUCRoom room = service.getChatRoom(name);
+                        room.getFmucHandler().applyConfigurationChanges();
 
-                            // Ensure that other cluster nodes see the changes applied above.
-                            service.syncChatRoom(room);
-                        } finally {
-                            lock.unlock();
-                        }
+                        // Ensure that other cluster nodes see the changes applied above.
+                        service.syncChatRoom(room);
+                    } finally {
+                        lock.unlock();
                     }
-                )
-            );
-        })
+                }
+            )
+        ))
         .build();
 
     /**

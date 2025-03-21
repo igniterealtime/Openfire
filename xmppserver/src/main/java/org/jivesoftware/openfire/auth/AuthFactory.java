@@ -146,7 +146,7 @@ public class AuthFactory {
     }
 
     /**
-     * Sets the users's password. This method should throw an UnsupportedOperationException
+     * Sets the user's password. This method should throw an UnsupportedOperationException
      * if this operation is not supported by the backend user store.
      *
      * @param username the username of the user.

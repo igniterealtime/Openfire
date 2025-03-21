@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -834,7 +834,7 @@ public class CacheFactory {
         PluginClassLoader pluginLoader = pluginManager.getPluginClassloader(plugin);
         if (pluginLoader != null) {
             if (log.isDebugEnabled()) {
-                StringBuffer pluginLoaderDetails = new StringBuffer("Clustering plugin class loader: ");
+                StringBuilder pluginLoaderDetails = new StringBuilder("Clustering plugin class loader: ");
                 pluginLoaderDetails.append(pluginLoader.getClass().getName());
                 for (URL url : pluginLoader.getURLs()) {
                     pluginLoaderDetails.append("\n\t").append(url.toExternalForm());

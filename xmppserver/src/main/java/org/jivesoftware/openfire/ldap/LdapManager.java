@@ -1441,7 +1441,7 @@ public class LdapManager {
      */
     String getProviderURL(LdapName baseDN) throws NamingException
     {
-        StringBuffer ldapURL = new StringBuffer();
+        StringBuilder ldapURL = new StringBuilder();
 
         try
         {

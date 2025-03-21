@@ -399,7 +399,7 @@ public class JiveGlobals {
     public static boolean getXMLProperty(String name, boolean defaultValue) {
         String value = getXMLProperty(name);
         if (value != null) {
-            return Boolean.valueOf(value);
+            return Boolean.parseBoolean(value);
         }
         return defaultValue;
     }
@@ -656,7 +656,7 @@ public class JiveGlobals {
      *      Otherwise {@code false} is returned.
      */
     public static boolean getBooleanProperty(String name) {
-        return Boolean.valueOf(getProperty(name));
+        return Boolean.parseBoolean(getProperty(name));
     }
 
     /**
@@ -674,7 +674,7 @@ public class JiveGlobals {
     public static boolean getBooleanProperty(String name, boolean defaultValue) {
         String value = getProperty(name);
         if (value != null) {
-            return Boolean.valueOf(value);
+            return Boolean.parseBoolean(value);
         }
         else {
             return defaultValue;
@@ -1232,7 +1232,7 @@ public class JiveGlobals {
      * @return true if in setup mode.
      */
     private static boolean isSetupMode() {
-        if (Boolean.valueOf(JiveGlobals.getXMLProperty("setup"))) {
+        if (Boolean.parseBoolean(JiveGlobals.getXMLProperty("setup"))) {
             return false;
         }
         // Check if the DB configuration is done

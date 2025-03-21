@@ -408,7 +408,7 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         maxWaitTime = Duration.ofMillis(JiveGlobals.getXMLProperty("database.defaultProvider.maxWaitTime", (int) Duration.ofMillis(500).toMillis()));
 
         // See if we should use Unicode under MySQL
-        mysqlUseUnicode = Boolean.valueOf(JiveGlobals.getXMLProperty("database.mysql.useUnicode"));
+        mysqlUseUnicode = Boolean.parseBoolean(JiveGlobals.getXMLProperty("database.mysql.useUnicode"));
         try {
             if (minCons != null) {
                 minConnections = Integer.parseInt(minCons);

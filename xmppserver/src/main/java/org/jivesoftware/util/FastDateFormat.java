@@ -79,10 +79,10 @@ import java.text.SimpleDateFormat;
 public class FastDateFormat {
     /** Style pattern */
     public static final Object
-        FULL = new Integer(SimpleDateFormat.FULL),
-        LONG = new Integer(SimpleDateFormat.LONG),
-        MEDIUM = new Integer(SimpleDateFormat.MEDIUM),
-        SHORT = new Integer(SimpleDateFormat.SHORT);
+        FULL = SimpleDateFormat.FULL,
+        LONG = SimpleDateFormat.LONG,
+        MEDIUM = SimpleDateFormat.MEDIUM,
+        SHORT = SimpleDateFormat.SHORT;
 
     private static final double LOG_10 = Math.log(10);
 
@@ -225,7 +225,7 @@ public class FastDateFormat {
         if (format == null) {
             int ds;
             try {
-                ds = ((Integer)style).intValue();
+                ds = (Integer) style;
             }
             catch (ClassCastException e) {
                 throw new IllegalArgumentException
@@ -275,7 +275,7 @@ public class FastDateFormat {
         if (format == null) {
             int ts;
             try {
-                ts = ((Integer)style).intValue();
+                ts = (Integer) style;
             }
             catch (ClassCastException e) {
                 throw new IllegalArgumentException
@@ -326,7 +326,7 @@ public class FastDateFormat {
         if (format == null) {
             int ds;
             try {
-                ds = ((Integer)dateStyle).intValue();
+                ds = (Integer) dateStyle;
             }
             catch (ClassCastException e) {
                 throw new IllegalArgumentException
@@ -335,7 +335,7 @@ public class FastDateFormat {
 
             int ts;
             try {
-                ts = ((Integer)timeStyle).intValue();
+                ts = (Integer) timeStyle;
             }
             catch (ClassCastException e) {
                 throw new IllegalArgumentException

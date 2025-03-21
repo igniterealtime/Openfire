@@ -43,7 +43,7 @@ import java.util.concurrent.ExecutionException;
  *
  * Rosters are another user resource accessed via the user or chatbot's long ID. A user/chatbot
  * may have zero or more roster items and each roster item may have zero or more groups. Each
- * roster item is additionaly keyed on a XMPP jid. In most cases, the entire roster will be read
+ * roster item is additionally keyed on a XMPP jid. In most cases, the entire roster will be read
  * in from memory and manipulated or sent to the user. However some operations will need to retrive
  * specific roster items rather than the entire roster.
  *

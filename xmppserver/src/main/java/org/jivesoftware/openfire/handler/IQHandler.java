@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
-import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 
 import java.util.Optional;
@@ -43,7 +42,7 @@ import java.util.Optional;
  *
  * @author Gaston Dombiak
  */
-public abstract class IQHandler extends BasicModule implements ChannelHandler {
+public abstract class IQHandler extends BasicModule implements ChannelHandler<IQ> {
 
     private static final Logger Log = LoggerFactory.getLogger(IQHandler.class);
 
@@ -110,8 +109,7 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler {
     }
 
     @Override
-    public void process(Packet packet) throws PacketException {
-        IQ iq = (IQ) packet;
+    public void process(IQ iq) throws PacketException {
 
         // Check for 'no such user' as per RFC 6121 8.5.1.
         if (performNoSuchUserCheck()) {

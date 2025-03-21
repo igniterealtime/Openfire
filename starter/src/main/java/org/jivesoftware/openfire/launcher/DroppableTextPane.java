@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,10 +88,10 @@ public abstract class DroppableTextPane extends JTextPane implements DropTargetL
             Transferable transferable = dropTargetDropEvent.getTransferable();
             if (transferable.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
                 dropTargetDropEvent.acceptDrop(DnDConstants.ACTION_COPY_OR_MOVE);
-                List fileList = (List) transferable.getTransferData(DataFlavor.javaFileListFlavor);
-                Iterator iterator = fileList.iterator();
+                List<File> fileList = (List<File>) transferable.getTransferData(DataFlavor.javaFileListFlavor);
+                Iterator<File> iterator = fileList.iterator();
                 while (iterator.hasNext()) {
-                    File file = (File) iterator.next();
+                    File file = iterator.next();
                     if (file.isFile()) {
                         fileDropped(file);
                     }

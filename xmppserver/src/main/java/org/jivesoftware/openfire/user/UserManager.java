@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -472,8 +472,8 @@ public final class UserManager {
                             if (IQ.Type.result == packet.getType()) {
                                 final Element child = packet.getChildElement();
                                 if (child != null) {
-                                    for (final Iterator it = child.elementIterator("identity"); it.hasNext();) {
-                                        final Element identity = (Element) it.next();
+                                    for (final Iterator<Element> it = child.elementIterator("identity"); it.hasNext();) {
+                                        final Element identity = it.next();
                                         final String accountType = identity.attributeValue("type");
                                         if ("registered".equals(accountType) || "admin".equals(accountType)) {
                                             isRegistered = Boolean.TRUE;
@@ -525,10 +525,10 @@ public final class UserManager {
         return ALLOW_FUTURE_USERS.getValue() && XMPPServer.getInstance().isLocal(user) && !SessionManager.getInstance().isAnonymousRoute(user.getNode());
     }
 
-    private static void initProvider(final Class clazz) {
+    private static void initProvider(final Class<? extends UserProvider> clazz) {
         if (provider == null || !clazz.equals(provider.getClass())) {
             try {
-                provider = (UserProvider) clazz.newInstance();
+                provider = clazz.newInstance();
             }
             catch (final Exception e) {
                 Log.error("Error loading user provider: " + clazz.getName(), e);
@@ -537,11 +537,11 @@ public final class UserManager {
         }
     }
 
-    private static void initPropertyProvider(final Class clazz) {
+    private static void initPropertyProvider(final Class<? extends UserPropertyProvider> clazz) {
         // Check if we need to reset the provider class
         if (propertyProvider == null || !clazz.equals(propertyProvider.getClass())) {
             try {
-                propertyProvider = (UserPropertyProvider) clazz.newInstance();
+                propertyProvider = clazz.newInstance();
             }
             catch (final Exception e) {
                 Log.error("Error loading user property provider: " + clazz.getName(), e);

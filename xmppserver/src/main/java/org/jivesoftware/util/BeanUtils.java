@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2020 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public class BeanUtils {
                     PropertyDescriptor descriptor = new PropertyDescriptor(
                             propName, bean.getClass());
                     // Load the class type of the property.
-                    Class propertyType = descriptor.getPropertyType();
+                    Class<?> propertyType = descriptor.getPropertyType();
                     // Get the value of the property by converting it from a
                     // String to the correct object type.
                     Object value = decode(propertyType, properties.get(propName));
@@ -110,8 +110,8 @@ public class BeanUtils {
      * @param request the HTTP request.
      */
     public static void setProperties(Object bean, HttpServletRequest request) {
-        for (Enumeration propNames = request.getParameterNames(); propNames.hasMoreElements();) {
-            String propName = (String) propNames.nextElement();
+        for (Enumeration<String> propNames = request.getParameterNames(); propNames.hasMoreElements();) {
+            String propName = propNames.nextElement();
             try {
                 // Create a property descriptor for the named property. If
                 // the bean doesn't have the named property, an
@@ -119,7 +119,7 @@ public class BeanUtils {
                 PropertyDescriptor descriptor = new PropertyDescriptor(
                         propName, bean.getClass());
                 // Load the class type of the property.
-                Class propertyType = descriptor.getPropertyType();
+                Class<?> propertyType = descriptor.getPropertyType();
                 // Get the value of the property by converting it from a
                 // String to the correct object type.
                 Object value = decode(propertyType, request.getParameter(propName));

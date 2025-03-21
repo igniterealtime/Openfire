@@ -86,7 +86,7 @@ import java.util.stream.Collectors;
  *
  * @author Iain Shigeoka
  */
-public class PresenceUpdateHandler extends BasicModule implements ChannelHandler, ClusterEventListener {
+public class PresenceUpdateHandler extends BasicModule implements ChannelHandler<Presence>, ClusterEventListener {
 
     private static final Logger Log = LoggerFactory.getLogger(PresenceUpdateHandler.class);
 
@@ -137,11 +137,6 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
     public PresenceUpdateHandler() {
         super("Presence update handler");
         localDirectedPresences = new ConcurrentHashMap<>();
-    }
-
-    @Override
-    public void process(Packet packet) throws UnauthorizedException, PacketException {
-        process((Presence) packet, sessionManager.getSession(packet.getFrom()));
     }
 
     private void process(Presence presence, ClientSession session) throws UnauthorizedException, PacketException {
@@ -207,9 +202,10 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
      * @param presence The presence presence to handle
      * @throws PacketException if the packet is null or the packet could not be routed.
      */
+    @Override
     public void process(Presence presence) throws PacketException {
         try {
-            process((Packet)presence);
+            process(presence, sessionManager.getSession(presence.getFrom()));
         }
         catch (UnauthorizedException e) {
             try {

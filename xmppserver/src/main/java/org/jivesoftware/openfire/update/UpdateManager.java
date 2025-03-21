@@ -861,9 +861,9 @@ public class UpdateManager extends BasicModule {
         }
 
         // Parse info and recreate available plugins
-        Iterator it = xmlResponse.getRootElement().elementIterator("plugin");
+        Iterator<Element> it = xmlResponse.getRootElement().elementIterator("plugin");
         while (it.hasNext()) {
-            Element plugin = (Element) it.next();
+            Element plugin = it.next();
             final AvailablePlugin instance = AvailablePlugin.getInstance( plugin );
             // Add plugin to the list of available plugins at js.org
             availablePlugins.put(instance.getName(), instance);

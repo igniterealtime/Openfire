@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -561,9 +561,9 @@ public class LdapUserProfile {
                 birthday = element.getTextTrim();
             }
             // Parse addresses
-            Iterator addresses = vCard.elementIterator("ADR");
+            Iterator<Element> addresses = vCard.elementIterator("ADR");
             while (addresses.hasNext()) {
-                element = (Element) addresses.next();
+                element = addresses.next();
                 if (element.element("HOME") != null) {
                     if (element.element("STREET") != null) {
                         homeStreet = element.elementTextTrim("STREET");
@@ -600,9 +600,9 @@ public class LdapUserProfile {
                 }
             }
             // Parse telephones
-            Iterator telephones = vCard.elementIterator("TEL");
+            Iterator<Element> telephones = vCard.elementIterator("TEL");
             while (telephones.hasNext()) {
-                element = (Element) telephones.next();
+                element = telephones.next();
                 if (element.element("HOME") != null) {
                     if (element.element("VOICE") != null) {
                         homePhone = element.elementTextTrim("NUMBER");

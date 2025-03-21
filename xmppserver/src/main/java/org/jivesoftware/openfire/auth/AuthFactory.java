@@ -71,12 +71,12 @@ public class AuthFactory {
         initProvider(AUTH_PROVIDER.getValue());
     }
 
-    private static void initProvider(final Class clazz) {
+    private static void initProvider(final Class<? extends AuthProvider> clazz) {
 
         // Check if we need to reset the auth provider class
         if (authProvider == null || !clazz.equals(authProvider.getClass())) {
             try {
-                authProvider = (AuthProvider)clazz.newInstance();
+                authProvider = clazz.newInstance();
             }
             catch (Exception e) {
                 Log.error("Error loading auth provider: " + clazz.getName(), e);

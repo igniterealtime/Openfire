@@ -4014,7 +4014,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     // overrides for important Group events
 
     @Override
-    public void groupDeleting(Group group, Map params) {
+    public void groupDeleting(Group group, Map<String, ?> params) {
         // remove the group from this room's affiliations
         GroupJID groupJID = group.getJID();
         try {
@@ -4025,7 +4025,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     }
 
     @Override
-    public void groupModified(Group group, Map params) {
+    public void groupModified(Group group, Map<String, ?> params) {
         // check the affiliation lists for the old group jid, replace with a new group jid
         if ("nameModified".equals(params.get("type"))) {
             GroupJID originalJID = (GroupJID) params.get("originalJID");
@@ -4048,22 +4048,22 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     }
 
     @Override
-    public void memberAdded(Group group, Map params) {
+    public void memberAdded(Group group, Map<String, ?> params) {
         applyAffiliationChangeAndSendPresence(new JID((String)params.get("member")));
     }
 
     @Override
-    public void memberRemoved(Group group, Map params) {
+    public void memberRemoved(Group group, Map<String, ?> params) {
         applyAffiliationChangeAndSendPresence(new JID((String)params.get("member")));
     }
 
     @Override
-    public void adminAdded(Group group, Map params) {
+    public void adminAdded(Group group, Map<String, ?> params) {
         applyAffiliationChangeAndSendPresence(new JID((String)params.get("admin")));
     }
 
     @Override
-    public void adminRemoved(Group group, Map params) {
+    public void adminRemoved(Group group, Map<String, ?> params) {
         applyAffiliationChangeAndSendPresence(new JID((String)params.get("admin")));
     }
 
@@ -4075,7 +4075,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     }
 
     @Override
-    public void groupCreated(Group group, Map params) {
+    public void groupCreated(Group group, Map<String, ?> params) {
         // ignore
     }
 

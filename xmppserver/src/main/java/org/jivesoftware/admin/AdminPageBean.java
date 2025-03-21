@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,11 +27,11 @@ import java.util.ArrayList;
 public class AdminPageBean {
 
     private String title;
-    private Collection breadcrumbs;
+    private Collection<Breadcrumb> breadcrumbs;
     private String pageID;
     private String subPageID;
     private String extraParams;
-    private Collection scripts;
+    private Collection<?> scripts;
 
     public AdminPageBean() {
     }
@@ -61,9 +61,9 @@ public class AdminPageBean {
      * Returns a collection of breadcrumbs. Use the Collection API to get/set/remove crumbs.
      * @return the collection of breadcrumbs
      */
-    public Collection getBreadcrumbs() {
+    public Collection<Breadcrumb> getBreadcrumbs() {
         if (breadcrumbs == null) {
-            breadcrumbs = new ArrayList();
+            breadcrumbs = new ArrayList<>();
         }
         return breadcrumbs;
     }
@@ -120,9 +120,9 @@ public class AdminPageBean {
      * Returns a collection of scripts. Use the Collection API to get/set/remove scripts.
      * @return the collection of scripts
      */
-    public Collection getScripts() {
+    public Collection<?> getScripts() {
         if (scripts == null) {
-            scripts = new ArrayList();
+            scripts = new ArrayList<>();
         }
         return scripts;
     }

@@ -25,14 +25,14 @@ import java.util.Map;
  */
 public class UserEventAdapter implements UserEventListener  {
     @Override
-    public void userCreated(User user, Map params) {
+    public void userCreated(User user, Map<String, Object> params) {
     }
 
     @Override
-    public void userDeleting(User user, Map params) {
+    public void userDeleting(User user, Map<String, Object> params) {
     }
 
     @Override
-    public void userModified(User user, Map params) {
+    public void userModified(User user, Map<String, Object> params) {
     }
 }

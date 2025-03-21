@@ -523,7 +523,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
         }
 
         if (memberField != null) {
-            NamingEnumeration ne = memberField.getAll();
+            NamingEnumeration<?> ne = memberField.getAll();
             while (ne.hasMore()) {
                 String username = (String) ne.next();
                 LdapName userDN = null;
@@ -551,14 +551,14 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                             userFilter.append(')');
                             userFilter.append(MessageFormat.format(manager.getSearchFilter(), "*"));
                             userFilter.append(')');
-                            NamingEnumeration usrAnswer = ctx.search("",
+                            NamingEnumeration<SearchResult> usrAnswer = ctx.search("",
                                     userFilter.toString(), searchControls);
                             if (usrAnswer.hasMoreElements()) {
                                 SearchResult searchResult = null;
                                 // We may get multiple search results for the same user CN.
                                 // Iterate through the entire set to find a matching distinguished name.
                                 while(usrAnswer.hasMoreElements()) {
-                                    searchResult = (SearchResult) usrAnswer.nextElement();
+                                    searchResult = usrAnswer.nextElement();
                                     Attributes attrs = searchResult.getAttributes();
                                     if (isAD) {
                                         Attribute userdnAttr = attrs.get("distinguishedName");

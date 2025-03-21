@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -547,52 +547,52 @@ public class GroupTest
         public String lastGroupAdminAdded;
         public String lastGroupAdminRemoved;
 
-        public Map lastParams;
+        public Map<String, ?> lastParams;
 
         @Override
-        public void groupCreated(Group group, Map params)
+        public void groupCreated(Group group, Map<String, ?> params)
         {
             lastGroupCreated = group.getName();
             lastParams = params;
         }
 
         @Override
-        public void groupDeleting(Group group, Map params)
+        public void groupDeleting(Group group, Map<String, ?> params)
         {
             lastGroupDeleted = group.getName();
             lastParams = params;
         }
 
         @Override
-        public void groupModified(Group group, Map params)
+        public void groupModified(Group group, Map<String, ?> params)
         {
             lastGroupModified = group.getName();
             lastParams = params;
         }
 
         @Override
-        public void memberAdded(Group group, Map params)
+        public void memberAdded(Group group, Map<String, ?> params)
         {
             lastGroupMemberAdded = group.getName();
             lastParams = params;
         }
 
         @Override
-        public void memberRemoved(Group group, Map params)
+        public void memberRemoved(Group group, Map<String, ?> params)
         {
             lastGroupMemberRemoved = group.getName();
             lastParams = params;
         }
 
         @Override
-        public void adminAdded(Group group, Map params)
+        public void adminAdded(Group group, Map<String, ?> params)
         {
             lastGroupAdminAdded = group.getName();
             lastParams = params;
         }
 
         @Override
-        public void adminRemoved(Group group, Map params)
+        public void adminRemoved(Group group, Map<String, ?> params)
         {
             lastGroupAdminRemoved = group.getName();
             lastParams = params;

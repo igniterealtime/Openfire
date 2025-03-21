@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,10 +87,10 @@ public class SecurityAuditManager {
      * Initializes the server's security audit provider, based on configuration and defaults to
      * DefaultSecurityAuditProvider if the specified provider is not valid or not specified.
      */
-    private static void initProvider(final Class clazz) {
+    private static void initProvider(final Class<? extends SecurityAuditProvider> clazz) {
         if (provider == null || !clazz.equals(provider.getClass())) {
             try {
-                provider = (SecurityAuditProvider) clazz.newInstance();
+                provider = clazz.newInstance();
             }
             catch (Exception e) {
                 Log.error("Error loading security audit provider: " + clazz.getName(), e);

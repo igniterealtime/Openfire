@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ public class PubSubEngine
      * synchronously, the returned future completes immediately. Note that the returned future will only return
      * <code>null</code> when it completes.
      */
-    public Future process(final PubSubService service, final IQ iq) {
+    public Future<?> process(final PubSubService service, final IQ iq) {
         // Ignore IQs of type ERROR or RESULT
         if (IQ.Type.error == iq.getType() || IQ.Type.result == iq.getType()) {
             return new ImmediateFuture<>();
@@ -564,7 +564,7 @@ public class PubSubEngine
             }
         }
         // Get the items to delete
-        Iterator itemElements = retractElement.elementIterator("item");
+        Iterator<Element> itemElements = retractElement.elementIterator("item");
         if (!itemElements.hasNext()) {
             Element pubsubError = DocumentHelper.createElement(QName.get(
                     "item-required", "http://jabber.org/protocol/pubsub#errors"));
@@ -627,7 +627,7 @@ public class PubSubEngine
         leafNode.deleteItems(items);
     }
 
-    private Future subscribeNode(final PubSubService service, final IQ iq, final Element childElement, Element subscribeElement) {
+    private Future<?> subscribeNode(final PubSubService service, final IQ iq, final Element childElement, Element subscribeElement) {
         String nodeID = subscribeElement.attributeValue("node");
         final Node node;
         if (nodeID == null) {
@@ -1208,7 +1208,7 @@ public class PubSubEngine
             items = new ArrayList<>(leafNode.getPublishedItems(recentItems));
         }
         else {
-            List requestedItems = itemsElement.elements("item");
+            List<Element> requestedItems = itemsElement.elements("item");
             if (requestedItems.isEmpty()) {
                 // Get all the active items that were published to the node
                 items = new ArrayList<>(leafNode.getPublishedItems());
@@ -1216,8 +1216,8 @@ public class PubSubEngine
             else {
                 items = new ArrayList<>();
                 // Get the items as requested by the user
-                for (Iterator it = requestedItems.iterator(); it.hasNext();) {
-                    Element element = (Element) it.next();
+                for (Iterator<Element> it = requestedItems.iterator(); it.hasNext();) {
+                    Element element = it.next();
                     String itemID = element.attributeValue("id");
                     PublishedItem item = leafNode.getPublishedItem(itemID);
                     if (item != null) {
@@ -1657,8 +1657,8 @@ public class PubSubEngine
         IQ reply = IQ.createResultIQ(iq);
 
         // Process modifications or creations of affiliations and subscriptions.
-        for (Iterator it = entitiesElement.elementIterator("subscription"); it.hasNext();) {
-            Element entity = (Element) it.next();
+        for (Iterator<Element> it = entitiesElement.elementIterator("subscription"); it.hasNext();) {
+            Element entity = it.next();
             JID subscriber = new JID(entity.attributeValue("jid"));
             // TODO Assumed that the owner of the subscription is the bare JID of the subscription JID. Waiting StPeter answer for explicit field.
             JID owner = subscriber.asBareJID();
@@ -1741,8 +1741,8 @@ public class PubSubEngine
         Collection<JID> invalidAffiliates = new ArrayList<>();
 
         // Process modifications or creations of affiliations
-        for (Iterator it = entitiesElement.elementIterator("affiliation"); it.hasNext();) {
-            Element affiliation = (Element) it.next();
+        for (Iterator<Element> it = entitiesElement.elementIterator("affiliation"); it.hasNext();) {
+            Element affiliation = it.next();
             JID owner = new JID(affiliation.attributeValue("jid"));
             String newAffiliation = affiliation.attributeValue("affiliation");
             // Get current affiliation of this user (if any)
@@ -1905,15 +1905,15 @@ public class PubSubEngine
                         configureElement.asXML());
             }
             // Check if a list of groups was specified
-            List groups = configureElement.elements("group");
+            List<Element> groups = configureElement.elements("group");
             if (!groups.isEmpty()) {
                 // Add the field that will contain the specified groups
                 formField = completedForm.addField();
                 formField.setType(FormField.Type.list_multi);
                 formField.setVariable("pubsub#roster_groups_allowed");
                 // Add each group as a value of the groups field
-                for (Iterator it = groups.iterator(); it.hasNext();) {
-                    formField.addValue(((Element) it.next()).getTextTrim());
+                for (Iterator<Element> it = groups.iterator(); it.hasNext();) {
+                    formField.addValue(it.next().getTextTrim());
                 }
             }
         }

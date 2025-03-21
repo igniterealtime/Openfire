@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ public class IQPrivacyHandler extends IQHandler
         if (type.equals(IQ.Type.get)) {
             // User wants to retrieve a privacy list or the list of privacy list
             Element child = packet.getChildElement();
-            List elements = child.elements();
+            List<Element> elements = child.elements();
             if (elements.isEmpty()) {
                 // User requested names of privacy lists
                 result = getPrivacyListsNames(packet, from);
@@ -118,7 +118,7 @@ public class IQPrivacyHandler extends IQHandler
                 // Privacy list handling (create/edit/delete)
                 Element list = child.element("list");
                 String listName = list.attributeValue("name");
-                List items = list.elements();
+                List<Element> items = list.elements();
                 if (!items.isEmpty()) {
                     // User wants to create or edit a privacy list
                     result = updateOrCreateList(packet, from, list);
@@ -421,18 +421,18 @@ public class IQPrivacyHandler extends IQHandler
     }
 
     @Override
-    public void userCreated(User user, Map params) {
+    public void userCreated(User user, Map<String, Object> params) {
         //Do nothing
     }
 
     @Override
-    public void userDeleting(User user, Map params) {
+    public void userDeleting(User user, Map<String, Object> params) {
         // Delete privacy lists owned by the user being deleted
         manager.deletePrivacyLists(user.getUsername());
     }
 
     @Override
-    public void userModified(User user, Map params) {
+    public void userModified(User user, Map<String, Object> params) {
         //Do nothing
     }
 

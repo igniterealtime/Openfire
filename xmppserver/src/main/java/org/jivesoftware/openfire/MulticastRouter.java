@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,8 +119,8 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
         String localDomain = "@" + server.getServerInfo().getXMPPDomain();
         // Build the <addresses> element to be included for local users and identify
         // remote domains that should receive the packet too
-        for (Iterator it=addresses.elementIterator("address");it.hasNext();) {
-            Element address = (Element) it.next();
+        for (Iterator<Element> it=addresses.elementIterator("address");it.hasNext();) {
+            Element address = it.next();
             // Skip addresses of type noreply since they don't have any address
             if (Type.noreply.toString().equals(address.attributeValue("type"))) {
                 continue;
@@ -237,8 +237,8 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
             // multicast service
             for (Packet packet : packets) {
                 Element addresses = getAddresses(packet);
-                for (Iterator it=addresses.elementIterator("address");it.hasNext();) {
-                    Element address = (Element) it.next();
+                for (Iterator<Element> it=addresses.elementIterator("address");it.hasNext();) {
+                    Element address = it.next();
                     String jid = address.attributeValue("jid");
                     if (!jid.contains("@"+domain)) {
                         if (Type.bcc.toString().equals(address.attributeValue("type"))) {
@@ -262,8 +262,8 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
                 Element addresses = getAddresses(packet);
                 List<String> targets = new ArrayList<>();
 
-                for (Iterator it=addresses.elementIterator("address");it.hasNext();) {
-                    Element address = (Element) it.next();
+                for (Iterator<Element> it=addresses.elementIterator("address");it.hasNext();) {
+                    Element address = it.next();
                     String jid = address.attributeValue("jid");
                     // Keep a list of the remote users that are going to receive the packet
                     if (jid.contains("@"+domain)) {
@@ -302,8 +302,8 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
 
             // Check if the node supports JEP-33
             boolean supports = false;
-            for (Iterator it = packet.getChildElement().elementIterator("feature"); it.hasNext();) {
-                if (NAMESPACE.equals(((Element)it.next()).attributeValue("var"))) {
+            for (Iterator<Element> it = packet.getChildElement().elementIterator("feature"); it.hasNext();) {
+                if (NAMESPACE.equals(it.next().attributeValue("var"))) {
                     supports = true;
                     break;
                 }

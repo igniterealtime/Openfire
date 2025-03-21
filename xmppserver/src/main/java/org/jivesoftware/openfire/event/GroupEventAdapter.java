@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,31 +26,30 @@ import org.jivesoftware.openfire.group.Group;
 public class GroupEventAdapter implements GroupEventListener {
 
     @Override
-    public void groupCreated(Group group, Map params) {
+    public void groupCreated(Group group, Map<String, ?> params) {
     }
 
     @Override
-    public void groupDeleting(Group group, Map params) {
+    public void groupDeleting(Group group, Map<String, ?> params) {
     }
 
     @Override
-    public void groupModified(Group group, Map params) {
+    public void groupModified(Group group, Map<String, ?> params) {
     }
 
     @Override
-    public void memberAdded(Group group, Map params) {
+    public void memberAdded(Group group, Map<String, ?> params) {
     }
 
     @Override
-    public void memberRemoved(Group group, Map params) {
+    public void memberRemoved(Group group, Map<String, ?> params) {
     }
 
     @Override
-    public void adminAdded(Group group, Map params) {
+    public void adminAdded(Group group, Map<String, ?> params) {
     }
 
     @Override
-    public void adminRemoved(Group group, Map params) {
+    public void adminRemoved(Group group, Map<String, ?> params) {
     }
-
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import org.jivesoftware.openfire.XMPPServer;
@@ -449,7 +450,7 @@ public class PluginMonitor implements PropertyEventListener
                 // Protect against zip-slip (before applying any file-system modifications).
                 if ( JiveGlobals.getBooleanProperty( "plugins.loading.zipslipDetection.enabled", true ) )
                 {
-                    for ( Enumeration e = zipFile.entries(); e.hasMoreElements(); )
+                    for (Enumeration<? extends ZipEntry> e = zipFile.entries(); e.hasMoreElements(); )
                     {
                         JarEntry entry = (JarEntry) e.nextElement();
                         Path entryFile = dir.resolve( entry.getName() );
@@ -470,7 +471,7 @@ public class PluginMonitor implements PropertyEventListener
                 // Set the date of the JAR file to the newly created folder
                 Files.setLastModifiedTime( dir, Files.getLastModifiedTime( file ) );
                 Log.debug( "Extracting plugin '{}'...", pluginName );
-                for ( Enumeration e = zipFile.entries(); e.hasMoreElements(); )
+                for ( Enumeration<? extends ZipEntry> e = zipFile.entries(); e.hasMoreElements(); )
                 {
                     JarEntry entry = (JarEntry) e.nextElement();
                     Path entryFile = dir.resolve( entry.getName() ); /* lgtm[java/zipslip] */

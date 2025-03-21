@@ -392,13 +392,16 @@ public class LocalMUCRoomManager
         }
 
         // Add a cluster listener to clean up locally stored data when another cluster node removes it from the cache.
-        ROOM_CACHE.addClusteredCacheEntryListener(new ClusteredCacheEntryListener<String, MUCRoom>() {
+        ROOM_CACHE.addClusteredCacheEntryListener(new ClusteredCacheEntryListener<>()
+        {
             @Override
-            public void entryAdded(@Nonnull String key, @Nullable MUCRoom newValue, @Nonnull NodeID nodeID) {
+            public void entryAdded(@Nonnull String key, @Nullable MUCRoom newValue, @Nonnull NodeID nodeID)
+            {
             }
 
             @Override
-            public void entryRemoved(@Nonnull String key, @Nullable MUCRoom oldValue, @Nonnull NodeID nodeID) {
+            public void entryRemoved(@Nonnull String key, @Nullable MUCRoom oldValue, @Nonnull NodeID nodeID)
+            {
                 localRooms.remove(key);
                 final MultiUserChatService service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName);
                 if (service != null) {
@@ -408,11 +411,13 @@ public class LocalMUCRoomManager
             }
 
             @Override
-            public void entryUpdated(@Nonnull String key, @Nullable MUCRoom oldValue, @Nullable MUCRoom newValue, @Nonnull NodeID nodeID) {
+            public void entryUpdated(@Nonnull String key, @Nullable MUCRoom oldValue, @Nullable MUCRoom newValue, @Nonnull NodeID nodeID)
+            {
             }
 
             @Override
-            public void entryEvicted(@Nonnull String key, @Nullable MUCRoom oldValue, @Nonnull NodeID nodeID) {
+            public void entryEvicted(@Nonnull String key, @Nullable MUCRoom oldValue, @Nonnull NodeID nodeID)
+            {
                 localRooms.remove(key);
                 final MultiUserChatService service = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(serviceName);
                 if (service != null) {
@@ -422,11 +427,13 @@ public class LocalMUCRoomManager
             }
 
             @Override
-            public void mapCleared(@Nonnull NodeID nodeID) {
+            public void mapCleared(@Nonnull NodeID nodeID)
+            {
             }
 
             @Override
-            public void mapEvicted(@Nonnull NodeID nodeID) {
+            public void mapEvicted(@Nonnull NodeID nodeID)
+            {
             }
         }, false, false);
 

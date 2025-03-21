@@ -461,9 +461,11 @@ public class Launcher {
             }
 
             final SimpleAttributeSet styles = new SimpleAttributeSet();
-            SwingWorker<String, Void> inputWorker = new SwingWorker<String, Void>() {
+            SwingWorker<String, Void> inputWorker = new SwingWorker<>()
+            {
                 @Override
-                public String doInBackground() {
+                public String doInBackground()
+                {
                     if (openfired != null) {
                         // Get the input stream and read from it
                         try (InputStream in = openfired.getInputStream()) {
@@ -472,14 +474,12 @@ public class Launcher {
                                 try {
                                     StyleConstants.setFontFamily(styles, "courier new");
                                     pane.getDocument().insertString(pane.getDocument().getLength(),
-                                            "" + (char)c, styles);
-                                }
-                                catch (BadLocationException e) {
+                                        "" + (char) c, styles);
+                                } catch (BadLocationException e) {
                                     // Ignore.
                                 }
                             }
-                        }
-                        catch (IOException e) {
+                        } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
@@ -489,9 +489,11 @@ public class Launcher {
             inputWorker.execute();
 
 
-            SwingWorker<String, Void> errorWorker = new SwingWorker<String, Void>() {
+            SwingWorker<String, Void> errorWorker = new SwingWorker<>()
+            {
                 @Override
-                public String doInBackground() {
+                public String doInBackground()
+                {
                     if (openfired != null) {
                         // Get the input stream and read from it
                         try (InputStream in = openfired.getErrorStream()) {
@@ -499,14 +501,12 @@ public class Launcher {
                             while ((c = in.read()) != -1) {
                                 try {
                                     StyleConstants.setForeground(styles, Color.red);
-                                    pane.getDocument().insertString(pane.getDocument().getLength(), "" + (char)c, styles);
-                                }
-                                catch (BadLocationException e) {
+                                    pane.getDocument().insertString(pane.getDocument().getLength(), "" + (char) c, styles);
+                                } catch (BadLocationException e) {
                                     // Ignore.
                                 }
                             }
-                        }
-                        catch (IOException e) {
+                        } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
@@ -617,9 +617,11 @@ public class Launcher {
         dialog.pack();
         dialog.setSize(225, 55);
 
-        final SwingWorker<File, Void> installerThread = new SwingWorker<File, Void>() {
+        final SwingWorker<File, Void> installerThread = new SwingWorker<>()
+        {
             @Override
-            public File doInBackground() {
+            public File doInBackground()
+            {
                 File pluginsDir = new File(binDir.getParentFile(), "plugins");
                 String tempName = plugin.getName() + ".part";
                 File tempPluginsFile = new File(pluginsDir, tempName);
@@ -635,15 +637,15 @@ public class Launcher {
 
                     // If successfull, rename to real plugin name.
                     tempPluginsFile.renameTo(realPluginsFile);
-                }
-                catch (Exception e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
                 return realPluginsFile;
             }
 
             @Override
-            public void done() {
+            public void done()
+            {
                 dialog.setVisible(false);
             }
         };

@@ -252,7 +252,7 @@
     </tr>
     <%
         } else {
-            List<RosterItem> rosterItems = new ArrayList<RosterItem>(roster.getRosterItems());
+            List<RosterItem> rosterItems = new ArrayList<>(roster.getRosterItems());
             Collections.sort(rosterItems, new RosterItemComparator());
             int i = 0;
             for (RosterItem rosterItem : rosterItems) {

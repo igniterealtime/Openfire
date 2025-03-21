@@ -368,7 +368,7 @@ public class IQMUCSearchHandler
      */
     private static List<MUCRoomSearchInfo> sortByUserAmount(List<MUCRoomSearchInfo> mucs)
     {
-        Collections.sort(mucs, (o1, o2) -> o2.getOccupantsCount() - o1.getOccupantsCount());
+        mucs.sort((o1, o2) -> o2.getOccupantsCount() - o1.getOccupantsCount());
 
         return mucs;
     }

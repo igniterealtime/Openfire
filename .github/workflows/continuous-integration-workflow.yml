@@ -232,8 +232,8 @@ jobs:
       - name: Stop CI server
         if: ${{ always() && steps.startCIServer.conclusion == 'success' }} # TODO figure out if this is correct. The intent is to have the server stopped if it was successfully started, even if the tests fail. Failing tests should still cause the job to fail.
         uses: ./.github/actions/stopserver-action
-  smack:
 
+  smack:
     name: Execute Smack-based CI tests
     runs-on: ubuntu-latest
     needs: build
@@ -287,6 +287,7 @@ jobs:
               - 'xmppserver/pom.xml'
               - 'xmppserver/src/main/java/org/jivesoftware/database/**'
 
+
   hsqldb-install:
     name: Test HSQLDB install script
     needs: [build, should-do-database-tests, check_branch]
@@ -315,18 +316,11 @@ jobs:
           OPENFIREVSN=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
           echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
-#      No old database script used - this will be a clean installation by Openfire instead
-#      - name: Download old Openfire database script
-#        run: |
-#          mkdir olddb
-#          cp $GITHUB_WORKSPACE/distribution/src/database/openfire_hsqldb.sql $GITHUB_WORKSPACE/olddb/openfire_hsqldb.sql
-#          sed -i '/^\/\//d' $GITHUB_WORKSPACE/olddb/openfire_hsqldb.sql
-#          sed '/^SET /d' $GITHUB_WORKSPACE/olddb/openfire_hsqldb.sql
-      - name: Start database server and install database
+      - name: Start database server with an empty database
         run: |
           docker compose -f ./build/ci/compose/hsqldb.yml up --detach
           docker exec -i compose-db-1 bash -c "sed -i 's/password/password '"$CONNECTION_PASSWORD"'/' ~/sqltool.rc"
-      - name: Build & run database tester
+      - name: Execute Openfire's database install script
         run: |
           pushd ./build/ci/updater
           ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
@@ -360,18 +354,18 @@ jobs:
           OPENFIREVSN=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
           echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
-      - name: Download old Openfire database script
+      - name: Download an old Openfire database installation script
         run: |
           mkdir olddb
           curl https://raw.githubusercontent.com/igniterealtime/Openfire/v4.3.0/distribution/src/database/openfire_hsqldb.sql > $GITHUB_WORKSPACE/olddb/openfire_hsqldb.sql
           sed -i '/^\/\//d' $GITHUB_WORKSPACE/olddb/openfire_hsqldb.sql
           sed '/^SET /d' $GITHUB_WORKSPACE/olddb/openfire_hsqldb.sql
-      - name: Start database server and install database
+      - name: Start database server, install old version of the Openfire database
         run: |
           docker compose -f ./build/ci/compose/hsqldb.yml up --detach
           docker exec -i compose-db-1 bash -c "sed -i 's/password/password '"$CONNECTION_PASSWORD"'/' ~/sqltool.rc"
           docker exec -i compose-db-1 bash -c "java -jar /opt/hsqldb/sqltool.jar db /olddb/openfire_hsqldb.sql"
-      - name: Build & run database tester
+      - name: Execute Openfire's database upgrade scripts
         run: |
           pushd ./build/ci/updater
           ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
@@ -405,13 +399,12 @@ jobs:
           OPENFIREVSN=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
           echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
-      - name: Copy the Openfire database installation script
+      - name: Start database server with an empty database
         run: |
           mkdir olddb
-          cp $GITHUB_WORKSPACE/distribution/src/database/openfire_sqlserver.sql $GITHUB_WORKSPACE/olddb/openfire_sqlserver.sql
-      - name: Start database server and install database
-        run: docker compose -f ./build/ci/compose/mssql.yml up --detach
-      - name: Build & run database tester
+          echo 'CREATE DATABASE openfire;' > $GITHUB_WORKSPACE/olddb/1-init-empty-database.sql
+          docker compose -f ./build/ci/compose/mssql.yml up --detach
+      - name: Execute Openfire's database install script
         run: |
           pushd ./build/ci/updater
           ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
@@ -445,13 +438,13 @@ jobs:
           OPENFIREVSN=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
           echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
-      - name: Download old Openfire database script
+      - name: Download an old Openfire database installation script
         run: |
           mkdir olddb
           curl https://raw.githubusercontent.com/igniterealtime/Openfire/v4.3.0/distribution/src/database/openfire_sqlserver.sql > $GITHUB_WORKSPACE/olddb/openfire_sqlserver.sql
-      - name: Start database server and install database
+      - name: Start database server, install old version of the Openfire database
         run: docker compose -f ./build/ci/compose/mssql.yml up --detach
-      - name: Build & run database tester
+      - name: Execute Openfire's database upgrade scripts
         run: |
           pushd ./build/ci/updater
           ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
@@ -485,13 +478,10 @@ jobs:
           OPENFIREVSN=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
           echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
-      - name: Copy the Openfire database installation script
+      - name: Start database server with an empty database
         run: |
-          mkdir olddb
-          cp $GITHUB_WORKSPACE/distribution/src/database/openfire_postgresql.sql $GITHUB_WORKSPACE/olddb/openfire_postgresql.sql
-      - name: Start database server and install database
-        run: docker compose -f ./build/ci/compose/postgresql.yml up --wait
-      - name: Build & run database tester
+          docker compose -f ./build/ci/compose/postgresql.yml up --wait
+      - name: Execute Openfire's database install script
         run: |
           pushd ./build/ci/updater
           ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
@@ -525,13 +515,13 @@ jobs:
           OPENFIREVSN=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
           echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
-      - name: Download old Openfire database script
+      - name: Download an old Openfire database installation script
         run: |
           mkdir olddb
           curl https://raw.githubusercontent.com/igniterealtime/Openfire/v4.3.0/distribution/src/database/openfire_postgresql.sql > $GITHUB_WORKSPACE/olddb/openfire_postgresql.sql
-      - name: Start database server and install database
+      - name: Start database server, install old version of the Openfire database
         run: docker compose -f ./build/ci/compose/postgresql.yml up --wait
-      - name: Build & run database tester
+      - name: Execute Openfire's database upgrade scripts
         run: |
           pushd ./build/ci/updater
           ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
@@ -565,12 +555,10 @@ jobs:
           OPENFIREVSN=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
           echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
-      - name: Copy the Openfire database installation script
+      - name: Start database server with an empty database
         run: |
           mkdir olddb
-          cp $GITHUB_WORKSPACE/distribution/src/database/openfire_mysql.sql $GITHUB_WORKSPACE/olddb/openfire_mysql.sql
-      - name: Start database server and install database
-        run: |
+          echo 'CREATE TABLE imready AS (SELECT 1);' > $GITHUB_WORKSPACE/olddb/ZZZ-signal-ready.sql
           docker compose -f ./build/ci/compose/mysql.yml up --detach --wait
       - name: Build & run database tester
         run: |
@@ -606,17 +594,19 @@ jobs:
           OPENFIREVSN=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
           echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
-      - name: Download old Openfire database script
+      - name: Download an old Openfire database installation script
         run: |
           mkdir olddb
           curl https://raw.githubusercontent.com/igniterealtime/Openfire/v4.3.0/distribution/src/database/openfire_mysql.sql > $GITHUB_WORKSPACE/olddb/openfire_mysql.sql
-      - name: Start database server and install database
+          echo 'CREATE TABLE imready AS (SELECT 1);' > $GITHUB_WORKSPACE/olddb/ZZZ-signal-ready.sql
+      - name: Start database server, install old version of the Openfire database
         run: |
           docker compose -f ./build/ci/compose/mysql.yml up --detach --wait
-      - name: Build & run database tester
+      - name: Execute Openfire's database upgrade scripts
         run: |
           pushd ./build/ci/updater
           ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
+
 
   oracle-install:
     name: Test Oracle install scripts
@@ -646,15 +636,12 @@ jobs:
           OPENFIREVSN=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
           echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
-      - name: Copy the Openfire database installation script
+      - name: Start database server with an empty database
         run: |
           mkdir olddb
-          cp $GITHUB_WORKSPACE/distribution/src/database/openfire_oracle.sql $GITHUB_WORKSPACE/openfire_oracle.sql
-      - name: Start database server and install database
-        run: |
-          cat ./build/ci/compose/scripts/1.oracle-init.sql $GITHUB_WORKSPACE/openfire_oracle.sql > $GITHUB_WORKSPACE/olddb/1.install-db.sql
+          cp ./build/ci/compose/scripts/1.oracle-init.sql $GITHUB_WORKSPACE/olddb/1.install-db.sql
           docker compose -f ./build/ci/compose/oracle.yml up --wait
-      - name: Build & run database tester
+      - name: Execute Openfire's database install script
         run: |
           pushd ./build/ci/updater
           ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
@@ -688,18 +675,19 @@ jobs:
           OPENFIREVSN=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
           echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
           echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
-      - name: Download old Openfire database script
+      - name: Download an old Openfire database installation script
         run: |
           mkdir olddb
           curl https://raw.githubusercontent.com/igniterealtime/Openfire/v4.3.0/distribution/src/database/openfire_oracle.sql > $GITHUB_WORKSPACE/openfire_oracle.sql
-      - name: Start database server and install database
+      - name: Start database server, install old version of the Openfire database
         run: |
           cat ./build/ci/compose/scripts/1.oracle-init.sql $GITHUB_WORKSPACE/openfire_oracle.sql > $GITHUB_WORKSPACE/olddb/1.install-db.sql
           docker compose -f ./build/ci/compose/oracle.yml up --wait
-      - name: Build & run database tester
+      - name: Execute Openfire's database upgrade scripts
         run: |
           pushd ./build/ci/updater
           ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
+
 
   publish-maven:
     name: Publish to Maven

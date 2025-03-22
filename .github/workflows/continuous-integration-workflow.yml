@@ -346,15 +346,6 @@ jobs:
         with:
           name: mvn-repo
           path: ~/.m2/repository/org/igniterealtime/openfire/
-      - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v4
-        with:
-          name: distribution-java17
-          path: .
-      - name: untar distribution
-        run: |
-          mkdir dist
-          tar -xf distribution-artifact.tar -C ./dist
       - name: Set environment variables
         run: |
           echo "CONNECTION_STRING=jdbc:sqlserver://localhost:1433;databaseName=openfire;applicationName=Openfire" >> $GITHUB_ENV
@@ -373,10 +364,7 @@ jobs:
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
-          ./mvnw -B clean package 
-          mkdir -p target/resources
-          cp -R ../../../dist/distribution/target/distribution-base/resources/database ./target/resources
-          ./mvnw -B exec:java -Dexec.args="$GITHUB_WORKSPACE"
+          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
 
 
   postgres-install:
@@ -438,15 +426,6 @@ jobs:
         with:
           name: mvn-repo
           path: ~/.m2/repository/org/igniterealtime/openfire/
-      - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v4
-        with:
-          name: distribution-java17
-          path: .
-      - name: untar distribution
-        run: |
-          mkdir dist
-          tar -xf distribution-artifact.tar -C ./dist
       - name: Set environment variables
         run: |
           echo "CONNECTION_STRING=jdbc:postgresql://localhost:5432/openfire" >> $GITHUB_ENV
@@ -465,10 +444,7 @@ jobs:
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
-          ./mvnw -B clean package 
-          mkdir -p target/resources
-          cp -R ../../../dist/distribution/target/distribution-base/resources/database ./target/resources
-          ./mvnw -B exec:java -Dexec.args="$GITHUB_WORKSPACE"
+          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
 
 
   mysql-install:
@@ -531,15 +507,6 @@ jobs:
         with:
           name: mvn-repo
           path: ~/.m2/repository/org/igniterealtime/openfire/
-      - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v4
-        with:
-          name: distribution-java17
-          path: .
-      - name: untar distribution
-        run: |
-          mkdir dist
-          tar -xf distribution-artifact.tar -C ./dist
       - name: Set environment variables
         run: |
           echo "CONNECTION_STRING=jdbc:mysql://localhost:3306/openfire?rewriteBatchedStatements=true&characterEncoding=UTF-8&characterSetResults=UTF-8&serverTimezone=UTC" >> $GITHUB_ENV
@@ -559,10 +526,7 @@ jobs:
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
-          ./mvnw -B clean package 
-          mkdir -p target/resources
-          cp -R ../../../dist/distribution/target/distribution-base/resources/database ./target/resources
-          ./mvnw -B exec:java -Dexec.args="$GITHUB_WORKSPACE"
+          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
 
   oracle-install:
     name: Test Oracle install scripts
@@ -625,15 +589,6 @@ jobs:
         with:
           name: mvn-repo
           path: ~/.m2/repository/org/igniterealtime/openfire/
-      - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v4
-        with:
-          name: distribution-java17
-          path: .
-      - name: untar distribution
-        run: |
-          mkdir dist
-          tar -xf distribution-artifact.tar -C ./dist
       - name: Set environment variables
         run: |
           echo "CONNECTION_STRING=jdbc:oracle:thin:@localhost:1521/FREEPDB1" >> $GITHUB_ENV
@@ -654,10 +609,7 @@ jobs:
       - name: Build & run database tester
         run: |
           pushd ./build/ci/updater
-          ./mvnw -B clean package 
-          mkdir -p target/resources
-          cp -R ../../../dist/distribution/target/distribution-base/resources/database ./target/resources
-          ./mvnw -B exec:java -Dexec.args="$GITHUB_WORKSPACE"
+          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
 
   publish-maven:
     name: Publish to Maven

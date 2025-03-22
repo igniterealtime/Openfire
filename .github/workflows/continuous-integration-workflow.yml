@@ -285,6 +285,7 @@ jobs:
               - 'build/ci/**'
               - '.github/workflows/continuous-integration-workflow.yml'
               - 'xmppserver/pom.xml'
+              - 'xmppserver/src/main/java/org/jivesoftware/database/**'
 
   sqlserver-install:
     name: Test MS SQL Server install script

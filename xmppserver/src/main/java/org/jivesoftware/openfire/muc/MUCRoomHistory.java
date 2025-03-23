@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public final class MUCRoomHistory implements Externalizable {
         // Don't keep messages whose sender is the room itself (thus address without resource)
         // unless the message is changing the room's subject
         if (!isSubjectChangeRequest &&
-            (fromJID == null || fromJID.toString().length() == 0 ||
+            (fromJID == null || fromJID.toString().isEmpty() ||
              fromJID.equals(getRoom().getSelfRepresentation().getOccupantJID()))) {
             return;
         }
@@ -85,7 +85,7 @@ public final class MUCRoomHistory implements Externalizable {
 
         // Ignore empty messages (no subject AND no body)
         if (!isSubjectChangeRequest &&
-            (packet.getBody() == null || packet.getBody().trim().length() == 0)) {
+            (packet.getBody() == null || packet.getBody().trim().isEmpty())) {
             return;
         }
 
@@ -229,7 +229,7 @@ public final class MUCRoomHistory implements Externalizable {
         message.setSubject(subject);
         message.setBody(body);
         // Set the sender of the message
-        if (nickname != null && nickname.trim().length() > 0) {
+        if (nickname != null && !nickname.trim().isEmpty()) {
             JID roomJID = getRoom().getSelfRepresentation().getOccupantJID();
             // Recreate the sender address based on the nickname and room's JID
             message.setFrom(new JID(roomJID.getNode(), roomJID.getDomain(), nickname, true));

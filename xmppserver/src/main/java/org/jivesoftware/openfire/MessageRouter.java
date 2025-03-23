@@ -202,7 +202,7 @@ public class MessageRouter extends BasicModule {
      */
     private void sendMessageToAdmins(Message packet) {
         String jids = JiveGlobals.getProperty("xmpp.forward.admins");
-        if (jids != null && jids.trim().length() > 0) {
+        if (jids != null && !jids.trim().isEmpty()) {
             // Forward the message to the users specified in the "xmpp.forward.admins" property
             StringTokenizer tokenizer = new StringTokenizer(jids, ", ");
             while (tokenizer.hasMoreTokens()) {

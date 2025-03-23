@@ -92,98 +92,98 @@
         } else {
             errors.put("allowpm", "allowpm");
         }
-        if (errors.size() == 0) {
-            if (publicRoom != null && publicRoom.trim().length() > 0) {
+        if (errors.isEmpty()) {
+            if (publicRoom != null && !publicRoom.trim().isEmpty()) {
                 MUCPersistenceManager.setProperty(mucname, "room.publicRoom", "true");
             }
             else {
                 MUCPersistenceManager.setProperty(mucname, "room.publicRoom", "false");
             }
-            if (persistentRoom != null && persistentRoom.trim().length() > 0) {
+            if (persistentRoom != null && !persistentRoom.trim().isEmpty()) {
                 MUCPersistenceManager.setProperty(mucname, "room.persistent", "true");
             }
             else {
                 MUCPersistenceManager.setProperty(mucname, "room.persistent", "false");
             }
-            if (retireOnDeletion != null && retireOnDeletion.trim().length() > 0) {
+            if (retireOnDeletion != null && !retireOnDeletion.trim().isEmpty()) {
                 MUCPersistenceManager.setProperty(mucname, "room.retireOnDeletion", "true");
             }
             else {
                 MUCPersistenceManager.setProperty(mucname, "room.retireOnDeletion", "false");
             }
-            if (moderatedRoom != null && moderatedRoom.trim().length() > 0) {
+            if (moderatedRoom != null && !moderatedRoom.trim().isEmpty()) {
                 MUCPersistenceManager.setProperty(mucname, "room.moderated", "true");
             }
             else {
                 MUCPersistenceManager.setProperty(mucname, "room.moderated", "false");
             }
-            if (membersOnly != null && membersOnly.trim().length() > 0) {
+            if (membersOnly != null && !membersOnly.trim().isEmpty()) {
                 MUCPersistenceManager.setProperty(mucname, "room.membersOnly", "true");
             }
             else {
                 MUCPersistenceManager.setProperty(mucname, "room.membersOnly", "false");
             }
-            if (nonanonymous != null && nonanonymous.trim().length() > 0) {
+            if (nonanonymous != null && !nonanonymous.trim().isEmpty()) {
                 MUCPersistenceManager.setProperty(mucname, "room.canAnyoneDiscoverJID", "true");
             }
             else {
                 MUCPersistenceManager.setProperty(mucname, "room.canAnyoneDiscoverJID", "false");
             }
-            if (allowInvites != null && allowInvites.trim().length() > 0) {
+            if (allowInvites != null && !allowInvites.trim().isEmpty()) {
                 MUCPersistenceManager.setProperty(mucname, "room.canOccupantsInvite", "true");
             }
             else {
                 MUCPersistenceManager.setProperty(mucname, "room.canOccupantsInvite", "false");
             }
-            if (changeSubject != null && changeSubject.trim().length() > 0) {
+            if (changeSubject != null && !changeSubject.trim().isEmpty()) {
                 MUCPersistenceManager.setProperty(mucname, "room.canOccupantsChangeSubject", "true");
             }
             else {
                 MUCPersistenceManager.setProperty(mucname, "room.canOccupantsChangeSubject", "false");
             }
-            if (reservedNick != null && reservedNick.trim().length() > 0) {
+            if (reservedNick != null && !reservedNick.trim().isEmpty()) {
                 MUCPersistenceManager.setProperty(mucname, "room.loginRestrictedToNickname", "true");
             }
             else {
                 MUCPersistenceManager.setProperty(mucname, "room.loginRestrictedToNickname", "false");
             }
-            if (canChangeNick != null && canChangeNick.trim().length() > 0) {
+            if (canChangeNick != null && !canChangeNick.trim().isEmpty()) {
                 MUCPersistenceManager.setProperty(mucname, "room.canChangeNickname", "true");
             }
             else {
                 MUCPersistenceManager.setProperty(mucname, "room.canChangeNickname", "false");
             }
-            if (registrationEnabled != null && registrationEnabled.trim().length() > 0) {
+            if (registrationEnabled != null && !registrationEnabled.trim().isEmpty()) {
                 MUCPersistenceManager.setProperty(mucname, "room.registrationEnabled", "true");
             }
             else {
                 MUCPersistenceManager.setProperty(mucname, "room.registrationEnabled", "false");
             }
-            if (enableLog != null && enableLog.trim().length() > 0) {
+            if (enableLog != null && !enableLog.trim().isEmpty()) {
                 MUCPersistenceManager.setProperty(mucname, "room.logEnabled", "true");
             }
             else {
                 MUCPersistenceManager.setProperty(mucname, "room.logEnabled", "false");
             }
-            if (preserveHistOnRoomDeletion != null && preserveHistOnRoomDeletion.trim().length() > 0) {
+            if (preserveHistOnRoomDeletion != null && !preserveHistOnRoomDeletion.trim().isEmpty()) {
                 MUCPersistenceManager.setProperty(mucname, "room.preserveHistOnRoomDeletion", "true");
             }
             else {
                 MUCPersistenceManager.setProperty(mucname, "room.preserveHistOnRoomDeletion", "false");
             }
-            if (broadcastModerator != null && broadcastModerator.trim().length() > 0) {
+            if (broadcastModerator != null && !broadcastModerator.trim().isEmpty()) {
                 MUCPersistenceManager.setProperty(mucname, "room.broadcastModerator", "true");
             }
             else {
                 MUCPersistenceManager.setProperty(mucname, "room.broadcastModerator", "false");
             }
-            if (broadcastParticipant != null && broadcastParticipant.trim().length() > 0) {
+            if (broadcastParticipant != null && !broadcastParticipant.trim().isEmpty()) {
                 MUCPersistenceManager.setProperty(mucname, "room.broadcastParticipant", "true");
             }
             else {
                 MUCPersistenceManager.setProperty(mucname, "room.broadcastParticipant", "false");
             }
-            if (broadcastVisitor != null && broadcastVisitor.trim().length() > 0) {
+            if (broadcastVisitor != null && !broadcastVisitor.trim().isEmpty()) {
                 MUCPersistenceManager.setProperty(mucname, "room.broadcastVisitor", "true");
             }
             else {

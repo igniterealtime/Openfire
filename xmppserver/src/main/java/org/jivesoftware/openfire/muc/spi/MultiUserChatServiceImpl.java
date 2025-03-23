@@ -304,7 +304,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         new JID(null,subdomain + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null);
 
         this.chatServiceName = subdomain;
-        if (description != null && description.trim().length() > 0) {
+        if (description != null && !description.trim().isEmpty()) {
             this.chatDescription = description;
         }
         else {
@@ -2487,10 +2487,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         String property = MUCPersistenceManager.getProperty(chatServiceName, "sysadmin.jid");
 
         sysadmins.clear();
-        if (property != null && property.trim().length() > 0) {
+        if (property != null && !property.trim().isEmpty()) {
             final String[] jids = property.split(",");
             for (final String jid : jids) {
-                if (jid == null || jid.trim().length() == 0) {
+                if (jid == null || jid.trim().isEmpty()) {
                     continue;
                 }
                 try {
@@ -2512,10 +2512,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         // Load the list of JIDs that are allowed to create a MUC room
         property = MUCPersistenceManager.getProperty(chatServiceName, "create.jid");
         allowedToCreate.clear();
-        if (property != null && property.trim().length() > 0) {
+        if (property != null && !property.trim().isEmpty()) {
             final String[] jids = property.split(",");
             for (final String jid : jids) {
-                if (jid == null || jid.trim().length() == 0) {
+                if (jid == null || jid.trim().isEmpty()) {
                     continue;
                 }
                 try {

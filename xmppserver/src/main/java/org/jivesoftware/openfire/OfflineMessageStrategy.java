@@ -254,11 +254,11 @@ public class OfflineMessageStrategy extends BasicModule implements ServerFeature
         JiveGlobals.migrateProperty("xmpp.offline.type");
 
         String quota = JiveGlobals.getProperty("xmpp.offline.quota");
-        if (quota != null && quota.length() > 0) {
+        if (quota != null && !quota.isEmpty()) {
             OfflineMessageStrategy.quota = Integer.parseInt(quota);
         }
         String type = JiveGlobals.getProperty("xmpp.offline.type");
-        if (type != null && type.length() > 0) {
+        if (type != null && !type.isEmpty()) {
             OfflineMessageStrategy.type = Type.valueOf(type);
         }
     }

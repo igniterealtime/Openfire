@@ -1021,7 +1021,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
      * @throws IOException if the namespace could not be written
      */
     protected void writeNamespace(String prefix, String uri) throws IOException {
-        if ( prefix != null && prefix.length() > 0 ) {
+        if ( prefix != null && !prefix.isEmpty()) {
             writer.write(" xmlns:");
             writer.write(prefix);
             writer.write("=\"");
@@ -1046,7 +1046,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
     }
 
     protected void writeString(String text) throws IOException {
-        if ( text != null && text.length() > 0 ) {
+        if ( text != null && !text.isEmpty()) {
             if ( escapeText ) {
                 text = escapeElementEntities(text);
             }
@@ -1090,7 +1090,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
      */
     protected void writeNodeText(Node node) throws IOException {
         String text = node.getText();
-        if (text != null && text.length() > 0) {
+        if (text != null && !text.isEmpty()) {
             if (escapeText) {
                 text = escapeElementEntities(text);
             }
@@ -1296,7 +1296,7 @@ public class XMLWriter extends XMLFilterImpl implements LexicalHandler {
 
     protected void indent() throws IOException {
         String indent = format.getIndent();
-        if ( indent != null && indent.length() > 0 ) {
+        if ( indent != null && !indent.isEmpty()) {
             for ( int i = 0; i < indentLevel; i++ ) {
                 writer.write(indent);
             }

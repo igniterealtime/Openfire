@@ -127,7 +127,7 @@
         }
 
         // do a create if there were no errors
-        if (errors.size() == 0) {
+        if (errors.isEmpty()) {
             try {
                 User newUser = webManager.getUserManager().createUser(username, password, name, email);
 

@@ -1,6 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
-  - Copyright (C) 2016-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2016-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@
         } catch (Exception e){
             errors.put("logTimeout","logTimeout");
         }
-        if (logDir == null || logDir.trim().length() == 0) {
+        if (logDir == null || logDir.trim().isEmpty()) {
             errors.put("logDir","logDir");
         }
         else {
@@ -121,7 +121,7 @@
                 errors.put("logDir","logDir");
             }
         }
-        if (errors.size() == 0){
+        if (errors.isEmpty()){
             if (ignore == null){
                 // remove all ignored users
                 auditManager.setIgnoreList(new ArrayList<>());
@@ -171,7 +171,7 @@
     }
 
     // Set page vars
-    if (errors.size() == 0) {
+    if (errors.isEmpty()) {
         auditEnabled = auditManager.isEnabled();
         auditMessages = auditManager.isAuditMessage();
         auditPresence = auditManager.isAuditPresence();
@@ -183,7 +183,7 @@
         logDir = auditManager.getLogDir();
         StringBuilder ignoreList = new StringBuilder();
         for (String username : auditManager.getIgnoreList()) {
-            if (ignoreList.length() == 0) {
+            if (ignoreList.isEmpty()) {
                 ignoreList.append(username);
             }
             else {

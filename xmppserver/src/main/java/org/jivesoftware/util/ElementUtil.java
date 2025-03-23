@@ -304,7 +304,7 @@ public class ElementUtil {
      * @param value the new value for the property.
      */
     public static void setProperty(Element element, String name, String value) {
-        if (name == null || name.length() == 0) return;
+        if (name == null || name.isEmpty()) return;
         if (value == null) value = "";
 
         String[] propName = parsePropertyName(name);

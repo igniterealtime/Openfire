@@ -740,7 +740,7 @@ public class XMLProperties {
             }
             // Found the correct element to remove, so remove it...
             element.remove(element.element(propName[propName.length - 1]));
-            if (element.elements().size() == 0) {
+            if (element.elements().isEmpty()) {
                 element.getParent().remove(element);
             }
             // .. then write to disk.

@@ -138,7 +138,7 @@ public class SubnavTag extends BodyTagSupport {
             }
 
             // Top level menu items
-            if (AdminConsole.getModel().elements().size() > 0) {
+            if (!AdminConsole.getModel().elements().isEmpty()) {
                 JspWriter out = pageContext.getOut();
                 StringBuilder buf = new StringBuilder();
 
@@ -164,10 +164,10 @@ public class SubnavTag extends BodyTagSupport {
                 // Loop through all items in the root, print them out
                 if (currentTab != null) {
                     Collection<Element> items = currentTab.elements();
-                    if (items.size() > 0) {
+                    if (!items.isEmpty()) {
                         buf.append("<ul>");
                         for (Element item : items) {
-                            if (item.elements().size() > 0) {
+                            if (!item.elements().isEmpty()) {
                                 Element firstSubItem = item.elements().get(0);
                                 String pluginName = item.attributeValue("plugin");
                                 String subitemID = item.attributeValue("id");

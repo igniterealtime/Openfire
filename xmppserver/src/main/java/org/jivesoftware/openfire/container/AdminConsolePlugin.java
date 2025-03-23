@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -429,10 +429,10 @@ public class AdminConsolePlugin implements Plugin {
         String adminInterfaceName = JiveGlobals.getXMLProperty("adminConsole.interface");
         String globalInterfaceName = JiveGlobals.getXMLProperty("network.interface");
         String bindInterface = null;
-        if (adminInterfaceName != null && adminInterfaceName.trim().length() > 0) {
+        if (adminInterfaceName != null && !adminInterfaceName.trim().isEmpty()) {
             bindInterface = adminInterfaceName;
         }
-        else if (globalInterfaceName != null && globalInterfaceName.trim().length() > 0) {
+        else if (globalInterfaceName != null && !globalInterfaceName.trim().isEmpty()) {
             bindInterface = globalInterfaceName;
          }
         return bindInterface;

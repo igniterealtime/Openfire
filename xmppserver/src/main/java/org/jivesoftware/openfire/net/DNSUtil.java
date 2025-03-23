@@ -204,7 +204,7 @@ public class DNSUtil {
         }
         StringBuilder sb = new StringBuilder();
         for (String key : internalDNS.keySet()) {
-            if (sb.length() > 0) {
+            if (!sb.isEmpty()) {
                 sb.append(',');
             }
             sb.append('{').append(key).append(',');

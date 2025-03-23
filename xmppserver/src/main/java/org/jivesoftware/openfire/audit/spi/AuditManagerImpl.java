@@ -235,7 +235,7 @@ public class AuditManagerImpl extends BasicModule implements AuditManager, Prope
         // Encode the collection
         StringBuilder ignoreString = new StringBuilder();
         for (String username : ignoreList) {
-            if (ignoreString.length() == 0) {
+            if (ignoreString.isEmpty()) {
                 ignoreString.append(username);
             }
             else {

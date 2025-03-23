@@ -80,7 +80,7 @@
             }
         }
 
-        if (errors.size() == 0) {
+        if (errors.isEmpty()) {
             user.setEmail(email);
             user.setName(name);
 

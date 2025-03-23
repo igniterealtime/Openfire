@@ -96,7 +96,7 @@ public class JNDIDataSourceProvider implements ConnectionProvider {
                 }
             }
             Context context;
-            if (contextProperties.size() > 0) {
+            if (!contextProperties.isEmpty()) {
                 context = new InitialContext(contextProperties);
             }
             else {

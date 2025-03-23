@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -367,7 +367,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         String interfaceName = JiveGlobals.getXMLProperty( "network.interface" );
         InetAddress bindInterface = null;
         if (interfaceName != null) {
-            if (interfaceName.trim().length() > 0) {
+            if (!interfaceName.trim().isEmpty()) {
                 bindInterface = InetAddress.getByName(interfaceName);
             }
         }
@@ -387,7 +387,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         String acInterfaceName = JiveGlobals.getXMLProperty( "adminConsole.interface" );
         InetAddress acBindInterface = null;
         if (acInterfaceName != null) {
-            if (acInterfaceName.trim().length() > 0) {
+            if (!acInterfaceName.trim().isEmpty()) {
                 acBindInterface = InetAddress.getByName(acInterfaceName);
             }
         }

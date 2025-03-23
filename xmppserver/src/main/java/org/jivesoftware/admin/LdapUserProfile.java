@@ -363,12 +363,12 @@ public class LdapUserProfile {
         Element subelement;
 
         // Add name
-        if (name != null && name.trim().length() > 0) {
+        if (name != null && !name.trim().isEmpty()) {
             subelement = vCard.addElement("N");
             subelement.addElement("GIVEN").setText(name.trim());
         }
         // Add email
-        if (email != null && email.trim().length() > 0) {
+        if (email != null && !email.trim().isEmpty()) {
             subelement = vCard.addElement("EMAIL");
             subelement.addElement("INTERNET");
             subelement.addElement("USERID").setText(email.trim());
@@ -376,15 +376,15 @@ public class LdapUserProfile {
         // Add Full Name
         vCard.addElement("FN").setText(fullName.trim());
         // Add nickname
-        if (nickname != null && nickname.trim().length() > 0) {
+        if (nickname != null && !nickname.trim().isEmpty()) {
             vCard.addElement("NICKNAME").setText(nickname.trim());
         }
         // Add birthday
-        if (birthday != null && birthday.trim().length() > 0) {
+        if (birthday != null && !birthday.trim().isEmpty()) {
             vCard.addElement("BDAY").setText(birthday.trim());
         }
         // Add photo/avatar
-        if (photo != null && photo.trim().length() > 0) {
+        if (photo != null && !photo.trim().isEmpty()) {
             Element element = vCard.addElement("PHOTO");
             element.addElement("TYPE").setText("image/jpeg");
             element.addElement("BINVAL").setText(photo.trim());
@@ -392,101 +392,101 @@ public class LdapUserProfile {
         // Add home address
         subelement = vCard.addElement("ADR");
         subelement.addElement("HOME");
-        if (homeStreet != null && homeStreet.trim().length() > 0) {
+        if (homeStreet != null && !homeStreet.trim().isEmpty()) {
             subelement.addElement("STREET").setText(homeStreet.trim());
         }
-        if (homeCity != null && homeCity.trim().length() > 0) {
+        if (homeCity != null && !homeCity.trim().isEmpty()) {
             subelement.addElement("LOCALITY").setText(homeCity.trim());
         }
-        if (homeState != null && homeState.trim().length() > 0) {
+        if (homeState != null && !homeState.trim().isEmpty()) {
             subelement.addElement("REGION").setText(homeState.trim());
         }
-        if (homeZip != null && homeZip.trim().length() > 0) {
+        if (homeZip != null && !homeZip.trim().isEmpty()) {
             subelement.addElement("PCODE").setText(homeZip.trim());
         }
-        if (homeCountry != null && homeCountry.trim().length() > 0) {
+        if (homeCountry != null && !homeCountry.trim().isEmpty()) {
             subelement.addElement("CTRY").setText(homeCountry.trim());
         }
         // Add business address
         subelement = vCard.addElement("ADR");
         subelement.addElement("WORK");
-        if (businessStreet != null && businessStreet.trim().length() > 0) {
+        if (businessStreet != null && !businessStreet.trim().isEmpty()) {
             subelement.addElement("STREET").setText(businessStreet.trim());
         }
-        if (businessCity != null && businessCity.trim().length() > 0) {
+        if (businessCity != null && !businessCity.trim().isEmpty()) {
             subelement.addElement("LOCALITY").setText(businessCity.trim());
         }
-        if (businessState != null && businessState.trim().length() > 0) {
+        if (businessState != null && !businessState.trim().isEmpty()) {
             subelement.addElement("REGION").setText(businessState.trim());
         }
-        if (businessZip != null && businessZip.trim().length() > 0) {
+        if (businessZip != null && !businessZip.trim().isEmpty()) {
             subelement.addElement("PCODE").setText(businessZip.trim());
         }
-        if (businessCountry != null && businessCountry.trim().length() > 0) {
+        if (businessCountry != null && !businessCountry.trim().isEmpty()) {
             subelement.addElement("CTRY").setText(businessCountry.trim());
         }
         // Add home phone
-        if (homePhone != null && homePhone.trim().length() > 0) {
+        if (homePhone != null && !homePhone.trim().isEmpty()) {
             subelement = vCard.addElement("TEL");
             subelement.addElement("HOME");
             subelement.addElement("VOICE");
             subelement.addElement("NUMBER").setText(homePhone.trim());
         }
         // Add home mobile
-        if (homeMobile != null && homeMobile.trim().length() > 0) {
+        if (homeMobile != null && !homeMobile.trim().isEmpty()) {
             subelement = vCard.addElement("TEL");
             subelement.addElement("HOME");
             subelement.addElement("CELL");
             subelement.addElement("NUMBER").setText(homeMobile.trim());
         }
         // Add home fax
-        if (homeFax != null && homeFax.trim().length() > 0) {
+        if (homeFax != null && !homeFax.trim().isEmpty()) {
             subelement = vCard.addElement("TEL");
             subelement.addElement("HOME");
             subelement.addElement("FAX");
             subelement.addElement("NUMBER").setText(homeFax.trim());
         }
         // Add home pager
-        if (homePager != null && homePager.trim().length() > 0) {
+        if (homePager != null && !homePager.trim().isEmpty()) {
             subelement = vCard.addElement("TEL");
             subelement.addElement("HOME");
             subelement.addElement("PAGER");
             subelement.addElement("NUMBER").setText(homePager.trim());
         }
         // Add business phone
-        if (businessPhone != null && businessPhone.trim().length() > 0) {
+        if (businessPhone != null && !businessPhone.trim().isEmpty()) {
             subelement = vCard.addElement("TEL");
             subelement.addElement("WORK");
             subelement.addElement("VOICE");
             subelement.addElement("NUMBER").setText(businessPhone.trim());
         }
         // Add business mobile
-        if (businessMobile != null && businessMobile.trim().length() > 0) {
+        if (businessMobile != null && !businessMobile.trim().isEmpty()) {
             subelement = vCard.addElement("TEL");
             subelement.addElement("WORK");
             subelement.addElement("CELL");
             subelement.addElement("NUMBER").setText(businessMobile.trim());
         }
         // Add business fax
-        if (businessFax != null && businessFax.trim().length() > 0) {
+        if (businessFax != null && !businessFax.trim().isEmpty()) {
             subelement = vCard.addElement("TEL");
             subelement.addElement("WORK");
             subelement.addElement("FAX");
             subelement.addElement("NUMBER").setText(businessFax.trim());
         }
         // Add business pager
-        if (businessPager != null && businessPager.trim().length() > 0) {
+        if (businessPager != null && !businessPager.trim().isEmpty()) {
             subelement = vCard.addElement("TEL");
             subelement.addElement("WORK");
             subelement.addElement("PAGER");
             subelement.addElement("NUMBER").setText(businessPager.trim());
         }
         // Add job title
-        if (businessJobTitle != null && businessJobTitle.trim().length() > 0) {
+        if (businessJobTitle != null && !businessJobTitle.trim().isEmpty()) {
             vCard.addElement("TITLE").setText(businessJobTitle.trim());
         }
         // Add job department
-        if (businessDepartment != null && businessDepartment.trim().length() > 0) {
+        if (businessDepartment != null && !businessDepartment.trim().isEmpty()) {
             vCard.addElement("ORG").addElement("ORGUNIT").setText(businessDepartment.trim());
         }
         // Generate content to store in property
@@ -527,7 +527,7 @@ public class LdapUserProfile {
      */
     public boolean loadFromProperties() {
         String xmlProperty = JiveGlobals.getProperty("ldap.vcard-mapping");
-        if (xmlProperty == null || xmlProperty.trim().length() == 0) {
+        if (xmlProperty == null || xmlProperty.trim().isEmpty()) {
             return false;
         }
 

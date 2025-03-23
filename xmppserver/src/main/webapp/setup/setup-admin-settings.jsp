@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2016-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -117,7 +117,7 @@
             errors.put("match", "match");
         }
         // if no errors, continue:
-        if (errors.size() == 0) {
+        if (errors.isEmpty()) {
             try {
                 User adminUser = UserManager.getInstance().getUser("admin");
                 adminUser.setPassword(newPassword);
@@ -243,7 +243,7 @@
         }
 
         String newUserList = StringUtils.collectionToString(temporaryUserList);
-        if (temporaryUserList.size() == 0) {
+        if (temporaryUserList.isEmpty()) {
             xmppSettings.put("admin.authorizedJIDs", "");
         } else {
             xmppSettings.put("admin.authorizedJIDs", newUserList);

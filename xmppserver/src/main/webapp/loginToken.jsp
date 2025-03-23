@@ -216,7 +216,7 @@
                                     </tbody>
                                 </table>
                             </noscript>
-                            <%  if (errors.size() > 0) { %>
+                            <%  if (!errors.isEmpty()) { %>
                             <% for (String error:errors.values()) { %>
                             <table class="table table-sm table-responsive table-borderless">
                                 <tbody>

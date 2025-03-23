@@ -111,7 +111,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         final Logger log = LoggerFactory.getLogger( Log.getName() + "[Authenticate local domain: '" + localDomain + "' to remote domain: '" + remoteDomain + "']" );
 
         log.debug( "Start domain authentication ..." );
-        if (remoteDomain == null || remoteDomain.length() == 0 || remoteDomain.trim().indexOf(' ') > -1) {
+        if (remoteDomain == null || remoteDomain.isEmpty() || remoteDomain.trim().indexOf(' ') > -1) {
             // Do nothing if the target domain is empty, null or contains whitespaces
             log.warn( "Unable to authenticate: remote domain is invalid." );
             return false;

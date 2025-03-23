@@ -151,7 +151,7 @@ public class IQMUCSearchHandler
         {
             if (field.getVariable().equals("name"))
             {
-                if (field.getFirstValue()!=null&&field.getFirstValue().trim().length()>0)
+                if (field.getFirstValue()!=null&& !field.getFirstValue().trim().isEmpty())
                 {
                     names.add(field.getFirstValue());
                 }
@@ -246,7 +246,7 @@ public class IQMUCSearchHandler
                 }
             }
 
-            if (subject != null && subject.trim().length()>0
+            if (subject != null && !subject.trim().isEmpty()
                     && room.getSubject().toLowerCase().contains(subject.toLowerCase()))
             {
                 find = true;

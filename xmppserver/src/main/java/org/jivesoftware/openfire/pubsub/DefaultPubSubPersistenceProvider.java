@@ -556,7 +556,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             }
             DbConnectionManager.fastcloseStmt(rs, pstmt);
 
-            if (nodes.size() == 0) {
+            if (nodes.isEmpty()) {
             	log.info("No nodes found in pubsub for service {}", service.getServiceID() );
             	return;
             }

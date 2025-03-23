@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -103,7 +103,7 @@
         }
 
         // if there were no errors, continue
-        if (errors.size() == 0) {
+        if (errors.isEmpty()) {
             // set properties, test connection, etc
 
             // Force the standard jive connection provider to be used by deleting the current setting:

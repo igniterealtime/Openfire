@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Issa Gorissen <issa-gorissen@usa.net>, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2012 Issa Gorissen <issa-gorissen@usa.net>, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
     
     static {
         String propertyValue = JiveGlobals.getProperty(JIVE_CROWD_GROUPS_CACHE_TTL_SECS);
-        int ttl = (propertyValue == null || propertyValue.trim().length() == 0) ? CACHE_TTL : Integer.parseInt(propertyValue);
+        int ttl = (propertyValue == null || propertyValue.trim().isEmpty()) ? CACHE_TTL : Integer.parseInt(propertyValue);
 
         crowdGroupSync.scheduleAtFixedRate(new GroupSynch(), 0, ttl, TimeUnit.SECONDS);
         
@@ -74,7 +74,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
     public CrowdGroupProvider() {
         super();
         String propertyValue = JiveGlobals.getProperty(JIVE_CROWD_GROUPS_CACHE_TTL_SECS);
-        int ttl = (propertyValue == null || propertyValue.trim().length() == 0) ? CACHE_TTL : Integer.parseInt(propertyValue);
+        int ttl = (propertyValue == null || propertyValue.trim().isEmpty()) ? CACHE_TTL : Integer.parseInt(propertyValue);
 
         Cache<String, ArrayList<JID>> groupMembershipCache = CacheFactory.createLocalCache(GROUP_MEMBERSHIP_CACHE_NAME);
         groupMembershipCache.setMaxCacheSize(-1L);
@@ -198,7 +198,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
         try {
             ArrayList<String> results = new ArrayList<>();
             
-            if (query != null && query.trim().length() > 0) {
+            if (query != null && !query.trim().isEmpty()) {
                 
                 if (query.endsWith("*")) {
                     query = query.substring(0, query.length() - 1);
@@ -290,7 +290,7 @@ public class CrowdGroupProvider extends AbstractGroupProvider {
                 return;
             }
             
-            if (allGroups != null && allGroups.size() > 0) {
+            if (allGroups != null && !allGroups.isEmpty()) {
                 CrowdGroupProvider.lock.writeLock().lock();
                 try {
                     CrowdGroupProvider.groups = allGroups;

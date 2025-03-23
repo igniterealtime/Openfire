@@ -243,7 +243,7 @@ public class LdapGroupProvider extends AbstractGroupProvider {
                             Log.debug("next range will be {}-{}",oldrangehigh,rangehigh!=-1?rangehigh:"*");
     
                             tmpGroup=processGroup(ctx, attrs, membersToIgnore);
-                            if (tmpGroup!=null&&tmpGroup.getMembers().size()>0)
+                            if (tmpGroup!=null&& !tmpGroup.getMembers().isEmpty())
                             {
                                 members.addAll(tmpGroup.getMembers());
                             }

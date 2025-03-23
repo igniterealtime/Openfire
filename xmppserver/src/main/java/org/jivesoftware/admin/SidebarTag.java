@@ -177,7 +177,7 @@ public class SidebarTag extends BodyTagSupport {
             }
 
             // Top level menu items
-            if (AdminConsole.getModel().elements().size() > 0) {
+            if (!AdminConsole.getModel().elements().isEmpty()) {
                 JspWriter out = pageContext.getOut();
                 StringBuilder buf = new StringBuilder();
 
@@ -211,7 +211,7 @@ public class SidebarTag extends BodyTagSupport {
                         hcss = "";
                     }
                     Collection<Element> items = subnav.elements();
-                    if (items.size() > 0) {
+                    if (!items.isEmpty()) {
                         buf.append("<ul>");
                         // Now print all items:
                         for (Element item : items) {

@@ -914,7 +914,7 @@ public class MUCPersistenceManager {
             // If the room does not include the last subject in the history then recreate one if
             // possible
             if (!room.getRoomHistory().hasChangedSubject() && room.getSubject() != null &&
-                room.getSubject().length() > 0) {
+                !room.getSubject().isEmpty()) {
                 final Message subject = room.getRoomHistory().parseHistoricMessage(room.getSelfRepresentation().getOccupantJID().toString(),
                     null, room.getModificationDate(), room.getSubject(), null, null);
                 room.getRoomHistory().addOldMessages(subject);
@@ -974,7 +974,7 @@ public class MUCPersistenceManager {
         {
             if (!loadedRoom.getRoomHistory().hasChangedSubject()
                 && loadedRoom.getSubject() != null
-                && loadedRoom.getSubject().length() > 0)
+                && !loadedRoom.getSubject().isEmpty())
             {
                 final Message message = loadedRoom.getRoomHistory().parseHistoricMessage(
                                                             loadedRoom.getSelfRepresentation().getOccupantJID().toString(),

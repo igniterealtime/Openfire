@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2005-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@
 
         // Validate params
         if (proxyEnabled) {
-            if (proxyHost == null || proxyHost.trim().length() == 0) {
+            if (proxyHost == null || proxyHost.trim().isEmpty()) {
                 errors.put("proxyHost","");
             }
             if (proxyPort <= 0) {
@@ -94,7 +94,7 @@
     }
 
     // Set page vars
-    if (errors.size() == 0) {
+    if (errors.isEmpty()) {
         serviceEnabled = updateManager.isServiceEnabled();
         notificationsEnabled = updateManager.isNotificationEnabled();
         proxyEnabled = updateManager.isUsingProxy();

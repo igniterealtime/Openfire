@@ -1,5 +1,5 @@
 <%--
-  - Copyright (C) 2005-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@
             sb.append( host ).append( ", " );
         }
         String hosts = sb.toString();
-        if ( hosts.trim().length() > 0 )
+        if (!hosts.trim().isEmpty())
         {
             hosts = hosts.substring( 0, hosts.length() - 2 );
         }

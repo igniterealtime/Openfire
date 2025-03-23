@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Issa Gorissen <issa-gorissen@usa.net>, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2012 Issa Gorissen <issa-gorissen@usa.net>, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class CrowdUserProvider implements UserProvider {
     
     public CrowdUserProvider() {
         String propertyValue = JiveGlobals.getProperty(JIVE_CROWD_USERS_CACHE_TTL_SECS);
-        int ttl = (propertyValue == null || propertyValue.trim().length() == 0) ? CACHE_TTL : Integer.parseInt(propertyValue);
+        int ttl = (propertyValue == null || propertyValue.trim().isEmpty()) ? CACHE_TTL : Integer.parseInt(propertyValue);
         
         crowdUserSync.scheduleAtFixedRate(new UserSynch(this), 0, ttl, TimeUnit.SECONDS);
         
@@ -153,7 +153,7 @@ public class CrowdUserProvider implements UserProvider {
         try {
             ArrayList<User> results = new ArrayList<>();
             
-            if (query != null && query.trim().length() > 0) {
+            if (query != null && !query.trim().isEmpty()) {
                 
                 if (query.endsWith("*")) {
                     query = query.substring(0, query.length() - 1);
@@ -300,7 +300,7 @@ public class CrowdUserProvider implements UserProvider {
                 return;
             }
 
-            if (allUsers != null && allUsers.size() > 0) {
+            if (allUsers != null && !allUsers.isEmpty()) {
                 
                 Map<String, org.jivesoftware.openfire.crowd.jaxb.User> usersMap = new TreeMap<>();
                 for (org.jivesoftware.openfire.crowd.jaxb.User user : allUsers) {

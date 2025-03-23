@@ -168,7 +168,7 @@
         {
             errors.put( "domain", "" );
         }
-        if ( remotePort == null || remotePort.trim().length() == 0 || "0".equals( remotePort ) )
+        if ( remotePort == null || remotePort.trim().isEmpty() || "0".equals( remotePort ) )
         {
             errors.put( "remotePort", "" );
         }
@@ -221,7 +221,7 @@
             response.sendRedirect( "connection-settings-socket-s2s.jsp?success=block" );
         }
     }
-    else if ( configToDelete != null && configToDelete.trim().length() != 0 && errors.isEmpty() )
+    else if ( configToDelete != null && !configToDelete.trim().isEmpty() && errors.isEmpty() )
     {
         RemoteServerManager.deleteConfiguration( configToDelete );
 

@@ -93,7 +93,7 @@
             mucname = mucname.toLowerCase();
 
             // do validation
-            if (mucname.indexOf('.') >= 0 || mucname.length() < 1) {
+            if (mucname.indexOf('.') >= 0 || mucname.isEmpty()) {
                 errors.put("mucname", "mucname");
             } else {
                 try {

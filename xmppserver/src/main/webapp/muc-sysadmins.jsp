@@ -71,7 +71,7 @@
     pageContext.setAttribute("csrf", csrfParam);
     List<JID> allowedJIDs = new ArrayList<>();
     try {
-        if (userJID != null && userJID.trim().length() > 0) {
+        if (userJID != null && !userJID.trim().isEmpty()) {
             String allowedJID;
             // do validation; could be a group jid
             if (userJID.indexOf('@') == -1) {
@@ -97,7 +97,7 @@
         errors.put("userJID","userJID");
     }
     
-    if (errors.size() == 0) {
+    if (errors.isEmpty()) {
         if (add) {
             mucService.addSysadmins(allowedJIDs);
             // Log the event
@@ -159,7 +159,7 @@
         <fmt:message key="groupchat.admins.settings.saved_successfully"/>
     </admin:infoBox>
 
-<%  } else if (errors.size() > 0) {  
+<%  } else if (!errors.isEmpty()) {
         if (delete) {
             userJID = null; // mask group jid on error
         }
@@ -205,7 +205,7 @@
                 </tr>
             </thead>
             <tbody>
-                <%  if (mucService.getSysadmins().size() == 0) { %>
+                <%  if (mucService.getSysadmins().isEmpty()) { %>
 
                     <tr>
                         <td colspan="2">

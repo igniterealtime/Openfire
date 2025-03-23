@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Issa Gorissen <issa-gorissen@usa.net>, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2012 Issa Gorissen <issa-gorissen@usa.net>, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,13 +44,13 @@ public class CrowdAdminProvider implements AdminProvider {
         GroupProvider provider = GroupManager.getInstance().getProvider();
         
         String groups = JiveGlobals.getProperty(JIVE_AUTHORIZED_GROUPS);
-        groups = (groups == null || groups.trim().length() == 0) ? "" : groups;
+        groups = (groups == null || groups.trim().isEmpty()) ? "" : groups;
         JiveGlobals.setProperty(JIVE_AUTHORIZED_GROUPS, groups); // make sure the property is created
         StringTokenizer tokenizer = new StringTokenizer(groups, ",");
         while (tokenizer.hasMoreTokens()) {
             String groupName = tokenizer.nextToken().trim().toLowerCase();
             
-            if (groupName.length() > 0) {
+            if (!groupName.isEmpty()) {
                 try {
                     LOG.info("Adding admin users from group: " + groupName);
                     Group group = provider.getGroup(groupName);

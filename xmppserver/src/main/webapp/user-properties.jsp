@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@
 <%@ page import="java.util.Collection" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -53,13 +54,13 @@
 
     // Handle a delete
     if (delete) {
-        response.sendRedirect("user-delete.jsp?username=" + URLEncoder.encode(username, "UTF-8"));
+        response.sendRedirect("user-delete.jsp?username=" + URLEncoder.encode(username, StandardCharsets.UTF_8));
         return;
     }
 
     // Handle password change
     if (password) {
-        response.sendRedirect("user-password.jsp?username=" + URLEncoder.encode(username, "UTF-8"));
+        response.sendRedirect("user-password.jsp?username=" + URLEncoder.encode(username, StandardCharsets.UTF_8));
         return;
     }
 
@@ -90,7 +91,7 @@
     <head>
         <title><fmt:message key="user.properties.title"/></title>
         <meta name="subPageID" content="user-properties"/>
-        <meta name="extraParams" content="<%= "username="+URLEncoder.encode(username, "UTF-8") %>"/>
+        <meta name="extraParams" content="<%= "username="+URLEncoder.encode(username, StandardCharsets.UTF_8) %>"/>
         <meta name="helpPage" content="edit_user_properties.html"/>
     </head>
     <body>

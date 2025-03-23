@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@
                  java.util.Map"
     errorPage="error.jsp"
 %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -86,7 +87,7 @@
     Node node = pubSubServiceInfo.getNode( nodeID );
     if (node == null) {
         // The requested node does not exist so return to the list of the existing node
-        response.sendRedirect("pubsub-node-summary.jsp" + (owner != null ? "?owner=" + URLEncoder.encode(owner.toBareJID(), "UTF-8") : ""));
+        response.sendRedirect("pubsub-node-summary.jsp" + (owner != null ? "?owner=" + URLEncoder.encode(owner.toBareJID(), StandardCharsets.UTF_8) : ""));
         return;
     }
 
@@ -99,10 +100,10 @@
             // Log the event
             webManager.logEvent("Cancelled subscription ID: " + deleteID +  ", from node ID: " + nodeID, "Owner: " + subscription.getOwner().toBareJID());
             // Done, so redirect
-            response.sendRedirect("pubsub-node-subscribers.jsp?nodeID=" + URLEncoder.encode(nodeID, "UTF-8")
+            response.sendRedirect("pubsub-node-subscribers.jsp?nodeID=" + URLEncoder.encode(nodeID, StandardCharsets.UTF_8)
                 + "&deleteSuccess=true"
-                + (owner != null ? "&owner=" + URLEncoder.encode(owner.toBareJID(), "UTF-8") : "")
-                + "&ownerOfDeleted=" + URLEncoder.encode(subscription.getOwner().toBareJID(), "UTF-8"));
+                + (owner != null ? "&owner=" + URLEncoder.encode(owner.toBareJID(), StandardCharsets.UTF_8) : "")
+                + "&ownerOfDeleted=" + URLEncoder.encode(subscription.getOwner().toBareJID(), StandardCharsets.UTF_8));
             return;
         }
     }

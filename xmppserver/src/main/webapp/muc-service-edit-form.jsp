@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@
 %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="org.xmpp.packet.JID" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib prefix="admin" uri="admin" %>
@@ -166,7 +167,7 @@
 <meta name="pageID" content="muc-service-create"/>
 <% } else { %>
 <meta name="subPageID" content="muc-service-edit-form"/>
-<meta name="extraParams" content="<%= "mucname="+URLEncoder.encode(mucname, "UTF-8") %>"/>
+<meta name="extraParams" content="<%= "mucname="+URLEncoder.encode(mucname, StandardCharsets.UTF_8) %>"/>
 <% } %>
 <meta name="helpPage" content="edit_group_chat_service_properties.html"/>    
 <script>

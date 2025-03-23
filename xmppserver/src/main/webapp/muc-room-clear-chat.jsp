@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2024 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2024-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
     errorPage="error.jsp"
 %>
 <%@ page import="org.xmpp.packet.JID" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -50,7 +51,7 @@
 
     // Handle a cancel
     if (cancel) {
-        response.sendRedirect("muc-room-edit-form.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8"));
+        response.sendRedirect("muc-room-edit-form.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), StandardCharsets.UTF_8));
         return;
     }
 
@@ -69,7 +70,7 @@
             });
         }
         // Done, so redirect to the room edit form
-        response.sendRedirect("muc-room-edit-form.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8")+"&clearchatsuccess=true");
+        response.sendRedirect("muc-room-edit-form.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), StandardCharsets.UTF_8)+"&clearchatsuccess=true");
         return;
     }
 

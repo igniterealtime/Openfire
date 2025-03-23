@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@
 <%@ page import="org.jivesoftware.openfire.muc.NotAllowedException"%>
 <%@ page import="org.jivesoftware.openfire.muc.spi.MUCPersistenceManager" %>
 <%@ page import="org.jivesoftware.openfire.muc.Role" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -120,7 +121,7 @@
             response.sendRedirect("muc-room-summary.jsp");
         } else {
             // case when canceling a room edit, used on summary to set service
-            response.sendRedirect("muc-room-summary.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8"));
+            response.sendRedirect("muc-room-summary.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), StandardCharsets.UTF_8));
         }
         return;
     }
@@ -132,7 +133,7 @@
 
         if (room == null) {
             // The requested room name does not exist so return to the list of the existing rooms
-            response.sendRedirect("muc-room-summary.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8"));
+            response.sendRedirect("muc-room-summary.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), StandardCharsets.UTF_8));
             return;
         }
     }
@@ -289,12 +290,12 @@
             // Changes good, so redirect
             String params;
             if (create) {
-                params = "addsuccess=true&roomJID=" + URLEncoder.encode(roomJID.toBareJID(), "UTF-8");
+                params = "addsuccess=true&roomJID=" + URLEncoder.encode(roomJID.toBareJID(), StandardCharsets.UTF_8);
                 // Log the event
                 webManager.logEvent("created new MUC room "+roomName, "subject = "+roomSubject+"\nroomdesc = "+description+"\nroomname = "+naturalName+"\nmaxusers = "+maxUsers);
             }
             else {
-                params = "success=true&roomJID=" + URLEncoder.encode(roomJID.toBareJID(), "UTF-8");
+                params = "success=true&roomJID=" + URLEncoder.encode(roomJID.toBareJID(), StandardCharsets.UTF_8);
                 // Log the event
                 webManager.logEvent("updated MUC room "+roomName, "subject = "+roomSubject+"\nroomdesc = "+description+"\nroomname = "+naturalName+"\nmaxusers = "+maxUsers);
             }
@@ -405,7 +406,7 @@
             </c:otherwise>
         </c:choose>
 
-        <meta name="extraParams" content="<%= "roomJID="+(roomJID != null ? URLEncoder.encode(roomJID.toBareJID(), "UTF-8") : "")+"&create="+create %>"/>
+        <meta name="extraParams" content="<%= "roomJID="+(roomJID != null ? URLEncoder.encode(roomJID.toBareJID(), StandardCharsets.UTF_8) : "")+"&create="+create %>"/>
         <meta name="helpPage" content="view_group_chat_room_summary.html"/>
     </head>
     <body>

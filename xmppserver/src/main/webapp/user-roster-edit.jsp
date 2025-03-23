@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2005-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="org.jivesoftware.openfire.group.Group" %>
 <%@ page import="java.util.Collection" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -46,7 +47,7 @@
 
     // Handle a cancel
     if (cancel) {
-        response.sendRedirect("user-roster.jsp?username=" + URLEncoder.encode(username, "UTF-8"));
+        response.sendRedirect("user-roster.jsp?username=" + URLEncoder.encode(username, StandardCharsets.UTF_8));
         return;
     }
 
@@ -84,7 +85,7 @@
         // Log the event
         webManager.logEvent("updated roster item for "+username, "roster item:\njid = "+jid+"\nnickname = "+nickname+"\ngroupList = "+groupList);
         // Done, so redirect
-        response.sendRedirect("user-roster.jsp?username=" + URLEncoder.encode(username, "UTF-8") + "&editsuccess=true");
+        response.sendRedirect("user-roster.jsp?username=" + URLEncoder.encode(username, StandardCharsets.UTF_8) + "&editsuccess=true");
         return;
     }
 %>
@@ -93,7 +94,7 @@
     <head>
         <title><fmt:message key="user.roster.edit.title"/></title>
         <meta name="subPageID" content="user-roster"/>
-        <meta name="extraParams" content="<%= "username="+URLEncoder.encode(username, "UTF-8") %>"/>
+        <meta name="extraParams" content="<%= "username="+URLEncoder.encode(username, StandardCharsets.UTF_8) %>"/>
     </head>
     <body>
 
@@ -166,7 +167,7 @@
                         if (count != 0) {
                             out.print(",");
                         }
-                        out.print("<a href='group-edit.jsp?group="+URLEncoder.encode(group.getName(), "UTF-8")+"'>");
+                        out.print("<a href='group-edit.jsp?group="+URLEncoder.encode(group.getName(), StandardCharsets.UTF_8)+"'>");
                         out.print(StringUtils.escapeForXML(group.getName()));
                         out.print("</a>");
                         count++;

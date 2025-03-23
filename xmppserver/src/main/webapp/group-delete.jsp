@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
     errorPage="error.jsp"
 %>
 <%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -48,7 +49,7 @@
 
     // Handle a cancel
     if (cancel) {
-        response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, "UTF-8"));
+        response.sendRedirect("group-edit.jsp?group=" + URLEncoder.encode(groupName, StandardCharsets.UTF_8));
         return;
     }
 

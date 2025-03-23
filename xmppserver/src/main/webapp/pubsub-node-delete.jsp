@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@
                 java.util.Map"
     errorPage="error.jsp"
 %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -79,7 +80,7 @@
 
     // Handle a cancel
     if (cancel) {
-        response.sendRedirect("pubsub-node-summary.jsp"+ (owner != null ? "?owner=" + URLEncoder.encode(owner.toBareJID(), "UTF-8") : ""));
+        response.sendRedirect("pubsub-node-summary.jsp"+ (owner != null ? "?owner=" + URLEncoder.encode(owner.toBareJID(), StandardCharsets.UTF_8) : ""));
         return;
     }
 
@@ -106,7 +107,7 @@
         }
         // Done, so redirect
         response.sendRedirect("pubsub-node-summary.jsp?deleteSuccess=true"
-            + (owner != null ? "&owner=" + URLEncoder.encode( owner.toBareJID(), "UTF-8") : "") );
+            + (owner != null ? "&owner=" + URLEncoder.encode( owner.toBareJID(), StandardCharsets.UTF_8) : "") );
         return;
     }
 

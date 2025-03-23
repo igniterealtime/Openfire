@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@
 <%@ page import="org.xmpp.packet.Presence" %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.Collection" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -224,7 +225,7 @@
             <%  } %>
         </td>
         <td style="width: 20%">
-            <a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"<%= lockedOut ? " style='text-decoration: line-through underline;'" : "" %>><%= StringUtils.escapeHTMLTags(JID.unescapeNode(user.getUsername())) %></a>
+            <a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), StandardCharsets.UTF_8) %>"<%= lockedOut ? " style='text-decoration: line-through underline;'" : "" %>><%= StringUtils.escapeHTMLTags(JID.unescapeNode(user.getUsername())) %></a>
             <% if (isAdmin) { %><img src="/images/star-16x16.gif" alt="<fmt:message key='user.properties.isadmin'/>" title="<fmt:message key='user.properties.isadmin'/>"/><% } %>
             <% if (lockedOut) { %><img src="/images/forbidden-16x16.gif" alt="<fmt:message key='user.properties.locked'/>" title="<fmt:message key='user.properties.locked'/>"/><% } %>
             <% if (pendingLockOut) { %><img src="/images/warning-16x16.gif" alt="<fmt:message key='user.properties.locked_set'/>" title="<fmt:message key='user.properties.locked_set'/>"/><% } %>
@@ -246,7 +247,7 @@
                         if (count != 0) {
                             out.print(", ");
                         }
-                        %><a href="group-edit.jsp?group=<%= URLEncoder.encode(group.getName(), "UTF-8") %>"><%= StringUtils.escapeHTMLTags(JID.unescapeNode(group.getName())) %></a><%
+                        %><a href="group-edit.jsp?group=<%= URLEncoder.encode(group.getName(), StandardCharsets.UTF_8) %>"><%= StringUtils.escapeHTMLTags(JID.unescapeNode(group.getName())) %></a><%
                         count++;
                     }
                 }
@@ -277,12 +278,12 @@
          <%  // Don't allow editing or deleting if users are read-only.
             if (!UserManager.getUserProvider().isReadOnly()) { %>
         <td style="width: 1%; text-align: center">
-            <a href="user-edit-form.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"
+            <a href="user-edit-form.jsp?username=<%= URLEncoder.encode(user.getUsername(), StandardCharsets.UTF_8) %>"
              title="<fmt:message key="global.click_edit" />"
              ><img src="images/edit-16x16.gif" alt="<fmt:message key="global.click_edit" />"></a>
         </td>
         <td style="width: 1%; text-align: center; border-right:1px #ccc solid;">
-            <a href="user-delete.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"
+            <a href="user-delete.jsp?username=<%= URLEncoder.encode(user.getUsername(), StandardCharsets.UTF_8) %>"
              title="<fmt:message key="global.click_delete" />"
              ><img src="images/delete-16x16.gif" alt="<fmt:message key="global.click_delete" />"></a>
         </td>

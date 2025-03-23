@@ -29,6 +29,7 @@
 <%@ page import="org.jivesoftware.openfire.user.UserAlreadyExistsException" %>
 <%@ page import="org.jivesoftware.openfire.SharedGroupException" %>
 <%@ page import="org.slf4j.LoggerFactory" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -49,7 +50,7 @@
     Map<String, String> errors = new HashMap<>();
     // Handle a cancel
     if (cancel) {
-        response.sendRedirect("user-roster.jsp?username=" + URLEncoder.encode(username, "UTF-8"));
+        response.sendRedirect("user-roster.jsp?username=" + URLEncoder.encode(username, StandardCharsets.UTF_8));
         return;
     }
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
@@ -88,9 +89,9 @@
 
                 // Successful, so redirect
                 if (another) {
-                    response.sendRedirect("user-roster-add.jsp?success=true&username=" + URLEncoder.encode(username, "UTF-8"));
+                    response.sendRedirect("user-roster-add.jsp?success=true&username=" + URLEncoder.encode(username, StandardCharsets.UTF_8));
                 } else {
-                    response.sendRedirect("user-roster.jsp?username=" + URLEncoder.encode(username, "UTF-8") + "&addsuccess=true");
+                    response.sendRedirect("user-roster.jsp?username=" + URLEncoder.encode(username, StandardCharsets.UTF_8) + "&addsuccess=true");
                 }
                 return;
             }
@@ -117,7 +118,7 @@
     <head>
         <title><fmt:message key="user.roster.add.title"/></title>
         <meta name="subPageID" content="user-roster"/>
-        <meta name="extraParams" content="<%= "username="+URLEncoder.encode(username, "UTF-8") %>"/>
+        <meta name="extraParams" content="<%= "username="+URLEncoder.encode(username, StandardCharsets.UTF_8) %>"/>
     </head>
     <body>
 

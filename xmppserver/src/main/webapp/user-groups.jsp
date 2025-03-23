@@ -27,6 +27,7 @@
 <%@ page import="org.xmpp.packet.JID"%>
 <%@ page import="java.net.URLEncoder"%>
 <%@ page import="java.util.*"%>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
@@ -63,7 +64,7 @@
         try {
             Group group = webManager.getGroupManager().getGroup(add);
             group.getMembers().add(jid);
-            response.sendRedirect("user-groups.jsp?username=" + URLEncoder.encode(username, "UTF-8") + "&updatesuccess=true");
+            response.sendRedirect("user-groups.jsp?username=" + URLEncoder.encode(username, StandardCharsets.UTF_8) + "&updatesuccess=true");
         } catch (GroupNotFoundException exp) {
             return;
         }
@@ -74,7 +75,7 @@
             Group group = webManager.getGroupManager().getGroup(delete);
             group.getMembers().remove(jid);
             group.getAdmins().remove(jid);
-            response.sendRedirect("user-groups.jsp?username=" + URLEncoder.encode(username, "UTF-8") + "&updatesuccess=true");
+            response.sendRedirect("user-groups.jsp?username=" + URLEncoder.encode(username, StandardCharsets.UTF_8) + "&updatesuccess=true");
         } catch (GroupNotFoundException exp) {
             return;
         }
@@ -143,7 +144,7 @@
 <title><fmt:message key="user.groups.title" /></title>
 <meta name="subPageID" content="user-groups" />
 <meta name="extraParams"
-    content="<%="username="+URLEncoder.encode(username, "UTF-8")%>" />
+    content="<%="username="+URLEncoder.encode(username, StandardCharsets.UTF_8)%>" />
 </head>
 <body>
     <p>
@@ -173,7 +174,7 @@
                     }
                                                             int x = 0;
                                                             for (Group group : userGroups) {
-                                                                String groupName = URLEncoder.encode(group.getName(), "UTF-8");
+                                                                String groupName = URLEncoder.encode(group.getName(), StandardCharsets.UTF_8);
                                                                 x++;
                 %>
                 <tr>
@@ -187,7 +188,7 @@
  %></td>
 
                     <td style="width: 5%"><a
-                        href="user-groups.jsp?username=<%=URLEncoder.encode(user.getUsername(), "UTF-8")%>&delete=<%=groupName%>&csrf=${csrf}"
+                        href="user-groups.jsp?username=<%=URLEncoder.encode(user.getUsername(), StandardCharsets.UTF_8)%>&delete=<%=groupName%>&csrf=${csrf}"
                         title="<fmt:message key="global.click_delete" />"><img
                             src="images/delete-16x16.gif"
                             alt="<fmt:message key="global.click_delete" />"></a></td>
@@ -260,7 +261,7 @@
                     boolean isCurrent = (i + 1) == curPage;
         %>
         <a
-            href="user-groups.jsp?username=<%=StringUtils.escapeForXML(user.getUsername())%>&start=<%=(i * range)%><%=search != null ? "&search=" + URLEncoder.encode(search, "UTF-8") : ""%>"
+            href="user-groups.jsp?username=<%=StringUtils.escapeForXML(user.getUsername())%>&start=<%=(i * range)%><%=search != null ? "&search=" + URLEncoder.encode(search, StandardCharsets.UTF_8) : ""%>"
             class="<%=((isCurrent) ? "jive-current" : "")%>"><%=(i + 1)%></a><%=sep%>
 
         <%
@@ -297,7 +298,7 @@
                     }
                     int i = 0;
                     for (Group group : groups.subList(start, groupIndex)) {
-                        String groupName = URLEncoder.encode(group.getName(), "UTF-8");
+                        String groupName = URLEncoder.encode(group.getName(), StandardCharsets.UTF_8);
                         i++;
                 %>
                 <tr>
@@ -311,7 +312,7 @@
  %></td>
 
                     <td style="width: 5%"><a
-                        href="user-groups.jsp?username=<%=URLEncoder.encode(user.getUsername(), "UTF-8")%>&add=<%=groupName%>&csrf=${csrf}"
+                        href="user-groups.jsp?username=<%=URLEncoder.encode(user.getUsername(), StandardCharsets.UTF_8)%>&add=<%=groupName%>&csrf=${csrf}"
                         title="<fmt:message key="global.click_add" />"> <img
                             src="images/add-16x16.gif"
                             alt="<fmt:message key="global.click_add" />"></a></td>
@@ -336,7 +337,7 @@
                     boolean isCurrent = (i + 1) == curPage;
         %>
         <a
-            href="user-groups.jsp?username=<%=StringUtils.escapeForXML(user.getUsername())%>&start=<%=(i * range)%><%=search != null ? "&search=" + URLEncoder.encode(search, "UTF-8") : ""%>"
+            href="user-groups.jsp?username=<%=StringUtils.escapeForXML(user.getUsername())%>&start=<%=(i * range)%><%=search != null ? "&search=" + URLEncoder.encode(search, StandardCharsets.UTF_8) : ""%>"
             class="<%=((isCurrent) ? "jive-current" : "")%>"><%=(i + 1)%></a><%=sep%>
 
         <%

@@ -7,6 +7,7 @@
                  java.util.Calendar,
                  java.util.Date"%>
  <%@ page import="java.net.*" %>
+ <%@ page import="java.nio.charset.StandardCharsets" %>
 
  <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
@@ -49,8 +50,8 @@
     <td style="width: 47%; white-space: nowrap">
         <table>
             <tr>
-            <td style="width: 1%; padding-right: 0.5em" ><img src="getFavicon?host=<%=URLEncoder.encode(host, "UTF-8")%>" width="16" height="16" alt=""></td>
-            <td><a href="server-session-details.jsp?hostname=<%= URLEncoder.encode(host, "UTF-8") %>" title="<fmt:message key='session.row.click' />"><%= StringUtils.escapeHTMLTags(host) %></a></td>
+            <td style="width: 1%; padding-right: 0.5em" ><img src="getFavicon?host=<%=URLEncoder.encode(host, StandardCharsets.UTF_8)%>" width="16" height="16" alt=""></td>
+            <td><a href="server-session-details.jsp?hostname=<%= URLEncoder.encode(host, StandardCharsets.UTF_8) %>" title="<fmt:message key='session.row.click' />"><%= StringUtils.escapeHTMLTags(host) %></a></td>
             </tr>
         </table>
     </td>
@@ -178,7 +179,7 @@
     </td>
 
     <td style="width: 1%; white-space: nowrap; text-align: center;">
-        <a href="server-session-summary.jsp?hostname=<%= URLEncoder.encode(host, "UTF-8") %>&close=true&csrf=${csrf}"
+        <a href="server-session-summary.jsp?hostname=<%= URLEncoder.encode(host, StandardCharsets.UTF_8) %>&close=true&csrf=${csrf}"
          title="<fmt:message key="session.row.click_kill_session" />"
          onclick="return confirm('<fmt:message key="session.row.confirm_close" />');"
          ><img src="images/delete-16x16.gif" alt="Delete"></a>

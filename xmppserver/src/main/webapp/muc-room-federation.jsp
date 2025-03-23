@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2020-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2020-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.HashMap" %>
 <%@ page import="java.util.Map" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -66,7 +67,7 @@
     MUCRoom room = webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).getChatRoom(roomName);
     if (room == null) {
         // The requested room name does not exist so return to the list of the existing rooms
-        response.sendRedirect("muc-room-summary.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8"));
+        response.sendRedirect("muc-room-summary.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), StandardCharsets.UTF_8));
         return;
     }
     final FMUCHandler fmucHandler = room.getFmucHandler();
@@ -95,9 +96,9 @@
         webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).syncChatRoom(room);
 
         if (stoppedSomething) {
-            response.sendRedirect("muc-room-federation.jsp?closeSuccess=true&roomJID=" + URLEncoder.encode(room.getJID().toBareJID(), "UTF-8"));
+            response.sendRedirect("muc-room-federation.jsp?closeSuccess=true&roomJID=" + URLEncoder.encode(room.getJID().toBareJID(), StandardCharsets.UTF_8));
         } else {
-            response.sendRedirect("muc-room-federation.jsp?closeError=true&roomJID=" + URLEncoder.encode(room.getJID().toBareJID(), "UTF-8"));
+            response.sendRedirect("muc-room-federation.jsp?closeError=true&roomJID=" + URLEncoder.encode(room.getJID().toBareJID(), StandardCharsets.UTF_8));
         }
         return;
     }
@@ -137,7 +138,7 @@
 
             // Log the event
             webManager.logEvent("Updated FMUC settings for MUC room "+roomName, "FMUC enabled = " + room.isFmucEnabled() + ",\noutbound peer = "+(room.getFmucOutboundNode() == null ? "(none)" :room.getFmucOutboundNode())+",\noutbound mode = "+(room.getFmucOutboundMode() == null ? "(none)" :room.getFmucOutboundMode()));
-            response.sendRedirect("muc-room-federation.jsp?success=true&roomJID="+URLEncoder.encode(room.getJID().toBareJID(), "UTF-8"));
+            response.sendRedirect("muc-room-federation.jsp?success=true&roomJID="+URLEncoder.encode(room.getJID().toBareJID(), StandardCharsets.UTF_8));
             return;
         }
     }
@@ -153,7 +154,7 @@
 <head>
     <title><fmt:message key="muc.room.federation.title"/></title>
     <meta name="subPageID" content="muc-room-federation"/>
-    <meta name="extraParams" content="<%= "roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>"/>
+    <meta name="extraParams" content="<%= "roomJID="+URLEncoder.encode(roomJID.toBareJID(), StandardCharsets.UTF_8) %>"/>
 </head>
 <body>
 

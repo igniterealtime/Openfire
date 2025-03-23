@@ -332,11 +332,7 @@ public class ListPager<T> {
             final String formFieldValue = ParamUtils.getStringParameter(request, additionalFormField, "").trim();
             if(!formFieldValue.isEmpty()) {
                 String encodedValue;
-                try {
-                    encodedValue = URLEncoder.encode(formFieldValue, StandardCharsets.UTF_8.name());
-                } catch (final UnsupportedEncodingException e) {
-                   encodedValue = formFieldValue;
-                }
+                encodedValue = URLEncoder.encode(formFieldValue, StandardCharsets.UTF_8);
                 sb.append(conjunction)
                     .append(String.format("%s=%s", additionalFormField, encodedValue));
                 conjunction = '&';

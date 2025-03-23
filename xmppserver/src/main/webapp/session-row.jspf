@@ -9,6 +9,7 @@
                  org.xmpp.packet.Presence"%>
  <%@ page import="java.net.URLEncoder"%>
  <%@ page import="java.text.NumberFormat" %>
+ <%@ page import="java.nio.charset.StandardCharsets" %>
 
  <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 
@@ -39,7 +40,7 @@
     <c:if test="${showName}">
         <td style="width: 10%; white-space: nowrap">
             <%  String name = sess.getAddress().getNode(); %>
-            <a href="session-details.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), "UTF-8") %>" title="<fmt:message key='session.row.click' />"
+            <a href="session-details.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), StandardCharsets.UTF_8) %>" title="<fmt:message key='session.row.click' />"
             ><%= ((!sessionManager.isAnonymousRoute(sess.getUsername())) ? JID.unescapeNode(name): "<i>"+LocaleUtils.getLocalizedString("session.details.anonymous")+"</i>") %></a>
         </td>
     </c:if>
@@ -229,7 +230,7 @@
     </c:if>
 
     <td style="width: 1%; white-space: nowrap; text-align: center;">
-        <a href="session-summary.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), "UTF-8") %>&close=true&csrf=${csrf}"
+        <a href="session-summary.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), StandardCharsets.UTF_8) %>&close=true&csrf=${csrf}"
          title="<fmt:message key="session.row.click_kill_session" />"
          onclick="return confirm('<fmt:message key="session.row.confirm_close" />');"
          ><img src="images/delete-16x16.gif" alt=""></a>

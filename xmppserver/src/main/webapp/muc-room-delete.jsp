@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
     errorPage="error.jsp"
 %>
 <%@ page import="org.xmpp.packet.JID" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -66,7 +67,7 @@
 
     // Handle a cancel
     if (cancel) {
-        response.sendRedirect("muc-room-summary.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8"));
+        response.sendRedirect("muc-room-summary.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), StandardCharsets.UTF_8));
         return;
     }
 
@@ -85,7 +86,7 @@
             webManager.logEvent("destroyed MUC room "+roomName, "reason = "+reason+"\nalt jid = "+alternateJID);
         }
         // Done, so redirect
-        response.sendRedirect("muc-room-summary.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8")+"&deletesuccess=true");
+        response.sendRedirect("muc-room-summary.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), StandardCharsets.UTF_8)+"&deletesuccess=true");
         return;
     }
 %>
@@ -94,14 +95,14 @@
     <head>
         <title><fmt:message key="muc.room.delete.title"/></title>
         <meta name="subPageID" content="muc-room-delete"/>
-        <meta name="extraParams" content="<%= "roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>"/>
+        <meta name="extraParams" content="<%= "roomJID="+URLEncoder.encode(roomJID.toBareJID(), StandardCharsets.UTF_8) %>"/>
         <meta name="helpPage" content="delete_a_group_chat_room.html"/>
     </head>
     <body>
 
 <p>
 <fmt:message key="muc.room.delete.info" />
-<b><a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"><%= StringUtils.escapeHTMLTags(room.getJID().toBareJID()) %></a></b>
+<b><a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), StandardCharsets.UTF_8) %>"><%= StringUtils.escapeHTMLTags(room.getJID().toBareJID()) %></a></b>
 <fmt:message key="muc.room.delete.detail" />
 </p>
 

@@ -4,7 +4,7 @@ function applyDisplayable( connectionType )
 {
     let configBlock, enabled;
 
-    // Select the right configuration block and enable or disable it as defined by the the corresponding checkbox.
+    // Select the right configuration block and enable or disable it as defined by the corresponding checkbox.
     configBlock = document.getElementById( connectionType + "-config" );
     enabled     = document.getElementById( connectionType + "-enabled" ).checked;
 

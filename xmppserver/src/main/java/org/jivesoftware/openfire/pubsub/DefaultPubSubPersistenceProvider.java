@@ -392,14 +392,14 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             pstmt.executeUpdate();
             DbConnectionManager.fastcloseStmt(pstmt);
 
-            // Remove existing JIDs associated with the the node
+            // Remove existing JIDs associated with the node
             pstmt = con.prepareStatement(DELETE_NODE_JIDS);
             pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
             DbConnectionManager.fastcloseStmt(pstmt);
 
-            // Remove roster groups associated with the the node being deleted
+            // Remove roster groups associated with the node being deleted
             pstmt = con.prepareStatement(DELETE_NODE_GROUPS);
             pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
@@ -421,7 +421,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
     private static void saveAssociatedElements(Connection con, Node node) throws SQLException {
         log.trace( "Saving associates elements of node: {}", node.getUniqueIdentifier() );
 
-        // Add new JIDs associated with the the node
+        // Add new JIDs associated with the node
         PreparedStatement pstmt = con.prepareStatement(ADD_NODE_JIDS);
         try {
             for (JID jid : node.getContacts()) {
@@ -455,7 +455,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 }
             }
             DbConnectionManager.fastcloseStmt(pstmt);
-            // Add new roster groups associated with the the node
+            // Add new roster groups associated with the node
             pstmt = con.prepareStatement(ADD_NODE_GROUPS);
             for (String groupName : node.getRosterGroupsAllowed()) {
                 pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
@@ -490,14 +490,14 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             pstmt.executeUpdate();
             DbConnectionManager.fastcloseStmt(pstmt);
 
-            // Remove JIDs associated with the the node being deleted
+            // Remove JIDs associated with the node being deleted
             pstmt = con.prepareStatement(DELETE_NODE_JIDS);
             pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.executeUpdate();
             DbConnectionManager.fastcloseStmt(pstmt);
 
-            // Remove roster groups associated with the the node being deleted
+            // Remove roster groups associated with the node being deleted
             pstmt = con.prepareStatement(DELETE_NODE_GROUPS);
             pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));

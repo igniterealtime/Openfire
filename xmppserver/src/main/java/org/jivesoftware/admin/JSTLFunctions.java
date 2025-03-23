@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public class JSTLFunctions
      * occur. The other argument is used as the argument for the invocation of {@link String#split(String)}.
      * @param string The string to split
      * @param regex the delimiting regular expression
-     * @return the the array of strings computed by splitting this string around matches of the given regular expression
+     * @return the array of strings computed by splitting this string around matches of the given regular expression
      * @see String#split(String)
      */
     public static String[] split(String string, String regex)

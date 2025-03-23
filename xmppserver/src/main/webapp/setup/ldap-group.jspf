@@ -26,7 +26,7 @@
 
     LdapManager manager = LdapManager.getInstance();
 
-    // Determine the right default values based on the the server type.
+    // Determine the right default values based on the server type.
     String defaultGroupNameField = JiveGlobals.getProperty("ldap.groupNameField");
     String defaultGroupMemberField = JiveGlobals.getProperty("ldap.groupMemberField");
     String defaultGroupDescriptionField = JiveGlobals.getProperty("ldap.groupDescriptionField");

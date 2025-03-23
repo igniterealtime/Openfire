@@ -32,7 +32,7 @@
     @SuppressWarnings("unchecked")
     Map<String,String> xmppSettings = (Map<String,String>)session.getAttribute("xmppSettings");
 
-    // Determine the right default values based on the the server type.
+    // Determine the right default values based on the server type.
     String defaultUsernameField;
     String defaultSearchFields;
     String defaultSearchFilter;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -246,11 +246,11 @@ public class PEPService implements PubSubService, Cacheable {
     }
 
     /**
-     * Returns true if the the prober is allowed to see the presence of the probee.
+     * Returns true if the prober is allowed to see the presence of the probee.
      *
      * @param prober the user that is trying to probe the presence of another user.
      * @param probee the username of the uset that is being probed.
-     * @return true if the the prober is allowed to see the presence of the probee.
+     * @return true if the prober is allowed to see the presence of the probee.
      * @throws UserNotFoundException If the probee does not exist in the local server or the prober
      *         is not present in the roster of the probee.
      */

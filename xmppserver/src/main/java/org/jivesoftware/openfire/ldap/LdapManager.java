@@ -2234,7 +2234,7 @@ public class LdapManager {
                     // Get the next result.
                     String result = (String)answer.next().getAttributes().get(attribute).get();
                     // Remove suffixToTrim if set
-                    if (suffixToTrim != null && suffixToTrim.length() > 0 && result.endsWith(suffixToTrim)) {
+                    if (suffixToTrim != null && !suffixToTrim.isEmpty() && result.endsWith(suffixToTrim)) {
                         result = result.substring(0,result.length()-suffixToTrim.length());
                     }
                     // Add this to the result.
@@ -2291,7 +2291,7 @@ public class LdapManager {
                         // Get the next result.
                         String result = (String)answer.next().getAttributes().get(attribute).get();
                         // Remove suffixToTrim if set
-                        if (suffixToTrim != null && suffixToTrim.length() > 0 && result.endsWith(suffixToTrim)) {
+                        if (suffixToTrim != null && !suffixToTrim.isEmpty() && result.endsWith(suffixToTrim)) {
                             result = result.substring(0,result.length()-suffixToTrim.length());
                         }
                         // Add this to the result.

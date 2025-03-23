@@ -933,7 +933,7 @@ public class ConnectionListener
             csv.append( protocol );
             csv.append( ',' );
         }
-        final String newValue = csv.length() > 0 ? csv.substring( 0, csv.length() - 1 ) : "";
+        final String newValue = !csv.isEmpty() ? csv.substring( 0, csv.length() - 1 ) : "";
         JiveGlobals.setProperty( type.getPrefix() + "protocols", newValue );
 
         if ( oldValue.equals( newValue ) )
@@ -1040,7 +1040,7 @@ public class ConnectionListener
             csv.append( cipherSuite );
             csv.append( ',' );
         }
-        final String newValue = csv.length() > 0 ? csv.substring( 0, csv.length() - 1 ) : "";
+        final String newValue = !csv.isEmpty() ? csv.substring( 0, csv.length() - 1 ) : "";
         JiveGlobals.setProperty( type.getPrefix() + "ciphersuites", newValue );
 
         if ( oldValue.equals( newValue ) )

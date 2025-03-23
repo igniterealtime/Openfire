@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2006-2008 Jive Software, 2018-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2006-2008 Jive Software, 2018-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -105,7 +105,7 @@
        if (countryCode == null) {
            errors.put("countryCode", "");
        }
-       if (errors.size() == 0) {
+       if (errors.isEmpty()) {
            try {
                // When updating certificates through the admin console, do not cause changes to restart the website, as
                // that is very likely to log out the administrator that is performing the changes. As the keystore change

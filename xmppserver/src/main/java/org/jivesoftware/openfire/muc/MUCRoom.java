@@ -3505,7 +3505,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * @return true if a user cannot enter without first providing the correct password.
      */
     public boolean isPasswordProtected() {
-        return password != null && password.trim().length() > 0;
+        return password != null && !password.trim().isEmpty();
     }
 
     /**

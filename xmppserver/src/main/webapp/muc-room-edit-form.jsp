@@ -181,7 +181,7 @@
             errors.put("room_topic_longer","room_topic_longer");
         }
 
-        if (create && errors.size() == 0) {
+        if (create && errors.isEmpty()) {
             if (roomName == null || roomName.contains("@")) {
                 errors.put("roomName","roomName");
             }
@@ -195,7 +195,7 @@
                 }
             }
 
-            if (errors.size() == 0) {
+            if (errors.isEmpty()) {
                 // Check that the requested room ID is available
                 room = webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).getChatRoom(roomName);
                 if (room != null) {
@@ -224,7 +224,7 @@
             }
         }
 
-        if (errors.size() == 0) {
+        if (errors.isEmpty()) {
             // Set the new configuration sending an IQ packet with an dataform
             final DataForm dataForm = new DataForm(DataForm.Type.submit);
             dataForm.addField("FORM_TYPE", null, FormField.Type.hidden).addValue("http://jabber.org/protocol/muc#roomconfig");

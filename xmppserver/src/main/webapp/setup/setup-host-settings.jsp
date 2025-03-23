@@ -121,7 +121,7 @@
             securePort = -1;
         }
         // Continue if there were no errors
-        if (errors.size() == 0) {
+        if (errors.isEmpty()) {
             Map<String, String> xmppSettings = new HashMap<>();
 
             xmppSettings.put(XMPPServerInfo.XMPP_DOMAIN.getKey(), domain);

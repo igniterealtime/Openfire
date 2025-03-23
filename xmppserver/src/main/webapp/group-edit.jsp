@@ -146,7 +146,7 @@
     // Handle a request to update the contact list settings.
     if ( updateContactListSettings )
     {
-        if (enableRosterGroups && (groupDisplayName == null || groupDisplayName.trim().length() == 0))
+        if (enableRosterGroups && (groupDisplayName == null || groupDisplayName.trim().isEmpty()))
         {
             errors.put("groupDisplayName", "Group display name cannot be null or empty.");
         }

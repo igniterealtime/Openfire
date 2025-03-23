@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2005-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@
     if (update) {
         // Validate params
         if (managerEnabled) {
-            if (defaultSecret == null || defaultSecret.trim().length() == 0) {
+            if (defaultSecret == null || defaultSecret.trim().isEmpty()) {
                 errors.put("defaultSecret","");
             }
             if (port <= 0) {
@@ -120,7 +120,7 @@
     }
 
     // Set page vars
-    if (errors.size() == 0) {
+    if (errors.isEmpty()) {
         managerEnabled = connectionManager.isEnabled(ConnectionType.CONNECTION_MANAGER, false);
         port = connectionManager.getPort(ConnectionType.CONNECTION_MANAGER, false);
         defaultSecret = ConnectionMultiplexerManager.getDefaultSecret();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ public class DefaultAuthorizationMapping implements AuthorizationMapping {
             String realm = authcid.substring(authcid.lastIndexOf('@')+1);
             String authzid = authcid.substring(0,authcid.lastIndexOf('@'));
 
-            if(realm.length() > 0) {
+            if(!realm.isEmpty()) {
                 if(realm.equals(XMPPServerInfo.XMPP_DOMAIN.getValue())) {
                     Log.debug("DefaultAuthorizationMapping: realm = " + XMPPServerInfo.XMPP_DOMAIN.getKey());
                     return authzid;

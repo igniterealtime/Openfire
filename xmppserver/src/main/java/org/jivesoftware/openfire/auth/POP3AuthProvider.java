@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,7 +101,7 @@ public class POP3AuthProvider implements AuthProvider {
         authRequiresDomain = Boolean.parseBoolean(JiveGlobals.getProperty("pop3.authRequiresDomain"));
 
         host = JiveGlobals.getProperty("pop3.host");
-        if (host == null || host.length() < 1) {
+        if (host == null || host.isEmpty()) {
             throw new IllegalArgumentException("pop3.host is null or empty");
         }
 

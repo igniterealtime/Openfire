@@ -69,7 +69,7 @@
     // Handle a request to create a user:
     if (add) {
         // do an add if there were no errors
-        if (errors.size() == 0) {
+        if (errors.isEmpty()) {
             try {
                 // Load the user's roster object
                 Roster roster = webManager.getRosterManager().getRoster(username);

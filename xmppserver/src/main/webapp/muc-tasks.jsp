@@ -86,7 +86,7 @@
             }
             Duration idle = null;
             // Try to obtain an int from the provided strings
-            if (errors.size() == 0) {
+            if (errors.isEmpty()) {
                 try {
                     idle = Duration.ofMinutes(Integer.parseInt(idletime));
                     if (idle.isNegative()) {
@@ -117,7 +117,7 @@
             }
             Duration idle = null;
             // Try to obtain an int from the provided strings
-            if (errors.size() == 0) {
+            if (errors.isEmpty()) {
                 try {
                     idle = Duration.ofMinutes(Integer.parseInt(pingtime));
                     if (idle.isNegative()) {
@@ -158,7 +158,7 @@
         Duration batchInterval = mucService.getLogMaxBatchInterval();
         Duration batchGracePeriod = mucService.getLogBatchGracePeriod();
         // Try to obtain an int from the provided strings
-        if (errors.size() == 0) {
+        if (errors.isEmpty()) {
             try {
                 size = Integer.parseInt(maxBatchSize);
             }
@@ -183,7 +183,7 @@
             }
         }
 
-        if (errors.size() == 0) {
+        if (errors.isEmpty()) {
             mucService.setLogMaxConversationBatchSize( size );
             mucService.setLogMaxBatchInterval( batchInterval );
             mucService.setLogBatchGracePeriod( batchGracePeriod );

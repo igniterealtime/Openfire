@@ -87,7 +87,7 @@
             lookupName = jndiNameMode;
         }
         // if no errors, continue
-        if (errors.size() == 0) {
+        if (errors.isEmpty()) {
             // Set the JNDI connection class property in the jive props file
             JiveGlobals.setProperty("connectionProvider.className",
                     "org.jivesoftware.database.JNDIDataSourceProvider");

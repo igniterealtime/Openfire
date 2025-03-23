@@ -343,7 +343,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         else {
                             User user = userManager.getUser(session.getUsername());
                             if (user.getUsername().equalsIgnoreCase(username)) {
-                                if (password != null && password.trim().length() > 0) {
+                                if (password != null && !password.trim().isEmpty()) {
                                     user.setPassword(password);
                                 }
                                 if (!onlyPassword) {
@@ -351,7 +351,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                                 }
                                 newUser = user;
                             }
-                            else if (password != null && password.trim().length() > 0) {
+                            else if (password != null && !password.trim().isEmpty()) {
                                 // An admin can create new accounts when logged in.
                                 newUser = userManager.createUser(username, password, null, email);
                             }
@@ -374,7 +374,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         }
                         // Inform the entity of failed registration if some required
                         // information was not provided
-                        else if (password == null || password.trim().length() == 0) {
+                        else if (password == null || password.trim().isEmpty()) {
                             reply = IQ.createResultIQ(packet);
                             reply.setChildElement(packet.getChildElement().createCopy());
                             reply.setError(PacketError.Condition.not_acceptable);

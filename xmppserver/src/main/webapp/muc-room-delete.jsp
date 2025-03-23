@@ -48,7 +48,7 @@
     JID roomJID = new JID(ParamUtils.getParameter(request,"roomJID"));
     String alternateJIDString = ParamUtils.getParameter(request,"alternateJID");
     JID alternateJID;
-    if (alternateJIDString != null && alternateJIDString.trim().length() > 0 ) {
+    if (alternateJIDString != null && !alternateJIDString.trim().isEmpty()) {
         // OF-526: Ignore invalid alternative JIDs.
         try {
             alternateJID = new JID(alternateJIDString.trim());

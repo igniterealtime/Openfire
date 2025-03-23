@@ -78,7 +78,7 @@
             errors.put("name", "");
         }
         // do a create if there were no errors
-        if (errors.size() == 0) {
+        if (errors.isEmpty()) {
             try {
                 Group newGroup = webManager.getGroupManager().createGroup(name);
                 if (description != null) {
@@ -110,7 +110,7 @@
             errors.put("name", "");
         }
         // do a create if there were no errors
-        if (errors.size() == 0) {
+        if (errors.isEmpty()) {
             try {
                 Group group = webManager.getGroupManager().getGroup(groupName);
                 group.setName(name);

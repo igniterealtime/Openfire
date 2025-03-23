@@ -70,7 +70,7 @@
     </head>
     <body>
 
-<%    if (errors.size() > 0) { %>
+<%    if (!errors.isEmpty()) { %>
 <p class="jive-error-text"><fmt:message key="user.search.not_found" /></p>
 <%    } %>
 <form name="f" action="user-search.jsp" autocomplete="off">

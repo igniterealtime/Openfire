@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -365,7 +365,7 @@ public abstract class SocketReader implements Runnable {
             if (iq.getType().equals(IQ.Type.result) && iq.getFrom().equals(session.getAddress())){
                 try {
                     List<Element> elements =  query.elements();
-                    if (elements.size() >0){
+                    if (!elements.isEmpty()){
                         for (Element element : elements){
                             session.setSoftwareVersionData(element.getName(), element.getStringValue());
                         }

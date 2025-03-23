@@ -222,82 +222,82 @@ public class LdapUserTester {
     private Map<String, PropertyMapping> getLdapAttributes() {
         Map<String, PropertyMapping> map = new HashMap<>();
 
-        if (profile.getName() != null && profile.getName().trim().length() > 0) {
+        if (profile.getName() != null && !profile.getName().trim().isEmpty()) {
             map.put(NAME, new PropertyMapping(profile.getName()));
         }
-        if (profile.getEmail() != null && profile.getEmail().trim().length() > 0) {
+        if (profile.getEmail() != null && !profile.getEmail().trim().isEmpty()) {
             map.put(EMAIL, new PropertyMapping(profile.getEmail()));
         }
-        if (profile.getFullName() != null && profile.getFullName().trim().length() > 0) {
+        if (profile.getFullName() != null && !profile.getFullName().trim().isEmpty()) {
             map.put(FULL_NAME, new PropertyMapping(profile.getFullName()));
         }
-        if (profile.getNickname() != null && profile.getNickname().trim().length() > 0) {
+        if (profile.getNickname() != null && !profile.getNickname().trim().isEmpty()) {
             map.put(NICKNAME, new PropertyMapping(profile.getNickname()));
         }
-        if (profile.getBirthday() != null && profile.getBirthday().trim().length() > 0) {
+        if (profile.getBirthday() != null && !profile.getBirthday().trim().isEmpty()) {
             map.put(BIRTHDAY, new PropertyMapping(profile.getBirthday()));
         }
-        if (profile.getPhoto() != null && profile.getPhoto().trim().length() > 0) {
+        if (profile.getPhoto() != null && !profile.getPhoto().trim().isEmpty()) {
             map.put(PHOTO, new PropertyMapping(profile.getPhoto()));
         }
-        if (profile.getHomeStreet() != null && profile.getHomeStreet().trim().length() > 0) {
+        if (profile.getHomeStreet() != null && !profile.getHomeStreet().trim().isEmpty()) {
             map.put(HOME_STREET, new PropertyMapping(profile.getHomeStreet()));
         }
-        if (profile.getHomeCity() != null && profile.getHomeCity().trim().length() > 0) {
+        if (profile.getHomeCity() != null && !profile.getHomeCity().trim().isEmpty()) {
             map.put(HOME_CITY, new PropertyMapping(profile.getHomeCity()));
         }
-        if (profile.getHomeState() != null && profile.getHomeState().trim().length() > 0) {
+        if (profile.getHomeState() != null && !profile.getHomeState().trim().isEmpty()) {
             map.put(HOME_STATE, new PropertyMapping(profile.getHomeState()));
         }
-        if (profile.getHomeZip() != null && profile.getHomeZip().trim().length() > 0) {
+        if (profile.getHomeZip() != null && !profile.getHomeZip().trim().isEmpty()) {
             map.put(HOME_ZIP, new PropertyMapping(profile.getHomeZip()));
         }
-        if (profile.getHomeCountry() != null && profile.getHomeCountry().trim().length() > 0) {
+        if (profile.getHomeCountry() != null && !profile.getHomeCountry().trim().isEmpty()) {
             map.put(HOME_COUNTRY, new PropertyMapping(profile.getHomeCountry()));
         }
-        if (profile.getHomePhone() != null && profile.getHomePhone().trim().length() > 0) {
+        if (profile.getHomePhone() != null && !profile.getHomePhone().trim().isEmpty()) {
             map.put(HOME_PHONE, new PropertyMapping(profile.getHomePhone()));
         }
-        if (profile.getHomeMobile() != null && profile.getHomeMobile().trim().length() > 0) {
+        if (profile.getHomeMobile() != null && !profile.getHomeMobile().trim().isEmpty()) {
             map.put(HOME_MOBILE, new PropertyMapping(profile.getHomeMobile()));
         }
-        if (profile.getHomeFax() != null && profile.getHomeFax().trim().length() > 0) {
+        if (profile.getHomeFax() != null && !profile.getHomeFax().trim().isEmpty()) {
             map.put(HOME_FAX, new PropertyMapping(profile.getHomeFax()));
         }
-        if (profile.getHomePager() != null && profile.getHomePager().trim().length() > 0) {
+        if (profile.getHomePager() != null && !profile.getHomePager().trim().isEmpty()) {
             map.put(HOME_PAGER, new PropertyMapping(profile.getHomePager()));
         }
-        if (profile.getBusinessStreet() != null && profile.getBusinessStreet().trim().length() > 0) {
+        if (profile.getBusinessStreet() != null && !profile.getBusinessStreet().trim().isEmpty()) {
             map.put(BUSINESS_STREET, new PropertyMapping(profile.getBusinessStreet()));
         }
-        if (profile.getBusinessCity() != null && profile.getBusinessCity().trim().length() > 0) {
+        if (profile.getBusinessCity() != null && !profile.getBusinessCity().trim().isEmpty()) {
             map.put(BUSINESS_CITY, new PropertyMapping(profile.getBusinessCity()));
         }
-        if (profile.getBusinessState() != null && profile.getBusinessState().trim().length() > 0) {
+        if (profile.getBusinessState() != null && !profile.getBusinessState().trim().isEmpty()) {
             map.put(BUSINESS_STATE, new PropertyMapping(profile.getBusinessState()));
         }
-        if (profile.getBusinessZip() != null && profile.getBusinessZip().trim().length() > 0) {
+        if (profile.getBusinessZip() != null && !profile.getBusinessZip().trim().isEmpty()) {
             map.put(BUSINESS_ZIP, new PropertyMapping(profile.getBusinessZip()));
         }
-        if (profile.getBusinessCountry() != null && profile.getBusinessCountry().trim().length() > 0) {
+        if (profile.getBusinessCountry() != null && !profile.getBusinessCountry().trim().isEmpty()) {
             map.put(BUSINESS_COUNTRY, new PropertyMapping(profile.getBusinessCountry()));
         }
-        if (profile.getBusinessJobTitle() != null && profile.getBusinessJobTitle().trim().length() > 0) {
+        if (profile.getBusinessJobTitle() != null && !profile.getBusinessJobTitle().trim().isEmpty()) {
             map.put(BUSINESS_JOB_TITLE, new PropertyMapping(profile.getBusinessJobTitle()));
         }
-        if (profile.getBusinessDepartment() != null && profile.getBusinessDepartment().trim().length() > 0) {
+        if (profile.getBusinessDepartment() != null && !profile.getBusinessDepartment().trim().isEmpty()) {
             map.put(BUSINESS_DEPARTMENT, new PropertyMapping(profile.getBusinessDepartment()));
         }
-        if (profile.getBusinessPhone() != null && profile.getBusinessPhone().trim().length() > 0) {
+        if (profile.getBusinessPhone() != null && !profile.getBusinessPhone().trim().isEmpty()) {
             map.put(BUSINESS_PHONE, new PropertyMapping(profile.getBusinessPhone()));
         }
-        if (profile.getBusinessMobile() != null && profile.getBusinessMobile().trim().length() > 0) {
+        if (profile.getBusinessMobile() != null && !profile.getBusinessMobile().trim().isEmpty()) {
             map.put(BUSINESS_MOBILE, new PropertyMapping(profile.getBusinessMobile()));
         }
-        if (profile.getBusinessFax() != null && profile.getBusinessFax().trim().length() > 0) {
+        if (profile.getBusinessFax() != null && !profile.getBusinessFax().trim().isEmpty()) {
             map.put(BUSINESS_FAX, new PropertyMapping(profile.getBusinessFax()));
         }
-        if (profile.getBusinessPager() != null && profile.getBusinessPager().trim().length() > 0) {
+        if (profile.getBusinessPager() != null && !profile.getBusinessPager().trim().isEmpty()) {
             map.put(BUSINESS_PAGER, new PropertyMapping(profile.getBusinessPager()));
         }
 

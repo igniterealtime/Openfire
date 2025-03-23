@@ -340,7 +340,7 @@ public class OutgoingSessionPromise {
                     // workaround for OF-23. "undo" the 'setFrom' to a bare JID 
                     // by sending the error to all available resources.
                     final List<JID> routes = new ArrayList<>();
-                    if (from.getResource() == null || from.getResource().trim().length() == 0) {
+                    if (from.getResource() == null || from.getResource().trim().isEmpty()) {
                         routes.addAll(routingTable.getRoutes(from, null));
                     } else {
                         routes.add(from);

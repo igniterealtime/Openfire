@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -418,7 +418,7 @@ public class HistoryStrategy implements Externalizable {
         this.contextPrefix = prefix;
         setTypeFromString(MUCPersistenceManager.getProperty(subdomain, prefix + ".type"));
         String maxNumberString = MUCPersistenceManager.getProperty(subdomain, prefix + ".maxNumber");
-        if (maxNumberString != null && maxNumberString.trim().length() > 0){
+        if (maxNumberString != null && !maxNumberString.trim().isEmpty()){
             try {
                 this.maxNumber = Integer.parseInt(maxNumberString);
             }

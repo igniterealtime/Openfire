@@ -232,7 +232,7 @@ public class MulticastRouter extends BasicModule implements ServerFeaturesProvid
             packets = remotePackets.remove(domain);
         }
 
-        if (multicastService != null && multicastService.trim().length() > 0) {
+        if (multicastService != null && !multicastService.trim().isEmpty()) {
             // Remote server has a multicast service so send pending packets to the
             // multicast service
             for (Packet packet : packets) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -617,7 +617,7 @@ public class InternalComponentManager extends BasicModule implements ClusterEven
                                             ( LocalComponentSession.LocalExternalComponent) component;
                                     LocalComponentSession session = externalComponent.getSession();
                                     if(session != null && session.getAddress() == iq.getFrom()){
-                                        if (elements.size() >0){
+                                        if (!elements.isEmpty()){
                                             for (Element element : elements){
                                                 session.setSoftwareVersionData(element.getName(), element.getStringValue());
                                             }

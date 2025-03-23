@@ -188,7 +188,7 @@
             sb.append(aHost).append(", ");
         }
         host = sb.toString();
-        if (host.trim().length() > 0) {
+        if (!host.trim().isEmpty()) {
             host = host.substring(0, host.length() - 2);
         }
         port = manager.getPort();

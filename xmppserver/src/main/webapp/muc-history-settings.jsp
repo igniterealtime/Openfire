@@ -80,7 +80,7 @@
                 errors.put("numMessages", "Please enter a valid number of messages.");
             }
         }
-        if (errors.size() == 0) {
+        if (errors.isEmpty()) {
             if (policy == ALL) {
                 // Update MUC history strategy
                 historyStrat.setType(HistoryStrategy.Type.all);
@@ -103,7 +103,7 @@
     }
 
     // Set page vars
-    if (errors.size() == 0) {
+    if (errors.isEmpty()) {
         if (historyStrat.getType() == HistoryStrategy.Type.all) {
             policy = ALL;
         }

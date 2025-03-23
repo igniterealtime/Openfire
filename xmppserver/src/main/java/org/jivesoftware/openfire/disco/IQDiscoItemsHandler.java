@@ -152,7 +152,7 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
         if (itemsProvider != null) {
             // Get the JID's name
             String name = packet.getTo() == null ? null : packet.getTo().getNode();
-            if (name == null || name.trim().length() == 0) {
+            if (name == null || name.trim().isEmpty()) {
                 name = null;
             }
             // Get the requested node

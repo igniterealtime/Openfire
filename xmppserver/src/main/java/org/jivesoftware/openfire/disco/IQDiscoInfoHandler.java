@@ -144,7 +144,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         if (infoProvider != null) {
             // Get the JID's name
             String name = packet.getTo() == null ? null : packet.getTo().getNode();
-            if (name == null || name.trim().length() == 0) {
+            if (name == null || name.trim().isEmpty()) {
                 name = null;
             }
             // Get the requested node

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2003-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -138,7 +138,7 @@ public class EmailService {
      */
     public void sendMessages(Collection<MimeMessage> messages) {
         // If there are no messages, do nothing.
-        if (messages.size() == 0) {
+        if (messages.isEmpty()) {
             return;
         }
         TaskEngine.getInstance().submit(new EmailTask(messages));

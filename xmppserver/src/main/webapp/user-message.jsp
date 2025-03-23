@@ -92,7 +92,7 @@
         if (message == null) {
             errors.put("message","message");
         }
-        if (errors.size() == 0) {
+        if (errors.isEmpty()) {
             // no errors, so continue
             if (user == null) {
                 // system-wide message:

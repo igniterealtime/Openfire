@@ -487,7 +487,7 @@ public final class StringUtils {
      * @return text broken up into an array of words.
      */
     public static String[] toLowerCaseWordArray(String text) {
-        if (text == null || text.length() == 0) {
+        if (text == null || text.isEmpty()) {
             return new String[0];
         }
 
@@ -508,7 +508,7 @@ public final class StringUtils {
             tmp = tmp.replace(")", "");
             tmp = tmp.replace("(", "");
             tmp = tmp.replace("&", "");
-            if (tmp.length() > 0) {
+            if (!tmp.isEmpty()) {
                 wordList.add(tmp);
             }
         }
@@ -570,7 +570,7 @@ public final class StringUtils {
      *         equal to <code>length</code>, and that is chopped at whitespace.
      */
     public static String chopAtWord(String string, int length) {
-        if (string == null || string.length() == 0) {
+        if (string == null || string.isEmpty()) {
             return string;
         }
 
@@ -709,7 +709,7 @@ public final class StringUtils {
         if (string == null) {
             return null;
         }
-        else if (string.length() == 0) {
+        else if (string.isEmpty()) {
             return string;
         }
 
@@ -1021,7 +1021,7 @@ public final class StringUtils {
      * @return a Collection representing the String.
      */
     public static Collection<String> stringToCollection(String string) {
-        if (string == null || string.trim().length() == 0) {
+        if (string == null || string.trim().isEmpty()) {
             return Collections.emptyList();
         }
         Collection<String> collection = new ArrayList<>();
@@ -1110,7 +1110,7 @@ public final class StringUtils {
      * @throws IllegalArgumentException The given domain name is not valid
      */
     public static String validateDomainName(String domain) {
-        if (domain == null || domain.trim().length() == 0) {
+        if (domain == null || domain.trim().isEmpty()) {
             throw new IllegalArgumentException("Domain name cannot be null or empty");
         }
         String result = IDN.toASCII(domain);
@@ -1237,7 +1237,7 @@ public final class StringUtils {
                 quoting = true;
                 quoteChar = c;
             } else if (!quoting && Character.isWhitespace(c)) {
-                if (current.length() > 0) {
+                if (!current.isEmpty()) {
                     tokens.add(current.toString());
                     current = new StringBuilder();
                 }
@@ -1245,7 +1245,7 @@ public final class StringUtils {
                 current.append(c);
             }
         }
-        if (current.length() > 0) {
+        if (!current.isEmpty()) {
             tokens.add(current.toString());
         }
         return tokens;

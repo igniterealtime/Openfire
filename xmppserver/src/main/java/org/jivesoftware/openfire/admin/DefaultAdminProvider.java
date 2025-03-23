@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2015 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,7 +109,7 @@ public class DefaultAdminProvider implements AdminProvider {
 
         // Add bare JIDs of users that are admins (may include remote users), primarily used to override/add to list of admin users
         String jids = JiveGlobals.getXMLProperty("admin.authorizedJIDs");
-        jids = (jids == null || jids.trim().length() == 0) ? "" : jids;
+        jids = (jids == null || jids.trim().isEmpty()) ? "" : jids;
         StringTokenizer tokenizer = new StringTokenizer(jids, ",");
         while (tokenizer.hasMoreTokens()) {
             final String jid = tokenizer.nextToken().toLowerCase().trim();
@@ -128,7 +128,7 @@ public class DefaultAdminProvider implements AdminProvider {
             usernames = JiveGlobals.getXMLProperty("adminConsole.authorizedUsernames");
         }
         // Add default of admin user if no other users were listed as admins.
-        usernames = (usernames == null || usernames.trim().length() == 0) ? (adminList.size() == 0 ? "admin" : "") : usernames;
+        usernames = (usernames == null || usernames.trim().isEmpty()) ? (adminList.isEmpty() ? "admin" : "") : usernames;
         tokenizer = new StringTokenizer(usernames, ",");
         while (tokenizer.hasMoreTokens()) {
             final String username = tokenizer.nextToken();

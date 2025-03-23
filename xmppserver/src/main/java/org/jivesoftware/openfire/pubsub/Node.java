@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -593,25 +593,25 @@ public abstract class Node implements Cacheable, Externalizable {
                 }
                 else if ("pubsub#type".equals(field.getVariable())) {
                     values = field.getValues();
-                    payloadType = values.size() > 0 ? values.get(0) : " ";
+                    payloadType = !values.isEmpty() ? values.get(0) : " ";
                 }
                 else if ("pubsub#body_xslt".equals(field.getVariable())) {
                     values = field.getValues();
-                    bodyXSLT = values.size() > 0 ? values.get(0) : " ";
+                    bodyXSLT = !values.isEmpty() ? values.get(0) : " ";
                 }
                 else if ("pubsub#dataform_xslt".equals(field.getVariable())) {
                     values = field.getValues();
-                    dataformXSLT = values.size() > 0 ? values.get(0) : " ";
+                    dataformXSLT = !values.isEmpty() ? values.get(0) : " ";
                 }
                 else if ("pubsub#access_model".equals(field.getVariable())) {
                     values = field.getValues();
-                    if (values.size() > 0)  {
+                    if (!values.isEmpty())  {
                         accessModel = AccessModel.valueOf(values.get(0));
                     }
                 }
                 else if ("pubsub#publish_model".equals(field.getVariable())) {
                     values = field.getValues();
-                    if (values.size() > 0)  {
+                    if (!values.isEmpty())  {
                         publisherModel = PublisherModel.valueOf(values.get(0));
                     }
                 }
@@ -636,19 +636,19 @@ public abstract class Node implements Cacheable, Externalizable {
                 }
                 else if ("pubsub#description".equals(field.getVariable())) {
                     values = field.getValues();
-                    description = values.size() > 0 ? values.get(0) : " ";
+                    description = !values.isEmpty() ? values.get(0) : " ";
                 }
                 else if ("pubsub#language".equals(field.getVariable())) {
                     values = field.getValues();
-                    language = values.size() > 0 ? values.get(0) : " ";
+                    language = !values.isEmpty() ? values.get(0) : " ";
                 }
                 else if ("pubsub#title".equals(field.getVariable())) {
                     values = field.getValues();
-                    name = values.size() > 0 ? values.get(0) : " ";
+                    name = !values.isEmpty() ? values.get(0) : " ";
                 }
                 else if ("pubsub#itemreply".equals(field.getVariable())) {
                     values = field.getValues();
-                    if (values.size() > 0)  {
+                    if (!values.isEmpty())  {
                         replyPolicy = ItemReplyPolicy.valueOf(values.get(0));
                     }
                 }
@@ -679,7 +679,7 @@ public abstract class Node implements Cacheable, Externalizable {
                 else if ("pubsub#collection".equals(field.getVariable())) {
                     // Set the parent collection node
                     values = field.getValues();
-                    String newParent = values.size() > 0 ? values.get(0) : " ";
+                    String newParent = !values.isEmpty() ? values.get(0) : " ";
                     Node newParentNode = getService().getNode(newParent);
 
                     if (!(newParentNode instanceof CollectionNode))

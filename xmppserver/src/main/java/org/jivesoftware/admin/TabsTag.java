@@ -159,7 +159,7 @@ public class TabsTag extends BodyTagSupport {
         
         // Get tabs from the model:
         List<Node> tabs = AdminConsole.getModel().selectNodes("//tab");
-        if (tabs.size() > 0) {
+        if (!tabs.isEmpty()) {
             JspWriter out = pageContext.getOut();
             // Build up the output in a buffer (is probably faster than a bunch of out.write's)
             StringBuilder buf = new StringBuilder();

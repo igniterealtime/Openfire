@@ -91,7 +91,7 @@
         }
 
         // if no errors, continue
-        if (errors.size() == 0) {
+        if (errors.isEmpty()) {
             // Create a message
             MimeMessage message = service.createMimeMessage();
             // Set the date of the message to be the current date

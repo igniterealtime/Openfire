@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2020 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -158,7 +158,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
      * The packet is a typical 'set' or 'get' update targeted at the server.
      * Notice that the set could be a roster removal in which case we have to
      * generate a local roster removal update as well as a new roster removal
-     * to send to the the roster item's owner.
+     * to send to the roster item's owner.
      *
      * @param packet The packet that triggered this update
      * @return Either a response to the roster update or null if the packet is corrupt and the session was closed down

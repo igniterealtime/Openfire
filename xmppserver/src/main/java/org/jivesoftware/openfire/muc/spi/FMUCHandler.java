@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2020-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -191,7 +191,7 @@ public class FMUCHandler
      * these stanzas only after all any other nodes that are to be disconnected have been disconnected (to prevent
      * sharing updates with other remote nodes that we might also be disconnecting from. This method does
      * therefor not send these stanzas. Instead, it returns the addresses that should be send stanzas. This allows
-     * callers to aggregate addresses, and send the the stanzas in one iteration.
+     * callers to aggregate addresses, and send the stanzas in one iteration.
      *
      * The implementation in this method will inform the remote, joining node that they left the local, joined node by
      * sending it a 'left' message.
@@ -271,7 +271,7 @@ public class FMUCHandler
      * these stanzas only after all any other nodes that are to be disconnected have been disconnected (to prevent
      * sharing updates with other remote nodes that we might also be disconnecting from. This method does
      * therefor not send these stanzas. Instead, it returns the addresses that should be send stanzas. This allows
-     * callers to aggregate addresses, and send the the stanzas in one iteration.
+     * callers to aggregate addresses, and send the stanzas in one iteration.
      *
      * The implementation in this method will inform the remote, joined node that the local, joining node has left, by
      * sending it presence stanzas for all occupants that the local, joining node has contributed to the FMUC set. After
@@ -913,7 +913,7 @@ public class FMUCHandler
         final MUCOccupant senderOccupantData = room.getOccupantByFullJID( author );
         Log.trace("(room: '{}'): Processing stanza from remote FMUC peer '{}' as regular room traffic. Sender of stanza: {}", room.getJID(), remoteMUC, author );
 
-        // Distribute. Note that this will distribute both to the local node, as well as to all FMUC nodes in the the FMUC set.
+        // Distribute. Note that this will distribute both to the local node, as well as to all FMUC nodes in the FMUC set.
         if ( stanza instanceof Presence ) {
             RemoteFMUCNode remoteFMUCNode = inboundJoins.get(remoteMUC);
             if ( remoteFMUCNode == null && outboundJoin != null && remoteMUC.equals(outboundJoin.getPeer())) {

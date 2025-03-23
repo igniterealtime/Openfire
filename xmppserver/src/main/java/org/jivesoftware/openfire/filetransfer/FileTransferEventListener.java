@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2018-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ public interface FileTransferEventListener
      * the initiator. The ready state indicates that the file transfer is ready to begin, and the channels can be
      * manipulated by the interceptor.
      * <p>
-     * It is recommended for the the sake of user experience that when in the not ready state, any processing done on
+     * It is recommended for the sake of user experience that when in the not ready state, any processing done on
      * the file transfer should be quick.
      *
      * @param transfer the transfer being intercepted (never null).

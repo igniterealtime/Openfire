@@ -2371,7 +2371,7 @@ public class LdapManager {
      * in the string before it is used as a string.
      *
      * @param attribute             LDAP attribute to be pulled from each result and placed in the return results.
-     *                              Typically pulled from this manager. Null means the the absolute DN is returned.
+     *                              Typically pulled from this manager. Null means the absolute DN is returned.
      * @param searchFilter          Filter to use to perform the search.  Typically pulled from this manager.
      * @param failOnMultipleResults It true, an {@link IllegalStateException} will be thrown, if the
      *                              search result is not unique. If false, just the first result will be returned.
@@ -2400,7 +2400,7 @@ public class LdapManager {
      * in the string before it is used as a string.
      *
      * @param attribute             LDAP attribute to be pulled from each result and placed in the return results.
-     *                              Typically pulled from this manager. Null means the the absolute DN is returned.
+     *                              Typically pulled from this manager. Null means the absolute DN is returned.
      * @param searchFilter          Filter to use to perform the search.  Typically pulled from this manager.
      * @param failOnMultipleResults It true, an {@link IllegalStateException} will be thrown, if the
      *                              search result is not unique. If false, just the first result will be returned.

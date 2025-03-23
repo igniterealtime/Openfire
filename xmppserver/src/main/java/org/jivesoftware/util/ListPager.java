@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2018-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -214,7 +214,7 @@ public class ListPager<T> {
     }
 
     /**
-     * @return {@code true} if the the supplied filter has restricted the number of items to display, otherwise {@code false}
+     * @return {@code true} if the supplied filter has restricted the number of items to display, otherwise {@code false}
      */
     public boolean isFiltered() {
         return totalItemCount != filteredItemCount;

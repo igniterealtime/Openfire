@@ -675,7 +675,7 @@ public class PluginManager
                 }
 
                 // In order to internationalize the names and descriptions in the model, we add a "plugin" attribute to
-                // each tab, sidebar, and item so that the the renderer knows where to load the i18n Strings from.
+                // each tab, sidebar, and item so that the renderer knows where to load the i18n Strings from.
                 final String[] elementNames = new String[]{ "tab", "sidebar", "item" };
                 for ( final String elementName : elementNames )
                 {

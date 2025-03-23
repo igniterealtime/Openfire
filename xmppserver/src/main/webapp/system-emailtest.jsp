@@ -1,6 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
-  - Copyright (C) 2005-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 %>
 <%@ page import="java.text.SimpleDateFormat"%>
 <%@ page import="org.xmpp.packet.JID" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -238,7 +239,7 @@ function checkClick() {
             <input type="hidden" name="from" value="<%= StringUtils.escapeForXML(from) %>">
             <%= StringUtils.escapeHTMLTags(from) %>
             <span class="jive-description">
-            (<a href="user-edit-form.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8")%>"><fmt:message key="system.emailtest.update-address" /></a>)
+            (<a href="user-edit-form.jsp?username=<%= URLEncoder.encode(user.getUsername(), StandardCharsets.UTF_8)%>"><fmt:message key="system.emailtest.update-address" /></a>)
             </span>
         </td>
     </tr>

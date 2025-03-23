@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2010 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2010 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
     errorPage="error.jsp"
 %>
 <%@ page import="java.net.URLEncoder" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -190,7 +191,7 @@
             }
         }
 
-        response.sendRedirect("muc-default-settings.jsp?success=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
+        response.sendRedirect("muc-default-settings.jsp?success=true&mucname="+URLEncoder.encode(mucname, StandardCharsets.UTF_8));
         return;
     }
 
@@ -224,7 +225,7 @@
     <head>
         <title><fmt:message key="muc.default.settings.title"/></title>
         <meta name="subPageID" content="muc-defaultsettings"/>
-        <meta name="extraParams" content="<%= "mucname="+URLEncoder.encode(mucname, "UTF-8") %>"/>
+        <meta name="extraParams" content="<%= "mucname="+URLEncoder.encode(mucname, StandardCharsets.UTF_8) %>"/>
         <meta name="helpPage" content="set_group_chat_room_creation_permissions.html"/>
     </head>
 

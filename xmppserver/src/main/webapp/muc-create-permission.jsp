@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@
 %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.net.URLDecoder" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -80,14 +81,14 @@
             mucService.setRoomCreationRestricted(false);
             // Log the event
             webManager.logEvent("set MUC room creation to restricted for service "+mucname, null);
-            response.sendRedirect("muc-create-permission.jsp?success=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
+            response.sendRedirect("muc-create-permission.jsp?success=true&mucname="+URLEncoder.encode(mucname, StandardCharsets.UTF_8));
             return;
         }
         else {
             mucService.setRoomCreationRestricted(true);
             // Log the event
             webManager.logEvent("set MUC room creation to not restricted for service "+mucname, null);
-            response.sendRedirect("muc-create-permission.jsp?success=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
+            response.sendRedirect("muc-create-permission.jsp?success=true&mucname="+URLEncoder.encode(mucname, StandardCharsets.UTF_8));
             return;
         }
     }
@@ -112,7 +113,7 @@
         if (groupNames != null) {
             // create a group JID for each group
             for (String groupName : groupNames) {
-                GroupJID groupJID = new GroupJID(URLDecoder.decode(groupName, "UTF-8"));
+                GroupJID groupJID = new GroupJID(URLDecoder.decode(groupName, StandardCharsets.UTF_8));
                 allowedJIDs.add(groupJID);
             }
         }
@@ -127,7 +128,7 @@
             mucService.setAllRegisteredUsersAllowedToCreate(allowAllRegisteredUsers);
             // Log the event
             webManager.logEvent("updated MUC room creation permissions for service "+mucname, null);
-            response.sendRedirect("muc-create-permission.jsp?addsuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
+            response.sendRedirect("muc-create-permission.jsp?addsuccess=true&mucname="+URLEncoder.encode(mucname, StandardCharsets.UTF_8));
             return;
         }
 
@@ -138,7 +139,7 @@
             // Log the event
             webManager.logEvent("removed MUC room creation permission from "+userJID+" for service "+mucname, null);
             // done, return
-            response.sendRedirect("muc-create-permission.jsp?deletesuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
+            response.sendRedirect("muc-create-permission.jsp?deletesuccess=true&mucname="+URLEncoder.encode(mucname, StandardCharsets.UTF_8));
             return;
         }
     }
@@ -148,14 +149,14 @@
 <head>
 <title><fmt:message key="muc.create.permission.title"/></title>
 <meta name="subPageID" content="muc-perms"/>
-<meta name="extraParams" content="<%= "mucname="+URLEncoder.encode(mucname, "UTF-8") %>"/>
+<meta name="extraParams" content="<%= "mucname="+URLEncoder.encode(mucname, StandardCharsets.UTF_8) %>"/>
 <meta name="helpPage" content="set_group_chat_room_creation_permissions.html"/>
 </head>
 <body>
 
 <p>
 <fmt:message key="muc.create.permission.info" />
-<fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"><%= StringUtils.escapeHTMLTags(mucname) %></a></b>
+<fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, StandardCharsets.UTF_8) %>"><%= StringUtils.escapeHTMLTags(mucname) %></a></b>
 </p>
 
 <%  if (errors.size() > 0) { 
@@ -245,7 +246,7 @@
         <select name="groupNames" size="6" multiple style="width:400px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;" 
          onclick="this.form.openPerms[1].checked=true;" id="groupJIDs">
         <%  for (Group g : webManager.getGroupManager().getGroups()) {	%>
-            <option value="<%= URLEncoder.encode(g.getName(), "UTF-8") %>"
+            <option value="<%= URLEncoder.encode(g.getName(), StandardCharsets.UTF_8) %>"
              <%= (StringUtils.contains(groupNames, g.getName()) ? "selected" : "") %>
              ><%= StringUtils.escapeHTMLTags(g.getName()) %></option>
         <%  } %>
@@ -288,11 +289,11 @@
                           <% } else { %>
                             <img src="images/user.gif" title="<fmt:message key="muc.create.permission.user" />" alt="<fmt:message key="muc.create.permission.user" />"/>
                           <% } %>
-                          <a href="<%= isGroup ? "group-edit.jsp?group=" + URLEncoder.encode(jidDisplay) : "user-properties.jsp?username=" + URLEncoder.encode(jid.getNode(), "UTF-8") %>">
+                          <a href="<%= isGroup ? "group-edit.jsp?group=" + URLEncoder.encode(jidDisplay) : "user-properties.jsp?username=" + URLEncoder.encode(jid.getNode(), StandardCharsets.UTF_8) %>">
                           <%= jidDisplay %></a>
                         </td>
                         <td style="width: 1%; text-align: center">
-                            <a href="muc-create-permission.jsp?userJID=<%= jid.toString() %>&delete=true&csrf=${csrf}&mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"
+                            <a href="muc-create-permission.jsp?userJID=<%= jid.toString() %>&delete=true&csrf=${csrf}&mucname=<%= URLEncoder.encode(mucname, StandardCharsets.UTF_8) %>"
                              title="<fmt:message key="muc.create.permission.click_title" />"
                              onclick="return confirm('<fmt:message key="muc.create.permission.confirm_remove" />');"
                              ><img src="images/delete-16x16.gif" alt=""></a>

@@ -24,6 +24,7 @@
                  java.util.Map,
                  java.net.URLEncoder"
 %><%@ page import="org.xmpp.packet.JID"%>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -55,7 +56,7 @@
         if (user != null) {
             // found the user, so redirect to the user properties page:
             response.sendRedirect("user-properties.jsp?username=" +
-                    URLEncoder.encode(user.getUsername(), "UTF-8"));
+                    URLEncoder.encode(user.getUsername(), StandardCharsets.UTF_8));
             return;
         }
     }

@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
     errorPage="error.jsp"
 %><%@ page import="org.xmpp.packet.JID"%>
 <%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -49,7 +50,7 @@
 
     // Handle a cancel
     if (cancel) {
-        response.sendRedirect("user-properties.jsp?username=" + URLEncoder.encode(username, "UTF-8"));
+        response.sendRedirect("user-properties.jsp?username=" + URLEncoder.encode(username, StandardCharsets.UTF_8));
         return;
     }
 
@@ -69,7 +70,7 @@
                     admin.logEvent("set password for user "+username, null);
                 }
                 // Done, so redirect
-                response.sendRedirect("user-password.jsp?success=true&username=" + URLEncoder.encode(username, "UTF-8"));
+                response.sendRedirect("user-password.jsp?success=true&username=" + URLEncoder.encode(username, StandardCharsets.UTF_8));
                 return;
             }
             catch (UnsupportedOperationException uoe) {
@@ -86,7 +87,7 @@
     <head>
         <title><fmt:message key="user.password.title"/></title>
         <meta name="subPageID" content="user-password"/>
-        <meta name="extraParams" content="<%= "username="+URLEncoder.encode(username, "UTF-8") %>"/>
+        <meta name="extraParams" content="<%= "username="+URLEncoder.encode(username, StandardCharsets.UTF_8) %>"/>
         <meta name="helpPage" content="change_a_user_password.html"/>
     </head>
     <body>

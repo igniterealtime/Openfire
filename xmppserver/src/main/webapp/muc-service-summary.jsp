@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="org.jivesoftware.openfire.muc.MultiUserChatService" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -189,24 +190,24 @@
             <%= i %>
         </td>
         <td style="width: 23%">
-            <a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(service.getServiceName(), "UTF-8") %>"><%= StringUtils.escapeHTMLTags(JID.unescapeNode(service.getServiceName())) %></a>
+            <a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(service.getServiceName(), StandardCharsets.UTF_8) %>"><%= StringUtils.escapeHTMLTags(JID.unescapeNode(service.getServiceName())) %></a>
         </td>
         <td style="width: 20%">
             <%= StringUtils.escapeHTMLTags(service.getDescription()) %> &nbsp;
         </td>
         <td style="width: 5%">
-            <a href="muc-room-summary.jsp?mucname=<%= URLEncoder.encode(service.getServiceName(), "UTF-8") %>"><%= service.getNumberChatRooms() %></a>
+            <a href="muc-room-summary.jsp?mucname=<%= URLEncoder.encode(service.getServiceName(), StandardCharsets.UTF_8) %>"><%= service.getNumberChatRooms() %></a>
         </td>
         <td style="width: 5%">
             <%= service.getNumberConnectedUsers() %>
         </td>
         <td style="width: 1%; text-align: center">
-            <a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(service.getServiceName(), "UTF-8") %>"
+            <a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(service.getServiceName(), StandardCharsets.UTF_8) %>"
              title="<fmt:message key="global.click_edit" />"
              ><img src="images/edit-16x16.gif" alt="<fmt:message key="global.click_edit" />"></a>
         </td>
         <td style="width: 1%; text-align: center; border-right:1px #ccc solid;">
-            <a href="muc-service-delete.jsp?mucname=<%= URLEncoder.encode(service.getServiceName(), "UTF-8") %>"
+            <a href="muc-service-delete.jsp?mucname=<%= URLEncoder.encode(service.getServiceName(), StandardCharsets.UTF_8) %>"
              title="<fmt:message key="global.click_delete" />"
              ><img src="images/delete-16x16.gif" alt="<fmt:message key="global.click_delete" />"></a>
         </td>

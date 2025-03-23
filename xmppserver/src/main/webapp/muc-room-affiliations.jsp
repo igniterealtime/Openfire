@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@
 <%@ page import="org.jivesoftware.openfire.muc.CannotBeInvitedException" %>
 <%@ page import="java.util.*" %>
 <%@ page import="java.util.stream.Collectors" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -60,7 +61,7 @@
 
     if (room == null) {
         // The requested room name does not exist so return to the list of the existing rooms
-        response.sendRedirect("muc-room-summary.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8"));
+        response.sendRedirect("muc-room-summary.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), StandardCharsets.UTF_8));
         return;
     }
 
@@ -107,7 +108,7 @@
                 if (groupNames != null) {
                     // create a group JID for each group
                     for (String groupName : groupNames) {
-                        GroupJID groupJID = new GroupJID(URLDecoder.decode(groupName, "UTF-8"));
+                        GroupJID groupJID = new GroupJID(URLDecoder.decode(groupName, StandardCharsets.UTF_8));
                         memberJIDs.add(groupJID);
                     }
                 }
@@ -133,7 +134,7 @@
                     }
                 }
                 // done, return
-                response.sendRedirect("muc-room-affiliations.jsp?addsuccess=true&roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8"));
+                response.sendRedirect("muc-room-affiliations.jsp?addsuccess=true&roomJID="+URLEncoder.encode(roomJID.toBareJID(), StandardCharsets.UTF_8));
                 return;
             }
             catch (ConflictException e) {
@@ -161,7 +162,7 @@
         webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).syncChatRoom(room);
 
         // done, return
-        response.sendRedirect("muc-room-affiliations.jsp?deletesuccess=true&roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8"));
+        response.sendRedirect("muc-room-affiliations.jsp?deletesuccess=true&roomJID="+URLEncoder.encode(roomJID.toBareJID(), StandardCharsets.UTF_8));
         return;
         }
         catch (ConflictException e) {
@@ -182,14 +183,14 @@
     <head>
         <title><fmt:message key="muc.room.affiliations.title"/></title>
         <meta name="subPageID" content="muc-room-affiliations"/>
-        <meta name="extraParams" content="<%= "roomJID="+URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>"/>
+        <meta name="extraParams" content="<%= "roomJID="+URLEncoder.encode(roomJID.toBareJID(), StandardCharsets.UTF_8) %>"/>
         <meta name="helpPage" content="edit_group_chat_room_user_permissions.html"/>
     </head>
     <body>
 
 <p>
 <fmt:message key="muc.room.affiliations.info" />
-<b><a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"><%= room.getJID().toBareJID() %></a></b>.
+<b><a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), StandardCharsets.UTF_8) %>"><%= room.getJID().toBareJID() %></a></b>.
 <fmt:message key="muc.room.affiliations.info_detail" />
 </p>
 
@@ -232,7 +233,7 @@
             .sorted(Comparator.comparing(g->g.getName().toLowerCase()))
             .collect(Collectors.toList());
         for (Group g : groups) {	%>
-        <option value="<%= URLEncoder.encode(g.getName(), "UTF-8") %>"
+        <option value="<%= URLEncoder.encode(g.getName(), StandardCharsets.UTF_8) %>"
          <%= (StringUtils.contains(groupNames, g.getName()) ? "selected" : "") %>
          ><%= StringUtils.escapeHTMLTags(g.getName()) %></option>
     <%  } %>
@@ -295,11 +296,11 @@
                   <% } else { %>
                     <img src="images/user.gif" title="<fmt:message key="muc.room.affiliations.user" />" alt="<fmt:message key="muc.room.affiliations.user" />"/>
                   <% } %>
-                    <a href="<%= isGroup ? "group-edit.jsp?group=" + URLEncoder.encode(userDisplay, "UTF-8") : "user-properties.jsp?username=" + URLEncoder.encode(user.getNode(), "UTF-8") %>">
+                    <a href="<%= isGroup ? "group-edit.jsp?group=" + URLEncoder.encode(userDisplay, StandardCharsets.UTF_8) : "user-properties.jsp?username=" + URLEncoder.encode(user.getNode(), StandardCharsets.UTF_8) %>">
                     <%= StringUtils.escapeHTMLTags(userDisplay) %></a>
                 </td>
                 <td style="width: 1%; text-align: center">
-                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= URLEncoder.encode(user.toString(), "UTF-8") %>&delete=true&affiliation=owner&csrf=${csrf}"
+                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), StandardCharsets.UTF_8) %>&userJID=<%= URLEncoder.encode(user.toString(), StandardCharsets.UTF_8) %>&delete=true&affiliation=owner&csrf=${csrf}"
                      title="<fmt:message key="global.click_delete" />"
                      onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
                      ><img src="images/delete-16x16.gif" alt=""></a>
@@ -334,11 +335,11 @@
                   <% } else { %>
                     <img src="images/user.gif" title="<fmt:message key="muc.room.affiliations.user" />" alt="<fmt:message key="muc.room.affiliations.user" />"/>
                   <% } %>
-                    <a href="<%= isGroup ? "group-edit.jsp?group=" + URLEncoder.encode(userDisplay, "UTF-8") : "user-properties.jsp?username=" + URLEncoder.encode(user.getNode(), "UTF-8") %>">
+                    <a href="<%= isGroup ? "group-edit.jsp?group=" + URLEncoder.encode(userDisplay, StandardCharsets.UTF_8) : "user-properties.jsp?username=" + URLEncoder.encode(user.getNode(), StandardCharsets.UTF_8) %>">
                     <%= StringUtils.escapeHTMLTags(userDisplay) %></a>
                 </td>
                 <td style="width: 1%; text-align: center">
-                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= URLEncoder.encode(user.toString(), "UTF-8") %>&delete=true&affiliation=admin&csrf=${csrf}"
+                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), StandardCharsets.UTF_8) %>&userJID=<%= URLEncoder.encode(user.toString(), StandardCharsets.UTF_8) %>&delete=true&affiliation=admin&csrf=${csrf}"
                      title="<fmt:message key="global.click_delete" />"
                      onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
                      ><img src="images/delete-16x16.gif" alt=""></a>
@@ -375,11 +376,11 @@
                   <% } else { %>
                     <img src="images/user.gif" title="<fmt:message key="muc.room.affiliations.user" />" alt="<fmt:message key="muc.room.affiliations.user" />"/>
                   <% } %>
-                    <a href="<%= isGroup ? "group-edit.jsp?group=" + URLEncoder.encode(userDisplay, "UTF-8") : "user-properties.jsp?username=" + URLEncoder.encode(user.getNode(), "UTF-8") %>">
+                    <a href="<%= isGroup ? "group-edit.jsp?group=" + URLEncoder.encode(userDisplay, StandardCharsets.UTF_8) : "user-properties.jsp?username=" + URLEncoder.encode(user.getNode(), StandardCharsets.UTF_8) %>">
                     <%= StringUtils.escapeHTMLTags(userDisplay) %></a><%= StringUtils.escapeHTMLTags(nickname) %>
                 </td>
                 <td style="width: 1%; text-align: center">
-                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= URLEncoder.encode(user.toString(), "UTF-8") %>&delete=true&affiliation=member&csrf=${csrf}"
+                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), StandardCharsets.UTF_8) %>&userJID=<%= URLEncoder.encode(user.toString(), StandardCharsets.UTF_8) %>&delete=true&affiliation=member&csrf=${csrf}"
                      title="<fmt:message key="global.click_delete" />"
                      onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
                      ><img src="images/delete-16x16.gif" alt=""></a>
@@ -414,11 +415,11 @@
                   <% } else { %>
                     <img src="images/user.gif" title="<fmt:message key="muc.room.affiliations.user" />" alt="<fmt:message key="muc.room.affiliations.user" />"/>
                   <% } %>
-                    <a href="<%= isGroup ? "group-edit.jsp?group=" + URLEncoder.encode(userDisplay, "UTF-8") : "user-properties.jsp?username=" + URLEncoder.encode(user.getNode(), "UTF-8") %>">
+                    <a href="<%= isGroup ? "group-edit.jsp?group=" + URLEncoder.encode(userDisplay, StandardCharsets.UTF_8) : "user-properties.jsp?username=" + URLEncoder.encode(user.getNode(), StandardCharsets.UTF_8) %>">
                     <%= StringUtils.escapeHTMLTags(userDisplay) %></a>
                 </td>
                 <td style="width: 1%; text-align: center">
-                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), "UTF-8") %>&userJID=<%= URLEncoder.encode(user.toString(), "UTF-8") %>&delete=true&affiliation=outcast&csrf=${csrf}"
+                    <a href="muc-room-affiliations.jsp?roomJID=<%= URLEncoder.encode(roomJID.toBareJID(), StandardCharsets.UTF_8) %>&userJID=<%= URLEncoder.encode(user.toString(), StandardCharsets.UTF_8) %>&delete=true&affiliation=outcast&csrf=${csrf}"
                      title="<fmt:message key="global.click_delete" />"
                      onclick="return confirm('<fmt:message key="muc.room.affiliations.confirm_removed" />');"
                      ><img src="images/delete-16x16.gif" alt=""></a>

@@ -41,6 +41,7 @@
 <%@ page import="java.util.TreeSet" %>
 <%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" %>
 <%@ page import="org.slf4j.LoggerFactory" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -122,7 +123,7 @@
     // Handle a "message" click:
     if (request.getParameter("message") != null) {
         if (csrfCookie != null && csrfParam != null && csrfCookie.getValue().equals(csrfParam)) {
-            response.sendRedirect("user-message.jsp?username=" + URLEncoder.encode(user.getUsername(), "UTF-8"));
+            response.sendRedirect("user-message.jsp?username=" + URLEncoder.encode(user.getUsername(), StandardCharsets.UTF_8));
             return;
         }
     }
@@ -188,7 +189,7 @@
 
             <%  } else { %>
 
-                <a href="user-properties.jsp?username=<%= URLEncoder.encode(n, "UTF-8") %>"><%= StringUtils.escapeHTMLTags(JID.unescapeNode(n)) %></a>
+                <a href="user-properties.jsp?username=<%= URLEncoder.encode(n, StandardCharsets.UTF_8) %>"><%= StringUtils.escapeHTMLTags(JID.unescapeNode(n)) %></a>
                 - <%= address.getResource()==null?"":StringUtils.escapeForXML(address.getResource()) %>
 
             <%  } %>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2018-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -332,11 +332,7 @@ public class ListPager<T> {
             final String formFieldValue = ParamUtils.getStringParameter(request, additionalFormField, "").trim();
             if(!formFieldValue.isEmpty()) {
                 String encodedValue;
-                try {
-                    encodedValue = URLEncoder.encode(formFieldValue, StandardCharsets.UTF_8.name());
-                } catch (final UnsupportedEncodingException e) {
-                   encodedValue = formFieldValue;
-                }
+                encodedValue = URLEncoder.encode(formFieldValue, StandardCharsets.UTF_8);
                 sb.append(conjunction)
                     .append(String.format("%s=%s", additionalFormField, encodedValue));
                 conjunction = '&';

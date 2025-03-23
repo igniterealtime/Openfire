@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@
 <%@ page import="org.xmpp.packet.JID" %>
 <%@ page import="org.xmpp.packet.StreamError" %>
 <%@ page import="java.net.URLEncoder" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -53,7 +54,7 @@
 
     // Handle a cancel
     if (cancel) {
-        response.sendRedirect("user-properties.jsp?username=" + URLEncoder.encode(username, "UTF-8"));
+        response.sendRedirect("user-properties.jsp?username=" + URLEncoder.encode(username, StandardCharsets.UTF_8));
         return;
     }
 
@@ -94,7 +95,7 @@
     <head>
         <title><fmt:message key="user.delete.title"/></title>
         <meta name="subPageID" content="user-delete"/>
-        <meta name="extraParams" content="<%= "username="+URLEncoder.encode(username, "UTF-8") %>"/>
+        <meta name="extraParams" content="<%= "username="+URLEncoder.encode(username, StandardCharsets.UTF_8) %>"/>
         <meta name="helpPage" content="remove_a_user_from_the_system.html"/>
     </head>
     <body>
@@ -107,7 +108,7 @@
 
 <p>
 <fmt:message key="user.delete.info" />
-<b><a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), "UTF-8") %>"><%= StringUtils.escapeHTMLTags(JID.unescapeNode(user.getUsername())) %></a></b>
+<b><a href="user-properties.jsp?username=<%= URLEncoder.encode(user.getUsername(), StandardCharsets.UTF_8) %>"><%= StringUtils.escapeHTMLTags(JID.unescapeNode(user.getUsername())) %></a></b>
 <fmt:message key="user.delete.info1" />
 </p>
 

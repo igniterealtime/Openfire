@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2005-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@
 <%@ page import="org.xmpp.packet.StreamError" %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.Date" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -41,7 +42,7 @@
     boolean unlock = request.getParameter("unlock") != null;
     boolean lock = request.getParameter("lock") != null;
     String username = ParamUtils.getParameter(request,"username");
-    String usernameUrlEncoded = URLEncoder.encode(username, "UTF-8");
+    String usernameUrlEncoded = URLEncoder.encode(username, StandardCharsets.UTF_8);
     long startdelay = ParamUtils.getLongParameter(request,"startdelay",-1); // -1 is immediate, -2 custom
     long duration = ParamUtils.getLongParameter(request,"duration",-1); // -1 is infinite, -2 custom
     if (startdelay == -2) {

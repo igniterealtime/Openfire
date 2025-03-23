@@ -21,13 +21,14 @@
 <%@ page import="java.net.URLDecoder" %>
 <%@ page import="javax.naming.ldap.Rdn" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="admin" prefix="admin"%>
 
 <%
-    String username = URLDecoder.decode( ParamUtils.getParameter( request, "username"), "UTF-8" );
+    String username = URLDecoder.decode( ParamUtils.getParameter( request, "username"), StandardCharsets.UTF_8);
     String password = ParamUtils.getParameter(request, "password");
     boolean ldap = "true".equals(request.getParameter("ldap"));
 

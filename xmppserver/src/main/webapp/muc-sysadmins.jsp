@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@
 %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.net.URLDecoder" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt"%>
@@ -88,7 +89,7 @@
         if (groupNames != null) {
             // create a group JID for each group
             for (String groupName : groupNames) {
-                GroupJID groupJID = new GroupJID(URLDecoder.decode(groupName, "UTF-8"));
+                GroupJID groupJID = new GroupJID(URLDecoder.decode(groupName, StandardCharsets.UTF_8));
                 allowedJIDs.add(groupJID);
             }
         }
@@ -101,7 +102,7 @@
             mucService.addSysadmins(allowedJIDs);
             // Log the event
             webManager.logEvent("added muc sysadmin permissions for service "+mucname, null);
-            response.sendRedirect("muc-sysadmins.jsp?addsuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
+            response.sendRedirect("muc-sysadmins.jsp?addsuccess=true&mucname="+URLEncoder.encode(mucname, StandardCharsets.UTF_8));
             return;
         }
 
@@ -111,7 +112,7 @@
             // Log the event
             webManager.logEvent("removed muc sysadmin "+userJID+" for service "+mucname, null);
             // done, return
-            response.sendRedirect("muc-sysadmins.jsp?deletesuccess=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
+            response.sendRedirect("muc-sysadmins.jsp?deletesuccess=true&mucname="+URLEncoder.encode(mucname, StandardCharsets.UTF_8));
             return;
         }
 
@@ -120,7 +121,7 @@
             // Log the event
             webManager.logEvent("muc sysadmins for service "+mucname + "now " + (requirePassword ? "cannot" : "can") + " join a password-protected room, without supplying the password.", null);
             // done, return
-            response.sendRedirect("muc-sysadmins.jsp?success=true&mucname="+URLEncoder.encode(mucname, "UTF-8"));
+            response.sendRedirect("muc-sysadmins.jsp?success=true&mucname="+URLEncoder.encode(mucname, StandardCharsets.UTF_8));
             return;
         }
     }
@@ -130,14 +131,14 @@
 <head>
 <title><fmt:message key="groupchat.admins.title"/></title>
 <meta name="subPageID" content="muc-sysadmin"/>
-<meta name="extraParams" content="<%= "mucname="+URLEncoder.encode(mucname, "UTF-8") %>"/>
+<meta name="extraParams" content="<%= "mucname="+URLEncoder.encode(mucname, StandardCharsets.UTF_8) %>"/>
 <meta name="helpPage" content="edit_group_chat_service_administrators.html"/>
 </head>
 <body>
 
 <p>
 <fmt:message key="groupchat.admins.introduction" />
-<fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>"><%= StringUtils.escapeHTMLTags(mucname) %></a></b>
+<fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, StandardCharsets.UTF_8) %>"><%= StringUtils.escapeHTMLTags(mucname) %></a></b>
 </p>
 
 <%  if ("true".equals(request.getParameter("deletesuccess"))) { %>
@@ -183,7 +184,7 @@
         <label for="groupJIDs"><fmt:message key="groupchat.admins.add_group" /></label><br/>
         <select name="groupNames" size="6" multiple style="width:400px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;" id="groupJIDs">
         <%  for (Group g : webManager.getGroupManager().getGroups()) {	%>
-            <option value="<%= URLEncoder.encode(g.getName(), "UTF-8") %>"
+            <option value="<%= URLEncoder.encode(g.getName(), StandardCharsets.UTF_8) %>"
              <%= (StringUtils.contains(groupNames, g.getName()) ? "selected" : "") %>
              ><%= StringUtils.escapeHTMLTags(g.getName()) %></option>
         <%  } %>
@@ -230,7 +231,7 @@
                           </a>
                         </td>
                         <td style="width: 1%; text-align: center">
-                            <a href="muc-sysadmins.jsp?userJID=<%= URLEncoder.encode(jid.toString()) %>&delete=true&mucname=<%= URLEncoder.encode(mucname, "UTF-8") %>&amp;csrf=<%= URLEncoder.encode(csrfParam) %>"
+                            <a href="muc-sysadmins.jsp?userJID=<%= URLEncoder.encode(jid.toString()) %>&delete=true&mucname=<%= URLEncoder.encode(mucname, StandardCharsets.UTF_8) %>&amp;csrf=<%= URLEncoder.encode(csrfParam) %>"
                              title="<fmt:message key="groupchat.admins.dialog.title" />"
                              onclick="return confirm('<fmt:message key="groupchat.admins.dialog.text" />');"
                              ><img src="images/delete-16x16.gif" alt=""></a>

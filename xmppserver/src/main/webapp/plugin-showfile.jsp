@@ -1,5 +1,5 @@
 <%--
-  - Copyright (C) 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 <%@ page import="org.jivesoftware.openfire.container.PluginManager" %>
 <%@ page import="java.nio.file.Path" %>
 <%@ page import="java.io.*" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager"  />
 <%
@@ -48,7 +49,7 @@
 
             if ( filePath.toFile().exists() )
             {
-                try ( final BufferedReader in = new BufferedReader( new InputStreamReader( new FileInputStream( filePath.toFile() ), "UTF8") ) )
+                try ( final BufferedReader in = new BufferedReader( new InputStreamReader( new FileInputStream( filePath.toFile() ), StandardCharsets.UTF_8) ) )
                 {
                     String line;
                     while ((line = in.readLine()) != null)

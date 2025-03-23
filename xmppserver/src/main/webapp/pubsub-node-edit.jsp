@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2017-2023 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -108,7 +109,7 @@
             webManager.logEvent("Configuration updated for " + nodeID, null);
         }
         // Done, so redirect
-        response.sendRedirect( "pubsub-node-edit.jsp?nodeID=" + URLEncoder.encode( nodeID, "UTF-8" ) + "&updateSuccess=true");
+        response.sendRedirect( "pubsub-node-edit.jsp?nodeID=" + URLEncoder.encode( nodeID, StandardCharsets.UTF_8) + "&updateSuccess=true");
         return;
     }
 

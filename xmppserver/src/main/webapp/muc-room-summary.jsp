@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@
 <%@ page import="org.jivesoftware.openfire.muc.MultiUserChatService" %>
 <%@ page import="org.xmpp.packet.JID" %>
 <%@ page import="java.util.stream.Collectors" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -80,7 +81,7 @@
 
 <p>
 <fmt:message key="muc.room.summary.info" />
-<a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucService.getServiceName(), "UTF-8")%>"><%= StringUtils.escapeHTMLTags(mucService.getServiceDomain()) %></a>
+<a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucService.getServiceName(), StandardCharsets.UTF_8)%>"><%= StringUtils.escapeHTMLTags(mucService.getServiceDomain()) %></a>
 <fmt:message key="muc.room.summary.info2" />
 </p>
 
@@ -161,12 +162,12 @@
         </td>
         <td style="width: 45%; vertical-align: middle">
             <% if (room.getName().equals(room.getNaturalLanguageName())) { %>
-                 <a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>" title="<fmt:message key="global.click_edit" />">
+                 <a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), StandardCharsets.UTF_8) %>" title="<fmt:message key="global.click_edit" />">
                      <%=  StringUtils.escapeHTMLTags(room.getName()) %>
                  </a>
             <% }
                else { %>
-                <a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"title="<fmt:message key="global.click_edit" />">
+                <a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), StandardCharsets.UTF_8) %>" title="<fmt:message key="global.click_edit" />">
                 <%= StringUtils.escapeHTMLTags(room.getNaturalLanguageName()) %> (<%=  StringUtils.escapeHTMLTags(room.getName()) %>)
                 </a>
             <% } %>
@@ -197,12 +198,12 @@
             <% } %>
         </td>
         <td style="width: 1%; text-align: center">
-            <a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"
+            <a href="muc-room-edit-form.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), StandardCharsets.UTF_8) %>"
              title="<fmt:message key="global.click_edit" />"
              ><img src="images/edit-16x16.gif" alt="Edit"></a>
         </td>
         <td style="width: 1%; text-align: center; border-right:1px #ccc solid;">
-            <a href="muc-room-delete.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), "UTF-8") %>"
+            <a href="muc-room-delete.jsp?roomJID=<%= URLEncoder.encode(room.getJID().toBareJID(), StandardCharsets.UTF_8) %>"
              title="<fmt:message key="global.click_delete" />"
              ><img src="images/delete-16x16.gif" alt="Delete"></a>
         </td>

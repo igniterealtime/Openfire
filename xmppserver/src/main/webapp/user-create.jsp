@@ -33,6 +33,7 @@
 <%@ page import="org.jivesoftware.openfire.group.GroupNotFoundException" %>
 <%@ page import="org.jivesoftware.openfire.group.Group" %>
 <%@ page import="org.slf4j.LoggerFactory" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -160,7 +161,7 @@
                 }
                 else {
                     response.sendRedirect("user-properties.jsp?success=true&username=" +
-                            URLEncoder.encode(newUser.getUsername(), "UTF-8"));
+                            URLEncoder.encode(newUser.getUsername(), StandardCharsets.UTF_8));
                 }
                 return;
             }

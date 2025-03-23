@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.jivesoftware.util.StringUtils;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Utility functions that are exposed through a taglib.
@@ -80,15 +81,7 @@ public class JSTLFunctions
      */
     public static String urlEncode( String string )
     {
-        try
-        {
-            return URLEncoder.encode( string, "UTF-8" );
-        }
-        catch ( UnsupportedEncodingException e )
-        {
-            // Should never occur, as UTF-8 encoding is mantdatory to implement for any JRE.
-            throw new IllegalStateException( "Unable to URL-encode string: " + string, e );
-        }
+        return URLEncoder.encode( string, StandardCharsets.UTF_8);
     }
 
     /**
@@ -100,15 +93,7 @@ public class JSTLFunctions
      */
     public static String urlDecode( String string )
     {
-        try
-        {
-            return URLDecoder.decode( string, "UTF-8" );
-        }
-        catch ( UnsupportedEncodingException e )
-        {
-            // Should never occur, as UTF-8 encoding is mandatory to implement for any JRE.
-            throw new IllegalStateException( "Unable to URL-decode string: " + string, e );
-        }
+        return URLDecoder.decode( string, StandardCharsets.UTF_8);
     }
 
     /**

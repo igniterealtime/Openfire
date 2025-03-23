@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -360,12 +360,12 @@
             %>
               <tr class="<%= (isLocalMember ? "local" : "") %>" style="vertical-align: middle">
                   <td style="width: 1%; text-align: center">
-                      <a href="plugins/<%= CacheFactory.getPluginName() %>/system-clustering-node.jsp?UID=<%= URLEncoder.encode(nodeID, StandardCharsets.UTF_8.name()) %>"
+                      <a href="plugins/<%= CacheFactory.getPluginName() %>/system-clustering-node.jsp?UID=<%= URLEncoder.encode(nodeID, StandardCharsets.UTF_8) %>"
                        title="Click for more details"
                        ><img src="images/server-network-24x24.gif" width="24" height="24" alt=""></a>
                   </td>
                   <td class="jive-description" style="width: 1%; white-space: nowrap; vertical-align: middle">
-                      <a href="plugins/<%= CacheFactory.getPluginName() %>/system-clustering-node.jsp?UID=<%= URLEncoder.encode(nodeID, StandardCharsets.UTF_8.name()) %>">
+                      <a href="plugins/<%= CacheFactory.getPluginName() %>/system-clustering-node.jsp?UID=<%= URLEncoder.encode(nodeID, StandardCharsets.UTF_8) %>">
                       <%  if (isLocalMember) { %>
                           <b><%= nodeInfo.getHostName() %></b>
                       <%  } else { %>

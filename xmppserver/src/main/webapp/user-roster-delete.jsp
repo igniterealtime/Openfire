@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2005-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
     errorPage="error.jsp"
 %>
 <%@ page import="org.jivesoftware.openfire.roster.Roster" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -34,7 +35,7 @@
     boolean cancel = request.getParameter("cancel") != null;
     boolean delete = request.getParameter("delete") != null;
     String username = ParamUtils.getParameter(request, "username");
-    String usernameUrlEncoded = URLEncoder.encode(username, "UTF-8");
+    String usernameUrlEncoded = URLEncoder.encode(username, StandardCharsets.UTF_8);
     String jid = ParamUtils.getParameter(request, "jid");
 
     pageContext.setAttribute( "username", username);

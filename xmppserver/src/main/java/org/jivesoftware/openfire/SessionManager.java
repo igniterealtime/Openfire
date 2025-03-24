@@ -284,7 +284,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // OF-1923: Only close the session if it has not been replaced by another session (if the session
         // has been replaced, then the condition below will compare to distinct instances). This *should* not
         // occur (but has been observed, prior to the fix of OF-1923). This check is left in as a safeguard.
-        if (session == routingTable.getClientRoute(session.getAddress())) {
+        final ClientSession currentSession = routingTable.getClientRoute(session.getAddress());
+        if (session == currentSession) {
             try {
                 if ((clientSession.getPresence().isAvailable() || !clientSession.wasAvailable()) &&
                     routingTable.hasClientRoute(session.getAddress())) {
@@ -303,7 +304,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                 removeSession(clientSession);
             }
         } else {
-            Log.warn("Not removing detached session '{}' ({}) that appears to have been replaced by another session.", session.getAddress(), session.getStreamID());
+            // This could be the start of data state inconsistency. See OF-3044.
+            Log.warn("Not removing detached session '{}' ({}) that appears to have been replaced by another session. New session: {} - original session {}", session.getAddress(), session.getStreamID(), currentSession, session);
         }
     }
 

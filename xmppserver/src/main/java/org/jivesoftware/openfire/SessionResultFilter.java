@@ -17,10 +17,13 @@
 package org.jivesoftware.openfire;
 
 import org.jivesoftware.openfire.session.ClientSession;
+import org.xmpp.packet.JID;
 
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * Filters and sorts lists of sessions. This allows for a very rich set of possible
@@ -210,25 +213,41 @@ public class SessionResultFilter {
     /**
      * Compares sessions according to sort fields.
      *
+     * Instances of this comparator retain a snapshot of the state of objects it is comparing. An instance of this
+     * comparator should therefor be discarded after use.
+     *
      * @author Iain Shigeoka
      */
     private class SessionComparator implements Comparator<ClientSession> {
 
+        // For session data that is mutable, store and use a snapshot of the value when first observed during the
+        // comparison. When values change during the comparison, the comparison will throw an exception (OF-3049).
+        // Additionally, this will speed up things when otherwise cluster tasks are repeatedly executed to obtain the
+        // values that are used in the computation (OF-3048).
+        final ConcurrentMap<JID, Long> snapshotsOfMutableData = new ConcurrentHashMap<>();
+
         @Override
         public int compare(ClientSession lhs, ClientSession rhs) {
             int comparison;
+            final Long lhv, rhv;
             switch (sortField) {
                 case SessionResultFilter.SORT_CREATION_DATE:
                     comparison = lhs.getCreationDate().compareTo(rhs.getCreationDate());
                     break;
                 case SessionResultFilter.SORT_LAST_ACTIVITY_DATE:
-                    comparison = lhs.getLastActiveDate().compareTo(rhs.getLastActiveDate());
+                    lhv = snapshotsOfMutableData.computeIfAbsent(lhs.getAddress(), (jid) -> lhs.getLastActiveDate() == null ? 0 : lhs.getLastActiveDate().getTime());
+                    rhv = snapshotsOfMutableData.computeIfAbsent(rhs.getAddress(), (jid) -> rhs.getLastActiveDate() == null ? 0 : rhs.getLastActiveDate().getTime());
+                    comparison = lhv.compareTo(rhv);
                     break;
                 case SessionResultFilter.SORT_NUM_CLIENT_PACKETS:
-                    comparison = (int)(lhs.getNumClientPackets() - rhs.getNumClientPackets());
+                    lhv = snapshotsOfMutableData.computeIfAbsent(lhs.getAddress(), (jid) -> lhs.getNumClientPackets());
+                    rhv = snapshotsOfMutableData.computeIfAbsent(rhs.getAddress(), (jid) -> rhs.getNumClientPackets());
+                    comparison = Long.compare(lhv, rhv);
                     break;
                 case SessionResultFilter.SORT_NUM_SERVER_PACKETS:
-                    comparison = (int)(lhs.getNumServerPackets() - rhs.getNumServerPackets());
+                    lhv = snapshotsOfMutableData.computeIfAbsent(lhs.getAddress(), (jid) -> lhs.getNumServerPackets());
+                    rhv = snapshotsOfMutableData.computeIfAbsent(rhs.getAddress(), (jid) -> rhs.getNumServerPackets());
+                    comparison = Long.compare(lhv, rhv);
                     break;
                 case SessionResultFilter.SORT_USER:
                     // sort first by name, then by resource

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -222,7 +222,7 @@ public class SessionResultFilter {
                     comparison = lhs.getCreationDate().compareTo(rhs.getCreationDate());
                     break;
                 case SessionResultFilter.SORT_LAST_ACTIVITY_DATE:
-                    comparison = lhs.getLastActiveDate().compareTo(rhs.getCreationDate());
+                    comparison = lhs.getLastActiveDate().compareTo(rhs.getLastActiveDate());
                     break;
                 case SessionResultFilter.SORT_NUM_CLIENT_PACKETS:
                     comparison = (int)(lhs.getNumClientPackets() - rhs.getNumClientPackets());

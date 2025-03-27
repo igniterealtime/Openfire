@@ -235,17 +235,7 @@
         <dependency>
             <groupId>org.igniterealtime</groupId>
             <artifactId>tinder</artifactId>
-            <version>2.0.0</version>
-            <exclusions>
-                <exclusion> <!-- Exclude the older SLF4J dependency that's defined in Tinder -->
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
-                </exclusion>
-                <exclusion> <!-- Exclude the older dom4j dependency that's defined in Tinder -->
-                    <groupId>dom4j</groupId>
-                    <artifactId>dom4j</artifactId>
-                </exclusion>
-            </exclusions>
+            <version>2.1.0</version>
         </dependency>
 
         <!-- XML, Dom4J, XPP -->

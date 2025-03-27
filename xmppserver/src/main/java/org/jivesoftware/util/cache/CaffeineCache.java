@@ -355,7 +355,7 @@ public class CaffeineCache<K extends Serializable, V extends Serializable> imple
     @Override
     public V get( final Object key )
     {
-        return cache.getIfPresent( key );
+        return cache.getIfPresent((K) key);
     }
 
     /**
@@ -423,8 +423,8 @@ public class CaffeineCache<K extends Serializable, V extends Serializable> imple
     @Override
     public V remove( final Object key )
     {
-        final V old = cache.getIfPresent( key );
-        cache.invalidate( key );
+        final V old = cache.getIfPresent((K) key);
+        cache.invalidate((K) key);
         return old;
     }
 

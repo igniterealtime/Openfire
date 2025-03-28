@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -54,12 +54,12 @@
     boolean canChangePassword = ParamUtils.getBooleanParameter(request, "canChangePassword");
     boolean anonLogin = ParamUtils.getBooleanParameter(request, "anonLogin");
     boolean futureUsersEnabled = ParamUtils.getBooleanParameter(request, "futureUsersEnabled");
-    String deleteBlockedIP = request.getParameter("deleteBlockedIP");
-    String deleteAllowedIP = request.getParameter("deleteAllowedIP");
-    String deleteAllowedAnonymIP = request.getParameter("deleteAllowedAnonymIP");
-    String blockValue = request.getParameter("blockValue");
-    String allowValue = request.getParameter("allowValue");
-    String allowAnonymValue = request.getParameter("allowAnonymValue");
+    String deleteBlockedIP = ParamUtils.getParameter(request, "deleteBlockedIP");
+    String deleteAllowedIP = ParamUtils.getParameter(request, "deleteAllowedIP");
+    String deleteAllowedAnonymIP = ParamUtils.getParameter(request, "deleteAllowedAnonymIP");
+    String blockValue = ParamUtils.getParameter(request, "blockValue");
+    String allowValue = ParamUtils.getParameter(request, "allowValue");
+    String allowAnonymValue = ParamUtils.getParameter(request, "allowAnonymValue");
 
     final Map<String, Object> errors = new HashMap<>();
 
@@ -201,7 +201,7 @@
 <fmt:message key="reg.settings.info" />
 </p>
 
-<form action="reg-settings.jsp">
+<form action="reg-settings.jsp" method="post">
     <input type="hidden" name="csrf" value="${csrf}">
 
     <c:choose>
@@ -319,20 +319,17 @@
 
         <br/>
 
-        <form action="reg-settings.jsp" method="post">
-            <input type="hidden" name="csrf" value="${csrf}">
-            <table>
-                <tr>
-                    <td style="width: 1%; white-space: nowrap">
-                        <b><label for="blockValue"><fmt:message key="reg.settings.block-value" /></label></b>
-                    </td>
-                    <td>
-                        <input type="text" size="40" name="blockValue" id="blockValue" value="${fn:escapeXml(blockValue)}" ${not empty errors.blockValue ? 'autofocus style=\'background-color: #ffdddd;\'' :''}/>
-                        <input type="submit" name="addBlockedIP" value="<fmt:message key="global.add" />">
-                    </td>
-                </tr>
-            </table>
-        </form>
+        <table>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
+                    <b><label for="blockValue"><fmt:message key="reg.settings.block-value" /></label></b>
+                </td>
+                <td>
+                    <input type="text" size="40" name="blockValue" id="blockValue" value="${fn:escapeXml(blockValue)}" ${not empty errors.blockValue ? 'autofocus style=\'background-color: #ffdddd;\'' :''}/>
+                    <input type="submit" name="addBlockedIP" value="<fmt:message key="global.add" />">
+                </td>
+            </tr>
+        </table>
 
         <br>
 
@@ -370,20 +367,17 @@
 
         <br/>
 
-        <form action="reg-settings.jsp" method="post">
-            <input type="hidden" name="csrf" value="${csrf}">
-            <table>
-                <tr>
-                    <td style="width: 1%; white-space: nowrap">
-                        <b><label for="allowValue"><fmt:message key="reg.settings.allow-value" /></label></b>
-                    </td>
-                    <td>
-                        <input type="text" size="40" name="allowValue" id="allowValue" value="${fn:escapeXml(allowValue)}" ${not empty errors.allowValue ? 'autofocus style=\'background-color: #ffdddd;\'' :''}/>
-                        <input type="submit" name="addAllowedIP" value="<fmt:message key="global.add" />">
-                    </td>
-                </tr>
-            </table>
-        </form>
+        <table>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
+                    <b><label for="allowValue"><fmt:message key="reg.settings.allow-value" /></label></b>
+                </td>
+                <td>
+                    <input type="text" size="40" name="allowValue" id="allowValue" value="${fn:escapeXml(allowValue)}" ${not empty errors.allowValue ? 'autofocus style=\'background-color: #ffdddd;\'' :''}/>
+                    <input type="submit" name="addAllowedIP" value="<fmt:message key="global.add" />">
+                </td>
+            </tr>
+        </table>
 
         <br/>
 
@@ -420,20 +414,17 @@
 
         <br/>
 
-        <form action="reg-settings.jsp" method="post">
-            <input type="hidden" name="csrf" value="${csrf}">
-            <table>
-                <tr>
-                    <td style="width: 1%; white-space: nowrap">
-                        <b><label for="allowAnonymValue"><fmt:message key="reg.settings.allow-value" /></label></b>
-                    </td>
-                    <td>
-                        <input type="text" size="40" name="allowAnonymValue" id="allowAnonymValue" value="${fn:escapeXml(allowAnonymValue)}" ${not empty errors.allowAnonymValue ? 'autofocus style=\'background-color: #ffdddd;\'' :''}/>
-                        <input type="submit" name="addAllowedAnonymIP" value="<fmt:message key="global.add" />">
-                    </td>
-                </tr>
-            </table>
-        </form>
+        <table>
+            <tr>
+                <td style="width: 1%; white-space: nowrap">
+                    <b><label for="allowAnonymValue"><fmt:message key="reg.settings.allow-value" /></label></b>
+                </td>
+                <td>
+                    <input type="text" size="40" name="allowAnonymValue" id="allowAnonymValue" value="${fn:escapeXml(allowAnonymValue)}" ${not empty errors.allowAnonymValue ? 'autofocus style=\'background-color: #ffdddd;\'' :''}/>
+                    <input type="submit" name="addAllowedAnonymIP" value="<fmt:message key="global.add" />">
+                </td>
+            </tr>
+        </table>
 
     </admin:contentBox>
 

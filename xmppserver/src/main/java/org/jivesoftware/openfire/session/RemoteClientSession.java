@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2009 Jive Software, 2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2007-2009 Jive Software, 2021-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,9 @@ import java.io.ObjectOutput;
 
 public class RemoteClientSession extends RemoteSession implements ClientSession {
 
+    // Cache content that never changes
     private long initialized = -1;
+    private Boolean isAnonymous = null;
 
     public RemoteClientSession(byte[] nodeID, JID address) {
         super(nodeID, address);
@@ -80,7 +82,11 @@ public class RemoteClientSession extends RemoteSession implements ClientSession 
     }
 
     public boolean isAnonymousUser() {
-        return SessionManager.getInstance().isAnonymousRoute(getAddress());
+        // Get it once and cache it since it never changes.
+        if (isAnonymous == null) {
+            isAnonymous = SessionManager.getInstance().isAnonymousRoute(getAddress());
+        }
+        return isAnonymous;
     }
 
     public boolean isInitialized() {

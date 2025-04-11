@@ -54,7 +54,7 @@
         <ul>
             <li>Openfire is configured to use an embedded database, which requires no setup</li>
             <li>an administrative account is created using the username 'admin' and password 'admin'</li>
-            <li>two users are automatically created: 'jane' and 'john', both using the value 'secret' as their password, and who are on each other's contact list</li>
+            <li>three users are automatically created: 'jane', 'john' and 'juan', all using the value 'secret' as their password, and who are on each other's contact list</li>
             <li>the XMPP domain name is configured to be 'example.org' (for ease of use, configure 'example.org' to be an alias of '127.0.0.1' in your hosts file!)</li>
         </ul>
         <p>
@@ -68,8 +68,8 @@
         <p>
             That is all! You should now be able to use Openfire! It's administrative console is accessible via a browser
             on <a href="http://localhost:9090">http://localhost:9090</a> (the credentials are 'admin'/'admin'). An XMPP
-            client can be used to log into the server on the default ports (eg: 5222) using both the 'jane@example.org'
-            and 'john@example.org' accounts (password: 'secret').
+            client can be used to log into the server on the default ports (eg: 5222) using any of the 'jane@example.org',
+            'john@example.org' and 'juan@exaple.org' accounts (password: 'secret').
         </p>
         <p>
             There's one caveat: in demoboot-mode, the TLS certificates that are used are self-signed. Some software

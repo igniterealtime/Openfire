@@ -35,6 +35,10 @@
                       <jid>jane@example.org</jid>
                       <nickname>Jane</nickname>
                   </item1>
+                  <item2>
+                      <jid>juan@example.org</jid>
+                      <nickname>Juan</nickname>
+                  </item2>
               </roster>
           </user1>
           <user2>
@@ -47,8 +51,28 @@
                       <jid>john@example.org</jid>
                       <nickname>John</nickname>
                   </item1>
+                  <item2>
+                      <jid>juan@example.org</jid>
+                      <nickname>Juan</nickname>
+                  </item2>
               </roster>
           </user2>
+          <user3>
+              <username>juan</username>
+              <password>secret</password>
+              <name>Juan Doe</name>
+              <email>juan.doe@example.com</email>
+              <roster>
+                  <item1>
+                      <jid>john@example.org</jid>
+                      <nickname>John</nickname>
+                  </item1>
+                  <item2>
+                      <jid>jane@example.org</jid>
+                      <nickname>Jane</nickname>
+                  </item2>
+              </roster>
+          </user3>
       </users>
   </autosetup>
 </jive>

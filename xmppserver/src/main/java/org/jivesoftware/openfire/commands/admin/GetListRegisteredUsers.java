@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2024-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,7 +100,7 @@ public class GetListRegisteredUsers extends AdHocCommand {
         field.setVariable("registereduserjids");
 
         // Get list of users (i.e. bareJIDs) that are registered on the server
-        final Collection<User> users = UserManager.getInstance().getUsers(0, maxItems);
+        final Collection<User> users = UserManager.getInstance().getUsers(0, maxItems == -1 ? Integer.MAX_VALUE : maxItems);
 
         // Add users to the result
         for (User user : users) {

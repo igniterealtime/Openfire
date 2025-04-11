@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,48 +27,70 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
+import org.xmpp.packet.PacketError;
 import org.xmpp.packet.PacketError.Condition;
 import org.xmpp.resultsetmanagement.ResultSet;
 import org.xmpp.resultsetmanagement.ResultSetImpl;
 
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
- * This class adds support for the search functionality for MUC rooms as identified by
- * the 'https://xmlns.zombofant.net/muclumbus/search/1.0' namespace.
+ * This class adds support for the search functionality for MUC rooms as defined in XEP-0433: Extended Channel Search.
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
- * @see <a href="https://search.jabbercat.org/docs/api">https://search.jabbercat.org/docs/api</a>
- * @deprecated The protocol defined herein was formalized (with minor changes) as XEP-0433, which is implemented in {@link IQExtendedChannelSearchHandler}
+ * @see <a href="https://xmpp.org/extensions/xep-0433.html">XEP-0433: Extended Channel Search</a>
  */
-@Deprecated(since = "5.0.0", forRemoval = true) // Remove in or after 5.1.0.
-public class IQMuclumbusSearchHandler
+public class IQExtendedChannelSearchHandler
 {
+    private static final Logger Log = LoggerFactory.getLogger( IQExtendedChannelSearchHandler.class );
+
+    public static final String VAR_ALL = "all";
     public static final String VAR_SINNAME = "sinname";
-    private static final Logger Log = LoggerFactory.getLogger( IQMuclumbusSearchHandler.class );
     public static final String VAR_Q = "q";
     public static final String VAR_SINDESCRIPTION = "sindescription";
-    public static final String VAR_SINDADDR = "sinaddr";
+    public static final String VAR_SINADDRESS = "sinaddress";
     public static final String VAR_MIN_USERS = "min_users";
     public static final String VAR_KEY = "key";
+    public static final String ERRORMESSAGE_UNSUPPORTED_KEY_VALUE = "Unsupported 'key' value";
 
-    public static SystemProperty<Boolean> PROPERTY_ENABLED = SystemProperty.Builder.ofType( Boolean.class )
-        .setKey( "xmpp.muc.muclumbus.v1-0.enabled" )
+    public static SystemProperty<Boolean> PROPERTY_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.muc.extendedchannelsearch.enabled")
         .setDynamic( true )
-        .setDefaultValue( false ) // As this service is now deprecated, disable it by default.
+        .setDefaultValue( true )
         .build();
 
     public static final String REQUEST_ELEMENT_NAME = "search";
     public static final String RESPONSE_ELEMENT_NAME = "result";
-    public static final String NAMESPACE = "https://xmlns.zombofant.net/muclumbus/search/1.0";
+    public static final String NAMESPACE = "urn:xmpp:channel-search:0:search";
+    public static final String SEARCH_FORM_TYPE = "urn:xmpp:channel-search:0:search-params";
 
     public enum Key
     {
-        nusers,
-        address
+        nusers("{urn:xmpp:channel-search:0:order}nusers"),
+        address("{urn:xmpp:channel-search:0:order}address");
+
+        private final String xmlRepresentation;
+
+        Key(String xmlRepresentation)
+        {
+            this.xmlRepresentation = xmlRepresentation;
+        }
+
+        public String getXmlRepresentation()
+        {
+            return xmlRepresentation;
+        }
+
+        public static Key byXmlRepresentation(final String xmlRepresentation) {
+            for (final Key key : values()) {
+                if (key.xmlRepresentation.equals(xmlRepresentation)) {
+                    return key;
+                }
+            }
+            throw new IllegalArgumentException("Not a valid value: " + xmlRepresentation);
+        }
     }
 
     /**
@@ -81,7 +103,7 @@ public class IQMuclumbusSearchHandler
      *
      * @param mucService The server for which to return search results.
      */
-    public IQMuclumbusSearchHandler( MultiUserChatService mucService )
+    public IQExtendedChannelSearchHandler(MultiUserChatService mucService )
     {
         this.mucService = mucService;
     }
@@ -90,18 +112,24 @@ public class IQMuclumbusSearchHandler
      * Utility method that returns a 'search' child element filled
      * with a blank dataform.
      *
-     * @return Element, named 'search', escaped by the 'https://xmlns.zombofant.net/muclumbus/search/1.0' namespace, filled with a blank dataform.
+     * @return Element, named 'search', escaped by the 'urn:xmpp:channel-search:0:search' namespace, filled with a blank dataform.
      */
     private static Element getDataElement()
     {
         final DataForm searchForm = new DataForm( DataForm.Type.form );
         searchForm.setTitle( "Chat Rooms Search" );
-        searchForm.addInstruction( "Instructions" );
+        searchForm.addInstruction( "Use this form the query for chat rooms on the server. Note that the 'return all' and 'search for' options are mutually exclusive." );
 
         final FormField typeFF = searchForm.addField();
         typeFF.setVariable( "FORM_TYPE" );
         typeFF.setType( FormField.Type.hidden );
-        typeFF.addValue( NAMESPACE + "#params" );
+        typeFF.addValue( SEARCH_FORM_TYPE );
+
+        final FormField qAll = searchForm.addField();
+        qAll.setVariable( VAR_ALL );
+        qAll.setType( FormField.Type.boolean_type );
+        qAll.setLabel( "Return all entries" );
+        qAll.setRequired( false );
 
         final FormField qFF = searchForm.addField();
         qFF.setVariable( VAR_Q );
@@ -112,38 +140,34 @@ public class IQMuclumbusSearchHandler
         final FormField sinnameFF = searchForm.addField();
         sinnameFF.setVariable( VAR_SINNAME );
         sinnameFF.setType( FormField.Type.boolean_type );
-        sinnameFF.setLabel( "Search in name?" );
+        sinnameFF.setLabel( "Search in name" );
         sinnameFF.setRequired( false );
-        sinnameFF.addValue( true );
 
         final FormField sindescriptionFF = searchForm.addField();
         sindescriptionFF.setVariable( VAR_SINDESCRIPTION );
         sindescriptionFF.setType( FormField.Type.boolean_type );
-        sindescriptionFF.setLabel( "Search in description?" );
+        sindescriptionFF.setLabel( "Search in description" );
         sindescriptionFF.setRequired( false );
-        sindescriptionFF.addValue( true );
 
         final FormField sinaddr = searchForm.addField();
-        sinaddr.setVariable( VAR_SINDADDR );
+        sinaddr.setVariable(VAR_SINADDRESS);
         sinaddr.setType( FormField.Type.boolean_type );
-        sinaddr.setLabel( "Search in address?" );
+        sinaddr.setLabel( "Search in address" );
         sinaddr.setRequired( false );
-        sinaddr.addValue( true );
 
         final FormField minUsersFF = searchForm.addField();
         minUsersFF.setVariable( VAR_MIN_USERS );
         minUsersFF.setType( FormField.Type.text_single );
         minUsersFF.setLabel( "Minimum number of users" );
         minUsersFF.setRequired( false );
-        minUsersFF.addValue( 1 );
 
         final FormField keyFF = searchForm.addField();
         keyFF.setVariable( VAR_KEY );
         keyFF.setType( FormField.Type.list_single );
         keyFF.setLabel( "Sort results by" );
         keyFF.setRequired( false );
-        keyFF.addOption( "Number of online users", Key.nusers.name() );
-        keyFF.addOption( "Address", Key.address.name() );
+        keyFF.addOption( "Number of online users", Key.nusers.getXmlRepresentation() );
+        keyFF.addOption( "Address", Key.address.getXmlRepresentation() );
         keyFF.addValue( Key.address.name() );
 
         final Element result = DocumentHelper.createElement( QName.get( REQUEST_ELEMENT_NAME, NAMESPACE ) );
@@ -187,17 +211,70 @@ public class IQMuclumbusSearchHandler
         catch ( IllegalArgumentException | ParseException e )
         {
             Log.debug( "Unable to parse search parameters from request.", e );
-            reply.setError( Condition.bad_request );
+            if (e.getMessage().startsWith(ERRORMESSAGE_UNSUPPORTED_KEY_VALUE)) {
+                reply.setError(new PacketError(Condition.feature_not_implemented, PacketError.Type.modify, "The sort key that was provided is not recognized."));
+                reply.getError().setApplicationCondition("invalid-sort-key", "urn:xmpp:channel-search:0:error");
+            } else {
+                reply.setError(new PacketError(Condition.bad_request, PacketError.Type.modify, "Unable to successfully parse the search parameters from the provided form."));
+            }
+            return reply;
+        }
+
+        final Set<String> conflictingFields = getConflictingFields(params);
+        if (!conflictingFields.isEmpty()) {
+            Log.debug("Request from {} contained conflicting fields: {}", iq.getFrom(), String.join(", ", conflictingFields) );
+            final PacketError error = new PacketError(Condition.bad_request, PacketError.Type.modify, "These fields cannot be used in the same request: '" + String.join("', '", conflictingFields) + "'.", "en");
+            final Element fields = error.getElement().addElement("conflicting-fields", "urn:xmpp:channel-search:0:error");
+            for (final String conflictingField : conflictingFields) {
+                fields.addElement("var").setText(conflictingField);
+            }
+            reply.setError(error);
+            return reply;
+        }
+
+        final Map<String, Set<String>> missingFields = getMissingFields(params);
+        if (!missingFields.isEmpty()) {
+            Log.debug("Request from {} contained missing fields: {}", iq.getFrom(), String.join(", ", missingFields.keySet()) );
+            final PacketError error = new PacketError(Condition.bad_request, PacketError.Type.modify, "Some fields cannot be used without specifying other fields. Please add: '" + String.join("', '", missingFields.keySet())+"' or remove: '" + missingFields.values().stream().flatMap(Collection::stream).collect(Collectors.joining("', '")) + "'.", "en");
+            final Element fields = error.getElement().addElement("conflicting-fields", "urn:xmpp:channel-search:0:error");
+            for (final Collection<String> dependants : missingFields.values()) {
+                for (String dependant : dependants) {
+                    fields.addElement("var").setText(dependant);
+                }
+            }
+            reply.setError(error);
+            return reply;
+        }
+
+        if ((params.getAll() == null || !params.getAll()) && (params.getQ() == null || params.getQ().isEmpty())) {
+            Log.debug("Request from {} didn't contain any search conditions.", iq.getFrom());
+            final PacketError error = new PacketError(Condition.bad_request, PacketError.Type.cancel, "A search request needs to contain a search condition. Please add either 'q' or 'all'.", "en");
+            error.setApplicationCondition("no-search-conditions", "urn:xmpp:channel-search:0:error");
+            reply.setError(error);
             return reply;
         }
 
         // Search for chatrooms matching the request params.
         List<MUCRoomSearchInfo> mucs = searchForChatrooms( params );
 
-        mucs = switch (params.getKey()) {
-            case nusers  -> sortByUserAmount(mucs);
-            case address -> sortByAddress(mucs);
-        };
+        final Key key;
+        if (params.getKey() != null ) {
+            // Use the value provided by the client.
+            key = params.getKey();
+        } else {
+            // Use the default key defined by the server.
+            key = Key.valueOf(new DataForm(getDataElement().element(QName.get(DataForm.ELEMENT_NAME, DataForm.NAMESPACE))).getField(VAR_KEY).getFirstValue());
+        }
+
+        switch (key) {
+            case nusers:
+                mucs = sortByUserAmount(mucs);
+                break;
+
+            case address:
+                mucs = sortByAddress(mucs);
+                break;
+        }
 
         final ResultSet<MUCRoomSearchInfo> searchResults = new ResultSetImpl<>( mucs );
 
@@ -237,10 +314,7 @@ public class IQMuclumbusSearchHandler
 
         final Element res = generateResultElement( mucrsm );
 
-        if ( applyRSM )
-        {
-            res.add( searchResults.generateSetElementFromResults( mucrsm ) );
-        }
+        res.add( searchResults.generateSetElementFromResults( mucrsm ) );
 
         reply.setChildElement( res );
 
@@ -254,6 +328,16 @@ public class IQMuclumbusSearchHandler
         final SearchParameters result = new SearchParameters();
 
         final DataForm df = new DataForm( formElement );
+        final FormField allFF = df.getField( VAR_ALL );
+        if ( allFF != null )
+        {
+            final String b = allFF.getFirstValue();
+            if ( b != null )
+            {
+                result.setAll( DataForm.parseBoolean( b ) );
+            }
+        }
+
         final FormField qFF = df.getField( VAR_Q );
         if ( qFF != null )
         {
@@ -280,7 +364,7 @@ public class IQMuclumbusSearchHandler
             }
         }
 
-        final FormField sinaddrFF = df.getField( VAR_SINDADDR );
+        final FormField sinaddrFF = df.getField(VAR_SINADDRESS);
         if ( sinaddrFF != null )
         {
             final String b = sinaddrFF.getFirstValue();
@@ -306,7 +390,11 @@ public class IQMuclumbusSearchHandler
             final String k = keyFF.getFirstValue();
             if ( k != null )
             {
-                result.setKey( Key.valueOf( k ) );
+                try {
+                    result.setKey(Key.byXmlRepresentation(k));
+                } catch (IllegalArgumentException e) {
+                    throw new IllegalArgumentException(ERRORMESSAGE_UNSUPPORTED_KEY_VALUE + ": " + k, e);
+                }
             }
         }
 
@@ -323,12 +411,15 @@ public class IQMuclumbusSearchHandler
         {
             boolean find = false;
 
-            if ( params.getQ() != null && !params.getQ().isEmpty() )
+            if ( params.getAll() != null && params.getAll() ) {
+                find = true;
+            }
+            else if ( params.getQ() != null && !params.getQ().isEmpty() )
             {
                 final List<String> qs = StringUtils.shellSplit( params.getQ() );
 
                 final String naturalLanguageName = room.getNaturalLanguageName();
-                if ( params.isSinname() && naturalLanguageName != null )
+                if ( params.isSinname() != null && params.isSinname() && naturalLanguageName != null )
                 {
                     if ( qs.stream().allMatch( naturalLanguageName::contains ) )
                     {
@@ -337,7 +428,7 @@ public class IQMuclumbusSearchHandler
                 }
 
                 final String description = room.getDescription();
-                if ( !find && params.isSindescription() && description != null )
+                if ( !find && params.isSindescription() != null && params.isSindescription() && description != null )
                 {
                     if ( qs.stream().allMatch( description::contains ) )
                     {
@@ -346,7 +437,7 @@ public class IQMuclumbusSearchHandler
                 }
 
                 final String address = room.getJID().toString();
-                if ( !find && params.isSinaddr() && address != null )
+                if ( !find && params.isSinaddr() != null && params.isSinaddr() && address != null )
                 {
                     if ( qs.stream().allMatch( address::contains ) )
                     {
@@ -360,7 +451,7 @@ public class IQMuclumbusSearchHandler
                 find = true;
             }
 
-            if ( room.getOccupantsCount() < params.getMinUsers() )
+            if ( params.getMinUsers() != null && room.getOccupantsCount() < params.getMinUsers() )
             {
                 find = false;
             }
@@ -427,7 +518,8 @@ public class IQMuclumbusSearchHandler
 
     /**
      * Sorts the provided list in such a way that the MUC with the most users
-     * will be the first one in the list.
+     * will be the first one in the list. Rooms with equal amounts of users
+     * are ordered by JID.
      *
      * @param mucs The unordered list that will be sorted.
      * @return The sorted list of MUC rooms.
@@ -435,7 +527,7 @@ public class IQMuclumbusSearchHandler
     public static List<MUCRoomSearchInfo> sortByUserAmount( List<MUCRoomSearchInfo> mucs )
     {
         Log.trace( "Sorting by occupant count." );
-        mucs.sort( ( o1, o2 ) -> o2.getOccupantsCount() - o1.getOccupantsCount() );
+        mucs.sort( Comparator.comparing(MUCRoomSearchInfo::getOccupantsCount).reversed().thenComparing(MUCRoomSearchInfo::getJID) );
         return mucs;
     }
 
@@ -460,14 +552,71 @@ public class IQMuclumbusSearchHandler
         return room.isPublicRoom();
     }
 
+    static Set<String> getConflictingFields(final SearchParameters form) {
+        final Set<String> result = new HashSet<>();
+        if (form.getAll() != null && form.getAll()) {
+            if (form.getQ() != null && !form.getQ().isEmpty()) {
+                // Mark 'all' and 'q' as conflict (but don't report any fields associated with 'q', to avoid confusion).
+                result.add(VAR_ALL);
+                result.add(VAR_Q);
+            } else {
+                // 'all' cannot be combined with fields that require 'q' (even if 'q' itself is not present).
+                if (form.isSindescription() != null) {
+                    result.add(VAR_ALL);
+                    result.add(VAR_SINDESCRIPTION);
+                }
+                if (form.isSinname() != null) {
+                    result.add(VAR_ALL);
+                    result.add(VAR_SINNAME);
+                }
+                if (form.isSinaddr() != null) {
+                    result.add(VAR_ALL);
+                    result.add(VAR_SINADDRESS);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    static Map<String, Set<String>> getMissingFields(final SearchParameters parameters) {
+        final Map<String, Set<String>> result = new HashMap<>();
+
+        if (parameters.getQ() == null || parameters.getQ().isEmpty()) {
+            final Set<String> dependants = new HashSet<>();
+            if (parameters.isSinaddr() != null) {
+                dependants.add(VAR_SINADDRESS);
+            }
+            if (parameters.isSinname() != null) {
+                dependants.add(VAR_SINNAME);
+            }
+            if (parameters.isSindescription() != null) {
+                dependants.add(VAR_SINDESCRIPTION);
+            }
+            if (!dependants.isEmpty()) {
+                result.put(VAR_Q, dependants);
+            }
+        }
+        return result;
+    }
+
     static class SearchParameters
     {
+        Boolean all = null;
         String q = null;
-        boolean sinname = true;
-        boolean sindescription = true;
-        boolean sinaddr = true;
-        int minUsers = 1;
-        Key key = Key.address;
+        Boolean sinname = null;
+        Boolean sindescription = null;
+        Boolean sinaddr = null;
+        Integer minUsers = null;
+        Key key = null;
+
+        public Boolean getAll() {
+            return all;
+        }
+
+        public void setAll( final Boolean all ) {
+            this.all = all;
+        }
 
         public String getQ()
         {
@@ -479,42 +628,42 @@ public class IQMuclumbusSearchHandler
             this.q = q;
         }
 
-        public boolean isSinname()
+        public Boolean isSinname()
         {
             return sinname;
         }
 
-        public void setSinname( final boolean sinname )
+        public void setSinname( final Boolean sinname )
         {
             this.sinname = sinname;
         }
 
-        public boolean isSindescription()
+        public Boolean isSindescription()
         {
             return sindescription;
         }
 
-        public void setSindescription( final boolean sindescription )
+        public void setSindescription( final Boolean sindescription )
         {
             this.sindescription = sindescription;
         }
 
-        public boolean isSinaddr()
+        public Boolean isSinaddr()
         {
             return sinaddr;
         }
 
-        public void setSinaddr( final boolean sinaddr )
+        public void setSinaddr( final Boolean sinaddr )
         {
             this.sinaddr = sinaddr;
         }
 
-        public int getMinUsers()
+        public Integer getMinUsers()
         {
             return minUsers;
         }
 
-        public void setMinUsers( final int minUsers )
+        public void setMinUsers( final Integer minUsers )
         {
             this.minUsers = minUsers;
         }
@@ -533,7 +682,8 @@ public class IQMuclumbusSearchHandler
         public String toString()
         {
             return "SearchParameters{" +
-                "q='" + q + '\'' +
+                "all='" + all + '\'' +
+                ", q='" + q + '\'' +
                 ", sinname=" + sinname +
                 ", sindescription=" + sindescription +
                 ", sinaddr=" + sinaddr +

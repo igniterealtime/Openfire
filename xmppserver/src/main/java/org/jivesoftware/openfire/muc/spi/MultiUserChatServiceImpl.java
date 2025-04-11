@@ -162,6 +162,11 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     private IQMUCSearchHandler searchHandler = null;
 
     /**
+     * The handler of search requests ('urn:xmpp:channel-search:0:search' namespace).
+     */
+    private IQExtendedChannelSearchHandler extendedChannelSearchHandler = null;
+
+    /**
      * The handler of search requests ('https://xmlns.zombofant.net/muclumbus/search/1.0' namespace).
      */
     private IQMuclumbusSearchHandler muclumbusSearchHandler = null;
@@ -464,6 +469,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
         else if ("jabber:iq:search".equals(namespace)) {
             final IQ reply = searchHandler.handleIQ(iq);
+            if (reply != null) {
+                XMPPServer.getInstance().getPacketRouter().route(reply);
+            }
+        }
+        else if (IQExtendedChannelSearchHandler.NAMESPACE.equals(namespace)) {
+            final IQ reply = extendedChannelSearchHandler.handleIQ(iq);
             if (reply != null) {
                 XMPPServer.getInstance().getPacketRouter().route(reply);
             }
@@ -2470,6 +2481,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         registerHandler = new IQMUCRegisterHandler(this);
         // Configure the handlers of search requests
         searchHandler = new IQMUCSearchHandler(this);
+        extendedChannelSearchHandler = new IQExtendedChannelSearchHandler(this);
         muclumbusSearchHandler = new IQMuclumbusSearchHandler(this);
         mucVCardHandler = new IQMUCvCardHandler(this);
         MUCEventDispatcher.addListener(occupantManager);
@@ -2948,10 +2960,13 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             features.add("http://jabber.org/protocol/muc");
             features.add("http://jabber.org/protocol/disco#info");
             features.add("http://jabber.org/protocol/disco#items");
-            if ( IQMuclumbusSearchHandler.PROPERTY_ENABLED.getValue() ) {
-                features.add( "jabber:iq:search" );
+            if (IQExtendedChannelSearchHandler.PROPERTY_ENABLED.getValue()) {
+                features.add(IQExtendedChannelSearchHandler.NAMESPACE);
             }
-            features.add(IQMuclumbusSearchHandler.NAMESPACE);
+            if (IQMuclumbusSearchHandler.PROPERTY_ENABLED.getValue()) {
+                features.add(IQMuclumbusSearchHandler.NAMESPACE);
+            }
+            features.add( "jabber:iq:search" );
             features.add(ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT);
             if (!extraDiscoFeatures.isEmpty()) {
                 features.addAll(extraDiscoFeatures);

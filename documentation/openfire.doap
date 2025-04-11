@@ -458,5 +458,13 @@
                 <xmpp:note xml:lang='en'>Implements most features, except for much of the Destination Address Selection as defined in RFC 6724, Section 6.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0433.html"/>
+                <xmpp:status>full</xmpp:status>
+                <xmpp:version>0.1.0</xmpp:version>
+                <xmpp:note xml:lang='en'>As Openfire does not support MIX, the 'service types' search form field is not supported by the implementation. All searches cover MUC only, as per the specification.</xmpp:note>
+            </xmpp:SupportedXep>
+        </implements>
     </Project>
 </rdf:RDF>

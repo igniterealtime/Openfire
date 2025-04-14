@@ -302,7 +302,7 @@ public abstract class UserMultiProvider implements UserProvider
                 final int providerResultMax = numResults - userList.size();
                 final List<User> providerList = providerResults instanceof List<?> ?
                         (List<User>) providerResults : new ArrayList<>( providerResults );
-                userList.addAll( providerList.subList( providerStartIndex, providerResultMax ) );
+                userList.addAll( providerList.subList( providerStartIndex, Math.min( providerList.size(), providerResultMax ) ));
 
                 // Check if we have enough results.
                 if ( userList.size() >= numResults )

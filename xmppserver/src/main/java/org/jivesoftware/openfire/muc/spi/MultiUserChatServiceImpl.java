@@ -692,11 +692,9 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 // adding an occupant-ID, generate a copy of the packet, for consistency.
                 final Packet modified = packet.createCopy();
                 if (preExistingOccupantData != null) {
-                    final Element oldOccupantId = modified.getElement().element(QName.get("occupant-id", "urn:xmpp:occupant-id:0"));
-                    if (oldOccupantId != null) {
-                        // Remove any previous value (to prevent spoofing)
-                        modified.getElement().remove(oldOccupantId);
-                    }
+                    final List<Element> oldOccupantIds = modified.getElement().elements(QName.get("occupant-id", "urn:xmpp:occupant-id:0"));
+                    oldOccupantIds.forEach(oldOccupantId -> modified.getElement().remove(oldOccupantId));
+
                     modified.getElement().addElement("occupant-id", "urn:xmpp:occupant-id:0").addAttribute("id", preExistingOccupantData.getOccupantId());
                 }
 

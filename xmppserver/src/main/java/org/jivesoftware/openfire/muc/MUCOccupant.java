@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -155,11 +156,11 @@ public class MUCOccupant implements Cacheable, Externalizable {
 
             // Add occupant-id to the presence stanza of the new occupant.
             final Presence modified = presence.createCopy();
-            final Element oldOccupantId = modified.getElement().element(QName.get("occupant-id", "urn:xmpp:occupant-id:0"));
-            if (oldOccupantId != null) {
-                // Remove any previous value (to prevent spoofing)
-                modified.getElement().remove(oldOccupantId);
-            }
+
+            // Remove any previous value (to prevent spoofing)
+            final List<Element> oldOccupantIds = modified.getElement().elements(QName.get("occupant-id", "urn:xmpp:occupant-id:0"));
+            oldOccupantIds.forEach(oldOccupantId -> modified.getElement().remove(oldOccupantId));
+
             modified.getElement().addElement("occupant-id", "urn:xmpp:occupant-id:0").addAttribute("id", occupantId);
 
             setPresence(modified);

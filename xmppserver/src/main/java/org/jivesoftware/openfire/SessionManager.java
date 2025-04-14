@@ -1083,14 +1083,10 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3132">OF-3132: When obtaining user sessions for bare JID, not all sessions are returned</a>
      */
     public Collection<ClientSession> getSessions(String username) {
-        List<ClientSession> sessionList = new ArrayList<>();
         if (username != null && serverName != null) {
-            List<JID> addresses = routingTable.getRoutes(new JID(username, serverName, null, true), null);
-            for (JID address : addresses) {
-                sessionList.add(routingTable.getClientRoute(address));
-            }
+            return routingTable.getClientRoutes(new JID(username, serverName, null, true));
         }
-        return sessionList;
+        return new ArrayList<>();
     }
 
     /**

@@ -819,6 +819,31 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     @Override
+    public Set<ClientSession> getClientRoutes(JID jid) {
+        final Set<ClientSession> clientSessions = new HashSet<>();
+        final Lock lock = usersSessionsCache.getLock(jid.toBareJID());
+        lock.lock(); // temporarily block new sessions for this JID
+        try {
+            Set<String> sessionFullJids = usersSessionsCache.get(jid.toBareJID());
+            if (sessionFullJids != null) {
+                for (String sessionFullJid : sessionFullJids) {
+                    ClientRoute clientRoute = usersCache.get(sessionFullJid);
+                    if (clientRoute != null) {
+                        final ClientSession clientSession = getClientRoute(new JID(sessionFullJid));
+                        if (clientSession != null) {
+                            clientSessions.add(clientSession);
+                        }
+                    }
+                }
+            }
+        }
+        finally {
+            lock.unlock();
+        }
+        return clientSessions;
+    }
+
+    @Override
     public Collection<ClientSession> getClientsRoutes(boolean onlyLocal) {
         // Add sessions hosted by this cluster node
         Collection<ClientSession> sessions = new ArrayList<>(localClientRoutingTable.getRoutes());

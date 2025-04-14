@@ -23,6 +23,7 @@ import org.xmpp.packet.Packet;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * <p>Maintains server-wide knowledge of routes to any node.</p>
@@ -217,12 +218,24 @@ public interface RoutingTable {
     /**
      * Returns the client session associated to the specified XMPP address or {@code null}
      * if none was found. When running inside of a cluster and a remote node is hosting
-     * the client session then a session surrage will be returned.
+     * the client session then a session surrogate will be returned.
      *
      * @param jid the address of the session.
      * @return the client session associated to the specified XMPP address or null if none was found.
      */
     ClientSession getClientRoute(JID jid);
+
+    /**
+     * Returns the client sessions associated to the specified XMPP address or an empty collection
+     * if none were found. When running inside of a cluster and a remote node is hosting
+     * the client session then a session surrogate will be returned. When the provided address is
+     * a full JID, at most one session is returned. If a bare JID is provided, then all sessions
+     * associated to the user will be returned.
+     *
+     * @param jid the address of the session.
+     * @return the client session associated to the specified XMPP address or null if none was found.
+     */
+    Set<ClientSession> getClientRoutes(JID jid);
 
     /**
      * Returns collection of client sessions authenticated with the server. When running inside

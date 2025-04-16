@@ -49,11 +49,15 @@ public class SpamReport
 
     private final String reason;
 
+    private final boolean allowedToReportToOriginDomain;
+
+    private final boolean allowedToSendToThirdParties;
+
     private final Set<Text> context;
 
     private final Map<StanzaID, Optional<Packet>> reportedStanzas;
 
-    public static SpamReport generate(final Instant timestamp, final JID reportingAddress, final JID reportedAddress, final String reason, final Set<Text> context, final Set<StanzaID> reportedStanzaIDs)
+    public static SpamReport generate(final Instant timestamp, final JID reportingAddress, final JID reportedAddress, final String reason, final boolean reportOrigin, final boolean thirdParty, final Set<Text> context, final Set<StanzaID> reportedStanzaIDs)
     {
         final Map<StanzaID, Optional<Packet>> reportedStanzas = new HashMap<>();
         for (final StanzaID stanzaID : reportedStanzaIDs) {
@@ -61,27 +65,31 @@ public class SpamReport
             reportedStanzas.put(stanzaID, Optional.empty());
         }
 
-        return new SpamReport(timestamp, reportingAddress, reportedAddress, reason, context, reportedStanzas);
+        return new SpamReport(timestamp, reportingAddress, reportedAddress, reason, reportOrigin, thirdParty, context, reportedStanzas);
     }
 
-    public SpamReport(final Instant timestamp, final JID reportingAddress, final JID reportedAddress, final String reason, final Set<Text> context, final Map<StanzaID, Optional<Packet>> reportedStanzas)
+    public SpamReport(final Instant timestamp, final JID reportingAddress, final JID reportedAddress, final String reason, final boolean allowedToReportToOriginDomain, final boolean allowedToSendToThirdParties, final Set<Text> context, final Map<StanzaID, Optional<Packet>> reportedStanzas)
     {
         this.id = SequenceManager.nextID(this);
         this.timestamp = timestamp;
         this.reportingAddress = reportingAddress;
         this.reportedAddress = reportedAddress;
         this.reason = reason;
+        this.allowedToReportToOriginDomain = allowedToReportToOriginDomain;
+        this.allowedToSendToThirdParties = allowedToSendToThirdParties;
         this.context = context;
         this.reportedStanzas = reportedStanzas;
     }
 
-    public SpamReport(final long id, final Instant timestamp, final JID reportingAddress, final JID reportedAddress, final String reason, final Set<Text> context, final Map<StanzaID, Optional<Packet>> reportedStanzas)
+    public SpamReport(final long id, final Instant timestamp, final JID reportingAddress, final JID reportedAddress, final String reason, final boolean allowedToReportToOriginDomain, final boolean allowedToSendToThirdParties, final Set<Text> context, final Map<StanzaID, Optional<Packet>> reportedStanzas)
     {
         this.id = id;
         this.timestamp = timestamp;
         this.reportingAddress = reportingAddress;
         this.reportedAddress = reportedAddress;
         this.reason = reason;
+        this.allowedToReportToOriginDomain = allowedToReportToOriginDomain;
+        this.allowedToSendToThirdParties = allowedToSendToThirdParties;
         this.context = context;
         this.reportedStanzas = reportedStanzas;
     }
@@ -109,6 +117,16 @@ public class SpamReport
     public String getReason()
     {
         return reason;
+    }
+
+    public boolean isAllowedToReportToOriginDomain()
+    {
+        return allowedToReportToOriginDomain;
+    }
+
+    public boolean isAllowedToSendToThirdParties()
+    {
+        return allowedToSendToThirdParties;
     }
 
     public Set<Text> getContext()

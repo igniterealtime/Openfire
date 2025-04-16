@@ -1,10 +1,12 @@
 CREATE TABLE ofSpamReport (
-    reportID BIGINT        NOT NULL,
-    reporter VARCHAR(1024) NOT NULL,
-    reported VARCHAR(1024) NOT NULL,
-    reason   VARCHAR(255)  NOT NULL,
-    created  BIGINT        NOT NULL,
-    context  LONGVARCHAR   NULL,
+    reportID     BIGINT        NOT NULL,
+    reporter     VARCHAR(1024) NOT NULL,
+    reported     VARCHAR(1024) NOT NULL,
+    reason       VARCHAR(255)  NOT NULL,
+    reportOrigin INTEGER       NOT NULL,
+    thirdParty   INTEGER       NOT NULL,
+    created      BIGINT        NOT NULL,
+    context      LONGVARCHAR   NULL,
     CONSTRAINT ofSpamReport PRIMARY KEY (reportID)
 );
 CREATE INDEX ofSpamReport_created_reporter_id ON ofSpamReport (created, reporter);

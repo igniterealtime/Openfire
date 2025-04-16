@@ -386,6 +386,8 @@ CREATE TABLE ofSpamReport (
   reporter            VARCHAR(1024) NOT NULL,
   reported            VARCHAR(1024) NOT NULL,
   reason              VARCHAR(255)  NOT NULL,
+  reportOrigin        INTEGER       NOT NULL,
+  thirdParty          INTEGER       NOT NULL,
   created             BIGINT        NOT NULL,
   context             TEXT          NULL,
   CONSTRAINT ofSpamReport_pk PRIMARY KEY (reportID)

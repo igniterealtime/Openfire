@@ -210,9 +210,11 @@ public class IQBlockingHandler extends IQHandler implements ServerFeaturesProvid
         if (reports != null) {
             for (final Element report : reports) {
                 final String reason = report.attributeValue("reason");
+                final boolean reportOrigin = report.element("report-origin") != null && (report.elementTextTrim("report-origin").isEmpty() || "1".equals(report.elementTextTrim("report-origin")) || "true".equalsIgnoreCase(report.elementTextTrim("report-origin")) ) ;
+                final boolean thirdParty = report.element("third-party") != null && (report.elementTextTrim("third-party").isEmpty() || "1".equals(report.elementTextTrim("third-party")) || "true".equalsIgnoreCase(report.elementTextTrim("third-party")) ) ;
                 final Set<SpamReport.Text> context = SpamReport.Text.allFromChildren(report);
                 final Set<StanzaID> offendingStanzas = new HashSet<>(StanzaID.allFromChildren(report));
-                result.add(SpamReport.generate(timestamp, reportingAddress, reportedAddress, reason, context, offendingStanzas));
+                result.add(SpamReport.generate(timestamp, reportingAddress, reportedAddress, reason, reportOrigin, thirdParty, context, offendingStanzas));
             }
         }
 

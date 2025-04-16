@@ -121,4 +121,8 @@ public class SpamReportManager
     public List<SpamReport> getSpamReports() {
         return spamReportProvider.getSpamReports();
     }
+
+    public SpamReport getSpamReport(final long reportId) {
+        return spamReportProvider.retrieve(reportId);
+    }
 }

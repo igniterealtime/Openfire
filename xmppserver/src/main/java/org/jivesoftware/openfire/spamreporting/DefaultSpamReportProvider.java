@@ -44,13 +44,13 @@ public class DefaultSpamReportProvider implements SpamReportProvider
 
     private static final Logger Log = LoggerFactory.getLogger(DefaultSpamReportProvider.class);
 
-    private static final String STORE_REPORT = "INSERT INTO ofSpamReport (reportID, reporter, reported, reason, created, context) VALUES (?,?,?,?,?,?)";
+    private static final String STORE_REPORT = "INSERT INTO ofSpamReport (reportID, reporter, reported, reason, reportOrigin, thirdParty, created, context) VALUES (?,?,?,?,?,?,?,?)";
     private static final String STORE_REPORTED_STANZA = "INSERT INTO ofSpamStanza (reportID, stanzaIDValue, stanzaIDBy, stanza) VALUES (?,?,?,?)";
-    private static final String GET_REPORT = "SELECT (reportID, reporter, reported, reason, created, context) FROM ofSpamReport WHERE reportID = ?";
-    private static final String GET_REPORTED_STANZAS = "SELECT reportID, reporter, reported, reason, created, context FROM ofSpamStanza r WHERE reportID = ?";
-    private static final String GET_REPORTS_SINCE = "SELECT reportID, reporter, reported, reason, created, context FROM ofSpamReport WHERE created >= ? ORDER BY created ASC, reportID ASC";
-    private static final String GET_REPORTS_BY = "SELECT reportID, reporter, reported, reason, created, context FROM ofSpamReport WHERE reporter = ? ORDER BY created ASC, reportID ASC";
-    private static final String GET_REPORTS_ABOUT = "SELECT reportID, reporter, reported, reason, created, context FROM ofSpamReport WHERE reported = ? ORDER BY created ASC, reportID ASC";
+    private static final String GET_REPORT = "SELECT reportID, reporter, reported, reason, reportOrigin, thirdParty, created, context FROM ofSpamReport WHERE reportID = ?";
+    private static final String GET_REPORTED_STANZAS = "SELECT reportID, stanzaIDValue, stanzaIDBy, stanza FROM ofSpamStanza WHERE reportID = ?";
+    private static final String GET_REPORTS_SINCE = "SELECT reportID, reporter, reported, reason, reportOrigin, thirdParty, created, context FROM ofSpamReport WHERE created >= ? ORDER BY created ASC, reportID ASC";
+    private static final String GET_REPORTS_BY = "SELECT reportID, reporter, reported, reason, reportOrigin, thirdParty, created, context FROM ofSpamReport WHERE reporter = ? ORDER BY created ASC, reportID ASC";
+    private static final String GET_REPORTS_ABOUT = "SELECT reportID, reporter, reported, reason, reportOrigin, thirdParty, created, context FROM ofSpamReport WHERE reported = ? ORDER BY created ASC, reportID ASC";
 
     @Override
     public void store(@Nonnull final SpamReport spamReport)
@@ -70,11 +70,13 @@ public class DefaultSpamReportProvider implements SpamReportProvider
             psmttReport.setString(2, spamReport.getReportingAddress().toString());
             psmttReport.setString(3, spamReport.getReportedAddress().toString());
             psmttReport.setString(4, spamReport.getReason());
-            psmttReport.setLong(5, spamReport.getTimestamp().toEpochMilli());
+            psmttReport.setInt(5, spamReport.isAllowedToReportToOriginDomain() ? 1 : 0);
+            psmttReport.setInt(6, spamReport.isAllowedToSendToThirdParties() ? 1 : 0);
+            psmttReport.setLong(7, spamReport.getTimestamp().toEpochMilli());
             if (!spamReport.getContext().isEmpty()) {
-                DbConnectionManager.setLargeTextField(psmttReport, 6, spamReport.getContext().stream().map(t -> t.getValue() + (t.getLang() != null ? " (lang: " + t.getLang() + ")" : "")).collect(Collectors.joining("|+|"))); // TODO properly serialize this.
+                DbConnectionManager.setLargeTextField(psmttReport, 8, spamReport.getContext().stream().map(t -> t.getValue() + (t.getLang() != null ? " (lang: " + t.getLang() + ")" : "")).collect(Collectors.joining("|+|"))); // TODO properly serialize this.
             } else {
-                psmttReport.setNull(6, Types.VARCHAR);
+                psmttReport.setNull(8, Types.VARCHAR);
             }
             psmttReport.executeUpdate();
 
@@ -312,8 +314,10 @@ public class DefaultSpamReportProvider implements SpamReportProvider
             final String reporter = rs.getString("reporter");
             final String reported = rs.getString("reported");
             final String reason = rs.getString("reason");
+            final boolean reportOrigin = rs.getInt("reportOrigin") == 1;
+            final boolean thirdParty = rs.getInt("thirdParty") == 1;
             final long created = rs.getLong("created");
-            final String contextRaw = DbConnectionManager.getLargeTextField(rs, 6);
+            final String contextRaw = DbConnectionManager.getLargeTextField(rs, 8);
 
             final Set<SpamReport.Text> context = new HashSet<>();
             // TODO replace this terrible serialization of texts into one column.
@@ -339,7 +343,7 @@ public class DefaultSpamReportProvider implements SpamReportProvider
             // TODO Improve on this, as it is not ideal to have another query for each row that is being parsed. On the other hand, a simple JOIN would possibly pull in a lot of duplicated data, which isn't ideal either.
             final Map<StanzaID, Optional<Packet>> reportedStanzas = retrieveStanzas(reportID);
 
-            final SpamReport spamReport = new SpamReport(reportID, Instant.ofEpochMilli(created), new JID(reporter), new JID(reported), reason, context, reportedStanzas);
+            final SpamReport spamReport = new SpamReport(reportID, Instant.ofEpochMilli(created), new JID(reporter), new JID(reported), reason, reportOrigin, thirdParty, context, reportedStanzas);
             result.add(spamReport);
 
             // When there are _many_ rows to be processed, log an occasional progress indicator, to let admins know that things are still churning.

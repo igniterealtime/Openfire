@@ -61,6 +61,7 @@
                 <th nowrap><fmt:message key="spam.report.viewer.reported" /></th>
                 <th nowrap><fmt:message key="spam.report.viewer.type" /></th>
                 <th nowrap><fmt:message key="spam.report.viewer.timestamp" /></th>
+                <th nowrap></th>
             </tr>
             <tr>
                 <td></td>
@@ -134,6 +135,7 @@
                         </tr>
                     </table>
                 </td>
+                <td></td>
             </tr>
             </thead>
             <tbody>
@@ -144,31 +146,9 @@
                     <td><c:out value="${spamReport.id}"/></td>
                     <td><c:out value="${spamReport.reportingAddress}"/></td>
                     <td><c:out value="${spamReport.reportedAddress}"/></td>
-                    <td>
-                        <c:out value="${spamReport.reason}"/>
-                        <c:if test="${not empty spamReport.reportedStanzas}">
-                    <span id='showDetails<c:out value="${spamReport.id}"/>'>
-                        <a href="" onclick='document.getElementById("showDetails<c:out value='${spamReport.id}'/>").style.display="none"; document.getElementById("hideDetails<c:out value='${spamReport.id}'/>").style.display=""; document.getElementById("detailsRow<c:out value='${spamReport.id}'/>").style.display=""; return false;'><fmt:message key="spam.report.viewer.show_details"/></a>
-                    </span>
-                            <span id='hideDetails<c:out value="${spamReport.id}"/>' style='display:none'>
-                        <a href="" onclick='document.getElementById("showDetails<c:out value='${spamReport.id}'/>").style.display=""; document.getElementById("hideDetails<c:out value='${spamReport.id}'/>").style.display="none"; document.getElementById("detailsRow<c:out value='${spamReport.id}'/>").style.display="none"; return false;'><fmt:message key="spam.report.viewer.hide_details"/></a>
-                    </span>
-                        </c:if>
-                    </td>
+                    <td><c:out value="${spamReport.reason}"/></td>
                     <td><c:out value="${admin:formatDateTimeInstant(spamReport.timestamp)}"/></td>
-                </tr>
-                <tr id='detailsRow<c:out value="${spamReport.id}"/>' style="display:none">
-                    <td colspan="5">
-                        <c:forEach items="${spamReport.reportedStanzas.entrySet()}" var="entry" varStatus="status">
-                            <c:out value="${entry.key}"/>
-                            <c:if test="${entry.value.isPresent()}">
-                                <c:out value="${entry.value.get()}"/>
-                            </c:if>
-                            <c:if test="${not status.last}">
-                                <br/><br/>
-                            </c:if>
-                        </c:forEach>
-                    </td>
+                    <td><a href="spam-report-details.jsp?reportId=${admin:escapeHTMLTags(spamReport.id)}"><img src="images/search-16x16.png" alt="<fmt:message key="spam.report.viewer.show_details"/>"/>&nbsp;<fmt:message key="spam.report.viewer.show_details"/></a></td>
                 </tr>
             </c:forEach>
             </tbody>

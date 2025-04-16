@@ -370,6 +370,8 @@ CREATE TABLE ofSpamReport (
   reporter            VARCHAR(1024) NOT NULL,
   reported            VARCHAR(1024) NOT NULL,
   reason              VARCHAR(255)  NOT NULL,
+  reportOrigin        TINYINT       NOT NULL,
+  thirdParty          TINYINT       NOT NULL,
   created             BIGINT        NOT NULL,
   context             TEXT          NULL,
   PRIMARY KEY (reportID),

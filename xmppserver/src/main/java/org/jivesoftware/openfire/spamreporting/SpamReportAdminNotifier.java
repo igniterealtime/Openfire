@@ -15,7 +15,6 @@
  */
 package org.jivesoftware.openfire.spamreporting;
 
-import org.dom4j.Element;
 import org.jivesoftware.openfire.MessageRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.LocaleUtils;

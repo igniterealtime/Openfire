@@ -208,9 +208,8 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
                     }
 
                     // overwrite the 'set' element.
-                    queryElement.remove(queryElement.element(
-                            QName.get("set",
-                                    ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT)));
+                    queryElement.elements(QName.get("set", ResultSet.NAMESPACE_RESULT_SET_MANAGEMENT))
+                        .forEach(queryElement::remove);
                     queryElement.add(rs.generateSetElementFromResults(rsmResults));
                 } else {
                     // don't apply RSM:

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,18 +147,8 @@ class IQMUCRegisterHandler {
                     ElementUtil.setProperty(currentRegistration, "query.registered", null);
                     currentRegistration.addElement("username").addText(nickname);
 
-                    Element form = currentRegistration.element(QName.get("x", "jabber:x:data"));
-                    currentRegistration.remove(form);
-        //                @SuppressWarnings("unchecked")
-        //				Iterator<Element> fields = form.elementIterator("field");
-        //
-        //                Element field;
-        //                while (fields.hasNext()) {
-        //                    field = fields.next();
-        //                    if ("muc#register_roomnick".equals(field.attributeValue("var"))) {
-        //                        field.addElement("value").addText(nickname);
-        //                    }
-        //                }
+                    currentRegistration.elements(QName.get("x", "jabber:x:data"))
+                        .forEach(currentRegistration::remove);
                     reply.setChildElement(currentRegistration);
                 }
                 else {

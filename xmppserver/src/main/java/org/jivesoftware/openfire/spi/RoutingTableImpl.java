@@ -36,19 +36,10 @@ import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.TaskEngine;
-import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.cache.CacheFactory;
-import org.jivesoftware.util.cache.CacheUtil;
-import org.jivesoftware.util.cache.ConsistencyChecks;
-import org.jivesoftware.util.cache.ReverseLookupComputingCacheEntryListener;
-import org.jivesoftware.util.cache.ReverseLookupUpdatingCacheEntryListener;
+import org.jivesoftware.util.cache.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.Presence;
+import org.xmpp.packet.*;
 
 import java.time.Duration;
 import java.util.*;
@@ -379,9 +370,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     private boolean routeToLocalDomain(JID jid, Packet packet)
     {
         boolean routed = false;
-        Element privateElement = packet.getElement().element(QName.get("private", Received.NAMESPACE));
         // The receiving server and SHOULD remove the <private/> element before delivering to the recipient.
-        packet.getElement().remove(privateElement);
+        final Element packetEl = packet.getElement();
+        packetEl.elements(QName.get("private", Received.NAMESPACE)).forEach(packetEl::remove);
 
         if (jid.getResource() == null) {
             // RFC 6121: 8.5.2. localpart@domainpart (Packet sent to a bare JID of a user)

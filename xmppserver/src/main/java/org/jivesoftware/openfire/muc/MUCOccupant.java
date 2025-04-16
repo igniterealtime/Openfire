@@ -219,10 +219,9 @@ public class MUCOccupant implements Cacheable, Externalizable {
     public synchronized void setPresence(Presence newPresence) {
         // Try to remove the element whose namespace is "http://jabber.org/protocol/muc" since we
         // don't need to include that element in future presence broadcasts
-        Element element = newPresence.getElement().element(QName.get("x", "http://jabber.org/protocol/muc"));
-        if (element != null) {
-            newPresence.getElement().remove(element);
-        }
+        final Element presenceEl = newPresence.getElement();
+        presenceEl.elements(QName.get("x", "http://jabber.org/protocol/muc"))
+            .forEach(presenceEl::remove);
 
         synchronized (this) {
             this.presence = newPresence;
@@ -579,13 +578,12 @@ public class MUCOccupant implements Cacheable, Externalizable {
     private void updatePresence() {
         if (extendedInformation != null && presence != null) {
             // Remove any previous extendedInformation, then re-add it.
-            Element mucUser = presence.getElement().element(QName.get("x", "http://jabber.org/protocol/muc#user"));
-            if (mucUser != null) {
-                // Remove any previous extendedInformation, then re-add it.
-                presence.getElement().remove(mucUser);
-            }
+            final Element presenceEl = presence.getElement();
+            presenceEl.elements(QName.get("x", "http://jabber.org/protocol/muc#user"))
+                .forEach(presenceEl::remove);
+
             Element exi = extendedInformation.createCopy();
-            presence.getElement().add(exi);
+            presenceEl.add(exi);
             cacheSize = -1;
         }
     }

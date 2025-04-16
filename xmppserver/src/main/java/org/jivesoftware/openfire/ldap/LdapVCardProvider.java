@@ -249,10 +249,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
             Element avatarElement = loadAvatarFromDatabase(username);
             if (avatarElement != null) {
                 Log.debug("LdapVCardProvider: Adding avatar element from local storage");
-                Element currentElement = vcard.element("PHOTO");
-                if (currentElement != null) {
-                    vcard.remove(currentElement);
-                }
+                vcard.elements("PHOTO").forEach(vcard::remove);
                 vcard.add(avatarElement);
             }
         }
@@ -302,10 +299,7 @@ public class LdapVCardProvider implements VCardProvider, PropertyEventListener {
             return vcard;
         }
         Log.debug("LdapVCardProvider: Merging avatar element from passed vcard");
-        Element currentElement = vcard.element("PHOTO");
-        if (currentElement != null) {
-            vcard.remove(currentElement);
-        }
+        vcard.elements("PHOTO").forEach(vcard::remove);
         vcard.add(photoElement);
         return vcard;
     }

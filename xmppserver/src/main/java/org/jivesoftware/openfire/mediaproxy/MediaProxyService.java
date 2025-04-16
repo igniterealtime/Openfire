@@ -39,7 +39,7 @@ import java.util.*;
 /**
  * A proxy service for UDP traffic such as RTP. It provides Jingle transport candidates
  * to be used for media transmission. The media proxy is especially useful for users
- * behind NAT devices or firewalls that prevent peer to peer communication..
+ * behind NAT devices or firewalls that prevent peer to peer communication.
  *
  * @author Thiago Camargo
  */
@@ -165,70 +165,71 @@ public class MediaProxyService extends BasicModule
             return;
         } else if (NAMESPACE.equals(namespace) && enabled) {
 
-            Element candidateElement = childElementCopy.element("candidate");
+            List<Element> candidateElements = childElementCopy.elements("candidate");
             String sid = childElementCopy.attribute("sid").getValue() + "-" + iq.getFrom();
 
-            if (candidateElement != null) {
-                childElementCopy.remove(candidateElement);
-                Element candidate = childElementCopy.addElement("candidate ");
-                ProxyCandidate proxyCandidate = mediaProxy.addRelayAgent(sid, iq.getFrom().toString());
-                Log.debug("MediaProxyService: "+sid);
-                proxyCandidate.start();
-                candidate.addAttribute("name", "voicechannel");
-                candidate.addAttribute("ip", mediaProxy.getPublicIP());
-                candidate.addAttribute("porta", String.valueOf(proxyCandidate.getLocalPortA()));
-                candidate.addAttribute("portb", String.valueOf(proxyCandidate.getLocalPortB()));
-                candidate.addAttribute("pass", proxyCandidate.getPass());
-
-            } else {
-                candidateElement = childElementCopy.element("relay");
-                if (candidateElement != null) {
-                    MediaProxySession session = mediaProxy.getSession(sid);
+            if (!candidateElements.isEmpty()) {
+                for (final Element candidateElement : candidateElements) {
+                    childElementCopy.remove(candidateElement);
+                    Element candidate = childElementCopy.addElement("candidate ");
+                    ProxyCandidate proxyCandidate = mediaProxy.addRelayAgent(sid, iq.getFrom().toString());
                     Log.debug("MediaProxyService: "+sid);
-                    if (session != null) {
-                        Attribute pass = candidateElement.attribute("pass");
+                    proxyCandidate.start();
+                    candidate.addAttribute("name", "voicechannel");
+                    candidate.addAttribute("ip", mediaProxy.getPublicIP());
+                    candidate.addAttribute("porta", String.valueOf(proxyCandidate.getLocalPortA()));
+                    candidate.addAttribute("portb", String.valueOf(proxyCandidate.getLocalPortB()));
+                    candidate.addAttribute("pass", proxyCandidate.getPass());
+                }
+            } else {
+                final List<Element> relayElements = childElementCopy.elements("relay");
+                if (!relayElements.isEmpty()) {
+                    for (final Element relayElement : relayElements) {
+                        MediaProxySession session = mediaProxy.getSession(sid);
+                        Log.debug("MediaProxyService: {}", sid);
+                        if (session != null) {
+                            Attribute pass = relayElement.attribute("pass");
 
-                        if (pass != null && pass.getValue().trim().equals(session.getPass().trim())) {
-                            Attribute portA = candidateElement.attribute("porta");
-                            Attribute portB = candidateElement.attribute("portb");
-                            Attribute hostA = candidateElement.attribute("hosta");
-                            Attribute hostB = candidateElement.attribute("hostb");
+                            if (pass != null && pass.getValue().trim().equals(session.getPass().trim())) {
+                                Attribute portA = relayElement.attribute("porta");
+                                Attribute portB = relayElement.attribute("portb");
+                                Attribute hostA = relayElement.attribute("hosta");
+                                Attribute hostB = relayElement.attribute("hostb");
 
-                            try {
-                                if (hostA != null && portA != null) {
-                                    for (int i = 0; i < 2; i++) {
-                                        session.sendFromPortA(hostB.getValue(), Integer.parseInt(portB.getValue()));
+                                try {
+                                    if (hostA != null && portA != null) {
+                                        for (int i = 0; i < 2; i++) {
+                                            session.sendFromPortA(hostB.getValue(), Integer.parseInt(portB.getValue()));
+                                        }
                                     }
+                                } catch (Exception e) {
+                                    Log.error(e.getMessage(), e);
                                 }
+
+                            } else {
+                                reply.setError(PacketError.Condition.forbidden);
                             }
-                            catch (Exception e) {
+                        }
+                        childElementCopy.remove(relayElement);
+                    }
+                } else {
+                    final List<Element> publicips = childElementCopy.elements("publicip");
+                    if (!publicips.isEmpty()) {
+                        for (final Element publicip : publicips) {
+                            childElementCopy.remove(publicip);
+                            Element publicIp = childElementCopy.addElement("publicip");
+                            try {
+                                String ip = sessionManager.getSession(iq.getFrom()).getHostAddress();
+                                if (ip != null) {
+                                    publicIp.addAttribute("ip", ip);
+                                }
+                            } catch (UnknownHostException e) {
                                 Log.error(e.getMessage(), e);
                             }
-
-                        } else {
-                            reply.setError(PacketError.Condition.forbidden);
                         }
-                    }
-                    childElementCopy.remove(candidateElement);
-                } else {
-                    candidateElement = childElementCopy.element("publicip");
-                    if (candidateElement != null) {
-                        childElementCopy.remove(candidateElement);
-                        Element publicIp = childElementCopy.addElement("publicip");
-                        try {
-                            String ip = sessionManager.getSession(iq.getFrom()).getHostAddress();
-                            if (ip != null) {
-                                publicIp.addAttribute("ip", ip);
-                            }
-                        } catch (UnknownHostException e) {
-                            Log.error(e.getMessage(), e);
-                        }
-
                     } else {
-                        childElementCopy.remove(candidateElement);
                         reply.setError(PacketError.Condition.forbidden);
                     }
-
                 }
             }
         } else {

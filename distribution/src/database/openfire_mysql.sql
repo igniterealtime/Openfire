@@ -365,6 +365,28 @@ CREATE TABLE ofPubsubDefaultConf (
   PRIMARY KEY (serviceID, leaf)
 );
 
+CREATE TABLE ofSpamReport (
+  reportID            BIGINT        NOT NULL,
+  reporter            VARCHAR(1024) NOT NULL,
+  reported            VARCHAR(1024) NOT NULL,
+  reason              VARCHAR(255)  NOT NULL,
+  reportOrigin        TINYINT       NOT NULL,
+  thirdParty          TINYINT       NOT NULL,
+  created             BIGINT        NOT NULL,
+  context             TEXT          NULL,
+  PRIMARY KEY (reportID),
+  INDEX ofSpamReport_created_reporter_id (created, reporter),
+  INDEX ofSpamReport_created_reported_id (created, reported)
+);
+
+CREATE TABLE ofSpamStanza (
+  reportID            BIGINT        NOT NULL,
+  stanzaIDValue       VARCHAR(1024) NOT NULL,
+  stanzaIDBy          VARCHAR(1024) NOT NULL,
+  stanza              TEXT          NULL,
+  INDEX ofSpamStanza_reportID (reportID)
+);
+
 # Finally, insert default table values.
 
 INSERT INTO ofID (idType, id) VALUES (18, 1);
@@ -372,6 +394,7 @@ INSERT INTO ofID (idType, id) VALUES (19, 1);
 INSERT INTO ofID (idType, id) VALUES (23, 1);
 INSERT INTO ofID (idType, id) VALUES (26, 2);
 INSERT INTO ofID (idType, id) VALUES (27, 1);
+INSERT INTO ofID (idType, id) VALUES (42, 1);
 
 # Entry for admin user
 INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)
@@ -381,4 +404,4 @@ INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modifica
 INSERT INTO ofMucService (serviceID, subdomain, isHidden) VALUES (1, 'conference', 0);
 
 # Do this last, as it is used by a continuous integration check to verify that the entire script was executed successfully.
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 37);
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 38);

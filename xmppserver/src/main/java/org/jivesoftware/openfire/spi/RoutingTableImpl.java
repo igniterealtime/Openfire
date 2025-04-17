@@ -566,7 +566,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         if ( !JiveGlobals.getBooleanProperty( ConnectionSettings.Server.ALLOW_ANONYMOUS_OUTBOUND_DATA, false ) )
         {
             // Disallow anonymous local users to send data to other domains than the local domain.
-            if ( isAnonymousRoute( packet.getFrom() ) )
+            if ( SessionManager.getInstance().isAnonymousClientSession(packet.getFrom()) )
             {
                 Log.info( "The anonymous user '{}' attempted to send data to '{}', which is on a remote domain. Openfire is configured to not allow anonymous users to send data to remote domains.", packet.getFrom(), jid );
                 return false;
@@ -929,20 +929,13 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
     }
 
-    @Override
+    @Deprecated(forRemoval = true, since = "5.0.0") // Remove in or after Openfire 5.1.0    @Override
     public boolean isAnonymousRoute(JID jid) {
         if (jid.getNode() == null || jid.getResource() == null) {
             Log.trace("isAnonymousRoute() invoked with a JID that's not a full JID: {}", jid);
             return false;
         }
-        final Lock lock = usersSessionsCache.getLock(jid.toBareJID());
-        lock.lock();
-        try {
-            // Check if there's an anonymous route for the JID.
-            return anonymousUsersCache.containsKey(jid.toFullJID());
-        } finally {
-            lock.unlock();
-        }
+        return server.getSessionManager().isAnonymousClientSession(jid);
     }
 
     @Override

@@ -208,6 +208,7 @@ public abstract class RemoteSessionTask implements ClusterTask<Object> {
          * Operations of c2s sessions
          */
         isInitialized,
+        isAnonymous,
         incrementConflictCount,
         hasRequestedBlocklist,
         

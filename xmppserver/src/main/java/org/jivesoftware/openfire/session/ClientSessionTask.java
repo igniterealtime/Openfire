@@ -90,6 +90,16 @@ public class ClientSessionTask extends RemoteSessionTask {
                 result = session.isInitialized();
             }
         }
+        if (operation == Operation.isAnonymous) {
+            if (session instanceof RemoteClientSession) {
+                // Something is wrong since the session should be local instead of remote
+                // Assume some default value
+                result = false;
+            }
+            else {
+                result = session.isAnonymousUser();
+            }
+        }
         else if (operation == Operation.incrementConflictCount) {
             if (session instanceof RemoteClientSession) {
                 // Something is wrong since the session should be local instead of remote

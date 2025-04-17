@@ -326,8 +326,8 @@ public class StreamManager {
         Log.debug("Resuming session for '{}'. Current session: {}", fullJid, session.getStreamID());
 
         // Locate existing session.
-        final ClientSession route = XMPPServer.getInstance().getRoutingTable().getClientRoute(fullJid);
-        if (route == null) {
+        final ClientSession existingSession = XMPPServer.getInstance().getSessionManager().getSession(fullJid);
+        if (existingSession == null) {
             Log.debug("Not able for client of '{}' to resume a session on this cluster node. No session was found for this client.", fullJid);
             if (LOCATION_TERMINATE_OTHERS_ENABLED.getValue()) {
                 // When the client tries to resume a connection on this host, it is unlikely to try other hosts. Remove any detached sessions living elsewhere in the cluster. (OF-2753)
@@ -337,7 +337,7 @@ public class StreamManager {
             return;
         }
 
-        if (!(route instanceof LocalClientSession)) {
+        if (!(existingSession instanceof LocalClientSession)) {
             Log.debug("Not allowing a client of '{}' to resume a session on this cluster node. The session can only be resumed on the Openfire cluster node where the original session was connected.", fullJid);
             if (LOCATION_TERMINATE_OTHERS_ENABLED.getValue()) {
                 // When the client tries to resume a connection on this host, it is unlikely to try other hosts. Remove any detached sessions living elsewhere in the cluster. (OF-2753)
@@ -347,7 +347,7 @@ public class StreamManager {
             return;
         }
 
-        final LocalClientSession otherSession = (LocalClientSession) route;
+        final LocalClientSession otherSession = (LocalClientSession) existingSession;
         if (!otherSession.getStreamID().getID().equals(streamId)) {
             sendError(new PacketError(PacketError.Condition.item_not_found));
             return;
@@ -355,7 +355,7 @@ public class StreamManager {
         Log.debug("Found existing session for '{}', checking status", fullJid);
 
         // OF-2811: Cannot resume a session that's already closed. That session is likely busy firing its 'closeListeners'.
-        if (route.isClosed()) {
+        if (otherSession.isClosed()) {
             Log.debug("Not allowing a client of '{}' to resume a session, as the preexisting session is already in process of being closed.", fullJid);
             sendError(new PacketError(PacketError.Condition.unexpected_request));
             return;

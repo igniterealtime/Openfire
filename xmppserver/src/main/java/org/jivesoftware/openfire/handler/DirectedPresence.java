@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@
 package org.jivesoftware.openfire.handler;
 
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.cache.CacheSizes;
+import org.jivesoftware.util.cache.Cacheable;
+import org.jivesoftware.util.cache.CannotCalculateSizeException;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.packet.JID;
 
@@ -24,6 +27,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -41,7 +45,7 @@ import java.util.Set;
  *
  * @author Gaston Dombiak
  */
-public class DirectedPresence implements Externalizable {
+public class DirectedPresence implements Externalizable, Cacheable {
     /**
      * ID of the node that received the request to send a directed presence. This is the
      * node ID that hosts the sender.
@@ -56,7 +60,7 @@ public class DirectedPresence implements Externalizable {
      * List of JIDs with the TO value of the directed presences.
      * E.g.: paul@js.com or room1@conference.js.com
      */
-    private Set<String> receivers = new HashSet<>();
+    private final Set<String> receivers = new HashSet<>();
 
     public DirectedPresence() {
     }
@@ -88,6 +92,27 @@ public class DirectedPresence implements Externalizable {
 
     public boolean isEmpty() {
         return receivers.isEmpty();
+    }
+
+    @Override
+    public int getCachedSize() throws CannotCalculateSizeException {
+        // Approximate the size of the object in bytes by calculating the size of each field.
+        int size = 0;
+        size += CacheSizes.sizeOfObject(); // overhead of object
+        size += CacheSizes.sizeOfObject() + nodeID.length;
+        size += CacheSizes.sizeOfAnything(handler);
+        size += CacheSizes.sizeOfCollection(receivers);
+        return size;
+    }
+
+    @Override
+    public String toString()
+    {
+        return "DirectedPresence{" +
+            "nodeID=" + Arrays.toString(nodeID) +
+            ", handler=" + handler +
+            ", receivers=[" + String.join(",", receivers) + "]" +
+            '}';
     }
 
     @Override

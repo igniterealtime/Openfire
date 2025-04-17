@@ -284,7 +284,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // OF-1923: Only close the session if it has not been replaced by another session (if the session
         // has been replaced, then the condition below will compare to distinct instances). This *should* not
         // occur (but has been observed, prior to the fix of OF-1923). This check is left in as a safeguard.
-        final ClientSession currentSession = routingTable.getClientRoute(session.getAddress());
+        final ClientSession currentSession = getSession(session.getAddress());
         if (session == currentSession) {
             try {
                 if ((clientSession.getPresence().isAvailable() || !clientSession.wasAvailable()) &&

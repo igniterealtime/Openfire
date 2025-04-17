@@ -6,14 +6,15 @@ HOST='example.org'
 
 usage()
 {
-	echo "Usage: $0 [-i IPADDRESS] [-h HOST] [-b BASEDIR]"
+	echo "Usage: $0 [-i IPADDRESS] [-h HOST] [-b BASEDIR] [-l LOGLEVEL]"
 	echo "    -i: Set a hosts file for the given IP and host (or for example.com if running locally). Reverted at exit."
 	echo "    -h: The network name for the Openfire under test, which will be used for both the hostname as the XMPP domain name (default: example.org)"
 	echo "    -b: The base directory of the distribution that is to be started"
+	echo "    -l: The log level (default: info)"
 	exit 2
 }
 
-while getopts h:i:b: OPTION "$@"; do
+while getopts h:i:b:l: OPTION "$@"; do
 	case $OPTION in
 		h)
 			HOST="${OPTARG}"
@@ -23,6 +24,9 @@ while getopts h:i:b: OPTION "$@"; do
 			;;
 		b)
 			BASEDIR="${OPTARG}"
+			;;
+		l)
+			LOGLEVEL="${OPTARG}"
 			;;
 		\? ) usage;;
         :  ) usage;;
@@ -55,6 +59,11 @@ function launchOpenfire {
 
 	# Replace the default XMPP domain name ('example.org') that's in the demoboot config with the configured domain name.
 	sed -i -e 's/example.org/'"${HOST}"'/g' ${BASEDIR}/conf/openfire.xml
+
+	# Replace the default log level ('info') that's in the log4j config with the configured level.
+	if [[ -n "${LOGLEVEL}" ]]; then
+	    sed -i -e 's/info/'"${LOGLEVEL}"'/g' ${BASEDIR}/lib/log4j2.xml
+	fi
 
 	echo "Starting Openfire…"
 	"${OPENFIRE_SHELL_SCRIPT}" &

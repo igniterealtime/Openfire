@@ -157,6 +157,8 @@ jobs:
       - name: Start CI server from distribution
         id: startCIServer
         uses: ./.github/actions/startserver-action
+        with:
+          logLevel: all
       - name: Run aioxmpp tests
         working-directory: ./aioxmpp
         run: |

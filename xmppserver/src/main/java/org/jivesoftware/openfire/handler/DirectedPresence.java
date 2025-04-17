@@ -17,6 +17,9 @@
 package org.jivesoftware.openfire.handler;
 
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.cache.CacheSizes;
+import org.jivesoftware.util.cache.Cacheable;
+import org.jivesoftware.util.cache.CannotCalculateSizeException;
 import org.jivesoftware.util.cache.ExternalizableUtil;
 import org.xmpp.packet.JID;
 
@@ -42,7 +45,7 @@ import java.util.Set;
  *
  * @author Gaston Dombiak
  */
-public class DirectedPresence implements Externalizable {
+public class DirectedPresence implements Externalizable, Cacheable {
     /**
      * ID of the node that received the request to send a directed presence. This is the
      * node ID that hosts the sender.
@@ -89,6 +92,17 @@ public class DirectedPresence implements Externalizable {
 
     public boolean isEmpty() {
         return receivers.isEmpty();
+    }
+
+    @Override
+    public int getCachedSize() throws CannotCalculateSizeException {
+        // Approximate the size of the object in bytes by calculating the size of each field.
+        int size = 0;
+        size += CacheSizes.sizeOfObject(); // overhead of object
+        size += CacheSizes.sizeOfObject() + nodeID.length;
+        size += CacheSizes.sizeOfAnything(handler);
+        size += CacheSizes.sizeOfCollection(receivers);
+        return size;
     }
 
     @Override

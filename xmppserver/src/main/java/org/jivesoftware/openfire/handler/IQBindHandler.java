@@ -18,7 +18,6 @@ package org.jivesoftware.openfire.handler;
 
 import org.dom4j.Element;
 import org.jivesoftware.openfire.IQHandlerInfo;
-import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthToken;
@@ -54,7 +53,6 @@ public class IQBindHandler extends IQHandler {
 
     private IQHandlerInfo info;
     private String serverName;
-    private RoutingTable routingTable;
 
     public IQBindHandler() {
         super("Resource Binding handler");
@@ -115,7 +113,7 @@ public class IQBindHandler extends IQHandler {
             // If a session already exists with the requested JID, then check to see
             // if we should kick it off or refuse the new connection
             final JID desiredJid = new JID(username, serverName, resource, true);
-            ClientSession oldSession = routingTable.getClientRoute(desiredJid);
+            ClientSession oldSession = sessionManager.getSession(desiredJid);
             if (oldSession != null) {
                 try {
                     if (oldSession.isClosed()) {
@@ -180,7 +178,6 @@ public class IQBindHandler extends IQHandler {
     @Override
     public void initialize(XMPPServer server) {
         super.initialize(server);
-        routingTable = server.getRoutingTable();
         serverName = server.getServerInfo().getXMPPDomain();
      }
 

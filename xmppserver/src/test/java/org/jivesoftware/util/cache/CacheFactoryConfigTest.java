@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2023-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -86,7 +86,6 @@ public class CacheFactoryConfigTest {
         result.add(Arguments.arguments(SessionManager.COMPONENT_SESSION_CACHE_NAME));
         result.add(Arguments.arguments(SessionManager.CM_CACHE_NAME));
         result.add(Arguments.arguments(RoutingTableImpl.C2S_CACHE_NAME));
-        result.add(Arguments.arguments(RoutingTableImpl.ANONYMOUS_C2S_CACHE_NAME));
         result.add(Arguments.arguments(RoutingTableImpl.S2S_CACHE_NAME));
         result.add(Arguments.arguments(RoutingTableImpl.COMPONENT_CACHE_NAME));
         result.add(Arguments.arguments(RoutingTableImpl.C2S_SESSION_NAME));

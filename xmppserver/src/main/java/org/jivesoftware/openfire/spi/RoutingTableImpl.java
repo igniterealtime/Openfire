@@ -49,7 +49,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Routing table that stores routes to client sessions, outgoing server sessions
@@ -72,7 +71,6 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     private static final Logger Log = LoggerFactory.getLogger(RoutingTableImpl.class);
     
     public static final String C2S_CACHE_NAME = "Routing Users Cache";
-    public static final String ANONYMOUS_C2S_CACHE_NAME = "Routing AnonymousUsers Cache";
     public static final String S2S_CACHE_NAME = "Routing Servers Cache";
     public static final String COMPONENT_CACHE_NAME = "Routing Components Cache";
     public static final String C2S_SESSION_NAME = "Routing User Sessions";
@@ -148,46 +146,32 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     private final Cache<String, ClientRoute> usersCache;
 
     /**
-     * Cache (unlimited, never expire) that holds sessions of anonymous user that have authenticated with the server.
-     * Key: full JID, Value: {nodeID, available/unavailable}
-     *
-     * <em>Note:</em> access to this cache is to be guarded by a lock acquired from {@link #usersSessionsCache}, using
-     * the <em>bare JID</em> representation of the key.
-     *
-     * @see #localClientRoutingTable which holds content added by the local cluster node.
-     * @see #routeOwnersByClusterNode which holds content added by cluster nodes other than the local node.
-     */
-    private final Cache<String, ClientRoute> anonymousUsersCache;
-
-    /**
      * A map that, for all nodes in the cluster except for the local one, tracks if a particular entity (identified by
-     * its full JID) has a ClientRoute in either #usersCache or #anonymousUsersCache. Every String in the collections
-     * that are the value of this map corresponds to a key in one of those caches.
+     * its full JID) has a ClientRoute in #usersCache.
      *
-     * Whenever any cluster node adds or removes an entry to either #usersCache or #anonymousUsersCache, this map, on
-     * <em>every</em> cluster node, will receive a corresponding update. This ensures that every cluster node has a
-     * complete overview of all cache entries (or at least the most important details of each entry - we should avoid
-     * duplicating the entire cache, as that somewhat defaults the purpose of having the cache).
+     * Whenever any cluster node adds or removes an entry to #usersCache, this map, on <em>every</em> cluster node, will
+     * receive a corresponding update. This ensures that every cluster node has a complete overview of all cache entries
+     * (or at least the most important details of each entry - we should avoid duplicating the entire cache, as that
+     * somewhat defaults the purpose of having the cache).
      *
      * This map is to be used when a cluster node unexpectedly leaves the cluster. As the cache implementation uses a
      * distributed data structure that gives no guarantee that all data is visible to all cluster nodes at any given
      * time, the cache cannot be trusted to 'locally' contain all information that was added to it by the disappeared
      * node (nor can that node be contacted to retrieve the missing data, because it has already disappeared).
      *
-     * @see #usersCache which is one of the two caches for which this field is a supporting data structure.
-     * @see #anonymousUsersCache which is one of the two for which this field is a supporting data structure.
+     * @see #usersCache which is the cache for which this field is a supporting data structure.
      */
     private final ConcurrentMap<NodeID, Set<String>> routeOwnersByClusterNode = new ConcurrentHashMap<>();
 
     /**
-     * Cache (unlimited, never expire) that holds set of connected resources of authenticated users
-     * (includes anonymous).
+     * Cache (unlimited, never expire) that holds set of connected resources of authenticated users.
+     *
      * Key: bare JID, Value: set of full JIDs of the user
      *
      * Note: unlike the other caches in this implementation, this cache does not explicitly have supporting data
-     * structures. Instead, it implicitly uses the supporting data structures of {@link #usersCache} and {@link #anonymousUsersCache}.
+     * structures. Instead, it implicitly uses the supporting data structures of {@link #usersCache}.
      *
-     * Note: locks from this cache are used to guard access to entries of {@link #usersCache} and {@link #anonymousUsersCache}.
+     * Note: locks from this cache are used to guard access to entries of {@link #usersCache}.
      */
     private final Cache<String, HashSet<String>> usersSessionsCache;
 
@@ -215,7 +199,6 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         serversCache = CacheFactory.createCache(S2S_CACHE_NAME);
         componentsCache = CacheFactory.createCache(COMPONENT_CACHE_NAME);
         usersCache = CacheFactory.createCache(C2S_CACHE_NAME);
-        anonymousUsersCache = CacheFactory.createCache(ANONYMOUS_C2S_CACHE_NAME);
         usersSessionsCache = CacheFactory.createCache(C2S_SESSION_NAME);
     }
 
@@ -273,13 +256,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             Log.trace("Adding client route {} to local routing table", route);
             localClientRoutingTable.addRoute(domainPair, destination);
 
-            if (destination.getAuthToken().isAnonymous()) {
-                Log.trace("Adding client route {} to anonymous users cache under key {}", newClientRoute, route);
-                anonymousUsersCache.put(route.toFullJID(), newClientRoute);
-            } else {
-                Log.trace("Adding client route {} to users cache under key {}", newClientRoute, route);
-                usersCache.put(route.toFullJID(), newClientRoute);
-            }
+            Log.trace("Adding client route {} to users cache under key {}", newClientRoute, route);
+            usersCache.put(route.toFullJID(), newClientRoute);
 
             Log.trace("Adding client full JID {} to users sessions cache under key {}", route, route.toBareJID());
             // Acquires the same lock, which should not be an issue as the lock implementation (both Openfire's and Hazelcast's) is reentrant.
@@ -473,11 +451,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         final Lock lock = usersSessionsCache.getLock(jid.toBareJID());
         lock.lock();
         try {
-            ClientRoute clientRoute = usersCache.get(jid.toFullJID());
-            if (clientRoute == null) {
-                clientRoute = anonymousUsersCache.get(jid.toFullJID());
-            }
-            return clientRoute;
+            return usersCache.get(jid.toFullJID());
         } finally {
             lock.unlock();
         }
@@ -852,15 +826,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             // Add sessions not hosted by this JVM
             RemoteSessionLocator locator = server.getRemoteSessionLocator();
             if (locator != null) {
-                // Add sessions of non-anonymous users hosted by other cluster nodes
+                // Add sessions of users hosted by other cluster nodes
                 for (Map.Entry<String, ClientRoute> entry : usersCache.entrySet()) {
-                    ClientRoute route = entry.getValue();
-                    if (!server.getNodeID().equals(route.getNodeID())) {
-                        sessions.add(locator.getClientSession(route.getNodeID().toByteArray(), new JID(entry.getKey())));
-                    }
-                }
-                // Add sessions of anonymous users hosted by other cluster nodes
-                for (Map.Entry<String, ClientRoute> entry : anonymousUsersCache.entrySet()) {
                     ClientRoute route = entry.getValue();
                     if (!server.getNodeID().equals(route.getNodeID())) {
                         sessions.add(locator.getClientSession(route.getNodeID().toByteArray(), new JID(entry.getKey())));
@@ -922,8 +889,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         final Lock lock = usersSessionsCache.getLock(jid.toBareJID());
         lock.lock();
         try {
-            // isAnonymousRoute() acquires the same lock, which should not be an issue as the lock implementation (both Openfire's and Hazelcast's) is reentrant.
-            return usersCache.containsKey(jid.toFullJID()) || isAnonymousRoute(jid);
+            return usersCache.containsKey(jid.toFullJID());
         } finally {
             lock.unlock();
         }
@@ -978,9 +944,6 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                     if (sessionFullJids != null) {
                         for (String sessionFullJid : sessionFullJids) {
                             ClientRoute clientRoute = usersCache.get(sessionFullJid);
-                            if (clientRoute == null) {
-                                clientRoute = anonymousUsersCache.get(sessionFullJid);
-                            }
                             if (clientRoute != null) {
                                 clientRoutes.put(sessionFullJid, clientRoute);
                             }
@@ -1028,11 +991,6 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             ClientRoute clientRoute = usersCache.remove(route.toFullJID());
             if (clientRoute != null) {
                 Log.trace("Removed client route {} from users cache under key {}", route, clientRoute);
-            } else {
-                clientRoute = anonymousUsersCache.remove(route.toFullJID());
-                if (clientRoute != null) {
-                    Log.trace("Removed client route {} from anonymous users cache under key {}", route, clientRoute);
-                }
             }
             sessionRemoved = clientRoute != null;
 
@@ -1212,8 +1170,8 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     /**
-     * Verifies that {@link #usersCache}, {@link #anonymousUsersCache}, {@link #localClientRoutingTable}
-     * and {@link #routeOwnersByClusterNode} are in a consistent state.
+     * Verifies that {@link #usersCache}, {@link #localClientRoutingTable} and {@link #routeOwnersByClusterNode} are in
+     * a consistent state.
      *
      * Note that this operation can be costly in terms of resource usage. Use with caution in large / busy systems.
      *
@@ -1221,21 +1179,19 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * description of a checked characteristic. When the state is consistent, no 'fail' entries will be returned.
      *
      * @return A consistency state report.
-     * @see #usersCache which is one of the two caches that is used tho share data with other cluster nodes.
-     * @see #anonymousUsersCache which is one of the two caches that is used tho share data with other cluster nodes.
-     * @see #localClientRoutingTable which holds content added to the caches by the local cluster node.
-     * @see #routeOwnersByClusterNode which holds content added to the caches by cluster nodes other than the local node.
+     * @see #usersCache which is the cache that is used tho share data with other cluster nodes.
+     * @see #localClientRoutingTable which holds content added to the cache by the local cluster node.
+     * @see #routeOwnersByClusterNode which holds content added to the cache by cluster nodes other than the local node.
      */
     public Multimap<String, String> clusteringStateConsistencyReportForClientRoutes() {
         // Pass through defensive copies, that both prevent the diagnostics from affecting cache usage, as well as
         // give a better chance of representing a stable / snapshot-like representation of the state while diagnostics
         // are being performed.
-        return ConsistencyChecks.generateReportForRoutingTableClientRoutes(usersCache, anonymousUsersCache, localClientRoutingTable.getRoutes(), new HashMap<>(routeOwnersByClusterNode));
+        return ConsistencyChecks.generateReportForRoutingTableClientRoutes(usersCache, localClientRoutingTable.getRoutes(), new HashMap<>(routeOwnersByClusterNode));
     }
 
     /**
-     * Verifies that {@link #usersSessionsCache}, {@link #usersCache} and {@link #anonymousUsersCache} are in a
-     * consistent state.
+     * Verifies that {@link #usersSessionsCache} and {@link #usersCache} are in a consistent state.
      *
      * Note that this operation can be costly in terms of resource usage. Use with caution in large / busy systems.
      *
@@ -1244,11 +1200,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      *
      * @return A consistency state report.
      * @see #usersSessionsCache which tracks user sessions.
-     * @see #usersCache which is one of the two caches that is used tho share data with other cluster nodes.
-     * @see #anonymousUsersCache which is one of the two caches that is used tho share data with other cluster nodes.
+     * @see #usersCache which the cache that is used tho share data with other cluster nodes.
      */
     public Multimap<String, String> clusteringStateConsistencyReportForUsersSessions() {
-        return ConsistencyChecks.generateReportForUserSessions(usersSessionsCache, usersCache, anonymousUsersCache);
+        return ConsistencyChecks.generateReportForUserSessions(usersSessionsCache, usersCache);
     }
 
 
@@ -1279,14 +1234,13 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         // Ensure that event listeners have been registered with the caches, before starting to simulate 'entryAdded' events,
         // to prevent the possibility of having entries that are missed by the simulation because of bad timing.
         usersCache.addClusteredCacheEntryListener(userCacheEntryListener, false, false);
-        anonymousUsersCache.addClusteredCacheEntryListener(userCacheEntryListener, false, false);
         serversCache.addClusteredCacheEntryListener(serversCacheEntryListener, false, false);
         componentsCache.addClusteredCacheEntryListener(componentsCacheEntryListener, true, true);
         // This is not necessary for the usersSessions cache, because its content is being managed while the content
-        // of users cache and anonymous users cache is being managed.
+        // of users cache is being managed.
 
         Log.debug("Simulate 'entryAdded' for all data that already exists elsewhere in the cluster.");
-        Stream.concat(usersCache.entrySet().stream(), anonymousUsersCache.entrySet().stream())
+        usersCache.entrySet().stream()
             // this filter isn't needed if we do this before restoreCacheContent.
             .filter(entry -> !entry.getValue().getNodeID().equals(XMPPServer.getInstance().getNodeID()))
             .forEach(entry -> userCacheEntryListener.entryAdded(entry.getKey(), entry.getValue(), entry.getValue().getNodeID()));
@@ -1520,38 +1474,19 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
 
         // Ensure that 'usersCache' has content that reflects the locally available client connections (we do not need
         // to restore the client connections on other nodes, as those will be dropped right after invoking this method anyway).
-        Log.info("Looking for local (non-anonymous) client routes that have 'dropped out' of the cache (likely as a result of a network failure).");
+        Log.info("Looking for local client routes that have 'dropped out' of the cache (likely as a result of a network failure).");
         final Collection<LocalClientSession> localClientRoutes = localClientRoutingTable.getRoutes();
-        final Map<String, LocalClientSession> localUserRoutes = localClientRoutes.stream().filter(r -> !r.isAnonymousUser()).collect(Collectors.toMap((LocalClientSession localClientSession) -> localClientSession.getAddress().toString(), Function.identity()));
+        final Map<String, LocalClientSession> localUserRoutes = localClientRoutes.stream().collect(Collectors.toMap((LocalClientSession localClientSession) -> localClientSession.getAddress().toString(), Function.identity()));
         final Set<String> cachedUsersRoutes = usersCache.keySet();
         final Set<String> userRoutesNotInCache = localUserRoutes.values().stream().map(LocalClientSession::getAddress).map(JID::toString).collect(Collectors.toSet());
         userRoutesNotInCache.removeAll(cachedUsersRoutes);
         if (userRoutesNotInCache.isEmpty()) {
-            Log.info("Found no local (non-anonymous) user routes that are missing from the cache.");
+            Log.info("Found no local user routes that are missing from the cache.");
         } else {
-            Log.warn("Found {} (non-anonymous) user routes that we know locally, but are not (no longer) in the cache. This can occur when a cluster node fails, but should not occur otherwise.", userRoutesNotInCache.size());
+            Log.warn("Found {} user routes that we know locally, but are not (no longer) in the cache. This can occur when a cluster node fails, but should not occur otherwise.", userRoutesNotInCache.size());
             for (String missing : userRoutesNotInCache) {
-                Log.info("Restoring (non-anonymous) user routes: {}", missing);
+                Log.info("Restoring user routes: {}", missing);
                 final LocalClientSession localClientSession = localUserRoutes.get(missing);
-                assert localClientSession != null; // We've established this with the filtering above.
-                addClientRoute(localClientSession.getAddress(), localClientSession);
-            }
-        }
-
-        // Ensure that 'anonymousUsersCache' has content that reflects the locally available client connections (we do not need
-        // to restore the client connections on other nodes, as those will be dropped right after invoking this method anyway).
-        Log.info("Looking for local (non-anonymous) client routes that have 'dropped out' of the cache (likely as a result of a network failure).");
-        final Map<String, LocalClientSession> localAnonymousUserRoutes = localClientRoutes.stream().filter(LocalClientSession::isAnonymousUser).collect(Collectors.toMap((LocalClientSession localClientSession) -> localClientSession.getAddress().toString(), Function.identity()));
-        final Set<String> cachedAnonymousUsersRoutes = anonymousUsersCache.keySet();
-        final Set<String> anonymousUserRoutesNotInCache = new HashSet<>(localAnonymousUserRoutes.keySet()); // defensive copy - we should not modify localAnonymousUserRoutes!
-        anonymousUserRoutesNotInCache.removeAll(cachedAnonymousUsersRoutes);
-        if (anonymousUserRoutesNotInCache.isEmpty()) {
-            Log.info("Found no local anonymous user routes that are missing from the cache.");
-        } else {
-            Log.warn("Found {} anonymous user routes that we know locally, but are not (no longer) in the cache. This can occur when a cluster node fails, but should not occur otherwise.", anonymousUserRoutesNotInCache.size());
-            for (String missing : anonymousUserRoutesNotInCache) {
-                Log.info("Restoring (non-anonymous) user route: {}", missing);
-                final LocalClientSession localClientSession = localAnonymousUserRoutes.get(missing);
                 assert localClientSession != null; // We've established this with the filtering above.
                 addClientRoute(localClientSession.getAddress(), localClientSession);
             }
@@ -1636,7 +1571,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     public void addLocalClientRoutesToCache() {
-        Log.debug( "Restoring cache content for cache '{}', '{}' and '{}' by adding all client routes that are connected to the local cluster node.", usersCache.getName(), anonymousUsersCache.getName(), usersSessionsCache.getName() );
+        Log.debug( "Restoring cache content for cache '{}' and '{}' by adding all client routes that are connected to the local cluster node.", usersCache.getName(), usersSessionsCache.getName() );
         // Add client sessions hosted locally to the cache (using new nodeID)
         for (LocalClientSession session : localClientRoutingTable.getRoutes()) {
             addClientRoute(session.getAddress(), session);

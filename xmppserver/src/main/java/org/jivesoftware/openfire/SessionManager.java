@@ -855,14 +855,32 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         }
     }
 
-    public boolean isAnonymousRoute(String username) {
+    public boolean isAnonymousClientSession(@Nonnull final String username) {
         // JID's node and resource are the same for anonymous sessions
-        return isAnonymousRoute(new JID(username, serverName, username, true));
+        final JID address = new JID(username, serverName, username, true);
+        return isAnonymousClientSession(address);
     }
 
-    public boolean isAnonymousRoute(JID address) {
+    public boolean isAnonymousClientSession(@Nonnull final JID address) {
         // JID's node and resource are the same for anonymous sessions
-        return routingTable.isAnonymousRoute(address);
+        final ClientSession session = getSession(address);
+        return session != null && session.isAnonymousUser();
+    }
+
+    /**
+     * @deprecated Replaced by {@link #isAnonymousClientSession(String)}
+     */
+    @Deprecated(forRemoval = true, since = "5.0.0") // Remove in or after Openfire 5.1.0
+    public boolean isAnonymousRoute(String username) {
+        return isAnonymousClientSession(username);
+    }
+
+    /**
+     * @deprecated Replaced by {@link #isAnonymousClientSession(JID)}
+     */
+    @Deprecated(forRemoval = true, since = "5.0.0") // Remove in or after Openfire 5.1.0
+    public boolean isAnonymousRoute(JID address) {
+        return isAnonymousClientSession(address);
     }
 
     public boolean isActiveRoute(String username, String resource) {

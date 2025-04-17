@@ -41,7 +41,7 @@
         <td style="width: 10%; white-space: nowrap">
             <%  String name = sess.getAddress().getNode(); %>
             <a href="session-details.jsp?jid=<%= URLEncoder.encode(sess.getAddress().toString(), StandardCharsets.UTF_8) %>" title="<fmt:message key='session.row.click' />"
-            ><%= ((!sessionManager.isAnonymousRoute(sess.getUsername())) ? JID.unescapeNode(name): "<i>"+LocaleUtils.getLocalizedString("session.details.anonymous")+"</i>") %></a>
+            ><%= (!sess.isAnonymousUser() ? JID.unescapeNode(name): "<i>"+LocaleUtils.getLocalizedString("session.details.anonymous")+"</i>") %></a>
         </td>
     </c:if>
     <c:if test="${showResource}">

@@ -82,10 +82,17 @@ public class RemoteClientSession extends RemoteSession implements ClientSession 
     }
 
     public boolean isAnonymousUser() {
-        // Get it once and cache it since it never changes.
         if (isAnonymous == null) {
-            isAnonymous = SessionManager.getInstance().isAnonymousRoute(getAddress());
+            // Cache the result only when sure that it can't change anymore, which is after authentication has happened.
+            if (isInitialized()) {
+                ClusterTask task = getRemoteSessionTask(RemoteSessionTask.Operation.isAnonymous);
+                Object result = doSynchronousClusterTask(task);
+                isAnonymous = result != null && (Boolean) result;
+            } else {
+                return false; // non-authenticated sessions are not identified as anonymous.
+            }
         }
+
         return isAnonymous;
     }
 

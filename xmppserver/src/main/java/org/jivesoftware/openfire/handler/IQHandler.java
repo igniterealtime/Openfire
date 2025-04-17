@@ -94,7 +94,7 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler<IQ
         if (iq.isRequest() && recipientJID != null && recipientJID.getNode() != null
             && !XMPPServer.getInstance().isRemote(recipientJID)
             && !UserManager.getInstance().isRegisteredUser(recipientJID, false)
-            && !sessionManager.isAnonymousRoute(recipientJID.getNode())
+            && !sessionManager.isAnonymousClientSession(recipientJID)
             && !UserManager.isPotentialFutureLocalUser(recipientJID) && sessionManager.getSession(recipientJID) == null
             && !(recipientJID.asBareJID().equals(iq.getFrom().asBareJID()) && sessionManager.isPreAuthenticatedSession(iq.getFrom())) // A pre-authenticated session queries the server about itself.
         )

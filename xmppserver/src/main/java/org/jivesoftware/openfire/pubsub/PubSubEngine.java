@@ -669,7 +669,7 @@ public class PubSubEngine
     private void subscribeNodeAsync(final IQ iq, final JID subscriberJID, final Node node, final JID owner, final PubSubService service, final JID from, final Element childElement, final AccessModel accessModel) {
 
         // Check if the subscriber is an anonymous user.
-        if (XMPPServer.getInstance().isLocal(subscriberJID) && SessionManager.getInstance().isAnonymousRoute(subscriberJID.getNode())) {
+        if (SessionManager.getInstance().isAnonymousClientSession(subscriberJID)) {
             // Anonymous users cannot subscribe to the node. Return forbidden error
             // TODO OF-2506: figure out why anonymous users should not be allowed to subscribe. There is no way to check if remote users are anonymous anyway.
             sendErrorPacket(iq, PacketError.Condition.forbidden, null);

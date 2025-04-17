@@ -522,7 +522,7 @@ public final class UserManager {
      * @return True if the address could be used for a locally registered user, potentially not having registered yet.
      */
     public static boolean isPotentialFutureLocalUser(final JID user) {
-        return ALLOW_FUTURE_USERS.getValue() && XMPPServer.getInstance().isLocal(user) && !SessionManager.getInstance().isAnonymousRoute(user.getNode());
+        return ALLOW_FUTURE_USERS.getValue() && XMPPServer.getInstance().isLocal(user) && !SessionManager.getInstance().isAnonymousClientSession(user);
     }
 
     private static void initProvider(final Class<? extends UserProvider> clazz) {

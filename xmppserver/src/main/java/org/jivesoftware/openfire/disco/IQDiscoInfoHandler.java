@@ -619,7 +619,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 else {
                     // Answer with identities of users of the server.
                     final Collection<UserIdentitiesProvider> providers;
-                    if (SessionManager.getInstance().isAnonymousRoute(name))
+                    if (SessionManager.getInstance().isAnonymousClientSession(name))
                     {
                         // Answer identity of an anonymous user.
                         providers = anonymousUserIdentityProviders;
@@ -668,7 +668,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 else {
                     // Answer with features of users of the server.
                     final Collection<UserFeaturesProvider> providers;
-                    if (SessionManager.getInstance().isAnonymousRoute(name))
+                    if (SessionManager.getInstance().isAnonymousClientSession(name))
                     {
                         // Answer features of an anonymous user.
                         providers = anonymousUserFeatureProviders;

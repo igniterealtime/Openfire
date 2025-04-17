@@ -526,8 +526,9 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                 new HashMap<>(localDirectedPresences);
         for (Map.Entry<String, Collection<DirectedPresence>> entry : copy.entrySet()) {
             for (DirectedPresence directedPresence : entry.getValue()) {
-                if (!routingTable.hasClientRoute(directedPresence.getHandler()) &&
-                        !routingTable.hasComponentRoute(directedPresence.getHandler())) {
+                // TODO This appears to remove all directed presence for non-local entities. Determine if that's true, and if so, desirable.
+                if (sessionManager.getSession(directedPresence.getHandler()) == null &&
+                        sessionManager.getComponentSession(directedPresence.getHandler().getDomain()) == null) {
                     Collection<DirectedPresence> presences = localDirectedPresences.get(entry.getKey());
                     presences.remove(directedPresence);
                     if (presences.isEmpty()) {

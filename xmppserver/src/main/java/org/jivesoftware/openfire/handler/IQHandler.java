@@ -91,6 +91,19 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler<IQ
 
         final JID recipientJID = iq.getTo();
 
+        Log.error("DEBUG! req: {}", iq.toXML());
+        Log.error("DEBUG! isRequest: {}", iq.isRequest());
+        Log.error("DEBUG! reci=null: {}", recipientJID != null);
+        if (recipientJID != null) {
+            Log.error("DEBUG! reci=====: {}", recipientJID);
+            Log.error("DEBUG! node=null: {}", recipientJID.getNode() != null);
+            Log.error("DEBUG! !isRemote: {}", !XMPPServer.getInstance().isRemote(recipientJID));
+            Log.error("DEBUG! !isRegist: {}", !UserManager.getInstance().isRegisteredUser(recipientJID, false));
+            Log.error("DEBUG! !isAnonym: {}", !sessionManager.isAnonymousClientSession(recipientJID));
+            Log.error("DEBUG! !isFuture: {}", !UserManager.isPotentialFutureLocalUser(recipientJID));
+            Log.error("DEBUG! !hasSessi: {}", sessionManager.getSession(recipientJID) == null);
+            Log.error("DEBUG! !preauthd: {}", !(recipientJID.asBareJID().equals(iq.getFrom().asBareJID()) && sessionManager.isPreAuthenticatedSession(iq.getFrom())));
+        }
         if (iq.isRequest() && recipientJID != null && recipientJID.getNode() != null
             && !XMPPServer.getInstance().isRemote(recipientJID)
             && !UserManager.getInstance().isRegisteredUser(recipientJID, false)

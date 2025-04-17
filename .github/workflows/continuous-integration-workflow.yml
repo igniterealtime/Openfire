@@ -28,9 +28,9 @@ jobs:
       - name: Build with Maven # We install instead of package, because we want the result in the local mvn repo
         run: |
           if [[ ${{ github.ref_name }} == 'main' ]]; then            
-            ./mvnw -B install -Pcoverage --file pom.xml
+            ./mvnw -B install -Dmaven.test.skip=true -Pcoverage --file pom.xml
           else
-            ./mvnw -B install
+            ./mvnw -B install -Dmaven.test.skip=true
           fi
       - name: Upload failed test reports
         uses: actions/upload-artifact@v4

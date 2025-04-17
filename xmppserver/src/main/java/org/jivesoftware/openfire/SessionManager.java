@@ -699,6 +699,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     public void addSession(LocalClientSession session) {
         // Add session to the routing table (routing table will know session is not available yet)
         routingTable.addClientRoute(session.getAddress(), session);
+        Log.error("DEBUG! Added {} {} to routingtable: {}", session.getAuthToken().isAnonymous(), session.isAnonymousUser(), session);
         // Remove the pre-Authenticated session but remember to use the temporary ID as the key
         localSessionManager.removePreAuthenticatedSession(session);
         SessionEventDispatcher.EventType event = session.getAuthToken().isAnonymous() ?
@@ -862,8 +863,13 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     public boolean isAnonymousClientSession(@Nonnull final JID address) {
-        // JID's node and resource are the same for anonymous sessions
-        final ClientSession session = getSession(address);
+        // JID's node and resource are the same for anonymous sessions. When a bare JID was provided, auto-complete it.
+        final JID correctedJid = address.getResource() != null ? address : new JID(address.getNode(), address.getDomain(), address.getNode(), true);
+        final ClientSession session = getSession(correctedJid);
+        Log.error("DEBUG! session for {}: {}", address, session);
+        Log.error("DEBUG! has null session: {}", session == null);
+        Log.error("DEBUG! has anon session: {}", session == null ? "NULL" : session.isAnonymousUser());
+
         return session != null && session.isAnonymousUser();
     }
 

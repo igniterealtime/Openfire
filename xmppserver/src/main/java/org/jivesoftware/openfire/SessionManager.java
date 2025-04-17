@@ -62,11 +62,48 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * Manages the sessions associated with an account. The information
- * maintained by the Session manager is entirely transient and does
- * not need to be preserved between server restarts.
+ * Manages the sessions associated to XMPP entities connected to Openfire. Such entities include:
+ *
+ * <ul>
+ * <li>Users / client sessions</li>
+ * <li>Other XMPP domains / server sessions</li>
+ * <li>(External) XMPP components sessions</li>
+ * <li>Connection Managers / multiplexer sessions</li>
+ * </ul>
+ *
+ * Sessions relate to routes (as managed by a {@link RoutingTable}), but are different: a <em>session</em> represents
+ * the connectivity between software entities, whereas a <em>route</em> represents the capability for an entity to be
+ * sent XMPP data. Although there's much overlap between the two, there are differences:
+ *
+ * <ul>
+ * <li>Not every session represents a entity that can be routed to. A <strong>Connection Manager</strong> (multiplexer),
+ * for example, is not an XMPP entity. Although multiplexer sessions exists (which represent the connection between
+ * Openfire and a Connection Manager instance), multiplexer <em>routes</em> do not exist.</li>
+ *
+ * <li>Not every route has a corresponding session: A <strong>Internal Component</strong> for example represents an
+ * addressable XMPP entity, but does not have a Session. An <em>External</em> Component, on the other hand, does have
+ * an associated session.</li>
+ *
+ * <li><strong>Client</strong> sessions are somewhat special in that they can be routed to only when they have sent
+ * Initial Presence (a variant exists for Client Sessions to be routable only for specific entities, when the session
+ * has sent those entities Directed Presence).</li>
+ * <ul>Connections to other XMPP domains (<strong>Server Sessions</strong>) are typically not bidirectional. Instead,
+ * two types of sessions exist:
+ *
+ * <ul>
+ * <li>An <em>outgoing</em> server session</li>
+ * <li>An <em>incoming</em> server session</li>
+ * </ul>
+ *
+ * Both types are supported in a SessionManager. As an 'incoming' server session is not used to route stanzas to, only
+ * 'outgoing' server sessions have routes.
+ * </li></ul>
+ *
+ * The information maintained by the Session manager is entirely transient and does not need to be preserved between
+ * server restarts.
  *
  * @author Derek DeMoro
+ * @see RoutingTable
  */
 public class SessionManager extends BasicModule implements ClusterEventListener
 {

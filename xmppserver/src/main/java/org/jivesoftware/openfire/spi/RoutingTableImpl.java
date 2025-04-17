@@ -57,7 +57,7 @@ import java.util.stream.Collectors;
  * or unavailable the routing table will be updated too.<p>
  *
  * When running inside of a cluster the routing table will also keep references to routes
- * hosted in other cluster nodes. A {@link RemotePacketRouter} will be use to route packets
+ * hosted in other cluster nodes. A {@link RemotePacketRouter} will be used to route packets
  * to routes hosted in other cluster nodes.<p>
  *
  * Failure to route a packet will end up sending {@link IQRouter#routingFailed(JID, Packet)},

@@ -413,7 +413,7 @@ public class IQRouter extends BasicModule {
                     && !XMPPServer.getInstance().isRemote(recipientJID)
                     && !userManager.isRegisteredUser(recipientJID, false)
                     && !UserManager.isPotentialFutureLocalUser(recipientJID)
-                    && !sessionManager.isAnonymousRoute(recipientJID.getNode())
+                    && !sessionManager.isAnonymousClientSession(recipientJID)
                     && sessionManager.getSession(recipientJID) == null
                     && !(recipientJID.asBareJID().equals(packet.getFrom().asBareJID()) && sessionManager.isPreAuthenticatedSession(packet.getFrom())) // A pre-authenticated session queries the server about itself.
                 )

@@ -394,28 +394,13 @@ public class PresenceUpdateHandler extends BasicModule implements ChannelHandler
                     if (Presence.Type.unavailable.equals(update.getType())) {
                         if (directedPresences != null) {
                             // It's a directed unavailable presence
-                            if (routingTable.hasClientRoute(handlerJID)) {
-                                // Client sessions will receive only presences to the same JID (the
-                                // address of the session) so remove the handler from the map
-                                for (DirectedPresence directedPresence : directedPresences) {
-                                    if (directedPresence.getHandler().equals(handlerJID)) {
+                            for (DirectedPresence directedPresence : directedPresences) {
+                                if (directedPresence.getHandler().equals(handlerJID)) {
+                                    directedPresence.removeReceiver(jid);
+                                    if (directedPresence.isEmpty()) {
                                         directedPresences.remove(directedPresence);
-                                        break;
                                     }
-                                }
-                            }
-                            else {
-                                // A service may receive presences for many JIDs so in this case we
-                                // just need to remove the jid that has received a directed
-                                // unavailable presence
-                                for (DirectedPresence directedPresence : directedPresences) {
-                                    if (directedPresence.getHandler().equals(handlerJID)) {
-                                        directedPresence.removeReceiver(jid);
-                                        if (directedPresence.isEmpty()) {
-                                            directedPresences.remove(directedPresence);
-                                        }
-                                        break;
-                                    }
+                                    break;
                                 }
                             }
                             if (directedPresences.isEmpty()) {

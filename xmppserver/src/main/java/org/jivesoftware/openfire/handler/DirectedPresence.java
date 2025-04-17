@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -56,7 +57,7 @@ public class DirectedPresence implements Externalizable {
      * List of JIDs with the TO value of the directed presences.
      * E.g.: paul@js.com or room1@conference.js.com
      */
-    private Set<String> receivers = new HashSet<>();
+    private final Set<String> receivers = new HashSet<>();
 
     public DirectedPresence() {
     }
@@ -88,6 +89,16 @@ public class DirectedPresence implements Externalizable {
 
     public boolean isEmpty() {
         return receivers.isEmpty();
+    }
+
+    @Override
+    public String toString()
+    {
+        return "DirectedPresence{" +
+            "nodeID=" + Arrays.toString(nodeID) +
+            ", handler=" + handler +
+            ", receivers=[" + String.join(",", receivers) + "]" +
+            '}';
     }
 
     @Override

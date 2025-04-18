@@ -13,6 +13,10 @@ inputs:
     description: 'Set a hosts file for the given IP and host (or for example.com if running locally)'
     required: false
     default: '127.0.0.1'
+  logLevel:
+    description: 'The verbosity of logging (one of error, warn, info, debug, trace, all)'
+    required: false
+    default: 'info'
 
 runs:
   using: "composite"
@@ -30,5 +34,5 @@ runs:
     - name: Set JAVA_HOME to use Java 17
       run: echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
       shell: bash
-    - run: startCIServer.sh -i ${{ inputs.ip }} -h ${{ inputs.domain }} -b ${{ inputs.distBaseDir }}
+    - run: startCIServer.sh -i ${{ inputs.ip }} -h ${{ inputs.domain }} -b ${{ inputs.distBaseDir }} -l ${{ inputs.logLevel }}
       shell: bash

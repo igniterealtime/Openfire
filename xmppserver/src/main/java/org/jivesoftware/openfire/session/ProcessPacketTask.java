@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2009 Jive Software, 2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2007-2009 Jive Software, 2021-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -128,7 +128,7 @@ public class ProcessPacketTask implements ClusterTask<Void> {
 
     Session getSession() {
         if (sessionType == SessionType.client) {
-            return XMPPServer.getInstance().getRoutingTable().getClientRoute(address);
+            return SessionManager.getInstance().getSession(address);
         }
         else if (sessionType == SessionType.component) {
             return SessionManager.getInstance().getComponentSession(address.getDomain());

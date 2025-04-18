@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.session;
 
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.spi.ClientRoute;
 import org.jivesoftware.openfire.spi.RoutingTableImpl;
@@ -54,7 +55,7 @@ public class ClientSessionTask extends RemoteSessionTask {
 
     Session getSession() {
         if (session == null) {
-            session = XMPPServer.getInstance().getRoutingTable().getClientRoute(address);
+            session = SessionManager.getInstance().getSession(address);
         }
         return session;
     }

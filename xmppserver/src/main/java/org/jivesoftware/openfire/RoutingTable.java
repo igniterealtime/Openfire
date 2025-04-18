@@ -23,65 +23,35 @@ import org.xmpp.packet.Packet;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
- * <p>Maintains server-wide knowledge of routes to any node.</p>
- * <p>Routes are only concerned with node addresses. Destinations are
- * packet handlers (typically of the three following types):</p>
- * <ul>
- * <li>Session - A local or remote session belonging to the server's domain.
- * Remote sessions may be possible in clustered servers.</li>
- * <li>Chatbot - A chatbot which will have various packets routed to it.</li>
- * <li>Transport - A transport for foreign server domains. Foreign domains
- * may be hosted in the same server JVM (e.g. virtual hosted servers, groupchat
- * servers, etc).</li>
- * </ul>
- * <p>In almost all cases, the caller should not be concerned with what
- * handler is associated with a given node. Simply obtain the packet handler
- * and deliver the packet to the node, leaving the details up to the handler.</p>
- * <p>Routes are matched using the stringprep rules given in the XMPP specification.
- * Wildcard routes for a particular name or resource is indicated by a null. E.g.
- * routing to any address at server.com should set the name to null, the host to
- * 'server.com' and the resource to null. A route to the best resource for user@server.com
- * should indicate that route with a null resource component of the XMPPAddress. Session
- * managers should add a route for both the generic user@server.com as well as
- * user@server.com/resource routes (knowing that one is an alias for the other
- * is the responsibility of the session or session manager).</p>
- * <p>In order to accommodate broadcasts, you can also do partial matches by querying
- * all 'child' nodes of a particular node. The routing table contains a forest of
- * node trees. The node tree is arranged in the following hierarchy:</p>
- * <ul>
- * <li>forest - All nodes in the routing table. An XMPP address with host, name, and resource set
- * to null will match all nodes stored in the routing table. Use with extreme caution as the
- * routing table may contain hundreds of thousands of entries and iterators will be produced using
- * a copy of the table for iteration safety.</li>
- * <li>domain root - The root of each node tree is the server domain. An XMPP address
- * containing just a host entry, and null in the name and resource fields will match
- * the domain root. The children will contain both the root entry (if there is one) and
- * all entries with the same host name.</li>
- * <li>user branches - The root's immediate children are the user branches. An
- * XMPP address containing just a hast and name entry, and null in the resource field
- * will match a particular user branch. The children will contain both the user branch
- * (if there is one) and all entries with the same host and name, ignoring resources.
- * This is the most useful for conducting user broadcasts. Note that if the user
- * branch is located on a foreign server, the only route returned will the server-to-server
- * transport.</li>
- * <li>resource leaves - Each user branch can have zero or more resource leaves. A partial
- * match on an XMPP address with values in host, name, and resource fields will be equivalent
- * to the exact match calls since only one route can ever be registered for a particular. See
- * getBestRoute() if you'd like to search for both the resource leaf route, as well as a valid user
- * branch for that node if no leaf exists.</li>
- * </ul>
- * <p>Note: it is important that any component or action affecting routes
- * update the routing table immediately.</p>
+ * Maintains knowledge of routes to any XMPP entity.
+ * <p>
+ * Routes closely relate to sessions (as managed by the {@link SessionManager}). Typically, a session can be routed to
+ * almost immediately after it has been established. <em>Client</em> Sessions are somewhat special, in that they can be
+ * routed to only when they have sent Initial Presence (a variant exists for Clients Sessions to be routable only for
+ * specific entities, when the session has sent those entities Directed Presence).
+ * <p>
+ * Generally speaking, every Route will have an associated Session, but not every Session may have an associated Route.
+ * <p>
+ * As Routes are closely related to sessions, a route is represented by a Session instance. A session will normally
+ * always be obtainable from a SessionManager, but will only be obtainable from a RoutingTable when the session is
+ * 'routable'.
+ * <p>
+ * The information maintained by a routing table is entirely transient and does not need to be preserved between
+ * server restarts.
+ * <p>
+ * Note: it is important that any component or action affecting routes update the routing table immediately.
  *
  * @author Iain Shigeoka
+ * @see SessionManager
  */
 public interface RoutingTable {
 
     /**
      * Adds a route to the routing table for the specified outgoing server session, or replaces a pre-existing one.
-     *
+     * <p>
      * When running inside a cluster, this method <em>must</em> be invoked on the cluster node that is actually holding
      * the physical connection to the remote server. Additionally, replacing a pre-existing server session can only
      * occur on the same cluster node as the one that was holding the original session. A runtime exception is thrown
@@ -93,12 +63,26 @@ public interface RoutingTable {
     void addServerRoute(DomainPair route, LocalOutgoingServerSession destination);
 
     /**
-     * Adds a route to the routing table for the specified internal or external component. <p>
+     * Removes a route from the routing table for the specified outgoing server session.
+     * <p>
+     * When running inside a cluster this message <em>must</em> be sent from the cluster node that is actually holding
+     * the physical connection to the remote server.
+     * <p>
+     * Returns true if a route to an outgoing server has been successfully removed.
      *
-     * When running inside of a cluster this message {@code must} be sent from the cluster
-     * node that is actually hosting the component. The component may be available in all
-     * or some of cluster nodes. The routing table will keep track of all nodes hosting
-     * the component. 
+     * @param route the route to remove.
+     * @return true if the route was successfully removed.
+     */
+    boolean removeServerRoute(DomainPair route);
+
+    /**
+     * Adds a route to the routing table for the specified internal or external component.
+     * <p>
+     * When running inside a cluster this method <em>must</em> be invoked from the cluster node that is actually hosting
+     * the component.
+     * <p>
+     * An internal component may be installed in or an external component may be connected to one, some, or all cluster
+     * nodes. The routing table will keep track of all nodes hosting the component.
      *
      * @param route the address associated to the route.
      * @param destination the component.
@@ -106,46 +90,75 @@ public interface RoutingTable {
     void addComponentRoute(JID route, RoutableChannelHandler destination);
 
     /**
-     * Adds a route to the routing table for the specified client session. The client
-     * session will be added as soon as the user has finished authenticating with the server.
-     * Moreover, when the user becomes available or unavailable then the routing table will
-     * get updated again. When running inside of a cluster this message {@code must} be sent
-     * from the cluster node that is actually holding the client session.
+     * Removes a route from the routing table for the specified internal or external component.
+     * <p>
+     * When running inside a cluster this message <em>must</em> be sent from the cluster node that is actually hosting
+     * the component.
+     * <p>
+     * Returns true if a route of a component has been successfully removed.
+     *
+     * @param route the route to remove.
+     * @return true if a route of a component has been successfully removed.
+     */
+    boolean removeComponentRoute(JID route);
+
+    /**
+     * Adds a route to the routing table for the specified client session.
+     * <p>
+     * The client session will be added as soon as the user has finished authenticating with the server. Moreover, when
+     * the user becomes available or unavailable then the routing table will get updated again.
+     * <p>
+     * When running inside a cluster this method <em>must</em> be invoked from the cluster node that is actually holding
+     * the client session.
      *
      * @param route the address (a full JID) associated to the route.
      * @param destination the client session.
      */
+    // FIXME: "Moreover, when the user becomes available or unavailable then the routing table will get updated again."
+    //        This appears to be true: this method gets invoked when a session is added, but also when it becomes
+    //        available and unavailable. Determine if this is needed, and if so, document why.
     void addClientRoute(JID route, LocalClientSession destination);
 
     /**
-     * Routes a packet to the specified address. The packet destination can be a
-     * user on the local server, a component, or a foreign server.<p>
+     * Removes a route from the routing table for the specified client session.
+     * <p>
+     * When running inside a cluster this message <em>must</em> be sent from the cluster node that is actually hosting
+     * the client session.
+     * <p>
+     * Returns true if a route of a client session has been successfully removed.
      *
-     * When routing a packet to a remote server then a new outgoing connection
-     * will be created to the remote server if none was found and the packet
-     * will be delivered. If an existing outgoing connection already exists then
-     * it will be used for delivering the packet. Moreover, when running inside of a cluster
-     * the node that has the actual outgoing connection will be requested to deliver
-     * the requested packet.<p>
+     * @param route the route to remove.
+     * @return true if a route of a client session has been successfully removed.
+     */
+    boolean removeClientRoute(JID route);
+
+    /**
+     * Routes a stanza to the specified address. The stanza destination can be any XMPP entity, including a user on the
+     * local XMPP domain, a component, or a remote XMPP domain.
+     * <p>
+     * When routing a stanza to a remote XMPP domain, then a new outgoing server connection will be created to a server
+     * belonging to the target domain, if no preexisting outgoing server connection to that domain is available. If an
+     * existing outgoing connection already exists then it will be used for delivering the stanza. Moreover, when
+     * running inside a cluster the node that has the actual outgoing connection will be requested to deliver the
+     * stanza.
+     * <p>
+     * Stanzas routed to components will only be sent if an internal or external component for the target address is
+     * available to the server. Unlike with servers, a new connection will <em>not</em> be established when a component
+     * is not available. When running inside a cluster the node that is hosting the component will be requested to
+     * deliver the stanza. Components available in the local cluster node are preferred. When a component is not
+     * available locally, the first cluster node found hosting the component will be used.
+     * <p>
+     * Stanzas routed to users of the local domain will be delivered if the user is connected to the XMPP domain.
+     * Depending on the stanza type and the sender of the stanza, only available or all user sessions can be considered
+     * for delivery of the stanza. For instance, {@link org.xmpp.packet.Message Messages} and
+     * {@link org.xmpp.packet.Presence Presences} are only sent to available client sessions, whilst
+     * {@link org.xmpp.packet.IQ IQs} originated from the XMPP domain can be sent to available or unavailable
+     * sessions. When running inside a cluster the node that is hosting the user session will be requested to deliver
+     * the requested stanza.
      *
-     * Packets routed to components will only be sent if the internal or external
-     * component is connected to the server. Moreover, when running inside of a cluster
-     * the node that is hosting the component will be requested to deliver the requested
-     * packet. It will be first checked if the component is available in this JVM and if not
-     * then the first cluster node found hosting the component will be used.<p>
-     *
-     * Packets routed to users will be delivered if the user is connected to the server. Depending
-     * on the packet type and the sender of the packet only available or all user sessions could
-     * be considered. For instance, {@link org.xmpp.packet.Message Messages} and
-     * {@link org.xmpp.packet.Presence Presences} are only sent to available client sessions whilst
-     * {@link org.xmpp.packet.IQ IQs} originated to the server can be sent to available or unavailable
-     * sessions. When running inside of a cluster the node that is hosting the user session will be
-     * requested to deliver the requested packet.<p>
-     *
-     * @param jid the recipient of the packet to route.
-     * @param packet the packet to route.
-     * @throws PacketException thrown if the packet is malformed (results in the sender's
-     *      session being shutdown).
+     * @param jid the recipient of the stanza to route.
+     * @param packet the stanza to route.
+     * @throws PacketException thrown if the stanza is malformed (results in the sender's session being shutdown).
      */
     void routePacket(JID jid, Packet packet) throws PacketException;
 
@@ -157,14 +170,13 @@ public interface RoutingTable {
      * // TODO Should we care about available or not available????
      *
      * @param jid the full JID of the user.
-     * @return true if a registered user or anonymous user with the specified full JID is
-     * currently logged.
+     * @return true if a registered user or anonymous user with the specified full JID is currently logged in.
      */
     boolean hasClientRoute(JID jid);
 
     /**
-     * Returns true if an anonymous user with the specified full JID is currently logged.
-     * When running inside of a cluster a true value will be returned as long as the
+     * Returns true if an anonymous user with the specified full JID is currently logged in.
+     * When running inside a cluster a true value will be returned as long as the
      * user is connected to any cluster node.
      *
      * @param jid the full JID of the anonymous user.
@@ -176,7 +188,7 @@ public interface RoutingTable {
 
     /**
      * Returns true if the specified address belongs to a route that is hosted by this JVM.
-     * When running inside of a cluster each cluster node will host routes to local resources.
+     * When running inside a cluster each cluster node will host routes to local resources.
      * A false value could either mean that the route is not hosted by this JVM but other
      * cluster node or that there is no route to the specified address. Use
      * {@link XMPPServer#isLocal(org.xmpp.packet.JID)} to figure out if the address
@@ -190,10 +202,10 @@ public interface RoutingTable {
     /**
      * Returns true if an outgoing server session exists to the specified remote server.
      * The JID can be a full JID or a bare JID since only the domain of the specified
-     * address will be used to look up the route.<p>
-     *
-     * When running inside of a cluster the look up will be done in all the cluster. So
-     * as long as a node has a connection to the remote server a true value will be
+     * address will be used to look up the route.
+     * <p>
+     * When running inside a cluster the look-up will be performed in all cluster nodes.
+     * As long as any node has a connection to the remote server, a true value will be
      * returned.
      *
      * @param pair DomainPair that specifies the local/remote server address.
@@ -202,12 +214,12 @@ public interface RoutingTable {
     boolean hasServerRoute(DomainPair pair);
 
     /**
-     * Returns true if an internal or external component is hosting the specified address.
+     * Returns true if an internal or external component exists that is hosting the specified address.
      * The JID can be a full JID or a bare JID since only the domain of the specified
-     * address will be used to look up the route.<p>
-     *
-     * When running inside of a cluster the look up will be done in all the cluster. So
-     * as long as a node is hosting the component  a true value will be returned.
+     * address will be used to look up the route.
+     * <p>
+     * When running inside a cluster the look-up will be performed in all cluster nodes.
+     * As long as any node is hosting the component, a true value will be returned.
      *
      * @param jid JID that specifies the component address.
      * @return true if an internal or external component is hosting the specified address.
@@ -215,9 +227,10 @@ public interface RoutingTable {
     boolean hasComponentRoute(JID jid);
 
     /**
-     * Returns the client session associated to the specified XMPP address or {@code null}
-     * if none was found. When running inside of a cluster and a remote node is hosting
-     * the client session then a session surrage will be returned.
+     * Returns the client session associated to the specified XMPP address or {@code null} if none was found.
+     * <p>
+     * When running inside a cluster and a remote node is hosting the client session then a session surrogate will be
+     * returned.
      *
      * @param jid the address of the session.
      * @return the client session associated to the specified XMPP address or null if none was found.
@@ -225,22 +238,38 @@ public interface RoutingTable {
     ClientSession getClientRoute(JID jid);
 
     /**
-     * Returns collection of client sessions authenticated with the server. When running inside
-     * of a cluster the returned sessions will include sessions connected to this JVM and also
-     * other cluster nodes.
+     * Returns the client sessions associated to the specified XMPP address or an empty collection
+     * if none were found.
+     * <p>
+     * When running inside a cluster and a remote node is hosting the client session then a session surrogate will be
+     * returned.
+     * <p>
+     * When the provided address is a full JID, at most one session is returned. If a bare JID is provided, then all
+     * sessions associated to the user will be returned.
      *
-     * TODO Prevent usage of this message and change original requirement to avoid having to load all sessions.
+     * @param jid the address of the session.
+     * @return the client session associated to the specified XMPP address or null if none was found.
+     */
+    Set<ClientSession> getClientRoutes(JID jid);
+
+    /**
+     * Returns collection of client sessions authenticated with the server.
+     * <p>
+     * When running inside a cluster the returned sessions will include sessions connected to the local cluster node.
+     * Optionally, sessions on other cluster nodes can be included in the result, too.
+     *
+     * TODO Prevent usage of this method and change original requirement to avoid having to load all sessions.
      * TODO This may not scale when hosting millions of sessions.
      *
-     * @param onlyLocal true if only client sessions connected to this JVM must be considered.
+     * @param onlyLocal true if only client sessions connected to the local cluster node are to be returned.
      * @return collection of client sessions authenticated with the server.
      */
     Collection<ClientSession> getClientsRoutes(boolean onlyLocal);
 
     /**
-     * Returns the outgoing server session associated to the specified XMPP address or {@code null}
-     * if none was found. When running inside of a cluster and a remote node is hosting
-     * the session then a session surrage will be returned.
+     * Returns the outgoing server session associated to the specified XMPP address or {@code null} if none was found.
+     * <p>
+     * When running inside a cluster and a remote node is hosting the session then a session surrogate will be returned.
      *
      * @param pair DomainPair that specifies the local/remote server address.
      * @return the outgoing server session associated to the specified XMPP address or null if none was found.
@@ -255,11 +284,13 @@ public interface RoutingTable {
      *         packets sent from this server.
      */
     Collection<String> getServerHostnames();
+
     Collection<DomainPair> getServerRoutes();
 
     /**
-     * Returns the number of outgoing server sessions hosted in this JVM. When running inside of
-     * a cluster you will need to get this value for each cluster node to learn the total number
+     * Returns the number of outgoing server sessions hosted in the local cluster node.
+     * <p>
+     * When running inside a cluster you will need to get this value for each cluster node to learn the total number
      * of outgoing server sessions.
      *
      * @return the number of outgoing server sessions hosted in this JVM.
@@ -267,10 +298,11 @@ public interface RoutingTable {
     int getServerSessionsCount();
 
     /**
-     * Returns domains of components hosted by the server. When running in a cluster, domains of
-     * components running in any node will be returned.
+     * Returns domains (e.g. mycomponent.example.org) of all components.
+     * <p>
+     * When running in a cluster, domains of components running in any node will be returned.
      *
-     * @return domains of components hosted by the server.
+     * @return domains of all components.
      */
     Collection<String> getComponentsDomains();
 
@@ -301,37 +333,6 @@ public interface RoutingTable {
      * @return list of routes associated to the specified route address.
      */
     List<JID> getRoutes(JID route, JID requester);
-
-    /**
-     * Returns true if a route of a client session has been successfully removed. When running
-     * inside of a cluster this message {@code must} be sent from the cluster node that is
-     * actually hosting the client session.
-     *
-     * @param route the route to remove.
-     * @return true if a route of a client session has been successfully removed.
-     */
-    boolean removeClientRoute(JID route);
-
-    /**
-     * Returns true if a route to an outgoing server has been successfully removed. When running
-     * inside of a cluster this message {@code must} be sent from the cluster node that is
-     * actually holding the physical connection to the remote server.
-     *
-     * @param route the route to remove.
-     * @return true if the route was successfully removed.
-     */
-    boolean removeServerRoute(DomainPair route);
-
-    /**
-     * Returns true if a route of a component has been successfully removed. Both internal
-     * and external components have a route in the table. When running inside of a cluster
-     * this message {@code must} be sent from the cluster node that is actually hosting the
-     * component.
-     *
-     * @param route the route to remove.
-     * @return true if a route of a component has been successfully removed.
-     */
-    boolean removeComponentRoute(JID route);
 
     /**
      * Sets the {@link RemotePacketRouter} to use for delivering packets to entities hosted

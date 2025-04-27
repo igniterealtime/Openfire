@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2018-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,30 +29,38 @@ import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
 import org.jivesoftware.openfire.privacy.PrivacyListProvider;
 import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.spamreporting.SpamReport;
+import org.jivesoftware.openfire.spamreporting.SpamReportManager;
+import org.jivesoftware.openfire.stanzaid.StanzaID;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.PacketError;
-import org.xmpp.packet.Presence;
+import org.xmpp.packet.*;
 
+import javax.annotation.Nonnull;
+import java.time.Instant;
 import java.util.*;
 
 /**
- * Implementation of XEP-0191 "Blocking Command".
+ * Implementation of XEP-0191 "Blocking Command". This implementation supports the optional extension that's defined
+ * in XEP-0377 "Spam Reporting".
  *
  * This implementation uses the default privacy list of a user to store its blocklist.
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
+ * @see <a href="https://xmpp.org/extensions/xep-0191.html">XEP-0191: Blocking Command</a>
+ * @see <a href="https://xmpp.org/extensions/xep-0377.html">XEP-0337: Spam Reporting</a>
  */
 public class IQBlockingHandler extends IQHandler implements ServerFeaturesProvider
 {
     private static final Logger Log = LoggerFactory.getLogger( IQBlockingHandler.class );
 
     public static final String NAMESPACE = "urn:xmpp:blocking";
+
+    public static final String XEP_0377_ELEMENT_NAME = "report";
+    public static final String XEP_0377_NAMESPACE = "urn:xmpp:reporting:1";
 
     public IQBlockingHandler()
     {
@@ -69,7 +77,7 @@ public class IQBlockingHandler extends IQHandler implements ServerFeaturesProvid
     @Override
     public Iterator<String> getFeatures()
     {
-        return Collections.singletonList( NAMESPACE ).iterator();
+        return List.of(NAMESPACE, XEP_0377_NAMESPACE).iterator();
     }
 
     @Override
@@ -130,13 +138,18 @@ public class IQBlockingHandler extends IQHandler implements ServerFeaturesProvid
                 }
 
                 final List<JID> toBlocks = new ArrayList<>();
+                final Set<SpamReport> reports = new HashSet<>();
+                final Instant now = Instant.now();
                 for ( final Element item : items )
                 {
-                    toBlocks.add( new JID( item.attributeValue( "jid" ) ) );
+                    final JID offender = new JID(item.attributeValue( "jid" ));
+                    reports.addAll(parseSpamReportsFromChildren(now, requester.asBareJID(), offender, item));
+                    toBlocks.add(offender);
                 }
 
                 addToBlockList( user, toBlocks );
                 pushBlocklistUpdates( user, toBlocks );
+                SpamReportManager.getInstance().process(reports);
 
                 return IQ.createResultIQ( iq );
             }
@@ -177,6 +190,35 @@ public class IQBlockingHandler extends IQHandler implements ServerFeaturesProvid
             error.setError( PacketError.Condition.internal_server_error );
             return error;
         }
+    }
+
+    /**
+     * Parses and returns any XEP-0377 defined spam reports found in the children of the provided element.
+     * @param timestamp The timestamp of the report.
+     * @param reportingAddress The entity doing the reporting
+     * @param reportedAddress The subject of the report (the 'offender').
+     * @param parentElement The parent element from which to parse spam reports.
+     * @return A list of spam reports
+     * @see XEP-0377
+     */
+    @Nonnull
+    public static List<SpamReport> parseSpamReportsFromChildren(final Instant timestamp, final JID reportingAddress, final JID reportedAddress, final Element parentElement)
+    {
+        final List<SpamReport> result = new ArrayList<>();
+        final List<Element> reports = parentElement.elements( QName.get(XEP_0377_ELEMENT_NAME, XEP_0377_NAMESPACE) );
+
+        if (reports != null) {
+            for (final Element report : reports) {
+                final String reason = report.attributeValue("reason");
+                final boolean reportOrigin = report.element("report-origin") != null && (report.elementTextTrim("report-origin").isEmpty() || "1".equals(report.elementTextTrim("report-origin")) || "true".equalsIgnoreCase(report.elementTextTrim("report-origin")) ) ;
+                final boolean thirdParty = report.element("third-party") != null && (report.elementTextTrim("third-party").isEmpty() || "1".equals(report.elementTextTrim("third-party")) || "true".equalsIgnoreCase(report.elementTextTrim("third-party")) ) ;
+                final Set<SpamReport.Text> context = SpamReport.Text.allFromChildren(report);
+                final Set<StanzaID> offendingStanzas = new HashSet<>(StanzaID.allFromChildren(report));
+                result.add(SpamReport.generate(timestamp, reportingAddress, reportedAddress, reason, reportOrigin, thirdParty, context, offendingStanzas));
+            }
+        }
+
+        return result;
     }
 
     /**

@@ -348,7 +348,7 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
 
         if ( publishedItems != null )
         {
-            final List<PublishedItem> collect = publishedItems.stream().filter( publishedItem -> publishedItem.getID().equals( itemIdentifier.getItemId() ) ).collect( Collectors.toList() );
+            final List<PublishedItem> collect = publishedItems.stream().filter( publishedItem -> publishedItem.getID().equals( itemIdentifier.getItemId() ) ).toList();
             if ( !collect.isEmpty() )
             {
                 if ( collect.size() > 1 )

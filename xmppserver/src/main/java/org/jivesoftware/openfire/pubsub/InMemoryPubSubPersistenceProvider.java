@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2020-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -322,25 +322,13 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
     @Override
     public List<PublishedItem> getPublishedItems( LeafNode node, int maxRows )
     {
-        log.debug( "Getting published items for node {} (max: {}).", node.getUniqueIdentifier(), maxRows );
+        log.debug( "Getting last published items for node {} (max: {}).", node.getUniqueIdentifier(), maxRows );
         List<PublishedItem> publishedItems = getPublishedItems( node );
         if ( maxRows >= 0 && publishedItems.size() > maxRows )
         {
             publishedItems = publishedItems.subList( publishedItems.size() - maxRows, publishedItems.size() );
         }
         return publishedItems;
-    }
-
-    @Override
-    public PublishedItem getLastPublishedItem( LeafNode node )
-    {
-        log.debug( "Getting last published item for node {}", node.getUniqueIdentifier() );
-        final List<PublishedItem> publishedItems = getPublishedItems( node );
-        if ( publishedItems != null && !publishedItems.isEmpty() ) {
-            return publishedItems.get( publishedItems.size() - 1 );
-        }
-
-        return null;
     }
 
     @Override

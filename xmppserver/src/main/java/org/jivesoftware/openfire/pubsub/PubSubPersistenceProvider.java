@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2020-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -202,7 +202,14 @@ public interface PubSubPersistenceProvider
      *
      * @param node the leaf node to load its last published items.
      */
-    PublishedItem getLastPublishedItem(LeafNode node);
+    default PublishedItem getLastPublishedItem(LeafNode node) {
+        final List<PublishedItem> items = getPublishedItems(node, 1);
+        if (items.isEmpty()) {
+            return null;
+        } else {
+            return items.get(0);
+        }
+    }
 
     PublishedItem getPublishedItem(LeafNode node, PublishedItem.UniqueIdentifier itemIdentifier);
 

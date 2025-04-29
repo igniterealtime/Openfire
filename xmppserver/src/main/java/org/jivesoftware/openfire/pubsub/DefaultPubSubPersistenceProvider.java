@@ -98,7 +98,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             "subscriptionEnabled, configSubscription, accessModel, payloadType, " +
             "bodyXSLT, dataformXSLT, creator, description, language, name, " +
             "replyPolicy, associationPolicy, maxLeafNodes FROM ofPubsubNode " +
- "WHERE serviceID=?";
+            "WHERE serviceID=?";
 
 	private static final String LOAD_NODE = LOAD_NODES + " AND nodeID=?";
 
@@ -174,15 +174,21 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             "DELETE FROM ofPubsubSubscription WHERE serviceID=? AND nodeID=? AND id=?";
     private static final String DELETE_SUBSCRIPTIONS =
             "DELETE FROM ofPubsubSubscription WHERE serviceID=? AND nodeID=?";
-    private static final String LOAD_ITEMS =
-            "SELECT id,jid,creationDate,payload FROM ofPubsubItem " +
-            "WHERE serviceID=? AND nodeID=? ORDER BY creationDate DESC";
+
     private static final String LOAD_ITEM =
             "SELECT jid,creationDate,payload FROM ofPubsubItem " +
             "WHERE serviceID=? AND nodeID=? AND id=?";
-    private static final String LOAD_LAST_ITEM =
-            "SELECT id,jid,creationDate,payload FROM ofPubsubItem " +
+
+    private static final String LOAD_LAST_ITEMS_TOP =
+            "SELECT TOP(?) id,jid,creationDate,payload FROM ofPubsubItem " +
             "WHERE serviceID=? AND nodeID=? ORDER BY creationDate DESC";
+    private static final String LOAD_LAST_ITEMS_FETCHFIRST =
+            "SELECT id,jid,creationDate,payload FROM ofPubsubItem " +
+            "WHERE serviceID=? AND nodeID=? ORDER BY creationDate DESC FETCH FIRST ? ROWS ONLY";
+    private static final String LOAD_LAST_ITEMS_LIMIT =
+            "SELECT id,jid,creationDate,payload FROM ofPubsubItem " +
+            "WHERE serviceID=? AND nodeID=? ORDER BY creationDate LIMIT ?";
+
     private static final String ADD_ITEM =
             "INSERT INTO ofPubsubItem (serviceID,nodeID,id,jid,creationDate,payload) " +
             "VALUES (?,?,?,?,?,?)";
@@ -566,7 +572,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             	CollectionNode parent = (CollectionNode) nodes.get(entry.getValue());
             	
             	if (parent == null) {
-            		log.error("Could not find parent node " + entry.getValue() + " for node " + entry.getKey());
+            		log.error("Could not find parent node {} for node {}", entry.getValue(), entry.getKey());
             	}
             	else {
                     child.changeParent(parent);
@@ -836,7 +842,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             String nodeID = decodeNodeID(rs.getString(1));
             Node node = lookupNode(nodes, nodeID);
             if (node == null) {
-                log.warn("Roster Group associated to a non-existent node: " + nodeID);
+                log.warn("Roster Group associated to a non-existent node: {}", nodeID);
                 return;
             }
             node.addAllowedRosterGroup(rs.getString(2));
@@ -851,7 +857,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             String nodeID = decodeNodeID(rs.getString(1));
             Node node = lookupNode(nodes, nodeID);
             if (node == null) {
-                log.warn("Affiliations found for a non-existent node: " + nodeID);
+                log.warn("Affiliations found for a non-existent node: {}", nodeID);
                 return;
             }
             NodeAffiliate affiliate = new NodeAffiliate(node, new JID(rs.getString(2)));
@@ -956,15 +962,14 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             String nodeID = decodeNodeID(rs.getString(1));
             Node node = lookupNode(nodes, nodeID);
             if (node == null) {
-                log.warn("Subscription found for a non-existent node: " + nodeID);
+                log.warn("Subscription found for a non-existent node: {}", nodeID);
                 return;
             }
             String subID = rs.getString(2);
             JID subscriber = new JID(rs.getString(3));
             JID owner = new JID(rs.getString(4));
             if (node.getAffiliate(owner) == null) {
-                log.warn("Subscription found for a non-existent affiliate: " + owner +
-                        " in node: " + node.getUniqueIdentifier());
+                log.warn("Subscription found for a non-existent affiliate: {} in node: {}", owner, node.getUniqueIdentifier());
                 return;
             }
             NodeSubscription.State state = NodeSubscription.State.valueOf(rs.getString(5));
@@ -1456,7 +1461,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                         result = config;
                     }
                     catch (Exception sqle) {
-                        log.error(sqle.getMessage(), sqle);
+                        log.error("An exception occurred while trying to load default configuration from the database for service {} (is leaf type: {})", serviceIdentifier, isLeafType, sqle);
                     }
                     finally {
                         DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -1513,7 +1518,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 defaultNodeConfigurationCache.put( key, config );
             }
             catch (SQLException sqle) {
-                log.error(sqle.getMessage(), sqle);
+                log.error("An exception occurred while trying to store default configuration to the database for service {} (is leaf type: {})", serviceIdentifier, config.isLeaf(), sqle);
             }
             finally {
                 DbConnectionManager.closeConnection(pstmt, con);
@@ -1567,7 +1572,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 defaultNodeConfigurationCache.put( getDefaultNodeConfigurationCacheKey( serviceIdentifier, config.isLeaf() ), config );
             }
             catch (SQLException sqle) {
-                log.error(sqle.getMessage(), sqle);
+                log.error("An exception occurred while trying to update default configuration in the database for service {} (is leaf type: {})", serviceIdentifier, config.isLeaf(), sqle);
             }
             finally {
                 DbConnectionManager.closeConnection(pstmt, con);
@@ -1597,7 +1602,6 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         else if (maxPublished != -1)
         	max = Math.min(MAX_ROWS_FETCH, maxPublished);
 
-        // We don't know how many items are in the db, so we will start with an allocation of 500
 		java.util.LinkedList<PublishedItem> results = new java.util.LinkedList<>();
 		boolean descending = JiveGlobals.getBooleanProperty("xmpp.pubsub.order.descending", false);
 
@@ -1605,15 +1609,27 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 		{
             con = DbConnectionManager.getConnection();
             // Get published items of the specified node
-            pstmt = con.prepareStatement(LOAD_ITEMS);
+            if (DbConnectionManager.getDatabaseType().equals(DbConnectionManager.DatabaseType.sqlserver)) {
+                pstmt = con.prepareStatement(LOAD_LAST_ITEMS_TOP);
+            } else if (DbConnectionManager.getDatabaseType().equals(DbConnectionManager.DatabaseType.oracle)) {
+                pstmt = con.prepareStatement(LOAD_LAST_ITEMS_FETCHFIRST);
+            } else {
+                pstmt = con.prepareStatement(LOAD_LAST_ITEMS_LIMIT);
+            }
             pstmt.setMaxRows(max);
-            pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
-            pstmt.setString(2, encodeNodeID(node.getNodeID()));
+            int paramIndex = 0;
+            if (DbConnectionManager.getDatabaseType().equals(DbConnectionManager.DatabaseType.sqlserver)){
+                pstmt.setLong(++paramIndex, max);
+            }
+            pstmt.setString(++paramIndex, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
+            pstmt.setString(++paramIndex, encodeNodeID(node.getNodeID()));
+            if (!DbConnectionManager.getDatabaseType().equals(DbConnectionManager.DatabaseType.sqlserver)){
+                pstmt.setLong(++paramIndex, max);
+            }
             rs = pstmt.executeQuery();
-            int counter = 0;
 
             // Rebuild loaded published items
-            while(rs.next() && (counter < max)) {
+            while(rs.next()) {
                 String itemID = rs.getString(1);
                 JID publisher = new JID(rs.getString(2));
                 Date creationDate = new Date(Long.parseLong(rs.getString(3).trim()));
@@ -1624,59 +1640,21 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 	item.setPayloadXML(rs.getString(4));
                 }
                 // Add the published item to the node
-				if (descending)
-					results.add(item);
-				else
-					results.addFirst(item);
-                counter++;
+				if (descending) {
+                    results.add(item);
+                } else {
+                    results.addFirst(item);
+                }
             }
         }
         catch (Exception sqle) {
-            log.error(sqle.getMessage(), sqle);
+            log.error("An exception occurred while trying to load the last {} published item(s) from node {}", maxRows, node.getUniqueIdentifier(), sqle);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
 
         return results;
-    }
-
-    @Override
-    public PublishedItem getLastPublishedItem(LeafNode node) {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        PublishedItem item = null;
-
-        try {
-            con = DbConnectionManager.getConnection();
-            // Get published items of the specified node
-            pstmt = con.prepareStatement(LOAD_LAST_ITEM);
-            pstmt.setFetchSize(1);
-            pstmt.setMaxRows(1);
-            pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
-            pstmt.setString(2, encodeNodeID(node.getNodeID()));
-            rs = pstmt.executeQuery();
-            // Rebuild loaded published items
-            if (rs.next()) {
-                String itemID = rs.getString(1);
-                JID publisher = new JID(rs.getString(2));
-                Date creationDate = new Date(Long.parseLong(rs.getString(3).trim()));
-                // Create the item
-                item = new PublishedItem(node, publisher, itemID, creationDate);
-                // Add the extra fields to the published item
-                if (rs.getString(4) != null) {
-                	item.setPayloadXML(rs.getString(4));
-                }
-            }
-        }
-        catch (Exception sqle) {
-            log.error(sqle.getMessage(), sqle);
-        }
-        finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
-        }
-        return item;
     }
 
     @Override
@@ -1704,7 +1682,6 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 if (rs.getString(3) != null) {
                     result.setPayloadXML(rs.getString(3));
                 }
-                log.debug("Loaded item from DB");
                 return result;
             }
         } catch (Exception exc) {
@@ -1729,7 +1706,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 		}
 		catch (SQLException exc)
 		{
-			log.error(exc.getMessage(), exc);
+            log.error("An exception occurred while trying to purge node {}", leafNode.getUniqueIdentifier(), exc);
 			rollback = true;
 		}
 		finally
@@ -1779,7 +1756,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 pepService = new PEPService(XMPPServer.getInstance(), jid);
             }
         } catch (SQLException sqle) {
-            log.error(sqle.getMessage(), sqle);
+            log.error("An exception occurred while trying to load a PEP service from the database for {}", jid, sqle);
         } finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
@@ -1864,7 +1841,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 		}
 		catch (Exception sqle)
 		{
-		    log.error(sqle.getMessage(), sqle);
+            log.error("An exception occurred while trying to purge all items from the database that exceed the defined item count on all nodes.", sqle);
 			abortTransaction = true;
 		}
 		finally

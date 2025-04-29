@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2020-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,19 @@ import java.util.Set;
  */
 public interface PubSubPersistenceProvider
 {
+    /**
+     * Starts the provider.
+     *
+     * This method is invoked before the provider is used to interact with the backend datastore.
+     */
     void initialize();
+
+    /**
+     * Stops the provider.
+     *
+     * This method is invoked when the system is to be shut down. The provider should not be used after this method is
+     * invoked.
+     */
     void shutdown();
 
     /**
@@ -71,6 +83,12 @@ public interface PubSubPersistenceProvider
      */
     void loadNode(PubSubService service, Node.UniqueIdentifier nodeIdentifier);
 
+    /**
+     * Loads a subscription from the database, storing it in the provided node.
+     *
+     * @param node The node for which a subscription is to be loaded from the database.
+     * @param subId The identifier of the subscription that is to be loaded from the database.
+     */
     void loadSubscription(Node node, String subId);
 
     /**
@@ -202,10 +220,29 @@ public interface PubSubPersistenceProvider
      *
      * @param node the leaf node to load its last published items.
      */
-    PublishedItem getLastPublishedItem(LeafNode node);
+    default PublishedItem getLastPublishedItem(LeafNode node) {
+        final List<PublishedItem> items = getPublishedItems(node, 1);
+        if (items.isEmpty()) {
+            return null;
+        } else {
+            return items.get(0);
+        }
+    }
 
+    /**
+     * Fetches a published item (by ID) for a node.
+     *
+     * @param node The node for which to get a published item.
+     * @param itemIdentifier The unique identifier of the item to fetch.
+     * @return The item, or null if no item was found.
+     */
     PublishedItem getPublishedItem(LeafNode node, PublishedItem.UniqueIdentifier itemIdentifier);
 
+    /**
+     * Deletes all published items of a node.
+     *
+     * @param leafNode the node for which to delete all published items.
+     */
     void purgeNode(LeafNode leafNode);
 
     /**

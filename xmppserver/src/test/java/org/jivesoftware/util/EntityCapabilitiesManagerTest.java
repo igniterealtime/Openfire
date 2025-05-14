@@ -16,6 +16,8 @@
 
 package org.jivesoftware.util;
 
+import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
@@ -167,5 +169,147 @@ public class EntityCapabilitiesManagerTest {
 
         // the verification string result must be q07IKJEyjvHSyhy//CH0CxmKi8w=
         assertEquals("q07IKJEyjvHSyhy//CH0CxmKi8w=", verification);
+    }
+
+    @Test
+    public void testEncodingOfResult() throws Exception
+    {
+        // Setup test fixture.
+        final String input = "pubsub/pep//<server/im//Openfire Server<http://jabber.org/protocol/address<http://jabber.org/protocol/caps<http://jabber.org/protocol/commands<http://jabber.org/protocol/disco#info<http://jabber.org/protocol/disco#items<http://jabber.org/protocol/offline<http://jabber.org/protocol/pubsub<http://jabber.org/protocol/pubsub#access-open<http://jabber.org/protocol/pubsub#auto-create<http://jabber.org/protocol/pubsub#auto-subscribe<http://jabber.org/protocol/pubsub#collections<http://jabber.org/protocol/pubsub#config-node<http://jabber.org/protocol/pubsub#create-and-configure<http://jabber.org/protocol/pubsub#create-nodes<http://jabber.org/protocol/pubsub#delete-items<http://jabber.org/protocol/pubsub#delete-nodes<http://jabber.org/protocol/pubsub#filtered-notifications<http://jabber.org/protocol/pubsub#get-pending<http://jabber.org/protocol/pubsub#instant-nodes<http://jabber.org/protocol/pubsub#item-ids<http://jabber.org/protocol/pubsub#manage-subscriptions<http://jabber.org/protocol/pubsub#meta-data<http://jabber.org/protocol/pubsub#modify-affiliations<http://jabber.org/protocol/pubsub#multi-items<http://jabber.org/protocol/pubsub#multi-subscribe<http://jabber.org/protocol/pubsub#outcast-affiliation<http://jabber.org/protocol/pubsub#persistent-items<http://jabber.org/protocol/pubsub#presence-notifications<http://jabber.org/protocol/pubsub#publish<http://jabber.org/protocol/pubsub#publish-options<http://jabber.org/protocol/pubsub#publisher-affiliation<http://jabber.org/protocol/pubsub#purge-nodes<http://jabber.org/protocol/pubsub#retract-items<http://jabber.org/protocol/pubsub#retrieve-affiliations<http://jabber.org/protocol/pubsub#retrieve-default<http://jabber.org/protocol/pubsub#retrieve-items<http://jabber.org/protocol/pubsub#retrieve-subscriptions<http://jabber.org/protocol/pubsub#subscribe<http://jabber.org/protocol/pubsub#subscription-options<http://jabber.org/protocol/rsm<jabber:iq:last<jabber:iq:privacy<jabber:iq:private<jabber:iq:register<jabber:iq:roster<jabber:iq:version<msgoffline<urn:xmpp:archive:auto<urn:xmpp:archive:manage<urn:xmpp:blocking<urn:xmpp:bookmarks-conversion:0<urn:xmpp:carbons:2<urn:xmpp:extdisco:1<urn:xmpp:extdisco:2<urn:xmpp:fulltext:0<urn:xmpp:mam:0<urn:xmpp:mam:1<urn:xmpp:mam:2<urn:xmpp:ping<urn:xmpp:push:0<urn:xmpp:raa:0<urn:xmpp:raa:0#embed-message <urn:xmpp:raa:0#embed-presence-directed<urn:xmpp:raa:0#embed-presence-sub<urn:xmpp:serverinfo:0<urn:xmpp:time<vcard-temp<http://jabber.org/network/serverinfo<admin-addresses<mailto:benjamin@holyarmy.org<mailto:dan.caseley@surevine.com<mailto:greg.d.thomas@gmail.com<mailto:guus.der.kinderen@gmail.com<mailto:robincollier@hotmail.com<xmpp:akrherz@igniterealtime.org<xmpp:benjamin@igniterealtime.org<xmpp:csh@igniterealtime.org<xmpp:dan.caseley@igniterealtime.org<xmpp:dwd@dave.cridland.net<xmpp:flow@igniterealtime.org<xmpp:gdt@igniterealtime.org<xmpp:guus.der.kinderen@igniterealtime.org<xmpp:lg@igniterealtime.org<xmpp:rcollier@igniterealtime.org<urn:xmpp:dataforms:softwareinfo<os<Linux<os_version<4.14.355-276.618.amzn2.x86_64 amd64 - Java 17.0.14<software<Openfire<software_version<5.0.0 Alpha<";
+
+        // Execute system under test.
+        final String hash = EntityCapabilitiesManager.generateHash(input, "SHA-1");
+        final String result = EntityCapabilitiesManager.encodeHash(hash);
+
+        // Verify results.
+        assertEquals("89D/mEGBT1K0RtY28gEkGRbV2rc=", result);
+    }
+
+    @Test
+    public void test() throws Exception
+    {
+        // Setup test fixture.
+        final String raw = """
+            <iq type="result" xmlns="jabber:client" to="inputmice3@igniterealtime.org/Conversations.cI4W" from="igniterealtime.org" id="L3xl8X8_kzvx">
+              <query node="https://www.igniterealtime.org/projects/openfire/#Cd91QBSG4JGOCEvRsSz64xeJPMk=" xmlns="http://jabber.org/protocol/disco#info">
+                <identity name="Openfire Server" type="im" category="server" xmlns="http://jabber.org/protocol/disco#info"/>
+                <identity type="pep" category="pubsub" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="urn:xmpp:raa:0#embed-presence-directed" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/caps" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#retrieve-default" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#purge-nodes" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#subscription-options" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="urn:xmpp:raa:0#embed-message " xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#outcast-affiliation" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="msgoffline" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#delete-nodes" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="jabber:iq:register" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#config-node" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#retrieve-items" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#auto-create" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/disco#items" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#delete-items" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="urn:xmpp:mam:0" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="urn:xmpp:mam:1" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="urn:xmpp:mam:2" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="urn:xmpp:fulltext:0" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#persistent-items" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#create-and-configure" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#retrieve-affiliations" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="urn:xmpp:time" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#manage-subscriptions" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="urn:xmpp:bookmarks-conversion:0" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#auto-subscribe" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/offline" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#publish-options" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="urn:xmpp:carbons:2" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/address" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#collections" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#retrieve-subscriptions" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="vcard-temp" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#subscribe" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#create-nodes" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#get-pending" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="urn:xmpp:blocking" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#multi-subscribe" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#presence-notifications" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="urn:xmpp:ping" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="urn:xmpp:archive:manage" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#filtered-notifications" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="urn:xmpp:push:0" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#meta-data" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#multi-items" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#item-ids" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="jabber:iq:roster" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#instant-nodes" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#modify-affiliations" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="urn:xmpp:raa:0#embed-presence-sub" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#publisher-affiliation" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#access-open" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="jabber:iq:version" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#retract-items" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="urn:xmpp:extdisco:1" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="jabber:iq:privacy" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="urn:xmpp:extdisco:2" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/commands" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="jabber:iq:last" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="urn:xmpp:raa:0" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/pubsub#publish" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="urn:xmpp:serverinfo:0" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="urn:xmpp:archive:auto" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/disco#info" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="jabber:iq:private" xmlns="http://jabber.org/protocol/disco#info"/>
+                <feature var="http://jabber.org/protocol/rsm" xmlns="http://jabber.org/protocol/disco#info"/>
+                <x type="result" xmlns="jabber:x:data">
+                  <field var="FORM_TYPE" type="hidden" xmlns="jabber:x:data">
+                    <value xmlns="jabber:x:data">urn:xmpp:dataforms:softwareinfo</value>
+                  </field>
+                  <field var="os" type="text-single" xmlns="jabber:x:data">
+                    <value xmlns="jabber:x:data">Linux</value>
+                  </field>
+                  <field var="os_version" type="text-single" xmlns="jabber:x:data">
+                    <value xmlns="jabber:x:data">4.14.355-276.618.amzn2.x86_64 amd64 - Java 17.0.14</value>
+                  </field>
+                  <field var="software" type="text-single" xmlns="jabber:x:data">
+                    <value xmlns="jabber:x:data">Openfire</value>
+                  </field>
+                  <field var="software_version" type="text-single" xmlns="jabber:x:data">
+                    <value xmlns="jabber:x:data">5.0.0 Alpha</value>
+                  </field>
+                </x>
+                <x type="result" xmlns="jabber:x:data">
+                  <field var="FORM_TYPE" type="hidden" xmlns="jabber:x:data">
+                    <value xmlns="jabber:x:data">http://jabber.org/network/serverinfo</value>
+                  </field>
+                  <field var="admin-addresses" type="list-multi" xmlns="jabber:x:data">
+                    <value xmlns="jabber:x:data">xmpp:dwd@dave.cridland.net</value>
+                    <value xmlns="jabber:x:data">xmpp:akrherz@igniterealtime.org</value>
+                    <value xmlns="jabber:x:data">xmpp:benjamin@igniterealtime.org</value>
+                    <value xmlns="jabber:x:data">mailto:benjamin@holyarmy.org</value>
+                    <value xmlns="jabber:x:data">xmpp:csh@igniterealtime.org</value>
+                    <value xmlns="jabber:x:data">xmpp:dan.caseley@igniterealtime.org</value>
+                    <value xmlns="jabber:x:data">mailto:dan.caseley@surevine.com</value>
+                    <value xmlns="jabber:x:data">xmpp:flow@igniterealtime.org</value>
+                    <value xmlns="jabber:x:data">xmpp:gdt@igniterealtime.org</value>
+                    <value xmlns="jabber:x:data">mailto:greg.d.thomas@gmail.com</value>
+                    <value xmlns="jabber:x:data">xmpp:guus.der.kinderen@igniterealtime.org</value>
+                    <value xmlns="jabber:x:data">mailto:guus.der.kinderen@gmail.com</value>
+                    <value xmlns="jabber:x:data">xmpp:lg@igniterealtime.org</value>
+                    <value xmlns="jabber:x:data">xmpp:rcollier@igniterealtime.org</value>
+                    <value xmlns="jabber:x:data">mailto:robincollier@hotmail.com</value>
+                  </field>
+                </x>
+              </query>
+            </iq>
+            """;
+        final Document doc = DocumentHelper.parseText(raw);
+        final IQ input = new IQ(doc.getRootElement());
+
+        // Execute system under test.
+        final String result = EntityCapabilitiesManager.generateVerHash(input, "SHA-1");
+
+        // Verify results.
+        assertEquals("89D/mEGBT1K0RtY28gEkGRbV2rc=", result);
     }
 }

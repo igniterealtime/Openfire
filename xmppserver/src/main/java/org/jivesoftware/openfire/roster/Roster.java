@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,7 @@ public class Roster implements Cacheable, Externalizable {
      * Roster item cache - table: key jabberid string; value roster item.
      */
     protected ConcurrentMap<String, RosterItem> rosterItems = new ConcurrentHashMap<>();
+
     /**
      * Contacts with subscription FROM that only exist due to shared groups
      * key: jabberid string; value: groups why the implicit roster item exists (aka invisibleSharedGroups).
@@ -337,12 +338,12 @@ public class Roster implements Cacheable, Externalizable {
             rosterItem = RosterManager.getRosterItemProvider().createItem(username, rosterItem);
         }
 
+        rosterItems.put(user.toBareJID(), rosterItem);
+
         if (push) {
             // Broadcast the roster push to the user
             broadcast(roster);
         }
-
-        rosterItems.put(user.toBareJID(), rosterItem);
 
         // Fire event indicating that a roster item has been added
         RosterEventDispatcher.contactAdded(this, rosterItem);
@@ -672,7 +673,7 @@ public class Roster implements Cacheable, Externalizable {
         // When roster versioning is enabled, the server MUST include
         // the updated roster version with each roster push.
         if (RosterManager.isRosterVersioningEnabled()) {
-            roster.getChildElement().addAttribute("ver", String.valueOf( roster.hashCode() ) );
+            roster.getChildElement().addAttribute("ver", getVersion() );
         }
         SessionManager.getInstance().userBroadcast(username, roster);
     }
@@ -1151,6 +1152,18 @@ public class Roster implements Cacheable, Externalizable {
             return false;
         }
         return username.equals( roster.username );
+    }
+
+    /**
+     * Generates a hash code based on only those fields that are relevant for Roster Versioning (as defined in RFC 6121 section 2.6).
+     *
+     * @return A hash code
+     */
+    public String getVersion() {
+        long result = username.hashCode(); // Helps to prevent identical version identifiers when rosters contain the same items.
+        result += rosterItems.values().stream().mapToInt(RosterItem::rosterVerHashCode).sum();
+        result += implicitFrom.hashCode();
+        return Long.toString(result);
     }
 
     @Override

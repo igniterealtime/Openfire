@@ -191,7 +191,7 @@ public class IQRosterHandler extends IQHandler implements ServerFeaturesProvider
 
                 if (RosterManager.isRosterVersioningEnabled()) {
                     String clientVersion = packet.getChildElement().attributeValue("ver");
-                    String latestVersion = String.valueOf( cachedRoster.hashCode() );
+                    String latestVersion = String.valueOf( cachedRoster.getVersion() );
                     // Whether or not the roster has been modified since the version ID enumerated by the client, ...
                     if (!latestVersion.equals(clientVersion)) {
                         // ... the server MUST either return the complete roster

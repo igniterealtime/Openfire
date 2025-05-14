@@ -681,4 +681,13 @@ public class RosterItem implements Cacheable, Externalizable {
     public void setStoredSubscribeStanza(Presence subscribeStanza) {
         this.subscribeStanza = subscribeStanza;
     }
+
+    /**
+     * Generates a hash code based on only those fields that are relevant for Roster Versioning (as defined in RFC 6121 section 2.6).
+     *
+     * @return A hash code
+     */
+    public int rosterVerHashCode() {
+        return Objects.hash(recvStatus, jid, nickname, groups, sharedGroups, invisibleSharedGroups, subStatus, askStatus, rosterID);
+    }
 }

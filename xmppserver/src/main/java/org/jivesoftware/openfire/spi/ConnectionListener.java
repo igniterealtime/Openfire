@@ -151,7 +151,7 @@ public class ConnectionListener
             return true;
         }
         // TODO if this is an TLS connection, legacy code required the existence of at least one certificate in the identity store in addition to the property value (although no such requirement is enforced for a TLS connection that might or might not be elevated to encrypted).
-        return JiveGlobals.getBooleanProperty( isEnabledPropertyName, true );
+        return JiveGlobals.getBooleanProperty( isEnabledPropertyName, type != ConnectionType.CONNECTION_MANAGER); // Default to 'true' for all but the rarely-used connection managers (OF-2453).
     }
 
     /**

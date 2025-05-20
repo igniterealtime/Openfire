@@ -1025,6 +1025,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             final NodeID host = serversCache.get(route);
             if (host != null && !host.equals(XMPPServer.getInstance().getNodeID())) {
                 Log.warn("Unable to remove Server Route for '{}': Server Routes can only be removed by the cluster node that holds the physical connection. The cluster node that holds the physical connection for this route is not the local node, but: '{}'", route, host, new IllegalStateException());
+                localServerRoutingTable.removeRoute(route); // If the connection is not connected locally, then there shouldn't be a registration in the local routing table (this happens when closing duplicate s2s connections on cluster join).
                 return false;
             }
             removed = serversCache.remove(route) != null;

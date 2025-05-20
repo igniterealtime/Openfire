@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2018-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -245,7 +245,8 @@ public class SocketUtil
                     if (maxWait.isNegative()) {
                         break;
                     }
-                    final Future<Map.Entry<SocketChannel, Boolean>> poll = completionService.poll(maxWait.toMillis(), TimeUnit.MILLISECONDS);
+                    final long wait = Math.min(maxWait.toMillis(), Duration.ofSeconds(2).toMillis()); // OF-3068: Periodically check if it continues to make sense to wait for the completionService to yield a result.
+                    final Future<Map.Entry<SocketChannel, Boolean>> poll = completionService.poll(wait, TimeUnit.MILLISECONDS);
                     result = poll == null ? null : poll.get();
                 } catch (ExecutionException e) {
                     Log.debug("Resolution of XMPP domain '{}' threw an exception (that is being ignored).", xmppDomain, e);

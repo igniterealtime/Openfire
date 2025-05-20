@@ -1022,6 +1022,36 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         Lock lock = serversCache.getLock(route);
         lock.lock();
         try {
+            final NodeID host = serversCache.get(route);
+            if (host != null && !host.equals(XMPPServer.getInstance().getNodeID())) {
+                Log.warn("Unable to remove Server Route for '{}': Server Routes can only be removed by the cluster node that holds the physical connection. The cluster node that holds the physical connection for this route is not the local node, but: '{}'", route, host, new IllegalStateException());
+                return false;
+            }
+            removed = serversCache.remove(route) != null;
+            localServerRoutingTable.removeRoute(route);
+        }
+        finally {
+            lock.unlock();
+        }
+        return removed;
+    }
+
+    /**
+     * Alternative to {@link #removeServerRoute(DomainPair)} that can be used to remove a route hosted on another
+     * cluster node.
+     *
+     * This method should only be used when recovering from cluster composition change.
+     */
+    public boolean removeServerRoute(DomainPair route, NodeID nodeID) {
+        boolean removed;
+        Lock lock = serversCache.getLock(route);
+        lock.lock();
+        try {
+            final NodeID host = serversCache.get(route);
+            if (host != null && !host.equals(nodeID)) { // When recovering from a cluster breakup, the cache can be empty. Allow this method to continue while reconstructing the cache (when host == null).
+                Log.warn("Did not remove server route '{}' as the route was unexpectedly hosted on a different cluster node ('{}') than what was expected ('{}').", route, host, nodeID);
+                return false;
+            }
             removed = serversCache.remove(route) != null;
             localServerRoutingTable.removeRoute(route);
         }
@@ -1309,16 +1339,19 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         routeOwnersByClusterNode.clear();
 
         // Remove outgoing server sessions hosted in node that left the cluster
-        s2sDomainPairsByClusterNode.values()
-            .stream()
-            .flatMap(Collection::stream)
-            .forEach(domainPair -> {
+        for (Map.Entry<NodeID, Set<DomainPair>> entry : s2sDomainPairsByClusterNode.entrySet()) {
+            final NodeID nodeID = entry.getKey();
+            final Set<DomainPair> domainPairs = entry.getValue();
+            domainPairs.forEach(domainPair -> {
                 try {
-                    removeServerRoute(domainPair);
+                    if (!removeServerRoute(domainPair, nodeID)) {
+                        Log.warn("We have left the cluster. Federated connections on other nodes are no longer available. To reflect this, we're deleting these routes. While doing this for '{}' on node '{}', the session could not be removed (presumably because it is not available on that cluster node).", domainPair, nodeID);
+                    }
                 } catch (Exception e) {
-                    Log.error("We have left the cluster. Federated connections on other nodes are no longer available. To reflect this, we're deleting these routes. While doing this for '{}', this caused an exception to occur.", domainPair, e);
+                    Log.error("We have left the cluster. Federated connections on other nodes are no longer available. To reflect this, we're deleting these routes. While doing this for '{}' on node '{}', this caused an exception to occur.", domainPair, nodeID, e);
                 }
             });
+        }
         s2sDomainPairsByClusterNode.clear();
 
         // Remove component connections hosted in node that left the cluster
@@ -1371,7 +1404,9 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         if (remoteServers != null) {
             for (final DomainPair domainPair : remoteServers) {
                 Log.debug("Removing server route for {} that is no longer available because cluster node {} left the cluster.", domainPair, nodeIDOfLostNode);
-                removeServerRoute(domainPair);
+                if (!removeServerRoute(domainPair, nodeIDOfLostNode)) {
+                    Log.warn("Cluster node {} just left the cluster. Federated connections on that node are no longer available. To reflect this, we're deleting these routes. While doing this for '{}' the session could not be removed (presumably because it is not available on that cluster node).", nodeID, domainPair);
+                }
             }
         }
         Log.info("Cluster node {} just left the cluster. A total of {} outgoing server sessions was living there, and are no longer available.", nodeIDOfLostNode, remoteServers == null ? 0 : remoteServers.size());

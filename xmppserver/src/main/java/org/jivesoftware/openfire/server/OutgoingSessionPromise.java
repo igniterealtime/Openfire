@@ -61,7 +61,7 @@ public class OutgoingSessionPromise {
     public static final SystemProperty<Integer> QUEUE_MAX_THREADS = SystemProperty.Builder.ofType(Integer.class)
         .setKey(ConnectionSettings.Server.QUEUE_MAX_THREADS)
         .setDynamic(false)
-        .setDefaultValue(20)
+        .setDefaultValue(100)
         .setMinValue(0) // RejectedExecutionHandler is CallerRunsPolicy, meaning that the calling thread would execute the task.
         .build();
 

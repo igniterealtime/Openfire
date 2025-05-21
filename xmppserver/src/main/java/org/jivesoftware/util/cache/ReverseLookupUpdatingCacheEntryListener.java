@@ -15,6 +15,8 @@
  */
 package org.jivesoftware.util.cache;
 
+import com.google.common.collect.Interner;
+import com.google.common.collect.Interners;
 import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
 import org.jivesoftware.openfire.cluster.NodeID;
 
@@ -39,7 +41,10 @@ import java.util.concurrent.ConcurrentMap;
  * This implementation assumes that the cluster node on which the cache entry change originates is an owner of the
  * corresponding entry.
  */
-public class ReverseLookupUpdatingCacheEntryListener<K, V> implements ClusteredCacheEntryListener<K, V> {
+public class ReverseLookupUpdatingCacheEntryListener<K, V> implements ClusteredCacheEntryListener<K, V>
+{
+    private final Interner<K> mutex = Interners.newStrongInterner();
+
     private final ConcurrentMap<NodeID, Set<K>> reverseCacheRepresentation;
     private final boolean uniqueOwnerExpected;
 
@@ -54,35 +59,43 @@ public class ReverseLookupUpdatingCacheEntryListener<K, V> implements ClusteredC
 
     @Override
     public void entryAdded(@Nonnull final K key, @Nullable final V value, @Nonnull final NodeID nodeID) {
-        reverseCacheRepresentation.computeIfAbsent(nodeID, k -> new HashSet<>()).add(key);
+        synchronized (mutex.intern(key)) {
+            reverseCacheRepresentation.computeIfAbsent(nodeID, k -> new HashSet<>()).add(key);
 
-        if (uniqueOwnerExpected) {
-            // As the entry is now owned by the nodeID processed above, it can no longer be owned by any of the others.
-            reverseCacheRepresentation.forEach((k, v) -> {
-                if (!k.equals(nodeID)) {
-                    v.remove(key);
-                }
-            });
+            if (uniqueOwnerExpected) {
+                // As the entry is now owned by the nodeID processed above, it can no longer be owned by any of the others.
+                reverseCacheRepresentation.forEach((k, v) -> {
+                    if (!k.equals(nodeID)) {
+                        v.remove(key);
+                    }
+                });
+            }
         }
     }
 
     @Override
     public void entryRemoved(@Nonnull final K key, @Nullable final V oldValue, @Nonnull final NodeID nodeID) {
-        reverseCacheRepresentation.computeIfPresent(nodeID, (k, v) -> {
-            v.remove(key);
-            return v;
-        });
+        synchronized (mutex.intern(key)) {
+            reverseCacheRepresentation.computeIfPresent(nodeID, (k, v) -> {
+                v.remove(key);
+                return v;
+            });
+        }
     }
 
     @Override
     public void entryUpdated(@Nonnull final K key, @Nullable final V oldValue, @Nullable final V newValue, @Nonnull final NodeID nodeID) {
-        // Possibly out-of-order event. The update itself signals that it's expected that the entry exists, so let's add it.
-        entryAdded(key, newValue, nodeID);
+        synchronized (mutex.intern(key)) {
+            // Possibly out-of-order event. The update itself signals that it's expected that the entry exists, so let's add it.
+            entryAdded(key, newValue, nodeID);
+        }
     }
 
     @Override
     public void entryEvicted(@Nonnull final K key, @Nullable final V oldValue, @Nonnull final NodeID nodeID) {
-        entryRemoved(key, oldValue, nodeID);
+        synchronized (mutex.intern(key)) {
+            entryRemoved(key, oldValue, nodeID);
+        }
     }
 
     @Override

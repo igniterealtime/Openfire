@@ -19,6 +19,7 @@ import com.google.common.collect.Interner;
 import com.google.common.collect.Interners;
 import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
 import org.jivesoftware.openfire.cluster.NodeID;
+import org.jivesoftware.util.SystemProperty;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -43,6 +44,12 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class ReverseLookupUpdatingCacheEntryListener<K, V> implements ClusteredCacheEntryListener<K, V>
 {
+    private final static SystemProperty<Boolean> DISABLE_OPTIMIZATION = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("cache.reverselookup.optimization.disabled")
+        .setDefaultValue(false)
+        .setDynamic(true)
+        .build();
+
     private final Interner<K> mutex = Interners.newStrongInterner();
 
     private final ConcurrentMap<NodeID, Set<K>> reverseCacheRepresentation;
@@ -62,7 +69,7 @@ public class ReverseLookupUpdatingCacheEntryListener<K, V> implements ClusteredC
         synchronized (mutex.intern(key)) {
             reverseCacheRepresentation.computeIfAbsent(nodeID, k -> new HashSet<>()).add(key);
 
-            if (uniqueOwnerExpected) {
+            if (uniqueOwnerExpected && !DISABLE_OPTIMIZATION.getValue()) {
                 // As the entry is now owned by the nodeID processed above, it can no longer be owned by any of the others.
                 reverseCacheRepresentation.forEach((k, v) -> {
                     if (!k.equals(nodeID)) {
@@ -85,6 +92,9 @@ public class ReverseLookupUpdatingCacheEntryListener<K, V> implements ClusteredC
 
     @Override
     public void entryUpdated(@Nonnull final K key, @Nullable final V oldValue, @Nullable final V newValue, @Nonnull final NodeID nodeID) {
+        if (DISABLE_OPTIMIZATION.getValue()) {
+            return;
+        }
         synchronized (mutex.intern(key)) {
             // Possibly out-of-order event. The update itself signals that it's expected that the entry exists, so let's add it.
             entryAdded(key, newValue, nodeID);

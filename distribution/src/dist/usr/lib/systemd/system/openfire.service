@@ -1,0 +1,26 @@
+[Unit]
+Description=Openfire XMPP Server
+After=network.target
+
+[Service]
+User=openfire
+Group=openfire
+EnvironmentFile=-/etc/default/openfire
+Type=simple
+WorkingDirectory=/usr/share/openfire/
+ExecStart=/bin/bash -c '/usr/share/openfire/bin/openfire.sh ${DAEMON_OPTS}'
+Restart=on-failure
+RuntimeDirectory=openfire
+
+# Specify resource limits in the slice
+Slice=openfire.slice
+# We expect a lot of connections from many clients so increase limit of file descriptiors
+LimitNOFILE=50000
+# The Openfire is less important for CPU than system vital services
+Nice=5
+# If not enough RAM then kill the Openfire first to preserve system vital services
+OOMScoreAdjust=-100
+
+[Install]
+WantedBy=multi-user.target
+Alias=xmpp.service

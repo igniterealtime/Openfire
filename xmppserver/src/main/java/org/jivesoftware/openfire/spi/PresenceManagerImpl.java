@@ -317,7 +317,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
         }
         catch (UserNotFoundException e) {
             Presence presenceToSend = new Presence();
-            presenceToSend.setError(PacketError.Condition.forbidden);
+            presenceToSend.setType(Presence.Type.unsubscribed);
             presenceToSend.setTo(packet.getFrom());
             presenceToSend.setFrom(packet.getTo());
             deliverer.deliver(presenceToSend);

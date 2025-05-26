@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009 Jive Software, 2017-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2009 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,9 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.ServerSocket;
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -98,7 +98,7 @@ public abstract class MediaProxySession extends Thread implements ProxyCandidate
         this.creator = creator;
         this.minPort = minPort;
         this.maxPort = maxPort;
-        this.pass = String.valueOf(Math.abs(new Random().nextLong()));
+        this.pass = String.valueOf(Math.abs(new SecureRandom().nextLong()));
         try {
             this.hostA = InetAddress.getByName(hostA);
             this.hostB = InetAddress.getByName(hostB);

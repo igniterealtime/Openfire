@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 package org.jivesoftware.openfire.entitycaps;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import org.dom4j.Element;
@@ -324,20 +323,6 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
      * @return the generated 'ver' hash
      */
     public static String generateVerHash(IQ packet, String algorithm) {
-        final String s = generateS(packet);
-
-        // Compute ver by hashing S using the algorithm as specified in
-        // RFC 3174 (with binary output) and encoding the hash using Base64 as
-        // specified in Section 4 of RFC 4648 (note: the Base64 output
-        // MUST NOT include whitespace and MUST set padding bits to zero).
-        final String hashed = generateHash(s, algorithm);
-        final String result = encodeHash(hashed);
-        Log.trace("Calculated Caps Hash '{}' from Caps string '{}' from stanza: {}", result, s, packet);
-        return result;
-    }
-
-    @VisibleForTesting
-    static String generateS(final IQ packet) {
         // Initialize an empty string S.
         final StringBuilder s = new StringBuilder();
 
@@ -346,7 +331,7 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
         final List<String> discoIdentities = getIdentitiesFrom(packet);
         Collections.sort(discoIdentities);
 
-        // For each identity, append the 'category/type/lang/name' to S,
+        // For each identity, append the 'category/type/lang/name' to S, 
         // followed by the '<' character.
         for (String discoIdentity : discoIdentities) {
             s.append(discoIdentity);
@@ -363,28 +348,24 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
             s.append(discoFeature);
             s.append('<');
         }
-
-        // If the service discovery information response includes XEP-0128
+        
+        // If the service discovery information response includes XEP-0128 
         // data forms, sort the forms by the FORM_TYPE (i.e., by the XML
         // character data of the <value/> element).
         final List<String> extendedDataForms = getExtendedDataForms(packet);
         Collections.sort(extendedDataForms);
-
+        
         for (String extendedDataForm : extendedDataForms) {
             s.append(extendedDataForm);
             // no need to add '<', this is done in #getExtendedDataForms()
         }
-        return s.toString();
-    }
-
-    @VisibleForTesting
-    public static String generateHash(String s, String algorithm) {
-        return StringUtils.hash(s, algorithm);
-    }
-
-    @VisibleForTesting
-    public static String encodeHash(String hash) {
-        return Base64.getEncoder().encodeToString(StringUtils.decodeHex(hash));
+        
+        // Compute ver by hashing S using the algorithm as specified in
+        // RFC 3174 (with binary output) and encoding the hash using Base64 as
+        // specified in Section 4 of RFC 4648 (note: the Base64 output
+        // MUST NOT include whitespace and MUST set padding bits to zero).
+        final String hashed = StringUtils.hash(s.toString(), algorithm);
+        return Base64.getEncoder().encodeToString(StringUtils.decodeHex(hashed));
     }
 
     @Override

@@ -32,7 +32,6 @@ import java.awt.MenuItem;
 import java.awt.PopupMenu;
 import java.awt.SystemTray;
 import java.awt.TrayIcon;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -67,9 +66,11 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.SimpleAttributeSet;
 import javax.swing.text.StyleConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
 
 import static javax.xml.XMLConstants.ACCESS_EXTERNAL_DTD;
 import static javax.xml.XMLConstants.ACCESS_EXTERNAL_SCHEMA;
@@ -564,14 +565,21 @@ public class Launcher {
         openfired = null;
     }
 
+    // @VisibleForTesting
+    static Document parse(final File configFile) throws ParserConfigurationException, IOException, SAXException
+    {
+        // Note, we use standard DOM to read in the XML. This is necessary so that
+        // Launcher has fewer dependencies.
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setAttribute(ACCESS_EXTERNAL_DTD, "");
+        factory.setAttribute(ACCESS_EXTERNAL_SCHEMA, "");
+
+        return factory.newDocumentBuilder().parse(configFile);
+    }
+
     private synchronized void launchBrowser() {
         try {
-            // Note, we use standard DOM to read in the XML. This is necessary so that
-            // Launcher has fewer dependencies.
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            factory.setAttribute(ACCESS_EXTERNAL_DTD, "");
-            factory.setAttribute(ACCESS_EXTERNAL_SCHEMA, "");
-            Document document = factory.newDocumentBuilder().parse(configFile);
+            Document document = parse(configFile);
             Element rootElement = document.getDocumentElement();
             Element adminElement = (Element)rootElement.getElementsByTagName("adminConsole").item(0);
             String port = "-1";

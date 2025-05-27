@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foobar [
+    <!ELEMENT foobar ANY >
+    <!ENTITY xxe SYSTEM "file:///dev/random" >]>
+<jive>
+    <foobar>&xxe;</foobar>
+    <adminConsole>
+        <port>9090</port>
+        <securePort>9091</securePort>
+    </adminConsole>
+    <locale>en</locale>
+</jive>

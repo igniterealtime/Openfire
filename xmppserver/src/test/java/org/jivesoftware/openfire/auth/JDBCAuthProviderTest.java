@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2018-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,8 @@ public class JDBCAuthProviderTest {
     private static final String SHA1_PASSWORD = "5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8";
     private static final String SHA256_PASSWORD = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8";
     private static final String SHA512_PASSWORD = "b109f3bbbc244eb82441917ed06d618b9008dd09b3befd1b5e07394c706a8bb980b1d7785e5976ec049b46df5f1326af5a2ea6d103fd07c95385ffab0cacbc86";
-    private static final String BCRYPTED_PASSWORD = "$2a$10$TS9mWNnHbTU.ukLUlrOopuGooirFR3IltqgRFcyM.iSPQuoPDAafG";
+    private static final String BCRYPTED_PASSWORD_10 = "$2a$10$TS9mWNnHbTU.ukLUlrOopuGooirFR3IltqgRFcyM.iSPQuoPDAafG";
+    private static final String BCRYPTED_PASSWORD_13 = "$2a$13$3VaudS1OBB/6/9HjXtYa1OqxMG5LcYw.DQXx6n16J6PFkDA16zJV6";
     private final JDBCAuthProvider jdbcAuthProvider = new JDBCAuthProvider();
 
     private void setPasswordTypes(final String passwordTypes) {
@@ -49,8 +50,9 @@ public class JDBCAuthProviderTest {
         assertEquals(SHA1_PASSWORD, jdbcAuthProvider.hashPassword(PASSWORD, JDBCAuthProvider.PasswordType.sha1));
         assertEquals(SHA256_PASSWORD, jdbcAuthProvider.hashPassword(PASSWORD, JDBCAuthProvider.PasswordType.sha256));
         assertEquals(SHA512_PASSWORD, jdbcAuthProvider.hashPassword(PASSWORD, JDBCAuthProvider.PasswordType.sha512));
-        assertNotEquals(BCRYPTED_PASSWORD, jdbcAuthProvider.hashPassword(PASSWORD, JDBCAuthProvider.PasswordType.bcrypt));
-        assertTrue(OpenBSDBCrypt.checkPassword(BCRYPTED_PASSWORD, PASSWORD.toCharArray()));
+        assertNotEquals(BCRYPTED_PASSWORD_10, jdbcAuthProvider.hashPassword(PASSWORD, JDBCAuthProvider.PasswordType.bcrypt));
+        assertTrue(OpenBSDBCrypt.checkPassword(BCRYPTED_PASSWORD_10, PASSWORD.toCharArray()));
+        assertTrue(OpenBSDBCrypt.checkPassword(BCRYPTED_PASSWORD_13, PASSWORD.toCharArray()));
     }
 
     @Test
@@ -62,13 +64,13 @@ public class JDBCAuthProviderTest {
     @Test
     public void comparePasswords_bcrypt() throws Exception {
         setPasswordTypes("bcrypt");
-        assertTrue(jdbcAuthProvider.comparePasswords(PASSWORD, BCRYPTED_PASSWORD), "password should be bcrypted");
+        assertTrue(jdbcAuthProvider.comparePasswords(PASSWORD, BCRYPTED_PASSWORD_13), "password should be bcrypted");
     }
 
     @Test
     public void comparePasswords_bcryptLast() throws Exception {
         setPasswordTypes("bcrypt,md5,plain");
-        assertTrue(jdbcAuthProvider.comparePasswords(PASSWORD, BCRYPTED_PASSWORD), "should ignore everything beyond bcrypt");
+        assertTrue(jdbcAuthProvider.comparePasswords(PASSWORD, BCRYPTED_PASSWORD_13), "should ignore everything beyond bcrypt");
     }
 
     @Test

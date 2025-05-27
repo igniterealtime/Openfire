@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jive>
+    <adminConsole>
+        <port>9090</port>
+        <securePort>9091</securePort>
+    </adminConsole>
+    <locale>en</locale>
+</jive>

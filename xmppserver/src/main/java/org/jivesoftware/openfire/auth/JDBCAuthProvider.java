@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2020 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,7 +110,7 @@ import org.xmpp.packet.JID;
 public class JDBCAuthProvider implements AuthProvider, PropertyEventListener {
 
     private static final Logger Log = LoggerFactory.getLogger(JDBCAuthProvider.class);
-    private static final int DEFAULT_BCRYPT_COST = 10; // Current (2015) value provided by Mindrot's BCrypt.GENSALT_DEFAULT_LOG2_ROUNDS value
+    private static final int DEFAULT_BCRYPT_COST = 13; // Per recommendation of ROS security audit, based on numbers provided by https://wiki.php.net/rfc/bcrypt_cost_2023 (OF-3078)
 
     private String connectionString;
 

@@ -616,8 +616,8 @@ public class SASLAuthentication {
         }
     }
 
-    private static void authenticationFailed(LocalSession session, Failure failure, boolean usingSASL2) {
-        final Element reply = DocumentHelper.createElement(QName.get("failure", usingSASL2 ? SASL2_NAMESPACE : SASL_NAMESPACE));
+    private static void authenticationFailed(LocalSession session, Failure failure) {
+        final Element reply = DocumentHelper.createElement(QName.get("failure", session.usingSASL2 ? SASL2_NAMESPACE : SASL_NAMESPACE));
         reply.addElement(failure.toString());
         session.deliverRawText(reply.asXML());
         // Give a number of retries before closing the connection

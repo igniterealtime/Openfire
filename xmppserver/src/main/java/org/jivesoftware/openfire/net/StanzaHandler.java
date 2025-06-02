@@ -503,7 +503,8 @@ public abstract class StanzaHandler {
         document.getRootElement().add(features);
 
         // Include available SASL Mechanisms
-        final Element mechanismsElement=SASLAuthentication.getSASLMechanisms(session);
+        SASLAuthentication.addSASLMechanisms(features, session);
+        final Element mechanismsElement = features.element("mechanisms");
         if (mechanismsElement!=null) {
             ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(mechanismsElement).ifPresent(features::add);
             features.add(mechanismsElement);
@@ -607,7 +608,8 @@ public abstract class StanzaHandler {
 
         // Include SASL mechanisms only if client has not been authenticated
         if (!session.isAuthenticated()) {
-            final Element saslMechanisms = SASLAuthentication.getSASLMechanisms(session);
+            SASLAuthentication.addSASLMechanisms(features, session);
+            final Element saslMechanisms = features.element("mechanisms");
             if (saslMechanisms != null) {
                 ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(saslMechanisms).ifPresent(features::add);
                 features.add(saslMechanisms);

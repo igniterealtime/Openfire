@@ -35,9 +35,11 @@ import org.jivesoftware.openfire.sasl.SaslFailureException;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.*;
+// import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
@@ -46,6 +48,7 @@ import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.*;
+import java.util.Base64;
 import java.util.regex.Pattern;
 
 /**
@@ -124,7 +127,7 @@ public class SASLAuthentication {
     private static final Pattern BASE64_ENCODED = Pattern.compile("^(=|([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==))$");
 
     private static final String SASL_NAMESPACE = "urn:ietf:params:xml:ns:xmpp-sasl";
-    private static final String SASL2_NAMESPACE = "urn:xmpp:sasl:1";
+    private static final String SASL2_NAMESPACE = "urn:xmpp:sasl:2";
 
     /**
      * Java's SaslServer does not allow for null values. This makes it hard to distinguish between an empty (initial)
@@ -138,6 +141,11 @@ public class SASLAuthentication {
      * @see <a href="https://igniterealtime.atlassian.net/jira/software/c/projects/OF/issues/OF-2514">OF-2514: Differentiate between missing and empty initial SASL response</a>
      */
     public static final String SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY = "Sasl.last-response-was-provided-but-empty";
+
+    /**
+     * Session attribute key for sessions that are using SASL. When set, this will be the SASL namespace in use.
+     */
+    public static final String SASL_IN_PROGRESS = "Sasl.in-progress";
 
     private static Set<String> mechanisms = new HashSet<>();
 
@@ -229,28 +237,48 @@ public class SASLAuthentication {
     }
 
     /**
-     * Returns an XML element with the valid SASL mechanisms available for the specified session. If
-     * the session's connection is not secured then only include the SASL mechanisms that don't
-     * require TLS.
-     *
-     * @param session The current session
-     *
-     * @return The valid SASL mechanisms available for the specified session.
+     * addSASLMechanisms adds suitable mechanisms to either an Element (intended to be the features element)
+     * or a List<Element>.
      */
-    public static Element getSASLMechanisms( LocalSession session )
+    public static void addSASLMechanisms( @Nonnull Element features, @Nonnull LocalSession session )
     {
+        // Never list these if the session is already authenticated.
+        if (session.isAuthenticated()) return;
+
         if ( session instanceof ClientSession )
         {
-            return getSASLMechanismsElement( (ClientSession) session, false ).asXML() + getSASLMechanismsElement( (ClientSession) session, true ).asXML();
+            features.add(getSASLMechanismsElement( (ClientSession) session, false ));
+            // TODO : Don't list these if SASL2 isn't enabled.
+            features.add(getSASLMechanismsElement( (ClientSession) session, true ));
         }
         else if ( session instanceof LocalIncomingServerSession )
         {
-            return getSASLMechanismsElement( (LocalIncomingServerSession) session );
+            features.add(getSASLMechanismsElement( (LocalIncomingServerSession) session ));
         }
         else
         {
             Log.debug( "Unable to determine SASL mechanisms that are applicable to session '{}'. Unrecognized session type.", session );
-            return null;
+        }
+    }
+
+    public static void addSASLMechanisms( @Nonnull List<Element> features, @Nonnull LocalSession session )
+    {
+        // Never list these if the session is already authenticated.
+        if (session.isAuthenticated()) return;
+
+        if ( session instanceof ClientSession )
+        {
+            features.add(getSASLMechanismsElement( (ClientSession) session, false ));
+            // TODO : Don't list these if SASL2 isn't enabled.
+            features.add(getSASLMechanismsElement( (ClientSession) session, true ));
+        }
+        else if ( session instanceof LocalIncomingServerSession )
+        {
+            features.add(getSASLMechanismsElement( (LocalIncomingServerSession) session ));
+        }
+        else
+        {
+            Log.debug( "Unable to determine SASL mechanisms that are applicable to session '{}'. Unrecognized session type.", session );
         }
     }
 
@@ -530,7 +558,7 @@ public class SASLAuthentication {
         return false;
     }
 
-    private static void sendElement(Session session, String element, byte[] data) {
+    private static void sendElement(Session session, String element, byte[] data, boolean usingSASL2) {
         final Element reply = DocumentHelper.createElement(QName.get(element, usingSASL2 ? SASL2_NAMESPACE : SASL_NAMESPACE));
         if (data != null) {
             String data_b64 = Base64.getEncoder().encodeToString(data).trim();
@@ -591,8 +619,8 @@ public class SASLAuthentication {
         }
     }
 
-    private static void authenticationFailed(LocalSession session, Failure failure) {
-        final Element reply = DocumentHelper.createElement(QName.get("failure", session.usingSASL2 ? SASL2_NAMESPACE : SASL_NAMESPACE));
+    private static void authenticationFailed(LocalSession session, Failure failure, boolean usingSASL2) {
+        final Element reply = DocumentHelper.createElement(QName.get("failure", usingSASL2 ? SASL2_NAMESPACE : SASL_NAMESPACE));
         reply.addElement(failure.toString());
         session.deliverRawText(reply.asXML());
         // Give a number of retries before closing the connection

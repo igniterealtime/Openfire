@@ -188,11 +188,13 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
                 }
 
                 // Include available SASL Mechanisms
-                final Element saslMechanisms = SASLAuthentication.getSASLMechanisms(session);
+                SASLAuthentication.addSASLMechanisms(features, session);
+                final Element saslMechanisms = features.element("mechanisms");
                 if (saslMechanisms != null) {
                     ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(saslMechanisms).ifPresent(features::add);
                     features.add(saslMechanisms);
                 }
+                SASLAuthentication.addSASLMechanisms(features, session);
 
                 if (ServerDialback.isEnabled()) {
                     // Also offer server dialback (when TLS is not required). Server dialback may be offered

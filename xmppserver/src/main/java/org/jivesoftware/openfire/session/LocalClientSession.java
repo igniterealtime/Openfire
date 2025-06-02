@@ -293,7 +293,8 @@ public class LocalClientSession extends LocalSession implements ClientSession {
                 Log.warn("Unable to access the identity store for client connections. StartTLS is not being offered as a feature for this session.", e);
             }
             // Include available SASL Mechanisms
-            final Element saslMechanisms = SASLAuthentication.getSASLMechanisms(session);
+            SASLAuthentication.addSASLMechanisms(features, session);
+            Element saslMechanisms = features.element("mechanisms");
             if (saslMechanisms != null) {
                 ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(saslMechanisms).ifPresent(features::add);
                 features.add(saslMechanisms);

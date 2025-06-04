@@ -45,7 +45,7 @@ jobs:
         cache: maven
 
     - name: Build with Maven
-      run: ./mvnw -Dmaven.test.skip=true package
+      run: ./mvnw -B -Dmaven.test.skip=true package
         
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v3

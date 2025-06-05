@@ -28,4 +28,5 @@ public class JiveConstants {
     public static final int SECURITY_AUDIT = 25;
     public static final int MUC_SERVICE = 26;
     public static final int MUC_MESSAGE_ID = 27;
+    public static final int SPAM_REPORT_ID = 42;
 }

@@ -234,6 +234,21 @@
         <function-signature>java.lang.String formatTime(java.util.Date)</function-signature>
     </function>
     <function>
+        <name>formatDateInstant</name>
+        <function-class>org.jivesoftware.util.JiveGlobals</function-class>
+        <function-signature>java.lang.String formatDate(java.time.Instant)</function-signature>
+    </function>
+    <function>
+        <name>formatDateTimeInstant</name>
+        <function-class>org.jivesoftware.util.JiveGlobals</function-class>
+        <function-signature>java.lang.String formatDateTime(java.time.Instant)</function-signature>
+    </function>
+    <function>
+        <name>formatTimeInstant</name>
+        <function-class>org.jivesoftware.util.JiveGlobals</function-class>
+        <function-signature>java.lang.String formatTime(java.time.Instant)</function-signature>
+    </function>
+    <function>
         <name>chopAtWord</name>
         <function-class>org.jivesoftware.util.StringUtils</function-class>
         <function-signature>java.lang.String chopAtWord(java.lang.String,int)</function-signature>

@@ -466,5 +466,13 @@
                 <xmpp:note xml:lang='en'>As Openfire does not support MIX, the 'service types' search form field is not supported by the implementation. All searches cover MUC only, as per the specification.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0485.html"/>
+                <xmpp:version>0.1.0</xmpp:version>
+                <xmpp:note xml:lang='en'>Provided by the 'PubSub Server Info' plugin</xmpp:note>
+            </xmpp:SupportedXep>
+        </implements>
+
     </Project>
 </rdf:RDF>

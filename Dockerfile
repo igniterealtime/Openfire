@@ -56,9 +56,9 @@ ENV OPENFIRE_USER=openfire \
     OPENFIRE_LOG_DIR=/var/log/openfire
 
 COPY --from=skeleton-runtime /etc/passwd /etc/shadow /etc/group /etc/
-COPY --chown=openfire::openfire --from=skeleton-runtime $OPENFIRE_DATA_DIR $OPENFIRE_DATA_DIR
+COPY --chown=$OPENFIRE_USER:$OPENFIRE_USER --from=skeleton-runtime $OPENFIRE_DATA_DIR $OPENFIRE_DATA_DIR
 COPY --chmod=0755 --from=build /usr/src/build/docker/entrypoint.sh /sbin/entrypoint.sh
-COPY --chown=openfire:openfire --from=build /usr/src/distribution/target/distribution-base /usr/local/openfire
+COPY --chown=$OPENFIRE_USER:$OPENFIRE_USER --from=build /usr/src/distribution/target/distribution-base /usr/local/openfire
 RUN mv ${OPENFIRE_DIR}/conf ${OPENFIRE_DIR}/conf_org \
     && mv ${OPENFIRE_DIR}/plugins ${OPENFIRE_DIR}/plugins_org \
     && mv ${OPENFIRE_DIR}/resources/security ${OPENFIRE_DIR}/resources/security_org

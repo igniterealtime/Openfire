@@ -19,6 +19,7 @@ import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -45,6 +46,15 @@ import java.util.stream.Collectors;
  *
  * An instance is backed by a backing Cache that is used as a delegate. This implementation serializes data before
  * storing it in this delegate, and deserializes it when it is retrieved.
+ *
+ * This implementation makes use of JAXB to serialize data. Instances stored in the cache (both for keys and values)
+ * therefor <em>must</em> be JAXB serializable, with this exception: when the class used for a key and/or value is in
+ * the list below, then serialization does not use JAXB. Instead, a String representation of the instance is used.
+ *
+ * <ul>
+ *     <li>java.lang.String</li>
+ *     <li>org.xmpp.packet.JID</li>
+ * </ul>
  *
  * If problems occur during serialization or deserializing of data, the various methods in this class will throw runtime
  * exceptions.
@@ -88,18 +98,49 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
     }
 
     @Nonnull
-    protected String marshall(@Nullable final Object object)
+    protected String marshall(@Nullable final Object object, @Nonnull final Class<?> typeClass)
     {
         if (object == null) {
             return "";
         }
+
+        if (typeClass == String.class) {
+            return (String) object;
+        }
+        if (typeClass == JID.class) {
+            return object.toString();
+        }
+
+        return marshall(object);
+    }
+
+    @Nonnull
+    private String marshall(@Nonnull final Object object)
+    {
         final Writer writer = new StringWriter();
         try {
             marshaller.marshal(object, writer);
         } catch (JAXBException e) {
-            throw new IllegalArgumentException("Object could not be marshalled into an XML format: " + object);
+            throw new IllegalArgumentException("Object could not be marshalled into an XML format: " + object, e);
         }
         return writer.toString();
+    }
+
+    protected Object unmarshall(@Nullable final String object, @Nonnull final Class<?> typeClass)
+    {
+        if (object == null || object.isEmpty()) {
+            return null;
+        }
+
+        if (typeClass == String.class) {
+            return object;
+        }
+        if (typeClass == JID.class) {
+            return new JID(object);
+        }
+
+
+        return unmarshall(object);
     }
 
     @Nullable
@@ -136,13 +177,13 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
         checkNotNull(key, DefaultCache.NULL_KEY_IS_NOT_ALLOWED);
         checkNotNull(value, DefaultCache.NULL_VALUE_IS_NOT_ALLOWED);
 
-        final String marshalledKey = marshall(key);
-        final String marshalledValue = marshall(value);
+        final String marshalledKey = marshall(key, keyClass);
+        final String marshalledValue = marshall(value, valueClass);
 
         final String oldValue = delegate.put(marshalledKey, marshalledValue);
 
         @SuppressWarnings("unchecked")
-        final V result = (V) unmarshall(oldValue);
+        final V result = (V) unmarshall(oldValue, valueClass);
         return result;
     }
 
@@ -152,11 +193,11 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
     {
         checkNotNull(key, DefaultCache.NULL_KEY_IS_NOT_ALLOWED);
 
-        final String marshalledKey = marshall(key);
+        final String marshalledKey = marshall(key, keyClass);
         final String marshalledValue = delegate.get(marshalledKey);
 
         @SuppressWarnings("unchecked")
-        final V result = (V) unmarshall(marshalledValue);
+        final V result = (V) unmarshall(marshalledValue, valueClass);
         return result;
     }
 
@@ -166,11 +207,11 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
     {
         checkNotNull(key, DefaultCache.NULL_KEY_IS_NOT_ALLOWED);
 
-        final String marshalledKey = marshall(key);
+        final String marshalledKey = marshall(key, keyClass);
         final String marshalledValue = delegate.remove(marshalledKey);
 
         @SuppressWarnings("unchecked")
-        final V result = (V) unmarshall(marshalledValue);
+        final V result = (V) unmarshall(marshalledValue, valueClass);
         return result;
     }
 
@@ -197,7 +238,7 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
         return marshalledValues.stream()
             .map(marshalledValue -> {
                 @SuppressWarnings("unchecked")
-                final V result = (V) unmarshall(marshalledValue);
+                final V result = (V) unmarshall(marshalledValue, valueClass);
                 return result;
             })
             .collect(Collectors.toList());
@@ -208,7 +249,7 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
     {
         checkNotNull(key, DefaultCache.NULL_KEY_IS_NOT_ALLOWED);
 
-        final String marshalledKey = marshall(key);
+        final String marshalledKey = marshall(key, keyClass);
         return delegate.containsKey(marshalledKey);
     }
 
@@ -217,8 +258,8 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
     {
         final Map<String, String> marshalledMap = map.entrySet().stream()
             .collect(Collectors.toMap(
-                e -> marshall(e.getKey()),
-                e -> marshall(e.getValue())
+                e -> marshall(e.getKey(), keyClass),
+                e -> marshall(e.getValue(), valueClass)
             ));
 
         delegate.putAll(marshalledMap);
@@ -229,7 +270,7 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
     {
         checkNotNull(value, DefaultCache.NULL_VALUE_IS_NOT_ALLOWED);
 
-        final String marshalledValue = marshall(value);
+        final String marshalledValue = marshall(value, valueClass);
         return delegate.containsValue(marshalledValue);
     }
 
@@ -242,12 +283,12 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
                 .collect(Collectors.toMap(
                     entry -> {
                         @SuppressWarnings("unchecked")
-                        final K key = (K) unmarshall(entry.getKey());
+                        final K key = (K) unmarshall(entry.getKey(), keyClass);
                         return key;
                     },
                     entry -> {
                         @SuppressWarnings("unchecked")
-                        final V value = (V) unmarshall(entry.getValue());
+                        final V value = (V) unmarshall(entry.getValue(), valueClass);
                         return value;
                     })
                 )
@@ -262,7 +303,7 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
         return marshalledKeySet.stream()
             .map(key -> {
                 @SuppressWarnings("unchecked")
-                final K result = (K) unmarshall(key);
+                final K result = (K) unmarshall(key, keyClass);
                 return result;
             })
             .collect(Collectors.toSet());
@@ -348,16 +389,16 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
             @Override
             public void entryAdded(@Nonnull String key, @Nullable String newValue, @Nonnull NodeID nodeID)
             {
-                @SuppressWarnings("unchecked") final K unmarshalledKey = (K) unmarshall(key);
-                @SuppressWarnings("unchecked") final V unmarshalledNewValue = (V) unmarshall(newValue);
+                @SuppressWarnings("unchecked") final K unmarshalledKey = (K) unmarshall(key, keyClass);
+                @SuppressWarnings("unchecked") final V unmarshalledNewValue = (V) unmarshall(newValue, valueClass);
                 listener.entryAdded(unmarshalledKey, unmarshalledNewValue, nodeID);
             }
 
             @Override
             public void entryRemoved(@Nonnull String key, @Nullable String oldValue, @Nonnull NodeID nodeID)
             {
-                @SuppressWarnings("unchecked") final K unmarshalledKey = (K) unmarshall(key);
-                @SuppressWarnings("unchecked") final V unmarshalledOldValue = (V) unmarshall(oldValue);
+                @SuppressWarnings("unchecked") final K unmarshalledKey = (K) unmarshall(key, keyClass);
+                @SuppressWarnings("unchecked") final V unmarshalledOldValue = (V) unmarshall(oldValue, valueClass);
 
                 listener.entryRemoved(unmarshalledKey, unmarshalledOldValue, nodeID);
             }
@@ -365,17 +406,17 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
             @Override
             public void entryUpdated(@Nonnull String key, @Nullable String oldValue, @Nullable String newValue, @Nonnull NodeID nodeID)
             {
-                @SuppressWarnings("unchecked") final K unmarshalledKey = (K) unmarshall(key);
-                @SuppressWarnings("unchecked") final V unmarshalledNewValue = (V) unmarshall(newValue);
-                @SuppressWarnings("unchecked") final V unmarshalledOldValue = (V) unmarshall(oldValue);
+                @SuppressWarnings("unchecked") final K unmarshalledKey = (K) unmarshall(key, keyClass);
+                @SuppressWarnings("unchecked") final V unmarshalledNewValue = (V) unmarshall(newValue, valueClass);
+                @SuppressWarnings("unchecked") final V unmarshalledOldValue = (V) unmarshall(oldValue, valueClass);
                 listener.entryUpdated(unmarshalledKey, unmarshalledOldValue, unmarshalledNewValue, nodeID);
             }
 
             @Override
             public void entryEvicted(@Nonnull String key, @Nullable String oldValue, @Nonnull NodeID nodeID)
             {
-                @SuppressWarnings("unchecked") final K unmarshalledKey = (K) unmarshall(key);
-                @SuppressWarnings("unchecked") final V unmarshalledOldValue = (V) unmarshall(oldValue);
+                @SuppressWarnings("unchecked") final K unmarshalledKey = (K) unmarshall(key, keyClass);
+                @SuppressWarnings("unchecked") final V unmarshalledOldValue = (V) unmarshall(oldValue, valueClass);
 
                 listener.entryEvicted(unmarshalledKey, unmarshalledOldValue, nodeID);
             }

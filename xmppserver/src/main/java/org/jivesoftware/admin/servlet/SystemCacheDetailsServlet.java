@@ -36,6 +36,8 @@ import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.WebManager;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.util.cache.CacheWrapper;
+import org.jivesoftware.util.cache.SerializingCache;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -67,7 +69,19 @@ public class SystemCacheDetailsServlet extends HttpServlet {
         final boolean secretKey = optionalCache.map(Cache::isKeySecret).orElse(Boolean.FALSE);
         final boolean secretValue = optionalCache.map(Cache::isValueSecret).orElse(Boolean.FALSE);
 
-        final List<Map.Entry<String, String>> cacheEntries = optionalCache.map(Cache::entrySet)
+        final List<Map.Entry<String, String>> cacheEntries = optionalCache.map(cache ->
+            {
+                // Do not try to deserialize data from a SerializedCache, as that typically needs classes available only in PluginClassLoader instances (that are not visible here).
+                final Cache<?,?> orig = cache;
+                if (cache instanceof CacheWrapper<?, ?>) {
+                    cache = ((CacheWrapper<?, ?>) cache).getWrappedCache();
+                }
+                if (cache instanceof SerializingCache<?, ?>) {
+                    return ((SerializingCache<?, ?>) cache).getDelegate();
+                }
+                return orig;
+            })
+            .map(Cache::entrySet)
             .map(Collection::stream)
             .orElseGet(Stream::empty)
             .map(entry -> new AbstractMap.SimpleEntry<>(secretKey ? "************" : entry.getKey().toString(), secretValue ? "************" : entry.getValue().toString()))

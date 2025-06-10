@@ -507,6 +507,12 @@ public class CacheFactory {
      * This is of particular interest when the cache is used to store data provided by Openfire plugins (as these
      * classes get loaded by a class loader that is replaced when a plugin gets reloaded or upgraded).
      *
+     * It is important for a Cache that uses class definitions loaded by a plugin to be 'dereferenced' when the plugin
+     * that provided the class definitions get unloaded (failing to do so will cause ClassCastExceptions, when a new
+     * version of the same plugin gets loaded). For this, {@link #dereferenceSerializingCache(String)} can be used.
+     * To (re)register class definitions with the cache, this #createSerializingCache method can be used. When the cache
+     * pre-exists, it will set (or overwrite) the registered class definitions.
+     *
      * As compared to other caches, usage of this cache will require more system resources, as the serialized
      * representation of an object typically is (much) larger than its original (unserialized) form.
      *
@@ -520,15 +526,44 @@ public class CacheFactory {
     public static synchronized <T extends Cache> T createSerializingCache(String name, Class keyClass, Class valueClass) {
         T cache = (T) caches.get(name);
         if (cache != null) {
+            if (cache instanceof CacheWrapper<?,?> && ((CacheWrapper) cache).getWrappedCache() instanceof SerializingCache<?,?>) {
+                log.debug("Reset the classes used to serialize data for serializing cache '{}': keyClass '{}', valueClass '{}' (it is likely that a new version of the plugin that uses this class was loaded).", name, keyClass, valueClass);
+                ((SerializingCache)((CacheWrapper) cache).getWrappedCache()).registerClasses(keyClass, valueClass);
+            }
             return cache;
         }
 
         final Cache<String, String> delegate = (Cache<String, String>) cacheFactoryStrategy.createCache(name);
-        final T sCache = (T) new SerializingCache(delegate, keyClass, valueClass);
+        final SerializingCache sCache = new SerializingCache(delegate);
+        sCache.registerClasses(keyClass, valueClass);
 
-        log.info("Created serializing cache [" + cacheFactoryStrategy.getClass().getName() + "] for " + name);
+        log.info("Created serializing cache [{}] for {}, keyClass '{}', valueClass '{}'", cacheFactoryStrategy.getClass().getName(), name, keyClass, valueClass);
 
-        return wrapCache(sCache, name);
+        return wrapCache((T) sCache, name);
+    }
+
+    /**
+     * Removes the class definitions from a SerializingCache, if a cache exists with the provided name (and that cache
+     * is a SerializingCache).
+     *
+     * This method should be invoked when a plugin that provided the class definitions gets unloaded. If this method is
+     * not invoked, the Plugin Class Loader will retain references (and thus not be garbage collected). This will cause
+     * ClassCastExceptions when a new/reloaded version of the plugin starts interacting with the cache.
+     *
+     * A cache for which this method is used does not get destroyed (all data is retained per the cache configuration).
+     * However, the cache cannot be interacted with (as data in the cache cannot be serialized/deserialized). To restore
+     * functionality, {@link #createSerializingCache(String, Class, Class)} is to be used. This will re-register class
+     * definitions for existing caches (or create a new cache, if one doesn't exist).
+     *
+     * @param name The name of the cache.
+     */
+    public static synchronized void dereferenceSerializingCache(String name) {
+        Cache cache = caches.get(name);
+        if (cache != null) {
+            if (cache instanceof CacheWrapper<?,?> && ((CacheWrapper) cache).getWrappedCache() instanceof SerializingCache<?,?>) {
+                ((SerializingCache)((CacheWrapper) cache).getWrappedCache()).deregisterClasses();
+            }
+        }
     }
 
     /**
@@ -949,7 +984,8 @@ public class CacheFactory {
                 Cache clusteredCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
                 if (cacheWrapper.getWrappedCache() instanceof SerializingCache) {
                     final SerializingCache serializingCache = (SerializingCache) cacheWrapper.getWrappedCache();
-                    clusteredCache = new SerializingCache(clusteredCache, serializingCache.getKeyClass(), serializingCache.getValueClass());
+                    clusteredCache = new SerializingCache(clusteredCache);
+                    ((SerializingCache) clusteredCache).registerClasses(serializingCache.getKeyClass(), serializingCache.getValueClass());
                 }
                 cacheWrapper.setWrappedCache(clusteredCache);
             });
@@ -974,7 +1010,8 @@ public class CacheFactory {
                 Cache standaloneCache = cacheFactoryStrategy.createCache(cacheWrapper.getName());
                 if (cacheWrapper.getWrappedCache() instanceof SerializingCache) {
                     final SerializingCache serializingCache = (SerializingCache) cacheWrapper.getWrappedCache();
-                    standaloneCache = new SerializingCache(standaloneCache, serializingCache.getKeyClass(), serializingCache.getValueClass());
+                    standaloneCache = new SerializingCache(standaloneCache);
+                    ((SerializingCache) standaloneCache).registerClasses(serializingCache.getKeyClass(), serializingCache.getValueClass());
                 }
                 cacheWrapper.setWrappedCache(standaloneCache);
             });

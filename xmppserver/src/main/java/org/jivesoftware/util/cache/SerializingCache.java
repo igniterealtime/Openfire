@@ -41,6 +41,13 @@ import java.util.stream.Collectors;
  * particular interest when the cache is used to store data provided by Openfire plugins (as these classes get loaded
  * by a class loader that is replaced when a plugin gets reloaded or upgraded).
  *
+ * Before usage, a cache needs to be configured with the class definitions of the data that is stored in the cache. This
+ * is done using the #registerClasses method. As stated above, these classes can be provided by an Openfire plugin. When
+ * the providing plugin gets removed (potentially replaced), it is important that the registered classes are no longer
+ * referenced by the cache (as that would make it impossible for the Plugin Class Loader to be destroyed, which in turn
+ * will cause ClassCastExceptions when a new version of the plugin interacts with the cache). To dereference classes,
+ * the #deregisterClasses method can be used.
+ *
  * As compared to other caches, usage of this cache will require more system resources, as the serialized representation
  * of an object typically is (much) larger than its original (unserialized) form.
  *
@@ -67,25 +74,35 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
     private static final Logger Log = LoggerFactory.getLogger(SerializingCache.class);
 
     private final Cache<String, String> delegate;
-    private final Marshaller marshaller;
-    private final Unmarshaller unmarshaller;
-    private final Class<K> keyClass;
-    private final Class<V> valueClass;
+    private Marshaller marshaller;
+    private Unmarshaller unmarshaller;
+    private Class<K> keyClass;
+    private Class<V> valueClass;
 
     /**
      * Creates a new serializing cache backed by the provided delegate.
      *
-     * The delegate will store (in serialized form) entries of which the keys are instances of the provided keyClass
-     * argument. The values are correspondingly instances of the provided valueClass argument.
+     * Before this cache is usable, the class definitions of the data that is stored in the cache need to be provided
+     * using the #registerClasses method.
      *
      * @param delegate The cache used to store data in serialized form.
+     */
+    SerializingCache(@Nonnull final Cache<String, String> delegate)
+    {
+        this.delegate = delegate;
+    }
+
+    /**
+     * The cache will store (in serialized form) entries of which the keys are instances of the provided keyClass
+     * argument. The values are correspondingly instances of the provided valueClass argument.
+     *
+     * When this method is invoked more than once, the definitions provided by the last invocation will be used.
+     *
      * @param keyClass The class of instances used as keys.
      * @param valueClass The class of instances used as values.
      * @throws IllegalArgumentException when keyClass and/or valueClass cannot be used to serialize and deserialize instances.
      */
-    SerializingCache(@Nonnull final Cache<String, String> delegate, @Nonnull final Class<K> keyClass, @Nonnull final Class<V> valueClass)
-    {
-        this.delegate = delegate;
+    public void registerClasses(@Nonnull final Class<K> keyClass, @Nonnull final Class<V> valueClass) {
         try {
             final JAXBContext jaxbContext = JAXBContext.newInstance(keyClass, valueClass);
             marshaller = jaxbContext.createMarshaller();
@@ -97,8 +114,24 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
         }
     }
 
+    /**
+     * Removes the registration of key and value class definitions. This is typically useful when the provided classes
+     * are provided by a plugin, and that plugin is being unloaded/replaced. When this method is not used, a reference
+     * to the classes from the original PluginClassLoader will be retained, which will cause ClassCastExceptions when
+     * interacting with the cache.
+     *
+     * An invocation of this method does not affect the data stored in the cache. After registering the class types
+     * again (using #registerClasses) that data can be stored in and retrieved from the cache again.
+     */
+    public void deregisterClasses() {
+        marshaller = null;
+        unmarshaller = null;
+        keyClass = null;
+        valueClass = null;
+    }
+
     @Nonnull
-    protected String marshall(@Nullable final Object object, @Nonnull final Class<?> typeClass)
+    protected String marshall(@Nullable final Serializable object, @Nonnull final Class<?> typeClass)
     {
         if (object == null) {
             return "";
@@ -115,8 +148,10 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
     }
 
     @Nonnull
-    private String marshall(@Nonnull final Object object)
+    private String marshall(@Nonnull final Serializable object)
     {
+        checkIsUsable();
+
         final Writer writer = new StringWriter();
         try {
             marshaller.marshal(object, writer);
@@ -126,7 +161,8 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
         return writer.toString();
     }
 
-    protected Object unmarshall(@Nullable final String object, @Nonnull final Class<?> typeClass)
+    @Nullable
+    protected Serializable unmarshall(@Nullable final String object, @Nonnull final Class<?> typeClass)
     {
         if (object == null || object.isEmpty()) {
             return null;
@@ -139,34 +175,32 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
             return new JID(object);
         }
 
-
         return unmarshall(object);
     }
 
-    @Nullable
-    private Object unmarshall(@Nullable final String object)
+    @Nonnull
+    private Serializable unmarshall(@Nonnull final String object)
     {
-        if (object == null || object.isEmpty()) {
-            return null;
-        } else {
-            final Reader reader = new StringReader(object);
-            try {
-                return unmarshaller.unmarshal(reader);
-            } catch (JAXBException e) {
-                throw new IllegalArgumentException("XML value could not be unmarshalled into an object: " + object);
-            }
+        checkIsUsable();
+        final Reader reader = new StringReader(object);
+        try {
+            return (Serializable) unmarshaller.unmarshal(reader);
+        } catch (JAXBException e) {
+            throw new IllegalArgumentException("XML value could not be unmarshalled into an object: " + object);
         }
     }
 
     @Nonnull
     public Class<K> getKeyClass()
     {
+        checkIsUsable();
         return keyClass;
     }
 
     @Nonnull
     public Class<V> getValueClass()
     {
+        checkIsUsable();
         return valueClass;
     }
 
@@ -174,6 +208,7 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
     @Nullable
     public synchronized V put(@Nullable final K key, @Nullable final V value)
     {
+        checkIsUsable();
         checkNotNull(key, DefaultCache.NULL_KEY_IS_NOT_ALLOWED);
         checkNotNull(value, DefaultCache.NULL_VALUE_IS_NOT_ALLOWED);
 
@@ -191,9 +226,14 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
     @Nullable
     public synchronized V get(@Nullable final Object key)
     {
+        checkIsUsable();
         checkNotNull(key, DefaultCache.NULL_KEY_IS_NOT_ALLOWED);
 
-        final String marshalledKey = marshall(key, keyClass);
+        if (!keyClass.isInstance(key)) {
+            return null;
+        }
+
+        final String marshalledKey = marshall((K)key, keyClass);
         final String marshalledValue = delegate.get(marshalledKey);
 
         @SuppressWarnings("unchecked")
@@ -205,9 +245,14 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
     @Nullable
     public synchronized V remove(@Nullable final Object key)
     {
+        checkIsUsable();
         checkNotNull(key, DefaultCache.NULL_KEY_IS_NOT_ALLOWED);
 
-        final String marshalledKey = marshall(key, keyClass);
+        if (!keyClass.isInstance(key)) {
+            return null;
+        }
+
+        final String marshalledKey = marshall((K)key, keyClass);
         final String marshalledValue = delegate.remove(marshalledKey);
 
         @SuppressWarnings("unchecked")
@@ -234,6 +279,7 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
     @Nonnull
     public Collection<V> values()
     {
+        checkIsUsable();
         final Collection<String> marshalledValues = delegate.values();
         return marshalledValues.stream()
             .map(marshalledValue -> {
@@ -247,15 +293,21 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
     @Override
     public boolean containsKey(@Nullable final Object key)
     {
+        checkIsUsable();
         checkNotNull(key, DefaultCache.NULL_KEY_IS_NOT_ALLOWED);
 
-        final String marshalledKey = marshall(key, keyClass);
+        if (!keyClass.isInstance(key)) {
+            return false;
+        }
+
+        final String marshalledKey = marshall((K)key, keyClass);
         return delegate.containsKey(marshalledKey);
     }
 
     @Override
     public void putAll(@Nonnull final Map<? extends K, ? extends V> map)
     {
+        checkIsUsable();
         final Map<String, String> marshalledMap = map.entrySet().stream()
             .collect(Collectors.toMap(
                 e -> marshall(e.getKey(), keyClass),
@@ -268,9 +320,14 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
     @Override
     public boolean containsValue(@Nullable final Object value)
     {
+        checkIsUsable();
         checkNotNull(value, DefaultCache.NULL_VALUE_IS_NOT_ALLOWED);
 
-        final String marshalledValue = marshall(value, valueClass);
+        if (!valueClass.isInstance(value)) {
+            return false;
+        }
+
+        final String marshalledValue = marshall((V)value, valueClass);
         return delegate.containsValue(marshalledValue);
     }
 
@@ -278,6 +335,7 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
     @Nonnull
     public Set<Entry<K, V>> entrySet()
     {
+        checkIsUsable();
         final Set<Entry<String, String>> marshalledEntrySet = delegate.entrySet();
         return marshalledEntrySet.stream()
                 .collect(Collectors.toMap(
@@ -299,6 +357,7 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
     @Nonnull
     public Set<K> keySet()
     {
+        checkIsUsable();
         final Set<String> marshalledKeySet = delegate.keySet();
         return marshalledKeySet.stream()
             .map(key -> {
@@ -368,6 +427,10 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
         delegate.setMaxLifetime(maxLifetime);
     }
 
+    public Cache<String, String> getDelegate() {
+        return delegate;
+    }
+
     private void checkNotNull(@Nullable final Object argument, @Nullable final String message) {
         try {
             if (argument == null) {
@@ -379,6 +442,12 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
             } else {
                 throw e;
             }
+        }
+    }
+
+    private void checkIsUsable() {
+        if (marshaller == null) {
+            throw new IllegalStateException("Type definitions are not available (they may not have been registered, or may have been deregistered since). Please use #registerClasses before interacting with this cache.");
         }
     }
 

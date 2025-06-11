@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<install4j version="10.0.3" transformSequenceNumber="10">
-  <directoryPresets config="src/bin/extra/sysconfig/openfire" />
-  <application name="${compiler:APP_NAME}" applicationId="${compiler:APPLICATION_ID}" mediaDir="../../target/distributions" mediaFilePattern="${compiler:FILE_PREFIX}_${compiler:sys.version}" compression="9" lzmaCompression="true" shortName="${compiler:APP_SHORT_NAME}" publisher="${compiler:PUBLISHER}" publisherWeb="${compiler:PUBLISHER_URL}" version="${compiler:sys.version}" allPathsRelative="true" autoSave="true" macVolumeId="419a18ebe125f2bf" javaMinVersion="11" allowBetaVM="true">
+<install4j version="11.0.3" transformSequenceNumber="11">
+  <directoryPresets config="./images" />
+  <application name="${compiler:APP_NAME}" applicationId="${compiler:APPLICATION_ID}" mediaDir="../../target/distributions" mediaFilePattern="${compiler:FILE_PREFIX}_${compiler:sys.version}" compression="9" lzmaCompression="true" shortName="${compiler:APP_SHORT_NAME}" publisher="${compiler:PUBLISHER}" publisherWeb="${compiler:PUBLISHER_URL}" version="${compiler:sys.version}" allPathsRelative="true" autoSave="true" macVolumeId="419a18ebe125f2bf" javaMinVersion="17" allowBetaVM="true">
     <languages>
       <additionalLanguages>
         <language id="zh_CN" />
@@ -56,58 +56,61 @@
   </files>
   <launchers>
     <launcher name="Openfire" id="2" excludeFromMenu="true">
-      <executable name="${compiler:PRODUCT_NAME}-service" iconSet="true" iconFile="./images/service.ico" executableDir="bin" stderrFile="../logs/stderror.log" redirectStdout="true" stdoutFile="../logs/stdout.log" executableMode="service" singleInstance="true" serviceDescription="${compiler:APP_NAME}" dpiAware="false">
+      <executable name="${compiler:PRODUCT_NAME}-service" iconSet="true" executableDir="bin" stderrFile="../logs/stderror.log" redirectStdout="true" stdoutFile="../logs/stdout.log" executableMode="service" singleInstance="true" serviceDescription="${compiler:APP_NAME}" dpiAware="false">
         <versionInfo include="true" fileDescription="${compiler:APP_NAME}" legalCopyright="${compiler:PUBLISHER}" internalName="${compiler:APP_NAME}" />
       </executable>
-      <java mainClass="org.jivesoftware.openfire.starter.ServerStarter" vmParameters="-Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true -Dlog4j.configurationFile=&quot;${launcher:sys.launcherDirectory}/../lib/log4j2.xml&quot; -Dlog4j2.formatMsgNoLookups=true -Dlog4j.skipJansi=false -DopenfireHome=&quot;${launcher:sys.launcherDirectory}../&quot;" preferredVM="server">
+      <java mainClass="org.jivesoftware.openfire.starter.ServerStarter" vmParameters="-Dlog4j.configurationFile=&quot;${launcher:sys.launcherDirectory}/../lib/log4j2.xml&quot; -Dlog4j2.formatMsgNoLookups=true -Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true -Djava.net.preferIPv6Addresses=system -DopenfireHome=&quot;${launcher:sys.launcherDirectory}../&quot;" preferredVM="server">
         <classPath>
           <scanDirectory location="lib" failOnError="false" />
         </classPath>
       </java>
       <vmOptionsFile mode="none" />
       <iconImageFiles>
-        <file path="./images/service-16x16.png" />
-        <file path="./images/service-32x32.png" />
+        <file path="./images/openfire-16.png" />
+        <file path="./images/openfire-32.png" />
+        <file path="./images/openfire-48.png" />
+        <file path="./images/openfire-128.png" />
+        <file path="./images/openfire-256.png" />
+        <file path="./images/openfire-512.png" />
       </iconImageFiles>
     </launcher>
     <launcher name="GUI Launcher" id="12" menuName="${compiler:APP_NAME} Server">
-      <executable name="${compiler:PRODUCT_NAME}" iconSet="true" iconFile="./images/openfire.ico" executableDir="bin" stderrFile="../logs/stderr.log" redirectStdout="true" stdoutFile="../logs/stdout.log" executableMode="gui" singleInstance="true" executionLevel="highestAvailable" dpiAware="false">
+      <executable name="${compiler:PRODUCT_NAME}" iconSet="true" executableDir="bin" stderrFile="../logs/stderr.log" redirectStdout="true" stdoutFile="../logs/stdout.log" executableMode="gui" singleInstance="true" executionLevel="highestAvailable" dpiAware="false">
         <versionInfo include="true" fileDescription="${compiler:APP_NAME} Launcher" legalCopyright="${compiler:PUBLISHER}" internalName="${compiler:APP_NAME}" />
       </executable>
-      <java mainClass="org.jivesoftware.openfire.launcher.Launcher" vmParameters="-Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true -Dlog4j.configurationFile=&quot;${launcher:sys.launcherDirectory}/../lib/log4j2.xml&quot; -Dlog4j2.formatMsgNoLookups=true -Dlog4j.skipJansi=false -Dappdir=&quot;${launcher:sys.launcherDirectory}&quot; -DopenfireHome=&quot;${launcher:sys.launcherDirectory}../&quot;">
+      <java mainClass="org.jivesoftware.openfire.launcher.Launcher" vmParameters="-Dlog4j.configurationFile=&quot;${launcher:sys.launcherDirectory}/../lib/log4j2.xml&quot; -Dlog4j2.formatMsgNoLookups=true -Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true -Djava.net.preferIPv6Addresses=system -DopenfireHome=&quot;${launcher:sys.launcherDirectory}../&quot;">
         <classPath>
           <scanDirectory location="lib" failOnError="false" />
         </classPath>
       </java>
       <vmOptionsFile mode="none" />
       <iconImageFiles>
-        <file path="./images/openfire-16x16.png" />
-        <file path="./images/openfire-32x32.png" />
+        <file path="./images/openfire-16.png" />
+        <file path="./images/openfire-32.png" />
+        <file path="./images/openfire-48.png" />
+        <file path="./images/openfire-128.png" />
+        <file path="./images/openfire-256.png" />
+        <file path="./images/openfire-512.png" />
       </iconImageFiles>
     </launcher>
     <launcher name="openfired" id="15" excludeFromMenu="true">
-      <executable name="${compiler:PRODUCT_NAME}d" iconSet="true" iconFile="./images/openfired.ico" executableDir="bin" redirectStderr="false" executableMode="console" singleInstance="true" executionLevel="highestAvailable" dpiAware="false">
+      <executable name="${compiler:PRODUCT_NAME}d" iconSet="true" executableDir="bin" redirectStderr="false" executableMode="console" singleInstance="true" executionLevel="highestAvailable" dpiAware="false">
         <versionInfo include="true" fileDescription="${compiler:APP_NAME} Server" legalCopyright="${compiler:PUBLISHER}" internalName="${compiler:APP_NAME}" />
       </executable>
-      <java mainClass="org.jivesoftware.openfire.starter.ServerStarter" vmParameters="-Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true -Dlog4j.configurationFile=&quot;${launcher:sys.launcherDirectory}/../lib/log4j2.xml&quot; -Dlog4j2.formatMsgNoLookups=true -Dlog4j.skipJansi=false -DopenfireHome=&quot;${launcher:sys.launcherDirectory}../&quot;" preferredVM="server">
+      <java mainClass="org.jivesoftware.openfire.starter.ServerStarter" vmParameters="-Dlog4j.configurationFile=&quot;${launcher:sys.launcherDirectory}/../lib/log4j2.xml&quot; -Dlog4j2.formatMsgNoLookups=true -Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true -Djava.net.preferIPv6Addresses=system -DopenfireHome=&quot;${launcher:sys.launcherDirectory}../&quot;" preferredVM="server">
         <classPath>
           <scanDirectory location="lib" failOnError="false" />
         </classPath>
       </java>
       <vmOptionsFile mode="none" />
       <iconImageFiles>
-        <file path="./images/openfired-16x16.png" />
-        <file path="./images/openfired-32x32.png" />
+        <file path="./images/openfire-16.png" />
+        <file path="./images/openfire-32.png" />
+        <file path="./images/openfire-48.png" />
+        <file path="./images/openfire-128.png" />
+        <file path="./images/openfire-256.png" />
+        <file path="./images/openfire-512.png" />
       </iconImageFiles>
-    </launcher>
-    <launcher name="openfire" id="22">
-      <executable name="${compiler:PRODUCT_NAME}" executableDir="bin" stderrFile="../logs/stderror.log" redirectStdout="true" stdoutFile="../logs/stdoutt.log" executableMode="service" dpiAware="false" />
-      <java mainClass="org.jivesoftware.openfire.starter.ServerStarter" vmParameters="-Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true -Dlog4j.configurationFile=&quot;${launcher:sys.launcherDirectory}/../lib/log4j2.xml&quot; -Dlog4j2.formatMsgNoLookups=true -Dlog4j.skipJansi=false -DopenfireHome=&quot;${launcher:sys.launcherDirectory}../&quot; -Dopenfire.lib.dir=&quot;$app_home/lib&quot;" preferredVM="server">
-        <classPath>
-          <scanDirectory location="lib" />
-        </classPath>
-      </java>
-      <vmOptionsFile mode="none" />
     </launcher>
   </launchers>
   <installerGui>
@@ -142,7 +145,7 @@
                 <property name="imageAnchor" type="enum" class="com.install4j.api.beans.Anchor" value="NORTHEAST" />
                 <property name="imageFile">
                   <object class="com.install4j.api.beans.ExternalFile">
-                    <string>./images/logo_small.png</string>
+                    <string>./images/openfire-32.png</string>
                   </object>
                 </property>
               </serializedBean>
@@ -409,7 +412,7 @@ return console.askOkCancel(message, true);
                 <property name="imageAnchor" type="enum" class="com.install4j.api.beans.Anchor" value="NORTHEAST" />
                 <property name="imageFile">
                   <object class="com.install4j.api.beans.ExternalFile">
-                    <string>./images/logo_small.png</string>
+                    <string>./images/openfire-32.png</string>
                   </object>
                 </property>
               </serializedBean>
@@ -731,18 +734,14 @@ return console.askYesNo(message, true);
   </installerGui>
   <mediaSets>
     <windows name="Windows x86" id="3" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" architecture="32">
-      <excludedLaunchers>
-        <launcher id="22" />
-      </excludedLaunchers>
       <exclude>
-        <entry rootId="1568" />
-        <entry location="bin/extra/redhat" />
-        <entry location="bin/extra/embedded-db-viewer.sh" />
+        <entry location="bin/openfirectl" />
+        <entry location="bin/extra/redhat-postinstall.sh" />
         <entry location="bin/extra/openfired" />
         <entry location="bin/extra/openfire-launchd-wrapper.sh" />
-        <entry location="bin/extra/redhat-postinstall.sh" />
+        <entry location="bin/extra/embedded-db-viewer.sh" />
+        <entry location="bin/extra/redhat" />
         <entry location="bin/openfire.sh" />
-        <entry location="bin/openfirectl" />
       </exclude>
       <jreBundle jreBundleSource="none" />
     </windows>
@@ -753,47 +752,45 @@ return console.askYesNo(message, true);
         <launcher id="15" />
       </excludedLaunchers>
       <exclude>
-        <entry rootId="1568" />
-        <entry location="bin/extra/embedded-db-viewer.bat" />
         <entry location="bin/openfire.bat" />
-        <entry location="bin/openfire-dev.bat" />
+        <entry location="bin/extra/embedded-db-viewer.bat" />
       </exclude>
       <jreBundle jreBundleSource="none" />
     </unixArchive>
     <windowsArchive name="Windows Archive" id="31" installDir="${compiler:APP_SHORT_NAME}" overridePrincipalLanguage="true" architecture="32">
-      <excludedLaunchers>
-        <launcher id="22" />
-      </excludedLaunchers>
       <exclude>
-        <entry rootId="1568" />
-        <entry location="bin/extra/redhat" />
-        <entry location="bin/extra/embedded-db-viewer.sh" />
+        <entry location="bin/openfirectl" />
+        <entry location="bin/extra/redhat-postinstall.sh" />
         <entry location="bin/extra/openfired" />
         <entry location="bin/extra/openfire-launchd-wrapper.sh" />
-        <entry location="bin/extra/redhat-postinstall.sh" />
+        <entry location="bin/extra/embedded-db-viewer.sh" />
+        <entry location="bin/extra/redhat" />
         <entry location="bin/openfire.sh" />
-        <entry location="bin/openfirectl" />
       </exclude>
       <jreBundle jreBundleSource="none" />
     </windowsArchive>
     <windows name="Windows x64" id="1354" mediaFileName="${compiler:FILE_PREFIX}_${compiler:sys.version}_x64" installDir="${compiler:WINDOWS_INSTALL_DIR}" overridePrincipalLanguage="true" architecture="64">
-      <excludedLaunchers>
-        <launcher id="22" />
-      </excludedLaunchers>
       <exclude>
-        <entry rootId="1568" />
-        <entry location="bin/extra/redhat" />
-        <entry location="bin/extra/embedded-db-viewer.sh" />
+        <entry location="bin/openfirectl" />
+        <entry location="bin/extra/redhat-postinstall.sh" />
         <entry location="bin/extra/openfired" />
         <entry location="bin/extra/openfire-launchd-wrapper.sh" />
-        <entry location="bin/extra/redhat-postinstall.sh" />
+        <entry location="bin/extra/embedded-db-viewer.sh" />
+        <entry location="bin/extra/redhat" />
         <entry location="bin/openfire.sh" />
-        <entry location="bin/openfirectl" />
       </exclude>
       <jreBundle jreBundleSource="none" />
     </windows>
+    <macosFolder name="macOS Folder" id="1429" architecture="universal">
+      <exclude>
+        <entry location="bin/openfire.bat" />
+        <entry location="bin/extra/redhat-postinstall.sh" />
+        <entry location="bin/extra/openfired" />
+        <entry location="bin/extra/embedded-db-viewer.bat" />
+        <entry location="bin/extra/openfire-launchd-wrapper.sh" />
+        <entry location="bin/extra/redhat" />
+      </exclude>
+      <jreBundle jreBundleSource="none" />
+    </macosFolder>
   </mediaSets>
-  <buildIds>
-    <mediaSet refId="18" />
-  </buildIds>
 </install4j>

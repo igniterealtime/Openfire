@@ -31,6 +31,7 @@ import java.io.*;
 import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 /**
@@ -366,6 +367,13 @@ public class SerializingCache<K extends Serializable, V extends Serializable> im
                 return result;
             })
             .collect(Collectors.toSet());
+    }
+
+    @Override
+    @Nonnull
+    public Lock getLock(K key) {
+        final String marshalledKey = marshall(key, keyClass);
+        return delegate.getLock(marshalledKey);
     }
 
     @Override

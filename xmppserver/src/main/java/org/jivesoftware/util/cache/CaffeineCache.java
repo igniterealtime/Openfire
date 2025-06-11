@@ -16,6 +16,7 @@
 package org.jivesoftware.util.cache;
 
 import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
+import org.jivesoftware.util.cache.lock.LocalLock;
 
 import javax.annotation.Nonnull;
 import java.io.Serializable;
@@ -25,6 +26,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Wraps an instance of Ben Manes' Caffeine cache in a class that inherits from
@@ -431,7 +433,7 @@ public class CaffeineCache<K extends Serializable, V extends Serializable> imple
     /**
      * Copies all of the mappings from the specified map to this map
      * (optional operation).  The effect of this call is equivalent to that
-     * of calling {@link #put(Object, Object) put(k, v)} on this map once
+     * of calling {@link #put(Serializable, Serializable)} on this map once
      * for each mapping from key <tt>k</tt> to value <tt>v</tt> in the
      * specified map.  The behavior of this operation is undefined if the
      * specified map is modified while the operation is in progress.
@@ -476,6 +478,12 @@ public class CaffeineCache<K extends Serializable, V extends Serializable> imple
     public Set<K> keySet()
     {
         return Collections.unmodifiableSet( cache.asMap().keySet() );
+    }
+
+    @Override
+    @Nonnull
+    public Lock getLock(K key) {
+        return LocalLock.getLock(key, this);
     }
 
     @Override

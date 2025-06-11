@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public class GetAdminConsoleInfoTask implements ClusterTask<GetAdminConsoleInfoT
     @Override
     public void run() {
         PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
-        AdminConsolePlugin adminConsolePlugin = ((AdminConsolePlugin) pluginManager.getPlugin("admin"));
+        AdminConsolePlugin adminConsolePlugin = ((AdminConsolePlugin) pluginManager.getPluginByCanonicalName("admin").orElseThrow());
 
         bindInterface = adminConsolePlugin.getBindInterface();
         adminPort = adminConsolePlugin.getAdminUnsecurePort();

@@ -626,7 +626,7 @@ public class XMPPServer {
                         // Otherwise, the page that requested the setup finish won't
                         // render properly!
                         Thread.sleep(1000);
-                        ((AdminConsolePlugin) pluginManager.getPlugin("admin")).restart();
+                        pluginManager.getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restart());
                     }
 
                     verifyDataSource();
@@ -923,7 +923,7 @@ public class XMPPServer {
                 // Otherwise, this page won't render properly!
                 try {
                     Thread.sleep(1000);
-                    ((AdminConsolePlugin) pluginManager.getPlugin("admin")).restart();
+                    pluginManager.getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restart());
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

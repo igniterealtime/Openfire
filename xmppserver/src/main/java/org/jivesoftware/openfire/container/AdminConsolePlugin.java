@@ -67,7 +67,7 @@ public class AdminConsolePlugin implements Plugin {
         .setKey("adminConsole.forwarded.enabled")
         .setDynamic(false)
         .setDefaultValue(false)
-        .addListener(enabled -> ((AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin")).restartNeeded = true)
+        .addListener(enabled -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
         .build();
 
     /**
@@ -77,7 +77,7 @@ public class AdminConsolePlugin implements Plugin {
         .setKey("adminConsole.forwarded.for.header")
         .setDynamic(false)
         .setDefaultValue(HttpHeader.X_FORWARDED_FOR.toString())
-        .addListener(enabled -> ((AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin")).restartNeeded = true)
+        .addListener(enabled -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
         .build();
 
     /**
@@ -87,7 +87,7 @@ public class AdminConsolePlugin implements Plugin {
         .setKey("adminConsole.forwarded.server.header")
         .setDynamic(false)
         .setDefaultValue(HttpHeader.X_FORWARDED_SERVER.toString())
-        .addListener(enabled -> ((AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin")).restartNeeded = true)
+        .addListener(enabled -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
         .build();
 
     /**
@@ -97,7 +97,7 @@ public class AdminConsolePlugin implements Plugin {
         .setKey("adminConsole.forwarded.host.header")
         .setDynamic(false)
         .setDefaultValue(HttpHeader.X_FORWARDED_HOST.toString())
-        .addListener(enabled -> ((AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin")).restartNeeded = true)
+        .addListener(enabled -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
         .build();
 
     /**
@@ -107,7 +107,7 @@ public class AdminConsolePlugin implements Plugin {
         .setKey("adminConsole.forwarded.host.name")
         .setDynamic(false)
         .setDefaultValue(null)
-        .addListener(enabled -> ((AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin")).restartNeeded = true)
+        .addListener(enabled -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
         .build();
 
     /**
@@ -466,7 +466,8 @@ public class AdminConsolePlugin implements Plugin {
      * process. The following pseudo code demonstrates how to do this:
      *
      * <pre>
-     *   ContextHandlerCollection contexts = ((AdminConsolePlugin)pluginManager.getPlugin("admin")).getContexts();
+     *   AdminConsolePlugin plugin = ((AdminConsolePlugin) pluginManager.getPluginByCanonicalName("admin").orElseThrow())
+     *   ContextHandlerCollection contexts = plugin.getContexts();
      *   context = new WebAppContext(SOME_DIRECTORY, "/CONTEXT_NAME");
      *   contexts.addHandler(context);
      *   context.setWelcomeFiles(new String[]{"index.jsp"});

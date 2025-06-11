@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -563,10 +563,8 @@ public class LocaleUtils {
         // Retrieve classloader from pluginName.
         final XMPPServer xmppServer = XMPPServer.getInstance();
         PluginManager pluginManager = xmppServer.getPluginManager();
-        Plugin plugin = pluginManager.getPlugin(pluginName);
-        if (plugin == null) {
-            throw new NullPointerException("Plugin could not be located: " + pluginName);
-        }
+        Plugin plugin = pluginManager.getPluginByCanonicalName(pluginName)
+            .orElseThrow(() -> new NullPointerException("Plugin could not be located: " + pluginName) );
 
         ClassLoader pluginClassLoader = pluginManager.getPluginClassloader(plugin);
         try {
@@ -600,11 +598,8 @@ public class LocaleUtils {
         // Retrieve classloader from pluginName.
         final XMPPServer xmppServer = XMPPServer.getInstance();
         PluginManager pluginManager = xmppServer.getPluginManager();
-        Plugin plugin = pluginManager.getPlugin(pluginName);
-        if (plugin == null) {
-            throw new NullPointerException("Plugin could not be located.");
-        }
-
+        Plugin plugin = pluginManager.getPluginByCanonicalName(pluginName)
+            .orElseThrow(() -> new NullPointerException("Plugin could not be located: " + pluginName) );
         ClassLoader pluginClassLoader = pluginManager.getPluginClassloader(plugin);
         return ResourceBundle.getBundle(i18nFile, locale, pluginClassLoader);
     }

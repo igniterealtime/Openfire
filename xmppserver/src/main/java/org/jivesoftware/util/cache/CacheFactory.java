@@ -859,13 +859,10 @@ public class CacheFactory {
 
     private static ClassLoader getClusteredCacheStrategyClassLoader() {
         PluginManager pluginManager = XMPPServer.getInstance().getPluginManager();
-        Plugin plugin = pluginManager.getPlugin("hazelcast");
-        if (plugin == null) {
-            plugin = pluginManager.getPlugin("clustering");
-            if (plugin == null) {
-                plugin = pluginManager.getPlugin("enterprise");
-            }
-        }
+        Plugin plugin = pluginManager.getPluginByCanonicalName("hazelcast")
+            .or(() -> pluginManager.getPluginByCanonicalName("clustering"))
+            .or(() -> pluginManager.getPluginByCanonicalName("enterprise"))
+            .orElse(null);
         PluginClassLoader pluginLoader = pluginManager.getPluginClassloader(plugin);
         if (pluginLoader != null) {
             if (log.isDebugEnabled()) {

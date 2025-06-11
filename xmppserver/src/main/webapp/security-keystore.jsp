@@ -105,7 +105,8 @@
                     // When updating certificates through the admin console, do not cause changes to restart the website, as
                     // that is very likely to log out the administrator that is performing the changes. As the keystore change
                     // event is async, this line disables restarting the plugin for a few minutes.
-                    ((AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin")).pauseAutoRestartEnabled(Duration.ofMinutes(5));
+                    XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin")
+                        .ifPresent(plugin -> ((AdminConsolePlugin) plugin).pauseAutoRestartEnabled(Duration.ofMinutes(5)));
 
                     identityStore.delete( alias );
 
@@ -130,7 +131,8 @@
             // When updating certificates through the admin console, do not cause changes to restart the website, as
             // that is very likely to log out the administrator that is performing the changes. As the keystore change
             // event is async, this line disables restarting the plugin for a few minutes.
-            ((AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin")).pauseAutoRestartEnabled(Duration.ofMinutes(5));
+            XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin")
+                .ifPresent(plugin -> ((AdminConsolePlugin) plugin).pauseAutoRestartEnabled(Duration.ofMinutes(5)));
 
             if (!identityStore.containsAllIdentityCertificate()) {
                 identityStore.addSelfSignedDomainCertificate();
@@ -157,7 +159,8 @@
                 // When updating certificates through the admin console, do not cause changes to restart the website, as
                 // that is very likely to log out the administrator that is performing the changes. As the keystore change
                 // event is async, this line disables restarting the plugin for a few minutes.
-                ((AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin")).pauseAutoRestartEnabled(Duration.ofMinutes(5));
+                XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin")
+                    .ifPresent(plugin -> ((AdminConsolePlugin) plugin).pauseAutoRestartEnabled(Duration.ofMinutes(5)));
 
                 identityStore.installCSRReply(alias, reply);
                 identityStore.persist();
@@ -172,7 +175,8 @@
         }
     }
 
-    final boolean restartNeeded = ( (AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin( "admin" ) ).isRestartNeeded();
+    final AdminConsolePlugin plugin = (AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").orElse(null);
+    final boolean restartNeeded = plugin != null && plugin.isRestartNeeded();
     pageContext.setAttribute( "restartNeeded", restartNeeded );
 
     boolean offerUpdateIssuer = false;

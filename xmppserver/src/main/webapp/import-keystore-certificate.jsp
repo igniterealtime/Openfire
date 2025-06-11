@@ -75,7 +75,8 @@
             try {
                 // When updating certificates through the admin console, do not immediately restart the website, as that
                 // is very likely to lock out the administrator that is performing the changes.
-                ((AdminConsolePlugin) XMPPServer.getInstance().getPluginManager().getPlugin("admin")).pauseAutoRestartEnabled(Duration.ofMinutes(5));
+                XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin")
+                    .ifPresent(plugin -> ((AdminConsolePlugin) plugin).pauseAutoRestartEnabled(Duration.ofMinutes(5)));
 
                 final IdentityStore identityStore = XMPPServer.getInstance().getCertificateStoreManager().getIdentityStore( connectionType );
 

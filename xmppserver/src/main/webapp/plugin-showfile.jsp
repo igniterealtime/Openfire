@@ -16,7 +16,6 @@
 
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
-<%@ page import="org.jivesoftware.openfire.container.Plugin" %>
 <%@ page import="org.jivesoftware.openfire.container.PluginManager" %>
 <%@ page import="java.nio.file.Path" %>
 <%@ page import="java.io.*" %>
@@ -33,8 +32,7 @@
         final PluginManager pluginManager = webManager.getXMPPServer().getPluginManager();
 
         final String pluginName = ParamUtils.getParameter(request, "plugin" );
-        final Plugin plugin = pluginManager.getPlugin( pluginName );
-        if ( plugin != null )
+        pluginManager.getPluginByCanonicalName( pluginName ).ifPresent(plugin ->
         {
             final Path filePath;
             final Path pluginPath = pluginManager.getPluginPath( plugin );
@@ -62,6 +60,6 @@
                     ioe.printStackTrace();
                 }
             }
-        }
+        });
     }
 %>

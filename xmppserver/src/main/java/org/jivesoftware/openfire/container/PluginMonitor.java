@@ -16,7 +16,6 @@
 
 package org.jivesoftware.openfire.container;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -334,7 +333,7 @@ public class PluginMonitor implements PropertyEventListener
 
                         // Before running any plugin, make sure that the admin plugin is loaded. It is a dependency
                         // of all plugins that attempt to modify the admin panel.
-                        if ( pluginManager.getPlugin( "admin" ) == null )
+                        if ( !pluginManager.isLoaded( "admin"))
                         {
                             pluginManager.loadPlugin( "admin", dirs.getFirst().get( 0 ) );
                         }
@@ -350,9 +349,9 @@ public class PluginMonitor implements PropertyEventListener
                                     int loaded = 0;
                                     for (final Path path : hierarchy) {
                                         // If the plugin hasn't already been started, start it.
-                                        final String canonicalName = PluginMetadataHelper.getCanonicalName(path);
-                                        if (pluginManager.getPlugin(canonicalName) == null) {
-                                            if (pluginManager.loadPlugin(canonicalName, path)) {
+                                        final String name = PluginMetadataHelper.getName(path);
+                                        if (pluginManager.getPluginByName(name).isEmpty()) {
+                                            if (pluginManager.loadPlugin(PluginMetadataHelper.getCanonicalName(path), path)) {
                                                 loaded++;
                                             }
                                         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,7 +51,7 @@ public class IsPluginInstalledTask implements ClusterTask<Boolean> {
 
     @Override
     public void run() {
-        installed = XMPPServer.getInstance().getPluginManager().getPlugin(pluginName) != null;
+        installed = XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName(pluginName).isPresent();
     }
 
     @Override

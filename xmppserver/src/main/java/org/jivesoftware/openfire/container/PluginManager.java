@@ -381,15 +381,15 @@ public class PluginManager
      * Returns a loaded plugin by its canonical name or {@code null} if a plugin with that name does not exist. The
      * canonical name is the lowercase-name of the plugin archive, without the file extension. For example: "broadcast".
      *
-     * @deprecated in Openfire 4.4 in favour of {@link #getPluginByName(String)}
+     * Note that the canonical name of the plugin is sensitive to filenames outside of the plugin's author direct
+     * control. Prefer using {@link #getPluginByName(String)}.
+     *
      * @param canonicalName the name of the plugin.
      * @return the plugin.
      */
-    // TODO: (2019-03-26) Remove with Openfire 5.0
-    @Deprecated(since = "4.4", forRemoval = true)
-    public synchronized Plugin getPlugin( String canonicalName )
+    public synchronized Optional<Plugin> getPluginByCanonicalName( String canonicalName )
     {
-        return pluginsLoaded.get( canonicalName.toLowerCase() );
+        return Optional.ofNullable(pluginsLoaded.get( canonicalName.toLowerCase() ));
     }
 
     /**
@@ -774,7 +774,7 @@ public class PluginManager
     {
         Log.debug( "Reloading plugin '{}'...", pluginName );
 
-        final Plugin plugin = getPlugin( pluginName );
+        final Plugin plugin = pluginsLoaded.get( pluginName.toLowerCase() );
         if ( plugin == null )
         {
             Log.warn( "Unable to reload plugin '{}'. No such plugin loaded.", pluginName );

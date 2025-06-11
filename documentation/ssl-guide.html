@@ -45,6 +45,7 @@
         <nav>
             <ul>
                 <li><a href="#background">Background</a></li>
+                <li><a href="#domains">What Domains Need To Be On the Certificate?</a></li>
                 <li><a href="#tools">Oracle Java Development Kit security tools</a></li>
                 <li><a href="#revocation">Certificate Revocation Configuration</a></li>
                 <li><a href="#misc">Other options</a></li>
@@ -107,6 +108,69 @@
             servers they've never interacted with before. Certificate signing is similar
             to a public notary (with equivalent amounts of verification of identity,
             record keeping, and costs).
+        </p>
+    </section>
+
+    <section id="domains">
+
+        <h2>What Domains Need To Be On the Certificate?</h2>
+        <p>
+            Openfire uses two kinds of 'domain names':
+        </p>
+        <ul>
+            <li>
+                The domain names used in (TCP) networking. Openfire uses the term Fully Qualified Domain Name for this
+                value. This mostly is the hostname of the server that is running Openfire, which is a value that is used
+                in DNS records. This is also typically an address used by HTTP clients (e.g. to access the admin
+                console, but also the websocket endpoint).
+            </li>
+            <li>
+                The XMPP domain name of Openfire. This is the value that identifies your domain. It's the part that
+                "comes after the @" in a JID: <code>userA@mychatservice.im</code>. It also is used for identifying
+                services on the XMPP domain, which take the form of subdomains of the XMPP domain (e.g.
+                <code>conference.mychatservice.im</code>).
+            </li>
+        </ul>
+        <p>
+            The FQDN and XMPP domain name can be configured to be different values (e.g. a server with hostname
+            <code>xmpp-openfire-1.myhosting.net</code> can be used to host an XMPP domain name
+            <code>mychatservice.im</code>). When FQDN and XMPP domain names are different, they are mapped to each other
+            through DNS SRV records. This is documented in the
+            <a href="network-configuration-guide.html#dns">Openfire: Network Configuration Guide</a>.
+        </p>
+        <p>
+            A TLS certificate that is used in Openfire needs to be valid for quite a wide range of names:
+        </p>
+        <ul>
+            <li>
+                The FQDN of the server used by Openfire (otherwise, browsers will raise security alerts when connecting
+                to the admin console, the websocket endpoint, etc.)
+            </li>
+            <li>
+                The XMPP domain name served by Openfire (otherwise, non-webbased XMPP clients will typically raise
+                security alerts when connecting, as does server federation, among others).
+            </li>
+            <li>
+                Various 'subdomains' of the XMPP domain name (this is a dynamic list, depending on the services that are
+                configured in openfire, but typically includes <code>conference.mychatserver.im</code>,
+                <code>pubsub.mychatserver.im</code> and <code>search.mychatserver.org</code>. These are typically needed
+                only when server federation needs to expose those services.
+            </li>
+        </ul>
+        <p>
+            As you can see, things get convoluted easily. A pragmatic approach to naming things typically is:
+        </p>
+        <ul>
+            <li>
+                Use the same 'root' domain name for both the FQDN as the XMPP domain name (e.g. <code>example.org</code>).
+            </li>
+            <li>
+                Use a wildcard certificate that is valid for <code>example.org</code> and <code>*.example.org</code> both.
+            </li>
+        </ul>
+        <p>
+            If that's not possible, then the certificate needs to be configured for all the domain names, typically
+            using a number of Subject Alternate Name entries in the certificate.
         </p>
     </section>
 

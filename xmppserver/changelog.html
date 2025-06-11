@@ -160,6 +160,180 @@ hr {
     
     <div id="pageBody">
 
+<h2>5.0.0 Beta -- <span style="font-weight: normal;">June 11, 2025</span></h2>
+<h2>Improvement</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2132">OF-2132</a>] - Use CRL as provided by CA</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2134">OF-2134</a>] - Restore and improve Certificate Revocation support</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2280">OF-2280</a>] - Guard against S2S connection inconsistency in cluster</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2453">OF-2453</a>] - Disable Connection Manager ports by default</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2785">OF-2785</a>] - Add IPv6 support when evaluating Client Session IP addresses</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2786">OF-2786</a>] - IPv6/IPv4 fallback</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2787">OF-2787</a>] - Add IPv6-specific documentation</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2811">OF-2811</a>] - Do not block Netty EventLoop threads</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2821">OF-2821</a>] - Allow session-summary to display resource string</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2859">OF-2859</a>] - Rename MUCRole</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2862">OF-2862</a>] - Refactor 'role' and 'affiliation' related privileges</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2871">OF-2871</a>] - Allow optional password for alternate venue when destroying room</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2876">OF-2876</a>] - Rise minimal required JRE to 17</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2877">OF-2877</a>] - Reproducible builds</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2889">OF-2889</a>] - i18n properties: don't convert from UTF-8 to Latin1</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2892">OF-2892</a>] - Available Plugins page: redesign to make Documentation easier to see</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2902">OF-2902</a>] - Update commons-fileupload for transitive CVE</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2903">OF-2903</a>] - Upgrade Sitemesh</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2914">OF-2914</a>] - Reduce verbosity of TLS issues</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2919">OF-2919</a>] - Don't let XMPP-decoder decode TLS's End-of-Transmission</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2924">OF-2924</a>] - Reduce duplicate code in Multi-providers</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2926">OF-2926</a>] - Add documented configuration options for LdapAuthProvider's cache</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2927">OF-2927</a>] - Allow LDAP alternateBaseDN to be configured in admin console</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2928">OF-2928</a>] - Improve parallel execution of multi-providers</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2939">OF-2939</a>] - Show plugin warning on index page</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2940">OF-2940</a>] - Run all plugin database update scripts</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2942">OF-2942</a>] - S2S outbound can give up faster when encryption and/or auth mechanisms are exhausted</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2945">OF-2945</a>] - Suppress warning during JSPC precompilation</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2950">OF-2950</a>] - RemoteSessionLocator should ignore local node</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2951">OF-2951</a>] - Faster log-in \(with federated contacts\)</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2955">OF-2955</a>] - Update PostgreSQL JDBC driver to 42.7.7</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2958">OF-2958</a>] - Bump up timeout for MUC non-responsiveness check</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2967">OF-2967</a>] - Remove newline before presence in ClientSession toString</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3027">OF-3027</a>] - Give parent eventloop threads a recognizable name</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3028">OF-3028</a>] - Netty threads from 'child' eventloop should use Netty-default settings</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3030">OF-3030</a>] - "Setting locale to X" isn't a warning</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3033">OF-3033</a>] - Modify Stream Management to account for short-lived background apps</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3034">OF-3034</a>] - Stream Management optional close shouldn't log error</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3035">OF-3035</a>] - Failure to get address from detached session over cluster shouldn't log an error</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3036">OF-3036</a>] - Improve log messages when unable to connect to a remote host that is unreachable</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3038">OF-3038</a>] - Reduce verbosity of Socket Connection reset log messages \(c2s only\)</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3048">OF-3048</a>] - Load time of session-summary admin page in a cluster</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3052">OF-3052</a>] - Consistently use pagination for ad-hoc commands</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3055">OF-3055</a>] - When removing XML elements, don't expect there to be only one.</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3056">OF-3056</a>] - Reduce reliance on RoutingTable when processing directed presence</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3059">OF-3059</a>] - Deprecate concept of 'anonymous route'</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3061">OF-3061</a>] - Improve DB query to get last pubsub items</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3062">OF-3062</a>] - Ignore unexpected 'subscription' values in Roster Set</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3063">OF-3063</a>] - CAPS calculation debug info</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3065">OF-3065</a>] - Allow Connection Manager DirectTLS endpoint configuration</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3067">OF-3067</a>] - Bump up xmpp.server.outgoing.max.threads</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3068">OF-3068</a>] - SocketUtil should give up sooner</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3071">OF-3071</a>] - Replace Pull Parser \(XPP3\) library for compat with Java 11</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3078">OF-3078</a>] - JDBCAuthProvider: Default bcrypt log rounds 10</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3079">OF-3079</a>] - Backwards compat plugins</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3083">OF-3083</a>] - SerializingCache should dereference classes when unused</li>
+</ul>
+
+<h2>Task</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2717">OF-2717</a>] - Migrate to Jetty 12</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2722">OF-2722</a>] - Phase out commons-fileupload</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2729">OF-2729</a>] - Setup IPv6 tests</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2754">OF-2754</a>] - Deprecate FastDateFormat</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2793">OF-2793</a>] - Include Oracle Database Driver in distribution</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2905">OF-2905</a>] - Update Maven Wrapper to 3.3.2</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2943">OF-2943</a>] - Update database used by unit tests</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2956">OF-2956</a>] - Drop unused database table ofSASLAuthorized</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2961">OF-2961</a>] - Update Netty to 4.1.118</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3051">OF-3051</a>] - Update to Tinder 2.1.0</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3082">OF-3082</a>] - Allow SerializingCache to use 'raw' types</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3084">OF-3084</a>] - Remove code that is deprecated and scheduled for removal in 5.0.0</li>
+</ul>
+
+<h2>New Feature</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2607">OF-2607</a>] - Implement XEP-0421: Anonymous unique occupant identifiers for MUCs</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2760">OF-2760</a>] - Add option to tombstone/retire a MUC upon deletion, preventing the name from use in the future</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2885">OF-2885</a>] - TaskEngine jobs to support Future</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2916">OF-2916</a>] - Add option to delete history on room deletion</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2917">OF-2917</a>] - Add option to preserve room history on room deletion</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2918">OF-2918</a>] - Add option to clear history for a given MUC</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2923">OF-2923</a>] - Use more than one AD/LDAP server</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2925">OF-2925</a>] - Have multi-providers for groups</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2952">OF-2952</a>] - Alert admins that certificate is about to expire</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3053">OF-3053</a>] - Add support for XEP-0433: Extended Channel Search</li>
+</ul>
+
+<h2>Sub-task</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2861">OF-2861</a>] - Rename MUCRole, breaking changes</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2973">OF-2973</a>] - Remove empty &lt;script$gt; element in main.jsp decorator</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2974">OF-2974</a>] - Remove inline &lt;script$gt; elements in connection management pages</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2975">OF-2975</a>] - Remove empty &lt;script$gt; element in setup-datasource-jndi.jsp</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2982">OF-2982</a>] - Replace inline &lt;script$gt; element in setup-host-settings.jsp</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3011">OF-3011</a>] - Replace inline &lt;script$gt; element in user-roster-add.jsp</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3012">OF-3012</a>] - Replace inline &lt;script$gt; element in user-search.jsp</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3085">OF-3085</a>] - Deprecate custom Base64 implementation</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3086">OF-3086</a>] - Remove deprecated date/time API usage</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3087">OF-3087</a>] - Remove deprecated PluginManager#getPlugin</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3088">OF-3088</a>] - Refactor Cache Locking implementation</li>
+</ul>
+
+<h2>Bug</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2397">OF-2397</a>] - Subscription change requests for shared contacts are partially processed</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2437">OF-2437</a>] - Primary Key constraint violations when flushing pubsub nodes</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2526">OF-2526</a>] - Support systemd for Debian</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2631">OF-2631</a>] - Access model of leaf nodes is ignored</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2784">OF-2784</a>] - IPv6 addresses should be usable in Registration&amp;Login settings</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2865">OF-2865</a>] - A moderator SHOULD NOT be allowed to revoke moderation privileges from someone with a higher affiliation than themselves</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2883">OF-2883</a>] - Base64 decoding issue preventing startup (after upgrade to 4.9.0)</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2904">OF-2904</a>] - Invalid OtherName parsing of TLS certificates</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2911">OF-2911</a>] - NPE: Cannot invoke "java.lang.StringBuilder.length\(\)" because "this.buffer" is null</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2912">OF-2912</a>] - Admin Console reports DNS Issue while dns-check.jsp reporting no issue</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2915">OF-2915</a>] - Database statistics don't observe end-time</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2930">OF-2930</a>] - Vulnerability discovered in netty-common- 4.1.108.Final.jar CVE-2024-47535</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2935">OF-2935</a>] - Unable to set the 'Retire room names on deletion..' check box in a clustered environment</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2938">OF-2938</a>] - Missing warnings for incompatible plugins</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2941">OF-2941</a>] - Incorrect detection of plugin update with SNAPSHOTs</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2948">OF-2948</a>] - Openfire 5.0.0 Alpha RPM workflow failed to generate a proper artifact</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2959">OF-2959</a>] - Plugin download in audit log</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2960">OF-2960</a>] - RPM build fails in new OJDBC driver</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2966">OF-2966</a>] - Race condition in BOSH logout leads to inconsistent state</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3026">OF-3026</a>] - Race condition in RoutingTable lead to inconsistent state</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3029">OF-3029</a>] - False postivie for "Client route not found for route {}, while user session still existed"</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3031">OF-3031</a>] - Detached clients generate errors in log when inspected (clustering)</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3040">OF-3040</a>] - Base64 decoding issue when resizing avatars</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3041">OF-3041</a>] - LocalOutgoingServer's canProcess error handling introduces deadlock</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3043">OF-3043</a>] - Get Idle Users command is implemented but not returned in Disco</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3044">OF-3044</a>] - Cache inconsistency: `routeOwnersByClusterNode` out of sync</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3046">OF-3046</a>] - MultiUserProvider should only use supported fields</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3047">OF-3047</a>] - LDAP Authentication Password 'authpassword' value</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3049">OF-3049</a>] - Session overview page error in cluster</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3050">OF-3050</a>] - Client session sorting on last activity issue</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3054">OF-3054</a>] - HybridUserProvider throws IndexOutOfBoundsException</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3064">OF-3064</a>] - Roster versioning doesn't generate usable identifiers</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3069">OF-3069</a>] - Not all elements in sessionInfosByClusterNode exist in Client Session Info Cache.</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3072">OF-3072</a>] - Incorrect presence probe processing</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3076">OF-3076</a>] - Launcher XML config parser XXE</li>
+</ul>
+
+<h2>4.9.2 -- <span style="font-weight: normal;">November 11, 2024</span></h2>
+<h2>Bug</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2900">OF-2900</a>] - LocalIncomingServerSessionTest.incomingTest failures on Rocky Linux 9 / openjdk 11</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2901">OF-2901</a>] - Reduce noisy logging of insecure LDAP</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2906">OF-2906</a>] - Cannot proceed with setup error</li>
+</ul>
+
+<h2>4.9.1 -- <span style="font-weight: normal;">November 1, 2024</span></h2>
+<h2>Improvement</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2880">OF-2880</a>] - Disable directory listing of admin console</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2893">OF-2893</a>] - Make it clearer when a plugin exposes HTTP wildcard routes</li>
+</ul>
+
+<h2>Bug</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2868">OF-2868</a>] - NullPointerException while configuration encryption algorithms</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2873">OF-2873</a>] - Improvements to debian build</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2874">OF-2874</a>] - RPM build script fails when date locale non-english</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2884">OF-2884</a>] - Making a group member a group admin removes the user from the group</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2890">OF-2890</a>] - CSRF bug prevents AD admin test</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2891">OF-2891</a>] - Misaligned button in directory service admin setup</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2896">OF-2896</a>] - Memory Leak PreAuthSessions</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2897">OF-2897</a>] - No-such-user detection misses anonymous users</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2898">OF-2898</a>] - Session Destroyed event no longer published</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2899">OF-2899</a>] - Handle null SASL mechanisms</li>
+</ul>
+
 <h2>4.9.0 -- <span style="font-weight: normal;">September 17, 2024</span></h2>
 <h2>Improvement</h2>
 <ul>

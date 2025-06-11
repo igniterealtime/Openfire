@@ -23,8 +23,8 @@ COPY .mvn/wrapper .mvn/wrapper
 COPY --from=poms /usr/src/ .
 # I don't know why we need all three either.
 RUN ./mvnw -e -B dependency:resolve-plugins -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo
-RUN ./mvnw -e -B dependency:go-offline -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo
 RUN ./mvnw -e -B de.qaware.maven:go-offline-maven-plugin:resolve-dependencies -Dmaven.repo.local=/tmp/m2_repo
+RUN ./mvnw -e -B dependency:get -DgroupId=org.codehaus.plexus -DartifactId=plexus-utils -Dpackaging=jar -Dversion=1.1 -Dmaven.repo.local=/tmp/m2_repo
 
 # Above here is only affected by the pom.xml files, so the cache is stable.
 

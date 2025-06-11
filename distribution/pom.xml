@@ -5,7 +5,7 @@
     <parent>
         <artifactId>parent</artifactId>
         <groupId>org.igniterealtime.openfire</groupId>
-        <version>5.0.0-SNAPSHOT</version>
+        <version>5.0.0-beta</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -47,7 +47,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.1.1</version>
+                <version>3.8.1</version>
                 <executions>
                     <execution>
                         <id>copy</id>
@@ -81,9 +81,9 @@
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.sonatype.install4j</groupId>
-                        <artifactId>install4j-maven-plugin</artifactId>
-                        <version>1.1.2</version>
+                        <groupId>com.install4j</groupId>
+                        <artifactId>install4j-maven</artifactId>
+                        <version>11.0.4</version>
 
                         <executions>
                             <execution>
@@ -106,13 +106,6 @@
             </build>
         </profile>
     </profiles>
-
-    <repositories>
-        <repository>
-            <id>ej-technologies</id>
-            <url>https://maven.ej-technologies.com/repository/</url>
-        </repository>
-    </repositories>
 
     <dependencies>
         <dependency>

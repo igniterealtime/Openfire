@@ -58,7 +58,7 @@
         <dependency>
             <groupId>com.install4j</groupId>
             <artifactId>install4j-runtime</artifactId>
-            <version>10.0.3</version>
+            <version>11.0.4</version>
             <scope>provided</scope>
         </dependency>
 
@@ -69,12 +69,5 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <repositories>
-        <repository>
-            <id>ej-technologies</id>
-            <url>https://maven.ej-technologies.com/repository/</url>
-        </repository>
-    </repositories>
 
 </project>

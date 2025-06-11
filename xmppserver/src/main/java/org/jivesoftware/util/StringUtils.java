@@ -391,46 +391,6 @@ public final class StringUtils {
     }
 
     /**
-     * Encodes a String as a base64 String.
-     *
-     * @param data a String to encode.
-     * @return a base64 encoded String.
-     * @deprecated Use java.util.Base64 instead.
-     */
-    @Deprecated(forRemoval = true, since = "4.9.0") // Remove in or after Openfire 5.0.0
-    public static String encodeBase64(String data) {
-        return java.util.Base64.getEncoder().encodeToString(data.getBytes(StandardCharsets.UTF_8));
-    }
-
-    /**
-     * Encodes a byte array into a base64 String.
-     *
-     * @param data a byte array to encode.
-     * @return a base64 encode String.
-     * @deprecated Use java.util.Base64 instead.
-     */
-    @Deprecated(forRemoval = true, since = "4.9.0") // Remove in or after Openfire 5.0.0
-    public static String encodeBase64(byte[] data) {
-        // Encode the String. We pass in a flag to specify that line
-        // breaks not be added. This is consistent with our previous base64
-        // implementation. Section 2.1 of 3548 (base64 spec) also specifies
-        // no line breaks by default.
-        return java.util.Base64.getEncoder().encodeToString(data);
-    }
-
-    /**
-     * Decodes a base64 String.
-     *
-     * @param data a base64 encoded String to decode.
-     * @return the decoded String.
-     * @deprecated Use java.util.Base64 instead.
-     */
-    @Deprecated(forRemoval = true, since = "4.9.0") // Remove in or after Openfire 5.0.0
-    public static byte[] decodeBase64(String data) {
-        return java.util.Base64.getDecoder().decode(data);
-    }
-
-    /**
      * Encodes a String as a base32 String using the base32hex profile.
      *
      * @param data a String to encode.

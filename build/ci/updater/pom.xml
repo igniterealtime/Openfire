@@ -123,11 +123,4 @@
     </dependency>
   </dependencies>
 
-  <repositories>
-    <repository>
-      <id>ej-technologies</id>
-      <url>https://maven.ej-technologies.com/repository</url>
-    </repository>
-  </repositories>
-
 </project>

@@ -30,7 +30,7 @@ RUN ./mvnw -e -B de.qaware.maven:go-offline-maven-plugin:resolve-dependencies -D
 
 # Now, copy in all the source, and actually build it, skipping the tests.
 COPY . .
-RUN ./mvnw -o -e -B package -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo
+RUN ./mvnw -o -e -B install -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo
 # In case of Windows, break glass.
 RUN sed -i 's/\r//g' /usr/src/distribution/target/distribution-base/bin/openfire.sh
 

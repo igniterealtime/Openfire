@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LinkedListNode;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.cache.lock.LocalLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,6 +28,7 @@ import java.io.Serializable;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 /**
@@ -64,7 +66,6 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
     private static final Logger Log = LoggerFactory.getLogger(DefaultCache.class);
     // Contains the set of times when the Cache was last culled
     private final Set<Long> cullTimes;
-
 
     /**
      * The map the keys and values are stored in.
@@ -336,6 +337,12 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
         synchronized (this) {
             return new HashSet<>(map.keySet());
         }
+    }
+
+    @Override
+    @Nonnull
+    public Lock getLock(K key) {
+        return LocalLock.getLock(key, this);
     }
 
     /**

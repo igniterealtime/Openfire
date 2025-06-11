@@ -256,10 +256,8 @@ public interface Cache<K extends Serializable, V extends Serializable> extends j
      * @param key the object that defines the visibility or scope of the lock.
      * @return an existing lock on the specified key or creates a new one if none was found.
      */
-    @SuppressWarnings("deprecation")
-    default Lock getLock(final K key) {
-        return CacheFactory.getLock(key, this);
-    }
+    @Nonnull
+    Lock getLock(final K key);
 
     AtomicBoolean secretKey = new AtomicBoolean(false);
     AtomicBoolean secretValue = new AtomicBoolean(false);

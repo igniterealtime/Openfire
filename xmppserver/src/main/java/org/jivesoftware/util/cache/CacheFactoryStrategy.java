@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.locks.Lock;
 
 /**
  * Implementation of CacheFactory that relies on the specific clustering solution.
@@ -177,18 +176,6 @@ public interface CacheFactoryStrategy {
      */
     void updateCacheStats(Map<String, Cache> caches);
 
-    /**
-     * Returns an existing lock on the specified key or creates a new one if none was found. This
-     * operation is thread safe. The supplied cache may or may not be used depending whether
-     * the server is running on cluster mode or not. When not running as part of a cluster then
-     * the lock will be unrelated to the cache and will only be visible in this JVM.
-     *
-     * @param key the object that defines the visibility or scope of the lock.
-     * @param cache the cache used for holding the lock.
-     * @return an existing lock on the specified key or creates a new one if none was found.
-     */
-    Lock getLock(Object key, Cache cache);
-    
     /**
      * Get the plugin name corresponding to this clustering implementation
      * 

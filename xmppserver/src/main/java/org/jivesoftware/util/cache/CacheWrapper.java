@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.Lock;
 
 /**
  * Acts as a proxy for a Cache implementation. The Cache implementation can be switched on the fly,
@@ -148,6 +149,12 @@ public class CacheWrapper<K extends Serializable, V extends Serializable> implem
     @Override
     public Set<K> keySet() {
         return Collections.unmodifiableSet(cache.keySet());
+    }
+
+    @Nonnull
+    @Override
+    public Lock getLock(K key) {
+        return cache.getLock(key);
     }
 
     @Override

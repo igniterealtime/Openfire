@@ -16,21 +16,12 @@
 
 package org.jivesoftware.util.cache;
 
-import com.google.common.collect.Interner;
-import com.google.common.collect.Interners;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 
-import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * CacheFactoryStrategy for use in Openfire. It creates and manages local caches, and it's cluster
@@ -40,13 +31,6 @@ import java.util.concurrent.locks.ReentrantLock;
  * @see CacheFactory
  */
 public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
-
-    /**
-     * Keep track of the locks that are currently being used.
-     */
-    private Map<CacheKey, LockAndCount> locks = new ConcurrentHashMap<>();
-
-    private Interner<CacheKey> interner = Interners.newWeakInterner();
 
     public DefaultLocalCacheStrategy() {
     }
@@ -133,139 +117,8 @@ public class DefaultLocalCacheStrategy implements CacheFactoryStrategy {
     }
 
     @Override
-    public Lock getLock(Object key, Cache cache) {
-        return new LocalLock(new CacheKey(cache, key));
-    }
-
-    @SuppressWarnings( "LockAcquiredButNotSafelyReleased" )
-    private void acquireLock(CacheKey key) {
-        ReentrantLock lock = lookupLockForAcquire(key);
-        lock.lock();
-    }
-
-    private void releaseLock(CacheKey key) {
-        ReentrantLock lock = lookupLockForRelease(key);
-        lock.unlock();
-    }
-
-    private ReentrantLock lookupLockForAcquire(CacheKey cacheKey) {
-        CacheKey mutex = interner.intern(cacheKey); // Ensure that the mutex used in the next line is the same for objects that are equal.
-        synchronized(mutex) {
-            LockAndCount lac = locks.get(mutex);
-            if (lac == null) {
-                lac = new LockAndCount(new ReentrantLock());
-                lac.count = 1;
-                locks.put(mutex, lac);
-            }
-            else {
-                lac.count++;
-            }
-
-            return lac.lock;
-        }
-    }
-
-    private ReentrantLock lookupLockForRelease(CacheKey cacheKey) {
-        CacheKey mutex = interner.intern(cacheKey); // Ensure that the mutex used in the next line is the same for objects that are equal.
-        synchronized(mutex) {
-            LockAndCount lac = locks.get(mutex);
-            if (lac == null) {
-                throw new IllegalStateException("No lock found for object " + mutex);
-            }
-
-            if (lac.count <= 1) {
-                locks.remove(mutex);
-            }
-            else {
-                lac.count--;
-            }
-
-            return lac.lock;
-        }
-    }
-
-
-    private class LocalLock implements Lock {
-        private final CacheKey key;
-
-        LocalLock(CacheKey key) {
-            this.key = key;
-        }
-
-        @Override
-        public void lock(){
-            acquireLock(key);
-        }
-
-        @Override
-        public void	unlock() {
-            releaseLock(key);
-        }
-
-        @Override
-        public void lockInterruptibly() throws InterruptedException {
-            ReentrantLock lock = lookupLockForAcquire(key);
-            lock.lockInterruptibly();
-        }
-
-        @Nonnull
-        @Override
-        public Condition newCondition(){
-            ReentrantLock lock = lookupLockForAcquire(key);
-            return lock.newCondition();
-        }
-
-        @Override
-        public boolean tryLock() {
-            ReentrantLock lock = lookupLockForAcquire(key);
-            return lock.tryLock();
-        }
-
-        @Override
-        public boolean tryLock(long time, @Nonnull TimeUnit unit) throws InterruptedException {
-            ReentrantLock lock = lookupLockForAcquire(key);
-            return lock.tryLock(time, unit);
-        }
-    }
-
-    private static class LockAndCount {
-        final ReentrantLock lock;
-        int count;
-
-        LockAndCount(ReentrantLock lock) {
-            this.lock = lock;
-        }
-    }
-
-    @Override
     public ClusterNodeInfo getClusterNodeInfo(byte[] nodeID) {
         // not clustered
         return null;
-    }
-
-    /**
-     * A key of a cache, namespaced by the cache that it belongs to.
-     */
-    private static class CacheKey {
-        final String cacheName;
-        final Object key;
-
-        private CacheKey(Cache cache, Object key) {
-            this.cacheName = cache.getName();
-            this.key = key;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            CacheKey cacheKey = (CacheKey) o;
-            return cacheName.equals(cacheKey.cacheName) && key.equals(cacheKey.key);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(cacheName, key);
-        }
     }
 }

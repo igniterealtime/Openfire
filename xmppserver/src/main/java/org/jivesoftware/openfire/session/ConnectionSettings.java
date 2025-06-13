@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,7 +149,7 @@ public final class ConnectionSettings {
          * and closed.
          */
         public static final SystemProperty<Duration> IDLE_TIMEOUT_PROPERTY = SystemProperty.Builder.ofType(Duration.class)
-            .setKey("xmpp.server.idle")
+            .setKey("xmpp.server.session.idle")
             .setDefaultValue(Duration.ofMinutes(30))
             .setMinValue(Duration.ofMillis(-1))
             .setChronoUnit(ChronoUnit.MILLIS)

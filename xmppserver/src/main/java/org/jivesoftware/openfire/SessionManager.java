@@ -1630,12 +1630,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      */
     public void setMultipleServerConnectionsAllowed(boolean allowed) {
         JiveGlobals.setProperty("xmpp.server.session.allowmultiple", Boolean.toString(allowed));
-        if (allowed && JiveGlobals.getIntProperty("xmpp.server.session.idle", 10 * 60 * 1000) <= 0)
+        if (allowed && (ConnectionSettings.Server.IDLE_TIMEOUT_PROPERTY.getValue().isNegative() || ConnectionSettings.Server.IDLE_TIMEOUT_PROPERTY.getValue().isZero()))
         {
             Log.warn("Allowing multiple S2S connections for each domain, without setting a " +
                     "maximum idle timeout for these connections, is unrecommended! Either " +
                     "set xmpp.server.session.allowmultiple to 'false' or change " +
-                    "xmpp.server.session.idle to a (large) positive value.");
+                    "{} to a (large) positive value.", ConnectionSettings.Server.IDLE_TIMEOUT_PROPERTY.getKey());
         }
     }
 
@@ -1669,19 +1669,19 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             return;
         }
         // Set the new property value
-        JiveGlobals.setProperty("xmpp.server.session.idle", Integer.toString(idleTime));
+        ConnectionSettings.Server.IDLE_TIMEOUT_PROPERTY.setValue(Duration.ofMillis(idleTime));
 
         if (idleTime <= 0 && isMultipleServerConnectionsAllowed() )
         {
             Log.warn("Allowing multiple S2S connections for each domain, without setting a " +
                 "maximum idle timeout for these connections, is unrecommended! Either " +
                 "set xmpp.server.session.allowmultiple to 'false' or change " +
-                "xmpp.server.session.idle to a (large) positive value.");
+                "{} to a (large) positive value.", ConnectionSettings.Server.IDLE_TIMEOUT_PROPERTY.getKey());
         }
     }
 
     public int getServerSessionIdleTime() {
-        return JiveGlobals.getIntProperty("xmpp.server.session.idle", 10 * 60 * 1000);
+        return (int) ConnectionSettings.Server.IDLE_TIMEOUT_PROPERTY.getValue().toMillis();
     }
 
     public void setSessionDetachTime(int idleTime) {

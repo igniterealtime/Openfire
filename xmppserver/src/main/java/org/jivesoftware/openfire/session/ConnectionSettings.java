@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.openfire.session;
 
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;
 
 import java.time.Duration;
@@ -150,7 +151,7 @@ public final class ConnectionSettings {
          */
         public static final SystemProperty<Duration> IDLE_TIMEOUT_PROPERTY = SystemProperty.Builder.ofType(Duration.class)
             .setKey("xmpp.server.session.idle")
-            .setDefaultValue(Duration.ofMinutes(30))
+            .setDefaultValue(Duration.ofMillis(JiveGlobals.getIntProperty("xmpp.server.idle", (int) Duration.ofMinutes(30).toMillis()))) // OF-3089: Use a fallback to a property name that was used by mistake in some versions of Openfire
             .setMinValue(Duration.ofMillis(-1))
             .setChronoUnit(ChronoUnit.MILLIS)
             .setDynamic(Boolean.TRUE)

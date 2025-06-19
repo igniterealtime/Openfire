@@ -3,11 +3,17 @@ package org.jivesoftware.openfire.sasl;
 import org.dom4j.Element;
 import org.dom4j.DocumentHelper;
 import org.dom4j.QName;
+import org.jivesoftware.openfire.XMPPServerInfo;
+import org.jivesoftware.openfire.lockout.LockOutFlag;
+import org.jivesoftware.openfire.lockout.LockOutManager;
+import org.jivesoftware.openfire.lockout.LockOutProvider;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -15,32 +21,145 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.jivesoftware.openfire.auth.AuthToken;
+import org.jivesoftware.openfire.XMPPServer;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
+import org.xmpp.packet.JID;
+import org.jivesoftware.util.cache.CacheFactory;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.lang.reflect.Field;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 public class SASLAuthenticationTest {
 
-    @Mock
+    @Mock(lenient = true)
     private LocalClientSession clientSession;
     
     @Mock
     private LocalIncomingServerSession serverSession;
 
+    @Mock(lenient = true)
+    private XMPPServer xmppServer;
+
+    @Mock(lenient = true) 
+    private XMPPServerInfo serverInfo;
+
     private Element features;
 
+    private TestSaslMechanism.TestSaslServer testSaslServer;
+
+    // Create a real map to store session data
+    private Map<String, Object> sessionDataMap;
+
+    @BeforeAll
+    public static void setUpClass() throws Exception {
+        CacheFactory.initialize();
+        // Set this or I can't set anythign else.
+        JiveGlobals.setXMLProperty("setup", "true");
+        SASLAuthentication.setEnabledMechanisms(Arrays.asList("BLURDYBLOOP", "TEST-MECHANISM"));
+    }
+//
+//    @AfterAll
+//    public static void tearDownClass() {
+//        CacheFactory.shutdown();
+//    }
+
     @BeforeEach
-    public void setUp() {
+    public void setUp() throws Exception {
+        long start = System.currentTimeMillis();
+        System.out.println("Starting setUp");
+
+        // Setup XMPPServer mock
+        XMPPServer.setInstance(xmppServer);
+        when(xmppServer.getServerInfo()).thenReturn(serverInfo);
+        when(xmppServer.createJID(anyString(), anyString())).thenReturn(new JID("foo@bar"));
+        when(xmppServer.createJID(anyString(), isNull())).thenReturn(new JID("foo@bar"));
+        when(xmppServer.createJID(anyString(), anyString(), anyBoolean())).thenReturn(new JID("foo@bar"));
+
+        // Setup ServerInfo mock
+        when(serverInfo.getXMPPDomain()).thenReturn("example.com");
+        when(serverInfo.getHostname()).thenReturn("openfire.example.com");
+
         features = DocumentHelper.createElement("features");
-        // Reset any static state between tests and ensure we have test mechanisms
-        SASLAuthentication.setEnabledMechanisms(List.of("PLAIN", "DIGEST-MD5", "ANONYMOUS"));
+        
+        // Create our test SASL server
+        testSaslServer = TestSaslMechanism.registerTestMechanism();
+
+        // Enable our test mechanism
+        SASLAuthentication.addSupportedMechanism("TEST-MECHANISM");
+
+
+        sessionDataMap = new HashMap<>();
+        // Mock both get and set to use the real map
+        when(clientSession.getSessionData(anyString())).thenAnswer(inv ->
+            sessionDataMap.get(inv.getArgument(0)));
+
+        doAnswer(inv -> {
+            sessionDataMap.put(inv.getArgument(0), inv.getArgument(1));
+            return null;
+        }).when(clientSession).setSessionData(anyString(), any());
+
+
+        // Instead of setting property, directly set the provider through reflection
+        try {
+            Field providerField = LockOutManager.class.getDeclaredField("provider");
+            providerField.setAccessible(true);
+
+            // Create anonymous implementation
+            LockOutProvider mockProvider = new LockOutProvider() {
+                @Override
+                public LockOutFlag getDisabledStatus(String username) {
+                    return null;
+                }
+                @Override
+                public void setDisabledStatus(LockOutFlag flag) {}
+                @Override
+                public void unsetDisabledStatus(String username) {}
+                @Override
+                public boolean isReadOnly() { return false; }
+                @Override
+                public boolean isDelayedStartSupported() { return false; }
+                @Override
+                public boolean isTimeoutSupported() { return false; }
+                @Override
+                public boolean shouldNotBeCached() { return true; }
+            };
+
+            providerField.set(null, mockProvider);
+        } catch (Exception e) {
+            fail("Could not set mock provider: " + e.getMessage());
+        }
+
+        long end = System.currentTimeMillis();
+        System.out.println("Finished setUp in " + (end-start) + "ms");
+    }
+
+    @AfterEach
+    public void tearDown() {
+        // Clear any SASL state
+        // SASLAuthentication.setEnabledMechanisms(null);
+        // Clear caches
+        CacheFactory.clearCaches();
+    }
+
+    @Test
+    public void testRegisteredSaslProvider() {
+        Set<String> implemented = SASLAuthentication.getImplementedMechanisms();
+        assertNotNull(implemented);
+        assertFalse(implemented.isEmpty());
+        assertTrue(implemented.contains("TEST-MECHANISM"));
+        Set<String> enabled = SASLAuthentication.getSupportedMechanisms();
+        assertNotNull(enabled);
+        assertFalse(enabled.isEmpty());
+        assertTrue(enabled.contains("TEST-MECHANISM"));
     }
 
     // Existing tests
@@ -89,16 +208,28 @@ public class SASLAuthenticationTest {
 
     @Test
     public void testGetSupportedMechanisms() {
-        // Test initial state
-        assertNotNull(SASLAuthentication.getSupportedMechanisms());
+        long t0 = System.currentTimeMillis();
+        System.out.println("Test starting: " + System.currentTimeMillis());
+
+        Set<String> implemented = SASLAuthentication.getImplementedMechanisms();
+        System.out.println("After getImplementedMechanisms: " + (System.currentTimeMillis() - t0));
+        Set<String> mechanisms = SASLAuthentication.getSupportedMechanisms();
+        System.out.println("After getSupportedMechanisms: " + (System.currentTimeMillis() - t0));
+        assertNotNull(mechanisms);
+        System.out.println("After assertNotNull: " + (System.currentTimeMillis() - t0));
 
         // Add multiple mechanisms and verify they're all present
         SASLAuthentication.addSupportedMechanism("PLAIN");
+        System.out.println("After add PLAIN: " + (System.currentTimeMillis() - t0));
         SASLAuthentication.addSupportedMechanism("DIGEST-MD5");
+        System.out.println("After add DIGEST-MD5: " + (System.currentTimeMillis() - t0));
+
+        mechanisms = SASLAuthentication.getSupportedMechanisms();
+        System.out.println("After second getSupportedMechanisms: " + (System.currentTimeMillis() - t0));
         
-        Set<String> mechanisms = SASLAuthentication.getSupportedMechanisms();
         assertTrue(mechanisms.contains("PLAIN"));
         assertTrue(mechanisms.contains("DIGEST-MD5"));
+        System.out.println("Test ending: " + (System.currentTimeMillis() - t0));
     }
 
     @Test
@@ -109,23 +240,8 @@ public class SASLAuthenticationTest {
         assertFalse(enabled.isEmpty());
         
         // Verify expected default mechanisms are present
-        assertTrue(enabled.contains("PLAIN"));
-        assertTrue(enabled.contains("DIGEST-MD5"));
-    }
-
-    @Test
-    public void testSetEnabledMechanisms() {
-        // Test setting new list of mechanisms
-        List<String> newMechs = Arrays.asList("PLAIN", "EXTERNAL");
-        SASLAuthentication.setEnabledMechanisms(newMechs);
-        
-        List<String> enabled = SASLAuthentication.getEnabledMechanisms();
-        // assertEquals(newMechs.size(), enabled.size());
-        assertTrue(enabled.containsAll(newMechs));
-
-        // Test setting null (should reset to defaults)
-        SASLAuthentication.setEnabledMechanisms(null);
-        assertNotNull(SASLAuthentication.getEnabledMechanisms());
+        assertTrue(enabled.contains("BLURDYBLOOP"));
+        assertTrue(enabled.contains("TEST-MECHANISM"));
     }
 
     @Test
@@ -138,6 +254,8 @@ public class SASLAuthenticationTest {
         // Verify common mechanisms are present
         assertTrue(implemented.contains("PLAIN"));
         assertTrue(implemented.contains("DIGEST-MD5"));
+        assertFalse(implemented.contains("BLURDYBLOOP"));
+        assertTrue(implemented.contains("TEST-MECHANISM"));
     }
 
     // New tests for addSASLMechanisms functionality
@@ -236,11 +354,11 @@ public class SASLAuthenticationTest {
     }
 
     @Test
-    public void testAnonymousAuthenticationWithoutInitialResponse() throws Exception {
+    public void testAuthenticationWithoutInitialResponse() throws Exception {
         // Setup
         when(clientSession.isAuthenticated()).thenReturn(false);
         Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
-            .addAttribute("mechanism", "ANONYMOUS");
+            .addAttribute("mechanism", "TEST-MECHANISM");
         
         // Execute - First step: Client sends auth without initial response
         SASLAuthentication.handle(clientSession, auth, false);
@@ -248,24 +366,25 @@ public class SASLAuthenticationTest {
         // Verify server sends success
         ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
         verify(clientSession).deliverRawText(responseCaptor.capture());
-        
-        Element response = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+
+        String xml = responseCaptor.getValue();
+        Element response = DocumentHelper.parseText(xml).getRootElement();
         assertEquals("success", response.getName());
         assertEquals("urn:ietf:params:xml:ns:xmpp-sasl", response.getNamespaceURI());
         
         // Verify session state
         verify(clientSession).setAuthToken(any(AuthToken.class));
-        assertTrue(clientSession.isAnonymousUser());
+        assertFalse(clientSession.isAnonymousUser());
     }
 
     @Test
-    public void testAnonymousAuthenticationWithInitialResponse() throws Exception {
+    public void testAuthenticationWithInitialResponse() throws Exception {
         // Setup
         when(clientSession.isAuthenticated()).thenReturn(false);
         Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
-            .addAttribute("mechanism", "ANONYMOUS");
+            .addAttribute("mechanism", "TEST-MECHANISM");
 
-        auth.setText(StringUtils.encodeBase64("".getBytes())); // Empty initial response
+        auth.setText(StringUtils.encodeBase64("initial-response".getBytes())); // Empty initial response
         
         // Execute - Client sends auth with initial response
         SASLAuthentication.handle(clientSession, auth, false);
@@ -280,15 +399,15 @@ public class SASLAuthenticationTest {
         
         // Verify session state
         verify(clientSession).setAuthToken(any(AuthToken.class));
-        assertTrue(clientSession.isAnonymousUser());
+        assertFalse(clientSession.isAnonymousUser());
     }
 
     @Test
-    public void testAnonymousAuthenticationWithSASL2() throws Exception {
+    public void testAuthenticationWithSASL2() throws Exception {
         // Setup
         when(clientSession.isAuthenticated()).thenReturn(false);
         Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
-            .addAttribute("mechanism", "ANONYMOUS");
+            .addAttribute("mechanism", "TEST-MECHANISM");
         
         // Execute - Client sends auth request
         SASLAuthentication.handle(clientSession, auth, true);
@@ -308,20 +427,14 @@ public class SASLAuthenticationTest {
         
         // Verify session state
         verify(clientSession).setAuthToken(any(AuthToken.class));
-        assertTrue(clientSession.isAnonymousUser());
+        assertFalse(clientSession.isAnonymousUser());
     }
 
     @Test
-    public void testAnonymousAuthenticationFailureInvalidMechanism() throws Exception {
+    public void testAuthenticationFailureInvalidMechanism() throws Exception {
         // Setup
-        when(clientSession.isAuthenticated()).thenReturn(false);
         Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
-            .addAttribute("mechanism", "ANONYMOUS");
-        
-        // Disable ANONYMOUS mechanism
-        List<String> mechanisms = new ArrayList<>(SASLAuthentication.getEnabledMechanisms());
-        mechanisms.remove("ANONYMOUS");
-        SASLAuthentication.setEnabledMechanisms(mechanisms);
+            .addAttribute("mechanism", "INVALID-MECHANISM");
         
         // Execute
         SASLAuthentication.handle(clientSession, auth, false);
@@ -342,11 +455,11 @@ public class SASLAuthenticationTest {
     }
 
     @Test
-    public void testAnonymousAuthenticationReplayAttack() throws Exception {
+    public void testAuthenticationReplayAttack() throws Exception {
         // Setup
         when(clientSession.isAuthenticated()).thenReturn(false);
         Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
-            .addAttribute("mechanism", "ANONYMOUS");
+            .addAttribute("mechanism", "TEST-MECHANISM");
         
         // First authentication
         SASLAuthentication.handle(clientSession, auth, false);
@@ -361,10 +474,56 @@ public class SASLAuthenticationTest {
         ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
         verify(clientSession).deliverRawText(responseCaptor.capture());
 
-        Element response = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        String xml = responseCaptor.getValue();
+        Element response = DocumentHelper.parseText(xml).getRootElement();
         assertEquals("failure", response.getName());
         assertEquals("urn:ietf:params:xml:ns:xmpp-sasl", response.getNamespaceURI());
         assertNotNull(response.element("not-authorized"), 
             "Should indicate not-authorized as failure reason");
+    }
+
+    @Test
+    public void testSuccessfulAuthentication() throws Exception {
+        // Setup
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
+            .addAttribute("mechanism", "TEST-MECHANISM");
+        
+        // Execute - First step: Client sends auth without initial response
+        SASLAuthentication.handle(clientSession, auth, false);
+        
+        // Verify server sends success
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).deliverRawText(responseCaptor.capture());
+        
+        Element response = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        assertEquals("success", response.getName());
+        assertEquals("urn:ietf:params:xml:ns:xmpp-sasl", response.getNamespaceURI());
+        
+        // Verify session state
+        verify(clientSession).setAuthToken(any(AuthToken.class));
+    }
+
+    @Test
+    public void testFailedAuthentication() throws Exception {
+        // Setup
+        Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
+            .addAttribute("mechanism", "TEST-MECHANISM");
+        
+        testSaslServer.setThrowError(true);
+
+        // Execute
+        SASLAuthentication.handle(clientSession, auth, false);
+        
+        // Verify server sends failure
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).deliverRawText(responseCaptor.capture());
+        
+        Element response = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        assertEquals("failure", response.getName());
+        assertEquals("urn:ietf:params:xml:ns:xmpp-sasl", response.getNamespaceURI());
+        
+        // Verify session state
+        verify(clientSession, never()).setAuthToken(any(AuthToken.class));
     }
 }

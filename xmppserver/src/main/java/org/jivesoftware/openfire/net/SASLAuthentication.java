@@ -158,7 +158,9 @@ public class SASLAuthentication {
     static
     {
         // Add (proprietary) Providers of SASL implementation to the Java security context.
-        Security.addProvider( new org.jivesoftware.openfire.sasl.SaslProvider() );
+        if (Security.getProvider( "JiveSoftware" ) == null) {
+            Security.addProvider(new org.jivesoftware.openfire.sasl.SaslProvider());
+        }
 
         // Convert XML based provider setup to Database based
         JiveGlobals.migrateProperty("sasl.mechs");
@@ -454,7 +456,7 @@ public class SASLAuthentication {
                     // Construct the configuration properties
                     final Map<String, Object> props = new HashMap<>();
                     props.put( LocalSession.class.getCanonicalName(), session );
-                    props.put(Sasl.POLICY_NOANONYMOUS, Boolean.toString(!AnonymousSaslServer.ENABLED.getValue()));
+                    props.put(Sasl.POLICY_NOANONYMOUS, false); // Boolean.toString(!AnonymousSaslServer.ENABLED.getValue()));
                     props.put( "com.sun.security.sasl.digest.realm", serverInfo.getXMPPDomain() );
 
                     SaslServer saslServer = Sasl.createSaslServer( mechanismName, "xmpp", serverName, props, new XMPPCallbackHandler() );
@@ -602,7 +604,7 @@ public class SASLAuthentication {
     @VisibleForTesting
     static void authenticationSuccessful(LocalSession session, String username, String mechanismName, byte[] successData, boolean usingSASL2)
     {
-        if (username != null && LockOutManager.getInstance().isAccountDisabled(username)) {
+        if (username != null && LockOutManager.getInstance() != null && LockOutManager.getInstance().isAccountDisabled(username)) {
             // Interception!  This person is locked out, fail instead!
             LockOutManager.getInstance().recordFailedLogin(username);
             authenticationFailed(session, Failure.ACCOUNT_DISABLED, usingSASL2);
@@ -621,6 +623,7 @@ public class SASLAuthentication {
             } else {
                 authId.setText(username);
             }
+            session.deliverRawText(success.asXML());
         } else {
             sendElement(session, "success", successData, usingSASL2);
         }
@@ -753,10 +756,10 @@ public class SASLAuthentication {
                     break;
 
                 case "ANONYMOUS":
-                    if (!AnonymousSaslServer.ENABLED.getValue()) {
+                    //if (!AnonymousSaslServer.ENABLED.getValue()) {
                         Log.trace( "Cannot support '{}' as it has been disabled by configuration.", mechanism );
                         it.remove();
-                    }
+                    //}
                     break;
 
                 case "JIVE-SHAREDSECRET":

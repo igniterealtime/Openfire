@@ -1,5 +1,7 @@
 package org.jivesoftware.util.cache.lock;
 
+import com.google.common.collect.Interner;
+import com.google.common.collect.Interners;
 import org.jivesoftware.util.cache.Cache;
 
 import java.util.Objects;
@@ -9,10 +11,17 @@ import java.util.Objects;
  */
 class CacheKey
 {
+    private static final Interner<CacheKey> interner = Interners.newWeakInterner();
+
     final String cacheName;
     final Object key;
 
-    CacheKey(Cache cache, Object key)
+    public static CacheKey createCacheKey(Cache cache, Object key) {
+        final CacheKey instance = new CacheKey(cache, key);
+        return interner.intern(instance);
+    }
+
+    private CacheKey(Cache cache, Object key)
     {
         this.cacheName = cache.getName();
         this.key = key;

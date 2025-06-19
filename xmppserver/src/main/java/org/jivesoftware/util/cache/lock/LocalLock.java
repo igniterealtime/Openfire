@@ -1,7 +1,5 @@
 package org.jivesoftware.util.cache.lock;
 
-import com.google.common.collect.Interner;
-import com.google.common.collect.Interners;
 import org.jivesoftware.util.cache.Cache;
 
 import javax.annotation.Nonnull;
@@ -19,12 +17,10 @@ public class LocalLock implements Lock
      */
     private static final Map<CacheKey, LockAndCount> locks = new ConcurrentHashMap<>();
 
-    private static final Interner<CacheKey> interner = Interners.newWeakInterner();
-
     private final CacheKey key;
 
     public static LocalLock getLock(Object key, Cache cache) {
-        return new LocalLock(new CacheKey(cache, key));
+        return new LocalLock(CacheKey.createCacheKey(cache, key));
     }
 
     LocalLock(CacheKey key)
@@ -84,8 +80,7 @@ public class LocalLock implements Lock
         lock.unlock();
     }
 
-    private ReentrantLock lookupLockForAcquire(CacheKey cacheKey) {
-        CacheKey mutex = interner.intern(cacheKey); // Ensure that the mutex used in the next line is the same for objects that are equal.
+    private ReentrantLock lookupLockForAcquire(CacheKey mutex) {
         synchronized(mutex) {
             LockAndCount lac = locks.get(mutex);
             if (lac == null) {
@@ -101,8 +96,7 @@ public class LocalLock implements Lock
         }
     }
 
-    private ReentrantLock lookupLockForRelease(CacheKey cacheKey) {
-        CacheKey mutex = interner.intern(cacheKey); // Ensure that the mutex used in the next line is the same for objects that are equal.
+    private ReentrantLock lookupLockForRelease(CacheKey mutex) {
         synchronized(mutex) {
             LockAndCount lac = locks.get(mutex);
             if (lac == null) {

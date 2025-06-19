@@ -44,6 +44,7 @@ import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
+import java.nio.charset.StandardCharsets;
 import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
@@ -364,8 +365,7 @@ public class SASLAuthentication {
             {
                 throw new SaslFailureException( Failure.INCORRECT_ENCODING );
             }
-
-            decoded = StringUtils.decodeBase64( encoded );
+            decoded = Base64.getDecoder().decode(encoded.getBytes(StandardCharsets.UTF_8));
         }
         return decoded;
     }
@@ -446,7 +446,7 @@ public class SASLAuthentication {
                     session.setSessionData( "SaslServer", saslServer );
 
                     if (elementType == ElementType.AUTHENTICATE) {
-                        data = doc.element("additional-data");
+                        data = doc.element("initial-response");
                     }
 
                     if ( mechanismName.equals( "DIGEST-MD5" ) )
@@ -586,8 +586,8 @@ public class SASLAuthentication {
         }
         if (usingSASL2) {
             final Element success = DocumentHelper.createElement( new QName( "success", new Namespace( "", SASL2_NAMESPACE ) ) );
-            if (successData != null) {
-                String data_b64 = StringUtils.encodeBase64(successData).trim();
+            if (successData != null && successData.length > 0) {
+                String data_b64 = Base64.getEncoder().encodeToString(successData).trim();
                 Element additionalData = success.addElement("additional-data");
                 additionalData.setText(data_b64);
             }

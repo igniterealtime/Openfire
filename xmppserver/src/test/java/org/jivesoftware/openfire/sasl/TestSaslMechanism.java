@@ -1,7 +1,6 @@
 package org.jivesoftware.openfire.sasl;
 
 import javax.security.auth.callback.CallbackHandler;
-import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
@@ -14,14 +13,14 @@ public class TestSaslMechanism {
      * A test SASL mechanism that we can control for testing purposes
      */
     public static class TestSaslServer implements SaslServer {
-        private boolean complete = false;
         private String authorizationID = null;
         private boolean throwError = false;
+        private long steps = 1;
 
         public void reset() {
-            complete = false;
             authorizationID = null;
             throwError = false;
+            steps = 1;
         }
 
         @Override
@@ -34,14 +33,17 @@ public class TestSaslMechanism {
             if (throwError) {
                 throw new SaslException("Authentication failed");
             }
-            complete = true;
+            if (this.steps <= 0) {
+                throw new SaslException("Authentication steps exceeded: " + this.steps);
+            }
+            this.steps--;
             authorizationID = "test-user";
-            return null;
+            return response;
         }
 
         @Override
         public boolean isComplete() {
-            return complete;
+            return this.steps == 0;
         }
 
         @Override
@@ -70,6 +72,10 @@ public class TestSaslMechanism {
 
         public void setThrowError(boolean throwError) {
             this.throwError = throwError;
+        }
+
+        public void setSteps(long steps) {
+            this.steps = steps;
         }
     }
 

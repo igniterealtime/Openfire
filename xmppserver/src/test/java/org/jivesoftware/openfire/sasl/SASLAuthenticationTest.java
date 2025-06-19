@@ -2,15 +2,19 @@ package org.jivesoftware.openfire.sasl;
 
 import org.dom4j.Element;
 import org.dom4j.DocumentHelper;
+import org.dom4j.QName;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
+import org.jivesoftware.util.StringUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.jivesoftware.openfire.auth.AuthToken;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,7 +40,7 @@ public class SASLAuthenticationTest {
     public void setUp() {
         features = DocumentHelper.createElement("features");
         // Reset any static state between tests and ensure we have test mechanisms
-        SASLAuthentication.setEnabledMechanisms(List.of("PLAIN", "DIGEST-MD5"));
+        SASLAuthentication.setEnabledMechanisms(List.of("PLAIN", "DIGEST-MD5", "ANONYMOUS"));
     }
 
     // Existing tests
@@ -229,5 +233,138 @@ public class SASLAuthenticationTest {
         // Verify
         assertTrue(features.elements().isEmpty(),
             "Unknown session types should not get any mechanisms");
+    }
+
+    @Test
+    public void testAnonymousAuthenticationWithoutInitialResponse() throws Exception {
+        // Setup
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
+            .addAttribute("mechanism", "ANONYMOUS");
+        
+        // Execute - First step: Client sends auth without initial response
+        SASLAuthentication.handle(clientSession, auth, false);
+        
+        // Verify server sends success
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).deliverRawText(responseCaptor.capture());
+        
+        Element response = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        assertEquals("success", response.getName());
+        assertEquals("urn:ietf:params:xml:ns:xmpp-sasl", response.getNamespaceURI());
+        
+        // Verify session state
+        verify(clientSession).setAuthToken(any(AuthToken.class));
+        assertTrue(clientSession.isAnonymousUser());
+    }
+
+    @Test
+    public void testAnonymousAuthenticationWithInitialResponse() throws Exception {
+        // Setup
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
+            .addAttribute("mechanism", "ANONYMOUS");
+
+        auth.setText(StringUtils.encodeBase64("".getBytes())); // Empty initial response
+        
+        // Execute - Client sends auth with initial response
+        SASLAuthentication.handle(clientSession, auth, false);
+        
+        // Verify server sends success
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).deliverRawText(responseCaptor.capture());
+
+        Element response = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        assertEquals("success", response.getName());
+        assertEquals("urn:ietf:params:xml:ns:xmpp-sasl", response.getNamespaceURI());
+        
+        // Verify session state
+        verify(clientSession).setAuthToken(any(AuthToken.class));
+        assertTrue(clientSession.isAnonymousUser());
+    }
+
+    @Test
+    public void testAnonymousAuthenticationWithSASL2() throws Exception {
+        // Setup
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
+            .addAttribute("mechanism", "ANONYMOUS");
+        
+        // Execute - Client sends auth request
+        SASLAuthentication.handle(clientSession, auth, true);
+        
+        // Verify server sends success with SASL2 format
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).deliverRawText(responseCaptor.capture());
+
+        Element response = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        assertEquals("success", response.getName());
+        assertEquals("urn:xmpp:sasl:2", response.getNamespaceURI());
+        
+        // Verify authorization-identifier is present
+        Element authId = response.element("authorization-identifier");
+        assertNotNull(authId, "SASL2 success must include authorization-identifier");
+        assertTrue(authId.getText().contains("@"), "Authorization ID should be a full JID");
+        
+        // Verify session state
+        verify(clientSession).setAuthToken(any(AuthToken.class));
+        assertTrue(clientSession.isAnonymousUser());
+    }
+
+    @Test
+    public void testAnonymousAuthenticationFailureInvalidMechanism() throws Exception {
+        // Setup
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
+            .addAttribute("mechanism", "ANONYMOUS");
+        
+        // Disable ANONYMOUS mechanism
+        List<String> mechanisms = new ArrayList<>(SASLAuthentication.getEnabledMechanisms());
+        mechanisms.remove("ANONYMOUS");
+        SASLAuthentication.setEnabledMechanisms(mechanisms);
+        
+        // Execute
+        SASLAuthentication.handle(clientSession, auth, false);
+        
+        // Verify server sends failure
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).deliverRawText(responseCaptor.capture());
+
+        Element response = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        assertEquals("failure", response.getName());
+        assertEquals("urn:ietf:params:xml:ns:xmpp-sasl", response.getNamespaceURI());
+        assertNotNull(response.element("invalid-mechanism"), 
+            "Should indicate invalid-mechanism as failure reason");
+        
+        // Verify session state
+        verify(clientSession, never()).setAuthToken(any(AuthToken.class));
+        verify(clientSession, never()).setAuthToken(null);
+    }
+
+    @Test
+    public void testAnonymousAuthenticationReplayAttack() throws Exception {
+        // Setup
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
+            .addAttribute("mechanism", "ANONYMOUS");
+        
+        // First authentication
+        SASLAuthentication.handle(clientSession, auth, false);
+        
+        // Reset mock to verify second attempt
+        reset(clientSession);
+
+        // Try to authenticate again with same session
+        SASLAuthentication.handle(clientSession, auth, false);
+        
+        // Verify server sends failure
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).deliverRawText(responseCaptor.capture());
+
+        Element response = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        assertEquals("failure", response.getName());
+        assertEquals("urn:ietf:params:xml:ns:xmpp-sasl", response.getNamespaceURI());
+        assertNotNull(response.element("not-authorized"), 
+            "Should indicate not-authorized as failure reason");
     }
 }

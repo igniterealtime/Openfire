@@ -30,6 +30,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -148,6 +149,7 @@ public class SASLAuthenticationTest {
         // SASLAuthentication.setEnabledMechanisms(null);
         // Clear caches
         CacheFactory.clearCaches();
+        testSaslServer.reset();
     }
 
     @Test
@@ -371,7 +373,8 @@ public class SASLAuthenticationTest {
         Element response = DocumentHelper.parseText(xml).getRootElement();
         assertEquals("success", response.getName());
         assertEquals("urn:ietf:params:xml:ns:xmpp-sasl", response.getNamespaceURI());
-        
+        assertEquals("=", response.getText());
+
         // Verify session state
         verify(clientSession).setAuthToken(any(AuthToken.class));
         assertFalse(clientSession.isAnonymousUser());
@@ -384,7 +387,7 @@ public class SASLAuthenticationTest {
         Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
             .addAttribute("mechanism", "TEST-MECHANISM");
 
-        auth.setText(StringUtils.encodeBase64("initial-response".getBytes())); // Empty initial response
+        auth.setText(Base64.getEncoder().encodeToString("initial-response".getBytes())); // Empty initial response
         
         // Execute - Client sends auth with initial response
         SASLAuthentication.handle(clientSession, auth, false);
@@ -396,6 +399,8 @@ public class SASLAuthenticationTest {
         Element response = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
         assertEquals("success", response.getName());
         assertEquals("urn:ietf:params:xml:ns:xmpp-sasl", response.getNamespaceURI());
+        String additionalData = new String(Base64.getDecoder().decode(response.getText()), StandardCharsets.UTF_8);
+        assertEquals("initial-response", additionalData);
         
         // Verify session state
         verify(clientSession).setAuthToken(any(AuthToken.class));
@@ -419,12 +424,109 @@ public class SASLAuthenticationTest {
         Element response = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
         assertEquals("success", response.getName());
         assertEquals("urn:xmpp:sasl:2", response.getNamespaceURI());
-        
+
+        Element additionalData = response.element("additional-data");
+        assertNull(additionalData, "SASL2 success must not include additional-data");
+
         // Verify authorization-identifier is present
         Element authId = response.element("authorization-identifier");
         assertNotNull(authId, "SASL2 success must include authorization-identifier");
         assertTrue(authId.getText().contains("@"), "Authorization ID should be a full JID");
         
+        // Verify session state
+        verify(clientSession).setAuthToken(any(AuthToken.class));
+        assertFalse(clientSession.isAnonymousUser());
+    }
+
+    @Test
+    public void testAuthenticationWithSASL2andIR() throws Exception {
+        // Setup
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
+            .addAttribute("mechanism", "TEST-MECHANISM")
+            .addElement("initial-response")
+            .addCDATA(Base64.getEncoder().encodeToString("initial-response".getBytes()))
+            .getParent();
+
+        // Execute - Client sends auth request
+        SASLAuthentication.handle(clientSession, auth, true);
+
+        // Verify server sends success with SASL2 format
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).deliverRawText(responseCaptor.capture());
+
+        Element response = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        assertEquals("success", response.getName());
+        assertEquals("urn:xmpp:sasl:2", response.getNamespaceURI());
+
+        Element additionalData = response.element("additional-data");
+        assertNotNull(additionalData, "SASL2 success must include additional-data");
+        String responseEnc = additionalData.getText();
+        byte[] resp = Base64.getDecoder().decode(responseEnc.getBytes(StandardCharsets.UTF_8));
+        String additionalDataString = new String(resp, StandardCharsets.UTF_8);
+        assertEquals("initial-response", additionalDataString);
+
+        // Verify authorization-identifier is present
+        Element authId = response.element("authorization-identifier");
+        assertNotNull(authId, "SASL2 success must include authorization-identifier");
+        assertTrue(authId.getText().contains("@"), "Authorization ID should be a full JID");
+
+        // Verify session state
+        verify(clientSession).setAuthToken(any(AuthToken.class));
+        assertFalse(clientSession.isAnonymousUser());
+    }
+
+    @Test
+    public void testAuthenticationWithSASL2andIRMultistep() throws Exception {
+        // Setup
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        testSaslServer.setSteps(2);
+        Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
+            .addAttribute("mechanism", "TEST-MECHANISM")
+            .addElement("initial-response")
+            .addCDATA(Base64.getEncoder().encodeToString("initial-response".getBytes()))
+            .getParent();
+
+        // Execute - Client sends auth request
+        SASLAuthentication.handle(clientSession, auth, true);
+
+        Element response = DocumentHelper.createElement(QName.get("response", "urn:xmpp:sasl:2"))
+            .addCDATA(Base64.getEncoder().encodeToString("subsequent-response".getBytes()));
+        SASLAuthentication.handle(clientSession, response, true);
+
+        // Verify server sends challenge with SASL2 format
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession, times(2)).deliverRawText(responseCaptor.capture());
+
+        List<String> responses = responseCaptor.getAllValues();
+
+        {
+            Element challenge = DocumentHelper.parseText(responses.get(0)).getRootElement();
+            assertEquals("challenge", challenge.getName());
+            assertEquals("urn:xmpp:sasl:2", challenge.getNamespaceURI());
+            String responseEnc = challenge.getText();
+            byte[] resp = Base64.getDecoder().decode(responseEnc.getBytes(StandardCharsets.UTF_8));
+            String additionalDataString = new String(resp, StandardCharsets.UTF_8);
+            assertEquals("initial-response", additionalDataString);
+        }
+
+        {
+            Element success = DocumentHelper.parseText(responses.get(1)).getRootElement();
+            assertEquals("success", success.getName());
+            assertEquals("urn:xmpp:sasl:2", success.getNamespaceURI());
+
+            Element additionalData = success.element("additional-data");
+            assertNotNull(additionalData, "SASL2 success must include additional-data");
+            String responseEnc2 = additionalData.getText();
+            byte[] resp2 = Base64.getDecoder().decode(responseEnc2.getBytes(StandardCharsets.UTF_8));
+            String additionalDataString2 = new String(resp2, StandardCharsets.UTF_8);
+            assertEquals("subsequent-response", additionalDataString2);
+
+            // Verify authorization-identifier is present
+            Element authId = success.element("authorization-identifier");
+            assertNotNull(authId, "SASL2 success must include authorization-identifier");
+            assertTrue(authId.getText().contains("@"), "Authorization ID should be a full JID");
+        }
         // Verify session state
         verify(clientSession).setAuthToken(any(AuthToken.class));
         assertFalse(clientSession.isAnonymousUser());

@@ -391,6 +391,11 @@
                                 <b>Sloven&#269;ina</b> (sk)
                             </label><br>
 
+                            <label for="sv">
+                                <input type="radio" name="localeCode" value="sv" ${locale eq 'sv' ? 'checked' : ''} id="sv" />
+                                <b>Svenska</b> (sv)
+                            </label><br>
+
                             <label for="tr_TR">
                                 <input type="radio" name="localeCode" value="tr_TR" ${locale eq 'tr_TR' ? 'checked' : ''} id="tr_TR" />
                                 <b>Türkçe</b> (tr_TR)

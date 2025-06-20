@@ -260,6 +260,14 @@
             </tr>
             <tr>
                 <td>
+                    <input type="radio" name="localeCode" value="tr_TR" <%= ("tr_TR".equals(locale.toString()) ? "checked" : "") %> id="tr_TR" />
+                </td>
+                <td colspan="2">
+                    <label for="tr_TR">Türkçe (tr_TR)</label>
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <input type="radio" name="localeCode" value="uk_UA" <%= ("uk_UA".equals(locale.toString()) ? "checked" : "") %> id="uk_UA" />
                 </td>
                 <td colspan="2">

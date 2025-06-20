@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2004-2010 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2010 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -351,6 +351,11 @@
                                 (he) <b>עברית</b>
                             </label><br>
 
+                            <label for="it_IT">
+                                <input type="radio" name="localeCode" value="it_IT" ${locale eq 'it_IT' ? 'checked' : ''} id="it_IT" />
+                                <b>Italiano</b> (it_IT)
+                            </label><br>
+
                             <label for="ja_JP">
                                 <input type="radio" name="localeCode" value="ja_JP" ${locale eq 'ja_JP' ? 'checked' : ''} id="ja_JP" />
                                 <b>日本語</b> (ja_JP)
@@ -384,6 +389,16 @@
                             <label for="sk">
                                 <input type="radio" name="localeCode" value="sk" ${locale eq 'sk' ? 'checked' : ''} id="sk" />
                                 <b>Sloven&#269;ina</b> (sk)
+                            </label><br>
+
+                            <label for="sv">
+                                <input type="radio" name="localeCode" value="sv" ${locale eq 'sv' ? 'checked' : ''} id="sv" />
+                                <b>Svenska</b> (sv)
+                            </label><br>
+
+                            <label for="tr_TR">
+                                <input type="radio" name="localeCode" value="tr_TR" ${locale eq 'tr_TR' ? 'checked' : ''} id="tr_TR" />
+                                <b>Türkçe</b> (tr_TR)
                             </label><br>
 
                             <label for="uk_UA">

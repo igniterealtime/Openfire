@@ -43,12 +43,9 @@
     boolean openfireHomeExists = false;
     Path openfireHome = null;
 
-    // Check for JRE 1.8
-    try {
-        String version = System.getProperty("java.version");
-        jreVersionCompatible = Integer.parseInt(version.split("\\.")[0]) >= 11;
-    }
-    catch (Throwable t) {}
+    // Check for min JRE requirement
+    Runtime.Version MIN_JAVA_VERSION = Runtime.Version.parse("11");
+    jreVersionCompatible = MIN_JAVA_VERSION.compareTo(Runtime.version()) <= 0;
     // Check for Servlet 2.3:
     try {
         Class c = ClassUtils.forName("javax.servlet.http.HttpSession");

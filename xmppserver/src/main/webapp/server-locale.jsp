@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -192,6 +192,14 @@
                 </td>
                 <td colspan="2">
                     <label for="he">עברית (he)</label>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="radio" name="localeCode" value="it_IT" <%= ("it_IT".equals(locale.toString()) ? "checked" : "") %> id="it_IT" />
+                </td>
+                <td colspan="2">
+                    <label for="it_IT">Italiano (it_IT)</label>
                 </td>
             </tr>
             <tr>

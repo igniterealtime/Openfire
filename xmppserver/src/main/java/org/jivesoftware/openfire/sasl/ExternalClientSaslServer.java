@@ -80,7 +80,7 @@ public class ExternalClientSaslServer implements SaslServer
             throw new IllegalStateException( "Authentication exchange already completed." );
         }
 
-        if (response.length == 0 && session.getSessionData(SASLAuthentication.SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY) != null) {
+        if (response.length == 0 && session.getSessionData(SASLAuthentication.SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY) == null) {
             // No initial response. Send a challenge to get one, per RFC 4422 appendix-A.
             return new byte[ 0 ];
         }

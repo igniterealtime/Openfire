@@ -122,6 +122,17 @@ public class SASLAuthentication {
         .setDefaultValue(false)
         .build();
 
+    /**
+     * Enable (or disable) SASL2. This is currently off by default, and means that SASL2 is not advertised in features, primarily.
+     *
+     * @see <a href="https://xmpp.org/extensions/xep-0388.html">XEP-0388: Extensible SASL Profile</a>
+     */
+    public static final SystemProperty<Boolean> ENABLE_SASL2 = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.auth.sasl2")
+        .setDynamic(true)
+        .setDefaultValue(false)
+        .build();
+
     // http://stackoverflow.com/questions/8571501/how-to-check-whether-the-string-is-base64-encoded-or-not
     // plus an extra regex alternative to catch a single equals sign ('=', see RFC 6120 6.4.2)
     private static final Pattern BASE64_ENCODED = Pattern.compile("^(=|([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==))$");
@@ -245,12 +256,18 @@ public class SASLAuthentication {
         if ( session instanceof ClientSession )
         {
             features.add(getSASLMechanismsElement( (ClientSession) session, false ));
-            // TODO : Don't list these if SASL2 isn't enabled.
-            features.add(getSASLMechanismsElement( (ClientSession) session, true ));
+            if (ENABLE_SASL2.getValue())
+            {
+                features.add(getSASLMechanismsElement((ClientSession) session, true));
+            }
         }
         else if ( session instanceof LocalIncomingServerSession )
         {
-            features.add(getSASLMechanismsElement( (LocalIncomingServerSession) session ));
+            features.add(getSASLMechanismsElement( (LocalIncomingServerSession) session, false ));
+            if (ENABLE_SASL2.getValue())
+            {
+                features.add(getSASLMechanismsElement((LocalIncomingServerSession) session, true));
+            }
         }
         else
         {
@@ -271,7 +288,11 @@ public class SASLAuthentication {
         }
         else if ( session instanceof LocalIncomingServerSession )
         {
-            features.add(getSASLMechanismsElement( (LocalIncomingServerSession) session ));
+            features.add(getSASLMechanismsElement( (LocalIncomingServerSession) session, false ));
+            if (ENABLE_SASL2.getValue())
+            {
+                features.add(getSASLMechanismsElement((LocalIncomingServerSession) session, true));
+            }
         }
         else
         {
@@ -313,9 +334,9 @@ public class SASLAuthentication {
         return result;
     }
 
-    public static Element getSASLMechanismsElement( LocalIncomingServerSession session )
+    public static Element getSASLMechanismsElement( LocalIncomingServerSession session, boolean usingSASL2 )
     {
-        final Element result = DocumentHelper.createElement( new QName( "mechanisms", new Namespace( "", SASL_NAMESPACE ) ) );
+        final Element result = DocumentHelper.createElement( new QName( "mechanisms", new Namespace( "", usingSASL2 ? SASL2_NAMESPACE : SASL_NAMESPACE ) ) );
         if (session.isEncrypted()) {
             final Connection connection   = session.getConnection();
             final TrustStore trustStore   = connection.getConfiguration().getTrustStore();

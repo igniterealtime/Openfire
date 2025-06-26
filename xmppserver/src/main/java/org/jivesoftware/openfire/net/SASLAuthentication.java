@@ -709,7 +709,7 @@ public class SASLAuthentication {
      * is required that might be missing. Use {@link #addSupportedMechanism(String)} to add
      * new SASL mechanisms.
      *
-     * @return the list of supported SASL mechanisms by the server.
+     * @return the set of supported SASL mechanisms by the server.
      */
     public static Set<String> getSupportedMechanisms()
     {

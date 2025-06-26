@@ -64,6 +64,8 @@ public class SASLAuthenticationTest {
         // Set this or I can't set anythign else.
         JiveGlobals.setXMLProperty("setup", "true");
         SASLAuthentication.setEnabledMechanisms(Arrays.asList("BLURDYBLOOP", "TEST-MECHANISM"));
+        // Enable SASL2
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
     }
 //
 //    @AfterAll
@@ -276,24 +278,58 @@ public class SASLAuthenticationTest {
     public void testAddSASLMechanismsToClientSession() {
         // Setup
         when(clientSession.isAuthenticated()).thenReturn(false);
-        
+
+        // Disable SASL2
+        SASLAuthentication.ENABLE_SASL2.setValue(false);
+
+        try {
+
+            // Execute
+            SASLAuthentication.addSASLMechanisms(features, clientSession);
+
+            // Verify
+            List<Element> mechanisms = features.elements();
+            assertFalse(mechanisms.isEmpty(), "SASL mechanisms should be added");
+
+            // Should have both SASL and SASL2 mechanisms elements
+            assertEquals(1, mechanisms.size(), "Should have both SASL and SASL2 mechanisms");
+
+            // Verify both namespaces are present without assuming order
+            Set<String> namespaces = mechanisms.stream()
+                .map(Element::getNamespaceURI)
+                .collect(Collectors.toSet());
+            assertTrue(namespaces.contains("urn:ietf:params:xml:ns:xmpp-sasl"),
+                "SASL namespace should be present");
+            assertFalse(namespaces.contains("urn:xmpp:sasl:2"), "SASL2 namespace should be present");
+        } finally {
+            // Enable SASL2
+            SASLAuthentication.ENABLE_SASL2.setValue(true);
+
+        }
+    }
+
+    @Test
+    public void testAddSASLMechanismsToClientSessionWithSASL2() {
+        // Setup
+        when(clientSession.isAuthenticated()).thenReturn(false);
+
         // Execute
         SASLAuthentication.addSASLMechanisms(features, clientSession);
-        
+
         // Verify
         List<Element> mechanisms = features.elements();
         assertFalse(mechanisms.isEmpty(), "SASL mechanisms should be added");
-        
+
         // Should have both SASL and SASL2 mechanisms elements
         assertEquals(2, mechanisms.size(), "Should have both SASL and SASL2 mechanisms");
-        
+
         // Verify both namespaces are present without assuming order
         Set<String> namespaces = mechanisms.stream()
             .map(Element::getNamespaceURI)
             .collect(Collectors.toSet());
-        assertTrue(namespaces.contains("urn:ietf:params:xml:ns:xmpp-sasl"), 
+        assertTrue(namespaces.contains("urn:ietf:params:xml:ns:xmpp-sasl"),
             "SASL namespace should be present");
-        assertTrue(namespaces.contains("urn:xmpp:sasl:2"), 
+        assertTrue(namespaces.contains("urn:xmpp:sasl:2"),
             "SASL2 namespace should be present");
     }
 
@@ -304,16 +340,22 @@ public class SASLAuthenticationTest {
         
         // Execute
         SASLAuthentication.addSASLMechanisms(features, serverSession);
-        
+
         // Verify
         List<Element> mechanisms = features.elements();
-        assertEquals(1, mechanisms.size(), 
-            "Server sessions should only get one mechanisms element");
-        
-        Element mechsElement = mechanisms.get(0);
-        assertEquals("urn:ietf:params:xml:ns:xmpp-sasl",
-            mechsElement.getNamespaceURI(),
-            "Server mechanisms should use SASL namespace");
+        assertFalse(mechanisms.isEmpty(), "SASL mechanisms should be added");
+
+        // Should have both SASL and SASL2 mechanisms elements
+        assertEquals(2, mechanisms.size(), "Should have both SASL and SASL2 mechanisms");
+
+        // Verify both namespaces are present without assuming order
+        Set<String> namespaces = mechanisms.stream()
+            .map(Element::getNamespaceURI)
+            .collect(Collectors.toSet());
+        assertTrue(namespaces.contains("urn:ietf:params:xml:ns:xmpp-sasl"),
+            "SASL namespace should be present");
+        assertTrue(namespaces.contains("urn:xmpp:sasl:2"),
+            "SASL2 namespace should be present");
     }
 
     @Test

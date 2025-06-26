@@ -1,5 +1,8 @@
 package org.jivesoftware.openfire.sasl;
 
+import org.jivesoftware.openfire.net.SASLAuthentication;
+import org.jivesoftware.openfire.session.LocalSession;
+
 import javax.security.auth.callback.CallbackHandler;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
@@ -16,6 +19,11 @@ public class TestSaslMechanism {
         private String authorizationID = null;
         private boolean throwError = false;
         private long steps = 1;
+        private LocalSession clientSession;
+
+        public TestSaslServer(LocalSession clientSession) {
+            this.clientSession = clientSession;
+        }
 
         public void reset() {
             authorizationID = null;
@@ -30,6 +38,12 @@ public class TestSaslMechanism {
 
         @Override
         public byte[] evaluateResponse(byte[] response) throws SaslException {
+            if ( response.length == 0 )
+            {
+                if (clientSession.getSessionData(SASLAuthentication.SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY) == null) {
+                    response = null;
+                }
+            }
             if (throwError) {
                 throw new SaslException("Authentication failed");
             }
@@ -112,9 +126,9 @@ public class TestSaslMechanism {
     /**
      * Helper method to register the test mechanism
      */
-    public static TestSaslServer registerTestMechanism() {
+    public static TestSaslServer registerTestMechanism(LocalSession clientSession) {
         if (Security.getProvider("Test Provider") == null) {
-            TestSaslServer testSaslServer = new TestSaslServer();
+            TestSaslServer testSaslServer = new TestSaslServer(clientSession);
 
             // Set the server instance before registering the provider
             TestSaslServerFactory.setSaslServer(testSaslServer);

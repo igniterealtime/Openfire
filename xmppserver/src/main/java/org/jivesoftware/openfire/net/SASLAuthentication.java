@@ -35,7 +35,6 @@ import org.jivesoftware.openfire.sasl.SaslFailureException;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.*;
-// import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -142,11 +141,6 @@ public class SASLAuthentication {
      * @see <a href="https://igniterealtime.atlassian.net/jira/software/c/projects/OF/issues/OF-2514">OF-2514: Differentiate between missing and empty initial SASL response</a>
      */
     public static final String SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY = "Sasl.last-response-was-provided-but-empty";
-
-    /**
-     * Session attribute key for sessions that are using SASL. When set, this will be the SASL namespace in use.
-     */
-    public static final String SASL_IN_PROGRESS = "Sasl.in-progress";
 
     private static Set<String> mechanisms = new HashSet<>();
 
@@ -345,17 +339,35 @@ public class SASLAuthentication {
         return result;
     }
 
-    private static byte[] decodeData(Element doc) throws SaslFailureException {
+    // emptyNull indicates whether a zero-length string is just a zero-length string, or if it's null.
+    // If emptyNull is false, the presence or absence of the element indicates null, whereas
+    // if it's true (for auth in SASL1) there's a "=" to indicate genuine empty strings.
+    private static byte[] decodeData(Element doc, boolean emptyNull) throws SaslFailureException {
         // Decode any data that is provided in the client response.
-        if (doc == null) return null;
+        if (doc == null) return new byte[0];
         final String encoded = doc.getTextTrim();
         final byte[] decoded;
-        if ( encoded == null || encoded.isEmpty()) // java SaslServer cannot handle a null.
+        if ( encoded == null )
         {
             decoded = null;
         }
+        else if ( encoded.isEmpty() )
+        {
+            if (emptyNull)
+            {
+                decoded = null;
+            }
+            else
+            {
+                decoded = new byte[0];
+            }
+        }
         else if ( encoded.equals("=") )
         {
+            if (!emptyNull)
+            {
+                throw new SaslFailureException(Failure.INCORRECT_ENCODING);
+            }
             decoded = new byte[0];
         }
         else
@@ -405,6 +417,8 @@ public class SASLAuthentication {
             }
 
             Element data = doc;
+            boolean emptyNull = false; // This is only true for SASL1 "auth" and "success".
+            SaslServer saslServer = (SaslServer) session.getSessionData( "SaslServer" ); // This may be null at this point.
             switch (elementType)
             {
                 case ABORT:
@@ -434,10 +448,10 @@ public class SASLAuthentication {
                     // Construct the configuration properties
                     final Map<String, Object> props = new HashMap<>();
                     props.put( LocalSession.class.getCanonicalName(), session );
-                    props.put(Sasl.POLICY_NOANONYMOUS, false); // Boolean.toString(!AnonymousSaslServer.ENABLED.getValue()));
+                    props.put(Sasl.POLICY_NOANONYMOUS, Boolean.toString(!AnonymousSaslServer.ENABLED.getValue()));
                     props.put( "com.sun.security.sasl.digest.realm", serverInfo.getXMPPDomain() );
 
-                    SaslServer saslServer = Sasl.createSaslServer( mechanismName, "xmpp", serverName, props, new XMPPCallbackHandler() );
+                    saslServer = Sasl.createSaslServer( mechanismName, "xmpp", serverName, props, new XMPPCallbackHandler() );
                     if ( saslServer == null )
                     {
                         throw new SaslFailureException( Failure.INVALID_MECHANISM, "There is no provider that can provide a SASL server for the desired mechanism and properties." );
@@ -445,8 +459,13 @@ public class SASLAuthentication {
 
                     session.setSessionData( "SaslServer", saslServer );
 
-                    if (elementType == ElementType.AUTHENTICATE) {
+                    if (elementType == ElementType.AUTHENTICATE)
+                    {
                         data = doc.element("initial-response");
+                    }
+                    else
+                    {
+                        emptyNull = true;
                     }
 
                     if ( mechanismName.equals( "DIGEST-MD5" ) )
@@ -454,14 +473,11 @@ public class SASLAuthentication {
                         // RFC2831 (DIGEST-MD5) says the client MAY provide data in the initial response. Java SASL does
                         // not (currently) support this and throws an exception. For XMPP, such data violates
                         // the RFC, so we just strip any initial token.
-                        if (data != null) data.setText( "" );
+                        if (data != null) data = null;
                     }
 
                     // intended fall-through
                 case RESPONSE:
-
-                    saslServer = (SaslServer) session.getSessionData( "SaslServer" );
-
                     if ( saslServer == null )
                     {
                         // Client sends response without a preceding auth?
@@ -469,10 +485,20 @@ public class SASLAuthentication {
                     }
 
                     // Decode any data that is provided in the client response.
-                    final byte[] decoded = decodeData(data);
+                    byte[] decoded = decodeData( data, emptyNull );
+
+                    session.removeSessionData( SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY );
+                    if ( decoded == null )
+                    {
+                        decoded = new byte[0];
+                    }
+                    else if ( decoded.length == 0 )
+                    {
+                        session.setSessionData(SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY, Boolean.TRUE);
+                    }
 
                     // Process client response.
-                    final byte[] challenge = saslServer.evaluateResponse( decoded == null ? new byte[0] : decoded ); // Either a challenge or success data. Note that Java SASL cannot handle a null here.
+                    final byte[] challenge = saslServer.evaluateResponse( decoded ); // Either a challenge or success data. Note that Java SASL cannot handle a null here.
 
                     if ( !saslServer.isComplete() )
                     {
@@ -503,6 +529,7 @@ public class SASLAuthentication {
 
                     authenticationSuccessful( session, saslServer.getAuthorizationID(), challenge, usingSASL2 );
                     session.removeSessionData( "SaslServer" );
+                    session.removeSessionData( SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY );
                     session.setSessionData("SaslMechanism", saslServer.getMechanismName());
                     return Status.authenticated;
 
@@ -726,10 +753,10 @@ public class SASLAuthentication {
                     break;
 
                 case "ANONYMOUS":
-                    //if (!AnonymousSaslServer.ENABLED.getValue()) {
+                    if (!AnonymousSaslServer.ENABLED.getValue()) {
                         Log.trace( "Cannot support '{}' as it has been disabled by configuration.", mechanism );
                         it.remove();
-                    //}
+                    }
                     break;
 
                 case "JIVE-SHAREDSECRET":

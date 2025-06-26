@@ -12,7 +12,6 @@ import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.StringUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +25,6 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.xmpp.packet.JID;
 import org.jivesoftware.util.cache.CacheFactory;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 
 import java.lang.reflect.Field;
@@ -92,7 +90,7 @@ public class SASLAuthenticationTest {
         features = DocumentHelper.createElement("features");
         
         // Create our test SASL server
-        testSaslServer = TestSaslMechanism.registerTestMechanism();
+        testSaslServer = TestSaslMechanism.registerTestMechanism(clientSession);
 
         // Enable our test mechanism
         SASLAuthentication.addSupportedMechanism("TEST-MECHANISM");
@@ -371,9 +369,10 @@ public class SASLAuthenticationTest {
 
         String xml = responseCaptor.getValue();
         Element response = DocumentHelper.parseText(xml).getRootElement();
+        assertNull(clientSession.getSessionData(SASLAuthentication.SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY));
         assertEquals("success", response.getName());
         assertEquals("urn:ietf:params:xml:ns:xmpp-sasl", response.getNamespaceURI());
-        assertEquals("=", response.getText());
+        assertEquals("", response.getText()); // We gave no IR, so no success-data reflected.
 
         // Verify session state
         verify(clientSession).setAuthToken(any(AuthToken.class));

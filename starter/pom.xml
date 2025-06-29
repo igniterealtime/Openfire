@@ -30,15 +30,6 @@
             </plugin>
         </plugins>
 
-        <resources>
-            <resource>
-                <directory>../distribution/src/installer/images</directory>
-                <includes>
-                    <include>*.gif</include>
-                    <include>*.png</include>
-                </includes>
-            </resource>
-        </resources>
     </build>
 
     <dependencies>

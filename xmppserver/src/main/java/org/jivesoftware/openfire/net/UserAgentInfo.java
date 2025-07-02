@@ -16,8 +16,6 @@
 package org.jivesoftware.openfire.net;
 
 import org.dom4j.Element;
-import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.openfire.session.LocalSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

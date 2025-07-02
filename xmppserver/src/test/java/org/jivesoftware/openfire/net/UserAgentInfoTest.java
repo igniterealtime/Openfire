@@ -1,8 +1,7 @@
-package org.jivesoftware.net;
+package org.jivesoftware.openfire.net;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.jivesoftware.openfire.net.UserAgentInfo;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

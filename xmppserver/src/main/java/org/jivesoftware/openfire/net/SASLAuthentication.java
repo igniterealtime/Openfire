@@ -496,7 +496,7 @@ public class SASLAuthentication {
                         // the RFC, so we just strip any initial token.
                         if (data != null) data = null;
                     }
-                    if (session instanceof LocalClientSession) {
+                    if (usingSASL2 && session instanceof LocalClientSession) {
                         Element userAgentElement = doc.element("user-agent");
                         if (userAgentElement != null) {
                             UserAgentInfo userAgentInfo = UserAgentInfo.extract(userAgentElement);

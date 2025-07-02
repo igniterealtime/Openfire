@@ -496,6 +496,16 @@ public class SASLAuthentication {
                         // the RFC, so we just strip any initial token.
                         if (data != null) data = null;
                     }
+                    if (session instanceof LocalClientSession) {
+                        Element userAgentElement = doc.element("user-agent");
+                        if (userAgentElement != null) {
+                            UserAgentInfo userAgentInfo = UserAgentInfo.extract(userAgentElement);
+                            if (userAgentInfo != null) {
+                                // Store the user agent info in the session
+                                session.setSessionData("user-agent-info", userAgentInfo);
+                            }
+                        }
+                    }
 
                     // intended fall-through
                 case RESPONSE:

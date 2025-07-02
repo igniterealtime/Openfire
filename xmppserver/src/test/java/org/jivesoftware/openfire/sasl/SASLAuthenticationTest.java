@@ -8,6 +8,7 @@ import org.jivesoftware.openfire.lockout.LockOutFlag;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.lockout.LockOutProvider;
 import org.jivesoftware.openfire.net.SASLAuthentication;
+import org.jivesoftware.openfire.net.UserAgentInfo;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
@@ -668,5 +669,54 @@ public class SASLAuthenticationTest {
         
         // Verify session state
         verify(clientSession, never()).setAuthToken(any(AuthToken.class));
+    }
+
+    @Test
+    public void testUserAgentCapturedForClientSession() throws Exception {
+        // Setup
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
+            .addAttribute("mechanism", "TEST-MECHANISM");
+        
+        // Add simple user-agent element
+        Element userAgent = auth.addElement("user-agent");
+        userAgent.addElement("software").setText("Test Client");
+
+        // Execute authentication
+        SASLAuthentication.handle(clientSession, auth, true);  // true for SASL2
+        
+        // Verify user agent info was stored in session
+        assertNotNull(clientSession.getSessionData("user-agent-info"));
+}
+
+    @Test
+    public void testNoUserAgentWhenElementMissing() throws Exception {
+        // Setup
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
+            .addAttribute("mechanism", "TEST-MECHANISM");
+
+        // Execute authentication
+        SASLAuthentication.handle(clientSession, auth, true);  // true for SASL2
+        
+        // Verify no user agent info was stored
+        assertNull(clientSession.getSessionData("user-agent-info"));
+    }
+
+    @Test
+    public void testNoUserAgentForServerSession() throws Exception {
+        // Setup
+        Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
+            .addAttribute("mechanism", "TEST-MECHANISM");
+        
+        // Add user-agent element
+        Element userAgent = auth.addElement("user-agent");
+        userAgent.addElement("software").setText("Test Server");
+
+        // Execute authentication
+        SASLAuthentication.handle(serverSession, auth, true);  // true for SASL2
+        
+        // Verify no user agent info was stored
+        assertNull(serverSession.getSessionData("user-agent-info"));  // Fixed to check serverSession instead of clientSession
     }
 }

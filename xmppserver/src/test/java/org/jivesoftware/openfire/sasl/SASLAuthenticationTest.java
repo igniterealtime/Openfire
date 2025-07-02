@@ -8,7 +8,6 @@ import org.jivesoftware.openfire.lockout.LockOutFlag;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.lockout.LockOutProvider;
 import org.jivesoftware.openfire.net.SASLAuthentication;
-import org.jivesoftware.openfire.net.UserAgentInfo;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;

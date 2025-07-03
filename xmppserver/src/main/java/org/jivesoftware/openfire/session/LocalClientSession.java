@@ -18,10 +18,7 @@ package org.jivesoftware.openfire.session;
 
 import org.dom4j.*;
 import org.dom4j.io.XMPPPacketReader;
-import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.StreamID;
-import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterManager;
@@ -40,6 +37,7 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -1018,5 +1016,66 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             ", peer address='" + peerAddress +'\'' +
             ", presence='" + presence.toXML() + '\'' +
             '}';
+    }
+
+    public PacketError.Condition bindResource(String resource) {
+        final RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
+        if (authToken.isAnonymous()) {
+            // User used ANONYMOUS SASL so initialize the session as an anonymous login
+            this.setAnonymousAuth();
+        } else {
+            String username = authToken.getUsername().toLowerCase();
+            // If a session already exists with the requested JID, then check to see
+            // if we should kick it off or refuse the new connection
+            final JID desiredJid = new JID(username, serverName, resource, true);
+            ClientSession oldSession = routingTable.getClientRoute(desiredJid);
+            if (oldSession != null) {
+                try {
+                    if (oldSession.isClosed()) {
+                        // If there's an old session that's already closed, then this could be a detached session. The
+                        // new session does not conflict with the old one, but the old one needs to be cleaned up to
+                        // prevent data consistency issues (OF-3044).
+                        Log.debug("Instructing all cluster nodes to remove any detached session for '{}' as a new session is binding to that resource.", desiredJid);
+                        CacheFactory.doSynchronousClusterTask(new ClientSessionTask(desiredJid, RemoteSessionTask.Operation.removeDetached), true);
+                    }
+                    else
+                    {
+                        Log.debug("Found a pre-existing, non-closed session for '{}'. Performing resource conflict resolution.", desiredJid);
+                        int conflictLimit = sessionManager.getConflictKickLimit();
+                        if (conflictLimit == SessionManager.NEVER_KICK) {
+                            Log.debug("Conflict resolution configuration is 'NEVER KICK'. Rejecting the bind request with error condition 'conflict'.");
+                            return PacketError.Condition.conflict;
+                        }
+
+                        int conflictCount = oldSession.incrementConflictCount();
+                        if (conflictCount > conflictLimit) {
+                            Log.debug("Kick out an old connection that is conflicting with a new one. Old session: {}", oldSession);
+                            StreamError error = new StreamError(StreamError.Condition.conflict);
+                            oldSession.deliverRawText(error.toXML());
+                            oldSession.close(); // When living on a remote cluster node, this will prevent that session from becoming 'resumable'.
+
+                            // OF-1923: As the session is now replaced, the old session will never be resumed.
+                            if (oldSession instanceof LocalClientSession) {
+                                // As the new session has already replaced the old session, we're not explicitly closing
+                                // the old session again, as that would cause the state of the new session to be affected.
+                                sessionManager.removeDetached((LocalClientSession) oldSession);
+                            }
+                        } else {
+                            Log.debug("Conflict resolution configuration does not allow kicking of old session (yet). Conflict count: {}, conflict limit: {}. Rejecting the bind request with error condition 'conflict'.", conflictCount, conflictLimit);
+                            return PacketError.Condition.conflict;
+                        }
+                    }
+                }
+                catch (Exception e) {
+                    Log.error("Error during login", e);
+                    return PacketError.Condition.internal_server_error;
+                }
+            }
+            // If the connection was not refused due to conflict, log the user in
+            setAuthToken(authToken, resource);
+
+            return null;
+        }
+
     }
 }

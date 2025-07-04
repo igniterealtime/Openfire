@@ -67,6 +67,7 @@ import org.jivesoftware.openfire.transport.TransportHandler;
 import org.jivesoftware.openfire.update.UpdateManager;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
+import org.jivesoftware.openfire.vcard.xep0398.UserAvatarToVCardConvertor;
 import org.jivesoftware.openfire.vcard.VCardManager;
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.CacheFactory;
@@ -800,6 +801,7 @@ public class XMPPServer {
         loadModule(SoftwareVersionManager.class.getName());
         loadModule(SoftwareServerVersionManager.class.getName());
         loadModule(CertificateExpiryChecker.class.getName());
+        loadModule(UserAvatarToVCardConvertor.class.getName());
 
         // Load this module always last since we don't want to start listening for clients
         // before the rest of the modules have been started
@@ -1732,6 +1734,17 @@ public class XMPPServer {
      */
     public CertificateExpiryChecker getCertificateExpiryChecker() {
         return (CertificateExpiryChecker) modules.get(CertificateExpiryChecker.class);
+    }
+
+    /**
+     * Returns the <code>UserAvatarToVCardConvertor</code> registered with this server. The
+     * <code>UserAvatarToVCardConvertor</code> was registered with the server as a module while starting up
+     * the server.
+     *
+     * @return the <code>UserAvatarToVCardConvertor</code> registered with this server.
+     */
+    public UserAvatarToVCardConvertor getUserAvatarToVCardConvertor() {
+        return (UserAvatarToVCardConvertor) modules.get(UserAvatarToVCardConvertor.class);
     }
 
     /**

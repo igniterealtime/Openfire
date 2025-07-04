@@ -245,6 +245,9 @@ public class VCardManager extends BasicModule implements ServerFeaturesProvider 
             vCardElement = provider.loadVCard(username);
             if (vCardElement != null) {
                 vcardCache.put(username, (DefaultElement) vCardElement);
+
+                // Check if the vCard-to-PEP conversion needs to happen. This allows conversion for VCards that are modified outside Openfire.
+                XMPPServer.getInstance().getUserAvatarToVCardConvertor().attemptPepUpdate(username, vCardElement);
             }
         }
         return vCardElement;

@@ -111,6 +111,12 @@
     </servlet>
 
     <servlet>
+        <servlet-name>VCardPhotoServlet</servlet-name>
+        <servlet-class>org.jivesoftware.util.VCardPhotoServlet</servlet-class>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet>
         <servlet-name>FaviconServlet</servlet-name>
         <servlet-class>org.jivesoftware.util.FaviconServlet</servlet-class>
         <load-on-startup>1</load-on-startup>
@@ -136,6 +142,11 @@
     <servlet-mapping>
         <servlet-name>PluginServlet</servlet-name>
         <url-pattern>/plugins/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>VCardPhotoServlet</servlet-name>
+        <url-pattern>/user/vcard/photo/</url-pattern>
     </servlet-mapping>
 
     <servlet-mapping>

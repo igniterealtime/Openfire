@@ -74,6 +74,7 @@ public abstract class StanzaHandler {
     // Flag that indicates that the client requested to be authenticated. Once the
     // authentication process is over the value will return to false.
     protected boolean startedSASL = false;
+    protected boolean usingSASL2 = false;
     /**
      * SASL status based on the last SASL interaction
      */
@@ -202,10 +203,19 @@ public abstract class StanzaHandler {
             // User is trying to authenticate using SASL
             startedSASL = true;
             // Process authentication stanza
-            saslStatus = SASLAuthentication.handle(session, doc);
+            saslStatus = SASLAuthentication.handle(session, doc, usingSASL2);
+        } else if ("authenticate".equals(tag)) {
+                // User is trying to authenticate using SASL2.
+                startedSASL = true;
+                usingSASL2 = true;
+                saslStatus = SASLAuthentication.handle(session, doc, usingSASL2);
         } else if (startedSASL && "response".equals(tag) || "abort".equals(tag)) {
             // User is responding to SASL challenge. Process response
-            saslStatus = SASLAuthentication.handle(session, doc);
+            saslStatus = SASLAuthentication.handle(session, doc, usingSASL2);
+            if (saslStatus == SASLAuthentication.Status.failed) {
+                startedSASL = false;
+                usingSASL2 = false;
+            }
         }
         else if ("compress".equals(tag)) {
             // Client is trying to initiate compression
@@ -352,7 +362,7 @@ public abstract class StanzaHandler {
                     for (Element element : elements){
                         session.setSoftwareVersionData(element.getName(), element.getStringValue());
                     }
-                }    
+                }
             } catch (Exception e) {
                 Log.error("Unexpected exception while processing IQ Version stanza from '{}'", session.getAddress(), e);
             }
@@ -490,10 +500,7 @@ public abstract class StanzaHandler {
         document.getRootElement().add(features);
 
         // Include available SASL Mechanisms
-        final Element mechanismsElement=SASLAuthentication.getSASLMechanisms(session);
-        if (mechanismsElement!=null) {
-        	features.add(mechanismsElement);
-        }
+        SASLAuthentication.addSASLMechanisms(features, session);
 
         // Include specific features such as auth and register for client sessions
         final List<Element> specificFeatures = session.getAvailableStreamFeatures();
@@ -592,12 +599,8 @@ public abstract class StanzaHandler {
         document.getRootElement().add(features);
 
         // Include SASL mechanisms only if client has not been authenticated
-        if (!session.isAuthenticated()) {
-            final Element saslMechanisms = SASLAuthentication.getSASLMechanisms(session);
-            if (saslMechanisms != null) {
-                features.add(saslMechanisms);
-            }
-        }
+        SASLAuthentication.addSASLMechanisms(features, session);
+
         // Include specific features such as resource binding and session establishment for client sessions
         final List<Element> specificFeatures = session.getAvailableStreamFeatures();
         if (specificFeatures != null) {

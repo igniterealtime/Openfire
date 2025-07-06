@@ -24,16 +24,6 @@ case "$1" in
 		chmod -R o-rwx /var/lib/openfire
 		chmod -R o-rwx /var/log/openfire
 		chmod -R o-rwx /etc/openfire
-
-    ;;
-
-    abort-upgrade|abort-remove|abort-deconfigure)
-
-    ;;
-
-    *)
-        echo "postinst called with unknown argument \`$1'" >&2
-        exit 1
     ;;
 esac
 

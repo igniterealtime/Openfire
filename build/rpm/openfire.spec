@@ -77,8 +77,8 @@ rm -rf $RPM_BUILD_ROOT%{homedir}/resources/nativeAuth/win32-x86
 rm -f $RPM_BUILD_ROOT%{homedir}/lib/*.dll
 rm -f $RPM_BUILD_ROOT%{homedir}/conf/openfire-demoboot.xml
 rm -f $RPM_BUILD_ROOT%{homedir}/dist/etc/ufw/applications.d/openfire
-rm -f $RPM_BUILD_ROOT%{homedir}/dist/usr/lib/systemd/system/openfire.service
-rm -f $RPM_BUILD_ROOT%{homedir}/dist/usr/lib/systemd/system/openfire.slice
+rm -f $RPM_BUILD_ROOT%{homedir}/dist/lib/systemd/system/openfire.service
+rm -f $RPM_BUILD_ROOT%{homedir}/dist/lib/systemd/system/openfire.slice
 
 %clean
 rm -rf $RPM_BUILD_ROOT

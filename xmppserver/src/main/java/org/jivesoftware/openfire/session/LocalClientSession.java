@@ -1073,9 +1073,9 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             }
             // If the connection was not refused due to conflict, log the user in
             setAuthToken(authToken, resource);
-
-            return null;
         }
 
+        // All done no error.
+        return null;
     }
 }

@@ -117,7 +117,9 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
             DbConnectionManager.closeConnection(pstmt, con);
         }
         try {
-            dataSource.close();
+            if (dataSource != null) {
+                dataSource.close();
+            }
         } catch (final Exception e) {
             Log.error("Unable to close the data source", e);
         }

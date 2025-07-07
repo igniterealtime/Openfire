@@ -72,6 +72,7 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
             }
         } catch (IOException e) {
             Log.error("Unable to create 'embedded-db' directory", e);
+            throw new RuntimeException("Unable to create 'embedded-db' directory", e);
         }
 
         serverURL = "jdbc:hsqldb:" + databaseDir.resolve("openfire");

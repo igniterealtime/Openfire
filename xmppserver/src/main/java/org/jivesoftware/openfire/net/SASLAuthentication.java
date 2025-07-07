@@ -34,6 +34,8 @@ import org.jivesoftware.openfire.sasl.Failure;
 import org.jivesoftware.openfire.sasl.JiveSharedSecretSaslServer;
 import org.jivesoftware.openfire.sasl.SaslFailureException;
 import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CertificateManager;
@@ -565,6 +567,10 @@ public class SASLAuthentication {
                                 session.setSessionData("user-agent-info", userAgentInfo);
                             }
                         }
+                        Bind2Request bind2Request = Bind2Request.from(doc);
+                        if (bind2Request != null) {
+                            session.setSessionData("bind2-request", bind2Request);
+                        }
                     }
 
                     // intended fall-through
@@ -733,6 +739,31 @@ public class SASLAuthentication {
     }
 
     /**
+     * Generates a resource string using the user agent information or defaults.
+     *
+     * @param userAgentInfo The user agent information, can be null
+     * @return A resource string containing the user agent tag (or "Openfire") followed by a UUID
+     */
+    private static String generateResourceString(Bind2Request bind2Request, UserAgentInfo userAgentInfo) {
+        StringBuilder resource = new StringBuilder();
+
+        // Add the client tag if available
+        if (bind2Request.getClientTag() != null && !bind2Request.getClientTag().isEmpty()) {
+            resource.append(bind2Request.getClientTag());
+            resource.append('/');
+        }
+
+        // Add the client's UUID if available, otherwise generate a new one
+        if (userAgentInfo != null && userAgentInfo.getId() != null) {
+            resource.append(userAgentInfo.getId());
+        } else {
+            resource.append(UUID.randomUUID().toString());
+        }
+
+        return resource.toString();
+    }
+
+    /**
      * Processes a successful SASL authentication.
      *
      * For client sessions, generates an authentication token. For inbound server sessions, marks the domain as
@@ -787,6 +818,60 @@ public class SASLAuthentication {
         } else {
             sendElement(session, "success", successData, false);
         }
+
+        if (usingSASL2) {
+            if (session instanceof LocalClientSession clientSession) {
+                final Bind2Request bind2Request = (Bind2Request) session.getSessionData("bind2-request");
+                if (bind2Request != null && clientSession.getStatus() != Session.Status.AUTHENTICATED) {
+                    session.setSessionData("bind2-request", null);
+                    final UserAgentInfo userAgentInfo = (UserAgentInfo) session.getSessionData("user-agent-info");
+                    final String resource = generateResourceString(bind2Request, userAgentInfo);
+                    final AuthToken authToken = clientSession.getAuthToken();
+                    final byte[] finalSuccessData = successData;
+                    SessionManager.getInstance().bindResource(clientSession, authToken, resource)
+                        .whenComplete((result, throwable) -> {
+                            final boolean bound = throwable == null && result == SessionManager.BindResult.BOUND;
+                            final Element success = buildSasl2SuccessElement(finalSuccessData, username, bound ? resource : null);
+                            if (bound) {
+                                bind2Request.processFeatureRequests(session, success);
+                            }
+                            session.deliverRawText(success.asXML());
+                            if (bound) {
+                                SessionEventDispatcher.dispatchEvent(session, SessionEventDispatcher.EventType.resource_bound);
+                            }
+                        });
+                    return; // Response is sent asynchronously from the completion stage.
+                }
+            }
+            // No Bind2 request, or session already authenticated: send <success/> synchronously without <bound/>.
+            final Element success = buildSasl2SuccessElement(successData, username, null);
+            session.deliverRawText(success.asXML());
+        } else {
+            sendElement(session, "success", successData, usingSASL2);
+        }
+    }
+
+    /**
+     * Builds a SASL2 &lt;success/&gt; element.
+     *
+     * @param successData optional mechanism-specific success data (can be null).
+     * @param username the authorized identity.
+     * @param resource the bound resource, or null if no resource was bound.
+     * @return the &lt;success/&gt; element.
+     */
+    private static Element buildSasl2SuccessElement(byte[] successData, String username, String resource) {
+        final Element success = DocumentHelper.createElement(new QName("success", new Namespace("", SASL2_NAMESPACE)));
+        if (successData != null && successData.length > 0) {
+            final String data_b64 = Base64.getEncoder().encodeToString(successData).trim();
+            success.addElement("additional-data").setText(data_b64);
+        }
+        final StringBuilder authId = new StringBuilder(username != null ? username : "");
+        authId.append('@').append(XMPPServer.getInstance().getServerInfo().getXMPPDomain());
+        if (resource != null) {
+            authId.append('/').append(resource);
+        }
+        success.addElement("authorization-identifier").setText(authId.toString());
+        return success;
     }
 
     private static void authenticationFailed(LocalSession session, Failure failure, boolean usingSASL2) {

@@ -551,6 +551,10 @@ public class SASLAuthentication {
                                 session.setSessionData("user-agent-info", userAgentInfo);
                             }
                         }
+                        Bind2Request bind2Request = Bind2Request.from(doc);
+                        if (bind2Request != null) {
+                            session.setSessionData("bind2-request", bind2Request);
+                        }
                     }
 
                     // intended fall-through
@@ -695,6 +699,31 @@ public class SASLAuthentication {
     }
 
     /**
+     * Generates a resource string using the user agent information or defaults.
+     *
+     * @param userAgentInfo The user agent information, can be null
+     * @return A resource string containing the user agent tag (or "Openfire") followed by a UUID
+     */
+    private static String generateResourceString(Bind2Request bind2Request, UserAgentInfo userAgentInfo) {
+        StringBuilder resource = new StringBuilder();
+
+        // Add the client tag if available
+        if (bind2Request.getClientTag() != null && !bind2Request.getClientTag().isEmpty()) {
+            resource.append(bind2Request.getClientTag());
+            resource.append('/');
+        }
+
+        // Add the client's UUID if available, otherwise generate a new one
+        if (userAgentInfo != null && userAgentInfo.getId() != null) {
+            resource.append(userAgentInfo.getId());
+        } else {
+            resource.append(UUID.randomUUID().toString());
+        }
+
+        return resource.toString();
+    }
+
+    /**
      * Processes a successful SASL authentication.
      *
      * For client sessions, generates an authentication token. For inbound server sessions, marks the domain as
@@ -716,6 +745,18 @@ public class SASLAuthentication {
             return;
         }
         if (usingSASL2) {
+            String resource = null;
+            if (session instanceof LocalClientSession) {
+                LocalClientSession clientSession = (LocalClientSession) session;
+                Bind2Request bind2Request = (Bind2Request) session.getSessionData("bind2-request");
+                if (bind2Request != null) {
+                    session.setSessionData("bind2-request", null);
+                    UserAgentInfo userAgentInfo = (UserAgentInfo) session.getSessionData("user-agent-info");
+                    resource = generateResourceString(bind2Request, userAgentInfo);
+                    clientSession.bindResource(resource);
+                }
+            }
+
             final Element success = DocumentHelper.createElement( new QName( "success", new Namespace( "", SASL2_NAMESPACE ) ) );
             if (successData != null && successData.length > 0) {
                 String data_b64 = Base64.getEncoder().encodeToString(successData).trim();
@@ -723,11 +764,16 @@ public class SASLAuthentication {
                 additionalData.setText(data_b64);
             }
             Element authId = success.addElement("authorization-identifier");
+            StringBuilder sb = new StringBuilder(username);
             if (session instanceof ClientSession) {
-                authId.setText(username + '@' + XMPPServer.getInstance().getServerInfo().getXMPPDomain());
-            } else {
-                authId.setText(username);
+                sb.append("@");
+                sb.append(XMPPServer.getInstance().getServerInfo().getXMPPDomain());
+                if (resource != null) {
+                    sb.append("/");
+                    sb.append(resource);
+                }
             }
+            authId.setText(sb.toString());
             session.deliverRawText(success.asXML());
         } else {
             sendElement(session, "success", successData, usingSASL2);

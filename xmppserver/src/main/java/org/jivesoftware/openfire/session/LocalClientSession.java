@@ -1100,6 +1100,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             setAuthToken(authToken, resource);
         }
 
+        // All done no error.
         return null;
     }
 }

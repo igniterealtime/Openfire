@@ -18,6 +18,7 @@ package org.jivesoftware.openfire.sasl;
 
 import org.dom4j.Element;
 import org.dom4j.DocumentHelper;
+import org.dom4j.Namespace;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.XMPPServerInfo;
@@ -707,6 +708,45 @@ public class SASLIntegrationTest {
         Element response = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
         if (!"success".equals(response.getName())) { throw new IllegalStateException("Test setup issue: if authentication does not succeed, this test assertion does not prove anything."); };
         assertNull(serverSession.getSessionData("user-agent-info"));
+    }
+
+    @Test
+    public void testAuthenticationWithSASL2AndBind2IncludesResource() throws Exception {
+        // Setup
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
+            .addAttribute("mechanism", "TEST-MECHANISM");
+
+        // Add bind2 element
+        Element bind = auth.addElement(new QName("bind", new Namespace("", "urn:xmpp:bind:0")));
+        Element tag = bind.addElement("tag");
+        tag.setText("MyClient");
+
+        // Execute - Client sends auth request
+        SASLAuthentication.handle(clientSession, auth, true);
+
+        // Verify server sends success with SASL2 format
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).deliverRawText(responseCaptor.capture());
+        ArgumentCaptor<String> bindCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).bindResource(bindCaptor.capture());
+
+        Element response = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        assertEquals("success", response.getName());
+        assertEquals("urn:xmpp:sasl:2", response.getNamespaceURI());
+
+        // Verify authorization-identifier is present and includes a resource
+        Element authId = response.element("authorization-identifier");
+        assertNotNull(authId, "SASL2 success must include authorization-identifier");
+        String jid = authId.getText();
+        assertTrue(jid.contains("@"), "Authorization ID should be a  JID");
+        assertTrue(jid.contains("/"), "Authorization ID should include a resource part");
+        assertTrue(jid.contains("MyClient"), "Resource should include client tag");
+        assertTrue(jid.endsWith("/" + responseCaptor.getValue()), "Authorization ID should end with the resource");
+
+        // Verify session state
+        verify(clientSession).setAuthToken(any(AuthToken.class));
+        assertFalse(clientSession.isAnonymousUser());
     }
 
     @Test

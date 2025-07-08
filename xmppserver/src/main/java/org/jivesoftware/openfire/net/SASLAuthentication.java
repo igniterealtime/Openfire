@@ -350,7 +350,10 @@ public class SASLAuthentication {
         }
         if ( usingSASL2 )
         {
-            // TODO :  Add Bind2 features here when implemented
+            Element inlineElement = result.addElement("inline");
+            Element bind2 = inlineElement.addElement(new QName("bind", new Namespace("", "urn:xmpp:bind:0")));
+            // Add Bind2 features here.
+            // Element sm = inlineElement.addElement(...);
         }
 
         // OF-2072: Return null instead of an empty element, if so configured.

@@ -473,18 +473,21 @@ public class IQOwnerHandler {
             room.send(presence, room.getSelfRepresentation());
         }
 
-        // XEP-0045 section 10.2.1 "Notification of Configuration Changes: A room MUST send notification to all occupants
-        // when the room configuration changes in a way that has an impact on the privacy or security profile of the room.
-        if (!statusCodes.isEmpty()) {
-            final Message message = new Message();
-            message.setFrom(room.getJID());
-            message.setTo(room.getJID());
-            message.setType(Message.Type.groupchat);
-            final Element x = message.addChildElement("x", "http://jabber.org/protocol/muc#user");
-            statusCodes.forEach(code -> x.addElement("status").addAttribute("code", String.valueOf(code)));
-
-            room.send(message, room.getSelfRepresentation());
+        // XEP-0045 section 10.2.1 Notification of Configuration Changes: "A room MUST send notification to all
+        // occupants when the room configuration changes in a way that has an impact on the privacy or security profile
+        // of the room. [...] For any other configuration change, the room SHOULD send status code 104 so that
+        // interested occupants can retrieve the updated room configuration if desired."
+        if (statusCodes.isEmpty()) {
+            statusCodes.add(104); // This assumes that any time a form is submitted, it applies at least one change.
         }
+        final Message message = new Message();
+        message.setFrom(room.getJID());
+        message.setTo(room.getJID());
+        message.setType(Message.Type.groupchat);
+        final Element x = message.addChildElement("x", "http://jabber.org/protocol/muc#user");
+        statusCodes.forEach(code -> x.addElement("status").addAttribute("code", String.valueOf(code)));
+
+        room.send(message, room.getSelfRepresentation());
     }
 
     private Element generateProbeResult(Locale preferredLocale) {

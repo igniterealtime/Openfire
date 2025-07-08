@@ -143,12 +143,12 @@ public class Bind2Request {
             String hmacHex = StringUtils.encodeHex(Arrays.copyOf(hmacResult, 8));
 
             // Construct final resource string
-            return resource.toString() + "/" + hmacHex;
+            return resource.toString() + hmacHex;
 
         } catch (SaslException e) {
             // Fall back to UUID in case of HMAC computation failure
             Log.error("Failed to compute HMAC for resource string", e);
-            return resource.toString() + "/" + UUID.randomUUID().toString();
+            return resource.toString() + UUID.randomUUID().toString();
         }
     }
 }

@@ -26,6 +26,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
+import org.jivesoftware.openfire.auth.ScramUtils;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.keystore.TrustStore;
 import org.jivesoftware.openfire.lockout.LockOutManager;
@@ -699,31 +700,6 @@ public class SASLAuthentication {
     }
 
     /**
-     * Generates a resource string using the user agent information or defaults.
-     *
-     * @param userAgentInfo The user agent information, can be null
-     * @return A resource string containing the user agent tag (or "Openfire") followed by a UUID
-     */
-    private static String generateResourceString(Bind2Request bind2Request, UserAgentInfo userAgentInfo) {
-        StringBuilder resource = new StringBuilder();
-
-        // Add the client tag if available
-        if (bind2Request.getClientTag() != null && !bind2Request.getClientTag().isEmpty()) {
-            resource.append(bind2Request.getClientTag());
-            resource.append('/');
-        }
-
-        // Add the client's UUID if available, otherwise generate a new one
-        if (userAgentInfo != null && userAgentInfo.getId() != null) {
-            resource.append(userAgentInfo.getId());
-        } else {
-            resource.append(UUID.randomUUID().toString());
-        }
-
-        return resource.toString();
-    }
-
-    /**
      * Processes a successful SASL authentication.
      *
      * For client sessions, generates an authentication token. For inbound server sessions, marks the domain as
@@ -752,7 +728,7 @@ public class SASLAuthentication {
                 if (bind2Request != null) {
                     session.setSessionData("bind2-request", null);
                     UserAgentInfo userAgentInfo = (UserAgentInfo) session.getSessionData("user-agent-info");
-                    resource = generateResourceString(bind2Request, userAgentInfo);
+                    resource = bind2Request.generateResourceString(userAgentInfo);
                     clientSession.bindResource(resource);
                 }
             }

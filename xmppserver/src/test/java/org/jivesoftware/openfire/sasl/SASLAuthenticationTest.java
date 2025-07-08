@@ -752,7 +752,7 @@ public class SASLAuthenticationTest {
         assertTrue(jid.contains("@"), "Authorization ID should be a  JID");
         assertTrue(jid.contains("/"), "Authorization ID should include a resource part");
         assertTrue(jid.contains("MyClient"), "Resource should include client tag");
-        assertTrue(jid.endsWith("/" + responseCaptor.getValue()), "Authorization ID should end with the resource");
+        assertTrue(jid.endsWith("/" + bindCaptor.getValue()), "Authorization ID should end with the resource");
         
         // Verify session state
         verify(clientSession).setAuthToken(any(AuthToken.class));

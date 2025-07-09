@@ -1,4 +1,4 @@
-.PHONY: all clean dbkg eclipse
+.PHONY: all clean dbkg
 
 all: build-openfire
 
@@ -18,14 +18,3 @@ dist:
 
 plugins:
 	./mvnw package --batch-mode --no-transfer-progress
-
-eclipse: .settings .classpath .project
-
-.settings:
-	ln -s build/eclipse/settings .settings
-
-.classpath:
-	ln -s build/eclipse/classpath .classpath
-
-.project:
-	ln -s build/eclipse/project .project

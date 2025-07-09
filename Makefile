@@ -1,4 +1,4 @@
-.PHONY: all clean dbkg
+.PHONY: all clean
 
 all: build-openfire
 

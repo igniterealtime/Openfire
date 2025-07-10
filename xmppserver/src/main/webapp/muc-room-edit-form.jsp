@@ -35,6 +35,8 @@
 <%@ page import="org.jivesoftware.openfire.muc.spi.MUCPersistenceManager" %>
 <%@ page import="org.jivesoftware.openfire.muc.Role" %>
 <%@ page import="java.nio.charset.StandardCharsets" %>
+<%@ page import="org.jivesoftware.openfire.vcard.VCardBean" %>
+<%@ page import="org.jivesoftware.openfire.vcard.VCardManager" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -357,6 +359,13 @@
     }
     roomName = roomName == null ? "" : roomName;
 
+    if (roomJID != null) {
+    final Element vCardElement = VCardManager.getInstance().getVCard(roomJID.toString());
+        VCardBean vCardBean = new VCardBean();
+        vCardBean.loadFromElement(vCardElement);
+        pageContext.setAttribute("vCard", vCardBean);
+    }
+
     pageContext.setAttribute("errors", errors);
     pageContext.setAttribute("create", create);
     pageContext.setAttribute("success", success);
@@ -408,6 +417,70 @@
 
         <meta name="extraParams" content="<%= "roomJID="+(roomJID != null ? URLEncoder.encode(roomJID.toBareJID(), StandardCharsets.UTF_8) : "")+"&create="+create %>"/>
         <meta name="helpPage" content="view_group_chat_room_summary.html"/>
+        <style>
+            /* Inspired by https://www.w3schools.com/howto/howto_css_modal_images.asp */
+            #photo {
+                border-radius: 2px;
+                cursor: pointer;
+                transition: 0.3s;
+            }
+
+            #photo:hover {opacity: 0.7;}
+
+            .modal {
+                display: none; /* Hidden by default */
+                position: fixed; /* Stay in place */
+                z-index: 1; /* Sit on top */
+                padding-top: 100px; /* Location of the box */
+                left: 0;
+                top: 0;
+                width: 100%; /* Full width */
+                height: 100%; /* Full height */
+                overflow: auto; /* Enable scroll if needed */
+                background-color: rgb(0,0,0); /* Fallback color */
+                background-color: rgba(0,0,0,0.9); /* Black w/ opacity */
+            }
+
+            /* Modal Content (Image) */
+            .modal-content {
+                margin: auto;
+                display: block;
+                width: 80%;
+                max-width: 700px;
+                animation-name: zoom;
+                animation-duration: 0.6s;
+            }
+
+            @keyframes zoom {
+                from {transform:scale(0)}
+                to {transform:scale(1)}
+            }
+
+            /* The Close Button */
+            .close {
+                position: absolute;
+                top: 15px;
+                right: 35px;
+                color: #f1f1f1;
+                font-size: 40px;
+                font-weight: bold;
+                transition: 0.3s;
+            }
+
+            .close:hover,
+            .close:focus {
+                color: #bbb;
+                text-decoration: none;
+                cursor: pointer;
+            }
+
+            /* 100% Image Width on Smaller Screens */
+            @media only screen and (max-width: 700px) {
+                .modal-content {
+                    width: 100%;
+                }
+            }
+        </style>
     </head>
     <body>
 
@@ -473,15 +546,17 @@
             </p>
             <div class="jive-table">
                 <table>
-                    <thead>
                     <tr>
                         <th scope="col"><fmt:message key="muc.room.edit.form.room_id" /></th>
                         <th scope="col"><fmt:message key="muc.room.edit.form.users" /></th>
                         <th scope="col"><fmt:message key="muc.room.edit.form.on" /></th>
                         <th scope="col"><fmt:message key="muc.room.edit.form.modified" /></th>
+                        <c:if test="${not empty vCard.photo}">
+                            <td style="width: 5em;" rowspan="2">
+                                <img id="photo" src="/user/vcard/photo/?username=${admin:urlEncode(roomJID)}" alt="${admin:escapeHTMLTags(room.name)}" style="height: 4em" onclick="document.getElementById('photoModal').style.display='block';"/>
+                            </td>
+                        </c:if>
                     </tr>
-                    </thead>
-                    <tbody>
                     <tr>
                         <td>
                             <c:out value="${room.name}"/>
@@ -514,7 +589,6 @@
                             <fmt:formatDate value="${room.modificationDate}" dateStyle="medium" timeStyle="short"/>
                         </td>
                     </tr>
-                    </tbody>
                 </table>
             </div>
             <br>
@@ -694,6 +768,11 @@
     </table>
     <span class="jive-description">* <fmt:message key="muc.room.edit.form.required_field" /> </span>
 </form>
+
+<div id="photoModal" class="modal">
+    <span class="close" onclick="document.getElementById('photoModal').style.display='none';">&times;</span>
+    <img class="modal-content" src="/user/vcard/photo/?username=${admin:urlEncode(roomJID)}" alt="${admin:escapeHTMLTags(room.name)}"/>
+</div>
 
     </body>
 </html>

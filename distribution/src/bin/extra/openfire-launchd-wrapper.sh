@@ -6,7 +6,7 @@ function shutdown()
 {
 	date
 	echo "Shutting down Openfire"
-    kill -s TERM `ps auxww | grep -v wrapper | awk '/openfire/ && !/awk/ {print $2}'`
+	kill -s TERM `ps auxww | grep -v wrapper | awk '/openfire/ && !/awk/ {print $2}'`
 }
 
 date

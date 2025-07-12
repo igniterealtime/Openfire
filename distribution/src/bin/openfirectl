@@ -3,8 +3,7 @@
 # openfirectl	Stops and starts the Openfire XMPP service.
 #
 # chkconfig: 2345 99 1
-# description: Openfire is an XMPP server, which is a server that facilitates \
-#              XML based communication, such as chat.
+# description: Openfire is an XMPP server
 # config: /opt/openfire/conf/openfire.xml
 # config: /etc/sysconfig/openfire
 # pidfile: /var/run/openfire.pid
@@ -15,7 +14,6 @@
 # chkconfig available, you can copy/symlink it into your init.d directory
 # and chkconfig --add it.  It's recommended to name it openfire instead of
 # openfirectl in the init.d directory.
-#
 
 #####
 # Begin setup work
@@ -55,8 +53,8 @@ if [ -z "$OPENFIRE_HOME" -o ! -d "$OPENFIRE_HOME" ]; then
 	else
 		echo "Could not find Openfire installation under /opt, /usr/share, or /usr/local."
 		if [ -f "/etc/sysconfig" ]; then
-	                echo "Please specify the Openfire installation location as variable OPENFIRE_HOME"
-	                echo "in /etc/sysconfig/openfire."
+			echo "Please specify the Openfire installation location as variable OPENFIRE_HOME"
+			echo "in /etc/sysconfig/openfire."
 		fi
 		exit 1
 	fi
@@ -124,22 +122,16 @@ OPENFIRE_RUN_CMD="${JAVACMD} -server -Djdk.tls.ephemeralDHKeySize=matched -Djsse
 start() {
 	OLD_PWD=`pwd`
 	cd $OPENFIRE_LOGDIR
-
-    # Start daemons.
-    echo "Starting openfire: \c"
-
+	# Start daemons.
+	echo "Starting openfire: \c"
 	su - $OPENFIRE_USER -c "nohup $OPENFIRE_RUN_CMD > $OPENFIRE_LOGDIR/nohup.out 2>&1 &"
 	RETVAL=$?
-
 	if [ $RETVAL -eq 0 -a ! -z "$OPENFIRE_PIDFILE" ]; then
-	    PID=`ps ax --width=1000 | grep openfire | grep startup.jar | awk '{print $1}'`
+		PID=`ps ax --width=1000 | grep openfire | grep startup.jar | awk '{print $1}'`
 		echo $PID > $OPENFIRE_PIDFILE
 	fi
-
 	echo
-
 	[ $RETVAL -eq 0 -a -d /var/lock/subsys ] && touch /var/lock/subsys/openfire
-
 	sleep 1 # allows prompt to return
 	cd $OLD_PWD
 }
@@ -147,11 +139,9 @@ start() {
 stop() {
 	# Stop daemons.
 	echo "Shutting down openfire: \c"
-
 	[ -f "$OPENFIRE_PIDFILE" ] && kill `cat $OPENFIRE_PIDFILE`
 	RETVAL=$?
 	echo
-
 	[ $RETVAL -eq 0 -a -f "$OPENFIRE_PIDFILE" ] && rm -f $OPENFIRE_PIDFILE
 	[ $RETVAL -eq 0 -a -f "/var/lock/subsys/openfire" ] && rm -f /var/lock/subsys/openfire
 }
@@ -172,12 +162,12 @@ status() {
 	if [ "$?" = "1" ]; then
 		echo "openfire is not running"
 		RETVAL=3
-	else 
+	else
 		ps -p $pid > /dev/null 2>&1
-		if [ "$?" = "0" ]; then 
+		if [ "$?" = "0" ]; then
 			echo "openfire is running"
 			RETVAL=0
-		else 
+		else
 			echo "openfire is not running"
 			RETVAL=1
 		fi
@@ -202,7 +192,7 @@ case "$CMD" in
 	reload)
 		restart
 		;;
-	status) 
+	status)
 		status
 		;;
 	*)

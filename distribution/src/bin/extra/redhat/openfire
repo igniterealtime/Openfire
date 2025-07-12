@@ -1,17 +1,13 @@
 #!/bin/sh
-#
 # openfire	Stops and starts the Openfire XMPP service.
 #
 # chkconfig: 2345 99 1
-# description: Openfire is an XMPP server, which is a server that facilitates \
-#              XML based communication, such as chat.
+# description: Openfire is an XMPP server.
 # config: /opt/openfire/conf/openfire.xml
 # config: /etc/sysconfig/openfire
 # pidfile: /var/run/openfire.pid
-# 
-# This script has currently been tested on Redhat, CentOS, and Fedora  based
-# systems.
 #
+# This script has currently been tested on Redhat, CentOS, and Fedora based systems.
 
 #####
 # Begin setup work
@@ -117,14 +113,14 @@ start() {
 	cd $OPENFIRE_LOGDIR
 
 	PID=$(findPID)
-	if [ -n "$PID" ]; then                                                
-	    echo "Openfire is already running."                                 
-	    RETVAL=1                                                           
-	    return                                                             
-	fi                                                                     
+	if [ -n "$PID" ]; then
+		echo "Openfire is already running."
+		RETVAL=1
+		return
+	fi
 
-	# Start daemons.                                                       
-	echo -n "Starting openfire: "                                          
+	# Start daemons.
+	echo -n "Starting openfire: "
 
 	rm -f nohup.out
 	su -s /bin/sh -c "nohup $OPENFIRE_RUN_CMD > $OPENFIRE_LOGDIR/nohup.out 2>&1 &" $OPENFIRE_USER
@@ -145,7 +141,6 @@ start() {
 stop() {
 	# Stop daemons.
 	echo -n "Shutting down openfire: "
-
 	if [ -f "$OPENFIRE_PIDFILE" ]; then
 		killproc -p $OPENFIRE_PIDFILE -d 10
 		rm -f $OPENFIRE_PIDFILE
@@ -157,10 +152,8 @@ stop() {
 			echo "Openfire is not running."
 		fi
 	fi
-	
 	RETVAL=$?
 	echo
-
 	[ $RETVAL -eq 0 -a -f "/var/lock/subsys/openfire" ] && rm -f /var/lock/subsys/openfire
 }
 
@@ -180,7 +173,7 @@ status() {
 	if [ -n "$PID" ]; then
 		echo "openfire is running"
 		RETVAL=0
-	else 
+	else
 		echo "openfire is not running"
 		RETVAL=1
 	fi
@@ -204,7 +197,7 @@ case "$1" in
 	condrestart)
 		condrestart
 		;;
-	status) 
+	status)
 		status
 		;;
 	*)

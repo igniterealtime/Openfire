@@ -11,7 +11,7 @@
 # If you used an non standard directory name of location
 # Please specify it here
 # OPENFIRE_HOME=
- 
+
 OPENFIRE_USER="jive"
 OPENFIRE_GROUP="jive"
 
@@ -23,7 +23,7 @@ if [ ! $OPENFIRE_HOME ]; then
 	fi
 fi
 
-# Grant execution permissions 
+# Grant execution permissions
 chmod +x $OPENFIRE_HOME/bin/extra/openfired
 
 # Install the init script
@@ -35,5 +35,5 @@ cp $OPENFIRE_HOME/bin/extra/openfired /etc/init.d
 /usr/sbin/groupadd $OPENFIRE_GROUP
 /usr/sbin/useradd $OPENFIRE_USER -g $OPENFIRE_GROUP -s /bin/bash
 
-# Change the permissions on the installtion directory
+# Change the permissions on the installation directory
 /bin/chown -R $OPENFIRE_USER:$OPENFIRE_GROUP $OPENFIRE_HOME

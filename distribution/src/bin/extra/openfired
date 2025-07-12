@@ -78,12 +78,12 @@ case "$1" in
 		sleep 10 # since stop is backgrounded
 		start
 		;;
-	status) 
+	status)
 		retval=$(pgrep -u $OPENFIRE_USER -f $OPENFIRE_HOME/bin/openfire > /dev/null ; echo $?)
-		if [ "$retval" = "0" ] ; then 
+		if [ "$retval" = "0" ] ; then
 			echo "openfire is running"
 			exit 0
-		else 
+		else
 			echo "openfire is not running"
 			exit 0
 		fi

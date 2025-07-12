@@ -18,15 +18,14 @@ PATH="/sbin:/bin:/usr/bin:/usr/sbin"
 RETVAL=0
 
 # Check that we are root ... so non-root users stop here.
-if [ "`id -u`" != 0 ]; then
-	echo $0 must be run as root
+if [ "$(id -u)" != 0 ]; then
+	echo "$0" must be run as root
 	exit 1
 fi
 
 # Get config.
 [ -f "/etc/sysconfig/openfire" ] && . /etc/sysconfig/openfire
 if [ -f "/etc/init.d/functions" ]; then
-  FUNCTIONS_FOUND=true
   . /etc/init.d/functions
 fi
 
@@ -64,7 +63,7 @@ if [ -z "$JAVA_HOME" ]; then
 	elif [ -d "/etc/alternatives/jre" ]; then
 		JAVA_HOME="/etc/alternatives/jre"
 	else
-		jdks=`ls -r1d /usr/java/j*`
+		jdks=$(ls -r1d /usr/java/j*)
 		for jdk in $jdks; do
 			if [ -f "${jdk}/bin/java" ]; then
 				JAVA_HOME="$jdk"
@@ -109,7 +108,7 @@ OPENFIRE_RUN_CMD="${JAVACMD} -server ${OPENFIRE_OPTS} -classpath \"${LOCALCLASSP
 
 
 start() {
-	OLD_PWD=`pwd`
+	OLD_PWD=$(pwd)
 	cd $OPENFIRE_LOGDIR
 
 	PID=$(findPID)
@@ -133,7 +132,7 @@ start() {
 	sleep 1 # allows prompt to return
 
 	PID=$(findPID)
-	echo $PID > $OPENFIRE_PIDFILE
+	echo "$PID" > $OPENFIRE_PIDFILE
 
 	cd $OLD_PWD
 }
@@ -146,8 +145,8 @@ stop() {
 		rm -f $OPENFIRE_PIDFILE
 	else
 		PID=$(findPID)
-		if [ -n $PID ]; then
-			kill $PID
+		if [ -n "$PID" ]; then
+			kill "$PID"
 		else
 			echo "Openfire is not running."
 		fi

@@ -179,7 +179,7 @@ status() {
 }
 
 findPID() {
-	echo `ps ax --width=1000 | grep openfire | grep startup.jar | awk '{print $1}'`
+	ps ax --width=1000 | grep openfire | grep startup.jar | awk '{print $1}'
 }
 
 # Handle how we were called.

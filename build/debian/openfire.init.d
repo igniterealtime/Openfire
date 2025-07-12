@@ -24,32 +24,9 @@ if [ -f /etc/default/openfire ] ; then
 	. /etc/default/openfire
 fi
 
-# Attempt to locate JAVA_HOME
-if [ -z $JAVA_HOME ]; then
- JAVA_HOME=$(LC_ALL=C update-alternatives --display java \
-    | grep best \
-    | grep -oe '\/.*\/bin\/java' \
-    | sed 's/\/bin\/java//g')
-    echo "best java alternative in: "$JAVA_HOME
-fi
-
-PATH=/sbin:/bin:/usr/sbin:/usr/bin:${JAVA_HOME}/bin
-JAVA=${JAVA_HOME}/bin/java
 NAME=openfire
 DESC=openfire
-DAEMON_DIR=/usr/share/openfire
-DAEMON_LIB=${DAEMON_DIR}/lib
 PIDFILE="/var/run/$NAME.pid"
-
-
-test -x $JAVA || exit 1
-
-DAEMON_OPTS="$DAEMON_OPTS -server -DopenfireHome=${DAEMON_DIR} \
- -Dlog4j.configurationFile=${DAEMON_LIB}/log4j2.xml \
- -Dlog4j2.formatMsgNoLookups=true \
- -Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true -Djava.net.preferIPv6Addresses=system \
- -Dopenfire.lib.dir=${DAEMON_LIB} -classpath ${DAEMON_LIB}/startup.jar\
- -jar ${DAEMON_LIB}/startup.jar"
 
 #set -e
 
@@ -57,7 +34,7 @@ DAEMON_OPTS="$DAEMON_OPTS -server -DopenfireHome=${DAEMON_DIR} \
 start() {
         start-stop-daemon --start --quiet --background --make-pidfile \
                 --pidfile "$PIDFILE" --chuid openfire:openfire \
-                --exec $JAVA -- $DAEMON_OPTS
+                --exec /bin/bash -- -c "/usr/share/openfire/bin/openfire.sh ${DAEMON_OPTS}"
 }
 
 stop() {

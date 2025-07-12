@@ -40,6 +40,7 @@ start() {
 stop() {
         start-stop-daemon --stop --quiet --pidfile "$PIDFILE" \
         --retry 4
+        rm -f "$PIDFILE"
 }
 
 status(){

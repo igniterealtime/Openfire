@@ -62,7 +62,7 @@ start() {
 
 stop() {
         start-stop-daemon --stop --quiet --pidfile "$PIDFILE" \
-		--exec $JAVA --retry 4
+        --retry 4
 }
 
 status(){

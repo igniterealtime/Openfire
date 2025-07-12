@@ -96,11 +96,6 @@ fi
 OPENFIRE_LIB="${OPENFIRE_HOME}/lib"
 OPENFIRE_OPTS="${OPENFIRE_OPTS} -Dopenfire.lib.dir=\"${OPENFIRE_LIB}\""
 
-# Override with bundled jre if it exists.
-if [ -f "$OPENFIRE_HOME/jre/bin/java" ]; then
-  JAVA_HOME="$OPENFIRE_HOME/jre"
-  JAVACMD="$OPENFIRE_HOME/jre/bin/java"
-fi
 
 if [ -z "$JAVACMD" ] ; then
   if [ -n "$JAVA_HOME"  ] ; then

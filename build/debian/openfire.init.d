@@ -1,14 +1,4 @@
 #!/bin/sh
-#
-#		Written by Miquel van Smoorenburg <miquels@cistron.nl>.
-#		Modified for Debian 
-#		by Ian Murdock <imurdock@gnu.ai.mit.edu>.
-#       LSBize the script
-#       by Erwan 'Labynocle' Ben Souiden <erwan@aleikoum.net>
-#
-# Version:	@(#)skeleton  1.9  26-Feb-2001  miquels@cistron.nl
-#
-
 ### BEGIN INIT INFO
 # Provides:             openfire
 # Required-Start:       $local_fs $remote_fs $network $syslog
@@ -17,7 +7,7 @@
 # Default-Stop:         0 1 6
 # Short-Description:    Start/stop openfire jabber server
 # Description:          Start/stop openfire jabber server
-### END INIT INFO 
+### END INIT INFO
 
 # Include openfire defaults if available
 if [ -f /etc/default/openfire ] ; then

@@ -24,10 +24,9 @@ CMD=$1
 PATH="/sbin:/bin:/usr/bin:/usr/sbin"
 RETVAL=0
 
-# Make sure we are running as root
-set `/usr/bin/id`
-if [ $1 != "uid=0(root)" ]; then
-	echo "$0: must be run as root"
+# Check that we are root ... so non-root users stop here.
+if [ "$(id -u)" != 0 ]; then
+	echo "$0" must be run as root
 	exit 1
 fi
 

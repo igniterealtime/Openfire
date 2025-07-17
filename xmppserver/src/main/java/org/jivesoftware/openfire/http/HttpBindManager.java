@@ -395,7 +395,7 @@ public final class HttpBindManager implements CertificateEventListener {
             handlerList.start();
 
             if ( extensionHandlers.getHandlers() != null ) {
-                Arrays.stream(handlerList.getHandlers().toArray()).forEach(handler  -> {
+                Arrays.stream(extensionHandlers.getHandlers().toArray()).forEach(handler  -> {
                     try {
                         ((Handler)handler).start();
                     } catch (Exception e) {

@@ -849,6 +849,11 @@ public class SASLAuthentication {
             authId.append('/').append(resource);
         }
         success.addElement("authorization-identifier").setText(authId.toString());
+        if (resource != null) {
+            // Add <bound/> element to indicate successful resource binding (XEP-0386).
+            // TODO: SHOULD add MAM metadata element here.
+            success.addElement(new QName("bound", new Namespace("", "urn:xmpp:bind:0")));
+        }
         return success;
     }
 

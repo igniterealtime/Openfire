@@ -129,7 +129,7 @@
             <pre>dpkg -i openfire_X_Y_Z.deb</pre>
 
             <p>
-                If using the tar.gz, extract the archive to <code>/opt</code> or <code>/usr/bin</code>:
+                If using the tar.gz, extract the archive to <code>/opt</code>:
             </p>
 
             <pre><code>tar -xzvf openfire_X_Y_Z.tar.gz
@@ -402,7 +402,7 @@ mv openfire /opt</code></pre>
             <h3>Custom Parameters</h3>
 
             <p>
-                Advanced users may wish to pass in parameters to the Java virtual machine (VM) to customize the runtime
+                Advanced users may wish to pass in parameters to the Java Virtual Machine (VM) to customize the runtime
                 environment of Openfire. You can do this by creating a <code>openfire.vmoptions</code> file in the
                 <code>bin/</code> directory of your Openfire installation. For the Windows service, you'd create a new
                 text file called <code>openfire-service.vmoptions</code>.
@@ -418,7 +418,7 @@ mv openfire /opt</code></pre>
 
             <p>
                 To create parameters for the normal launcher, create a file called <code>openfired.vmoptions</code>
-                (since the openfire.exe launcher invokes the openfired.exe executable to actually start the server).
+                (since the <code>openfire.exe</code> launcher invokes the <code>openfired.exe</code> executable to actually start the server).
             </p>
 
         </section>
@@ -432,21 +432,19 @@ mv openfire /opt</code></pre>
         <p>
             If you are running on a Red Hat or Red Hat like system (CentOS, Fedora, etc.), we recommend using the RPM
             distributable, as it contains some custom handling of the standard Red Hat like environment. Assuming that
-            you have used the RPM, you can start and stop Openfire using the <code>/etc/init.d/openfire</code> script.
+            you have used the RPM, you can start and stop Openfire using the <code>systemctl restart</code> and <code>systemctl stop</code> commands.
+            Under hood it will call the <code>/etc/init.d/openfire</code> script:
         </p>
         <pre><code># /etc/init.d/openfire
 Usage /etc/init.d/openfire {start|stop|restart|status|condrestart|reload}
 # /etc/init.d/openfire start
 Starting openfire:</code></pre>
         <p>
+            The <code>/etc/init.d/openfire</code> should not be used directly but called with a SystemD wrapper via <code>systemctl</code> command.
+            The init script is diffuclt to maintain and eventually it will be replaced with the SystemD unit. See the <a hre="https://igniterealtime.atlassian.net/browse/OF-3070">issue ticket</a> for details</li>
             If you are running on a different Linux/Unix variant, and/or you have used the .tar.gz 'installer', you can
-            start and stop Openfire using the <code>bin/openfire</code> script in your Openfire installation:
+            start and stop Openfire using the <code>bin/openfire.sh</code> script in your Openfire installation.
         </p>
-        <pre><code># ./openfire
-
-Usage: ./openfire {start|stop}
-# ./openfire start
-Starting openfire</code></pre>
         <p>
             If you would like to install Openfire as a service, two scripts are provided in the <code>bin/extra</code>
             directory:
@@ -467,9 +465,11 @@ Starting openfire</code></pre>
             <h3>Custom Parameters</h3>
 
             <p>
-                Advanced users may wish to pass in parameters to the Java virtual machine (VM) to customize the runtime
+                Advanced users may wish to pass in parameters to the Java Virtual Machine (JVM) to customize the runtime
                 environment of Openfire. If you installed via RPM, you can customize this by editing
-                <code>/etc/sysconfig/openfire</code> and looking at the OPENFIRE_OPTS option. If you installed via
+                <code>/etc/sysconfig/openfire</code> and looking at the <code>OPENFIRE_OPTS</code> option.
+                In Debian, you can customize this by editing <code>/etc/default/openfire</code> to set options in the
+                <code>DAEMON_OPTS</code> variable. If you installed via
                 .tar.gz, you will need to tweak your startup script to fit your needs.
             </p>
 

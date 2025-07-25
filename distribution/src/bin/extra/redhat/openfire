@@ -1,17 +1,13 @@
 #!/bin/sh
-#
 # openfire	Stops and starts the Openfire XMPP service.
 #
 # chkconfig: 2345 99 1
-# description: Openfire is an XMPP server, which is a server that facilitates \
-#              XML based communication, such as chat.
+# description: Openfire is an XMPP server.
 # config: /opt/openfire/conf/openfire.xml
 # config: /etc/sysconfig/openfire
 # pidfile: /var/run/openfire.pid
-# 
-# This script has currently been tested on Redhat, CentOS, and Fedora  based
-# systems.
 #
+# This script has currently been tested on Redhat, CentOS, and Fedora based systems.
 
 #####
 # Begin setup work
@@ -22,15 +18,14 @@ PATH="/sbin:/bin:/usr/bin:/usr/sbin"
 RETVAL=0
 
 # Check that we are root ... so non-root users stop here.
-if [ "`id -u`" != 0 ]; then
-	echo $0 must be run as root
+if [ "$(id -u)" != 0 ]; then
+	echo "$0" must be run as root
 	exit 1
 fi
 
 # Get config.
 [ -f "/etc/sysconfig/openfire" ] && . /etc/sysconfig/openfire
 if [ -f "/etc/init.d/functions" ]; then
-  FUNCTIONS_FOUND=true
   . /etc/init.d/functions
 fi
 
@@ -68,7 +63,7 @@ if [ -z "$JAVA_HOME" ]; then
 	elif [ -d "/etc/alternatives/jre" ]; then
 		JAVA_HOME="/etc/alternatives/jre"
 	else
-		jdks=`ls -r1d /usr/java/j*`
+		jdks=$(ls -r1d /usr/java/j*)
 		for jdk in $jdks; do
 			if [ -f "${jdk}/bin/java" ]; then
 				JAVA_HOME="$jdk"
@@ -98,7 +93,7 @@ else
 	LOCALCLASSPATH="${OPENFIRE_LIB}/startup.jar:${LOCALCLASSPATH}"
 fi
 
-JAVACMD="${JAVACMD} -Dlog4j.configurationFile=${OPENFIRE_LIB}/log4j2.xml -Dlog4j2.formatMsgNoLookups=true"
+JAVACMD="${JAVACMD} -Dlog4j.configurationFile=${OPENFIRE_LIB}/log4j2.xml -Dlog4j2.formatMsgNoLookups=true -Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true -Djava.net.preferIPv6Addresses=system"
 
 # Export any necessary variables
 export JAVA_HOME JAVACMD
@@ -113,18 +108,18 @@ OPENFIRE_RUN_CMD="${JAVACMD} -server ${OPENFIRE_OPTS} -classpath \"${LOCALCLASSP
 
 
 start() {
-	OLD_PWD=`pwd`
+	OLD_PWD=$(pwd)
 	cd $OPENFIRE_LOGDIR
 
 	PID=$(findPID)
-	if [ -n "$PID" ]; then                                                
-	    echo "Openfire is already running."                                 
-	    RETVAL=1                                                           
-	    return                                                             
-	fi                                                                     
+	if [ -n "$PID" ]; then
+		echo "Openfire is already running."
+		RETVAL=1
+		return
+	fi
 
-	# Start daemons.                                                       
-	echo -n "Starting openfire: "                                          
+	# Start daemons.
+	echo -n "Starting openfire: "
 
 	rm -f nohup.out
 	su -s /bin/sh -c "nohup $OPENFIRE_RUN_CMD > $OPENFIRE_LOGDIR/nohup.out 2>&1 &" $OPENFIRE_USER
@@ -137,7 +132,7 @@ start() {
 	sleep 1 # allows prompt to return
 
 	PID=$(findPID)
-	echo $PID > $OPENFIRE_PIDFILE
+	echo "$PID" > $OPENFIRE_PIDFILE
 
 	cd $OLD_PWD
 }
@@ -145,22 +140,19 @@ start() {
 stop() {
 	# Stop daemons.
 	echo -n "Shutting down openfire: "
-
 	if [ -f "$OPENFIRE_PIDFILE" ]; then
 		killproc -p $OPENFIRE_PIDFILE -d 10
 		rm -f $OPENFIRE_PIDFILE
 	else
 		PID=$(findPID)
-		if [ -n $PID ]; then
-			kill $PID
+		if [ -n "$PID" ]; then
+			kill "$PID"
 		else
 			echo "Openfire is not running."
 		fi
 	fi
-	
 	RETVAL=$?
 	echo
-
 	[ $RETVAL -eq 0 -a -f "/var/lock/subsys/openfire" ] && rm -f /var/lock/subsys/openfire
 }
 
@@ -180,14 +172,14 @@ status() {
 	if [ -n "$PID" ]; then
 		echo "openfire is running"
 		RETVAL=0
-	else 
+	else
 		echo "openfire is not running"
 		RETVAL=1
 	fi
 }
 
 findPID() {
-	echo `ps ax --width=1000 | grep openfire | grep startup.jar | awk '{print $1}'`
+	ps ax --width=1000 | grep openfire | grep startup.jar | awk '{print $1}'
 }
 
 # Handle how we were called.
@@ -204,7 +196,7 @@ case "$1" in
 	condrestart)
 		condrestart
 		;;
-	status) 
+	status)
 		status
 		;;
 	*)

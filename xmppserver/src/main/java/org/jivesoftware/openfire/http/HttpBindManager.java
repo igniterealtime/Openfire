@@ -98,6 +98,17 @@ public final class HttpBindManager implements CertificateEventListener {
         .build();
 
     /**
+     * Duration of the maximum duration of gracefully stopping the embedded webserver that is hosting the BOSH endpoint (among others).
+     */
+    public static final SystemProperty<Duration> HTTP_BIND_STOP_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("httpbind.stop-timeout")
+        .setChronoUnit(ChronoUnit.MILLIS)
+        .setDynamic(true)
+        .setDefaultValue(Duration.ofSeconds(5))
+        .addListener(HttpBindManager::updateStopTimeout) // No need to restart the server, as this setting applies to stopping the server only.
+        .build();
+
+    /**
      * Minimum amount of threads in the thread pool to perform the network IO related to BOSH traffic.
      *
      * Note: Apart from the network-IO threads configured in this property, the server also uses a thread pool for
@@ -363,6 +374,9 @@ public final class HttpBindManager implements CertificateEventListener {
             JMXManager jmx = JMXManager.getInstance();
             httpBindServer.addBean(jmx.getContainer());
         }
+
+        final Duration stopTimeout = HTTP_BIND_STOP_TIMEOUT.getValue();
+        httpBindServer.setStopTimeout(stopTimeout == null || stopTimeout.isNegative() ? 0 : stopTimeout.toMillis());
 
         final Connector httpConnector = createConnector( httpBindServer );
         final Connector httpsConnector = createSSLConnector( httpBindServer);
@@ -894,5 +908,22 @@ public final class HttpBindManager implements CertificateEventListener {
     public void storeContentChanged( CertificateStore store )
     {
         restartServer();
+    }
+
+    /**
+     * Static reference for {@link #setStopTimeout(Duration)} that can be used as a listener of a
+     * {@link SystemProperty}.
+     */
+    public static void updateStopTimeout(final Duration stopTimeout) {
+        if (getInstance() != null) {
+            getInstance().setStopTimeout(stopTimeout);
+        }
+    }
+
+    public void setStopTimeout(final Duration stopTimeout)
+    {
+        if (httpBindServer != null) {
+            httpBindServer.setStopTimeout(stopTimeout == null || stopTimeout.isNegative() ? 0 : stopTimeout.toMillis());
+        }
     }
 }

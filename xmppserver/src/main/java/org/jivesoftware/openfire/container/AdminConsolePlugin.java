@@ -41,6 +41,7 @@ import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.io.File;
 import java.io.IOException;
@@ -59,6 +60,17 @@ import java.time.Duration;
 public class AdminConsolePlugin implements Plugin {
 
     private static final Logger Log = LoggerFactory.getLogger(AdminConsolePlugin.class);
+
+    /**
+     * Duration of the maximum duration of gracefully stopping the embedded webserver that is hosting the admin console.
+     */
+    public static final SystemProperty<Duration> ADMIN_CONSOLE_STOP_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("adminConsole.stop-timeout")
+        .setChronoUnit(ChronoUnit.MILLIS)
+        .setDynamic(true)
+        .setDefaultValue(Duration.ofSeconds(5))
+        .addListener(stopTimeout -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).adminServer.setStopTimeout(stopTimeout == null || stopTimeout.isNegative() ? 0 : stopTimeout.toMillis())))
+        .build();
 
     /**
      * Enable / Disable parsing a 'X-Forwarded-For' style HTTP header of HTTP requests.
@@ -180,6 +192,9 @@ public class AdminConsolePlugin implements Plugin {
             JMXManager jmx = JMXManager.getInstance();
             adminServer.addBean(jmx.getContainer());
         }
+
+        final Duration stopTimeout = ADMIN_CONSOLE_STOP_TIMEOUT.getValue();
+        adminServer.setStopTimeout(stopTimeout == null || stopTimeout.isNegative() ? 0 : stopTimeout.toMillis());
 
         // Create connector for http traffic if it's enabled.
         if (adminPort > 0) {

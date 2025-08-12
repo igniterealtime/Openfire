@@ -88,7 +88,7 @@ public class IQOfflineMessagesHandler extends IQHandler implements ServerFeature
                 try {
                     creationDate = xmppDateTime.parseString(item.attributeValue("node"));
                 } catch (ParseException e) {
-                    Log.error("Error parsing date", e);
+                    Log.debug("Error parsing date that was in the 'node' attribute of a stanza. Ignoring this attribute. Offending stanza: {}", offlineRequest, e);
                 }
                 if ("view".equals(item.attributeValue("action"))) {
                     // User requested to receive specific message

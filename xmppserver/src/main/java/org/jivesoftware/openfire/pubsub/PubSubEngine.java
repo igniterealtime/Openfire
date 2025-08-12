@@ -1184,7 +1184,7 @@ public class PubSubEngine
             }
             catch (NumberFormatException e) {
                 // There was an error parsing the number so assume that all items were requested
-                Log.warn("Assuming that all items were requested", e);
+                Log.debug("Error parsing 'max_items' from request. Assuming that all items were requested. Offending stanza: {}", iq, e);
                 max_items = null;
             }
         }

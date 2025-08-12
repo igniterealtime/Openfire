@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2008 Jive Software, 2017-2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 1999-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,6 +147,7 @@ public class DefaultFileTransferManager extends BasicModule implements FileTrans
             size = Long.parseLong(sizeString);
         }
         catch (Exception ex) {
+            Log.debug("Unable to parse the value of attribute '{}', as '{}' is not a valid integer value. This attribute will be ignored.", "size", sizeString, ex);
             return null;
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,13 +54,28 @@ public class HistoryRequest {
         Element history = userFragment.element("history");
         if (history != null) {
             if (history.attribute("maxchars") != null) {
-                this.maxChars = Integer.parseInt(history.attributeValue("maxchars"));
+                final String maxcharsAttributeValue = history.attributeValue("maxchars");
+                try {
+                    this.maxChars = Integer.parseInt(maxcharsAttributeValue);
+                } catch (NumberFormatException e) {
+                    Log.debug("Unable to parse the value of attribute '{}', as '{}' is not a valid integer value. This attribute will be ignored.", "maxchars", maxcharsAttributeValue, e);
+                }
             }
             if (history.attribute("maxstanzas") != null) {
-                this.maxStanzas = Integer.parseInt(history.attributeValue("maxstanzas"));
+                final String maxstanzasAttributeValue = history.attributeValue("maxstanzas");
+                try {
+                    this.maxStanzas = Integer.parseInt(maxstanzasAttributeValue);
+                } catch (NumberFormatException e) {
+                    Log.debug("Unable to parse the value of attribute '{}', as '{}' is not a valid integer value. This attribute will be ignored.", "maxstanzas", maxstanzasAttributeValue, e);
+                }
             }
             if (history.attribute("seconds") != null) {
-                this.seconds = Integer.parseInt(history.attributeValue("seconds"));
+                final String secondsAttributeValue = history.attributeValue("seconds");
+                try {
+                    this.seconds = Integer.parseInt(secondsAttributeValue);
+                } catch (NumberFormatException e) {
+                    Log.debug("Unable to parse the value of attribute '{}', as '{}' is not a valid integer value. This attribute will be ignored.", "seconds", secondsAttributeValue, e);
+                }
             }
             if (history.attribute("since") != null) {
                 try {

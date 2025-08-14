@@ -85,18 +85,12 @@ public class VCardPhotoServlet extends HttpServlet
         }
 
         // Read data from VCard.
-        final String value = element.getTextTrim();
-        final Base64.Decoder decoder;
-        if (value.length() > 76 && Character.isWhitespace(value.charAt(76))) {
-            decoder = Base64.getMimeDecoder();
-        } else {
-            decoder = Base64.getDecoder();
-        }
-        final byte[] bytes = decoder.decode(value);
+        final String value = element.getTextTrim().replaceAll("\\s","");
+        final byte[] decoded = Base64.getDecoder().decode(value);
 
         // Output data.
-        if (bytes != null) {
-            writeBytesToStream(contentType, bytes, response);
+        if (decoded != null) {
+            writeBytesToStream(contentType, decoded, response);
         }
     }
 

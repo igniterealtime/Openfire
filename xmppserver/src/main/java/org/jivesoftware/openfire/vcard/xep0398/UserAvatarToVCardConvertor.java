@@ -284,20 +284,15 @@ public class UserAvatarToVCardConvertor implements VCardListener, PubSubListener
     }
 
     /**
-     * Decodes a base64-encoded binary value. This method can decode both Mime-encoded as well as non-Mime-encoded values.
+     * Decodes a base64-encoded binary value.
      *
      * @param binVal The value to decode
      * @return the decoded value.
      */
     public static byte[] decode(final String binVal)
     {
-        final Base64.Decoder decoder;
-        if (binVal.length() > 76 && Character.isWhitespace(binVal.charAt(76))) {
-            decoder = Base64.getMimeDecoder();
-        } else {
-            decoder = Base64.getDecoder();
-        }
-        return decoder.decode(binVal);
+        final String value = binVal.replaceAll("\\s",""); // OF-3112: Ignore all whitespace in Base64 encoded data.
+        return Base64.getDecoder().decode(value);
     }
 
     /**

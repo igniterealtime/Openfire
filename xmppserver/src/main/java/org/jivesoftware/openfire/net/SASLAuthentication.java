@@ -811,7 +811,7 @@ public class SASLAuthentication {
                             final boolean bound = throwable == null && result == SessionManager.BindResult.BOUND;
                             final Element success = buildSasl2SuccessElement(finalSuccessData, username, bound ? resource : null);
                             if (bound) {
-                                bind2Request.processFeatureRequests(session, success);
+                                bind2Request.processFeatureRequests(success);
                             }
                             session.deliverRawText(success.asXML());
                             if (bound) {

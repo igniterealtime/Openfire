@@ -16,6 +16,8 @@
 package org.jivesoftware.openfire.net;
 
 import org.dom4j.Element;
+import org.dom4j.Namespace;
+import org.dom4j.QName;
 import org.jivesoftware.openfire.auth.ScramUtils;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
@@ -24,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import javax.security.sasl.SaslException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Represents a SASL2 bind2 request from a client.
@@ -33,6 +36,77 @@ import java.util.*;
  */
 public class Bind2Request {
     private static final Logger Log = LoggerFactory.getLogger(Bind2Request.class);
+    
+    // Add a map to store registered handlers by namespace
+    private static final Map<String, Bind2InlineHandler> elementHandlers = 
+        new ConcurrentHashMap<>();
+        
+    /**
+     * Registers a handler for processing inline elements with a specific namespace.
+     *
+     * @param handler The handler to register
+     */
+    public static void registerElementHandler(Bind2InlineHandler handler) {
+        if (handler == null) {
+            throw new NullPointerException("Handler cannot be null");
+        }
+        String namespace = handler.getNamespace();
+        if (namespace == null || namespace.trim().isEmpty()) {
+            throw new IllegalArgumentException("Handler namespace cannot be null or empty");
+        }
+        
+        elementHandlers.put(namespace, handler);
+        if (Log.isDebugEnabled()) {
+            Log.debug("Registered inline element handler for namespace: {}", namespace);
+        }
+    }
+
+    /**
+     * Unregisters a handler for a specific namespace.
+     *
+     * @param namespace The namespace of the handler to remove
+     * @return The removed handler, or null if none was registered for this namespace
+     */
+    public static Bind2InlineHandler unregisterElementHandler(String namespace) {
+        if (namespace == null || namespace.trim().isEmpty()) {
+            throw new IllegalArgumentException("Namespace cannot be null or empty");
+        }
+        
+        Bind2InlineHandler removed = elementHandlers.remove(namespace);
+        if (removed != null && Log.isDebugEnabled()) {
+            Log.debug("Unregistered inline element handler for namespace: {}", namespace);
+        }
+        return removed;
+    }
+
+    /**
+     * Process feature request elements using registered handlers.
+     *
+     * @return True if all elements were processed successfully, false if any failed
+     */
+    public Element processFeatureRequests(Element successElement) {
+        Element bound = successElement.element(new QName("bound", new Namespace("", NAMESPACE)));
+        
+        for (Element element : featureRequests) {
+            String namespace = element.getNamespaceURI();
+            Bind2InlineHandler handler = elementHandlers.get(namespace);
+            
+            if (handler != null) {
+                try {
+                    if (!handler.handleElement(bound, element)) {
+                        Log.warn("Handler for namespace {} failed to process element", namespace);
+                    }
+                } catch (Exception e) {
+                    Log.error("Error processing element with namespace: " + namespace, e);
+                }
+            } else {
+                Log.debug("No handler registered for namespace: {}", namespace);
+                // We don't fail here because there's no obvious way we could fail.
+            }
+        }
+        
+        return bound;
+    }
 
 
     private static final String NAMESPACE = "urn:xmpp:bind:0";

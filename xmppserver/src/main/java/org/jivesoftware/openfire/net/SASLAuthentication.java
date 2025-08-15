@@ -686,9 +686,13 @@ public class SASLAuthentication {
                 }
             }
             authId.setText(sb.toString());
-            final Element bound = success.addElement(new QName("bound", new Namespace( "", "urn:xmpp:bind:0")));
-            // Add any inline bind bits to bound.
-            // TODO : SHOULD add MAM metadata element here.
+
+            if (resource != null) {
+                Bind2Request bind2Request = (Bind2Request) session.getSessionData("bind2-request");
+                if (bind2Request != null) {
+                    bind2Request.processFeatureRequests(success);
+                }
+            }
             session.deliverRawText(success.asXML());
         } else {
             sendElement(session, "success", successData, usingSASL2);

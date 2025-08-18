@@ -28,6 +28,9 @@ import org.jivesoftware.util.cache.CacheFactory;
 import org.xmpp.packet.JID;
 
 import java.lang.reflect.Field;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -42,21 +45,25 @@ import java.util.*;
 public class AbstractGroupProviderTest extends DBTestCase {
 
     public static final String DRIVER = "org.hsqldb.jdbcDriver";
-    public static final String URL;
+    public static String URL;
     public static final String USERNAME = "sa";
     public static final String PASSWORD = "";
 
     static {
-        final java.net.URL location = AbstractGroupProvider.class.getResource("/datasets/openfire.script");
-        assert location != null;
-        final String fileLocation = location.toString().substring(0, location.toString().lastIndexOf("/")+1) + "openfire";
-        URL = "jdbc:hsqldb:"+fileLocation+";ifexists=true";
-
+      final URL locationUrl = AbstractGroupProvider.class.getResource("/datasets/openfire.script");
+      assert locationUrl != null;
+      try {
+        Path location = Path.of(locationUrl.toURI()).getParent().resolve("openfire");
+        URL = "jdbc:hsqldb:"+location.toString()+";ifexists=true";
         // Setup database configuration of DBUnit.
         System.setProperty( PropertiesBasedJdbcDatabaseTester.DBUNIT_DRIVER_CLASS, DRIVER );
         System.setProperty( PropertiesBasedJdbcDatabaseTester.DBUNIT_CONNECTION_URL, URL );
         System.setProperty( PropertiesBasedJdbcDatabaseTester.DBUNIT_USERNAME, USERNAME );
         System.setProperty( PropertiesBasedJdbcDatabaseTester.DBUNIT_PASSWORD, PASSWORD );
+        
+      } catch ( URISyntaxException e) {
+        assertFalse(e.getMessage(),false);
+      }
     }
 
     @Override

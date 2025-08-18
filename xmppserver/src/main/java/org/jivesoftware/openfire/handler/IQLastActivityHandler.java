@@ -53,6 +53,10 @@ public class IQLastActivityHandler extends IQHandler implements ServerFeaturesPr
 
     @Override
     public IQ handleIQ(IQ packet) throws UnauthorizedException {
+        if ( packet.isResponse() ) {
+            return null;
+        }
+
         IQ reply = IQ.createResultIQ(packet);
         Element lastActivity = reply.setChildElement("query", NAMESPACE);
         String sender = packet.getFrom().getNode();

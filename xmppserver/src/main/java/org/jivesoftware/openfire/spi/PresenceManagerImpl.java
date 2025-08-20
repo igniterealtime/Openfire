@@ -329,9 +329,13 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
         if (probee.equals(prober.getNode()) && XMPPServer.getInstance().isLocal(prober)) {
             return true;
         }
-        RosterItem item = rosterManager.getRoster(probee).getRosterItem(prober);
-        return item.getSubStatus() == RosterItem.SUB_FROM
+        try {
+            RosterItem item = rosterManager.getRoster(probee).getRosterItem(prober);
+            return item.getSubStatus() == RosterItem.SUB_FROM
                 || item.getSubStatus() == RosterItem.SUB_BOTH;
+        } catch (UserNotFoundException e) {
+            return false;
+        }
     }
 
     @Override

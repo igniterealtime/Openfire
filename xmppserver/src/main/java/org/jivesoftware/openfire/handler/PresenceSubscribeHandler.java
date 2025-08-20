@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
 
     private RoutingTable routingTable;
     private XMPPServer localServer;
-    private String serverName;
+    private String serverDomain;
     private PacketDeliverer deliverer;
     private PresenceManager presenceManager;
     private RosterManager rosterManager;
@@ -128,7 +128,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
         // contact's server SHOULD check the syntax of the JID contained in the 'to' attribute. If the
         // JID is of the form <contact@domainpart/resourcepart> instead of <contact@domainpart>, the
         // contact's server SHOULD treat it as if the request had been directed to the contact's bare
-        // JID and modify the 'to' address accordingly.
+        // JID and modify the 'to' address accordingly."
         if (presence.getTo() != null) {
             presence.setTo(presence.getTo().toBareJID());
         }
@@ -138,7 +138,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
 
         try {            
             // Reject presence subscription requests sent to the local server itself.
-            if (recipientJID == null || recipientJID.toString().equals(serverName)) {
+            if (recipientJID == null || recipientJID.toString().equals(serverDomain)) {
                 if (type == Presence.Type.subscribe) {
                     Presence reply = new Presence();
                     reply.setTo(senderJID);
@@ -147,6 +147,16 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
                     deliverer.deliver(reply);
                 }
                 return;
+            }
+
+            // RFC-6121 Section 8.5.1: "If the user account identified by the 'to' attribute does not exist, how the
+            // stanza is processed depends on the stanza type. [...] For a presence stanza of type "subscribe",
+            // "subscribed", "unsubscribe", or "unsubscribed", the server MUST silently ignore the stanza.
+            if (recipientJID.getDomain().equals(serverDomain) && !UserManager.getInstance().isRegisteredUser(recipientJID, false)
+                && !UserManager.isPotentialFutureLocalUser(recipientJID))
+            {
+                Log.debug("Silently ignoring a presence stanza of type {} that is addressed to a non-existing local account: {}", type, presence);
+                return; // OF-3113: Silently ignore.
             }
 
             try {
@@ -571,7 +581,7 @@ public class PresenceSubscribeHandler extends BasicModule implements ChannelHand
     public void initialize(XMPPServer server) {
         super.initialize(server);
         localServer = server;
-        serverName = server.getServerInfo().getXMPPDomain();
+        serverDomain = server.getServerInfo().getXMPPDomain();
         routingTable = server.getRoutingTable();
         deliverer = server.getPacketDeliverer();
         presenceManager = server.getPresenceManager();

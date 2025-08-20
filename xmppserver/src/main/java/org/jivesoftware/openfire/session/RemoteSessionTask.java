@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire.session;
 
 import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.ClusterTask;
 import org.jivesoftware.util.cache.ExternalizableUtil;
@@ -95,7 +96,7 @@ public abstract class RemoteSessionTask implements ClusterTask<Object> {
                             // OF-2311: If closed by another cluster node, chances are that the session needs to be closed forcibly.
                             // Chances of the session being resumed are neglectable, while retaining the session in a detached state
                             // causes problems (eg: IQBindHandler could have re-issued the resource to a replacement session).
-                            ((LocalSession) session).getStreamManager().formalClose();
+                            session.markNonResumable();
                         }
                         session.close();
                     } catch (Exception e) {
@@ -166,6 +167,15 @@ public abstract class RemoteSessionTask implements ClusterTask<Object> {
                 }
             }
         }
+        else if (operation == Operation.markNonResumable) {
+            final Session session = getSession();
+            if (session instanceof LocalSession) {
+                final StreamManager streamManager = ((LocalSession) session).getStreamManager();
+                if (streamManager != null) {
+                    streamManager.formalClose();
+                }
+            }
+        }
     }
 
     public void writeExternal(ObjectOutput out) throws IOException {
@@ -203,6 +213,7 @@ public abstract class RemoteSessionTask implements ClusterTask<Object> {
         getHostName,
         validate,
         removeDetached,
+        markNonResumable,
         
         /**
          * Operations of c2s sessions

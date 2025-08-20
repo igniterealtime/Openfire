@@ -106,8 +106,7 @@ public class IQRouter extends BasicModule {
                 handle(packet);
             } else if (SessionPacketRouter.isInvalidStanzaSentPriorToResourceBinding(packet, session)) {
                 Log.debug("Closing session that attempts to send stanza to an entity other than the server itself or the client's account, before completing resource binding. Session closed: {}", session);
-                session.deliverRawText(new StreamError(StreamError.Condition.not_authorized, "Do not send invalid stanza prior to authentication/resource binding.").toXML());
-                session.close();
+                session.close(new StreamError(StreamError.Condition.not_authorized, "Do not send invalid stanza prior to authentication/resource binding."));
                 return;
             } else {
                 Log.debug("Rejecting stanza from client that has not (yet?) established an authenticated session: {}", packet.toXML());

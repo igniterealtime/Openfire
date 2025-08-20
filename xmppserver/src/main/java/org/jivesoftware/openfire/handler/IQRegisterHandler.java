@@ -251,8 +251,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                             final StreamError error = new StreamError(StreamError.Condition.not_authorized);
                             for (ClientSession sess : sessionManager.getSessions(user.getUsername()) )
                             {
-                                sess.deliverRawText(error.toXML());
-                                sess.close();
+                                sess.close(error);
                             }
                             // The reply has been sent so clean up the variable
                             reply = null;

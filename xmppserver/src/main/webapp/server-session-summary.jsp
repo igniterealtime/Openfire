@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -17,14 +17,13 @@
 --%>
 
 <%@ page import="org.jivesoftware.openfire.SessionManager,
-                 org.jivesoftware.openfire.session.OutgoingServerSession,
-                 org.jivesoftware.openfire.session.Session,
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.StringUtils,
                  org.jivesoftware.util.CookieUtils,
                  java.util.*"
     errorPage="error.jsp"
 %>
+<%@ page import="org.jivesoftware.openfire.session.*" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -65,12 +64,14 @@
         try {
             final List<IncomingServerSession> incomingServerSessions = sessionManager.getIncomingServerSessions(domainName);
             for (Session incomingServerSession : incomingServerSessions) {
+                incomingServerSession.markNonResumable();
                 incomingServerSession.close();
             }
 
             Collection<OutgoingServerSession> outgoingServerSessions = sessionManager.getOutgoingServerSessions(domainName);
             for (OutgoingServerSession outgoingServerSession : outgoingServerSessions) {
                 if (outgoingServerSession != null) {
+                    outgoingServerSession.markNonResumable();
                     outgoingServerSession.close();
                 }
             }

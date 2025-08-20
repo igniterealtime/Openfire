@@ -116,6 +116,7 @@ public class EndUserSession extends AdHocCommand
             }
 
             for (final ClientSession session : sessions) {
+                session.markNonResumable();
                 session.close();
                 affectedSessionCount++;
             }

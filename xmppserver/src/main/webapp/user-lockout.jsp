@@ -95,8 +95,7 @@
             final StreamError error = new StreamError(StreamError.Condition.not_authorized);
             for (ClientSession sess : webManager.getSessionManager().getSessions(username) )
             {
-                sess.deliverRawText(error.toXML());
-                sess.close();
+                sess.close(error);
             }
             // Disabled your own user account, force login
             if (username.equals(webManager.getAuthToken().getUsername())){

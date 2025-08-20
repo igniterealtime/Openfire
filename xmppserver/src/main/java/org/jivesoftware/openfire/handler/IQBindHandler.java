@@ -143,7 +143,7 @@ public class IQBindHandler extends IQHandler {
                             Log.debug("Kick out an old connection that is conflicting with a new one. Old session: {}", oldSession);
                             StreamError error = new StreamError(StreamError.Condition.conflict);
                             oldSession.deliverRawText(error.toXML());
-                            oldSession.close(); // When living on a remote cluster node, this will prevent that session from becoming 'resumable'.
+                            oldSession.markNonResumable();
 
                             // OF-1923: As the session is now replaced, the old session will never be resumed.
                             if (oldSession instanceof LocalClientSession) {

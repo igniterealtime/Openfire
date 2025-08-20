@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,7 +90,7 @@ public class NettyIdleStateKeepAliveHandler extends ChannelDuplexHandler {
                 // Idle flag already present. Connection has been idle for a while. Close it.
                 final NettyConnection connection = channel.attr(CONNECTION).get();
                 Log.debug("Closing connection because of inactivity: {}", connection);
-                connection.close(new StreamError(StreamError.Condition.connection_timeout, doPing ? "Connection has been idle and did not respond to a keep-alive check." : "Connection has been idle."), doPing);
+                connection.close(new StreamError(StreamError.Condition.connection_timeout, doPing ? "Connection has been idle and did not respond to a keep-alive check." : "Connection has been idle."));
             }
         }
         super.userEventTriggered(ctx, evt);

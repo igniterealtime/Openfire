@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2024-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -102,6 +102,7 @@ public class EndUserSession extends AdHocCommand
         }
 
         // No errors. Disable all users.
+        int affectedSessionCount = 0;
         for (final JID address : addresses) {
             // Note: If the JID is of the form <user@host>, the service MUST end all of the user's sessions; if the JID
             // is of the form <user@host/resource>, the service MUST end only the session associated with that resource.
@@ -116,12 +117,14 @@ public class EndUserSession extends AdHocCommand
 
             for (final ClientSession session : sessions) {
                 session.close();
+                affectedSessionCount++;
             }
         }
 
         // Answer that the operation was successful
         note.addAttribute("type", "info");
-        note.setText(LocaleUtils.getLocalizedString("commands.global.operation.finished.success", preferredLocale));
+        note.setText(LocaleUtils.getLocalizedString("commands.global.operation.finished.success", preferredLocale)
+             + " " + LocaleUtils.getLocalizedString("commands.admin.user.endusersession.note.ended-session-count", List.of(String.valueOf(affectedSessionCount)), preferredLocale));
     }
 
     @Override

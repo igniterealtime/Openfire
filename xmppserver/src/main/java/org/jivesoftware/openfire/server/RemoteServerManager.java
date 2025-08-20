@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -101,6 +101,7 @@ public class RemoteServerManager {
         // Check if the remote server was connected and proceed to close the connection
         for (Session session : SessionManager.getInstance().getIncomingServerSessions(domain)) {
             Log.debug( "Closing session for domain '{}' as the domain is being blocked. Affected session: {}", domain, session );
+            session.markNonResumable();
             session.close();
         }
         // Can't just lookup a single remote server anymore, so check them all.
@@ -108,6 +109,7 @@ public class RemoteServerManager {
             if (domainPair.getRemote().equals(domain)) {
                 Session session = SessionManager.getInstance().getOutgoingServerSession(domainPair);
                 Log.debug( "Closing (domain-pair) session for domain '{}' as the domain is being blocked. Affected session: {}", domain, session );
+                session.markNonResumable();
                 session.close();
             }
         }
@@ -370,6 +372,7 @@ public class RemoteServerManager {
             if (!canAccess(hostname)) {
                 for (Session session : SessionManager.getInstance().getIncomingServerSessions(hostname)) {
                     Log.debug( "Closing session for hostname '{}' as a changed permission policy is taken into effect. Affected session: {}", hostname, session );
+                    session.markNonResumable();
                     session.close();
                 }
             }
@@ -378,6 +381,7 @@ public class RemoteServerManager {
             if (!canAccess(domainPair.getRemote())) {
                 Session session = SessionManager.getInstance().getOutgoingServerSession(domainPair);
                 Log.debug( "Closing session as a changed permission policy is taken into effect. Affected session: {}", session );
+                session.markNonResumable();
                 session.close();
                 // After the session has been close, inform all listeners as well.
                 ServerSessionEventDispatcher.dispatchEvent(session, ServerSessionEventDispatcher.EventType.session_destroyed);

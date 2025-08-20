@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,11 +112,13 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
         } else if ("handshake".equals(tag)) {
             if (!((LocalConnectionMultiplexerSession) session).authenticate(doc.getStringValue())) {
                 Log.debug( "Closing session that failed to authenticate: {}", session );
+                session.markNonResumable();
                 session.close();
             }
             return true;
         } else if ("error".equals(tag) && "stream".equals(doc.getNamespacePrefix())) {
             Log.debug( "Closing session because of received stream error {}. Affected session: {}", doc.asXML(), session );
+            session.markNonResumable();
             session.close();
             return true;
         }

@@ -24,6 +24,7 @@ import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.container.BasicModule;
+import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.LocaleUtils;
 import org.slf4j.Logger;
@@ -129,15 +130,17 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler<IQ
         }
         catch (org.jivesoftware.openfire.auth.UnauthorizedException e) {
             if (iq != null) {
+                final ClientSession session = sessionManager.getSession(iq.getFrom());
                 try {
                     IQ response = IQ.createResultIQ(iq);
                     response.setChildElement(iq.getChildElement().createCopy());
                     response.setError(PacketError.Condition.not_authorized);
-                    sessionManager.getSession(iq.getFrom()).process(response);
+                    session.process(response);
                 }
                 catch (Exception de) {
                     Log.error(LocaleUtils.getLocalizedString("admin.error"), de);
-                    sessionManager.getSession(iq.getFrom()).close();
+                    session.markNonResumable();
+                    session.close();
                 }
             }
         }

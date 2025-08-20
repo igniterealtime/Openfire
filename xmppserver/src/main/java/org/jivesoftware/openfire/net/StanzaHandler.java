@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -149,7 +149,7 @@ public abstract class StanzaHandler {
         // Verify if end of stream was requested
         if (isEndOfStream(stanza)) {
             if (session != null) {
-                session.getStreamManager().formalClose();
+                session.setHasReceivedEndOfStream();
                 Log.debug( "Closing session as an end-of-stream was received: {}", session );
                 session.close();
             }
@@ -237,6 +237,7 @@ public abstract class StanzaHandler {
         String tag = doc.getName();
         if ("error".equals(tag)) {
             Log.info("The stream is being closed by the peer ('{}'), which sent this stream error: {}", session.getAddress(), doc.asXML());
+            session.markNonResumable();
             session.close();
         }
         else if ("message".equals(tag)) {
@@ -327,8 +328,7 @@ public abstract class StanzaHandler {
                 // IQ packets MUST have an 'id' attribute so close the connection
                 Log.debug( "Closing session, as it sent us an IQ packet that has no ID attribute: {}. Affected session: {}", packet.toXML(), session );
                 StreamError error = new StreamError(StreamError.Condition.invalid_xml, "Stanza is missing 'id' attribute.");
-                session.deliverRawText(error.toXML());
-                session.close();
+                session.close(error);
                 return;
             }
             processIQ(packet);
@@ -336,6 +336,7 @@ public abstract class StanzaHandler {
         else {
             if (!processUnknowPacket(doc)) {
                 Log.warn(LocaleUtils.getLocalizedString("admin.error.packet.tag") + "{}. Closing session: {}", doc.asXML(), session);
+                session.markNonResumable();
                 session.close();
             }
         }
@@ -468,6 +469,7 @@ public abstract class StanzaHandler {
         catch (Exception e) {
             Log.error("Error while negotiating TLS with connection {}", connection, e);
             connection.deliverRawText("<failure xmlns=\"urn:ietf:params:xml:ns:xmpp-tls\"/>");
+            session.markNonResumable();
             connection.close();
             return false;
         }

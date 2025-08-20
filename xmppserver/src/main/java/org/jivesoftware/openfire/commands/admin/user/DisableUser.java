@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2024-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,8 +133,7 @@ public class DisableUser extends AdHocCommand
             final StreamError error = new StreamError(StreamError.Condition.not_authorized);
             final Collection<ClientSession> sessions = SessionManager.getInstance().getSessions(user.getUsername());
             for (final ClientSession session : sessions) {
-                session.deliverRawText(error.toXML());
-                session.close();
+                session.close(error);
             }
         }
 

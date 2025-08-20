@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Tom Evans, 2023-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2015 Tom Evans, 2023-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,10 +173,10 @@ public class WebSocketClientConnectionHandler
         try {
             if (isWebSocketOpen()) {
                 Log.warn("Attempting to close connection on which an error occurred: {}", wsConnection, error);
-                wsConnection.close(new StreamError(StreamError.Condition.internal_server_error), !isWebSocketOpen());
+                wsConnection.close(new StreamError(StreamError.Condition.internal_server_error));
             } else {
                 Log.debug("Error detected on websocket that isn't open (any more):", error);
-                wsConnection.close(null, !isWebSocketOpen());
+                wsConnection.close(null);
             }
         } catch (Exception e) {
             Log.error("Error disconnecting websocket", e);

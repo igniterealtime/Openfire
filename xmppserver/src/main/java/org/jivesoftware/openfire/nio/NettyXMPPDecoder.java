@@ -79,7 +79,7 @@ public class NettyXMPPDecoder extends ByteToMessageDecoder {
         if (isNotSslRecord(cause)) {
             Log.warn("Closing connection with {}, as unencrypted data was received, while encrypted data was expected (A full stack trace will be logged on the ‘debug’ level).", connection.getPeer() == null ? "(unknown)" : connection.getPeer(), cause);
             Log.debug("Error occurred while decoding XMPP stanza: {}", connection, cause);
-            connection.close(new StreamError(StreamError.Condition.internal_server_error, "Received unencrypted data while encrypted data was expected."), cause instanceof IOException);
+            connection.close(new StreamError(StreamError.Condition.internal_server_error, "Received unencrypted data while encrypted data was expected."));
             return;
         }
 
@@ -94,7 +94,7 @@ public class NettyXMPPDecoder extends ByteToMessageDecoder {
         } else {
             Log.warn("Error occurred while decoding XMPP stanza, closing connection: {}", connection, cause);
         }
-        connection.close(new StreamError(StreamError.Condition.internal_server_error, "An error occurred in XMPP Decoder"), cause instanceof IOException);
+        connection.close(new StreamError(StreamError.Condition.internal_server_error, "An error occurred in XMPP Decoder"));
     }
 
     private boolean isNotSslRecord(Throwable t)

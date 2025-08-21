@@ -620,7 +620,7 @@ public abstract class LocalSession implements Session {
 
     /**
      * Sets a boolean value indicating that the client associated to this session has sent an 'end of stream' event to
-     * the server (typically, this is a <tt></stream:stream></tt> tag). This is an indication that the client wishes to
+     * the server (typically, this is a {@code </stream:stream>} tag). This is an indication that the client wishes to
      * end the session.
      *
      * Sending such an end-of-stream is unrecoverable. This boolean can therefor not be changed from 'true' to 'false'.

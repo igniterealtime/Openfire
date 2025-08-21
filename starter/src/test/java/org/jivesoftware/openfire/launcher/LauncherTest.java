@@ -20,6 +20,8 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import java.io.File;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -37,7 +39,7 @@ public class LauncherTest
     public void testXmlParsingXXE() throws Exception
     {
         // Setup test fixture.
-        final File input = new File(getClass().getClassLoader().getResource("xxe.xml").getFile());
+        final File input = new File(URLDecoder.decode(getClass().getClassLoader().getResource("xxe.xml").getFile(), StandardCharsets.UTF_8));
 
         // Execute system under test / verify results.
         assertThrows(SAXException.class, () -> Launcher.parse(input));
@@ -50,7 +52,7 @@ public class LauncherTest
     public void testXmlParsingClean() throws Exception
     {
         // Setup test fixture.
-        final File input = new File(getClass().getClassLoader().getResource("clean.xml").getFile());
+        final File input = new File(URLDecoder.decode(getClass().getClassLoader().getResource("clean.xml").getFile(), StandardCharsets.UTF_8));
 
         // Execute system under test.
         final Document result = Launcher.parse(input);

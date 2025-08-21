@@ -11,32 +11,33 @@ jobs:
   build:
 
     name: Build Openfire from source
-    runs-on: ubuntu-latest
     strategy:
       matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
         java: [ 17, 21 ]
         distribution: [ zulu ] # We could add more here: temurin, adopt, liberica, microsoft, corretto
 
+    runs-on: ${{ matrix.os }}
+
     steps:
       - uses: actions/checkout@v5
-      - name: Set up JDK ${{ matrix.java }} ${{ matrix.distribution }}
+      - name: Set up JDK ${{ matrix.java }} ${{ matrix.distribution }} on ${{ matrix.os }}
         uses: actions/setup-java@v4
         with:
           java-version: ${{ matrix.java }}
           distribution: ${{ matrix.distribution }}
           cache: maven
+      - name: Build with Maven while generating code coverage report # We install instead of package, because we want the result in the local mvn repo
+        if: ${{ github.ref_name == 'main' }}
+        run: mvnw -B install -Pcoverage --file pom.xml
       - name: Build with Maven # We install instead of package, because we want the result in the local mvn repo
-        run: |
-          if [[ ${{ github.ref_name }} == 'main' ]]; then            
-            ./mvnw -B install -Pcoverage --file pom.xml
-          else
-            ./mvnw -B install
-          fi
+        if: ${{ github.ref_name != 'main' }}
+        run: mvnw -B install --file pom.xml
       - name: Upload failed test reports
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: Openfire Build Java ${{ matrix.java }} JUnit Test reports
+          name: Openfire Build Java ${{ matrix.java }} ${{ matrix.distribution }} on ${{ runner.os }} JUnit Test reports
           path: xmppserver/target/surefire-reports
       - name: tar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
         if: ${{ matrix.distribution == 'zulu' }}
@@ -45,16 +46,16 @@ jobs:
         if: ${{ matrix.distribution == 'zulu' }}
         uses: actions/upload-artifact@v4
         with:
-          name: Openfire Distribution Java ${{ matrix.java }}
+          name: Openfire Distribution Java ${{ matrix.java }} ${{ matrix.distribution }} on ${{ runner.os }}
           path: distribution-artifact.tar
       - name: Upload coverage report for 'xmppserver' module
-        if: ${{ matrix.distribution == 'zulu' && matrix.java == 17 && github.ref_name == 'main'}}
+        if: ${{ matrix.distribution == 'zulu' && matrix.java == 17 && matrix.os == 'ubuntu-latest' && github.ref_name == 'main'}}
         uses: actions/upload-artifact@v4
         with:
           name: Openfire Build Java ${{ matrix.java }} Unit Test Coverage Report (for 'xmppserver' module)
           path: xmppserver/target/site/jacoco/
       - name: Temporarily stash openfire artifacts from the mvn repo for later jobs
-        if: ${{ matrix.distribution == 'zulu' && matrix.java == 17 }}
+        if: ${{ matrix.distribution == 'zulu' && matrix.java == 17 && matrix.os == 'ubuntu-latest'}}
         uses: actions/upload-artifact@v4
         with:
           name: Maven Repository
@@ -124,7 +125,7 @@ jobs:
       - name: Download distribution artifact from build job.
         uses: actions/download-artifact@v5
         with:
-          name: Openfire Distribution Java 17
+          name: Openfire Distribution Java 17 zulu on ${{ runner.os }}
           path: .
       - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
         run: tar -xf distribution-artifact.tar
@@ -222,7 +223,7 @@ jobs:
       - name: Download distribution artifact from build job.
         uses: actions/download-artifact@v5
         with:
-          name: Openfire Distribution Java 17
+          name: Openfire Distribution Java 17 zulu on ${{ runner.os }}
           path: .
       - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
         run: tar -xf distribution-artifact.tar
@@ -251,7 +252,7 @@ jobs:
       - name: Download distribution artifact from build job.
         uses: actions/download-artifact@v5
         with:
-          name: Openfire Distribution Java 17
+          name: Openfire Distribution Java 17 zulu on ${{ runner.os }}
           path: .
       - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
         run: tar -xf distribution-artifact.tar
@@ -782,7 +783,7 @@ jobs:
       - name: Download distribution artifact from build job.
         uses: actions/download-artifact@v5
         with:
-          name: Openfire Distribution Java 17
+          name: Openfire Distribution Java 17 zulu on ${{ runner.os }}
           path: .
       - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
         run: tar -xf distribution-artifact.tar

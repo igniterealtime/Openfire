@@ -335,20 +335,20 @@
 
     <section id="db2">
 
-        <h2>IBM DB2 7</h2>
+        <h2>IBM DB2</h2>
 
         <section id="db2-jdbc-drivers">
 
             <h3>JDBC Drivers</h3>
             <p>
-                Use the JDBC 1.2 compliant driver, db2java.zip (1293KB), located in the <nobr>"%DB2PATH%\java2"</nobr>
-                directory. Copy the JDBC driver to the <code>lib/</code> directory of your Openfire installation.
+                The JDBC driver for DB2 is bundled with Openfire, so you do not need to download and install a
+                separate driver.
             </p>
             <p>
                 Values for the config file are:
             </p>
             <ul style="list-style: none">
-                <li><span class="short-tab">driver:</span> <code>COM.ibm.db2.jdbc.app.DB2Driver</code></li>
+                <li><span class="short-tab">driver:</span> <code>com.ibm.db2.jcc.DB2Driver</code></li>
                 <li><span class="short-tab">server:</span> <code>jdbc:db2:[DB NAME, e.g. OPENFIRE]</code></li>
             </ul>
 

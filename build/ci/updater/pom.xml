@@ -74,6 +74,11 @@
       <artifactId>mssql-jdbc</artifactId>
       <version>9.4.1.jre11</version>
     </dependency>
+    <dependency>
+      <groupId>com.ibm.db2</groupId>
+      <artifactId>jcc</artifactId>
+      <version>12.1.0.0</version>
+    </dependency>
     <dependency> <!-- OF-2960: Including dependencies of ojdbc11-production rather than ojdbc11-production itself. -->
       <groupId>com.oracle.database.jdbc</groupId>
       <artifactId>ojdbc11</artifactId>

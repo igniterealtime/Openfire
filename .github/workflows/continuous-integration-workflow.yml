@@ -28,11 +28,17 @@ jobs:
           distribution: ${{ matrix.distribution }}
           cache: maven
       - name: Build with Maven while generating code coverage report # We install instead of package, because we want the result in the local mvn repo
-        if: ${{ github.ref_name == 'main' }}
-        run: mvnw -B install -Pcoverage --file pom.xml
+        if: ${{ github.ref_name == 'main' && runner.os != 'Windows' }}
+        run: ./mvnw -B install -Pcoverage --file pom.xml
+      - name: Build with Maven while generating code coverage report (Windows) # We install instead of package, because we want the result in the local mvn repo
+        if: ${{ github.ref_name == 'main' && runner.os == 'Windows' }}
+        run: ./mvnw.cmd -B install -Pcoverage --file pom.xml
       - name: Build with Maven # We install instead of package, because we want the result in the local mvn repo
-        if: ${{ github.ref_name != 'main' }}
-        run: mvnw -B install --file pom.xml
+        if: ${{ github.ref_name != 'main' && runner.os != 'Windows' }}
+        run: ./mvnw -B install --file pom.xml
+      - name: Build with Maven (Windows) # We install instead of package, because we want the result in the local mvn repo
+        if: ${{ github.ref_name != 'main' && runner.os == 'Windows' }}
+        run: ./mvnw.cmd -B install --file pom.xml
       - name: Upload failed test reports
         uses: actions/upload-artifact@v4
         if: always()

@@ -20,6 +20,7 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Module;
+import org.jivesoftware.openfire.disco.UserFeaturesProvider;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.pep.IQPEPHandler;
 import org.jivesoftware.openfire.pep.PEPService;
@@ -41,9 +42,7 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.Base64;
-import java.util.Collection;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -52,7 +51,7 @@ import java.util.concurrent.TimeUnit;
  * @author Guus der Kinderen, guus@goodbytes.nl
  * @see <a href="https://xmpp.org/extensions/xep-0398.html">XEP-0398: User Avatar to vCard-Based Avatars Conversion</a>
  */
-public class UserAvatarToVCardConvertor implements VCardListener, PubSubListener, Module
+public class UserAvatarToVCardConvertor implements VCardListener, PubSubListener, Module, UserFeaturesProvider
 {
     public static final Logger Log = LoggerFactory.getLogger(UserAvatarToVCardConvertor.class);
 
@@ -76,6 +75,7 @@ public class UserAvatarToVCardConvertor implements VCardListener, PubSubListener
         VCardEventDispatcher.addListener(this);
         PubSubEventDispatcher.addListener(this);
         InterceptorManager.getInstance().addInterceptor(presenceEnhancer);
+        XMPPServer.getInstance().getIQDiscoInfoHandler().addUserFeaturesProvider(this);
     }
 
     @Override
@@ -91,6 +91,7 @@ public class UserAvatarToVCardConvertor implements VCardListener, PubSubListener
     @Override
     public void destroy()
     {
+        XMPPServer.getInstance().getIQDiscoInfoHandler().removeUserFeaturesProvider(this);
         InterceptorManager.getInstance().removeInterceptor(presenceEnhancer);
         PubSubEventDispatcher.removeListener(this);
         VCardEventDispatcher.removeListener(this);
@@ -392,5 +393,15 @@ public class UserAvatarToVCardConvertor implements VCardListener, PubSubListener
             Log.warn( "Failed to determine dimensions of image. An unexpected exception occurred while reading the image.", ex );
             return null;
         }
+    }
+
+    @Override
+    public Iterator<String> getFeatures()
+    {
+        final Set<String> features = new HashSet<>();
+        if (!DISABLED.getValue()) {
+            features.add("urn:xmpp:pep-vcard-conversion:0");
+        }
+        return features.iterator();
     }
 }

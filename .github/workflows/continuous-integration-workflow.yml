@@ -237,8 +237,8 @@ jobs:
         if: ${{ always() && steps.startCIServer.conclusion == 'success' }} # TODO figure out if this is correct. The intent is to have the server stopped if it was successfully started, even if the tests fail. Failing tests should still cause the job to fail.
         uses: ./.github/actions/stopserver-action
 
-  smack:
-    name: Execute Smack-based CI tests
+  xitf:
+    name: Execute XMPP Interop Testing Framework
     runs-on: ubuntu-latest
     needs: build
 
@@ -260,7 +260,7 @@ jobs:
         uses: ./.github/actions/startserver-action
         with:
           logLevel: debug
-      - name: Run Smack tests against server
+      - name: Run XMPP Interop Testing Framework tests against server
         uses: XMPP-Interop-Testing/xmpp-interop-tests-action@main # TODO replace 'main' with a proper versioned tag, like 'v1'.
         with:
           domain: 'example.org'
@@ -698,7 +698,7 @@ jobs:
   publish-maven:
     name: Publish to Maven
     runs-on: ubuntu-latest
-    needs: [aioxmpp, connectivity, smack, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
+    needs: [aioxmpp, connectivity, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
     if: ${{github.repository == 'igniterealtime/Openfire' && github.event_name == 'push' && needs.check_branch.outputs.is_publishable_branch == 'true'}}
 
     steps:
@@ -725,7 +725,7 @@ jobs:
   build-and-push-docker:
     name: Publish to GitHub's Docker registry
     runs-on: ubuntu-latest
-    needs: [aioxmpp, connectivity, smack, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
+    needs: [aioxmpp, connectivity, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
     if: |
       github.event_name == 'push' && 
       (contains(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')

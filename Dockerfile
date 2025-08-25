@@ -12,7 +12,6 @@ RUN find . -type d -empty -delete
 # Now we build:
 FROM eclipse-temurin:17 AS build
 WORKDIR /tmp/
-RUN mkdir /tmp/m2_repo
 WORKDIR /usr/src
 COPY mvnw ./
 RUN chmod +x mvnw
@@ -22,15 +21,15 @@ COPY .mvn/wrapper .mvn/wrapper
 # First, copy in just the pom.xml files and fetch the dependencies:
 COPY --from=poms /usr/src/ .
 # I don't know why we need all three either.
-RUN ./mvnw -e -B dependency:resolve-plugins -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo
-RUN ./mvnw -e -B de.qaware.maven:go-offline-maven-plugin:resolve-dependencies -Dmaven.repo.local=/tmp/m2_repo
-RUN ./mvnw -e -B dependency:get -DgroupId=org.codehaus.plexus -DartifactId=plexus-utils -Dpackaging=jar -Dversion=1.1 -Dmaven.repo.local=/tmp/m2_repo
+RUN --mount=type=cache,target=/tmp/m2_repo,id=openfire_build ./mvnw -e -B dependency:resolve-plugins -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo
+RUN --mount=type=cache,target=/tmp/m2_repo,id=openfire_build ./mvnw -e -B de.qaware.maven:go-offline-maven-plugin:resolve-dependencies -Dmaven.repo.local=/tmp/m2_repo
+RUN --mount=type=cache,target=/tmp/m2_repo,id=openfire_build ./mvnw -e -B dependency:get -DgroupId=org.codehaus.plexus -DartifactId=plexus-utils -Dpackaging=jar -Dversion=1.1 -Dmaven.repo.local=/tmp/m2_repo
 
 # Above here is only affected by the pom.xml files, so the cache is stable.
 
 # Now, copy in all the source, and actually build it, skipping the tests.
 COPY . .
-RUN ./mvnw -o -e -B install -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo
+RUN --mount=type=cache,target=/tmp/m2_repo,id=openfire_build ./mvnw -o -e -B install -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo
 # In case of Windows, break glass.
 RUN sed -i 's/\r//g' /usr/src/distribution/target/distribution-base/bin/openfire.sh
 

@@ -131,7 +131,7 @@ jobs:
       - name: Checkout aioxmpp devel/head
         run: git clone https://codeberg.org/jssfr/aioxmpp.git aioxmpp
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.11
           check-latest: true # attempt to prevent to use 3.11.3 by enticing the runner to update (to something later)

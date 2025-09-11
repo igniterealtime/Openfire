@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,29 @@
  */
 package org.jivesoftware.util.cert;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.naming.InvalidNameException;
+import javax.naming.ldap.LdapName;
+import javax.naming.ldap.Rdn;
+import javax.security.auth.x500.X500Principal;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Certificate identity mapping that uses the CommonName as the
  * identity credentials
  * 
+ * @author Nikita Markevich
+ * @author Guus der Kinderen
  * @author Victor Hong
- *
  */
 public class CNCertificateIdentityMapping implements CertificateIdentityMapping {
 
-    private static Pattern cnPattern = Pattern.compile("(?i)(cn=)([^,]*)");
-    
+    private static final Logger Log = LoggerFactory.getLogger(CNCertificateIdentityMapping.class);
+
     /**
      * Maps certificate CommonName as identity credentials
      * 
@@ -39,15 +45,23 @@ public class CNCertificateIdentityMapping implements CertificateIdentityMapping 
      * @return A List of names.
      */
     @Override
-    public List<String> mapIdentity(X509Certificate certificate) {
-        String name = certificate.getSubjectDN().getName();
-        Matcher matcher = cnPattern.matcher(name);
+    public List<String> mapIdentity(X509Certificate certificate)
+    {
         // Create an array with the detected identities
-        List<String> names = new ArrayList<>();
-        while (matcher.find()) {
-            names.add(matcher.group(2));
+        final List<String> names = new ArrayList<>();
+        final X500Principal p = certificate.getSubjectX500Principal();
+        final LdapName ln;
+        try {
+            ln = new LdapName(p.getName(X500Principal.RFC2253));
+            for (final Rdn rdn : ln.getRdns()) {
+                if ("CN".equalsIgnoreCase(rdn.getType())) {
+                    names.add(rdn.getValue().toString());
+                }
+            }
+        } catch (InvalidNameException e) {
+            Log.warn("Unable to extract identify from certificate: {}", certificate, e);
         }
-        
+
         return names;
     }
 
@@ -60,5 +74,4 @@ public class CNCertificateIdentityMapping implements CertificateIdentityMapping 
     public String name() {
         return "Common Name Mapping";
     }
-
 }

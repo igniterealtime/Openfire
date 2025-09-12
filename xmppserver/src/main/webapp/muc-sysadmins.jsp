@@ -141,19 +141,19 @@
 <fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, StandardCharsets.UTF_8) %>"><%= StringUtils.escapeHTMLTags(mucname) %></a></b>
 </p>
 
-<%  if ("true".equals(request.getParameter("deletesuccess"))) { %>
+<%  if (Boolean.parseBoolean(request.getParameter("deletesuccess"))) { %>
 
     <admin:infoBox type="success">
         <fmt:message key="groupchat.admins.user_removed" />
     </admin:infoBox>
 
-<%  } else if ("true".equals(request.getParameter("addsuccess"))) { %>
+<%  } else if (Boolean.parseBoolean(request.getParameter("addsuccess"))) { %>
 
     <admin:infoBox type="success">
         <fmt:message key="groupchat.admins.user_added" />
     </admin:infoBox>
 
-<%  } else if ("true".equals(request.getParameter("success"))) { %>
+<%  } else if (Boolean.parseBoolean(request.getParameter("success"))) { %>
 
     <admin:infoBox type="success">
         <fmt:message key="groupchat.admins.settings.saved_successfully"/>

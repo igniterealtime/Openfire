@@ -190,7 +190,7 @@
             <%  } else { %>
 
                 <a href="user-properties.jsp?username=<%= URLEncoder.encode(n, StandardCharsets.UTF_8) %>"><%= StringUtils.escapeHTMLTags(JID.unescapeNode(n)) %></a>
-                - <%= address.getResource()==null?"":StringUtils.escapeForXML(address.getResource()) %>
+                - <%= StringUtils.escapeForXML(address.getResource()) %>
 
             <%  } %>
         </td>

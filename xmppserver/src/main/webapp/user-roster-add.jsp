@@ -172,7 +172,7 @@
         <tr>
             <td style="width: 1%; white-space: nowrap"><label for="jidtf"><fmt:message key="user.roster.jid" />:</label> *</td>
             <td>
-                <input type="text" name="jid" size="30" maxlength="255" value="<%= ((jid!=null) ? StringUtils.escapeForXML(jid) : "") %>"
+                <input type="text" name="jid" size="30" maxlength="255" value="<%= StringUtils.escapeForXML(jid) %>"
                  id="jidtf" autofocus>
             </td>
         </tr>
@@ -180,7 +180,7 @@
             <td style="width: 1%; white-space: nowrap">
                 <label for="nicknametf"><fmt:message key="user.roster.nickname" />:</label></td>
             <td>
-                <input type="text" name="nickname" size="30" maxlength="255" value="<%= ((nickname!=null) ? StringUtils.escapeForXML(nickname) : "") %>"
+                <input type="text" name="nickname" size="30" maxlength="255" value="<%= StringUtils.escapeForXML(nickname) %>"
                  id="nicknametf">
             </td>
         </tr>
@@ -188,7 +188,7 @@
             <td style="width: 1%; white-space: nowrap">
                 <label for="groupstf"><fmt:message key="user.roster.groups" />:</label></td>
             <td>
-                <input type="text" name="groups" size="30" maxlength="255" value="<%= ((groups!=null) ? StringUtils.escapeForXML(groups) : "") %>"
+                <input type="text" name="groups" size="30" maxlength="255" value="<%= StringUtils.escapeForXML(groups) %>"
                  id="groupstf">
             </td>
         </tr>

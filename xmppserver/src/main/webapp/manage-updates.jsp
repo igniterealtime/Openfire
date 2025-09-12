@@ -245,7 +245,7 @@
                             </td>
                             <td>
                                 <input type="text" size="15" maxlength="70" id="proxyHost" name="proxyHost"
-                                 value="<%= ((proxyHost != null) ? StringUtils.escapeForXML(proxyHost) : "") %>">
+                                 value="<%= StringUtils.escapeForXML(proxyHost) %>">
                             </td>
                         </tr>
                         <tr>

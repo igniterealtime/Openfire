@@ -253,7 +253,7 @@
             <label for="serverName"><fmt:message key="server.props.name" /></label>
         </td>
         <td>
-            <input type="text" id="serverName" name="serverName" value="<%= (serverName != null) ? StringUtils.escapeForXML(serverName) : "" %>"
+            <input type="text" id="serverName" name="serverName" value="<%= StringUtils.escapeForXML(serverName) %>"
              size="30" maxlength="150">
             <%  if (errors.containsKey("serverName")) { %>
                 <br>

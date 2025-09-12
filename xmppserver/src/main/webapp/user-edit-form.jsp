@@ -180,7 +180,7 @@
             </td>
             <td>
                 <input type="text" size="30" maxlength="150" id="email" name="email"
-                 value="<%= ((user.getEmail()!=null) ? StringUtils.escapeForXML(user.getEmail()) : "") %>">
+                 value="<%= StringUtils.escapeForXML(user.getEmail()) %>">
             </td>
         </tr>
         <% if (!AdminManager.getAdminProvider().isReadOnly()) { %>

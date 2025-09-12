@@ -26,7 +26,7 @@
 %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <fmt:setBundle basename="openfire_i18n"/>
-<%  boolean debug = "true".equals(JiveGlobals.getProperty("skin.default.debug"));
+<%  boolean debug = Boolean.parseBoolean(JiveGlobals.getProperty("skin.default.debug"));
     if (debug) {
         exception.printStackTrace();
     }

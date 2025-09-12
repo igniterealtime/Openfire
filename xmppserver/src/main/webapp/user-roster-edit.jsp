@@ -130,7 +130,7 @@
             </td>
             <td>
                 <input type="text" size="30" maxlength="150" name="nickname" id="nickname"
-                 value="<%= item.getNickname() == null || item.getNickname().isEmpty() ? "" : StringUtils.escapeForXML(item.getNickname()) %>">
+                 value="<%= StringUtils.escapeForXML(item.getNickname()) %>">
             </td>
         </tr>
         <tr>

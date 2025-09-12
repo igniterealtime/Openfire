@@ -235,7 +235,7 @@
                 </td>
                 <td>
                     <% if (create) { %>
-                    <input type="text" size="30" maxlength="150" id="mucname" name="mucname" value="<%= (mucname != null ? StringUtils.escapeForXML(mucname) : "") %>">
+                    <input type="text" size="30" maxlength="150" id="mucname" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>">
 
                     <%  if (errors.get("mucname") != null) { %>
 
@@ -254,7 +254,7 @@
                    <label for="mucdesc"><fmt:message key="groupchat.service.properties.label_service_description" /></label>
                 </td>
                 <td>
-                    <input type="text" size="30" maxlength="150" id="mucdesc" name="mucdesc" value="<%= (mucdesc != null ? StringUtils.escapeForXML(mucdesc) : "") %>">
+                    <input type="text" size="30" maxlength="150" id="mucdesc" name="mucdesc" value="<%= StringUtils.escapeForXML(mucdesc) %>">
                 </td>
             </tr>
         </table>

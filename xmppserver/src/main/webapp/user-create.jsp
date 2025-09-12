@@ -242,14 +242,14 @@
         <tr>
             <td style="width: 1%; white-space: nowrap"><label for="usernametf"><fmt:message key="user.create.username" />:</label> *</td>
             <td>
-                <input type="text" name="username" size="30" maxlength="75" value="<%= ((username!=null) ? StringUtils.escapeForXML(username) : "") %>"
+                <input type="text" name="username" size="30" maxlength="75" value="<%= StringUtils.escapeForXML(username) %>"
                  id="usernametf" autocomplete="off">
             </td>
         </tr>
         <tr>
             <td style="width: 1%; white-space: nowrap"><label for="nametf"><fmt:message key="user.create.name" />:</label> <%= UserManager.getUserProvider().isNameRequired() ? "*" : "" %></td>
             <td>
-                <input type="text" name="name" size="30" maxlength="75" value="<%= ((name!=null) ? StringUtils.escapeForXML(name) : "") %>"
+                <input type="text" name="name" size="30" maxlength="75" value="<%= StringUtils.escapeForXML(name) %>"
                  id="nametf" autocomplete="off">
             </td>
         </tr>
@@ -257,7 +257,7 @@
             <td style="width: 1%; white-space: nowrap">
                 <label for="emailtf"><fmt:message key="user.create.email" />:</label> <%= UserManager.getUserProvider().isEmailRequired() ? "*" : "" %></td>
             <td>
-                <input type="text" name="email" size="30" maxlength="75" value="<%= ((email!=null) ? StringUtils.escapeForXML(email) : "") %>"
+                <input type="text" name="email" size="30" maxlength="75" value="<%= StringUtils.escapeForXML(email) %>"
                  id="emailtf" autocomplete="off">
             </td>
         </tr>
@@ -296,7 +296,7 @@
                 <label for="grouptf"><fmt:message key="user.create.group"/>:</label>
             </td>
             <td>
-                <input type="text" name="group" size="30" maxlength="75" value="<%= ((group!=null) ? StringUtils.escapeForXML(group) : "") %>"
+                <input type="text" name="group" size="30" maxlength="75" value="<%= StringUtils.escapeForXML(group) %>"
                        id="grouptf" autocomplete="off" list="groupNames" >
                 <datalist id="groupNames">
                     <c:forEach var="groupName" items="${groupNames}">

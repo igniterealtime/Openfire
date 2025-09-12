@@ -191,7 +191,7 @@
         </select>
         </p>
         <label for="userJIDtf"><fmt:message key="groupchat.admins.label_add_admin" /></label>
-        <input type="text" name="userJID" size="30" maxlength="100" value="<%= (userJID != null ? StringUtils.escapeForXML(userJID) : "") %>"
+        <input type="text" name="userJID" size="30" maxlength="100" value="<%= StringUtils.escapeForXML(userJID) %>"
          id="userJIDtf">
         <input type="submit" value="<fmt:message key="groupchat.admins.add" />">
         <br><br>

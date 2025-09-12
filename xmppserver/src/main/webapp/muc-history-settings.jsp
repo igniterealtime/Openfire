@@ -131,7 +131,7 @@
 <fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, StandardCharsets.UTF_8) %>"><%= StringUtils.escapeHTMLTags(mucname) %></a></b>
 </p>
 
-<%  if ("true".equals(request.getParameter("success"))) { %>
+<%  if (Boolean.parseBoolean(request.getParameter("success"))) { %>
 
 <admin:infoBox type="success">
     <fmt:message key="groupchat.history.settings.saved_successfully" />

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,6 +140,7 @@ public class CertificateManager {
         
         if (clientCertMapping.isEmpty()) {
             Log.debug("CertificateManager: No client CertificateIdentityMapping's found. Loading default mappings");
+            clientCertMapping.add(new SANCertificateIdentityMapping());
             clientCertMapping.add(new CNCertificateIdentityMapping());
         }
     }

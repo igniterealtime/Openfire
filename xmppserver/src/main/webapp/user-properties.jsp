@@ -32,7 +32,6 @@
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.Collection" %>
 <%@ page import="java.util.Map" %>
-<%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>

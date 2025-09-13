@@ -82,7 +82,7 @@
     String token = ParamUtils.getParameter(request, "token");
 
     String url = ParamUtils.getParameter(request, "url");
-    url = org.jivesoftware.util.StringUtils.escapeHTMLTags(url);
+    url = StringUtils.escapeHTMLTags(url);
 
     // SSO between cluster nodes
     String secret = ParamUtils.getParameter(request, "secret");

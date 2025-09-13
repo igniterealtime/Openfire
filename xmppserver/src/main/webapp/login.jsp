@@ -92,7 +92,7 @@
 
     String password = ParamUtils.getParameter(request, "password");
     String url = ParamUtils.getParameter(request, "url");
-    url = org.jivesoftware.util.StringUtils.escapeHTMLTags(url);
+    url = StringUtils.escapeHTMLTags(url);
 
     // SSO between cluster nodes
     String secret = ParamUtils.getParameter(request, "secret");
@@ -179,7 +179,7 @@
 
     // Escape HTML tags in username to prevent cross-site scripting attacks. This
     // is necessary because we display the username in the page below.
-    username = org.jivesoftware.util.StringUtils.escapeHTMLTags(username);
+    username = StringUtils.escapeHTMLTags(username);
 
 %>
 

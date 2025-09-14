@@ -10,6 +10,7 @@ Type=simple
 WorkingDirectory=/usr/share/openfire/
 ExecStart=/bin/bash -c '/usr/share/openfire/bin/openfire.sh ${DAEMON_OPTS}'
 Restart=on-failure
+SuccessExitStatus=143
 RuntimeDirectory=openfire
 
 # Specify resource limits in the slice

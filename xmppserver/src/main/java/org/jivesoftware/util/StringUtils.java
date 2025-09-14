@@ -222,7 +222,7 @@ public final class StringUtils {
      */
     public static String escapeHTMLTags(String in, boolean includeLF) {
         if (in == null) {
-            return null;
+            return "";
         }
         char ch;
         int i = 0;

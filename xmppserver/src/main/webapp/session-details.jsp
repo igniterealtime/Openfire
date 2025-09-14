@@ -181,7 +181,7 @@
             <%  String n = address.getNode(); %>
             <%  if (isAnonymous) { %>
 
-                <i> <fmt:message key="session.details.anonymous" /> </i> - <%= address.getResource()==null?"":StringUtils.escapeHTMLTags(address.getResource()) %>
+                <i> <fmt:message key="session.details.anonymous" /> </i> - <%= StringUtils.escapeHTMLTags(address.getResource()) %>
 
             <%  } else { %>
 

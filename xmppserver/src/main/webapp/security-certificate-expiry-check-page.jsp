@@ -137,7 +137,7 @@
                     <label for="frequencyHours"><b><fmt:message key="ssl.certificate.expirycheck.frequency-label" /></b></label>
                 </td>
                 <td>
-                    <input type="number" min="1" id="frequencyHours" name="frequencyHours" value="${not empty frequencyHours ? admin:escapeHTMLTags(frequencyHours) : ''}"> <fmt:message key="global.hours" />
+                    <input type="number" min="1" id="frequencyHours" name="frequencyHours" value="${admin:escapeHTMLTags(frequencyHours)}"> <fmt:message key="global.hours" />
                 </td>
             </tr>
 
@@ -158,7 +158,7 @@
                     <label for="warningPeriodHours"><b><fmt:message key="ssl.certificate.expirycheck.warning-period-label" /></b></label>
                 </td>
                 <td>
-                    <input type="number" min="1" id="warningPeriodHours" name="warningPeriodHours" value="${not empty warningPeriodHours ? admin:escapeHTMLTags(warningPeriodHours) : ''}"> <fmt:message key="global.hours" />
+                    <input type="number" min="1" id="warningPeriodHours" name="warningPeriodHours" value="${admin:escapeHTMLTags(warningPeriodHours)}"> <fmt:message key="global.hours" />
                 </td>
             </tr>
 

@@ -377,7 +377,7 @@
                             <label for="ignore"><fmt:message key="audit.policy.ignore" /></label>
                         </td>
                         <td>
-                            <textarea id="ignore" name="ignore" cols="40" rows="3" wrap="virtual"><%= ((ignore != null) ? StringUtils.escapeHTMLTags(ignore) : "") %></textarea>
+                            <textarea id="ignore" name="ignore" cols="40" rows="3" wrap="virtual"><%= StringUtils.escapeHTMLTags(ignore) %></textarea>
                             <%  if (errors.get("ignore") != null) { %>
 
                                 <span class="jive-error-text">

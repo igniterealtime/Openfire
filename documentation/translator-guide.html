@@ -66,25 +66,26 @@ skin.message=<i>Beitrag</i></pre>
         <h2>Construct a Resource Bundle</h2>
 
         <p>
-            To start, make a copy of the default (English) locale file "openfire_i18n.properties".
-            It can be found in the <code>resources\i18n</code> directory of your Openfire
-            installation. Note: the files found in <code>resources\i18n</code> are copies of the
+            To start, make a copy of the default (English) locale file <code>openfire_i18n.properties</code>.
+            It can be found in the <code>resources/i18n</code> directory of your Openfire
+            installation. Note: the files found in <code>resources/i18n</code> are copies of the
             real resource bundles used by the application (the real resource bundles are contained
-            in the openfire.jar file). Editing the resource files in the <code>resources\i18n</code>
+            in the <code>openfire.jar</code> file). Editing the resource files in the <code>resources/i18n</code>
             directory will not affect your running copy of Openfire.
         </p>
         <p>
             Next, you'll need to rename the file to match the locale that you're making a
-            translation for. The syntax of the name is "openfire_i18n_[lang]_[country].properties".
+            translation for. The syntax of the name is <code>openfire_i18n_[lang]_[country].properties</code>.
             However, the country code should be used in most cases. For example, the German resource
-            bundle should be named "openfire_i18n_de.properties" because
-            "de" is the language code for German. For French, the file would be called
-            "openfire_i18n_fr.properties". A list of language codes can
-            be found at: <a href="https://www.ics.uci.edu/pub/ietf/http/related/iso639.txt"
-            target="_new">http://www.ics.uci.edu/pub/ietf/http/related/iso639.txt</a>.
+            bundle should be named <code>openfire_i18n_de.properties</code> because
+            <code>de</code> is the language code for German. For French, the file would be called
+            <code>openfire_i18n_fr.properties</code>. A list of language codes can
+            be found at: <a href="https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes" target="_blank">Wikipedia</a>.
             Some locales require a combination of language and country code. For example
-            simplified Chinese would have the name "openfire_i18n_zh_CN.properties"
-            while traditional Chinese would have the name "openfire_i18n_zh_TW.properties".
+            simplified Chinese would have the name <code>openfire_i18n_zh_CN.properties</code>
+            while traditional Chinese would have the name <code>openfire_i18n_zh_TW.properties</code>.
+            Please note that the two digit language code should be in lower case, and the
+            two digit country code should be in uppercase.
         </p>
 
     </section>
@@ -97,6 +98,10 @@ skin.message=<i>Beitrag</i></pre>
             Next, use your favorite text editor to translate the English values into
             your language. The key names must not be changed.
         </p>
+        <p>
+            In property strings that are parameterized, single quotes can be used to quote the <code>{</code> (curly brace) if necessary.
+            A real single quote is represented by <code>''</code>.
+        </p>
 
     </section>
 
@@ -106,10 +111,10 @@ skin.message=<i>Beitrag</i></pre>
 
         <p>
             To test your translation, copy the translated resource bundle file (example,
-            openfire_i18n_de.properties) to the <code>lib/</code> directory of your Openfire
+            <code>openfire_i18n_de.properties</code>) to the <code>lib/</code> directory of your Openfire
             installation. Make sure Openfire is stopped and then edit the <code>conf/openfire.xml</code>
             file. Set the <code>locale</code> property to match your new resource
-            bundle such as "de" or "zh_CN". Start Openfire and the admin console
+            bundle such as <code>de</code> or <code>zh_CN</code>. Start Openfire and the admin console
             should now be using your translation. If you still see English text you may have
             named your bundle incorrectly or used the wrong value for the <code>locale</code>
             property.

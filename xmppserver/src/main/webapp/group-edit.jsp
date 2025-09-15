@@ -308,10 +308,10 @@
         return;
     }
 
-    success = groupInfoChanged || Boolean.parseBoolean(request.getParameter("success")) ||
-            Boolean.parseBoolean(request.getParameter("deletesuccess")) ||
-            Boolean.parseBoolean(request.getParameter("updatesuccess")) ||
-            Boolean.parseBoolean(request.getParameter("creategroupsuccess"));
+    success = groupInfoChanged || ParamUtils.getBooleanParameter(request, "success") ||
+            ParamUtils.getBooleanParameter(request, "deletesuccess") ||
+            ParamUtils.getBooleanParameter(request, "updatesuccess") ||
+            ParamUtils.getBooleanParameter(request, "creategroupsuccess");
 
     SharedGroupVisibility visibility = group.getSharedWith();
     if ( SharedGroupVisibility.usersOfGroups == visibility ) {

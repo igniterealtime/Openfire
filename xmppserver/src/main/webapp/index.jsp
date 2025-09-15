@@ -48,7 +48,7 @@
 <jsp:useBean id="pageinfo" scope="request" class="org.jivesoftware.admin.AdminPageBean" />
 
 <%  // Simple logout code
-    if (Boolean.parseBoolean(request.getParameter("logout"))) {
+    if (ParamUtils.getBooleanParameter(request, "logout")) {
         session.removeAttribute("jive.admin.authToken");
         response.sendRedirect("index.jsp");
         return;

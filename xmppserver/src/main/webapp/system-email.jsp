@@ -126,7 +126,7 @@
 <fmt:message key="system.email.info" />
 </p>
 
-<%  if (Boolean.parseBoolean(request.getParameter("success"))) { %>
+<%  if (ParamUtils.getBooleanParameter(request, "success")) { %>
 
     <admin:infoBox type="success">
         <fmt:message key="system.email.update_success" />

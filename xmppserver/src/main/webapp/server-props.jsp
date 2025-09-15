@@ -221,8 +221,8 @@
 <fmt:message key="server.props.info" />
 </p>
 
-<%  if (Boolean.parseBoolean(request.getParameter("success"))) {
-        pageContext.setAttribute("restart", Boolean.parseBoolean(request.getParameter("restart")));
+<%  if (ParamUtils.getBooleanParameter(request, "success")) {
+        pageContext.setAttribute("restart", ParamUtils.getBooleanParameter(request, "restart"));
 %>
 
 <admin:infoBox type="success">

@@ -34,6 +34,7 @@ import java.lang.reflect.Field;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -85,7 +86,7 @@ public class MUCRoomTest {
         populateField(roomSelfOccupant, "affiliation", Affiliation.member);
         populateField(roomSelfOccupant, "occupantJID", new JID("room-test-jid@conference.example.org"));
 
-        final List<MUCOccupant> occupants = new ArrayList<>();
+        final List<MUCOccupant> occupants = new CopyOnWriteArrayList<>();
         final MUCOccupant occupantA = new MUCOccupant();
         populateField(occupantA, "roomJid", new JID("occupantA@example.org/Ψ+"));
         populateField(occupantA, "role", Role.participant);

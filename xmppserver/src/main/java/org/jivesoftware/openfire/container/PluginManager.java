@@ -770,7 +770,27 @@ public class PluginManager
         }
     }
 
+    /**
+     * Starts the process of reloading a plugin. Does not wait for the process to conclude.
+     *
+     * @param pluginName The name of the plugin to be reloaded.
+     * @return if the process could be started.
+     */
     public boolean reloadPlugin( String pluginName )
+    {
+        return reloadPlugin(pluginName, false);
+    }
+
+    /**
+     * Starts the process of reloading a plugin. Does not wait for the process to conclude.
+     *
+     * Note that the return value does not indicate that the reload was successful. It only indicates if an attempt was
+     * made.
+     *
+     * @param pluginName The name of the plugin to be reloaded.
+     * @return if the process could be started.
+     */
+    public boolean reloadPlugin(String pluginName, boolean blockUntilDone)
     {
         Log.debug( "Reloading plugin '{}'...", pluginName );
 
@@ -798,7 +818,7 @@ public class PluginManager
             return false;
         }
 
-        pluginMonitor.runNow( false );
+        pluginMonitor.runNow( blockUntilDone );
         return true;
     }
 

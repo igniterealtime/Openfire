@@ -29,6 +29,7 @@ import org.jivesoftware.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -519,7 +520,7 @@ public class PluginManager
                 }
             }
 
-            // Initialize the plugin class loader, which is either a new instance, or a the loader from a parent plugin.
+            // Initialize the plugin class loader, which is either a new instance, or the loader from a parent plugin.
             final PluginClassLoader pluginLoader;
 
             // Check to see if this is a child plugin of another plugin. If it is, we re-use the parent plugin's class
@@ -561,7 +562,7 @@ public class PluginManager
                 pluginLoader = new PluginClassLoader();
             }
 
-            // Add the plugin sources to the classloaded.
+            // Add the plugin sources to the class loader.
             pluginLoader.addDirectory( pluginDir.toFile() );
 
             // Initialise a logging context, if necessary
@@ -638,7 +639,7 @@ public class PluginManager
             Log.debug( "Initialized plugin '{}'.", canonicalName );
             Thread.currentThread().setContextClassLoader( oldLoader );
 
-            // If there a <adminconsole> section defined, register it.
+            // If there is an <adminconsole> section defined, register it.
             final Element adminElement = (Element) pluginXML.selectSingleNode( "/plugin/adminconsole" );
             if ( adminElement != null )
             {
@@ -823,84 +824,140 @@ public class PluginManager
     }
 
     /**
-     * Unloads a plugin. The {@link Plugin#destroyPlugin()} method will be called and then any resources will be
-     * released. The name should be the canonical name of the plugin (based on the plugin directory name) and not the
-     * human readable name as given by the plugin meta-data.
+     * An operation that can be executed against a plugin.
      *
-     * This method only removes the plugin but does not delete the plugin JAR file. Therefore, if the plugin JAR still
-     * exists after this method is called, the plugin will be started again the next  time the plugin monitor process
-     * runs. This is useful for "restarting" plugins. To completely remove the plugin, use {@link #deletePlugin(String)}
-     * instead.
-     *
-     * This method is called automatically when a plugin's JAR file is deleted.
-     *
-     * @param canonicalName the canonical name of the plugin to unload.
+     * @param <String> The canonical name of the plugin against which the operation is to be applied.
+     * @param <Plugin> The plugin instance against which the operation is to be applied.
      */
-    synchronized void unloadPlugin( String canonicalName )
+    @FunctionalInterface
+    private interface PluginOperation<String, Plugin>
     {
-        Log.debug( "Unloading plugin '{}'...", canonicalName );
+        void perform(String canonicalName, Plugin plugin);
+    }
 
-        failureToLoadCount.remove( canonicalName );
-        lastLoadWarnings.remove(canonicalName);
+    /**
+     * Execute an operation on all plugins that exist in the hierarchy of the provided plugin.
+     *
+     * Note that the operation is executed against all plugins in the hierarchy, including any descendant, ancestor or
+     * sibling, as well as their descendants, ancestors and siblings. The operation as also executed against the
+     * provided plugin itself.
+     *
+     * This is a recursive method that guards against circular hierarchies (by delegating to the overloaded
+     * {@link #doInPluginHierarchy(String, Plugin, Set, PluginOperation)} method).
+     *
+     * @param canonicalName The name of the plugin
+     * @param plugin a plugin instance, possibly part of a hierarchy of plugins
+     * @param pluginOperation An operation to be executed against every plugin that is in the same hierarchy as the provided plugin.
+     */
+    private void doInPluginHierarchy(@Nonnull final String canonicalName, @Nonnull final Plugin plugin, @Nonnull final PluginOperation<String, Plugin> pluginOperation)
+    {
+        doInPluginHierarchy(canonicalName, plugin, new HashSet<>(), pluginOperation);
+    }
 
-        Plugin plugin = pluginsLoaded.get( canonicalName );
-        if ( plugin != null )
-        {
-            // See if any child plugins are defined.
-            if ( parentPluginMap.containsKey( plugin ) )
-            {
-                String[] childPlugins = parentPluginMap.get( plugin ).toArray(new String[0]);
-                for ( String childPlugin : childPlugins )
-                {
-                    Log.debug( "Unloading child plugin: '{}'.", childPlugin );
-                    childPluginMap.remove( pluginsLoaded.get( childPlugin ) );
-                    unloadPlugin( childPlugin );
-                }
-                parentPluginMap.remove( plugin );
-            }
+    /**
+     * Execute an operation on all plugins that exist in the hierarchy of the provided plugin.
+     *
+     * Note that the operation is executed against all plugins in the hierarchy, including any descendant, ancestor or
+     * sibling, as well as their descendants, ancestors and siblings. The operation as also executed against the
+     * provided plugin itself.
+     *
+     * This is a recursive method that guards against circular hierarchies (using the `seen` argument)
+     *
+     * @param canonicalName The name of the plugin
+     * @param plugin a plugin instance, possibly part of a hierarchy of plugins
+     * @param seen canonical names of plugins against which the operation has already been executed.
+     * @param pluginOperation An operation to be executed against every plugin that is in the same hierarchy as the provided plugin.
+     */
+    private void doInPluginHierarchy(@Nonnull final String canonicalName, @Nonnull final Plugin plugin, @Nonnull final Set<String> seen, @Nonnull final PluginOperation<String, Plugin> pluginOperation)
+    {
+        // Guard against circular recursion
+        if (!seen.add(canonicalName)) {
+            return;
+        }
 
-            Path webXML = pluginDirectory.resolve( canonicalName ).resolve( "web" ).resolve( "WEB-INF" ).resolve( "web.xml" );
-            if ( Files.exists( webXML ) )
-            {
-                AdminConsole.removeModel( canonicalName );
-                PluginServlet.unregisterServlets( webXML.toFile() );
+        // Recursively perform this in all children of the provided Plugin instance.
+        final List<String> childPluginNames = parentPluginMap.getOrDefault(plugin, Collections.emptyList());
+        for (final String childPluginName : childPluginNames) {
+            final Plugin childPlugin = pluginsLoaded.get(childPluginName);
+            if (childPlugin != null) {
+                doInPluginHierarchy(childPluginName, childPlugin, seen, pluginOperation);
             }
-            Path customWebXML = pluginDirectory.resolve( canonicalName ).resolve( "web" ).resolve( "WEB-INF" ).resolve( "web-custom.xml" );
-            if ( Files.exists( customWebXML ) )
-            {
-                PluginServlet.unregisterServlets( customWebXML.toFile() );
-            }
+        }
 
-            // Wrap destroying the plugin in a try/catch block. Otherwise, an exception raised
-            // in the destroy plugin process will disrupt the whole unloading process. It's still
-            // possible that classloader destruction won't work in the case that destroying the plugin
-            // fails. In that case, Openfire may need to be restarted to fully cleanup the plugin
-            // resources.
-            try
-            {
-                plugin.destroyPlugin();
-                Log.debug( "Destroyed plugin '{}'.", canonicalName );
+        // Recursively perform this in the parent of the provided Plugin instance.
+        final String parentPluginName = childPluginMap.get(plugin);
+        if (parentPluginName != null) {
+            final Plugin parentPlugin = pluginsLoaded.get(parentPluginName);
+            if (parentPlugin != null) {
+                doInPluginHierarchy(parentPluginName, parentPlugin, seen, pluginOperation);
             }
-            catch ( Exception e )
-            {
-                Log.error( "An exception occurred while unloading plugin '{}':", canonicalName, e );
-            }
+        }
+
+        // Perform this in the provided Plugin instance itself.
+        pluginOperation.perform(canonicalName, plugin);
+    }
+
+    /**
+     * Destroys a plugin, by:
+     *
+     * <ol>
+     * <li>unregistering its web components</li>
+     * <li>invoking its {@link Plugin#destroyPlugin()} method</li>
+     * <li>removing its System Properties</li>
+     * <li>removing its metadata from PluginManager</li>
+     * </ol>
+     *
+     * @param canonicalName The name of the plugin to be destroyed.
+     * @param plugin the instance to be destroyed.
+     */
+    private void doDestroyPlugin(@Nonnull final String canonicalName, @Nonnull final Plugin plugin)
+    {
+        Path webXML = pluginDirectory.resolve(canonicalName).resolve("web").resolve("WEB-INF").resolve("web.xml");
+        if (Files.exists(webXML)) {
+            AdminConsole.removeModel(canonicalName);
+            PluginServlet.unregisterServlets(webXML.toFile());
+        }
+        Path customWebXML = pluginDirectory.resolve(canonicalName).resolve("web").resolve("WEB-INF").resolve("web-custom.xml");
+        if (Files.exists(customWebXML)) {
+            PluginServlet.unregisterServlets(customWebXML.toFile());
+        }
+
+        // Wrap destroying the plugin in a try/catch block. Otherwise, an exception raised
+        // in the destroy plugin process will disrupt the whole unloading process. It's still
+        // possible that classloader destruction won't work in the case that destroying the plugin
+        // fails. In that case, Openfire may need to be restarted to fully cleanup the plugin
+        // resources.
+        try {
+            plugin.destroyPlugin();
+            Log.debug("Destroyed plugin '{}'.", canonicalName);
+        } catch (Exception e) {
+            Log.error("An exception occurred while unloading plugin '{}':", canonicalName, e);
         }
 
         // Remove references to the plugin so it can be unloaded from memory
         // If plugin still fails to be removed then we will add references back
         // Anyway, for a few seconds admins may not see the plugin in the admin console
         // and in a subsequent refresh it will appear if failed to be removed
-        pluginsLoaded.remove( canonicalName );
         PluginMetadata metadata = getMetadata(canonicalName);
         if (metadata != null) {
-            final String pluginName = metadata.getName();
+            final String pluginName = getMetadata(canonicalName).getName();
             Log.info("Removing all System Properties for the plugin '{}'", pluginName);
             SystemProperty.removePropertiesForPlugin(pluginName);
         }
-        Path pluginFile = pluginDirs.remove( canonicalName );
+        pluginMetadata.remove(canonicalName);
+    }
+
+    /**
+     * Destroys a PluginClassLoader associated to a plugin.
+     *
+     * WHen no class loader is associated to the plugin, this method is a no-op.
+     *
+     * @param canonicalName The name of the plugin for which to destroy the class loader.
+     * @param plugin the instance of the plugin for which to destroy the class loader.
+     */
+    private void doDestroyClassLoader(final String canonicalName, final Plugin plugin)
+    {
         PluginClassLoader pluginLoader = classloaders.remove( plugin );
-        pluginMetadata.remove( canonicalName );
 
         // try to close the cached jar files from the plugin class loader
         if ( pluginLoader != null )
@@ -917,7 +974,16 @@ public class PluginManager
         {
             Log.warn( "No plugin loader found for '{}'.", canonicalName );
         }
+    }
 
+    /**
+     * Deletes the directory in which the plugin's jar file is extracted.
+     *
+     * @param canonicalName The name of the plugin for which to delete the plugin directory.
+     * @param plugin the instance of the plugin for which to delete the plugin directory.
+     */
+    private void doDestroyExtractedFiles(final String canonicalName, final Plugin plugin)
+    {
         // Try to remove the folder where the plugin was exploded. If this works then
         // the plugin was successfully removed. Otherwise, some objects created by the
         // plugin are still in memory.
@@ -936,52 +1002,69 @@ public class PluginManager
                 // Ask the system to clean up references.
                 System.gc();
             }
+            pluginDirs.remove(canonicalName);
         }
         catch ( InterruptedException e )
         {
             Log.debug( "Stopped waiting for plugin '{}' to be fully unloaded.", canonicalName, e );
         }
+    }
 
-        if ( plugin != null && Files.notExists( dir ) )
-        {
-            // Unregister plugin caches
-            PluginCacheRegistry.getInstance().unregisterCaches( canonicalName );
+    /**
+     * Unregisters the caches that were registered for a plugin.
+     *
+     * @param canonicalName The name of the plugin for which to unregister caches.
+     * @param plugin the instance of the plugin for which to unregister caches.
+     */
+    private void doDestroyCaches(final String canonicalName, final Plugin plugin)
+    {
+        // Unregister plugin caches
+        PluginCacheRegistry.getInstance().unregisterCaches( canonicalName );
+    }
 
-            // See if this is a child plugin. If it is, we should unload
-            // the parent plugin as well.
-            if ( childPluginMap.containsKey( plugin ) )
-            {
-                String parentPluginName = childPluginMap.get( plugin );
-                Plugin parentPlugin = pluginsLoaded.get( parentPluginName );
-                List<String> childrenPlugins = parentPluginMap.get( parentPlugin );
+    /**
+     * Unloads a plugin. The {@link Plugin#destroyPlugin()} method will be called and then any resources will be
+     * released. The name should be the canonical name of the plugin (based on the plugin directory name) and not the
+     * human-readable name as given by the plugin meta-data.
+     *
+     * This method only removes the plugin but does not delete the plugin JAR file. Therefore, if the plugin JAR still
+     * exists after this method is called, the plugin will be started again the next time the plugin monitor process
+     * runs. This is useful for "restarting" plugins. To completely remove the plugin, use {@link #deletePlugin(String)}
+     * instead.`
+     *
+     * This method is called automatically when a plugin's JAR file is deleted.
+     *
+     * When the plugin that is unloaded is part of a hierarchy of parent/child plugins, all plugins in the hierarchy are
+     * unloaded.
+     *
+     * @param canonicalName the canonical name of the plugin to unload.
+     */
+    synchronized void unloadPlugin( String canonicalName )
+    {
+        Log.debug( "Unloading plugin '{}'...", canonicalName );
 
-                childrenPlugins.remove( canonicalName );
-                childPluginMap.remove( plugin );
+        failureToLoadCount.remove(canonicalName);
+        lastLoadWarnings.remove(canonicalName);
 
-                // When the parent plugin implements PluginListener, its pluginDestroyed() method
-                // isn't called if it dies first before its child. Athough the parent will die anyway,
-                // it's proper if the parent "gets informed first" about the dying child when the
-                // child is the one being killed first.
-                if ( parentPlugin instanceof PluginListener )
-                {
-                    PluginListener listener;
-                    listener = (PluginListener) parentPlugin;
-                    listener.pluginDestroyed( canonicalName, plugin );
-                }
-                unloadPlugin( parentPluginName );
-            }
-            firePluginDestroyedEvent( canonicalName, plugin );
-            Log.info( "Successfully unloaded plugin '{}'.", canonicalName );
+        Plugin plugin = pluginsLoaded.get( canonicalName );
+        if (plugin == null) {
+            return;
         }
-        else if ( plugin != null )
-        {
-            //FIXME this make no sense, while state of plugin is undetermined, (Destroy is partly executed, files are/are not removed)
-            Log.info( "Restore references since we failed to remove the plugin '{}'.", canonicalName );
-            pluginsLoaded.put( canonicalName, plugin );
-            pluginDirs.put( canonicalName, pluginFile );
-            classloaders.put( plugin, pluginLoader );
-            pluginMetadata.put( canonicalName, metadata );
-        }
+
+        doInPluginHierarchy(canonicalName, plugin, this::doDestroyPlugin);
+        doInPluginHierarchy(canonicalName, plugin, this::doDestroyClassLoader);
+        doInPluginHierarchy(canonicalName, plugin, this::doDestroyExtractedFiles);
+        doInPluginHierarchy(canonicalName, plugin, this::doDestroyCaches); // TODO document if/why this is done here (and not as part of doDestroyPlugin, for example).
+        doInPluginHierarchy(canonicalName, plugin, this::firePluginDestroyedEvent);
+
+        // Clean up the data structures that are used to maintain the plugin hierarchy.
+        doInPluginHierarchy(canonicalName, plugin, (String name, Plugin plug) -> {
+            pluginsLoaded.remove(name);
+            childPluginMap.remove(plug);
+            parentPluginMap.remove(plug);
+        });
+
+        Log.info( "Successfully unloaded plugin '{}'.", canonicalName );
     }
 
     /**

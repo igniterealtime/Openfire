@@ -217,9 +217,7 @@ public class PluginMonitor implements PropertyEventListener
                     }
 
                     // Turn the list of JAR/WAR files into a set so that we can do lookups.
-                    final Set<String> jarSet = new HashSet<>();
-
-                    // Explode all plugin files that have not yet been exploded (or need to be re-exploded).
+                    final Map<String, Path> jarsByPluginName = new HashMap<>();
                     try ( final DirectoryStream<Path> ds = Files.newDirectoryStream( pluginsDirectory, path -> {
                         if (Files.isDirectory(path)) {
                             return false;
@@ -229,48 +227,11 @@ public class PluginMonitor implements PropertyEventListener
                         return ( fileName.endsWith( ".jar" ) || fileName.endsWith( ".war" ) );
                     }) )
                     {
-                        for ( final Path jarFile : ds )
-                        {
+                        for ( final Path jarFile : ds ) {
                             final String fileName = jarFile.getFileName().toString();
-                            final String canonicalPluginName = fileName.substring( 0, fileName.length() - 4 ).toLowerCase(); // strip extension.
+                            final String canonicalPluginName = fileName.substring(0, fileName.length() - 4).toLowerCase(); // strip extension.
 
-                            jarSet.add( canonicalPluginName );
-
-                            // See if the JAR has already been exploded.
-                            final Path dir = pluginsDirectory.resolve( canonicalPluginName );
-
-                            // See if the JAR is newer than the directory. If so, the plugin needs to be unloaded and then reloaded.
-                            if ( Files.exists( dir ) && Files.getLastModifiedTime( jarFile ).toMillis() > Files.getLastModifiedTime( dir ).toMillis() )
-                            {
-                                // If this is the first time that the monitor process is running, then plugins won't be loaded yet. Therefore, just delete the directory.
-                                if ( !pluginManager.isExecuted() )
-                                {
-                                    int count = 0;
-                                    // Attempt to delete the folder for up to 5 seconds.
-                                    while ( !PluginManager.deleteDir( dir ) && count++ < 5 )
-                                    {
-                                        Thread.sleep( 1000 );
-                                    }
-                                }
-                                else
-                                {
-                                    // Not the first time? Properly unload the plugin.
-                                    pluginManager.unloadPlugin( canonicalPluginName );
-                                }
-                            }
-
-                            // If the JAR needs to be exploded, do so.
-                            if ( Files.notExists( dir ) )
-                            {
-                                if (!unzipPlugin( canonicalPluginName, jarFile, dir ) )
-                                {
-                                    // the 'continue' statement is strictly unneeded here, as this
-                                    // is the last statement at the time of writing. It's left in
-                                    // to avoid future additions to this code from progressing
-                                    // beyond this point.
-                                    continue;
-                                }
-                            }
+                            jarsByPluginName.put(canonicalPluginName, jarFile);
                         }
                     }
 
@@ -283,7 +244,7 @@ public class PluginMonitor implements PropertyEventListener
                         }
 
                         final String pluginName = PluginMetadataHelper.getCanonicalName( path );
-                        return !pluginName.equals( "admin" ) && !jarSet.contains( pluginName );
+                        return !pluginName.equals( "admin" ) && !jarsByPluginName.containsKey( pluginName );
                     }) )
                     {
                         for ( final Path path : ds )
@@ -291,6 +252,56 @@ public class PluginMonitor implements PropertyEventListener
                             final String pluginName = PluginMetadataHelper.getCanonicalName( path );
                             Log.info( "Plugin '{}' was removed from the file system.", pluginName );
                             pluginManager.unloadPlugin( pluginName );
+                        }
+                    }
+
+                    // See if any JAR is newer than the directory. If so, the plugin needs to be unloaded and then reloaded.
+                    for (final Map.Entry<String, Path> entry : jarsByPluginName.entrySet())
+                    {
+                        final String canonicalPluginName = entry.getKey();
+                        final Path jarFile = entry.getValue();
+                        final Path dir = pluginsDirectory.resolve( canonicalPluginName );
+
+                        if ( Files.exists( dir ) && Files.getLastModifiedTime( jarFile ).toMillis() > Files.getLastModifiedTime( dir ).toMillis() )
+                        {
+                            // If this is the first time that the monitor process is running, then plugins won't be loaded yet. Therefore, just delete the directory.
+                            if ( !pluginManager.isExecuted() )
+                            {
+                                int count = 0;
+                                // Attempt to delete the folder for up to 5 seconds.
+                                while ( !PluginManager.deleteDir( dir ) && count++ < 5 )
+                                {
+                                    Thread.sleep( 1000 );
+                                }
+                            }
+                            else
+                            {
+                                // Not the first time? Properly unload the plugin.
+                                pluginManager.unloadPlugin( canonicalPluginName );
+                            }
+                        }
+                    }
+
+                    // Explode all plugin files that have not yet been exploded (or need to be re-exploded).
+                    for (final Map.Entry<String, Path> entry : jarsByPluginName.entrySet())
+                    {
+                        final String canonicalPluginName = entry.getKey();
+                        final Path jarFile = entry.getValue();
+
+                        // See if the JAR has already been exploded.
+                        final Path dir = pluginsDirectory.resolve( canonicalPluginName );
+
+                        // If the JAR needs to be exploded, do so.
+                        if ( Files.notExists( dir ) )
+                        {
+                            if (!unzipPlugin( canonicalPluginName, jarFile, dir ) )
+                            {
+                                // the 'continue' statement is strictly unneeded here, as this
+                                // is the last statement at the time of writing. It's left in
+                                // to avoid future additions to this code from progressing
+                                // beyond this point.
+                                continue;
+                            }
                         }
                     }
 

@@ -148,7 +148,7 @@ public class PluginLoadingSimpleHierarchyTest
         }
 
         // Execute system under test.
-        pluginManager.reloadPlugin("node_a");
+        pluginManager.reloadPlugin("node_a", true);
 
         // Verify results.
         assertTrue(pluginManager.isInstalled("node_a"), "Expected the 'plugins' directory to contain the plugin jar file (but it does not).");
@@ -233,7 +233,7 @@ public class PluginLoadingSimpleHierarchyTest
         }
 
         // Execute system under test.
-        pluginManager.reloadPlugin("node_a_b");
+        pluginManager.reloadPlugin("node_a_b", true);
 
         // Verify results.
         assertTrue(pluginManager.isInstalled("node_a_b"), "Expected the 'plugins' directory to contain the child plugin jar file (but it does not).");
@@ -287,7 +287,7 @@ public class PluginLoadingSimpleHierarchyTest
         }
 
         // Execute system under test.
-        pluginManager.reloadPlugin("node_a");
+        pluginManager.reloadPlugin("node_a", true);
 
         // Verify results.
         assertTrue(pluginManager.isInstalled("node_a"), "Expected the 'plugins' directory to contain the parent plugin jar file (but it does not).");
@@ -350,7 +350,7 @@ public class PluginLoadingSimpleHierarchyTest
         }
 
         // Execute system under test.
-        pluginManager.reloadPlugin("node_a_b");
+        pluginManager.reloadPlugin("node_a_b", true);
 
         // Verify results.
         assertTrue(pluginManager.isInstalled("node_a_b"), "Expected the 'plugins' directory to contain the reloaded child plugin jar file (but it does not).");

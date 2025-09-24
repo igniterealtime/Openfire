@@ -223,7 +223,7 @@ public class PluginLoadingComplexHierarchyTest
     public void testReload_Node_A() throws Exception
     {
         // Execute system under test.
-        pluginManager.reloadPlugin("node_a");
+        pluginManager.reloadPlugin("node_a", true);
 
         // Verify results.
         assertIsActive("node_a");
@@ -254,7 +254,7 @@ public class PluginLoadingComplexHierarchyTest
     public void testReload_Node_A_B() throws Exception
     {
         // Execute system under test.
-        pluginManager.reloadPlugin("node_a_b");
+        pluginManager.reloadPlugin("node_a_b", true);
 
         // Verify results.
         assertIsActive("node_a");
@@ -285,7 +285,7 @@ public class PluginLoadingComplexHierarchyTest
     public void testReload_Node_A_C() throws Exception
     {
         // Execute system under test.
-        pluginManager.reloadPlugin("node_a_c");
+        pluginManager.reloadPlugin("node_a_c", true);
 
         // Verify results.
         assertIsActive("node_a");
@@ -316,7 +316,7 @@ public class PluginLoadingComplexHierarchyTest
     public void testReload_Node_A_C_D() throws Exception
     {
         // Execute system under test.
-        pluginManager.reloadPlugin("node_a_c_d");
+        pluginManager.reloadPlugin("node_a_c_d", true);
 
         // Verify results.
         assertIsActive("node_a");
@@ -347,7 +347,7 @@ public class PluginLoadingComplexHierarchyTest
     public void testReload_Node_A_C_E() throws Exception
     {
         // Execute system under test.
-        pluginManager.reloadPlugin("node_a_c_e");
+        pluginManager.reloadPlugin("node_a_c_e", true);
 
         // Verify results.
         assertIsActive("node_a");

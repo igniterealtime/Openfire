@@ -31,6 +31,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
@@ -222,10 +224,16 @@ public class PluginLoadingComplexHierarchyTest
     @Test
     public void testReload_Node_A() throws Exception
     {
+        // Setup test fixture.
+        final Instant installTime = getLastInstallTime("node_a");
+        Thread.sleep(1); // Ensure that, upon reinstall, the 'last install time' is different.
+
         // Execute system under test.
         pluginManager.reloadPlugin("node_a", true);
 
         // Verify results.
+        final Instant reloadTime = getLastInstallTime("node_a");
+        assertTrue(reloadTime.isAfter(installTime), "Expected the plugin to have been re-installed (but it was not).");
         assertIsActive("node_a");
         assertIsActive("node_a_b");
         assertIsActive("node_a_c");
@@ -253,10 +261,16 @@ public class PluginLoadingComplexHierarchyTest
     @Test
     public void testReload_Node_A_B() throws Exception
     {
+        // Setup test fixture.
+        final Instant installTime = getLastInstallTime("node_a_b");
+        Thread.sleep(1); // Ensure that, upon reinstall, the 'last install time' is different.
+
         // Execute system under test.
         pluginManager.reloadPlugin("node_a_b", true);
 
         // Verify results.
+        final Instant reloadTime = getLastInstallTime("node_a_b");
+        assertTrue(reloadTime.isAfter(installTime), "Expected the plugin to have been re-installed (but it was not).");
         assertIsActive("node_a");
         assertIsActive("node_a_b");
         assertIsActive("node_a_c");
@@ -284,10 +298,16 @@ public class PluginLoadingComplexHierarchyTest
     @Test
     public void testReload_Node_A_C() throws Exception
     {
+        // Setup test fixture.
+        final Instant installTime = getLastInstallTime("node_a_c");
+        Thread.sleep(1); // Ensure that, upon reinstall, the 'last install time' is different.
+
         // Execute system under test.
         pluginManager.reloadPlugin("node_a_c", true);
 
         // Verify results.
+        final Instant reloadTime = getLastInstallTime("node_a_c");
+        assertTrue(reloadTime.isAfter(installTime), "Expected the plugin to have been re-installed (but it was not).");
         assertIsActive("node_a");
         assertIsActive("node_a_b");
         assertIsActive("node_a_c");
@@ -315,10 +335,16 @@ public class PluginLoadingComplexHierarchyTest
     @Test
     public void testReload_Node_A_C_D() throws Exception
     {
+        // Setup test fixture.
+        final Instant installTime = getLastInstallTime("node_a_c_d");
+        Thread.sleep(1); // Ensure that, upon reinstall, the 'last install time' is different.
+
         // Execute system under test.
         pluginManager.reloadPlugin("node_a_c_d", true);
 
         // Verify results.
+        final Instant reloadTime = getLastInstallTime("node_a_c_d");
+        assertTrue(reloadTime.isAfter(installTime), "Expected the plugin to have been re-installed (but it was not).");
         assertIsActive("node_a");
         assertIsActive("node_a_b");
         assertIsActive("node_a_c");
@@ -346,10 +372,16 @@ public class PluginLoadingComplexHierarchyTest
     @Test
     public void testReload_Node_A_C_E() throws Exception
     {
+        // Setup test fixture.
+        final Instant installTime = getLastInstallTime("node_a_c_e");
+        Thread.sleep(1); // Ensure that, upon reinstall, the 'last install time' is different.
+
         // Execute system under test.
         pluginManager.reloadPlugin("node_a_c_e", true);
 
         // Verify results.
+        final Instant reloadTime = getLastInstallTime("node_a_c_e");
+        assertTrue(reloadTime.isAfter(installTime), "Expected the plugin to have been re-installed (but it was not).");
         assertIsActive("node_a");
         assertIsActive("node_a_b");
         assertIsActive("node_a_c");
@@ -369,5 +401,17 @@ public class PluginLoadingComplexHierarchyTest
         try (final InputStream is = this.getClass().getResourceAsStream("/testplugins/" + fileName)) {
             return pluginManager.installPlugin(is, fileName);
         }
+    }
+
+    /**
+     * Returns the time that the plugin was installed (reloaded) last.
+     *
+     * @param canonicalPluginName The name of the plugin that is expected to be installed.
+     * @return the time when the plugin was installed.
+     */
+    private Instant getLastInstallTime(final String canonicalPluginName) throws IOException
+    {
+        final Path explodedPluginPath = tempPluginDirectory.resolve(canonicalPluginName);
+        return Files.getLastModifiedTime(explodedPluginPath).toInstant();
     }
 }

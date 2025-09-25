@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
@@ -146,11 +147,15 @@ public class PluginLoadingSimpleHierarchyTest
         if (!installPlugin("node_a")) {
             throw new AssertionFailedException("Unable to execute test: the plugin (that is to be reloaded as part of this test) could not be installed during the test fixture setup.");
         }
+        final Instant installTime = getLastInstallTime("node_a");
+        Thread.sleep(1); // Ensure that, upon reinstall, the 'last install time' is different.
 
         // Execute system under test.
         pluginManager.reloadPlugin("node_a", true);
 
         // Verify results.
+        final Instant reloadTime = getLastInstallTime("node_a");
+        assertTrue(reloadTime.isAfter(installTime), "Expected the plugin to have been re-installed (but it was not).");
         assertTrue(pluginManager.isInstalled("node_a"), "Expected the 'plugins' directory to contain the plugin jar file (but it does not).");
         assertTrue(pluginManager.isExtracted("node_a"), "Expected the 'plugins' directory to contain a subdirectory that matches the canonical name of the plugin (but it does not).");
         assertTrue(pluginManager.isLoaded("node_a"), "An instance of the plugin's class file is expected to have been created and registered with the plugin manager (but it has not).");
@@ -231,11 +236,15 @@ public class PluginLoadingSimpleHierarchyTest
         if (!installPlugin("node_a_b")) {
             throw new AssertionFailedException("Unable to execute test: the child plugin (that is to be reloaded as part of this test) could not be installed during the test fixture setup.");
         }
+        final Instant installTime = getLastInstallTime("node_a_b");
+        Thread.sleep(1); // Ensure that, upon reinstall, the 'last install time' is different.
 
         // Execute system under test.
         pluginManager.reloadPlugin("node_a_b", true);
 
         // Verify results.
+        final Instant reloadTime = getLastInstallTime("node_a_b");
+        assertTrue(reloadTime.isAfter(installTime), "Expected the plugin to have been re-installed (but it was not).");
         assertTrue(pluginManager.isInstalled("node_a_b"), "Expected the 'plugins' directory to contain the child plugin jar file (but it does not).");
         assertTrue(pluginManager.isExtracted("node_a_b"), "Expected the 'plugins' directory to contain a subdirectory that matches the canonical name of the child plugin (but it does not).");
         assertTrue(pluginManager.isLoaded("node_a_b"), "An instance of the child plugin's class file is expected to have been created and registered with the plugin manager (but it has not).");
@@ -285,11 +294,15 @@ public class PluginLoadingSimpleHierarchyTest
         if (!installPlugin("node_a_b")) {
             throw new AssertionFailedException("Unable to execute test: the child plugin (of which the parent is to be reloaded as part of this test) could not be installed during the test fixture setup.");
         }
+        final Instant installTime = getLastInstallTime("node_a");
+        Thread.sleep(1); // Ensure that, upon reinstall, the 'last install time' is different.
 
         // Execute system under test.
         pluginManager.reloadPlugin("node_a", true);
 
         // Verify results.
+        final Instant reloadTime = getLastInstallTime("node_a");
+        assertTrue(reloadTime.isAfter(installTime), "Expected the plugin to have been re-installed (but it was not).");
         assertTrue(pluginManager.isInstalled("node_a"), "Expected the 'plugins' directory to contain the parent plugin jar file (but it does not).");
         assertTrue(pluginManager.isExtracted("node_a"), "Expected the 'plugins' directory to contain a subdirectory that matches the canonical name of the parent plugin (but it does not).");
         assertTrue(pluginManager.isLoaded("node_a"), "An instance of the parent plugin's class file is expected to have been created and registered with the plugin manager (but it has not).");
@@ -348,11 +361,15 @@ public class PluginLoadingSimpleHierarchyTest
         if (!installPlugin("node_a_c")) {
             throw new AssertionFailedException("Unable to execute test: a child plugin (that is a sibling of the plugin to be reloaded as part of this test) could not be installed during the test fixture setup.");
         }
+        final Instant installTime = getLastInstallTime("node_a_b");
+        Thread.sleep(1); // Ensure that, upon reinstall, the 'last install time' is different.
 
         // Execute system under test.
         pluginManager.reloadPlugin("node_a_b", true);
 
         // Verify results.
+        final Instant reloadTime = getLastInstallTime("node_a_b");
+        assertTrue(reloadTime.isAfter(installTime), "Expected the plugin to have been re-installed (but it was not).");
         assertTrue(pluginManager.isInstalled("node_a_b"), "Expected the 'plugins' directory to contain the reloaded child plugin jar file (but it does not).");
         assertTrue(pluginManager.isExtracted("node_a_b"), "Expected the 'plugins' directory to contain a subdirectory that matches the canonical name of the reloaded child plugin (but it does not).");
         assertTrue(pluginManager.isLoaded("node_a_b"), "An instance of the reloaded child plugin's class file is expected to have been created and registered with the plugin manager (but it has not).");
@@ -405,5 +422,17 @@ public class PluginLoadingSimpleHierarchyTest
         try (final InputStream is = this.getClass().getResourceAsStream("/testplugins/" + fileName)) {
             return pluginManager.installPlugin(is, fileName);
         }
+    }
+
+    /**
+     * Returns the time that the plugin was installed (reloaded) last.
+     *
+     * @param canonicalPluginName The name of the plugin that is expected to be installed.
+     * @return the time when the plugin was installed.
+     */
+    private Instant getLastInstallTime(final String canonicalPluginName) throws IOException
+    {
+        final Path explodedPluginPath = tempPluginDirectory.resolve(canonicalPluginName);
+        return Files.getLastModifiedTime(explodedPluginPath).toInstant();
     }
 }

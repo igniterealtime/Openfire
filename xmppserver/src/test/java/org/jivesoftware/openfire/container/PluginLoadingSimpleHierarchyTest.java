@@ -15,7 +15,6 @@
  */
 package org.jivesoftware.openfire.container;
 
-import com.mysql.cj.exceptions.AssertionFailedException;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.XMPPServer;
 import org.junit.jupiter.api.AfterEach;
@@ -35,8 +34,7 @@ import java.time.Instant;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests that verify the functionality of {@link PluginManager}, particularly in regard to loading and unloading of
@@ -125,7 +123,7 @@ public class PluginLoadingSimpleHierarchyTest
     {
         // Setup test fixture.
         if (!installPlugin("node_a")) {
-            throw new AssertionFailedException("Unable to execute test: the plugin (that is to be deleted as part of this test) could not be installed during the test fixture setup.");
+            fail("Unable to execute test: the plugin (that is to be deleted as part of this test) could not be installed during the test fixture setup.");
         }
 
         // Execute system under test.
@@ -145,7 +143,7 @@ public class PluginLoadingSimpleHierarchyTest
     {
         // Setup test fixture.
         if (!installPlugin("node_a")) {
-            throw new AssertionFailedException("Unable to execute test: the plugin (that is to be reloaded as part of this test) could not be installed during the test fixture setup.");
+            fail("Unable to execute test: the plugin (that is to be reloaded as part of this test) could not be installed during the test fixture setup.");
         }
         final Instant installTime = getLastInstallTime("node_a");
         Thread.sleep(1); // Ensure that, upon reinstall, the 'last install time' is different.
@@ -184,7 +182,7 @@ public class PluginLoadingSimpleHierarchyTest
     {
         // Setup test fixture.
         if (!installPlugin("node_a")) {
-            throw new AssertionFailedException("Unable to execute test: the parent plugin (of the plugin to be installed as part of this test) could not be installed during the test fixture setup.");
+            fail("Unable to execute test: the parent plugin (of the plugin to be installed as part of this test) could not be installed during the test fixture setup.");
         }
         // Execute system under test.
         final boolean result = installPlugin("node_a_b");
@@ -205,10 +203,10 @@ public class PluginLoadingSimpleHierarchyTest
     {
         // Setup test fixture.
         if (!installPlugin("node_a")) {
-            throw new AssertionFailedException("Unable to execute test: the parent plugin (of the plugin to be deleted as part of this test) could not be installed during the test fixture setup.");
+            fail("Unable to execute test: the parent plugin (of the plugin to be deleted as part of this test) could not be installed during the test fixture setup.");
         }
         if (!installPlugin("node_a_b")) {
-            throw new AssertionFailedException("Unable to execute test: the child plugin (that is to be deleted as part of this test) could not be installed during the test fixture setup.");
+            fail("Unable to execute test: the child plugin (that is to be deleted as part of this test) could not be installed during the test fixture setup.");
         }
 
         // Execute system under test.
@@ -231,10 +229,10 @@ public class PluginLoadingSimpleHierarchyTest
     {
         // Setup test fixture.
         if (!installPlugin("node_a")) {
-            throw new AssertionFailedException("Unable to execute test: the parent plugin (of the plugin to be reloaded as part of this test) could not be installed during the test fixture setup.");
+            fail("Unable to execute test: the parent plugin (of the plugin to be reloaded as part of this test) could not be installed during the test fixture setup.");
         }
         if (!installPlugin("node_a_b")) {
-            throw new AssertionFailedException("Unable to execute test: the child plugin (that is to be reloaded as part of this test) could not be installed during the test fixture setup.");
+            fail("Unable to execute test: the child plugin (that is to be reloaded as part of this test) could not be installed during the test fixture setup.");
         }
         final Instant installTime = getLastInstallTime("node_a_b");
         Thread.sleep(1); // Ensure that, upon reinstall, the 'last install time' is different.
@@ -261,10 +259,10 @@ public class PluginLoadingSimpleHierarchyTest
     {
         // Setup test fixture.
         if (!installPlugin("node_a")) {
-            throw new AssertionFailedException("Unable to execute test: the parent plugin (that is to be deleted as part of this test) could not be installed during the test fixture setup.");
+            fail("Unable to execute test: the parent plugin (that is to be deleted as part of this test) could not be installed during the test fixture setup.");
         }
         if (!installPlugin("node_a_b")) {
-            throw new AssertionFailedException("Unable to execute test: the child plugin (of which the parent is to be deleted as part of this test) could not be installed during the test fixture setup.");
+            fail("Unable to execute test: the child plugin (of which the parent is to be deleted as part of this test) could not be installed during the test fixture setup.");
         }
 
         // Execute system under test.
@@ -289,10 +287,10 @@ public class PluginLoadingSimpleHierarchyTest
     {
         // Setup test fixture.
         if (!installPlugin("node_a")) {
-            throw new AssertionFailedException("Unable to execute test: the parent plugin (to be reloaded as part of this test) could not be installed during the test fixture setup.");
+            fail("Unable to execute test: the parent plugin (to be reloaded as part of this test) could not be installed during the test fixture setup.");
         }
         if (!installPlugin("node_a_b")) {
-            throw new AssertionFailedException("Unable to execute test: the child plugin (of which the parent is to be reloaded as part of this test) could not be installed during the test fixture setup.");
+            fail("Unable to execute test: the child plugin (of which the parent is to be reloaded as part of this test) could not be installed during the test fixture setup.");
         }
         final Instant installTime = getLastInstallTime("node_a");
         Thread.sleep(1); // Ensure that, upon reinstall, the 'last install time' is different.
@@ -320,13 +318,13 @@ public class PluginLoadingSimpleHierarchyTest
     {
         // Setup test fixture.
         if (!installPlugin("node_a")) {
-            throw new AssertionFailedException("Unable to execute test: the parent plugin (of the plugin to be deleted as part of this test) could not be installed during the test fixture setup.");
+            fail("Unable to execute test: the parent plugin (of the plugin to be deleted as part of this test) could not be installed during the test fixture setup.");
         }
         if (!installPlugin("node_a_b")) {
-            throw new AssertionFailedException("Unable to execute test: a child plugin (that is to be deleted as part of this test) could not be installed during the test fixture setup.");
+            fail("Unable to execute test: a child plugin (that is to be deleted as part of this test) could not be installed during the test fixture setup.");
         }
         if (!installPlugin("node_a_c")) {
-            throw new AssertionFailedException("Unable to execute test: a child plugin (that is a sibling of the plugin to be deleted as part of this test) could not be installed during the test fixture setup.");
+            fail("Unable to execute test: a child plugin (that is a sibling of the plugin to be deleted as part of this test) could not be installed during the test fixture setup.");
         }
 
         // Execute system under test.
@@ -353,13 +351,13 @@ public class PluginLoadingSimpleHierarchyTest
     {
         // Setup test fixture.
         if (!installPlugin("node_a")) {
-            throw new AssertionFailedException("Unable to execute test: the parent plugin (of the plugin to be reloaded as part of this test) could not be installed during the test fixture setup.");
+            fail("Unable to execute test: the parent plugin (of the plugin to be reloaded as part of this test) could not be installed during the test fixture setup.");
         }
         if (!installPlugin("node_a_b")) {
-            throw new AssertionFailedException("Unable to execute test: a child plugin (that is to be reloaded as part of this test) could not be installed during the test fixture setup.");
+            fail("Unable to execute test: a child plugin (that is to be reloaded as part of this test) could not be installed during the test fixture setup.");
         }
         if (!installPlugin("node_a_c")) {
-            throw new AssertionFailedException("Unable to execute test: a child plugin (that is a sibling of the plugin to be reloaded as part of this test) could not be installed during the test fixture setup.");
+            fail("Unable to execute test: a child plugin (that is a sibling of the plugin to be reloaded as part of this test) could not be installed during the test fixture setup.");
         }
         final Instant installTime = getLastInstallTime("node_a_b");
         Thread.sleep(1); // Ensure that, upon reinstall, the 'last install time' is different.
@@ -390,10 +388,10 @@ public class PluginLoadingSimpleHierarchyTest
     {
         // Setup test fixture.
         if (!installPlugin("node_a")) {
-            throw new AssertionFailedException("Unable to execute test: the parent plugin (that is to be reloaded as part of this test) could not be installed during the test fixture setup.");
+            fail("Unable to execute test: the parent plugin (that is to be reloaded as part of this test) could not be installed during the test fixture setup.");
         }
         if (!installPlugin("node_a_b")) {
-            throw new AssertionFailedException("Unable to execute test: the child plugin (of which the parent is to be deleted as part of this test) could not be installed during the test fixture setup.");
+            fail("Unable to execute test: the child plugin (of which the parent is to be deleted as part of this test) could not be installed during the test fixture setup.");
         }
         pluginManager.deletePlugin("node_a");
 

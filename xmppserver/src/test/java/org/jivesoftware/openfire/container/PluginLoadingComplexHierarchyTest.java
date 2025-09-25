@@ -15,7 +15,6 @@
  */
 package org.jivesoftware.openfire.container;
 
-import com.mysql.cj.exceptions.AssertionFailedException;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.XMPPServer;
 import org.junit.jupiter.api.AfterEach;
@@ -31,13 +30,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests that verify the functionality of {@link PluginManager}, particularly in regard to loading and unloading of
@@ -109,19 +106,19 @@ public class PluginLoadingComplexHierarchyTest
 
         // Populate the plugin manager with all five plugins from the hierarchy
         if (!installPlugin("node_a")) {
-            throw new AssertionFailedException("Unable to execute test: plugin 'node_a.jar' could not be installed during the test fixture setup.");
+            fail("Unable to execute test: plugin 'node_a.jar' could not be installed during the test fixture setup.");
         }
         if (!installPlugin("node_a_b")) {
-            throw new AssertionFailedException("Unable to execute test: plugin 'node_a_b.jar' could not be installed during the test fixture setup.");
+            fail("Unable to execute test: plugin 'node_a_b.jar' could not be installed during the test fixture setup.");
         }
         if (!installPlugin("node_a_c")) {
-            throw new AssertionFailedException("Unable to execute test: plugin 'node_a_c.jar' could not be installed during the test fixture setup.");
+            fail("Unable to execute test: plugin 'node_a_c.jar' could not be installed during the test fixture setup.");
         }
         if (!installPlugin("node_a_c_d")) {
-            throw new AssertionFailedException("Unable to execute test: plugin 'node_a_c_d.jar' could not be installed during the test fixture setup.");
+            fail("Unable to execute test: plugin 'node_a_c_d.jar' could not be installed during the test fixture setup.");
         }
         if (!installPlugin("node_a_c_e")) {
-            throw new AssertionFailedException("Unable to execute test: plugin 'node_a_c_e.jar' could not be installed during the test fixture setup.");
+            fail("Unable to execute test: plugin 'node_a_c_e.jar' could not be installed during the test fixture setup.");
         }
     }
 

@@ -11,8 +11,8 @@ CREATE TABLE ofUser (
   encryptedPassword     VARCHAR(255),
   name                  VARCHAR(100),
   email                 VARCHAR(100),
-  creationDate          TIMESTAMP       NOT NULL,
-  modificationDate      TIMESTAMP       NOT NULL,
+  creationDate          TIMESTAMP WITH TIME ZONE       NOT NULL,
+  modificationDate      TIMESTAMP WITH TIME ZONE       NOT NULL,
   CONSTRAINT ofUser_pk PRIMARY KEY (username)
 );
 CREATE INDEX ofUser_cDate_idx ON ofUser (creationDate);
@@ -29,8 +29,8 @@ CREATE TABLE ofUserProp (
 CREATE TABLE ofUserFlag (
   username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
-  startTime             TIMESTAMP,
-  endTime               TIMESTAMP,
+  startTime             TIMESTAMP WITH TIME ZONE,
+  endTime               TIMESTAMP WITH TIME ZONE,
   CONSTRAINT ofUserFlag_pk PRIMARY KEY (username, name)
 );
 CREATE INDEX ofUserFlag_sTime_idx ON ofUserFlag (startTime);
@@ -40,7 +40,7 @@ CREATE INDEX ofUserFlag_eTime_idx ON ofUserFlag (endTime);
 CREATE TABLE ofOffline (
   username              VARCHAR(64)     NOT NULL,
   messageID             INTEGER         NOT NULL,
-  creationDate          TIMESTAMP       NOT NULL,
+  creationDate          TIMESTAMP WITH TIME ZONE       NOT NULL,
   messageSize           INTEGER         NOT NULL,
   stanza                TEXT            NOT NULL,
   CONSTRAINT ofOffline_pk PRIMARY KEY (username, messageID)
@@ -50,7 +50,7 @@ CREATE TABLE ofOffline (
 CREATE TABLE ofPresence (
   username              VARCHAR(64)     NOT NULL,
   offlinePresence       TEXT,
-  offlineDate           TIMESTAMP     NOT NULL,
+  offlineDate           TIMESTAMP WITH TIME ZONE     NOT NULL,
   CONSTRAINT ofPresence_pk PRIMARY KEY (username)
 );
 
@@ -189,13 +189,13 @@ CREATE TABLE ofMucServiceProp (
 CREATE TABLE ofMucRoom (
   serviceID           INTEGER       NOT NULL,
   roomID              INTEGER       NOT NULL,
-  creationDate        TIMESTAMP     NOT NULL,
-  modificationDate    TIMESTAMP     NOT NULL,
+  creationDate        TIMESTAMP WITH TIME ZONE     NOT NULL,
+  modificationDate    TIMESTAMP WITH TIME ZONE     NOT NULL,
   name                VARCHAR(50)   NOT NULL,
   naturalName         VARCHAR(255)  NOT NULL,
   description         VARCHAR(255),
-  lockedDate          TIMESTAMP     NOT NULL,
-  emptyDate           TIMESTAMP     NULL,
+  lockedDate          TIMESTAMP WITH TIME ZONE     NOT NULL,
+  emptyDate           TIMESTAMP WITH TIME ZONE     NULL,
   canChangeSubject    INTEGER       NOT NULL,
   maxUsers            INTEGER       NOT NULL,
   publicRoom          INTEGER       NOT NULL,
@@ -234,7 +234,7 @@ CREATE TABLE ofMucRoomRetiree (
   name                VARCHAR(50)   NOT NULL,
   alternateJID        VARCHAR(2000),
   reason              VARCHAR(1024),
-  retiredAt           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  retiredAt           TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP WITH TIME ZONE,
   CONSTRAINT ofMucRoomRetiree_pk PRIMARY KEY (serviceID, name)
 );
 
@@ -262,7 +262,7 @@ CREATE TABLE ofMucConversationLog (
   messageID           INTEGER        NOT NULL,
   sender              VARCHAR(1024)  NOT NULL,
   nickname            VARCHAR(255)   NULL,
-  logTime             TIMESTAMP      NOT NULL,
+  logTime             TIMESTAMP WITH TIME ZONE      NOT NULL,
   subject             VARCHAR(255)   NULL,
   body                TEXT           NULL,
   stanza              TEXT           NULL
@@ -278,8 +278,8 @@ CREATE TABLE ofPubsubNode (
   serviceID           VARCHAR(100)  NOT NULL,
   nodeID              VARCHAR(100)  NOT NULL,
   leaf                INTEGER       NOT NULL,
-  creationDate        TIMESTAMP     NOT NULL,
-  modificationDate    TIMESTAMP     NOT NULL,
+  creationDate        TIMESTAMP WITH TIME ZONE     NOT NULL,
+  modificationDate    TIMESTAMP WITH TIME ZONE     NOT NULL,
   parent              VARCHAR(100)  NULL,
   deliverPayloads     INTEGER       NOT NULL,
   maxPayloadSize      INTEGER       NULL,
@@ -335,7 +335,7 @@ CREATE TABLE ofPubsubItem (
   nodeID              VARCHAR(100)  NOT NULL,
   id                  VARCHAR(100)  NOT NULL,
   jid                 VARCHAR(1024) NOT NULL,
-  creationDate        TIMESTAMP     NOT NULL,
+  creationDate        TIMESTAMP WITH TIME ZONE     NOT NULL,
   payload             TEXT          NULL,
   CONSTRAINT ofPubsubItem_pk PRIMARY KEY (serviceID, nodeID, id)
 );
@@ -350,7 +350,7 @@ CREATE TABLE ofPubsubSubscription (
   deliver             INTEGER       NOT NULL,
   digest              INTEGER       NOT NULL,
   digest_frequency    INTEGER       NOT NULL,
-  expire              TIMESTAMP     NULL,
+  expire              TIMESTAMP WITH TIME ZONE     NULL,
   includeBody         INTEGER       NOT NULL,
   showValues          VARCHAR(30)   NOT NULL,
   subscriptionType    VARCHAR(10)   NOT NULL,

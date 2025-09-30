@@ -16,6 +16,7 @@
 package org.jivesoftware.openfire.lockout;
 
 import java.sql.*;
+import java.time.Instant;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
@@ -67,9 +68,9 @@ public class DefaultLockOutProvider implements LockOutProvider {
             if (!rs.next()) {
                 return null;
             }
-            Date startTime = rs.getTimestamp(2, Calendar.getInstance(TimeZone.getTimeZone("UTC")));
-            Date endTime = rs.getTimestamp(3, Calendar.getInstance(TimeZone.getTimeZone("UTC")));
-            ret = new LockOutFlag(username, startTime, endTime);
+            Instant startTime = rs.getObject(2, Instant.class);
+            Instant endTime = rs.getObject(3, Instant.class);
+            ret = new LockOutFlag(username, startTime == null ? null : Date.from(startTime), endTime == null ? null : Date.from(endTime));
         }
         catch (Exception e) {
             Log.error("Error loading lockout information from DB", e);
@@ -107,16 +108,16 @@ public class DefaultLockOutProvider implements LockOutProvider {
             pstmt = con.prepareStatement(ADD_FLAG);
             pstmt.setString(1, flag.getUsername());
             if (flag.getStartTime() != null) {
-                pstmt.setTimestamp(2, new Timestamp(flag.getStartTime().getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
+                pstmt.setObject(2, flag.getStartTime().toInstant());
             }
             else {
-                pstmt.setNull(2, Types.TIMESTAMP);
+                pstmt.setNull(2, Types.TIMESTAMP_WITH_TIMEZONE);
             }
             if (flag.getEndTime() != null) {
-                pstmt.setTimestamp(3, new Timestamp(flag.getEndTime().getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
+                pstmt.setObject(3, flag.getEndTime().toInstant());
             }
             else {
-                pstmt.setNull(3, Types.TIMESTAMP);
+                pstmt.setNull(3, Types.TIMESTAMP_WITH_TIMEZONE);
             }
             pstmt.executeUpdate();
         }

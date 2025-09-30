@@ -184,15 +184,15 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(INSERT_OFFLINE);
 
-            Timestamp creationDate = new Timestamp(System.currentTimeMillis());
+            Instant creationDate = Instant.now();
             pstmt.setString(1, username);
             pstmt.setLong(2, messageID);
-            pstmt.setTimestamp(3, creationDate, Calendar.getInstance(TimeZone.getTimeZone("UTC")));
+            pstmt.setObject(3, creationDate);
             pstmt.setInt(4, msgXML.length());
             pstmt.setString(5, msgXML);
             pstmt.executeUpdate();
 
-            offlineMessage = new OfflineMessage(creationDate, message.getElement());
+            offlineMessage = new OfflineMessage(Date.from(creationDate), message.getElement());
         }
         catch (Exception e) {
             Log.error(LocaleUtils.getLocalizedString("admin.error"), e);
@@ -232,10 +232,10 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 String msgXML = rs.getString(1);
-                Date creationDate = rs.getTimestamp(2, Calendar.getInstance(TimeZone.getTimeZone("UTC")));
+                Instant creationDate = rs.getObject(2, Instant.class);
                 OfflineMessage message;
                 try {
-                    message = new OfflineMessage(creationDate, SAXReaderUtil.readRootElement(msgXML));
+                    message = new OfflineMessage(Date.from(creationDate), SAXReaderUtil.readRootElement(msgXML));
                 } catch (ExecutionException e) {
                     // Try again after removing invalid XML chars (e.g. &#12;)
                     Matcher matcher = pattern.matcher(msgXML);
@@ -243,7 +243,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
                         msgXML = matcher.replaceAll("");
                     }
                     try {
-                        message = new OfflineMessage(creationDate, SAXReaderUtil.readRootElement(msgXML));
+                        message = new OfflineMessage(Date.from(creationDate), SAXReaderUtil.readRootElement(msgXML));
                     } catch (ExecutionException de) {
                         Log.error("Failed to route packet (offline message): " + msgXML, de);
                         continue; // skip and process remaining offline messages
@@ -313,7 +313,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_OFFLINE_MESSAGE);
             pstmt.setString(1, username);
-            pstmt.setTimestamp(2, new Timestamp(creationDate.getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
+            pstmt.setObject(2, creationDate.toInstant());
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 String msgXML = rs.getString(1);
@@ -380,7 +380,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(DELETE_OFFLINE_MESSAGE);
             pstmt.setString(1, username);
-            pstmt.setTimestamp(2, new Timestamp(creationDate.getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
+            pstmt.setObject(2, creationDate.toInstant());
             pstmt.executeUpdate();
             
             // Force a refresh for next call to getSize(username),
@@ -683,7 +683,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             pstmt = con.prepareStatement(DELETE_OFFLINE_MESSAGE_BEFORE);
 
             final Instant pastTime = Instant.now().minus(OFFLINE_AUTOCLEAN_DAYSTOLIVE.getValue());
-            pstmt.setTimestamp(1, new Timestamp(pastTime.toEpochMilli()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
+            pstmt.setObject(1, pastTime);
             final int updateCount = pstmt.executeUpdate();
             Log.info("Offline message cleaning - Cleaning successful. Removed {} message(s)", updateCount);
             return true;

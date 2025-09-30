@@ -35,6 +35,7 @@ import org.xmpp.packet.JID;
 import javax.annotation.Nonnull;
 import java.sql.*;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.Date;
 import java.util.concurrent.locks.Lock;
@@ -279,8 +280,8 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.setInt(3, (node.isCollectionNode() ? 0 : 1));
-            pstmt.setTimestamp(4, new Timestamp(node.getCreationDate().getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
-            pstmt.setTimestamp(5, new Timestamp(node.getModificationDate().getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
+            pstmt.setObject(4, node.getCreationDate().toInstant());
+            pstmt.setObject(5, node.getModificationDate().toInstant());
             pstmt.setString(6, node.getParent() != null ? encodeNodeID(node.getParent().getNodeID()) : null);
             pstmt.setInt(7, (node.isPayloadDelivered() ? 1 : 0));
             if (!node.isCollectionNode()) {
@@ -349,7 +350,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         try {
             con = DbConnectionManager.getTransactionConnection();
             pstmt = con.prepareStatement(UPDATE_NODE);
-            pstmt.setTimestamp(1, new Timestamp(node.getModificationDate().getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
+            pstmt.setObject(1, node.getModificationDate().toInstant());
             pstmt.setString(2, node.getParent() != null ? encodeNodeID(node.getParent().getNodeID()) : null);
             pstmt.setInt(3, (node.isPayloadDelivered() ? 1 : 0));
             if (!node.isCollectionNode()) {
@@ -778,8 +779,8 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 final int maxLeafNodes = rs.getInt(28);
                 node = new CollectionNode(serviceId, null, nodeId.getNodeId(), creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy, associationPolicy, maxLeafNodes );
             }
-            node.setCreationDate(rs.getTimestamp(3));
-            node.setModificationDate(rs.getTimestamp(4));
+            node.setCreationDate(Date.from(rs.getObject(3, Instant.class)));
+            node.setModificationDate(Date.from(rs.getObject(4, Instant.class)));
             node.setSubscriptionConfigurationRequired(rs.getInt(17) == 1);
             node.setPayloadType(rs.getString(19));
             node.setBodyXSLT(rs.getString(20));
@@ -975,8 +976,8 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             subscription.setShouldDeliverNotifications(rs.getInt(6) == 1);
             subscription.setUsingDigest(rs.getInt(7) == 1);
             subscription.setDigestFrequency(rs.getInt(8));
-            if (rs.getTimestamp(9) != null) {
-                subscription.setExpire(rs.getTimestamp(9));
+            if (rs.getObject(9, Instant.class) != null) {
+                subscription.setExpire(Date.from(rs.getObject(9, Instant.class)));
             }
             subscription.setIncludingBody(rs.getInt(10) == 1);
             subscription.setPresenceStates(decodeWithComma(rs.getString(11)));
@@ -1079,10 +1080,10 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             pstmt.setInt(9, subscription.getDigestFrequency());
             Date expireDate = subscription.getExpire();
             if (expireDate == null) {
-                pstmt.setTimestamp(10, null);
+                pstmt.setObject(10, null);
             }
             else {
-                pstmt.setTimestamp(10, new Timestamp(expireDate.getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
+                pstmt.setObject(10, expireDate.toInstant());
             }
             pstmt.setInt(11, (subscription.isIncludingBody() ? 1 : 0));
             pstmt.setString(12, encodeWithComma(subscription.getPresenceStates()));
@@ -1127,10 +1128,10 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 pstmt.setInt(5, subscription.getDigestFrequency());
                 Date expireDate = subscription.getExpire();
                 if (expireDate == null) {
-                    pstmt.setTimestamp(6, null);
+                    pstmt.setObject(6, null);
                 }
                 else {
-                    pstmt.setTimestamp(6, new Timestamp(expireDate.getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
+                    pstmt.setObject(6, expireDate.toInstant());
                 }
                 pstmt.setInt(7, (subscription.isIncludingBody() ? 1 : 0));
                 pstmt.setString(8, encodeWithComma(subscription.getPresenceStates()));
@@ -1199,7 +1200,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             pstmt.setString(2, encodeNodeID(item.getNodeID()));
             pstmt.setString(3, item.getID());
             pstmt.setString(4, item.getPublisher().toString());
-            pstmt.setTimestamp(5, new Timestamp(item.getCreationDate().getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
+            pstmt.setObject(5, item.getCreationDate().toInstant());
             pstmt.setString(6, item.getPayloadXML());
             pstmt.execute();
         } catch (SQLException ex) {
@@ -1219,7 +1220,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_ITEM);
             pstmt.setString(1, item.getPublisher().toString());
-            pstmt.setTimestamp(2, new Timestamp(item.getCreationDate().getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
+            pstmt.setObject(2, item.getCreationDate().toInstant());
             pstmt.setString(3, item.getPayloadXML());
             pstmt.setString(4, item.getNode().getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(5, encodeNodeID(item.getNodeID()));
@@ -1249,7 +1250,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 pstmt.setString(2, encodeNodeID(item.getNodeID()));
                 pstmt.setString(3, item.getID());
                 pstmt.setString(4, item.getPublisher().toString());
-                pstmt.setTimestamp(5, new Timestamp(item.getCreationDate().getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
+                pstmt.setObject(5, item.getCreationDate().toInstant());
                 pstmt.setString(6, item.getPayloadXML());
                 if ( batch ) {
                     hasBatchItems = true;
@@ -1630,9 +1631,9 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             while(rs.next()) {
                 String itemID = rs.getString(1);
                 JID publisher = new JID(rs.getString(2));
-                Date creationDate = rs.getTimestamp(3);
+                Instant creationDate = rs.getObject(3, Instant.class);
                 // Create the item
-                PublishedItem item = new PublishedItem(node, publisher, itemID, creationDate);
+                PublishedItem item = new PublishedItem(node, publisher, itemID, Date.from(creationDate));
                 // Add the extra fields to the published item
                 if (rs.getString(4) != null) {
                 	item.setPayloadXML(rs.getString(4));
@@ -1673,9 +1674,9 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             // Add to each node the corresponding subscriptions
             if (rs.next()) {
                 JID publisher = new JID(rs.getString(1));
-                Date creationDate = rs.getTimestamp(2);
+                Instant creationDate = rs.getObject(2, Instant.class);
                 // Create the item
-                final PublishedItem result = new PublishedItem(node, publisher, itemIdentifier.getItemId(), creationDate);
+                final PublishedItem result = new PublishedItem(node, publisher, itemIdentifier.getItemId(), Date.from(creationDate));
                 // Add the extra fields to the published item
                 if (rs.getString(3) != null) {
                     result.setPayloadXML(rs.getString(3));

@@ -18,6 +18,7 @@ package org.jivesoftware.openfire.spi;
 
 import java.sql.*;
 import java.sql.Connection;
+import java.time.Instant;
 import java.util.*;
 import java.util.Date;
 import java.util.concurrent.locks.Lock;
@@ -278,7 +279,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
             } else {
                 pstmt.setNull(2, Types.VARCHAR);
             }
-            pstmt.setTimestamp(3, new Timestamp(offlinePresenceDate.getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
+            pstmt.setObject(3, offlinePresenceDate.toInstant());
             pstmt.execute();
         } catch (SQLException sqle) {
             Log.error("Error storing offline presence of user: " + username, sqle);
@@ -566,9 +567,9 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
                     if (rs.wasNull()) {
                         offlinePresence = NULL_STRING;
                     }
-                    long offlineDate = rs.getTimestamp(2, Calendar.getInstance(TimeZone.getTimeZone("UTC"))).getTime();
+                    Instant offlineDate = rs.getObject(2, Instant.class);
                     offlinePresenceCache.put(username, offlinePresence);
-                    lastActivityCache.put(username, offlineDate);
+                    lastActivityCache.put(username, offlineDate.toEpochMilli());
                 }
                 else {
                     offlinePresenceCache.put(username, NULL_STRING);

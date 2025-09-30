@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire.user;
 
 import java.sql.*;
+import java.time.Instant;
 import java.util.*;
 import java.util.Date;
 
@@ -94,10 +95,10 @@ public class DefaultUserProvider implements UserProvider {
             int iterations = rs.getInt(4);
             String name = rs.getString(5);
             String email = rs.getString(6);
-            Date creationDate = rs.getTimestamp(7, Calendar.getInstance(TimeZone.getTimeZone("UTC")));
-            Date modificationDate = rs.getTimestamp(8, Calendar.getInstance(TimeZone.getTimeZone("UTC")));
+            Instant creationDate = rs.getObject(7, Instant.class);
+            Instant modificationDate = rs.getObject(8, Instant.class);
 
-            User user = new User(username, name, email, creationDate, modificationDate);
+            User user = new User(username, name, email, Date.from(creationDate), Date.from(modificationDate));
             user.setSalt(salt);
             user.setServerKey(serverKey);
             user.setStoredKey(storedKey);
@@ -123,7 +124,7 @@ public class DefaultUserProvider implements UserProvider {
         }
         catch (UserNotFoundException unfe) {
             // The user doesn't already exist so we can create a new user
-            Timestamp now = new Timestamp(System.currentTimeMillis());
+            Instant now = Instant.now();
             Connection con = null;
             PreparedStatement pstmt = null;
             try {
@@ -142,8 +143,8 @@ public class DefaultUserProvider implements UserProvider {
                 else {
                     pstmt.setString(3, email);
                 }
-                pstmt.setTimestamp(4, now, Calendar.getInstance(TimeZone.getTimeZone("UTC")));
-                pstmt.setTimestamp(5, now, Calendar.getInstance(TimeZone.getTimeZone("UTC")));
+                pstmt.setObject(4, now);
+                pstmt.setObject(5, now);
                 pstmt.execute();
             }
             catch (SQLException e) {
@@ -338,7 +339,7 @@ public class DefaultUserProvider implements UserProvider {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_CREATION_DATE);
-            pstmt.setTimestamp(1, new Timestamp(creationDate.getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
+            pstmt.setObject(1, creationDate.toInstant());
             pstmt.setString(2, username);
             pstmt.executeUpdate();
         }
@@ -357,7 +358,7 @@ public class DefaultUserProvider implements UserProvider {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_MODIFICATION_DATE);
-            pstmt.setTimestamp(1, new Timestamp(modificationDate.getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
+            pstmt.setObject(1, modificationDate.toInstant());
             pstmt.setString(2, username);
             pstmt.executeUpdate();
         }

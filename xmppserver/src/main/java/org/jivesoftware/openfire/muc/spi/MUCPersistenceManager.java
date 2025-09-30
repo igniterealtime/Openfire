@@ -242,13 +242,13 @@ public class MUCPersistenceManager {
                 throw new IllegalArgumentException("Room " + room.getName() + " was not found in the database.");
             }
             room.setID(rs.getLong("roomID"));
-            room.setCreationDate(rs.getTimestamp("creationDate"));
-            room.setModificationDate(rs.getTimestamp("modificationDate"));
+            room.setCreationDate(rs.getTimestamp("creationDate", Calendar.getInstance(TimeZone.getTimeZone("UTC")) ));
+            room.setModificationDate(rs.getTimestamp("modificationDate", Calendar.getInstance(TimeZone.getTimeZone("UTC")) ));
             room.setNaturalLanguageName(rs.getString("naturalName"));
             room.setDescription(rs.getString("description"));
-            room.setLockedDate(rs.getTimestamp("lockedDate"));
-            if (rs.getTimestamp("emptyDate") != null) {
-                room.setEmptyDate(rs.getTimestamp("emptyDate"));
+            room.setLockedDate(rs.getTimestamp("lockedDate", Calendar.getInstance(TimeZone.getTimeZone("UTC")) ));
+            if (rs.getTimestamp("emptyDate", Calendar.getInstance(TimeZone.getTimeZone("UTC"))) != null) {
+                room.setEmptyDate(rs.getTimestamp("emptyDate", Calendar.getInstance(TimeZone.getTimeZone("UTC"))));
             }
             else {
                 room.setEmptyDate(null);
@@ -398,7 +398,7 @@ public class MUCPersistenceManager {
             con = DbConnectionManager.getConnection();
             if (room.wasSavedToDB()) {
                 pstmt = con.prepareStatement(UPDATE_ROOM);
-                pstmt.setTimestamp(1, new Timestamp(room.getModificationDate().getTime()));
+                pstmt.setTimestamp(1, new Timestamp(room.getModificationDate().getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
                 pstmt.setString(2, room.getNaturalLanguageName());
                 pstmt.setString(3, room.getDescription());
                 pstmt.setInt(4, (room.canOccupantsChangeSubject() ? 1 : 0));
@@ -450,18 +450,18 @@ public class MUCPersistenceManager {
                 pstmt = con.prepareStatement(ADD_ROOM);
                 pstmt.setLong(1, XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(room.getMUCService().getServiceName()));
                 pstmt.setLong(2, room.getID());
-                pstmt.setTimestamp(3, new Timestamp(room.getCreationDate().getTime()));
-                pstmt.setTimestamp(4, new Timestamp(room.getModificationDate().getTime()));
+                pstmt.setTimestamp(3, new Timestamp(room.getCreationDate().getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
+                pstmt.setTimestamp(4, new Timestamp(room.getModificationDate().getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
                 pstmt.setString(5, room.getName());
                 pstmt.setString(6, room.getNaturalLanguageName());
                 pstmt.setString(7, room.getDescription());
-                pstmt.setTimestamp(8, new Timestamp(room.getLockedDate().getTime()));
+                pstmt.setTimestamp(8, new Timestamp(room.getLockedDate().getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
                 Date emptyDate = room.getEmptyDate();
                 if (emptyDate == null) {
                     pstmt.setTimestamp(9, null);
                 }
                 else {
-                    pstmt.setTimestamp(9, new Timestamp(emptyDate.getTime()));
+                    pstmt.setTimestamp(9, new Timestamp(emptyDate.getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
                 }
                 pstmt.setInt(10, (room.canOccupantsChangeSubject() ? 1 : 0));
                 pstmt.setInt(11, room.getMaxUsers());
@@ -731,7 +731,7 @@ public class MUCPersistenceManager {
             {
                 statement = connection.prepareStatement(RELOAD_ALL_ROOMS_WITH_RECENT_ACTIVITY);
                 statement.setLong(1, serviceID);
-                statement.setTimestamp(2, new Timestamp(cleanupDate.getTime()));
+                statement.setTimestamp(2, new Timestamp(cleanupDate.getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
             }
             else
             {
@@ -744,13 +744,13 @@ public class MUCPersistenceManager {
                 try {
                     MUCRoom room = new MUCRoom(chatserver, resultSet.getString("name"));
                     room.setID(resultSet.getLong("roomID"));
-                    room.setCreationDate(resultSet.getTimestamp("creationDate"));
-                    room.setModificationDate(resultSet.getTimestamp("modificationDate"));
+                    room.setCreationDate(resultSet.getTimestamp("creationDate", Calendar.getInstance(TimeZone.getTimeZone("UTC"))));
+                    room.setModificationDate(resultSet.getTimestamp("modificationDate", Calendar.getInstance(TimeZone.getTimeZone("UTC"))));
                     room.setNaturalLanguageName(resultSet.getString("naturalName"));
                     room.setDescription(resultSet.getString("description"));
-                    room.setLockedDate(resultSet.getTimestamp("lockedDate"));
-                    if (resultSet.getTimestamp("emptyDate") != null) {
-                        room.setEmptyDate(resultSet.getTimestamp("emptyDate"));
+                    room.setLockedDate(resultSet.getTimestamp("lockedDate", Calendar.getInstance(TimeZone.getTimeZone("UTC"))));
+                    if (resultSet.getTimestamp("emptyDate", Calendar.getInstance(TimeZone.getTimeZone("UTC"))) != null) {
+                        room.setEmptyDate(resultSet.getTimestamp("emptyDate", Calendar.getInstance(TimeZone.getTimeZone("UTC"))));
                     }
                     else {
                         room.setEmptyDate(null);
@@ -879,7 +879,7 @@ public class MUCPersistenceManager {
                     from = System.currentTimeMillis() - (BigInteger.valueOf(86400000).multiply(BigInteger.valueOf(reloadLimitDays))).longValue();
                 }
 
-                pstmt.setTimestamp(1, new Timestamp(from));
+                pstmt.setTimestamp(1, new Timestamp(from), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
                 pstmt.setLong(2, room.getID());
                 rs = pstmt.executeQuery();
 
@@ -899,7 +899,7 @@ public class MUCPersistenceManager {
                 while (rs.next()) {
                     String senderJID = rs.getString("sender");
                     String nickname = rs.getString("nickname");
-                    Date sentDate = rs.getTimestamp("logTime");
+                    Date sentDate = rs.getTimestamp("logTime", Calendar.getInstance(TimeZone.getTimeZone("UTC")));
                     String subject = rs.getString("subject");
                     String body = rs.getString("body");
                     String stanza = rs.getString("stanza");
@@ -942,7 +942,7 @@ public class MUCPersistenceManager {
                 from = System.currentTimeMillis() - (BigInteger.valueOf(86400000).multiply(BigInteger.valueOf(reloadLimitDays))).longValue();
             }
             statement.setLong(1, serviceID);
-            statement.setTimestamp(2, new Timestamp(from));
+            statement.setTimestamp(2, new Timestamp(from), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
             resultSet = statement.executeQuery();
 
             while (resultSet.next()) {
@@ -954,7 +954,7 @@ public class MUCPersistenceManager {
                     }
                     String senderJID = resultSet.getString("sender");
                     String nickname  = resultSet.getString("nickname");
-                    Date sentDate    = resultSet.getTimestamp("logTime");
+                    Date sentDate    = resultSet.getTimestamp("logTime", Calendar.getInstance(TimeZone.getTimeZone("UTC")));
                     String subject   = resultSet.getString("subject");
                     String body      = resultSet.getString("body");
                     String stanza    = resultSet.getString("stanza");
@@ -1125,7 +1125,7 @@ public class MUCPersistenceManager {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_LOCK);
-            pstmt.setTimestamp(1, new Timestamp(room.getLockedDate().getTime()));
+            pstmt.setTimestamp(1, new Timestamp(room.getLockedDate().getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
             pstmt.setLong(2, room.getID());
             pstmt.executeUpdate();
         }
@@ -1157,7 +1157,7 @@ public class MUCPersistenceManager {
                 pstmt.setTimestamp(1, null);
             }
             else {
-                pstmt.setTimestamp(1, new Timestamp(emptyDate.getTime()));
+                pstmt.setTimestamp(1, new Timestamp(emptyDate.getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
             }
             pstmt.setLong(2, room.getID());
             pstmt.executeUpdate();
@@ -1428,7 +1428,7 @@ public class MUCPersistenceManager {
                 pstmt.setLong(2, entry.getMessageID());
                 pstmt.setString(3, entry.getSender().toString());
                 pstmt.setString(4, entry.getNickname());
-                pstmt.setTimestamp(5, new Timestamp(entry.getDate().getTime()));
+                pstmt.setTimestamp(5, new Timestamp(entry.getDate().getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
                 pstmt.setString(6, entry.getSubject());
                 pstmt.setString(7, entry.getBody());
                 pstmt.setString(8, entry.getStanza());

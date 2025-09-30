@@ -187,7 +187,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             Timestamp creationDate = new Timestamp(System.currentTimeMillis());
             pstmt.setString(1, username);
             pstmt.setLong(2, messageID);
-            pstmt.setTimestamp(3, creationDate);
+            pstmt.setTimestamp(3, creationDate, Calendar.getInstance(TimeZone.getTimeZone("UTC")));
             pstmt.setInt(4, msgXML.length());
             pstmt.setString(5, msgXML);
             pstmt.executeUpdate();
@@ -232,7 +232,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 String msgXML = rs.getString(1);
-                Date creationDate = rs.getTimestamp(2);
+                Date creationDate = rs.getTimestamp(2, Calendar.getInstance(TimeZone.getTimeZone("UTC")));
                 OfflineMessage message;
                 try {
                     message = new OfflineMessage(creationDate, SAXReaderUtil.readRootElement(msgXML));
@@ -313,7 +313,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_OFFLINE_MESSAGE);
             pstmt.setString(1, username);
-            pstmt.setTimestamp(2, new Timestamp(creationDate.getTime()));
+            pstmt.setTimestamp(2, new Timestamp(creationDate.getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 String msgXML = rs.getString(1);
@@ -380,7 +380,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(DELETE_OFFLINE_MESSAGE);
             pstmt.setString(1, username);
-            pstmt.setTimestamp(2, new Timestamp(creationDate.getTime()));
+            pstmt.setTimestamp(2, new Timestamp(creationDate.getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
             pstmt.executeUpdate();
             
             // Force a refresh for next call to getSize(username),
@@ -683,7 +683,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             pstmt = con.prepareStatement(DELETE_OFFLINE_MESSAGE_BEFORE);
 
             final Instant pastTime = Instant.now().minus(OFFLINE_AUTOCLEAN_DAYSTOLIVE.getValue());
-            pstmt.setTimestamp(1, new Timestamp(pastTime.toEpochMilli()));
+            pstmt.setTimestamp(1, new Timestamp(pastTime.toEpochMilli()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
             final int updateCount = pstmt.executeUpdate();
             Log.info("Offline message cleaning - Cleaning successful. Removed {} message(s)", updateCount);
             return true;

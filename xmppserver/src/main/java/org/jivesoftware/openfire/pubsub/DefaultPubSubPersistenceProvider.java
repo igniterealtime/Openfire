@@ -279,8 +279,8 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(2, encodeNodeID(node.getNodeID()));
             pstmt.setInt(3, (node.isCollectionNode() ? 0 : 1));
-            pstmt.setTimestamp(4, new Timestamp(node.getCreationDate().getTime()));
-            pstmt.setTimestamp(5, new Timestamp(node.getModificationDate().getTime()));
+            pstmt.setTimestamp(4, new Timestamp(node.getCreationDate().getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
+            pstmt.setTimestamp(5, new Timestamp(node.getModificationDate().getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
             pstmt.setString(6, node.getParent() != null ? encodeNodeID(node.getParent().getNodeID()) : null);
             pstmt.setInt(7, (node.isPayloadDelivered() ? 1 : 0));
             if (!node.isCollectionNode()) {
@@ -349,7 +349,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         try {
             con = DbConnectionManager.getTransactionConnection();
             pstmt = con.prepareStatement(UPDATE_NODE);
-            pstmt.setTimestamp(1, new Timestamp(node.getModificationDate().getTime()));
+            pstmt.setTimestamp(1, new Timestamp(node.getModificationDate().getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
             pstmt.setString(2, node.getParent() != null ? encodeNodeID(node.getParent().getNodeID()) : null);
             pstmt.setInt(3, (node.isPayloadDelivered() ? 1 : 0));
             if (!node.isCollectionNode()) {
@@ -1082,7 +1082,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 pstmt.setTimestamp(10, null);
             }
             else {
-                pstmt.setTimestamp(10, new Timestamp(expireDate.getTime()));
+                pstmt.setTimestamp(10, new Timestamp(expireDate.getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
             }
             pstmt.setInt(11, (subscription.isIncludingBody() ? 1 : 0));
             pstmt.setString(12, encodeWithComma(subscription.getPresenceStates()));
@@ -1130,7 +1130,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                     pstmt.setTimestamp(6, null);
                 }
                 else {
-                    pstmt.setTimestamp(6, new Timestamp(expireDate.getTime()));
+                    pstmt.setTimestamp(6, new Timestamp(expireDate.getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
                 }
                 pstmt.setInt(7, (subscription.isIncludingBody() ? 1 : 0));
                 pstmt.setString(8, encodeWithComma(subscription.getPresenceStates()));
@@ -1199,7 +1199,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             pstmt.setString(2, encodeNodeID(item.getNodeID()));
             pstmt.setString(3, item.getID());
             pstmt.setString(4, item.getPublisher().toString());
-            pstmt.setTimestamp(5, new Timestamp(item.getCreationDate().getTime()));
+            pstmt.setTimestamp(5, new Timestamp(item.getCreationDate().getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
             pstmt.setString(6, item.getPayloadXML());
             pstmt.execute();
         } catch (SQLException ex) {
@@ -1219,7 +1219,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_ITEM);
             pstmt.setString(1, item.getPublisher().toString());
-            pstmt.setTimestamp(2, new Timestamp(item.getCreationDate().getTime()));
+            pstmt.setTimestamp(2, new Timestamp(item.getCreationDate().getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
             pstmt.setString(3, item.getPayloadXML());
             pstmt.setString(4, item.getNode().getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(5, encodeNodeID(item.getNodeID()));
@@ -1249,7 +1249,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 pstmt.setString(2, encodeNodeID(item.getNodeID()));
                 pstmt.setString(3, item.getID());
                 pstmt.setString(4, item.getPublisher().toString());
-                pstmt.setTimestamp(5, new Timestamp(item.getCreationDate().getTime()));
+                pstmt.setTimestamp(5, new Timestamp(item.getCreationDate().getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
                 pstmt.setString(6, item.getPayloadXML());
                 if ( batch ) {
                     hasBatchItems = true;

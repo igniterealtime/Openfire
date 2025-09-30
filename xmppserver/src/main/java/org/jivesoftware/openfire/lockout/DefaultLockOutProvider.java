@@ -16,7 +16,9 @@
 package org.jivesoftware.openfire.lockout;
 
 import java.sql.*;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.slf4j.Logger;
@@ -65,8 +67,8 @@ public class DefaultLockOutProvider implements LockOutProvider {
             if (!rs.next()) {
                 return null;
             }
-            Date startTime = rs.getTimestamp(2);
-            Date endTime = rs.getTimestamp(3);
+            Date startTime = rs.getTimestamp(2, Calendar.getInstance(TimeZone.getTimeZone("UTC")));
+            Date endTime = rs.getTimestamp(3, Calendar.getInstance(TimeZone.getTimeZone("UTC")));
             ret = new LockOutFlag(username, startTime, endTime);
         }
         catch (Exception e) {
@@ -105,13 +107,13 @@ public class DefaultLockOutProvider implements LockOutProvider {
             pstmt = con.prepareStatement(ADD_FLAG);
             pstmt.setString(1, flag.getUsername());
             if (flag.getStartTime() != null) {
-                pstmt.setTimestamp(2, new Timestamp(flag.getStartTime().getTime()));
+                pstmt.setTimestamp(2, new Timestamp(flag.getStartTime().getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
             }
             else {
                 pstmt.setNull(2, Types.TIMESTAMP);
             }
             if (flag.getEndTime() != null) {
-                pstmt.setTimestamp(3, new Timestamp(flag.getEndTime().getTime()));
+                pstmt.setTimestamp(3, new Timestamp(flag.getEndTime().getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
             }
             else {
                 pstmt.setNull(3, Types.TIMESTAMP);

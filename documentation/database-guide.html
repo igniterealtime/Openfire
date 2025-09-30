@@ -41,15 +41,38 @@
 
         <h2>Data Type Conventions</h2>
         <p>
-            Date column type support varies widely across databases. Therefore, Openfire prior to version 5.2.0
-            specially encodes dates as VARCHAR values. Starting with Openfire 5.2.0, the TIMESTAMP datatype is used.
-            For the VARCHAR representation that was used prior to 5.2.0, each date is a Java long value which is
-            0-padded to 15 characters. The long value is the internal representation of Java Date objects, which can be
-            obtained with code such as the following:
+            Date column type support varies widely across databases and drivers. Therefore, Openfire uses a specific
+            representation when working with date/time values. This representation was changed with Openfire 5.2.0.
+        </p>
+        <p>
+            Openfire interprets date/time database values as UTC-based values.
+        </p>
+        <h3>Dates in Openfire 5.2.0 and later</h3>
+        <p>
+            Openfire stores dates as TIMESTAMP values, with fractional seconds parts. To help prevent environmental
+            configurations from imposing a timezone context to these values, values are to be written to and obtained
+            from the database using the JDBC <code>setTimestamp()</code> methods with a third argument that explicitly
+            defines the UTC-calendar, as shown below.
+        </p>
+        <p>To read a timestamp from the database:</p>
+        <ul style="list-style: none">
+            <li><code>Date creationDate = rs.getTimestamp("creationDate", Calendar.getInstance(TimeZone.getTimeZone("UTC")));</code></li>
+        </ul>
+        <p>Conversely, to write a timestamp to the database:</p>
+        <ul style="list-style: none">
+            <li><code>pstmt.setTimestamp("creationDate", new Timestamp(creationDate.getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));</code></li>
+        </ul>
+        <h3>Dates prior to Openfire 5.2.0</h3>
+        <p>
+            Openfire specially encodes dates as VARCHAR values. Each date is a Java long value which is 0-padded to
+            15 characters. The long value is the internal representation of Java Date objects, which can be obtained
+            with code such as the following:
         </p>
         <ul style="list-style: none">
             <li><code>long currentDate = new Date().getTime(); // Prior to Openfire 5.2.0</code></li>
         </ul>
+
+        <h3>Boolean values</h3>
         <p>
             Boolean values are always represented a numeric values: 0 for false and 1 for true.
         </p>

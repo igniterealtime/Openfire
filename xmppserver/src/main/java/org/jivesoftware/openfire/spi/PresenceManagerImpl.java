@@ -278,7 +278,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
             } else {
                 pstmt.setNull(2, Types.VARCHAR);
             }
-            pstmt.setTimestamp(3, new Timestamp(offlinePresenceDate.getTime()));
+            pstmt.setTimestamp(3, new Timestamp(offlinePresenceDate.getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
             pstmt.execute();
         } catch (SQLException sqle) {
             Log.error("Error storing offline presence of user: " + username, sqle);
@@ -566,7 +566,7 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
                     if (rs.wasNull()) {
                         offlinePresence = NULL_STRING;
                     }
-                    long offlineDate = rs.getTimestamp(2).getTime();
+                    long offlineDate = rs.getTimestamp(2, Calendar.getInstance(TimeZone.getTimeZone("UTC"))).getTime();
                     offlinePresenceCache.put(username, offlinePresence);
                     lastActivityCache.put(username, offlineDate);
                 }

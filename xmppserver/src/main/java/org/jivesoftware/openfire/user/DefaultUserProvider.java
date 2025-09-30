@@ -17,14 +17,8 @@
 package org.jivesoftware.openfire.user;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -100,8 +94,8 @@ public class DefaultUserProvider implements UserProvider {
             int iterations = rs.getInt(4);
             String name = rs.getString(5);
             String email = rs.getString(6);
-            Date creationDate = rs.getTimestamp(7);
-            Date modificationDate = rs.getTimestamp(8);
+            Date creationDate = rs.getTimestamp(7, Calendar.getInstance(TimeZone.getTimeZone("UTC")));
+            Date modificationDate = rs.getTimestamp(8, Calendar.getInstance(TimeZone.getTimeZone("UTC")));
 
             User user = new User(username, name, email, creationDate, modificationDate);
             user.setSalt(salt);
@@ -148,8 +142,8 @@ public class DefaultUserProvider implements UserProvider {
                 else {
                     pstmt.setString(3, email);
                 }
-                pstmt.setTimestamp(4, now);
-                pstmt.setTimestamp(5, now);
+                pstmt.setTimestamp(4, now, Calendar.getInstance(TimeZone.getTimeZone("UTC")));
+                pstmt.setTimestamp(5, now, Calendar.getInstance(TimeZone.getTimeZone("UTC")));
                 pstmt.execute();
             }
             catch (SQLException e) {
@@ -344,7 +338,7 @@ public class DefaultUserProvider implements UserProvider {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_CREATION_DATE);
-            pstmt.setTimestamp(1, new Timestamp(creationDate.getTime()));
+            pstmt.setTimestamp(1, new Timestamp(creationDate.getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
             pstmt.setString(2, username);
             pstmt.executeUpdate();
         }
@@ -363,7 +357,7 @@ public class DefaultUserProvider implements UserProvider {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_MODIFICATION_DATE);
-            pstmt.setTimestamp(1, new Timestamp(modificationDate.getTime()));
+            pstmt.setTimestamp(1, new Timestamp(modificationDate.getTime()), Calendar.getInstance(TimeZone.getTimeZone("UTC")));
             pstmt.setString(2, username);
             pstmt.executeUpdate();
         }

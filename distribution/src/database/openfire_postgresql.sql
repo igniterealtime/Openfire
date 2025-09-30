@@ -11,8 +11,8 @@ CREATE TABLE ofUser (
   encryptedPassword     VARCHAR(255),
   name                  VARCHAR(100),
   email                 VARCHAR(100),
-  creationDate          CHAR(15)        NOT NULL,
-  modificationDate      CHAR(15)        NOT NULL,
+  creationDate          TIMESTAMP       NOT NULL,
+  modificationDate      TIMESTAMP       NOT NULL,
   CONSTRAINT ofUser_pk PRIMARY KEY (username)
 );
 CREATE INDEX ofUser_cDate_idx ON ofUser (creationDate);
@@ -29,8 +29,8 @@ CREATE TABLE ofUserProp (
 CREATE TABLE ofUserFlag (
   username              VARCHAR(64)     NOT NULL,
   name                  VARCHAR(100)    NOT NULL,
-  startTime             CHAR(15),
-  endTime               CHAR(15),
+  startTime             TIMESTAMP,
+  endTime               TIMESTAMP,
   CONSTRAINT ofUserFlag_pk PRIMARY KEY (username, name)
 );
 CREATE INDEX ofUserFlag_sTime_idx ON ofUserFlag (startTime);
@@ -40,7 +40,7 @@ CREATE INDEX ofUserFlag_eTime_idx ON ofUserFlag (endTime);
 CREATE TABLE ofOffline (
   username              VARCHAR(64)     NOT NULL,
   messageID             INTEGER         NOT NULL,
-  creationDate          CHAR(15)        NOT NULL,
+  creationDate          TIMESTAMP       NOT NULL,
   messageSize           INTEGER         NOT NULL,
   stanza                TEXT            NOT NULL,
   CONSTRAINT ofOffline_pk PRIMARY KEY (username, messageID)
@@ -50,7 +50,7 @@ CREATE TABLE ofOffline (
 CREATE TABLE ofPresence (
   username              VARCHAR(64)     NOT NULL,
   offlinePresence       TEXT,
-  offlineDate           VARCHAR(15)     NOT NULL,
+  offlineDate           TIMESTAMP     NOT NULL,
   CONSTRAINT ofPresence_pk PRIMARY KEY (username)
 );
 
@@ -108,7 +108,7 @@ CREATE TABLE ofGroupUser (
   administrator         INTEGER         NOT NULL,
   CONSTRAINT ofGroupUser_pk PRIMARY KEY (groupName, username, administrator)
 );
- 
+
 
 CREATE TABLE ofID (
   idType                INTEGER         NOT NULL,
@@ -189,13 +189,13 @@ CREATE TABLE ofMucServiceProp (
 CREATE TABLE ofMucRoom (
   serviceID           INTEGER       NOT NULL,
   roomID              INTEGER       NOT NULL,
-  creationDate        CHAR(15)      NOT NULL,
-  modificationDate    CHAR(15)      NOT NULL,
+  creationDate        TIMESTAMP     NOT NULL,
+  modificationDate    TIMESTAMP     NOT NULL,
   name                VARCHAR(50)   NOT NULL,
   naturalName         VARCHAR(255)  NOT NULL,
   description         VARCHAR(255),
-  lockedDate          CHAR(15)      NOT NULL,
-  emptyDate           CHAR(15)      NULL,
+  lockedDate          TIMESTAMP     NOT NULL,
+  emptyDate           TIMESTAMP     NULL,
   canChangeSubject    INTEGER       NOT NULL,
   maxUsers            INTEGER       NOT NULL,
   publicRoom          INTEGER       NOT NULL,
@@ -259,13 +259,13 @@ CREATE TABLE ofMucMember (
 
 CREATE TABLE ofMucConversationLog (
   roomID              INTEGER        NOT NULL,
-  messageID              INTEGER        NOT NULL,
+  messageID           INTEGER        NOT NULL,
   sender              VARCHAR(1024)  NOT NULL,
   nickname            VARCHAR(255)   NULL,
-  logTime             CHAR(15)       NOT NULL,
+  logTime             TIMESTAMP      NOT NULL,
   subject             VARCHAR(255)   NULL,
   body                TEXT           NULL,
-  stanza                TEXT           NULL
+  stanza              TEXT           NULL
 );
 CREATE INDEX ofMucConversationLog_roomtime_idx ON ofMucConversationLog (roomID, logTime);
 CREATE INDEX ofMucConversationLog_time_idx ON ofMucConversationLog (logTime);
@@ -278,8 +278,8 @@ CREATE TABLE ofPubsubNode (
   serviceID           VARCHAR(100)  NOT NULL,
   nodeID              VARCHAR(100)  NOT NULL,
   leaf                INTEGER       NOT NULL,
-  creationDate        CHAR(15)      NOT NULL,
-  modificationDate    CHAR(15)      NOT NULL,
+  creationDate        TIMESTAMP     NOT NULL,
+  modificationDate    TIMESTAMP     NOT NULL,
   parent              VARCHAR(100)  NULL,
   deliverPayloads     INTEGER       NOT NULL,
   maxPayloadSize      INTEGER       NULL,
@@ -335,7 +335,7 @@ CREATE TABLE ofPubsubItem (
   nodeID              VARCHAR(100)  NOT NULL,
   id                  VARCHAR(100)  NOT NULL,
   jid                 VARCHAR(1024) NOT NULL,
-  creationDate        CHAR(15)      NOT NULL,
+  creationDate        TIMESTAMP     NOT NULL,
   payload             TEXT          NULL,
   CONSTRAINT ofPubsubItem_pk PRIMARY KEY (serviceID, nodeID, id)
 );
@@ -350,7 +350,7 @@ CREATE TABLE ofPubsubSubscription (
   deliver             INTEGER       NOT NULL,
   digest              INTEGER       NOT NULL,
   digest_frequency    INTEGER       NOT NULL,
-  expire              CHAR(15)      NULL,
+  expire              TIMESTAMP     NULL,
   includeBody         INTEGER       NOT NULL,
   showValues          VARCHAR(30)   NOT NULL,
   subscriptionType    VARCHAR(10)   NOT NULL,
@@ -391,10 +391,10 @@ INSERT INTO ofID (idType, id) VALUES (27, 1);
 
 -- Entry for admin user
 INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modificationDate)
-    VALUES ('admin', 'admin', 'Administrator', 'admin@example.com', '0', '0');
+    VALUES ('admin', 'admin', 'Administrator', 'admin@example.com', 'epoch', 'epoch');
 
 -- Entry for default conference service
 INSERT INTO ofMucService (serviceID, subdomain, isHidden) VALUES (1, 'conference', 0);
 
 -- Do this last, as it is used by a continuous integration check to verify that the entire script was executed successfully.
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 37);
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 38);

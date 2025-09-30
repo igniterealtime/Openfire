@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,14 +35,13 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
+import java.sql.*;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.Date;
 import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -185,10 +184,10 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(INSERT_OFFLINE);
 
-            Date creationDate = new java.util.Date();
+            Timestamp creationDate = new Timestamp(System.currentTimeMillis());
             pstmt.setString(1, username);
             pstmt.setLong(2, messageID);
-            pstmt.setString(3, StringUtils.dateToMillis(creationDate));
+            pstmt.setTimestamp(3, creationDate);
             pstmt.setInt(4, msgXML.length());
             pstmt.setString(5, msgXML);
             pstmt.executeUpdate();
@@ -233,7 +232,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 String msgXML = rs.getString(1);
-                Date creationDate = new Date(Long.parseLong(rs.getString(2).trim()));
+                Date creationDate = rs.getTimestamp(2);
                 OfflineMessage message;
                 try {
                     message = new OfflineMessage(creationDate, SAXReaderUtil.readRootElement(msgXML));
@@ -314,7 +313,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(LOAD_OFFLINE_MESSAGE);
             pstmt.setString(1, username);
-            pstmt.setString(2, StringUtils.dateToMillis(creationDate));
+            pstmt.setTimestamp(2, new Timestamp(creationDate.getTime()));
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 String msgXML = rs.getString(1);
@@ -381,7 +380,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(DELETE_OFFLINE_MESSAGE);
             pstmt.setString(1, username);
-            pstmt.setString(2, StringUtils.dateToMillis(creationDate));
+            pstmt.setTimestamp(2, new Timestamp(creationDate.getTime()));
             pstmt.executeUpdate();
             
             // Force a refresh for next call to getSize(username),
@@ -684,9 +683,7 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
             pstmt = con.prepareStatement(DELETE_OFFLINE_MESSAGE_BEFORE);
 
             final Instant pastTime = Instant.now().minus(OFFLINE_AUTOCLEAN_DAYSTOLIVE.getValue());
-            final String creationDatePast = StringUtils.zeroPadString(String.valueOf(pastTime.toEpochMilli()), 15);
-
-            pstmt.setString(1,creationDatePast);
+            pstmt.setTimestamp(1, new Timestamp(pastTime.toEpochMilli()));
             final int updateCount = pstmt.executeUpdate();
             Log.info("Offline message cleaning - Cleaning successful. Removed {} message(s)", updateCount);
             return true;

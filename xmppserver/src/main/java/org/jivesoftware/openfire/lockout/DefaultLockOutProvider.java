@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,10 @@
  */
 package org.jivesoftware.openfire.lockout;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Types;
+import java.sql.*;
 import java.util.Date;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,15 +65,8 @@ public class DefaultLockOutProvider implements LockOutProvider {
             if (!rs.next()) {
                 return null;
             }
-            Date startTime = null;
-            if (rs.getString(2) != null) {
-                startTime = new Date(Long.parseLong(rs.getString(2).trim()));
-            }
-            Date endTime = null;
-            if (rs.getString(3) != null) {
-                endTime = new Date(Long.parseLong(rs.getString(3).trim()));
-            }
-
+            Date startTime = rs.getTimestamp(2);
+            Date endTime = rs.getTimestamp(3);
             ret = new LockOutFlag(username, startTime, endTime);
         }
         catch (Exception e) {
@@ -117,16 +105,16 @@ public class DefaultLockOutProvider implements LockOutProvider {
             pstmt = con.prepareStatement(ADD_FLAG);
             pstmt.setString(1, flag.getUsername());
             if (flag.getStartTime() != null) {
-                pstmt.setString(2, StringUtils.dateToMillis(flag.getStartTime()));
+                pstmt.setTimestamp(2, new Timestamp(flag.getStartTime().getTime()));
             }
             else {
-                pstmt.setNull(2, Types.VARCHAR);
+                pstmt.setNull(2, Types.TIMESTAMP);
             }
             if (flag.getEndTime() != null) {
-                pstmt.setString(3, StringUtils.dateToMillis(flag.getEndTime()));
+                pstmt.setTimestamp(3, new Timestamp(flag.getEndTime().getTime()));
             }
             else {
-                pstmt.setNull(3, Types.VARCHAR);
+                pstmt.setNull(3, Types.TIMESTAMP);
             }
             pstmt.executeUpdate();
         }

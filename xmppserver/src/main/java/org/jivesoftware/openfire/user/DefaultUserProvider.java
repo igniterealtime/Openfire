@@ -16,11 +16,7 @@
 
 package org.jivesoftware.openfire.user;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Types;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -33,7 +29,6 @@ import java.util.Set;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
-import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -105,8 +100,8 @@ public class DefaultUserProvider implements UserProvider {
             int iterations = rs.getInt(4);
             String name = rs.getString(5);
             String email = rs.getString(6);
-            Date creationDate = new Date(Long.parseLong(rs.getString(7).trim()));
-            Date modificationDate = new Date(Long.parseLong(rs.getString(8).trim()));
+            Date creationDate = rs.getTimestamp(7);
+            Date modificationDate = rs.getTimestamp(8);
 
             User user = new User(username, name, email, creationDate, modificationDate);
             user.setSalt(salt);
@@ -134,7 +129,7 @@ public class DefaultUserProvider implements UserProvider {
         }
         catch (UserNotFoundException unfe) {
             // The user doesn't already exist so we can create a new user
-            Date now = new Date();
+            Timestamp now = new Timestamp(System.currentTimeMillis());
             Connection con = null;
             PreparedStatement pstmt = null;
             try {
@@ -153,8 +148,8 @@ public class DefaultUserProvider implements UserProvider {
                 else {
                     pstmt.setString(3, email);
                 }
-                pstmt.setString(4, StringUtils.dateToMillis(now));
-                pstmt.setString(5, StringUtils.dateToMillis(now));
+                pstmt.setTimestamp(4, now);
+                pstmt.setTimestamp(5, now);
                 pstmt.execute();
             }
             catch (SQLException e) {
@@ -349,7 +344,7 @@ public class DefaultUserProvider implements UserProvider {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_CREATION_DATE);
-            pstmt.setString(1, StringUtils.dateToMillis(creationDate));
+            pstmt.setTimestamp(1, new Timestamp(creationDate.getTime()));
             pstmt.setString(2, username);
             pstmt.executeUpdate();
         }
@@ -368,7 +363,7 @@ public class DefaultUserProvider implements UserProvider {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_MODIFICATION_DATE);
-            pstmt.setString(1, StringUtils.dateToMillis(modificationDate));
+            pstmt.setTimestamp(1, new Timestamp(modificationDate.getTime()));
             pstmt.setString(2, username);
             pstmt.executeUpdate();
         }

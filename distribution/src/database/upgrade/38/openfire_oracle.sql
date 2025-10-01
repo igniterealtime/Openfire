@@ -6,7 +6,7 @@
 -- Note that the stanzas in ofMucConversationLog typically do not contain a timestamp (although one is provided in a
 -- separate column). If the subject that gets migrated to ofMucRoom is used as-is, the time of subject change is likely
 -- lost (until the room's subject gets changed). This is deemed an acceptable loss.
-ALTER TABLE ofMucRoom MODIFY subject VARCHAR2(4000) NULL;
+ALTER TABLE ofMucRoom MODIFY subject VARCHAR2(4000);
 
 MERGE INTO ofMucRoom r
 USING (

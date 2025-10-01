@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.muc;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.dom4j.tree.DefaultElement;
 import org.jivesoftware.database.JiveID;
 import org.jivesoftware.database.SequenceManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -50,6 +51,7 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
@@ -324,11 +326,9 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     private FMUCHandler fmucHandler;
 
     /**
-     * The last known subject of the room. This information is used to respond disco requests. The
-     * MUCRoomHistory class holds the history of the room together with the last message that set
-     * the room's subject.
+     * The message stanza that represents the room's last subject change.
      */
-    private String subject = "";
+    private Message subject;
 
     /**
      * The ID of the room. If the room is temporary and does not log its conversation then the value
@@ -906,17 +906,16 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
 
     /**
      * Sends the room subject to a user that just joined the room.
+     *
+     * @param realAddress The address of the user that joined the room.
+     * @param joiningOccupant The Occupant representation for the user that joined the room.
      */
-    private void sendRoomSubjectAfterJoin(@Nonnull final JID realAddress, @Nonnull MUCOccupant joiningOccupant )
+    private void sendRoomSubjectAfterJoin(@Nonnull final JID realAddress, @Nonnull MUCOccupant joiningOccupant)
     {
         Log.trace( "Sending room subject to user '{}' that joined room '{}'.", realAddress, this.getJID() );
 
-        Message roomSubject = roomHistory.getChangedSubject();
-        if (roomSubject != null) {
-            // OF-2163: Prevent modifying the original subject stanza (that can be retrieved by others later) by making a defensive copy.
-            //          This prevents the stanza kept in memory to have the 'to' address for the last user that it was sent to.
-            roomSubject.createCopy();
-        } else {
+        Message roomSubject = this.getSubjectStanza();
+        if (roomSubject == null) {
             // 7.2.15 If there is no subject set, the room MUST return an empty <subject/> element.
             roomSubject = new Message();
             roomSubject.setFrom( this.getJID() );
@@ -2629,8 +2628,6 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      * a moderator or the room must be configured so that anyone can change its subject, otherwise
      * a forbidden exception will be thrown.
      *
-     * The new subject will be added to the history of the room.
-     *
      * @param packet the stanza used to change the room's subject (cannot be {@code null}).
      * @param actor the occupant that is trying to change the subject (cannot be {@code null}).
      * @throws ForbiddenException If the user is not allowed to change the subject.
@@ -2638,18 +2635,47 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     public void changeSubject(Message packet, MUCOccupant actor) throws ForbiddenException {
         if ((canOccupantsChangeSubject() && actor.getRole().compareTo(Role.visitor) < 0) ||
             Role.moderator == actor.getRole()) {
-            // Set the new subject to the room
-            subject = packet.getSubject();
-            MUCPersistenceManager.updateRoomSubject(this);
-            // Notify all the occupants that the subject has changed
+
+            // Don't let the client dictate a timestamp as if it was set by the server.
+            final List<Element> clientProvidedDelayElements = packet.getElement().elements(QName.get("delay", "urn:xmpp:delay"));
+            clientProvidedDelayElements.removeIf(clientProvidedDelayElement -> this.getJID().toBareJID().equals(clientProvidedDelayElement.attributeValue("from")));
+
+            // Unsure that the subject's change author is the actor.
             packet.setFrom(actor.getOccupantJID());
+            packet.setTo((JID) null);
+
+            // Set the new subject to the room
+            this.subject = packet.createCopy();
+            final Element delayElement = this.subject.addChildElement("delay", "urn:xmpp:delay");
+            delayElement.addAttribute("stamp", XMPPDateTimeFormat.format(Instant.now()));
+            delayElement.addAttribute("from", this.getJID().toBareJID()); // XEP-0045: "If the <delay/> element is included, its 'from' attribute MUST be set to the JID of the room itself."
+
+            MUCPersistenceManager.updateRoomSubject(this);
+
+            // Notify all the occupants that the subject has changed
             send(packet, actor);
 
             // Fire event signifying that the room's subject has changed.
-            MUCEventDispatcher.roomSubjectChanged(getJID(), actor.getUserAddress(), subject);
+            MUCEventDispatcher.roomSubjectChanged(getJID(), actor.getUserAddress(), packet.getSubject());
         }
         else {
             throw new ForbiddenException();
+        }
+    }
+
+    /**
+     * Updates this instance with a subject, without processing it as a subject-change event.
+     *
+     * This method is expected to be used only when a pre-existing room is loaded from a persisted form (such as the
+     * database, or possibly through Serialization in a cluster).
+     *
+     * @param subjectStanza A stanza representing the most recent subject change.
+     */
+    public void initializeSubject(@Nullable final Message subjectStanza)
+    {
+        this.subject = subjectStanza;
+        if (this.subject != null) {
+            this.subject.setTo((JID) null);
         }
     }
 
@@ -2658,18 +2684,49 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
      *
      * @return the last subject that some occupant set to the room.
      */
-    public String getSubject() {
-        return subject;
+    public Message getSubjectStanza()
+    {
+        // OF-2163: Prevent modifying the original subject stanza (that can be retrieved by others later) by making a defensive copy.
+        //          This prevents the stanza kept in memory to have the 'to' address for the last user that it was sent to.
+        return this.subject == null ? null : this.subject.createCopy();
     }
 
     /**
-     * Sets the last subject that some occupant set to the room. This message will only be used
-     * when loading a room from the database.
+     * Returns the last subject that some occupant set to the room.
      *
-     * @param subject the last known subject of the room (cannot be {@code null}).
+     * @return the last subject that some occupant set to the room.
      */
+    public String getSubject() {
+        final Message subjectStanza = getSubjectStanza();
+        return subjectStanza == null ? null : subjectStanza.getSubject();
+    }
+
+    /**
+     * Sets the current subject of the room.
+     *
+     * @param subject the new subject of the room.
+     * @deprecated Use {@link #changeSubject(Message, MUCOccupant)} or {@link #initializeSubject(Message)} instead.
+     */
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0
     public void setSubject(String subject) {
-        this.subject = subject;
+        try {
+            final Message roomSubject = new Message();
+            roomSubject.setType(Message.Type.groupchat);
+            roomSubject.setID(UUID.randomUUID().toString());
+            roomSubject.setFrom(this.getJID());
+
+            // Add the subject to the 'subject' element of the message. Ensure that this element is always present (even
+            // when empty), as MUC joins require 'subject' element to be present.
+            if (subject != null && !subject.isEmpty()) {
+                roomSubject.setSubject(subject);
+            } else {
+                roomSubject.getElement().addElement("subject");
+            }
+
+            changeSubject(roomSubject, this.selfOccupantData);
+        } catch (ForbiddenException e) {
+            Log.warn("Unable to change the subject of room {}", this.getJID(), e);
+        }
     }
 
     /**
@@ -3767,7 +3824,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         if (fmucHandler != null) {
             size += 2048; // Guestimate of fmucHandler
         }
-        size += CacheSizes.sizeOfString(subject);
+        size += CacheSizes.sizeOfAnything(subject);
         size += CacheSizes.sizeOfLong();        // roomID
         size += CacheSizes.sizeOfDate();        // creationDate
         size += CacheSizes.sizeOfDate();        // modificationDate
@@ -3819,7 +3876,10 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         if (fmucInboundNodes != null) {
             ExternalizableUtil.getInstance().writeSerializableCollection(out, fmucInboundNodes);
         }
-        ExternalizableUtil.getInstance().writeSafeUTF(out, subject);
+        ExternalizableUtil.getInstance().writeBoolean(out, subject != null);
+        if (subject != null) {
+            ExternalizableUtil.getInstance().writeSerializable(out, (DefaultElement) subject.getElement());
+        }
         ExternalizableUtil.getInstance().writeLong(out, roomID);
         ExternalizableUtil.getInstance().writeLong(out, creationDate.getTime());
         ExternalizableUtil.getInstance().writeBoolean(out, modificationDate != null);
@@ -3884,7 +3944,12 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         } else {
             fmucInboundNodes = null;
         }
-        subject = ExternalizableUtil.getInstance().readSafeUTF(in);
+        if (ExternalizableUtil.getInstance().readBoolean(in)) {
+            Element subjectElement = (Element) ExternalizableUtil.getInstance().readSerializable(in);
+            subject = new Message(subjectElement, true);
+        } else {
+            subject = null;
+        }
         roomID = ExternalizableUtil.getInstance().readLong(in);
         creationDate = new Date(ExternalizableUtil.getInstance().readLong(in));
         if (ExternalizableUtil.getInstance().readBoolean(in)) {

@@ -25,6 +25,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -157,7 +158,10 @@ public class MUCRoomTest {
         populateField(input, "fmucOutboundNode", new JID("fmuc-unit-test-node@example.com"));
         populateField(input, "fmucOutboundMode", FMUCMode.MasterMaster);
         populateField(input, "fmucInboundNodes", new HashSet<>(Arrays.asList(new JID("fmuc-inbound-z@example.org"), new JID("fmuc-inbound-y@example.org"))));
-        populateField(input, "subject", "test subject");
+        final Message subject = new Message();
+        subject.setSubject("test subject");
+        subject.setFrom(new JID("test-room-name", mockService.getServiceDomain(), "Juan"));
+        populateField(input, "subject", subject);
         populateField(input, "roomID", 325);
         populateField(input, "creationDate", Date.from(Instant.now().minus(Duration.ofHours(3252))));
         populateField(input, "modificationDate", Date.from(Instant.now().minus(Duration.ofSeconds(91))));

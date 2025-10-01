@@ -16,20 +16,26 @@
 
 package org.jivesoftware.openfire.muc.spi;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SAXReaderUtil;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.sql.*;
+import java.time.Instant;
 import java.util.Date;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -94,7 +100,7 @@ public class MUCPersistenceManager {
         "UPDATE ofMucRoom SET modificationDate=?, naturalName=?, description=?, " +
         "canChangeSubject=?, maxUsers=?, publicRoom=?, moderated=?, membersOnly=?, " +
         "canInvite=?, roomPassword=?, canDiscoverJID=?, logEnabled=?, retireOnDeletion=?, preserveHistOnDel=?, " +
-        "rolesToBroadcast=?, useReservedNick=?, canChangeNick=?, canRegister=?, allowpm=?, fmucEnabled=?, " +
+        "subject=?, rolesToBroadcast=?, useReservedNick=?, canChangeNick=?, canRegister=?, allowpm=?, fmucEnabled=?, " +
         "fmucOutboundNode=?, fmucOutboundMode=?, fmucInboundNodes=? " +
         "WHERE roomID=?";
     private static final String ADD_ROOM = 
@@ -256,7 +262,24 @@ public class MUCPersistenceManager {
             room.setLogEnabled(rs.getInt("logEnabled") == 1);
             room.setRetireOnDeletion(rs.getInt("retireOnDeletion") == 1);
             room.setPreserveHistOnRoomDeletionEnabled(rs.getInt("preserveHistOnDel") == 1);
-            room.setSubject(rs.getString("subject"));
+            try {
+                final String subjectRaw = rs.getString("subject");
+                if (subjectRaw != null) {
+                    final Message subjectStanza;
+                    if (subjectRaw.trim().startsWith("<message ")) {
+                        // Expected: the database contains a stanza
+                        final Element subjectEl = SAXReaderUtil.readRootElement(subjectRaw);
+                        subjectStanza = new Message(subjectEl);
+                    } else {
+                        // Fallback: as a result of the migration for OF-3131, the database _may_ contain plain text.
+                        Log.debug("Plain text (instead of stanza) subject found in database for room '{}'", room.getJID());
+                        subjectStanza = constructRoomSubjectMessage(room.getJID(), subjectRaw, null, null);
+                    }
+                    room.initializeSubject(subjectStanza);
+                }
+            } catch (Throwable t) {
+                Log.warn("Unable to parse data as a subject-changing stanza for room '{}'", room.getJID(), t);
+            }
             List<Role> rolesToBroadcast = new ArrayList<>();
             String roles = StringUtils.zeroPadString(Integer.toBinaryString(rs.getInt("rolesToBroadcast")), 3);
             if (roles.charAt(0) == '1') {
@@ -399,38 +422,39 @@ public class MUCPersistenceManager {
                 pstmt.setInt(12, (room.isLogEnabled() ? 1 : 0));
                 pstmt.setInt(13, (room.isRetireOnDeletion() ? 1 : 0));
                 pstmt.setInt(14, (room.isPreserveHistOnRoomDeletionEnabled() ? 1 : 0));
-                pstmt.setInt(15, marshallRolesToBroadcast(room));
-                pstmt.setInt(16, (room.isLoginRestrictedToNickname() ? 1 : 0));
-                pstmt.setInt(17, (room.canChangeNickname() ? 1 : 0));
-                pstmt.setInt(18, (room.isRegistrationEnabled() ? 1 : 0));
+                pstmt.setString(15, room.getSubject());
+                pstmt.setInt(16, marshallRolesToBroadcast(room));
+                pstmt.setInt(17, (room.isLoginRestrictedToNickname() ? 1 : 0));
+                pstmt.setInt(18, (room.canChangeNickname() ? 1 : 0));
+                pstmt.setInt(19, (room.isRegistrationEnabled() ? 1 : 0));
                 switch (room.canSendPrivateMessage())
                 {
                     default:
-                    case "anyone":       pstmt.setInt(19, 0); break;
-                    case "participants": pstmt.setInt(19, 1); break;
-                    case "moderators":   pstmt.setInt(19, 2); break;
-                    case "none":         pstmt.setInt(19, 3); break;
+                    case "anyone":       pstmt.setInt(20, 0); break;
+                    case "participants": pstmt.setInt(20, 1); break;
+                    case "moderators":   pstmt.setInt(20, 2); break;
+                    case "none":         pstmt.setInt(20, 3); break;
                 }
-                pstmt.setInt(20, (room.isFmucEnabled() ? 1 : 0 ));
+                pstmt.setInt(21, (room.isFmucEnabled() ? 1 : 0 ));
                 if ( room.getFmucOutboundNode() == null ) {
-                    pstmt.setNull(21, Types.VARCHAR);
+                    pstmt.setNull(22, Types.VARCHAR);
                 } else {
-                    pstmt.setString(21, room.getFmucOutboundNode().toString());
+                    pstmt.setString(22, room.getFmucOutboundNode().toString());
                 }
                 if ( room.getFmucOutboundMode() == null ) {
-                    pstmt.setNull(22, Types.INTEGER);
+                    pstmt.setNull(23, Types.INTEGER);
                 } else {
-                    pstmt.setInt(22, room.getFmucOutboundMode().equals(MasterMaster) ? 0 : 1);
+                    pstmt.setInt(23, room.getFmucOutboundMode().equals(MasterMaster) ? 0 : 1);
                 }
 
                 // Store a newline-separated collection, which is an 'allow only on list' configuration. Note that the list can be empty (effectively: disallow all), or null: this is an 'allow all' configuration.
                 if (room.getFmucInboundNodes() == null) {
-                    pstmt.setNull(23, Types.VARCHAR); // Null: allow all.
+                    pstmt.setNull(24, Types.VARCHAR); // Null: allow all.
                 } else {
                     final String content = room.getFmucInboundNodes().stream().map(JID::toString).collect(Collectors.joining("\n")); // result potentially is an empty String, but will not be null.
-                    pstmt.setString(23, content);
+                    pstmt.setString(24, content);
                 }
-                pstmt.setLong(24, room.getID());
+                pstmt.setLong(25, room.getID());
                 pstmt.executeUpdate();
             }
             else {
@@ -745,7 +769,25 @@ public class MUCPersistenceManager {
                     room.setLogEnabled(resultSet.getInt("logEnabled") == 1);
                     room.setRetireOnDeletion(resultSet.getInt("retireOnDeletion") == 1);
                     room.setPreserveHistOnRoomDeletionEnabled(resultSet.getInt("preserveHistOnDel") == 1);
-                    room.setSubject(resultSet.getString("subject"));
+                    try {
+                        final String subjectRaw = resultSet.getString("subject");
+                        if (subjectRaw != null) {
+                            final Message subjectStanza;
+                            if (subjectRaw.trim().startsWith("<message ")) {
+                                // Expected: the database contains a stanza
+                                final Element subjectEl = SAXReaderUtil.readRootElement(subjectRaw);
+                                subjectStanza = new Message(subjectEl);
+                            } else {
+                                // Fallback: as a result of the migration for OF-3131, the database _may_ contain plain text.
+                                Log.debug("Plain text (instead of stanza) subject found in database for room '{}'", room.getJID());
+                                subjectStanza = constructRoomSubjectMessage(room.getJID(), subjectRaw, null, null);
+                            }
+                            room.initializeSubject(subjectStanza);
+                        }
+                    } catch (Throwable t) {
+                        Log.warn("Unable to parse data as a subject-changing stanza for room '{}'", room.getJID(), t);
+                    }
+
                     List<Role> rolesToBroadcast = new ArrayList<>();
                     String roles = StringUtils.zeroPadString(Integer.toBinaryString(resultSet.getInt("rolesToBroadcast")), 3);
                     if (roles.charAt(0) == '1') {
@@ -917,7 +959,7 @@ public class MUCPersistenceManager {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_SUBJECT);
-            pstmt.setString(1, room.getSubject());
+            pstmt.setString(1, room.getSubjectStanza() == null ? null : room.getSubjectStanza().toXML());
             pstmt.setLong(2, room.getID());
             pstmt.executeUpdate();
         }
@@ -1477,11 +1519,11 @@ public class MUCPersistenceManager {
         propertyMaps.put(subdomain, properties);
     }
 
-   /**
+    /**
      * Sets multiple Jive properties at once. If a property doesn't already exists, a new
      * one will be created.
      *
-    * @param subdomain the subdomain of the service to set properties for
+     * @param subdomain the subdomain of the service to set properties for
      * @param propertyMap a map of properties, keyed on property name.
      */
     public static void setProperties(String subdomain, Map<String, String> propertyMap) {
@@ -1553,5 +1595,46 @@ public class MUCPersistenceManager {
         finally {
             DbConnectionManager.closeConnection(resultSet, statement, connection);
         }
+    }
+
+    /**
+     * Constructs a message stanza that represents a room subject change.
+     *
+     * @param roomJid The room address
+     * @param subject The subject test
+     * @param date The moment in time that the subject was set/changed.
+     * @param authorNickname The nickname (JID resourcepart) of the entity that set/changed the subject.
+     * @return A message stanza representing the subject change
+     */
+    @VisibleForTesting
+    static Message constructRoomSubjectMessage(@Nonnull final JID roomJid, @Nullable final String subject, @Nullable final Instant date, @Nullable final String authorNickname)
+    {
+        final Message roomSubject = new Message();
+        roomSubject.setType(Message.Type.groupchat);
+        roomSubject.setID(UUID.randomUUID().toString());
+
+        // If the author of the subject is known, use their nickname as the originator of the message.
+        if (authorNickname != null && !authorNickname.isEmpty()) {
+            roomSubject.setFrom(new JID(roomJid.getNode(), roomJid.getDomain(), authorNickname));
+        } else {
+            roomSubject.setFrom(roomJid);
+        }
+
+        // Add the subject to the 'subject' element of the message. Ensure that this element is always present (even
+        // when empty), as MUC joins require 'subject' element to be present.
+        if (subject != null && !subject.isEmpty()) {
+            roomSubject.setSubject(subject);
+        } else {
+            roomSubject.getElement().addElement("subject");
+        }
+
+        // Include the time when this subject was set.
+        if (date != null) {
+            final Element delayElement = roomSubject.addChildElement("delay", "urn:xmpp:delay");
+            delayElement.addAttribute("stamp", XMPPDateTimeFormat.format(date));
+            delayElement.addAttribute("from", roomJid.toBareJID()); // XEP-0045: "If the <delay/> element is included, its 'from' attribute MUST be set to the JID of the room itself."
+        }
+
+        return roomSubject;
     }
 }

@@ -88,7 +88,9 @@ public class HistoryStrategy implements Externalizable {
 
     /**
      * Track the latest room subject change or null if none exists yet.
+     * @deprecated Since Openfire 5.1.0, a room's subject is managed by {@link MUCRoom} directly.
      */
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0
     private Message roomSubject = null;
 
     /**
@@ -434,7 +436,9 @@ public class HistoryStrategy implements Externalizable {
      *
      * @return true if there is a message within the history of the room that has changed the
      *         room's subject.
+     * @deprecated Since Openfire 5.1.0, a room's subject is managed by {@link MUCRoom} directly.
      */
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0
     public boolean hasChangedSubject() {
         return roomSubject != null;
     }
@@ -444,7 +448,9 @@ public class HistoryStrategy implements Externalizable {
      * room's subject.
      * 
      * @return the latest room subject change or null if none exists yet.
+     * @deprecated Since Openfire 5.1.0, a room's subject is managed by {@link MUCRoom} directly.
      */
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0
     @Nullable
     public Message getChangedSubject() {
         return roomSubject;

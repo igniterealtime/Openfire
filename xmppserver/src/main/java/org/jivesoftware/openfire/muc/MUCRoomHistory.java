@@ -286,7 +286,9 @@ public final class MUCRoomHistory implements Externalizable {
      *
      * @return true if there is a message within the history of the room that has changed the
      *         room's subject.
+     * @deprecated Since Openfire 5.1.0, a room's subject is managed by {@link MUCRoom} directly.
      */
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0
     public boolean hasChangedSubject() {
         return historyStrategy.hasChangedSubject();
     }
@@ -296,7 +298,9 @@ public final class MUCRoomHistory implements Externalizable {
      * room's subject.
      * 
      * @return the latest room subject change or null if none exists yet.
+     * @deprecated Since Openfire 5.1.0, a room's subject is managed by {@link MUCRoom} directly.
      */
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0
     @Nullable
     public Message getChangedSubject() {
         return historyStrategy.getChangedSubject();
@@ -307,7 +311,9 @@ public final class MUCRoomHistory implements Externalizable {
      *
      * @param message the message to check
      * @return true if the given packet is a subject change request
+     * @deprecated Since Openfire 5.1.0, a room's subject is managed by {@link MUCRoom} directly.
      */
+    @Deprecated
     public boolean isSubjectChangeRequest(Message message) {
         return historyStrategy.isSubjectChangeRequest(message);
     }

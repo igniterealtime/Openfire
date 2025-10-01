@@ -294,6 +294,33 @@ jobs:
               - 'xmppserver/src/main/java/org/jivesoftware/database/**'
 
 
+  xcheck-database-version:
+    name: Cross check that any new database upgrades match the code version
+    needs: [build, should-do-database-tests, check_branch]
+    runs-on: ubuntu-latest
+    if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
+    steps:
+      - name: Checkout Openfire
+        uses: actions/checkout@v5
+      - name: Cross check DATABASE_VERSION
+        run: |
+          set -e
+          CODE_SAYS=$(grep 'int DATABASE_VERSION =' xmppserver/src/main/java/org/jivesoftware/database/SchemaManager.java | sed -e 's/.*= //' -e 's/;//')
+          NEXT=$((CODE_SAYS + 1))
+          for dbname in db2 hsqldb mysql oracle postgresql sqlserver sybase; do
+            # Ensure that a file exists for CODE_SAYS
+            if [ ! -f distribution/src/database/upgrade/${CODE_SAYS}/openfire_${dbname}.sql ]; then
+              echo "ERROR: Expected to find a database upgrade script for ${dbname} and version ${CODE_SAYS}, but no such file exists."
+              exit 1
+            fi
+          done
+          # Ensure that the next increment does not have a directory
+          if [ -d distribution/src/database/upgrade/${NEXT} ]; then
+            echo "ERROR: Found a directory for the next database version ${NEXT}, but the code still says ${CODE_SAYS}. Please increment the DATABASE_VERSION in SchemaManager.java."
+            exit 1
+          fi
+
+
   hsqldb-install:
     name: Test HSQLDB install script
     needs: [build, should-do-database-tests, check_branch]

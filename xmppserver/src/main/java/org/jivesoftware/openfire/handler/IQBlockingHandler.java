@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2018-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -300,7 +300,7 @@ public class IQBlockingHandler extends IQHandler implements ServerFeaturesProvid
 
         Log.debug( "Pushing blocklist updates to all resources of user '{}' that have previously requested the blocklist.", user.getUsername() );
 
-        final Collection<ClientSession> sessions = sessionManager.getSessions( user.getUsername() );
+        final Collection<ClientSession> sessions = sessionManager.getSessions( XMPPServer.getInstance().createJID(user.getUsername(), null) );
         for ( final ClientSession session : sessions )
         {
             if ( session.hasRequestedBlocklist() )
@@ -432,7 +432,7 @@ public class IQBlockingHandler extends IQHandler implements ServerFeaturesProvid
 
         Log.debug( "Pushing blocklist updates to all resources of user '{}' that have previously requested the blocklist.", user.getUsername() );
 
-        final Collection<ClientSession> sessions = sessionManager.getSessions( user.getUsername() );
+        final Collection<ClientSession> sessions = sessionManager.getSessions( XMPPServer.getInstance().createJID(user.getUsername(), null) );
         for ( final ClientSession session : sessions )
         {
             if ( session.hasRequestedBlocklist() )

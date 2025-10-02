@@ -128,7 +128,7 @@
     Collection<ClientSession> sessions = null;
     int sessionCount = sessionManager.getSessionCount(address.getNode());
     if (!isAnonymous && sessionCount > 1) {
-        sessions = sessionManager.getSessions(address.getNode());
+        sessions = sessionManager.getSessions(address);
     }
 
     // Number dateFormatter for all numbers on this page:

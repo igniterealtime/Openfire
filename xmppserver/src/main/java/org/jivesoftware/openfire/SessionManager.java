@@ -926,6 +926,42 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     /**
+     * Returns all sessions responsible for this JID. The returned Sessions may have never sent
+     * an available presence (thus not have a route) or could be a Session that hasn't
+     * authenticated yet (i.e. preAuthenticatedSessions).
+     *
+     * If the provided JID is a full JID, this method behaves exactly like {@link #getSession(JID)},
+     * but returns the singular result (if any) in a collection of one element. If that method returned null,
+     * this method returns an empty collection.
+     *
+     * @param from the sender of the packet.
+     * @return the <code>Session</code> associated with the JID.
+     * @see #getSessions(String) returns only 'available' sessions for a user.
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3132">OF-3132: When obtaining user sessions for bare JID, not all sessions are returned</a>
+     */
+    public Collection<ClientSession> getSessions(JID from) {
+        // Return null if the JID is null or belongs to a foreign server. If the server is
+        // shutting down then serverName will be null so answer null too in this case.
+        if (from == null || serverName == null || !serverName.equals(from.getDomain())) {
+            return Collections.emptyList();
+        }
+
+        if (from.getResource() != null) {
+            final ClientSession fullJidResult = getSession(from);
+            return fullJidResult == null ? Collections.emptyList() : List.of(fullJidResult);
+        }
+
+        if (from.getNode() == null) {
+            return Collections.emptyList();
+        }
+
+        return routingTable.getClientsRoutes(false).stream()
+            .filter(clientSession -> from.getNode().equals(clientSession.getAddress().getNode())
+                && serverName.equals(clientSession.getAddress().getDomain()))
+            .toList();
+    }
+
+    /**
      * Returns a list that contains all authenticated client sessions connected to the server.
      * The list contains sessions of anonymous and non-anonymous users.
      *
@@ -1053,6 +1089,15 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         return sessions;
     }
 
+    /**
+     * Return all user sessions that match the definition of RoutingTable#getRoutes (notably, the sessions are
+     * 'available' / have sent initial presence).
+     *
+     * @param username The user for which to return sessions
+     * @return sessions for the user
+     * @see #getSessions(JID) can return all sessions of a user (including those that are not 'available').
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3132">OF-3132: When obtaining user sessions for bare JID, not all sessions are returned</a>
+     */
     public Collection<ClientSession> getSessions(String username) {
         List<ClientSession> sessionList = new ArrayList<>();
         if (username != null && serverName != null) {
@@ -1137,8 +1182,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     public int getSessionCount(String username) {
-        // TODO Count ALL sessions not only available
-        return routingTable.getRoutes(new JID(username, serverName, null, true), null).size();
+        return getSessions(new JID(username, serverName, null, true)).size();
     }
 
     /**

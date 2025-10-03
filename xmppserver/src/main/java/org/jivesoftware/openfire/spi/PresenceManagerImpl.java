@@ -196,8 +196,8 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
             String username = presence.getFrom().getNode();
 
             // Optimization: only delete the unavailable presence information if this
-            // is the first session created on the server.
-            if (sessionManager.getSessionCount(username) > 1) {
+            // is the first 'available' session created on the server.
+            if (sessionManager.getSessions(username).size() > 1) {
                 return;
             }
 

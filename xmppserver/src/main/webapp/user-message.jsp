@@ -30,6 +30,7 @@
 %>
 <%@ page import="java.util.Map" %>
 <%@ page import="java.nio.charset.StandardCharsets" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -134,7 +135,7 @@
     Collection<ClientSession> sessions = null;
     if (user != null) {
         numSessions = sessionManager.getSessionCount(user.getUsername());
-        sessions = sessionManager.getSessions(user.getUsername());
+        sessions = sessionManager.getSessions(XMPPServer.getInstance().createJID(user.getUsername(), null));
         if (numSessions == 1) {
             sess = sessions.iterator().next();
         }

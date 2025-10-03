@@ -112,7 +112,7 @@ public class EndUserSession extends AdHocCommand
                 sessions.add(SessionManager.getInstance().getSession(address));
             } else {
                 // Bare JID: close all sessions for the user.
-                sessions.addAll(SessionManager.getInstance().getSessions(address.getNode()));
+                sessions.addAll(SessionManager.getInstance().getSessions(address));
             }
 
             for (final ClientSession session : sessions) {

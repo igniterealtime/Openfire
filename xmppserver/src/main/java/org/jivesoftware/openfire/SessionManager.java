@@ -760,7 +760,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         Presence presence;
         // Get list of sessions of the same user
         JID searchJID = new JID(session.getAddress().getNode(), session.getAddress().getDomain(), null);
-        List<JID> addresses = routingTable.getRoutes(searchJID, null);
+        List<JID> addresses = routingTable.getRoutes(searchJID, searchJID);
         for (JID address : addresses) {
             if (address.equals(session.getAddress())) {
                 continue;
@@ -791,7 +791,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         }
         // Get list of sessions of the same user
         JID searchJID = new JID(originatingResource.getNode(), originatingResource.getDomain(), null);
-        List<JID> addresses = routingTable.getRoutes(searchJID, null);
+        List<JID> addresses = routingTable.getRoutes(searchJID, searchJID);
         for (JID address : addresses) {
             if (!originatingResource.equals(address)) {
                 // Send the presence of the session whose presence has changed to
@@ -835,7 +835,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
 
         // Check presence's priority of other available resources
         JID searchJID = session.getAddress().asBareJID();
-        for (JID address : routingTable.getRoutes(searchJID, null)) {
+        for (JID address : routingTable.getRoutes(searchJID, searchJID)) {
             if (address.equals(session.getAddress())) {
                 continue;
             }
@@ -923,6 +923,42 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         }
 
         return routingTable.getClientRoute(from);
+    }
+
+    /**
+     * Returns all sessions responsible for this JID. The returned Sessions may have never sent
+     * an available presence (thus not have a route) or could be a Session that hasn't
+     * authenticated yet (i.e. preAuthenticatedSessions).
+     *
+     * If the provided JID is a full JID, this method behaves exactly like {@link #getSession(JID)},
+     * but returns the singular result (if any) in a collection of one element. If that method returned null,
+     * this method returns an empty collection.
+     *
+     * @param from the sender of the packet.
+     * @return the <code>Session</code> associated with the JID.
+     * @see #getSessions(String) returns only 'available' sessions for a user.
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3132">OF-3132: When obtaining user sessions for bare JID, not all sessions are returned</a>
+     */
+    public Collection<ClientSession> getSessions(JID from) {
+        // Return null if the JID is null or belongs to a foreign server. If the server is
+        // shutting down then serverName will be null so answer null too in this case.
+        if (from == null || serverName == null || !serverName.equals(from.getDomain())) {
+            return Collections.emptyList();
+        }
+
+        if (from.getResource() != null) {
+            final ClientSession fullJidResult = getSession(from);
+            return fullJidResult == null ? Collections.emptyList() : List.of(fullJidResult);
+        }
+
+        if (from.getNode() == null) {
+            return Collections.emptyList();
+        }
+
+        return routingTable.getClientsRoutes(false).stream()
+            .filter(clientSession -> from.getNode().equals(clientSession.getAddress().getNode())
+                && serverName.equals(clientSession.getAddress().getDomain()))
+            .toList();
     }
 
     /**
@@ -1053,6 +1089,15 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         return sessions;
     }
 
+    /**
+     * Return all user sessions that match the definition of RoutingTable#getRoutes (notably, the sessions are
+     * 'available' / have sent initial presence).
+     *
+     * @param username The user for which to return sessions
+     * @return sessions for the user
+     * @see #getSessions(JID) can return all sessions of a user (including those that are not 'available').
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3132">OF-3132: When obtaining user sessions for bare JID, not all sessions are returned</a>
+     */
     public Collection<ClientSession> getSessions(String username) {
         List<ClientSession> sessionList = new ArrayList<>();
         if (username != null && serverName != null) {
@@ -1137,8 +1182,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     public int getSessionCount(String username) {
-        // TODO Count ALL sessions not only available
-        return routingTable.getRoutes(new JID(username, serverName, null, true), null).size();
+        return getSessions(new JID(username, serverName, null, true)).size();
     }
 
     /**
@@ -1236,10 +1280,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * @throws PacketException if a packet exception occurs.
      */
     public void userBroadcast(String username, Packet packet) throws PacketException {
-        // TODO broadcast to ALL sessions of the user and not only available
-        for (JID address : routingTable.getRoutes(new JID(username, serverName, null), null)) {
-            packet.setTo(address);
-            routingTable.routePacket(address, packet);
+        for (final ClientSession session : getSessions(new JID(username, serverName, null))) {
+            packet.setTo(session.getAddress());
+            session.process(packet);
         }
     }
 
@@ -1544,9 +1587,10 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         }
         else {
             // Full JID: address to the session, if one exists.
-            for (JID sessionAddress : routingTable.getRoutes(address, null)) {
-                packet.setTo(sessionAddress); // expected to be equal to 'address'.
-                routingTable.routePacket(sessionAddress, packet);
+            final ClientSession session = routingTable.getClientRoute(address);
+            if (session != null){
+                packet.setTo(session.getAddress()); // expected to be equal to 'address'.
+                session.process(packet);
             }
         }
     }

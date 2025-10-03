@@ -30,6 +30,7 @@
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.util.Date" %>
 <%@ page import="java.nio.charset.StandardCharsets" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -93,7 +94,7 @@
         // Close the user's connection if the lockout is immedate
         if (webManager.getLockOutManager().isAccountDisabled(username)) {
             final StreamError error = new StreamError(StreamError.Condition.not_authorized);
-            for (ClientSession sess : webManager.getSessionManager().getSessions(username) )
+            for (ClientSession sess : webManager.getSessionManager().getSessions(XMPPServer.getInstance().createJID(username, null)) )
             {
                 sess.close(error);
             }

@@ -131,7 +131,7 @@ public class DisableUser extends AdHocCommand
 
             // Close existing sessions for the disabled user.
             final StreamError error = new StreamError(StreamError.Condition.not_authorized);
-            final Collection<ClientSession> sessions = SessionManager.getInstance().getSessions(user.getUsername());
+            final Collection<ClientSession> sessions = SessionManager.getInstance().getSessions(XMPPServer.getInstance().createJID(user.getUsername(), null));
             for (final ClientSession session : sessions) {
                 session.close(error);
             }

@@ -249,7 +249,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                             Thread.sleep(10);
                             // Close the user's connection
                             final StreamError error = new StreamError(StreamError.Condition.not_authorized);
-                            for (ClientSession sess : sessionManager.getSessions(user.getUsername()) )
+                            for (ClientSession sess : sessionManager.getSessions(XMPPServer.getInstance().createJID(user.getUsername(), null)) )
                             {
                                 sess.close(error);
                             }

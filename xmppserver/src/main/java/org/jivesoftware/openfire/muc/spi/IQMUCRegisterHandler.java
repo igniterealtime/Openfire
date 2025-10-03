@@ -135,7 +135,7 @@ class IQMUCRegisterHandler {
 
                 final FormField fieldFaq = registrationForm.addField();
                 fieldFaq.setVariable("muc#register_faqentry");
-                fieldFaq.setType(FormField.Type.text_single);
+                fieldFaq.setType(FormField.Type.text_multi);
                 fieldFaq.setLabel(LocaleUtils.getLocalizedString("muc.form.reg.faqentry", preferredLocale));
 
                 // Create the probeResult and add the registration form

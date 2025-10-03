@@ -4,8 +4,8 @@ import org.jivesoftware.smack.bosh.BOSHConfiguration;
 import org.jivesoftware.smack.bosh.XMPPBOSHConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class ConnectivityTest
 {
@@ -57,7 +57,7 @@ public class ConnectivityTest
         }
 
         // Verify result.
-        Assert.assertEquals("Expected all BOSH connection attempts to result in an authenticated session, but not all did.", iterations, result);
+        Assertions.assertEquals(iterations, result, "Expected all BOSH connection attempts to result in an authenticated session, but not all did.");
     }
 
     /**
@@ -106,6 +106,6 @@ public class ConnectivityTest
         }
 
         // Verify result.
-        Assert.assertTrue("Expected all TCP connection attempts to result in an authenticated session, but not all did.", iterations >= result * .9); // FIXME make this an _exact_ comparison after stability of the BOSH connectivity is achieved.
+        Assertions.assertTrue(iterations >= result * .9, "Expected all TCP connection attempts to result in an authenticated session, but not all did."); // FIXME make this an _exact_ comparison after stability of the BOSH connectivity is achieved.
     }
 }

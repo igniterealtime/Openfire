@@ -15,9 +15,11 @@
  */
 package org.jivesoftware.openfire.keystore;
 
-import org.junit.*;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.Parameter;
+import org.junit.jupiter.params.ParameterizedClass;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.security.KeyStore;
 import java.security.cert.*;
@@ -31,7 +33,8 @@ import java.util.List;
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
-@RunWith( Parameterized.class )
+@ParameterizedClass(name = "acceptSelfSignedCertificates={0},checkValidity={1},checkRevocation={2}")
+@MethodSource("arguments")
 public class CheckChainTrustedTest
 {
     /**
@@ -39,31 +42,33 @@ public class CheckChainTrustedTest
      * iterable returned here (its values are passed to the constructor of this class). This allows us to execute the
      * same set of tests against a different configuration of the system under test.
      */
-    @Parameterized.Parameters(name = "acceptSelfSignedCertificates={0},checkValidity={1},checkRevocation={2}")
-    public static Iterable<Object[]> constructorArguments()
+    public static Iterable<Arguments> arguments()
     {
-        final List<Object[]> constructorArguments = new ArrayList<>();
-        constructorArguments.add( new Object[] { false, true, false } );  // acceptSelfSignedCertificates = false, check validity = true
-        constructorArguments.add( new Object[] { false, false, false } ); // acceptSelfSignedCertificates = false, check validity = false
-        constructorArguments.add( new Object[] { true, true, false } );   // acceptSelfSignedCertificates = true, check validity = true
-        constructorArguments.add( new Object[] { true, false, false } );  // acceptSelfSignedCertificates = true, check validity = false
-        return constructorArguments;
+        final List<Arguments> arguments = new ArrayList<>();
+        arguments.add( Arguments.of ( false, true, false ) );  // acceptSelfSignedCertificates = false, check validity = true
+        arguments.add( Arguments.of ( false, false, false ) ); // acceptSelfSignedCertificates = false, check validity = false
+        arguments.add( Arguments.of ( true, true, false ) );   // acceptSelfSignedCertificates = true, check validity = true
+        arguments.add( Arguments.of ( true, false, false ) );  // acceptSelfSignedCertificates = true, check validity = false
+        return arguments;
     }
 
     /**
      * Configuration for the system under test: does or does not accept self-signed certificates.
      */
-    private final boolean acceptSelfSigned;
+    @Parameter(0)
+    private boolean acceptSelfSigned;
 
     /**
      * Configuration for the system under test: does or does not check current validity (notBefore/notAfter).
      */
-    private final boolean checkValidity;
+    @Parameter(1)
+    private boolean checkValidity;
 
     /**
      * Configuration for the system under test: does or does not check certificate revocation.
      */
-    private final boolean checkRevocation;
+    @Parameter(2)
+    private boolean checkRevocation;
 
     /**
      * The keystore that contains the certificates used by the system under test (refreshed before every test invocation).
@@ -98,14 +103,7 @@ public class CheckChainTrustedTest
      */
     private OpenfireX509TrustManager trustManager;
 
-    public CheckChainTrustedTest( boolean acceptSelfSigned, boolean checkValidity, boolean checkRevocation )
-    {
-        this.acceptSelfSigned = acceptSelfSigned;
-        this.checkValidity = checkValidity;
-        this.checkRevocation = checkRevocation;
-    }
-
-    @BeforeClass
+    @BeforeAll
     public static void createChains() throws Exception
     {
         // Generate re-usable certificate chains (these are resource intensive to generate).
@@ -114,7 +112,7 @@ public class CheckChainTrustedTest
         expiredRootChain = KeystoreTestUtils.generateCertificateChainWithExpiredRootCert().getCertificateChain();
     }
 
-    @Before
+    @BeforeEach
     public void createFixture() throws Exception
     {
         trustStore = KeyStore.getInstance( KeyStore.getDefaultType() );
@@ -143,7 +141,7 @@ public class CheckChainTrustedTest
         return chain[ chain.length - 1 ];
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception
     {
         if ( trustStore != null)
@@ -155,15 +153,15 @@ public class CheckChainTrustedTest
     /**
      * Verifies that providing a null value for the first argument causes a runtime exception to be thrown.
      */
-    @Test( expected = RuntimeException.class )
-    public void testNullSelectorArgument() throws Exception
+    @Test
+    public void testNullSelectorArgument()
     {
         // Setup fixture.
         final CertSelector selector = null;
         final X509Certificate[] chain = validChain;
 
         // Execute system under test.
-        trustManager.checkChainTrusted( selector, chain );
+        Assertions.assertThrows(RuntimeException.class, () -> trustManager.checkChainTrusted( selector, chain ));
 
         // Verify results
         // (verified by 'expected' parameter of @Test annotation).
@@ -172,15 +170,15 @@ public class CheckChainTrustedTest
     /**
      * Verifies that providing a null value for the first argument causes a runtime exception to be thrown.
      */
-    @Test( expected = RuntimeException.class )
-    public void testNullChainArgument() throws Exception
+    @Test
+    public void testNullChainArgument()
     {
         // Setup fixture.
         final CertSelector selector = new X509CertSelector();
         final X509Certificate[] chain = null;
 
         // Execute system under test.
-        trustManager.checkChainTrusted( selector, chain );
+        Assertions.assertThrows(RuntimeException.class, () -> trustManager.checkChainTrusted( selector, chain ));
 
         // Verify results
         // (verified by 'expected' parameter of @Test annotation).
@@ -189,15 +187,15 @@ public class CheckChainTrustedTest
     /**
      * Verifies that providing an empty array for the first argument causes a runtime exception to be thrown.
      */
-    @Test( expected = RuntimeException.class )
-    public void testEmptyChainArgument() throws Exception
+    @Test
+    public void testEmptyChainArgument()
     {
         // Setup fixture.
         final CertSelector selector = new X509CertSelector();
         final X509Certificate[] chain = new X509Certificate[0];
 
         // Execute system under test.
-        trustManager.checkChainTrusted( selector, chain );
+        Assertions.assertThrows(RuntimeException.class, () -> trustManager.checkChainTrusted( selector, chain ));
 
         // Verify results
         // (verified by 'expected' parameter of @Test annotation).
@@ -221,7 +219,7 @@ public class CheckChainTrustedTest
         final CertPath result = trustManager.checkChainTrusted( selector, chain );
 
         // Verify results
-        Assert.assertNotNull( result );
+        Assertions.assertNotNull( result );
     }
 
     /**
@@ -240,7 +238,7 @@ public class CheckChainTrustedTest
         final CertPath result = trustManager.checkChainTrusted( selector, chain );
 
         // Verify results
-        Assert.assertNotNull( result );
+        Assertions.assertNotNull( result );
     }
 
     /**
@@ -264,7 +262,7 @@ public class CheckChainTrustedTest
         final CertPath result = trustManager.checkChainTrusted( selector, chain );
 
         // Verify results
-        Assert.assertNotNull( result );
+        Assertions.assertNotNull( result );
     }
 
     /**
@@ -283,7 +281,7 @@ public class CheckChainTrustedTest
         final CertPath result = trustManager.checkChainTrusted( selector, chain );
 
         // Verify results
-        Assert.assertNotNull( result );
+        Assertions.assertNotNull( result );
     }
 
     /**
@@ -309,15 +307,15 @@ public class CheckChainTrustedTest
         final CertPath result = trustManager.checkChainTrusted( selector, chain );
 
         // Verify results
-        Assert.assertNotNull( result );
+        Assertions.assertNotNull( result );
     }
 
     /**
      * Verifies that providing a chain that does not contain an intermediate certificate throws an exception
      * (selection criteria during this test: match on subject).
      */
-    @Test( expected = CertPathBuilderException.class )
-    public void testIncompleteChain() throws Exception
+    @Test
+    public void testIncompleteChain()
     {
         // Setup fixture.
         final X509CertSelector selector = new X509CertSelector();
@@ -329,7 +327,7 @@ public class CheckChainTrustedTest
         final X509Certificate[] chain = copy.toArray(new X509Certificate[0]);
 
         // Execute system under test.
-        trustManager.checkChainTrusted( selector, chain );
+        Assertions.assertThrows(CertPathBuilderException.class, () -> trustManager.checkChainTrusted( selector, chain ));
 
         // Verify results
         // (verified by 'expected' parameter of @Test annotation).
@@ -339,7 +337,7 @@ public class CheckChainTrustedTest
      * Verifies that providing chain for which the root certificate is not in the store (but is otherwise valid)
      * throw a CertPathBuilderException.
      */
-    @Test( expected = CertPathBuilderException.class )
+    @Test
     public void testFullChainUnrecognizedRoot() throws Exception
     {
         // Setup fixture.
@@ -348,7 +346,7 @@ public class CheckChainTrustedTest
         final X509Certificate[] chain = KeystoreTestUtils.generateValidCertificateChain().getCertificateChain();
 
         // Execute system under test.
-        trustManager.checkChainTrusted( selector, chain );
+        Assertions.assertThrows(CertPathBuilderException.class, () -> trustManager.checkChainTrusted( selector, chain ));
 
         // Verify results
         // (verified by 'expected' parameter of @Test annotation).
@@ -382,11 +380,11 @@ public class CheckChainTrustedTest
         // Verify results
         if ( checkValidity )
         {
-            Assert.assertNotNull( "Certificate validity is enforced. Validation should have thrown an exception.", exception );
+            Assertions.assertNotNull( exception, "Certificate validity is enforced. Validation should have thrown an exception." );
         }
         else
         {
-            Assert.assertNotNull( "Certificate validity is not checked. Validation should have succeeded.", result );
+            Assertions.assertNotNull( result, "Certificate validity is not checked. Validation should have succeeded." );
         }
     }
 
@@ -418,11 +416,11 @@ public class CheckChainTrustedTest
         // Verify results
         if ( checkValidity )
         {
-            Assert.assertNotNull( "Certificate validity is enforced. Validation should have thrown an exception.", exception );
+            Assertions.assertNotNull( exception, "Certificate validity is enforced. Validation should have thrown an exception." );
         }
         else
         {
-            Assert.assertNotNull( "Certificate validity is not checked. Validation should have succeeded.", result );
+            Assertions.assertNotNull( result, "Certificate validity is not checked. Validation should have succeeded." );
         }
     }
 
@@ -454,11 +452,11 @@ public class CheckChainTrustedTest
         // Verify results
         if ( checkValidity )
         {
-            Assert.assertNotNull( "Certificate validity is enforced. Validation should have thrown an exception.", exception );
+            Assertions.assertNotNull( exception, "Certificate validity is enforced. Validation should have thrown an exception." );
         }
         else
         {
-            Assert.assertNotNull( "Certificate validity is not checked. Validation should have succeeded.", result );
+            Assertions.assertNotNull( result, "Certificate validity is not checked. Validation should have succeeded." );
         }
     }
 
@@ -489,11 +487,11 @@ public class CheckChainTrustedTest
         // Verify results
         if ( acceptSelfSigned )
         {
-            Assert.assertNotNull( "Self-signed certificates are accepted. Validation should have succeeded.", result );
+            Assertions.assertNotNull( result, "Self-signed certificates are accepted. Validation should have succeeded." );
         }
         else
         {
-            Assert.assertNotNull( "Self-signed certificates are not accepted. Validation should have thrown an exception.", exception );
+            Assertions.assertNotNull( exception, "Self-signed certificates are not accepted. Validation should have thrown an exception." );
         }
     }
 
@@ -525,7 +523,7 @@ public class CheckChainTrustedTest
         // Verify results
         if ( acceptSelfSigned && !checkValidity)
         {
-            Assert.assertNotNull( "Certificate validity is not checked, and self-signed certificates are accepted. Validation should have succeeded.", result );
+            Assertions.assertNotNull( result, "Certificate validity is not checked, and self-signed certificates are accepted. Validation should have succeeded." );
         }
         else
         {
@@ -539,7 +537,7 @@ public class CheckChainTrustedTest
             {
                 sb.append( "Self-signed certificates are not accepted. " );
             }
-            Assert.assertNotNull( sb + "Validation should have thrown an exception.", exception );
+            Assertions.assertNotNull( exception, sb + "Validation should have thrown an exception." );
         }
     }
 }

@@ -18,18 +18,18 @@ package org.jivesoftware.openfire.sasl;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.session.LocalClientSession;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import javax.security.sasl.SaslException;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -37,7 +37,7 @@ import static org.mockito.Mockito.*;
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
 public class ExternalClientSaslServerTest
 {
     @Mock
@@ -48,12 +48,12 @@ public class ExternalClientSaslServerTest
 
     private MockedStatic<SASLAuthentication> saslAuthentication;
 
-    @Before
+    @BeforeEach
     public void setupStaticMock() {
         saslAuthentication = Mockito.mockStatic(SASLAuthentication.class);
     }
 
-    @After
+    @AfterEach
     public void teardownStaticMock() {
         if (saslAuthentication != null) {
             saslAuthentication.close();

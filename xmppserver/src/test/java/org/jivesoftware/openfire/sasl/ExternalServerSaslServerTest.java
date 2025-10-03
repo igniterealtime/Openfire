@@ -18,14 +18,14 @@ package org.jivesoftware.openfire.sasl;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.nio.charset.StandardCharsets;
 
@@ -37,7 +37,7 @@ import static org.mockito.Mockito.*;
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
+@ExtendWith(MockitoExtension.class)
 public class ExternalServerSaslServerTest
 {
     @Mock
@@ -48,12 +48,12 @@ public class ExternalServerSaslServerTest
 
     private MockedStatic<SASLAuthentication> saslAuthentication;
 
-    @Before
+    @BeforeEach
     public void setupStaticMock() {
         saslAuthentication = Mockito.mockStatic(SASLAuthentication.class);
     }
 
-    @After
+    @AfterEach
     public void teardownStaticMock() {
         if (saslAuthentication != null) {
             saslAuthentication.close();
@@ -185,7 +185,7 @@ public class ExternalServerSaslServerTest
      * Verify that when an initial response is given that matches the streamID as transmitted over the connection, but
      * <em>can not</em> be used to validate the provided TLS certificates, authentication fails.
      */
-    @Test(expected = SaslFailureException.class)
+    @Test
     public void testInitialResponseDifferentFromStreamID() throws Exception
     {
         // Setup test fixture.
@@ -200,6 +200,6 @@ public class ExternalServerSaslServerTest
         final byte[] input = authzID.getBytes(StandardCharsets.UTF_8);
 
         // Execute system under test.
-        server.evaluateResponse(input);
+        assertThrows(SaslFailureException.class, () -> server.evaluateResponse(input));
     }
 }

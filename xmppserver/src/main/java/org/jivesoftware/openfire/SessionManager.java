@@ -760,7 +760,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         Presence presence;
         // Get list of sessions of the same user
         JID searchJID = new JID(session.getAddress().getNode(), session.getAddress().getDomain(), null);
-        List<JID> addresses = routingTable.getRoutes(searchJID, null);
+        List<JID> addresses = routingTable.getRoutes(searchJID, searchJID);
         for (JID address : addresses) {
             if (address.equals(session.getAddress())) {
                 continue;
@@ -791,7 +791,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         }
         // Get list of sessions of the same user
         JID searchJID = new JID(originatingResource.getNode(), originatingResource.getDomain(), null);
-        List<JID> addresses = routingTable.getRoutes(searchJID, null);
+        List<JID> addresses = routingTable.getRoutes(searchJID, searchJID);
         for (JID address : addresses) {
             if (!originatingResource.equals(address)) {
                 // Send the presence of the session whose presence has changed to
@@ -835,7 +835,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
 
         // Check presence's priority of other available resources
         JID searchJID = session.getAddress().asBareJID();
-        for (JID address : routingTable.getRoutes(searchJID, null)) {
+        for (JID address : routingTable.getRoutes(searchJID, searchJID)) {
             if (address.equals(session.getAddress())) {
                 continue;
             }
@@ -1280,10 +1280,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * @throws PacketException if a packet exception occurs.
      */
     public void userBroadcast(String username, Packet packet) throws PacketException {
-        // TODO broadcast to ALL sessions of the user and not only available
-        for (JID address : routingTable.getRoutes(new JID(username, serverName, null), null)) {
-            packet.setTo(address);
-            routingTable.routePacket(address, packet);
+        for (final ClientSession session : getSessions(new JID(username, serverName, null))) {
+            packet.setTo(session.getAddress());
+            session.process(packet);
         }
     }
 
@@ -1588,9 +1587,10 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         }
         else {
             // Full JID: address to the session, if one exists.
-            for (JID sessionAddress : routingTable.getRoutes(address, null)) {
-                packet.setTo(sessionAddress); // expected to be equal to 'address'.
-                routingTable.routePacket(sessionAddress, packet);
+            final ClientSession session = routingTable.getClientRoute(address);
+            if (session != null){
+                packet.setTo(session.getAddress()); // expected to be equal to 'address'.
+                session.process(packet);
             }
         }
     }

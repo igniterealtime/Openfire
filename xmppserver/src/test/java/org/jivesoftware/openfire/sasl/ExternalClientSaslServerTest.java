@@ -18,7 +18,6 @@ package org.jivesoftware.openfire.sasl;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -29,7 +28,6 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.security.sasl.SaslException;
-import java.nio.charset.StandardCharsets;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;

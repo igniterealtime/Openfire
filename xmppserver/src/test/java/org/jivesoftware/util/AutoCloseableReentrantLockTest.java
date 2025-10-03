@@ -29,12 +29,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@RunWith(MockitoJUnitRunner.class)
 public class AutoCloseableReentrantLockTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AutoCloseableReentrantLockTest.class);

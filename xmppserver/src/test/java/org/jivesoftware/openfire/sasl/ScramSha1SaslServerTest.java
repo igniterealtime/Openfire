@@ -22,10 +22,8 @@ import org.jivesoftware.util.StringUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
@@ -45,7 +43,6 @@ import static org.mockito.Mockito.any;
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
 public class ScramSha1SaslServerTest
 {
     private MockedStatic<AuthFactory> authFactory;

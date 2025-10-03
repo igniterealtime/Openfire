@@ -16,11 +16,11 @@
 package org.jivesoftware.openfire.websocket;
 
 import org.dom4j.*;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * Verifies the implementation of {@link WebSocketClientStanzaHandler}

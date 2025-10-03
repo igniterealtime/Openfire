@@ -73,7 +73,7 @@ public final class Fixtures {
     /**
      * Reconfigures the Openfire home directory to the blank test one. This allows {@link JiveGlobals#setProperty(String, String)} etc.
      * to work (and persist) in test classes without errors being displayed to stderr. Ideally should be called in a
-     * {@link org.junit.BeforeClass} method.
+     * {@link org.junit.jupiter.api.BeforeAll} method.
      */
     public static void reconfigureOpenfireHome() throws Exception {
         final URL configFile = ClassLoader.getSystemResource("conf/openfire.xml");
@@ -86,7 +86,8 @@ public final class Fixtures {
 
     /**
      * As {@link #reconfigureOpenfireHome()} allows properties to persist, this method clears all existing properties
-     * (both XML and 'database') to ensure clean test output. Ideally should be called in a {@link org.junit.Before} method.
+     * (both XML and 'database') to ensure clean test output. Ideally should be called in a
+     * {@link org.junit.jupiter.api.BeforeEach} method.
      */
     public static void clearExistingProperties() {
         JiveGlobals.getXMLPropertyNames().stream()
@@ -100,7 +101,8 @@ public final class Fixtures {
 
     /**
      * As {@link #reconfigureOpenfireHome()} allows properties to persist, this method clears all existing properties
-     * (both XML and 'database') to ensure clean test output. Ideally should be called in a {@link org.junit.Before} method.
+     * (both XML and 'database') to ensure clean test output. Ideally should be called in a
+     * {@link org.junit.jupiter.api.BeforeEach} method.
      *
      * @param except properties that are not cleared if they are set.
      */

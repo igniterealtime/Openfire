@@ -25,6 +25,9 @@ import org.jivesoftware.database.DefaultConnectionProvider;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.xmpp.packet.JID;
 
 import java.lang.reflect.Field;
@@ -36,13 +39,17 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Unit tests that verify the functionality of {@link GroupManager}.
  *
- * Implementation-wise, this class extends for DBTestCase, which is as JUnit 3 derivative. Practically, this means that
- * Junit 4 annotations in this class will be ignored.
+ * Implementation-wise, this class extends for DBTestCase, which is a JUnit Jupiter derivative. Practically, this means that
+ * JUnit Jupiter annotations and assertions should be used.
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
@@ -66,10 +73,12 @@ public class GroupManagerNoMockTest extends DBTestCase
         System.setProperty( PropertiesBasedJdbcDatabaseTester.DBUNIT_PASSWORD, PASSWORD );
         
       } catch ( URISyntaxException e) {
-        assertFalse(e.getMessage(),false);
+        assertFalse(false, e.getMessage());
       }
     }
 
+    @BeforeEach
+    @Override
     public void setUp() throws Exception
     {
         // Ensure that DB-Unit's setUp is called!
@@ -94,6 +103,8 @@ public class GroupManagerNoMockTest extends DBTestCase
         DbConnectionManager.setConnectionProvider(conProvider);
     }
 
+    @AfterEach
+    @Override
     public void tearDown() throws Exception {
         super.tearDown();
 
@@ -124,6 +135,7 @@ public class GroupManagerNoMockTest extends DBTestCase
     /**
      * Asserts that a simple test group that is created by the provider can be retrieved again in good order.
      */
+    @Test
     public void testCreateGroup() throws Exception
     {
         // Setup test fixture.
@@ -156,6 +168,7 @@ public class GroupManagerNoMockTest extends DBTestCase
     /**
      * Asserts that a with no name cannot be created
      */
+    @Test
     public void testCreateGroupWithEmptyNameThrows() throws Exception
     {
         final String GROUP_NAME = "";
@@ -166,6 +179,7 @@ public class GroupManagerNoMockTest extends DBTestCase
     /**
      * Asserts that two groups with the same name cannot be created
      */
+    @Test
     public void testCreateGroupWithDuplicateNameThrows() throws Exception
     {
         final String GROUP_NAME = "Test Group A";
@@ -177,6 +191,7 @@ public class GroupManagerNoMockTest extends DBTestCase
     /**
      * Asserts that a group can be created, removed and recreated again, with the same name.
      */
+    @Test
     public void testRecreateGroup() throws Exception
     {
         final String GROUP_NAME = "Test Group A";
@@ -192,6 +207,7 @@ public class GroupManagerNoMockTest extends DBTestCase
      *
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2426">Group cache can contain ghost entries</a>
      */
+    @Test
     public void testAddMemberToDeletedGroup() throws Exception
     {
         // Setup test fixture
@@ -210,6 +226,7 @@ public class GroupManagerNoMockTest extends DBTestCase
     /**
      * Verifies that a group can be retrieved based on the name that it was created with.
      */
+    @Test
     public void testGetGroupByName() throws Exception
     {
         // Setup test fixture.
@@ -228,6 +245,7 @@ public class GroupManagerNoMockTest extends DBTestCase
      * Verifies that a {@link GroupManager#getGroupCount()} returns the correct count of groups when no groups
      * are present.
      */
+    @Test
     public void testGroupCountEmpty() throws Exception
     {
         // Setup test fixture.
@@ -244,6 +262,7 @@ public class GroupManagerNoMockTest extends DBTestCase
      * Verifies that a {@link GroupManager#getGroupCount()} returns the correct count of groups when one group
      * is present.
      */
+    @Test
     public void testGroupCountOne() throws Exception
     {
         // Setup test fixture.
@@ -261,6 +280,7 @@ public class GroupManagerNoMockTest extends DBTestCase
      * Verifies that a {@link GroupManager#getGroupCount()} returns the correct count of groups when multiple
      * groups are present.
      */
+    @Test
     public void testGroupCountMultiple() throws Exception
     {
         // Setup test fixture.
@@ -278,6 +298,7 @@ public class GroupManagerNoMockTest extends DBTestCase
     /**
      * Verifies that {@link GroupManager#deleteGroup(Group)} deletes a shared group, such that it cannot be retrieved
      */
+    @Test
     public void testDeleteGroupShared() throws Exception {
         final JID needle = new JID("jane@example.org");
         final GroupManager groupManager = GroupManager.getInstance();

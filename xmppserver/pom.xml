@@ -570,7 +570,7 @@
         <dependency>
             <groupId>org.dbunit</groupId>
             <artifactId>dbunit</artifactId>
-            <version>2.7.2</version>
+            <version>3.0.0</version>
             <scope>test</scope>
         </dependency>
 

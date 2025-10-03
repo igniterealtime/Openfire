@@ -25,6 +25,9 @@ import org.jivesoftware.database.DefaultConnectionProvider;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.PersistableMap;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.xmpp.packet.JID;
 
 import java.lang.reflect.Field;
@@ -33,12 +36,16 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.util.*;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /**
  * Unit tests that verify the functionality of {@link AbstractGroupProvider} methods not overridden by the
  * {@link DefaultGroupProvider}.
  *
- * Implementation-wise, this class extends for DBTestCase, which is as JUnit 3 derivative. Practically, this means that
- * Junit 4 annotations in this class will be ignored.
+ * Implementation-wise, this class extends for DBTestCase, which is a JUnit Jupiter derivative. Practically, this means that
+ * JUnit Jupiter annotations and assertions should be used.
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
@@ -62,7 +69,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
         System.setProperty( PropertiesBasedJdbcDatabaseTester.DBUNIT_PASSWORD, PASSWORD );
         
       } catch ( URISyntaxException e) {
-        assertFalse(e.getMessage(),false);
+        assertFalse(false, e.getMessage());
       }
     }
 
@@ -73,6 +80,8 @@ public class AbstractGroupProviderTest extends DBTestCase {
         return new XmlDataSet(getClass().getResourceAsStream("/datasets/clean.xml"));
     }
 
+    @BeforeEach
+    @Override
     public void setUp() throws Exception {
         // Ensure that DB-Unit's setUp is called!
         super.setUp();
@@ -96,6 +105,8 @@ public class AbstractGroupProviderTest extends DBTestCase {
         DbConnectionManager.setConnectionProvider(conProvider);
     }
 
+    @AfterEach
+    @Override
     public void tearDown() throws Exception {
         super.tearDown();
 
@@ -115,6 +126,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} returns nothing when there are no groups
      * that are shared.
      */
+    @Test
     public void testSharedGroupNamesNone() throws Exception
     {
         // Setup test fixture.
@@ -133,6 +145,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} returns nothing when there are no groups
      * that are shared, but one that's explicitly shared with 'nobody'.
      */
+    @Test
     public void testSharedGroupNamesNobody() throws Exception
     {
         // Setup test fixture.
@@ -151,6 +164,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} returns nothing a group that is shared with
      * everyone.
      */
+    @Test
     public void testSharedGroupNamesOneWithEveryone() throws Exception
     {
         // Setup test fixture.
@@ -170,6 +184,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} returns nothing a group that is shared with
      * members of that group.
      */
+    @Test
     public void testSharedGroupNamesOneWithGroup() throws Exception
     {
         // Setup test fixture.
@@ -189,6 +204,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} returns nothing a group that is shared with
      * everyone and another group that is shared explicitly with members of that group.
      */
+    @Test
     public void testSharedGroupNamesOneWithMix() throws Exception
     {
         // Setup test fixture.
@@ -209,6 +225,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to be shared with a different set of users.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationEverybodyToEverybody() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -229,6 +246,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to be shared with a different set of users.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationEverybodyToEverybodyRename() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -249,6 +267,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to be shared with a different set of users.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationEverybodyToSameGroup() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -269,6 +288,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to be shared with a different set of users.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationEverybodyToOtherGroups() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -289,6 +309,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to no longer be shared.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationEverybodytoSharedWithNobody() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -308,6 +329,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to be shared with a different set of users.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationSameGroupToEverybody() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -328,6 +350,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to be shared with a different set of users.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationSameGroupToSameGroup() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -348,6 +371,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to be shared with a different set of users.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationSameGroupRenamed() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -368,6 +392,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to be shared with a different set of users.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationSameGroupToOtherGroups() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -388,6 +413,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to no longer be shared.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationSameGrouptoSharedWithNobody() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -407,6 +433,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to be shared with a different set of users.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationOtherGroupToEverybody() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -428,6 +455,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to be shared with a different set of users.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationOtherGroupToSameGroup() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -449,6 +477,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to be shared with a different set of users.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationOtherRename() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -470,6 +499,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to be shared with a different set of users.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationOtherToOtherGroups() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -491,6 +521,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to be shared with a different set of users.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationOtherToAdditionalGroups() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -513,6 +544,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to be shared with a different set of users.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationOtherToFewerGroups() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -535,6 +567,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to no longer be shared.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationOtherGrouptoSharedWithNobody() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -555,6 +588,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has been removed.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterGroupRemoval() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -574,6 +608,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to be shared with a different set of users.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationUnsharedToEverybody() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -593,6 +628,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to be shared with a different set of users.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationUnsharedToSameGroup() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -612,6 +648,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to be shared with a different set of users.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationUnsharedToOtherGroups() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -632,6 +669,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to no longer be shared.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationUnsharedSharedWithNobody() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -650,6 +688,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to be shared with a different set of users.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationSharedWithNobodyToEverybody() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -670,6 +709,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to be shared with a different set of users.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationSharedWithNobodyToSameGroup() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -690,6 +730,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to be shared with a different set of users.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationSharedWithNobodyToOtherGroups() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -711,6 +752,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames()} does not return a stale cache entry after a
      * previously obtained group has reconfigured to no longer be shared.
      */
+    @Test
     public void testSharedGroupNamesStaleCacheTestAfterModificationSharedWithNobodytoSharedWithNobody() throws Exception
     {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
@@ -730,6 +772,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames(JID)} returns nothing when there are no groups
      * that are shared, without the user being in any of the groups.
      */
+    @Test
     public void testSharedGroupNamesByNameNone() throws Exception
     {
         // Setup test fixture.
@@ -749,6 +792,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames(JID)} returns nothing when there are no groups
      * that are shared, with the user being in a member of one of the groups.
      */
+    @Test
     public void testSharedGroupNamesByNameNoneButMember() throws Exception
     {
         // Setup test fixture.
@@ -768,6 +812,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames(JID)} returns nothing when there are no groups
      * that are shared, with the user being in an admin of one of the groups.
      */
+    @Test
     public void testSharedGroupNamesByNameNoneButAdmin() throws Exception
     {
         // Setup test fixture.
@@ -787,6 +832,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames(JID)} returns nothing when there are no groups
      * that are shared, but one that is explicitly shared with 'nobody', without the user being in any of the groups.
      */
+    @Test
     public void testSharedGroupNamesByNameNobody() throws Exception
     {
         // Setup test fixture.
@@ -806,6 +852,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames(JID)} returns nothing when there are no groups
      * that are shared, but one that is explicitly shared with 'nobody', with the user being in a member of that group.
      */
+    @Test
     public void testSharedGroupNamesByNameNobodyButMember() throws Exception
     {
         // Setup test fixture.
@@ -827,6 +874,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames(JID)} returns nothing when there are no groups
      * that are shared, but one that is explicitly shared with 'nobody', with the user being in an admin of that group.
      */
+    @Test
     public void testSharedGroupNamesByNameNobodyButAdmin() throws Exception
     {
         // Setup test fixture.
@@ -848,6 +896,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames(JID)} returns a group when there are is one
      * group that is shared with everybody, without the user being in that group.
      */
+    @Test
     public void testSharedGroupNamesByNameWithEveryoneNoAssociation() throws Exception
     {
         // Setup test fixture.
@@ -868,6 +917,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames(JID)} returns a group when there are is one
      * group that is shared with everybody, with the user being in a member of that group.
      */
+    @Test
     public void testSharedGroupNamesByNameWithEveryoneMember() throws Exception
     {
         // Setup test fixture.
@@ -890,6 +940,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames(JID)} returns a group when there are is one
      * group that is shared with everybody, with the user being in an admin of that group.
      */
+    @Test
     public void testSharedGroupNamesByNameWithEveryoneAdmin() throws Exception
     {
         // Setup test fixture.
@@ -912,6 +963,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames(JID)} returns nothing when there's a group
      * shared with users in the group, without the user being in that group.
      */
+    @Test
     public void testSharedGroupNamesByNameWithGroupNoAssociation() throws Exception
     {
         // Setup test fixture.
@@ -932,6 +984,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames(JID)} returns a group when there are is one
      * group shared with users in the group, with the user being in a member of that group.
      */
+    @Test
     public void testSharedGroupNamesByNameWithGroupMember() throws Exception
     {
         // Setup test fixture.
@@ -955,6 +1008,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames(JID)} returns a group when there are is one
      * group shared with users in the group, with the user being in an admin of that group.
      */
+    @Test
     public void testSharedGroupNamesByNameWithGroupAdmin() throws Exception
     {
         // Setup test fixture.
@@ -978,6 +1032,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames(JID)} returns no group when there are is one
      * group that is shared with users in the group, with the user being in a member of another group.
      */
+    @Test
     public void testSharedGroupNamesByNameWithGroupMemberOfOtherGroup() throws Exception
     {
         // Setup test fixture.
@@ -999,6 +1054,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames(JID)} returns no group when there are is one
      * group that is shared with users in the group, with the user being in an admin of another group.
      */
+    @Test
     public void testSharedGroupNamesByNameWithGroupAdminOfOtherGroup() throws Exception
     {
         // Setup test fixture.
@@ -1020,6 +1076,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames(JID)} returns a group when there is one
      * group that is shared with users in another group, with the user being in a member of that other group.
      */
+    @Test
     public void testSharedGroupNamesByNameWithOtherGroupMemberOfOtherGroup() throws Exception
     {
         // Setup test fixture.
@@ -1043,6 +1100,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames(JID)} returns no group when there are is one
      * group that is shared with users in the group, with the user being in an admin of another group.
      */
+    @Test
     public void testSharedGroupNamesByNameWithOtherGroupAdminOfOtherGroup() throws Exception
     {
         // Setup test fixture.
@@ -1066,6 +1124,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames(JID)} returns only groups that are configured to
      * be directly visible to the (group of) the provided user, when recursion is disabled.
      */
+    @Test
     public void testSharedGroupNamesByNameRecursionDisabled() throws Exception
     {
         // Setup test fixture.
@@ -1098,6 +1157,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * directly visible to the (group of) the provided user, but also groups that are configured to be visible to
      * members of those groups (etc), when recursion is enabled.
      */
+    @Test
     public void testSharedGroupNamesByNameRecursionEnabled() throws Exception
     {
         // Setup test fixture.
@@ -1131,6 +1191,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames(JID)} does not return a stale cache test when
      * a member is added to a shared group after the group as already loaded in a cache.
      */
+    @Test
     public void testSharedGroupNamesByNameStaleCacheTestMemberAdded() throws Exception
     {
         // Setup test fixture.
@@ -1153,6 +1214,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames(JID)} does not return a stale cache test when
      * a member is removed from a shared group after the group as already loaded in a cache.
      */
+    @Test
     public void testSharedGroupNamesByNameStaleCacheTestMemberRemoved() throws Exception
     {
         // Setup test fixture.
@@ -1175,6 +1237,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames(JID)} does not return a stale cache test when
      * sharing is enabled after the group as already loaded in a cache.
      */
+    @Test
     public void testSharedGroupNamesByNameStaleCacheTestSharingEnabled() throws Exception
     {
         // Setup test fixture.
@@ -1197,6 +1260,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getSharedGroupNames(JID)} does not return a stale cache test when
      * sharing is disabled after the group as already loaded in a cache.
      */
+    @Test
     public void testSharedGroupNamesByNameStaleCacheTestSharingDisabled() throws Exception
     {
         // Setup test fixture.
@@ -1219,6 +1283,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getPublicSharedGroupNames()} returns nothing when there
      * are no groups that are shared with everyone.
      */
+    @Test
     public void testPublicSharedGroupNamesNone() throws Exception
     {
         // Setup test fixture.
@@ -1237,6 +1302,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getPublicSharedGroupNames()} returns one group when there
      * is one groups that is shared with everyone.
      */
+    @Test
     public void testPublicSharedGroupNamesOne() throws Exception
     {
         // Setup test fixture.
@@ -1256,6 +1322,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getPublicSharedGroupNames()} returns all group names when
      * there are multiple groups that are shared with everyone.
      */
+    @Test
     public void testPublicSharedGroupNamesMultiple() throws Exception
     {
         // Setup test fixture.
@@ -1276,6 +1343,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getPublicSharedGroupNames()} returns nothing when there
      * are no groups that are shared with everyone, but when there is a group that is shared explicitly with 'nobody'.
      */
+    @Test
     public void testPublicSharedGroupNamesWithNobody() throws Exception
     {
         // Setup test fixture.
@@ -1295,6 +1363,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * are no groups that are shared with everyone, but when there is a group that is shared explicitly with members
      * of that group.
      */
+    @Test
     public void testPublicSharedGroupNamesWithOnlyGroup() throws Exception
     {
         // Setup test fixture.
@@ -1312,6 +1381,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
     /**
      * Verifies that a {@link AbstractGroupProvider#hasSharedGroups()} returns false when there are no share groups
      */
+    @Test
     public void testHasSharedGroupsReturnsFalseWhenThereAreNone() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
@@ -1323,6 +1393,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#hasSharedGroups()} returns true when one group is shared with
      * members of the same group
      */
+    @Test
     public void testHasSharedGroupsReturnsTrueWhenOneIsSharedWithTheSameWithTheSameGroup() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A").shareWithUsersInSameGroup("Users in group A");
@@ -1334,6 +1405,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#hasSharedGroups()} returns true when all groups are shared with
      * members of the same group
      */
+    @Test
     public void testHasSharedGroupsReturnsTrueWhenAllAreSharedWithTheSameWithTheSameGroup() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A").shareWithUsersInSameGroup("Users in group A");
@@ -1345,6 +1417,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#hasSharedGroups()} returns true when one group is shared with
      * everybody
      */
+    @Test
     public void testHasSharedGroupsReturnsTrueWhenOneIsSharedWithTheSameWithEverybody() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A").shareWithEverybody("Shared with Everybody");
@@ -1356,6 +1429,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#hasSharedGroups()} returns true when one group is shared with
      * members of the other group
      */
+    @Test
     public void testHasSharedGroupsReturnsTrueWhenOneIsSharedWithTheOther() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
@@ -1367,6 +1441,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#hasSharedGroups()} returns true when one group is shared with
      * members of a non-existent group (since it shows intent)
      */
+    @Test
     public void testHasSharedGroupsReturnsTrueWhenOneIsSharedWithNonExistent() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
@@ -1378,6 +1453,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#hasSharedGroups()} returns true when one group is shared with
      * members of a non-existent group that's been deleted (since it shows intent)
      */
+    @Test
     public void testHasSharedGroupsReturnsTrueWhenOneIsSharedWithNonExistentByWayOfDeletion() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
@@ -1390,6 +1466,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#hasSharedGroups()} returns true when called the second time (since
      * the value is cached as part of processing
      */
+    @Test
     public void testHasSharedGroupsReturnsTrueWhenCalledTheSecondTime() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
@@ -1402,6 +1479,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#hasSharedGroups()} returns false when called the second time (since
      * the value is cached as part of processing
      */
+    @Test
     public void testHasSharedGroupsReturnsFalseWhenCalledTheSecondTime() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
@@ -1414,6 +1492,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#hasSharedGroups()} returns false when group is explicitly shared
      * with nobody
      */
+    @Test
     public void testHasSharedGroupsReturnsFalseWhenSharedWithNobody() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A").shareWithNobody();
@@ -1424,6 +1503,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getVisibleGroupNames(String)} returns an empty collection when no
      * groups are shared
      */
+    @Test
     public void testGetVisibleGroupNamesWithNoSharedGroups() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");
@@ -1435,6 +1515,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
      * Verifies that a {@link AbstractGroupProvider#getVisibleGroupNames(String)} returns an empty collection when
      * groups are shared explicitly with Nobody
      */
+    @Test
     public void testGetVisibleGroupNamesWithGroupSharedExplicitlyWithNobody() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A").shareWithNobody();
@@ -1445,6 +1526,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
     /**
      * Verifies that a {@link AbstractGroupProvider#getVisibleGroupNames(String)} returns a group shared with itself
      */
+    @Test
     public void testGetVisibleGroupNamesWithGroupSharedWithItself() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A").shareWithUsersInSameGroup("Users in Test Group A");
@@ -1453,6 +1535,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
         assertTrue(result.contains("Test Group A"));
     }
 
+    @Test
     public void testSearchByKeyAndValueReturnsGroup() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A").shareWithNobody();
@@ -1461,6 +1544,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
         assertTrue(result.contains("Test Group A"));
     }
 
+    @Test
     public void testSearchByKeyAndValueReturnsNothingForInvalidProperty() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A").shareWithNobody();
@@ -1468,6 +1552,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
         assertEquals(0, result.size());
     }
 
+    @Test
     public void testSearchByKeyAndValueReturnsNothingForInvalidValue() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A").shareWithNobody();
@@ -1475,6 +1560,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
         assertEquals(0, result.size());
     }
 
+    @Test
     public void testSearchByKeyAndValueReturnsMultipleGroups() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A").shareWithNobody();
@@ -1485,6 +1571,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
         assertTrue(result.contains("Test Group B"));
     }
 
+    @Test
     public void testSearchByKeyAndValueReturnsResultsForBlankValues() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A").shareWithNobody();
@@ -1495,6 +1582,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
         assertTrue(result.contains("Test Group B"));
     }
 
+    @Test
     public void testLoadPropertiesReturnsPropertiesForGroup() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         Group a = provider.createGroup("Test Group A");
@@ -1510,6 +1598,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
         assertEquals(SharedGroupVisibility.nobody.getDbValue(), result.get(Group.SHARED_ROSTER_SHOW_IN_ROSTER_PROPERTY_KEY));
     }
 
+    @Test
     public void testLoadPropertiesReturnsNoPropertiesForNewGroup() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         Group a = provider.createGroup("Test Group A");
@@ -1517,6 +1606,7 @@ public class AbstractGroupProviderTest extends DBTestCase {
         assertEquals(0, result.size());
     }
 
+    @Test
     public void testLoadPropertiesReturnsNoPropertiesForNonExistentGroup() throws Exception {
         final DefaultGroupProvider provider = new DefaultGroupProvider();
         provider.createGroup("Test Group A");

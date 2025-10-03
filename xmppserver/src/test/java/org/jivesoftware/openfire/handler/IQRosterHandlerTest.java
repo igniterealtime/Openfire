@@ -15,7 +15,7 @@
  */
 package org.jivesoftware.openfire.handler;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Roster;

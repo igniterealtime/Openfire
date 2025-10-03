@@ -17,36 +17,37 @@ package org.jivesoftware.util;
 
 import static org.awaitility.Awaitility.await;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jivesoftware.openfire.XMPPServer;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.ExpectedException;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class AutoCloseableReentrantLockTest {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AutoCloseableReentrantLockTest.class);
-    @Rule public ExpectedException expectedException = ExpectedException.none();
 
     private Thread thread1;
     private Thread thread2;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         thread1 = null;
         thread2 = null;
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         // Ensure all the threads have had time to complete, releasing the locks
         for (final Thread thread : new Thread[]{thread1, thread2}) {
@@ -57,7 +58,8 @@ public class AutoCloseableReentrantLockTest {
         }
     }
 
-    @Test(timeout = 1000)
+    @Test
+    @Timeout(value = 1000, unit = TimeUnit.MILLISECONDS)
     public void willLockAResource() {
 
         final AtomicBoolean lockAcquired = new AtomicBoolean(false);
@@ -93,7 +95,8 @@ public class AutoCloseableReentrantLockTest {
         assertThat(callCount.get(), is(1));
     }
 
-    @Test(timeout = 1000)
+    @Test
+    @Timeout(value = 1000, unit = TimeUnit.MILLISECONDS)
     public void willUseDifferentLocksForDifferentPartsOfTheSameClass() {
 
         final AtomicBoolean lockAcquired = new AtomicBoolean(false);
@@ -129,7 +132,8 @@ public class AutoCloseableReentrantLockTest {
 
     }
 
-    @Test(timeout = 1000)
+    @Test
+    @Timeout(value = 1000, unit = TimeUnit.MILLISECONDS)
     public void willUseDifferentLocksForDifferentClassesWithTheSamePart() {
 
         final AtomicBoolean lockAcquired = new AtomicBoolean(false);
@@ -165,7 +169,8 @@ public class AutoCloseableReentrantLockTest {
 
     }
 
-    @Test(timeout = 1000)
+    @Test
+    @Timeout(value = 1000, unit = TimeUnit.MILLISECONDS)
     public void locksWillBeAutoClosed() {
 
         final AtomicInteger callCount = new AtomicInteger(0);
@@ -181,20 +186,20 @@ public class AutoCloseableReentrantLockTest {
         assertThat(callCount.get(), is(2));
     }
 
-    @Test(timeout = 1000)
+    @Test
+    @Timeout(value = 1000, unit = TimeUnit.MILLISECONDS)
     public void willNotReuseAReleasedLock() {
-
-        expectedException.expect(IllegalStateException.class);
-        expectedException.expectMessage("already been released");
 
         final AutoCloseableReentrantLock lock = new AutoCloseableReentrantLock(AutoCloseableReentrantLockTest.class, "user1");
         final AutoCloseableReentrantLock.AutoCloseableLock autoCloseable = lock.lock();
         autoCloseable.close();
 
-        lock.lock();
+        IllegalStateException ise = Assertions.assertThrows(IllegalStateException.class, lock::lock);
+        assertThat(ise.getMessage(), containsString("already been released"));
     }
 
-    @Test(timeout = 1000)
+    @Test
+    @Timeout(value = 1000, unit = TimeUnit.MILLISECONDS)
     public void willReuseAnUnreleasedLock() {
 
         final AutoCloseableReentrantLock lock = new AutoCloseableReentrantLock(AutoCloseableReentrantLockTest.class, "user1");
@@ -204,7 +209,8 @@ public class AutoCloseableReentrantLockTest {
         autoCloseable2.close();
     }
 
-    @Test(timeout = 1000)
+    @Test
+    @Timeout(value = 1000, unit = TimeUnit.MILLISECONDS)
     public void willIndicateTheLockIsHeldByTheCurrentThread() {
 
         final AutoCloseableReentrantLock lock = new AutoCloseableReentrantLock(AutoCloseableReentrantLockTest.class, "user1");
@@ -217,7 +223,8 @@ public class AutoCloseableReentrantLockTest {
 
     }
 
-    @Test(timeout = 1000)
+    @Test
+    @Timeout(value = 1000, unit = TimeUnit.MILLISECONDS)
     public void willIndicateTheLockIsHeldByAnotherThread() {
 
         final AtomicBoolean lockAcquired = new AtomicBoolean(false);
@@ -238,7 +245,8 @@ public class AutoCloseableReentrantLockTest {
         assertThat(lock.isLocked(), is(true));
     }
 
-    @Test(timeout = 1000)
+    @Test
+    @Timeout(value = 1000, unit = TimeUnit.MILLISECONDS)
     public void willReturnEmptyIfTheLockIsHeldByAnotherThread() {
 
         final AtomicBoolean lockAcquired = new AtomicBoolean(false);
@@ -258,7 +266,8 @@ public class AutoCloseableReentrantLockTest {
         assertThat(lock.tryLock(), is(Optional.empty()));
     }
 
-    @Test(timeout = 1000)
+    @Test
+    @Timeout(value = 1000, unit = TimeUnit.MILLISECONDS)
     public void willReturnTheCloseableIfTheLockIsNotHeldByAnotherThread() {
 
         final AutoCloseableReentrantLock lock = new AutoCloseableReentrantLock(AutoCloseableReentrantLockTest.class, "user1");
@@ -269,7 +278,8 @@ public class AutoCloseableReentrantLockTest {
         }
     }
 
-    @Test(timeout = 1000)
+    @Test
+    @Timeout(value = 1000, unit = TimeUnit.MILLISECONDS)
     public void willInterruptWhilstWaitingForALock() throws InterruptedException {
 
         final AtomicBoolean lock1Acquired = new AtomicBoolean(false);

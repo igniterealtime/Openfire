@@ -16,24 +16,14 @@
 
 package org.jivesoftware.openfire.user;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Types;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
+import java.sql.*;
+import java.time.Instant;
+import java.util.*;
 import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
-import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -105,10 +95,10 @@ public class DefaultUserProvider implements UserProvider {
             int iterations = rs.getInt(4);
             String name = rs.getString(5);
             String email = rs.getString(6);
-            Date creationDate = new Date(Long.parseLong(rs.getString(7).trim()));
-            Date modificationDate = new Date(Long.parseLong(rs.getString(8).trim()));
+            Instant creationDate = rs.getObject(7, Instant.class);
+            Instant modificationDate = rs.getObject(8, Instant.class);
 
-            User user = new User(username, name, email, creationDate, modificationDate);
+            User user = new User(username, name, email, Date.from(creationDate), Date.from(modificationDate));
             user.setSalt(salt);
             user.setServerKey(serverKey);
             user.setStoredKey(storedKey);
@@ -134,7 +124,7 @@ public class DefaultUserProvider implements UserProvider {
         }
         catch (UserNotFoundException unfe) {
             // The user doesn't already exist so we can create a new user
-            Date now = new Date();
+            Instant now = Instant.now();
             Connection con = null;
             PreparedStatement pstmt = null;
             try {
@@ -153,8 +143,8 @@ public class DefaultUserProvider implements UserProvider {
                 else {
                     pstmt.setString(3, email);
                 }
-                pstmt.setString(4, StringUtils.dateToMillis(now));
-                pstmt.setString(5, StringUtils.dateToMillis(now));
+                pstmt.setObject(4, now);
+                pstmt.setObject(5, now);
                 pstmt.execute();
             }
             catch (SQLException e) {
@@ -349,7 +339,7 @@ public class DefaultUserProvider implements UserProvider {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_CREATION_DATE);
-            pstmt.setString(1, StringUtils.dateToMillis(creationDate));
+            pstmt.setObject(1, creationDate.toInstant());
             pstmt.setString(2, username);
             pstmt.executeUpdate();
         }
@@ -368,7 +358,7 @@ public class DefaultUserProvider implements UserProvider {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_MODIFICATION_DATE);
-            pstmt.setString(1, StringUtils.dateToMillis(modificationDate));
+            pstmt.setObject(1, modificationDate.toInstant());
             pstmt.setString(2, username);
             pstmt.executeUpdate();
         }

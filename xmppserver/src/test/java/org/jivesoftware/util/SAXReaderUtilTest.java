@@ -104,15 +104,8 @@ public class SAXReaderUtilTest
         // Setup test fixture.
         final InputStream input = new ByteArrayInputStream("this is not valid XML".getBytes(StandardCharsets.UTF_8));
 
-        final ExecutionException result;
-        try {
-            // Execute system under test.
-            SAXReaderUtil.readDocument(input);
-            fail("An ExecutionException should have been thrown.");
-            return;
-        } catch (ExecutionException e) {
-            result = e;
-        }
+        final ExecutionException result =
+            assertThrows(ExecutionException.class, () -> SAXReaderUtil.readDocument(input), "An ExecutionException should have been thrown.");
 
         // Verify result.
         assertNotNull(result);

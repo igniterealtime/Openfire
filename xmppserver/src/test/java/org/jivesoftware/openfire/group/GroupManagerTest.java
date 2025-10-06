@@ -34,7 +34,7 @@ import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -98,13 +98,8 @@ public class GroupManagerTest {
 
         groupCache.put(GROUP_NAME, CacheableOptional.of(null));
 
-        try {
-            groupManager.getGroup(GROUP_NAME, false);
-        } catch (final GroupNotFoundException ignored) {
-            verifyNoMoreInteractions(groupProvider);
-            return;
-        }
-        fail();
+        assertThrows(GroupNotFoundException.class, () -> groupManager.getGroup(GROUP_NAME, false));
+        verifyNoMoreInteractions(groupProvider);
     }
 
     @Test
@@ -124,14 +119,9 @@ public class GroupManagerTest {
 
         doThrow(new GroupNotFoundException()).when(groupProvider).getGroup(GROUP_NAME);
 
-        try {
-            groupManager.getGroup(GROUP_NAME, false);
-        } catch (final GroupNotFoundException ignored) {
-            verify(groupProvider).getGroup(GROUP_NAME);
-            assertThat(groupCache.get(GROUP_NAME), is(CacheableOptional.of(null)));
-            return;
-        }
-        fail();
+        assertThrows(GroupNotFoundException.class, () -> groupManager.getGroup(GROUP_NAME, false));
+        verify(groupProvider).getGroup(GROUP_NAME);
+        assertThat(groupCache.get(GROUP_NAME), is(CacheableOptional.of(null)));
     }
 
     @Test
@@ -151,14 +141,9 @@ public class GroupManagerTest {
         groupCache.put(GROUP_NAME, CacheableOptional.of(cachedGroup));
         doThrow(new GroupNotFoundException()).when(groupProvider).getGroup(GROUP_NAME);
 
-        try {
-            groupManager.getGroup(GROUP_NAME, true);
-        } catch (final GroupNotFoundException ignored) {
-            verify(groupProvider).getGroup(GROUP_NAME);
-            assertThat(groupCache.get(GROUP_NAME), is(CacheableOptional.of(null)));
-            return;
-        }
-        fail();
+        assertThrows(GroupNotFoundException.class, () -> groupManager.getGroup(GROUP_NAME, true));
+        verify(groupProvider).getGroup(GROUP_NAME);
+        assertThat(groupCache.get(GROUP_NAME), is(CacheableOptional.of(null)));
     }
 
     /**

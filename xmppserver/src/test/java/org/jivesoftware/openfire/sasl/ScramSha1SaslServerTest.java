@@ -91,9 +91,7 @@ public class ScramSha1SaslServerTest
 
         // Verify result (first server message should match a pattern, and contain a number of properties)
         final Matcher firstServerResponseMatcher = Pattern.compile("r=([^,]*),s=([^,]*),i=(.*)$").matcher(firstServerResponse);
-        if (!firstServerResponseMatcher.matches()) {
-            fail("First server message does not match expected pattern.");
-        }
+        assertTrue(firstServerResponseMatcher.matches(), "First server message does not match expected pattern.");
         final String serverNonce = firstServerResponseMatcher.group(1);
         assertTrue(serverNonce != null && !serverNonce.isBlank(), "First server message should contain a non-empty server nonce (but did not)");
         assertTrue(serverNonce.startsWith(hardCodedClientNonce), "First server message should contain a server nonce that starts with the client nonce, but did not.");

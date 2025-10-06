@@ -72,9 +72,9 @@ public class DefaultGroupProviderTest extends DBTestCase
           System.setProperty( PropertiesBasedJdbcDatabaseTester.DBUNIT_CONNECTION_URL, URL );
           System.setProperty( PropertiesBasedJdbcDatabaseTester.DBUNIT_USERNAME, USERNAME );
           System.setProperty( PropertiesBasedJdbcDatabaseTester.DBUNIT_PASSWORD, PASSWORD );
-          
+
         } catch ( URISyntaxException e) {
-          assertFalse(false, e.getMessage());
+          fail(e.getMessage());
         }
     }
 

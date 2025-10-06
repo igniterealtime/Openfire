@@ -71,9 +71,7 @@ public class AdminConsoleTest {
                 assertEquals("Click to see foo bar", tab.attributeValue("description"));
             }
         }
-        if (!found) {
-            fail("Expected new item 'foobar' was not found.");
-        }
+        assertTrue(found, "Expected new item 'foobar' was not found.");
     }
 
     @Test
@@ -91,8 +89,6 @@ public class AdminConsoleTest {
                 assertEquals("Testing 1 2 3", tab.attributeValue("description"));
             }
         }
-        if (!found) {
-            fail("Failed to overwrite 'server' tab with new properties.");
-        }
+        assertTrue(found, "Failed to overwrite 'server' tab with new properties.");
     }
 }

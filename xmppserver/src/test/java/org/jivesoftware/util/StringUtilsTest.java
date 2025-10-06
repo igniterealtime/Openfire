@@ -28,15 +28,15 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class StringUtilsTest {
-    
+
     @BeforeEach
     public void setUp() {
         JiveGlobals.setLocale(Locale.ENGLISH);
     }
-    
+
     @Test
     public void testValidDomainNames() {
-        
+
         assertValidDomainName("www.mycompany.com");
         assertValidDomainName("www.my-company.com");
         assertValidDomainName("abc.de");
@@ -44,10 +44,10 @@ public class StringUtilsTest {
         assertValidDomainName("öbb.at", "xn--bb-eka.at");
 
     }
-    
+
     @Test
     public void testInvalidDomainNames() {
-        
+
         assertInvalidDomainName("www.my_company.com", "Contains non-LDH characters");
         assertInvalidDomainName("www.-dash.com", "Has leading or trailing hyphen");
         assertInvalidDomainName("www.dash-.com", "Has leading or trailing hyphen");
@@ -64,13 +64,10 @@ public class StringUtilsTest {
     }
 
     private void assertInvalidDomainName(String domain, String expectedCause) {
-        try {
-            StringUtils.validateDomainName(domain);
-            fail("Domain should not be valid: " + domain);
-        } catch (IllegalArgumentException iae) {
-            // this is not part of the official API, so leave off for now
-            //assertEquals("Unexpected cause: " + iae.getMessage(), expectedCause, iae.getMessage());
-        }
+        IllegalArgumentException iae =
+            assertThrows(IllegalArgumentException.class, () -> StringUtils.validateDomainName(domain), "Domain should not be valid: " + domain);
+        // this is not part of the official API, so leave off for now
+        //assertEquals("Unexpected cause: " + iae.getMessage(), expectedCause, iae.getMessage());
     }
 
     @Test

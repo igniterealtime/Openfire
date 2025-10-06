@@ -30,7 +30,7 @@ public class XMPPDateTimeFormatTest {
     private final String TEST_DATE = "2013-01-25T18:07:22.768Z";
     DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
     private final XMPPDateTimeFormat xmppDateTimeFormat = new XMPPDateTimeFormat();
-    
+
     @Test
     public void failTest() {
         Date parsedDate = null;
@@ -77,14 +77,11 @@ public class XMPPDateTimeFormatTest {
         final String testValue = "This is not a valid date value";
 
         // Execute system under test
-        try {
-            xmppDateTimeFormat.parseString(testValue);
+        ParseException e =
+            assertThrows(ParseException.class, () -> xmppDateTimeFormat.parseString(testValue), "An exception should have been thrown (but was not).");
 
-            // Verify results
-            fail("An exception should have been thrown (but was not).");
-        } catch (ParseException e) {
-            assertTrue(e.getMessage().contains(testValue));
-        }
+        // Verify results
+        assertTrue(e.getMessage().contains(testValue));
     }
 
     @Test

@@ -39,6 +39,7 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Unit tests that verify the functionality of {@link AbstractGroupProvider} methods not overridden by the
@@ -67,9 +68,9 @@ public class AbstractGroupProviderTest extends DBTestCase {
         System.setProperty( PropertiesBasedJdbcDatabaseTester.DBUNIT_CONNECTION_URL, URL );
         System.setProperty( PropertiesBasedJdbcDatabaseTester.DBUNIT_USERNAME, USERNAME );
         System.setProperty( PropertiesBasedJdbcDatabaseTester.DBUNIT_PASSWORD, PASSWORD );
-        
+
       } catch ( URISyntaxException e) {
-        assertFalse(false, e.getMessage());
+        fail(e.getMessage());
       }
     }
 

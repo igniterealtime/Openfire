@@ -27,6 +27,7 @@ import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.server.ServerDialbackErrorException;
 import org.jivesoftware.openfire.server.ServerDialbackKeyInvalidException;
 import org.jivesoftware.util.CertificateManager;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StreamErrorException;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
@@ -432,6 +433,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         }
         
         // Offer server dialback if using self-signed certificates and no authentication has been done yet
+        // Also offer dialback if xmpp.server.dialback.offer is true        
         boolean usingSelfSigned;
         final Certificate[] chain = conn.getLocalCertificates();
         if (chain == null || chain.length == 0) {
@@ -439,11 +441,21 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         } else {
             usingSelfSigned = CertificateManager.isSelfSignedCertificate((X509Certificate) chain[0]);
         }
-        
-        if (usingSelfSigned && ServerDialback.isEnabledForSelfSigned() && validatedDomains.isEmpty()) {
-            final Element dialback = DocumentHelper.createElement(QName.get("dialback", "urn:xmpp:features:dialback"));
-            dialback.addElement("errors");
-            result.add(dialback);
+
+        boolean offerDialback;
+        String property = JiveGlobals.getProperty("xmpp.server.dialback.offer");
+        if (property == null) {
+            offerDialback = false;
+        } else {
+            offerDialback = Boolean.valueOf(property);
+        }
+
+        if ((usingSelfSigned && ServerDialback.isEnabledForSelfSigned()) || offerDialback) {
+            if (validatedDomains.isEmpty()) {
+                final Element dialback = DocumentHelper.createElement(QName.get("dialback", "urn:xmpp:features:dialback"));
+                dialback.addElement("errors");
+                result.add(dialback);
+            }
         }
 
         if (!ConnectionSettings.Server.STREAM_LIMITS_ADVERTISEMENT_DISABLED.getValue()) {

@@ -8,18 +8,26 @@
 -- lost (until the room's subject gets changed). This is deemed an acceptable loss.
 ALTER TABLE ofMucRoom ALTER COLUMN subject SET DATA TYPE LONGVARCHAR;
 
+CREATE INDEX ofMucConversationLog_room_subject_time_idx
+    ON ofMucConversationLog(roomID, subject, logTime);
+
 UPDATE ofMucRoom r
-SET r.subject = (
-    SELECT l.stanza
-    FROM ofMucConversationLog l
-    WHERE l.roomID = r.roomID
-      AND l.subject IS NOT NULL
-      AND l.logTime = (
-          SELECT MAX(l2.logTime)
-          FROM ofMucConversationLog l2
-          WHERE l2.roomID = r.roomID
-            AND l2.subject IS NOT NULL
-      )
+SET subject = (
+    SELECT l1.stanza
+    FROM ofMucConversationLog l1
+    JOIN (
+        SELECT roomID, MAX(logTime) AS maxTime
+        FROM ofMucConversationLog
+        WHERE subject IS NOT NULL
+        GROUP BY roomID
+    ) lm
+    ON lm.roomID = l1.roomID
+    AND lm.maxTime = l1.logTime
+    WHERE l1.roomID = r.roomID
+      AND l1.subject IS NOT NULL
+      AND l1.stanza IS NOT NULL
 );
+
+DROP INDEX ofMucConversationLog_room_subject_time_idx;
 
 UPDATE ofVersion SET version = 38 WHERE name = 'openfire';

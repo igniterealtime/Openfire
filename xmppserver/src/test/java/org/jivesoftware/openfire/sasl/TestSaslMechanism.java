@@ -97,14 +97,18 @@ public class TestSaslMechanism {
      * A test SASL Server factory that creates our test mechanism
      */
     public static class TestSaslServerFactory implements SaslServerFactory {
-        private static TestSaslServer saslServer;
+        private static ThreadLocal<TestSaslServer> saslServer = new ThreadLocal<>();
 
         public TestSaslServerFactory() {
             // Default constructor required for factory instantiation
         }
 
         private static void setSaslServer(TestSaslServer server) {
-            saslServer = server;
+            saslServer.set(server);
+        }
+
+        private static void clearSaslServer() {
+            saslServer.remove();
         }
 
         @Override
@@ -112,7 +116,7 @@ public class TestSaslMechanism {
                                            String serverName, Map<String, ?> props,
                                            CallbackHandler cbh) throws SaslException {
             if ("TEST-MECHANISM".equals(mechanism)) {
-                return saslServer;
+                return saslServer.get();
             }
             return null;
         }
@@ -127,18 +131,22 @@ public class TestSaslMechanism {
      * Helper method to register the test mechanism
      */
     public static TestSaslServer registerTestMechanism(LocalSession clientSession) {
+        TestSaslServer testSaslServer = new TestSaslServer(clientSession);
+
+        // Set the server instance before registering the provider
+        TestSaslServerFactory.setSaslServer(testSaslServer);
+
         if (Security.getProvider("Test Provider") == null) {
-            TestSaslServer testSaslServer = new TestSaslServer(clientSession);
-
-            // Set the server instance before registering the provider
-            TestSaslServerFactory.setSaslServer(testSaslServer);
-
             // Register the provider if not already registered
             Security.addProvider(new Provider("Test Provider", "1.0", "Test Provider") {{
                 put("SaslServerFactory.TEST-MECHANISM", TestSaslServerFactory.class.getName());
             }});
         }
 
-        return TestSaslServerFactory.saslServer;
+        return testSaslServer;
+    }
+
+    public static void unregisterTestMechanism() {
+        TestSaslServerFactory.clearSaslServer();
     }
 }

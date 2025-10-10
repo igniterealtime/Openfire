@@ -34,7 +34,7 @@ public class UserAgentInfo {
     private String device;      // Device description
 
     /**
-     * Extracts and validates user agent information as from authentication element.
+     * Extracts and validates user agent information from the authentication element.
      *
      * @param userAgentElement the authentication element containing potential user agent data
      * @return UserAgentInfo containing the parsed data, or null if no user agent data present

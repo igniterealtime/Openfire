@@ -129,8 +129,9 @@ abstract class SocketReadingMode {
 
         boolean isComplete = false;
         boolean success = false;
+        boolean usingSASL2 = false;
         while (!isComplete) {
-            SASLAuthentication.Status status = SASLAuthentication.handle(socketReader.session, doc, false);
+            SASLAuthentication.Status status = SASLAuthentication.handle(socketReader.session, doc, usingSASL2);
             if (status == SASLAuthentication.Status.needResponse) {
                 // Get the next answer since we are not done yet
                 doc = socketReader.reader.parseDocument().getRootElement();
@@ -142,6 +143,10 @@ abstract class SocketReadingMode {
             else {
                 isComplete = true;
                 success = status == SASLAuthentication.Status.authenticated;
+                if (success && usingSASL2) {
+                    Element features = generateFeatures();
+                    socketReader.session.deliverRawText(features.asXML());
+                }
             }
         }
         return success;
@@ -156,6 +161,13 @@ abstract class SocketReadingMode {
     protected void saslSuccessful() throws XmlPullParserException, IOException
     {
         final Document document = getStreamHeader();
+        final Element features = generateFeatures();
+        document.getRootElement().add(features);
+
+        socketReader.connection.deliverRawText(StringUtils.asUnclosedStream(document));
+    }
+
+    protected Element generateFeatures() {
         final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
 
         // Include specific features such as resource binding and session establishment for client sessions
@@ -165,9 +177,8 @@ abstract class SocketReadingMode {
                 features.add(feature);
             }
         }
-        document.getRootElement().add(features);
 
-        socketReader.connection.deliverRawText(StringUtils.asUnclosedStream(document));
+        return features;
     }
 
     /**

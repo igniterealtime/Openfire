@@ -216,6 +216,10 @@ public abstract class StanzaHandler {
                 startedSASL = false;
                 usingSASL2 = false;
             }
+            if (saslStatus == SASLAuthentication.Status.authenticated && usingSASL2) {
+                Element features = generateFeatures();
+                session.deliverRawText(features.asXML());
+            }
         }
         else if ("compress".equals(tag)) {
             // Client is trying to initiate compression
@@ -323,7 +327,7 @@ public abstract class StanzaHandler {
                 // The original packet contains a malformed JID so answer an error
                 IQ reply = new IQ();
                 if (!doc.elements().isEmpty()) {
-                    reply.setChildElement(((Element)doc.elements().get(0)).createCopy());
+                    reply.setChildElement((doc.elements().get(0)).createCopy());
                 }
                 reply.setID(doc.attributeValue("id"));
                 reply.setTo(session.getAddress());
@@ -523,8 +527,12 @@ public abstract class StanzaHandler {
      */
     protected void saslSuccessful() {
         final Document document = getStreamHeader();
-        final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
+        final Element features = generateFeatures();
         document.getRootElement().add(features);
+        connection.deliverRawText(StringUtils.asUnclosedStream(document));
+    }
+    protected Element generateFeatures() {
+        final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
 
         // Include specific features such as resource binding and session establishment for client sessions
         final List<Element> specificFeatures = session.getAvailableStreamFeatures();
@@ -534,7 +542,7 @@ public abstract class StanzaHandler {
             }
         }
 
-        connection.deliverRawText(StringUtils.asUnclosedStream(document));
+        return features;
     }
 
     /**

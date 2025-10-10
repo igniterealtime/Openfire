@@ -1050,14 +1050,10 @@ public class LocalClientSession extends LocalSession implements ClientSession {
                         int conflictCount = oldSession.incrementConflictCount();
                         if (conflictCount > conflictLimit) {
                             Log.debug("Kick out an old connection that is conflicting with a new one. Old session: {}", oldSession);
-                            StreamError error = new StreamError(StreamError.Condition.conflict);
-                            oldSession.deliverRawText(error.toXML());
-                            oldSession.close(); // When living on a remote cluster node, this will prevent that session from becoming 'resumable'.
+                            oldSession.close(new StreamError(StreamError.Condition.conflict));
 
                             // OF-1923: As the session is now replaced, the old session will never be resumed.
                             if (oldSession instanceof LocalClientSession) {
-                                // As the new session has already replaced the old session, we're not explicitly closing
-                                // the old session again, as that would cause the state of the new session to be affected.
                                 sessionManager.removeDetached((LocalClientSession) oldSession);
                             }
                         } else {
@@ -1068,7 +1064,6 @@ public class LocalClientSession extends LocalSession implements ClientSession {
                 }
                 catch (Exception e) {
                     Log.error("Error during login", e);
-                    return PacketError.Condition.internal_server_error;
                 }
             }
             // If the connection was not refused due to conflict, log the user in

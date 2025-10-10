@@ -61,23 +61,15 @@ public class SASLAuthenticationTest {
     @BeforeAll
     public static void setUpClass() throws Exception {
         CacheFactory.initialize();
-        // Set this or I can't set anythign else.
+        // Set this or I can't set anything else.
         JiveGlobals.setXMLProperty("setup", "true");
         SASLAuthentication.setEnabledMechanisms(Arrays.asList("BLURDYBLOOP", "TEST-MECHANISM"));
         // Enable SASL2
         SASLAuthentication.ENABLE_SASL2.setValue(true);
     }
-//
-//    @AfterAll
-//    public static void tearDownClass() {
-//        CacheFactory.shutdown();
-//    }
 
     @BeforeEach
     public void setUp() throws Exception {
-        long start = System.currentTimeMillis();
-        System.out.println("Starting setUp");
-
         // Setup XMPPServer mock
         XMPPServer.setInstance(xmppServer);
         when(xmppServer.getServerInfo()).thenReturn(serverInfo);
@@ -138,18 +130,16 @@ public class SASLAuthenticationTest {
         } catch (Exception e) {
             fail("Could not set mock provider: " + e.getMessage());
         }
-
-        long end = System.currentTimeMillis();
-        System.out.println("Finished setUp in " + (end-start) + "ms");
     }
 
     @AfterEach
-    public void tearDown() {
+    public void tearDown() throws Exception {
         // Clear any SASL state
         // SASLAuthentication.setEnabledMechanisms(null);
         // Clear caches
         CacheFactory.clearCaches();
-        testSaslServer.reset();
+        testSaslServer = null;
+        TestSaslMechanism.unregisterTestMechanism();
     }
 
     @Test
@@ -210,28 +200,18 @@ public class SASLAuthenticationTest {
 
     @Test
     public void testGetSupportedMechanisms() {
-        long t0 = System.currentTimeMillis();
-        System.out.println("Test starting: " + System.currentTimeMillis());
-
         Set<String> implemented = SASLAuthentication.getImplementedMechanisms();
-        System.out.println("After getImplementedMechanisms: " + (System.currentTimeMillis() - t0));
         Set<String> mechanisms = SASLAuthentication.getSupportedMechanisms();
-        System.out.println("After getSupportedMechanisms: " + (System.currentTimeMillis() - t0));
         assertNotNull(mechanisms);
-        System.out.println("After assertNotNull: " + (System.currentTimeMillis() - t0));
 
         // Add multiple mechanisms and verify they're all present
         SASLAuthentication.addSupportedMechanism("PLAIN");
-        System.out.println("After add PLAIN: " + (System.currentTimeMillis() - t0));
         SASLAuthentication.addSupportedMechanism("DIGEST-MD5");
-        System.out.println("After add DIGEST-MD5: " + (System.currentTimeMillis() - t0));
 
         mechanisms = SASLAuthentication.getSupportedMechanisms();
-        System.out.println("After second getSupportedMechanisms: " + (System.currentTimeMillis() - t0));
-        
+
         assertTrue(mechanisms.contains("PLAIN"));
         assertTrue(mechanisms.contains("DIGEST-MD5"));
-        System.out.println("Test ending: " + (System.currentTimeMillis() - t0));
     }
 
     @Test

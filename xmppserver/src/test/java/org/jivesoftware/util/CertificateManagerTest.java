@@ -40,6 +40,7 @@ import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.X509Certificate;
@@ -605,14 +606,7 @@ public class CertificateManagerTest
 
     public static void assertCertificateDateNotValid( String message, X509Certificate certificate, Date date )
     {
-        try
-        {
-            certificate.checkValidity( date );
-            fail( message );
-        }
-        catch ( CertificateExpiredException | CertificateNotYetValidException e )
-        {
-            // This is expected to be thrown.
-        }
+        CertificateException e = assertThrows(CertificateException.class, () -> certificate.checkValidity( date ), message);
+        assertTrue( e instanceof CertificateExpiredException || e instanceof CertificateNotYetValidException, message );
     }
 }

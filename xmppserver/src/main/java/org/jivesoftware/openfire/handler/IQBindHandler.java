@@ -106,14 +106,63 @@ public class IQBindHandler extends IQHandler {
             session.process(reply);
             return reply;
         }
+        if (authToken.isAnonymous()) {
+            // User used ANONYMOUS SASL so initialize the session as an anonymous login
+            session.setAnonymousAuth();
+        }
+        else {
+            String username = authToken.getUsername().toLowerCase();
+            // If a session already exists with the requested JID, then check to see
+            // if we should kick it off or refuse the new connection
+            final JID desiredJid = new JID(username, serverName, resource, true);
+            ClientSession oldSession = routingTable.getClientRoute(desiredJid);
+            if (oldSession != null) {
+                try {
+                    if (oldSession.isClosed()) {
+                        // If there's an old session that's already closed, then this could be a detached session. The
+                        // new session does not conflict with the old one, but the old one needs to be cleaned up to
+                        // prevent data consistency issues (OF-3044).
+                        Log.debug("Instructing all cluster nodes to remove any detached session for '{}' as a new session is binding to that resource.", desiredJid);
+                        CacheFactory.doSynchronousClusterTask(new ClientSessionTask(desiredJid, RemoteSessionTask.Operation.removeDetached), true);
+                    }
+                    else
+                    {
+                        Log.debug("Found a pre-existing, non-closed session for '{}'. Performing resource conflict resolution.", desiredJid);
+                        int conflictLimit = sessionManager.getConflictKickLimit();
+                        if (conflictLimit == SessionManager.NEVER_KICK) {
+                            Log.debug("Conflict resolution configuration is 'NEVER KICK'. Rejecting the bind request with error condition 'conflict'.");
+                            reply.setChildElement(packet.getChildElement().createCopy());
+                            reply.setError(PacketError.Condition.conflict);
+                            // Send the error directly since a route does not exist at this point.
+                            session.process(reply);
+                            return null;
+                        }
 
-        final PacketError.Condition error = session.bindResource(resource);
-        if (error != null) {
-            reply.setChildElement(packet.getChildElement().createCopy());
-            reply.setError(error);
-            // Send the error directly since a route does not exist at this point.
-            session.process(reply);
-            return null;
+                        int conflictCount = oldSession.incrementConflictCount();
+                        if (conflictCount > conflictLimit) {
+                            Log.debug("Kick out an old connection that is conflicting with a new one. Old session: {}", oldSession);
+                            oldSession.close(new StreamError(StreamError.Condition.conflict));
+
+                            // OF-1923: As the session is now replaced, the old session will never be resumed.
+                            if (oldSession instanceof LocalClientSession) {
+                                sessionManager.removeDetached((LocalClientSession) oldSession);
+                            }
+                        } else {
+                            Log.debug("Conflict resolution configuration does not allow kicking of old session (yet). Conflict count: {}, conflict limit: {}. Rejecting the bind request with error condition 'conflict'.", conflictCount, conflictLimit);
+                            reply.setChildElement(packet.getChildElement().createCopy());
+                            reply.setError(PacketError.Condition.conflict);
+                            // Send the error directly since a route does not exist at this point.
+                            session.process(reply);
+                            return null;
+                        }
+                    }
+                }
+                catch (Exception e) {
+                    Log.error("Error during login", e);
+                }
+            }
+            // If the connection was not refused due to conflict, log the user in
+            session.setAuthToken(authToken, resource);
         }
 
         child.addElement("jid").setText(session.getAddress().toString());

@@ -4,7 +4,7 @@
     <parent>
         <artifactId>parent</artifactId>
         <groupId>org.igniterealtime.openfire</groupId>
-        <version>5.0.0-SNAPSHOT</version>
+        <version>5.1.0-SNAPSHOT</version>
     </parent>
     <artifactId>starter</artifactId>
     <name>Starter for Openfire</name>
@@ -30,15 +30,6 @@
             </plugin>
         </plugins>
 
-        <resources>
-            <resource>
-                <directory>../distribution/src/installer/images</directory>
-                <includes>
-                    <include>*.gif</include>
-                    <include>*.png</include>
-                </includes>
-            </resource>
-        </resources>
     </build>
 
     <dependencies>

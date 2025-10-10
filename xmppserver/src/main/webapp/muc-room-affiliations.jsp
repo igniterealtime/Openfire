@@ -249,11 +249,11 @@
     </p>
     <p>
         <label for="memberJID"><fmt:message key="muc.room.affiliations.add_jid" /></label>
-        <input type="text" name="userJID" size="30" maxlength="255" value="<%= (userJID != null ? StringUtils.escapeHTMLTags(userJID) : "") %>" id="memberJID">
+        <input type="text" name="userJID" size="30" maxlength="255" value="<%= StringUtils.escapeHTMLTags(userJID) %>" id="memberJID">
     </p>
     <p id="memberNickParagraph" style="visibility: hidden">
         <label for="memberNick"><fmt:message key="muc.room.affiliations.add_jid_nickname" /></label>
-        <input type="text" name="nickName" size="30" maxlength="255" value="<%= (nickName != null ? StringUtils.escapeHTMLTags(nickName) : "") %>" id="memberNick">
+        <input type="text" name="nickName" size="30" maxlength="255" value="<%= StringUtils.escapeHTMLTags(nickName) %>" id="memberNick">
     </p>
     <p>
         <input type="submit" value="<fmt:message key="global.add" />">

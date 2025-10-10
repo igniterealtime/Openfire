@@ -5,7 +5,7 @@
     <parent>
         <artifactId>parent</artifactId>
         <groupId>org.igniterealtime.openfire</groupId>
-        <version>5.0.0-SNAPSHOT</version>
+        <version>5.1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -126,7 +126,7 @@
         <dependency>
             <groupId>org.igniterealtime.openfire.plugins</groupId>
             <artifactId>search</artifactId>
-            <version>1.7.4</version>
+            <version>1.7.5</version>
             <classifier>openfire-plugin-assembly</classifier>
             <scope>provided</scope>
         </dependency>

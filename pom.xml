@@ -4,7 +4,7 @@
 
     <groupId>org.igniterealtime.openfire</groupId>
     <artifactId>parent</artifactId>
-    <version>5.0.0-SNAPSHOT</version>
+    <version>5.1.0-SNAPSHOT</version>
     <name>Parent</name>
     <packaging>pom</packaging>
 
@@ -120,7 +120,7 @@
 
         <!-- Versions -->
         <!-- Note; the following jetty.version should be identical to the jetty.version in plugins/pom.xml -->
-        <jetty.version>12.0.22</jetty.version>
+        <jetty.version>12.0.24</jetty.version>
         <standard-taglib.version>1.2.5</standard-taglib.version>
         <netty.version>4.1.118.Final</netty.version>
         <bouncycastle.version>1.78.1</bouncycastle.version>

@@ -103,7 +103,7 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     /**
      * All occupants that are associated with this room.
      */
-    public final ArrayList<MUCOccupant> occupants = new ArrayList<>();
+    public final CopyOnWriteArrayList<MUCOccupant> occupants = new CopyOnWriteArrayList<>();
 
     /**
      * The name of the room.

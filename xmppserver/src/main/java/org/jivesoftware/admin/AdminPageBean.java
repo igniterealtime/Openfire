@@ -41,12 +41,7 @@ public class AdminPageBean {
      * @return the page title
      */
     public String getTitle() {
-        if (title != null) {
-            return StringUtils.escapeHTMLTags(title);
-        }
-        else {
-            return title;
-        }
+        return StringUtils.escapeHTMLTags(title);
     }
 
     /**
@@ -149,12 +144,7 @@ public class AdminPageBean {
          * @return the HTML escaped breadcrumb name
          */
         public String getName() {
-            if (name != null) {
-                return StringUtils.escapeHTMLTags(name);
-            }
-            else {
-                return name;
-            }
+            return StringUtils.escapeHTMLTags(name);
         }
 
         /**

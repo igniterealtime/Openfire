@@ -29,6 +29,7 @@
 <%@ page import="org.xmpp.packet.StreamError" %>
 <%@ page import="java.net.URLEncoder" %>
 <%@ page import="java.nio.charset.StandardCharsets" %>
+<%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -73,10 +74,9 @@
         }
         // Close the user's connection
         final StreamError error = new StreamError(StreamError.Condition.not_authorized);
-        for (ClientSession sess : webManager.getSessionManager().getSessions(user.getUsername()) )
+        for (ClientSession sess : webManager.getSessionManager().getSessions(XMPPServer.getInstance().createJID(user.getUsername(), null)))
         {
-            sess.deliverRawText(error.toXML());
-            sess.close();
+            sess.close(error);
         }
         // Deleted your own user account, force login
         if (username.equals(webManager.getAuthToken().getUsername())){

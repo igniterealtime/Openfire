@@ -141,19 +141,19 @@
 <fmt:message key="groupchat.service.settings_affect" /> <b><a href="muc-service-edit-form.jsp?mucname=<%= URLEncoder.encode(mucname, StandardCharsets.UTF_8) %>"><%= StringUtils.escapeHTMLTags(mucname) %></a></b>
 </p>
 
-<%  if ("true".equals(request.getParameter("deletesuccess"))) { %>
+<%  if (ParamUtils.getBooleanParameter(request, "deletesuccess")) { %>
 
     <admin:infoBox type="success">
         <fmt:message key="groupchat.admins.user_removed" />
     </admin:infoBox>
 
-<%  } else if ("true".equals(request.getParameter("addsuccess"))) { %>
+<%  } else if (ParamUtils.getBooleanParameter(request, "addsuccess")) { %>
 
     <admin:infoBox type="success">
         <fmt:message key="groupchat.admins.user_added" />
     </admin:infoBox>
 
-<%  } else if ("true".equals(request.getParameter("success"))) { %>
+<%  } else if (ParamUtils.getBooleanParameter(request, "success")) { %>
 
     <admin:infoBox type="success">
         <fmt:message key="groupchat.admins.settings.saved_successfully"/>
@@ -191,7 +191,7 @@
         </select>
         </p>
         <label for="userJIDtf"><fmt:message key="groupchat.admins.label_add_admin" /></label>
-        <input type="text" name="userJID" size="30" maxlength="100" value="<%= (userJID != null ? StringUtils.escapeForXML(userJID) : "") %>"
+        <input type="text" name="userJID" size="30" maxlength="100" value="<%= StringUtils.escapeForXML(userJID) %>"
          id="userJIDtf">
         <input type="submit" value="<fmt:message key="groupchat.admins.add" />">
         <br><br>

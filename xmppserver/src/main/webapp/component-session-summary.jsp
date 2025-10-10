@@ -67,6 +67,7 @@
         try {
             Session sess = sessionManager.getComponentSession(jid);
             if (sess != null) {
+                sess.markNonResumable();
                 sess.close();
             }
             // Log the event

@@ -68,7 +68,7 @@
     boolean doSkip = request.getParameter("doSkip") != null;
     boolean doTest = request.getParameter("test") != null;
 
-    boolean ldap = "true".equals(request.getParameter("ldap"));
+    boolean ldap = ParamUtils.getBooleanParameter(request, "ldap");
 
     boolean addAdmin = request.getParameter("addAdministrator") != null;
     boolean deleteAdmins = request.getParameter("deleteAdmins") != null;

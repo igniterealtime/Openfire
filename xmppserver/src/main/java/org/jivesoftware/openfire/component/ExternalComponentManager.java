@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,6 +113,7 @@ public class ExternalComponentManager {
         Session session = SessionManager.getInstance().getComponentSession(domain);
         if (session != null) {
             Log.debug( "Closing session for external component '{}' as the domain is being blocked. Affected session: {}", domain, session );
+            session.markNonResumable();
             session.close();
         }
     }
@@ -467,6 +468,7 @@ public class ExternalComponentManager {
             for (String domain : session.getExternalComponent().getSubdomains()) {
                 if (!canAccess(domain)) {
                     Log.debug( "Closing session for external component '{}' as a changed permission policy is taken into effect. Affected session: {}", domain, session );
+                    session.markNonResumable();
                     session.close();
                     break;
                 }

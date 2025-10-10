@@ -196,8 +196,8 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
             String username = presence.getFrom().getNode();
 
             // Optimization: only delete the unavailable presence information if this
-            // is the first session created on the server.
-            if (sessionManager.getSessionCount(username) > 1) {
+            // is the first 'available' session created on the server.
+            if (sessionManager.getSessions(username).size() > 1) {
                 return;
             }
 
@@ -329,9 +329,13 @@ public class PresenceManagerImpl extends BasicModule implements PresenceManager,
         if (probee.equals(prober.getNode()) && XMPPServer.getInstance().isLocal(prober)) {
             return true;
         }
-        RosterItem item = rosterManager.getRoster(probee).getRosterItem(prober);
-        return item.getSubStatus() == RosterItem.SUB_FROM
+        try {
+            RosterItem item = rosterManager.getRoster(probee).getRosterItem(prober);
+            return item.getSubStatus() == RosterItem.SUB_FROM
                 || item.getSubStatus() == RosterItem.SUB_BOTH;
+        } catch (UserNotFoundException e) {
+            return false;
+        }
     }
 
     @Override

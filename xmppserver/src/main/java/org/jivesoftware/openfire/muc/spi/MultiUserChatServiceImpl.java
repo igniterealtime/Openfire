@@ -37,6 +37,7 @@ import org.jivesoftware.openfire.stanzaid.StanzaIDUtil;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.vcard.VCardManager;
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
@@ -1760,9 +1761,29 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 return;
             }
 
+            try {
+                // If the user has joined the room from several client resources, only the misbehaving resource should be removed (OF-3098).
+                final List<MUCOccupant> occupantsByBareJID = room.getOccupantsByBareJID(occupant.getRealJID().asBareJID());
+                final boolean hasOthers = occupantsByBareJID.stream().anyMatch(mucOccupant -> !mucOccupant.getUserAddress().equals(occupant.getRealJID()));
+                if (hasOthers) {
+                    final Optional<MUCOccupant> resourceToRemove = occupantsByBareJID.stream().filter(mucOccupant -> mucOccupant.getUserAddress().equals(occupant.getRealJID())).findAny();
+                    if (resourceToRemove.isPresent()) {
+                        Log.debug("Removing (but not kicking) {} as this resource no longer is in the room (but others for the same users are).", occupant);
+                        room.removeOccupant(resourceToRemove.get());
+                    } else {
+                        Log.debug("Unable to find MUC occupant for {} even though it is identified by local occupant. Data consistency issue?", occupant);
+                    }
+                    return;
+                }
+            } catch (UserNotFoundException e) {
+                // Occupant no longer in room? Mismatch between MUCUser#getRooms() and MUCRoom#localMUCRoomManager?
+                Log.debug("Skip removing {} as this occupant no longer is in the room.", occupant);
+                return;
+            }
+
             // Kick the user from the room that he/she had previously joined.
             Log.debug("Removing/kicking {}: {}", occupant, reason);
-            room.kickOccupant(occupant.getRealJID(), room.getSelfRepresentation().getAffiliation(), room.getSelfRepresentation().getRole(), null, null, reason);
+            room.kickOccupant(occupant.getRealJID().asBareJID(), room.getSelfRepresentation().getAffiliation(), room.getSelfRepresentation().getRole(), null, null, reason);
 
             // Ensure that other cluster nodes see any changes that might have been applied.
             syncChatRoom(room);
@@ -3071,6 +3092,22 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 fieldDate.setType(FormField.Type.text_single);
                 fieldDate.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.creationdate", preferredLocale));
                 fieldDate.addValue(XMPPDateTimeFormat.format(room.getCreationDate()));
+
+                // XEP-0486: Announce the hash of the room's avatar, if one is set.
+                if (IQMUCvCardHandler.PROPERTY_ENABLED.getValue()) {
+                    final Element vCard = VCardManager.getInstance().getVCard(room.getJID().toString());
+                    if (vCard != null) {
+                        final String hash = IQMUCvCardHandler.calculatePhotoHash(vCard);
+                        if (!hash.isEmpty()) {
+                            final FormField fieldAvatarHash = dataForm.addField();
+                            fieldAvatarHash.setVariable("muc#roominfo_avatarhash");
+                            fieldAvatarHash.setType(FormField.Type.text_multi);
+                            fieldAvatarHash.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.avatarhash", preferredLocale));
+                            fieldAvatarHash.addValue(hash);
+                        }
+                    }
+                }
+
                 final Set<DataForm> dataForms = new HashSet<>();
                 dataForms.add(dataForm);
                 return dataForms;

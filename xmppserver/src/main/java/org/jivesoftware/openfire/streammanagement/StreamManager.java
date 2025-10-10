@@ -183,7 +183,17 @@ public class StreamManager {
                 enable( element.getNamespace().getStringValue(), resume );
                 break;
             case "resume":
-                long h = new Long(element.attributeValue("h"));
+                final String hValue = element.attributeValue("h");
+                final long h;
+                try {
+                    h = Long.parseLong(hValue);
+                } catch (NumberFormatException e) {
+                    Log.warn( "Closing client session. Client sends non-numeric value for SM 'h': {}, affected session: {}", hValue, session );
+                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a 'h' value that is not a number (which is illegal). Your Ack h: " + hValue + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
+                    session.deliverRawText( error.toXML() );
+                    session.close();
+                    return;
+                }
                 if (h < 0) {
                     Log.warn( "Closing client session. Client sends negative value for SM 'h': {}, affected session: {}", h, session );
                     final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a negative value (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
@@ -193,12 +203,13 @@ public class StreamManager {
                 }
                 String previd = element.attributeValue("previd");
                 startResume( element.getNamespaceURI(), previd, h);
+
                 break;
             case "r":
                 sendServerAcknowledgement();
                 break;
             case "a":
-                processClientAcknowledgement( element);
+                processClientAcknowledgement(element);
                 break;
             default:
                 sendUnexpectedError();
@@ -387,7 +398,7 @@ public class StreamManager {
             Connection oldConnection = otherSession.getConnection();
             otherSession.setDetached();
             assert oldConnection != null; // If the other session is not detached, the connection can't be null.
-            oldConnection.close(new StreamError(StreamError.Condition.conflict, "The stream previously served over this connection is resumed on a new connection."), true);
+            oldConnection.close(new StreamError(StreamError.Condition.conflict, "The stream previously served over this connection is resumed on a new connection."));
         }
         Log.debug("Attaching to other session '{}' of '{}'.", otherSession.getStreamID(), fullJid);
         // If we're all happy, re-attach the connection from the pre-existing session to the new session, discarding the old session.
@@ -527,7 +538,17 @@ public class StreamManager {
     private void processClientAcknowledgement(Element ack) {
         if(isEnabled()) {
             if (ack.attribute("h") != null) {
-                final long h = Long.parseLong(ack.attributeValue("h"));
+                final String hValue = ack.attributeValue("h");
+                final long h;
+                try {
+                    h = Long.parseLong(hValue);
+                } catch (NumberFormatException e) {
+                    Log.warn( "Closing client session. Client sends non-numeric value for SM 'h': {}, affected session: {}", hValue, session );
+                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a 'h' value that is not a number (which is illegal). Your Ack h: " + hValue + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
+                    session.deliverRawText( error.toXML() );
+                    session.close();
+                    return;
+                }
                 if (h < 0) {
                     Log.warn( "Closing client session. Client sends negative value for SM 'h': {}, affected session: {}", h, session );
                     final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a negative value (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );

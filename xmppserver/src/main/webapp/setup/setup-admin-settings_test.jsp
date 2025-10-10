@@ -30,8 +30,7 @@
 <%
     String username = URLDecoder.decode( ParamUtils.getParameter( request, "username"), StandardCharsets.UTF_8);
     String password = ParamUtils.getParameter(request, "password");
-    boolean ldap = "true".equals(request.getParameter("ldap"));
-
+    boolean ldap = ParamUtils.getBooleanParameter(request, "ldap");
     if (!ldap) {
         return;
     }

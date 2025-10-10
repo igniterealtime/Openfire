@@ -18,7 +18,6 @@
 
 <%@ page import="org.jivesoftware.openfire.SessionManager,
                  org.jivesoftware.openfire.SessionResultFilter,
-                 org.jivesoftware.openfire.session.ClientSession,
                  org.jivesoftware.util.JiveGlobals,
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.CookieUtils,
@@ -33,6 +32,7 @@
 <%@ page import="java.util.ArrayList" %>
 <%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" %>
 <%@ page import="org.slf4j.LoggerFactory" %>
+<%@ page import="org.jivesoftware.openfire.session.*" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -84,9 +84,7 @@
         JID address = new JID(jid);
         try {
             Session sess = sessionManager.getSession(address);
-            if (sess instanceof LocalClientSession) {
-                ((LocalClientSession) sess).getStreamManager().formalClose();
-            }
+            sess.markNonResumable();
             sess.close();
             // Log the event
             webManager.logEvent("closed session for address "+address, null);

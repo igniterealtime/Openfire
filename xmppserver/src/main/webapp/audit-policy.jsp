@@ -242,7 +242,7 @@
                         </td>
                         <td>
                             <input type="text" size="50" maxlength="150" id="logDir" name="logDir"
-                             value="<%= ((logDir != null) ? StringUtils.escapeForXML(logDir) : "") %>">
+                             value="<%= StringUtils.escapeForXML(logDir) %>">
 
                         <%  if (errors.get("logDir") != null) { %>
 
@@ -260,7 +260,7 @@
                         </td>
                         <td>
                             <input type="text" size="15" maxlength="50" id="maxTotalSize" name="maxTotalSize"
-                             value="<%= ((maxTotalSize != null) ? StringUtils.escapeForXML(maxTotalSize) : "") %>">
+                             value="<%= StringUtils.escapeForXML(maxTotalSize) %>">
 
                         <%  if (errors.get("maxTotalSize") != null) { %>
 
@@ -278,7 +278,7 @@
                         </td>
                         <td>
                             <input type="text" size="15" maxlength="50" id="maxFileSize" name="maxFileSize"
-                             value="<%= ((maxFileSize != null) ? StringUtils.escapeForXML(maxFileSize) : "") %>">
+                             value="<%= StringUtils.escapeForXML(maxFileSize) %>">
 
                         <%  if (errors.get("maxFileSize") != null) { %>
 
@@ -296,7 +296,7 @@
                         </td>
                         <td>
                             <input type="text" size="15" maxlength="50" id="maxDays" name="maxDays"
-                             value="<%= ((maxDays != null) ? StringUtils.escapeForXML(maxDays) : "") %>">
+                             value="<%= StringUtils.escapeForXML(maxDays) %>">
 
                             <%  if (errors.get("maxDays") != null) { %>
 
@@ -314,7 +314,7 @@
                         </td>
                         <td>
                             <input type="text" size="15" maxlength="50" id="logTimeout" name="logTimeout"
-                             value="<%= ((logTimeout != null) ? StringUtils.escapeForXML(logTimeout) : "") %>">
+                             value="<%= StringUtils.escapeForXML(logTimeout) %>">
 
                         <%  if (errors.get("logTimeout") != null) { %>
 
@@ -377,7 +377,7 @@
                             <label for="ignore"><fmt:message key="audit.policy.ignore" /></label>
                         </td>
                         <td>
-                            <textarea id="ignore" name="ignore" cols="40" rows="3" wrap="virtual"><%= ((ignore != null) ? StringUtils.escapeHTMLTags(ignore) : "") %></textarea>
+                            <textarea id="ignore" name="ignore" cols="40" rows="3" wrap="virtual"><%= StringUtils.escapeHTMLTags(ignore) %></textarea>
                             <%  if (errors.get("ignore") != null) { %>
 
                                 <span class="jive-error-text">

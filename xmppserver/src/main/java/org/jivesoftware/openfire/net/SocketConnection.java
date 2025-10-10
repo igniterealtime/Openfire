@@ -374,8 +374,8 @@ public class SocketConnection extends AbstractConnection {
         return backupDeliverer;
     }
 
-    public void close(@Nullable final StreamError error, final boolean networkInterruption) {
-        close(error, networkInterruption, false);
+    public void close(@Nullable final StreamError error) {
+        close(error, false);
     }
 
     /**
@@ -383,14 +383,10 @@ public class SocketConnection extends AbstractConnection {
      * forces the connection closed immediately. This method will be called when  we need to close the socket, discard
      * the connection and its session.
      */
-    private void close(@Nullable final StreamError error, final boolean networkInterruption, final boolean force) {
+    private void close(@Nullable final StreamError error, final boolean force) {
         if (state.compareAndSet(State.OPEN, State.CLOSED)) {
             
             if (session != null) {
-                if (!force && !networkInterruption) {
-                    // A 'clean' closure should never be resumed (see #onRemoteDisconnect for handling of unclean disconnects). OF-2752
-                    session.getStreamManager().formalClose();
-                }
                 session.setStatus(Session.Status.CLOSED);
             }
 

@@ -111,6 +111,11 @@ public abstract class LocalSession implements Session {
     private final Locale language;
 
     /**
+     * Indicates if peer has sent &lt;/stream:stream>
+     */
+    private boolean hasReceivedEndOfStream;
+
+    /**
      * Creates a session with an underlying connection and permission protection.
      *
      * @param serverName domain of the XMPP server where the new session belongs.
@@ -599,4 +604,41 @@ public abstract class LocalSession implements Session {
         softwareVersionData.put(key, value);
     }
 
+    /**
+     * Mark this session in the associated stream manager as non-resumable.
+     *
+     * If a session was not resumable before invoking this method, or if stream management wasn't in effect at all, an
+     * invocation of this method has no effect.
+     */
+    @Override
+    public void markNonResumable()
+    {
+        if (streamManager != null) {
+            streamManager.formalClose();
+        }
+    }
+
+    /**
+     * Sets a boolean value indicating that the client associated to this session has sent an 'end of stream' event to
+     * the server (typically, this is a {@code </stream:stream>} tag). This is an indication that the client wishes to
+     * end the session.
+     *
+     * Sending such an end-of-stream is unrecoverable. This boolean can therefor not be changed from 'true' to 'false'.
+     */
+    public void setHasReceivedEndOfStream()
+    {
+        hasReceivedEndOfStream = true;
+        markNonResumable();
+    }
+
+    /**
+     * Returns a boolean value indicating if this client has sent an 'end of stream' event to the server (typically, this
+     * is a <tt></stream:stream></tt> tag). This is an indication that the client wishes to end the session.
+     *
+     * @return 'true' if an 'end of stream' event was received from the client, otherwise 'false'.
+     */
+    public boolean getHasReceivedEndOfStream()
+    {
+        return hasReceivedEndOfStream;
+    }
 }

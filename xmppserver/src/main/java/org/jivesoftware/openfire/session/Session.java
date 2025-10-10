@@ -23,8 +23,10 @@ import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.StreamError;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.util.Date;
@@ -131,6 +133,20 @@ public interface Session extends RoutableChannelHandler {
      * Implementations should ensure that after invocation, the result of {@link #getStatus()} will be CLOSED.
      */
     void close();
+
+    /**
+     * Closes this session, as in {@link #close()}, with an error.
+     *
+     * When an error is supplied, it is delivered to the peer prior to disconnection. Additionally, the session is
+     * marked as 'non-resumable'.
+     */
+    default void close(@Nullable final StreamError error) {
+        if (error != null) {
+            markNonResumable();
+            deliverRawText(error.toXML());
+        }
+        close();
+    }
 
     /**
      * Returns true if the link to the remote XMPP entity (the session) is closed.
@@ -260,6 +276,14 @@ public interface Session extends RoutableChannelHandler {
      * @return The language for the session.
      */
     Locale getLanguage();
+
+    /**
+     * Mark this session in the associated stream manager as non-resumable.
+     *
+     * If a session was not resumable before invoking this method, or if stream management wasn't in effect at all, an
+     * invocation of this method has no effect.
+     */
+    void markNonResumable();
 
     /**
      * Returns all Software Version data as reported by the remote XMPP entity,

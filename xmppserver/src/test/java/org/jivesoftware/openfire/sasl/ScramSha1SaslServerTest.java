@@ -19,13 +19,12 @@ import org.apache.commons.codec.digest.HmacAlgorithms;
 import org.apache.commons.codec.digest.HmacUtils;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.util.StringUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
 
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
@@ -37,7 +36,7 @@ import java.util.Base64;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.any;
 
 /**
@@ -45,17 +44,16 @@ import static org.mockito.Mockito.any;
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
-@RunWith(MockitoJUnitRunner.Silent.class)
 public class ScramSha1SaslServerTest
 {
     private MockedStatic<AuthFactory> authFactory;
 
-    @Before
+    @BeforeEach
     public void setupStaticMock() {
         authFactory = Mockito.mockStatic(AuthFactory.class);
     }
 
-    @After
+    @AfterEach
     public void teardownStaticMock() {
         if (authFactory != null) {
             authFactory.close();
@@ -93,18 +91,16 @@ public class ScramSha1SaslServerTest
 
         // Verify result (first server message should match a pattern, and contain a number of properties)
         final Matcher firstServerResponseMatcher = Pattern.compile("r=([^,]*),s=([^,]*),i=(.*)$").matcher(firstServerResponse);
-        if (!firstServerResponseMatcher.matches()) {
-            fail("First server message does not match expected pattern.");
-        }
+        assertTrue(firstServerResponseMatcher.matches(), "First server message does not match expected pattern.");
         final String serverNonce = firstServerResponseMatcher.group(1);
-        assertTrue("First server message should contain a non-empty server nonce (but did not)", serverNonce != null && !serverNonce.isBlank());
-        assertTrue("First server message should contain a server nonce that starts with the client nonce, but did not.", serverNonce.startsWith(hardCodedClientNonce));
+        assertTrue(serverNonce != null && !serverNonce.isBlank(), "First server message should contain a non-empty server nonce (but did not)");
+        assertTrue(serverNonce.startsWith(hardCodedClientNonce), "First server message should contain a server nonce that starts with the client nonce, but did not.");
 
 
         byte[] salt = null;
         try {
             salt = DatatypeConverter.parseBase64Binary(firstServerResponseMatcher.group(2));
-            assertEquals("First server message should include the 'salt' value configured for this unit test (but did not)", hardCodedSalt, firstServerResponseMatcher.group(2));
+            assertEquals(hardCodedSalt, firstServerResponseMatcher.group(2), "First server message should include the 'salt' value configured for this unit test (but did not)");
         } catch (IllegalArgumentException e) {
             fail("First server message should contain a valid 'salt' value (but did not).");
         }
@@ -112,7 +108,7 @@ public class ScramSha1SaslServerTest
         int iterations = -1;
         try {
             iterations = Integer.parseInt(firstServerResponseMatcher.group(3));
-            assertEquals("First server message should include the 'iterations' value configured for this unit test (but did not)", hardCodedIterations, iterations);
+            assertEquals(hardCodedIterations, iterations, "First server message should include the 'iterations' value configured for this unit test (but did not)");
         } catch (NumberFormatException e) {
             fail("First server message should contain a valid 'iterations' value (but did not).");
         }

@@ -3,8 +3,7 @@
 # openfirectl	Stops and starts the Openfire XMPP service.
 #
 # chkconfig: 2345 99 1
-# description: Openfire is an XMPP server, which is a server that facilitates \
-#              XML based communication, such as chat.
+# description: Openfire is an XMPP server
 # config: /opt/openfire/conf/openfire.xml
 # config: /etc/sysconfig/openfire
 # pidfile: /var/run/openfire.pid
@@ -15,7 +14,6 @@
 # chkconfig available, you can copy/symlink it into your init.d directory
 # and chkconfig --add it.  It's recommended to name it openfire instead of
 # openfirectl in the init.d directory.
-#
 
 #####
 # Begin setup work
@@ -26,10 +24,9 @@ CMD=$1
 PATH="/sbin:/bin:/usr/bin:/usr/sbin"
 RETVAL=0
 
-# Make sure we are running as root
-set `/usr/bin/id`
-if [ $1 != "uid=0(root)" ]; then
-	echo "$0: must be run as root"
+# Check that we are root ... so non-root users stop here.
+if [ "$(id -u)" != 0 ]; then
+	echo "$0" must be run as root
 	exit 1
 fi
 
@@ -55,8 +52,8 @@ if [ -z "$OPENFIRE_HOME" -o ! -d "$OPENFIRE_HOME" ]; then
 	else
 		echo "Could not find Openfire installation under /opt, /usr/share, or /usr/local."
 		if [ -f "/etc/sysconfig" ]; then
-	                echo "Please specify the Openfire installation location as variable OPENFIRE_HOME"
-	                echo "in /etc/sysconfig/openfire."
+			echo "Please specify the Openfire installation location as variable OPENFIRE_HOME"
+			echo "in /etc/sysconfig/openfire."
 		fi
 		exit 1
 	fi
@@ -107,13 +104,13 @@ else
 	LOCALCLASSPATH="${OPENFIRE_LIB}/startup.jar:${LOCALCLASSPATH}"
 fi
 
-JAVACMD="${JAVACMD} -Dlog4j.configurationFile=${OPENFIRE_LIB}/log4j2.xml -Dlog4j2.formatMsgNoLookups=true"
+JAVACMD="${JAVACMD} -Dlog4j.configurationFile=${OPENFIRE_LIB}/log4j2.xml -Dlog4j2.formatMsgNoLookups=true -Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true -Djava.net.preferIPv6Addresses=system"
 
 # Export any necessary variables
 export JAVA_HOME JAVACMD
 
 # Lastly, prepare the full command that we are going to run.
-OPENFIRE_RUN_CMD="${JAVACMD} -server -Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true ${OPENFIRE_OPTS} -classpath \"${LOCALCLASSPATH}\" -jar \"${OPENFIRE_LIB}/startup.jar\""
+OPENFIRE_RUN_CMD="${JAVACMD} -server ${OPENFIRE_OPTS} -classpath \"${LOCALCLASSPATH}\" -jar \"${OPENFIRE_LIB}/startup.jar\""
 
 #####
 # End setup work
@@ -124,22 +121,16 @@ OPENFIRE_RUN_CMD="${JAVACMD} -server -Djdk.tls.ephemeralDHKeySize=matched -Djsse
 start() {
 	OLD_PWD=`pwd`
 	cd $OPENFIRE_LOGDIR
-
-    # Start daemons.
-    echo "Starting openfire: \c"
-
+	# Start daemons.
+	echo "Starting openfire: \c"
 	su - $OPENFIRE_USER -c "nohup $OPENFIRE_RUN_CMD > $OPENFIRE_LOGDIR/nohup.out 2>&1 &"
 	RETVAL=$?
-
 	if [ $RETVAL -eq 0 -a ! -z "$OPENFIRE_PIDFILE" ]; then
-	    PID=`ps ax --width=1000 | grep openfire | grep startup.jar | awk '{print $1}'`
+		PID=$(findPID)
 		echo $PID > $OPENFIRE_PIDFILE
 	fi
-
 	echo
-
 	[ $RETVAL -eq 0 -a -d /var/lock/subsys ] && touch /var/lock/subsys/openfire
-
 	sleep 1 # allows prompt to return
 	cd $OLD_PWD
 }
@@ -147,11 +138,9 @@ start() {
 stop() {
 	# Stop daemons.
 	echo "Shutting down openfire: \c"
-
 	[ -f "$OPENFIRE_PIDFILE" ] && kill `cat $OPENFIRE_PIDFILE`
 	RETVAL=$?
 	echo
-
 	[ $RETVAL -eq 0 -a -f "$OPENFIRE_PIDFILE" ] && rm -f $OPENFIRE_PIDFILE
 	[ $RETVAL -eq 0 -a -f "/var/lock/subsys/openfire" ] && rm -f /var/lock/subsys/openfire
 }
@@ -172,18 +161,21 @@ status() {
 	if [ "$?" = "1" ]; then
 		echo "openfire is not running"
 		RETVAL=3
-	else 
+	else
 		ps -p $pid > /dev/null 2>&1
-		if [ "$?" = "0" ]; then 
+		if [ "$?" = "0" ]; then
 			echo "openfire is running"
 			RETVAL=0
-		else 
+		else
 			echo "openfire is not running"
 			RETVAL=1
 		fi
 	fi
 }
 
+findPID() {
+	ps ax --width=1000 | grep openfire | grep startup.jar | awk '{print $1}'
+}
 
 # Handle how we were called.
 case "$CMD" in
@@ -199,14 +191,11 @@ case "$CMD" in
 	condrestart)
 		condrestart
 		;;
-	reload)
-		restart
-		;;
-	status) 
+	status)
 		status
 		;;
 	*)
-		echo "Usage $0 {start|stop|restart|status|condrestart|reload}"
+		echo "Usage $0 {start|stop|restart|status|condrestart}"
 		RETVAL=1
 esac
 

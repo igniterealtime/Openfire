@@ -18,8 +18,6 @@
 
 <%@ page import="org.jivesoftware.openfire.PresenceManager,
                  org.jivesoftware.openfire.SessionManager,
-                 org.jivesoftware.openfire.session.ClientSession,
-                 org.jivesoftware.openfire.session.LocalClientSession,
                  org.jivesoftware.openfire.user.User,
                  org.jivesoftware.openfire.user.UserManager,
                  org.jivesoftware.util.JiveGlobals,
@@ -30,7 +28,6 @@
                  java.util.Collection"
     errorPage="error.jsp"
 %>
-<%@ page import="org.jivesoftware.openfire.session.LocalSession" %>
 <%@ page import="org.jivesoftware.openfire.nio.NettyConnection" %>
 <%@ page import="org.jivesoftware.openfire.websocket.WebSocketConnection" %>
 <%@ page import="org.jivesoftware.openfire.http.HttpSession" %>
@@ -42,6 +39,7 @@
 <%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" %>
 <%@ page import="org.slf4j.LoggerFactory" %>
 <%@ page import="java.nio.charset.StandardCharsets" %>
+<%@ page import="org.jivesoftware.openfire.session.*" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -70,9 +68,7 @@
         JID address = new JID(jid);
         try {
             Session sess = sessionManager.getSession(address);
-            if (sess instanceof LocalClientSession) {
-                ((LocalClientSession) sess).getStreamManager().formalClose();
-            }
+            sess.markNonResumable();
             sess.close();
             // Log the event
             webManager.logEvent("closed session for address "+address, null);
@@ -132,7 +128,7 @@
     Collection<ClientSession> sessions = null;
     int sessionCount = sessionManager.getSessionCount(address.getNode());
     if (!isAnonymous && sessionCount > 1) {
-        sessions = sessionManager.getSessions(address.getNode());
+        sessions = sessionManager.getSessions(address);
     }
 
     // Number dateFormatter for all numbers on this page:
@@ -185,12 +181,12 @@
             <%  String n = address.getNode(); %>
             <%  if (isAnonymous) { %>
 
-                <i> <fmt:message key="session.details.anonymous" /> </i> - <%= address.getResource()==null?"":StringUtils.escapeHTMLTags(address.getResource()) %>
+                <i> <fmt:message key="session.details.anonymous" /> </i> - <%= StringUtils.escapeHTMLTags(address.getResource()) %>
 
             <%  } else { %>
 
                 <a href="user-properties.jsp?username=<%= URLEncoder.encode(n, StandardCharsets.UTF_8) %>"><%= StringUtils.escapeHTMLTags(JID.unescapeNode(n)) %></a>
-                - <%= address.getResource()==null?"":StringUtils.escapeForXML(address.getResource()) %>
+                - <%= StringUtils.escapeForXML(address.getResource()) %>
 
             <%  } %>
         </td>

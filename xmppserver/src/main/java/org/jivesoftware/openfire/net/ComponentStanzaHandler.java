@@ -59,11 +59,13 @@ public class ComponentStanzaHandler extends StanzaHandler {
             // External component is trying to authenticate
             if (!((LocalComponentSession) session).authenticate(doc.getStringValue())) {
                 Log.debug( "Closing session that failed to authenticate: {}", session );
+                session.markNonResumable();
                 session.close();
             }
             return true;
         } else if ("error".equals(tag) && "stream".equals(doc.getNamespacePrefix())) {
             Log.debug( "Closing session because of received stream error {}. Affected session: {}", doc.asXML(), session );
+            session.markNonResumable();
             session.close();
             return true;
         } else if ("bind".equals(tag)) {

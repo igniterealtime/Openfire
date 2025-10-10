@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -196,6 +196,14 @@
             </tr>
             <tr>
                 <td>
+                    <input type="radio" name="localeCode" value="it_IT" <%= ("it_IT".equals(locale.toString()) ? "checked" : "") %> id="it_IT" />
+                </td>
+                <td colspan="2">
+                    <label for="it_IT">Italiano (it_IT)</label>
+                </td>
+            </tr>
+            <tr>
+                <td>
                     <input type="radio" name="localeCode" value="ja_JP" <%= ("ja_JP".equals(locale.toString()) ? "checked" : "") %> id="ja_JP" />
                 </td>
                 <td colspan="2">
@@ -248,6 +256,22 @@
                 </td>
                 <td colspan="2">
                     <label for="sk">Sloven&#269;ina (sk)</label>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="radio" name="localeCode" value="sv" <%= ("sv".equals(locale.toString()) ? "checked" : "") %> id="sv" />
+                </td>
+                <td colspan="2">
+                    <label for="sv">Svenska (sv)</label>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input type="radio" name="localeCode" value="tr_TR" <%= ("tr_TR".equals(locale.toString()) ? "checked" : "") %> id="tr_TR" />
+                </td>
+                <td colspan="2">
+                    <label for="tr_TR">Türkçe (tr_TR)</label>
                 </td>
             </tr>
             <tr>

@@ -184,6 +184,10 @@ public abstract class RemoteSession implements Session {
         doClusterTask(getDeliverRawTextTask(text));
     }
 
+    public void markNonResumable() {
+        doSynchronousClusterTask(getRemoteSessionTask(RemoteSessionTask.Operation.markNonResumable));
+    }
+
     public boolean validate() {
         ClusterTask<Object> task = getRemoteSessionTask(RemoteSessionTask.Operation.validate);
         final Object clusterTaskResult = doSynchronousClusterTask(task);

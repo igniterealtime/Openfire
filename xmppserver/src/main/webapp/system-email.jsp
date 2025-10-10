@@ -126,7 +126,7 @@
 <fmt:message key="system.email.info" />
 </p>
 
-<%  if ("true".equals(request.getParameter("success"))) { %>
+<%  if (ParamUtils.getBooleanParameter(request, "success")) { %>
 
     <admin:infoBox type="success">
         <fmt:message key="system.email.update_success" />
@@ -157,7 +157,7 @@
                 <label for="host"><fmt:message key="system.email.mail_host" />:</label>
             </td>
             <td nowrap>
-                <input type="text" id="host" name="host" value="<%= (host != null)? StringUtils.escapeForXML(host):"" %>" size="40" maxlength="150">
+                <input type="text" id="host" name="host" value="<%= StringUtils.escapeForXML(host) %>" size="40" maxlength="150">
             </td>
         </tr>
 
@@ -202,7 +202,7 @@
                 <label for="server_username"><fmt:message key="system.email.server_username" />:</label>
             </td>
             <td nowrap>
-                <input type="text" id="server_username" name="server_username" value="<%= (username != null) ? StringUtils.escapeForXML(username) : "" %>" size="40" maxlength="150">
+                <input type="text" id="server_username" name="server_username" value="<%= StringUtils.escapeForXML(username) %>" size="40" maxlength="150">
             </td>
         </tr>
         <tr>

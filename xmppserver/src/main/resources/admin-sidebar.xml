@@ -364,6 +364,11 @@
                           url="user-properties.jsp"
                           description="${sidebar.user-properties.descr}"/>
 
+                    <!-- Profile Information -->
+                    <item id="user-profile" name="${sidebar.user-profile}"
+                          url="user-profile.jsp"
+                          description="${sidebar.user-profile.descr}"/>
+
                     <!-- User Roster -->
                     <item id="user-roster" name="${sidebar.user-roster}"
                           url="user-roster.jsp"

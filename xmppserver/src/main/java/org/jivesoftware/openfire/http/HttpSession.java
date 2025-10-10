@@ -796,6 +796,7 @@ public class HttpSession extends LocalClientSession {
             try {
                 HttpBindManager.getInstance().getSessionManager().execute(this, () -> {
                     Log.trace("Stream {}: Closing", streamID);
+                    super.markNonResumable();
                     super.close();
                 });
             } catch (Throwable t) {

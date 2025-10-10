@@ -16,7 +16,7 @@
 package org.jivesoftware.admin.servlet;
 
 import org.json.JSONArray;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 import java.util.Locale;

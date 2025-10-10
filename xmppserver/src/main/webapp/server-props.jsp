@@ -221,8 +221,8 @@
 <fmt:message key="server.props.info" />
 </p>
 
-<%  if ("true".equals(request.getParameter("success"))) {
-        pageContext.setAttribute("restart", "true".equals(request.getParameter("restart")));
+<%  if (ParamUtils.getBooleanParameter(request, "success")) {
+        pageContext.setAttribute("restart", ParamUtils.getBooleanParameter(request, "restart"));
 %>
 
 <admin:infoBox type="success">
@@ -253,7 +253,7 @@
             <label for="serverName"><fmt:message key="server.props.name" /></label>
         </td>
         <td>
-            <input type="text" id="serverName" name="serverName" value="<%= (serverName != null) ? StringUtils.escapeForXML(serverName) : "" %>"
+            <input type="text" id="serverName" name="serverName" value="<%= StringUtils.escapeForXML(serverName) %>"
              size="30" maxlength="150">
             <%  if (errors.containsKey("serverName")) { %>
                 <br>

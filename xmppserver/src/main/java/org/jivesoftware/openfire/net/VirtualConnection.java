@@ -119,14 +119,10 @@ public abstract class VirtualConnection extends AbstractConnection
      * @param error If non-null, the end-stream tag will be preceded with this error.
      */
     @Override
-    public void close(@Nullable final StreamError error, final boolean networkInterruption) {
+    public void close(@Nullable final StreamError error) {
         if (state.compareAndSet(State.OPEN, State.CLOSED)) {
             
             if (session != null) {
-                if (!networkInterruption) {
-                    // A 'clean' closure should never be resumed (see #onRemoteDisconnect for handling of unclean disconnects). OF-2752
-                    session.getStreamManager().formalClose();
-                }
                 session.setStatus(Session.Status.CLOSED);
             }
 

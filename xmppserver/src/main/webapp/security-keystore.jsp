@@ -15,7 +15,6 @@
   - limitations under the License.
 --%>
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@page import="org.jivesoftware.util.StringUtils"%>
 <%@page import="org.jivesoftware.util.CertificateManager"%>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>

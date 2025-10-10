@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,30 +174,7 @@ public interface Connection extends Closeable {
      */
     @Override
     default void close() {
-        close(null, false);
-    }
-
-    /**
-     * Close this connection including associated session, optionally citing a stream error. The events for closing
-     * the connection are:
-     *
-     * <ul>
-     *      <li>Set closing flag to prevent redundant shutdowns.
-     *      <li>Close the socket.
-     *      <li>Notify all listeners that the channel is shut down.
-     * </ul>
-     *
-     * Not all implementations use the same order of events.
-     *
-     * Invocation of this method is expected to occur when a coordinated, 'clean' disconnect occurs. Such disconnects
-     * are expected to be user (or server) initiated. As a result, a session closed by this method is not resumable,
-     * even if Stream Management was activated for this session. Refer to {@link #close(StreamError, boolean)} for
-     * processing of unexpected disconnects (that <em>are</em> potentially resumable).
-     *
-     * @param error If non-null, the end-stream tag will be preceded with this error.
-     */
-    default void close(@Nullable final StreamError error) {
-        close(error, false);
+        close(null);
     }
 
     /**
@@ -222,7 +199,7 @@ public interface Connection extends Closeable {
      *
      * @param error If non-null, the end-stream tag will be preceded with this error.
      */
-    void close(@Nullable final StreamError error, final boolean networkInterruption);
+    void close(@Nullable final StreamError error);
 
     /**
      * Notification message indicating that the server is being shutdown. Implementors

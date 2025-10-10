@@ -248,7 +248,7 @@ function checkClick() {
             <label for="to"><fmt:message key="system.emailtest.to" />:</label>
         </td>
         <td>
-            <input type="text" id="to" name="to" value="<%= ((to != null) ? StringUtils.escapeForXML(to) : "") %>"
+            <input type="text" id="to" name="to" value="<%= StringUtils.escapeForXML(to) %>"
              size="40" maxlength="100">
         </td>
     </tr>
@@ -257,7 +257,7 @@ function checkClick() {
             <label for="subject"><fmt:message key="system.emailtest.subject" />:</label>
         </td>
         <td>
-            <input type="text" id="subject" name="subject" value="<%= ((subject != null) ? StringUtils.escapeForXML(subject) : "") %>"
+            <input type="text" id="subject" name="subject" value="<%= StringUtils.escapeForXML(subject) %>"
              size="40" maxlength="100">
         </td>
     </tr>

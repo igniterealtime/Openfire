@@ -88,17 +88,14 @@ public class PhotoResizer
         final ImageWriter iw = it.next();
 
         // Extract the original avatar from the VCard.
-        final String value = element.getTextTrim();
-        final Base64.Decoder decoder;
-        final Base64.Encoder encoder;
-        if (value.length() > 76 && Character.isWhitespace(value.charAt(76))) {
-            decoder = Base64.getMimeDecoder();
-            encoder = Base64.getMimeEncoder();
-        } else {
-            decoder = Base64.getDecoder();
-            encoder = Base64.getEncoder();
+        final byte[] original;
+        try {
+            final String value = element.getTextTrim().replaceAll("\\s",""); // OF-3112: Ignore all whitespace in Base64 encoded data.
+            original = Base64.getDecoder().decode(value);
+        } catch (IllegalArgumentException ex) {
+            Log.warn( "Failed to resize avatar. An unexpected exception occurred while trying to decode the original Base64-encoded image data.", ex );
+            return;
         }
-        final byte[] original = decoder.decode(value);
 
         // Crop and shrink, if needed.
         final int targetDimension = JiveGlobals.getIntProperty( PROPERTY_TARGETDIMENSION, PROPERTY_TARGETDIMENSION_DEFAULT );
@@ -108,7 +105,7 @@ public class PhotoResizer
         if ( resized != null )
         {
             Log.debug( "Replacing original avatar in vcard with a resized variant." );
-            vCardElement.element( "PHOTO" ).element( "BINVAL" ).setText( encoder.encodeToString( resized ) );
+            vCardElement.element( "PHOTO" ).element( "BINVAL" ).setText( Base64.getEncoder().encodeToString( resized ) );
         }
     }
 

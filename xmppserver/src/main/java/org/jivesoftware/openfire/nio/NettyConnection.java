@@ -190,16 +190,15 @@ public class NettyConnection extends AbstractConnection
     }
 
     @Override
-    public void close(@Nullable final StreamError error, final boolean networkInterruption) {
+    public void close(@Nullable final StreamError error) {
         if (state.compareAndSet(State.OPEN, State.CLOSED)) {
             Log.trace("Closing {} with optional error: {}", this, error);
 
             ChannelFuture f;
 
             if (session != null) {
-
-                if (!networkInterruption) {
-                    // A 'clean' closure should never be resumed (OF-2752).
+                // If the stream was ended because of an error, it should not be possible to resume it (OF-2751).
+                if (error != null) {
                     session.getStreamManager().formalClose();
                 }
 

@@ -46,6 +46,8 @@ public class ConnectionConfiguration
     private final boolean verifyCertificateValidity;
     private final boolean verifyCertificateRevocation;
     private final boolean strictCertificateValidation;
+    private final boolean dialbackOffer;
+    private final boolean dialbackEnabled;
     private final Set<String> encryptionProtocols;
     private final Set<String> encryptionCipherSuites;
     private final Connection.CompressionPolicy compressionPolicy;
@@ -73,9 +75,11 @@ public class ConnectionConfiguration
      * @param encryptionCipherSuites the set of ciphers supported
      * @param compressionPolicy the compression policy
      * @param strictCertificateValidation {@code true} to abort connections if certificate validation fails, otherwise {@code false}
+     * @param dialbackEnabled {@code true} to enable dialback , otherwise {@code false}
+     * @param dialbackOffer {@code true} to offer dialback even if SASL fails, otherwise {@code false}
      */
     // TODO input validation
-    public ConnectionConfiguration( ConnectionType type, boolean enabled, int maxThreadPoolSize, int maxBufferSize, Connection.ClientAuth clientAuth, InetAddress bindAddress, int port, Connection.TLSPolicy tlsPolicy, CertificateStoreConfiguration identityStoreConfiguration, CertificateStoreConfiguration trustStoreConfiguration, boolean acceptSelfSignedCertificates, boolean verifyCertificateValidity,  boolean verifyCertificateRevocation, Set<String> encryptionProtocols, Set<String> encryptionCipherSuites, Connection.CompressionPolicy compressionPolicy, boolean strictCertificateValidation )
+    public ConnectionConfiguration( ConnectionType type, boolean enabled, int maxThreadPoolSize, int maxBufferSize, Connection.ClientAuth clientAuth, InetAddress bindAddress, int port, Connection.TLSPolicy tlsPolicy, CertificateStoreConfiguration identityStoreConfiguration, CertificateStoreConfiguration trustStoreConfiguration, boolean acceptSelfSignedCertificates, boolean verifyCertificateValidity,  boolean verifyCertificateRevocation, Set<String> encryptionProtocols, Set<String> encryptionCipherSuites, Connection.CompressionPolicy compressionPolicy, boolean strictCertificateValidation, boolean dialbackEnabled, boolean dialbackOffer )
     {
         if ( maxThreadPoolSize <= 0 ) {
             throw new IllegalArgumentException( "Argument 'maxThreadPoolSize' must be equal to or greater than one." );
@@ -101,7 +105,8 @@ public class ConnectionConfiguration
         this.encryptionCipherSuites = Collections.unmodifiableSet( encryptionCipherSuites );
         this.compressionPolicy = compressionPolicy;
         this.strictCertificateValidation = strictCertificateValidation;
-
+        this.dialbackEnabled = dialbackEnabled;
+        this.dialbackOffer = dialbackOffer;
         this.isOcspEnabled = Boolean.parseBoolean(Security.getProperty("ocsp.enable"));
         final CertificateStoreManager certificateStoreManager = XMPPServer.getInstance().getCertificateStoreManager();
         this.identityStore = certificateStoreManager.getIdentityStore( type );
@@ -259,4 +264,23 @@ public class ConnectionConfiguration
     public boolean isStrictCertificateValidation() {
         return strictCertificateValidation;
     }
+
+    /**
+     * A boolean that indicates if the dialback should be offered
+     *
+     * @return true for offer
+     */
+    public boolean isDialbackOffer() {
+        return dialbackOffer;
+    }
+
+    /**
+     * A boolean that indicates if dialback is enabled
+     *
+     * @return true for dialback
+     */
+    public boolean isDialbackEnabled() {
+        return dialbackEnabled;
+    }
+
 }

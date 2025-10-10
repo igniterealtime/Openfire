@@ -283,8 +283,9 @@ public class SASLAuthentication {
         if ( session instanceof ClientSession )
         {
             features.add(getSASLMechanismsElement( (ClientSession) session, false ));
-            // TODO : Don't list these if SASL2 isn't enabled.
-            features.add(getSASLMechanismsElement( (ClientSession) session, true ));
+            if (ENABLE_SASL2.getValue()) {
+                features.add(getSASLMechanismsElement((ClientSession) session, true));
+            }
         }
         else if ( session instanceof LocalIncomingServerSession )
         {
@@ -329,7 +330,7 @@ public class SASLAuthentication {
         }
         if ( usingSASL2 )
         {
-            // Add Bind2 features here.
+            // TODO :  Add Bind2 features here when implemented
         }
 
         // OF-2072: Return null instead of an empty element, if so configured.

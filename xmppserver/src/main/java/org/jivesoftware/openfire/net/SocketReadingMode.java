@@ -118,7 +118,7 @@ abstract class SocketReadingMode {
         socketReader.connection.deliverRawText(StringUtils.asUnclosedStream(document));
     }
 
-    protected boolean authenticateClient(Element doc) throws DocumentException, IOException,
+    protected boolean authenticateClient(Element doc, boolean usingSASL2) throws DocumentException, IOException,
             XmlPullParserException {
         // Ensure that connection was encrypted if TLS was required
         if (socketReader.connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required &&
@@ -129,7 +129,6 @@ abstract class SocketReadingMode {
 
         boolean isComplete = false;
         boolean success = false;
-        boolean usingSASL2 = false;
         while (!isComplete) {
             SASLAuthentication.Status status = SASLAuthentication.handle(socketReader.session, doc, usingSASL2);
             if (status == SASLAuthentication.Status.needResponse) {

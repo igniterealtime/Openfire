@@ -150,7 +150,19 @@ class BlockingReadingMode extends SocketReadingMode {
             }
             else if ("auth".equals(tag)) {
                 // User is trying to authenticate using SASL
-                if (authenticateClient(doc)) {
+                if (authenticateClient(doc, false)) {
+                    // SASL authentication was successful so open a new stream and offer
+                    // resource binding and session establishment (to client sessions only)
+                    saslSuccessful();
+                }
+                else if (socketReader.connection.isClosed()) {
+                    socketReader.open = false;
+                    socketReader.session = null;
+                }
+            }
+            else if ("authenticate".equals(tag)) {
+                // User is trying to authenticate using SASL
+                if (authenticateClient(doc, true)) {
                     // SASL authentication was successful so open a new stream and offer
                     // resource binding and session establishment (to client sessions only)
                     saslSuccessful();

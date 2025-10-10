@@ -109,12 +109,10 @@ public class IQBindHandler extends IQHandler {
             session.process(reply);
             return reply;
         }
-
-        final PacketError.Condition error = session.bindResource(resource);
+        PacketError.Condition error = session.bindResource(resource);
         if (error != null) {
             reply.setChildElement(packet.getChildElement().createCopy());
             reply.setError(error);
-            // Send the error directly since a route does not exist at this point.
             session.process(reply);
             return null;
         }

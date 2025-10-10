@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.openfire.net;
 
+import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.QName;
@@ -106,6 +107,16 @@ public class Bind2Request {
         }
         
         return bound;
+    }
+
+    public static Element featureElement() {
+        Element bind2 = DocumentHelper.createElement(new QName("bind", new Namespace("", "urn:xmpp:bind:0")));
+        Element bind2inline = bind2.addElement("inline");
+        for (Bind2InlineHandler handler : elementHandlers.values()) {
+            Element var = bind2inline.addElement("feature");
+            var.addAttribute("var", handler.getNamespace());
+        }
+        return bind2;
     }
 
 

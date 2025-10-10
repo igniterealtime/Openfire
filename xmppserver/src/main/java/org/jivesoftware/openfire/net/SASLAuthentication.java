@@ -331,8 +331,7 @@ public class SASLAuthentication {
         if ( usingSASL2 )
         {
             Element inlineElement = result.addElement("inline");
-            Element bind2 = inlineElement.addElement(new QName("bind", new Namespace("", "urn:xmpp:bind:0")));
-            // Add Bind2 features here.
+            inlineElement.add(Bind2Request.featureElement());
             // Element sm = inlineElement.addElement(...);
         }
 

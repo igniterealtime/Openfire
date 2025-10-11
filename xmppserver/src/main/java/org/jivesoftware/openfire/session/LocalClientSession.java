@@ -823,7 +823,10 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         else {
             // If the session has been authenticated then offer resource binding,
             // and session establishment
-            result.add(DocumentHelper.createElement(QName.get("bind", "urn:ietf:params:xml:ns:xmpp-bind")));
+            if (getStatus() != Status.AUTHENTICATED) {
+                // We might be bound already via bind2
+                result.add(DocumentHelper.createElement(QName.get("bind", "urn:ietf:params:xml:ns:xmpp-bind")));
+            }
             final Element session = DocumentHelper.createElement(QName.get("session", "urn:ietf:params:xml:ns:xmpp-session"));
             session.addElement("optional");
             result.add(session);
@@ -1019,6 +1022,10 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     }
 
     public PacketError.Condition bindResource(String resource) {
+        if (getStatus() == Status.AUTHENTICATED) {
+            // Don't allow double-binding!
+            return PacketError.Condition.bad_request;
+        }
         final RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
         if (authToken.isAnonymous()) {
             // User used ANONYMOUS SASL so initialize the session as an anonymous login

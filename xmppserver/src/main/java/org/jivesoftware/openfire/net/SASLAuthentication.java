@@ -26,6 +26,7 @@ import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.ScramUtils;
+import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.keystore.TrustStore;
 import org.jivesoftware.openfire.lockout.LockOutManager;
@@ -655,16 +656,38 @@ public class SASLAuthentication {
             authenticationFailed(session, Failure.ACCOUNT_DISABLED, usingSASL2);
             return;
         }
+        // We only support SASL for c2s
+        if (session instanceof ClientSession) {
+            final AuthToken authToken;
+            if (username == null) {
+                // AuthzId is null, which indicates that authentication was anonymous.
+                authToken = AuthToken.generateAnonymousToken();
+            } else {
+                authToken = AuthToken.generateUserToken(username);
+            }
+            ((LocalClientSession) session).setAuthToken(authToken);
+        }
+        else if (session instanceof IncomingServerSession) {
+            String hostname = username;
+            // Add the validated domain as a valid domain. The remote server can
+            // now send packets from this address
+            ((LocalIncomingServerSession) session).addValidatedDomain(hostname);
+            ((LocalIncomingServerSession) session).setAuthenticationMethod(ServerSession.AuthenticationMethod.SASL_EXTERNAL);
+            Log.info("Inbound Server {} authenticated (via TLS)", username);
+        }
         if (usingSASL2) {
             String resource = null;
             if (session instanceof LocalClientSession) {
                 LocalClientSession clientSession = (LocalClientSession) session;
                 Bind2Request bind2Request = (Bind2Request) session.getSessionData("bind2-request");
                 if (bind2Request != null) {
-                    session.setSessionData("bind2-request", null);
                     UserAgentInfo userAgentInfo = (UserAgentInfo) session.getSessionData("user-agent-info");
                     resource = bind2Request.generateResourceString(userAgentInfo);
-                    clientSession.bindResource(resource);
+                    if (clientSession.bindResource(resource) != null) {
+                        // This should always succeed, but defensively let's pretend it might not.
+                        resource = null;
+                        session.setSessionData("bind2-request", null);
+                    }
                 }
             }
 
@@ -689,31 +712,16 @@ public class SASLAuthentication {
             if (resource != null) {
                 Bind2Request bind2Request = (Bind2Request) session.getSessionData("bind2-request");
                 if (bind2Request != null) {
-                    bind2Request.processFeatureRequests(success);
+                    session.setSessionData("bind2-request", null);
+                    bind2Request.processFeatureRequests(session, success);
                 }
             }
             session.deliverRawText(success.asXML());
+            if (resource != null) {
+                SessionEventDispatcher.dispatchEvent(session, SessionEventDispatcher.EventType.resource_bound);
+            }
         } else {
             sendElement(session, "success", successData, usingSASL2);
-        }
-        // We only support SASL for c2s
-        if (session instanceof ClientSession) {
-            final AuthToken authToken;
-            if (username == null) {
-                // AuthzId is null, which indicates that authentication was anonymous.
-                authToken = AuthToken.generateAnonymousToken();
-            } else {
-                authToken = AuthToken.generateUserToken(username);
-            }
-            ((LocalClientSession) session).setAuthToken(authToken);
-        }
-        else if (session instanceof IncomingServerSession) {
-            String hostname = username;
-            // Add the validated domain as a valid domain. The remote server can
-            // now send packets from this address
-            ((LocalIncomingServerSession) session).addValidatedDomain(hostname);
-            ((LocalIncomingServerSession) session).setAuthenticationMethod(ServerSession.AuthenticationMethod.SASL_EXTERNAL);
-            Log.info("Inbound Server {} authenticated (via TLS)", username);
         }
     }
 

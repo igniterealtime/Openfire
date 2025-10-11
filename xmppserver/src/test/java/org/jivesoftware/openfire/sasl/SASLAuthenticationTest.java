@@ -741,7 +741,8 @@ public class SASLAuthenticationTest {
         ArgumentCaptor<String> bindCaptor = ArgumentCaptor.forClass(String.class);
         verify(clientSession).bindResource(bindCaptor.capture());
 
-        Element response = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        String responseString = responseCaptor.getValue();
+        Element response = DocumentHelper.parseText(responseString).getRootElement();
         assertEquals("success", response.getName());
         assertEquals("urn:xmpp:sasl:2", response.getNamespaceURI());
 
@@ -753,7 +754,9 @@ public class SASLAuthenticationTest {
         assertTrue(jid.contains("/"), "Authorization ID should include a resource part");
         assertTrue(jid.contains("MyClient"), "Resource should include client tag");
         assertTrue(jid.endsWith("/" + bindCaptor.getValue()), "Authorization ID should end with the resource");
-        
+
+        Element bound = response.element("bound");
+        assertNotNull(bound, "SASL2 success must include bound element: " + responseString);
         // Verify session state
         verify(clientSession).setAuthToken(any(AuthToken.class));
         assertFalse(clientSession.isAnonymousUser());

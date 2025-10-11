@@ -20,6 +20,8 @@ import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.auth.ScramUtils;
+import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,28 +87,34 @@ public class Bind2Request {
      *
      * @return True if all elements were processed successfully, false if any failed
      */
-    public Element processFeatureRequests(Element successElement) {
-        Element bound = successElement.element(new QName("bound", new Namespace("", NAMESPACE)));
-        
-        for (Element element : featureRequests) {
-            String namespace = element.getNamespaceURI();
-            Bind2InlineHandler handler = elementHandlers.get(namespace);
-            
-            if (handler != null) {
-                try {
-                    if (!handler.handleElement(bound, element)) {
-                        Log.warn("Handler for namespace {} failed to process element", namespace);
+    public Element processFeatureRequests(LocalSession session, Element successElement) {
+        if (session instanceof LocalClientSession) {
+            LocalClientSession clientSession = (LocalClientSession) session;
+            Element bound = successElement.addElement(new QName("bound", new Namespace("", NAMESPACE)));
+
+            for (Element element : featureRequests) {
+                String namespace = element.getNamespaceURI();
+                Bind2InlineHandler handler = elementHandlers.get(namespace);
+
+                if (handler != null) {
+                    try {
+                        if (!handler.handleElement(clientSession, bound, element)) {
+                            Log.warn("Handler for namespace {} failed to process element", namespace);
+                        }
+                    } catch (Exception e) {
+                        Log.error("Error processing element with namespace: " + namespace, e);
                     }
-                } catch (Exception e) {
-                    Log.error("Error processing element with namespace: " + namespace, e);
+                } else {
+                    Log.debug("No handler registered for namespace: {}", namespace);
+                    // We don't fail here because there's no obvious way we could fail.
                 }
-            } else {
-                Log.debug("No handler registered for namespace: {}", namespace);
-                // We don't fail here because there's no obvious way we could fail.
             }
+
+            return bound;
+        } else {
+            Log.debug("Session is not a LocalClientSession, cannot process feature requests");
+            return null;
         }
-        
-        return bound;
     }
 
     public static Element featureElement() {

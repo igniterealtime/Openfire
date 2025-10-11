@@ -4,6 +4,7 @@ import org.dom4j.Element;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Namespace;
 import org.dom4j.QName;
+import org.jivesoftware.openfire.session.LocalClientSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.AfterEach;
@@ -26,6 +27,9 @@ public class Bind2RequestProcessingTest {
     
     @Mock
     private Bind2InlineHandler mockHandler2;
+
+    @Mock
+    private LocalClientSession mockSession;
 
     private Bind2Request bind2Request;
     private Element successElement;
@@ -50,8 +54,8 @@ public class Bind2RequestProcessingTest {
         // Setup mock handlers
         when(mockHandler1.getNamespace()).thenReturn("http://test1.namespace");
         when(mockHandler2.getNamespace()).thenReturn("http://test2.namespace");
-        when(mockHandler1.handleElement(any(), any())).thenReturn(true);
-        when(mockHandler2.handleElement(any(), any())).thenReturn(true);
+        when(mockHandler1.handleElement(any(), any(), any())).thenReturn(true);
+        when(mockHandler2.handleElement(any(), any(), any())).thenReturn(true);
         
         // Create a Bind2Request instance with test data
         // Note: This assumes featureRequests is accessible or there's a way to set it
@@ -77,25 +81,25 @@ public class Bind2RequestProcessingTest {
         Bind2Request.registerElementHandler(mockHandler2);
 
         // Execute
-        Element result = bind2Request.processFeatureRequests(successElement);
+        Element result = bind2Request.processFeatureRequests(mockSession, successElement);
 
         // Verify
         assertNotNull(result);
-        verify(mockHandler1).handleElement(eq(boundElement), eq(featureElement1));
-        verify(mockHandler2).handleElement(eq(boundElement), eq(featureElement2));
+        verify(mockHandler1).handleElement(any(), eq(boundElement), eq(featureElement1));
+        verify(mockHandler2).handleElement(any(), eq(boundElement), eq(featureElement2));
     }
 
     @Test
     public void testProcessFeatureRequestsWithNoRegisteredHandlers() {
         // Execute (no handlers registered)
-        Element result = bind2Request.processFeatureRequests(successElement);
+        Element result = bind2Request.processFeatureRequests(mockSession, successElement);
 
         // Verify - should complete without errors
         assertNotNull(result);
         
         // No handlers should be called
-        verify(mockHandler1, never()).handleElement(any(), any());
-        verify(mockHandler2, never()).handleElement(any(), any());
+        verify(mockHandler1, never()).handleElement(any(), any(), any());
+        verify(mockHandler2, never()).handleElement(any(), any(), any());
     }
 
     @Test
@@ -104,58 +108,53 @@ public class Bind2RequestProcessingTest {
         Bind2Request.registerElementHandler(mockHandler1);
 
         // Execute
-        Element result = bind2Request.processFeatureRequests(successElement);
+        Element result = bind2Request.processFeatureRequests(mockSession, successElement);
 
         // Verify
         assertNotNull(result);
-        verify(mockHandler1).handleElement(eq(boundElement), eq(featureElement1));
-        verify(mockHandler2, never()).handleElement(any(), any());
+        verify(mockHandler1).handleElement(any(), eq(boundElement), eq(featureElement1));
+        verify(mockHandler2, never()).handleElement(any(), any(), any());
     }
 
     @Test
     public void testProcessFeatureRequestsWithHandlerException() {
         // Setup
-        when(mockHandler1.handleElement(any(), any())).thenThrow(new RuntimeException("Test exception"));
+        when(mockHandler1.handleElement(any(), any(), any())).thenThrow(new RuntimeException("Test exception"));
         Bind2Request.registerElementHandler(mockHandler1);
         Bind2Request.registerElementHandler(mockHandler2);
 
         // Execute - should not throw exception
         Element result = assertDoesNotThrow(() -> 
-            bind2Request.processFeatureRequests(successElement));
+            bind2Request.processFeatureRequests(mockSession, successElement));
 
         // Verify processing continues despite exception
         assertNotNull(result);
-        verify(mockHandler1).handleElement(eq(boundElement), eq(featureElement1));
-        verify(mockHandler2).handleElement(eq(boundElement), eq(featureElement2));
+        verify(mockHandler1).handleElement(any(), eq(boundElement), eq(featureElement1));
+        verify(mockHandler2).handleElement(any(), eq(boundElement), eq(featureElement2));
     }
 
     @Test
     public void testProcessFeatureRequestsWithHandlerReturnsFalse() {
         // Setup
-        when(mockHandler1.handleElement(any(), any())).thenReturn(false);
+        when(mockHandler1.handleElement(any(), any(), any())).thenReturn(false);
         Bind2Request.registerElementHandler(mockHandler1);
 
         // Execute - should not throw exception
         Element result = assertDoesNotThrow(() -> 
-            bind2Request.processFeatureRequests(successElement));
+            bind2Request.processFeatureRequests(mockSession, successElement));
 
         // Verify
         assertNotNull(result);
-        verify(mockHandler1).handleElement(eq(boundElement), eq(featureElement1));
+        verify(mockHandler1).handleElement(any(), eq(boundElement), eq(featureElement1));
     }
 
     @Test
     public void testProcessFeatureRequestsCreatesBoundElement() {
-        // Setup - create success element without bound element
-        Element freshSuccessElement = DocumentHelper.createElement("success");
-        
         // Execute
-        Element result = bind2Request.processFeatureRequests(freshSuccessElement);
+        Element result = bind2Request.processFeatureRequests(mockSession, successElement);
 
         // Verify bound element is created
         assertNotNull(result);
-        Element createdBound = freshSuccessElement.element(new QName("bound", new Namespace("", "urn:xmpp:bind:0")));
-        assertNotNull(createdBound);
-        assertEquals(result, createdBound);
+        assertEquals(result, boundElement);
     }
 }

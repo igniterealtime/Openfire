@@ -36,8 +36,8 @@ public class ScramUtils {
 
     private ScramUtils() {}
 
-    public static byte[] createSaltedPassword(byte[] salt, String password, int iters) throws SaslException {
-        Mac mac = createSha1Hmac(password.getBytes(StandardCharsets.UTF_8));
+    public static byte[] createSaltedPassword(byte[] salt, String password, int iters, String algorithm) throws SaslException {
+        Mac mac = createHmac(password.getBytes(StandardCharsets.UTF_8), algorithm);
         mac.update(salt);
         mac.update(new byte[]{0, 0, 0, 1});
         byte[] result = mac.doFinal();
@@ -54,22 +54,40 @@ public class ScramUtils {
         return result;
     }
     
-    public static byte[] computeHmac(final byte[] key, final String string)
+    public static byte[] computeHmac(final byte[] key, final String string, String algorithm)
             throws SaslException {
-        Mac mac = createSha1Hmac(key);
+        Mac mac = createHmac(key, algorithm);
         mac.update(string.getBytes(StandardCharsets.UTF_8));
         return mac.doFinal();
     }
 
-    public static Mac createSha1Hmac(final byte[] keyBytes)
+    public static Mac createHmac(final byte[] keyBytes, String algorithm)
             throws SaslException {
         try {
-            SecretKeySpec key = new SecretKeySpec(keyBytes, "HmacSHA1");
-            Mac mac = Mac.getInstance("HmacSHA1");
+            String hmacAlgorithm = getHmacAlgorithm(algorithm);
+            SecretKeySpec key = new SecretKeySpec(keyBytes, hmacAlgorithm);
+            Mac mac = Mac.getInstance(hmacAlgorithm);
             mac.init(key);
             return mac;
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             throw new SaslException(e.getMessage(), e);
         }
+    }
+    
+    private static String getHmacAlgorithm(String hashAlgorithm) {
+        return "Hmac" + hashAlgorithm.toUpperCase().replace("-", "");
+    }
+
+    // Keep backward compatibility methods for existing SHA-1 usage
+    public static byte[] createSaltedPassword(byte[] salt, String password, int iters) throws SaslException {
+        return createSaltedPassword(salt, password, iters, "SHA-1");
+    }
+    
+    public static byte[] computeHmac(final byte[] key, final String string) throws SaslException {
+        return computeHmac(key, string, "SHA-1");
+    }
+
+    public static Mac createSha1Hmac(final byte[] keyBytes) throws SaslException {
+        return createHmac(keyBytes, "SHA-1");
     }
 }

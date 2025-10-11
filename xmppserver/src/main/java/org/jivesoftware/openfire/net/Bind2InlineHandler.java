@@ -1,6 +1,7 @@
 package org.jivesoftware.openfire.net;
 
 import org.dom4j.Element;
+import org.jivesoftware.openfire.session.LocalClientSession;
 
 /**
  * Interface for plugins that handle inline elements in SASL2 bind2 requests.
@@ -21,5 +22,5 @@ public interface Bind2InlineHandler {
      * @param element The DOM element to process
      * @return true if the element was handled successfully, false otherwise
      */
-    boolean handleElement(Element bound, Element element);
+    boolean handleElement(LocalClientSession session, Element bound, Element element);
 }

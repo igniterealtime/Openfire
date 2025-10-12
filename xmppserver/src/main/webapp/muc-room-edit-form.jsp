@@ -16,28 +16,27 @@
   - limitations under the License.
 --%>
 
-<%@ page import="org.jivesoftware.util.ParamUtils,
-                 org.jivesoftware.util.StringUtils,
-                 org.jivesoftware.util.CookieUtils,
-                 java.util.*,
-                 org.jivesoftware.openfire.muc.MUCRoom,
-                 org.xmpp.forms.*,
-                 org.dom4j.Element,
-                 org.xmpp.packet.IQ,
-                 org.xmpp.packet.Message,
-                 org.xmpp.packet.JID,
-                 gnu.inet.encoding.Stringprep,
+<%@ page import="gnu.inet.encoding.Stringprep,
                  gnu.inet.encoding.StringprepException,
-                 java.net.URLEncoder"
+                 java.net.URLEncoder,
+                 java.nio.charset.StandardCharsets,
+                 java.util.*,
+                 org.dom4j.Element,
+                 org.jivesoftware.openfire.muc.MUCRoom,
+                 org.jivesoftware.openfire.muc.NotAllowedException,
+                 org.jivesoftware.openfire.muc.Role,
+                 org.jivesoftware.openfire.muc.spi.MUCPersistenceManager,
+                 org.jivesoftware.openfire.vcard.VCardBean,
+                 org.jivesoftware.openfire.vcard.VCardManager,
+                 org.jivesoftware.util.CookieUtils,
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.StringUtils,
+                 org.xmpp.forms.*,
+                 org.xmpp.packet.IQ,
+                 org.xmpp.packet.JID,
+                 org.xmpp.packet.Message"
     errorPage="error.jsp"
 %>
-<%@ page import="org.jivesoftware.openfire.muc.NotAllowedException"%>
-<%@ page import="org.jivesoftware.openfire.muc.spi.MUCPersistenceManager" %>
-<%@ page import="org.jivesoftware.openfire.muc.Role" %>
-<%@ page import="java.nio.charset.StandardCharsets" %>
-<%@ page import="org.jivesoftware.openfire.vcard.VCardBean" %>
-<%@ page import="org.jivesoftware.openfire.vcard.VCardManager" %>
-
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>

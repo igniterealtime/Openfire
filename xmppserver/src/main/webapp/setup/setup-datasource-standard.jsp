@@ -15,22 +15,14 @@
   - limitations under the License.
 --%>
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="org.jivesoftware.database.DbConnectionManager,
+<%@ page import="java.time.Duration,
+                 java.util.*,
+                 org.jivesoftware.database.DbConnectionManager,
                  org.jivesoftware.database.DefaultConnectionProvider,
                  org.jivesoftware.openfire.XMPPServer,
-                 java.lang.Double,
-                 java.lang.Exception,
-                 java.lang.Integer,
-                 java.lang.String,
-                 java.lang.Throwable"
+                 org.jivesoftware.util.*,
+                 org.slf4j.LoggerFactory"
 %>
-<%@ page import="java.util.ArrayList"%>
-<%@ page import="java.util.HashMap" %>
-<%@ page import="java.util.List" %>
-<%@ page import="java.util.Map" %>
-<%@ page import="org.jivesoftware.util.*" %>
-<%@ page import="org.slf4j.LoggerFactory" %>
-<%@ page import="java.time.Duration" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>

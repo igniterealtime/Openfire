@@ -270,7 +270,7 @@ function checkSubmit() {
         <label for="driver"><fmt:message key="setup.datasource.standard.jdbc" /></label>
     </td>
     <td>
-        <input type="text" name="driver" id="driver" size="75" maxlength="150" value="${fn:escapeXml(not empty driver ? driver : '')}">
+        <input type="text" name="driver" id="driver" size="75" maxlength="150" value="${fn:escapeXml(driver)}">
         <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.datasource.standard.jdbc_info"/></span></div>
         <c:if test="${not empty errors['driver']}">
             <span class="jive-error-text">
@@ -284,7 +284,7 @@ function checkSubmit() {
         <label for="serverURL"><fmt:message key="setup.datasource.standard.url" /></label>
     </td>
     <td>
-        <input type="text" name="serverURL" id="serverURL" size="75" maxlength="250" value="${not empty serverURL ? fn:escapeXml(serverURL) : ''}">
+        <input type="text" name="serverURL" id="serverURL" size="75" maxlength="250" value="${fn:escapeXml(serverURL)}">
         <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.datasource.standard.valid_url"/></span></div>
         <c:if test="${not empty errors['serverURL']}">
             <span class="jive-error-text">
@@ -299,7 +299,7 @@ function checkSubmit() {
         <label for="username"><fmt:message key="setup.datasource.standard.username" /></label>
     </td>
     <td>
-        <input type="text" name="username" id="username" size="20" maxlength="50" value="${fn:escapeXml(not empty username ? username : '')}">
+        <input type="text" name="username" id="username" size="20" maxlength="50" value="${fn:escapeXml(username)}">
         <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.datasource.standard.username_info"/></span></div>
         <c:if test="${not empty errors['username']}">
             <span class="jive-error-text">
@@ -313,7 +313,7 @@ function checkSubmit() {
         <label for="password"><fmt:message key="setup.datasource.standard.password" /></label>
     </td>
     <td>
-        <input type="password" name="password" id="password" size="20" maxlength="50" value="${fn:escapeXml(not empty password ? password : '')}">
+        <input type="password" name="password" id="password" size="20" maxlength="50" value="${fn:escapeXml(password)}">
         <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.datasource.standard.password_info"/></span></div>
         <c:if test="${not empty errors['password']}">
             <span class="jive-error-text">
@@ -356,7 +356,7 @@ function checkSubmit() {
         <label for="connectionTimeout"><fmt:message key="setup.datasource.standard.timeout" /></label>
     </td>
     <td>
-        <input type="text" name="connectionTimeout" id="connectionTimeout" size="5" maxlength="5" value="${fn:escapeXml(not empty connectionTimeout ? connectionTimeout : '')}"> <span style="display: block; float: left; padding: 2px 5px 0px 2px;"><fmt:message key="setup.datasource.standard.timeout.days" /></span>
+        <input type="text" name="connectionTimeout" id="connectionTimeout" size="5" maxlength="5" value="${fn:escapeXml(connectionTimeout)}"> <span style="display: block; float: left; padding: 2px 5px 0px 2px;"><fmt:message key="setup.datasource.standard.timeout.days" /></span>
         <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.datasource.standard.timeout_info"/></span></div>
         <c:if test="${not empty errors['connectionTimeout']}">
             <span class="jive-error-text">

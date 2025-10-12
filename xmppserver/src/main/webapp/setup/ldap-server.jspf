@@ -389,7 +389,7 @@
             </tr>
             <tr>
                 <td align="right" style="width: 1%; white-space: nowrap"><label for="jiveLDAPadminpwd"><fmt:message key="setup.ldap.server.password" />:</label></td>
-                <td colspan="3"><input type="password" name="adminpwd" id="jiveLDAPadminpwd" size="22" maxlength="300" value="${not empty adminPassword ? fn:escapeXml(adminPassword) : ''}"> <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.ldap.server.password_help"/></span></div></td>
+                <td colspan="3"><input type="password" name="adminpwd" id="jiveLDAPadminpwd" size="22" maxlength="300" value="${fn:escapeXml(adminPassword)}"> <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.ldap.server.password_help"/></span></div></td>
             </tr>
             </table>
         </div>
@@ -479,7 +479,7 @@
                         <fmt:message key="setup.ldap.server.alternatebasedn" />
                     </td>
                     <td class="jive-advancedBorderBottom" colspan="2" style="text-align: center">
-                        <input type="text" name="alternatebasedn" value="${empty alternateBaseDN ? '' : fn:escapeXml(alternateBaseDN)}">
+                        <input type="text" name="alternatebasedn" value="${fn:escapeXml(alternateBaseDN)}">
                     </td>
                 </tr>
 

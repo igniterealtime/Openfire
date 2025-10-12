@@ -156,7 +156,7 @@
 <c:choose>
     <c:when test="${isLookupNames}">
         <label for="jndiName">fmt:message key="setup.datasource.jndi.name" /></label>
-        <input type="text" name="jndiName" id="jndiName" size="30" maxlength="100" value="${not empty jndiName ? fn:escapeXml(jndiName) : ''}" autofocus>
+        <input type="text" name="jndiName" id="jndiName" size="30" maxlength="100" value="${fn:escapeXml(jndiName)}" autofocus>
     </c:when>
     <c:otherwise>
 
@@ -166,7 +166,7 @@
         <td>
             <label for="jndiName"><fmt:message key="setup.datasource.jndi.custom" /></label>
             &nbsp;
-            <input type="text" name="jndiName" id="jndiName" size="30" maxlength="100" value="${not empty jndiName ? fn:escapeXml(jndiName) : ''}">
+            <input type="text" name="jndiName" id="jndiName" size="30" maxlength="100" value="${fn:escapeXml(jndiName)}">
             <c:if test="${not empty errors['jndiName']}">
                 <span class="jive-error-text"><br>
                     <fmt:message key="setup.datasource.jndi.valid_name" />

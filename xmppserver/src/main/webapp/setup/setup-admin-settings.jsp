@@ -372,7 +372,7 @@ function checkClick() {
                 </td>
                 <td>
                     <input type="password" name="password" id="password" size="20" maxlength="50"
-                     value="${not empty password ? fn:escapeXml(password) : ''}"><br>
+                     value="${fn:escapeXml(password)}"><br>
 
                     <c:choose>
                         <c:when test="${not empty errors['password']}">
@@ -436,7 +436,7 @@ function checkClick() {
     </td>
     <td>
         <input type="password" name="newPassword" id="newPassword" size="20" maxlength="50"
-         value="${not empty newPassword ? fn:escapeXml(newPassword) : ''}"><br>
+         value="${fn:escapeXml(newPassword)}"><br>
 
         <c:choose>
             <c:when test="${not empty errors['newPassword']}">
@@ -458,7 +458,7 @@ function checkClick() {
     </td>
     <td>
         <input type="password" name="newPasswordConfirm" id="newPasswordConfirm" size="20" maxlength="50"
-         value="${not empty newPasswordConfirm ? fn:escapeXml(newPasswordConfirm) : ''}"><br>
+         value="${fn:escapeXml(newPasswordConfirm)}"><br>
         <c:if test="${not empty errors['newPasswordConfirm']}">
             <span class="jive-error-text">
                 <fmt:message key="setup.admin.settings.valid_confirm" />
@@ -540,7 +540,7 @@ document.acctform.newPassword.focus();
             <label for="administrator"><fmt:message key="setup.admin.settings.add.administrator" />:</label>
         </td>
         <td>
-            <input type="text" name="administrator" id="administrator" size="20" maxlength="50" value="${not empty xmppSettings['provider.group.groupBasedAdminProvider.groupName'] ? fn:escapeXml(xmppSettings['provider.group.groupBasedAdminProvider.groupName']) : ''}"/>
+            <input type="text" name="administrator" id="administrator" size="20" maxlength="50" value="${fn:escapeXml(xmppSettings['provider.group.groupBasedAdminProvider.groupName'])}"/>
         </td>
     </tr>
     <tr>

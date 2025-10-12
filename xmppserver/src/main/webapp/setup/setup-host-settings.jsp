@@ -223,7 +223,7 @@
         <label for="domain"><fmt:message key="setup.host.settings.domain" /></label>
     </td>
     <td>
-        <input type="text" size="30" maxlength="150" name="domain" id="domain" value="${not empty domain ? fn:escapeXml(domain) : ''}" autofocus>
+        <input type="text" size="30" maxlength="150" name="domain" id="domain" value="${fn:escapeXml(domain)}" autofocus>
         <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.host.settings.domain.help" /></span></div>
         <c:if test="${not empty errors['domain']}">
             <span class="jive-error-text">
@@ -237,7 +237,7 @@
         <label for="fqdn"><fmt:message key="setup.host.settings.fqdn" /></label>
     </td>
     <td>
-        <input type="text" size="30" maxlength="150" name="fqdn" id="fqdn" value="${not empty fqdn ? fn:escapeXml(fqdn) : ''}">
+        <input type="text" size="30" maxlength="150" name="fqdn" id="fqdn" value="${fn:escapeXml(fqdn)}">
         <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="setup.host.settings.fqdn.help" /></span></div>
         <c:if test="${not empty errors['fqdn']}">
         <span class="jive-error-text">

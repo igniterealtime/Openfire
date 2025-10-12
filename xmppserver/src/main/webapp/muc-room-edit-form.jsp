@@ -648,15 +648,15 @@
                     </tr>
                     <tr>
                         <td><label for="roomconfig_roomname"><fmt:message key="muc.room.edit.form.room_name" /></label>: *</td>
-                        <td><input type="text" name="roomconfig_roomname" id="roomconfig_roomname" value="${empty naturalName ? "" : fn:escapeXml(naturalName)}"></td>
+                        <td><input type="text" name="roomconfig_roomname" id="roomconfig_roomname" value="${fn:escapeXml(naturalName)}"></td>
                     </tr>
                     <tr>
                         <td><label for="roomconfig_roomdesc"><fmt:message key="muc.room.edit.form.description" /></label>:  *</td>
-                        <td><input name="roomconfig_roomdesc" id="roomconfig_roomdesc" value="${empty description ? "" : fn:escapeXml(description)}" type="text" size="40"></td>
+                        <td><input name="roomconfig_roomdesc" id="roomconfig_roomdesc" value="${fn:escapeXml(description)}" type="text" size="40"></td>
                     </tr>
                     <tr>
                         <td><label for="room_topic"><fmt:message key="muc.room.edit.form.topic" /></label>:</td>
-                        <td><input name="room_topic" id="room_topic" value="${empty roomSubject ? "" : fn:escapeXml(roomSubject)}" type="text" size="40"></td>
+                        <td><input name="room_topic" id="room_topic" value="${fn:escapeXml(roomSubject)}" type="text" size="40"></td>
                     </tr>
                     <tr>
                         <td><label for="roomconfig_maxusers"><fmt:message key="muc.room.edit.form.max_room" /></label>:</td>

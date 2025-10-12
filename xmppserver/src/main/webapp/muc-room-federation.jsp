@@ -266,7 +266,7 @@
         </tr>
         <tr>
             <td><label for="roomconfig_fmuc_outbound_jid"><fmt:message key="muc.room.federation.form.outbound_jid" /></label>:</td>
-            <td><input name="roomconfig_fmuc_outbound_jid" id="roomconfig_fmuc_outbound_jid" value="${empty fmucOutboundJID ? "" : fn:escapeXml(fmucOutboundJID)}" type="text" size="40"></td>
+            <td><input name="roomconfig_fmuc_outbound_jid" id="roomconfig_fmuc_outbound_jid" value="${fn:escapeXml(fmucOutboundJID)}" type="text" size="40"></td>
         </tr>
     </table>
 

@@ -18,25 +18,25 @@
 <%--
 --%>
 
-<%@ page import="org.jivesoftware.openfire.XMPPServer,
+<%@ page import="java.net.URLDecoder,
+                 java.util.*,
+                 java.util.stream.Collectors,
+                 javax.servlet.http.HttpSession,
+                 org.jivesoftware.openfire.XMPPServer,
+                 org.jivesoftware.openfire.XMPPServerInfo,
+                 org.jivesoftware.openfire.admin.GroupBasedAdminProvider,
                  org.jivesoftware.openfire.auth.AuthFactory,
+                 org.jivesoftware.openfire.auth.UnauthorizedException,
+                 org.jivesoftware.openfire.ldap.LdapGroupProvider,
                  org.jivesoftware.openfire.ldap.LdapManager,
                  org.jivesoftware.openfire.user.User,
                  org.jivesoftware.openfire.user.UserManager,
+                 org.jivesoftware.util.CookieUtils,
                  org.jivesoftware.util.JiveGlobals,
-                 org.jivesoftware.util.ParamUtils" %>
-<%@ page import="org.jivesoftware.util.StringUtils"%>
-<%@ page import="org.xmpp.packet.JID"%>
-<%@ page import="javax.servlet.http.HttpSession" %>
-<%@ page import="java.util.*" %>
-<%@ page import="org.jivesoftware.openfire.auth.UnauthorizedException" %>
-<%@ page import="org.jivesoftware.openfire.XMPPServerInfo" %>
-<%@ page import="java.util.stream.Collectors" %>
-<%@ page import="org.jivesoftware.util.CookieUtils" %>
-<%@ page import="java.net.URLDecoder" %>
-<%@ page import="org.jivesoftware.openfire.ldap.LdapGroupProvider" %>
-<%@ page import="org.jivesoftware.openfire.admin.GroupBasedAdminProvider" %>
-
+                 org.jivesoftware.util.ParamUtils,
+                 org.jivesoftware.util.StringUtils,
+                 org.xmpp.packet.JID"
+%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>

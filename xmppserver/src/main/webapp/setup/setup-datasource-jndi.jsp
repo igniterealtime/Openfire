@@ -15,16 +15,16 @@
   - limitations under the License.
 --%>
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@ page import="org.jivesoftware.database.DbConnectionManager,
+<%@ page import="java.util.*,
+                 javax.naming.Binding,
+                 javax.naming.Context,
+                 javax.naming.InitialContext,
+                 javax.naming.NamingEnumeration,
+                 org.jivesoftware.database.DbConnectionManager,
                  org.jivesoftware.database.JNDIDataSourceProvider,
                  org.jivesoftware.openfire.XMPPServer,
-                 javax.naming.Binding,
-                 javax.naming.Context" %>
-<%@ page import="javax.naming.InitialContext"%>
-<%@ page import="javax.naming.NamingEnumeration"%>
-<%@ page import="java.util.HashMap"%>
-<%@ page import="java.util.Map"%>
-<%@ page import="org.jivesoftware.util.*" %>
+                 org.jivesoftware.util.*"
+%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>

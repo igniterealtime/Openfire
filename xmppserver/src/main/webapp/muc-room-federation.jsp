@@ -16,21 +16,19 @@
   - limitations under the License.
 --%>
 
-<%@ page import="org.jivesoftware.openfire.muc.MUCRoom,
+<%@ page import="java.net.URLEncoder,
+                 java.nio.charset.StandardCharsets,
+                 java.util.*,
+                 org.jivesoftware.openfire.muc.MUCRoom,
                  org.jivesoftware.openfire.muc.spi.FMUCHandler,
                  org.jivesoftware.openfire.muc.spi.FMUCMode,
                  org.jivesoftware.util.CookieUtils,
                  org.jivesoftware.util.ParamUtils,
                  org.jivesoftware.util.StringUtils,
-                 org.slf4j.LoggerFactory"
+                 org.slf4j.LoggerFactory,
+                 org.xmpp.packet.JID"
          errorPage="error.jsp"
 %>
-<%@ page import="org.xmpp.packet.JID" %>
-<%@ page import="java.net.URLEncoder" %>
-<%@ page import="java.util.HashMap" %>
-<%@ page import="java.util.Map" %>
-<%@ page import="java.nio.charset.StandardCharsets" %>
-
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>

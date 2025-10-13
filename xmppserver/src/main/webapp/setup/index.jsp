@@ -305,14 +305,7 @@
 
                 <form action="index.jsp" name="sform">
                     <input type="hidden" name="csrf" value="${csrf}">
-                    <%  boolean usingPreset = false;
-                        Locale[] locales = Locale.getAvailableLocales();
-                        for ( final Locale value : locales ) {
-                            usingPreset = value.equals( locale );
-                            if ( usingPreset ) { break; }
-                        }
-
-                        pageContext.setAttribute( "usingPreset", usingPreset );
+                    <%
                         pageContext.setAttribute( "locale", locale.toString() );
                     %>
                     <div id="jive-setup-language">

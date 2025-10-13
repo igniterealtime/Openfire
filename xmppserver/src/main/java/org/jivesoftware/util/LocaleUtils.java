@@ -239,6 +239,36 @@ public class LocaleUtils {
         nameMap.put(timeZoneIds[74], "Nuku'alofa");
     }
 
+    private static final Map<String, String> supportedLocales = new LinkedHashMap<>(20);
+    static {
+        supportedLocales.put("cs_CZ", "Czech");
+        supportedLocales.put("de", "Deutsch");
+        supportedLocales.put("en", "English");
+        supportedLocales.put("es", "Español");
+        supportedLocales.put("fa_IR", "فارسی");
+        supportedLocales.put("fr", "Français");
+        supportedLocales.put("he", "עברית");
+        supportedLocales.put("it_IT", "Italiano");
+        supportedLocales.put("ja_JP", "日本語");
+        supportedLocales.put("nl", "Nederlands");
+        supportedLocales.put("pl_PL", "Polski");
+        supportedLocales.put("pt_PT", "Português Portugal");
+        supportedLocales.put("pt_BR", "Português Brasileiro");
+        supportedLocales.put("ru_RU", "Русский");
+        supportedLocales.put("sk", "Slovenčina");
+        supportedLocales.put("sv", "Svenska");
+        supportedLocales.put("tr_TR", "Türkçe");
+        supportedLocales.put("uk_UA", "Українська");
+        supportedLocales.put("zh_CN", "中文简体");
+    }
+
+    /**
+     * Get list of locales (code: name) that the web admin has translations for.
+     */
+    public static Map<String, String> getSupportedLocales() {
+        return supportedLocales;
+    }
+
     /**
      * Returns a list of all available time zone's as a String [][]. The first
      * entry in each list item is the timeZoneID, and the second is the

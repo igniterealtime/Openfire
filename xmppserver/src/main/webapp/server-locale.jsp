@@ -276,11 +276,8 @@
                 <td>
                     <input type="radio" name="localeCode" value="zh_CN" <%= ("zh_CN".equals(locale.toString()) ? "checked" : "") %> id="zh_CN" />
                 </td>
-                <td>
-                    <a href="#" onclick="document.sform.localeCode[1].checked=true; return false;"><img src="images/language_zh_CN.gif" alt="" /></a>
-                </td>
-                <td>
-                    <label for="zh_CN">Simplified Chinese (zh_CN)</label>
+                <td colspan="2">
+                    <label for="zh_CN">中文简体 (zh_CN)</label>
                 </td>
             </tr>
         </tbody>

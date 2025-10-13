@@ -124,16 +124,6 @@
             <%= LocaleUtils.getTimeZoneName(JiveGlobals.getTimeZone().getID(), locale) %>
         </p>
 
-        <%  boolean usingPreset;
-            Locale[] locales = Locale.getAvailableLocales();
-            for (Locale locale1 : locales) {
-                usingPreset = locale1.equals(locale);
-                if (usingPreset) {
-                    break;
-                }
-            }
-        %>
-
         <p><b><fmt:message key="language.choose" />:</b></p>
 
         <table>

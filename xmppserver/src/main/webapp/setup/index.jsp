@@ -400,8 +400,7 @@
 
                             <label for="zh_CN">
                                 <input type="radio" name="localeCode" value="zh_CN" ${locale eq 'zh_CN' ? 'checked' : ''} id="zh_CN" />
-                                <img src="../images/setup_language_zh_CN.gif" align="top" />
-                                <b>Simplified Chinese</b> (zh_CN)
+                                <b>中文简体</b> (zh_CN)
                             </label><br>
                         </p>
                     </div>

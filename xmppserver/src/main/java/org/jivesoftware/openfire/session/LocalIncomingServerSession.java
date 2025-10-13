@@ -433,7 +433,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         }
         
         // Offer server dialback if using self-signed certificates and no authentication has been done yet
-        // Also offer dialback if xmpp.socket.ssl.dialback-offer is true        
+        // Also offer dialback if xmpp.server.dialback.offer is true        
         boolean usingSelfSigned;
         final Certificate[] chain = conn.getLocalCertificates();
         if (chain == null || chain.length == 0) {
@@ -443,7 +443,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         }
 
         boolean offerDialback;
-        String property = JiveGlobals.getProperty("xmpp.socket.ssl.dialback-offer");
+        String property = JiveGlobals.getProperty("xmpp.server.dialback.offer");
         if (property == null) {
             offerDialback = false;
         } else {

@@ -107,8 +107,8 @@
         final boolean verifyCertificateValidity = ParamUtils.getBooleanParameter( request, "verify-certificate-validity" );
         final boolean verifyCertificateRevocation = ParamUtils.getBooleanParameter( request, "verify-certificate-revocation" );
         final boolean strictCertificateValidation = ParamUtils.getBooleanParameter( request, "strict-certificate-validation" );
-        final boolean dialbackEnabled = ParamUtils.getBooleanParameter( request, "dialback-enabled" );
-        final boolean dialbackOffer = ParamUtils.getBooleanParameter( request, "dialback-offer" );
+
+
 
         // Apply new configuration
         final ConnectionListener listener = manager.getListener( connectionType, startInSslMode );
@@ -125,8 +125,6 @@
         listener.setVerifyCertificateValidity( verifyCertificateValidity );
         listener.setVerifyCertificateRevocation( verifyCertificateRevocation );
         listener.setStrictCertificateValidation( strictCertificateValidation );
-        listener.setDialbackEnabled( dialbackEnabled );
-        listener.setDialbackOffer( dialbackOffer );
 
         // Log the event
         webManager.logEvent( "Updated connection settings for " + connectionType + " (mode: " + connectionModeParam + ")", configuration.toString() );
@@ -245,12 +243,6 @@
     </admin:infoBox>
 </c:if>
 
-<c:if test="${configuration.clientAuth.name() eq 'disabled' && !configuration.dialbackEnabled}">
-    <admin:infobox type="info">
-        <fmt:message key="connection.advanced.settings.clientauth.mutualauth.warning" />
-    </admin:infobox>
-</c:if>
-
 <c:if test="${configuration.verifyCertificateRevocation && !configuration.ocspEnabled}">
     <admin:infobox type="info">
         <fmt:message key="connection.advanced.settings.certchain.ocsp.warning" />
@@ -340,18 +332,6 @@
                     <td>
                         <input type="checkbox" name="strict-certificate-validation" id="strict-certificate-validation" ${configuration.strictCertificateValidation ? 'checked' : ''}/>
                         <label for="strict-certificate-validation"><fmt:message key="connection.advanced.settings.clientauth.label_strict_cert_validation"/></label>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <input type="checkbox" name="dialback-enabled" id="dialback-enabled" ${configuration.dialbackEnabled ? 'checked' : ''}/>
-                        <label for="dialback-enabled"><fmt:message key="connection.advanced.settings.clientauth.label_dialback_enabled"/></label>
-                    </td>
-                </tr>
-                <tr>
-                    <td>
-                        <input type="checkbox" name="dialback-offer" id="dialback-offer" ${configuration.dialbackOffer ? 'checked' : ''}/>
-                        <label for="dialback-offer"><fmt:message key="connection.advanced.settings.clientauth.label_dialback_offer"/></label>
                     </td>
                 </tr>
             </c:if>

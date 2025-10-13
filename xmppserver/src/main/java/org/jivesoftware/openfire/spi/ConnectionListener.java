@@ -293,9 +293,7 @@ public class ConnectionListener
                 getEncryptionProtocols(),
                 getEncryptionCipherSuites(),
                 getCompressionPolicy(),
-                getStrictCertificateValidation(),
-                getDialbackEnabled(),
-                getDialbackOffer()
+                getStrictCertificateValidation()
         );
     }
 
@@ -1054,82 +1052,6 @@ public class ConnectionListener
         Log.debug( "Changing cipher suite configuration from '{}' to '{}'.", oldValue, newValue );
         restart();
     }
-
-    /**
-     * Defines whether dialback should be offered, even if SASL fails.
-     *
-     * @param dialbackOffer true to offer dialback
-     */
-    public void setDialbackOffer(boolean dialbackOffer) {
-        final boolean oldValue = getDialbackOffer();
-
-        // Always set the property explicitly even if it appears the equal to the old value (the old value might be a fallback value).
-        JiveGlobals.setProperty( type.getPrefix() +  "dialback-offer", Boolean.toString( dialbackOffer ) );
-
-        if ( oldValue == dialbackOffer ) {
-            Log.debug( "Ignoring dialback offer configuration change request (to '{}'): listener already in this state.", dialbackOffer );
-            return;
-        }
-
-        Log.debug( "Changing dialback offer configuration from '{}' to '{}'.", oldValue, dialbackOffer );
-        restart();
-    }
-
-    /**
-     * Defines whether dialback should be offered, even if SASL fails.
-     *
-     * @return true will lead to dialback offer
-     */
-    private boolean getDialbackOffer() {
-        final String propertyName = type.getPrefix() + "dialback-offer";
-        final boolean defaultValue = false;
-
-        if ( type.getFallback() == null ) {
-            return JiveGlobals.getBooleanProperty( propertyName, defaultValue );
-        }
-        else {
-            return JiveGlobals.getBooleanProperty( propertyName, getConnectionListener( type.getFallback() ).getDialbackOffer() );
-        }
-    }
-
-
-    /**
-     * Defines whether dialback should be enabled
-     *
-     * @param dialbackEnabled true to offer dialback
-     */
-    public void setDialbackEnabled(boolean dialbackEnabled) {
-        final boolean oldValue = getDialbackEnabled();
-
-        // Always set the property explicitly even if it appears the equal to the old value (the old value might be a fallback value).
-        JiveGlobals.setProperty( "xmpp.server.dialback.enabled", Boolean.toString( dialbackEnabled ) );
-
-        if ( oldValue == dialbackEnabled ) {
-            Log.debug( "Ignoring dialback enabled configuration change request (to '{}'): listener already in this state.", dialbackEnabled );
-            return;
-        }
-
-        Log.debug( "Changing dialback enabled configuration from '{}' to '{}'.", oldValue, dialbackEnabled );
-        restart();
-    }
-
-    /**
-     * Defines whether dialback should be enabled
-     * 
-     * @return true will enable dialback 
-     */
-    private boolean getDialbackEnabled() {
-        final String propertyName = "xmpp.server.dialback.enabled";
-        final boolean defaultValue = true;
-
-        if ( type.getFallback() == null ) {
-            return JiveGlobals.getBooleanProperty( propertyName, defaultValue );
-        }
-        else {
-            return JiveGlobals.getBooleanProperty( propertyName, getConnectionListener( type.getFallback() ).getDialbackEnabled() );
-        }
-    }
-
 
     /**
      * Defines whether a connection should be aborted if certificate validation fails.

@@ -106,7 +106,6 @@ public final class ConnectionSettings {
         public static final String QUEUE_SIZE = "xmpp.server.outgoing.queue";
 
         public static final String DIALBACK_ENABLED = "xmpp.server.dialback.enabled";
-        public static final String DIALBACK_OFFER = "xmpp.socket.ssl.dialback-offer";
         public static final String TLS_POLICY = "xmpp.server.tls.policy";
 
         public static final String TLS_ACCEPT_SELFSIGNED_CERTS = "xmpp.server.certificate.accept-selfsigned";

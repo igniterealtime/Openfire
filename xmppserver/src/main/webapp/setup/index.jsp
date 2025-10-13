@@ -132,6 +132,7 @@
     }
 
     Locale locale = JiveGlobals.getLocale();
+    pageContext.setAttribute( "locale", locale.toString() );
     pageContext.setAttribute( "localizedTitle", LocaleUtils.getLocalizedString("title") );
     pageContext.setAttribute( "errors", errors );
 %>
@@ -305,9 +306,6 @@
 
                 <form action="index.jsp" name="sform">
                     <input type="hidden" name="csrf" value="${csrf}">
-                    <%
-                        pageContext.setAttribute( "locale", locale.toString() );
-                    %>
                     <div id="jive-setup-language">
                         <p>
                             <label for="cs_CZ">

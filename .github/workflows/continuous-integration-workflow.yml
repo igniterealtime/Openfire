@@ -261,7 +261,7 @@ jobs:
         with:
           logLevel: debug
       - name: Run XMPP Interop Testing Framework tests against server
-        uses: XMPP-Interop-Testing/xmpp-interop-tests-action@main # TODO replace 'main' with a proper versioned tag, like 'v1'.
+        uses: XMPP-Interop-Testing/xmpp-interop-tests-action@v1.7.2
         with:
           domain: 'example.org'
           adminAccountUsername: 'admin'

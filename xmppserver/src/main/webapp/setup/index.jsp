@@ -130,8 +130,7 @@
     }
 
     pageContext.setAttribute( "locales", LocaleUtils.getSupportedLocales() );
-    Locale locale = JiveGlobals.getLocale();
-    pageContext.setAttribute( "locale", locale.toString() );
+    pageContext.setAttribute( "locale", LocaleUtils.bestMatchingSupportedLocale(request.getLocales()) );
     pageContext.setAttribute( "localizedTitle", LocaleUtils.getLocalizedString("title") );
     pageContext.setAttribute( "errors", errors );
 %>

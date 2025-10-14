@@ -270,6 +270,45 @@ public class LocaleUtils {
     }
 
     /**
+     * Find the preferred locale from user browser from list of supported.
+     */
+    public static String bestMatchingSupportedLocale(Enumeration<Locale> requestLocales) {
+        Map<String, String> supportedLocalesByLang = null; // cs: cs_CZ, pt: pt_PT etc.
+        while (requestLocales.hasMoreElements()) {
+            Locale reqLocale = requestLocales.nextElement();
+            String language = reqLocale.getLanguage();
+            String country = reqLocale.getCountry();
+            // First try an exact language + country match
+            if (!country.isEmpty()) {
+                String exactLocaleCode = language + "_" + country;
+                if (supportedLocales.containsKey(exactLocaleCode)) {
+                    return exactLocaleCode;
+                }
+            }
+            // Then fall back to a language-only match.
+            if (supportedLocales.containsKey(language)) {
+                return language;
+            }
+            // lazy init supportedLocalesByLang
+            if (supportedLocalesByLang == null) {
+                supportedLocalesByLang = new HashMap<>();
+                for (String supportedLocale : supportedLocales.keySet()) {
+                    String[] parts = supportedLocale.split("_");
+                    if (parts.length == 2) {
+                        supportedLocalesByLang.putIfAbsent(parts[0], supportedLocale);
+                    }
+                }
+            }
+            String localeCode = supportedLocalesByLang.get(language);
+            if (localeCode != null) {
+                return localeCode;
+            }
+        }
+        // if no match then take server default locale
+        return JiveGlobals.getLocale().toString();
+    }
+
+    /**
      * Returns a list of all available time zone's as a String [][]. The first
      * entry in each list item is the timeZoneID, and the second is the
      * display name.

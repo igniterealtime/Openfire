@@ -27,6 +27,8 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static org.apache.commons.lang3.StringUtils.substringBefore;
+
 /**
  * A set of methods for retrieving and converting locale specific strings and numbers.
  *
@@ -267,6 +269,42 @@ public class LocaleUtils {
      */
     public static Map<String, String> getSupportedLocales() {
         return supportedLocales;
+    }
+
+    /**
+     * Find the preferred locale from user browser from list of supported.
+     */
+    public static String bestMatchingSupportedLocale(Enumeration<Locale> requestLocales) {
+        // build lang codes haystack "pt_BR pt_PT pt_ "
+        String localesList = "";
+        while (requestLocales.hasMoreElements()){
+            Locale locale = requestLocales.nextElement();
+            localesList += locale.getLanguage() + "_" + locale.getCountry() + " ";
+        }
+        int bestMatchPos = Integer.MAX_VALUE;
+        String matchedLocale = null;
+        for (Map.Entry<String, String> entry : supportedLocales.entrySet()) {
+            // first match by lang and country, if no then try to match by only language
+            String localeCode = entry.getKey(); // e.g. pt_BR
+            int matchPos = localesList.indexOf(localeCode + " ");
+            if (matchPos < 0) {
+                // match by lang only i.e, no country
+                String lang = substringBefore(localeCode, "_");
+                matchPos = localesList.indexOf(lang + "_ ");
+                if (matchPos < 0) {
+                    continue;
+                }
+            }
+            if (matchPos < bestMatchPos) {
+                bestMatchPos = matchPos;
+                matchedLocale = localeCode;
+            }
+        }
+        if (matchedLocale != null) {
+            return matchedLocale;
+        }
+        // if no match then take server default locale
+        return JiveGlobals.getLocale().toString();
     }
 
     /**

@@ -161,7 +161,7 @@ public class LocaleUtils {
     };
 
     // A mapping from the supported timezone ids to friendly english names.
-    private static final Map<String, String> nameMap = new HashMap<>();
+    private static final Map<String, String> nameMap = new HashMap<>(75);
 
     static {
         nameMap.put(timeZoneIds[0], "International Date Line West");
@@ -423,7 +423,7 @@ public class LocaleUtils {
         // This is obviously not something that's re-usable outside of Openfire. However, this includes all languages
         // for which we provide translations.
         String language = JiveGlobals.getLocale().getLanguage();
-        return language.equals(new Locale("he").getLanguage()) || language.equals(new Locale("fa").getLanguage());
+        return language.equals("he") || language.equals("fa");
     }
 
 

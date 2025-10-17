@@ -144,6 +144,9 @@
                     <c:when test="${componentSession.externalComponent.type eq 'icq'}">
                         <img src="images/icq.gif" alt="ICQ">&nbsp;
                     </c:when>
+                    <c:when test="${componentSession.externalComponent.type eq 'irc'}">
+                        <img src="images/irc.gif" alt="IRC">&nbsp;
+                    </c:when>
                 </c:choose>
             </c:if>
             <c:out value="${componentSession.externalComponent.type}"/>

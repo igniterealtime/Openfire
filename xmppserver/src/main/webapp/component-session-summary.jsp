@@ -216,17 +216,8 @@
             <table>
             <tr style="text-align: center">
             <% if ("gateway".equals(componentSession.getExternalComponent().getCategory())) {
-                if ("msn".equals(componentSession.getExternalComponent().getType())) { %>
-                <td><img src="images/msn.gif" alt="MSN"></td>
-             <% }
-                else if ("aim".equals(componentSession.getExternalComponent().getType())) { %>
+                if ("aim".equals(componentSession.getExternalComponent().getType())) { %>
                 <td><img src="images/aim.gif" alt="AIM"></td>
-             <% }
-                else if ("yahoo".equals(componentSession.getExternalComponent().getType())) { %>
-                <td><img src="images/yahoo.gif" alt="Yahoo!"></td>
-             <% }
-                else if ("icq".equals(componentSession.getExternalComponent().getType())) { %>
-                <td><img src="images/icq.gif" alt="ICQ"></td>
              <% }
                 else if ("irc".equals(componentSession.getExternalComponent().getType())) { %>
                 <td><img src="images/irc.gif" alt="IRC"></td>

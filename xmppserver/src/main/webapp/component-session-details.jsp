@@ -132,17 +132,8 @@
         <td>
             <c:if test="${componentSession.externalComponent.category eq 'gateway'}">
                 <c:choose>
-                    <c:when test="${componentSession.externalComponent.type eq 'msn'}">
-                        <img src="images/msn.gif" alt="MSN">&nbsp;
-                    </c:when>
                     <c:when test="${componentSession.externalComponent.type eq 'aim'}">
                         <img src="images/aim.gif" alt="AIM">&nbsp;
-                    </c:when>
-                    <c:when test="${componentSession.externalComponent.type eq 'yahoo'}">
-                        <img src="images/yahoo.gif" alt="Yahoo!">&nbsp;
-                    </c:when>
-                    <c:when test="${componentSession.externalComponent.type eq 'icq'}">
-                        <img src="images/icq.gif" alt="ICQ">&nbsp;
                     </c:when>
                     <c:when test="${componentSession.externalComponent.type eq 'irc'}">
                         <img src="images/irc.gif" alt="IRC">&nbsp;

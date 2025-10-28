@@ -204,7 +204,7 @@ CREATE TABLE ofMucRoom (
   logEnabled          INT           NOT NULL,
   retireOnDeletion    INT           NOT NULL,
   preserveHistOnDel   INT           NOT NULL,
-  subject             NVARCHAR(100) NULL,
+  subject             TEXT          NULL,
   rolesToBroadcast    INT           NOT NULL,
   useReservedNick     INT           NOT NULL,
   canChangeNick       INT           NOT NULL,
@@ -394,4 +394,4 @@ INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modifica
 INSERT INTO ofMucService (serviceID, subdomain, isHidden) VALUES (1, 'conference', 0)
 
 /* Do this last, as it is used by a continuous integration check to verify that the entire script was executed successfully. */
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 37)
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 38)

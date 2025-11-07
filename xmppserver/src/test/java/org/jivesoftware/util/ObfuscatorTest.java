@@ -89,4 +89,28 @@ public class ObfuscatorTest {
 
         assertNull(deobfuscated, "Deobfuscating null should return null");
     }
+
+    /**
+     * Tests that Obfuscator can deobfuscate values encrypted by AesEncryptor
+     * with hardcoded IV (backward compatibility).
+     * This is important for reading security.xml files from older Openfire versions.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3074">OF-3074: Prevent hardcoded IV when encrypting parameters</a>
+     */
+    @Test
+    @SuppressWarnings("deprecation")
+    public void testBackwardCompatibilityWithAesEncryptor() {
+        String plaintext = "test-encryption-key-123";
+
+        // Encrypt with deprecated AesEncryptor (simulating old Openfire version)
+        AesEncryptor aesEncryptor = new AesEncryptor();
+        String encryptedWithAes = aesEncryptor.encrypt(plaintext);
+
+        // Deobfuscate with Obfuscator (should work since they use same constants)
+        Obfuscator obfuscator = new Obfuscator();
+        String deobfuscated = obfuscator.deobfuscate(encryptedWithAes);
+
+        assertEquals(plaintext, deobfuscated,
+                     "Obfuscator should be able to deobfuscate values encrypted by AesEncryptor with hardcoded IV");
+    }
 }

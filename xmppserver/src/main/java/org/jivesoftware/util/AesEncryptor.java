@@ -39,22 +39,6 @@ public class AesEncryptor implements Encryptor {
     private static final Logger log = LoggerFactory.getLogger(AesEncryptor.class);
     private static final String ALGORITHM = "AES/CBC/PKCS7Padding";
 
-    private static final byte[] INIT_PARM =
-    {
-        (byte)0xcd, (byte)0x91, (byte)0xa7, (byte)0xc5,
-        (byte)0x27, (byte)0x8b, (byte)0x39, (byte)0xe0,
-        (byte)0xfa, (byte)0x72, (byte)0xd0, (byte)0x29,
-        (byte)0x83, (byte)0x65, (byte)0x9d, (byte)0x74
-    };
-
-    private static final byte[] DEFAULT_KEY =
-    {
-        (byte)0xf2, (byte)0x46, (byte)0x5d, (byte)0x2a,
-        (byte)0xd1, (byte)0x73, (byte)0x0b, (byte)0x18,
-        (byte)0xcb, (byte)0x86, (byte)0x95, (byte)0xa3,
-        (byte)0xb1, (byte)0xe5, (byte)0x89, (byte)0x27
-    };
-
     private static boolean isInitialized = false;
 
     private byte[] cipherKey = null;
@@ -95,7 +79,7 @@ public class AesEncryptor implements Encryptor {
     public String encrypt(String value, byte[] iv) {
         if (value == null) { return null; }
         byte [] bytes = value.getBytes(StandardCharsets.UTF_8);
-        return java.util.Base64.getEncoder().encodeToString(cipher(bytes, getKey(), iv == null ? INIT_PARM : iv, Cipher.ENCRYPT_MODE));
+        return java.util.Base64.getEncoder().encodeToString(cipher(bytes, getKey(), iv == null ? LegacyEncryptionConstants.LEGACY_IV : iv, Cipher.ENCRYPT_MODE));
     }
 
     /**
@@ -124,7 +108,7 @@ public class AesEncryptor implements Encryptor {
         // While persisting data in 'security.xml', linebreaks are replaced by white space.
         final String val = value.trim().replaceAll("\\s",""); // OF-3112: Ignore all whitespace in Base64 encoded data.
         final byte[] decoded = Base64.getDecoder().decode(val);
-        final byte [] bytes = cipher(decoded, getKey(), iv == null ? INIT_PARM : iv, Cipher.DECRYPT_MODE);
+        final byte [] bytes = cipher(decoded, getKey(), iv == null ? LegacyEncryptionConstants.LEGACY_IV : iv, Cipher.DECRYPT_MODE);
         if (bytes == null) { return null; }
         return new String(bytes, StandardCharsets.UTF_8);
     }
@@ -167,7 +151,7 @@ public class AesEncryptor implements Encryptor {
      */
     private byte [] getKey()
     {
-        return cipherKey == null ? DEFAULT_KEY : cipherKey;
+        return cipherKey == null ? LegacyEncryptionConstants.LEGACY_KEY : cipherKey;
     }
 
     /**
@@ -207,10 +191,10 @@ public class AesEncryptor implements Encryptor {
     private byte [] editKey(byte [] key)
     {
         if (key == null) { return null; }
-        byte [] result = new byte [DEFAULT_KEY.length];
-        for (int x=0; x<DEFAULT_KEY.length; x++)
+        byte [] result = new byte [LegacyEncryptionConstants.LEGACY_KEY.length];
+        for (int x=0; x<LegacyEncryptionConstants.LEGACY_KEY.length; x++)
         {
-            result[x] = x < key.length ? key[x] : DEFAULT_KEY[x];
+            result[x] = x < key.length ? key[x] : LegacyEncryptionConstants.LEGACY_KEY[x];
         }
         return result;
     }

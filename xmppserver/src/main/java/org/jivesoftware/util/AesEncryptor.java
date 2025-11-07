@@ -72,9 +72,20 @@ public class AesEncryptor implements Encryptor {
         setKey(key);
     }
 
-    /* (non-Javadoc)
-     * @see org.jivesoftware.util.Encryptor#encrypt(java.lang.String)
+    /**
+     * Encrypts a string value using AES with hardcoded IV.
+     *
+     * @deprecated This method uses a hardcoded IV which makes encryption deterministic
+     *             (same plaintext always produces same ciphertext). This is a security
+     *             vulnerability as it enables pattern analysis attacks. Use
+     *             {@link #encrypt(String, byte[])} with a randomly generated IV instead.
+     *             This method is only kept for backward compatibility with existing
+     *             encrypted values in configuration files.
+     * @param value the value to encrypt
+     * @return the Base64-encoded encrypted value, or null if input is null
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3074">OF-3074: Prevent hardcoded IV when encrypting parameters</a>
      */
+    @Deprecated
     @Override
     public String encrypt(String value) {
         return encrypt(value, null);
@@ -87,8 +98,17 @@ public class AesEncryptor implements Encryptor {
         return java.util.Base64.getEncoder().encodeToString(cipher(bytes, getKey(), iv == null ? INIT_PARM : iv, Cipher.ENCRYPT_MODE));
     }
 
-    /* (non-Javadoc)
-     * @see org.jivesoftware.util.Encryptor#decrypt(java.lang.String)
+    /**
+     * Decrypts a Base64-encoded encrypted string using AES with hardcoded IV.
+     * This method is kept for backward compatibility with values encrypted by older
+     * versions of Openfire that used a hardcoded IV. For new encryption operations,
+     * use {@link #encrypt(String, byte[])} with a randomly generated IV and
+     * {@link #decrypt(String, byte[])} with the same IV for decryption.
+     *
+     * @param value the Base64-encoded encrypted value to decrypt
+     * @return the decrypted plaintext value, or null if input is null
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2883">OF-2883: Base64 decoding issue preventing startup (after upgrade to 4.9.0)</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3074">OF-3074: Prevent hardcoded IV when encrypting parameters</a>
      */
     @Override
     public String decrypt(String value) {

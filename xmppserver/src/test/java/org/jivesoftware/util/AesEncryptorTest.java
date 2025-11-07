@@ -17,6 +17,7 @@ package org.jivesoftware.util;
 
 import org.junit.jupiter.api.Test;
 
+import java.security.SecureRandom;
 import java.util.UUID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -26,51 +27,66 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class AesEncryptorTest {
 
+    private static final SecureRandom RANDOM = new SecureRandom();
+
+    /**
+     * Generates a random 16-byte IV for testing.
+     */
+    private byte[] generateRandomIV() {
+        byte[] iv = new byte[16];
+        RANDOM.nextBytes(iv);
+        return iv;
+    }
+
     @Test
     public void testEncryptionUsingDefaultKey() {
         String test = UUID.randomUUID().toString();
-        
+        byte[] iv = generateRandomIV();
+
         Encryptor encryptor = new AesEncryptor();
-        
-        String b64Encrypted = encryptor.encrypt(test);
+
+        String b64Encrypted = encryptor.encrypt(test, iv);
         assertNotEquals(test, b64Encrypted);
-        
-        assertEquals(test, encryptor.decrypt(b64Encrypted));
+
+        assertEquals(test, encryptor.decrypt(b64Encrypted, iv));
     }
 
     @Test
     public void testEncryptionUsingCustomKey() {
-        
+
         String test = UUID.randomUUID().toString();
-        
+        byte[] iv = generateRandomIV();
+
         Encryptor encryptor = new AesEncryptor(UUID.randomUUID().toString());
-        
-        String b64Encrypted = encryptor.encrypt(test);
+
+        String b64Encrypted = encryptor.encrypt(test, iv);
         assertNotEquals(test, b64Encrypted);
-        
-        assertEquals(test, encryptor.decrypt(b64Encrypted));
+
+        assertEquals(test, encryptor.decrypt(b64Encrypted, iv));
     }
 
     @Test
     public void testEncryptionForEmptyString() {
-        
+
         String test = "";
-        
+        byte[] iv = generateRandomIV();
+
         Encryptor encryptor = new AesEncryptor();
-        
-        String b64Encrypted = encryptor.encrypt(test);
+
+        String b64Encrypted = encryptor.encrypt(test, iv);
         assertNotEquals(test, b64Encrypted);
-        
-        assertEquals(test, encryptor.decrypt(b64Encrypted));
+
+        assertEquals(test, encryptor.decrypt(b64Encrypted, iv));
     }
 
 
     @Test
     public void testEncryptionForNullString() {
+        byte[] iv = generateRandomIV();
         Encryptor encryptor = new AesEncryptor();
-        
-        String b64Encrypted = encryptor.encrypt(null);
-        
+
+        String b64Encrypted = encryptor.encrypt(null, iv);
+
         assertNull(b64Encrypted);
     }
 
@@ -144,17 +160,19 @@ public class AesEncryptorTest {
     /**
      * Tests that encryption without explicit IV is deterministic (same plaintext produces same ciphertext).
      * This demonstrates the security vulnerability of hardcoded IV usage.
+     * This test uses the DEPRECATED encrypt(String) method.
      *
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3074">OF-3074: Prevent hardcoded IV when encrypting parameters</a>
      */
     @Test
+    @SuppressWarnings("deprecation")
     public void testEncryptionWithoutExplicitIVIsDeterministic()
     {
         // Setup test fixture.
         final String plaintext = "sensitive-password-123";
         final Encryptor encryptor = new AesEncryptor();
 
-        // Execute system under test - encrypt the same value twice.
+        // Execute system under test - encrypt the same value twice using deprecated method.
         final String encrypted1 = encryptor.encrypt(plaintext);
         final String encrypted2 = encryptor.encrypt(plaintext);
 
@@ -162,5 +180,33 @@ public class AesEncryptorTest {
         // This is a security vulnerability as it enables pattern analysis attacks.
         assertEquals(encrypted1, encrypted2,
                      "Same plaintext should produce same ciphertext with hardcoded IV (current vulnerability)");
+    }
+
+    /**
+     * Tests that encryption with different IVs produces different ciphertext.
+     * This verifies the fix for the hardcoded IV vulnerability.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3074">OF-3074: Prevent hardcoded IV when encrypting parameters</a>
+     */
+    @Test
+    public void testEncryptionWithDifferentIVsIsNonDeterministic()
+    {
+        // Setup test fixture.
+        final String plaintext = "sensitive-password-123";
+        final Encryptor encryptor = new AesEncryptor();
+        final byte[] iv1 = generateRandomIV();
+        final byte[] iv2 = generateRandomIV();
+
+        // Execute system under test - encrypt the same value with different IVs.
+        final String encrypted1 = encryptor.encrypt(plaintext, iv1);
+        final String encrypted2 = encryptor.encrypt(plaintext, iv2);
+
+        // Verify results - different IVs should produce different ciphertext.
+        assertNotEquals(encrypted1, encrypted2,
+                     "Same plaintext with different IVs should produce different ciphertext");
+
+        // Verify both can be decrypted correctly with their respective IVs.
+        assertEquals(plaintext, encryptor.decrypt(encrypted1, iv1));
+        assertEquals(plaintext, encryptor.decrypt(encrypted2, iv2));
     }
 }

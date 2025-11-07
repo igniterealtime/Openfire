@@ -46,28 +46,6 @@ public class Obfuscator {
     private static final Logger log = LoggerFactory.getLogger(Obfuscator.class);
     private static final String ALGORITHM = "AES/CBC/PKCS7Padding";
 
-    /**
-     * Hardcoded initialization vector for deterministic obfuscation.
-     * WARNING: Using a fixed IV is not cryptographically secure.
-     */
-    private static final byte[] INIT_PARM = {
-        (byte)0xcd, (byte)0x91, (byte)0xa7, (byte)0xc5,
-        (byte)0x27, (byte)0x8b, (byte)0x39, (byte)0xe0,
-        (byte)0xfa, (byte)0x72, (byte)0xd0, (byte)0x29,
-        (byte)0x83, (byte)0x65, (byte)0x9d, (byte)0x74
-    };
-
-    /**
-     * Hardcoded encryption key for deterministic obfuscation.
-     * WARNING: Using a fixed key is not cryptographically secure.
-     */
-    private static final byte[] DEFAULT_KEY = {
-        (byte)0xf2, (byte)0x46, (byte)0x5d, (byte)0x2a,
-        (byte)0xd1, (byte)0x73, (byte)0x0b, (byte)0x18,
-        (byte)0xcb, (byte)0x86, (byte)0x95, (byte)0xa3,
-        (byte)0xb1, (byte)0xe5, (byte)0x89, (byte)0x27
-    };
-
     private static boolean isInitialized = false;
 
     /** Default constructor */
@@ -124,13 +102,13 @@ public class Obfuscator {
         byte[] result = null;
         try {
             // Create AES encryption key
-            Key aesKey = new SecretKeySpec(DEFAULT_KEY, "AES");
+            Key aesKey = new SecretKeySpec(LegacyEncryptionConstants.LEGACY_KEY, "AES");
 
             // Create AES Cipher
             Cipher aesCipher = Cipher.getInstance(ALGORITHM);
 
             // Initialize AES Cipher and convert using hardcoded IV
-            aesCipher.init(mode, aesKey, new IvParameterSpec(INIT_PARM));
+            aesCipher.init(mode, aesKey, new IvParameterSpec(LegacyEncryptionConstants.LEGACY_IV));
             result = aesCipher.doFinal(data);
         } catch (Exception e) {
             log.error("Obfuscation cipher failed", e);

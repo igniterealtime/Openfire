@@ -140,4 +140,27 @@ public class AesEncryptorTest {
         // Verify results.
         assertEquals(unencoded, result);
     }
+
+    /**
+     * Tests that encryption without explicit IV is deterministic (same plaintext produces same ciphertext).
+     * This demonstrates the security vulnerability of hardcoded IV usage.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3074">OF-3074: Prevent hardcoded IV when encrypting parameters</a>
+     */
+    @Test
+    public void testEncryptionWithoutExplicitIVIsDeterministic()
+    {
+        // Setup test fixture.
+        final String plaintext = "sensitive-password-123";
+        final Encryptor encryptor = new AesEncryptor();
+
+        // Execute system under test - encrypt the same value twice.
+        final String encrypted1 = encryptor.encrypt(plaintext);
+        final String encrypted2 = encryptor.encrypt(plaintext);
+
+        // Verify results - this is the CURRENT BEHAVIOUR (deterministic encryption).
+        // This is a security vulnerability as it enables pattern analysis attacks.
+        assertEquals(encrypted1, encrypted2,
+                     "Same plaintext should produce same ciphertext with hardcoded IV (current vulnerability)");
+    }
 }

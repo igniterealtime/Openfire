@@ -479,7 +479,7 @@
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>mssql-jdbc</artifactId>
-            <version>9.4.1.jre11</version>
+            <version>10.2.4.jre11</version>
         </dependency>
         <dependency> <!-- OF-2960: Including dependencies of ojdbc11-production rather than ojdbc11-production itself. -->
             <groupId>com.oracle.database.jdbc</groupId>

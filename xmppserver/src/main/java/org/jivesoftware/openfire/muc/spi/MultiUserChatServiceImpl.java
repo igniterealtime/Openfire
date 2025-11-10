@@ -244,15 +244,36 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     private static final long CLEANUP_FREQUENCY = 60;
 
     /**
-     * Total number of received messages in all rooms since the last reset. The counter
-     * is reset each time the Statistic makes a sampling.
+     * Total number of received messages since the service was last restarted (this is an in-memory
+     * count only, which does not survive restarts of Openfire). The count reflects the messages received on this
+     * cluster node only.
      */
     private final AtomicInteger inMessages = new AtomicInteger(0);
+
+    /**
+     * Total number of received messages in all rooms since the last reset. The counter
+     * is reset each time the Statistic makes a sampling.
+     *
+     * @deprecated replaced by {@link #inMessages} because of issue OF-3142.
+     */
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0
+    private final AtomicInteger inMessagesResettable = new AtomicInteger(0);
+
+    /**
+     * Total number of broadcasted messages in all rooms since the service was last restarted (this is an in-memory
+     * count only, which does not survive restarts of Openfire). The count reflects the messages broadcasted on this
+     * cluster node only.
+     */
+    private final AtomicLong outMessages = new AtomicLong(0);
+
     /**
      * Total number of broadcasted messages in all rooms since the last reset. The counter
      * is reset each time the Statistic makes a sampling.
+     *
+     * @deprecated replaced by {@link #outMessages} because of issue OF-3142.
      */
-    private final AtomicLong outMessages = new AtomicLong(0);
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0
+    private final AtomicLong outMessagesResettable = new AtomicLong(0);
 
     /**
      * Flag that indicates if MUC service is enabled.
@@ -2855,19 +2876,46 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     }
 
     /**
+     * Returns the total number of received messages since the service was last restarted (this is an in-memory
+     * count only, which does not survive restarts of Openfire). The count reflects the messages received on this
+     * cluster node only.
+     *
+     * @return the number of incoming messages through the service.
+     */
+    @Override
+    public long getIncomingMessageCount() {
+        return inMessages.get();
+    }
+
+    /**
      * Returns the total number of incoming messages since last reset.
      *
      * @param resetAfter True if you want the counter to be reset after results returned.
      * @return the number of incoming messages through the service.
+     * @deprecated replaced by {@link #getIncomingMessageCount()} because of issue OF-3142.
      */
     @Override
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0
     public long getIncomingMessageCount(final boolean resetAfter) {
         if (resetAfter) {
-            return inMessages.getAndSet(0);
+            return inMessagesResettable.getAndSet(0);
         }
         else {
-            return inMessages.get();
+            return inMessagesResettable.get();
         }
+    }
+
+    /**
+     * Returns the total number of broadcasted messages in all rooms since the service was last restarted (this is an
+     * in-memory count only, which does not survive restarts of Openfire). The count reflects the messages broadcasted
+     * on this cluster node only.
+     *
+     * @return the number of outgoing messages through the service.
+     */
+    @Override
+    public long getOutgoingMessageCount()
+    {
+        return outMessages.get();
     }
 
     /**
@@ -2875,14 +2923,15 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      *
      * @param resetAfter True if you want the counter to be reset after results returned.
      * @return the number of outgoing messages through the service.
+     * @deprecated replaced by {@link #getOutgoingMessageCount()} because of issue OF-3142.
      */
-    @Override
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0
     public long getOutgoingMessageCount(final boolean resetAfter) {
         if (resetAfter) {
-            return outMessages.getAndSet(0);
+            return outMessagesResettable.getAndSet(0);
         }
         else {
-            return outMessages.get();
+            return outMessagesResettable.get();
         }
     }
 
@@ -2897,9 +2946,11 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     @Override
     public void messageBroadcastedTo(final int numOccupants) {
         // Increment counter of received messages that where broadcasted by one
+        inMessagesResettable.incrementAndGet();
         inMessages.incrementAndGet();
         // Increment counter of outgoing messages with the number of room occupants
         // that received the message
+        outMessagesResettable.addAndGet(numOccupants);
         outMessages.addAndGet(numOccupants);
     }
 

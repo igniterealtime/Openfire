@@ -81,11 +81,23 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
     /**
      * Statistics keys
      */
-    private static final String roomsStatKey = "muc_rooms";
-    private static final String occupantsStatKey = "muc_occupants";
-    private static final String usersStatKey = "muc_users";
-    private static final String incomingStatKey = "muc_incoming";
-    private static final String outgoingStatKey = "muc_outgoing";
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0.
+    private static final String roomsCountStatKey = "muc_rooms";
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0.
+    private static final String occupantsCountStatKey = "muc_occupants";
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0.
+    private static final String usersCountStatKey = "muc_users";
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0.
+    private static final String incomingRateStatKey = "muc_incoming";
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0.
+    private static final String outgoingRateStatKey = "muc_outgoing";
+
+    private static final String roomsAmountStatKey = "muc_rooms_amt";
+    private static final String occupantsAmountStatKey = "muc_occupants_amt";
+    private static final String usersAmountStatKey = "muc_users_amt";
+    private static final String incomingAmountStatKey = "muc_incoming_amt";
+    private static final String outgoingAmountStatKey = "muc_outgoing_amt";
+
     private static final String trafficStatGroup = "muc_traffic";
 
     private final ConcurrentHashMap<String,MultiUserChatService> mucServices = new ConcurrentHashMap<>();
@@ -143,11 +155,16 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
         MUCServicePropertyEventDispatcher.removeListener(this);
 
         // Remove the statistics.
-        StatisticsManager.getInstance().removeStatistic(roomsStatKey);
-        StatisticsManager.getInstance().removeStatistic(occupantsStatKey);
-        StatisticsManager.getInstance().removeStatistic(usersStatKey);
-        StatisticsManager.getInstance().removeStatistic(incomingStatKey);
-        StatisticsManager.getInstance().removeStatistic(outgoingStatKey);
+        StatisticsManager.getInstance().removeStatistic(roomsCountStatKey);
+        StatisticsManager.getInstance().removeStatistic(roomsAmountStatKey);
+        StatisticsManager.getInstance().removeStatistic(occupantsCountStatKey);
+        StatisticsManager.getInstance().removeStatistic(occupantsAmountStatKey);
+        StatisticsManager.getInstance().removeStatistic(usersCountStatKey);
+        StatisticsManager.getInstance().removeStatistic(usersAmountStatKey);
+        StatisticsManager.getInstance().removeStatistic(incomingRateStatKey);
+        StatisticsManager.getInstance().removeStatistic(incomingAmountStatKey);
+        StatisticsManager.getInstance().removeStatistic(outgoingRateStatKey);
+        StatisticsManager.getInstance().removeStatistic(outgoingAmountStatKey);
 
         for (MultiUserChatService service : mucServices.values()) {
             unregisterMultiUserChatService(service.getServiceName(), false);
@@ -748,8 +765,11 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
 
     /****************** Statistics code ************************/
     private void addTotalRoomStats() {
-        // Register a statistic.
-        final Statistic statistic = new Statistic() {
+        /*
+         * Replaced by 'statisticAmount' (see below) because of issue OF-3142.
+         */
+        @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0
+        final Statistic statisticCount = new Statistic() {
             @Override
             public String getName() {
                 return LocaleUtils.getLocalizedString("muc.stats.active_group_chats.name");
@@ -758,6 +778,11 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
             @Override
             public Type getStatType() {
                 return Type.count;
+            }
+
+            @Override
+            public RepresentationSemantics getRepresentationSemantics() {
+                return RepresentationSemantics.SNAPSHOT;
             }
 
             @Override
@@ -784,12 +809,58 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
                 return false;
             }
         };
-        StatisticsManager.getInstance().addStatistic(roomsStatKey, statistic);
+        StatisticsManager.getInstance().addStatistic(roomsCountStatKey, statisticCount);
+
+        final Statistic statisticAmount = new Statistic() {
+            @Override
+            public String getName() {
+                return LocaleUtils.getLocalizedString("muc.stats.active_group_chats.name");
+            }
+
+            @Override
+            public Type getStatType() {
+                return Type.amount;
+            }
+
+            @Override
+            public RepresentationSemantics getRepresentationSemantics() {
+                return RepresentationSemantics.SNAPSHOT;
+            }
+
+            @Override
+            public String getDescription() {
+                return LocaleUtils.getLocalizedString("muc.stats.active_group_chats.desc");
+            }
+
+            @Override
+            public String getUnits() {
+                return LocaleUtils.getLocalizedString("muc.stats.active_group_chats.units");
+            }
+
+            @Override
+            public double sample() {
+                double rooms = 0;
+                for (MultiUserChatService service : getMultiUserChatServices()) {
+                    rooms += service.getNumberChatRooms();
+                }
+                return rooms;
+            }
+
+            @Override
+            public boolean isPartialSample() {
+                return false;
+            }
+        };
+        StatisticsManager.getInstance().addStatistic(roomsAmountStatKey, statisticAmount);
+
     }
 
     private void addTotalOccupantsStats() {
-        // Register a statistic.
-        final Statistic statistic = new Statistic() {
+        /*
+         * Replaced by 'statisticAmount' (see below) because of issue OF-3142.
+         */
+        @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0
+        final Statistic statisticCount = new Statistic() {
             @Override
             public String getName() {
                 return LocaleUtils.getLocalizedString("muc.stats.occupants.name");
@@ -798,6 +869,11 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
             @Override
             public Type getStatType() {
                 return Type.count;
+            }
+
+            @Override
+            public RepresentationSemantics getRepresentationSemantics() {
+                return RepresentationSemantics.SNAPSHOT;
             }
 
             @Override
@@ -824,12 +900,57 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
                 return false;
             }
         };
-        StatisticsManager.getInstance().addStatistic(occupantsStatKey, statistic);
+        StatisticsManager.getInstance().addStatistic(occupantsCountStatKey, statisticCount);
+
+        final Statistic statisticAmount = new Statistic() {
+            @Override
+            public String getName() {
+                return LocaleUtils.getLocalizedString("muc.stats.occupants.name");
+            }
+
+            @Override
+            public Type getStatType() {
+                return Type.amount;
+            }
+
+            @Override
+            public RepresentationSemantics getRepresentationSemantics() {
+                return RepresentationSemantics.SNAPSHOT;
+            }
+
+            @Override
+            public String getDescription() {
+                return LocaleUtils.getLocalizedString("muc.stats.occupants.description");
+            }
+
+            @Override
+            public String getUnits() {
+                return LocaleUtils.getLocalizedString("muc.stats.occupants.label");
+            }
+
+            @Override
+            public double sample() {
+                double occupants = 0;
+                for (MultiUserChatService service : getMultiUserChatServices()) {
+                    occupants += service.getNumberRoomOccupants();
+                }
+                return occupants;
+            }
+
+            @Override
+            public boolean isPartialSample() {
+                return false;
+            }
+        };
+        StatisticsManager.getInstance().addStatistic(occupantsAmountStatKey, statisticAmount);
     }
 
     private void addTotalConnectedUsers() {
-        // Register a statistic.
-        final Statistic statistic = new Statistic() {
+        /*
+         * Replaced by 'statisticAmount' (see below) because of issue OF-3142.
+         */
+        @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0
+        final Statistic statisticCount = new Statistic() {
             @Override
             public String getName() {
                 return LocaleUtils.getLocalizedString("muc.stats.users.name");
@@ -838,6 +959,11 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
             @Override
             public Type getStatType() {
                 return Type.count;
+            }
+
+            @Override
+            public RepresentationSemantics getRepresentationSemantics() {
+                return RepresentationSemantics.SNAPSHOT;
             }
 
             @Override
@@ -864,12 +990,57 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
                 return false;
             }
         };
-        StatisticsManager.getInstance().addStatistic(usersStatKey, statistic);
+        StatisticsManager.getInstance().addStatistic(usersCountStatKey, statisticCount);
+
+        final Statistic statisticAmount = new Statistic() {
+            @Override
+            public String getName() {
+                return LocaleUtils.getLocalizedString("muc.stats.users.name");
+            }
+
+            @Override
+            public Type getStatType() {
+                return Type.amount;
+            }
+
+            @Override
+            public RepresentationSemantics getRepresentationSemantics() {
+                return RepresentationSemantics.SNAPSHOT;
+            }
+
+            @Override
+            public String getDescription() {
+                return LocaleUtils.getLocalizedString("muc.stats.users.description");
+            }
+
+            @Override
+            public String getUnits() {
+                return LocaleUtils.getLocalizedString("muc.stats.users.label");
+            }
+
+            @Override
+            public double sample() {
+                double users = 0;
+                for (MultiUserChatService service : getMultiUserChatServices()) {
+                    users += service.getNumberConnectedUsers();
+                }
+                return users;
+            }
+
+            @Override
+            public boolean isPartialSample() {
+                return false;
+            }
+        };
+        StatisticsManager.getInstance().addStatistic(usersAmountStatKey, statisticAmount);
     }
 
     private void addNumberIncomingMessages() {
-        // Register a statistic.
-        final Statistic statistic = new Statistic() {
+        /*
+         * Replaced by 'statisticAmount' (see below) because of issue OF-3142.
+         */
+        @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0
+        final Statistic statisticRate = new Statistic() {
             @Override
             public String getName() {
                 return LocaleUtils.getLocalizedString("muc.stats.incoming.name");
@@ -878,6 +1049,11 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
             @Override
             public Type getStatType() {
                 return Type.rate;
+            }
+
+            @Override
+            public RepresentationSemantics getRepresentationSemantics() {
+                return RepresentationSemantics.RATE;
             }
 
             @Override
@@ -905,12 +1081,58 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
                 return true;
             }
         };
-        StatisticsManager.getInstance().addMultiStatistic(incomingStatKey, trafficStatGroup, statistic);
+        StatisticsManager.getInstance().addMultiStatistic(incomingRateStatKey, trafficStatGroup, statisticRate);
+
+        final Statistic statisticAmount = new Statistic() {
+            @Override
+            public String getName() {
+                return LocaleUtils.getLocalizedString("muc.stats.incoming.amount.name");
+            }
+
+            @Override
+            public Type getStatType() {
+                return Type.amount;
+            }
+
+            @Override
+            public RepresentationSemantics getRepresentationSemantics() {
+                return RepresentationSemantics.RATE;
+            }
+
+            @Override
+            public String getDescription() {
+                return LocaleUtils.getLocalizedString("muc.stats.incoming.amount.description");
+            }
+
+            @Override
+            public String getUnits() {
+                return LocaleUtils.getLocalizedString("muc.stats.incoming.amount.label");
+            }
+
+            @Override
+            public double sample() {
+                double msgcnt = 0;
+                for (MultiUserChatService service : getMultiUserChatServices()) {
+                    msgcnt += service.getIncomingMessageCount();
+                }
+                return msgcnt;
+            }
+
+            @Override
+            public boolean isPartialSample() {
+                // Get this value from the other cluster nodes
+                return true;
+            }
+        };
+        StatisticsManager.getInstance().addMultiStatistic(incomingAmountStatKey, trafficStatGroup, statisticAmount);
     }
 
     private void addNumberOutgoingMessages() {
-        // Register a statistic.
-        final Statistic statistic = new Statistic() {
+        /*
+         * Replaced by 'statisticAmount' (see below) because of issue OF-3142.
+         */
+        @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0
+        final Statistic statisticRate = new Statistic() {
             @Override
             public String getName() {
                 return LocaleUtils.getLocalizedString("muc.stats.outgoing.name");
@@ -919,6 +1141,11 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
             @Override
             public Type getStatType() {
                 return Type.rate;
+            }
+
+            @Override
+            public RepresentationSemantics getRepresentationSemantics() {
+                return RepresentationSemantics.RATE;
             }
 
             @Override
@@ -946,7 +1173,50 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
                 return false;
             }
         };
-        StatisticsManager.getInstance().addMultiStatistic(outgoingStatKey, trafficStatGroup, statistic);
+        StatisticsManager.getInstance().addMultiStatistic(outgoingRateStatKey, trafficStatGroup, statisticRate);
+
+        final Statistic statisticAmount = new Statistic() {
+            @Override
+            public String getName() {
+                return LocaleUtils.getLocalizedString("muc.stats.outgoing.amount.name");
+            }
+
+            @Override
+            public Type getStatType() {
+                return Type.amount;
+            }
+
+            @Override
+            public RepresentationSemantics getRepresentationSemantics() {
+                return RepresentationSemantics.RATE;
+            }
+
+            @Override
+            public String getDescription() {
+                return LocaleUtils.getLocalizedString("muc.stats.outgoing.amount.description");
+            }
+
+            @Override
+            public String getUnits() {
+                return LocaleUtils.getLocalizedString("muc.stats.outgoing.amount.label");
+            }
+
+            @Override
+            public double sample() {
+                double msgcnt = 0;
+                for (MultiUserChatService service : getMultiUserChatServices()) {
+                    msgcnt += service.getOutgoingMessageCount();
+                }
+                return msgcnt;
+            }
+
+            @Override
+            public boolean isPartialSample() {
+                // Each cluster node knows the total across the cluster
+                return false;
+            }
+        };
+        StatisticsManager.getInstance().addMultiStatistic(outgoingAmountStatKey, trafficStatGroup, statisticAmount);
     }
 
     @Override

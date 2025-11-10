@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2008 Jive Software, 2017-2020 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 1999-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,15 @@ public interface Statistic {
      * @return the type of a stat.
      */
     Type getStatType();
+
+    /**
+     * Describes how a statistic's values should be interpreted and visualized.
+     *
+     * @return a hint for visualizing values.
+     */
+    default RepresentationSemantics getRepresentationSemantics() {
+        return RepresentationSemantics.SNAPSHOT;
+    }
 
     /**
      * Returns a description of the stat.
@@ -82,10 +91,22 @@ public interface Statistic {
     enum Type {
 
         /**
-         * The average rate over time. For example, the averave kb/s in bandwidth used for
+         * A number, reflecting the current measurement of the data on the time the sample was taken.
+         *
+         * An example would be the number of users in multi-user chats. Each time the {@link Statistic#sample()}
+         * method is invoked, it should return the current measurement of the data, irrelevant of
+         * previous reads of the data.
+         */
+        amount,
+
+        /**
+         * The average rate over time. For example, the average kb/s in bandwidth used for
          * file transfers. Each time the {@link Statistic#sample()} method is invoked, it should
          * return the "amount" of data recorded since the last invocation.
+         *
+         * @deprecated OF-3142: Avoid using this type, as it is highly susceptible to bugs (there's no guarantee that sample is being invoked exactly once per intended time period).
          */
+        @Deprecated
         rate,
 
         /**
@@ -93,6 +114,8 @@ public interface Statistic {
          * {@link Statistic#sample()} method is invoked, it should return the "amount" of data
          * recorded since the last invocation. The values will be totalled over the relevant
          * time interval (by minute, hourly, daily, etc.).
+         *
+         * @deprecated OF-3142: Avoid using this type, as it is highly susceptible to bugs (there's no guarantee that sample is being invoked exactly once per intended time period).
          */
         // TODO: rate_total,
 
@@ -100,8 +123,11 @@ public interface Statistic {
          * The average count over a time period. An example would be the
          * number of users in multi-user chats. Each time the {@link Statistic#sample()}
          * method is invoked, it should return the current measurement of the data, irrelevant of
-         * previous reads of the data.   
+         * previous reads of the data.
+         *
+         * @deprecated OF-3142: Replaced by #amount, which in practise is expected to be implemented in the same way, but isn't defined to return an average or a value related to a time period.
          */
+        @Deprecated
         count;
 
         /*
@@ -112,5 +138,20 @@ public interface Statistic {
          * (by minute, hourly, daily, etc.).
          */
         // TODO: count_max
+    }
+
+    /**
+     * Describes how a statistic's values should be interpreted and visualized.
+     */
+    enum RepresentationSemantics {
+        /**
+         * Represents a snapshot of a measurement at a given time (e.g., current connections).
+         * */
+        SNAPSHOT,
+
+        /**
+         * Represents a rate of change over time (e.g., messages per second).
+         */
+        RATE
     }
 }

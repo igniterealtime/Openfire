@@ -87,7 +87,10 @@ public class ProxyConnectionManager {
         .setDynamic(false)
         .build();
 
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0.
     private static final String proxyTransferRate = "proxyTransferRate";
+
+    private static final String proxyTransferAmount = "proxy_transfer_amt";
 
     private Cache<String, ProxyTransfer> connectionMap;
 
@@ -132,6 +135,7 @@ public class ProxyConnectionManager {
 
         transferManager = manager;
         StatisticsManager.getInstance().addStatistic(proxyTransferRate, new ProxyTracker());
+        StatisticsManager.getInstance().addStatistic(proxyTransferAmount, new ProxyTrackerAmount());
     }
 
     /*
@@ -413,19 +417,59 @@ public class ProxyConnectionManager {
         }
     }
 
+    /**
+     * Replaced by {@link ProxyTrackerAmount} because of issue OF-3142.
+     */
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0
     private static class ProxyTracker extends i18nStatistic {
+        private double previousSample = 0;
+
         public ProxyTracker() {
             super("filetransferproxy.transfered", Statistic.Type.rate);
         }
 
         @Override
         public double sample() {
-            return (ProxyOutputStream.amountTransferred.getAndSet(0) / 1000d);
+            final double current = ProxyOutputStream.amountTransferred.get() / 1000d;
+            double delta;
+
+            synchronized (this) {
+                delta = current - previousSample;
+                previousSample = current;
+            }
+
+            return delta;
         }
 
         @Override
         public boolean isPartialSample() {
             return true;
+        }
+
+        @Override
+        public RepresentationSemantics getRepresentationSemantics() {
+            return RepresentationSemantics.RATE;
+        }
+    }
+
+    private static class ProxyTrackerAmount extends i18nStatistic {
+        public ProxyTrackerAmount() {
+            super("filetransferproxy.transfered.amount", Statistic.Type.amount);
+        }
+
+        @Override
+        public double sample() {
+            return (ProxyOutputStream.amountTransferred.get() / 1000d);
+        }
+
+        @Override
+        public boolean isPartialSample() {
+            return true;
+        }
+
+        @Override
+        public RepresentationSemantics getRepresentationSemantics() {
+            return RepresentationSemantics.RATE;
         }
     }
 }

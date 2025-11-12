@@ -39,7 +39,7 @@ public class StatisticDynamicMBeanTest
         Mockito.when(statMock.getName()).thenReturn("ActiveUsers");
         Mockito.when(statMock.getDescription()).thenReturn("Number of active user sessions");
         Mockito.when(statMock.getUnits()).thenReturn("users");
-        Mockito.when(statMock.getStatType()).thenReturn(Statistic.Type.count);
+        Mockito.when(statMock.getStatType()).thenReturn(Statistic.Type.amount);
         Mockito.when(statMock.isPartialSample()).thenReturn(false);
         Mockito.when(statMock.sample()).thenReturn(42.0);
         systemUnderTest = new StatisticDynamicMBean(statMock);
@@ -55,7 +55,7 @@ public class StatisticDynamicMBeanTest
         assertEquals("ActiveUsers", systemUnderTest.getAttribute("Name"));
         assertEquals("Number of active user sessions", systemUnderTest.getAttribute("Description"));
         assertEquals("users", systemUnderTest.getAttribute("Units"));
-        assertEquals("count", systemUnderTest.getAttribute("Type"));
+        assertEquals("amount", systemUnderTest.getAttribute("Type"));
         assertEquals(false, systemUnderTest.getAttribute("IsPartialSample"));
         assertEquals(42.0, (double) systemUnderTest.getAttribute("Sample"), 0.0001);
     }

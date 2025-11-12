@@ -206,7 +206,7 @@ public class ServerTrafficCounter {
             @Override
             public double sample() {
                 // Divide result by 1024 so that we return the result in Kb.
-                return incomingCounter.getAndSet(0)/1024d;
+                return incomingCounter.get()/1024d;
             }
 
             @Override
@@ -290,7 +290,7 @@ public class ServerTrafficCounter {
 
             @Override
             public double sample() {
-                return outgoingCounter.getAndSet(0)/1024d;
+                return outgoingCounter.get()/1024d;
             }
 
             @Override

@@ -1447,6 +1447,46 @@ public class JiveGlobals {
     
         // (re)write the encryption key to the security XML file (obfuscated, not encrypted)
         securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, new Obfuscator().obfuscate(currentKey));
+
+        // Initialise Blowfish KDF for new installations
+        initializeBlowfishKdf();
+    }
+
+    /**
+     * Initialises the Blowfish key derivation function (KDF) for new installations.
+     * For fresh installations (setup not complete), sets PBKDF2 as the default KDF.
+     * For existing installations, preserves the current KDF (SHA1 or PBKDF2) and logs appropriate messages.
+     *
+     * This method is called once during security properties initialization. It determines whether this
+     * is a new or existing installation by checking if setup has been completed. This ensures new
+     * installations use the stronger PBKDF2-HMAC-SHA512 key derivation whilst existing installations
+     * maintain backward compatibility with their current configuration.
+     */
+    private static void initializeBlowfishKdf() {
+        String currentKdf = securityProperties.getProperty(BLOWFISH_KDF, false);
+
+        if (currentKdf == null || currentKdf.trim().isEmpty()) {
+            // No KDF configured yet - determine if this is a new or existing installation
+            if (isSetupMode()) {
+                // New installation (setup not complete): set PBKDF2 as default
+                securityProperties.setProperty(BLOWFISH_KDF, BLOWFISH_KDF_PBKDF2);
+                // Salt will be auto-generated when first accessed by getBlowfishSalt()
+                Log.info("New installation detected: Blowfish KDF set to PBKDF2-HMAC-SHA512");
+            } else {
+                // Existing installation (setup complete): keep SHA1 for backward compatibility
+                // Don't set the property - getBlowfishKdf() will default to SHA1
+                Log.warn("Existing installation detected with no Blowfish KDF configured. " +
+                        "Defaulting to legacy SHA1 for backward compatibility. " +
+                        "Consider migrating to PBKDF2 via the admin console for improved security.");
+            }
+        } else if (BLOWFISH_KDF_SHA1.equalsIgnoreCase(currentKdf)) {
+            // Existing installation explicitly using SHA1
+            Log.warn("Blowfish is using legacy SHA1 key derivation. " +
+                    "Consider migrating to PBKDF2 via the admin console for improved security.");
+        } else if (BLOWFISH_KDF_PBKDF2.equalsIgnoreCase(currentKdf)) {
+            // Already using PBKDF2
+            Log.info("Blowfish is using PBKDF2-HMAC-SHA512 key derivation");
+        }
     }
 
     public static final String[] setupExcludePaths = {

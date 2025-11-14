@@ -48,13 +48,14 @@ public class ServerTrafficCounter {
      */
     private static final AtomicLong incomingCounter = new AtomicLong(0);
 
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0.
     private static final String trafficStatGroup = "server_bytes";
-
     @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0.
     private static final String incomingRateStatKey = "server_bytes_in";
     @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0.
     private static final String outgoingRateStatKey = "server_bytes_out";
 
+    private static final String trafficAmountStatGroup = "server_bytes_amt";
     private static final String incomingAmountStatKey = "server_bytes_in_amt";
     private static final String outgoingAmountStatKey = "server_bytes_out_amt";
 
@@ -215,7 +216,7 @@ public class ServerTrafficCounter {
             }
         };
         StatisticsManager.getInstance()
-            .addMultiStatistic(incomingAmountStatKey, trafficStatGroup, statisticAmount);
+            .addMultiStatistic(incomingAmountStatKey, trafficAmountStatGroup, statisticAmount);
     }
 
     private static void addWrittenBytesStat() {
@@ -299,7 +300,7 @@ public class ServerTrafficCounter {
             }
         };
         StatisticsManager.getInstance()
-            .addMultiStatistic(outgoingAmountStatKey, trafficStatGroup, statisticAmount);
+            .addMultiStatistic(outgoingAmountStatKey, trafficAmountStatGroup, statisticAmount);
     }
 
     /**

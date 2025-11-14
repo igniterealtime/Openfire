@@ -1388,21 +1388,14 @@ public class FMUCHandler
         Log.trace("(room: '{}'): Sending subject to joining node '{}'.", room.getJID(), joiningPeer );
 
         // TODO can org.jivesoftware.openfire.muc.spi.MUCRoom.sendRoomSubjectAfterJoin be re-used?
-        final MUCRoomHistory roomHistory = room.getRoomHistory();
-        Message roomSubject = roomHistory.getChangedSubject();
-        if ( roomSubject != null ) {
-            roomSubject = roomSubject.createCopy(); // OF-2163: Prevent accidental modifications to the original.
-        } else {
+        Message roomSubject = room.getSubjectStanza();
+        if (roomSubject == null) {
+            // 7.2.15 If there is no subject set, the room MUST return an empty <subject/> element.
             roomSubject = new Message();
-            roomSubject.setFrom(this.room.getJID()); // This might break FMUC, as it does not include the nickname of the author of the subject.
-            roomSubject.setTo(joiningPeer);
-            roomSubject.setType(Message.Type.groupchat);
-            roomSubject.setID(UUID.randomUUID().toString());
-            final Element subjectEl = roomSubject.getElement().addElement("subject");
-            if ( room.getSubject() != null && !room.getSubject().isEmpty() )
-            {
-                subjectEl.setText(room.getSubject());
-            }
+            roomSubject.setFrom( room.getJID() );
+            roomSubject.setType( Message.Type.groupchat );
+            roomSubject.setID( UUID.randomUUID().toString() );
+            roomSubject.getElement().addElement( "subject" );
         }
 
         final JID originalAuthorUserAddress = roomSubject.getFrom();

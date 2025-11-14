@@ -1515,12 +1515,35 @@ public class Blowfish implements Encryptor {
      *
      * @param password The password to derive the key from
      * @param salt A random salt (must be at least 16 bytes, 32 bytes recommended)
-     * @return The derived key suitable for Blowfish encryption
+     * @return The derived key suitable for Blowfish encryption (256 bits / 32 bytes)
      * @throws Exception if key derivation fails
      */
     static byte[] deriveKeyPBKDF2(String password, byte[] salt) throws Exception {
-        // TODO: Implement PBKDF2-HMAC-SHA512 key derivation
-        throw new UnsupportedOperationException("PBKDF2 key derivation not yet implemented");
+        if (password == null || password.isEmpty()) {
+            throw new IllegalArgumentException("Password cannot be null or empty");
+        }
+        if (salt == null || salt.length < 16) {
+            throw new IllegalArgumentException("Salt must be at least 16 bytes");
+        }
+
+        // PBKDF2-HMAC-SHA512 with 100,000 iterations (OWASP recommended minimum)
+        final int iterations = 100_000;
+        final int keyLength = 256; // 256 bits for strong key derivation
+
+        javax.crypto.spec.PBEKeySpec spec = new javax.crypto.spec.PBEKeySpec(
+            password.toCharArray(),
+            salt,
+            iterations,
+            keyLength
+        );
+
+        javax.crypto.SecretKeyFactory factory = javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
+        javax.crypto.SecretKey key = factory.generateSecret(spec);
+
+        // Clear the password from memory
+        spec.clearPassword();
+
+        return key.getEncoded();
     }
 
     @Override

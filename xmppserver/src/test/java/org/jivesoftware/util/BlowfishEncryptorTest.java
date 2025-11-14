@@ -105,4 +105,74 @@ public class BlowfishEncryptorTest {
         assertFalse(java.util.Arrays.equals(key1, key2),
             "Different salts should produce different keys even with same password");
     }
+
+    /**
+     * Test backward compatibility: default configuration uses SHA1 KDF.
+     * This ensures existing Openfire installations continue to work without
+     * requiring migration of encrypted properties.
+     */
+    @Test
+    public void testDefaultKdfIsSHA1ForBackwardCompatibility() {
+        String kdf = JiveGlobals.getBlowfishKdf();
+        assertEquals("sha1", kdf, "Default KDF should be SHA1 for backward compatibility");
+    }
+
+    /**
+     * Test backward compatibility: encryption and decryption works with SHA1 KDF.
+     * This verifies that the legacy key derivation method continues to function,
+     * allowing existing encrypted properties to be read.
+     */
+    @Test
+    public void testBackwardCompatibilityWithSHA1Encryption() {
+        // Verify we're using SHA1 (the legacy/default mode)
+        String kdf = JiveGlobals.getBlowfishKdf();
+        assertEquals("sha1", kdf, "Test assumes SHA1 as default KDF");
+
+        // Test encrypt/decrypt cycle with SHA1 (legacy behaviour)
+        String testValue = "backward-compatibility-test-" + UUID.randomUUID();
+        Encryptor encryptor = new Blowfish();
+
+        String encrypted = encryptor.encrypt(testValue);
+        assertNotNull(encrypted, "Encryption should succeed with SHA1 KDF");
+        assertNotEquals(testValue, encrypted, "Encrypted value should differ from plaintext");
+
+        String decrypted = encryptor.decrypt(encrypted);
+        assertEquals(testValue, decrypted, "Decryption should recover original value with SHA1 KDF");
+    }
+
+    /**
+     * Test end-to-end encryption and decryption using PBKDF2 KDF.
+     * This verifies the full integration path: salt generation, KDF configuration,
+     * and the complete encrypt/decrypt cycle with PBKDF2-HMAC-SHA512.
+     */
+    @Test
+    public void testEncryptionWithPBKDF2KDF() {
+        // Store original KDF setting to restore later
+        String originalKdf = JiveGlobals.getBlowfishKdf();
+
+        try {
+            // Configure Openfire to use PBKDF2 key derivation
+            JiveGlobals.setBlowfishKdf(JiveGlobals.BLOWFISH_KDF_PBKDF2);
+
+            // Ensure a salt is generated (getBlowfishSalt auto-generates if not present)
+            String salt = JiveGlobals.getBlowfishSalt();
+            assertNotNull(salt, "Salt should be generated");
+            assertFalse(salt.trim().isEmpty(), "Salt should not be empty");
+
+            // Test encrypt/decrypt cycle with PBKDF2
+            String testValue = "pbkdf2-test-" + UUID.randomUUID();
+            Encryptor encryptor = new Blowfish();
+
+            String encrypted = encryptor.encrypt(testValue);
+            assertNotNull(encrypted, "Encryption should succeed with PBKDF2 KDF");
+            assertNotEquals(testValue, encrypted, "Encrypted value should differ from plaintext");
+
+            String decrypted = encryptor.decrypt(encrypted);
+            assertEquals(testValue, decrypted, "Decryption should recover original value with PBKDF2 KDF");
+
+        } finally {
+            // Restore original KDF setting to avoid affecting other tests
+            JiveGlobals.setBlowfishKdf(originalKdf);
+        }
+    }
 }

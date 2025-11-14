@@ -91,14 +91,15 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
     private static final String incomingRateStatKey = "muc_incoming";
     @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0.
     private static final String outgoingRateStatKey = "muc_outgoing";
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0.
+    private static final String trafficStatGroup = "muc_traffic";
 
     private static final String roomsAmountStatKey = "muc_rooms_amt";
     private static final String occupantsAmountStatKey = "muc_occupants_amt";
     private static final String usersAmountStatKey = "muc_users_amt";
     private static final String incomingAmountStatKey = "muc_incoming_amt";
     private static final String outgoingAmountStatKey = "muc_outgoing_amt";
-
-    private static final String trafficStatGroup = "muc_traffic";
+    private static final String trafficAmountStatGroup = "muc_traffic_amt";
 
     private final ConcurrentHashMap<String,MultiUserChatService> mucServices = new ConcurrentHashMap<>();
 
@@ -1124,7 +1125,7 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
                 return true;
             }
         };
-        StatisticsManager.getInstance().addMultiStatistic(incomingAmountStatKey, trafficStatGroup, statisticAmount);
+        StatisticsManager.getInstance().addMultiStatistic(incomingAmountStatKey, trafficAmountStatGroup, statisticAmount);
     }
 
     private void addNumberOutgoingMessages() {
@@ -1216,7 +1217,7 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
                 return false;
             }
         };
-        StatisticsManager.getInstance().addMultiStatistic(outgoingAmountStatKey, trafficStatGroup, statisticAmount);
+        StatisticsManager.getInstance().addMultiStatistic(outgoingAmountStatKey, trafficAmountStatGroup, statisticAmount);
     }
 
     @Override

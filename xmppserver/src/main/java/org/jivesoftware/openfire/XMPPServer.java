@@ -35,6 +35,7 @@ import org.jivesoftware.openfire.component.InternalComponentManager;
 import org.jivesoftware.openfire.container.AdminConsolePlugin;
 import org.jivesoftware.openfire.container.Module;
 import org.jivesoftware.openfire.container.PluginManager;
+import org.jivesoftware.openfire.csi.CsiModule;
 import org.jivesoftware.openfire.disco.*;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager;
@@ -765,6 +766,7 @@ public class XMPPServer {
         loadModule(OfflineMessageStore.class.getName());
         loadModule(VCardManager.class.getName());
         // Load standard modules
+        loadModule(CsiModule.class.getName());
         loadModule(IQBindHandler.class.getName());
         loadModule(IQSessionEstablishmentHandler.class.getName());
         loadModule(IQPingHandler.class.getName());

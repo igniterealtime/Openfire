@@ -63,8 +63,12 @@ public class JiveGlobals {
     private static final String ENCRYPTION_ALGORITHM_BLOWFISH = "Blowfish";
     private static final String BLOWFISH_KDF = ENCRYPTED_PROPERTY_NAME_PREFIX + "blowfish.kdf";
     private static final String BLOWFISH_SALT = ENCRYPTED_PROPERTY_NAME_PREFIX + "blowfish.salt";
-    private static final String BLOWFISH_KDF_PBKDF2 = "pbkdf2";
-    private static final String BLOWFISH_KDF_SHA1 = "sha1";
+
+    /** Blowfish key derivation function using PBKDF2-HMAC-SHA512 */
+    public static final String BLOWFISH_KDF_PBKDF2 = "pbkdf2";
+
+    /** Blowfish key derivation function using legacy SHA1 (for backward compatibility) */
+    public static final String BLOWFISH_KDF_SHA1 = "sha1";
 
     /**
      * Location of the jiveHome directory. All configuration files should be

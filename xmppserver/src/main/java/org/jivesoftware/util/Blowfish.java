@@ -1510,6 +1510,21 @@ public class Blowfish implements Encryptor {
     }
 
     /**
+     * Derives a key using legacy SHA1 hashing (for backward compatibility).
+     *
+     * @param password The password to hash
+     * @return The SHA1 hash of the password
+     * @throws Exception if SHA1 hashing fails
+     */
+    private static byte[] deriveKeySHA1(String password) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA1");
+        digest.update(password.getBytes());
+        byte[] key = digest.digest();
+        digest.reset();
+        return key;
+    }
+
+    /**
      * Derives a cryptographically strong encryption key from a password using PBKDF2-HMAC-SHA512.
      * This method uses 100,000 iterations as recommended by OWASP for password-based key derivation.
      *
@@ -1548,21 +1563,37 @@ public class Blowfish implements Encryptor {
 
     @Override
     public void setKey(String key) {
-
         String password = key == null ? DEFAULT_KEY : key;
-        // hash down the password to a 160bit key
-        MessageDigest digest = null;
+        byte[] derivedKey = null;
+
         try {
-            digest = MessageDigest.getInstance("SHA1");
-            digest.update(password.getBytes());
-        }
-        catch (Exception e) {
-            Log.error(e.getMessage(), e);
+            // Determine which key derivation function to use
+            String kdf = JiveGlobals.getBlowfishKdf();
+
+            if (JiveGlobals.BLOWFISH_KDF_PBKDF2.equalsIgnoreCase(kdf)) {
+                // Use PBKDF2-HMAC-SHA512 with salt for strong key derivation
+                String saltBase64 = JiveGlobals.getBlowfishSalt();
+                byte[] salt = java.util.Base64.getDecoder().decode(saltBase64);
+                derivedKey = deriveKeyPBKDF2(password, salt);
+                Log.debug("Using PBKDF2-HMAC-SHA512 for Blowfish key derivation");
+            } else {
+                // Use legacy SHA1 for backward compatibility
+                derivedKey = deriveKeySHA1(password);
+                Log.debug("Using legacy SHA1 for Blowfish key derivation");
+            }
+        } catch (Exception e) {
+            Log.error("Error deriving Blowfish key, falling back to legacy SHA1", e);
+            // Fallback to legacy SHA1 on any error
+            try {
+                derivedKey = deriveKeySHA1(password);
+            } catch (Exception fallbackException) {
+                Log.error("Critical error: Unable to derive Blowfish key", fallbackException);
+                throw new RuntimeException("Unable to derive Blowfish key", fallbackException);
+            }
         }
 
-        // setup the encryptor (use a dummy IV)
-        m_bfish = new BlowfishCBC(digest.digest(), 0);
-        digest.reset();
+        // Setup the encryptor (use a dummy IV)
+        m_bfish = new BlowfishCBC(derivedKey, 0);
     }
 }
 

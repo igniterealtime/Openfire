@@ -70,4 +70,39 @@ public class BlowfishEncryptorTest {
 
         assertNull(b64Encrypted);
     }
+
+    /**
+     * Test PBKDF2 key derivation produces deterministic results.
+     * Same password + same salt should produce the same derived key.
+     */
+    @Test
+    public void testPBKDF2KeyDerivationIsDeterministic() throws Exception {
+        byte[] salt = new byte[32];
+        java.security.SecureRandom random = new java.security.SecureRandom();
+        random.nextBytes(salt);
+
+        byte[] key1 = Blowfish.deriveKeyPBKDF2("testPassword", salt);
+        byte[] key2 = Blowfish.deriveKeyPBKDF2("testPassword", salt);
+
+        assertArrayEquals(key1, key2, "Same password and salt should produce identical keys");
+    }
+
+    /**
+     * Test PBKDF2 key derivation produces different keys for different salts.
+     * This prevents rainbow table attacks.
+     */
+    @Test
+    public void testPBKDF2KeyDerivationUsesSalt() throws Exception {
+        byte[] salt1 = new byte[32];
+        byte[] salt2 = new byte[32];
+        java.security.SecureRandom random = new java.security.SecureRandom();
+        random.nextBytes(salt1);
+        random.nextBytes(salt2);
+
+        byte[] key1 = Blowfish.deriveKeyPBKDF2("testPassword", salt1);
+        byte[] key2 = Blowfish.deriveKeyPBKDF2("testPassword", salt2);
+
+        assertFalse(java.util.Arrays.equals(key1, key2),
+            "Different salts should produce different keys even with same password");
+    }
 }

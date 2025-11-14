@@ -1509,9 +1509,23 @@ public class Blowfish implements Encryptor {
         return decrypt(value);
     }
 
+    /**
+     * Derives a cryptographically strong encryption key from a password using PBKDF2-HMAC-SHA512.
+     * This method uses 100,000 iterations as recommended by OWASP for password-based key derivation.
+     *
+     * @param password The password to derive the key from
+     * @param salt A random salt (must be at least 16 bytes, 32 bytes recommended)
+     * @return The derived key suitable for Blowfish encryption
+     * @throws Exception if key derivation fails
+     */
+    static byte[] deriveKeyPBKDF2(String password, byte[] salt) throws Exception {
+        // TODO: Implement PBKDF2-HMAC-SHA512 key derivation
+        throw new UnsupportedOperationException("PBKDF2 key derivation not yet implemented");
+    }
+
     @Override
     public void setKey(String key) {
-        
+
         String password = key == null ? DEFAULT_KEY : key;
         // hash down the password to a 160bit key
         MessageDigest digest = null;

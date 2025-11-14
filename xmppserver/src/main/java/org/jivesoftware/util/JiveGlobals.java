@@ -61,6 +61,10 @@ public class JiveGlobals {
     private static final String ENCRYPTION_KEY_OLD = ENCRYPTED_PROPERTY_NAME_PREFIX + "key.old";
     private static final String ENCRYPTION_ALGORITHM_AES = "AES";
     private static final String ENCRYPTION_ALGORITHM_BLOWFISH = "Blowfish";
+    private static final String BLOWFISH_KDF = ENCRYPTED_PROPERTY_NAME_PREFIX + "blowfish.kdf";
+    private static final String BLOWFISH_SALT = ENCRYPTED_PROPERTY_NAME_PREFIX + "blowfish.salt";
+    private static final String BLOWFISH_KDF_PBKDF2 = "pbkdf2";
+    private static final String BLOWFISH_KDF_SHA1 = "sha1";
 
     /**
      * Location of the jiveHome directory. All configuration files should be
@@ -1148,6 +1152,66 @@ public class JiveGlobals {
             encryptor = new Blowfish(key);
         }
         return encryptor;
+    }
+
+    /**
+     * Gets the Blowfish encryption salt. If no salt exists, generates a new
+     * cryptographically random 32-byte salt and stores it in security.xml.
+     *
+     * @return Base64-encoded salt (32 bytes)
+     */
+    public static String getBlowfishSalt() {
+        if (securityProperties == null) {
+            loadSecurityProperties();
+        }
+
+        String salt = securityProperties.getProperty(BLOWFISH_SALT);
+        if (salt == null || salt.trim().isEmpty()) {
+            // Generate a new random salt (32 bytes for strong security)
+            byte[] saltBytes = new byte[32];
+            new java.security.SecureRandom().nextBytes(saltBytes);
+            salt = Base64.getEncoder().encodeToString(saltBytes);
+            securityProperties.setProperty(BLOWFISH_SALT, salt);
+            Log.info("Generated new Blowfish salt for PBKDF2 key derivation");
+        }
+
+        return salt;
+    }
+
+    /**
+     * Gets the Blowfish key derivation function (KDF) type.
+     * Returns "sha1" for legacy single-round SHA1 hashing, or "pbkdf2" for
+     * PBKDF2-HMAC-SHA512 key derivation.
+     *
+     * @return The KDF type ("sha1" or "pbkdf2"), defaults to "sha1" for backward compatibility
+     */
+    public static String getBlowfishKdf() {
+        if (securityProperties == null) {
+            loadSecurityProperties();
+        }
+
+        String kdf = securityProperties.getProperty(BLOWFISH_KDF);
+        // Default to SHA1 for backward compatibility with existing installations
+        return (kdf != null && !kdf.trim().isEmpty()) ? kdf : BLOWFISH_KDF_SHA1;
+    }
+
+    /**
+     * Sets the Blowfish key derivation function (KDF) type.
+     *
+     * @param kdf The KDF type ("sha1" or "pbkdf2")
+     */
+    public static void setBlowfishKdf(String kdf) {
+        if (securityProperties == null) {
+            loadSecurityProperties();
+        }
+
+        if (BLOWFISH_KDF_PBKDF2.equalsIgnoreCase(kdf)) {
+            securityProperties.setProperty(BLOWFISH_KDF, BLOWFISH_KDF_PBKDF2);
+            Log.info("Blowfish KDF set to PBKDF2-HMAC-SHA512");
+        } else {
+            securityProperties.setProperty(BLOWFISH_KDF, BLOWFISH_KDF_SHA1);
+            Log.info("Blowfish KDF set to SHA1 (legacy)");
+        }
     }
 
     /**

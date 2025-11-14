@@ -1561,6 +1561,19 @@ public class Blowfish implements Encryptor {
         return key.getEncoded();
     }
 
+    /**
+     * Derives a PBKDF2 key using the salt stored in security.xml.
+     *
+     * @param password The password to derive the key from
+     * @return The derived key
+     * @throws Exception if key derivation fails or salt cannot be retrieved
+     */
+    private static byte[] deriveKeyPBKDF2WithStoredSalt(String password) throws Exception {
+        String saltBase64 = JiveGlobals.getBlowfishSalt();
+        byte[] salt = java.util.Base64.getDecoder().decode(saltBase64);
+        return deriveKeyPBKDF2(password, salt);
+    }
+
     @Override
     public void setKey(String key) {
         String password = key == null ? DEFAULT_KEY : key;
@@ -1569,12 +1582,11 @@ public class Blowfish implements Encryptor {
         try {
             // Determine which key derivation function to use
             String kdf = JiveGlobals.getBlowfishKdf();
+            boolean usePBKDF2 = JiveGlobals.BLOWFISH_KDF_PBKDF2.equalsIgnoreCase(kdf);
 
-            if (JiveGlobals.BLOWFISH_KDF_PBKDF2.equalsIgnoreCase(kdf)) {
+            if (usePBKDF2) {
                 // Use PBKDF2-HMAC-SHA512 with salt for strong key derivation
-                String saltBase64 = JiveGlobals.getBlowfishSalt();
-                byte[] salt = java.util.Base64.getDecoder().decode(saltBase64);
-                derivedKey = deriveKeyPBKDF2(password, salt);
+                derivedKey = deriveKeyPBKDF2WithStoredSalt(password);
                 Log.debug("Using PBKDF2-HMAC-SHA512 for Blowfish key derivation");
             } else {
                 // Use legacy SHA1 for backward compatibility

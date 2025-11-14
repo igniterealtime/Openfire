@@ -329,7 +329,7 @@ public class NettyConnection extends AbstractConnection
     private void updateWrittenBytesCounter(ChannelHandlerContext ctx) {
         ChannelTrafficShapingHandler handler = (ChannelTrafficShapingHandler) ctx.channel().pipeline().get(TRAFFIC_HANDLER_NAME);
         if (handler != null) {
-            long currentBytes = handler.trafficCounter().lastWrittenBytes();
+            long currentBytes = handler.trafficCounter().currentWrittenBytes();
             Long prevBytes = ctx.channel().attr(WRITTEN_BYTES).get();
             long delta;
             if (prevBytes == null) {

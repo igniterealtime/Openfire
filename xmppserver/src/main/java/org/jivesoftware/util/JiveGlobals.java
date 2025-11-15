@@ -1110,8 +1110,8 @@ public class JiveGlobals {
             // update encrypted properties
             updateEncryptionProperties(oldAlg, key);
         }
-        // Set the new key
-        securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, new AesEncryptor().encrypt(key));
+        // Set the new key (obfuscated, not encrypted - the key just needs to be hidden from casual viewing)
+        securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, new Obfuscator().obfuscate(key));
         currentKey = key == "" ? null : key;
         propertyEncryptorNew = getEncryptor(oldAlg, key);
         propertyEncryptor = propertyEncryptorNew;
@@ -1119,13 +1119,17 @@ public class JiveGlobals {
 
     /**
      * Get current encryptor key.
+     * The key is stored obfuscated (not encrypted) in security.xml.
+     * Obfuscator is used for backward compatibility - it can deobfuscate
+     * values that were previously encrypted with AesEncryptor using hardcoded IV.
      *
+     * @see Obfuscator
      */
     private static String getCurrentKey() {
         String encryptedKey = securityProperties.getProperty(ENCRYPTION_KEY_CURRENT);
         String key = null;
         if (StringUtils.isNotEmpty(encryptedKey)) {
-            key = new AesEncryptor().decrypt(encryptedKey);
+            key = new Obfuscator().deobfuscate(encryptedKey);
         }
         return key;
     }
@@ -1373,8 +1377,8 @@ public class JiveGlobals {
             securityProperties.deleteProperty(ENCRYPTION_KEY_OLD);
         }
     
-        // (re)write the encryption key to the security XML file
-        securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, new AesEncryptor().encrypt(currentKey));
+        // (re)write the encryption key to the security XML file (obfuscated, not encrypted)
+        securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, new Obfuscator().obfuscate(currentKey));
     }
 
     public static final String[] setupExcludePaths = {

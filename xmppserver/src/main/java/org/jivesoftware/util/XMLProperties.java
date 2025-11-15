@@ -30,7 +30,9 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.security.SecureRandom;
 import java.util.*;
+import java.util.Base64;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -56,6 +58,7 @@ public class XMLProperties {
 
     private static final Logger Log = LoggerFactory.getLogger(XMLProperties.class);
     private static final String ENCRYPTED_ATTRIBUTE = "encrypted";
+    private static final String IV_ATTRIBUTE = "iv";
 
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
@@ -212,7 +215,7 @@ public class XMLProperties {
                 if (JiveGlobals.isXMLPropertyEncrypted(name)) {
                     Attribute encrypted = element.attribute(ENCRYPTED_ATTRIBUTE);
                     if (encrypted != null) {
-                        value = JiveGlobals.getPropertyEncryptor().decrypt(value);
+                        value = decryptPropertyValue(name, element);
                     } else {
                         // rewrite property as an encrypted value
                         Log.info("Rewriting XML property " + name + " as an encrypted value");
@@ -288,7 +291,7 @@ public class XMLProperties {
                     if (JiveGlobals.isXMLPropertyEncrypted(name)) {
                         Attribute encrypted = prop.attribute(ENCRYPTED_ATTRIBUTE);
                         if (encrypted != null) {
-                            value = JiveGlobals.getPropertyEncryptor().decrypt(value);
+                            value = decryptPropertyValue(name, prop);
                         } else {
                             // rewrite property as an encrypted value
                             // TODO find a way to modify the Element while holding a Write lock rather than a Read lock.
@@ -511,8 +514,7 @@ public class XMLProperties {
                     String propValue = value;
                     // check to see if the property is marked as encrypted
                     if (JiveGlobals.isPropertyEncrypted(name)) {
-                        propValue = JiveGlobals.getPropertyEncryptor().encrypt(value);
-                        childElement.addAttribute(ENCRYPTED_ATTRIBUTE, "true");
+                        propValue = encryptPropertyWithCurrentEncryptor(value, childElement);
                     }
                     childElement.setText(propValue);
                 }
@@ -698,8 +700,7 @@ public class XMLProperties {
                 String propValue = value;
                 // check to see if the property is marked as encrypted
                 if (JiveGlobals.isXMLPropertyEncrypted(name)) {
-                    propValue = JiveGlobals.getPropertyEncryptor(true).encrypt(value);
-                    element.addAttribute(ENCRYPTED_ATTRIBUTE, "true");
+                    propValue = encryptPropertyWithNewEncryptor(value, element);
                 }
                 element.setText(propValue);
             }
@@ -870,6 +871,104 @@ public class XMLProperties {
             propName.add(tokenizer.nextToken());
         }
         return propName.toArray(new String[0]);
+    }
+
+    /**
+     * Decrypts an encrypted property value, handling both new format (with IV) and legacy format (without IV).
+     * Package-private for testing.
+     *
+     * @param propertyName the name of the property (for logging)
+     * @param element the XML element containing the encrypted property value and optional IV attribute
+     * @return the decrypted value, or null if decryption fails
+     */
+    String decryptPropertyValue(String propertyName, Element element) {
+        String encryptedValue = element.getTextTrim();
+
+        // Check for IV attribute (new format)
+        Attribute ivAttr = element.attribute(IV_ATTRIBUTE);
+        if (ivAttr != null) {
+            // New format: decrypt with IV
+            byte[] iv = null;
+            try {
+                iv = Base64.getDecoder().decode(ivAttr.getValue());
+                if (iv.length != 16) {
+                    Log.error("Property '{}' has corrupted IV attribute: '{}'. IV must be exactly 16 bytes but got {}. This property was encrypted with a random IV but the IV is now invalid. Manual intervention required: either restore from backup or delete and re-create this property.",
+                        propertyName, ivAttr.getValue(), iv.length);
+                    iv = null;
+                }
+            } catch (final IllegalArgumentException e) {
+                Log.error("Property '{}' has corrupted IV attribute: '{}'. This property was encrypted with a random IV but the IV is now invalid Base64 or wrong length. Manual intervention required: either restore from backup or delete and re-create this property.",
+                    propertyName, ivAttr.getValue(), e);
+                iv = null;
+            }
+
+            // Decrypt with validated IV (or null if IV was corrupted)
+            try {
+                return JiveGlobals.getPropertyEncryptor().decrypt(encryptedValue, iv);
+            } catch (Exception e) {
+                Log.error("Failed to decrypt property '{}' with IV. Manual intervention required: either restore from backup or delete and re-create this property.", propertyName, e);
+                return null;
+            }
+        } else {
+            // Legacy format: decrypt without IV
+            String decrypted = JiveGlobals.getPropertyEncryptor().decrypt(encryptedValue);
+            Log.warn("Property '{}' uses legacy encryption without IV, consider re-saving to upgrade", propertyName);
+            return decrypted;
+        }
+    }
+
+    /**
+     * Encrypts a property value with a random IV using the target/new encryptor.
+     * During encryption key rotation, this uses the NEW key so updated properties
+     * are encrypted with the target key. In normal operation (no rotation), this
+     * is the same as the current encryptor.
+     * Package-private for testing.
+     *
+     * @param value the plaintext value to encrypt
+     * @param element the XML element to add attributes to
+     * @return the encrypted value
+     */
+    String encryptPropertyWithNewEncryptor(String value, Element element) {
+        return encryptPropertyValueWithIV(value, element, JiveGlobals.getPropertyEncryptor(true));
+    }
+
+    /**
+     * Encrypts a property value with a random IV using the current encryptor.
+     * During encryption key rotation, this uses the CURRENT/OLD key. This is used
+     * for list-based properties (setProperties) which weren't updated during the
+     * 2019 key rotation feature implementation (commit 589ef8b39c).
+     * Package-private for testing.
+     *
+     * @param value the plaintext value to encrypt
+     * @param element the XML element to add attributes to
+     * @return the encrypted value
+     */
+    String encryptPropertyWithCurrentEncryptor(String value, Element element) {
+        return encryptPropertyValueWithIV(value, element, JiveGlobals.getPropertyEncryptor());
+    }
+
+    /**
+     * Encrypts a property value with a random IV and adds the encrypted attribute and IV to the element.
+     * Private helper method to avoid code duplication between encryption operations using different encryptors.
+     *
+     * @param value the plaintext value to encrypt
+     * @param element the XML element to add attributes to
+     * @param encryptor the encryptor to use (new/target encryptor or current encryptor)
+     * @return the encrypted value
+     */
+    private String encryptPropertyValueWithIV(String value, Element element, Encryptor encryptor) {
+        // Generate random IV for this property
+        byte[] iv = new byte[16];
+        new SecureRandom().nextBytes(iv);
+
+        // Encrypt with random IV
+        String encrypted = encryptor.encrypt(value, iv);
+
+        // Store encrypted value and IV
+        element.addAttribute(ENCRYPTED_ATTRIBUTE, "true");
+        element.addAttribute(IV_ATTRIBUTE, Base64.getEncoder().encodeToString(iv));
+
+        return encrypted;
     }
 
     public void setProperties(Map<String, String> propertyMap) {

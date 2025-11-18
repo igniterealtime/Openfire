@@ -1126,10 +1126,10 @@ public class JiveGlobals {
      * @see Obfuscator
      */
     private static String getCurrentKey() {
-        String encryptedKey = securityProperties.getProperty(ENCRYPTION_KEY_CURRENT);
+        String obfuscatedKey = securityProperties.getProperty(ENCRYPTION_KEY_CURRENT);
         String key = null;
-        if (StringUtils.isNotEmpty(encryptedKey)) {
-            key = new Obfuscator().deobfuscate(encryptedKey);
+        if (StringUtils.isNotEmpty(obfuscatedKey)) {
+            key = new Obfuscator().deobfuscate(obfuscatedKey);
         }
         return key;
     }

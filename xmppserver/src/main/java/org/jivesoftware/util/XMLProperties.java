@@ -16,6 +16,7 @@
 
 package org.jivesoftware.util;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.text.StringEscapeUtils;
 import org.dom4j.*;
 import org.dom4j.io.OutputFormat;
@@ -881,6 +882,7 @@ public class XMLProperties {
      * @param element the XML element containing the encrypted property value and optional IV attribute
      * @return the decrypted value, or null if decryption fails
      */
+    @VisibleForTesting
     String decryptPropertyValue(String propertyName, Element element) {
         String encryptedValue = element.getTextTrim();
 
@@ -928,6 +930,7 @@ public class XMLProperties {
      * @param element the XML element to add attributes to
      * @return the encrypted value
      */
+    @VisibleForTesting
     String encryptPropertyWithNewEncryptor(String value, Element element) {
         return encryptPropertyValueWithIV(value, element, JiveGlobals.getPropertyEncryptor(true));
     }
@@ -943,6 +946,7 @@ public class XMLProperties {
      * @param element the XML element to add attributes to
      * @return the encrypted value
      */
+    @VisibleForTesting
     String encryptPropertyWithCurrentEncryptor(String value, Element element) {
         return encryptPropertyValueWithIV(value, element, JiveGlobals.getPropertyEncryptor());
     }

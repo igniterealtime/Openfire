@@ -156,6 +156,10 @@ OPENFIRE_OPTS="${OPENFIRE_OPTS} -Djdk.tls.server.enableStatusRequestExtension=tr
 # Enable the CRL Distribution Points extension
 OPENFIRE_OPTS="${OPENFIRE_OPTS} -Dcom.sun.security.enableCRLDP=true"
 
+# Auto-upgrade legacy encrypted XML properties to use random IV (secure by default)
+# Admins can disable by setting: -Dopenfire.xmlproperties.encryption.autoupgrade=false
+OPENFIRE_OPTS="${OPENFIRE_OPTS} -Dopenfire.xmlproperties.encryption.autoupgrade=true"
+
 JAVACMD="${JAVACMD} -Dlog4j.configurationFile=${OPENFIRE_LIB}/log4j2.xml -Dlog4j2.formatMsgNoLookups=true -Djdk.tls.ephemeralDHKeySize=matched -Djsse.SSLEngine.acceptLargeFragments=true -Djava.net.preferIPv6Addresses=system"
 
 if [ -z "$LOCALCLASSPATH" ] ; then

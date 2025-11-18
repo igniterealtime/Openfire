@@ -454,4 +454,119 @@ public class XMLPropertiesTest {
         byte[] iv = Base64.getDecoder().decode(ivBase64);
         assertEquals(16, iv.length, "IV should be exactly 16 bytes");
     }
+
+    /**
+     * Tests that auto-upgrade is enabled by default when system property is not set.
+     * This verifies the secure-by-default behaviour.
+     */
+    @Test
+    public void testAutoUpgrade_EnabledByDefault() throws Exception {
+        // Clear system property to test default behaviour
+        String originalValue = System.getProperty("openfire.xmlproperties.encryption.autoupgrade");
+        try {
+            System.clearProperty("openfire.xmlproperties.encryption.autoupgrade");
+
+            // Create XML with legacy encrypted property (no IV attribute)
+            String xml = "<root>"
+                    + "<config>"
+                    + "<legacy encrypted=\"true\">legacyValue</legacy>"
+                    + "</config>"
+                    + "</root>";
+
+            XMLProperties props = XMLProperties.getNonPersistedInstance(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+
+            // Verify legacy property has no IV initially
+            assertNull(props.getAttribute("config.legacy", "iv"),
+                    "Legacy property should not have IV attribute initially");
+
+            // shouldAutoUpgradeProperty should return true by default (secure default)
+            Document doc = DocumentHelper.parseText(xml);
+            Element element = doc.getRootElement().element("config").element("legacy");
+            boolean shouldUpgrade = props.shouldAutoUpgradeProperty("config.legacy", element);
+
+            assertTrue(shouldUpgrade, "Auto-upgrade should be enabled by default");
+        } finally {
+            // Restore original system property
+            if (originalValue != null) {
+                System.setProperty("openfire.xmlproperties.encryption.autoupgrade", originalValue);
+            } else {
+                System.clearProperty("openfire.xmlproperties.encryption.autoupgrade");
+            }
+        }
+    }
+
+    /**
+     * Tests that auto-upgrade can be disabled via system property.
+     * This allows administrators to prevent automatic migration if needed.
+     */
+    @Test
+    public void testAutoUpgrade_Disabled() throws Exception {
+        String originalValue = System.getProperty("openfire.xmlproperties.encryption.autoupgrade");
+        try {
+            // Disable auto-upgrade
+            System.setProperty("openfire.xmlproperties.encryption.autoupgrade", "false");
+
+            // Create XML with legacy encrypted property (no IV attribute)
+            String xml = "<root>"
+                    + "<config>"
+                    + "<legacy encrypted=\"true\">legacyValue</legacy>"
+                    + "</config>"
+                    + "</root>";
+
+            XMLProperties props = XMLProperties.getNonPersistedInstance(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+
+            // Verify shouldAutoUpgradeProperty returns false
+            Document doc = DocumentHelper.parseText(xml);
+            Element element = doc.getRootElement().element("config").element("legacy");
+            boolean shouldUpgrade = props.shouldAutoUpgradeProperty("config.legacy", element);
+
+            assertFalse(shouldUpgrade, "Auto-upgrade should be disabled when property is 'false'");
+        } finally {
+            if (originalValue != null) {
+                System.setProperty("openfire.xmlproperties.encryption.autoupgrade", originalValue);
+            } else {
+                System.clearProperty("openfire.xmlproperties.encryption.autoupgrade");
+            }
+        }
+    }
+
+    /**
+     * Tests that properties with IV attribute are not flagged for auto-upgrade.
+     * Only legacy properties (encrypted="true" with no iv attribute) should be upgraded.
+     */
+    @Test
+    public void testAutoUpgrade_SkipsPropertiesWithIV() throws Exception {
+        String originalValue = System.getProperty("openfire.xmlproperties.encryption.autoupgrade");
+        try {
+            // Enable auto-upgrade
+            System.setProperty("openfire.xmlproperties.encryption.autoupgrade", "true");
+
+            // Create XML with modern encrypted property (has IV attribute)
+            String xml = "<root>"
+                    + "<config>"
+                    + "<modern encrypted=\"true\" iv=\"MTIzNDU2Nzg5MDEyMzQ1Ng==\">modernValue</modern>"
+                    + "</config>"
+                    + "</root>";
+
+            XMLProperties props = XMLProperties.getNonPersistedInstance(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
+
+            // Verify property has IV
+            assertNotNull(props.getAttribute("config.modern", "iv"),
+                    "Modern property should have IV attribute");
+
+            // Verify shouldAutoUpgradeProperty returns false (no upgrade needed)
+            Document doc = DocumentHelper.parseText(xml);
+            Element element = doc.getRootElement().element("config").element("modern");
+            boolean shouldUpgrade = props.shouldAutoUpgradeProperty("config.modern", element);
+
+            assertFalse(shouldUpgrade,
+                    "Properties with IV should not be flagged for auto-upgrade");
+        } finally {
+            if (originalValue != null) {
+                System.setProperty("openfire.xmlproperties.encryption.autoupgrade", originalValue);
+            } else {
+                System.clearProperty("openfire.xmlproperties.encryption.autoupgrade");
+            }
+        }
+    }
 }

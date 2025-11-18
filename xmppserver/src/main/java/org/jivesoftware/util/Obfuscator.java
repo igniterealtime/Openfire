@@ -180,12 +180,12 @@ public class Obfuscator {
             // This is required for backward compatibility and deterministic obfuscation.
             // DO NOT modify cipher() to use random IVs - that would break existing installations.
 
-            // Create AES Cipher
-            // CodeQL[java/insecure-crypto] Intentional use of CBC mode for backward compatibility and deterministic obfuscation
+            // Create AES Cipher - intentional use of CBC mode for backward compatibility
+            // codeql[java/insecure-crypto]
             Cipher aesCipher = Cipher.getInstance(ALGORITHM);
 
-            // Initialize AES Cipher and convert using hardcoded IV
-            // CodeQL[java/static-initialization-vector] Intentional use of static IV for deterministic obfuscation, not cryptographic security
+            // Initialize AES Cipher with hardcoded IV - intentional for deterministic obfuscation
+            // codeql[java/static-initialization-vector]
             aesCipher.init(mode, aesKey, new IvParameterSpec(LegacyEncryptionConstants.LEGACY_IV));
             result = aesCipher.doFinal(data);
         } catch (Exception e) {

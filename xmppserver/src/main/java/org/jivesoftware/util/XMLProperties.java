@@ -61,6 +61,14 @@ public class XMLProperties {
     private static final String ENCRYPTED_ATTRIBUTE = "encrypted";
     private static final String IV_ATTRIBUTE = "iv";
 
+    /**
+     * Java system property to control automatic upgrade of legacy encrypted XML properties
+     * (those without random IV) to use random IV encryption.
+     * Set to "false" to disable auto-upgrade (enabled by default for security).
+     * Example: -Dopenfire.xmlproperties.encryption.autoupgrade=false
+     */
+    private static final String XML_PROPERTY_ENCRYPTION_AUTOUPGRADE_PROPERTY = "openfire.xmlproperties.encryption.autoupgrade";
+
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
     private final Path file;
@@ -217,6 +225,11 @@ public class XMLProperties {
                     Attribute encrypted = element.attribute(ENCRYPTED_ATTRIBUTE);
                     if (encrypted != null) {
                         value = decryptPropertyValue(name, element);
+
+                        // Check if legacy encrypted property should be auto-upgraded
+                        if (shouldAutoUpgradeProperty(name, element)) {
+                            mustRewrite = true;
+                        }
                     } else {
                         // rewrite property as an encrypted value
                         Log.info("Rewriting XML property " + name + " as an encrypted value");
@@ -973,6 +986,42 @@ public class XMLProperties {
         element.addAttribute(IV_ATTRIBUTE, Base64.getEncoder().encodeToString(iv));
 
         return encrypted;
+    }
+
+    /**
+     * Checks if automatic upgrade of legacy encrypted properties is enabled.
+     * Defaults to true for security (auto-upgrade ON by default).
+     * Can be disabled by setting Java system property to false:
+     * -Dopenfire.xmlproperties.encryption.autoupgrade=false
+     *
+     * @return true if auto-upgrade is enabled, false otherwise
+     */
+    @VisibleForTesting
+    static boolean isAutoUpgradeEnabled() {
+        return Boolean.parseBoolean(
+            System.getProperty(XML_PROPERTY_ENCRYPTION_AUTOUPGRADE_PROPERTY, "true")
+        );
+    }
+
+    /**
+     * Determines if a property should be auto-upgraded from legacy encryption
+     * (without IV) to modern encryption (with random IV).
+     *
+     * @param propertyName the name of the property
+     * @param element the XML element containing the property
+     * @return true if the property should be auto-upgraded, false otherwise
+     */
+    @VisibleForTesting
+    boolean shouldAutoUpgradeProperty(String propertyName, Element element) {
+        // Check if property is encrypted and has no IV attribute (legacy format)
+        Attribute ivAttr = element.attribute(IV_ATTRIBUTE);
+        if (ivAttr == null && isAutoUpgradeEnabled()) {
+            Log.info("Auto-upgrading legacy encrypted property '{}' to use random IV", propertyName);
+            return true;
+        } else if (ivAttr == null && !isAutoUpgradeEnabled()) {
+            Log.warn("Legacy encrypted property '{}' was not auto-upgraded (disabled by system property)", propertyName);
+        }
+        return false;
     }
 
     public void setProperties(Map<String, String> propertyMap) {

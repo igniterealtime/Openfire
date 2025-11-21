@@ -57,7 +57,6 @@ public class BlowfishMigrationServlet extends HttpServlet {
     private static final String PARAM_ACTION = "action";
     private static final String PARAM_DB_BACKUP = "dbBackup";
     private static final String PARAM_SECURITY_BACKUP = "securityBackup";
-    private static final String PARAM_CLUSTER_OFFLINE = "clusterOffline";
     private static final String ACTION_MIGRATE = "migrate";
 
     @Override
@@ -88,9 +87,15 @@ public class BlowfishMigrationServlet extends HttpServlet {
             request.setAttribute("encryptedPropertyCount", count);
         }
 
-        // Detect clustering status
+        // Detect clustering status and node count
         boolean isClustered = ClusterManager.isClusteringStarted();
+        int clusterNodeCount = 0;
+        if (isClustered) {
+            clusterNodeCount = ClusterManager.getNodesInfo().size();
+        }
+
         request.setAttribute("isClustered", isClustered);
+        request.setAttribute("clusterNodeCount", clusterNodeCount);
 
         // Set CSRF token
         String csrf = StringUtils.randomString(16);
@@ -124,17 +129,22 @@ public class BlowfishMigrationServlet extends HttpServlet {
             // Verify checkboxes confirmed
             boolean dbBackup = "true".equals(request.getParameter(PARAM_DB_BACKUP));
             boolean securityBackup = "true".equals(request.getParameter(PARAM_SECURITY_BACKUP));
-            boolean clusterOffline = "true".equals(request.getParameter(PARAM_CLUSTER_OFFLINE));
 
-            // Check clustering status to determine if cluster checkbox is required
-            boolean isClustered = ClusterManager.isClusteringStarted();
-
-            // Validate required checkboxes (cluster checkbox only required if clustered)
-            boolean allRequiredChecked = dbBackup && securityBackup && (!isClustered || clusterOffline);
-
-            if (!allRequiredChecked) {
+            if (!dbBackup || !securityBackup) {
                 request.getSession().setAttribute("errorMessage",
                         "security.blowfish.migration.error.backups-required");
+                response.sendRedirect("security-blowfish-migration.jsp");
+                return;
+            }
+
+            // Check clustering status - block migration if multiple nodes are active
+            boolean isClustered = ClusterManager.isClusteringStarted();
+            int clusterNodeCount = isClustered ? ClusterManager.getNodesInfo().size() : 0;
+
+            if (clusterNodeCount > 1) {
+                request.getSession().setAttribute("errorMessage",
+                        "security.blowfish.migration.error.multi-node-active");
+                request.getSession().setAttribute("errorParam", clusterNodeCount);
                 response.sendRedirect("security-blowfish-migration.jsp");
                 return;
             }

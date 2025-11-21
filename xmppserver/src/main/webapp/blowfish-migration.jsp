@@ -193,23 +193,17 @@
     </c:when>
 
     <c:when test="${needsMigration}">
-        <div class="warning-box">
-            <h3><fmt:message key="security.blowfish.migration.warning.title"/></h3>
-            <p><fmt:message key="security.blowfish.migration.warning.irreversible"/></p>
-            <ul>
-                <li><fmt:message key="security.blowfish.migration.warning.backup"/></li>
-                <li><fmt:message key="security.blowfish.migration.warning.cluster"/></li>
-                <li><fmt:message key="security.blowfish.migration.warning.downtime"/></li>
-            </ul>
-        </div>
+        <c:choose>
+            <c:when test="${clusterNodeCount > 1}">
+                <%-- Block migration if multiple cluster nodes are running --%>
+                <admin:infobox type="error">
+                    <fmt:message key="security.blowfish.migration.error.multi-node-active">
+                        <fmt:param value="${clusterNodeCount}"/>
+                    </fmt:message>
+                </admin:infobox>
 
-        <div class="migration-instructions">
-            <p class="note"><fmt:message key="security.blowfish.migration.detailed-guide-notice"/></p>
-
-            <c:choose>
-                <c:when test="${isClustered}">
+                <div class="migration-instructions">
                     <h3><fmt:message key="security.blowfish.migration.cluster.title"/></h3>
-                    <p><fmt:message key="security.blowfish.migration.cluster.info"/></p>
                     <div class="critical">
                         <fmt:message key="security.blowfish.migration.cluster.critical"/>
                     </div>
@@ -225,22 +219,54 @@
                         <li><fmt:message key="security.blowfish.migration.cluster.step9"/></li>
                         <li><fmt:message key="security.blowfish.migration.cluster.step10"/></li>
                     </ol>
-                </c:when>
-                <c:otherwise>
-                    <h3><fmt:message key="security.blowfish.migration.singlenode.title"/></h3>
-                    <p><fmt:message key="security.blowfish.migration.singlenode.info"/></p>
-                    <ol>
-                        <li><fmt:message key="security.blowfish.migration.singlenode.step1"/></li>
-                        <li><fmt:message key="security.blowfish.migration.singlenode.step2"/></li>
-                        <li><fmt:message key="security.blowfish.migration.singlenode.step3"/></li>
-                        <li><fmt:message key="security.blowfish.migration.singlenode.step4"/></li>
-                    </ol>
-                    <p class="note"><fmt:message key="security.blowfish.migration.singlenode.completion"/></p>
-                </c:otherwise>
-            </c:choose>
-        </div>
+                </div>
+            </c:when>
+            <c:otherwise>
+                <%-- Migration allowed - show warnings and form --%>
+                <div class="warning-box">
+                    <h3><fmt:message key="security.blowfish.migration.warning.title"/></h3>
+                    <p><fmt:message key="security.blowfish.migration.warning.irreversible"/></p>
+                    <ul>
+                        <li><fmt:message key="security.blowfish.migration.warning.backup"/></li>
+                        <c:if test="${isClustered}">
+                            <li><fmt:message key="security.blowfish.migration.warning.cluster"/></li>
+                        </c:if>
+                        <li><fmt:message key="security.blowfish.migration.warning.downtime"/></li>
+                    </ul>
+                </div>
 
-        <div class="jive-table">
+                <div class="migration-instructions">
+                    <p class="note"><fmt:message key="security.blowfish.migration.detailed-guide-notice"/></p>
+                    <c:choose>
+                        <c:when test="${isClustered && clusterNodeCount == 1}">
+                            <h3><fmt:message key="security.blowfish.migration.singlenode.title"/></h3>
+                            <div class="success">
+                                <fmt:message key="security.blowfish.migration.cluster.single-node-safe"/>
+                            </div>
+                            <p><fmt:message key="security.blowfish.migration.singlenode.info"/></p>
+                            <ol>
+                                <li><fmt:message key="security.blowfish.migration.singlenode.step1"/></li>
+                                <li><fmt:message key="security.blowfish.migration.singlenode.step2"/></li>
+                                <li><fmt:message key="security.blowfish.migration.singlenode.step3"/></li>
+                                <li><fmt:message key="security.blowfish.migration.singlenode.step4"/></li>
+                            </ol>
+                            <p class="note"><fmt:message key="security.blowfish.migration.singlenode.completion"/></p>
+                        </c:when>
+                        <c:otherwise>
+                            <h3><fmt:message key="security.blowfish.migration.singlenode.title"/></h3>
+                            <p><fmt:message key="security.blowfish.migration.singlenode.info"/></p>
+                            <ol>
+                                <li><fmt:message key="security.blowfish.migration.singlenode.step1"/></li>
+                                <li><fmt:message key="security.blowfish.migration.singlenode.step2"/></li>
+                                <li><fmt:message key="security.blowfish.migration.singlenode.step3"/></li>
+                                <li><fmt:message key="security.blowfish.migration.singlenode.step4"/></li>
+                            </ol>
+                            <p class="note"><fmt:message key="security.blowfish.migration.singlenode.completion"/></p>
+                        </c:otherwise>
+                    </c:choose>
+                </div>
+
+                <div class="jive-table">
             <table cellpadding="0" cellspacing="0" border="0" width="100%">
                 <thead>
                     <tr>
@@ -274,16 +300,12 @@
                     <input type="checkbox" name="securityBackup" value="true" required>
                     <fmt:message key="security.blowfish.migration.checklist.security-backup"/>
                 </label>
-                <c:if test="${isClustered}">
-                    <label>
-                        <input type="checkbox" name="clusterOffline" value="true" required>
-                        <fmt:message key="security.blowfish.migration.checklist.cluster-offline"/>
-                    </label>
-                </c:if>
             </div>
 
-            <input type="submit" value="<fmt:message key="security.blowfish.migration.button.migrate"/>">
-        </form>
+                    <input type="submit" value="<fmt:message key="security.blowfish.migration.button.migrate"/>">
+                </form>
+            </c:otherwise>
+        </c:choose>
     </c:when>
 </c:choose>
 

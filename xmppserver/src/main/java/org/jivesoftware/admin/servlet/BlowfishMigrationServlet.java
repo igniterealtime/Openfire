@@ -17,6 +17,7 @@
 package org.jivesoftware.admin.servlet;
 
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.util.Blowfish;
 import org.jivesoftware.util.CookieUtils;
 import org.jivesoftware.util.JiveGlobals;
@@ -87,6 +88,10 @@ public class BlowfishMigrationServlet extends HttpServlet {
             request.setAttribute("encryptedPropertyCount", count);
         }
 
+        // Detect clustering status
+        boolean isClustered = ClusterManager.isClusteringStarted();
+        request.setAttribute("isClustered", isClustered);
+
         // Set CSRF token
         String csrf = StringUtils.randomString(16);
         CookieUtils.setCookie(request, response, "csrf", csrf, -1);
@@ -121,7 +126,13 @@ public class BlowfishMigrationServlet extends HttpServlet {
             boolean securityBackup = "true".equals(request.getParameter(PARAM_SECURITY_BACKUP));
             boolean clusterOffline = "true".equals(request.getParameter(PARAM_CLUSTER_OFFLINE));
 
-            if (!dbBackup || !securityBackup || !clusterOffline) {
+            // Check clustering status to determine if cluster checkbox is required
+            boolean isClustered = ClusterManager.isClusteringStarted();
+
+            // Validate required checkboxes (cluster checkbox only required if clustered)
+            boolean allRequiredChecked = dbBackup && securityBackup && (!isClustered || clusterOffline);
+
+            if (!allRequiredChecked) {
                 request.getSession().setAttribute("errorMessage",
                         "security.blowfish.migration.error.backups-required");
                 response.sendRedirect("security-blowfish-migration.jsp");

@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Openfire: Blowfish PBKDF2 Migration Guide</title>
+    <link type="text/css" rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<article>
+
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
+        <h1>Blowfish PBKDF2 Migration Guide</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </nav>
+
+    <section id="intro">
+
+        <h2>Introduction</h2>
+
+        <p>
+            Openfire 5.1.0 introduces PBKDF2-HMAC-SHA512 key derivation for Blowfish encryption,
+            replacing the legacy SHA1 key derivation method. This security enhancement provides
+            significantly improved protection for encrypted properties stored in the Openfire database.
+        </p>
+
+        <p>
+            This guide describes how to migrate existing Openfire installations from SHA1 to PBKDF2
+            key derivation for Blowfish-encrypted properties.
+        </p>
+
+        <p>Topics that are covered in this document:</p>
+
+        <nav>
+            <ul>
+                <li><a href="#overview">Security Improvement Overview</a></li>
+                <li><a href="#who-needs-migration">Who Needs to Migrate</a></li>
+                <li><a href="#single-node">Single-Node Migration Procedure</a></li>
+                <li><a href="#cluster">Clustered Migration Procedure</a></li>
+                <li><a href="#troubleshooting">Troubleshooting</a></li>
+            </ul>
+        </nav>
+
+    </section>
+
+    <section id="overview">
+
+        <h2>Security Improvement Overview</h2>
+
+        <p>
+            The migration from SHA1 to PBKDF2 key derivation improves security in three key ways:
+        </p>
+
+        <ul>
+            <li>
+                <strong>Slow Key Derivation Function:</strong> PBKDF2 uses 100,000 iterations, making
+                brute-force attacks computationally expensive and impractical.
+            </li>
+            <li>
+                <strong>Random Salt:</strong> Each Openfire installation uses a unique random salt
+                (32 bytes), preventing rainbow table attacks and ensuring that identical passwords
+                produce different derived keys across installations.
+            </li>
+            <li>
+                <strong>Industry Standard Algorithm:</strong> PBKDF2-HMAC-SHA512 is a well-vetted
+                algorithm recommended by NIST and other security standards organisations.
+            </li>
+        </ul>
+
+        <p>
+            <strong>What Properties Are Affected:</strong> This migration applies to all properties
+            encrypted with Blowfish encryption, including database passwords, LDAP bind passwords,
+            and any custom encrypted properties. Properties encrypted with AES are not affected by
+            this migration.
+        </p>
+
+    </section>
+
+    <section id="who-needs-migration">
+
+        <h2>Who Needs to Migrate</h2>
+
+        <section>
+            <h3>New Installations (Openfire 5.1.0+)</h3>
+
+            <p>
+                <strong>Action Required:</strong> None. New installations automatically use PBKDF2.
+            </p>
+
+            <p>
+                When you complete the setup wizard in Openfire 5.1.0 or later, PBKDF2 key derivation
+                is automatically enabled. You can verify this in the admin console by navigating to
+                <strong>Server → Server Settings → Blowfish Encryption Migration</strong>, which will
+                show "Your installation is already using PBKDF2-HMAC-SHA512".
+            </p>
+        </section>
+
+        <section>
+            <h3>Existing Installations Using Blowfish Encryption</h3>
+
+            <p>
+                <strong>Action Required:</strong> Migration recommended for improved security.
+            </p>
+
+            <p>
+                If you upgraded from a previous version of Openfire and use Blowfish encryption
+                (the default), your installation continues to use SHA1 key derivation for backward
+                compatibility. You should migrate to PBKDF2 to benefit from the security improvements.
+            </p>
+
+            <p>
+                To check if migration is needed, navigate to <strong>Server → Server Settings →
+                Blowfish Encryption Migration</strong> in the admin console. If migration is needed,
+                you'll see a warning indicating "Your installation is using legacy SHA1 key derivation".
+            </p>
+        </section>
+
+        <section>
+            <h3>Existing Installations Using AES Encryption</h3>
+
+            <p>
+                <strong>Action Required:</strong> None. This migration does not apply to AES encryption.
+            </p>
+
+            <p>
+                If your installation uses AES encryption (configured in <code>conf/security.xml</code>),
+                this migration is not applicable. The migration tool will indicate that your server
+                uses AES encryption and no action is required.
+            </p>
+        </section>
+
+    </section>
+
+    <section id="single-node">
+
+        <h2>Single-Node Migration Procedure</h2>
+
+        <p>
+            This procedure applies to standalone Openfire installations (non-clustered). The migration
+            runs whilst the server is operational, requiring no downtime.
+        </p>
+
+        <section>
+            <h3>Prerequisites</h3>
+
+            <p>Before beginning the migration, ensure you have:</p>
+
+            <ul>
+                <li>Administrative access to the Openfire admin console</li>
+                <li>Ability to backup the Openfire database</li>
+                <li>Access to the server filesystem to backup <code>conf/security.xml</code></li>
+            </ul>
+        </section>
+
+        <section>
+            <h3>Migration Steps</h3>
+
+            <ol>
+                <li>
+                    <strong>Backup the Database</strong>
+                    <p>
+                        Create a complete backup of your Openfire database. The migration is wrapped in
+                        a database transaction and will roll back on failure, but having a backup provides
+                        an additional safety mechanism.
+                    </p>
+                    <p>Example backup commands:</p>
+                    <ul>
+                        <li>PostgreSQL: <code>pg_dump openfire &gt; openfire_backup.sql</code></li>
+                        <li>MySQL: <code>mysqldump openfire &gt; openfire_backup.sql</code></li>
+                        <li>Embedded HSQLDB: <code>cp -r embedded-db/ embedded-db.backup/</code></li>
+                    </ul>
+                </li>
+
+                <li>
+                    <strong>Backup security.xml</strong>
+                    <p>
+                        Create a backup of the security configuration file:
+                    </p>
+                    <pre>cp /opt/openfire/conf/security.xml /opt/openfire/conf/security.xml.backup</pre>
+                    <p>
+                        (Adjust the path if Openfire is installed in a different location)
+                    </p>
+                </li>
+
+                <li>
+                    <strong>Access the Migration Page</strong>
+                    <p>
+                        Log into the Openfire admin console and navigate to:
+                    </p>
+                    <p>
+                        <strong>Server → Server Settings → Blowfish Encryption Migration</strong>
+                    </p>
+                    <p>
+                        The page will display the current encryption status, including the key derivation
+                        function in use and the number of encrypted properties that will be migrated.
+                    </p>
+                </li>
+
+                <li>
+                    <strong>Confirm Backups</strong>
+                    <p>
+                        Check all three confirmation boxes on the migration page:
+                    </p>
+                    <ul>
+                        <li>"I have backed up the Openfire database"</li>
+                        <li>"I have backed up conf/security.xml"</li>
+                        <li>"All cluster nodes are offline (except this one)"</li>
+                    </ul>
+                    <p>
+                        <strong>Note:</strong> Even for single-node installations, all three checkboxes
+                        must be checked. The third checkbox confirms that your installation is not part
+                        of a cluster or that all other cluster nodes are offline.
+                    </p>
+                </li>
+
+                <li>
+                    <strong>Run the Migration</strong>
+                    <p>
+                        Click the <strong>"Begin Migration"</strong> button. You will be prompted to
+                        confirm the operation. Click "OK" to proceed.
+                    </p>
+                    <p>
+                        The migration process will:
+                    </p>
+                    <ul>
+                        <li>Decrypt all encrypted properties using the SHA1-derived key</li>
+                        <li>Re-encrypt all properties using the PBKDF2-derived key</li>
+                        <li>Update all encrypted values in the database</li>
+                        <li>Update <code>conf/security.xml</code> to use PBKDF2</li>
+                    </ul>
+                    <p>
+                        The migration typically completes in under 10 seconds for installations with fewer
+                        than 100 encrypted properties.
+                    </p>
+                </li>
+
+                <li>
+                    <strong>Verify Success</strong>
+                    <p>
+                        After successful migration, you will see a success message indicating how many
+                        properties were migrated. The migration page will now show "Your installation is
+                        using PBKDF2-HMAC-SHA512 key derivation".
+                    </p>
+                    <p>
+                        Verify that Openfire continues to function normally:
+                    </p>
+                    <ul>
+                        <li>Test database connectivity (indicates database password still decrypts correctly)</li>
+                        <li>Test LDAP connections if configured</li>
+                        <li>Check that users can authenticate</li>
+                        <li>Review <code>logs/openfire.log</code> for any errors</li>
+                    </ul>
+                    <p>
+                        You can also verify the updated <code>conf/security.xml</code> contains:
+                    </p>
+                    <pre>&lt;blowfish&gt;
+  &lt;kdf&gt;pbkdf2&lt;/kdf&gt;
+  &lt;salt&gt;BASE64_ENCODED_SALT&lt;/salt&gt;
+&lt;/blowfish&gt;</pre>
+                </li>
+            </ol>
+        </section>
+
+        <section>
+            <h3>Rollback Procedure (Single-Node)</h3>
+
+            <p>
+                If you encounter issues after migration and need to rollback:
+            </p>
+
+            <ol>
+                <li>
+                    <strong>Stop Openfire</strong>
+                    <pre>systemctl stop openfire</pre>
+                    <p>Or use the appropriate stop command for your installation method.</p>
+                </li>
+
+                <li>
+                    <strong>Restore the Database</strong>
+                    <p>Restore your database backup:</p>
+                    <ul>
+                        <li>PostgreSQL: <code>psql openfire &lt; openfire_backup.sql</code></li>
+                        <li>MySQL: <code>mysql openfire &lt; openfire_backup.sql</code></li>
+                        <li>Embedded HSQLDB: <code>rm -rf embedded-db/ && cp -r embedded-db.backup/ embedded-db/</code></li>
+                    </ul>
+                </li>
+
+                <li>
+                    <strong>Restore security.xml</strong>
+                    <pre>cp /opt/openfire/conf/security.xml.backup /opt/openfire/conf/security.xml</pre>
+                </li>
+
+                <li>
+                    <strong>Start Openfire</strong>
+                    <pre>systemctl start openfire</pre>
+                </li>
+
+                <li>
+                    <strong>Verify Rollback</strong>
+                    <p>
+                        Verify that Openfire starts successfully and encrypted properties decrypt correctly.
+                        The system is now back to using SHA1 key derivation (pre-migration state).
+                    </p>
+                </li>
+            </ol>
+
+        </section>
+
+    </section>
+
+    <section id="cluster">
+
+        <h2>Clustered Migration Procedure</h2>
+
+        <p>
+            This procedure applies to Openfire installations with multiple nodes in a cluster.
+            <strong>Important:</strong> Clustered migration requires a maintenance window as all
+            nodes must be offline during the migration except for the one node performing the migration.
+        </p>
+
+        <section>
+            <h3>Why Cluster Migration Requires Downtime</h3>
+
+            <p>
+                In a clustered environment:
+            </p>
+            <ul>
+                <li>The <strong>database</strong> is shared across all nodes (stores encrypted property values)</li>
+                <li>The <strong>security.xml</strong> file is local to each node (stores KDF configuration and salt)</li>
+            </ul>
+
+            <p>
+                Migration updates both the database (re-encrypted property values) and <code>security.xml</code>
+                (KDF setting). If multiple nodes are running with mismatched configurations, nodes using SHA1
+                will be unable to decrypt properties that were re-encrypted with PBKDF2, causing failures
+                across the cluster.
+            </p>
+
+            <p>
+                <strong>Critical:</strong> You cannot have nodes with different KDF settings accessing the
+                same database simultaneously. This is why all nodes except the migration node must be offline
+                during the migration process.
+            </p>
+        </section>
+
+        <section>
+            <h3>Prerequisites</h3>
+
+            <p>Before beginning the migration, ensure you have:</p>
+
+            <ul>
+                <li>Administrative access to all cluster nodes</li>
+                <li>Ability to stop and start all cluster nodes</li>
+                <li>Ability to backup the shared database</li>
+                <li>SSH or filesystem access to all nodes to backup and sync <code>security.xml</code></li>
+                <li>A scheduled maintenance window (15-30 minutes recommended)</li>
+            </ul>
+        </section>
+
+        <section>
+            <h3>Migration Steps</h3>
+
+            <h4>Phase 1: Upgrade All Nodes (Optional - Can Use Rolling Upgrade)</h4>
+
+            <p>
+                If you are upgrading from a version prior to Openfire 5.1.0, you can perform a rolling
+                upgrade first:
+            </p>
+
+            <ol>
+                <li>Upgrade Node 1 to Openfire 5.1.0, restart, verify it joins cluster</li>
+                <li>Upgrade Node 2 to Openfire 5.1.0, restart, verify it joins cluster</li>
+                <li>Upgrade Node 3 to Openfire 5.1.0, restart, verify it joins cluster</li>
+            </ol>
+
+            <p>
+                At this point, all nodes are running Openfire 5.1.0 but still using SHA1 key derivation
+                (backward compatible). The cluster operates normally. Migration is performed separately
+                during a maintenance window.
+            </p>
+
+            <h4>Phase 2: Plan and Schedule Maintenance Window</h4>
+
+            <ol start="4">
+                <li>Schedule a maintenance window (15-30 minutes recommended)</li>
+                <li>Notify users of the planned downtime</li>
+                <li>Prepare backup procedures and rollback plan</li>
+                <li>Choose one node to perform the migration (typically Node 1)</li>
+            </ol>
+
+            <h4>Phase 3: Execute Migration (During Maintenance Window)</h4>
+
+            <ol start="8">
+                <li>
+                    <strong>Stop All Cluster Nodes Except One</strong>
+                    <p>Stop all nodes except the one you'll use for migration (e.g., Node 1):</p>
+                    <pre>systemctl stop openfire  # On Node 2
+systemctl stop openfire  # On Node 3
+# etc. for all other nodes</pre>
+                    <p>
+                        <strong>Verify:</strong> Check the admin console on Node 1 shows cluster size = 1,
+                        or check logs confirm other nodes have disconnected.
+                    </p>
+                </li>
+
+                <li>
+                    <strong>Stop the Migration Node</strong>
+                    <p>Stop the remaining node:</p>
+                    <pre>systemctl stop openfire  # On Node 1</pre>
+                    <p>All cluster nodes are now offline.</p>
+                </li>
+
+                <li>
+                    <strong>Backup Everything</strong>
+                    <p>Create backups whilst all nodes are offline:</p>
+
+                    <p>Backup the shared database:</p>
+                    <ul>
+                        <li>PostgreSQL: <code>pg_dump openfire &gt; openfire_backup.sql</code></li>
+                        <li>MySQL: <code>mysqldump openfire &gt; openfire_backup.sql</code></li>
+                    </ul>
+
+                    <p>Backup <code>security.xml</code> on all nodes:</p>
+                    <pre>ssh node1 "cp /opt/openfire/conf/security.xml /opt/openfire/conf/security.xml.backup"
+ssh node2 "cp /opt/openfire/conf/security.xml /opt/openfire/conf/security.xml.backup"
+ssh node3 "cp /opt/openfire/conf/security.xml /opt/openfire/conf/security.xml.backup"</pre>
+                </li>
+
+                <li>
+                    <strong>Start Migration Node Only</strong>
+                    <p>Start only Node 1 (all other nodes remain stopped):</p>
+                    <pre>systemctl start openfire  # On Node 1 only</pre>
+                    <p>
+                        Wait for Node 1 to fully start. Monitor logs or wait until admin console is accessible.
+                    </p>
+                    <p>
+                        <strong>Verify:</strong> Cluster size should be 1 (only this node).
+                    </p>
+                </li>
+
+                <li>
+                    <strong>Run Migration via Admin Console</strong>
+                    <p>On Node 1, access the admin console and navigate to:</p>
+                    <p>
+                        <strong>Server → Server Settings → Blowfish Encryption Migration</strong>
+                    </p>
+                    <p>Check all three confirmation boxes:</p>
+                    <ul>
+                        <li>"I have backed up the Openfire database"</li>
+                        <li>"I have backed up conf/security.xml"</li>
+                        <li>"All cluster nodes are offline (except this one)"</li>
+                    </ul>
+                    <p>Click <strong>"Begin Migration"</strong> and confirm.</p>
+                    <p>
+                        The migration will decrypt all properties (using SHA1), re-encrypt them (using PBKDF2),
+                        update the database, and update Node 1's <code>security.xml</code>.
+                    </p>
+                    <p>
+                        Wait for the success message: "Successfully migrated N properties from SHA1 to PBKDF2".
+                    </p>
+                </li>
+
+                <li>
+                    <strong>Verify Migration on Node 1</strong>
+                    <p>Check that Node 1's <code>security.xml</code> was updated:</p>
+                    <pre>ssh node1 "grep -A2 '&lt;blowfish&gt;' /opt/openfire/conf/security.xml"</pre>
+                    <p>You should see:</p>
+                    <pre>&lt;blowfish&gt;
+  &lt;kdf&gt;pbkdf2&lt;/kdf&gt;
+  &lt;salt&gt;BASE64_ENCODED_SALT&lt;/salt&gt;
+&lt;/blowfish&gt;</pre>
+                    <p>
+                        <strong>Important:</strong> Note the exact salt value. All nodes must have the same salt.
+                    </p>
+                </li>
+
+                <li>
+                    <strong>Stop Migration Node</strong>
+                    <p>Stop Node 1 cleanly:</p>
+                    <pre>systemctl stop openfire  # On Node 1</pre>
+                    <p>All nodes are now offline again.</p>
+                </li>
+
+                <li>
+                    <strong>Sync security.xml to All Other Nodes</strong>
+                    <p>
+                        Copy the updated <code>security.xml</code> from Node 1 to all other nodes. You can
+                        either copy the entire file or manually edit each node's file.
+                    </p>
+
+                    <p><strong>Option A - Copy Entire File (Recommended):</strong></p>
+                    <pre>scp node1:/opt/openfire/conf/security.xml node2:/opt/openfire/conf/security.xml
+scp node1:/opt/openfire/conf/security.xml node3:/opt/openfire/conf/security.xml</pre>
+
+                    <p><strong>Option B - Manual Edit Each Node:</strong></p>
+                    <p>On each node (Node 2, Node 3, etc.), edit <code>/opt/openfire/conf/security.xml</code>:</p>
+                    <ul>
+                        <li>Change <code>&lt;kdf&gt;sha1&lt;/kdf&gt;</code> to <code>&lt;kdf&gt;pbkdf2&lt;/kdf&gt;</code></li>
+                        <li>Add the <code>&lt;salt&gt;</code> element with the exact Base64 value from Node 1</li>
+                    </ul>
+
+                    <p>
+                        <strong>Critical:</strong> All nodes must have identical KDF and salt values.
+                    </p>
+                </li>
+
+                <li>
+                    <strong>Verify All Nodes Have Matching Configuration</strong>
+                    <p>Compare <code>security.xml</code> on all nodes:</p>
+                    <pre>ssh node1 "grep -A2 '&lt;blowfish&gt;' /opt/openfire/conf/security.xml"
+ssh node2 "grep -A2 '&lt;blowfish&gt;' /opt/openfire/conf/security.xml"
+ssh node3 "grep -A2 '&lt;blowfish&gt;' /opt/openfire/conf/security.xml"</pre>
+                    <p>All should show <code>pbkdf2</code> and the <strong>same salt value</strong>.</p>
+                </li>
+
+                <li>
+                    <strong>Start All Cluster Nodes</strong>
+                    <p>Start nodes one at a time, verifying each joins the cluster successfully:</p>
+                    <pre>systemctl start openfire  # On Node 1
+# Wait 30-60 seconds, verify Node 1 started successfully
+
+systemctl start openfire  # On Node 2
+# Wait 30-60 seconds, verify Node 2 joined cluster
+
+systemctl start openfire  # On Node 3
+# Wait 30-60 seconds, verify Node 3 joined cluster</pre>
+                    <p>
+                        Check the admin console or logs to verify cluster size returns to expected count.
+                    </p>
+                </li>
+
+                <li>
+                    <strong>Verify Cluster Health Post-Migration</strong>
+                    <p>Perform comprehensive verification:</p>
+                    <ul>
+                        <li>Admin console shows all nodes in cluster</li>
+                        <li>Test encrypted property access on each node (e.g., database connection works)</li>
+                        <li>Create a test encrypted property, verify it replicates across nodes</li>
+                        <li>Check <code>logs/openfire.log</code> on all nodes for any decryption errors</li>
+                        <li>Monitor cluster for 15-30 minutes to ensure stability</li>
+                    </ul>
+                </li>
+
+                <li>
+                    <strong>End of Maintenance Window</strong>
+                    <p>
+                        Once cluster health is verified, notify users that the service is back online.
+                    </p>
+                </li>
+            </ol>
+
+        </section>
+
+        <section>
+            <h3>Critical Errors to Avoid (Clustered Environments)</h3>
+
+            <p>
+                <span style="color: red; "><strong>DO NOT</strong></span> run migration with other nodes
+                still active:
+            </p>
+            <ul>
+                <li>
+                    <strong>Problem:</strong> Node 1 migrates database to PBKDF2, but Node 2 (still running)
+                    tries to decrypt with SHA1.
+                </li>
+                <li>
+                    <strong>Result:</strong> Node 2 cannot decrypt properties, cluster breaks, service disruption.
+                </li>
+            </ul>
+
+            <p>
+                <span style="color: red; "><strong>DO NOT</strong></span> start other nodes before syncing
+                security.xml:
+            </p>
+            <ul>
+                <li>
+                    <strong>Problem:</strong> Node 1 has <code>kdf=pbkdf2</code>, but Node 2 still has
+                    <code>kdf=sha1</code> (not updated).
+                </li>
+                <li>
+                    <strong>Result:</strong> Node 2 derives wrong key, cannot decrypt properties, node fails
+                    to start or operate correctly.
+                </li>
+            </ul>
+
+            <p>
+                <span style="color: red; "><strong>DO NOT</strong></span> allow salt mismatch between nodes:
+            </p>
+            <ul>
+                <li>
+                    <strong>Problem:</strong> Node 1 has <code>salt=abc123...</code>, but Node 2 has
+                    <code>salt=xyz789...</code> (different values).
+                </li>
+                <li>
+                    <strong>Result:</strong> Different derived keys per node, Node 2 cannot decrypt,
+                    cluster inconsistency.
+                </li>
+            </ul>
+
+            <p>
+                <span style="color: green; "><strong>CORRECT PROCEDURE:</strong></span> All nodes stopped →
+                migrate on one node → sync security.xml to all nodes → start all nodes.
+            </p>
+
+        </section>
+
+        <section>
+            <h3>Rollback Procedure (Clustered)</h3>
+
+            <p>
+                If you encounter issues after migration and need to rollback:
+            </p>
+
+            <ol>
+                <li>
+                    <strong>Stop All Cluster Nodes Immediately</strong>
+                    <pre>systemctl stop openfire  # On all nodes</pre>
+                </li>
+
+                <li>
+                    <strong>Restore Shared Database</strong>
+                    <p>Restore the database backup:</p>
+                    <ul>
+                        <li>PostgreSQL: <code>psql openfire &lt; openfire_backup.sql</code></li>
+                        <li>MySQL: <code>mysql openfire &lt; openfire_backup.sql</code></li>
+                    </ul>
+                </li>
+
+                <li>
+                    <strong>Restore security.xml on All Nodes</strong>
+                    <pre>ssh node1 "cp /opt/openfire/conf/security.xml.backup /opt/openfire/conf/security.xml"
+ssh node2 "cp /opt/openfire/conf/security.xml.backup /opt/openfire/conf/security.xml"
+ssh node3 "cp /opt/openfire/conf/security.xml.backup /opt/openfire/conf/security.xml"</pre>
+                </li>
+
+                <li>
+                    <strong>Verify All Nodes Have KDF=sha1 (Pre-Migration State)</strong>
+                    <pre>ssh node1 "grep -A2 '&lt;blowfish&gt;' /opt/openfire/conf/security.xml"
+ssh node2 "grep -A2 '&lt;blowfish&gt;' /opt/openfire/conf/security.xml"
+ssh node3 "grep -A2 '&lt;blowfish&gt;' /opt/openfire/conf/security.xml"</pre>
+                    <p>All should show <code>sha1</code> or have no KDF element (defaults to sha1).</p>
+                </li>
+
+                <li>
+                    <strong>Start All Nodes</strong>
+                    <pre>systemctl start openfire  # On all nodes</pre>
+                </li>
+
+                <li>
+                    <strong>Verify Cluster Health</strong>
+                    <p>
+                        Verify all nodes join the cluster and encrypted properties decrypt correctly.
+                        The cluster is now back to using SHA1 key derivation (pre-migration state).
+                    </p>
+                </li>
+            </ol>
+
+        </section>
+
+    </section>
+
+    <section id="troubleshooting">
+
+        <h2>Troubleshooting</h2>
+
+        <section>
+            <h3>"Migration failed: Transaction rolled back" Error</h3>
+
+            <p>
+                <strong>Symptom:</strong> Migration fails midway through with an error indicating the
+                database transaction was rolled back.
+            </p>
+
+            <p>
+                <strong>Cause:</strong> One or more encrypted properties failed to decrypt or re-encrypt.
+                Possible causes include:
+            </p>
+            <ul>
+                <li>Corrupted encrypted property value in database</li>
+                <li>Database connection issue during migration</li>
+                <li>Mismatched encryption key</li>
+            </ul>
+
+            <p><strong>Solution:</strong></p>
+            <ol>
+                <li>
+                    Check <code>logs/openfire.log</code> for specific property names that failed. The log
+                    will indicate which property caused the failure.
+                </li>
+                <li>
+                    If the issue is a corrupted property, you may need to delete or manually repair that
+                    property before retrying migration.
+                </li>
+                <li>
+                    Verify your master encryption key in <code>security.xml</code> is correct. If the key
+                    was changed, properties encrypted with the old key cannot be decrypted.
+                </li>
+                <li>
+                    If the issue persists, restore from backup and report the issue in the Openfire category
+                    on the Ignite Realtime community forum with the error logs.
+                </li>
+            </ol>
+
+            <p>
+                <strong>Important:</strong> The database transaction rollback means no changes were
+                committed. Your installation remains in the pre-migration state (SHA1) and can continue
+                operating normally. You can investigate the issue and retry migration when resolved.
+            </p>
+        </section>
+
+        <section>
+            <h3>Node Fails to Start After Cluster Migration</h3>
+
+            <p>
+                <strong>Symptom:</strong> After completing cluster migration, one or more nodes fail to
+                start or fail to decrypt properties.
+            </p>
+
+            <p>
+                <strong>Cause:</strong> The node's <code>security.xml</code> was not synced correctly,
+                resulting in KDF or salt mismatch.
+            </p>
+
+            <p><strong>Solution:</strong></p>
+            <ol>
+                <li>
+                    Stop the failing node:
+                    <pre>systemctl stop openfire</pre>
+                </li>
+                <li>
+                    Copy the updated <code>security.xml</code> from the migration node:
+                    <pre>scp working-node:/opt/openfire/conf/security.xml /opt/openfire/conf/security.xml</pre>
+                </li>
+                <li>
+                    Verify the <code>&lt;blowfish&gt;</code> section matches the working node exactly,
+                    including KDF and salt values.
+                </li>
+                <li>
+                    Restart the node:
+                    <pre>systemctl start openfire</pre>
+                </li>
+                <li>
+                    Check logs to verify the node starts successfully and joins the cluster.
+                </li>
+            </ol>
+        </section>
+
+        <section>
+            <h3>Properties Cannot Decrypt After Migration</h3>
+
+            <p>
+                <strong>Symptom:</strong> After migration, Openfire fails to decrypt properties. Database
+                connection fails, LDAP connection fails, or other encrypted properties are inaccessible.
+            </p>
+
+            <p>
+                <strong>Cause:</strong> Mismatch between database state and <code>security.xml</code>:
+            </p>
+            <ul>
+                <li>
+                    Database contains PBKDF2-encrypted values, but <code>security.xml</code> still has
+                    <code>kdf=sha1</code> (security.xml not updated).
+                </li>
+                <li>
+                    Database contains SHA1-encrypted values, but <code>security.xml</code> has
+                    <code>kdf=pbkdf2</code> (database not updated, but security.xml was).
+                </li>
+            </ul>
+
+            <p><strong>Solution:</strong></p>
+
+            <p>
+                <strong>If database was not updated, but security.xml was changed:</strong>
+            </p>
+            <ol>
+                <li>Stop Openfire</li>
+                <li>Restore <code>security.xml</code> from backup (restores SHA1 setting)</li>
+                <li>Start Openfire - properties should decrypt correctly</li>
+                <li>Retry migration carefully, ensuring migration completes successfully</li>
+            </ol>
+
+            <p>
+                <strong>If database was updated, but security.xml was not:</strong>
+            </p>
+            <ol>
+                <li>Stop Openfire</li>
+                <li>Manually update <code>security.xml</code> to use <code>&lt;kdf&gt;pbkdf2&lt;/kdf&gt;</code></li>
+                <li>Ensure the <code>&lt;salt&gt;</code> element exists (salt should have been generated during migration)</li>
+                <li>Start Openfire - properties should decrypt correctly</li>
+            </ol>
+
+            <p>
+                <strong>If you cannot resolve the issue:</strong>
+            </p>
+            <ol>
+                <li>Stop Openfire</li>
+                <li>Restore both database and <code>security.xml</code> from backups</li>
+                <li>Start Openfire - system returns to pre-migration state</li>
+                <li>Report the issue in the Openfire category on the Ignite Realtime community forum
+                    with error logs before retrying migration</li>
+            </ol>
+        </section>
+
+        <section>
+            <h3>Getting Help</h3>
+
+            <p>
+                If you encounter issues not covered in this troubleshooting guide, please seek assistance:
+            </p>
+
+            <ul>
+                <li>
+                    <strong>Community Forum:</strong>
+                    <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>
+                </li>
+            </ul>
+
+            <p>
+                When seeking help, please include:
+            </p>
+            <ul>
+                <li>Openfire version number</li>
+                <li>How was Openfire installed (RPM, deb, tar.gz, exe, etc.)</li>
+                <li>Database type (PostgreSQL, MySQL, etc.)</li>
+                <li>Single-node or clustered deployment</li>
+                <li>Are you using any custom plugins or authentication methods?</li>
+                <li>Relevant excerpts from <code>logs/openfire.log</code></li>
+                <li>Contents of the <code>&lt;blowfish&gt;</code> section in <code>security.xml</code> (safe to share)</li>
+            </ul>
+        </section>
+
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
+
+</body>
+</html>

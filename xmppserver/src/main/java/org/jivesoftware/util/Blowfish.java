@@ -1574,14 +1574,34 @@ public class Blowfish implements Encryptor {
         return deriveKeyPBKDF2(password, salt);
     }
 
+    /**
+     * Sets the password to be used for encryption/decryption using the KDF configured in security.xml.
+     *
+     * @param key The password to use for encryption
+     */
     @Override
     public void setKey(String key) {
+        String kdf = JiveGlobals.getBlowfishKdf();
+        setKey(key, kdf);
+    }
+
+    /**
+     * Sets the password to be used for encryption/decryption with an explicit KDF.
+     *
+     * This overload is primarily used during migration from SHA1 to PBKDF2,
+     * where we need two Blowfish instances with different KDFs operating
+     * simultaneously (one to decrypt with SHA1, one to encrypt with PBKDF2).
+     *
+     * @param key The password to use for encryption
+     * @param kdf The key derivation function to use ("sha1" or "pbkdf2")
+     * @since 5.1.0
+     */
+    public void setKey(String key, String kdf) {
         String password = key == null ? DEFAULT_KEY : key;
         byte[] derivedKey = null;
 
         try {
             // Determine which key derivation function to use
-            String kdf = JiveGlobals.getBlowfishKdf();
             boolean usePBKDF2 = JiveGlobals.BLOWFISH_KDF_PBKDF2.equalsIgnoreCase(kdf);
 
             if (usePBKDF2) {

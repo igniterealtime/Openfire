@@ -1143,6 +1143,22 @@ public class JiveGlobals {
     }
 
     /**
+     * Gets the current master encryption key used for property encryption.
+     * The key is deobfuscated from security.xml.
+     *
+     * This method is primarily used by migration tools and encryption utilities
+     * that need direct access to the master key.
+     *
+     * @return The current master encryption key, or null if no key is configured
+     */
+    public static String getMasterEncryptionKey() {
+        if (securityProperties == null) {
+            loadSecurityProperties();
+        }
+        return getCurrentKey();
+    }
+
+    /**
      * Get current encryptor according to alg and key.
      *
      * @param alg algorithm type
@@ -1216,6 +1232,40 @@ public class JiveGlobals {
             securityProperties.setProperty(BLOWFISH_KDF, BLOWFISH_KDF_SHA1);
             Log.info("Blowfish KDF set to SHA1 (legacy)");
         }
+    }
+
+    /**
+     * Checks whether Blowfish encryption migration from SHA1 to PBKDF2 is needed.
+     * Returns true if the server is currently using Blowfish encryption with the
+     * legacy SHA1 key derivation function.
+     *
+     * @return true if migration from SHA1 to PBKDF2 is needed, false otherwise
+     * @since 5.1.0
+     */
+    public static boolean isBlowfishMigrationNeeded() {
+        String encryptionAlgorithm = getEncryptionAlgorithm();
+        if (!ENCRYPTION_ALGORITHM_BLOWFISH.equalsIgnoreCase(encryptionAlgorithm)) {
+            return false;
+        }
+        String kdf = getBlowfishKdf();
+        return BLOWFISH_KDF_SHA1.equalsIgnoreCase(kdf);
+    }
+
+    /**
+     * Returns the encryption algorithm configured in security.xml.
+     *
+     * @return The encryption algorithm ("AES" or "Blowfish"), defaults to "Blowfish" if not configured
+     * @since 5.1.0
+     */
+    public static String getEncryptionAlgorithm() {
+        if (securityProperties == null) {
+            loadSecurityProperties();
+        }
+
+        String algorithm = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
+        return (algorithm != null && !algorithm.trim().isEmpty())
+               ? algorithm
+               : ENCRYPTION_ALGORITHM_BLOWFISH;
     }
 
     /**

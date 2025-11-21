@@ -86,6 +86,36 @@
             margin: 10px 0;
             font-weight: bold;
         }
+        .migration-instructions {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .migration-instructions h3 {
+            margin-top: 0;
+            color: #212529;
+        }
+        .migration-instructions ol {
+            margin: 10px 0;
+            padding-left: 25px;
+        }
+        .migration-instructions li {
+            margin: 8px 0;
+        }
+        .migration-instructions .note {
+            font-style: italic;
+            color: #6c757d;
+            margin: 10px 0;
+        }
+        .migration-instructions .critical {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -173,6 +203,43 @@
             </ul>
         </div>
 
+        <div class="migration-instructions">
+            <p class="note"><fmt:message key="security.blowfish.migration.detailed-guide-notice"/></p>
+
+            <c:choose>
+                <c:when test="${isClustered}">
+                    <h3><fmt:message key="security.blowfish.migration.cluster.title"/></h3>
+                    <p><fmt:message key="security.blowfish.migration.cluster.info"/></p>
+                    <div class="critical">
+                        <fmt:message key="security.blowfish.migration.cluster.critical"/>
+                    </div>
+                    <ol>
+                        <li><fmt:message key="security.blowfish.migration.cluster.step1"/></li>
+                        <li><fmt:message key="security.blowfish.migration.cluster.step2"/></li>
+                        <li><fmt:message key="security.blowfish.migration.cluster.step3"/></li>
+                        <li><fmt:message key="security.blowfish.migration.cluster.step4"/></li>
+                        <li><fmt:message key="security.blowfish.migration.cluster.step5"/></li>
+                        <li><fmt:message key="security.blowfish.migration.cluster.step6"/></li>
+                        <li><fmt:message key="security.blowfish.migration.cluster.step7"/></li>
+                        <li><fmt:message key="security.blowfish.migration.cluster.step8"/></li>
+                        <li><fmt:message key="security.blowfish.migration.cluster.step9"/></li>
+                        <li><fmt:message key="security.blowfish.migration.cluster.step10"/></li>
+                    </ol>
+                </c:when>
+                <c:otherwise>
+                    <h3><fmt:message key="security.blowfish.migration.singlenode.title"/></h3>
+                    <p><fmt:message key="security.blowfish.migration.singlenode.info"/></p>
+                    <ol>
+                        <li><fmt:message key="security.blowfish.migration.singlenode.step1"/></li>
+                        <li><fmt:message key="security.blowfish.migration.singlenode.step2"/></li>
+                        <li><fmt:message key="security.blowfish.migration.singlenode.step3"/></li>
+                        <li><fmt:message key="security.blowfish.migration.singlenode.step4"/></li>
+                    </ol>
+                    <p class="note"><fmt:message key="security.blowfish.migration.singlenode.completion"/></p>
+                </c:otherwise>
+            </c:choose>
+        </div>
+
         <div class="jive-table">
             <table cellpadding="0" cellspacing="0" border="0" width="100%">
                 <thead>
@@ -207,10 +274,12 @@
                     <input type="checkbox" name="securityBackup" value="true" required>
                     <fmt:message key="security.blowfish.migration.checklist.security-backup"/>
                 </label>
-                <label>
-                    <input type="checkbox" name="clusterOffline" value="true" required>
-                    <fmt:message key="security.blowfish.migration.checklist.cluster-offline"/>
-                </label>
+                <c:if test="${isClustered}">
+                    <label>
+                        <input type="checkbox" name="clusterOffline" value="true" required>
+                        <fmt:message key="security.blowfish.migration.checklist.cluster-offline"/>
+                    </label>
+                </c:if>
             </div>
 
             <input type="submit" value="<fmt:message key="security.blowfish.migration.button.migrate"/>">

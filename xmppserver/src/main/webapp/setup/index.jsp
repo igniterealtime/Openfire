@@ -423,7 +423,7 @@
             </div>
 
             <p class="info">
-                <fmt:message key="setup.index.translator-invitation"/>
+                <fmt:message key="locale.translator-invitation"/>
             </p>
             <!-- END jive-contentBox -->
 

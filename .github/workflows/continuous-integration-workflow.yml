@@ -18,7 +18,7 @@ jobs:
         distribution: [ zulu ] # We could add more here: temurin, adopt, liberica, microsoft, corretto
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up JDK ${{ matrix.java }} ${{ matrix.distribution }}
         uses: actions/setup-java@v5
         with:
@@ -74,14 +74,14 @@ jobs:
       # The first 2 steps (checking out, and building from Openfire Dockerfile)
       # can be removed when the docker image is published to a registry.
       # This 'integration' job should then need the 'build-and-push-docker' job as a dependency.
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - name: Build Docker Image
         run: |
           docker build -t openfire:latest .
 
       - name: Checkout Integration Tests
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: igniterealtime/openfire-integration-tests
           path: openfire-integration-tests
@@ -117,7 +117,7 @@ jobs:
 
     steps:
       - name: Checkout local actions (that are invoked in the 'startCIServer' and 'stopCIServer' steps) # Do this _before_ untarring the distribution, as the checkout will empty the directory prior to the checkout!
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           sparse-checkout: |
             .github
@@ -215,7 +215,7 @@ jobs:
 
     steps:
       - name: Checkout local actions (that are invoked in the 'startCIServer' and 'stopCIServer' steps) # Do this _before_ untarring the distribution, as the checkout will empty the directory prior to the checkout!
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           sparse-checkout: |
             .github
@@ -244,7 +244,7 @@ jobs:
 
     steps:
       - name: Checkout local actions (that are invoked in the 'startCIServer' and 'stopCIServer' steps) # Do this _before_ untarring the distribution, as the checkout will empty the directory prior to the checkout!
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           sparse-checkout: |
             .github
@@ -280,7 +280,7 @@ jobs:
       check: ${{ steps.filter.outputs.database-relevant-files }}
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Check for differences
         uses: dorny/paths-filter@v3
         id: filter
@@ -301,7 +301,7 @@ jobs:
     if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Cross check DATABASE_VERSION
         run: |
           set -e
@@ -328,7 +328,7 @@ jobs:
     if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up JDK 17 Zulu
         uses: actions/setup-java@v5
         with:
@@ -366,7 +366,7 @@ jobs:
     if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up JDK 17 Zulu
         uses: actions/setup-java@v5
         with:
@@ -411,7 +411,7 @@ jobs:
     if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up JDK 17 Zulu
         uses: actions/setup-java@v5
         with:
@@ -450,7 +450,7 @@ jobs:
     if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up JDK 17 Zulu
         uses: actions/setup-java@v5
         with:
@@ -490,7 +490,7 @@ jobs:
     if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up JDK 17 Zulu
         uses: actions/setup-java@v5
         with:
@@ -527,7 +527,7 @@ jobs:
     if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up JDK 17 Zulu
         uses: actions/setup-java@v5
         with:
@@ -567,7 +567,7 @@ jobs:
     if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up JDK 17 Zulu
         uses: actions/setup-java@v5
         with:
@@ -606,7 +606,7 @@ jobs:
     if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up JDK 17 Zulu
         uses: actions/setup-java@v5
         with:
@@ -648,7 +648,7 @@ jobs:
     if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up JDK 17 Zulu
         uses: actions/setup-java@v5
         with:
@@ -687,7 +687,7 @@ jobs:
     if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
       - name: Set up JDK 17 Zulu
         uses: actions/setup-java@v5
         with:
@@ -729,7 +729,7 @@ jobs:
     if: ${{github.repository == 'igniterealtime/Openfire' && github.event_name == 'push' && needs.check_branch.outputs.is_publishable_branch == 'true'}}
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           # Defend against another commit quickly following the first
           # We want the one that's been tested, rather than the head of main
@@ -765,7 +765,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3
@@ -806,7 +806,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           # Defend against another commit quickly following the first
           # We want the one that's been tested, rather than the head of main

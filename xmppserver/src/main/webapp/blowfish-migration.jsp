@@ -28,7 +28,8 @@
     String errorMessage = (String) session.getAttribute("errorMessage");
     String errorParam = (String) session.getAttribute("errorParam");
     String successMessage = (String) session.getAttribute("successMessage");
-    Integer successParam = (Integer) session.getAttribute("successParam");
+    Integer successParamDb = (Integer) session.getAttribute("successParamDb");
+    Integer successParamXml = (Integer) session.getAttribute("successParamXml");
 
     // Clear session attributes after retrieving to prevent message reappearance
     if (errorMessage != null) {
@@ -37,7 +38,8 @@
     }
     if (successMessage != null) {
         session.removeAttribute("successMessage");
-        session.removeAttribute("successParam");
+        session.removeAttribute("successParamDb");
+        session.removeAttribute("successParamXml");
     }
 
     // Set as request attributes for JSTL tags to access
@@ -49,8 +51,11 @@
     }
     if (successMessage != null) {
         request.setAttribute("successMessage", successMessage);
-        if (successParam != null) {
-            request.setAttribute("successParam", successParam);
+        if (successParamDb != null) {
+            request.setAttribute("successParamDb", successParamDb);
+        }
+        if (successParamXml != null) {
+            request.setAttribute("successParamXml", successParamXml);
         }
     }
 %>
@@ -142,9 +147,10 @@
 <c:if test="${not empty successMessage}">
     <admin:infobox type="success">
         <c:choose>
-            <c:when test="${not empty successParam}">
+            <c:when test="${not empty successParamDb}">
                 <fmt:message key="${successMessage}">
-                    <fmt:param value="${successParam}"/>
+                    <fmt:param value="${successParamDb}"/>
+                    <fmt:param value="${successParamXml}"/>
                 </fmt:message>
             </c:when>
             <c:otherwise>
@@ -279,8 +285,12 @@
                         <td class="c2"><strong><c:out value="${currentKdf}"/></strong></td>
                     </tr>
                     <tr>
-                        <td class="c1"><fmt:message key="security.blowfish.migration.status.encrypted-count"/></td>
-                        <td class="c2"><strong><c:out value="${encryptedPropertyCount}"/></strong></td>
+                        <td class="c1"><fmt:message key="security.blowfish.migration.status.encrypted-count-db"/></td>
+                        <td class="c2"><strong><c:out value="${encryptedPropertyCountDb}"/></strong></td>
+                    </tr>
+                    <tr>
+                        <td class="c1"><fmt:message key="security.blowfish.migration.status.encrypted-count-xml"/></td>
+                        <td class="c2"><strong><c:out value="${encryptedPropertyCountXml}"/></strong></td>
                     </tr>
                 </tbody>
             </table>

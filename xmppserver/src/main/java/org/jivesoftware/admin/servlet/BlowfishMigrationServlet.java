@@ -84,8 +84,10 @@ public class BlowfishMigrationServlet extends HttpServlet {
 
         // If migration needed, count encrypted properties
         if (needsMigration) {
-            int count = getEncryptedPropertyCount();
-            request.setAttribute("encryptedPropertyCount", count);
+            int dbCount = getEncryptedPropertyCount();
+            int xmlCount = getEncryptedXMLPropertyCount();
+            request.setAttribute("encryptedPropertyCountDb", dbCount);
+            request.setAttribute("encryptedPropertyCountXml", xmlCount);
         }
 
         // Detect clustering status and node count
@@ -153,11 +155,12 @@ public class BlowfishMigrationServlet extends HttpServlet {
 
             try {
                 // Perform migration
-                int migratedCount = migrateBlowfishToPBKDF2();
+                MigrationResult result = migrateBlowfishToPBKDF2();
 
                 request.getSession().setAttribute("successMessage",
                         "security.blowfish.migration.success");
-                request.getSession().setAttribute("successParam", migratedCount);
+                request.getSession().setAttribute("successParamDb", result.databaseCount());
+                request.getSession().setAttribute("successParamXml", result.xmlCount());
 
             } catch (Exception e) {
                 request.getSession().setAttribute("errorMessage",
@@ -169,6 +172,16 @@ public class BlowfishMigrationServlet extends HttpServlet {
 
         // Redirect to GET to prevent form resubmission
         response.sendRedirect("security-blowfish-migration.jsp");
+    }
+
+    /**
+     * Returns the count of encrypted XML properties that have actual values.
+     * These are the properties that will be migrated (not just configured names).
+     *
+     * @return Number of encrypted properties with values in openfire.xml
+     */
+    private int getEncryptedXMLPropertyCount() {
+        return JiveGlobals.getEncryptedXMLPropertyValueCount();
     }
 
     /**
@@ -211,11 +224,11 @@ public class BlowfishMigrationServlet extends HttpServlet {
      * - security.xml backed up
      * - All cluster nodes offline (except migration node)
      *
-     * @return Number of properties successfully migrated
+     * @return MigrationResult containing counts for database and XML properties migrated
      * @throws IllegalStateException if already using PBKDF2 or not using Blowfish
      * @throws RuntimeException if migration fails (with rollback)
      */
-    private int migrateBlowfishToPBKDF2() throws Exception {
+    private MigrationResult migrateBlowfishToPBKDF2() throws Exception {
         // 1. Verify preconditions
         String currentKdf = JiveGlobals.getBlowfishKdf();
         if (JiveGlobals.BLOWFISH_KDF_PBKDF2.equalsIgnoreCase(currentKdf)) {
@@ -320,10 +333,11 @@ public class BlowfishMigrationServlet extends HttpServlet {
             Log.info("Updated security.xml: encrypt.blowfish.kdf=pbkdf2");
 
             // 9. Log success
-            Log.info("Successfully migrated {} Blowfish-encrypted properties from SHA1 to PBKDF2", migrated);
+            Log.info("Successfully migrated {} database properties and {} XML properties from SHA1 to PBKDF2",
+                    migrated, xmlMigrated);
             Log.info("Blowfish KDF is now set to PBKDF2-HMAC-SHA512 in security.xml");
 
-            return migrated;
+            return new MigrationResult(migrated, xmlMigrated);
 
         } catch (Exception e) {
             // Rollback on any error
@@ -415,15 +429,12 @@ public class BlowfishMigrationServlet extends HttpServlet {
     }
 
     /**
-     * Simple data class for encrypted property.
+     * Simple record for encrypted property.
      */
-    private static class EncryptedProperty {
-        final String name;
-        final String value;
+    private record EncryptedProperty(String name, String value) {}
 
-        EncryptedProperty(String name, String value) {
-            this.name = name;
-            this.value = value;
-        }
-    }
+    /**
+     * Result of migration operation containing counts for both database and XML properties.
+     */
+    private record MigrationResult(int databaseCount, int xmlCount) {}
 }

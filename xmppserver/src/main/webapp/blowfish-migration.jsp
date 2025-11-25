@@ -300,6 +300,10 @@
                     <input type="checkbox" name="securityBackup" value="true" required>
                     <fmt:message key="security.blowfish.migration.checklist.security-backup"/>
                 </label>
+                <label>
+                    <input type="checkbox" name="openfireBackup" value="true" required>
+                    <fmt:message key="security.blowfish.migration.checklist.openfire-backup"/>
+                </label>
             </div>
 
                     <input type="submit" value="<fmt:message key="security.blowfish.migration.button.migrate"/>">

@@ -57,6 +57,7 @@ public class BlowfishMigrationServlet extends HttpServlet {
     private static final String PARAM_ACTION = "action";
     private static final String PARAM_DB_BACKUP = "dbBackup";
     private static final String PARAM_SECURITY_BACKUP = "securityBackup";
+    private static final String PARAM_OPENFIRE_BACKUP = "openfireBackup";
     private static final String ACTION_MIGRATE = "migrate";
 
     @Override
@@ -129,8 +130,9 @@ public class BlowfishMigrationServlet extends HttpServlet {
             // Verify checkboxes confirmed
             boolean dbBackup = "true".equals(request.getParameter(PARAM_DB_BACKUP));
             boolean securityBackup = "true".equals(request.getParameter(PARAM_SECURITY_BACKUP));
+            boolean openfireBackup = "true".equals(request.getParameter(PARAM_OPENFIRE_BACKUP));
 
-            if (!dbBackup || !securityBackup) {
+            if (!dbBackup || !securityBackup || !openfireBackup) {
                 request.getSession().setAttribute("errorMessage",
                         "security.blowfish.migration.error.backups-required");
                 response.sendRedirect("security-blowfish-migration.jsp");

@@ -230,22 +230,29 @@ public class BlowfishMigrationServlet extends HttpServlet {
 
         Log.info("Starting Blowfish migration from SHA1 to PBKDF2...");
 
-        // 2. Find all Blowfish-encrypted properties in database
+        // 2. Migrate XML properties FIRST (fail fast before database changes)
+        // This migrates encrypted properties in openfire.xml (e.g., database credentials)
+        int xmlMigrated = 0;
+        try {
+            xmlMigrated = JiveGlobals.migrateXMLPropertiesFromSHA1ToPBKDF2();
+            Log.info("Migrated {} XML properties from openfire.xml", xmlMigrated);
+        } catch (Exception e) {
+            // XML migration failed - stop before making any database changes
+            throw new RuntimeException("XML property migration failed. " +
+                    "No database changes were made. " + e.getMessage(), e);
+        }
+
+        // 3. Find all Blowfish-encrypted properties in database
         List<EncryptedProperty> dbProperties = getAllEncryptedPropertiesFromDatabase();
         Log.info("Found {} encrypted properties in database to migrate", dbProperties.size());
 
-        if (dbProperties.isEmpty()) {
-            Log.warn("No encrypted properties found - migration not needed");
-            return 0;
-        }
-
-        // 3. Get the master encryption key from JiveGlobals
+        // 4. Get the master encryption key from JiveGlobals
         String masterKey = JiveGlobals.getMasterEncryptionKey();
         if (masterKey == null) {
             Log.info("No custom encryption key configured - using default Blowfish key for migration");
         }
 
-        // 4. Initialise both SHA1 and PBKDF2 encryptors
+        // 5. Initialise both SHA1 and PBKDF2 encryptors
         // We need two separate instances with different KDFs:
         // - SHA1: for decrypting existing properties
         // - PBKDF2: for re-encrypting with new KDF
@@ -255,7 +262,7 @@ public class BlowfishMigrationServlet extends HttpServlet {
         Blowfish pbkdf2Blowfish = new Blowfish();
         pbkdf2Blowfish.setKey(masterKey, JiveGlobals.BLOWFISH_KDF_PBKDF2);
 
-        // 5. Migrate each property within a transaction
+        // 6. Migrate each database property within a transaction
         Connection con = null;
         boolean originalAutoCommit = true;
         int migrated = 0;

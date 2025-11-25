@@ -1235,6 +1235,98 @@ public class JiveGlobals {
     }
 
     /**
+     * Migrates encrypted XML properties (in openfire.xml) from SHA1 to PBKDF2 key derivation.
+     *
+     * This method uses the encryptor swap pattern to re-encrypt properties:
+     * 1. Sets up SHA1 encryptor for decryption and PBKDF2 encryptor for encryption
+     * 2. Reads property names listed as encrypted in security.xml
+     * 3. For each property: reads value from openfire.xml (decrypts with SHA1),
+     *    writes back (encrypts with PBKDF2)
+     * 4. Restores original encryptor state
+     *
+     * CRITICAL: This operation cannot be reversed without a backup.
+     * Call this BEFORE updating the KDF setting and BEFORE database migration.
+     *
+     * @return Number of XML properties successfully migrated
+     * @throws IllegalStateException if not using Blowfish encryption or already using PBKDF2
+     * @throws RuntimeException if migration fails for any property
+     * @since 5.1.0
+     */
+    public static int migrateXMLPropertiesFromSHA1ToPBKDF2() {
+        // 1. Verify preconditions
+        String algorithm = getEncryptionAlgorithm();
+        if (!ENCRYPTION_ALGORITHM_BLOWFISH.equalsIgnoreCase(algorithm)) {
+            throw new IllegalStateException("Cannot migrate: encryption algorithm is " +
+                    algorithm + ", not Blowfish");
+        }
+
+        String currentKdf = getBlowfishKdf();
+        if (BLOWFISH_KDF_PBKDF2.equalsIgnoreCase(currentKdf)) {
+            throw new IllegalStateException("Cannot migrate: already using PBKDF2");
+        }
+
+        // 2. Get the master encryption key
+        String masterKey = getMasterEncryptionKey();
+
+        // 3. Save current encryptor state
+        Encryptor originalEncryptor = propertyEncryptor;
+        Encryptor originalEncryptorNew = propertyEncryptorNew;
+
+        try {
+            // 4. Create SHA1 encryptor (for decryption) and PBKDF2 encryptor (for encryption)
+            Blowfish sha1Blowfish = new Blowfish();
+            sha1Blowfish.setKey(masterKey, BLOWFISH_KDF_SHA1);
+
+            Blowfish pbkdf2Blowfish = new Blowfish();
+            pbkdf2Blowfish.setKey(masterKey, BLOWFISH_KDF_PBKDF2);
+
+            // 5. Swap encryptors: old for decrypt, new for encrypt
+            propertyEncryptor = sha1Blowfish;
+            propertyEncryptorNew = pbkdf2Blowfish;
+
+            // 6. Get list of encrypted property names from security.xml
+            if (securityProperties == null) {
+                loadSecurityProperties();
+            }
+            List<String> encryptedPropertyNames =
+                    securityProperties.getProperties(ENCRYPTED_PROPERTY_NAMES, true);
+
+            Log.info("Starting XML property migration: {} properties to process",
+                    encryptedPropertyNames.size());
+
+            // 7. Migrate each property (values stored in openfire.xml)
+            int migrated = 0;
+            int skipped = 0;
+
+            for (String propertyName : encryptedPropertyNames) {
+                // Get decrypts with SHA1 (via propertyEncryptor)
+                String plaintext = getXMLProperty(propertyName);
+
+                if (plaintext == null || plaintext.isEmpty()) {
+                    // Property doesn't exist or is empty in openfire.xml - skip
+                    Log.debug("Skipping empty XML property: {}", propertyName);
+                    skipped++;
+                    continue;
+                }
+
+                // Set encrypts with PBKDF2 (via propertyEncryptorNew)
+                setXMLProperty(propertyName, plaintext);
+                migrated++;
+                Log.debug("Migrated XML property: {}", propertyName);
+            }
+
+            Log.info("XML property migration complete: {} migrated, {} skipped (empty)",
+                    migrated, skipped);
+            return migrated;
+
+        } finally {
+            // 9. Restore original encryptor state
+            propertyEncryptor = originalEncryptor;
+            propertyEncryptorNew = originalEncryptorNew;
+        }
+    }
+
+    /**
      * Checks whether Blowfish encryption migration from SHA1 to PBKDF2 is needed.
      * Returns true if the server is currently using Blowfish encryption with the
      * legacy SHA1 key derivation function.

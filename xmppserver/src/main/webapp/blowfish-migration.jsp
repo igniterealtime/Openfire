@@ -85,6 +85,7 @@
         }
         .migration-checklist input[type="checkbox"] {
             margin-right: 8px;
+            vertical-align: middle;
         }
         .migration-checklist label {
             display: block;

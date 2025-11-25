@@ -41,13 +41,38 @@
 
         <h2>Data Type Conventions</h2>
         <p>
-            Date column type support varies widely across databases. Therefore, Openfire specially encodes dates as
-            VARCHAR values. Each date is a Java long value which is 0-padded to 15 characters. The long value is the
-            internal representation of Java Date objects, which can be obtained with code such as the following:
+            Date column type support varies widely across databases and drivers. Therefore, Openfire uses a specific
+            representation when working with date/time values. This representation was changed with Openfire 5.2.0.
+        </p>
+        <p>
+            Openfire interprets date/time database values as UTC-based values.
+        </p>
+        <h3>Dates in Openfire 5.2.0 and later</h3>
+        <p>
+            Openfire stores dates as TIMESTAMP WITH TIME ZONE values, with fractional seconds parts. To help prevent environmental
+            configurations from imposing a timezone context to these values, values are to be written to and obtained
+            from the database using the JDBC 4.2 <code>getObject()</code> <code>setObject()</code> methods with a Java
+            representations from <code>java.time</code> (e.g. <code>java.time.Instant</code>).
+        </p>
+        <p>To read a timestamp from the database:</p>
+        <ul style="list-style: none">
+            <li><code>Instant creationDate = rs.getObject("creationDate")</code></li>
+        </ul>
+        <p>Conversely, to write a timestamp to the database:</p>
+        <ul style="list-style: none">
+            <li><code>pstmt.setObject("creationDate", instant</code></li>
+        </ul>
+        <h3>Dates prior to Openfire 5.2.0</h3>
+        <p>
+            Openfire specially encodes dates as VARCHAR values. Each date is a Java long value which is 0-padded to
+            15 characters. The long value is the internal representation of Java Date objects, which can be obtained
+            with code such as the following:
         </p>
         <ul style="list-style: none">
-            <li><code>long currentDate = new Date().getTime();</code></li>
+            <li><code>long currentDate = new Date().getTime(); // Prior to Openfire 5.2.0</code></li>
         </ul>
+
+        <h3>Boolean values</h3>
         <p>
             Boolean values are always represented a numeric values: 0 for false and 1 for true.
         </p>
@@ -256,8 +281,8 @@
             </tr>
             <tr>
                 <td>creationDate</td>
-                <td>VARCHAR</td>
-                <td>15</td>
+                <td>TIMESTAMP WITH TIME ZONE</td>
+                <td></td>
                 <td>Date message stored</td>
             </tr>
             <tr>
@@ -301,8 +326,8 @@
             </tr>
             <tr>
                 <td>offlineDate</td>
-                <td>CHAR</td>
-                <td>15</td>
+                <td>TIMESTAMP WITH TIME ZONE</td>
+                <td></td>
                 <td>Date message stored</td>
             </tr>
             </tbody>
@@ -392,14 +417,14 @@
             </tr>
             <tr>
                 <td>creationDate</td>
-                <td>VARCHAR</td>
-                <td>15</td>
+                <td>TIMESTAMP WITH TIME ZONE</td>
+                <td></td>
                 <td>Creation Date</td>
             </tr>
             <tr>
                 <td>modificationDate</td>
-                <td>VARCHAR</td>
-                <td>15</td>
+                <td>TIMESTAMP WITH TIME ZONE</td>
+                <td></td>
                 <td>Last Modified Date</td>
             </tr>
             </tbody>
@@ -464,14 +489,14 @@
             </tr>
             <tr>
                 <td>startTime</td>
-                <td>CHAR</td>
-                <td>15</td>
+                <td>TIMESTAMP WITH TIME ZONE</td>
+                <td></td>
                 <td>Time when the flag is to start being effective (null for 'now')</td>
             </tr>
             <tr>
                 <td>endTime</td>
-                <td>CHAR</td>
-                <td>15</td>
+                <td>TIMESTAMP WITH TIME ZONE</td>
+                <td></td>
                 <td>Time when the flag is to end being effective (null for 'forever')</td>
             </tr>
             </tbody>
@@ -896,14 +921,14 @@
             </tr>
             <tr>
                 <td>creationDate</td>
-                <td>VARCHAR</td>
-                <td>15</td>
+                <td>TIMESTAMP WITH TIME ZONE</td>
+                <td></td>
                 <td>Creation Date</td>
             </tr>
             <tr>
                 <td>modificationDate</td>
-                <td>VARCHAR</td>
-                <td>15</td>
+                <td>TIMESTAMP WITH TIME ZONE</td>
+                <td></td>
                 <td>Last Modified Date</td>
             </tr>
             <tr>
@@ -923,6 +948,18 @@
                 <td>VARCHAR</td>
                 <td>255</td>
                 <td>Room Description</td>
+            </tr>
+            <tr>
+                <td>lockedDate</td>
+                <td>TIMESTAMP WITH TIME ZONE</td>
+                <td></td>
+                <td>the date when the room was locked</td>
+            </tr>
+            <tr>
+                <td>emptyDate</td>
+                <td>TIMESTAMP WITH TIME ZONE</td>
+                <td></td>
+                <td>The date when the last occupant left the room</td>
             </tr>
             <tr>
                 <td>canChangeSubject</td>
@@ -1094,7 +1131,7 @@
             </tr>
             <tr>
                 <td>retiredAt</td>
-                <td>TIMESTAMP</td>
+                <td>TIMESTAMP WITH TIME ZONE</td>
                 <td>n/a</td>
                 <td>When the room was retired (defaults to current timestamp)</td>
             </tr>
@@ -1199,8 +1236,8 @@
             </tr>
             <tr>
                 <td>logTime</td>
-                <td>VARCHAR</td>
-                <td>15</td>
+                <td>TIMESTAMP WITH TIME ZONE</td>
+                <td></td>
                 <td>Date when the message was sent to the room</td>
             </tr>
             <tr>
@@ -1250,14 +1287,14 @@
             </tr>
             <tr>
                 <td>creationDate</td>
-                <td>VARCHAR</td>
-                <td>15</td>
+                <td>TIMESTAMP WITH TIME ZONE</td>
+                <td></td>
                 <td>Creation Date</td>
             </tr>
             <tr>
                 <td>modificationDate</td>
-                <td>VARCHAR</td>
-                <td>15</td>
+                <td>TIMESTAMP WITH TIME ZONE</td>
+                <td></td>
                 <td>Last Modified Date</td>
             </tr>
             <tr>
@@ -1557,8 +1594,8 @@
             </tr>
             <tr>
                 <td>creationDate</td>
-                <td>VARCHAR</td>
-                <td>15</td>
+                <td>TIMESTAMP WITH TIME ZONE</td>
+                <td></td>
                 <td>Creation Date</td>
             </tr>
             <tr>
@@ -1638,8 +1675,8 @@
             </tr>
             <tr>
                 <td>expire</td>
-                <td>VARCHAR</td>
-                <td>15</td>
+                <td>TIMESTAMP WITH TIME ZONE</td>
+                <td></td>
                 <td>Date at which a leased subscription will end or has ended</td>
             </tr>
             <tr>

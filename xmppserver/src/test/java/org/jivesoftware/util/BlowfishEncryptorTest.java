@@ -141,6 +141,93 @@ public class BlowfishEncryptorTest {
     }
 
     /**
+     * Test decryption behaviour for structurally invalid ciphertext.
+     *
+     * IMPORTANT: Blowfish.decryptString() only returns null for STRUCTURAL issues:
+     * - Invalid binhex characters
+     * - Ciphertext too short (less than 16 hex chars / 8 bytes for the IV)
+     *
+     * For structurally valid but wrong-key ciphertext, decryption produces garbage,
+     * not null. This is a fundamental limitation of Blowfish-CBC without integrity
+     * verification (no MAC/HMAC).
+     */
+    @Test
+    public void testDecryptReturnsNullForStructurallyInvalidCiphertext() {
+        Encryptor encryptor = new Blowfish();
+
+        // Structurally invalid inputs that should return null
+        assertNull(encryptor.decrypt("not-valid-hex!@#$"),
+            "Invalid hex characters should return null");
+        assertNull(encryptor.decrypt("ABC"),
+            "Too short ciphertext should return null");
+        assertNull(encryptor.decrypt("0123456789ABCDEF"),
+            "Only IV, no ciphertext should return empty or null");
+    }
+
+    /**
+     * Test that decrypting with wrong key produces GARBAGE, not null.
+     *
+     * This documents an important limitation of Blowfish-CBC: there's no integrity
+     * verification. Decrypting with the wrong key produces mojibake (garbage text)
+     * rather than null or an exception.
+     *
+     * This has implications for migration: we cannot reliably detect wrong-key
+     * decryption. The migration code checks for null (which catches structural
+     * errors) but cannot detect key mismatches. Users MUST ensure proper backups.
+     */
+    @Test
+    public void testDecryptWithWrongKeyProducesGarbageNotNull() {
+        // Encrypt with one key
+        Encryptor encryptor1 = new Blowfish("correct-key-12345");
+        String plaintext = "sensitive-data-" + UUID.randomUUID();
+        String ciphertext = encryptor1.encrypt(plaintext);
+        assertNotNull(ciphertext, "Encryption should succeed");
+
+        // Decrypt with a different key
+        Encryptor encryptor2 = new Blowfish("wrong-key-67890");
+        String decrypted = encryptor2.decrypt(ciphertext);
+
+        // IMPORTANT: Wrong key produces garbage, NOT null
+        // This is why backup verification is critical before migration
+        assertNotNull(decrypted, "Wrong key produces garbage, not null");
+        assertNotEquals(plaintext, decrypted, "Wrong key produces different (garbage) result");
+    }
+
+    /**
+     * Test that documents the limitation of decryption failure detection.
+     *
+     * The migration code in JiveGlobals uses null-checking to detect SOME failures:
+     * - Invalid binhex format -> returns null (DETECTABLE)
+     * - Truncated ciphertext -> returns null (DETECTABLE)
+     * - Wrong encryption key -> returns garbage (NOT DETECTABLE)
+     * - Corrupted but valid hex -> returns garbage (NOT DETECTABLE)
+     *
+     * This test documents that proper database and security.xml backups are the
+     * ONLY reliable protection against migration failures, as not all decryption
+     * failures can be programmatically detected.
+     */
+    @Test
+    public void testMigrationCanOnlyDetectStructuralDecryptionFailures() {
+        Encryptor encryptor = new Blowfish("test-key");
+
+        // Case 1: Structural failures ARE detectable (returns null)
+        String structurallyInvalid = "GHIJ";  // Not valid hex
+        assertNull(encryptor.decrypt(structurallyInvalid),
+            "Structural failures should return null and be detectable");
+
+        // Case 2: Wrong-key failures are NOT detectable (returns garbage)
+        String plaintext = "test-value";
+        String encrypted = encryptor.encrypt(plaintext);
+
+        Encryptor wrongKeyEncryptor = new Blowfish("wrong-key");
+        String wrongKeyResult = wrongKeyEncryptor.decrypt(encrypted);
+        assertNotNull(wrongKeyResult,
+            "Wrong-key decryption returns garbage, not null - NOT detectable");
+
+        // This demonstrates why backups are essential for migration safety
+    }
+
+    /**
      * Test end-to-end encryption and decryption using PBKDF2 KDF.
      * This verifies the full integration path: salt generation, KDF configuration,
      * and the complete encrypt/decrypt cycle with PBKDF2-HMAC-SHA512.

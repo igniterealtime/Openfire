@@ -1327,6 +1327,34 @@ public class JiveGlobals {
     }
 
     /**
+     * Returns the count of encrypted properties in openfire.xml that have values.
+     * This counts only properties from security.xml that exist in openfire.xml
+     * with non-empty values (i.e., properties that will actually be migrated).
+     *
+     * @return Number of encrypted properties with values in openfire.xml
+     * @since 5.1.0
+     */
+    public static int getEncryptedXMLPropertyValueCount() {
+        if (securityProperties == null) {
+            loadSecurityProperties();
+        }
+        List<String> encryptedPropertyNames =
+                securityProperties.getProperties(ENCRYPTED_PROPERTY_NAMES, true);
+        if (encryptedPropertyNames == null) {
+            return 0;
+        }
+
+        int count = 0;
+        for (String propertyName : encryptedPropertyNames) {
+            String rawValue = openfireProperties.getProperty(propertyName);
+            if (rawValue != null && !rawValue.isEmpty()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
      * Checks whether Blowfish encryption migration from SHA1 to PBKDF2 is needed.
      * Returns true if the server is currently using Blowfish encryption with the
      * legacy SHA1 key derivation function.

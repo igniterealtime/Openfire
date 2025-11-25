@@ -508,6 +508,30 @@ scp node1:/opt/openfire/conf/security.xml node3:/opt/openfire/conf/security.xml<
                 </li>
 
                 <li>
+                    <strong>Sync openfire.xml to Other Nodes (If Applicable)</strong>
+                    <p>
+                        If your <code>openfire.xml</code> contains encrypted properties (check your
+                        <code>security.xml</code> for <code>&lt;property&gt;&lt;name&gt;</code> elements
+                        that reference properties stored in openfire.xml), these values were also
+                        re-encrypted during migration and must be synced to other nodes.
+                    </p>
+
+                    <p><strong>Option A - Copy Entire File:</strong></p>
+                    <p>If all nodes have identical <code>openfire.xml</code> configurations
+                        (same ports, same network interfaces, same settings):</p>
+                    <pre>scp node1:/opt/openfire/conf/openfire.xml node2:/opt/openfire/conf/openfire.xml
+scp node1:/opt/openfire/conf/openfire.xml node3:/opt/openfire/conf/openfire.xml</pre>
+
+                    <p><strong>Option B - Manual Sync:</strong></p>
+                    <p>If nodes have different configurations (different ports, network interfaces, etc.),
+                        manually compare the files and copy only the encrypted property values from Node 1
+                        to the other nodes, preserving node-specific settings.</p>
+
+                    <p><strong>Note:</strong> If your <code>openfire.xml</code> does not contain any
+                        encrypted properties, you can skip this step.</p>
+                </li>
+
+                <li>
                     <strong>Verify All Nodes Have Matching Configuration</strong>
                     <p>Compare <code>security.xml</code> on all nodes:</p>
                     <pre>ssh node1 "grep -A2 '&lt;blowfish&gt;' /opt/openfire/conf/security.xml"
@@ -602,7 +626,7 @@ systemctl start openfire  # On Node 3
 
             <p>
                 <span style="color: green; "><strong>CORRECT PROCEDURE:</strong></span> All nodes stopped →
-                migrate on one node → sync security.xml to all nodes → start all nodes.
+                migrate on one node → sync security.xml and openfire.xml (if applicable) to all nodes → start all nodes.
             </p>
 
         </section>

@@ -63,7 +63,7 @@
 <html>
 <head>
     <title><fmt:message key="security.blowfish.migration.title"/></title>
-    <meta name="pageID" content="security-blowfish-migration"/>
+    <meta name="pageID" content="server-settings"/>
     <style>
         .warning-box {
             background-color: #fff3cd;

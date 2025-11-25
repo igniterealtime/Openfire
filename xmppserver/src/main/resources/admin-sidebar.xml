@@ -61,11 +61,6 @@
                   url="system-sms.jsp"
                   description="${sidebar.server-sms.descr}"/>
 
-            <!-- Blowfish Encryption Migration -->
-            <item id="security-blowfish-migration" name="${sidebar.security-blowfish-migration}"
-                  url="security-blowfish-migration.jsp"
-                  description="${sidebar.security-blowfish-migration.descr}"/>
-
             <!-- Security Audit Viewer -->
             <item id="security-audit-viewer" name="${sidebar.security-audit-viewer}"
                   url="security-audit-viewer.jsp"

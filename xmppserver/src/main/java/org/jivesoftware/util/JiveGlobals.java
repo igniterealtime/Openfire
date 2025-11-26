@@ -1216,7 +1216,8 @@ public class JiveGlobals {
     }
 
     /**
-     * Sets the Blowfish key derivation function (KDF) type.
+     * Sets the Blowfish key derivation function (KDF) type and re-initialises
+     * the property encryptor cache to use the new KDF immediately.
      *
      * @param kdf The KDF type ("sha1" or "pbkdf2")
      */
@@ -1232,6 +1233,9 @@ public class JiveGlobals {
             securityProperties.setProperty(BLOWFISH_KDF, BLOWFISH_KDF_SHA1);
             Log.info("Blowfish KDF set to SHA1 (legacy)");
         }
+
+        // Reinitialise the encryptor cache so new properties use the updated KDF immediately
+        reinitialisePropertyEncryptor();
     }
 
     /**
@@ -1386,6 +1390,21 @@ public class JiveGlobals {
         return (algorithm != null && !algorithm.trim().isEmpty())
                ? algorithm
                : ENCRYPTION_ALGORITHM_BLOWFISH;
+    }
+
+    /**
+     * Re-initialises the property encryptor with the current encryption settings.
+     * Call this after changing the encryption algorithm or KDF to ensure new
+     * properties are encrypted with the updated settings without requiring a restart.
+     *
+     * @since 5.1.0
+     */
+    public static void reinitialisePropertyEncryptor() {
+        String algorithm = getEncryptionAlgorithm();
+        String key = getMasterEncryptionKey();
+        propertyEncryptor = getEncryptor(algorithm, key);
+        propertyEncryptorNew = propertyEncryptor;
+        Log.info("Property encryptor reinitialised with algorithm: {}", algorithm);
     }
 
     /**

@@ -31,11 +31,12 @@
 
         <nav>
             <ul>
+                <li><a href="#quick-reference">Quick Reference: XML vs Database</a></li>
                 <li><a href="#encryption-overview">Encryption Overview</a></li>
                 <li><a href="#storage-locations">Property Storage Locations</a></li>
                 <li><a href="#property-encryption">How Property Encryption Works</a></li>
                 <li><a href="#which-properties">Which Properties to Encrypt</a></li>
-                <li><a href="#automatic-upgrade">Automatic Security Upgrades</a></li>
+                <li><a href="#automatic-upgrade">Automatic Security Upgrades (XML Only)</a></li>
                 <li><a href="#limitations">Security Limitations</a></li>
                 <li><a href="#backup-restore">Backup and Restore</a></li>
                 <li><a href="#configuration">Configuration Options</a></li>
@@ -43,6 +44,49 @@
                 <li><a href="#further">Further Reading</a></li>
             </ul>
         </nav>
+
+    </section>
+
+    <section id="quick-reference">
+
+        <h2>Quick Reference: XML vs Database Property Encryption</h2>
+
+        <p>
+            Openfire stores encrypted properties in two locations with different encryption implementations.
+            This table summarises the key differences:
+        </p>
+
+        <table class="general" style="border-collapse: collapse;">
+            <thead>
+            <tr>
+                <th>Feature</th>
+                <th>XML Properties</th>
+                <th>Database Properties</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr style="border-bottom: 1px solid #ccc;">
+                <td>Storage location</td>
+                <td><code>conf/openfire.xml</code></td>
+                <td><code>ofProperty</code> table</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #ccc;">
+                <td>Random IV support</td>
+                <td>Openfire 5.1+</td>
+                <td>Supported for several major versions</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #ccc;">
+                <td>Auto-upgrade applies</td>
+                <td>Yes</td>
+                <td>No (not needed)</td>
+            </tr>
+            <tr>
+                <td>IV storage</td>
+                <td>XML attribute</td>
+                <td>Database column</td>
+            </tr>
+            </tbody>
+        </table>
 
     </section>
 
@@ -55,15 +99,17 @@
             and other credentials from being readable in configuration files and database backups.
         </p>
 
-        <h3>Security Improvements</h3>
+        <h3>Security Improvements in Openfire 5.1</h3>
 
         <p>
-            Openfire 5.1 included significant security improvements to the encryption system:
+            Openfire 5.1 included significant security improvements to XML property encryption
+            (properties stored in <code>openfire.xml</code>):
         </p>
         <ul>
-            <li><strong>Random initialisation vectors</strong> &ndash; Each encrypted value uses a unique random IV,
-                preventing pattern analysis attacks where identical plaintext produces identical ciphertext</li>
-            <li><strong>Automatic upgrades</strong> &ndash; Legacy encrypted properties are automatically upgraded
+            <li><strong>Random initialisation vectors</strong> &ndash; XML properties now use unique random IVs,
+                preventing pattern analysis attacks where identical plaintext produces identical ciphertext.
+                (Database properties have used random IVs for several major versions.)</li>
+            <li><strong>Automatic upgrades</strong> &ndash; Legacy encrypted XML properties are automatically upgraded
                 to use stronger encryption when accessed</li>
             <li><strong>Backward compatibility</strong> &ndash; Existing installations work without manual intervention</li>
         </ul>
@@ -78,39 +124,35 @@
             Openfire stores properties in two different locations, and encryption works for both:
         </p>
 
-        <dl>
-            <dt><strong>Configuration File (<code>openfire.xml</code>)</strong></dt>
-            <dd>
-                <p>
-                    Contains bootstrap properties needed before the database is available,
-                    such as database connection settings and server domain. These properties
-                    are specific to each server instance and stored in <code>conf/openfire.xml</code>.
-                </p>
-                <p>
-                    Common encrypted properties in <code>openfire.xml</code>:
-                </p>
-                <ul>
-                    <li>Database password (<code>database.defaultProvider.password</code>)</li>
-                    <li>LDAP bind password (<code>ldap.adminPassword</code>)</li>
-                </ul>
-            </dd>
+        <h3>Configuration File (<code>openfire.xml</code>)</h3>
 
-            <dt><strong>Database (<code>ofProperty</code> table)</strong></dt>
-            <dd>
-                <p>
-                    Contains runtime properties that are shared across all servers in a clustered
-                    deployment. Most properties set via the admin console are stored here.
-                </p>
-                <p>
-                    Common encrypted properties in the database:
-                </p>
-                <ul>
-                    <li>Email server passwords (<code>mail.smtp.password</code>)</li>
-                    <li>Plugin settings and API keys</li>
-                    <li>Integration credentials configured via admin console</li>
-                </ul>
-            </dd>
-        </dl>
+        <p>
+            Contains bootstrap properties needed before the database is available,
+            such as database connection settings and server domain. These properties
+            are specific to each server instance and stored in <code>conf/openfire.xml</code>.
+        </p>
+        <p>
+            Common encrypted properties in <code>openfire.xml</code>:
+        </p>
+        <ul>
+            <li>Database password (<code>database.defaultProvider.password</code>)</li>
+            <li>LDAP bind password (<code>ldap.adminPassword</code>)</li>
+        </ul>
+
+        <h3>Database (<code>ofProperty</code> table)</h3>
+
+        <p>
+            Contains runtime properties that are shared across all servers in a clustered
+            deployment. Most properties set via the admin console are stored here.
+        </p>
+        <p>
+            Common encrypted properties in the database:
+        </p>
+        <ul>
+            <li>Email server passwords (<code>mail.smtp.password</code>)</li>
+            <li>Plugin settings and API keys</li>
+            <li>Integration credentials configured via admin console</li>
+        </ul>
 
     </section>
 
@@ -138,6 +180,24 @@
         <p>
             The <code>encrypted="true"</code> attribute indicates the value is encrypted. The <code>iv</code>
             attribute contains the initialisation vector used for encryption (Base64-encoded).
+        </p>
+
+        <h3>Database Storage Format</h3>
+
+        <p>
+            For properties stored in the database, the encrypted value and IV are stored in separate columns
+            of the <code>ofProperty</code> table:
+        </p>
+
+        <ul>
+            <li><code>propValue</code> &ndash; The encrypted value (Base64-encoded)</li>
+            <li><code>encrypted</code> &ndash; Boolean flag indicating encryption</li>
+            <li><code>iv</code> &ndash; The initialisation vector (Base64-encoded)</li>
+        </ul>
+
+        <p>
+            Database properties have used random IVs for several major versions, so there is no "legacy format"
+            concern for database-stored properties.
         </p>
 
         <h3>Marking Properties for Encryption</h3>
@@ -201,14 +261,20 @@
 
     <section id="automatic-upgrade">
 
-        <h2>Automatic Security Upgrades</h2>
-
-        <h3>Legacy Encryption Format</h3>
+        <h2>Automatic Security Upgrades (XML Properties Only)</h2>
 
         <p>
-            Older versions of Openfire (pre 5.1) used a weaker encryption method that could be vulnerable to
-            pattern analysis attacks. Properties encrypted with the legacy method lack the <code>iv</code>
-            attribute.
+            <strong>Note:</strong> This section applies only to properties stored in <code>openfire.xml</code>.
+            Database properties (stored in the <code>ofProperty</code> table) have used random IVs for several
+            major versions and do not require upgrading.
+        </p>
+
+        <h3>Legacy XML Encryption Format</h3>
+
+        <p>
+            Older versions of Openfire (pre 5.1) used a weaker encryption method for XML properties that could
+            be vulnerable to pattern analysis attacks. Properties encrypted with the legacy method lack the
+            <code>iv</code> attribute.
         </p>
 
         <p>
@@ -226,7 +292,7 @@
             <li>Openfire reads a property with legacy encryption</li>
             <li>The value is decrypted using the legacy method</li>
             <li>The value is immediately re-encrypted using the modern method with a random IV</li>
-            <li>The configuration file or database is updated with the new encrypted value</li>
+            <li>The configuration is updated with the new encrypted value</li>
         </ol>
 
         <p>
@@ -319,29 +385,27 @@
 
         <h3>Restore Scenarios</h3>
 
-        <dl>
-            <dt><strong>Restoring to the same server</strong></dt>
-            <dd>
-                Works normally. The existing encryption keys will decrypt all properties.
-            </dd>
+        <h4>Restoring to the same server</h4>
+        <p>
+            Works normally. The existing encryption keys will decrypt all properties.
+        </p>
 
-            <dt><strong>Restoring to a different server (same installation)</strong></dt>
-            <dd>
-                If you previously copied <code>security.xml</code> to maintain consistent keys,
-                restore will work normally.
-            </dd>
+        <h4>Restoring to a different server (same installation)</h4>
+        <p>
+            If you previously copied <code>security.xml</code> to maintain consistent keys,
+            restore will work normally.
+        </p>
 
-            <dt><strong>Restoring to a different server (different installation)</strong></dt>
-            <dd>
-                <p>You must restore <code>conf/security.xml</code> along with <code>conf/openfire.xml</code>
-                to maintain the correct encryption keys. Without matching keys:</p>
-                <ul>
-                    <li>Encrypted properties cannot be decrypted</li>
-                    <li>Openfire may fail to start (if database password cannot be decrypted)</li>
-                    <li>You will need to reconfigure all encrypted properties manually</li>
-                </ul>
-            </dd>
-        </dl>
+        <h4>Restoring to a different server (different installation)</h4>
+        <p>
+            You must restore <code>conf/security.xml</code> along with <code>conf/openfire.xml</code>
+            to maintain the correct encryption keys. Without matching keys:
+        </p>
+        <ul>
+            <li>Encrypted properties cannot be decrypted</li>
+            <li>Openfire may fail to start (if database password cannot be decrypted)</li>
+            <li>You will need to reconfigure all encrypted properties manually</li>
+        </ul>
 
         <h3>Disaster Recovery Best Practice</h3>
 
@@ -356,10 +420,11 @@
 
         <h2>Configuration Options</h2>
 
-        <h3>Disabling Automatic Upgrades</h3>
+        <h3>Disabling Automatic Upgrades (XML Properties)</h3>
 
         <p>
-            In rare cases, you may want to disable automatic upgrades (for example, to maintain exact
+            The auto-upgrade feature only affects XML properties in <code>openfire.xml</code>.
+            In rare cases, you may want to disable it (for example, to maintain exact
             configuration file compatibility during troubleshooting or for controlled migration testing).
         </p>
 
@@ -368,7 +433,7 @@
         </p>
 
         <ol>
-            <li>Edit the Openfire startup script:
+            <li>Edit the Openfire startup script (for example):
                 <ul>
                     <li><strong>Linux/Unix:</strong> <code>bin/openfire.sh</code></li>
                 </ul>

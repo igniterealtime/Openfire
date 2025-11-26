@@ -132,7 +132,8 @@ public class BlowfishMigrationServletTest {
         verify(request).setAttribute("needsMigration", true);
         verify(request).setAttribute("alreadyMigrated", false);
         verify(request).setAttribute(eq("currentKdf"), eq(JiveGlobals.BLOWFISH_KDF_SHA1));
-        verify(request).setAttribute(eq("encryptedPropertyCount"), anyInt());
+        verify(request).setAttribute(eq("encryptedPropertyCountDb"), anyInt());
+        verify(request).setAttribute(eq("encryptedPropertyCountXml"), anyInt());
         verify(request).setAttribute(eq("csrf"), anyString());
         verify(requestDispatcher).forward(request, response);
     }

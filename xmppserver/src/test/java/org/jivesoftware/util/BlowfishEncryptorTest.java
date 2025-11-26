@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -259,6 +259,51 @@ public class BlowfishEncryptorTest {
 
         } finally {
             // Restore original KDF setting to avoid affecting other tests
+            JiveGlobals.setBlowfishKdf(originalKdf);
+        }
+    }
+
+    /**
+     * Test that setBlowfishKdf() automatically reinitialises the encryptor cache.
+     *
+     * This test verifies the fix for the bug where newly encrypted properties
+     * continued to use SHA1 key derivation after migration until restart.
+     * The setBlowfishKdf() method should automatically refresh the cached
+     * encryptor to use the updated KDF setting immediately.
+     */
+    @Test
+    public void testSetBlowfishKdfReinitialises() {
+        // Store original KDF setting to restore later
+        String originalKdf = JiveGlobals.getBlowfishKdf();
+
+        try {
+            // 1. Start with SHA1 KDF (legacy mode)
+            JiveGlobals.setBlowfishKdf(JiveGlobals.BLOWFISH_KDF_SHA1);
+
+            // 2. Encrypt a value using the current encryptor (SHA1)
+            String testValue = "reinit-test-" + UUID.randomUUID();
+            Encryptor sha1Encryptor = JiveGlobals.getPropertyEncryptor();
+            String sha1Encrypted = sha1Encryptor.encrypt(testValue);
+
+            // 3. Switch to PBKDF2 - this should automatically reinitialise the encryptor
+            JiveGlobals.setBlowfishKdf(JiveGlobals.BLOWFISH_KDF_PBKDF2);
+
+            // 4. Get the encryptor again - should now use PBKDF2
+            Encryptor pbkdf2Encryptor = JiveGlobals.getPropertyEncryptor();
+            String pbkdf2Encrypted = pbkdf2Encryptor.encrypt(testValue);
+
+            // 5. The two encrypted values should be different because they use different KDFs
+            // (SHA1 vs PBKDF2 produce different derived keys)
+            assertNotEquals(sha1Encrypted, pbkdf2Encrypted,
+                "Encrypted values should differ after KDF change because different KDFs are used");
+
+            // 6. Verify the new encryptor can decrypt its own ciphertext
+            String decrypted = pbkdf2Encryptor.decrypt(pbkdf2Encrypted);
+            assertEquals(testValue, decrypted,
+                "Encryptor should be able to decrypt values it encrypted after KDF change");
+
+        } finally {
+            // Restore original KDF (setBlowfishKdf automatically reinitialises)
             JiveGlobals.setBlowfishKdf(originalKdf);
         }
     }

@@ -92,8 +92,8 @@
 
             <p>
                 When you complete the setup wizard in Openfire 5.1.0 or later, PBKDF2 key derivation
-                is automatically enabled. You can verify this in the admin console by navigating to
-                <strong>Server → Server Settings → Blowfish Encryption Migration</strong>, which will
+                is automatically enabled. You can verify this by accessing the migration page directly
+                at <code>https://your-server:9090/security-blowfish-migration.jsp</code>, which will
                 show "Your installation is already using PBKDF2-HMAC-SHA512".
             </p>
         </section>
@@ -112,9 +112,10 @@
             </p>
 
             <p>
-                To check if migration is needed, navigate to <strong>Server → Server Settings →
-                Blowfish Encryption Migration</strong> in the admin console. If migration is needed,
-                you'll see a warning indicating "Your installation is using legacy SHA1 key derivation".
+                To check if migration is needed, log into the admin console. If migration is needed,
+                a warning banner will appear on the Server Information page (the homepage) with a link
+                to the migration tool. Alternatively, navigate directly to
+                <code>https://your-server:9090/security-blowfish-migration.jsp</code>.
             </p>
         </section>
 
@@ -140,7 +141,9 @@
 
         <p>
             This procedure applies to standalone Openfire installations (non-clustered). The migration
-            runs whilst the server is operational, requiring no downtime.
+            runs while the server continues accepting connections. Users remain connected and can
+            continue messaging throughout the process. The migration is typically fast (under 10 seconds
+            for most installations) and does not interrupt service.
         </p>
 
         <section>
@@ -151,7 +154,7 @@
             <ul>
                 <li>Administrative access to the Openfire admin console</li>
                 <li>Ability to backup the Openfire database</li>
-                <li>Access to the server filesystem to backup <code>conf/security.xml</code></li>
+                <li>Access to the server filesystem to backup <code>conf/security.xml</code> and <code>conf/openfire.xml</code></li>
             </ul>
         </section>
 
@@ -172,14 +175,20 @@
                         <li>MySQL: <code>mysqldump openfire &gt; openfire_backup.sql</code></li>
                         <li>Embedded HSQLDB: <code>cp -r embedded-db/ embedded-db.backup/</code></li>
                     </ul>
+                    <p>
+                        <strong>Note:</strong> Replace "openfire" with your actual database name if different.
+                        Check the <code>&lt;database&gt;</code> element in <code>conf/openfire.xml</code> to
+                        confirm your database name.
+                    </p>
                 </li>
 
                 <li>
-                    <strong>Backup security.xml</strong>
+                    <strong>Backup security.xml and openfire.xml</strong>
                     <p>
-                        Create a backup of the security configuration file:
+                        Create backups of the configuration files:
                     </p>
-                    <pre>cp /opt/openfire/conf/security.xml /opt/openfire/conf/security.xml.backup</pre>
+                    <pre>cp /opt/openfire/conf/security.xml /opt/openfire/conf/security.xml.backup
+cp /opt/openfire/conf/openfire.xml /opt/openfire/conf/openfire.xml.backup</pre>
                     <p>
                         (Adjust the path if Openfire is installed in a different location)
                     </p>
@@ -188,10 +197,10 @@
                 <li>
                     <strong>Access the Migration Page</strong>
                     <p>
-                        Log into the Openfire admin console and navigate to:
-                    </p>
-                    <p>
-                        <strong>Server → Server Settings → Blowfish Encryption Migration</strong>
+                        Log into the Openfire admin console. If migration is needed, a warning banner
+                        will appear on the Server Information page (the homepage) with a link to the
+                        migration tool. Click the link, or navigate directly to
+                        <code>https://your-server:9090/security-blowfish-migration.jsp</code>.
                     </p>
                     <p>
                         The page will display the current encryption status, including the key derivation
@@ -206,20 +215,15 @@
                     </p>
                     <ul>
                         <li>"I have backed up the Openfire database"</li>
-                        <li>"I have backed up conf/security.xml"</li>
-                        <li>"All cluster nodes are offline (except this one)"</li>
+                        <li>"I have backed up the conf/security.xml file"</li>
+                        <li>"I have backed up the conf/openfire.xml file"</li>
                     </ul>
-                    <p>
-                        <strong>Note:</strong> Even for single-node installations, all three checkboxes
-                        must be checked. The third checkbox confirms that your installation is not part
-                        of a cluster or that all other cluster nodes are offline.
-                    </p>
                 </li>
 
                 <li>
                     <strong>Run the Migration</strong>
                     <p>
-                        Click the <strong>"Begin Migration"</strong> button. You will be prompted to
+                        Click the <strong>"Migrate to PBKDF2"</strong> button. You will be prompted to
                         confirm the operation. Click "OK" to proceed.
                     </p>
                     <p>
@@ -254,12 +258,17 @@
                         <li>Review <code>logs/openfire.log</code> for any errors</li>
                     </ul>
                     <p>
-                        You can also verify the updated <code>conf/security.xml</code> contains:
+                        You can also verify the updated <code>conf/security.xml</code> contains a
+                        <code>&lt;blowfish&gt;</code> element (inside the <code>&lt;encrypt&gt;</code>
+                        section) with the following structure:
                     </p>
-                    <pre>&lt;blowfish&gt;
-  &lt;kdf&gt;pbkdf2&lt;/kdf&gt;
-  &lt;salt&gt;BASE64_ENCODED_SALT&lt;/salt&gt;
-&lt;/blowfish&gt;</pre>
+                    <pre>&lt;encrypt&gt;
+  ...
+  &lt;blowfish&gt;
+    &lt;kdf&gt;pbkdf2&lt;/kdf&gt;
+    &lt;salt&gt;BASE64_ENCODED_SALT&lt;/salt&gt;
+  &lt;/blowfish&gt;
+&lt;/encrypt&gt;</pre>
                 </li>
             </ol>
         </section>
@@ -289,8 +298,9 @@
                 </li>
 
                 <li>
-                    <strong>Restore security.xml</strong>
-                    <pre>cp /opt/openfire/conf/security.xml.backup /opt/openfire/conf/security.xml</pre>
+                    <strong>Restore security.xml and openfire.xml</strong>
+                    <pre>cp /opt/openfire/conf/security.xml.backup /opt/openfire/conf/security.xml
+cp /opt/openfire/conf/openfire.xml.backup /opt/openfire/conf/openfire.xml</pre>
                 </li>
 
                 <li>
@@ -355,7 +365,7 @@
                 <li>Administrative access to all cluster nodes</li>
                 <li>Ability to stop and start all cluster nodes</li>
                 <li>Ability to backup the shared database</li>
-                <li>SSH or filesystem access to all nodes to backup and sync <code>security.xml</code></li>
+                <li>SSH or filesystem access to all nodes to backup and sync <code>security.xml</code> and <code>openfire.xml</code></li>
                 <li>A scheduled maintenance window (15-30 minutes recommended)</li>
             </ul>
         </section>
@@ -423,10 +433,13 @@ systemctl stop openfire  # On Node 3
                         <li>MySQL: <code>mysqldump openfire &gt; openfire_backup.sql</code></li>
                     </ul>
 
-                    <p>Backup <code>security.xml</code> on all nodes:</p>
+                    <p>Backup <code>security.xml</code> and <code>openfire.xml</code> on all nodes:</p>
                     <pre>ssh node1 "cp /opt/openfire/conf/security.xml /opt/openfire/conf/security.xml.backup"
+ssh node1 "cp /opt/openfire/conf/openfire.xml /opt/openfire/conf/openfire.xml.backup"
 ssh node2 "cp /opt/openfire/conf/security.xml /opt/openfire/conf/security.xml.backup"
-ssh node3 "cp /opt/openfire/conf/security.xml /opt/openfire/conf/security.xml.backup"</pre>
+ssh node2 "cp /opt/openfire/conf/openfire.xml /opt/openfire/conf/openfire.xml.backup"
+ssh node3 "cp /opt/openfire/conf/security.xml /opt/openfire/conf/security.xml.backup"
+ssh node3 "cp /opt/openfire/conf/openfire.xml /opt/openfire/conf/openfire.xml.backup"</pre>
                 </li>
 
                 <li>
@@ -443,17 +456,19 @@ ssh node3 "cp /opt/openfire/conf/security.xml /opt/openfire/conf/security.xml.ba
 
                 <li>
                     <strong>Run Migration via Admin Console</strong>
-                    <p>On Node 1, access the admin console and navigate to:</p>
                     <p>
-                        <strong>Server → Server Settings → Blowfish Encryption Migration</strong>
+                        On Node 1, access the admin console. A warning banner will appear on the
+                        Server Information page (the homepage) with a link to the migration tool.
+                        Click the link, or navigate directly to
+                        <code>https://your-server:9090/security-blowfish-migration.jsp</code>.
                     </p>
                     <p>Check all three confirmation boxes:</p>
                     <ul>
                         <li>"I have backed up the Openfire database"</li>
-                        <li>"I have backed up conf/security.xml"</li>
-                        <li>"All cluster nodes are offline (except this one)"</li>
+                        <li>"I have backed up the conf/security.xml file"</li>
+                        <li>"I have backed up the conf/openfire.xml file"</li>
                     </ul>
-                    <p>Click <strong>"Begin Migration"</strong> and confirm.</p>
+                    <p>Click <strong>"Migrate to PBKDF2"</strong> and confirm.</p>
                     <p>
                         The migration will decrypt all properties (using SHA1), re-encrypt them (using PBKDF2),
                         update the database, and update Node 1's <code>security.xml</code>.
@@ -625,6 +640,21 @@ systemctl start openfire  # On Node 3
             </ul>
 
             <p>
+                <span style="color: red; "><strong>DO NOT</strong></span> forget to sync openfire.xml
+                if it contains encrypted properties:
+            </p>
+            <ul>
+                <li>
+                    <strong>Problem:</strong> Node 1's <code>openfire.xml</code> has re-encrypted values,
+                    but Node 2's <code>openfire.xml</code> still has SHA1-encrypted values.
+                </li>
+                <li>
+                    <strong>Result:</strong> Node 2 cannot decrypt XML-stored properties, configuration
+                    errors on startup.
+                </li>
+            </ul>
+
+            <p>
                 <span style="color: green; "><strong>CORRECT PROCEDURE:</strong></span> All nodes stopped →
                 migrate on one node → sync security.xml and openfire.xml (if applicable) to all nodes → start all nodes.
             </p>
@@ -654,10 +684,13 @@ systemctl start openfire  # On Node 3
                 </li>
 
                 <li>
-                    <strong>Restore security.xml on All Nodes</strong>
+                    <strong>Restore security.xml and openfire.xml on All Nodes</strong>
                     <pre>ssh node1 "cp /opt/openfire/conf/security.xml.backup /opt/openfire/conf/security.xml"
+ssh node1 "cp /opt/openfire/conf/openfire.xml.backup /opt/openfire/conf/openfire.xml"
 ssh node2 "cp /opt/openfire/conf/security.xml.backup /opt/openfire/conf/security.xml"
-ssh node3 "cp /opt/openfire/conf/security.xml.backup /opt/openfire/conf/security.xml"</pre>
+ssh node2 "cp /opt/openfire/conf/openfire.xml.backup /opt/openfire/conf/openfire.xml"
+ssh node3 "cp /opt/openfire/conf/security.xml.backup /opt/openfire/conf/security.xml"
+ssh node3 "cp /opt/openfire/conf/openfire.xml.backup /opt/openfire/conf/openfire.xml"</pre>
                 </li>
 
                 <li>
@@ -801,7 +834,7 @@ ssh node3 "grep -A2 '&lt;blowfish&gt;' /opt/openfire/conf/security.xml"</pre>
             </p>
             <ol>
                 <li>Stop Openfire</li>
-                <li>Restore <code>security.xml</code> from backup (restores SHA1 setting)</li>
+                <li>Restore <code>security.xml</code> and <code>openfire.xml</code> from backups (restores SHA1 setting)</li>
                 <li>Start Openfire - properties should decrypt correctly</li>
                 <li>Retry migration carefully, ensuring migration completes successfully</li>
             </ol>
@@ -821,7 +854,7 @@ ssh node3 "grep -A2 '&lt;blowfish&gt;' /opt/openfire/conf/security.xml"</pre>
             </p>
             <ol>
                 <li>Stop Openfire</li>
-                <li>Restore both database and <code>security.xml</code> from backups</li>
+                <li>Restore database, <code>security.xml</code>, and <code>openfire.xml</code> from backups</li>
                 <li>Start Openfire - system returns to pre-migration state</li>
                 <li>Report the issue in the Openfire category on the Ignite Realtime community forum
                     with error logs before retrying migration</li>

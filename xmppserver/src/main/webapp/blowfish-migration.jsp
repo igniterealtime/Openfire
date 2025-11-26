@@ -225,6 +225,7 @@
                         <li><fmt:message key="security.blowfish.migration.cluster.step8"/></li>
                         <li><fmt:message key="security.blowfish.migration.cluster.step9"/></li>
                         <li><fmt:message key="security.blowfish.migration.cluster.step10"/></li>
+                        <li><fmt:message key="security.blowfish.migration.cluster.step11"/></li>
                     </ol>
                 </div>
             </c:when>
@@ -258,6 +259,7 @@
                                 <li><fmt:message key="security.blowfish.migration.singlenode.step4"/></li>
                             </ol>
                             <p class="note"><fmt:message key="security.blowfish.migration.singlenode.completion"/></p>
+                            <p class="note"><fmt:message key="security.blowfish.migration.cluster.completion"/></p>
                         </c:when>
                         <c:otherwise>
                             <h3><fmt:message key="security.blowfish.migration.singlenode.title"/></h3>

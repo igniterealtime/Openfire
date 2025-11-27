@@ -282,6 +282,8 @@ public class BlowfishMigrationServlet extends HttpServlet {
         int failed = 0;
         List<String> failedProperties = new ArrayList<>();
 
+        int skipped = 0;
+
         try {
             con = DbConnectionManager.getConnection();
             originalAutoCommit = con.getAutoCommit();
@@ -289,6 +291,13 @@ public class BlowfishMigrationServlet extends HttpServlet {
 
             for (EncryptedProperty prop : dbProperties) {
                 try {
+                    // Check if property is already migrated (has $v2$ prefix)
+                    if (prop.value != null && prop.value.startsWith(Blowfish.VERSION_PREFIX_PBKDF2)) {
+                        Log.debug("Skipping already-migrated property: {}", prop.name);
+                        skipped++;
+                        continue;
+                    }
+
                     // Decrypt with SHA1-derived key
                     String decrypted = sha1Blowfish.decryptString(prop.value);
 
@@ -333,6 +342,9 @@ public class BlowfishMigrationServlet extends HttpServlet {
             Log.info("Updated security.xml: encrypt.blowfish.kdf=pbkdf2");
 
             // 9. Log success
+            if (skipped > 0) {
+                Log.info("Skipped {} properties that were already migrated (had $v2$ prefix)", skipped);
+            }
             Log.info("Successfully migrated {} database properties and {} XML properties from SHA1 to PBKDF2",
                     migrated, xmlMigrated);
             Log.info("Blowfish KDF is now set to PBKDF2-HMAC-SHA512 in security.xml");

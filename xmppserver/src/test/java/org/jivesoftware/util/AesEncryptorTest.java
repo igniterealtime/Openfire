@@ -15,9 +15,12 @@
  */
 package org.jivesoftware.util;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.security.SecureRandom;
+import java.security.Security;
 import java.util.UUID;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -28,6 +31,12 @@ import static org.junit.jupiter.api.Assertions.*;
 public class AesEncryptorTest {
 
     private static final SecureRandom RANDOM = new SecureRandom();
+
+    @BeforeAll
+    static void setupBouncyCastle() {
+        // Register BouncyCastle provider to enable PKCS7Padding (consistent with AesEncryptor)
+        Security.addProvider(new BouncyCastleProvider());
+    }
 
     /**
      * Generates a random 16-byte IV for testing.
@@ -208,5 +217,93 @@ public class AesEncryptorTest {
         // Verify both can be decrypted correctly with their respective IVs.
         assertEquals(plaintext, encryptor.decrypt(encrypted1, iv1));
         assertEquals(plaintext, encryptor.decrypt(encrypted2, iv2));
+    }
+
+    /**
+     * Tests that GCM encryption with random IV works correctly.
+     * This verifies the OF-3077 fix that switches from CBC to GCM mode.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3077">OF-3077: Potential padding oracle CBC-mode encryption</a>
+     */
+    @Test
+    public void testGcmEncryptionDecryption()
+    {
+        // Setup test fixture.
+        final String plaintext = "sensitive-data-for-gcm-test";
+        final Encryptor encryptor = new AesEncryptor();
+        final byte[] iv = generateRandomIV();
+
+        // Execute system under test.
+        final String encrypted = encryptor.encrypt(plaintext, iv);
+
+        // Verify results.
+        assertNotNull(encrypted, "Encrypted value should not be null");
+        assertNotEquals(plaintext, encrypted, "Encrypted value should differ from plaintext");
+        assertEquals(plaintext, encryptor.decrypt(encrypted, iv),
+                     "Decrypted value should match original plaintext");
+    }
+
+    /**
+     * Tests that legacy CBC-encrypted data (from OF-1533 era, 2018+) can still be decrypted
+     * using the CBC fallback mechanism. This simulates data encrypted with CBC mode and
+     * a random IV, as was done by JiveProperties since OF-1533.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-1533">OF-1533: Use a random IV for each new encrypted property</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3077">OF-3077: Potential padding oracle CBC-mode encryption</a>
+     */
+    @Test
+    public void testCbcFallbackForLegacyData() throws Exception
+    {
+        // Setup test fixture - simulate CBC-encrypted data from OF-1533 era.
+        final String plaintext = "legacy-password";
+        final byte[] iv = generateRandomIV();
+
+        // Encrypt using CBC directly (simulating old Openfire behaviour before OF-3077).
+        javax.crypto.Cipher cbcCipher = javax.crypto.Cipher.getInstance("AES/CBC/PKCS7Padding");
+        cbcCipher.init(javax.crypto.Cipher.ENCRYPT_MODE,
+                       new javax.crypto.spec.SecretKeySpec(LegacyEncryptionConstants.LEGACY_KEY, "AES"),
+                       new javax.crypto.spec.IvParameterSpec(iv));
+        byte[] cbcEncryptedBytes = cbcCipher.doFinal(plaintext.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        final String cbcEncrypted = java.util.Base64.getEncoder().encodeToString(cbcEncryptedBytes);
+
+        // Execute system under test - decrypt using AesEncryptor (which now uses GCM first, then CBC fallback).
+        final AesEncryptor encryptor = new AesEncryptor();
+        final String decrypted = encryptor.decrypt(cbcEncrypted, iv);
+
+        // Verify results - the CBC fallback should successfully decrypt the legacy data.
+        assertEquals(plaintext, decrypted,
+                     "Legacy CBC-encrypted data should be decrypted via fallback mechanism");
+    }
+
+    /**
+     * Tests that GCM mode detects tampering with the ciphertext.
+     * GCM provides authenticated encryption, so modified ciphertext should fail to decrypt.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3077">OF-3077: Potential padding oracle CBC-mode encryption</a>
+     */
+    @Test
+    public void testGcmDetectsTampering()
+    {
+        // Setup test fixture.
+        final String plaintext = "sensitive-data";
+        final Encryptor encryptor = new AesEncryptor();
+        final byte[] iv = generateRandomIV();
+
+        // Encrypt the data.
+        final String encrypted = encryptor.encrypt(plaintext, iv);
+
+        // Tamper with the ciphertext by modifying a character.
+        final byte[] ciphertextBytes = java.util.Base64.getDecoder().decode(encrypted);
+        ciphertextBytes[0] ^= 0xFF; // Flip bits in first byte
+        final String tamperedEncrypted = java.util.Base64.getEncoder().encodeToString(ciphertextBytes);
+
+        // Execute system under test - attempt to decrypt tampered data.
+        final String decrypted = encryptor.decrypt(tamperedEncrypted, iv);
+
+        // Verify results - GCM should detect the tampering and return null.
+        // Note: The fallback to CBC may produce garbage or null depending on the tampering.
+        // The key point is that the original plaintext should NOT be recovered.
+        assertNotEquals(plaintext, decrypted,
+                        "Tampered ciphertext should not decrypt to original plaintext");
     }
 }

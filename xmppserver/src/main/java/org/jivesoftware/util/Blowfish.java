@@ -42,6 +42,19 @@ public class Blowfish implements Encryptor {
     private static final String DEFAULT_KEY = "Blowfish-CBC";
 
     /**
+     * Version prefix for PBKDF2-encrypted values. Inspired by PHC String Format
+     * used by bcrypt, argon2, scrypt. The '$' character is not valid hex, so
+     * this prefix is unambiguous with legacy (unprefixed) ciphertext.
+     */
+    public static final String VERSION_PREFIX_PBKDF2 = "$v2$";
+
+    /**
+     * Tracks whether this Blowfish instance is configured for PBKDF2 key derivation.
+     * Used to determine whether to add version prefix during encryption.
+     */
+    private boolean usingPBKDF2 = false;
+
+    /**
      * Creates a new Blowfish object using the default key
      */
     public Blowfish() {
@@ -117,8 +130,11 @@ public class Blowfish implements Encryptor {
                 newCBCIV,
                 0);
 
-        return bytesToBinHex(newCBCIV, 0, BlowfishCBC.BLOCKSIZE) +
+        String hexCiphertext = bytesToBinHex(newCBCIV, 0, BlowfishCBC.BLOCKSIZE) +
                 bytesToBinHex(buf, 0, buf.length);
+
+        // Add version prefix for PBKDF2-encrypted values to make them self-describing
+        return usingPBKDF2 ? VERSION_PREFIX_PBKDF2 + hexCiphertext : hexCiphertext;
     }
 
 
@@ -129,6 +145,13 @@ public class Blowfish implements Encryptor {
      */
     public String decryptString(String sCipherText)
     {
+        if (sCipherText == null) { return null; }
+
+        // Strip version prefix if present (values are self-describing)
+        if (sCipherText.startsWith(VERSION_PREFIX_PBKDF2)) {
+            sCipherText = sCipherText.substring(VERSION_PREFIX_PBKDF2.length());
+        }
+
         // get the number of estimated bytes in the string (cut off broken blocks)
         int nLen = (sCipherText.length() >> 1) & ~7;
 
@@ -1602,9 +1625,9 @@ public class Blowfish implements Encryptor {
 
         try {
             // Determine which key derivation function to use
-            boolean usePBKDF2 = JiveGlobals.BLOWFISH_KDF_PBKDF2.equalsIgnoreCase(kdf);
+            this.usingPBKDF2 = JiveGlobals.BLOWFISH_KDF_PBKDF2.equalsIgnoreCase(kdf);
 
-            if (usePBKDF2) {
+            if (this.usingPBKDF2) {
                 // Use PBKDF2-HMAC-SHA512 with salt for strong key derivation
                 derivedKey = deriveKeyPBKDF2WithStoredSalt(password);
                 Log.debug("Using PBKDF2-HMAC-SHA512 for Blowfish key derivation");
@@ -1615,6 +1638,7 @@ public class Blowfish implements Encryptor {
             }
         } catch (Exception e) {
             Log.error("Error deriving Blowfish key, falling back to legacy SHA1", e);
+            this.usingPBKDF2 = false;
             // Fallback to legacy SHA1 on any error
             try {
                 derivedKey = deriveKeySHA1(password);
@@ -1626,6 +1650,17 @@ public class Blowfish implements Encryptor {
 
         // Setup the encryptor (use a dummy IV)
         m_bfish = new BlowfishCBC(derivedKey, 0);
+    }
+
+    /**
+     * Returns whether this Blowfish instance is configured for PBKDF2 key derivation.
+     * Used to determine the version prefix for encrypted values.
+     *
+     * @return true if using PBKDF2, false if using legacy SHA1
+     * @since 5.1.0
+     */
+    public boolean isUsingPBKDF2() {
+        return usingPBKDF2;
     }
 }
 

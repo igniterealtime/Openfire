@@ -11,14 +11,18 @@ We need to decide: should migration happen automatically on server startup, or s
 
 **Key architectural constraint**: Blowfish-encrypted properties are stored in a **shared database** (ofProperty table), but the KDF configuration is stored in **local files** per node (security.xml). This creates a fundamental coordination challenge for automatic migration.
 
+**Data integrity concern**: If configuration state becomes inconsistent with encrypted data (e.g., security.xml is lost or corrupted), the system must detect this rather than silently corrupting data by using the wrong KDF. This requires encrypted values to be self-describing - carrying their own KDF version indicator.
+
 ## Decision
 
-We will implement a **manual migration tool** in the admin console rather than automatic migration on startup.
+We will implement a **manual migration tool** in the admin console rather than automatic migration on startup. Migrated values will use a **version prefix** (`$v2$`) to enable per-property KDF identification and prevent silent data corruption.
 
 Admins must explicitly trigger migration via:
 - Link in warning banner on Server Information page (if migration needed)
 - Requires confirmation checkboxes (database backup, security.xml backup, openfire.xml backup)
 - Displays migration progress and success/failure status
+
+Migrated encrypted values are prefixed with `$v2$` to indicate PBKDF2 key derivation, making each value self-describing regardless of configuration state.
 
 ## Options Considered
 
@@ -30,6 +34,7 @@ Admins must explicitly trigger migration via:
 - Requires checkbox confirmation of backups before proceeding
 - Provides clear progress indication and error messages
 - Admin must stop all cluster nodes before migration
+- Migrated values prefixed with `$v2$` to indicate PBKDF2 key derivation
 
 **Consequences**:
 
@@ -46,6 +51,8 @@ Admins must explicitly trigger migration via:
 ✅ **Rollback capability**: Admin can restore from backup if migration fails
 
 ✅ **No surprise downtime**: Migration happens during planned maintenance, not unexpectedly at startup
+
+✅ **Self-describing values**: Version prefix prevents silent corruption if configuration is lost or inconsistent
 
 ❌ **Manual intervention required**: Admin must remember to run migration tool after upgrade
 
@@ -198,9 +205,8 @@ The bootstrap configuration (`security.xml`) **cannot depend on the database** b
 The architectural mismatch between **shared database storage** and **local file configuration** makes automatic migration fundamentally unsafe for production environments:
 
 1. **Coordination impossible**: Cannot update security.xml on multiple servers automatically
-2. **All-or-nothing**: No per-property KDF tracking (would require database schema change to add `kdf_version` column)
-3. **Cluster safety**: Requires all nodes stopped to prevent race conditions
-4. **Data safety**: Irreversible migration requires backup opportunity
+2. **Cluster safety**: Requires all nodes stopped to prevent race conditions
+3. **Data safety**: Irreversible migration requires backup opportunity
 
 **Comparison with XMLProperties auto-migration** (which does work):
 
@@ -208,8 +214,8 @@ The architectural mismatch between **shared database storage** and **local file 
 |--------|--------------|---------------------|
 | **Storage** | Local file (openfire.xml) | Shared database (ofProperty) |
 | **Configuration** | Local file (same file) | Local file (security.xml) |
-| **Migration scope** | Per-property (gradual) | All-or-nothing (global KDF) |
-| **Format mixing** | Can mix old/new formats | Cannot mix KDFs |
+| **Migration scope** | Per-property (gradual) | Per-property (with version prefix) |
+| **Format mixing** | Can mix old/new formats | Can mix KDFs (via `$v2$` prefix) |
 | **Rollback** | Easy (restore file) | Requires database backup |
 | **Cluster coordination** | None needed (per-node file) | **IMPOSSIBLE** (shared DB + local config) |
 
@@ -231,7 +237,109 @@ XMLProperties auto-migration works because storage and configuration are both lo
 - Backup and rollback procedures
 - Troubleshooting common migration failures
 
-**Future consideration**: If we later add `kdf_version` column to ofProperty table, gradual automatic migration becomes possible (similar to XMLProperties). However, this requires database schema change and doesn't address the security.xml synchronisation problem in clusters.
+**Critical backup requirement**: After migration to PBKDF2, the salt stored in security.xml becomes essential for decryption. Unlike SHA1 (which derived keys solely from the master password), PBKDF2 requires both the master password AND the salt. If security.xml is lost or the `<blowfish>` element is deleted, PBKDF2-encrypted data becomes unrecoverable. Administrators must:
+- Include security.xml in all backup procedures
+- Never delete or modify the `<blowfish><salt>` element after migration
+- Ensure security.xml is synchronised across all cluster nodes
+
+## Version Prefix Format (`$v2$`)
+
+To address the data integrity concern identified in Context, migrated encrypted values include a version prefix that identifies the KDF used.
+
+### Format Design
+
+```
+Legacy (v1/SHA1):   a7f3e9b2c1d4...      (no prefix)
+New (v2/PBKDF2):    $v2$a7f3e9b2c1d4...  (prefix added)
+```
+
+The `$v2$` format is inspired by the PHC (Password Hashing Competition) String Format, a de facto standard used by modern password hashing algorithms:
+- bcrypt: `$2b$12$...`
+- argon2: `$argon2id$v=19$...`
+- scrypt: `$scrypt$...`
+
+Design choices for `$v2$`:
+- **`$` delimiter**: Not a valid hex character (0-9, a-f), so no ambiguity with legacy ciphertext
+- **Simple version number**: `v2` is human-readable and easy to parse
+- **Short (4 chars)**: Minimises storage overhead
+- **Extensible**: Future versions can use `$v3$`, `$v4$`, etc.
+- **Industry familiarity**: Developers familiar with password hashes will recognise the pattern
+
+Alternative formats considered:
+- `{v2}` - Less standard, braces might conflict with other formats
+- `bf2:` - Blowfish-specific, less extensible if algorithm changes
+- Single byte marker - Not human-readable, harder to debug
+- Full PHC format (`$blowfish$v=2$...`) - Overkill for this use case
+
+### Problem Solved: Silent Data Corruption
+
+Without version prefixes, configuration loss can cause silent data corruption:
+
+**Scenario without version prefix**:
+1. Server operating with PBKDF2 (kdf=pbkdf2, salt in security.xml)
+2. Admin deletes `<blowfish>` element from security.xml (accidentally or during troubleshooting)
+3. System defaults to SHA1 (no config = SHA1)
+4. Migration tool shows "needs migration"
+5. Migration decrypts PBKDF2 data with SHA1 key = **garbage**
+6. Garbage re-encrypted and saved = **silent corruption**
+
+**Same scenario with `$v2$` prefix**:
+1. Server operating with PBKDF2 (kdf=pbkdf2, salt in security.xml)
+2. Admin deletes `<blowfish>` element from security.xml (accidentally or during troubleshooting)
+3. System detects `$v2$` prefix and auto-configures PBKDF2
+4. Migration tool shows "already migrated"
+5. No migration attempted
+6. Data remains unchanged (but may be unreadable if salt was also lost - see below)
+
+The version prefix makes each encrypted value self-describing, so the system can detect KDF mismatches rather than silently corrupting data.
+
+### Remaining Risk: Salt Loss After Migration
+
+While the `$v2$` prefix prevents silent corruption, there is a remaining risk when configuration is lost **after** migration to PBKDF2.
+
+**Scenario**:
+1. Server successfully migrated to PBKDF2 (properties have `$v2$` prefix)
+2. Admin deletes or loses `<blowfish>` element from security.xml (including the salt)
+3. Server restarts, detects `$v2$` prefix, auto-configures PBKDF2
+4. Server generates a **new random salt** (because the original was lost)
+5. Decryption attempts fail - wrong salt produces wrong key
+6. Data is preserved but **unreadable**
+
+**Key insight**: The salt stored in security.xml is critical for PBKDF2 decryption. Unlike the KDF version (which can be auto-detected from the `$v2$` prefix), the salt cannot be recovered from the encrypted data itself.
+
+**Behaviour comparison**:
+
+| Scenario | Without `$v2$` prefix | With `$v2$` prefix |
+|----------|----------------------|-------------------|
+| Config lost before migration | Silent corruption (SHA1 key used on PBKDF2 data) | Auto-detects PBKDF2, generates new salt, data unreadable |
+| Config lost after migration | Silent corruption | Data preserved but unreadable |
+
+The `$v2$` prefix is a **fail-safe** mechanism: it prevents silent corruption by ensuring the system knows PBKDF2 was used, but it cannot recover the original salt. This is the correct trade-off - explicit failure is better than silent data corruption.
+
+**Mitigation**: Backup security.xml as part of regular backup procedures. The salt is as important as the encryption key for PBKDF2-encrypted data.
+
+### Downgrade Behaviour
+
+Once migrated to PBKDF2, downgrading to older Openfire versions is not supported - old versions lack PBKDF2 key derivation code. The version prefix improves this scenario by making the incompatibility obvious:
+
+| Scenario | Without prefix | With `$v2$` prefix |
+|----------|---------------|-------------------|
+| Old Openfire decrypts | Hex parsing succeeds, uses SHA1 key (wrong) | Hex parsing fails (`$` invalid) |
+| Result | **Silent garbage** - appears to work | **Explicit failure** - returns null |
+
+The prefix makes incompatibility fail fast and obviously rather than silently corrupting data.
+
+### Benefits and Trade-offs
+
+**Benefits**:
+- Self-describing values - each carries its own KDF version
+- Prevents silent corruption - config/data mismatch detectable
+- Cluster-safe - works even with inconsistent node configs
+- No database schema change required
+- Works for both database and XML properties
+
+**Trade-offs**:
+- Cannot downgrade after migration (acceptable - security improvement is one-way)
 
 ## Related
 

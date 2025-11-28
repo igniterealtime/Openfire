@@ -4,11 +4,9 @@ Version: %{OPENFIRE_VERSION}
 Release: %{OPENFIRE_RELEASE}
 BuildRoot: %{_builddir}/%{name}-root
 Source0: %{OPENFIRE_SOURCE}
-%ifarch noarch
 # Note that epoch is set here to 1, this appears to be consistent with non-Redhat
 # jres as well due to an ancient problem with java-1.5.0-ibm jpackage RPM
 Requires: java >= 1:17.0.0
-%endif
 Group: Applications/Communications
 Vendor: Igniterealtime Community
 Packager: Igniterealtime Community
@@ -45,12 +43,6 @@ rm -rf $RPM_BUILD_ROOT
 mkdir -p $RPM_BUILD_ROOT%{prefix}
 # Copy over the main install tree.
 cp -R . $RPM_BUILD_ROOT%{homedir}
-%ifnarch noarch
-# Set up distributed JRE
-pushd $RPM_BUILD_ROOT%{homedir}
-gzip -cd %{SOURCE1} | tar xvf -
-popd
-%endif
 # Set up the init script.
 mkdir -p $RPM_BUILD_ROOT/etc/init.d
 cp $RPM_BUILD_ROOT%{homedir}/bin/extra/redhat/openfire $RPM_BUILD_ROOT/etc/init.d/openfire
@@ -151,9 +143,6 @@ exit 0
 %doc %{homedir}/changelog.html
 %{_sysconfdir}/init.d/openfire
 %config(noreplace) %{_sysconfdir}/sysconfig/openfire
-%ifnarch noarch
-%{homedir}/jre
-%endif
 
 %changelog
 * %{OPENFIRE_BUILDDATE} Igniterealtime Community <webmaster@igniterealtime.org> %{OPENFIRE_VERSION}-%{OPENFIRE_RELEASE}

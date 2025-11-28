@@ -225,9 +225,29 @@ XMLProperties auto-migration works because storage and configuration are both lo
 - Success/failure messaging
 - Detailed logging for audit trail
 
+**Clustering detection implementation**:
+
+The migration tool uses multiple `ClusterManager` methods to detect unsafe cluster scenarios:
+
+| Method | Purpose |
+|--------|---------|
+| `isClusteringAvailable()` | Checks if Hazelcast plugin is installed and loadable |
+| `isClusteringEnabled()` | Checks if clustering is configured in XML properties |
+| `isClusteringStarted()` | Checks if JVM is actually participating in a cluster |
+| `getNodesInfo().size()` | Counts active cluster nodes |
+
+**Migration blocked when**:
+1. `clusteringEnabled && !clusteringStarted` — clustering configured but not yet running (race condition risk: other nodes might be starting simultaneously)
+2. `clusteringStarted && nodeCount > 1` — multiple nodes active in cluster
+
+**Migration allowed when**:
+1. `!clusteringAvailable` — Hazelcast plugin not installed, clustering impossible
+2. `!clusteringEnabled` — clustering not configured
+3. `clusteringStarted && nodeCount == 1` — single node in active cluster (safe)
+
 **Admin documentation must include**:
 - Migration procedure for single-node deployments
-- Migration procedure for clustered deployments (stop all nodes, run from one node, update all security.xml files, restart)
+- Migration procedure for clustered deployments (stop all nodes, run from one node, update all security.xml and openfire.xml files, restart)
 - Backup and rollback procedures
 - Troubleshooting common migration failures
 

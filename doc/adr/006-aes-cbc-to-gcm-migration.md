@@ -114,6 +114,14 @@ An important design decision: when no IV is provided (legacy mode), the implemen
 
 Therefore, for backward compatibility with legacy data that was encrypted without a random IV, CBC is the safer choice. GCM is only used when the caller provides a proper random IV.
 
+### Why the GCM-First Fallback is Safe
+
+A key property that makes the fallback mechanism safe is that GCM decryption is **guaranteed to fail** (throw an exception) rather than silently producing garbage when given CBC-encrypted data.
+
+GCM is an authenticated encryption mode where the ciphertext includes a 16-byte authentication tag (GHASH). During decryption, GCM computes what the tag should be and throws `AEADBadTagException` if it doesn't match. CBC ciphertext contains no valid GHASH tag, so GCM will always fail. The probability of random bytes accidentally being a valid tag is 1 in 2^128 (cryptographically negligible).
+
+This explicit failure mode is a feature of authenticated encryption - it fails loudly rather than silently corrupting data, making the try-GCM-then-fallback-to-CBC pattern safe.
+
 ## Residual Security Risk
 
 The CBC fallback mechanism maintains backward compatibility but also **preserves the padding oracle vulnerability for legacy CBC-encrypted data**. This data remains theoretically vulnerable until it is re-encrypted with GCM.

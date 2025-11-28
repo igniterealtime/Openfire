@@ -36,6 +36,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -299,6 +301,10 @@ public class BlowfishMigrationServlet extends HttpServlet {
         try {
             con = DbConnectionManager.getTransactionConnection();
 
+            // Time-based progress logging - log at most every 5 seconds
+            Instant lastLogTime = Instant.now();
+            Duration logInterval = Duration.ofSeconds(5);
+
             for (EncryptedProperty prop : dbProperties) {
                 try {
                     // Decrypt with SHA1-derived key
@@ -312,8 +318,11 @@ public class BlowfishMigrationServlet extends HttpServlet {
 
                     migrated++;
 
-                    if (migrated % 10 == 0) {
+                    // Log progress at most every 5 seconds to avoid log spam
+                    Instant now = Instant.now();
+                    if (Duration.between(lastLogTime, now).compareTo(logInterval) >= 0) {
                         Log.info("Migration progress: {}/{} properties", migrated, dbProperties.size());
+                        lastLogTime = now;
                     }
 
                 } catch (Exception e) {

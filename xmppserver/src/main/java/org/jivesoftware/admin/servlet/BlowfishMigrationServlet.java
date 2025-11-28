@@ -291,15 +291,13 @@ public class BlowfishMigrationServlet extends HttpServlet {
 
         // 6. Migrate each database property within a transaction
         Connection con = null;
-        boolean originalAutoCommit = true;
+        boolean abortTransaction = false;
         int migrated = 0;
         int failed = 0;
         List<String> failedProperties = new ArrayList<>();
 
         try {
-            con = DbConnectionManager.getConnection();
-            originalAutoCommit = con.getAutoCommit();
-            con.setAutoCommit(false); // Start transaction
+            con = DbConnectionManager.getTransactionConnection();
 
             for (EncryptedProperty prop : dbProperties) {
                 try {
@@ -327,8 +325,7 @@ public class BlowfishMigrationServlet extends HttpServlet {
 
             // 6. Check migration results
             if (failed > 0) {
-                // Rollback transaction
-                con.rollback();
+                abortTransaction = true;
                 Log.error("Migration completed with {} failures out of {} properties",
                         failed, dbProperties.size());
                 Log.error("Failed properties: {}", String.join(", ", failedProperties));
@@ -336,7 +333,18 @@ public class BlowfishMigrationServlet extends HttpServlet {
                         "Database has been rolled back. Check logs for details.");
             }
 
-            // 7. Commit transaction
+            // 7. Explicitly commit the database transaction before updating security.xml.
+            // This provides clarity of intent - the transaction boundary is explicit, and
+            // it's clear that what follows is post-commit work.
+            //
+            // Note: True atomicity across database and XML file operations isn't possible
+            // since they're separate systems. The openfire XML properties were already
+            // migrated in step 2 before this transaction started, so we're already
+            // committed to PBKDF2 at that point. This commit finalises the database
+            // portion of the migration.
+            //
+            // The closeTransactionConnection in the finally block will call commit() again,
+            // but this is harmless - committing an already-committed transaction is a no-op.
             con.commit();
             Log.info("Database transaction committed successfully");
 
@@ -354,27 +362,12 @@ public class BlowfishMigrationServlet extends HttpServlet {
             return new MigrationResult(migrated, xmlMigrated);
 
         } catch (Exception e) {
-            // Rollback on any error
-            if (con != null) {
-                try {
-                    con.rollback();
-                    Log.error("Transaction rolled back due to error", e);
-                } catch (SQLException rollbackEx) {
-                    Log.error("Failed to rollback transaction", rollbackEx);
-                }
-            }
+            abortTransaction = true;
+            Log.error("Transaction rolled back due to error", e);
             throw e;
 
         } finally {
-            // Restore autocommit
-            if (con != null) {
-                try {
-                    con.setAutoCommit(originalAutoCommit);
-                } catch (SQLException e) {
-                    Log.error("Failed to restore autocommit setting", e);
-                }
-                DbConnectionManager.closeConnection(con);
-            }
+            DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
     }
 

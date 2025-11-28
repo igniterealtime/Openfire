@@ -215,6 +215,22 @@ The architectural mismatch between **shared database storage** and **local file 
 
 XMLProperties auto-migration works because storage and configuration are both local. Blowfish has storage (database) that's shared while configuration (security.xml) is local - creating an unsolvable coordination problem for automatic migration.
 
+## Consequences
+
+Choosing manual migration means:
+
+✅ Admins control timing and can prepare backups during planned maintenance
+
+✅ Cluster coordination is explicit (stop all nodes requirement)
+
+✅ Clear visibility into migration progress and any failures
+
+❌ Existing installations remain on SHA1 until manually migrated
+
+❌ Requires admin awareness of the migration tool after upgrade
+
+See Option 1 for full consequence analysis.
+
 ## Implementation Notes
 
 **Manual migration tool provides**:
@@ -253,7 +269,8 @@ The migration tool uses multiple `ClusterManager` methods to detect unsafe clust
 
 **Future consideration**: If we later add `kdf_version` column to ofProperty table, gradual automatic migration becomes possible (similar to XMLProperties). However, this requires database schema change and doesn't address the security.xml synchronisation problem in clusters.
 
-## Related
+## References
 
-- OF-3075: Weak SHA1 hash used as key for Blowfish
+- [OF-3075](https://igniterealtime.atlassian.net/browse/OF-3075): Weak SHA1 hash used as key for Blowfish
 - ADR-001: Separate Obfuscation from Encryption (architectural split)
+- ADR-005: PBKDF2 Parameters for Blowfish (cryptographic parameters used by this migration)

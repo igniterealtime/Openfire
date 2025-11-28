@@ -90,14 +90,16 @@ public class BlowfishMigrationServlet extends HttpServlet {
             request.setAttribute("encryptedPropertyCountXml", xmlCount);
         }
 
-        // Detect clustering status and node count
-        boolean isClustered = ClusterManager.isClusteringStarted();
-        int clusterNodeCount = 0;
-        if (isClustered) {
-            clusterNodeCount = ClusterManager.getNodesInfo().size();
-        }
+        // Detect clustering status using multiple checks to avoid race conditions
+        // See ADR-004 for detailed explanation of clustering detection approach
+        boolean clusteringAvailable = ClusterManager.isClusteringAvailable();
+        boolean clusteringEnabled = ClusterManager.isClusteringEnabled();
+        boolean clusteringStarted = ClusterManager.isClusteringStarted();
+        int clusterNodeCount = clusteringStarted ? ClusterManager.getNodesInfo().size() : 0;
 
-        request.setAttribute("isClustered", isClustered);
+        request.setAttribute("clusteringAvailable", clusteringAvailable);
+        request.setAttribute("clusteringEnabled", clusteringEnabled);
+        request.setAttribute("clusteringStarted", clusteringStarted);
         request.setAttribute("clusterNodeCount", clusterNodeCount);
 
         // Set CSRF token
@@ -141,14 +143,26 @@ public class BlowfishMigrationServlet extends HttpServlet {
                 return;
             }
 
-            // Check clustering status - block migration if multiple nodes are active
-            boolean isClustered = ClusterManager.isClusteringStarted();
-            int clusterNodeCount = isClustered ? ClusterManager.getNodesInfo().size() : 0;
+            // Check clustering status - block migration in unsafe scenarios
+            // See ADR-004 for detailed explanation of clustering detection approach
+            boolean clusteringEnabled = ClusterManager.isClusteringEnabled();
+            boolean clusteringStarted = ClusterManager.isClusteringStarted();
+            int clusterNodeCount = clusteringStarted ? ClusterManager.getNodesInfo().size() : 0;
 
+            // Block if clustering is enabled but not yet started (race condition risk)
+            // Other nodes might be starting simultaneously
+            if (clusteringEnabled && !clusteringStarted) {
+                request.getSession().setAttribute("errorMessage",
+                        "security.blowfish.migration.error.cluster-enabled-not-started");
+                response.sendRedirect("security-blowfish-migration.jsp");
+                return;
+            }
+
+            // Block if multiple cluster nodes are active
             if (clusterNodeCount > 1) {
                 request.getSession().setAttribute("errorMessage",
                         "security.blowfish.migration.error.multi-node-active");
-                request.getSession().setAttribute("errorParam", clusterNodeCount);
+                request.getSession().setAttribute("errorParam", String.valueOf(clusterNodeCount));
                 response.sendRedirect("security-blowfish-migration.jsp");
                 return;
             }

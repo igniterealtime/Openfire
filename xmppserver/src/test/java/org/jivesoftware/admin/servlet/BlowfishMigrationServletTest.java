@@ -16,6 +16,8 @@
 package org.jivesoftware.admin.servlet;
 
 import org.jivesoftware.Fixtures;
+import org.jivesoftware.openfire.cluster.ClusterManager;
+import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 import org.jivesoftware.util.JiveGlobals;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -23,7 +25,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.Collection;
+import java.util.List;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.http.Cookie;
@@ -31,7 +37,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -393,5 +398,176 @@ public class BlowfishMigrationServletTest {
         verify(response).sendRedirect("security-blowfish-migration.jsp");
         verify(session, never()).setAttribute(eq("errorMessage"), anyString());
         verify(session, never()).setAttribute(eq("successMessage"), anyString());
+    }
+
+    // ========== Clustering Tests ==========
+
+    /**
+     * Test doPost() allows migration when clustering is not available.
+     * If the Hazelcast plugin isn't installed, clustering is impossible and migration is safe.
+     *
+     * This test verifies that when ClusterManager.isClusteringAvailable() returns false,
+     * the servlet does NOT block migration due to clustering concerns.
+     */
+    @Test
+    public void testDoPost_ClusteringNotAvailable_AllowsMigration() throws Exception {
+        try (MockedStatic<ClusterManager> clusterManagerMock = mockStatic(ClusterManager.class)) {
+            // Setup: Clustering plugin not installed
+            clusterManagerMock.when(ClusterManager::isClusteringAvailable).thenReturn(false);
+            clusterManagerMock.when(ClusterManager::isClusteringEnabled).thenReturn(false);
+            clusterManagerMock.when(ClusterManager::isClusteringStarted).thenReturn(false);
+
+            // Setup: Valid CSRF and all backup confirmations
+            String csrfToken = "valid-token";
+            when(request.getParameter("csrf")).thenReturn(csrfToken);
+            Cookie csrfCookie = new Cookie("csrf", csrfToken);
+            when(request.getCookies()).thenReturn(new Cookie[]{csrfCookie});
+            when(request.getParameter("action")).thenReturn("migrate");
+            when(request.getParameter("dbBackup")).thenReturn("true");
+            when(request.getParameter("securityBackup")).thenReturn("true");
+            when(request.getParameter("openfireBackup")).thenReturn("true");
+
+            // Execute
+            servlet.doPost(request, response);
+
+            // Verify: Should NOT set clustering-related error message
+            // (may still fail for other reasons like no properties to migrate,
+            // but clustering check should pass)
+            verify(session, never()).setAttribute(eq("errorMessage"), eq("security.blowfish.migration.error.multi-node-active"));
+            verify(session, never()).setAttribute(eq("errorMessage"), eq("security.blowfish.migration.error.cluster-enabled-not-started"));
+        }
+    }
+
+    /**
+     * Test doPost() blocks migration when clustering is enabled but not started.
+     * This is a race condition risk: other nodes may be starting up and would have
+     * different KDF settings after migration completes.
+     */
+    @Test
+    public void testDoPost_ClusteringEnabledButNotStarted_BlocksMigration() throws Exception {
+        try (MockedStatic<ClusterManager> clusterManagerMock = mockStatic(ClusterManager.class)) {
+            // Setup: Clustering available and enabled, but not yet started (race condition risk)
+            clusterManagerMock.when(ClusterManager::isClusteringAvailable).thenReturn(true);
+            clusterManagerMock.when(ClusterManager::isClusteringEnabled).thenReturn(true);
+            clusterManagerMock.when(ClusterManager::isClusteringStarted).thenReturn(false);
+
+            // Setup: Valid CSRF and all backup confirmations (all other validation passes)
+            String csrfToken = "valid-token";
+            when(request.getParameter("csrf")).thenReturn(csrfToken);
+            Cookie csrfCookie = new Cookie("csrf", csrfToken);
+            when(request.getCookies()).thenReturn(new Cookie[]{csrfCookie});
+            when(request.getParameter("action")).thenReturn("migrate");
+            when(request.getParameter("dbBackup")).thenReturn("true");
+            when(request.getParameter("securityBackup")).thenReturn("true");
+            when(request.getParameter("openfireBackup")).thenReturn("true");
+
+            // Execute
+            servlet.doPost(request, response);
+
+            // Verify: Should set the race condition error and redirect
+            verify(session).setAttribute("errorMessage", "security.blowfish.migration.error.cluster-enabled-not-started");
+            verify(response).sendRedirect("security-blowfish-migration.jsp");
+        }
+    }
+
+    /**
+     * Test doPost() blocks migration when clustering is active with multiple nodes.
+     * Migration must be performed with only one node running to prevent data corruption.
+     */
+    @Test
+    public void testDoPost_ClusteringStartedWithMultipleNodes_BlocksMigration() throws Exception {
+        try (MockedStatic<ClusterManager> clusterManagerMock = mockStatic(ClusterManager.class)) {
+            // Setup: Clustering active with 3 nodes
+            clusterManagerMock.when(ClusterManager::isClusteringAvailable).thenReturn(true);
+            clusterManagerMock.when(ClusterManager::isClusteringEnabled).thenReturn(true);
+            clusterManagerMock.when(ClusterManager::isClusteringStarted).thenReturn(true);
+
+            // Mock node info - 3 nodes in cluster
+            ClusterNodeInfo node1 = mock(ClusterNodeInfo.class);
+            ClusterNodeInfo node2 = mock(ClusterNodeInfo.class);
+            ClusterNodeInfo node3 = mock(ClusterNodeInfo.class);
+            Collection<ClusterNodeInfo> nodeInfos = List.of(node1, node2, node3);
+            clusterManagerMock.when(ClusterManager::getNodesInfo).thenReturn(nodeInfos);
+
+            // Setup: Valid CSRF and all backup confirmations
+            String csrfToken = "valid-token";
+            when(request.getParameter("csrf")).thenReturn(csrfToken);
+            Cookie csrfCookie = new Cookie("csrf", csrfToken);
+            when(request.getCookies()).thenReturn(new Cookie[]{csrfCookie});
+            when(request.getParameter("action")).thenReturn("migrate");
+            when(request.getParameter("dbBackup")).thenReturn("true");
+            when(request.getParameter("securityBackup")).thenReturn("true");
+            when(request.getParameter("openfireBackup")).thenReturn("true");
+
+            // Execute
+            servlet.doPost(request, response);
+
+            // Verify: Should set multi-node-active error with node count as String parameter
+            verify(session).setAttribute("errorMessage", "security.blowfish.migration.error.multi-node-active");
+            verify(session).setAttribute("errorParam", "3");
+            verify(response).sendRedirect("security-blowfish-migration.jsp");
+        }
+    }
+
+    /**
+     * Test doPost() allows migration when clustering is started with only one node.
+     * Single-node cluster is safe for migration.
+     */
+    @Test
+    public void testDoPost_ClusteringStartedWithSingleNode_AllowsMigration() throws Exception {
+        try (MockedStatic<ClusterManager> clusterManagerMock = mockStatic(ClusterManager.class)) {
+            // Setup: Clustering active with only 1 node (this node only)
+            clusterManagerMock.when(ClusterManager::isClusteringAvailable).thenReturn(true);
+            clusterManagerMock.when(ClusterManager::isClusteringEnabled).thenReturn(true);
+            clusterManagerMock.when(ClusterManager::isClusteringStarted).thenReturn(true);
+
+            // Mock node info - single node in cluster
+            ClusterNodeInfo thisNode = mock(ClusterNodeInfo.class);
+            Collection<ClusterNodeInfo> nodeInfos = List.of(thisNode);
+            clusterManagerMock.when(ClusterManager::getNodesInfo).thenReturn(nodeInfos);
+
+            // Setup: Valid CSRF and all backup confirmations
+            String csrfToken = "valid-token";
+            when(request.getParameter("csrf")).thenReturn(csrfToken);
+            Cookie csrfCookie = new Cookie("csrf", csrfToken);
+            when(request.getCookies()).thenReturn(new Cookie[]{csrfCookie});
+            when(request.getParameter("action")).thenReturn("migrate");
+            when(request.getParameter("dbBackup")).thenReturn("true");
+            when(request.getParameter("securityBackup")).thenReturn("true");
+            when(request.getParameter("openfireBackup")).thenReturn("true");
+
+            // Execute
+            servlet.doPost(request, response);
+
+            // Verify: Should NOT set clustering-related error messages
+            verify(session, never()).setAttribute(eq("errorMessage"), eq("security.blowfish.migration.error.multi-node-active"));
+            verify(session, never()).setAttribute(eq("errorMessage"), eq("security.blowfish.migration.error.cluster-enabled-not-started"));
+        }
+    }
+
+    /**
+     * Test doGet() sets clustering-related request attributes.
+     * These attributes are used by the JSP to display appropriate warnings.
+     */
+    @Test
+    public void testDoGet_SetsClusteringAttributes() throws Exception {
+        try (MockedStatic<ClusterManager> clusterManagerMock = mockStatic(ClusterManager.class)) {
+            // Setup: Clustering available and enabled but not started
+            clusterManagerMock.when(ClusterManager::isClusteringAvailable).thenReturn(true);
+            clusterManagerMock.when(ClusterManager::isClusteringEnabled).thenReturn(true);
+            clusterManagerMock.when(ClusterManager::isClusteringStarted).thenReturn(false);
+
+            when(request.getRequestDispatcher("blowfish-migration.jsp")).thenReturn(requestDispatcher);
+
+            // Execute
+            servlet.doGet(request, response);
+
+            // Verify clustering attributes are set
+            verify(request).setAttribute("clusteringAvailable", true);
+            verify(request).setAttribute("clusteringEnabled", true);
+            verify(request).setAttribute("clusteringStarted", false);
+            verify(request).setAttribute("clusterNodeCount", 0);
+            verify(requestDispatcher).forward(request, response);
+        }
     }
 }

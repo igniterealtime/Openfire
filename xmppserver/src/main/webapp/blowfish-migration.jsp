@@ -201,6 +201,20 @@
 
     <c:when test="${needsMigration}">
         <c:choose>
+            <c:when test="${clusteringEnabled and not clusteringStarted}">
+                <%-- Block migration if clustering is configured but not yet running (race condition risk) --%>
+                <admin:infobox type="error">
+                    <fmt:message key="security.blowfish.migration.error.cluster-enabled-not-started"/>
+                </admin:infobox>
+
+                <div class="migration-instructions">
+                    <h3><fmt:message key="security.blowfish.migration.cluster.title"/></h3>
+                    <div class="critical">
+                        <fmt:message key="security.blowfish.migration.cluster.race-condition"/>
+                    </div>
+                    <p><fmt:message key="security.blowfish.migration.cluster.wait-or-disable"/></p>
+                </div>
+            </c:when>
             <c:when test="${clusterNodeCount > 1}">
                 <%-- Block migration if multiple cluster nodes are running --%>
                 <admin:infobox type="error">
@@ -236,7 +250,7 @@
                     <p><fmt:message key="security.blowfish.migration.warning.irreversible"/></p>
                     <ul>
                         <li><fmt:message key="security.blowfish.migration.warning.backup"/></li>
-                        <c:if test="${isClustered}">
+                        <c:if test="${clusteringEnabled}">
                             <li><fmt:message key="security.blowfish.migration.warning.cluster"/></li>
                         </c:if>
                         <li><fmt:message key="security.blowfish.migration.warning.downtime"/></li>
@@ -246,7 +260,7 @@
                 <div class="migration-instructions">
                     <p class="note"><fmt:message key="security.blowfish.migration.detailed-guide-notice"/></p>
                     <c:choose>
-                        <c:when test="${isClustered && clusterNodeCount == 1}">
+                        <c:when test="${clusteringStarted and clusterNodeCount == 1}">
                             <h3><fmt:message key="security.blowfish.migration.singlenode.title"/></h3>
                             <div class="success">
                                 <fmt:message key="security.blowfish.migration.cluster.single-node-safe"/>

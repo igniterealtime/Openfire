@@ -1316,7 +1316,7 @@ public class MUCPersistenceManager {
                     pstmt.setLong(2, room.getID());
                     pstmt.setString(3, affiliationJid);
                     if (pstmt.executeUpdate() == 0) {
-                        Log.warn("While trying to persist the update the affiliation of {} in room: {} from {} to {}, no database rows were modified. The change was possibly not persisted (or was unnecessary). This may be a bug in Openfire logic.", jid, room.getName(), oldAffiliation, newAffiliation);
+                        Log.warn("While trying to persist the update the affiliation of {} in room: {} from {} to {}, no database rows were modified. The change was possibly not persisted (or was unnecessary). This may be a bug in Openfire logic.", jid, room.getJID(), oldAffiliation, newAffiliation);
                     }
                 }
                 catch (SQLException sqle) {

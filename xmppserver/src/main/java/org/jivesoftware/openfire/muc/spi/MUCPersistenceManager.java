@@ -1315,7 +1315,9 @@ public class MUCPersistenceManager {
                     pstmt.setInt(1, newAffiliation.getValue());
                     pstmt.setLong(2, room.getID());
                     pstmt.setString(3, affiliationJid);
-                    pstmt.executeUpdate();
+                    if (pstmt.executeUpdate() == 0) {
+                        Log.warn("While trying to persist the update the affiliation of {} in room: {} from {} to {}, no database rows were modified. The change was possibly not persisted (or was unnecessary). This may be a bug in Openfire logic.", jid, room.getName(), oldAffiliation, newAffiliation);
+                    }
                 }
                 catch (SQLException sqle) {
                     Log.error("A database error occurred while trying to update affiliation for {} in room: {}", jid, room.getName(), sqle);

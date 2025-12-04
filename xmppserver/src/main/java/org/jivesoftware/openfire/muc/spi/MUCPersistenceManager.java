@@ -322,9 +322,8 @@ public class MUCPersistenceManager {
             room.setPersistent(true);
             DbConnectionManager.fastcloseStmt(rs, pstmt);
 
-            // Recreate the history only for the rooms that have the conversation logging
-            // enabled
-            loadHistory(room, room.getRoomHistory().getMaxMessages());
+            // Recreate the history only for the rooms that have the conversation logging enabled
+            loadHistory(room);
 
             pstmt = con.prepareStatement(LOAD_AFFILIATIONS);
             pstmt.setLong(1, room.getID());
@@ -845,7 +844,7 @@ public class MUCPersistenceManager {
      */
     public static void loadHistory(@Nonnull final MUCRoom room) throws SQLException
     {
-        loadHistory(room, -1);
+        loadHistory(room, room.getRoomHistory().getMaxMessages());
     }
 
     /**
@@ -858,6 +857,7 @@ public class MUCPersistenceManager {
      * @param maxNumber A hint for the maximum number of messages that need to be read from the database. -1 for all messages.
      * @throws SQLException
      */
+    // TODO Consider merging this method with the one above, to avoid confusion. You'd hope that people use MAM instead of this anyway.
     public static void loadHistory(@Nonnull final MUCRoom room, final int maxNumber) throws SQLException
     {
         Log.debug("Loading room history for room '{}' (max: {})", room.getJID(), maxNumber == -1 ? "all" : maxNumber);

@@ -329,6 +329,20 @@ public class Group implements Cacheable, Externalizable {
     }
 
     /**
+     * Indicates if contact list group sharing has been enabled for this group.
+     *
+     * A group is considered shared when it is configured to be visible to either
+     * all users in the system ({@link SharedGroupVisibility#everybody}) or to
+     * users of specific groups ({@link SharedGroupVisibility#usersOfGroups}).
+     *
+     * @return {@code true} if this group is shared using contact list group sharing,
+     *         otherwise {@code false}.
+     */
+    public boolean isShared() {
+        return SharedGroupVisibility.everybody == getSharedWith() || SharedGroupVisibility.usersOfGroups == getSharedWith();
+    }
+
+    /**
      * Defines the groups of users with which this group is shared if contact list group sharing is enabled and this
      * group is shared with (other) groups (as defined by {@link #getSharedWith()}).
      *

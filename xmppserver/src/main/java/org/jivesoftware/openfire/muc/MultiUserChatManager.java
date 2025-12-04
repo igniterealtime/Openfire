@@ -67,13 +67,11 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
         .setEncrypted(true)
         .build();
 
-    private static final String LOAD_SERVICES = "SELECT subdomain,description,isHidden FROM ofMucService";
-    private static final String LOAD_SERVICE = "SELECT description,isHidden FROM ofMucService WHERE subdomain =?";
+    private static final String LOAD_SERVICES = "SELECT serviceID,subdomain,description,isHidden FROM ofMucService";
+    private static final String LOAD_SERVICE = "SELECT serviceID,description,isHidden FROM ofMucService WHERE subdomain =?";
     private static final String CREATE_SERVICE = "INSERT INTO ofMucService(serviceID,subdomain,description,isHidden) VALUES(?,?,?,?)";
     private static final String UPDATE_SERVICE = "UPDATE ofMucService SET subdomain=?,description=? WHERE serviceID=?";
     private static final String DELETE_SERVICE = "DELETE FROM ofMucService WHERE serviceID=?";
-    private static final String LOAD_SERVICE_ID = "SELECT serviceID FROM ofMucService WHERE subdomain=?";
-    private static final String LOAD_SUBDOMAIN = "SELECT subdomain FROM ofMucService WHERE serviceID=?";
     private static final String GET_RETIREES = "SELECT serviceID, name, alternateJID, reason, retiredAt FROM ofMucRoomRetiree WHERE serviceID = ? ORDER BY name ASC";
     private static final String DELETE_RETIREE = "DELETE FROM ofMucRoomRetiree WHERE serviceID=? AND name=?";
     private static final String COUNT_RETIREE = "SELECT COUNT(name) FROM ofMucRoomRetiree WHERE serviceID = ?";
@@ -219,8 +217,12 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
             Log.error("Unable to register MUC service '{}' as a component.", service.getServiceName(), e);
         }
         if (allNodes) {
-            Log.trace("Sending 'service added' event for MUC service '{}' to all other cluster nodes.", service.getServiceName());
-            CacheFactory.doClusterTask(new ServiceAddedEvent(service.getServiceName(), service.getDescription(), service.isHidden()));
+            if (service instanceof MultiUserChatServiceImpl) {
+                Log.trace("Sending 'service added' event for MUC service '{}' to all other cluster nodes.", service.getServiceName());
+                CacheFactory.doClusterTask(new ServiceAddedEvent(((MultiUserChatServiceImpl)service).getServiceID(), service.getServiceName(), service.getDescription(), service.isHidden()));
+            } else {
+                Log.warn("Custom MUCService implementation detected for for MUC service '{}'. Unable to send 'service added' event to all other cluster nodes.", service.getServiceName());
+            }
         }
     }
 
@@ -312,8 +314,12 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
         }
 
         Log.info("Creating MUC service '{}'", subdomain);
-        final MultiUserChatServiceImpl muc = new MultiUserChatServiceImpl(subdomain, description, isHidden);
-        insertService(subdomain, description, isHidden);
+
+        // Check subdomain and throw an IllegalArgumentException if it's invalid
+        new JID(null,subdomain + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null);
+
+        final long serviceID = insertService(subdomain, description, isHidden);
+        final MultiUserChatServiceImpl muc = new MultiUserChatServiceImpl(serviceID, subdomain, description, isHidden);
         registerMultiUserChatService(muc);
         return muc;
     }
@@ -365,13 +371,13 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
             updateService(serviceID, subdomain, description);
 
             // Create new MUC service with new settings
-            final MultiUserChatService replacement = new MultiUserChatServiceImpl(subdomain, description, muc.isHidden());
+            final MultiUserChatService replacement = new MultiUserChatServiceImpl(serviceID, subdomain, description, muc.isHidden());
 
             // Register to new service
             registerMultiUserChatService(replacement, false);
 
             // Broadcast change(s) to other cluster nodes (OF-2164)
-            CacheFactory.doSynchronousClusterTask(new ServiceAddedEvent(subdomain, description, muc.isHidden()), false);
+            CacheFactory.doSynchronousClusterTask(new ServiceAddedEvent(serviceID, subdomain, description, muc.isHidden()), false);
             CacheFactory.doSynchronousClusterTask(new ServiceRemovedEvent(oldSubdomain), false);
         }
     }
@@ -434,7 +440,7 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
     }
 
     /**
-     * Retrieves a MultiUserChatService instance specified by it's service ID.
+     * Retrieves a MultiUserChatService instance specified by its service ID.
      *
      * @param serviceID ID of the conference service you wish to query.
      * @return The MultiUserChatService instance associated with the id, or null if none found.
@@ -516,8 +522,13 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
      * @param subdomain Subdomain of service to get ID of.
      * @return ID number of MUC service, or null if none found.
      */
-    public Long getMultiUserChatServiceID(@Nonnull final String subdomain) {
-        return loadServiceID(subdomain);
+    public Long getMultiUserChatServiceID(@Nonnull final String subdomain)
+    {
+        final MultiUserChatService multiUserChatService = mucServices.get(subdomain);
+        if (multiUserChatService instanceof MultiUserChatServiceImpl service) {
+            return service.getServiceID();
+        }
+        return null;
     }
 
     /**
@@ -528,7 +539,11 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
      */
     @Nullable
     public String getMultiUserChatSubdomain(final long serviceID) {
-        return loadServiceSubdomain(serviceID);
+        return mucServices.values().stream()
+            .filter(mucService -> mucService instanceof MultiUserChatServiceImpl impl && impl.getServiceID() == serviceID)
+            .map(MultiUserChatService::getServiceName)
+            .findAny()
+            .orElse(null);
     }
 
     /**
@@ -547,10 +562,11 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
             pstmt = con.prepareStatement(LOAD_SERVICES);
             rs = pstmt.executeQuery();
             while (rs.next()) {
-                String subdomain = rs.getString(1);
-                String description = rs.getString(2);
-                Boolean isHidden = Boolean.valueOf(rs.getString(3));
-                final MultiUserChatServiceImpl muc = new MultiUserChatServiceImpl(subdomain, description, isHidden);
+                long serviceID = rs.getLong(1);
+                String subdomain = rs.getString(2);
+                String description = rs.getString(3);
+                Boolean isHidden = Boolean.valueOf(rs.getString(4));
+                final MultiUserChatServiceImpl muc = new MultiUserChatServiceImpl(serviceID, subdomain, description, isHidden);
 
                 Log.trace("... loaded '{}' MUC service from the database.", subdomain);
                 mucServices.put(subdomain, muc);
@@ -565,16 +581,19 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
     }
 
     /**
-     * Updates the in-memory representation of a previously loaded services from the database.
+     * Updates the in-memory representation of a previously loaded service from the database.
      *
      * This call will modify database-stored characteristics for a service previously loaded to memory on the local
-     * cluster node. An exception will be thrown if used for a service that's not in memory.
+     * cluster node. An exception will be thrown if used for a service not in memory.
      *
      * Note that this method will not cause MUCServiceProperties to be reloaded. It only operates on fields like the
      * service description.
      *
      * This method is primarily useful to cause a service to reload its state from the database after it was changed on
      * another cluster node.
+     *
+     * This method is <em>not used</em> to update the serviceID or subdomain of a service. If those changed, a removal
+     * and an addition instead of an update would be invoked.
      *
      * @param subdomain the domain of the service to refresh
      */
@@ -592,8 +611,8 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
             pstmt.setString(1, subdomain);
             rs = pstmt.executeQuery();
             if (rs.next()) {
-                String description = rs.getString(1);
-                Boolean isHidden = Boolean.valueOf(rs.getString(2));
+                String description = rs.getString(2);
+                Boolean isHidden = Boolean.valueOf(rs.getString(3));
                 ((MultiUserChatServiceImpl)mucServices.get(subdomain)).setDescription(description);
                 ((MultiUserChatServiceImpl)mucServices.get(subdomain)).setHidden(isHidden);
             }
@@ -611,78 +630,14 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
     }
 
     /**
-     * Gets a specific subdomain/service's ID number.
-     *
-     * @param subdomain Subdomain to retrieve ID for.
-     * @return ID number of service, or null if no such service was found
-     */
-    @Nullable
-    private Long loadServiceID(@Nonnull final String subdomain) {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        Long id = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(LOAD_SERVICE_ID);
-            pstmt.setString(1, subdomain);
-            rs = pstmt.executeQuery();
-            if (rs.next()) {
-                id = rs.getLong(1);
-            }
-            else {
-                throw new Exception("Unable to locate Service ID for subdomain "+subdomain);
-            }
-        }
-        catch (Exception e) {
-            Log.error("A database exception occurred while trying to load the ID for MUC service '{}' from the database.", subdomain, e);
-        }
-        finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
-        }
-        Log.trace("Loaded service ID for MUC service '{}'", subdomain);
-        return id;
-    }
-
-    /**
-     * Gets a specific subdomain by a service's ID number.
-     *
-     * @param serviceID ID to retrieve subdomain for.
-     * @return Subdomain of service, or null if no such service was found.
-     */
-    @Nullable
-    private String loadServiceSubdomain(final long serviceID) {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        String subdomain = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(LOAD_SUBDOMAIN);
-            pstmt.setLong(1, serviceID);
-            rs = pstmt.executeQuery();
-            if (rs.next()) {
-                subdomain = rs.getString(1);
-            }
-        }
-        catch (Exception e) {
-            Log.error("A database exception occurred while trying to load the subdomain for MUC service with database ID {} from the database.", serviceID, e);
-        }
-        finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
-        }
-        Log.trace("Loaded service name for service with ID {}", serviceID);
-        return subdomain;
-    }
-
-    /**
      * Inserts a new MUC service into the database.
      *
      * @param subdomain Subdomain of new service.
      * @param description Description of MUC service. Can be null for default description.
      * @param isHidden True if the service should be hidden from service listing.
+     * @return Database ID of the newly inserted service.
      */
-    private void insertService(@Nonnull final String subdomain, @Nullable final String description, final boolean isHidden) {
+    private long insertService(@Nonnull final String subdomain, @Nullable final String description, final boolean isHidden) {
         Connection con = null;
         PreparedStatement pstmt = null;
         final long serviceID = SequenceManager.nextID(JiveConstants.MUC_SERVICE);
@@ -707,6 +662,7 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
         finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
+        return serviceID;
     }
 
     /**

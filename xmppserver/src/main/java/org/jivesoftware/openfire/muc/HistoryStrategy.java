@@ -258,7 +258,7 @@ public class HistoryStrategy implements Externalizable {
         if (!MUC_HISTORY_CACHE.containsKey(roomJID)) {
             try {
                 final MUCRoom room = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatService(roomJID).getChatRoom(roomJID.getNode());
-                MUCPersistenceManager.loadHistory(room, getMaxNumber());
+                MUCPersistenceManager.loadHistory(room);
             } catch (Exception e) {
                 Log.error("Unable to load history for room {} from database.", roomJID, e);
             }

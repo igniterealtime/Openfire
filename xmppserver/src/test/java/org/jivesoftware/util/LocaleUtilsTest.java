@@ -15,9 +15,15 @@
  */
 package org.jivesoftware.util;
 
-import org.hamcrest.MatcherAssert;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Locale;
+
+import static java.util.Arrays.asList;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 public class LocaleUtilsTest {
@@ -27,6 +33,23 @@ public class LocaleUtilsTest {
 
         final String key = "if.this.key.exists.the.test.will.fail";
 
-        MatcherAssert.assertThat(LocaleUtils.getLocalizedString(key), is("???" + key + "???"));
+        assertThat(LocaleUtils.getLocalizedString(key), is("???" + key + "???"));
+    }
+
+    @Test
+    public void bestMatchingSupportedLocale() {
+        Enumeration<Locale> reqLocales = Collections.enumeration(asList(
+            new Locale("pt", "BR"),
+            new Locale("pt", "PT"),
+            new Locale("pt")
+            ));
+        String preferredLocale = LocaleUtils.bestMatchingSupportedLocale(reqLocales);
+        assertThat(preferredLocale, is("pt_BR"));
+
+        reqLocales = Collections.enumeration(asList(
+            new Locale("pt")
+        ));
+        preferredLocale = LocaleUtils.bestMatchingSupportedLocale(reqLocales);
+        assertThat(preferredLocale, is("pt_PT"));
     }
 }

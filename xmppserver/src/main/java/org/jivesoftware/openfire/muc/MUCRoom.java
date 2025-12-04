@@ -2093,7 +2093,6 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
                 // Do nothing
                 return Collections.emptyList();
             }
-            admins.add(targetUserAddressBare);
 
             // Remove the user from other affiliation lists
             final Affiliation oldAffiliation = getAffiliation(targetUserAddressBare);
@@ -2108,6 +2107,8 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
                     removeOutcast(targetUserAddressBare, actorAffiliation, null);  // No need to calculate actor role, as the 'owner' affiliation is guaranteed to be allowed to perform this action.
                     break;
             }
+            admins.add(targetUserAddressBare);
+
             // Update the DB if the room is persistent
             MUCPersistenceManager.saveAffiliationToDB(
                 this,

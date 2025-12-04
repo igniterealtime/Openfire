@@ -421,7 +421,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
                 return;
             }
             // Do nothing if the group is not being shown in users' rosters
-            if (!isSharedGroup(group)) {
+            if (!group.isShared()) {
                 return;
             }
             // Get all the affected users
@@ -488,9 +488,11 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
      *
      * @param group the group to check if it may be considered a shared group.
      * @return true if the specified Group may be included in a user roster.
+     * @deprecated Replaced by {@link Group#isShared()}
      */
+    @Deprecated(forRemoval = true, since = "5.0.3") // Remove in or after Openfire 5.2.0
     public static boolean isSharedGroup(Group group) {
-        return SharedGroupVisibility.everybody == group.getSharedWith() || SharedGroupVisibility.usersOfGroups == group.getSharedWith();
+        return group.isShared();
     }
 
     /**
@@ -511,7 +513,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         if (group.getAdmins().contains(addedUser)) {
             return;
         }
-        if (!isSharedGroup(group)) {
+        if (!group.isShared()) {
             for (Group visibleGroup : getVisibleGroups(group)) {
                 // Get the list of affected users
                 Collection<JID> users = new HashSet<>(visibleGroup.getMembers());
@@ -535,7 +537,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         if (group.getAdmins().contains(deletedUser)) {
             return;
         }
-        if (!isSharedGroup(group)) {
+        if (!group.isShared()) {
             for (Group visibleGroup : getVisibleGroups(group)) {
                 // Get the list of affected users
                 Collection<JID> users = new HashSet<>(visibleGroup.getMembers());
@@ -555,7 +557,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
         if (group.getMembers().contains(addedUser)) {
             return;
         }
-        if (!isSharedGroup(group)) {
+        if (!group.isShared()) {
             for (Group visibleGroup : getVisibleGroups(group)) {
                 // Get the list of affected users
                 Collection<JID> users = new HashSet<>(visibleGroup.getMembers());
@@ -576,7 +578,7 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
             return;
         }
         // Do nothing if the group is not being shown in group members' rosters
-        if (!isSharedGroup(group)) {
+        if (!group.isShared()) {
             for (Group visibleGroup : getVisibleGroups(group)) {
                 // Get the list of affected users
                 Collection<JID> users = new HashSet<>(visibleGroup.getMembers());

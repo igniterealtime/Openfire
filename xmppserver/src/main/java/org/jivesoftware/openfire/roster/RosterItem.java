@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.roster;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.jivesoftware.openfire.SharedGroupException;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
@@ -440,28 +441,54 @@ public class RosterItem implements Cacheable, Externalizable {
             }
 
             // Remove shared groups from the param
-            for (Iterator<String> it=groups.iterator(); it.hasNext();) {
-                String groupName = it.next();
-                try {
-                    Group group = GroupManager.getInstance().getGroup(groupName);
-                    if (RosterManager.isSharedGroup(group)) {
-                        it.remove();
-                    }
-                } catch (GroupNotFoundException e) {
-                    // Check now if there is a group whose display name matches the requested group
-                    Collection<Group> groupsWithProp = GroupManager
-                            .getInstance()
-                            .search(Group.SHARED_ROSTER_DISPLAY_NAME_PROPERTY_KEY, groupName);
-                    Iterator<Group> itr = groupsWithProp.iterator();
-                    while(itr.hasNext()) {
-                        Group group = itr.next();
-                        if (RosterManager.isSharedGroup(group)) {
-                            it.remove();
-                        }
-                    }
+            removeSharedGroups(groups);
+
+            this.groups = groups;
+        }
+    }
+
+    /**
+     * Removes any group names from the provided collection that represent
+     * shared groups, either directly by group name or through a matching
+     * shared-roster display name.
+     *
+     * @param groupNames a modifiable collection of group names
+     */
+    @VisibleForTesting
+    static void removeSharedGroups(Collection<String> groupNames)
+    {
+        final Iterator<String> it = groupNames.iterator();
+        while (it.hasNext())
+        {
+            final String groupName = it.next();
+
+            try {
+                // Attempt to load the group by its name
+                final Group group = GroupManager.getInstance().getGroup(groupName);
+                if (group.isShared()) {
+                    it.remove();
                 }
             }
-            this.groups = groups;
+            catch (GroupNotFoundException e)
+            {
+                // Fallback: check for groups whose display name matches the provided name
+                final Collection<Group> groupsWithProp = GroupManager
+                    .getInstance()
+                    .search(Group.SHARED_ROSTER_DISPLAY_NAME_PROPERTY_KEY, groupName);
+
+                boolean isShared = false;
+
+                for (final Group group : groupsWithProp) {
+                    if (group.isShared()) {
+                        isShared = true;
+                        break; // Prevent multiple remove() attempts (OF-3149)
+                    }
+                }
+
+                if (isShared) {
+                    it.remove();
+                }
+            }
         }
     }
 

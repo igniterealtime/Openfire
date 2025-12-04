@@ -860,12 +860,16 @@ public class MUCPersistenceManager {
      */
     public static void loadHistory(@Nonnull final MUCRoom room, final int maxNumber) throws SQLException
     {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
+        Log.debug("Loading room history for room '{}' (max: {})", room.getJID(), maxNumber == -1 ? "all" : maxNumber);
 
-        try {
-            if (room.isLogEnabled()) {
+        final List<Message> oldMessages = new LinkedList<>();
+        if (room.isLogEnabled() && maxNumber != 0)
+        {
+            Connection con = null;
+            PreparedStatement pstmt = null;
+            ResultSet rs = null;
+            try {
+                // Reload historic messages from the database.
                 con = DbConnectionManager.getConnection();
                 pstmt = con.prepareStatement(LOAD_HISTORY, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
@@ -895,7 +899,6 @@ public class MUCPersistenceManager {
                     Log.debug("Unable to skip to the last {} rows of the result set.", maxNumber, e);
                 }
 
-                final List<Message> oldMessages = new LinkedList<>();
                 while (rs.next()) {
                     String senderJID = rs.getString("sender");
                     String nickname = rs.getString("nickname");
@@ -905,22 +908,21 @@ public class MUCPersistenceManager {
                     String stanza = rs.getString("stanza");
                     oldMessages.add(room.getRoomHistory().parseHistoricMessage(senderJID, nickname, sentDate, subject, body, stanza));
                 }
-
-                if (!oldMessages.isEmpty()) {
-                    room.getRoomHistory().addOldMessages(oldMessages);
-                }
+            } finally {
+                DbConnectionManager.closeConnection(rs, pstmt, con);
             }
+        }
 
-            // If the room does not include the last subject in the history then recreate one if
-            // possible
-            if (!room.getRoomHistory().hasChangedSubject() && room.getSubject() != null &&
-                !room.getSubject().isEmpty()) {
-                final Message subject = room.getRoomHistory().parseHistoricMessage(room.getSelfRepresentation().getOccupantJID().toString(),
-                    null, room.getModificationDate(), room.getSubject(), null, null);
-                room.getRoomHistory().addOldMessages(subject);
-            }
-        } finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
+        room.getRoomHistory().purge();
+        if (!oldMessages.isEmpty()) {
+            room.getRoomHistory().addOldMessages(oldMessages);
+        }
+
+        // If the room does not include the last subject in the history, then recreate one if possible.
+        if (!room.getRoomHistory().hasChangedSubject() && room.getSubject() != null && !room.getSubject().isEmpty()) {
+            final Message subject = room.getRoomHistory().parseHistoricMessage(room.getSelfRepresentation().getOccupantJID().toString(),
+                null, room.getModificationDate(), room.getSubject(), null, null);
+            room.getRoomHistory().addOldMessages(subject);
         }
     }
 

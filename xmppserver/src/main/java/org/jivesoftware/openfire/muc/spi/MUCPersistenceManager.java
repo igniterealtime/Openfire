@@ -90,18 +90,6 @@ public class MUCPersistenceManager {
         "SELECT count(*) FROM ofMucRoom WHERE serviceID=?";
     private static final String LOAD_ALL_ROOM_NAMES =
         "SELECT name FROM ofMucRoom WHERE serviceID=?";
-    private static final String LOAD_ALL_AFFILIATIONS =
-        "SELECT ofMucAffiliation.roomID AS roomID, ofMucAffiliation.jid AS jid, ofMucAffiliation.affiliation AS affiliation " +
-        "FROM ofMucAffiliation,ofMucRoom WHERE ofMucAffiliation.roomID = ofMucRoom.roomID AND ofMucRoom.serviceID=?";
-    private static final String LOAD_ALL_MEMBERS =
-        "SELECT ofMucMember.roomID AS roomID, ofMucMember.jid AS jid, ofMucMember.nickname AS nickname FROM ofMucMember,ofMucRoom " +
-        "WHERE ofMucMember.roomID = ofMucRoom.roomID AND ofMucRoom.serviceID=?";
-    private static final String LOAD_ALL_HISTORY =
-        "SELECT ofMucConversationLog.roomID AS roomID, ofMucConversationLog.sender AS sender, ofMucConversationLog.nickname AS nickname, " +
-        "ofMucConversationLog.logTime AS logTime, ofMucConversationLog.subject AS subject, ofMucConversationLog.body AS body, ofMucConversationLog.stanza AS stanza FROM " +
-        "ofMucConversationLog, ofMucRoom WHERE ofMucConversationLog.roomID = ofMucRoom.roomID AND " +
-        "ofMucRoom.serviceID=? AND ofMucConversationLog.logTime>? AND (ofMucConversationLog.nickname IS NOT NULL " +
-        "OR ofMucConversationLog.subject IS NOT NULL) ORDER BY ofMucConversationLog.logTime";
     private static final String UPDATE_ROOM =
         "UPDATE ofMucRoom SET modificationDate=?, naturalName=?, description=?, " +
         "canChangeSubject=?, maxUsers=?, publicRoom=?, moderated=?, membersOnly=?, " +
@@ -680,8 +668,7 @@ public class MUCPersistenceManager {
     }
 
     /**
-     * Loads all the rooms that had occupants after a given date from the database. This query
-     * will be executed only when the service is starting up.
+     * Loads all the rooms that had occupants after a given date from the database.
      *
      * @param chatserver the chat server that will hold the loaded rooms.
      * @param cleanupDate rooms that hadn't been used after this date won't be loaded.
@@ -694,27 +681,16 @@ public class MUCPersistenceManager {
         final Map<Long, MUCRoom> rooms;
         try {
             rooms = loadRooms(serviceID, cleanupDate, chatserver);
-            loadHistory(serviceID, rooms);
-            loadAffiliations(serviceID, rooms);
-            loadMembers(serviceID, rooms);
         }
         catch (SQLException sqle) {
             Log.error("A database error prevented MUC rooms to be loaded from the database.", sqle);
             return Collections.emptyList();
         }
 
-        // Set now that the room's configuration is updated in the database. Note: We need to
-        // set this now since otherwise the room's affiliations will be saved to the database
-        // "again" while adding them to the room!
-        for (final MUCRoom room : rooms.values()) {
-            room.setSavedToDB(true);
-            if (room.getEmptyDate() == null) {
-                // The service process was killed somehow while the room was being used. Since
-                // the room won't have occupants at this time we need to set the best date when
-                // the last occupant left the room that we can
-                room.setEmptyDate(new Date());
-            }
+        for (MUCRoom room : rooms.values()) {
+            loadFromDB(room);
         }
+
         Log.debug( "Loaded {} rooms for chat service {}", rooms.size(), chatserver.getServiceName() );
         return rooms.values();
     }
@@ -921,165 +897,6 @@ public class MUCPersistenceManager {
             }
         } finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
-        }
-    }
-
-    private static void loadHistory(Long serviceID, Map<Long, MUCRoom> rooms) throws SQLException {
-        Connection connection = null;
-        PreparedStatement statement = null;
-        ResultSet resultSet = null;
-        try {
-            connection = DbConnectionManager.getConnection();
-            statement = connection.prepareStatement(LOAD_ALL_HISTORY);
-
-            // Reload the history, using "muc.history.reload.limit" (days) if present
-            long from = 0;
-            String reloadLimit = JiveGlobals.getProperty(MUC_HISTORY_RELOAD_LIMIT);
-            if (reloadLimit != null) {
-                // if the property is defined, but not numeric, default to 2 (days)
-                int reloadLimitDays = JiveGlobals.getIntProperty(MUC_HISTORY_RELOAD_LIMIT, 2);
-                Log.warn("MUC history reload limit set to " + reloadLimitDays + " days");
-                from = System.currentTimeMillis() - (BigInteger.valueOf(86400000).multiply(BigInteger.valueOf(reloadLimitDays))).longValue();
-            }
-            statement.setLong(1, serviceID);
-            statement.setString(2, StringUtils.dateToMillis(new Date(from)));
-            resultSet = statement.executeQuery();
-
-            while (resultSet.next()) {
-                try {
-                    MUCRoom room = rooms.get(resultSet.getLong("roomID"));
-                    // Skip to the next position if the room does not exist or if history is disabled
-                    if (room == null || !room.isLogEnabled()) {
-                        continue;
-                    }
-                    String senderJID = resultSet.getString("sender");
-                    String nickname  = resultSet.getString("nickname");
-                    Date sentDate    = new Date(Long.parseLong(resultSet.getString("logTime").trim()));
-                    String subject   = resultSet.getString("subject");
-                    String body      = resultSet.getString("body");
-                    String stanza    = resultSet.getString("stanza");
-                    final Message message = room.getRoomHistory().parseHistoricMessage(senderJID, nickname, sentDate, subject, body, stanza);
-                    room.getRoomHistory().addOldMessages(message);
-                } catch (SQLException e) {
-                    Log.warn("A database exception prevented the history for one particular MUC room to be loaded from the database.", e);
-                }
-            }
-        } finally {
-            DbConnectionManager.closeConnection(resultSet, statement, connection);
-        }
-
-        // Add the last known room subject to the room history only for those rooms that still
-        // don't have in their histories the last room subject
-        for (MUCRoom loadedRoom : rooms.values())
-        {
-            if (!loadedRoom.getRoomHistory().hasChangedSubject()
-                && loadedRoom.getSubject() != null
-                && !loadedRoom.getSubject().isEmpty())
-            {
-                final Message message = loadedRoom.getRoomHistory().parseHistoricMessage(
-                                                            loadedRoom.getSelfRepresentation().getOccupantJID().toString(),
-                                                            null,
-                                                            loadedRoom.getModificationDate(),
-                                                            loadedRoom.getSubject(),
-                                                            null,
-                                                            null);
-                loadedRoom.getRoomHistory().addOldMessages(message);
-            }
-        }
-    }
-
-    private static void loadAffiliations(Long serviceID, Map<Long, MUCRoom> rooms) throws SQLException {
-        Connection connection = null;
-        PreparedStatement statement = null;
-        ResultSet resultSet = null;
-        try {
-            connection = DbConnectionManager.getConnection();
-            statement = connection.prepareStatement(LOAD_ALL_AFFILIATIONS);
-            statement.setLong(1, serviceID);
-            resultSet = statement.executeQuery();
-
-            while (resultSet.next()) {
-                try {
-                    long roomID = resultSet.getLong("roomID");
-                    MUCRoom room = rooms.get(roomID);
-                    // Skip to the next position if the room does not exist
-                    if (room == null) {
-                        continue;
-                    }
-
-                    final Affiliation affiliation = Affiliation.valueOf(resultSet.getInt("affiliation"));
-
-                    final String jidValue = resultSet.getString("jid");
-                    final JID affiliationJID;
-                    try {
-                        // might be a group JID
-                        affiliationJID = GroupJID.fromString(jidValue);
-                    } catch (IllegalArgumentException ex) {
-                        Log.warn("An illegal JID ({}) was found in the database, "
-                                + "while trying to load all affiliations for room "
-                                + "{}. The JID is ignored."
-                                , new Object[] { jidValue, roomID });
-                        continue;
-                    }
-
-                    try {
-                        switch (affiliation) {
-                            case owner:
-                                room.addOwner(affiliationJID, room.getSelfRepresentation().getAffiliation());
-                                break;
-                            case admin:
-                                room.addAdmin(affiliationJID, room.getSelfRepresentation().getAffiliation());
-                                break;
-                            case outcast:
-                                room.addOutcast(affiliationJID, null, null, room.getSelfRepresentation().getAffiliation(), room.getSelfRepresentation().getRole());
-                                break;
-                            default:
-                                Log.error("Unknown affiliation value " + affiliation + " for user " + affiliationJID + " in persistent room " + room.getID());
-                        }
-                    } catch (ForbiddenException | ConflictException | NotAllowedException e) {
-                        Log.warn("An exception prevented affiliations to be added to the room with id " + roomID, e);
-                    }
-                } catch (SQLException e) {
-                    Log.error("A database exception prevented affiliations for one particular MUC room to be loaded from the database.", e);
-                }
-            }
-
-        } finally {
-            DbConnectionManager.closeConnection(resultSet, statement, connection);
-        }
-    }
-
-    private static void loadMembers(Long serviceID, Map<Long, MUCRoom> rooms) throws SQLException {
-        Connection connection = null;
-        PreparedStatement statement = null;
-        ResultSet resultSet = null;
-        JID affiliationJID = null;
-        try {
-            connection = DbConnectionManager.getConnection();
-            statement = connection.prepareStatement(LOAD_ALL_MEMBERS);
-            statement.setLong(1, serviceID);
-            resultSet = statement.executeQuery();
-
-            while (resultSet.next()) {
-                try {
-                    MUCRoom room = rooms.get(resultSet.getLong("roomID"));
-                    // Skip to the next position if the room does not exist
-                    if (room == null) {
-                        continue;
-                    }
-                    try {
-                        // might be a group JID
-                        affiliationJID = GroupJID.fromString(resultSet.getString("jid"));
-                        room.addMember(affiliationJID, resultSet.getString("nickname"), room.getSelfRepresentation().getAffiliation());
-                    } catch (ForbiddenException | ConflictException e) {
-                        Log.warn("Unable to add member to room.", e);
-                    }
-                } catch (SQLException e) {
-                    Log.error("A database exception prevented members for one particular MUC room to be loaded from the database.", e);
-                }
-            }
-        } finally {
-            DbConnectionManager.closeConnection(resultSet, statement, connection);
         }
     }
 

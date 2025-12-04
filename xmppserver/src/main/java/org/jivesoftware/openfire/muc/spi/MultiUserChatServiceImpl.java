@@ -91,6 +91,11 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     private static final Logger Log = LoggerFactory.getLogger(MultiUserChatServiceImpl.class);
 
     /**
+     * The database identifier for this service.
+     */
+    private final long serviceID;
+
+    /**
      * The time to elapse between clearing of idle chat users.
      */
     private Duration userIdleTaskInterval;
@@ -314,6 +319,8 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     /**
      * Create a new group chat server.
      *
+     * @param serviceID
+     *            The database identifier for this service.
      * @param subdomain
      *            Subdomain portion of the conference services (for example,
      *            conference for conference.example.org)
@@ -326,10 +333,11 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      *             if the provided subdomain is an invalid, according to the JID
      *             domain definition.
      */
-    public MultiUserChatServiceImpl(final String subdomain, final String description, final Boolean isHidden) {
-        // Check subdomain and throw an IllegalArgumentException if its invalid
+    public MultiUserChatServiceImpl(final long serviceID, final String subdomain, final String description, final Boolean isHidden) {
+        // Check subdomain and throw an IllegalArgumentException if it's invalid
         new JID(null,subdomain + "." + XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null);
 
+        this.serviceID = serviceID;
         this.chatServiceName = subdomain;
         if (description != null && !description.trim().isEmpty()) {
             this.chatDescription = description;
@@ -1593,6 +1601,16 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         enableService( false, false );
         ClusterManager.removeListener(this);
         MUCEventDispatcher.removeListener(occupantManager);
+    }
+
+    /**
+     * Returns the database ID of this service
+     *
+     * @return the database ID of this service.
+     */
+    public long getServiceID()
+    {
+        return serviceID;
     }
 
     @Override

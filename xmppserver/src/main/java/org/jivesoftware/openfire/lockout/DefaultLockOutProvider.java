@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,13 @@
  */
 package org.jivesoftware.openfire.lockout;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Types;
+import java.sql.*;
+import java.time.Instant;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.TimeZone;
 
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -70,16 +68,9 @@ public class DefaultLockOutProvider implements LockOutProvider {
             if (!rs.next()) {
                 return null;
             }
-            Date startTime = null;
-            if (rs.getString(2) != null) {
-                startTime = new Date(Long.parseLong(rs.getString(2).trim()));
-            }
-            Date endTime = null;
-            if (rs.getString(3) != null) {
-                endTime = new Date(Long.parseLong(rs.getString(3).trim()));
-            }
-
-            ret = new LockOutFlag(username, startTime, endTime);
+            Instant startTime = rs.getObject(2, Instant.class);
+            Instant endTime = rs.getObject(3, Instant.class);
+            ret = new LockOutFlag(username, startTime == null ? null : Date.from(startTime), endTime == null ? null : Date.from(endTime));
         }
         catch (Exception e) {
             Log.error("Error loading lockout information from DB", e);
@@ -117,16 +108,16 @@ public class DefaultLockOutProvider implements LockOutProvider {
             pstmt = con.prepareStatement(ADD_FLAG);
             pstmt.setString(1, flag.getUsername());
             if (flag.getStartTime() != null) {
-                pstmt.setString(2, StringUtils.dateToMillis(flag.getStartTime()));
+                pstmt.setObject(2, flag.getStartTime().toInstant());
             }
             else {
-                pstmt.setNull(2, Types.VARCHAR);
+                pstmt.setNull(2, Types.TIMESTAMP_WITH_TIMEZONE);
             }
             if (flag.getEndTime() != null) {
-                pstmt.setString(3, StringUtils.dateToMillis(flag.getEndTime()));
+                pstmt.setObject(3, flag.getEndTime().toInstant());
             }
             else {
-                pstmt.setNull(3, Types.VARCHAR);
+                pstmt.setNull(3, Types.TIMESTAMP_WITH_TIMEZONE);
             }
             pstmt.executeUpdate();
         }

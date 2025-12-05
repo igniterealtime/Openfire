@@ -30,6 +30,7 @@ import org.xmpp.packet.Message;
 import javax.annotation.Nonnull;
 import java.math.BigInteger;
 import java.sql.*;
+import java.time.Instant;
 import java.util.Date;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -242,13 +243,13 @@ public class MUCPersistenceManager {
                 throw new IllegalArgumentException("Room " + room.getName() + " was not found in the database.");
             }
             room.setID(rs.getLong("roomID"));
-            room.setCreationDate(new Date(Long.parseLong(rs.getString("creationDate").trim())));
-            room.setModificationDate(new Date(Long.parseLong(rs.getString("modificationDate").trim())));
+            room.setCreationDate(Date.from(rs.getObject("creationDate", Instant.class)));
+            room.setModificationDate(Date.from(rs.getObject("modificationDate", Instant.class)));
             room.setNaturalLanguageName(rs.getString("naturalName"));
             room.setDescription(rs.getString("description"));
-            room.setLockedDate(new Date(Long.parseLong(rs.getString("lockedDate").trim())));
-            if (rs.getString("emptyDate") != null) {
-                room.setEmptyDate(new Date(Long.parseLong(rs.getString("emptyDate").trim())));
+            room.setLockedDate(Date.from(rs.getObject("lockedDate", Instant.class)));
+            if (rs.getObject("emptyDate", Instant.class) != null) {
+                room.setEmptyDate(Date.from(rs.getObject("emptyDate", Instant.class)));
             }
             else {
                 room.setEmptyDate(null);
@@ -398,7 +399,7 @@ public class MUCPersistenceManager {
             con = DbConnectionManager.getConnection();
             if (room.wasSavedToDB()) {
                 pstmt = con.prepareStatement(UPDATE_ROOM);
-                pstmt.setString(1, StringUtils.dateToMillis(room.getModificationDate()));
+                pstmt.setObject(1, room.getModificationDate().toInstant());
                 pstmt.setString(2, room.getNaturalLanguageName());
                 pstmt.setString(3, room.getDescription());
                 pstmt.setInt(4, (room.canOccupantsChangeSubject() ? 1 : 0));
@@ -450,18 +451,18 @@ public class MUCPersistenceManager {
                 pstmt = con.prepareStatement(ADD_ROOM);
                 pstmt.setLong(1, XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(room.getMUCService().getServiceName()));
                 pstmt.setLong(2, room.getID());
-                pstmt.setString(3, StringUtils.dateToMillis(room.getCreationDate()));
-                pstmt.setString(4, StringUtils.dateToMillis(room.getModificationDate()));
+                pstmt.setObject(3, room.getCreationDate().toInstant());
+                pstmt.setObject(4, room.getModificationDate().toInstant());
                 pstmt.setString(5, room.getName());
                 pstmt.setString(6, room.getNaturalLanguageName());
                 pstmt.setString(7, room.getDescription());
-                pstmt.setString(8, StringUtils.dateToMillis(room.getLockedDate()));
+                pstmt.setObject(8, room.getLockedDate().toInstant());
                 Date emptyDate = room.getEmptyDate();
                 if (emptyDate == null) {
-                    pstmt.setString(9, null);
+                    pstmt.setObject(9, null);
                 }
                 else {
-                    pstmt.setString(9, StringUtils.dateToMillis(emptyDate));
+                    pstmt.setObject(9, emptyDate.toInstant());
                 }
                 pstmt.setInt(10, (room.canOccupantsChangeSubject() ? 1 : 0));
                 pstmt.setInt(11, room.getMaxUsers());
@@ -731,7 +732,7 @@ public class MUCPersistenceManager {
             {
                 statement = connection.prepareStatement(RELOAD_ALL_ROOMS_WITH_RECENT_ACTIVITY);
                 statement.setLong(1, serviceID);
-                statement.setString(2, StringUtils.dateToMillis(cleanupDate));
+                statement.setObject(2, cleanupDate.toInstant());
             }
             else
             {
@@ -744,13 +745,13 @@ public class MUCPersistenceManager {
                 try {
                     MUCRoom room = new MUCRoom(chatserver, resultSet.getString("name"));
                     room.setID(resultSet.getLong("roomID"));
-                    room.setCreationDate(new Date(Long.parseLong(resultSet.getString("creationDate").trim())));
-                    room.setModificationDate(new Date(Long.parseLong(resultSet.getString("modificationDate").trim())));
+                    room.setCreationDate(Date.from(resultSet.getObject("creationDate", Instant.class)));
+                    room.setModificationDate(Date.from(resultSet.getObject("modificationDate", Instant.class)));
                     room.setNaturalLanguageName(resultSet.getString("naturalName"));
                     room.setDescription(resultSet.getString("description"));
-                    room.setLockedDate(new Date(Long.parseLong(resultSet.getString("lockedDate").trim())));
-                    if (resultSet.getString("emptyDate") != null) {
-                        room.setEmptyDate(new Date(Long.parseLong(resultSet.getString("emptyDate").trim())));
+                    room.setLockedDate(Date.from(resultSet.getObject("lockedDate", Instant.class)));
+                    if (resultSet.getObject("emptyDate", Instant.class) != null) {
+                        room.setEmptyDate(Date.from(resultSet.getObject("emptyDate", Instant.class)));
                     }
                     else {
                         room.setEmptyDate(null);
@@ -879,7 +880,7 @@ public class MUCPersistenceManager {
                     from = System.currentTimeMillis() - (BigInteger.valueOf(86400000).multiply(BigInteger.valueOf(reloadLimitDays))).longValue();
                 }
 
-                pstmt.setString(1, StringUtils.dateToMillis(new Date(from)));
+                pstmt.setObject(1, Instant.ofEpochMilli(from));
                 pstmt.setLong(2, room.getID());
                 rs = pstmt.executeQuery();
 
@@ -899,11 +900,11 @@ public class MUCPersistenceManager {
                 while (rs.next()) {
                     String senderJID = rs.getString("sender");
                     String nickname = rs.getString("nickname");
-                    Date sentDate = new Date(Long.parseLong(rs.getString("logTime").trim()));
+                    Instant sentDate = rs.getObject("logTime", Instant.class);
                     String subject = rs.getString("subject");
                     String body = rs.getString("body");
                     String stanza = rs.getString("stanza");
-                    oldMessages.add(room.getRoomHistory().parseHistoricMessage(senderJID, nickname, sentDate, subject, body, stanza));
+                    oldMessages.add(room.getRoomHistory().parseHistoricMessage(senderJID, nickname, Date.from(sentDate), subject, body, stanza));
                 }
 
                 if (!oldMessages.isEmpty()) {
@@ -942,7 +943,7 @@ public class MUCPersistenceManager {
                 from = System.currentTimeMillis() - (BigInteger.valueOf(86400000).multiply(BigInteger.valueOf(reloadLimitDays))).longValue();
             }
             statement.setLong(1, serviceID);
-            statement.setString(2, StringUtils.dateToMillis(new Date(from)));
+            statement.setObject(2, Instant.ofEpochMilli(from));
             resultSet = statement.executeQuery();
 
             while (resultSet.next()) {
@@ -954,11 +955,11 @@ public class MUCPersistenceManager {
                     }
                     String senderJID = resultSet.getString("sender");
                     String nickname  = resultSet.getString("nickname");
-                    Date sentDate    = new Date(Long.parseLong(resultSet.getString("logTime").trim()));
+                    Instant sentDate    = resultSet.getObject("logTime", Instant.class);
                     String subject   = resultSet.getString("subject");
                     String body      = resultSet.getString("body");
                     String stanza    = resultSet.getString("stanza");
-                    final Message message = room.getRoomHistory().parseHistoricMessage(senderJID, nickname, sentDate, subject, body, stanza);
+                    final Message message = room.getRoomHistory().parseHistoricMessage(senderJID, nickname, Date.from(sentDate), subject, body, stanza);
                     room.getRoomHistory().addOldMessages(message);
                 } catch (SQLException e) {
                     Log.warn("A database exception prevented the history for one particular MUC room to be loaded from the database.", e);
@@ -1125,7 +1126,7 @@ public class MUCPersistenceManager {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_LOCK);
-            pstmt.setString(1, StringUtils.dateToMillis(room.getLockedDate()));
+            pstmt.setObject(1, room.getLockedDate().toInstant());
             pstmt.setLong(2, room.getID());
             pstmt.executeUpdate();
         }
@@ -1154,10 +1155,10 @@ public class MUCPersistenceManager {
             pstmt = con.prepareStatement(UPDATE_EMPTYDATE);
             Date emptyDate = room.getEmptyDate();
             if (emptyDate == null) {
-                pstmt.setString(1, null);
+                pstmt.setObject(1, null);
             }
             else {
-                pstmt.setString(1, StringUtils.dateToMillis(emptyDate));
+                pstmt.setObject(1, emptyDate.toInstant());
             }
             pstmt.setLong(2, room.getID());
             pstmt.executeUpdate();
@@ -1428,7 +1429,7 @@ public class MUCPersistenceManager {
                 pstmt.setLong(2, entry.getMessageID());
                 pstmt.setString(3, entry.getSender().toString());
                 pstmt.setString(4, entry.getNickname());
-                pstmt.setString(5, StringUtils.dateToMillis(entry.getDate()));
+                pstmt.setObject(5, entry.getDate().toInstant());
                 pstmt.setString(6, entry.getSubject());
                 pstmt.setString(7, entry.getBody());
                 pstmt.setString(8, entry.getStanza());

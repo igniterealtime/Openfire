@@ -187,10 +187,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
                 }
 
                 // Include available SASL Mechanisms
-                final Element saslMechanisms = SASLAuthentication.getSASLMechanisms(session);
-                if (saslMechanisms != null) {
-                    features.add(saslMechanisms);
-                }
+                SASLAuthentication.addSASLMechanisms(features, session);
 
                 if (ServerDialback.isEnabled()) {
                     // Also offer server dialback (when TLS is not required). Server dialback may be offered

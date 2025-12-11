@@ -45,6 +45,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -720,6 +721,7 @@ public class MUCPersistenceManager {
      */
     public static Collection<MUCRoom> loadRoomsFromDB(MultiUserChatService chatserver, Date cleanupDate) {
         final int workers = ROOM_LOADING_WORKERS.getValue();
+        final long startTime = System.currentTimeMillis();
         Log.info( "Loading rooms for chat service {} using {} worker(s)", chatserver.getServiceName(), workers );
         Long serviceID = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(chatserver.getServiceName());
 
@@ -742,9 +744,17 @@ public class MUCPersistenceManager {
             final ThreadFactory threadFactory = new NamedThreadFactory(
                 "MUC-RoomLoad-", Executors.defaultThreadFactory(), false, Thread.NORM_PRIORITY);
             final ExecutorService executor = Executors.newFixedThreadPool(workers, threadFactory);
+            final AtomicInteger failedCount = new AtomicInteger(0);
 
             for (MUCRoom room : rooms.values()) {
-                executor.submit(() -> loadFromDB(room));
+                executor.submit(() -> {
+                    try {
+                        loadFromDB(room);
+                    } catch (Exception e) {
+                        Log.error("Failed to load room '{}' from database.", room.getName(), e);
+                        failedCount.incrementAndGet();
+                    }
+                });
             }
 
             executor.shutdown();
@@ -756,9 +766,15 @@ public class MUCPersistenceManager {
                     chatserver.getServiceName(), e);
                 Thread.currentThread().interrupt();
             }
+
+            if (failedCount.get() > 0) {
+                Log.warn("Failed to load {} room(s) for chat service {}. See previous error messages for details.",
+                    failedCount.get(), chatserver.getServiceName());
+            }
         }
 
-        Log.info( "Loaded {} rooms for chat service {}", rooms.size(), chatserver.getServiceName() );
+        final long elapsedTime = System.currentTimeMillis() - startTime;
+        Log.info( "Loaded {} rooms for chat service {} in {} ms", rooms.size(), chatserver.getServiceName(), elapsedTime );
         return rooms.values();
     }
 

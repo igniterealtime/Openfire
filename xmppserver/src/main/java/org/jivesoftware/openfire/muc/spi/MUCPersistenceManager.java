@@ -39,6 +39,7 @@ import java.math.BigInteger;
 import java.sql.*;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -83,6 +84,18 @@ public class MUCPersistenceManager {
         .setDefaultValue(1)
         .setMinValue(1)
         .setMaxValue(5)
+        .build();
+
+    /**
+     * Defines the maximum duration to wait for loading MUC rooms from the database at service startup.
+     * If the loading process exceeds this timeout, it will be aborted. A value of zero (the default)
+     * indicates that no timeout is configured, and the process may run indefinitely.
+     */
+    public static final SystemProperty<Duration> ROOM_LOADING_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.muc.loading.timeout")
+        .setDynamic(false)
+        .setChronoUnit(ChronoUnit.MILLIS)
+        .setDefaultValue(Duration.ZERO)
         .build();
 
     private static final String GET_RESERVED_NAME =
@@ -760,8 +773,11 @@ public class MUCPersistenceManager {
 
             executor.shutdown();
             try {
-                // Wait indefinitely for completion, matching sequential behaviour
-                executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+                final Duration timeout = ROOM_LOADING_TIMEOUT.getValue();
+                final boolean terminationSuccessful = executor.awaitTermination(timeout.isZero() ? Long.MAX_VALUE : timeout.toMillis(), TimeUnit.MILLISECONDS);
+                if (!terminationSuccessful) {
+                    Log.warn("Room loading timed out after {}.", timeout);
+                }
             } catch (InterruptedException e) {
                 Log.warn("Interrupted while waiting for MUC room loading to complete for service {}.",
                     chatserver.getServiceName(), e);

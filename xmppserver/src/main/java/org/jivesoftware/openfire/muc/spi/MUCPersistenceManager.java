@@ -734,7 +734,7 @@ public class MUCPersistenceManager {
      * @return a collection with all the persistent rooms.
      */
     public static Collection<MUCRoom> loadRoomsFromDB(MultiUserChatService chatserver, Date cleanupDate) {
-        final int workers = ROOM_LOADING_WORKERS.getValue();
+        final int workers = ROOM_LOADING_WORKERS.getValue() < 1 ? 1 : ROOM_LOADING_WORKERS.getValue();
         final Instant startTime = Instant.now();
         Log.info( "Loading rooms for chat service {} using {} worker(s)", chatserver.getServiceName(), workers );
         Long serviceID = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(chatserver.getServiceName());
@@ -748,46 +748,39 @@ public class MUCPersistenceManager {
             return Collections.emptyList();
         }
 
-        if (workers <= 1) {
-            // Sequential loading
-            for (MUCRoom room : rooms.values()) {
-                loadFromDB(room);
-            }
-        } else {
-            // Parallel loading with configured number of workers
-            final ThreadFactory threadFactory = new NamedThreadFactory(
-                "MUC-RoomLoad-", Executors.defaultThreadFactory(), false, Thread.NORM_PRIORITY);
-            final ExecutorService executor = Executors.newFixedThreadPool(workers, threadFactory);
-            final AtomicInteger failedCount = new AtomicInteger(0);
+        // Parallel loading with configured number of workers
+        final ThreadFactory threadFactory = new NamedThreadFactory(
+            "MUC-RoomLoad-", Executors.defaultThreadFactory(), false, Thread.NORM_PRIORITY);
+        final ExecutorService executor = Executors.newFixedThreadPool(workers, threadFactory);
+        final AtomicInteger failedCount = new AtomicInteger(0);
 
-            for (MUCRoom room : rooms.values()) {
-                executor.submit(() -> {
-                    try {
-                        loadFromDB(room);
-                    } catch (Exception e) {
-                        Log.error("Failed to load room '{}' from database.", room.getName(), e);
-                        failedCount.incrementAndGet();
-                    }
-                });
-            }
-
-            executor.shutdown();
-            try {
-                final Duration timeout = ROOM_LOADING_TIMEOUT.getValue();
-                final boolean terminationSuccessful = executor.awaitTermination(timeout.isZero() ? Long.MAX_VALUE : timeout.toMillis(), TimeUnit.MILLISECONDS);
-                if (!terminationSuccessful) {
-                    Log.warn("Room loading timed out after {}.", timeout);
+        for (MUCRoom room : rooms.values()) {
+            executor.submit(() -> {
+                try {
+                    loadFromDB(room);
+                } catch (Exception e) {
+                    Log.error("Failed to load room '{}' from database.", room.getName(), e);
+                    failedCount.incrementAndGet();
                 }
-            } catch (InterruptedException e) {
-                Log.warn("Interrupted while waiting for MUC room loading to complete for service {}.",
-                    chatserver.getServiceName(), e);
-                Thread.currentThread().interrupt();
-            }
+            });
+        }
 
-            if (failedCount.get() > 0) {
-                Log.warn("Failed to load {} room(s) for chat service {}. See previous error messages for details.",
-                    failedCount.get(), chatserver.getServiceName());
+        executor.shutdown();
+        try {
+            final Duration timeout = ROOM_LOADING_TIMEOUT.getValue();
+            final boolean terminationSuccessful = executor.awaitTermination(timeout.isZero() ? Long.MAX_VALUE : timeout.toMillis(), TimeUnit.MILLISECONDS);
+            if (!terminationSuccessful) {
+                Log.warn("Room loading timed out after {}.", timeout);
             }
+        } catch (InterruptedException e) {
+            Log.warn("Interrupted while waiting for MUC room loading to complete for service {}.",
+                chatserver.getServiceName(), e);
+            Thread.currentThread().interrupt();
+        }
+
+        if (failedCount.get() > 0) {
+            Log.warn("Failed to load {} room(s) for chat service {}. See previous error messages for details.",
+                failedCount.get(), chatserver.getServiceName());
         }
 
         final Duration elapsedTime = Duration.between(startTime, Instant.now());

@@ -23,6 +23,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.NamedThreadFactory;
 import org.jivesoftware.util.SAXReaderUtil;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.SystemProperty;
@@ -40,6 +41,10 @@ import java.time.Instant;
 import java.util.Date;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -715,7 +720,7 @@ public class MUCPersistenceManager {
      */
     public static Collection<MUCRoom> loadRoomsFromDB(MultiUserChatService chatserver, Date cleanupDate) {
         final int workers = ROOM_LOADING_WORKERS.getValue();
-        Log.debug( "Loading rooms for chat service {} using {} worker(s)", chatserver.getServiceName(), workers );
+        Log.info( "Loading rooms for chat service {} using {} worker(s)", chatserver.getServiceName(), workers );
         Long serviceID = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(chatserver.getServiceName());
 
         final Map<Long, MUCRoom> rooms;
@@ -727,11 +732,33 @@ public class MUCPersistenceManager {
             return Collections.emptyList();
         }
 
-        for (MUCRoom room : rooms.values()) {
-            loadFromDB(room);
+        if (workers <= 1) {
+            // Sequential loading
+            for (MUCRoom room : rooms.values()) {
+                loadFromDB(room);
+            }
+        } else {
+            // Parallel loading with configured number of workers
+            final ThreadFactory threadFactory = new NamedThreadFactory(
+                "MUC-RoomLoad-", Executors.defaultThreadFactory(), false, Thread.NORM_PRIORITY);
+            final ExecutorService executor = Executors.newFixedThreadPool(workers, threadFactory);
+
+            for (MUCRoom room : rooms.values()) {
+                executor.submit(() -> loadFromDB(room));
+            }
+
+            executor.shutdown();
+            try {
+                // Wait indefinitely for completion, matching sequential behaviour
+                executor.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
+            } catch (InterruptedException e) {
+                Log.warn("Interrupted while waiting for MUC room loading to complete for service {}.",
+                    chatserver.getServiceName(), e);
+                Thread.currentThread().interrupt();
+            }
         }
 
-        Log.debug( "Loaded {} rooms for chat service {}", rooms.size(), chatserver.getServiceName() );
+        Log.info( "Loaded {} rooms for chat service {}", rooms.size(), chatserver.getServiceName() );
         return rooms.values();
     }
 

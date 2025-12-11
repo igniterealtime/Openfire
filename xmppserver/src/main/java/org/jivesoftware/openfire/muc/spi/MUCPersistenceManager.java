@@ -42,12 +42,9 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -96,6 +93,15 @@ public class MUCPersistenceManager {
         .setDynamic(false)
         .setChronoUnit(ChronoUnit.MILLIS)
         .setDefaultValue(Duration.ZERO)
+        .build();
+
+    /**
+     * If true, room loading aborts on the first failure (fail-fast); if false, all rooms are attempted (resilient).
+     */
+    public static final SystemProperty<Boolean> ROOM_LOADING_FAILFAST = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.muc.loading.failfast")
+        .setDynamic(false)
+        .setDefaultValue(true)
         .build();
 
     private static final String GET_RESERVED_NAME =
@@ -753,14 +759,22 @@ public class MUCPersistenceManager {
             "MUC-RoomLoad-", Executors.defaultThreadFactory(), false, Thread.NORM_PRIORITY);
         final ExecutorService executor = Executors.newFixedThreadPool(workers, threadFactory);
         final AtomicInteger failedCount = new AtomicInteger(0);
+        final AtomicReference<Exception> firstFailure = new AtomicReference<>();
+        final boolean failFast = ROOM_LOADING_FAILFAST.getValue();
 
         for (MUCRoom room : rooms.values()) {
             executor.submit(() -> {
+                // Skip loading if fail-fast and a failure has already occurred
+                if (failFast && failedCount.get() > 0) {
+                    return;
+                }
+
                 try {
                     loadFromDB(room);
                 } catch (Exception e) {
                     Log.error("Failed to load room '{}' from database.", room.getName(), e);
                     failedCount.incrementAndGet();
+                    firstFailure.compareAndSet(null, e);
                 }
             });
         }
@@ -779,6 +793,9 @@ public class MUCPersistenceManager {
         }
 
         if (failedCount.get() > 0) {
+            if (failFast) {
+                throw new RuntimeException("Failed to load a room for chat service " + chatserver.getServiceName(), firstFailure.get());
+            }
             Log.warn("Failed to load {} room(s) for chat service {}. See previous error messages for details.",
                 failedCount.get(), chatserver.getServiceName());
         }

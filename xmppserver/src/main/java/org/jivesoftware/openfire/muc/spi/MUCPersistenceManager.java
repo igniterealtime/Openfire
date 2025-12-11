@@ -25,6 +25,7 @@ import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SAXReaderUtil;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,6 +62,21 @@ public class MUCPersistenceManager {
     
     // property name for optional number of days to limit persistent MUC history during reload (OF-764)
     private static final String MUC_HISTORY_RELOAD_LIMIT = "xmpp.muc.history.reload.limit";
+
+    /**
+     * Controls the number of parallel workers used when loading MUC rooms from the database at
+     * service startup. A value of 1 (the default) loads rooms sequentially. Values 2-5 enable
+     * parallel loading which can improve startup time for services with many rooms, but increases
+     * database load. Consider your database's connection pool size and capacity before increasing
+     * this value.
+     */
+    public static final SystemProperty<Integer> ROOM_LOADING_WORKERS = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.muc.loading.workers")
+        .setDynamic(false)
+        .setDefaultValue(1)
+        .setMinValue(1)
+        .setMaxValue(5)
+        .build();
 
     private static final String GET_RESERVED_NAME =
         "SELECT nickname FROM ofMucMember WHERE roomID=? AND jid=?";
@@ -698,7 +714,8 @@ public class MUCPersistenceManager {
      * @return a collection with all the persistent rooms.
      */
     public static Collection<MUCRoom> loadRoomsFromDB(MultiUserChatService chatserver, Date cleanupDate) {
-        Log.debug( "Loading rooms for chat service {}", chatserver.getServiceName() );
+        final int workers = ROOM_LOADING_WORKERS.getValue();
+        Log.debug( "Loading rooms for chat service {} using {} worker(s)", chatserver.getServiceName(), workers );
         Long serviceID = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(chatserver.getServiceName());
 
         final Map<Long, MUCRoom> rooms;

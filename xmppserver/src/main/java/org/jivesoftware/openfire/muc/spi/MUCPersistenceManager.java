@@ -16,20 +16,26 @@
 
 package org.jivesoftware.openfire.muc.spi;
 
+import com.google.common.annotations.VisibleForTesting;
+import org.dom4j.Element;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SAXReaderUtil;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.sql.*;
+import java.time.Instant;
 import java.util.Date;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -90,23 +96,11 @@ public class MUCPersistenceManager {
         "SELECT count(*) FROM ofMucRoom WHERE serviceID=?";
     private static final String LOAD_ALL_ROOM_NAMES =
         "SELECT name FROM ofMucRoom WHERE serviceID=?";
-    private static final String LOAD_ALL_AFFILIATIONS =
-        "SELECT ofMucAffiliation.roomID AS roomID, ofMucAffiliation.jid AS jid, ofMucAffiliation.affiliation AS affiliation " +
-        "FROM ofMucAffiliation,ofMucRoom WHERE ofMucAffiliation.roomID = ofMucRoom.roomID AND ofMucRoom.serviceID=?";
-    private static final String LOAD_ALL_MEMBERS =
-        "SELECT ofMucMember.roomID AS roomID, ofMucMember.jid AS jid, ofMucMember.nickname AS nickname FROM ofMucMember,ofMucRoom " +
-        "WHERE ofMucMember.roomID = ofMucRoom.roomID AND ofMucRoom.serviceID=?";
-    private static final String LOAD_ALL_HISTORY =
-        "SELECT ofMucConversationLog.roomID AS roomID, ofMucConversationLog.sender AS sender, ofMucConversationLog.nickname AS nickname, " +
-        "ofMucConversationLog.logTime AS logTime, ofMucConversationLog.subject AS subject, ofMucConversationLog.body AS body, ofMucConversationLog.stanza AS stanza FROM " +
-        "ofMucConversationLog, ofMucRoom WHERE ofMucConversationLog.roomID = ofMucRoom.roomID AND " +
-        "ofMucRoom.serviceID=? AND ofMucConversationLog.logTime>? AND (ofMucConversationLog.nickname IS NOT NULL " +
-        "OR ofMucConversationLog.subject IS NOT NULL) ORDER BY ofMucConversationLog.logTime";
     private static final String UPDATE_ROOM =
         "UPDATE ofMucRoom SET modificationDate=?, naturalName=?, description=?, " +
         "canChangeSubject=?, maxUsers=?, publicRoom=?, moderated=?, membersOnly=?, " +
         "canInvite=?, roomPassword=?, canDiscoverJID=?, logEnabled=?, retireOnDeletion=?, preserveHistOnDel=?, " +
-        "rolesToBroadcast=?, useReservedNick=?, canChangeNick=?, canRegister=?, allowpm=?, fmucEnabled=?, " +
+        "subject=?, rolesToBroadcast=?, useReservedNick=?, canChangeNick=?, canRegister=?, allowpm=?, fmucEnabled=?, " +
         "fmucOutboundNode=?, fmucOutboundMode=?, fmucInboundNodes=? " +
         "WHERE roomID=?";
     private static final String ADD_ROOM = 
@@ -268,7 +262,24 @@ public class MUCPersistenceManager {
             room.setLogEnabled(rs.getInt("logEnabled") == 1);
             room.setRetireOnDeletion(rs.getInt("retireOnDeletion") == 1);
             room.setPreserveHistOnRoomDeletionEnabled(rs.getInt("preserveHistOnDel") == 1);
-            room.setSubject(rs.getString("subject"));
+            try {
+                final String subjectRaw = rs.getString("subject");
+                if (subjectRaw != null) {
+                    final Message subjectStanza;
+                    if (subjectRaw.trim().startsWith("<message ")) {
+                        // Expected: the database contains a stanza
+                        final Element subjectEl = SAXReaderUtil.readRootElement(subjectRaw);
+                        subjectStanza = new Message(subjectEl);
+                    } else {
+                        // Fallback: as a result of the migration for OF-3131, the database _may_ contain plain text.
+                        Log.debug("Plain text (instead of stanza) subject found in database for room '{}'", room.getJID());
+                        subjectStanza = constructRoomSubjectMessage(room.getJID(), subjectRaw, null, null);
+                    }
+                    room.initializeSubject(subjectStanza);
+                }
+            } catch (Throwable t) {
+                Log.warn("Unable to parse data as a subject-changing stanza for room '{}'", room.getJID(), t);
+            }
             List<Role> rolesToBroadcast = new ArrayList<>();
             String roles = StringUtils.zeroPadString(Integer.toBinaryString(rs.getInt("rolesToBroadcast")), 3);
             if (roles.charAt(0) == '1') {
@@ -322,9 +333,8 @@ public class MUCPersistenceManager {
             room.setPersistent(true);
             DbConnectionManager.fastcloseStmt(rs, pstmt);
 
-            // Recreate the history only for the rooms that have the conversation logging
-            // enabled
-            loadHistory(room, room.getRoomHistory().getMaxMessages());
+            // Recreate the history only for the rooms that have the conversation logging enabled
+            loadHistory(room);
 
             pstmt = con.prepareStatement(LOAD_AFFILIATIONS);
             pstmt.setLong(1, room.getID());
@@ -412,38 +422,39 @@ public class MUCPersistenceManager {
                 pstmt.setInt(12, (room.isLogEnabled() ? 1 : 0));
                 pstmt.setInt(13, (room.isRetireOnDeletion() ? 1 : 0));
                 pstmt.setInt(14, (room.isPreserveHistOnRoomDeletionEnabled() ? 1 : 0));
-                pstmt.setInt(15, marshallRolesToBroadcast(room));
-                pstmt.setInt(16, (room.isLoginRestrictedToNickname() ? 1 : 0));
-                pstmt.setInt(17, (room.canChangeNickname() ? 1 : 0));
-                pstmt.setInt(18, (room.isRegistrationEnabled() ? 1 : 0));
+                pstmt.setString(15, room.getSubject());
+                pstmt.setInt(16, marshallRolesToBroadcast(room));
+                pstmt.setInt(17, (room.isLoginRestrictedToNickname() ? 1 : 0));
+                pstmt.setInt(18, (room.canChangeNickname() ? 1 : 0));
+                pstmt.setInt(19, (room.isRegistrationEnabled() ? 1 : 0));
                 switch (room.canSendPrivateMessage())
                 {
                     default:
-                    case "anyone":       pstmt.setInt(19, 0); break;
-                    case "participants": pstmt.setInt(19, 1); break;
-                    case "moderators":   pstmt.setInt(19, 2); break;
-                    case "none":         pstmt.setInt(19, 3); break;
+                    case "anyone":       pstmt.setInt(20, 0); break;
+                    case "participants": pstmt.setInt(20, 1); break;
+                    case "moderators":   pstmt.setInt(20, 2); break;
+                    case "none":         pstmt.setInt(20, 3); break;
                 }
-                pstmt.setInt(20, (room.isFmucEnabled() ? 1 : 0 ));
+                pstmt.setInt(21, (room.isFmucEnabled() ? 1 : 0 ));
                 if ( room.getFmucOutboundNode() == null ) {
-                    pstmt.setNull(21, Types.VARCHAR);
+                    pstmt.setNull(22, Types.VARCHAR);
                 } else {
-                    pstmt.setString(21, room.getFmucOutboundNode().toString());
+                    pstmt.setString(22, room.getFmucOutboundNode().toString());
                 }
                 if ( room.getFmucOutboundMode() == null ) {
-                    pstmt.setNull(22, Types.INTEGER);
+                    pstmt.setNull(23, Types.INTEGER);
                 } else {
-                    pstmt.setInt(22, room.getFmucOutboundMode().equals(MasterMaster) ? 0 : 1);
+                    pstmt.setInt(23, room.getFmucOutboundMode().equals(MasterMaster) ? 0 : 1);
                 }
 
                 // Store a newline-separated collection, which is an 'allow only on list' configuration. Note that the list can be empty (effectively: disallow all), or null: this is an 'allow all' configuration.
                 if (room.getFmucInboundNodes() == null) {
-                    pstmt.setNull(23, Types.VARCHAR); // Null: allow all.
+                    pstmt.setNull(24, Types.VARCHAR); // Null: allow all.
                 } else {
                     final String content = room.getFmucInboundNodes().stream().map(JID::toString).collect(Collectors.joining("\n")); // result potentially is an empty String, but will not be null.
-                    pstmt.setString(23, content);
+                    pstmt.setString(24, content);
                 }
-                pstmt.setLong(24, room.getID());
+                pstmt.setLong(25, room.getID());
                 pstmt.executeUpdate();
             }
             else {
@@ -680,8 +691,7 @@ public class MUCPersistenceManager {
     }
 
     /**
-     * Loads all the rooms that had occupants after a given date from the database. This query
-     * will be executed only when the service is starting up.
+     * Loads all the rooms that had occupants after a given date from the database.
      *
      * @param chatserver the chat server that will hold the loaded rooms.
      * @param cleanupDate rooms that hadn't been used after this date won't be loaded.
@@ -694,27 +704,16 @@ public class MUCPersistenceManager {
         final Map<Long, MUCRoom> rooms;
         try {
             rooms = loadRooms(serviceID, cleanupDate, chatserver);
-            loadHistory(serviceID, rooms);
-            loadAffiliations(serviceID, rooms);
-            loadMembers(serviceID, rooms);
         }
         catch (SQLException sqle) {
             Log.error("A database error prevented MUC rooms to be loaded from the database.", sqle);
             return Collections.emptyList();
         }
 
-        // Set now that the room's configuration is updated in the database. Note: We need to
-        // set this now since otherwise the room's affiliations will be saved to the database
-        // "again" while adding them to the room!
-        for (final MUCRoom room : rooms.values()) {
-            room.setSavedToDB(true);
-            if (room.getEmptyDate() == null) {
-                // The service process was killed somehow while the room was being used. Since
-                // the room won't have occupants at this time we need to set the best date when
-                // the last occupant left the room that we can
-                room.setEmptyDate(new Date());
-            }
+        for (MUCRoom room : rooms.values()) {
+            loadFromDB(room);
         }
+
         Log.debug( "Loaded {} rooms for chat service {}", rooms.size(), chatserver.getServiceName() );
         return rooms.values();
     }
@@ -770,7 +769,25 @@ public class MUCPersistenceManager {
                     room.setLogEnabled(resultSet.getInt("logEnabled") == 1);
                     room.setRetireOnDeletion(resultSet.getInt("retireOnDeletion") == 1);
                     room.setPreserveHistOnRoomDeletionEnabled(resultSet.getInt("preserveHistOnDel") == 1);
-                    room.setSubject(resultSet.getString("subject"));
+                    try {
+                        final String subjectRaw = resultSet.getString("subject");
+                        if (subjectRaw != null) {
+                            final Message subjectStanza;
+                            if (subjectRaw.trim().startsWith("<message ")) {
+                                // Expected: the database contains a stanza
+                                final Element subjectEl = SAXReaderUtil.readRootElement(subjectRaw);
+                                subjectStanza = new Message(subjectEl);
+                            } else {
+                                // Fallback: as a result of the migration for OF-3131, the database _may_ contain plain text.
+                                Log.debug("Plain text (instead of stanza) subject found in database for room '{}'", room.getJID());
+                                subjectStanza = constructRoomSubjectMessage(room.getJID(), subjectRaw, null, null);
+                            }
+                            room.initializeSubject(subjectStanza);
+                        }
+                    } catch (Throwable t) {
+                        Log.warn("Unable to parse data as a subject-changing stanza for room '{}'", room.getJID(), t);
+                    }
+
                     List<Role> rolesToBroadcast = new ArrayList<>();
                     String roles = StringUtils.zeroPadString(Integer.toBinaryString(resultSet.getInt("rolesToBroadcast")), 3);
                     if (roles.charAt(0) == '1') {
@@ -845,7 +862,7 @@ public class MUCPersistenceManager {
      */
     public static void loadHistory(@Nonnull final MUCRoom room) throws SQLException
     {
-        loadHistory(room, -1);
+        loadHistory(room, room.getRoomHistory().getMaxMessages());
     }
 
     /**
@@ -858,14 +875,19 @@ public class MUCPersistenceManager {
      * @param maxNumber A hint for the maximum number of messages that need to be read from the database. -1 for all messages.
      * @throws SQLException
      */
+    // TODO Consider merging this method with the one above, to avoid confusion. You'd hope that people use MAM instead of this anyway.
     public static void loadHistory(@Nonnull final MUCRoom room, final int maxNumber) throws SQLException
     {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
+        Log.debug("Loading room history for room '{}' (max: {})", room.getJID(), maxNumber == -1 ? "all" : maxNumber);
 
-        try {
-            if (room.isLogEnabled()) {
+        final List<Message> oldMessages = new LinkedList<>();
+        if (room.isLogEnabled() && maxNumber != 0)
+        {
+            Connection con = null;
+            PreparedStatement pstmt = null;
+            ResultSet rs = null;
+            try {
+                // Reload historic messages from the database.
                 con = DbConnectionManager.getConnection();
                 pstmt = con.prepareStatement(LOAD_HISTORY, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
@@ -895,7 +917,6 @@ public class MUCPersistenceManager {
                     Log.debug("Unable to skip to the last {} rows of the result set.", maxNumber, e);
                 }
 
-                final List<Message> oldMessages = new LinkedList<>();
                 while (rs.next()) {
                     String senderJID = rs.getString("sender");
                     String nickname = rs.getString("nickname");
@@ -905,181 +926,21 @@ public class MUCPersistenceManager {
                     String stanza = rs.getString("stanza");
                     oldMessages.add(room.getRoomHistory().parseHistoricMessage(senderJID, nickname, sentDate, subject, body, stanza));
                 }
-
-                if (!oldMessages.isEmpty()) {
-                    room.getRoomHistory().addOldMessages(oldMessages);
-                }
-            }
-
-            // If the room does not include the last subject in the history then recreate one if
-            // possible
-            if (!room.getRoomHistory().hasChangedSubject() && room.getSubject() != null &&
-                !room.getSubject().isEmpty()) {
-                final Message subject = room.getRoomHistory().parseHistoricMessage(room.getSelfRepresentation().getOccupantJID().toString(),
-                    null, room.getModificationDate(), room.getSubject(), null, null);
-                room.getRoomHistory().addOldMessages(subject);
-            }
-        } finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
-        }
-    }
-
-    private static void loadHistory(Long serviceID, Map<Long, MUCRoom> rooms) throws SQLException {
-        Connection connection = null;
-        PreparedStatement statement = null;
-        ResultSet resultSet = null;
-        try {
-            connection = DbConnectionManager.getConnection();
-            statement = connection.prepareStatement(LOAD_ALL_HISTORY);
-
-            // Reload the history, using "muc.history.reload.limit" (days) if present
-            long from = 0;
-            String reloadLimit = JiveGlobals.getProperty(MUC_HISTORY_RELOAD_LIMIT);
-            if (reloadLimit != null) {
-                // if the property is defined, but not numeric, default to 2 (days)
-                int reloadLimitDays = JiveGlobals.getIntProperty(MUC_HISTORY_RELOAD_LIMIT, 2);
-                Log.warn("MUC history reload limit set to " + reloadLimitDays + " days");
-                from = System.currentTimeMillis() - (BigInteger.valueOf(86400000).multiply(BigInteger.valueOf(reloadLimitDays))).longValue();
-            }
-            statement.setLong(1, serviceID);
-            statement.setString(2, StringUtils.dateToMillis(new Date(from)));
-            resultSet = statement.executeQuery();
-
-            while (resultSet.next()) {
-                try {
-                    MUCRoom room = rooms.get(resultSet.getLong("roomID"));
-                    // Skip to the next position if the room does not exist or if history is disabled
-                    if (room == null || !room.isLogEnabled()) {
-                        continue;
-                    }
-                    String senderJID = resultSet.getString("sender");
-                    String nickname  = resultSet.getString("nickname");
-                    Date sentDate    = new Date(Long.parseLong(resultSet.getString("logTime").trim()));
-                    String subject   = resultSet.getString("subject");
-                    String body      = resultSet.getString("body");
-                    String stanza    = resultSet.getString("stanza");
-                    final Message message = room.getRoomHistory().parseHistoricMessage(senderJID, nickname, sentDate, subject, body, stanza);
-                    room.getRoomHistory().addOldMessages(message);
-                } catch (SQLException e) {
-                    Log.warn("A database exception prevented the history for one particular MUC room to be loaded from the database.", e);
-                }
-            }
-        } finally {
-            DbConnectionManager.closeConnection(resultSet, statement, connection);
-        }
-
-        // Add the last known room subject to the room history only for those rooms that still
-        // don't have in their histories the last room subject
-        for (MUCRoom loadedRoom : rooms.values())
-        {
-            if (!loadedRoom.getRoomHistory().hasChangedSubject()
-                && loadedRoom.getSubject() != null
-                && !loadedRoom.getSubject().isEmpty())
-            {
-                final Message message = loadedRoom.getRoomHistory().parseHistoricMessage(
-                                                            loadedRoom.getSelfRepresentation().getOccupantJID().toString(),
-                                                            null,
-                                                            loadedRoom.getModificationDate(),
-                                                            loadedRoom.getSubject(),
-                                                            null,
-                                                            null);
-                loadedRoom.getRoomHistory().addOldMessages(message);
+            } finally {
+                DbConnectionManager.closeConnection(rs, pstmt, con);
             }
         }
-    }
 
-    private static void loadAffiliations(Long serviceID, Map<Long, MUCRoom> rooms) throws SQLException {
-        Connection connection = null;
-        PreparedStatement statement = null;
-        ResultSet resultSet = null;
-        try {
-            connection = DbConnectionManager.getConnection();
-            statement = connection.prepareStatement(LOAD_ALL_AFFILIATIONS);
-            statement.setLong(1, serviceID);
-            resultSet = statement.executeQuery();
-
-            while (resultSet.next()) {
-                try {
-                    long roomID = resultSet.getLong("roomID");
-                    MUCRoom room = rooms.get(roomID);
-                    // Skip to the next position if the room does not exist
-                    if (room == null) {
-                        continue;
-                    }
-
-                    final Affiliation affiliation = Affiliation.valueOf(resultSet.getInt("affiliation"));
-
-                    final String jidValue = resultSet.getString("jid");
-                    final JID affiliationJID;
-                    try {
-                        // might be a group JID
-                        affiliationJID = GroupJID.fromString(jidValue);
-                    } catch (IllegalArgumentException ex) {
-                        Log.warn("An illegal JID ({}) was found in the database, "
-                                + "while trying to load all affiliations for room "
-                                + "{}. The JID is ignored."
-                                , new Object[] { jidValue, roomID });
-                        continue;
-                    }
-
-                    try {
-                        switch (affiliation) {
-                            case owner:
-                                room.addOwner(affiliationJID, room.getSelfRepresentation().getAffiliation());
-                                break;
-                            case admin:
-                                room.addAdmin(affiliationJID, room.getSelfRepresentation().getAffiliation());
-                                break;
-                            case outcast:
-                                room.addOutcast(affiliationJID, null, null, room.getSelfRepresentation().getAffiliation(), room.getSelfRepresentation().getRole());
-                                break;
-                            default:
-                                Log.error("Unknown affiliation value " + affiliation + " for user " + affiliationJID + " in persistent room " + room.getID());
-                        }
-                    } catch (ForbiddenException | ConflictException | NotAllowedException e) {
-                        Log.warn("An exception prevented affiliations to be added to the room with id " + roomID, e);
-                    }
-                } catch (SQLException e) {
-                    Log.error("A database exception prevented affiliations for one particular MUC room to be loaded from the database.", e);
-                }
-            }
-
-        } finally {
-            DbConnectionManager.closeConnection(resultSet, statement, connection);
+        room.getRoomHistory().purge();
+        if (!oldMessages.isEmpty()) {
+            room.getRoomHistory().addOldMessages(oldMessages);
         }
-    }
 
-    private static void loadMembers(Long serviceID, Map<Long, MUCRoom> rooms) throws SQLException {
-        Connection connection = null;
-        PreparedStatement statement = null;
-        ResultSet resultSet = null;
-        JID affiliationJID = null;
-        try {
-            connection = DbConnectionManager.getConnection();
-            statement = connection.prepareStatement(LOAD_ALL_MEMBERS);
-            statement.setLong(1, serviceID);
-            resultSet = statement.executeQuery();
-
-            while (resultSet.next()) {
-                try {
-                    MUCRoom room = rooms.get(resultSet.getLong("roomID"));
-                    // Skip to the next position if the room does not exist
-                    if (room == null) {
-                        continue;
-                    }
-                    try {
-                        // might be a group JID
-                        affiliationJID = GroupJID.fromString(resultSet.getString("jid"));
-                        room.addMember(affiliationJID, resultSet.getString("nickname"), room.getSelfRepresentation().getAffiliation());
-                    } catch (ForbiddenException | ConflictException e) {
-                        Log.warn("Unable to add member to room.", e);
-                    }
-                } catch (SQLException e) {
-                    Log.error("A database exception prevented members for one particular MUC room to be loaded from the database.", e);
-                }
-            }
-        } finally {
-            DbConnectionManager.closeConnection(resultSet, statement, connection);
+        // If the room does not include the last subject in the history, then recreate one if possible.
+        if (!room.getRoomHistory().hasChangedSubject() && room.getSubject() != null && !room.getSubject().isEmpty()) {
+            final Message subject = room.getRoomHistory().parseHistoricMessage(room.getSelfRepresentation().getOccupantJID().toString(),
+                null, room.getModificationDate(), room.getSubject(), null, null);
+            room.getRoomHistory().addOldMessages(subject);
         }
     }
 
@@ -1098,7 +959,7 @@ public class MUCPersistenceManager {
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(UPDATE_SUBJECT);
-            pstmt.setString(1, room.getSubject());
+            pstmt.setString(1, room.getSubjectStanza() == null ? null : room.getSubjectStanza().toXML());
             pstmt.setLong(2, room.getID());
             pstmt.executeUpdate();
         }
@@ -1315,7 +1176,9 @@ public class MUCPersistenceManager {
                     pstmt.setInt(1, newAffiliation.getValue());
                     pstmt.setLong(2, room.getID());
                     pstmt.setString(3, affiliationJid);
-                    pstmt.executeUpdate();
+                    if (pstmt.executeUpdate() == 0) {
+                        Log.warn("While trying to persist the update the affiliation of {} in room: {} from {} to {}, no database rows were modified. The change was possibly not persisted (or was unnecessary). This may be a bug in Openfire logic.", jid, room.getJID(), oldAffiliation, newAffiliation);
+                    }
                 }
                 catch (SQLException sqle) {
                     Log.error("A database error occurred while trying to update affiliation for {} in room: {}", jid, room.getName(), sqle);
@@ -1656,11 +1519,11 @@ public class MUCPersistenceManager {
         propertyMaps.put(subdomain, properties);
     }
 
-   /**
+    /**
      * Sets multiple Jive properties at once. If a property doesn't already exists, a new
      * one will be created.
      *
-    * @param subdomain the subdomain of the service to set properties for
+     * @param subdomain the subdomain of the service to set properties for
      * @param propertyMap a map of properties, keyed on property name.
      */
     public static void setProperties(String subdomain, Map<String, String> propertyMap) {
@@ -1732,5 +1595,46 @@ public class MUCPersistenceManager {
         finally {
             DbConnectionManager.closeConnection(resultSet, statement, connection);
         }
+    }
+
+    /**
+     * Constructs a message stanza that represents a room subject change.
+     *
+     * @param roomJid The room address
+     * @param subject The subject test
+     * @param date The moment in time that the subject was set/changed.
+     * @param authorNickname The nickname (JID resourcepart) of the entity that set/changed the subject.
+     * @return A message stanza representing the subject change
+     */
+    @VisibleForTesting
+    static Message constructRoomSubjectMessage(@Nonnull final JID roomJid, @Nullable final String subject, @Nullable final Instant date, @Nullable final String authorNickname)
+    {
+        final Message roomSubject = new Message();
+        roomSubject.setType(Message.Type.groupchat);
+        roomSubject.setID(UUID.randomUUID().toString());
+
+        // If the author of the subject is known, use their nickname as the originator of the message.
+        if (authorNickname != null && !authorNickname.isEmpty()) {
+            roomSubject.setFrom(new JID(roomJid.getNode(), roomJid.getDomain(), authorNickname));
+        } else {
+            roomSubject.setFrom(roomJid);
+        }
+
+        // Add the subject to the 'subject' element of the message. Ensure that this element is always present (even
+        // when empty), as MUC joins require 'subject' element to be present.
+        if (subject != null && !subject.isEmpty()) {
+            roomSubject.setSubject(subject);
+        } else {
+            roomSubject.getElement().addElement("subject");
+        }
+
+        // Include the time when this subject was set.
+        if (date != null) {
+            final Element delayElement = roomSubject.addChildElement("delay", "urn:xmpp:delay");
+            delayElement.addAttribute("stamp", XMPPDateTimeFormat.format(date));
+            delayElement.addAttribute("from", roomJid.toBareJID()); // XEP-0045: "If the <delay/> element is included, its 'from' attribute MUST be set to the JID of the room itself."
+        }
+
+        return roomSubject;
     }
 }

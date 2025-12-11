@@ -61,6 +61,14 @@ public class JiveGlobals {
     private static final String ENCRYPTION_KEY_OLD = ENCRYPTED_PROPERTY_NAME_PREFIX + "key.old";
     private static final String ENCRYPTION_ALGORITHM_AES = "AES";
     private static final String ENCRYPTION_ALGORITHM_BLOWFISH = "Blowfish";
+    private static final String BLOWFISH_KDF = ENCRYPTED_PROPERTY_NAME_PREFIX + "blowfish.kdf";
+    private static final String BLOWFISH_SALT = ENCRYPTED_PROPERTY_NAME_PREFIX + "blowfish.salt";
+
+    /** Blowfish key derivation function using PBKDF2-HMAC-SHA512 */
+    public static final String BLOWFISH_KDF_PBKDF2 = "pbkdf2";
+
+    /** Blowfish key derivation function using legacy SHA1 (for backward compatibility) */
+    public static final String BLOWFISH_KDF_SHA1 = "sha1";
 
     /**
      * Location of the jiveHome directory. All configuration files should be
@@ -1135,6 +1143,22 @@ public class JiveGlobals {
     }
 
     /**
+     * Gets the current master encryption key used for property encryption.
+     * The key is deobfuscated from security.xml.
+     *
+     * This method is primarily used by migration tools and encryption utilities
+     * that need direct access to the master key.
+     *
+     * @return The current master encryption key, or null if no key is configured
+     */
+    public static String getMasterEncryptionKey() {
+        if (securityProperties == null) {
+            loadSecurityProperties();
+        }
+        return getCurrentKey();
+    }
+
+    /**
      * Get current encryptor according to alg and key.
      *
      * @param alg algorithm type
@@ -1148,6 +1172,239 @@ public class JiveGlobals {
             encryptor = new Blowfish(key);
         }
         return encryptor;
+    }
+
+    /**
+     * Gets the Blowfish encryption salt. If no salt exists, generates a new
+     * cryptographically random 32-byte salt and stores it in security.xml.
+     *
+     * @return Base64-encoded salt (32 bytes)
+     */
+    public static String getBlowfishSalt() {
+        if (securityProperties == null) {
+            loadSecurityProperties();
+        }
+
+        String salt = securityProperties.getProperty(BLOWFISH_SALT);
+        if (salt == null || salt.trim().isEmpty()) {
+            // Generate a new random salt (32 bytes for strong security)
+            byte[] saltBytes = new byte[32];
+            new java.security.SecureRandom().nextBytes(saltBytes);
+            salt = Base64.getEncoder().encodeToString(saltBytes);
+            securityProperties.setProperty(BLOWFISH_SALT, salt);
+            Log.info("Generated new Blowfish salt for PBKDF2 key derivation");
+        }
+
+        return salt;
+    }
+
+    /**
+     * Gets the Blowfish key derivation function (KDF) type.
+     * Returns "sha1" for legacy single-round SHA1 hashing, or "pbkdf2" for
+     * PBKDF2-HMAC-SHA512 key derivation.
+     *
+     * @return The KDF type ("sha1" or "pbkdf2"), defaults to "sha1" for backward compatibility
+     */
+    public static String getBlowfishKdf() {
+        if (securityProperties == null) {
+            loadSecurityProperties();
+        }
+
+        String kdf = securityProperties.getProperty(BLOWFISH_KDF);
+        // Default to SHA1 for backward compatibility with existing installations
+        return (kdf != null && !kdf.trim().isEmpty()) ? kdf : BLOWFISH_KDF_SHA1;
+    }
+
+    /**
+     * Sets the Blowfish key derivation function (KDF) type and re-initialises
+     * the property encryptor cache to use the new KDF immediately.
+     *
+     * @param kdf The KDF type ("sha1" or "pbkdf2")
+     */
+    public static void setBlowfishKdf(String kdf) {
+        if (securityProperties == null) {
+            loadSecurityProperties();
+        }
+
+        if (BLOWFISH_KDF_PBKDF2.equalsIgnoreCase(kdf)) {
+            securityProperties.setProperty(BLOWFISH_KDF, BLOWFISH_KDF_PBKDF2);
+            Log.info("Blowfish KDF set to PBKDF2-HMAC-SHA512");
+        } else {
+            securityProperties.setProperty(BLOWFISH_KDF, BLOWFISH_KDF_SHA1);
+            Log.info("Blowfish KDF set to SHA1 (legacy)");
+        }
+
+        // Reinitialise the encryptor cache so new properties use the updated KDF immediately
+        reinitialisePropertyEncryptor();
+    }
+
+    /**
+     * Migrates encrypted XML properties (in openfire.xml) from SHA1 to PBKDF2 key derivation.
+     *
+     * This method uses the encryptor swap pattern to re-encrypt properties:
+     * 1. Sets up SHA1 encryptor for decryption and PBKDF2 encryptor for encryption
+     * 2. Reads property names listed as encrypted in security.xml
+     * 3. For each property: reads value from openfire.xml (decrypts with SHA1),
+     *    writes back (encrypts with PBKDF2)
+     * 4. Restores original encryptor state
+     *
+     * CRITICAL: This operation cannot be reversed without a backup.
+     * Call this BEFORE updating the KDF setting and BEFORE database migration.
+     *
+     * @return Number of XML properties successfully migrated
+     * @throws IllegalStateException if not using Blowfish encryption or already using PBKDF2
+     * @throws RuntimeException if migration fails for any property
+     * @since 5.1.0
+     */
+    public static int migrateXMLPropertiesFromSHA1ToPBKDF2() {
+        // 1. Verify preconditions
+        String algorithm = getEncryptionAlgorithm();
+        if (!ENCRYPTION_ALGORITHM_BLOWFISH.equalsIgnoreCase(algorithm)) {
+            throw new IllegalStateException("Cannot migrate: encryption algorithm is " +
+                    algorithm + ", not Blowfish");
+        }
+
+        String currentKdf = getBlowfishKdf();
+        if (BLOWFISH_KDF_PBKDF2.equalsIgnoreCase(currentKdf)) {
+            throw new IllegalStateException("Cannot migrate: already using PBKDF2");
+        }
+
+        // 2. Get the master encryption key
+        String masterKey = getMasterEncryptionKey();
+
+        // 3. Save current encryptor state
+        Encryptor originalEncryptor = propertyEncryptor;
+        Encryptor originalEncryptorNew = propertyEncryptorNew;
+
+        try {
+            // 4. Create SHA1 encryptor (for decryption) and PBKDF2 encryptor (for encryption)
+            Blowfish sha1Blowfish = new Blowfish();
+            sha1Blowfish.setKey(masterKey, BLOWFISH_KDF_SHA1);
+
+            Blowfish pbkdf2Blowfish = new Blowfish();
+            pbkdf2Blowfish.setKey(masterKey, BLOWFISH_KDF_PBKDF2);
+
+            // 5. Swap encryptors: old for decrypt, new for encrypt
+            propertyEncryptor = sha1Blowfish;
+            propertyEncryptorNew = pbkdf2Blowfish;
+
+            // 6. Get list of encrypted property names from security.xml
+            if (securityProperties == null) {
+                loadSecurityProperties();
+            }
+            List<String> encryptedPropertyNames =
+                    securityProperties.getProperties(ENCRYPTED_PROPERTY_NAMES, true);
+
+            Log.info("Starting XML property migration: {} properties to process",
+                    encryptedPropertyNames.size());
+
+            // 7. Migrate each property (values stored in openfire.xml)
+            int migrated = 0;
+            int skipped = 0;
+
+            for (String propertyName : encryptedPropertyNames) {
+                // Get decrypts with SHA1 (via propertyEncryptor)
+                String plaintext = getXMLProperty(propertyName);
+
+                if (plaintext == null || plaintext.isEmpty()) {
+                    // Property doesn't exist or is empty in openfire.xml - skip
+                    Log.debug("Skipping empty XML property: {}", propertyName);
+                    skipped++;
+                    continue;
+                }
+
+                // Set encrypts with PBKDF2 (via propertyEncryptorNew)
+                setXMLProperty(propertyName, plaintext);
+                migrated++;
+                Log.debug("Migrated XML property: {}", propertyName);
+            }
+
+            Log.info("XML property migration complete: {} migrated, {} skipped (empty)",
+                    migrated, skipped);
+            return migrated;
+
+        } finally {
+            // 9. Restore original encryptor state
+            propertyEncryptor = originalEncryptor;
+            propertyEncryptorNew = originalEncryptorNew;
+        }
+    }
+
+    /**
+     * Returns the count of encrypted properties in openfire.xml that have values.
+     * This counts only properties from security.xml that exist in openfire.xml
+     * with non-empty values (i.e., properties that will actually be migrated).
+     *
+     * @return Number of encrypted properties with values in openfire.xml
+     * @since 5.1.0
+     */
+    public static int getEncryptedXMLPropertyValueCount() {
+        if (securityProperties == null) {
+            loadSecurityProperties();
+        }
+        List<String> encryptedPropertyNames =
+                securityProperties.getProperties(ENCRYPTED_PROPERTY_NAMES, true);
+        if (encryptedPropertyNames == null) {
+            return 0;
+        }
+
+        int count = 0;
+        for (String propertyName : encryptedPropertyNames) {
+            String rawValue = openfireProperties.getProperty(propertyName);
+            if (rawValue != null && !rawValue.isEmpty()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Checks whether Blowfish encryption migration from SHA1 to PBKDF2 is needed.
+     * Returns true if the server is currently using Blowfish encryption with the
+     * legacy SHA1 key derivation function.
+     *
+     * @return true if migration from SHA1 to PBKDF2 is needed, false otherwise
+     * @since 5.1.0
+     */
+    public static boolean isBlowfishMigrationNeeded() {
+        String encryptionAlgorithm = getEncryptionAlgorithm();
+        if (!ENCRYPTION_ALGORITHM_BLOWFISH.equalsIgnoreCase(encryptionAlgorithm)) {
+            return false;
+        }
+        String kdf = getBlowfishKdf();
+        return BLOWFISH_KDF_SHA1.equalsIgnoreCase(kdf);
+    }
+
+    /**
+     * Returns the encryption algorithm configured in security.xml.
+     *
+     * @return The encryption algorithm ("AES" or "Blowfish"), defaults to "Blowfish" if not configured
+     * @since 5.1.0
+     */
+    public static String getEncryptionAlgorithm() {
+        if (securityProperties == null) {
+            loadSecurityProperties();
+        }
+
+        String algorithm = securityProperties.getProperty(ENCRYPTION_ALGORITHM);
+        return (algorithm != null && !algorithm.trim().isEmpty())
+               ? algorithm
+               : ENCRYPTION_ALGORITHM_BLOWFISH;
+    }
+
+    /**
+     * Re-initialises the property encryptor with the current encryption settings.
+     * Call this after changing the encryption algorithm or KDF to ensure new
+     * properties are encrypted with the updated settings without requiring a restart.
+     *
+     * @since 5.1.0
+     */
+    public static void reinitialisePropertyEncryptor() {
+        String algorithm = getEncryptionAlgorithm();
+        String key = getMasterEncryptionKey();
+        propertyEncryptor = getEncryptor(algorithm, key);
+        propertyEncryptorNew = propertyEncryptor;
+        Log.info("Property encryptor reinitialised with algorithm: {}", algorithm);
     }
 
     /**
@@ -1379,6 +1636,46 @@ public class JiveGlobals {
     
         // (re)write the encryption key to the security XML file (obfuscated, not encrypted)
         securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, new Obfuscator().obfuscate(currentKey));
+
+        // Initialise Blowfish KDF for new installations
+        initializeBlowfishKdf();
+    }
+
+    /**
+     * Initialises the Blowfish key derivation function (KDF) for new installations.
+     * For fresh installations (setup not complete), sets PBKDF2 as the default KDF.
+     * For existing installations, preserves the current KDF (SHA1 or PBKDF2) and logs appropriate messages.
+     *
+     * This method is called once during security properties initialization. It determines whether this
+     * is a new or existing installation by checking if setup has been completed. This ensures new
+     * installations use the stronger PBKDF2-HMAC-SHA512 key derivation whilst existing installations
+     * maintain backward compatibility with their current configuration.
+     */
+    private static void initializeBlowfishKdf() {
+        String currentKdf = securityProperties.getProperty(BLOWFISH_KDF, false);
+
+        if (currentKdf == null || currentKdf.trim().isEmpty()) {
+            // No KDF configured yet - determine if this is a new or existing installation
+            if (isSetupMode()) {
+                // New installation (setup not complete): set PBKDF2 as default
+                securityProperties.setProperty(BLOWFISH_KDF, BLOWFISH_KDF_PBKDF2);
+                // Salt will be auto-generated when first accessed by getBlowfishSalt()
+                Log.info("New installation detected: Blowfish KDF set to PBKDF2-HMAC-SHA512");
+            } else {
+                // Existing installation (setup complete): keep SHA1 for backward compatibility
+                // Don't set the property - getBlowfishKdf() will default to SHA1
+                Log.warn("Existing installation detected with no Blowfish KDF configured. " +
+                        "Defaulting to legacy SHA1 for backward compatibility. " +
+                        "Consider migrating to PBKDF2 via the admin console for improved security.");
+            }
+        } else if (BLOWFISH_KDF_SHA1.equalsIgnoreCase(currentKdf)) {
+            // Existing installation explicitly using SHA1
+            Log.warn("Blowfish is using legacy SHA1 key derivation. " +
+                    "Consider migrating to PBKDF2 via the admin console for improved security.");
+        } else if (BLOWFISH_KDF_PBKDF2.equalsIgnoreCase(currentKdf)) {
+            // Already using PBKDF2
+            Log.info("Blowfish is using PBKDF2-HMAC-SHA512 key derivation");
+        }
     }
 
     public static final String[] setupExcludePaths = {

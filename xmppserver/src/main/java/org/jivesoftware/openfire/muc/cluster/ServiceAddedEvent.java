@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import java.io.ObjectOutput;
  * @author Daniel Henninger
  */
 public class ServiceAddedEvent implements ClusterTask<Void> {
+    private long serviceID;
     private String subdomain;
     private String description;
     private Boolean isHidden;
@@ -44,7 +45,8 @@ public class ServiceAddedEvent implements ClusterTask<Void> {
     public ServiceAddedEvent() {
     }
 
-    public ServiceAddedEvent(String subdomain, String description, Boolean isHidden) {
+    public ServiceAddedEvent(long serviceID, String subdomain, String description, Boolean isHidden) {
+        this.serviceID = serviceID;
         this.subdomain = subdomain;
         this.description = description;
         this.isHidden = isHidden;
@@ -61,7 +63,7 @@ public class ServiceAddedEvent implements ClusterTask<Void> {
         // is provided by an internal component that registered at startup.  This scenario, however,
         // should really never occur.
         if (!XMPPServer.getInstance().getMultiUserChatManager().isServiceRegistered(subdomain)) {
-            MultiUserChatService service = new MultiUserChatServiceImpl(subdomain, description, isHidden);
+            MultiUserChatService service = new MultiUserChatServiceImpl(serviceID, subdomain, description, isHidden);
             XMPPServer.getInstance().getMultiUserChatManager().registerMultiUserChatService(service, false);
         }
     }
@@ -69,6 +71,7 @@ public class ServiceAddedEvent implements ClusterTask<Void> {
     @Override
     public void writeExternal(ObjectOutput out) throws IOException {
         final ExternalizableUtil externalizableUtil = ExternalizableUtil.getInstance();
+        externalizableUtil.writeLong(out, serviceID);
         externalizableUtil.writeSafeUTF(out, subdomain);
         externalizableUtil.writeSafeUTF(out, description);
         externalizableUtil.writeBoolean(out, isHidden);
@@ -77,6 +80,7 @@ public class ServiceAddedEvent implements ClusterTask<Void> {
     @Override
     public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
         final ExternalizableUtil externalizableUtil = ExternalizableUtil.getInstance();
+        serviceID = externalizableUtil.readLong(in);
         subdomain = externalizableUtil.readSafeUTF(in);
         description = externalizableUtil.readSafeUTF(in);
         isHidden = externalizableUtil.readBoolean(in);

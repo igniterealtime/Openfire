@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
@@ -37,7 +38,9 @@ import java.util.Base64;
 public class AesEncryptor implements Encryptor {
 
     private static final Logger log = LoggerFactory.getLogger(AesEncryptor.class);
-    private static final String ALGORITHM = "AES/CBC/PKCS7Padding";
+    private static final String ALGORITHM_CBC = "AES/CBC/PKCS7Padding";
+    private static final String ALGORITHM_GCM = "AES/GCM/NoPadding";
+    private static final int GCM_TAG_LENGTH_BITS = 128;
 
     private static boolean isInitialized = false;
 
@@ -75,11 +78,38 @@ public class AesEncryptor implements Encryptor {
         return encrypt(value, null);
     }
 
+    /**
+     * Encrypts a plaintext string using AES-GCM with the provided IV.
+     *
+     * IMPORTANT: Never reuse an IV with the same key. GCM mode is catastrophically
+     * weak if the same IV is used twice with the same key - it allows an attacker
+     * to recover the authentication key and forge messages. Always generate a new
+     * random IV for each encryption operation using SecureRandom.
+     *
+     * If iv is null, falls back to legacy CBC mode with hardcoded IV for backward
+     * compatibility (deprecated behaviour).
+     *
+     * @param value the plaintext value to encrypt
+     * @param iv a unique 16-byte initialisation vector (must never be reused with the same key)
+     * @return the Base64-encoded encrypted value, or null if input is null
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3077">OF-3077: Potential padding oracle CBC-mode encryption</a>
+     * @see <a href="https://csrc.nist.gov/pubs/sp/800/38/d/final">NIST SP 800-38D: GCM Mode</a>
+     */
     @Override
     public String encrypt(String value, byte[] iv) {
         if (value == null) { return null; }
-        byte [] bytes = value.getBytes(StandardCharsets.UTF_8);
-        return java.util.Base64.getEncoder().encodeToString(cipher(bytes, getKey(), iv == null ? LegacyEncryptionConstants.LEGACY_IV : iv, Cipher.ENCRYPT_MODE));
+        byte[] bytes = value.getBytes(StandardCharsets.UTF_8);
+
+        byte[] encrypted;
+        if (iv == null) {
+            // Legacy mode: use CBC with hardcoded IV for backward compatibility
+            encrypted = cipherCbc(bytes, getKey(), LegacyEncryptionConstants.LEGACY_IV, Cipher.ENCRYPT_MODE);
+        } else {
+            // Modern mode: use GCM with provided IV (OF-3077)
+            encrypted = cipherGcm(bytes, getKey(), iv, Cipher.ENCRYPT_MODE);
+        }
+
+        return encrypted == null ? null : Base64.getEncoder().encodeToString(encrypted);
     }
 
     /**
@@ -108,37 +138,79 @@ public class AesEncryptor implements Encryptor {
         // While persisting data in 'security.xml', linebreaks are replaced by white space.
         final String val = value.trim().replaceAll("\\s",""); // OF-3112: Ignore all whitespace in Base64 encoded data.
         final byte[] decoded = Base64.getDecoder().decode(val);
-        final byte [] bytes = cipher(decoded, getKey(), iv == null ? LegacyEncryptionConstants.LEGACY_IV : iv, Cipher.DECRYPT_MODE);
+
+        byte[] bytes;
+        if (iv == null) {
+            // Legacy mode: use CBC with hardcoded IV for backward compatibility
+            bytes = cipherCbc(decoded, getKey(), LegacyEncryptionConstants.LEGACY_IV, Cipher.DECRYPT_MODE);
+        } else {
+            // Modern mode: try GCM first (OF-3077), fall back to CBC for OF-1533 era data
+            bytes = cipherGcm(decoded, getKey(), iv, Cipher.DECRYPT_MODE);
+            if (bytes == null) {
+                // GCM failed - try CBC for backward compatibility with data encrypted
+                // since OF-1533 (2018) which used CBC with random IV
+                log.debug("GCM decryption failed, attempting CBC fallback for backward compatibility");
+                bytes = cipherCbc(decoded, getKey(), iv, Cipher.DECRYPT_MODE);
+            }
+        }
+
         if (bytes == null) { return null; }
         return new String(bytes, StandardCharsets.UTF_8);
     }
 
     /**
-     * Symmetric encrypt/decrypt routine.
+     * Symmetric encrypt/decrypt routine using AES-GCM (authenticated encryption).
+     * GCM mode provides both confidentiality and integrity protection, and is not
+     * susceptible to padding oracle attacks.
      *
      * @param attribute The value to be converted
      * @param key The encryption key
+     * @param iv The initialisation vector
+     * @param mode The cipher mode (encrypt or decrypt)
+     * @return The converted attribute, or null if conversion fails
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3077">OF-3077: Potential padding oracle CBC-mode encryption</a>
+     */
+    private byte[] cipherGcm(byte[] attribute, byte[] key, byte[] iv, int mode)
+    {
+        byte[] result = null;
+        try
+        {
+            Key aesKey = new SecretKeySpec(key, "AES");
+            Cipher aesCipher = Cipher.getInstance(ALGORITHM_GCM);
+            aesCipher.init(mode, aesKey, new GCMParameterSpec(GCM_TAG_LENGTH_BITS, iv));
+            result = aesCipher.doFinal(attribute);
+        }
+        catch (Exception e)
+        {
+            // Don't log at error level - this may be expected during fallback decryption
+            log.debug("AES-GCM cipher failed", e);
+        }
+        return result;
+    }
+
+    /**
+     * Symmetric encrypt/decrypt routine using AES-CBC (legacy mode).
+     * This method is kept for backward compatibility with data encrypted before OF-3077.
+     *
+     * @param attribute The value to be converted
+     * @param key The encryption key
+     * @param iv The initialisation vector
      * @param mode The cipher mode (encrypt or decrypt)
      * @return The converted attribute, or null if conversion fails
      */
-    private byte [] cipher(byte [] attribute, byte [] key, byte[] iv, int mode)
+    private byte[] cipherCbc(byte[] attribute, byte[] key, byte[] iv, int mode)
     {
-        byte [] result = null;
+        byte[] result = null;
         try
         {
-            // Create AES encryption key
             Key aesKey = new SecretKeySpec(key, "AES");
-
-            // Create AES Cipher
-            Cipher aesCipher = Cipher.getInstance(ALGORITHM);
-
-            // Initialize AES Cipher and convert
+            Cipher aesCipher = Cipher.getInstance(ALGORITHM_CBC);
             aesCipher.init(mode, aesKey, new IvParameterSpec(iv));
             result = aesCipher.doFinal(attribute);
         }
         catch (Exception e)
         {
-            log.error("AES cipher failed", e);
+            log.error("AES-CBC cipher failed", e);
         }
         return result;
     }

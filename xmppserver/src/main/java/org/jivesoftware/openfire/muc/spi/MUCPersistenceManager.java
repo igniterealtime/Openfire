@@ -37,6 +37,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.sql.*;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.*;
@@ -721,7 +722,7 @@ public class MUCPersistenceManager {
      */
     public static Collection<MUCRoom> loadRoomsFromDB(MultiUserChatService chatserver, Date cleanupDate) {
         final int workers = ROOM_LOADING_WORKERS.getValue();
-        final long startTime = System.currentTimeMillis();
+        final Instant startTime = Instant.now();
         Log.info( "Loading rooms for chat service {} using {} worker(s)", chatserver.getServiceName(), workers );
         Long serviceID = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(chatserver.getServiceName());
 
@@ -773,8 +774,8 @@ public class MUCPersistenceManager {
             }
         }
 
-        final long elapsedTime = System.currentTimeMillis() - startTime;
-        Log.info( "Loaded {} rooms for chat service {} in {} ms", rooms.size(), chatserver.getServiceName(), elapsedTime );
+        final Duration elapsedTime = Duration.between(startTime, Instant.now());
+        Log.info( "Loaded {} rooms for chat service {} in {}", rooms.size(), chatserver.getServiceName(), elapsedTime );
         return rooms.values();
     }
 

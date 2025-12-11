@@ -16,6 +16,11 @@
 package org.jivesoftware.openfire.muc.spi;
 
 import org.dom4j.Element;
+import org.jivesoftware.Fixtures;
+import org.jivesoftware.util.JiveGlobals;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
@@ -25,15 +30,38 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests that verify the implementation of {@link MUCPersistenceManager}
  *
  * @author Guus der Kinderen, guus@goodbytes.nl
+ * @author Matthew Vivian
  */
 public class MUCPersistenceManagerTest
 {
+    @BeforeAll
+    public static void setUpClass() throws Exception {
+        Fixtures.reconfigureOpenfireHome();
+        Fixtures.disableDatabasePersistence();
+    }
+
+    @BeforeEach
+    public void setUp() {
+        Fixtures.clearExistingProperties();
+    }
+
+    @AfterEach
+    public void tearDown() {
+        Fixtures.clearExistingProperties();
+    }
+
+    // =====================================
+    // Tests for constructRoomSubjectMessage
+    // =====================================
+
     /**
      * Verifies that the provided stanza is a correct representation of a 'subject change' as specified by XEP-0045.
      *
@@ -133,5 +161,62 @@ public class MUCPersistenceManagerTest
         final Element delayElement = result.getChildElement("delay", "urn:xmpp:delay");
 
         assertEquals("1969-07-21T02:56:15.123Z", delayElement.attributeValue("stamp"), "Expected the generated stanza's 'from' address to represent the timestamp when the subject change was applied (but it did not).");
+    }
+
+    // =====================================
+    // Tests for ROOM_LOADING_WORKERS property
+    // =====================================
+
+    @Test
+    public void roomLoadingWorkersPropertyDefaultsToOne() {
+        // When no property is set, the default should be 1 (sequential loading)
+        assertThat(MUCPersistenceManager.ROOM_LOADING_WORKERS.getValue(), is(1));
+    }
+
+    @Test
+    public void roomLoadingWorkersPropertyAcceptsValidValues() {
+        // Test that valid values within range are accepted
+        JiveGlobals.setProperty("xmpp.muc.loading.workers", "3");
+        assertThat(MUCPersistenceManager.ROOM_LOADING_WORKERS.getValue(), is(3));
+
+        JiveGlobals.setProperty("xmpp.muc.loading.workers", "5");
+        assertThat(MUCPersistenceManager.ROOM_LOADING_WORKERS.getValue(), is(5));
+    }
+
+    @Test
+    public void roomLoadingWorkersPropertyRejectsValueBelowMinimum() {
+        // Values below 1 should be rejected and default should be used
+        JiveGlobals.setProperty("xmpp.muc.loading.workers", "0");
+        assertThat(MUCPersistenceManager.ROOM_LOADING_WORKERS.getValue(), is(1));
+
+        JiveGlobals.setProperty("xmpp.muc.loading.workers", "-1");
+        assertThat(MUCPersistenceManager.ROOM_LOADING_WORKERS.getValue(), is(1));
+    }
+
+    @Test
+    public void roomLoadingWorkersPropertyRejectsValueAboveMaximum() {
+        // Values above 5 should be rejected and default should be used
+        JiveGlobals.setProperty("xmpp.muc.loading.workers", "6");
+        assertThat(MUCPersistenceManager.ROOM_LOADING_WORKERS.getValue(), is(1));
+
+        JiveGlobals.setProperty("xmpp.muc.loading.workers", "10");
+        assertThat(MUCPersistenceManager.ROOM_LOADING_WORKERS.getValue(), is(1));
+    }
+
+    @Test
+    public void roomLoadingWorkersPropertyRejectsNonNumericValues() {
+        // Non-numeric values should be rejected and default should be used
+        JiveGlobals.setProperty("xmpp.muc.loading.workers", "abc");
+        assertThat(MUCPersistenceManager.ROOM_LOADING_WORKERS.getValue(), is(1));
+    }
+
+    @Test
+    public void roomLoadingWorkersPropertyAcceptsBoundaryValues() {
+        // Test boundary values: minimum (1) and maximum (5)
+        JiveGlobals.setProperty("xmpp.muc.loading.workers", "1");
+        assertThat(MUCPersistenceManager.ROOM_LOADING_WORKERS.getValue(), is(1));
+
+        JiveGlobals.setProperty("xmpp.muc.loading.workers", "5");
+        assertThat(MUCPersistenceManager.ROOM_LOADING_WORKERS.getValue(), is(5));
     }
 }

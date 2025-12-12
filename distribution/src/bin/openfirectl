@@ -36,8 +36,7 @@ fi
 # If openfire user is not set elsewhere, set to daemon.
 [ -z "$OPENFIRE_USER" ] && OPENFIRE_USER="daemon"
 
-# If pid file path is not set elsewhere, set to /var/run/openfire.pid.
-[ -z "$OPENFIRE_PIDFILE" ] && OPENFIRE_PIDFILE="/var/run/openfire.pid"
+OPENFIRE_PIDFILE="/var/run/openfire.pid"
 
 # -----------------------------------------------------------------
 

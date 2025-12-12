@@ -7,10 +7,6 @@
 # change the following line.
 #OPENFIRE_USER="daemon"
 
-# If you wish to change the location of the openfire pid file,
-# change the following line.
-#OPENFIRE_PIDFILE="/var/run/openfire.pid"
-
 # If you wish to explicitly specific the location of the log directory,
 # you can set it here.  Note that this applies to the logs generated outside
 # openfire itself.  If you want to change the location of openfire's own

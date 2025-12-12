@@ -95,15 +95,6 @@ public class MUCPersistenceManager {
         .setDefaultValue(Duration.ZERO)
         .build();
 
-    /**
-     * If true, room loading aborts on the first failure (fail-fast); if false, all rooms are attempted (resilient).
-     */
-    public static final SystemProperty<Boolean> ROOM_LOADING_FAILFAST = SystemProperty.Builder.ofType(Boolean.class)
-        .setKey("xmpp.muc.loading.failfast")
-        .setDynamic(false)
-        .setDefaultValue(true)
-        .build();
-
     private static final String GET_RESERVED_NAME =
         "SELECT nickname FROM ofMucMember WHERE roomID=? AND jid=?";
     private static final String LOAD_ROOM =
@@ -760,12 +751,11 @@ public class MUCPersistenceManager {
         final ExecutorService executor = Executors.newFixedThreadPool(workers, threadFactory);
         final AtomicInteger failedCount = new AtomicInteger(0);
         final AtomicReference<Exception> firstFailure = new AtomicReference<>();
-        final boolean failFast = ROOM_LOADING_FAILFAST.getValue();
 
         for (MUCRoom room : rooms.values()) {
             executor.submit(() -> {
-                // Skip loading if fail-fast and a failure has already occurred
-                if (failFast && failedCount.get() > 0) {
+                // Skip loading if a failure has already occurred (fail-fast)
+                if (failedCount.get() > 0) {
                     return;
                 }
 
@@ -793,11 +783,7 @@ public class MUCPersistenceManager {
         }
 
         if (failedCount.get() > 0) {
-            if (failFast) {
-                throw new RuntimeException("Failed to load a room for chat service " + chatserver.getServiceName(), firstFailure.get());
-            }
-            Log.warn("Failed to load {} room(s) for chat service {}. See previous error messages for details.",
-                failedCount.get(), chatserver.getServiceName());
+            throw new RuntimeException("Failed to load a room for chat service " + chatserver.getServiceName(), firstFailure.get());
         }
 
         final Duration elapsedTime = Duration.between(startTime, Instant.now());

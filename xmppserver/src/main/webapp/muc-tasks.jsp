@@ -281,7 +281,7 @@
                 <td>
                     <label for="cb01"><fmt:message key="muc.tasks.ping_user" /></label>
                     <input type="number" min="1" id="pingtime" name="pingtime" size="5" maxlength="5" onclick="this.form.pingEnabled[1].checked=true;"
-                           value="${empty mucService.idleUserPingThreshold ? '8' : mucService.idleUserPingThreshold.toMinutes()}">
+                           value="${empty mucService.idleUserPingThreshold ? '240' : mucService.idleUserPingThreshold.toMinutes()}">
                     <label for="pingtime"><fmt:message key="global.minutes" /></label>.
                 </td>
             </tr>

@@ -36,6 +36,9 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.StreamError;
 
+import java.time.Duration;
+import java.time.Instant;
+
 /**
  * Binds a resource to the stream so that the client's address becomes a full JID. Once a resource
  * has been bound to the session the entity (i.e. client) is considered a "connected resource".
@@ -147,6 +150,15 @@ public class IQBindHandler extends IQHandler {
                             if (oldSession instanceof LocalClientSession) {
                                 sessionManager.removeDetached((LocalClientSession) oldSession);
                             }
+
+                            // OF-3155: Await closure of the old session, to prevent the _new_ session to be influenced by the closure process.
+                            final Instant deadline = Instant.now().plus(Duration.ofSeconds(20));
+                            do {
+                                // TODO find a better way to wait for closure than using a busy-wait mechanism. Using the connectionClosed event listener
+                                //      a) doesn't work in a cluster and
+                                //      b) doesn't reliably give an indication that all _other_ connectionClosed listeners have been called, which could still cause issues.
+                                Thread.sleep(Duration.ofMillis(50).toMillis());
+                            } while (Instant.now().isBefore(deadline) && routingTable.getClientRoute(desiredJid) != null);
                         } else {
                             Log.debug("Conflict resolution configuration does not allow kicking of old session (yet). Conflict count: {}, conflict limit: {}. Rejecting the bind request with error condition 'conflict'.", conflictCount, conflictLimit);
                             reply.setChildElement(packet.getChildElement().createCopy());

@@ -168,9 +168,9 @@ public class MUCPersistenceManagerTest
     // =====================================
 
     @Test
-    public void roomLoadingWorkersPropertyDefaultsToOne() {
-        // When no property is set, the default should be 1 (sequential loading)
-        assertThat(MUCPersistenceManager.ROOM_LOADING_WORKERS.getValue(), is(1));
+    public void roomLoadingWorkersPropertyDefaultsToTwo() {
+        // When no property is set, the default should be 2 (parallel loading with 2 workers)
+        assertThat(MUCPersistenceManager.ROOM_LOADING_WORKERS.getValue(), is(2));
     }
 
     @Test
@@ -187,27 +187,27 @@ public class MUCPersistenceManagerTest
     public void roomLoadingWorkersPropertyRejectsValueBelowMinimum() {
         // Values below 1 should be rejected and default should be used
         JiveGlobals.setProperty("xmpp.muc.loading.workers", "0");
-        assertThat(MUCPersistenceManager.ROOM_LOADING_WORKERS.getValue(), is(1));
+        assertThat(MUCPersistenceManager.ROOM_LOADING_WORKERS.getValue(), is(2));
 
         JiveGlobals.setProperty("xmpp.muc.loading.workers", "-1");
-        assertThat(MUCPersistenceManager.ROOM_LOADING_WORKERS.getValue(), is(1));
+        assertThat(MUCPersistenceManager.ROOM_LOADING_WORKERS.getValue(), is(2));
     }
 
     @Test
     public void roomLoadingWorkersPropertyRejectsValueAboveMaximum() {
         // Values above 5 should be rejected and default should be used
         JiveGlobals.setProperty("xmpp.muc.loading.workers", "6");
-        assertThat(MUCPersistenceManager.ROOM_LOADING_WORKERS.getValue(), is(1));
+        assertThat(MUCPersistenceManager.ROOM_LOADING_WORKERS.getValue(), is(2));
 
         JiveGlobals.setProperty("xmpp.muc.loading.workers", "10");
-        assertThat(MUCPersistenceManager.ROOM_LOADING_WORKERS.getValue(), is(1));
+        assertThat(MUCPersistenceManager.ROOM_LOADING_WORKERS.getValue(), is(2));
     }
 
     @Test
     public void roomLoadingWorkersPropertyRejectsNonNumericValues() {
         // Non-numeric values should be rejected and default should be used
         JiveGlobals.setProperty("xmpp.muc.loading.workers", "abc");
-        assertThat(MUCPersistenceManager.ROOM_LOADING_WORKERS.getValue(), is(1));
+        assertThat(MUCPersistenceManager.ROOM_LOADING_WORKERS.getValue(), is(2));
     }
 
     @Test

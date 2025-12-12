@@ -70,15 +70,15 @@ public class MUCPersistenceManager {
 
     /**
      * Controls the number of parallel workers used when loading MUC rooms from the database at
-     * service startup. A value of 1 (the default) loads rooms sequentially. Values 2-5 enable
-     * parallel loading which can improve startup time for services with many rooms, but increases
-     * database load. Consider your database's connection pool size and capacity before increasing
-     * this value.
+     * service startup. A value of 1 loads rooms sequentially. The default value of 2 and above
+     * enables parallel loading which can improve startup time for services with many rooms, but
+     * increases database load. Consider your database's connection pool size and capacity before
+     * increasing this value.
      */
     public static final SystemProperty<Integer> ROOM_LOADING_WORKERS = SystemProperty.Builder.ofType(Integer.class)
         .setKey("xmpp.muc.loading.workers")
         .setDynamic(false)
-        .setDefaultValue(1)
+        .setDefaultValue(2)
         .setMinValue(1)
         .setMaxValue(5)
         .build();

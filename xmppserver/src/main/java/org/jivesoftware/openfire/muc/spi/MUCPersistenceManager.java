@@ -23,8 +23,10 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.group.GroupJID;
 import org.jivesoftware.openfire.muc.*;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.NamedThreadFactory;
 import org.jivesoftware.util.SAXReaderUtil;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,10 +37,14 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.sql.*;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -61,6 +67,33 @@ public class MUCPersistenceManager {
     
     // property name for optional number of days to limit persistent MUC history during reload (OF-764)
     private static final String MUC_HISTORY_RELOAD_LIMIT = "xmpp.muc.history.reload.limit";
+
+    /**
+     * Controls the number of parallel workers used when loading MUC rooms from the database at
+     * service startup. A value of 1 loads rooms sequentially. The default value of 2 and above
+     * enables parallel loading which can improve startup time for services with many rooms, but
+     * increases database load. Consider your database's connection pool size and capacity before
+     * increasing this value.
+     */
+    public static final SystemProperty<Integer> ROOM_LOADING_WORKERS = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.muc.loading.workers")
+        .setDynamic(false)
+        .setDefaultValue(2)
+        .setMinValue(1)
+        .setMaxValue(5)
+        .build();
+
+    /**
+     * Defines the maximum duration to wait for loading MUC rooms from the database at service startup.
+     * If the loading process exceeds this timeout, it will be aborted. A value of zero (the default)
+     * indicates that no timeout is configured, and the process may run indefinitely.
+     */
+    public static final SystemProperty<Duration> ROOM_LOADING_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.muc.loading.timeout")
+        .setDynamic(false)
+        .setChronoUnit(ChronoUnit.MILLIS)
+        .setDefaultValue(Duration.ZERO)
+        .build();
 
     private static final String GET_RESERVED_NAME =
         "SELECT nickname FROM ofMucMember WHERE roomID=? AND jid=?";
@@ -698,7 +731,9 @@ public class MUCPersistenceManager {
      * @return a collection with all the persistent rooms.
      */
     public static Collection<MUCRoom> loadRoomsFromDB(MultiUserChatService chatserver, Date cleanupDate) {
-        Log.debug( "Loading rooms for chat service {}", chatserver.getServiceName() );
+        final int workers = ROOM_LOADING_WORKERS.getValue() < 1 ? 1 : ROOM_LOADING_WORKERS.getValue();
+        final Instant startTime = Instant.now();
+        Log.info( "Loading rooms for chat service {} using {} worker(s)", chatserver.getServiceName(), workers );
         Long serviceID = XMPPServer.getInstance().getMultiUserChatManager().getMultiUserChatServiceID(chatserver.getServiceName());
 
         final Map<Long, MUCRoom> rooms;
@@ -710,11 +745,49 @@ public class MUCPersistenceManager {
             return Collections.emptyList();
         }
 
+        // Parallel loading with configured number of workers
+        final ThreadFactory threadFactory = new NamedThreadFactory(
+            "MUC-RoomLoad-", Executors.defaultThreadFactory(), false, Thread.NORM_PRIORITY);
+        final ExecutorService executor = Executors.newFixedThreadPool(workers, threadFactory);
+        final AtomicInteger failedCount = new AtomicInteger(0);
+        final AtomicReference<Exception> firstFailure = new AtomicReference<>();
+
         for (MUCRoom room : rooms.values()) {
-            loadFromDB(room);
+            executor.submit(() -> {
+                // Skip loading if a failure has already occurred (fail-fast)
+                if (failedCount.get() > 0) {
+                    return;
+                }
+
+                try {
+                    loadFromDB(room);
+                } catch (Exception e) {
+                    Log.error("Failed to load room '{}' from database.", room.getName(), e);
+                    failedCount.incrementAndGet();
+                    firstFailure.compareAndSet(null, e);
+                }
+            });
         }
 
-        Log.debug( "Loaded {} rooms for chat service {}", rooms.size(), chatserver.getServiceName() );
+        executor.shutdown();
+        try {
+            final Duration timeout = ROOM_LOADING_TIMEOUT.getValue();
+            final boolean terminationSuccessful = executor.awaitTermination(timeout.isZero() ? Long.MAX_VALUE : timeout.toMillis(), TimeUnit.MILLISECONDS);
+            if (!terminationSuccessful) {
+                Log.warn("Room loading timed out after {}.", timeout);
+            }
+        } catch (InterruptedException e) {
+            Log.warn("Interrupted while waiting for MUC room loading to complete for service {}.",
+                chatserver.getServiceName(), e);
+            Thread.currentThread().interrupt();
+        }
+
+        if (failedCount.get() > 0) {
+            throw new RuntimeException("Failed to load a room for chat service " + chatserver.getServiceName(), firstFailure.get());
+        }
+
+        final Duration elapsedTime = Duration.between(startTime, Instant.now());
+        Log.info( "Loaded {} rooms for chat service {} in {}", rooms.size(), chatserver.getServiceName(), elapsedTime );
         return rooms.values();
     }
 

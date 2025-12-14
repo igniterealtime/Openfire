@@ -431,7 +431,7 @@
         <dependency>
             <groupId>com.twelvemonkeys.imageio</groupId>
             <artifactId>imageio-bmp</artifactId>
-            <version>3.9.4</version>
+            <version>3.12.0</version>
         </dependency>
         <dependency>
             <groupId>org.json</groupId>

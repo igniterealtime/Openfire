@@ -33,7 +33,7 @@ jobs:
             ./mvnw -B install
           fi
       - name: Upload failed test reports
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: Openfire Build Java ${{ matrix.java }} JUnit Test reports
@@ -43,19 +43,19 @@ jobs:
         run: tar -cf distribution-artifact.tar distribution/target/distribution-base
       - name: Upload distribution
         if: ${{ matrix.distribution == 'zulu' }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: Openfire Distribution Java ${{ matrix.java }}
           path: distribution-artifact.tar
       - name: Upload coverage report for 'xmppserver' module
         if: ${{ matrix.distribution == 'zulu' && matrix.java == 17 && github.ref_name == 'main'}}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: Openfire Build Java ${{ matrix.java }} Unit Test Coverage Report (for 'xmppserver' module)
           path: xmppserver/target/site/jacoco/
       - name: Temporarily stash openfire artifacts from the mvn repo for later jobs
         if: ${{ matrix.distribution == 'zulu' && matrix.java == 17 }}
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: Maven Repository
           path: ~/.m2/repository/org/igniterealtime/openfire/
@@ -103,7 +103,7 @@ jobs:
         run: ./mvnw -B verify
 
       - name: Upload test reports
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: Integration Test Reports
@@ -172,7 +172,7 @@ jobs:
           if [ ${PIPESTATUS[0]} -ne 0 ]; then false; fi;
       - name: Expose test output
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: Aioxmpp Test Output
           path: aioxmpp/output
@@ -181,7 +181,7 @@ jobs:
         uses: ./.github/actions/stopserver-action
       - name: Expose openfire output
         if: always()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: Aioxmpp Test Openfire logs
           path: distribution/target/distribution-base/logs/*

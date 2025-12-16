@@ -209,9 +209,9 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
      */
     public void registerMultiUserChatService(@Nonnull final MultiUserChatService service, final boolean allNodes) {
         Log.debug("Registering MUC service '{}'", service.getServiceName());
+        mucServices.put(service.getServiceName(), service);
         try {
             ComponentManagerFactory.getComponentManager().addComponent(service.getServiceName(), service);
-            mucServices.put(service.getServiceName(), service);
         }
         catch (ComponentException e) {
             Log.error("Unable to register MUC service '{}' as a component.", service.getServiceName(), e);
@@ -362,7 +362,7 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
             CacheFactory.doSynchronousClusterTask(new ServiceUpdatedEvent(subdomain), false);
         }
         else {
-            // Changing the subdomain, here's where it   gets complex.
+            // Changing the subdomain, here's where it gets complex.
 
             // Unregister existing muc service
             unregisterMultiUserChatService(subdomain, false);

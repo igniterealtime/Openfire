@@ -121,23 +121,27 @@
             }
 
             // Update settings only after the service has been created.
-            if (ParamUtils.getParameter(request, "muccleanupdays") != null || muckeep) { // Only explicitly store if set (otherwise use default).
-                MUCPersistenceManager.setProperty(mucname, "unload.empty_days", Integer.toString(muccleanupdays));
-            }
+            if (errors.isEmpty()) {
+                if (ParamUtils.getParameter(request, "muccleanupdays") != null || muckeep) { // Only explicitly store if set (otherwise use default).
+                    MUCPersistenceManager.setProperty(mucname, "unload.empty_days", Integer.toString(muccleanupdays));
+                }
 
-            if (ParamUtils.getParameter(request, "mucpreloaddays") != null || !mucpreload) { // Only explicitly store if set (otherwise use default).
-                MUCPersistenceManager.setProperty(mucname, "preload.days", Integer.toString(mucpreloaddays));
+                if (ParamUtils.getParameter(request, "mucpreloaddays") != null || !mucpreload) { // Only explicitly store if set (otherwise use default).
+                    MUCPersistenceManager.setProperty(mucname, "preload.days", Integer.toString(mucpreloaddays));
+                }
             }
 
             // Log the event
-            if (!create) {
-                webManager.logEvent("updated MUC service configuration for "+mucname, "name = "+mucname+"\ndescription = "+mucdesc+"\ncleanup = "+muccleanupdays+"\npreload = "+mucpreloaddays);
-                response.sendRedirect("muc-service-edit-form.jsp?success=true&mucname="+mucname);
-                return;
-            } else {
-                webManager.logEvent("created MUC service "+mucname, "name = "+mucname+"\ndescription = "+mucdesc+"\ncleanup = "+muccleanupdays+"\npreload = "+mucpreloaddays);
-                response.sendRedirect("muc-service-edit-form.jsp?success=true&mucname="+mucname);
-                return;
+            if (errors.isEmpty()) {
+                if (!create) {
+                    webManager.logEvent("updated MUC service configuration for " + mucname, "name = " + mucname + "\ndescription = " + mucdesc + "\ncleanup = " + muccleanupdays + "\npreload = " + mucpreloaddays);
+                    response.sendRedirect("muc-service-edit-form.jsp?success=true&mucname=" + mucname);
+                    return;
+                } else {
+                    webManager.logEvent("created MUC service " + mucname, "name = " + mucname + "\ndescription = " + mucdesc + "\ncleanup = " + muccleanupdays + "\npreload = " + mucpreloaddays);
+                    response.sendRedirect("muc-service-edit-form.jsp?success=true&mucname=" + mucname);
+                    return;
+                }
             }
         }
     }    

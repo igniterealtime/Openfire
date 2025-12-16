@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,8 @@
 
 package org.jivesoftware.util.cache;
 
-import org.jivesoftware.util.cache.Cacheable;
+import org.jivesoftware.openfire.OfflineMessage;
+import org.xmpp.packet.Packet;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -159,6 +160,32 @@ public class CacheSizes {
     }
 
     /**
+     * Returns the size in bytes of a Packet object.
+     *
+     * @param stanza the Packet object to determine the size of.
+     * @return the size of the Packet object.
+     * @throws CannotCalculateSizeException if the size cannot be calculated
+     */
+    public static int sizeOfPacket(Packet stanza)
+        throws CannotCalculateSizeException {
+        if (stanza == null) {
+            return 0;
+        }
+
+        // Generally speaking, subclasses of Packet do not add fields. State is primarily stored in the element.
+        int result = sizeOfObject();
+        result += sizeOfAnything(stanza.getElement());
+        result += sizeOfAnything(stanza.getFrom());
+        result += sizeOfAnything(stanza.getTo());
+
+        // Sub-class specific fields.
+        if (stanza instanceof OfflineMessage offlineMessage) {
+            result += sizeOfAnything(offlineMessage.getCreationDate());
+        }
+        return result;
+    }
+
+    /**
      * Returns the size of an object in bytes. Determining size by serialization
      * is only used as a last resort.
      *
@@ -204,6 +231,9 @@ public class CacheSizes {
         else if (object instanceof byte[]) {
             byte [] array = (byte[])object;
             return sizeOfObject() + array.length;
+        }
+        else if (object instanceof final Packet packet) {
+            return sizeOfPacket(packet);
         }
         // Default behavior -- serialize the object to determine its size.
         else {

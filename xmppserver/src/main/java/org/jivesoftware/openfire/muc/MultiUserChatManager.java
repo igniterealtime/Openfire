@@ -215,6 +215,8 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
         }
         catch (ComponentException e) {
             Log.error("Unable to register MUC service '{}' as a component.", service.getServiceName(), e);
+            mucServices.remove(service.getServiceName());
+            return;
         }
         if (allNodes) {
             if (service instanceof MultiUserChatServiceImpl) {

@@ -86,6 +86,10 @@ public class SANCertificateIdentityMapping implements CertificateIdentityMapping
             {
                 return Collections.emptyList();
             }
+
+            // OF-3159: Limit the number of SubjectAltNames to prevent abuse through resource exhaustion.
+            altNames = altNames.stream().limit(1024).toList();
+
             for ( List<?> item : altNames )
             {
                 final Integer type = (Integer) item.get( 0 );

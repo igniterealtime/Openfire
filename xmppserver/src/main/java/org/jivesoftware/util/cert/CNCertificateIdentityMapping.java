@@ -53,7 +53,12 @@ public class CNCertificateIdentityMapping implements CertificateIdentityMapping 
         final LdapName ln;
         try {
             ln = new LdapName(p.getName(X500Principal.RFC2253));
-            for (final Rdn rdn : ln.getRdns()) {
+            List<Rdn> rdns = ln.getRdns();
+
+            // OF-3159: Limit the number of RDNs to prevent abuse through resource exhaustion.
+            rdns = rdns.stream().limit(1024).toList();
+
+            for (final Rdn rdn : rdns) {
                 if ("CN".equalsIgnoreCase(rdn.getType())) {
                     names.add(rdn.getValue().toString());
                 }

@@ -129,10 +129,8 @@
                 if (ParamUtils.getParameter(request, "mucpreloaddays") != null || !mucpreload) { // Only explicitly store if set (otherwise use default).
                     MUCPersistenceManager.setProperty(mucname, "preload.days", Integer.toString(mucpreloaddays));
                 }
-            }
 
-            // Log the event
-            if (errors.isEmpty()) {
+                // Log the event
                 if (!create) {
                     webManager.logEvent("updated MUC service configuration for " + mucname, "name = " + mucname + "\ndescription = " + mucdesc + "\ncleanup = " + muccleanupdays + "\npreload = " + mucpreloaddays);
                     response.sendRedirect("muc-service-edit-form.jsp?success=true&mucname=" + mucname);

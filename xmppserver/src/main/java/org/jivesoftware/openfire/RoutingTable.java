@@ -163,18 +163,6 @@ public interface RoutingTable {
     boolean hasClientRoute(JID jid);
 
     /**
-     * Returns true if an anonymous user with the specified full JID is currently logged.
-     * When running inside of a cluster a true value will be returned as long as the
-     * user is connected to any cluster node.
-     *
-     * @param jid the full JID of the anonymous user.
-     * @return true if an anonymous user with the specified full JID is currently logged.
-     * @deprecated Replaced by {@link SessionManager#isAnonymousClientSession(JID)}
-     */
-    @Deprecated(forRemoval = true, since = "5.0.0") // Remove in or after Openfire 5.1.0
-    boolean isAnonymousRoute(JID jid);
-
-    /**
      * Returns true if the specified address belongs to a route that is hosted by this JVM.
      * When running inside of a cluster each cluster node will host routes to local resources.
      * A false value could either mean that the route is not hosted by this JVM but other

@@ -895,15 +895,6 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
     }
 
-    @Deprecated(forRemoval = true, since = "5.0.0") // Remove in or after Openfire 5.1.0    @Override
-    public boolean isAnonymousRoute(JID jid) {
-        if (jid.getNode() == null || jid.getResource() == null) {
-            Log.trace("isAnonymousRoute() invoked with a JID that's not a full JID: {}", jid);
-            return false;
-        }
-        return server.getSessionManager().isAnonymousClientSession(jid);
-    }
-
     @Override
     public boolean isLocalRoute(JID jid) {
         return localClientRoutingTable.isLocalRoute(jid) || localServerRoutingTable.isLocalRoute(jid) || localComponentRoutingTable.isLocalRoute(jid);

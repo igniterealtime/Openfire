@@ -351,6 +351,7 @@
         <dependency>
             <groupId>org.fusesource.jansi</groupId>
             <artifactId>jansi</artifactId>
+            <!-- Although there are newer versions of this library, those no longer contain the functionality that we're using it for. See https://github.com/fusesource/jansi/issues/210 -->
             <version>1.18</version>
         </dependency>
         <dependency>

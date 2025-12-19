@@ -50,14 +50,6 @@ public class Update {
      */
     private boolean downloaded;
 
-    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.1.0
-    public Update(String componentName, String latestVersion, String changelog, String url) {
-        this.componentName = componentName;
-        this.latestVersion = new Version(latestVersion);
-        this.changelog = changelog;
-        this.url = url;
-    }
-
     public Update(String componentName, Version latestVersion, String changelog, String url) {
         this.componentName = componentName;
         this.latestVersion = latestVersion;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -425,20 +425,24 @@ public final class UserManager {
      * domain-part does not match the local domain.
      *
      * <p>WARNING: If the supplied JID could be a remote user and the disco#info result packet comes back on the same
-     * thread as the one the calls this method then it will not be processed, and this method will block for 60 seconds
+     * thread as the one that calls this method, then it will not be processed, and this method will block for 60 seconds
      * by default. To change the timeout, update the system property <code>usermanager.remote-disco-info-timeout-seconds</code>
      *
-     * @param user to JID of the user to check it it's a registered user.
+     * @param user the JID of the user to check if it's a registered user.
      * @param checkRemoteDomains false the lookup is allowed to include calls to remote XMPP domains.
      * @return true if the specified JID belongs to a registered user.
      */
     public boolean isRegisteredUser(@Nonnull final JID user, final boolean checkRemoteDomains) {
+        if (user.getNode() == null) {
+            return false;
+        }
         if (xmppServer.isLocal(user)) {
             try {
                 getUser(user.getNode());
                 return true;
             }
             catch (final UserNotFoundException e) {
+                // FIXME: Exception-based control flow adds overhead, that leads to real-world problems. This should be replaced. See OF-3164
                 return false;
             }
         }
@@ -522,7 +526,7 @@ public final class UserManager {
      * @return True if the address could be used for a locally registered user, potentially not having registered yet.
      */
     public static boolean isPotentialFutureLocalUser(final JID user) {
-        return ALLOW_FUTURE_USERS.getValue() && XMPPServer.getInstance().isLocal(user) && !SessionManager.getInstance().isAnonymousClientSession(user);
+        return ALLOW_FUTURE_USERS.getValue() && user.getNode() != null && XMPPServer.getInstance().isLocal(user) && !SessionManager.getInstance().isAnonymousClientSession(user);
     }
 
     private static void initProvider(final Class<? extends UserProvider> clazz) {

@@ -29,16 +29,19 @@ import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.security.cert.CertificateRevokedException;
+import java.security.cert.X509Certificate;
 import java.time.Duration;
 
 /**
@@ -128,8 +131,24 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
                         return;
                     }
 
-                    if (!ServerDialback.isEnabled() && !ServerDialback.isEnabledForSelfSigned()) {
+                    if (!ServerDialback.isEnabled()) {
                         Log.warn("As peer's certificates are not valid for its domain ('{}'), the SASL EXTERNAL authentication mechanism cannot be used. The Server Dialback authentication mechanism is disabled by configuration. Aborting session, as this leaves no available authentication mechanisms.", domainPair.getRemote());
+                        stanzaHandler.setSession(null);
+                        stanzaHandler.setAttemptedAllAuthenticationMethods();
+                        ctx.channel().close();
+                        return;
+                    }
+
+                    boolean usingSelfSigned; 
+                    final Certificate[] chain = connection.getPeerCertificates();
+                    if (chain == null || chain.length == 0) {
+                        usingSelfSigned = true;
+                    } else {
+                        usingSelfSigned = CertificateManager.isSelfSignedCertificate((X509Certificate) chain[0]);
+                    }
+
+                    if (usingSelfSigned && !ServerDialback.isEnabledForSelfSigned()) {
+                        Log.warn("As peer's certificates are not valid for its domain ('{}'), the SASL EXTERNAL authentication mechanism cannot be used. The peer uses a selfsigned certificate and the Server Dialback authentication mechanism is not enabled for selfsigned certificate. Aborting session, as this leaves no available authentication mechanisms.", domainPair.getRemote());
                         stanzaHandler.setSession(null);
                         stanzaHandler.setAttemptedAllAuthenticationMethods();
                         ctx.channel().close();
@@ -144,7 +163,7 @@ public class NettyOutboundConnectionHandler extends NettyConnectionHandler {
                     // keys [XEP-0220] are used." In short: if Dialback is allowed, unauthenticated TLS is better than no TLS.
 
                     Log.warn("As peer's certificates are not valid for its domain ('{}'), the SASL EXTERNAL authentication mechanism cannot be used. The Server Dialback authentication mechanism is available.", domainPair.getRemote());
-
+ 
                     sendNewStreamHeader(connection);
                     connection.setEncrypted(true);
                     ctx.fireChannelActive();

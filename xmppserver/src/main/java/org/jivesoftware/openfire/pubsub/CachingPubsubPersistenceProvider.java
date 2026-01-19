@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2020-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -638,7 +638,6 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         }
 
         delegate.bulkPublishedItems( addList, delList );
-        flushPendingChanges( sendToCluster );
     }
 
     @Override

@@ -496,6 +496,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
 
         itemCache.put(itemKey, item);
         log.debug("Added new (inbound) item to cache");
+        boolean shouldFlush;
         synchronized (itemsPending) {
             // Remove any earlier 'adds' (this new one will replace those).
             final Deque<PublishedItem> adds = itemsToAdd.get(nodeKey);
@@ -516,9 +517,11 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
             }
 
             itemsPending.put(itemKey, item);
+
+            shouldFlush = itemsPending.size() > MAX_ITEMS_FLUSH;
         }
 
-        if (itemsPending.size() > MAX_ITEMS_FLUSH) {
+        if (shouldFlush) {
             TaskEngine.getInstance().submit(() -> flushPendingChanges(false));
         }
     }
@@ -616,6 +619,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         log.debug( "Removing published item {} {}", nodeKey, item.getID() );
 
         itemCache.remove(itemKey);
+        boolean shouldFlush;
         synchronized (itemsPending) {
             // Remove any earlier 'deletes' (this new one will replace those).
 //            final Deque<PublishedItem> deletes = itemsToDelete.get(nodeKey);
@@ -636,6 +640,12 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
             }
 
             itemsPending.remove(itemKey);
+
+            shouldFlush = itemsPending.size() > MAX_ITEMS_FLUSH;
+        }
+
+        if (shouldFlush) {
+            TaskEngine.getInstance().submit(() -> flushPendingChanges(false));
         }
     }
 

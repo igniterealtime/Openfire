@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+
+<adminconsole>
+    <tab id="testtab" name="A Test Tab" description="Testing 1 2 3">
+        <sidebar id="sidebar2" order="20" name="Sidebar B">
+            <item id="item2-3" name="Item C of Sidebar B" url="item2-3.jsp" order="3"/>
+            <item id="item2-1" name="Item A of Sidebar B" url="item2-1.jsp" order="1"/>
+            <item id="item2-2" name="Item B of Sidebar B" url="item2-2.jsp" order="2"/>
+        </sidebar>
+        <sidebar id="sidebar1" order="10" name="Sidebar A">
+            <item id="item1-3" name="Item C of Sidebar A" url="item1-3.jsp" order="3"/>
+            <item id="item1-1" name="Item A of Sidebar A" url="item1-1.jsp" order="1"/>
+            <item id="item1-2" name="Item B of Sidebar A" url="item1-2.jsp" order="2"/>
+        </sidebar>
+    </tab>
+</adminconsole>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -368,15 +368,6 @@ public class AdminConsole {
                 Element existingTab = getElemnetByID(id);
                 // Simple case, there is no existing tab with the same id.
                 if (existingTab == null) {
-                    // Make sure that the URL on the tab is set. If not, default to the
-                    // url of the first item.
-                    if (tab.attributeValue("url") == null) {
-                        Element firstItem = (Element) tab.selectSingleNode(
-                                "//item[@url]");
-                        if (firstItem != null) {
-                            tab.addAttribute("url", firstItem.attributeValue("url"));
-                        }
-                    }
                     generatedModel.add(tab.createCopy());
                 }
                 // More complex case -- a tab with the same id already exists.
@@ -390,6 +381,23 @@ public class AdminConsole {
 
         // OF-1484: Order everything explicitly.
         orderModel();
+
+        // Only after explicit ordering is applied (OF-3168), make sure that the URL on every tab is set. If not,
+        // default to the url of the first item.
+        for (Object o : generatedModel.selectNodes("//adminconsole//tab")) {
+            Element tab = (Element) o;
+            if (tab.attributeValue("url") == null) {
+                final List<Element> sidebars = tab.elements("sidebar");
+                if (!sidebars.isEmpty()) {
+                    sidebars.sort(new ElementByOrderAttributeComparator());
+                    final List<Element> items = sidebars.get(0).elements("item");
+                    if (!items.isEmpty()) {
+                        items.sort(new ElementByOrderAttributeComparator());
+                        tab.addAttribute("url", items.get(0).attributeValue("url"));
+                    }
+                }
+            }
+        }
     }
 
     /**

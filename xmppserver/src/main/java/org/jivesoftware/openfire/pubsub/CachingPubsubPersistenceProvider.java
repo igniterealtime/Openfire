@@ -29,13 +29,13 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
+import javax.annotation.concurrent.GuardedBy;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
-import java.util.stream.Collectors;
 
 /**
  * A persistence provider for Pub/Sub functionality that adds caching behavior. Instead of 'writing through' to the
@@ -90,23 +90,26 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
      * Queue that holds the (wrapped) items that need to be added to the database.
      */
     @VisibleForTesting
-    Deque<PublishedItem> itemsToAdd = new ConcurrentLinkedDeque<>();
+    @GuardedBy("itemsPending")
+    Map<Node.UniqueIdentifier, Deque<PublishedItem>> itemsToAdd = new HashMap<>();
 
     /**
      * Queue that holds the items that need to be deleted from the database.
      */
     @VisibleForTesting
-    Deque<PublishedItem> itemsToDelete = new ConcurrentLinkedDeque<>();
+    @GuardedBy("itemsPending")
+    Map<Node.UniqueIdentifier, Deque<PublishedItem>> itemsToDelete = new HashMap<>();
 
     /**
      * Keeps reference to published items that haven't been persisted yet so they
      * can be removed before being deleted.
      */
     @VisibleForTesting
-    final HashMap<PublishedItem.UniqueIdentifier, PublishedItem> itemsPending = new HashMap<>();
+    @GuardedBy("itemsPending")
+    final Map<PublishedItem.UniqueIdentifier, PublishedItem> itemsPending = new HashMap<>();
 
     @VisibleForTesting
-    final ConcurrentMap<Node.UniqueIdentifier, List<NodeOperation>> nodesToProcess = new ConcurrentHashMap<>();
+    final ConcurrentMap<Node.UniqueIdentifier, Deque<NodeOperation>> nodesToProcess = new ConcurrentHashMap<>();
 
     /**
      * Cache name for recently accessed published items.
@@ -176,12 +179,8 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
     {
         log.trace( "Flushing pending nodes (count: {})", nodesToProcess.size() );
 
-        // TODO verify that this is thread-safe.
-        final Iterator<List<NodeOperation>> iterator = nodesToProcess.values().iterator();
-        while (iterator.hasNext()) {
-            final List<NodeOperation> operations = iterator.next();
-            operations.forEach( this::process );
-            iterator.remove();
+        for (final Node.UniqueIdentifier nodeId : new ArrayList<>(nodesToProcess.keySet())) {
+            flushPendingNode(nodeId); // remove inside flushPendingNode() is safe because ConcurrentMap supports concurrent removal.
         }
     }
 
@@ -189,44 +188,37 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
     {
         log.trace( "Flushing pending nodes for service: {}", serviceIdentifier );
 
-        // TODO verify that this is thread-safe (hint: it's not!)
-        final Iterator<Map.Entry<Node.UniqueIdentifier, List<NodeOperation>>> iterator = nodesToProcess.entrySet().iterator();
-        while (iterator.hasNext()) {
-            final Map.Entry<Node.UniqueIdentifier,List<NodeOperation>> entry = iterator.next();
-            if ( serviceIdentifier.owns( entry.getKey() ) )
-            {
-                entry.getValue().forEach( this::process );
-                iterator.remove();
+        for (final Node.UniqueIdentifier nodeId : new ArrayList<>(nodesToProcess.keySet())) {
+            if (serviceIdentifier.owns(nodeId)) {
+                flushPendingNode(nodeId); // remove inside flushPendingNode() is safe because ConcurrentMap supports concurrent removal.
             }
         }
     }
 
     private void flushPendingNode( Node.UniqueIdentifier uniqueIdentifier )
     {
+        // TODO verify if this is having the desired effect. - nodes could be in a hierarchy, which could warrant for flushing the entire tree.
         log.trace( "Flushing pending node: {} for service: {}", uniqueIdentifier.getNodeId(), uniqueIdentifier.getServiceIdentifier().getServiceId() );
 
-        nodesToProcess.computeIfPresent( uniqueIdentifier , ( key, operations ) -> {
-            operations.forEach( operation -> log.trace("- {}", operation) );
-            // Returning null causes the mapping to removed from nodesToProcess.
-            return null;
-        } );
-        // TODO verify if this is having the desired effect. - nodes could be in a hierarchy, which could warrant for flushing the entire tree.
-        // TODO verify that this is thread-safe.
-        nodesToProcess.computeIfPresent( uniqueIdentifier , ( key, operations ) -> {
-            operations.forEach( this::process );
-            // Returning null causes the mapping to removed from nodesToProcess.
-            return null;
-        } );
+        final Deque<NodeOperation> operations = nodesToProcess.remove(uniqueIdentifier);
+        if (operations == null) {
+            return;
+        }
+
+        NodeOperation op;
+        while ((op = operations.pollFirst()) != null) {
+            process(op);
+        }
     }
 
     @Override
     public void createNode(Node node) {
         log.debug( "Creating node: {}", node.getUniqueIdentifier() );
-        final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ArrayList<>() );
+        final Deque<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>() );
         // Don't purge pending operations. It'd be odd for operations to already exist at this stage. It'd be possible for
         // a node to be recreated, which could mean that there's a DELETE. When there are other operations, the pre-'nodesToProcess'
         // behavior will kick in (which would presumably lead to database constraint-related exceptions).
-        operations.add( NodeOperation.create( node ) );
+        operations.addLast( NodeOperation.create( node ) );
 
         // If the node that's created is the root node of a service, persist it immediately. Without this, the pubsub (pep) service
         // that is defined by this root node doesn't exist, which causes issues when attempting to create the service. OF-2016
@@ -239,19 +231,19 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
     public void updateNode(Node node) {
         log.debug( "Updating node: {}", node.getUniqueIdentifier() );
 
-        final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ArrayList<>() );
+        final Deque<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>() );
 
         // This update can replace any pending updates (since the last create/delete or affiliation change).
-        final ListIterator<NodeOperation> iter = operations.listIterator( operations.size() );
-        while ( iter.hasPrevious() ) {
-            final NodeOperation operation = iter.previous();
-            if ( operation.action.equals( NodeOperation.Action.UPDATE ) ) {
+        final Iterator<NodeOperation> iter = operations.descendingIterator();
+        while ( iter.hasNext() ) {
+            final NodeOperation existing = iter.next();
+            if ( existing.action.equals( NodeOperation.Action.UPDATE ) ) {
                 iter.remove(); // This is replaced by the update that's being added.
             } else {
                 break; // Operations that precede anything other than the last operations that are UPDATE shouldn't be replaced.
             }
         }
-        operations.add( NodeOperation.update( node ));
+        operations.addLast( NodeOperation.update( node ));
     }
 
     @Override
@@ -262,12 +254,12 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
             purgeNode( (LeafNode) node );
         }
 
-        final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ArrayList<>() );
+        final Deque<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>() );
         final boolean hadCreate = operations.stream().anyMatch(operation -> operation.action.equals(NodeOperation.Action.CREATE));
         operations.removeIf(operation -> !operation.action.equals(NodeOperation.Action.REMOVE)); // Any previously recorded, but as of yet unsaved operations, can be skipped.
 
         if (!hadCreate) { // If one of the operations that have not been executed was a node create, we need not delete the node either.
-            operations.add(NodeOperation.remove(node));
+            operations.addLast(NodeOperation.remove(node));
         }
     }
 
@@ -314,22 +306,22 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
     public void createAffiliation(Node node, NodeAffiliate affiliate)
     {
         log.debug( "Creating node affiliation for {} (type: {}) on node {}", affiliate.getJID(), affiliate.getAffiliation(), node.getUniqueIdentifier() );
-        final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ArrayList<>() );
+        final Deque<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>() );
         final NodeOperation operation = NodeOperation.createAffiliation( node, affiliate );
-        operations.add( operation );
+        operations.addLast( operation );
     }
 
     @Override
     public void updateAffiliation(Node node, NodeAffiliate affiliate)
     {
         log.debug( "Updating node affiliation for {} (type: {}) on node {}", affiliate.getJID(), affiliate.getAffiliation(), node.getUniqueIdentifier() );
-        final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ArrayList<>() );
+        final Deque<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>() );
         // This affiliation update can replace any pending updates of the same affiliate (since the last create/delete of the node or affiliation change of this affiliate to the node).
-        final ListIterator<NodeOperation> iter = operations.listIterator( operations.size() );
-        while ( iter.hasPrevious() ) {
-            final NodeOperation op = iter.previous();
-            if ( op.action.equals( NodeOperation.Action.UPDATE_AFFILIATION ) ) {
-                if ( affiliate.getJID().equals( op.affiliate.getJID() ) ) {
+        final Iterator<NodeOperation> iter = operations.descendingIterator();
+        while ( iter.hasNext() ) {
+            final NodeOperation existing = iter.next();
+            if ( existing.action.equals( NodeOperation.Action.UPDATE_AFFILIATION ) ) {
+                if ( affiliate.getJID().equals( existing.affiliate.getJID() ) ) {
                     iter.remove(); // This is replaced by the update that's being added.
                 }
             } else {
@@ -338,22 +330,22 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         }
 
         final NodeOperation operation = NodeOperation.updateAffiliation( node, affiliate );
-        operations.add( operation );
+        operations.addLast( operation );
     }
 
     @Override
     public void removeAffiliation(Node node, NodeAffiliate affiliate) {
         log.debug( "Removing node affiliation for {} (type: {}) on node {}", affiliate.getJID(), affiliate.getAffiliation(), node.getUniqueIdentifier() );
-        final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ArrayList<>() );
+        final Deque<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>() );
 
         // This affiliation removal can replace any pending creation, update or delete of the same affiliate (since the last create/delete of the node or affiliation change of this affiliate to the node).
         boolean hadCreate = false;
-        final ListIterator<NodeOperation> iter = operations.listIterator( operations.size() );
-        while ( iter.hasPrevious() ) {
-            final NodeOperation operation = iter.previous();
-            if ( Arrays.asList( NodeOperation.Action.CREATE_AFFILIATION, NodeOperation.Action.UPDATE_AFFILIATION ).contains( operation.action ) ) {
-                if ( affiliate.getJID().equals( operation.affiliate.getJID() ) ) {
-                    if (operation.action.equals(NodeOperation.Action.CREATE_AFFILIATION)) {
+        final Iterator<NodeOperation> iter = operations.descendingIterator();
+        while ( iter.hasNext() ) {
+            final NodeOperation existing = iter.next();
+            if ( Arrays.asList( NodeOperation.Action.CREATE_AFFILIATION, NodeOperation.Action.UPDATE_AFFILIATION ).contains( existing.action ) ) {
+                if ( affiliate.getJID().equals( existing.affiliate.getJID() ) ) {
+                    if (existing.action.equals(NodeOperation.Action.CREATE_AFFILIATION)) {
                         hadCreate = true;
                     }
                     iter.remove(); // This is replaced by the update that's being added.
@@ -364,7 +356,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         }
 
         if (!hadCreate) { // If one of the operations that have not been executed was an affiliation create, we need not delete the affiliation either.
-            operations.add(NodeOperation.removeAffiliation(node, affiliate));
+            operations.addLast(NodeOperation.removeAffiliation(node, affiliate));
         }
     }
 
@@ -372,20 +364,20 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
     public void createSubscription(Node node, NodeSubscription subscription) {
         log.debug( "Creating node subscription for owner {} to node {} (subscription ID: {})", subscription.getOwner(), node.getUniqueIdentifier(), subscription.getID() );
 
-        final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ArrayList<>() );
+        final Deque<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>() );
         final NodeOperation operation = NodeOperation.createSubscription( node, subscription );
-        operations.add( operation );
+        operations.addLast( operation );
     }
 
     @Override
     public void updateSubscription(Node node, NodeSubscription subscription) {
         log.debug( "Updating node subscription for owner {} to node {} (subscription ID: {})", subscription.getOwner(), node.getUniqueIdentifier(), subscription.getID() );
-        final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ArrayList<>() );
+        final Deque<NodeOperation> operations = nodesToProcess.computeIfAbsent( node.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>() );
 
         // This subscription update can replace any pending updates of the same subscription (since the last create/delete of the node or subscription change of this affiliate to the node).
-        final ListIterator<NodeOperation> iter = operations.listIterator( operations.size() );
-        while ( iter.hasPrevious() ) {
-            final NodeOperation op = iter.previous();
+        final Iterator<NodeOperation> iter = operations.descendingIterator();
+        while ( iter.hasNext() ) {
+            final NodeOperation op = iter.next();
             if ( op.action.equals( NodeOperation.Action.UPDATE_SUBSCRIPTION ) ) {
                 if ( subscription.getID().equals( op.subscription.getID() ) ) {
                     iter.remove(); // This is replaced by the update that's being added.
@@ -396,20 +388,20 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         }
 
         final NodeOperation operation = NodeOperation.updateSubscription( node, subscription );
-        operations.add( operation );
+        operations.addLast( operation );
     }
 
     @Override
     public void removeSubscription(NodeSubscription subscription) {
         log.debug( "Removing node subscription for owner {} to node {} (subscription ID: {})", subscription.getOwner(), subscription.getNode().getUniqueIdentifier(), subscription.getID() );
 
-        final List<NodeOperation> operations = nodesToProcess.computeIfAbsent( subscription.getNode().getUniqueIdentifier(), id -> new ArrayList<>() );
+        final Deque<NodeOperation> operations = nodesToProcess.computeIfAbsent( subscription.getNode().getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>() );
 
         // This subscription removal can replace any pending creation or update of the same subscription (since the last create/delete of the node or subscription change of this subscription to the node).
         boolean hadCreate = false;
-        final ListIterator<NodeOperation> iter = operations.listIterator( operations.size() );
-        while ( iter.hasPrevious() ) {
-            final NodeOperation operation = iter.previous();
+        final Iterator<NodeOperation> iter = operations.descendingIterator();
+        while ( iter.hasNext() ) {
+            final NodeOperation operation = iter.next();
             if ( Arrays.asList( NodeOperation.Action.CREATE_SUBSCRIPTION, NodeOperation.Action.UPDATE_SUBSCRIPTION ).contains( operation.action ) ) {
                 if ( subscription.getID().equals( operation.subscription.getID() ) ) {
                     if (operation.action == NodeOperation.Action.CREATE_SUBSCRIPTION) {
@@ -423,7 +415,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         }
 
         if (!hadCreate) { // If one of the operations that have not been executed was a subscription create, we need not delete the subscription either.
-            operations.add(NodeOperation.removeSubscription(subscription.getNode(), subscription));
+            operations.addLast(NodeOperation.removeSubscription(subscription.getNode(), subscription));
         }
     }
 
@@ -478,8 +470,8 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         // If there are any pending items for this node, don't bother processing them.
         synchronized (itemsPending) {
             itemsPending.values().removeIf( publishedItem -> leafNode.getUniqueIdentifier().equals( publishedItem.getNode().getUniqueIdentifier() ) );
-            itemsToAdd.removeIf( publishedItem -> leafNode.getUniqueIdentifier().equals( publishedItem.getNode().getUniqueIdentifier() ) );
-            itemsToDelete.removeIf( publishedItem -> leafNode.getUniqueIdentifier().equals( publishedItem.getNode().getUniqueIdentifier() ) );
+            itemsToAdd.remove(leafNode.getUniqueIdentifier());
+            itemsToDelete.remove(leafNode.getUniqueIdentifier());
         }
 
         // drop cached items for purged node
@@ -498,21 +490,31 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
 
     @Override
     public void savePublishedItem(PublishedItem item) {
-        log.debug( "Saving published item {} {}", item.getNode().getUniqueIdentifier(), item.getID() );
+        final Node.UniqueIdentifier nodeKey = item.getNode().getUniqueIdentifier();
+        final PublishedItem.UniqueIdentifier itemKey = item.getUniqueIdentifier();
+        log.debug( "Saving published item {} {}", nodeKey, item.getID() );
 
-        PublishedItem.UniqueIdentifier itemKey = item.getUniqueIdentifier();
         itemCache.put(itemKey, item);
         log.debug("Added new (inbound) item to cache");
         synchronized (itemsPending) {
-            PublishedItem itemToReplace = itemsPending.remove(itemKey);
-            if (itemToReplace != null) {
-                itemsToAdd.remove(itemToReplace); // remove duplicate from itemsToAdd linked list
+            // Remove any earlier 'adds' (this new one will replace those).
+            final Deque<PublishedItem> adds = itemsToAdd.get(nodeKey);
+            if (adds != null) {
+                adds.removeIf(i -> i.getUniqueIdentifier().equals(itemKey));
             }
 
-            // TODO this iterates over all elements in the collection. See if this can be improved for performance.
-            itemsToDelete.removeIf(scheduledItem -> item.getUniqueIdentifier().equals(scheduledItem.getUniqueIdentifier()));
+            // Add to per-node add queue
+            itemsToAdd.computeIfAbsent(nodeKey, k -> new ArrayDeque<>()).addLast(item);
 
-            itemsToAdd.addLast(item);
+            // Remove from delete queue (as we're now storing a new item with that ID, that one shouldn't be removed)
+            final Deque<PublishedItem> deletes = itemsToDelete.get(nodeKey);
+            if (deletes != null) {
+                deletes.removeIf(i -> i.getUniqueIdentifier().equals(itemKey));
+                if (deletes.isEmpty()) {
+                    itemsToDelete.remove(nodeKey);
+                }
+            }
+
             itemsPending.put(itemKey, item);
         }
 
@@ -543,35 +545,26 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         List<PublishedItem> addList;
         List<PublishedItem> delList;
 
-        // Swap pending items so we can parse and save the contents from this point in time
-        // while not blocking new entries from being cached.
         synchronized(itemsPending)
         {
-            // find items for node.
+            final Deque<PublishedItem> adds = itemsToAdd.remove(nodeUniqueId);
+            final Deque<PublishedItem> deletes = itemsToDelete.remove(nodeUniqueId);
 
-            // Split the to-do list in two parts: one that contains items for the node of interest, and the rest.
-            final Map<Boolean, List<PublishedItem>> partsToAdd = itemsToAdd.stream().collect(
-                    Collectors.partitioningBy( publishedItem -> nodeUniqueId.equals( publishedItem.getNode().getUniqueIdentifier() ) )
-            );
-            addList = new ArrayList<>( partsToAdd.get( true ) ); // All elements that match must be processed.
-            itemsToAdd.retainAll( partsToAdd.get(false) ); // Non-matching elements remain on the to-do list.
+            addList = adds == null ? Collections.emptyList() : new ArrayList<>(adds);
+            delList = deletes == null ? Collections.emptyList() : new ArrayList<>(deletes);
 
-            // Split the to-do list in two parts: one that contains items for the node of interest, and the rest.
-            final Map<Boolean, List<PublishedItem>> partsToDelete = itemsToDelete.stream().collect(
-                    Collectors.partitioningBy( publishedItem -> nodeUniqueId.equals( publishedItem.getNode().getUniqueIdentifier() ) )
-            );
-            delList = new ArrayList<>( partsToDelete.get( true ) ); // All elements that match must be processed.
-            itemsToDelete.retainAll( partsToDelete.get(false) ); // Non-matching elements remain on the to-do list.
+            // Remove flushed items from itemsPending map
+            addList.forEach(i -> itemsPending.remove(i.getUniqueIdentifier()));
+            delList.forEach(i -> itemsPending.remove(i.getUniqueIdentifier()));
 
             // Ensure pending items are available via the item read cache;
             // this allows the item(s) to be fetched by other request threads
             // while being written to the DB from this thread
             // TODO Determine if this works as intended when items are being queued for adding as well as removal.
             int copied = 0;
-            for (final PublishedItem itemToAdd : itemsToAdd) {
+            for (final PublishedItem itemToAdd : addList) {
                 final PublishedItem.UniqueIdentifier key = itemToAdd.getUniqueIdentifier();
                 if (!itemCache.containsKey(key)) {
-                    itemsPending.remove( key );
                     itemCache.put(key, itemToAdd);
                     copied++;
                 }
@@ -607,50 +600,42 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
             return;	 // Nothing left to do for this cluster member.
         }
 
-        List<PublishedItem> addList;
-        List<PublishedItem> delList;
-
-        // Swap pending items so we can parse and save the contents from this point in time
-        // while not blocking new entries from being cached.
-        synchronized(itemsPending)
-        {
-            addList = new ArrayList<>( itemsToAdd );
-            delList = new ArrayList<>( itemsToDelete );
-
-            itemsToAdd = new ConcurrentLinkedDeque<>();
-            itemsToDelete = new ConcurrentLinkedDeque<>();
-
-            // Ensure pending items are available via the item read cache;
-            // this allows the item(s) to be fetched by other request threads
-            // while being written to the DB from this thread
-            // TODO Determine if this works as intended when items are being queued for adding as well as removal.
-            int copied = 0;
-            for ( PublishedItem.UniqueIdentifier key : itemsPending.keySet()) {
-                if (!itemCache.containsKey(key)) {
-                    itemCache.put(key, itemsPending.get(key));
-                    copied++;
-                }
-            }
-            if (log.isDebugEnabled() && copied > 0) {
-                log.debug("Added " + copied + " pending items to published item cache");
-            }
-            itemsPending.clear();
+        // Flush per node. Create a snapshot to avoid concurrent modification exceptions.
+        for (final Node.UniqueIdentifier nodeId : new ArrayList<>(itemsToAdd.keySet())) {
+            flushPendingChanges(nodeId, sendToCluster);
         }
-
-        delegate.bulkPublishedItems( addList, delList );
+        for (final Node.UniqueIdentifier nodeId : new ArrayList<>(itemsToDelete.keySet())) {
+            flushPendingChanges(nodeId, sendToCluster);
+        }
     }
 
     @Override
     public void removePublishedItem(PublishedItem item) {
-        PublishedItem.UniqueIdentifier itemKey = item.getUniqueIdentifier();
+        final PublishedItem.UniqueIdentifier itemKey = item.getUniqueIdentifier();
+        final Node.UniqueIdentifier nodeKey = item.getNode().getUniqueIdentifier();
+        log.debug( "Removing published item {} {}", nodeKey, item.getID() );
+
         itemCache.remove(itemKey);
-        synchronized (itemsPending)
-        {
-            itemsToDelete.addLast(item);
-            PublishedItem itemToReplace = itemsPending.remove(itemKey);
-            if (itemToReplace != null) {
-                itemsToAdd.remove(itemToReplace); // remove duplicate from itemsToAdd linked list
+        synchronized (itemsPending) {
+            // Remove any earlier 'deletes' (this new one will replace those).
+//            final Deque<PublishedItem> deletes = itemsToDelete.get(nodeKey);
+//            if (deletes != null) {
+//                deletes.removeIf(i -> i.getUniqueIdentifier().equals(itemKey));
+//            }
+
+            // Add to per-node delete queue
+            itemsToDelete.computeIfAbsent(nodeKey, k -> new ArrayDeque<>()).addLast(item);
+
+            // Remove from add queue (as we're now deleting an item with that ID, that one shouldn't be added)
+            final Deque<PublishedItem> adds = itemsToAdd.get(nodeKey);
+            if (adds != null) {
+                adds.removeIf(i -> i.getUniqueIdentifier().equals(itemKey));
+                if (adds.isEmpty()) {
+                    itemsToAdd.remove(nodeKey);
+                }
             }
+
+            itemsPending.remove(itemKey);
         }
     }
 

@@ -19,7 +19,6 @@ import com.google.common.annotations.VisibleForTesting;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.pep.PEPService;
 import org.jivesoftware.openfire.pubsub.cluster.FlushTask;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.cache.Cache;
@@ -31,6 +30,7 @@ import org.xmpp.packet.JID;
 import javax.annotation.Nonnull;
 import javax.annotation.concurrent.GuardedBy;
 import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedDeque;
@@ -64,6 +64,27 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
         .build();
 
     /**
+     * Flush timer delay is configurable, but not less than 20 seconds (default: 2 mins)
+     */
+    public static final SystemProperty<Duration> FLUSH_TIMER_DELAY = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.pubsub.flush.timer")
+        .setChronoUnit(ChronoUnit.SECONDS)
+        .setDynamic(false)
+        .setDefaultValue(Duration.ofSeconds(120))
+        .setMinValue(Duration.ofSeconds(20))
+        .build();
+
+    /**
+     * Maximum number of published items allowed in the write cache
+     * before being flushed to the database.
+     */
+    public static final SystemProperty<Integer> MAX_ITEMS_FLUSH = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.pubsub.flush.max")
+        .setDynamic(true)
+        .setDefaultValue(1000)
+        .build();
+
+    /**
      * The delegate instance, used by this instance to interact with persistent data storage.
      */
     @VisibleForTesting
@@ -74,17 +95,6 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
      * within a cluster (so they don't run at the same time on all members).
      */
     private final Random prng = new Random();
-
-    /**
-     * Flush timer delay is configurable, but not less than 20 seconds (default: 2 mins)
-     */
-    private static final Duration flushTimerDelay = Duration.ofSeconds(Math.max( 20, JiveGlobals.getIntProperty( "xmpp.pubsub.flush.timer", 120)));
-
-    /**
-     * Maximum number of published items allowed in the write cache
-     * before being flushed to the database.
-     */
-    private static final int MAX_ITEMS_FLUSH = JiveGlobals.getIntProperty("xmpp.pubsub.flush.max", 1000);
 
     /**
      * Queue that holds the (wrapped) items that need to be added to the database.
@@ -130,13 +140,13 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
 
         initDelegate();
         try {
-            if (MAX_ITEMS_FLUSH > 0) {
+            if (MAX_ITEMS_FLUSH.getValue() > 0) {
                 flushTask = new TimerTask()
                 {
                     @Override
                     public void run() { flushPendingChanges(false ); } // this member only
                 };
-                TaskEngine.getInstance().schedule(flushTask, Duration.ofMillis(Math.abs(prng.nextLong())%flushTimerDelay.toMillis()), flushTimerDelay);
+                TaskEngine.getInstance().schedule(flushTask, Duration.ofMillis(Math.abs(prng.nextLong())%FLUSH_TIMER_DELAY.getValue().toMillis()), FLUSH_TIMER_DELAY.getValue());
             }
 
         } catch (Exception ex) {
@@ -518,7 +528,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
 
             itemsPending.put(itemKey, item);
 
-            shouldFlush = itemsPending.size() > MAX_ITEMS_FLUSH;
+            shouldFlush = itemsPending.size() > MAX_ITEMS_FLUSH.getValue();
         }
 
         if (shouldFlush) {
@@ -641,7 +651,7 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
 
             itemsPending.remove(itemKey);
 
-            shouldFlush = itemsPending.size() > MAX_ITEMS_FLUSH;
+            shouldFlush = itemsPending.size() > MAX_ITEMS_FLUSH.getValue();
         }
 
         if (shouldFlush) {

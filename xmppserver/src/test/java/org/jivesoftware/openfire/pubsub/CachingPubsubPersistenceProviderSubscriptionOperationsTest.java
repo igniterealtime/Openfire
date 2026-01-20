@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2025-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.xmpp.packet.JID;
 
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -56,10 +58,10 @@ public class CachingPubsubPersistenceProviderSubscriptionOperationsTest
         provider.createSubscription(mockNode, subscription);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(1, pending.size());
 
-        final CachingPubsubPersistenceProvider.NodeOperation nodeOperation = pending.get(0);
+        final CachingPubsubPersistenceProvider.NodeOperation nodeOperation = pending.getFirst();
         assertEquals(mockNode.getUniqueIdentifier(), nodeOperation.node.getUniqueIdentifier());
         assertEquals(CachingPubsubPersistenceProvider.NodeOperation.Action.CREATE_SUBSCRIPTION, nodeOperation.action);
         assertEquals(subscriptionId, nodeOperation.subscription.getID());
@@ -89,10 +91,10 @@ public class CachingPubsubPersistenceProviderSubscriptionOperationsTest
         provider.updateSubscription(mockNode, subscription);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(1, pending.size());
 
-        final CachingPubsubPersistenceProvider.NodeOperation nodeOperation = pending.get(0);
+        final CachingPubsubPersistenceProvider.NodeOperation nodeOperation = pending.getFirst();
         assertEquals(mockNode.getUniqueIdentifier(), nodeOperation.node.getUniqueIdentifier());
         assertEquals(CachingPubsubPersistenceProvider.NodeOperation.Action.UPDATE_SUBSCRIPTION, nodeOperation.action);
         assertEquals(subscriptionId, nodeOperation.subscription.getID());
@@ -122,10 +124,10 @@ public class CachingPubsubPersistenceProviderSubscriptionOperationsTest
         provider.removeSubscription(subscription);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(1, pending.size());
 
-        final CachingPubsubPersistenceProvider.NodeOperation nodeOperation = pending.get(0);
+        final CachingPubsubPersistenceProvider.NodeOperation nodeOperation = pending.getFirst();
         assertEquals(mockNode.getUniqueIdentifier(), nodeOperation.node.getUniqueIdentifier());
         assertEquals(CachingPubsubPersistenceProvider.NodeOperation.Action.REMOVE_SUBSCRIPTION, nodeOperation.action);
         assertEquals(subscriptionId, nodeOperation.subscription.getID());
@@ -162,16 +164,16 @@ public class CachingPubsubPersistenceProviderSubscriptionOperationsTest
         provider.createSubscription(mockNode, subscription);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(2, pending.size());
 
-        final CachingPubsubPersistenceProvider.NodeOperation firstNodeOperation = pending.get(0);
+        final CachingPubsubPersistenceProvider.NodeOperation firstNodeOperation = pending.getFirst();
         assertEquals(mockNode.getUniqueIdentifier(), firstNodeOperation.node.getUniqueIdentifier());
         assertEquals(CachingPubsubPersistenceProvider.NodeOperation.Action.CREATE_SUBSCRIPTION, firstNodeOperation.action);
         assertEquals(subscriptionId, firstNodeOperation.subscription.getID());
         assertNull(firstNodeOperation.affiliate);
 
-        final CachingPubsubPersistenceProvider.NodeOperation secondNodeOperation = pending.get(1);
+        final CachingPubsubPersistenceProvider.NodeOperation secondNodeOperation = new ArrayList<>(pending).get(1);
         assertEquals(mockNode.getUniqueIdentifier(), secondNodeOperation.node.getUniqueIdentifier());
         assertEquals(CachingPubsubPersistenceProvider.NodeOperation.Action.CREATE_SUBSCRIPTION, secondNodeOperation.action);
         assertEquals(subscriptionId, secondNodeOperation.subscription.getID());
@@ -207,10 +209,10 @@ public class CachingPubsubPersistenceProviderSubscriptionOperationsTest
         provider.createSubscription(mockNode, secondSubscription);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(2, pending.size());
 
-        final CachingPubsubPersistenceProvider.NodeOperation firstNodeOperation = pending.get(0);
+        final CachingPubsubPersistenceProvider.NodeOperation firstNodeOperation = pending.getFirst();
         assertEquals(mockNode.getUniqueIdentifier(), firstNodeOperation.node.getUniqueIdentifier());
         assertEquals(CachingPubsubPersistenceProvider.NodeOperation.Action.CREATE_SUBSCRIPTION, firstNodeOperation.action);
         assertEquals(firstSubscriptionId, firstNodeOperation.subscription.getID());
@@ -218,7 +220,7 @@ public class CachingPubsubPersistenceProviderSubscriptionOperationsTest
         assertEquals(firstSubscriber, firstNodeOperation.subscription.getOwner());
         assertNull(firstNodeOperation.affiliate);
 
-        final CachingPubsubPersistenceProvider.NodeOperation secondNodeOperation = pending.get(1);
+        final CachingPubsubPersistenceProvider.NodeOperation secondNodeOperation = new ArrayList<>(pending).get(1);
         assertEquals(mockNode.getUniqueIdentifier(), secondNodeOperation.node.getUniqueIdentifier());
         assertEquals(CachingPubsubPersistenceProvider.NodeOperation.Action.CREATE_SUBSCRIPTION, secondNodeOperation.action);
         assertEquals(secondSubscriptionId, secondNodeOperation.subscription.getID());
@@ -257,10 +259,10 @@ public class CachingPubsubPersistenceProviderSubscriptionOperationsTest
         provider.updateSubscription(mockNode, secondSubscription);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(1, pending.size());
 
-        final CachingPubsubPersistenceProvider.NodeOperation nodeOperation = pending.get(0);
+        final CachingPubsubPersistenceProvider.NodeOperation nodeOperation = pending.getFirst();
         assertEquals(mockNode.getUniqueIdentifier(), nodeOperation.node.getUniqueIdentifier());
         assertEquals(CachingPubsubPersistenceProvider.NodeOperation.Action.UPDATE_SUBSCRIPTION, nodeOperation.action);
         assertEquals(subscriptionId, nodeOperation.subscription.getID());
@@ -297,7 +299,7 @@ public class CachingPubsubPersistenceProviderSubscriptionOperationsTest
         provider.removeSubscription(subscription);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(0, pending.size());
 
         assertEquals(0, provider.itemsPending.size());
@@ -328,16 +330,16 @@ public class CachingPubsubPersistenceProviderSubscriptionOperationsTest
         provider.createSubscription(mockNode, subscription);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(2, pending.size());
 
-        final CachingPubsubPersistenceProvider.NodeOperation firstOperation = pending.get(0);
+        final CachingPubsubPersistenceProvider.NodeOperation firstOperation = pending.getFirst();
         assertEquals(mockNode.getUniqueIdentifier(), firstOperation.node.getUniqueIdentifier());
         assertEquals(CachingPubsubPersistenceProvider.NodeOperation.Action.REMOVE_SUBSCRIPTION, firstOperation.action);
         assertEquals(subscriptionId, firstOperation.subscription.getID());
         assertNull(firstOperation.affiliate);
 
-        final CachingPubsubPersistenceProvider.NodeOperation secondOperation = pending.get(1);
+        final CachingPubsubPersistenceProvider.NodeOperation secondOperation = new ArrayList<>(pending).get(1);
         assertEquals(mockNode.getUniqueIdentifier(), secondOperation.node.getUniqueIdentifier());
         assertEquals(CachingPubsubPersistenceProvider.NodeOperation.Action.CREATE_SUBSCRIPTION, secondOperation.action);
         assertEquals(subscriptionId, secondOperation.subscription.getID());
@@ -376,10 +378,10 @@ public class CachingPubsubPersistenceProviderSubscriptionOperationsTest
         provider.createSubscription(mockNode, subscription);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(1, pending.size());
 
-        final CachingPubsubPersistenceProvider.NodeOperation nodeOperation = pending.get(0);
+        final CachingPubsubPersistenceProvider.NodeOperation nodeOperation = pending.getFirst();
         assertEquals(mockNode.getUniqueIdentifier(), nodeOperation.node.getUniqueIdentifier());
         assertEquals(CachingPubsubPersistenceProvider.NodeOperation.Action.CREATE_SUBSCRIPTION, nodeOperation.action);
         assertEquals(subscriptionId, nodeOperation.subscription.getID());
@@ -416,10 +418,10 @@ public class CachingPubsubPersistenceProviderSubscriptionOperationsTest
         provider.removeSubscription(subscription);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(1, pending.size());
 
-        final CachingPubsubPersistenceProvider.NodeOperation nodeOperation = pending.get(0);
+        final CachingPubsubPersistenceProvider.NodeOperation nodeOperation = pending.getFirst();
         assertEquals(mockNode.getUniqueIdentifier(), nodeOperation.node.getUniqueIdentifier());
         assertEquals(CachingPubsubPersistenceProvider.NodeOperation.Action.REMOVE_SUBSCRIPTION, nodeOperation.action);
         assertEquals(subscriptionId, nodeOperation.subscription.getID());
@@ -458,7 +460,7 @@ public class CachingPubsubPersistenceProviderSubscriptionOperationsTest
         provider.removeSubscription(subscription);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(0, pending.size());
 
         assertEquals(0, provider.itemsPending.size());
@@ -492,16 +494,16 @@ public class CachingPubsubPersistenceProviderSubscriptionOperationsTest
         provider.removeSubscription(subscription);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(2, pending.size());
 
-        final CachingPubsubPersistenceProvider.NodeOperation firstNodeOperation = pending.get(0);
+        final CachingPubsubPersistenceProvider.NodeOperation firstNodeOperation = pending.getFirst();
         assertEquals(mockNode.getUniqueIdentifier(), firstNodeOperation.node.getUniqueIdentifier());
         assertEquals(CachingPubsubPersistenceProvider.NodeOperation.Action.REMOVE_SUBSCRIPTION, firstNodeOperation.action);
         assertEquals(subscriptionId, firstNodeOperation.subscription.getID());
         assertNull(firstNodeOperation.affiliate);
 
-        final CachingPubsubPersistenceProvider.NodeOperation secondNodeOperation = pending.get(1);
+        final CachingPubsubPersistenceProvider.NodeOperation secondNodeOperation = new ArrayList<>(pending).get(1);
         assertEquals(mockNode.getUniqueIdentifier(), secondNodeOperation.node.getUniqueIdentifier());
         assertEquals(CachingPubsubPersistenceProvider.NodeOperation.Action.REMOVE_SUBSCRIPTION, secondNodeOperation.action);
         assertEquals(subscriptionId, firstNodeOperation.subscription.getID());
@@ -540,16 +542,16 @@ public class CachingPubsubPersistenceProviderSubscriptionOperationsTest
         provider.removeSubscription(secondSubscription);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(2, pending.size());
 
-        final CachingPubsubPersistenceProvider.NodeOperation firstNodeOperation = pending.get(0);
+        final CachingPubsubPersistenceProvider.NodeOperation firstNodeOperation = pending.getFirst();
         assertEquals(mockNode.getUniqueIdentifier(), firstNodeOperation.node.getUniqueIdentifier());
         assertEquals(CachingPubsubPersistenceProvider.NodeOperation.Action.CREATE_SUBSCRIPTION, firstNodeOperation.action);
         assertEquals(firstSubscriptionId, firstNodeOperation.subscription.getID());
         assertNull(firstNodeOperation.affiliate);
 
-        final CachingPubsubPersistenceProvider.NodeOperation secondNodeOperation = pending.get(1);
+        final CachingPubsubPersistenceProvider.NodeOperation secondNodeOperation = new ArrayList<>(pending).get(1);
         assertEquals(mockNode.getUniqueIdentifier(), secondNodeOperation.node.getUniqueIdentifier());
         assertEquals(CachingPubsubPersistenceProvider.NodeOperation.Action.REMOVE_SUBSCRIPTION, secondNodeOperation.action);
         assertEquals(secondSubscriptionId, secondNodeOperation.subscription.getID());
@@ -587,16 +589,16 @@ public class CachingPubsubPersistenceProviderSubscriptionOperationsTest
         provider.updateSubscription(mockNode, secondSubscription);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(2, pending.size());
 
-        final CachingPubsubPersistenceProvider.NodeOperation firstNodeOperation = pending.get(0);
+        final CachingPubsubPersistenceProvider.NodeOperation firstNodeOperation = pending.getFirst();
         assertEquals(mockNode.getUniqueIdentifier(), firstNodeOperation.node.getUniqueIdentifier());
         assertEquals(CachingPubsubPersistenceProvider.NodeOperation.Action.UPDATE_SUBSCRIPTION, firstNodeOperation.action);
         assertEquals(firstSubscriptionId, firstNodeOperation.subscription.getID());
         assertNull(firstNodeOperation.affiliate);
 
-        final CachingPubsubPersistenceProvider.NodeOperation secondNodeOperation = pending.get(1);
+        final CachingPubsubPersistenceProvider.NodeOperation secondNodeOperation = new ArrayList<>(pending).get(1);
         assertEquals(mockNode.getUniqueIdentifier(), secondNodeOperation.node.getUniqueIdentifier());
         assertEquals(CachingPubsubPersistenceProvider.NodeOperation.Action.UPDATE_SUBSCRIPTION, secondNodeOperation.action);
         assertEquals(secondSubscriptionId, secondNodeOperation.subscription.getID());
@@ -636,10 +638,10 @@ public class CachingPubsubPersistenceProviderSubscriptionOperationsTest
         provider.removeNode(mockNode);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(1, pending.size());
 
-        final CachingPubsubPersistenceProvider.NodeOperation nodeOperation = pending.get(0);
+        final CachingPubsubPersistenceProvider.NodeOperation nodeOperation = pending.getFirst();
         assertEquals(mockNode.getUniqueIdentifier(), nodeOperation.node.getUniqueIdentifier());
         assertEquals(CachingPubsubPersistenceProvider.NodeOperation.Action.REMOVE, nodeOperation.action);
         assertNull(nodeOperation.subscription);
@@ -679,10 +681,10 @@ public class CachingPubsubPersistenceProviderSubscriptionOperationsTest
         provider.removeNode(mockNode);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(1, pending.size());
 
-        final CachingPubsubPersistenceProvider.NodeOperation nodeOperation = pending.get(0);
+        final CachingPubsubPersistenceProvider.NodeOperation nodeOperation = pending.getFirst();
         assertEquals(mockNode.getUniqueIdentifier(), nodeOperation.node.getUniqueIdentifier());
         assertEquals(CachingPubsubPersistenceProvider.NodeOperation.Action.REMOVE, nodeOperation.action);
         assertNull(nodeOperation.subscription);
@@ -722,10 +724,10 @@ public class CachingPubsubPersistenceProviderSubscriptionOperationsTest
         provider.removeNode(mockNode);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(1, pending.size());
 
-        final CachingPubsubPersistenceProvider.NodeOperation nodeOperation = pending.get(0);
+        final CachingPubsubPersistenceProvider.NodeOperation nodeOperation = pending.getFirst();
         assertEquals(mockNode.getUniqueIdentifier(), nodeOperation.node.getUniqueIdentifier());
         assertEquals(CachingPubsubPersistenceProvider.NodeOperation.Action.REMOVE, nodeOperation.action);
         assertNull(nodeOperation.subscription);

@@ -247,6 +247,7 @@ public final class SystemProperty<T> {
     private final Class baseClass;
     private final Class collectionType;
     private final boolean sorted;
+    private volatile ClassLoader classLoader;
 
     private SystemProperty(final Builder<T> builder) {
         // Before we do anything, convert XML based provider setup to Database based
@@ -256,6 +257,9 @@ public final class SystemProperty<T> {
         this.plugin = builder.plugin;
         this.description = LocaleUtils.getLocalizedPluginString(plugin, "system_property." + key);
         this.defaultValue = builder.defaultValue;
+        if (defaultValue instanceof Class) {
+            this.classLoader = ((Class<?>) defaultValue).getClassLoader();
+        }
         this.minValue = builder.minValue;
         this.maxValue = builder.maxValue;
         this.dynamic = builder.dynamic;
@@ -317,21 +321,31 @@ public final class SystemProperty<T> {
      */
     @SuppressWarnings("unchecked")
     public T getValue() {
-        final T value = (T) FROM_STRING.get(getConverterClass()).apply(JiveGlobals.getProperty(key), this);
-        if (value == null || (Collection.class.isAssignableFrom(value.getClass()) && ((Collection) value).isEmpty())) {
-            return defaultValue;
+        ClassLoader previousClassLoader = Thread.currentThread().getContextClassLoader();
+        try {
+            ClassLoader cl = classLoader;
+            if (cl != null) {
+                Thread.currentThread().setContextClassLoader(cl);
+            }
+
+            final T value = (T) FROM_STRING.get(getConverterClass()).apply(JiveGlobals.getProperty(key), this);
+            if (value == null || (Collection.class.isAssignableFrom(value.getClass()) && ((Collection) value).isEmpty())) {
+                return defaultValue;
+            }
+            if (minValue != null && ((Comparable) minValue).compareTo(value) > 0) {
+                LOGGER.warn("Configured value of {} is less than the minimum value of {} for the SystemProperty {} - will use default value of {} instead",
+                    value, minValue, key, defaultValue);
+                return defaultValue;
+            }
+            if (maxValue != null && ((Comparable) maxValue).compareTo(value) < 0) {
+                LOGGER.warn("Configured value of {} is more than the maximum value of {} for the SystemProperty {} - will use default value of {} instead",
+                    value, maxValue, key, defaultValue);
+                return defaultValue;
+            }
+            return value;
+        } finally {
+            Thread.currentThread().setContextClassLoader(previousClassLoader);
         }
-        if (minValue != null && ((Comparable) minValue).compareTo(value) > 0) {
-            LOGGER.warn("Configured value of {} is less than the minimum value of {} for the SystemProperty {} - will use default value of {} instead",
-                value, minValue, key, defaultValue);
-            return defaultValue;
-        }
-        if (maxValue != null && ((Comparable) maxValue).compareTo(value) < 0) {
-            LOGGER.warn("Configured value of {} is more than the maximum value of {} for the SystemProperty {} - will use default value of {} instead",
-                value, maxValue, key, defaultValue);
-            return defaultValue;
-        }
-        return value;
     }
 
     /**
@@ -369,6 +383,10 @@ public final class SystemProperty<T> {
      * @param value the new value for the SystemProperty
      */
     public void setValue(final T value) {
+        if (value instanceof Class) {
+            Class<?> clazz = ((Class<?>) value);
+            this.classLoader = clazz.getClassLoader();
+        }
         JiveGlobals.setProperty(key, TO_STRING.get(getConverterClass()).apply(value, this), isEncrypted());
     }
 

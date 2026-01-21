@@ -27,6 +27,8 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static org.apache.commons.lang3.StringUtils.substringBefore;
+
 /**
  * A set of methods for retrieving and converting locale specific strings and numbers.
  *
@@ -159,7 +161,7 @@ public class LocaleUtils {
     };
 
     // A mapping from the supported timezone ids to friendly english names.
-    private static final Map<String, String> nameMap = new HashMap<>();
+    private static final Map<String, String> nameMap = new HashMap<>(75);
 
     static {
         nameMap.put(timeZoneIds[0], "International Date Line West");
@@ -237,6 +239,72 @@ public class LocaleUtils {
         nameMap.put(timeZoneIds[72], "Auckland, Wellington");
         nameMap.put(timeZoneIds[73], "Fiji, Kamchatka, Marshall Is.");
         nameMap.put(timeZoneIds[74], "Nuku'alofa");
+    }
+
+    private static final Map<String, String> supportedLocales = new LinkedHashMap<>(20);
+    static {
+        supportedLocales.put("cs_CZ", "Czech");
+        supportedLocales.put("de", "Deutsch");
+        supportedLocales.put("en", "English");
+        supportedLocales.put("es", "Español");
+        supportedLocales.put("fa_IR", "فارسی");
+        supportedLocales.put("fr", "Français");
+        supportedLocales.put("he", "עברית");
+        supportedLocales.put("it_IT", "Italiano");
+        supportedLocales.put("ja_JP", "日本語");
+        supportedLocales.put("nl", "Nederlands");
+        supportedLocales.put("pl_PL", "Polski");
+        supportedLocales.put("pt_PT", "Português Portugal");
+        supportedLocales.put("pt_BR", "Português Brasileiro");
+        supportedLocales.put("ru_RU", "Русский");
+        supportedLocales.put("sk", "Slovenčina");
+        supportedLocales.put("sv", "Svenska");
+        supportedLocales.put("tr_TR", "Türkçe");
+        supportedLocales.put("uk_UA", "Українська");
+        supportedLocales.put("zh_CN", "中文简体");
+    }
+
+    /**
+     * Get list of locales (code: name) that the web admin has translations for.
+     */
+    public static Map<String, String> getSupportedLocales() {
+        return supportedLocales;
+    }
+
+    /**
+     * Find the preferred locale from user browser from list of supported.
+     */
+    public static String bestMatchingSupportedLocale(Enumeration<Locale> requestLocales) {
+        // build lang codes haystack "pt_BR pt_PT pt_ "
+        String localesList = "";
+        while (requestLocales.hasMoreElements()){
+            Locale locale = requestLocales.nextElement();
+            localesList += locale.getLanguage() + "_" + locale.getCountry() + " ";
+        }
+        int bestMatchPos = Integer.MAX_VALUE;
+        String matchedLocale = null;
+        for (Map.Entry<String, String> entry : supportedLocales.entrySet()) {
+            // first match by lang and country, if no then try to match by only language
+            String localeCode = entry.getKey(); // e.g. pt_BR
+            int matchPos = localesList.indexOf(localeCode + " ");
+            if (matchPos < 0) {
+                // match by lang only i.e, no country
+                String lang = substringBefore(localeCode, "_");
+                matchPos = localesList.indexOf(lang + "_ ");
+                if (matchPos < 0) {
+                    continue;
+                }
+            }
+            if (matchPos < bestMatchPos) {
+                bestMatchPos = matchPos;
+                matchedLocale = localeCode;
+            }
+        }
+        if (matchedLocale != null) {
+            return matchedLocale;
+        }
+        // if no match then take server default locale
+        return JiveGlobals.getLocale().toString();
     }
 
     /**
@@ -355,7 +423,7 @@ public class LocaleUtils {
         // This is obviously not something that's re-usable outside of Openfire. However, this includes all languages
         // for which we provide translations.
         String language = JiveGlobals.getLocale().getLanguage();
-        return language.equals(new Locale("he").getLanguage()) || language.equals(new Locale("fa").getLanguage());
+        return language.equals("he") || language.equals("fa");
     }
 
 

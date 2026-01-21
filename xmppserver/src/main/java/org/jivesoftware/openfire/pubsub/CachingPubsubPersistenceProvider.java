@@ -563,8 +563,8 @@ public class CachingPubsubPersistenceProvider implements PubSubPersistenceProvid
             final Deque<PublishedItem> adds = itemsToAdd.remove(nodeUniqueId);
             final Deque<PublishedItem> deletes = itemsToDelete.remove(nodeUniqueId);
 
-            addList = adds == null ? Collections.emptyList() : new ArrayList<>(adds);
-            delList = deletes == null ? Collections.emptyList() : new ArrayList<>(deletes);
+            addList = adds == null ? new ArrayList<>() : new ArrayList<>(adds);
+            delList = deletes == null ? new ArrayList<>() : new ArrayList<>(deletes);
 
             // Remove flushed items from itemsPending map
             addList.forEach(i -> itemsPending.remove(i.getUniqueIdentifier()));

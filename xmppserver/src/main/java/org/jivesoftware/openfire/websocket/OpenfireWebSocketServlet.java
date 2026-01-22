@@ -20,10 +20,13 @@ import org.eclipse.jetty.ee8.websocket.server.JettyWebSocketServletFactory;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.http.HttpBindManager;
+import org.jivesoftware.openfire.ratelimit.NewConnectionLimiterRegistry;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalSession;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.TokenBucketRateLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,6 +114,16 @@ public class OpenfireWebSocketServlet extends JettyWebSocketServlet {
         factory.setIdleTimeout(Duration.ofMillis(maxJettyIdleMs));
 
         factory.setCreator((req, resp) -> {
+            // Rate limiting is applied per logical connection category (e.g., client-to-server, server-to-server),
+            // with unlimited limiters for unsupported or disabled categories.
+            final TokenBucketRateLimiter limiter = NewConnectionLimiterRegistry.getLimiter(ConnectionType.BOSH_C2S);
+            if (!limiter.tryAcquire()) {
+                NewConnectionLimiterRegistry.maybeLogRejection(ConnectionType.BOSH_C2S); // TODO consider creating a new ConnectionType that is specific to WebSocket connections.
+                resp.sendError(503, "Too many new connections; please try again later.");
+                return null; // Reject this WebSocket connection
+            }
+
+            // Create WebSocket-based connection.
             try {
                 for (String subprotocol : req.getSubProtocols())
                 {

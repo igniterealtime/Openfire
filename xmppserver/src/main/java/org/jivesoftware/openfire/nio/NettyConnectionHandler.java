@@ -26,7 +26,10 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.net.ServerTrafficCounter;
 import org.jivesoftware.openfire.net.StanzaHandler;
+import org.jivesoftware.openfire.ratelimit.NewConnectionLimiterRegistry;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.jivesoftware.openfire.spi.ConnectionType;
+import org.jivesoftware.util.TokenBucketRateLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
@@ -104,6 +107,25 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
      * @return the time a connection can be idle.
      */
     public abstract Duration getMaxIdleTime();
+
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception
+    {
+        // Rate limiting is applied per logical connection category (e.g., client-to-server, server-to-server),
+        // with unlimited limiters for unsupported or disabled categories.
+        final ConnectionType connectionType = configuration.getType();
+        final TokenBucketRateLimiter limiter = NewConnectionLimiterRegistry.getLimiter(connectionType);
+
+        if (!limiter.tryAcquire()) {
+            // Reject connection immediately
+            ctx.close();
+            NewConnectionLimiterRegistry.maybeLogRejection(connectionType);
+            return;
+        }
+
+        // Proceed with normal channel setup
+        super.channelActive(ctx);
+    }
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) {

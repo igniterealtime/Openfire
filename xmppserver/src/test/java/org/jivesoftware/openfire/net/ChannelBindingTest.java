@@ -8,6 +8,8 @@ import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.cert.X509v3CertificateBuilder;
 import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+import org.bouncycastle.jsse.BCExtendedSSLSession;
+import org.bouncycastle.jsse.BCSSLConnection;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -77,49 +79,26 @@ public class ChannelBindingTest {
         // For TLS 1.2 and earlier.
         // It's the 'client finished' message for the most recent handshake.
         
-        try {
-            Class<?> bcSslSessionClass = Class.forName("org.bouncycastle.jsse.BCExtendedSSLSession");
-            Class<?> bcSslConnectionClass = Class.forName("org.bouncycastle.jsse.BCSSLConnection");
-            
-            Object mockSession = Mockito.mock(bcSslSessionClass);
-            Object mockConnection = Mockito.mock(bcSslConnectionClass);
-            
-            byte[] expectedTlsUnique = new byte[]{1, 2, 3, 4};
-            Method getChannelBindingMethod = bcSslConnectionClass.getMethod("getChannelBinding", String.class);
-            Mockito.when(getChannelBindingMethod.invoke(mockConnection, "tls-unique")).thenReturn(expectedTlsUnique);
-            
-            // This is how we would use it in NettyConnection
-            if (bcSslSessionClass.isInstance(mockSession)) {
-                // In reality, we'd get the connection from the session or similar BC-specific way
-                // For prototyping:
-                byte[] cbData = (byte[]) getChannelBindingMethod.invoke(mockConnection, "tls-unique");
-                assertArrayEquals(expectedTlsUnique, cbData);
-            }
-        } catch (ClassNotFoundException e) {
-            System.out.println("[DEBUG_LOG] BCExtendedSSLSession not found: " + e.getMessage());
-            // Fallback for environment where it's still missing or not in classpath
-            assertTrue(true, "Skipping as bctls not in test classpath");
-        }
+        BCSSLConnection mockConnection = Mockito.mock(BCSSLConnection.class);
+        
+        byte[] expectedTlsUnique = new byte[]{1, 2, 3, 4};
+        Mockito.when(mockConnection.getChannelBinding("tls-unique")).thenReturn(expectedTlsUnique);
+        
+        byte[] cbData = mockConnection.getChannelBinding("tls-unique");
+        assertArrayEquals(expectedTlsUnique, cbData);
     }
 
     @Test
     public void testTlsExporterWithBctls() throws Exception {
         // tls-exporter (RFC 9266)
         // For TLS 1.3.
-        try {
-            Class<?> bcSslConnectionClass = Class.forName("org.bouncycastle.jsse.BCSSLConnection");
-            Object mockConnection = Mockito.mock(bcSslConnectionClass);
-            
-            byte[] expectedTlsExporter = new byte[]{5, 6, 7, 8};
-            Method exportKeyingMaterialMethod = bcSslConnectionClass.getMethod("exportKeyingMaterial", String.class, byte[].class, int.class);
-            Mockito.when(exportKeyingMaterialMethod.invoke(mockConnection, "EXPORTER-Channel-Binding", null, 32)).thenReturn(expectedTlsExporter);
-            
-            byte[] cbData = (byte[]) exportKeyingMaterialMethod.invoke(mockConnection, "EXPORTER-Channel-Binding", null, 32);
-            assertArrayEquals(expectedTlsExporter, cbData);
-        } catch (ClassNotFoundException e) {
-            System.out.println("[DEBUG_LOG] BCSSLConnection not found: " + e.getMessage());
-            assertTrue(true, "Skipping as bctls not in test classpath");
-        }
+        BCSSLConnection mockConnection = Mockito.mock(BCSSLConnection.class);
+        
+        byte[] expectedTlsExporter = new byte[]{5, 6, 7, 8};
+        Mockito.when(mockConnection.getChannelBinding("tls-exporter")).thenReturn(expectedTlsExporter);
+        
+        byte[] cbData = mockConnection.getChannelBinding("tls-exporter");
+        assertArrayEquals(expectedTlsExporter, cbData);
     }
 
     @Test

@@ -331,6 +331,7 @@
             <groupId>org.bouncycastle</groupId>
             <artifactId>bctls-jdk18on</artifactId>
             <version>${bouncycastle.version}</version>
+            <scope>test</scope>
         </dependency>
 
         <!-- Logging -->

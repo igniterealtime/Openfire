@@ -232,15 +232,16 @@ public class NettyConnection extends AbstractConnection
 
     private Optional<byte[]> getTlsUnique(SSLSession session) {
         try {
-            final Class<?> extendedSessionClass = Class.forName("org.bouncycastle.jsse.BCExtendedSSLSession");
-            if (extendedSessionClass.isInstance(session)) {
-                final Method getStatusMethod = extendedSessionClass.getMethod("getStatus");
-                final Object status = getStatusMethod.invoke(session);
-                if (status != null) {
-                    final Class<?> connectionClass = Class.forName("org.bouncycastle.jsse.BCSSLConnection");
-                    if (connectionClass.isInstance(status)) {
-                        final Method getChannelBindingMethod = connectionClass.getMethod("getChannelBinding", String.class);
-                        return Optional.ofNullable((byte[]) getChannelBindingMethod.invoke(status, "tls-unique"));
+            final SslHandler sslhandler = (SslHandler) channelHandlerContext.channel().pipeline().get(SSL_HANDLER_NAME);
+            if (sslhandler != null) {
+                final javax.net.ssl.SSLEngine engine = sslhandler.engine();
+                final Class<?> bcSslEngineClass = Class.forName("org.bouncycastle.jsse.BCSSLEngine");
+                if (bcSslEngineClass.isInstance(engine)) {
+                    final Method getConnectionMethod = bcSslEngineClass.getMethod("getConnection");
+                    final Object connection = getConnectionMethod.invoke(engine);
+                    if (connection != null) {
+                        final Method getChannelBindingMethod = connection.getClass().getMethod("getChannelBinding", String.class);
+                        return Optional.ofNullable((byte[]) getChannelBindingMethod.invoke(connection, "tls-unique"));
                     }
                 }
             }
@@ -254,15 +255,16 @@ public class NettyConnection extends AbstractConnection
 
     private Optional<byte[]> getTlsExporter(SSLSession session) {
         try {
-            final Class<?> extendedSessionClass = Class.forName("org.bouncycastle.jsse.BCExtendedSSLSession");
-            if (extendedSessionClass.isInstance(session)) {
-                final Method getStatusMethod = extendedSessionClass.getMethod("getStatus");
-                final Object status = getStatusMethod.invoke(session);
-                if (status != null) {
-                    final Class<?> connectionClass = Class.forName("org.bouncycastle.jsse.BCSSLConnection");
-                    if (connectionClass.isInstance(status)) {
-                        final Method exportKeyingMaterialMethod = connectionClass.getMethod("exportKeyingMaterial", String.class, byte[].class, int.class);
-                        return Optional.ofNullable((byte[]) exportKeyingMaterialMethod.invoke(status, "EXPORTER-Channel-Binding", null, 32));
+            final SslHandler sslhandler = (SslHandler) channelHandlerContext.channel().pipeline().get(SSL_HANDLER_NAME);
+            if (sslhandler != null) {
+                final javax.net.ssl.SSLEngine engine = sslhandler.engine();
+                final Class<?> bcSslEngineClass = Class.forName("org.bouncycastle.jsse.BCSSLEngine");
+                if (bcSslEngineClass.isInstance(engine)) {
+                    final Method getConnectionMethod = bcSslEngineClass.getMethod("getConnection");
+                    final Object connection = getConnectionMethod.invoke(engine);
+                    if (connection != null) {
+                        final Method getChannelBindingMethod = connection.getClass().getMethod("getChannelBinding", String.class);
+                        return Optional.ofNullable((byte[]) getChannelBindingMethod.invoke(connection, "tls-exporter"));
                     }
                 }
             }

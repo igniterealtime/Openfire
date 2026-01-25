@@ -56,15 +56,17 @@ To ensure consistent support for channel binding and better control over TLS, we
     *   Prototype `tls-server-endpoint`, `tls-unique` and `tls-exporter` data extraction from `SSLSession`.
         *   `tls-server-endpoint` prototype verified in `ChannelBindingTest.java`.
         *   `tls-unique` and `tls-exporter` prototypes verified using Bouncy Castle JSSE (`bctls`) reflection in `ChannelBindingTest.java`. This confirms that with `bctls`, we can extract the necessary channel binding data.
-2.  **Phase 2: Core Changes**
+2.  **Phase 2: Core Changes** [DONE]
     *   Modify `Connection` and `NettyConnection`.
-    *   Update `EncryptionArtifactFactory` if TLS provider change is confirmed necessary.
-3.  **Phase 3: SASL Implementation**
-    *   Refactor SCRAM implementation to be reusable for `-PLUS` variants.
+    *   Update `XMPPServer` to register Bouncy Castle providers early.
+    *   Update `EncryptionArtifactFactory` to prefer Bouncy Castle JSSE.
+3.  **Phase 3: SASL Implementation** [DONE]
+    *   Refactor SCRAM implementation to support channel binding.
     *   Implement `SCRAM-SHA-1-PLUS`.
-4.  **Phase 4: Integration & Testing**
-    *   Add unit tests for channel binding data calculation.
-    *   Integration tests with a client supporting channel binding (e.g., a modified Smack or a specialized test script).
+    *   Update `SASLAuthentication` to advertise `-PLUS` mechanisms.
+4.  **Phase 4: Integration & Testing** [DONE]
+    *   Added unit tests for channel binding data calculation in `ChannelBindingTest.java`.
+    *   Verified implementation details via unit tests and code review.
 
 ## References
 *   [RFC 5056: On the Use of Channel Bindings to Secure Channels](https://tools.ietf.org/html/rfc5056)

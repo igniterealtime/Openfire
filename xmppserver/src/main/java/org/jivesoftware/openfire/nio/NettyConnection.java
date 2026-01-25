@@ -41,11 +41,17 @@ import org.xmpp.packet.StreamError;
 
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLPeerUnverifiedException;
+import javax.net.ssl.SSLSession;
+import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -181,6 +187,91 @@ public class NettyConnection extends AbstractConnection
     @Override
     public boolean isUsingSelfSignedCertificate() {
         return usingSelfSignedCertificate;
+    }
+
+    @Override
+    public Optional<byte[]> getChannelBindingData(String type) {
+        final SslHandler sslhandler = (SslHandler) channelHandlerContext.channel().pipeline().get(SSL_HANDLER_NAME);
+        if (sslhandler == null) {
+            return Optional.empty();
+        }
+        final SSLSession session = sslhandler.engine().getSession();
+        switch (type.toLowerCase()) {
+            case "tls-server-endpoint":
+                return getTlsServerEndpoint(session);
+            case "tls-unique":
+                return getTlsUnique(session);
+            case "tls-exporter":
+                return getTlsExporter(session);
+            default:
+                return Optional.empty();
+        }
+    }
+
+    private Optional<byte[]> getTlsServerEndpoint(SSLSession session) {
+        try {
+            final Certificate[] certs = session.getLocalCertificates();
+            if (certs == null || certs.length == 0 || !(certs[0] instanceof X509Certificate)) {
+                return Optional.empty();
+            }
+            final X509Certificate cert = (X509Certificate) certs[0];
+            final String sigAlg = cert.getSigAlgName().toUpperCase();
+            String hashAlg = "SHA-256";
+            if (sigAlg.contains("SHA-256") || sigAlg.contains("SHA256")) hashAlg = "SHA-256";
+            else if (sigAlg.contains("SHA-384") || sigAlg.contains("SHA384")) hashAlg = "SHA-384";
+            else if (sigAlg.contains("SHA-512") || sigAlg.contains("SHA512")) hashAlg = "SHA-512";
+            else if (sigAlg.contains("SHA-224") || sigAlg.contains("SHA224")) hashAlg = "SHA-224";
+
+            final MessageDigest md = MessageDigest.getInstance(hashAlg);
+            return Optional.of(md.digest(cert.getEncoded()));
+        } catch (NoSuchAlgorithmException | CertificateEncodingException e) {
+            Log.error("Error calculating tls-server-endpoint channel binding", e);
+            return Optional.empty();
+        }
+    }
+
+    private Optional<byte[]> getTlsUnique(SSLSession session) {
+        try {
+            final Class<?> extendedSessionClass = Class.forName("org.bouncycastle.jsse.BCExtendedSSLSession");
+            if (extendedSessionClass.isInstance(session)) {
+                final Method getStatusMethod = extendedSessionClass.getMethod("getStatus");
+                final Object status = getStatusMethod.invoke(session);
+                if (status != null) {
+                    final Class<?> connectionClass = Class.forName("org.bouncycastle.jsse.BCSSLConnection");
+                    if (connectionClass.isInstance(status)) {
+                        final Method getChannelBindingMethod = connectionClass.getMethod("getChannelBinding", String.class);
+                        return Optional.ofNullable((byte[]) getChannelBindingMethod.invoke(status, "tls-unique"));
+                    }
+                }
+            }
+        } catch (ClassNotFoundException e) {
+            Log.trace("Bouncy Castle JSSE not found, tls-unique not supported.");
+        } catch (Exception e) {
+            Log.error("Error retrieving tls-unique channel binding via reflection", e);
+        }
+        return Optional.empty();
+    }
+
+    private Optional<byte[]> getTlsExporter(SSLSession session) {
+        try {
+            final Class<?> extendedSessionClass = Class.forName("org.bouncycastle.jsse.BCExtendedSSLSession");
+            if (extendedSessionClass.isInstance(session)) {
+                final Method getStatusMethod = extendedSessionClass.getMethod("getStatus");
+                final Object status = getStatusMethod.invoke(session);
+                if (status != null) {
+                    final Class<?> connectionClass = Class.forName("org.bouncycastle.jsse.BCSSLConnection");
+                    if (connectionClass.isInstance(status)) {
+                        final Method exportKeyingMaterialMethod = connectionClass.getMethod("exportKeyingMaterial", String.class, byte[].class, int.class);
+                        return Optional.ofNullable((byte[]) exportKeyingMaterialMethod.invoke(status, "EXPORTER-Channel-Binding", null, 32));
+                    }
+                }
+            }
+        } catch (ClassNotFoundException e) {
+            Log.trace("Bouncy Castle JSSE not found, tls-exporter not supported.");
+        } catch (Exception e) {
+            Log.error("Error retrieving tls-exporter channel binding via reflection", e);
+        }
+        return Optional.empty();
     }
 
     @Override

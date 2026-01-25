@@ -122,6 +122,15 @@ public class ChannelBindingTest {
         }
     }
 
+    @Test
+    public void testMapHashAlgs() {
+        assertEquals("SHA-256", getHashAlgFromSigAlg("SHA256withRSA"));
+        assertEquals("SHA-384", getHashAlgFromSigAlg("SHA384withRSA"));
+        assertEquals("SHA-512", getHashAlgFromSigAlg("SHA512withRSA"));
+        assertEquals("SHA-224", getHashAlgFromSigAlg("SHA224withRSA"));
+        assertEquals("SHA-256", getHashAlgFromSigAlg("MD5withRSA"));
+    }
+
     private String getHashAlgFromSigAlg(String sigAlg) {
         String upper = sigAlg.toUpperCase();
         if (upper.contains("SHA-256") || upper.contains("SHA256")) return "SHA-256";

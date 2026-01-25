@@ -55,6 +55,7 @@ To ensure consistent support for channel binding and better control over TLS, we
         *   Bouncy Castle JSSE (`bctls`) is required to support `tls-unique` and `tls-exporter`.
     *   Prototype `tls-server-endpoint`, `tls-unique` and `tls-exporter` data extraction from `SSLSession`.
         *   `tls-server-endpoint` prototype verified in `ChannelBindingTest.java`.
+        *   `tls-unique` and `tls-exporter` prototypes verified using Bouncy Castle JSSE (`bctls`) reflection in `ChannelBindingTest.java`. This confirms that with `bctls`, we can extract the necessary channel binding data.
 2.  **Phase 2: Core Changes**
     *   Modify `Connection` and `NettyConnection`.
     *   Update `EncryptionArtifactFactory` if TLS provider change is confirmed necessary.

@@ -41,7 +41,7 @@ import java.util.*;
  */
 public class EncryptionArtifactFactory
 {
-    private final Logger Log = LoggerFactory.getLogger( EncryptionArtifactFactory.class );
+    private static final Logger Log = LoggerFactory.getLogger( EncryptionArtifactFactory.class );
 
     public static final SystemProperty<Class> TRUST_MANAGER_CLASS = SystemProperty.Builder.ofType( Class.class )
         .setKey( "xmpp.auth.ssl.default-trustmanager-impl" )
@@ -192,9 +192,19 @@ public class EncryptionArtifactFactory
         if ( protocol == null ) {
             // Use the 'highest' available protocol from the default, which happens to coincide with alphabetic ordering: SSLv1 < TLSv1 < TLSv1.3
             final String defaultProtocol = Arrays.stream( SSLContext.getDefault().getDefaultSSLParameters().getProtocols() ).max( Comparator.naturalOrder() ).orElse( "TLSv1" );
-            return SSLContext.getInstance( defaultProtocol ) ;
+            try {
+                return SSLContext.getInstance( defaultProtocol, "BCJSSE" ) ;
+            } catch ( NoSuchProviderException | NoSuchAlgorithmException e ) {
+                Log.debug( "Bouncy Castle JSSE provider not found or protocol not supported by it. Falling back to default provider for SSLContext." );
+                return SSLContext.getInstance( defaultProtocol );
+            }
         } else {
-            return SSLContext.getInstance( protocol );
+            try {
+                return SSLContext.getInstance( protocol, "BCJSSE" );
+            } catch ( NoSuchProviderException | NoSuchAlgorithmException e ) {
+                Log.debug( "Bouncy Castle JSSE provider not found or protocol not supported by it. Falling back to default provider for SSLContext." );
+                return SSLContext.getInstance( protocol );
+            }
         }
     }
 

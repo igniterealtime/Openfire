@@ -54,6 +54,7 @@ public class SaslServerFactoryImpl implements SaslServerFactory
         allMechanisms.add( new Mechanism( "ANONYMOUS", true, true ) );
         allMechanisms.add( new Mechanism( "PLAIN", false, true ) );
         allMechanisms.add( new Mechanism( "SCRAM-SHA-1", false, false ) );
+        allMechanisms.add( new Mechanism( "SCRAM-SHA-1-PLUS", false, false ) );
         allMechanisms.add( new Mechanism( "JIVE-SHAREDSECRET", true, false ) );
         allMechanisms.add( new Mechanism( "EXTERNAL", false, false ) );
     }
@@ -78,7 +79,19 @@ public class SaslServerFactoryImpl implements SaslServerFactory
                 return new SaslServerPlainImpl( protocol, serverName, props, cbh );
 
             case "SCRAM-SHA-1":
+                if (props != null && props.containsKey(LocalSession.class.getCanonicalName())) {
+                    final LocalSession session = (LocalSession) props.get(LocalSession.class.getCanonicalName());
+                    return new ScramSha1SaslServer(session.getConnection());
+                }
                 return new ScramSha1SaslServer();
+
+            case "SCRAM-SHA-1-PLUS":
+                if (props != null && props.containsKey(LocalSession.class.getCanonicalName())) {
+                    final LocalSession session = (LocalSession) props.get(LocalSession.class.getCanonicalName());
+                    return new ScramSha1SaslServer(session.getConnection());
+                }
+                Log.debug("Unable to instantiate {} SaslServer: Provided properties do not contain a LocalSession instance.", mechanism);
+                return null;
 
             case "ANONYMOUS":
                 if ( !props.containsKey( LocalSession.class.getCanonicalName() ) )

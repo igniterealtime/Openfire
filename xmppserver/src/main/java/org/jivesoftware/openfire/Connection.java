@@ -395,6 +395,16 @@ public interface Connection extends Closeable {
     void setAdditionalNamespaces(@Nonnull final Set<Namespace> additionalNamespaces);
 
     /**
+     * Returns the channel binding data for the specified type.
+     *
+     * @param type The type of channel binding (e.g., "tls-server-endpoint", "tls-unique", "tls-exporter").
+     * @return The channel binding data, or an empty optional if not available or supported for this connection.
+     */
+    default Optional<byte[]> getChannelBindingData(String type) {
+        return Optional.empty();
+    }
+
+    /**
      * Enumeration of possible compression policies required to interact with the server.
      */
     enum CompressionPolicy {

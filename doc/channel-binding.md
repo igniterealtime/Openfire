@@ -48,9 +48,13 @@ To ensure consistent support for channel binding and better control over TLS, we
 
 ## Implementation Steps
 
-1.  **Phase 1: Research & Prototype**
+1.  **Phase 1: Research & Prototype** [DONE]
     *   Verify Bouncy Castle JSSE integration.
+        *   Determined that `tls-server-endpoint` can be implemented using standard JSSE by hashing the server certificate.
+        *   `tls-unique` and `tls-exporter` require access to internal TLS data (Finished messages, Keying Material Export) not exposed by standard Java `SSLSession` API.
+        *   Bouncy Castle JSSE (`bctls`) is required to support `tls-unique` and `tls-exporter`.
     *   Prototype `tls-server-endpoint`, `tls-unique` and `tls-exporter` data extraction from `SSLSession`.
+        *   `tls-server-endpoint` prototype verified in `ChannelBindingTest.java`.
 2.  **Phase 2: Core Changes**
     *   Modify `Connection` and `NettyConnection`.
     *   Update `EncryptionArtifactFactory` if TLS provider change is confirmed necessary.

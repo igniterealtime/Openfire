@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -581,18 +581,22 @@ public class XMLProperties {
      * @return Names for all properties in the file
      */
     public List<String> getAllPropertyNames() {
-        List<String> result = new ArrayList<>();
+        final List<String> propertyNames = new ArrayList<>();
 
         final Lock readLock = readWriteLock.readLock();
         readLock.lock();
         try {
-            for (String propertyName : getChildPropertyNamesFor(document.getRootElement(), "")) {
-                if (getProperty(propertyName) != null) {
-                    result.add(propertyName);
-                }
-            }
+            propertyNames.addAll(getChildPropertyNamesFor(document.getRootElement(), ""));
         } finally {
             readLock.unlock();
+        }
+
+        // Check if each property exists, but do this outside of the read-lock (as it applies its own read-lock but may also apply a write-lock). See OF-3175.
+        final List<String> result = new ArrayList<>();
+        for (final String propertyName : propertyNames) {
+            if (getProperty(propertyName) != null) {
+                result.add(propertyName);
+            }
         }
         return result;
     }

@@ -16,6 +16,7 @@
 package org.jivesoftware.openfire.muc.spi;
 
 import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusteredCacheEntryListener;
 import org.jivesoftware.openfire.cluster.NodeID;
@@ -326,7 +327,7 @@ public class LocalMUCRoomManager
                                 Log.trace("Trying to add occupant '{}' but no role for that occupant exists in the local room. Data inconsistency?", localOccupantToRestore.getRealJID());
                                 continue;
                             } else {
-                                Log.trace("Found localOccupantRole {} for localOccupantToRestore {}, client route = {}", localOccupant, localOccupantToRestore.getRealJID(), XMPPServer.getInstance().getRoutingTable().getClientRoute(localOccupantToRestore.getRealJID()));
+                                Log.trace("Found localOccupantRole {} for localOccupantToRestore {}, client session = {}", localOccupant, localOccupantToRestore.getRealJID(), SessionManager.getInstance().getSession(localOccupantToRestore.getRealJID()));
                             }
 
                             // OF-2165

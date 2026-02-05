@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2018-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,7 +160,8 @@ public class EncryptionArtifactFactory
         }
         catch ( Exception e )
         {
-            Log.debug( "Unable to instantiate '{}' using the four-argument constructor that is proprietary to Openfire. Trying to use a no-arg constructor instead...", trustManagerClass );
+            Log.debug( "Unable to instantiate '{}' using the four-argument constructor that is proprietary to Openfire. ", trustManagerClass, e );
+            Log.debug( "Trying to use a no-arg constructor instead...");
             try
             {
                 final TrustManager trustManager = trustManagerClass.newInstance();

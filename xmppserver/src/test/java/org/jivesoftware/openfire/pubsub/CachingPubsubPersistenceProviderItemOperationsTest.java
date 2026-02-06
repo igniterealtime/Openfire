@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2025-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,8 @@ import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.xmpp.packet.JID;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -56,10 +54,11 @@ public class CachingPubsubPersistenceProviderItemOperationsTest
         provider.savePublishedItem(item);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(0, pending.size());
 
         assertEquals(1, provider.itemsToAdd.size());
+        assertEquals(1, provider.itemsToAdd.get(mockNode.getUniqueIdentifier()).size());
         assertEquals(0, provider.itemsToDelete.size());
     }
 
@@ -81,11 +80,12 @@ public class CachingPubsubPersistenceProviderItemOperationsTest
         provider.removePublishedItem(item);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(0, pending.size());
 
         assertEquals(0, provider.itemsToAdd.size());
         assertEquals(1, provider.itemsToDelete.size());
+        assertEquals(1, provider.itemsToDelete.get(mockNode.getUniqueIdentifier()).size());
     }
 
     /**
@@ -108,10 +108,11 @@ public class CachingPubsubPersistenceProviderItemOperationsTest
         provider.savePublishedItem(itemB);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(0, pending.size());
 
-        assertEquals(2, provider.itemsToAdd.size());
+        assertEquals(1, provider.itemsToAdd.size());
+        assertEquals(2, provider.itemsToAdd.get(mockNode.getUniqueIdentifier()).size());
         assertEquals(0, provider.itemsToDelete.size());
     }
 
@@ -137,11 +138,11 @@ public class CachingPubsubPersistenceProviderItemOperationsTest
         provider.savePublishedItem(itemB);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(0, pending.size());
 
         assertEquals(1, provider.itemsToAdd.size());
-        assertEquals(itemB.getID(), provider.itemsToAdd.getFirst().getID());
+        assertEquals(itemB.getID(), provider.itemsToAdd.values().iterator().next().getFirst().getID());
         assertEquals(0, provider.itemsToDelete.size());
     }
 
@@ -165,11 +166,12 @@ public class CachingPubsubPersistenceProviderItemOperationsTest
         provider.removePublishedItem(itemB);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(0, pending.size());
 
         assertEquals(0, provider.itemsToAdd.size());
-        assertEquals(2, provider.itemsToDelete.size());
+        assertEquals(1, provider.itemsToDelete.size());
+        assertEquals(2, provider.itemsToDelete.get(mockNode.getUniqueIdentifier()).size());
     }
 
     /**
@@ -194,12 +196,14 @@ public class CachingPubsubPersistenceProviderItemOperationsTest
         provider.removePublishedItem(itemB);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(0, pending.size());
 
         assertEquals(0, provider.itemsToAdd.size());
-        assertEquals(2, provider.itemsToDelete.size());
+        assertEquals(1, provider.itemsToDelete.size());
+        assertEquals(2, provider.itemsToDelete.get(mockNode.getUniqueIdentifier()).size());
     }
+
     /**
      * Asserts that an invocation of {@link CachingPubsubPersistenceProvider#savePublishedItem(PublishedItem)} followed
      * by an invocation of {@link CachingPubsubPersistenceProvider#removePublishedItem(PublishedItem)} to represent
@@ -223,11 +227,12 @@ public class CachingPubsubPersistenceProviderItemOperationsTest
         provider.removePublishedItem(item);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(0, pending.size());
 
         assertEquals(0, provider.itemsToAdd.size());
         assertEquals(1, provider.itemsToDelete.size());
+        assertEquals(1, provider.itemsToDelete.get(mockNode.getUniqueIdentifier()).size());
     }
 
     /**
@@ -235,8 +240,8 @@ public class CachingPubsubPersistenceProviderItemOperationsTest
      * by an invocation of {@link CachingPubsubPersistenceProvider#savePublishedItem(PublishedItem)} to represent
      * removal and then creation of the same item causes the provider to optimize: the removal can be discarded.
      *
-     * Note that the XML content can be different in both items. The latter save will still overwrite what would've been
-     * otherwise explicitly been deleted first.
+     * Note that the XML content can be different in both items. The latter save will still overwrite what would
+     * otherwise explicitly have been deleted first.
      */
     @Test
     public void testRemoveAndSavePublishedItem() throws Exception
@@ -253,10 +258,11 @@ public class CachingPubsubPersistenceProviderItemOperationsTest
         provider.savePublishedItem(item);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(0, pending.size());
 
         assertEquals(1, provider.itemsToAdd.size());
+        assertEquals(1, provider.itemsToAdd.get(mockNode.getUniqueIdentifier()).size());
         assertEquals(0, provider.itemsToDelete.size());
     }
 
@@ -290,10 +296,10 @@ public class CachingPubsubPersistenceProviderItemOperationsTest
         provider.removeNode(mockNode);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(1, pending.size());
 
-        final CachingPubsubPersistenceProvider.NodeOperation nodeOperation = pending.get(0);
+        final CachingPubsubPersistenceProvider.NodeOperation nodeOperation = pending.getFirst();
         assertEquals(mockNode.getUniqueIdentifier(), nodeOperation.node.getUniqueIdentifier());
         assertEquals(CachingPubsubPersistenceProvider.NodeOperation.Action.REMOVE, nodeOperation.action);
         assertNull(nodeOperation.affiliate);
@@ -333,10 +339,10 @@ public class CachingPubsubPersistenceProviderItemOperationsTest
         provider.removeNode(mockNode);
 
         // Verify results.
-        final List<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ArrayList<>());
+        final Deque<CachingPubsubPersistenceProvider.NodeOperation> pending = provider.nodesToProcess.computeIfAbsent(mockNode.getUniqueIdentifier(), id -> new ConcurrentLinkedDeque<>());
         assertEquals(1, pending.size());
 
-        final CachingPubsubPersistenceProvider.NodeOperation nodeOperation = pending.get(0);
+        final CachingPubsubPersistenceProvider.NodeOperation nodeOperation = pending.getFirst();
         assertEquals(mockNode.getUniqueIdentifier(), nodeOperation.node.getUniqueIdentifier());
         assertEquals(CachingPubsubPersistenceProvider.NodeOperation.Action.REMOVE, nodeOperation.action);
         assertNull(nodeOperation.affiliate);

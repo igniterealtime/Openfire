@@ -20,16 +20,15 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.Arrays;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
-import javax.xml.bind.DatatypeConverter;
 
+import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.ConnectionException;
 import org.jivesoftware.openfire.auth.InternalUnauthenticatedException;
@@ -61,6 +60,9 @@ public class ScramSha1SaslServer implements SaslServer {
     private String serverFirstMessage;
     private String clientFirstMessageBare;
     private SecureRandom random = new SecureRandom();
+    private Connection connection;
+    private String gs2CbindFlag;
+    private String gs2CbindName;
 
     private enum State {
         INITIAL,
@@ -71,6 +73,10 @@ public class ScramSha1SaslServer implements SaslServer {
     public ScramSha1SaslServer() {
     }
 
+    public ScramSha1SaslServer(Connection connection) {
+        this.connection = connection;
+    }
+
     /**
      * Returns the IANA-registered mechanism name of this SASL server.
      * ("SCRAM-SHA-1").
@@ -78,7 +84,7 @@ public class ScramSha1SaslServer implements SaslServer {
      */
     @Override
     public String getMechanismName() {
-        return "SCRAM-SHA-1";
+        return connection != null ? "SCRAM-SHA-1-PLUS" : "SCRAM-SHA-1";
     }
 
     /**
@@ -147,15 +153,15 @@ public class ScramSha1SaslServer implements SaslServer {
             throw new SaslException("Invalid first client message");
         }
 //        String gs2Header = m.group(1);
-//        String gs2CbindFlag = m.group(2);
-//        String gs2CbindName = m.group(3);
+        gs2CbindFlag = m.group(2);
+        gs2CbindName = m.group(3);
 //        String authzId = m.group(4);
         clientFirstMessageBare = m.group(5);
         username = m.group(6);
         String clientNonce = m.group(7);
         nonce = clientNonce + UUID.randomUUID().toString();
 
-        serverFirstMessage = String.format("r=%s,s=%s,i=%d", nonce, DatatypeConverter.printBase64Binary(getSalt(username)),
+        serverFirstMessage = String.format("r=%s,s=%s,i=%d", nonce, Base64.getEncoder().encodeToString(getSalt(username)),
                 getIterations(username));
         return serverFirstMessage.getBytes(StandardCharsets.UTF_8);
     }
@@ -171,12 +177,50 @@ public class ScramSha1SaslServer implements SaslServer {
         }
 
         String clientFinalMessageWithoutProof = m.group(1);
-//        String channelBinding = m.group(2);
+        String channelBindingBase64 = m.group(2);
         String clientNonce = m.group(3);
         String proof = m.group(4);
-        
+
         if (!nonce.equals(clientNonce)) {
             throw new SaslException("Client final message has incorrect nonce value");
+        }
+
+        // Channel binding verification
+        if ("p".equals(gs2CbindFlag)) {
+            if (connection == null) {
+                throw new SaslException("Client requested channel binding but none available");
+            }
+            if (gs2CbindName == null || gs2CbindName.isEmpty()) {
+                throw new SaslException("Client requested channel binding but did not provide the binding type in GS2 header");
+            }
+            final Optional<byte[]> cbData = connection.getChannelBindingData(gs2CbindName);
+            if (!cbData.isPresent()) {
+                throw new SaslException("Channel binding type not supported: " + gs2CbindName);
+            }
+            final byte[] expectedCbind = cbData.get();
+            final String gs2Header = "p=" + gs2CbindName + ",,";
+            final byte[] gs2HeaderBytes = gs2Header.getBytes(StandardCharsets.UTF_8);
+            final byte[] expectedChannelBindingData = new byte[gs2HeaderBytes.length + expectedCbind.length];
+            System.arraycopy(gs2HeaderBytes, 0, expectedChannelBindingData, 0, gs2HeaderBytes.length);
+            System.arraycopy(expectedCbind, 0, expectedChannelBindingData, gs2HeaderBytes.length, expectedCbind.length);
+
+            final byte[] clientChannelBindingData = Base64.getDecoder().decode(channelBindingBase64);
+            if (!Arrays.equals(expectedChannelBindingData, clientChannelBindingData)) {
+                throw new SaslException("Channel binding verification failed");
+            }
+        } else if ("y".equals(gs2CbindFlag)) {
+            if (connection != null && !connection.getChannelBindingData("tls-server-endpoint").isPresent()) {
+                // if we DO support it, client SHOULD have used 'p'
+                // but RFC 5802 says server MUST fail if it supports CB and client said 'y'
+            }
+            // Check if server supports channel binding. If so, 'y' is invalid.
+            if (connection != null && (connection.getChannelBindingData("tls-server-endpoint").isPresent()
+                                    || connection.getChannelBindingData("tls-unique").isPresent()
+                                    || connection.getChannelBindingData("tls-exporter").isPresent())) {
+                 throw new SaslException("Client did not use channel binding but server supports it");
+            }
+        } else if ("n".equals(gs2CbindFlag)) {
+            // Client does not support channel binding. 
         }
 
         try {
@@ -194,7 +238,7 @@ public class ScramSha1SaslServer implements SaslServer {
             byte[] serverSignature = ScramUtils.computeHmac(serverKey, authMessage);
             
             byte[] clientKey = clientSignature.clone();
-            byte[] decodedProof = DatatypeConverter.parseBase64Binary(proof);
+            byte[] decodedProof = Base64.getDecoder().decode(proof);
             for (int i = 0; i < clientKey.length; i++) {
                 clientKey[i] ^= decodedProof[i];
             }
@@ -202,7 +246,7 @@ public class ScramSha1SaslServer implements SaslServer {
             if (!Arrays.equals(storedKey, MessageDigest.getInstance("SHA-1").digest(clientKey))) {
                 throw new SaslException("Authentication failed for: '"+username+"'");
             }
-            return ("v=" + DatatypeConverter.printBase64Binary(serverSignature))
+            return ("v=" + Base64.getEncoder().encodeToString(serverSignature))
                     .getBytes(StandardCharsets.UTF_8);
         } catch (UserNotFoundException | NoSuchAlgorithmException e) {
             throw new SaslException(e.getMessage(), e);
@@ -317,9 +361,9 @@ public class ScramSha1SaslServer implements SaslServer {
                 Log.debug("No salt found, so resetting password.");
                 String password = AuthFactory.getPassword(username);
                 AuthFactory.setPassword(username, password);
-                salt = DatatypeConverter.parseBase64Binary(AuthFactory.getSalt(username));
+                salt = Base64.getDecoder().decode(AuthFactory.getSalt(username));
             } else {
-                salt = DatatypeConverter.parseBase64Binary(saltshaker);
+                salt = Base64.getDecoder().decode(saltshaker);
             }
             return salt;
         } catch (UserNotFoundException e) {
@@ -355,7 +399,7 @@ public class ScramSha1SaslServer implements SaslServer {
         if (serverKey == null) {
             return null;
         } else {
-            return DatatypeConverter.parseBase64Binary( serverKey );
+            return Base64.getDecoder().decode( serverKey );
         }
     }
     
@@ -367,7 +411,7 @@ public class ScramSha1SaslServer implements SaslServer {
         if (storedKey == null) {
             return null;
         } else {
-            return DatatypeConverter.parseBase64Binary( storedKey );
+            return Base64.getDecoder().decode( storedKey );
         }
     }
 }

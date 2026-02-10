@@ -251,9 +251,12 @@ public class CertificateManager {
         // Add SubjectAlternativeNames (SANs)
         final ASN1EncodableVector subjectAlternativeNames = new ASN1EncodableVector();
 
-        final Collection<List<?>> certSans = cert.getSubjectAlternativeNames();
+        Collection<List<?>> certSans = cert.getSubjectAlternativeNames();
         if ( certSans != null )
         {
+            // OF-3159: Limit the number of SubjectAltNames to prevent abuse through resource exhaustion.
+            certSans = certSans.stream().limit(1024).toList();
+
             for ( final List<?> certSan : certSans )
             {
                 final int nameType = (Integer) certSan.get( 0 );

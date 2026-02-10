@@ -123,7 +123,7 @@
         <jetty.version>12.0.24</jetty.version>
         <standard-taglib.version>1.2.5</standard-taglib.version>
         <netty.version>4.1.118.Final</netty.version>
-        <bouncycastle.version>1.78.1</bouncycastle.version>
+        <bouncycastle.version>1.83</bouncycastle.version>
         <slf4j.version>2.0.17</slf4j.version>
         <log4j.version>2.20.0</log4j.version>
         <ojdbc.version>23.7.0.25.01</ojdbc.version>

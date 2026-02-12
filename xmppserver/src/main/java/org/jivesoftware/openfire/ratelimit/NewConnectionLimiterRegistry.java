@@ -16,6 +16,9 @@
 package org.jivesoftware.openfire.ratelimit;
 
 import org.jivesoftware.openfire.spi.ConnectionType;
+import org.jivesoftware.openfire.stats.Statistic;
+import org.jivesoftware.openfire.stats.StatisticsManager;
+import org.jivesoftware.openfire.stats.i18nStatistic;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TokenBucketRateLimiter;
 import org.slf4j.Logger;
@@ -172,7 +175,12 @@ public final class NewConnectionLimiterRegistry
             return S2S_LIMITER_REF.get();
         }
 
-        return UNSUPPORTED_LIMITERS.computeIfAbsent(type, t -> TokenBucketRateLimiter.unlimited());
+        // For unsupported types: create unlimited limiter and register statistics dynamically.
+        return UNSUPPORTED_LIMITERS.computeIfAbsent(type, t -> {
+            final TokenBucketRateLimiter unlimited = TokenBucketRateLimiter.unlimited();
+            registerLimiterStatistics(t);
+            return unlimited;
+        });
     }
 
     /**
@@ -180,11 +188,14 @@ public final class NewConnectionLimiterRegistry
      */
     private static void updateC2SLimiter()
     {
+        final TokenBucketRateLimiter rateLimiter;
         if (C2S_ENABLED.getValue()) {
-            C2S_LIMITER_REF.set(new TokenBucketRateLimiter(C2S_PERMITS_PER_SECOND.getValue(), C2S_MAX_BURST.getValue()));
+            rateLimiter = new TokenBucketRateLimiter(C2S_PERMITS_PER_SECOND.getValue(), C2S_MAX_BURST.getValue());
         } else {
-            C2S_LIMITER_REF.set(TokenBucketRateLimiter.unlimited());
+            rateLimiter = TokenBucketRateLimiter.unlimited();
         }
+        C2S_LIMITER_REF.set(rateLimiter);
+        registerLimiterStatistics(ConnectionType.SOCKET_C2S);
     }
 
     /**
@@ -192,11 +203,14 @@ public final class NewConnectionLimiterRegistry
      */
     private static void updateS2SLimiter()
     {
+        final TokenBucketRateLimiter rateLimiter;
         if (S2S_ENABLED.getValue()) {
-            S2S_LIMITER_REF.set(new TokenBucketRateLimiter(S2S_PERMITS_PER_SECOND.getValue(), S2S_MAX_BURST.getValue()));
+            rateLimiter = new TokenBucketRateLimiter(S2S_PERMITS_PER_SECOND.getValue(), S2S_MAX_BURST.getValue());
         } else {
-            S2S_LIMITER_REF.set(TokenBucketRateLimiter.unlimited());
+            rateLimiter = TokenBucketRateLimiter.unlimited();
         }
+        S2S_LIMITER_REF.set(rateLimiter);
+        registerLimiterStatistics(ConnectionType.SOCKET_S2S);
     }
 
     /**
@@ -225,6 +239,52 @@ public final class NewConnectionLimiterRegistry
                 Log.warn("New {} connection rejected due to rate limiting. This message will not be logged again for {} to prevent excessive log output.", type, interval);
             }
         }
+    }
+
+    /**
+     * Registers all metrics for a limiter dynamically, using localized names, descriptions, and units.
+     */
+    private static void registerLimiterStatistics(final ConnectionType type)
+    {
+        // Note: rather than passing the limiter and using that in the statistic, this implementation dynamically
+        //       gets the limiter from the registry. This allows the limiter to be updated dynamically. This in turn
+        //       prevents issues when the statistic is cached after first use (as done by the Monitoring plugin), which
+        //       causes the original limiter to be used instead of the updated one.
+        final StatisticsManager stats = StatisticsManager.getInstance();
+
+        // Explicit calls to remove older statistics shouldn't be needed: the new ones will overwrite any old ones.
+
+        final String statKeyPrefix = "ratelimit.newconnections." + type.name().toLowerCase() + ".";
+
+        // Accepted connections
+        final String statKeyAccepted = statKeyPrefix + "accepted";
+        stats.removeStatistic(statKeyAccepted);
+        stats.addStatistic(statKeyAccepted,
+            new i18nStatistic("ratelimit.newconnections."+type.name().toLowerCase()+".accepted", Statistic.Type.amount) {
+                @Override public double sample() { return getLimiter(type).getAcceptedEvents(); }
+                @Override public boolean isPartialSample() { return true; }
+            }
+        );
+
+        // Rejected connections
+        final String statKeyRejected = statKeyPrefix + "rejected";
+        stats.removeStatistic(statKeyRejected);
+        stats.addStatistic(statKeyRejected,
+            new i18nStatistic("ratelimit.newconnections."+type.name().toLowerCase()+".rejected", Statistic.Type.amount) {
+                @Override public double sample() { return getLimiter(type).getRejectedEvents(); }
+                @Override public boolean isPartialSample() { return true; }
+            }
+        );
+
+        // Available tokens
+        final String statKeyTokens = statKeyPrefix + "tokens";
+        stats.removeStatistic(statKeyTokens);
+        stats.addStatistic(statKeyTokens,
+            new i18nStatistic("ratelimit.newconnections."+type.name().toLowerCase()+".tokens", Statistic.Type.amount) {
+                @Override public double sample() { return getLimiter(type).getAvailableTokens(); }
+                @Override public boolean isPartialSample() { return true; }
+            }
+        );
     }
 
     private NewConnectionLimiterRegistry()

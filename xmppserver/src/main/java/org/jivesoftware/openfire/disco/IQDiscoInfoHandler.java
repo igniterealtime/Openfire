@@ -94,11 +94,8 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
     private List<UserFeaturesProvider> registeredUserFeatureProviders = new ArrayList<>();
     private List<ExtendedDiscoInfoProvider> extendedDiscoInfoProviders = new ArrayList<>();
 
-    public static final SystemProperty<Boolean> ENABLED = SystemProperty.Builder.ofType(Boolean.class)
-        .setKey("xmpp.iqdiscoinfo.xformsoftwareversion")
-        .setDefaultValue(Boolean.TRUE)
-        .setDynamic(Boolean.TRUE)
-        .build();
+    private final ContactAddressesExtendedDiscoInfoProvider contactAddressesProvider = new ContactAddressesExtendedDiscoInfoProvider();
+    private final SoftwareInfoExtendedDiscoInfoProvider softwareInfoProvider = new SoftwareInfoExtendedDiscoInfoProvider();
 
     public IQDiscoInfoHandler() {
         super("XMPP Disco Info Handler");
@@ -452,6 +449,11 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         serverFeatures = CacheFactory.createCache("Disco Server Features");
         addServerFeature(NAMESPACE_DISCO_INFO);
         setProvider(server.getServerInfo().getXMPPDomain(), getServerInfoProvider());
+
+        // Register built-in ExtendedDiscoInfoProviders
+        addExtendedDiscoInfoProvider(contactAddressesProvider);
+        addExtendedDiscoInfoProvider(softwareInfoProvider);
+
         // Listen to cluster events
         ClusterManager.addListener(this);
     }
@@ -770,88 +772,10 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                     // Redirect the request to the disco info provider of the specified node
                     result.addAll(serverNodeProviders.get(node).getExtendedInfos(name, node, senderJID));
                 }
-                else if (name == null || name.equals(XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
-                    // Answer extended info of the server itself.
-
-                    // XEP-0157 Contact addresses for XMPP Services
-                    if ( !JiveGlobals.getBooleanProperty( "admin.disable-exposure" ) )
-                    {
-                        final Collection<JID> admins = XMPPServer.getInstance().getAdmins();
-                        if ( admins == null || admins.isEmpty() )
-                        {
-                            return null;
-                        }
-
-                        final DataForm dataForm = new DataForm(DataForm.Type.result);
-
-                        final FormField fieldType = dataForm.addField();
-                        fieldType.setVariable("FORM_TYPE");
-                        fieldType.setType(FormField.Type.hidden);
-                        fieldType.addValue("http://jabber.org/network/serverinfo");
-
-                        final FormField fieldAdminAddresses = dataForm.addField();
-                        fieldAdminAddresses.setVariable("admin-addresses");
-                        fieldAdminAddresses.setType(Type.list_multi);
-
-                        final UserManager userManager = UserManager.getInstance();
-                        for ( final JID admin : admins )
-                        {
-                            fieldAdminAddresses.addValue( "xmpp:" + admin.asBareJID() );
-                            if ( admin.getDomain().equals( XMPPServer.getInstance().getServerInfo().getXMPPDomain() ) ) {
-                                try
-                                {
-                                    final String email = userManager.getUser( admin.getNode() ).getEmail();
-                                    if ( email != null && !email.trim().isEmpty() )
-                                    {
-                                        fieldAdminAddresses.addValue( "mailto:" + email );
-                                    }
-                                }
-                                catch (Exception e)
-                                {
-                                    continue;
-                                }
-                            }
-                        }
-
-                        //XEP-0232 includes extended information about Software Version in a data form
-                        final DataForm dataFormSoftwareVersion = new DataForm(DataForm.Type.result);
-
-                        final FormField fieldTypeSoftwareVersion = dataFormSoftwareVersion.addField();
-                        fieldTypeSoftwareVersion.setVariable("FORM_TYPE");
-                        fieldTypeSoftwareVersion.setType(FormField.Type.hidden);
-                        fieldTypeSoftwareVersion.addValue("urn:xmpp:dataforms:softwareinfo");
-
-                        final FormField fieldOs = dataFormSoftwareVersion.addField();
-                        fieldOs.setType(Type.text_single);
-                        fieldOs.setVariable("os");
-                        fieldOs.addValue( System.getProperty("os.name"));
-
-                        final FormField fieldOsVersion = dataFormSoftwareVersion.addField();
-                        fieldOsVersion.setType(Type.text_single);
-                        fieldOsVersion.setVariable("os_version");
-                        fieldOsVersion.addValue(System.getProperty("os.version")+" "+System.getProperty("os.arch")+" - Java " + System.getProperty("java.version"));
-
-                        final FormField fieldSoftware = dataFormSoftwareVersion.addField();
-                        fieldSoftware.setType(Type.text_single);
-                        fieldSoftware.setVariable("software");
-                        fieldSoftware.addValue(AdminConsole.getAppName());
-
-                        final FormField fieldSoftwareVersion = dataFormSoftwareVersion.addField();
-                        fieldSoftwareVersion.setType(Type.text_single);
-                        fieldSoftwareVersion.setVariable("software_version");
-                        fieldSoftwareVersion.addValue(AdminConsole.getVersionString());
-
-                        final Set<DataForm> dataForms = new HashSet<>();
-                        if (ENABLED.getValue()){
-                            dataForms.add(dataFormSoftwareVersion);
-                        }
-                        dataForms.add(dataForm);
-                        result.addAll(dataForms);
-                    }
-                }
                 else if (node != null && name != null) {
                     result.addAll(XMPPServer.getInstance().getIQPEPHandler().getExtendedInfos(name, node, senderJID));
                 }
+
                 for (final ExtendedDiscoInfoProvider provider : extendedDiscoInfoProviders) {
                     Set<DataForm> extended = provider.getExtendedInfos(name, node, senderJID);
                     merge(result, extended);

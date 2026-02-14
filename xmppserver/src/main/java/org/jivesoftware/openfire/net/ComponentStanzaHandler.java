@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,7 +109,8 @@ public class ComponentStanzaHandler extends StanzaHandler {
                         componentSession.getConnection().registerCloseListener(new ConnectionCloseListener() {
                             @Override
                             public CompletableFuture<Void> onConnectionClosing(@Nullable Object handback) {
-                                return CompletableFuture.runAsync(() -> InternalComponentManager.getInstance().removeComponent(subdomain, (ComponentSession.ExternalComponent) handback));
+                                InternalComponentManager.getInstance().removeComponent(subdomain, (ComponentSession.ExternalComponent) handback);
+                                return CompletableFuture.completedFuture(null);
                             }
                         }, component);
                         // Send confirmation that the new domain has been registered

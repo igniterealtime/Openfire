@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,20 @@
 
 package org.jivesoftware.openfire;
 
+import org.jivesoftware.openfire.event.SessionEventListener;
+
 import javax.annotation.Nullable;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Implement and register with a connection to receive notification
- * of the connection closing.
+ * Implement and register this listener with a connection to receive notifications when the connection is closed.
+ *
+ * <em>Important:</em> A connection closing does <em>not</em> necessarily imply that the associated session has been
+ * closed as well. In some cases, a session may outlive its connection - for example, when Stream Management is enabled.
+ *
+ * Implementations MUST NOT assume that a callback to any method in this interface indicates that the corresponding
+ * session has been closed. To reliably detect session closure events, implementations should instead use
+ * {@link SessionEventListener}.
  *
  * @author Iain Shigeoka
  * @author Guus der Kinderen, guus@goodbytes.nl

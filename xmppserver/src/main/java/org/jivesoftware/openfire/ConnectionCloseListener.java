@@ -31,11 +31,32 @@ import java.util.concurrent.CompletableFuture;
  * session has been closed. To reliably detect session closure events, implementations should instead use
  * {@link SessionEventListener}.
  *
+ * <em>Listener Execution Order</em>
+ * Listeners are executed in order of their priority, with higher priority values being executed first. Built-in
+ * listeners (such as those for client, server, or component sessions) use high priority values. Third-party listeners
+ * should use the default priority (0) or a low positive value to ensure they are executed after built-in listeners.
+ * This guarantees that critical cleanup logic (e.g., session removal from routing tables) occurs before any other
+ * listeners are invoked.
+ *
  * @author Iain Shigeoka
  * @author Guus der Kinderen, guus@goodbytes.nl
  */
 public interface ConnectionCloseListener
 {
+    /**
+     * The priority used by Openfire's built-in listeners. These should generally be higher than those implemented by
+     * third parties / in plugins. This guarantees that critical cleanup logic (e.g., session removal from routing
+     * tables) occurs before any other listeners are invoked.
+     */
+    int PRIO_BUILT_IN = 100;
+
+    /**
+     * The recommended priority for third-party implementations. These should generally be lower than the priority used
+     * by Openfire's built-in implementations. This guarantees that critical cleanup logic (e.g., session removal from
+     * routing tables) occurs before any other listeners are invoked.
+     */
+    int PRIO_THIRDPARTY = 0;
+
     /**
      * Called when a connection is being closed.
      *
@@ -46,4 +67,19 @@ public interface ConnectionCloseListener
      * @return a Future representing pending completion of the event listener invocation.
      */
     CompletableFuture<Void> onConnectionClosing(@Nullable final Object handback);
+
+    /**
+     * Returns the priority of this listener.
+     *
+     * Listeners with higher priority values are executed before listeners with lower priority values. Built-in
+     * listeners (such as those for client, server, or component sessions) use high priority values (e.g., 100) and
+     * should generally be executed before any third-party listeners. Third-party listeners are encouraged to use the
+     * default priority (0) or a low positive value to ensure they are executed after built-in listeners.
+     *
+     * @return the priority of this listener
+     */
+    default int getPriority()
+    {
+        return PRIO_THIRDPARTY;
+    }
 }

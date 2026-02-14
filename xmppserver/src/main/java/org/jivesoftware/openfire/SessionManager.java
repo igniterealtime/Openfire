@@ -1428,6 +1428,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener
 
             return CompletableFuture.completedFuture(null);
         }
+
+        @Override
+        public int getPriority() {
+            // Openfire's built-in listeners should use a higher priority than listeners implemented by plugins / third parties.
+            return ConnectionCloseListener.PRIO_BUILT_IN;
+        }
     }
 
     private class IncomingServerSessionListener implements ConnectionCloseListener
@@ -1458,6 +1464,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             }
 
             return CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0]));
+        }
+
+        @Override
+        public int getPriority() {
+            // Openfire's built-in listeners should use a higher priority than listeners implemented by plugins / third parties.
+            return ConnectionCloseListener.PRIO_BUILT_IN;
         }
     }
 
@@ -1490,6 +1502,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener
 
             return CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0]));
         }
+
+        @Override
+        public int getPriority() {
+            // Openfire's built-in listeners should use a higher priority than listeners implemented by plugins / third parties.
+            return ConnectionCloseListener.PRIO_BUILT_IN;
+        }
     }
 
     private class ConnectionMultiplexerSessionListener implements ConnectionCloseListener
@@ -1521,6 +1539,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             }
 
             return CompletableFuture.completedFuture(null);
+        }
+
+        @Override
+        public int getPriority() {
+            // Openfire's built-in listeners should use a higher priority than listeners implemented by plugins / third parties.
+            return ConnectionCloseListener.PRIO_BUILT_IN;
         }
     }
 

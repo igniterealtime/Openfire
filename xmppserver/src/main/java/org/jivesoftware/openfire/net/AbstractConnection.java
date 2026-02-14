@@ -68,7 +68,7 @@ public abstract class AbstractConnection implements Connection
      * An optional handback object can be associated with the registration if the same listener is registered to listen
      * for multiple connection closures.
      */
-    final protected Map<ConnectionCloseListener, Object> closeListeners = new HashMap<>();
+    final protected LinkedHashMap<ConnectionCloseListener, Object> closeListeners = new LinkedHashMap<>();
 
     /**
      * The session that owns this connection.
@@ -153,6 +153,15 @@ public abstract class AbstractConnection implements Connection
      * close operation. This prevents blocking or long-running listener implementations (for example, those performing
      * database or network I/O) from interfering with connection shutdown or I/O processing performed by subclasses.
      *
+     * Listeners are executed in order of their priority, with higher priority values being executed first.
+     * Built-in listeners (such as those for client, server, or component sessions) use high priority values to ensure
+     * they are executed before third-party listeners. This guarantees that critical cleanup logic (e.g., session
+     * removal from routing tables) occurs before any other listeners are invoked.
+     *
+     * <b>Execution Order:</b>
+     * Listeners are executed sequentially, in priority order. Each listener is only invoked after all higher-priority
+     * listeners have completed. This ensures that lower-priority listeners always observe a consistent, post-cleanup state.
+     *
      * Each listener may return a {@link CompletableFuture} to represent asynchronous work that continues after the
      * listener is invoked. The Future returned by this method completes only after all listeners have been invoked and
      * all listener-provided Futures have completed.
@@ -160,18 +169,18 @@ public abstract class AbstractConnection implements Connection
      * Exceptions thrown by listeners, whether synchronously during invocation or asynchronously during completion of
      * their returned Future, are captured and propagated via the returned Future.
      *
-     * When the ConnectionManager instance or its event executor is not available, this method returns skips invocation
-     * of registered listeners and returns failed Future. It is assumed that this happens only when the server is
+     * When the ConnectionManager instance or its event executor is not available, this method skips invocation
+     * of registered listeners and returns a failed Future. It is assumed that this happens only when the server is
      * shutting down.
      *
      * @return A Future that completes when all close listeners have been invoked and all listener-provided asynchronous
      *         work has completed.
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3180">OF-3180: Ensure ConnectionCloseListener invocation cannot execute blocking logic on Netty event loop threads</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3179">OF-3179: Ensure deterministic execution order for ConnectionCloseListeners</a>
      */
     protected CompletableFuture<?> notifyCloseListeners()
     {
         Log.debug("Notifying close listeners of connection {}", this);
-        final ArrayList<CompletableFuture<?>> futures = new ArrayList<>();
 
         final ConnectionManagerImpl connectionManager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
         if (connectionManager == null) {
@@ -179,19 +188,32 @@ public abstract class AbstractConnection implements Connection
             return CompletableFuture.failedFuture(new IllegalStateException("No ConnectionManager available (server is likely shutting down)."));
         }
 
-        for (final Map.Entry<ConnectionCloseListener, Object> entry : closeListeners.entrySet())
+        // Sort listeners by priority (highest first), then by insertion order for ties.
+        final List<Map.Entry<ConnectionCloseListener, Object>> sortedListeners = new ArrayList<>(closeListeners.entrySet());
+        sortedListeners.sort((e1, e2) -> {
+            int priorityCompare = Integer.compare(e2.getKey().getPriority(), e1.getKey().getPriority());
+            if (priorityCompare != 0) {
+                return priorityCompare;
+            }
+            // For listeners with the same priority, preserve insertion order.
+            return 0;
+        });
+
+        // Execute listeners sequentially, in priority order.
+        CompletableFuture<?> result = CompletableFuture.completedFuture(null);
+        for (final Map.Entry<ConnectionCloseListener, Object> entry : sortedListeners)
         {
             final ConnectionCloseListener listener = entry.getKey();
             if (listener != null) {
                 final Object handback = entry.getValue();
-
-                final CompletableFuture<?> future = connectionManager
-                    .supplyConnectionEventTaskAsync(() -> listener.onConnectionClosing(handback))
-                    .thenCompose(f -> f); // flatten listener-provided future
-                futures.add(future);
+                result = result.thenCompose(v ->
+                    connectionManager
+                        .supplyConnectionEventTaskAsync(() -> listener.onConnectionClosing(handback))
+                        .thenCompose(f -> f) // flatten listener-provided future.
+                );
             }
         }
 
-        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+        return result;
     }
 }

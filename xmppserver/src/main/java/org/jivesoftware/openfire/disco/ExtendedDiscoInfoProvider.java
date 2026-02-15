@@ -39,8 +39,8 @@ import java.util.Set;
  * provider's entire contribution is skipped and a warning is logged. Other providers continue to be processed
  * normally.
  *
- * Implementations should use 'JiveGlobals.getBooleanProperty( "admin.disable-exposure" )' and consider appropriate
- * adjustments where needed.
+ * Implementations may wish to check {@link IQDiscoInfoHandler#DISABLE_EXPOSURE} and return an empty set
+ * when it is true, to respect privacy configurations that suppress exposure of administrative details.
  *
  * @see <a href="https://xmpp.org/extensions/xep-0004.html">XEP-0004: Data Forms</a>
  * @see <a href="https://xmpp.org/extensions/xep-0128.html">XEP-0128: Service Discovery Extensions</a>

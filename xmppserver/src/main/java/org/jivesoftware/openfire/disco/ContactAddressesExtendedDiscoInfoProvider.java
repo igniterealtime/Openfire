@@ -18,7 +18,6 @@ package org.jivesoftware.openfire.disco;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.user.UserManager;
-import org.jivesoftware.util.JiveGlobals;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
@@ -51,7 +50,7 @@ public class ContactAddressesExtendedDiscoInfoProvider implements ExtendedDiscoI
     @Override
     public Set<DataForm> getExtendedInfos(String domain, String name, String node, JID senderJID) {
         // Return empty set if admin exposure is disabled
-        if (JiveGlobals.getBooleanProperty("admin.disable-exposure")) {
+        if (IQDiscoInfoHandler.DISABLE_EXPOSURE.getValue()) {
             return Collections.emptySet();
         }
 

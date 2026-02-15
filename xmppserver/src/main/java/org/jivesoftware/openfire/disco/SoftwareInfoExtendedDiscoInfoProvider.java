@@ -18,7 +18,6 @@ package org.jivesoftware.openfire.disco;
 
 import org.jivesoftware.admin.AdminConsole;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
@@ -66,7 +65,7 @@ public class SoftwareInfoExtendedDiscoInfoProvider implements ExtendedDiscoInfoP
         }
 
         // Return empty set if admin exposure is disabled
-        if (JiveGlobals.getBooleanProperty("admin.disable-exposure")) {
+        if (IQDiscoInfoHandler.DISABLE_EXPOSURE.getValue()) {
             return Collections.emptySet();
         }
 

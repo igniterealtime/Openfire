@@ -19,7 +19,6 @@ package org.jivesoftware.openfire.disco;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.admin.AdminConsole;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -45,7 +44,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
-import org.xmpp.forms.FormField.Type;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -96,6 +94,18 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
 
     private final ContactAddressesExtendedDiscoInfoProvider contactAddressesProvider = new ContactAddressesExtendedDiscoInfoProvider();
     private final SoftwareInfoExtendedDiscoInfoProvider softwareInfoProvider = new SoftwareInfoExtendedDiscoInfoProvider();
+
+    /**
+     * Controls whether extended service discovery information that may expose
+     * administrative details (e.g. contact addresses, software versions) should be
+     * included in disco#info responses. When set to true, such information is
+     * suppressed for security/privacy reasons.
+     */
+    public static final SystemProperty<Boolean> DISABLE_EXPOSURE = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("admin.disable-exposure")
+        .setDefaultValue(Boolean.FALSE)
+        .setDynamic(Boolean.TRUE)
+        .build();
 
     public IQDiscoInfoHandler() {
         super("XMPP Disco Info Handler");

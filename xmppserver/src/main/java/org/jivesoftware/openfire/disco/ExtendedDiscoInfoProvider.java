@@ -55,11 +55,12 @@ public interface ExtendedDiscoInfoProvider {
      * Forms should include a FORM_TYPE field to enable proper merging.
      * </p>
      *
-     * @param name the recipient's JID.
-     * @param node the requested disco node.
-     * @param senderJID the XMPPAddress of user that sent the disco info request.
+     * @param domain the domain of the target JID (e.g., "localhost", "conference.localhost", "pubsub.localhost")
+     * @param name the node part of the target JID (null for service-level queries)
+     * @param node the requested disco node parameter (null if not specified)
+     * @param senderJID the XMPPAddress of user that sent the disco info request
      * @return A Set of data forms (possibly empty, never null). May be immutable.
      */
-    Set<DataForm> getExtendedInfos(String name, String node, JID senderJID );
+    Set<DataForm> getExtendedInfos(String domain, String name, String node, JID senderJID);
 
 }

@@ -72,7 +72,17 @@ class IQDiscoInfoHandlerTest {
         }
 
         @Override
-        public Set<DataForm> getExtendedInfos(String name, String node, JID senderJID) {
+        public Set<DataForm> getExtendedInfos(String domain, String name, String node, JID senderJID) {
+            // Only return forms for server domain, service-level queries (matching real provider behavior)
+            if (domain != null && !domain.equals(Fixtures.XMPP_DOMAIN)) {
+                return Collections.emptySet();
+            }
+            if (name != null) {
+                return Collections.emptySet();
+            }
+            if (node != null) {
+                return Collections.emptySet();
+            }
             return forms;
         }
     }
@@ -117,7 +127,47 @@ class IQDiscoInfoHandlerTest {
         }
     }
 
+    /**
+     * Helper method to get extended disco info forms from a handler by simulating a disco#info request.
+     * This tests through the full handleIQ() flow where ExtendedDiscoInfoProviders are now applied.
+     */
+    private Set<DataForm> getExtendedInfosViaHandleIQ(IQDiscoInfoHandler handler, JID from, JID to) {
+        try {
+            // Initialize the handler (this registers the server disco info provider)
+            handler.initialize(XMPPServer.getInstance());
+            handler.start();
 
+            // Create disco#info request
+            org.xmpp.packet.IQ request = new org.xmpp.packet.IQ(org.xmpp.packet.IQ.Type.get);
+            request.setFrom(from);
+            if (to != null) {
+                request.setTo(to);
+            } else {
+                // If no 'to' specified, it goes to the server domain
+                request.setTo(new JID(Fixtures.XMPP_DOMAIN));
+            }
+            request.setChildElement("query", "http://jabber.org/protocol/disco#info");
+
+            // Handle the request
+            org.xmpp.packet.IQ response = handler.handleIQ(request);
+
+            // Parse the response to extract DataForms
+            Set<DataForm> forms = new HashSet<>();
+            if (response != null && response.getChildElement() != null) {
+                for (Object element : response.getChildElement().elements("x")) {
+                    if (element instanceof org.dom4j.Element) {
+                        org.dom4j.Element xElement = (org.dom4j.Element) element;
+                        if ("jabber:x:data".equals(xElement.getNamespaceURI())) {
+                            forms.add(new DataForm(xElement));
+                        }
+                    }
+                }
+            }
+            return forms;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get extended infos via handleIQ", e);
+        }
+    }
 
     @Test
     void testSameFormTypeIsMerged() {
@@ -133,11 +183,8 @@ class IQDiscoInfoHandlerTest {
             new TestExtendedDiscoInfoProvider(Set.of(f2))
         );
 
-        DiscoInfoProvider provider =
-            invokeGetServerInfoProvider(handler);
-
-        Set<DataForm> result =
-            provider.getExtendedInfos(null, null, new JID("tester@example.org"));
+        Set<DataForm> result = getExtendedInfosViaHandleIQ(handler,
+            new JID("tester@example.org"), null);
 
         DataForm merged = result.stream()
             .filter(f -> "urn:xmpp:dataforms:openfire-unittest".equals(getFormType(f)))
@@ -168,11 +215,8 @@ class IQDiscoInfoHandlerTest {
             new TestExtendedDiscoInfoProvider(Set.of(form2))
         );
 
-        DiscoInfoProvider provider =
-            invokeGetServerInfoProvider(handler);
-
-        Set<DataForm> result =
-            provider.getExtendedInfos(null, null, new JID("tester@example.org"));
+        Set<DataForm> result = getExtendedInfosViaHandleIQ(handler,
+            new JID("tester@example.org"), null);
 
         long testFormCount = result.stream()
             .filter(f -> {
@@ -192,11 +236,8 @@ class IQDiscoInfoHandlerTest {
             new TestExtendedDiscoInfoProvider(Collections.emptySet())
         );
 
-        DiscoInfoProvider provider =
-            invokeGetServerInfoProvider(handler);
-
-        Set<DataForm> result =
-            provider.getExtendedInfos(null, null, new JID("tester@example.org"));
+        Set<DataForm> result = getExtendedInfosViaHandleIQ(handler,
+            new JID("tester@example.org"), null);
 
         assertNotNull(result);
         // Result should not contain our test forms since provider returned empty set
@@ -246,11 +287,8 @@ class IQDiscoInfoHandlerTest {
             new TestExtendedDiscoInfoProvider(Set.of(form2))
         );
 
-        DiscoInfoProvider provider =
-            invokeGetServerInfoProvider(handler);
-
-        Set<DataForm> result =
-            provider.getExtendedInfos(null, null, new JID("tester@example.org"));
+        Set<DataForm> result = getExtendedInfosViaHandleIQ(handler,
+            new JID("tester@example.org"), null);
 
         DataForm merged = result.stream()
             .filter(f -> "urn:xmpp:dataforms:openfire-unittest".equals(getFormType(f)))
@@ -282,12 +320,9 @@ class IQDiscoInfoHandlerTest {
             new TestExtendedDiscoInfoProvider(Set.of(form))
         );
 
-        DiscoInfoProvider provider =
-            invokeGetServerInfoProvider(handler);
-
         // This should not throw an exception even though provider returns immutable set
-        Set<DataForm> result =
-            provider.getExtendedInfos(null, null, new JID("tester@example.org"));
+        Set<DataForm> result = getExtendedInfosViaHandleIQ(handler,
+            new JID("tester@example.org"), null);
 
         assertNotNull(result);
         assertTrue(result.stream()
@@ -328,11 +363,8 @@ class IQDiscoInfoHandlerTest {
             new TestExtendedDiscoInfoProvider(Set.of(form2))
         );
 
-        DiscoInfoProvider provider =
-            invokeGetServerInfoProvider(handler);
-
-        Set<DataForm> result =
-            provider.getExtendedInfos(null, null, new JID("tester@example.org"));
+        Set<DataForm> result = getExtendedInfosViaHandleIQ(handler,
+            new JID("tester@example.org"), null);
 
         DataForm merged = result.stream()
             .filter(f -> "urn:xmpp:dataforms:openfire-unittest".equals(getFormType(f)))
@@ -397,10 +429,9 @@ class IQDiscoInfoHandlerTest {
             new TestExtendedDiscoInfoProvider(Set.of(form3))
         );
 
-        DiscoInfoProvider provider = invokeGetServerInfoProvider(handler);
-
         // Should not throw - should continue processing and return valid response
-        Set<DataForm> result = provider.getExtendedInfos(null, null, new JID("tester@example.org"));
+        Set<DataForm> result = getExtendedInfosViaHandleIQ(handler,
+            new JID("tester@example.org"), null);
 
         DataForm merged = result.stream()
             .filter(f -> "urn:xmpp:dataforms:openfire-unittest".equals(getFormType(f)))
@@ -456,9 +487,8 @@ class IQDiscoInfoHandlerTest {
             new TestExtendedDiscoInfoProvider(Set.of(form2))
         );
 
-        DiscoInfoProvider provider = invokeGetServerInfoProvider(handler);
-
-        Set<DataForm> result = provider.getExtendedInfos(null, null, new JID("tester@example.org"));
+        Set<DataForm> result = getExtendedInfosViaHandleIQ(handler,
+            new JID("tester@example.org"), null);
 
         DataForm merged = result.stream()
             .filter(f -> "urn:xmpp:dataforms:openfire-unittest".equals(getFormType(f)))
@@ -487,20 +517,20 @@ class IQDiscoInfoHandlerTest {
         // Add the provider
         handler.addExtendedDiscoInfoProvider(provider);
 
-        DiscoInfoProvider serverProvider = invokeGetServerInfoProvider(handler);
-
         // Verify the form appears in the response
-        Set<DataForm> result = serverProvider.getExtendedInfos(null, null, new JID("tester@example.org"));
+        Set<DataForm> result = getExtendedInfosViaHandleIQ(handler,
+            new JID("tester@example.org"), null);
         long formCountBefore = result.stream()
             .filter(f -> "urn:xmpp:dataforms:openfire-unittest".equals(getFormType(f)))
             .count();
         assertEquals(1, formCountBefore, "Form should be present after adding provider");
 
-        // Remove the provider
+        // Remove the provider - need to create a new handler instance to test removal
         handler.removeExtendedDiscoInfoProvider(provider);
 
         // Verify the form no longer appears in the response
-        result = serverProvider.getExtendedInfos(null, null, new JID("tester@example.org"));
+        result = getExtendedInfosViaHandleIQ(handler,
+            new JID("tester@example.org"), null);
         long formCountAfter = result.stream()
             .filter(f -> "urn:xmpp:dataforms:openfire-unittest".equals(getFormType(f)))
             .count();
@@ -515,11 +545,10 @@ class IQDiscoInfoHandlerTest {
         DataForm form = testForm("field1", "value1");
         TestExtendedDiscoInfoProvider provider = new TestExtendedDiscoInfoProvider(Set.of(form));
 
-        DiscoInfoProvider serverProvider = invokeGetServerInfoProvider(handler);
-
         // Add the provider and verify form appears
         handler.addExtendedDiscoInfoProvider(provider);
-        Set<DataForm> result = serverProvider.getExtendedInfos(null, null, new JID("tester@example.org"));
+        Set<DataForm> result = getExtendedInfosViaHandleIQ(handler,
+            new JID("tester@example.org"), null);
         long formCountAfterAdd = result.stream()
             .filter(f -> "urn:xmpp:dataforms:openfire-unittest".equals(getFormType(f)))
             .count();
@@ -527,7 +556,8 @@ class IQDiscoInfoHandlerTest {
 
         // Remove the provider and verify form disappears
         handler.removeExtendedDiscoInfoProvider(provider);
-        result = serverProvider.getExtendedInfos(null, null, new JID("tester@example.org"));
+        result = getExtendedInfosViaHandleIQ(handler,
+            new JID("tester@example.org"), null);
         long formCountAfterRemove = result.stream()
             .filter(f -> "urn:xmpp:dataforms:openfire-unittest".equals(getFormType(f)))
             .count();
@@ -535,7 +565,8 @@ class IQDiscoInfoHandlerTest {
 
         // Re-add the same provider and verify form appears again
         handler.addExtendedDiscoInfoProvider(provider);
-        result = serverProvider.getExtendedInfos(null, null, new JID("tester@example.org"));
+        result = getExtendedInfosViaHandleIQ(handler,
+            new JID("tester@example.org"), null);
         long formCountAfterReAdd = result.stream()
             .filter(f -> "urn:xmpp:dataforms:openfire-unittest".equals(getFormType(f)))
             .count();

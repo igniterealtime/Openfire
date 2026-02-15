@@ -67,7 +67,7 @@ class SoftwareInfoExtendedDiscoInfoProviderTest {
     public void testReturnsSoftwareInfoWhenEnabled() {
         // Setup - ENABLED defaults to true
         // Execute
-        Set<DataForm> forms = provider.getExtendedInfos(null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
+        Set<DataForm> forms = provider.getExtendedInfos(Fixtures.XMPP_DOMAIN, null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
 
         // Verify
         assertNotNull(forms);
@@ -117,7 +117,7 @@ class SoftwareInfoExtendedDiscoInfoProviderTest {
         SoftwareInfoExtendedDiscoInfoProvider.ENABLED.setValue(false);
 
         // Execute
-        Set<DataForm> forms = provider.getExtendedInfos(null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
+        Set<DataForm> forms = provider.getExtendedInfos(Fixtures.XMPP_DOMAIN, null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
 
         // Verify
         assertNotNull(forms);
@@ -130,7 +130,7 @@ class SoftwareInfoExtendedDiscoInfoProviderTest {
         JiveGlobals.setProperty("admin.disable-exposure", "true");
 
         // Execute
-        Set<DataForm> forms = provider.getExtendedInfos(null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
+        Set<DataForm> forms = provider.getExtendedInfos(Fixtures.XMPP_DOMAIN, null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
 
         // Verify
         assertNotNull(forms);
@@ -140,7 +140,7 @@ class SoftwareInfoExtendedDiscoInfoProviderTest {
     @Test
     public void testReturnsEmptyWhenNodeIsNotNull() {
         // Execute
-        Set<DataForm> forms = provider.getExtendedInfos(null, "somenode", new JID("user@" + Fixtures.XMPP_DOMAIN));
+        Set<DataForm> forms = provider.getExtendedInfos(Fixtures.XMPP_DOMAIN, null, "somenode", new JID("user@" + Fixtures.XMPP_DOMAIN));
 
         // Verify
         assertNotNull(forms);
@@ -148,9 +148,19 @@ class SoftwareInfoExtendedDiscoInfoProviderTest {
     }
 
     @Test
-    public void testReturnsEmptyWhenNameDoesNotMatchServerDomain() {
+    public void testReturnsEmptyWhenDomainDoesNotMatchServerDomain() {
         // Execute
-        Set<DataForm> forms = provider.getExtendedInfos("other.domain", null, new JID("user@" + Fixtures.XMPP_DOMAIN));
+        Set<DataForm> forms = provider.getExtendedInfos("other.domain", null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
+
+        // Verify
+        assertNotNull(forms);
+        assertTrue(forms.isEmpty());
+    }
+
+    @Test
+    public void testReturnsEmptyWhenNameIsNotNull() {
+        // Execute
+        Set<DataForm> forms = provider.getExtendedInfos(Fixtures.XMPP_DOMAIN, "someuser", null, new JID("user@" + Fixtures.XMPP_DOMAIN));
 
         // Verify
         assertNotNull(forms);
@@ -159,8 +169,8 @@ class SoftwareInfoExtendedDiscoInfoProviderTest {
 
     @Test
     public void testWorksForServerDomain() {
-        // Execute with name matching server domain
-        Set<DataForm> forms = provider.getExtendedInfos(Fixtures.XMPP_DOMAIN, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
+        // Execute with domain matching server domain
+        Set<DataForm> forms = provider.getExtendedInfos(Fixtures.XMPP_DOMAIN, null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
 
         // Verify
         assertNotNull(forms);
@@ -170,17 +180,17 @@ class SoftwareInfoExtendedDiscoInfoProviderTest {
     @Test
     public void testRespectsEnabledPropertyChanges() {
         // Initial state - enabled
-        Set<DataForm> forms = provider.getExtendedInfos(null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
+        Set<DataForm> forms = provider.getExtendedInfos(Fixtures.XMPP_DOMAIN, null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
         assertFalse(forms.isEmpty());
 
         // Disable
         SoftwareInfoExtendedDiscoInfoProvider.ENABLED.setValue(false);
-        forms = provider.getExtendedInfos(null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
+        forms = provider.getExtendedInfos(Fixtures.XMPP_DOMAIN, null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
         assertTrue(forms.isEmpty());
 
         // Re-enable
         SoftwareInfoExtendedDiscoInfoProvider.ENABLED.setValue(true);
-        forms = provider.getExtendedInfos(null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
+        forms = provider.getExtendedInfos(Fixtures.XMPP_DOMAIN, null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
         assertFalse(forms.isEmpty());
     }
 
@@ -205,7 +215,7 @@ class SoftwareInfoExtendedDiscoInfoProviderTest {
     @Test
     public void testAllFieldsArePresent() {
         // Execute
-        Set<DataForm> forms = provider.getExtendedInfos(null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
+        Set<DataForm> forms = provider.getExtendedInfos(Fixtures.XMPP_DOMAIN, null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
 
         // Verify all expected fields are present
         assertNotNull(forms);

@@ -47,6 +47,31 @@ import java.util.Set;
  */
 public class ContactAddressesExtendedDiscoInfoProvider implements ExtendedDiscoInfoProvider {
 
+    /**
+     * Returns XEP-0157 Contact Addresses data form for the server when appropriate conditions are met.
+     * <p>
+     * This implementation only returns contact information for service-level disco#info queries
+     * targeting the server's main domain (not subdomains like MUC or PubSub). The returned data form
+     * contains XMPP addresses of configured administrators and their email addresses when available.
+     * </p>
+     * <p>
+     * Returns an empty set when:
+     * <ul>
+     *   <li>Administrative exposure is disabled ({@link IQDiscoInfoHandler#DISABLE_EXPOSURE} is true)</li>
+     *   <li>A specific disco node is requested (only responds to node-less queries)</li>
+     *   <li>The domain is not the server's main domain (e.g., MUC or PubSub subdomains)</li>
+     *   <li>A specific user/resource is targeted (only responds to service-level queries where name is null)</li>
+     *   <li>No administrators are configured</li>
+     * </ul>
+     * </p>
+     *
+     * @param domain the domain of the target JID (e.g., "localhost", "conference.localhost")
+     * @param name the node part of the target JID (null for service-level queries)
+     * @param node the requested disco node parameter (null if not specified)
+     * @param senderJID the JID of the entity that sent the disco#info request
+     * @return A set containing a single XEP-0157 data form with contact addresses, or an empty set if conditions are not met
+     * @see <a href="https://xmpp.org/extensions/xep-0157.html">XEP-0157: Contact Addresses for XMPP Services</a>
+     */
     @Override
     public Set<DataForm> getExtendedInfos(String domain, String name, String node, JID senderJID) {
         // Return empty set if admin exposure is disabled

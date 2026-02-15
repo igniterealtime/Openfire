@@ -57,6 +57,31 @@ public class SoftwareInfoExtendedDiscoInfoProvider implements ExtendedDiscoInfoP
         .setDynamic(Boolean.TRUE)
         .build();
 
+    /**
+     * Returns XEP-0232 Software Information data form for the server when appropriate conditions are met.
+     * <p>
+     * This implementation only returns software information for service-level disco#info queries
+     * targeting the server's main domain (not subdomains like MUC or PubSub). The returned data form
+     * contains details about the operating system, OS version, server software name, and version.
+     * </p>
+     * <p>
+     * Returns an empty set when:
+     * <ul>
+     *   <li>The feature is disabled ({@link #ENABLED} is false)</li>
+     *   <li>Administrative exposure is disabled ({@link IQDiscoInfoHandler#DISABLE_EXPOSURE} is true)</li>
+     *   <li>A specific disco node is requested (only responds to node-less queries)</li>
+     *   <li>The domain is not the server's main domain (e.g., MUC or PubSub subdomains)</li>
+     *   <li>A specific user/resource is targeted (only responds to service-level queries where name is null)</li>
+     * </ul>
+     * </p>
+     *
+     * @param domain the domain of the target JID (e.g., "localhost", "conference.localhost")
+     * @param name the node part of the target JID (null for service-level queries)
+     * @param node the requested disco node parameter (null if not specified)
+     * @param senderJID the JID of the entity that sent the disco#info request
+     * @return A set containing a single XEP-0232 data form with software information, or an empty set if conditions are not met
+     * @see <a href="https://xmpp.org/extensions/xep-0232.html">XEP-0232: Software Information</a>
+     */
     @Override
     public Set<DataForm> getExtendedInfos(String domain, String name, String node, JID senderJID) {
         // Check if feature is enabled

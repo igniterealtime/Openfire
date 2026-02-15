@@ -59,7 +59,7 @@ public class SoftwareInfoExtendedDiscoInfoProvider implements ExtendedDiscoInfoP
         .build();
 
     @Override
-    public Set<DataForm> getExtendedInfos(String name, String node, JID senderJID) {
+    public Set<DataForm> getExtendedInfos(String domain, String name, String node, JID senderJID) {
         // Check if feature is enabled
         if (!ENABLED.getValue()) {
             return Collections.emptySet();
@@ -75,8 +75,14 @@ public class SoftwareInfoExtendedDiscoInfoProvider implements ExtendedDiscoInfoP
             return Collections.emptySet();
         }
 
-        // Only respond for server domain or null name
-        if (name != null && !name.equals(XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
+        // Only respond for server domain (not MUC, PubSub, etc.)
+        final String serverDomain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+        if (!serverDomain.equals(domain)) {
+            return Collections.emptySet();
+        }
+
+        // Only respond for service-level queries (name == null)
+        if (name != null) {
             return Collections.emptySet();
         }
 

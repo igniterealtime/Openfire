@@ -63,7 +63,7 @@ class ContactAddressesExtendedDiscoInfoProviderTest {
         when(xmppServer.getAdmins()).thenReturn(admins);
 
         // Execute
-        Set<DataForm> forms = provider.getExtendedInfos(null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
+        Set<DataForm> forms = provider.getExtendedInfos(Fixtures.XMPP_DOMAIN, null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
 
         // Verify
         assertNotNull(forms);
@@ -96,7 +96,7 @@ class ContactAddressesExtendedDiscoInfoProviderTest {
         when(xmppServer.getAdmins()).thenReturn(admins);
 
         // Execute
-        Set<DataForm> forms = provider.getExtendedInfos(null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
+        Set<DataForm> forms = provider.getExtendedInfos(Fixtures.XMPP_DOMAIN, null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
 
         // Verify
         assertNotNull(forms);
@@ -111,7 +111,7 @@ class ContactAddressesExtendedDiscoInfoProviderTest {
         when(xmppServer.getAdmins()).thenReturn(admins);
 
         // Execute
-        Set<DataForm> forms = provider.getExtendedInfos(null, "somenode", new JID("user@" + Fixtures.XMPP_DOMAIN));
+        Set<DataForm> forms = provider.getExtendedInfos(Fixtures.XMPP_DOMAIN, null, "somenode", new JID("user@" + Fixtures.XMPP_DOMAIN));
 
         // Verify
         assertNotNull(forms);
@@ -119,14 +119,29 @@ class ContactAddressesExtendedDiscoInfoProviderTest {
     }
 
     @Test
-    public void testReturnsEmptyWhenNameDoesNotMatchServerDomain() {
+    public void testReturnsEmptyWhenDomainDoesNotMatchServerDomain() {
         // Setup
         Set<JID> admins = new HashSet<>();
         admins.add(new JID("admin@" + Fixtures.XMPP_DOMAIN));
         when(xmppServer.getAdmins()).thenReturn(admins);
 
         // Execute
-        Set<DataForm> forms = provider.getExtendedInfos("other.domain", null, new JID("user@" + Fixtures.XMPP_DOMAIN));
+        Set<DataForm> forms = provider.getExtendedInfos("other.domain", null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
+
+        // Verify
+        assertNotNull(forms);
+        assertTrue(forms.isEmpty());
+    }
+
+    @Test
+    public void testReturnsEmptyWhenNameIsNotNull() {
+        // Setup
+        Set<JID> admins = new HashSet<>();
+        admins.add(new JID("admin@" + Fixtures.XMPP_DOMAIN));
+        when(xmppServer.getAdmins()).thenReturn(admins);
+
+        // Execute
+        Set<DataForm> forms = provider.getExtendedInfos(Fixtures.XMPP_DOMAIN, "someuser", null, new JID("user@" + Fixtures.XMPP_DOMAIN));
 
         // Verify
         assertNotNull(forms);
@@ -139,7 +154,7 @@ class ContactAddressesExtendedDiscoInfoProviderTest {
         when(xmppServer.getAdmins()).thenReturn(Collections.emptySet());
 
         // Execute
-        Set<DataForm> forms = provider.getExtendedInfos(null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
+        Set<DataForm> forms = provider.getExtendedInfos(Fixtures.XMPP_DOMAIN, null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
 
         // Verify
         assertNotNull(forms);
@@ -152,7 +167,7 @@ class ContactAddressesExtendedDiscoInfoProviderTest {
         when(xmppServer.getAdmins()).thenReturn(null);
 
         // Execute
-        Set<DataForm> forms = provider.getExtendedInfos(null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
+        Set<DataForm> forms = provider.getExtendedInfos(Fixtures.XMPP_DOMAIN, null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
 
         // Verify
         assertNotNull(forms);
@@ -166,8 +181,8 @@ class ContactAddressesExtendedDiscoInfoProviderTest {
         admins.add(new JID("admin@" + Fixtures.XMPP_DOMAIN));
         when(xmppServer.getAdmins()).thenReturn(admins);
 
-        // Execute with name matching server domain
-        Set<DataForm> forms = provider.getExtendedInfos(Fixtures.XMPP_DOMAIN, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
+        // Execute with domain matching server domain
+        Set<DataForm> forms = provider.getExtendedInfos(Fixtures.XMPP_DOMAIN, null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
 
         // Verify
         assertNotNull(forms);
@@ -184,7 +199,7 @@ class ContactAddressesExtendedDiscoInfoProviderTest {
         when(xmppServer.getAdmins()).thenReturn(admins);
 
         // Execute
-        Set<DataForm> forms = provider.getExtendedInfos(null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
+        Set<DataForm> forms = provider.getExtendedInfos(Fixtures.XMPP_DOMAIN, null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
 
         // Verify
         assertNotNull(forms);
@@ -209,7 +224,7 @@ class ContactAddressesExtendedDiscoInfoProviderTest {
         when(xmppServer.getAdmins()).thenReturn(admins);
 
         // Execute
-        Set<DataForm> forms = provider.getExtendedInfos(null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
+        Set<DataForm> forms = provider.getExtendedInfos(Fixtures.XMPP_DOMAIN, null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
 
         // Verify form has correct structure
         assertNotNull(forms);

@@ -211,10 +211,18 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                         }
                     }
                     // Add to the reply the multiple extended info (XDataForm) provided by the DiscoInfoProvider
-                    final Set<DataForm> dataForms = infoProvider.getExtendedInfos(name, node, packet.getFrom());
-                    if (dataForms != null) {
-                        dataForms.forEach(dataForm -> queryElement.add(dataForm.getElement()));
+                    Set<DataForm> dataForms = infoProvider.getExtendedInfos(name, node, packet.getFrom());
+                    if (dataForms == null) {
+                        dataForms = new HashSet<>();
                     }
+
+                    // Apply global ExtendedDiscoInfoProviders (creates mutable copy and merges)
+                    final String targetDomain = packet.getTo() == null ?
+                        XMPPServer.getInstance().getServerInfo().getXMPPDomain() : packet.getTo().getDomain();
+                    final Set<DataForm> enrichedForms = applyExtendedDiscoInfoProviders(dataForms, targetDomain, name, node, packet.getFrom());
+
+                    // Add all forms to the response (clone elements to avoid parent conflicts)
+                    enrichedForms.forEach(dataForm -> queryElement.add(dataForm.getElement().createCopy()));
                 } else {
                     // If the DiscoInfoProvider has no information for the requested name and node
                     // then answer a not found error
@@ -606,6 +614,127 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
     }
 
     /**
+     * Merges incoming forms into the result set, combining forms with matching FORM_TYPE.
+     * Forms with the same FORM_TYPE have their fields merged. If duplicate field names
+     * are detected, the offending provider's contribution is skipped with a warning.
+     */
+    private void merge(Set<DataForm> result, Set<DataForm> incoming) {
+        for (DataForm incomingForm : incoming) {
+            String incomingType = getFormType(incomingForm);
+            if (incomingType == null || incomingType.isBlank()) {
+                continue; // Only possible for bad DataForms
+            }
+
+            DataForm target = result.stream()
+                .filter(existing -> incomingType.equals(getFormType(existing)))
+                .findFirst()
+                .orElse(null);
+
+            if (target != null) {
+                // Form exists - attempt to merge fields
+                try {
+                    mergeFields(target, incomingForm);
+                } catch (IllegalArgumentException e) {
+                    // Duplicate field detected - log error and skip this provider's contribution
+                    Log.warn("Skipping extended disco info contribution due to duplicate field: {}", e.getMessage());
+                    // Don't add the form, continue processing other providers
+                }
+            } else {
+                // No matching form - add the entire form
+                result.add(incomingForm);
+            }
+        }
+    }
+
+    @Nullable
+    private String getFormType(DataForm form) {
+        return form.getFields().stream()
+            .filter(f -> "FORM_TYPE".equals(f.getVariable()))
+            .map(FormField::getFirstValue)
+            .findFirst()
+            .orElse(null);
+    }
+
+    /**
+     * Merges fields from an incoming form into a target form.
+     * <p>
+     * Each field should be contributed by only one provider. If a duplicate field is detected
+     * (a field with the same variable name already exists in the target form), an
+     * {@link IllegalArgumentException} is thrown to signal the conflict.
+     * </p>
+     *
+     * @param target The form to merge fields into
+     * @param incoming The form whose fields should be merged
+     * @throws IllegalArgumentException if a duplicate field is detected
+     */
+    private void mergeFields(DataForm target, DataForm incoming) {
+        // First pass: Validate all fields to ensure atomicity
+        // (either all fields are added, or none are)
+        for (FormField incomingField : incoming.getFields()) {
+            String fieldName = incomingField.getVariable();
+
+            // Skip FORM_TYPE - it's the same for both forms
+            if ("FORM_TYPE".equals(fieldName)) {
+                continue;
+            }
+
+            // Check if field already exists
+            FormField existingField = target.getField(fieldName);
+            if (existingField != null) {
+                // Duplicate field - throw exception to be caught by caller
+                String formType = target.getField("FORM_TYPE").getFirstValue();
+                throw new IllegalArgumentException(
+                    String.format("Duplicate field '%s' in form FORM_TYPE '%s'",
+                        fieldName, formType)
+                );
+            }
+        }
+
+        // Second pass: Add all fields (we know none are duplicates)
+        for (FormField incomingField : incoming.getFields()) {
+            String fieldName = incomingField.getVariable();
+
+            // Skip FORM_TYPE - it's the same for both forms
+            if ("FORM_TYPE".equals(fieldName)) {
+                continue;
+            }
+
+            // Add the field
+            FormField newField = target.addField(
+                incomingField.getVariable(),
+                incomingField.getLabel(),
+                incomingField.getType()
+            );
+            incomingField.getValues().forEach(newField::addValue);
+        }
+    }
+
+    /**
+     * Applies all registered extended disco info providers to a set of data forms.
+     * Creates a mutable copy of the input, applies all providers, and returns the merged result.
+     *
+     * @param existingForms The existing set of data forms (from component provider)
+     * @param targetDomain The domain of the target entity
+     * @param name The node part of the target JID
+     * @param node The requested disco node parameter
+     * @param senderJID The sender of the disco request
+     * @return A new set containing the merged forms (never null)
+     */
+    private Set<DataForm> applyExtendedDiscoInfoProviders(Set<DataForm> existingForms, String targetDomain,
+                                                           String name, String node, JID senderJID) {
+        // Create mutable copy of existing forms
+        Set<DataForm> result = new HashSet<>(existingForms != null ? existingForms : Collections.emptySet());
+
+        // Apply each registered provider
+        for (final ExtendedDiscoInfoProvider provider : extendedDiscoInfoProviders) {
+            Set<DataForm> extended = provider.getExtendedInfos(targetDomain, name, node, senderJID);
+            merge(result, extended);
+        }
+
+        return result;
+    }
+
+    /**
      * Returns the DiscoInfoProvider responsible for providing information at the server level. This
      * means that this DiscoInfoProvider will provide information whenever a disco request whose
      * recipient JID is the server (e.g. localhost) is made.
@@ -776,102 +905,10 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                     result.addAll(XMPPServer.getInstance().getIQPEPHandler().getExtendedInfos(name, node, senderJID));
                 }
 
-                for (final ExtendedDiscoInfoProvider provider : extendedDiscoInfoProviders) {
-                    Set<DataForm> extended = provider.getExtendedInfos(name, node, senderJID);
-                    merge(result, extended);
-                }
+                // Note: Global ExtendedDiscoInfoProviders are now applied in handleIQ (line ~215)
+                // to avoid double-application
+
                 return result;
-            }
-
-            private void merge(Set<DataForm> result, Set<DataForm> incoming) {
-                for (DataForm incomingForm : incoming) {
-                    String incomingType = getFormType(incomingForm);
-                    if (incomingType == null || incomingType.isBlank()) {
-                        continue; // Only possible for bad DataForms
-                    }
-
-                    DataForm target = result.stream()
-                        .filter(existing -> incomingType.equals(getFormType(existing)))
-                        .findFirst()
-                        .orElse(null);
-
-                    if (target != null) {
-                        // Form exists - attempt to merge fields
-                        try {
-                            mergeFields(target, incomingForm);
-                        } catch (IllegalArgumentException e) {
-                            // Duplicate field detected - log error and skip this provider's contribution
-                            Log.warn("Skipping extended disco info contribution due to duplicate field: {}", e.getMessage());
-                            // Don't add the form, continue processing other providers
-                        }
-                    } else {
-                        // No matching form - add the entire form
-                        result.add(incomingForm);
-                    }
-                }
-            }
-
-            @Nullable
-            private String getFormType(DataForm form) {
-                return form.getFields().stream()
-                    .filter(f -> "FORM_TYPE".equals(f.getVariable()))
-                    .map(FormField::getFirstValue)
-                    .findFirst()
-                    .orElse(null);
-            }
-
-            /**
-             * Merges fields from an incoming form into a target form.
-             * <p>
-             * Each field should be contributed by only one provider. If a duplicate field is detected
-             * (a field with the same variable name already exists in the target form), an
-             * {@link IllegalArgumentException} is thrown to signal the conflict.
-             * </p>
-             *
-             * @param target The form to merge fields into
-             * @param incoming The form whose fields should be merged
-             * @throws IllegalArgumentException if a duplicate field is detected
-             */
-            private void mergeFields(DataForm target, DataForm incoming) {
-                // First pass: Validate all fields to ensure atomicity
-                // (either all fields are added, or none are)
-                for (FormField incomingField : incoming.getFields()) {
-                    String fieldName = incomingField.getVariable();
-
-                    // Skip FORM_TYPE - it's the same for both forms
-                    if ("FORM_TYPE".equals(fieldName)) {
-                        continue;
-                    }
-
-                    // Check if field already exists
-                    FormField existingField = target.getField(fieldName);
-                    if (existingField != null) {
-                        // Duplicate field - throw exception to be caught by caller
-                        String formType = target.getField("FORM_TYPE").getFirstValue();
-                        throw new IllegalArgumentException(
-                            String.format("Duplicate field '%s' in form FORM_TYPE '%s'",
-                                fieldName, formType)
-                        );
-                    }
-                }
-
-                // Second pass: Add all fields (we know none are duplicates)
-                for (FormField incomingField : incoming.getFields()) {
-                    String fieldName = incomingField.getVariable();
-
-                    // Skip FORM_TYPE - it's the same for both forms
-                    if ("FORM_TYPE".equals(fieldName)) {
-                        continue;
-                    }
-
-                    // Add the field
-                    FormField newField = target.addField(
-                        incomingField.getVariable(),
-                        incomingField.getLabel(),
-                        incomingField.getType()
-                    );
-                    incomingField.getValues().forEach(newField::addValue);
-                }
             }
 
         };

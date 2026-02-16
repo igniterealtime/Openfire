@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,7 +136,13 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
         connection.registerCloseListener(new ConnectionCloseListener() {
             @Override
             public CompletableFuture<Void> onConnectionClosing(@Nullable Object handback) {
-                return CompletableFuture.runAsync(() -> SessionManager.getInstance().removeComponentSession((LocalComponentSession) handback));
+                SessionManager.getInstance().removeComponentSession((LocalComponentSession) handback);
+                return CompletableFuture.completedFuture(null);
+            }
+            @Override
+            public int getPriority() {
+                // Openfire's built-in listeners should use a higher priority than listeners implemented by plugins / third parties.
+                return ConnectionCloseListener.PRIO_BUILT_IN;
             }
         }, session);
         session.component = new LocalExternalComponent(session, connection);
@@ -239,7 +245,13 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
                 conn.registerCloseListener(new ConnectionCloseListener() {
                     @Override
                     public CompletableFuture<Void> onConnectionClosing(@Nullable Object handback) {
-                        return CompletableFuture.runAsync(() -> InternalComponentManager.getInstance().removeComponent(defaultSubdomain, (ExternalComponent) handback));
+                        InternalComponentManager.getInstance().removeComponent(defaultSubdomain, (ExternalComponent) handback);
+                        return CompletableFuture.completedFuture(null);
+                    }
+                    @Override
+                    public int getPriority() {
+                        // Openfire's built-in listeners should use a higher priority than listeners implemented by plugins / third parties.
+                        return ConnectionCloseListener.PRIO_BUILT_IN;
                     }
                 }, component);
                 Log.debug("LocalComponentSession: [ExComp] External component was registered SUCCESSFULLY with domain: {}", defaultSubdomain);

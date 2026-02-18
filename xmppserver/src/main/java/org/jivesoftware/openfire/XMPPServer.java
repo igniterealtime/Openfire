@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,6 +77,7 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 
+import javax.annotation.Nonnull;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -132,7 +133,6 @@ public class XMPPServer {
     private boolean initialized = false;
     private boolean started = false;
     private NodeID nodeID;
-    private static final NodeID DEFAULT_NODE_ID = NodeID.getInstance( UUID.randomUUID().toString().getBytes() );
 
     private Timer terminatorTimer;
     public static final String EXIT = "exit";
@@ -142,7 +142,7 @@ public class XMPPServer {
             // Admin console network settings
             "adminConsole.port", "adminConsole.securePort", "adminConsole.interface", "network.interface",
             // Misc. settings
-            "locale", "fqdn", "setup", ClusterManager.CLUSTER_PROPERTY_NAME,
+            "locale", "fqdn", "setup", ClusterManager.CLUSTER_PROPERTY_NAME, ClusterManager.NODEID_PROPERTY_NAME,
             // Database config
             "connectionProvider.className",
             "database.defaultProvider.driver", "database.defaultProvider.serverURL", "database.defaultProvider.username",
@@ -263,35 +263,37 @@ public class XMPPServer {
     }
 
     /**
-     * Returns an ID that uniquely identifies this server in a cluster. When not running in cluster mode
-     * the returned value is always the same. However, when in cluster mode the value should be set
-     * when joining the cluster and must be unique even upon restarts of this node.
+     * Returns an ID that uniquely identifies this server in a cluster.
      *
      * @return an ID that uniquely identifies this server in a cluster.
      */
+    @Nonnull
     public NodeID getNodeID() {
-        return nodeID == null ? DEFAULT_NODE_ID : nodeID;
+        if (nodeID == null) {
+            throw new IllegalStateException("Not initialized yet.");
+        }
+        return nodeID;
     }
 
     /**
-     * Sets an ID that uniquely identifies this server in a cluster. When not running in cluster mode
-     * the returned value is always the same. However, when in cluster mode the value should be set
-     * when joining the cluster and must be unique even upon restarts of this node.
+     * Sets an ID that uniquely identifies this server in a cluster.
      *
-     * @param nodeID an ID that uniquely identifies this server in a cluster or null if not in a cluster.
+     * @param nodeID an ID that uniquely identifies this server in a cluster.
      */
-    public void setNodeID(NodeID nodeID) {
+    public void setNodeID(@Nonnull final NodeID nodeID) {
+        if (nodeID == null) {
+            throw new IllegalStateException("Not initialized yet.");
+        }
         this.nodeID = nodeID;
     }
 
     /**
-     * Returns the default node ID used by this server before clustering is
-     * initialized.
-     *
-     * @return The default node ID.
+     * @return The node ID.
+     * @deprecated use {@link #getNodeID()} instead. In versions of Openfire prior to 4.4.0, the cluster node identifier of a server was changed when a server joined a cluster. That's no longer the case: a cluster node now has a static identifier. As such, it's no longer needed to distinguish between the 'default' nodeID (which was used when no cluster was joind) and the cluster node ID.
      */
+    @Deprecated(forRemoval = true, since = "5.1.0") // Remove in or after Openfire 5.2.0.
     public NodeID getDefaultNodeID() {
-        return DEFAULT_NODE_ID;
+        return getNodeID();
     }
 
     /**
@@ -427,6 +429,8 @@ public class XMPPServer {
             JiveGlobals.setXMLProperty("fqdn", hostname);
             JiveGlobals.deleteProperty("xmpp.fqdn");
         }
+
+        initClusterNodeID();
     }
 
     void runAutoSetup() {
@@ -565,6 +569,20 @@ public class XMPPServer {
         // finish setup
         this.finalSetupSteps();
         setupMode = false;
+    }
+
+    /**
+     * Initialize the (supposedly unique) identifier of this server in a cluster of servers.
+     */
+    private void initClusterNodeID()
+    {
+        final String staticNodeID = JiveGlobals.getXMLProperty(ClusterManager.NODEID_PROPERTY_NAME);
+        if (staticNodeID != null) {
+            nodeID = NodeID.getInstance(staticNodeID.getBytes());
+        } else {
+            nodeID = NodeID.getInstance( UUID.randomUUID().toString().getBytes() );
+            JiveGlobals.setXMLProperty(ClusterManager.NODEID_PROPERTY_NAME, nodeID.toString());
+        }
     }
 
     private void finalSetupSteps() {

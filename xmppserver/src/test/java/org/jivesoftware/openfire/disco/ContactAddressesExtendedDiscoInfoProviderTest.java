@@ -31,6 +31,27 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for {@link ContactAddressesExtendedDiscoInfoProvider}.
+ *
+ * <p>This test class verifies the behavior of the ContactAddressesExtendedDiscoInfoProvider,
+ * which provides contact address information (admin addresses) in service discovery responses
+ * according to XEP-0157: Contact Addresses for XMPP Services.</p>
+ *
+ * <p>The tests cover various scenarios including:
+ * <ul>
+ *   <li>Inclusion of admin contact addresses when admins exist</li>
+ *   <li>Exclusion of information when admin exposure is disabled</li>
+ *   <li>Proper filtering based on domain, node, and name parameters</li>
+ *   <li>Handling of multiple administrators and external admin JIDs</li>
+ *   <li>Correct form structure and field types</li>
+ * </ul>
+ * </p>
+ *
+ * @author Dan Caseley, dan@caseley.me.uk
+ * @see ContactAddressesExtendedDiscoInfoProvider
+ * @see <a href="https://xmpp.org/extensions/xep-0157.html">XEP-0157: Contact Addresses for XMPP Services</a>
+ */
 class ContactAddressesExtendedDiscoInfoProviderTest {
 
     private ContactAddressesExtendedDiscoInfoProvider provider;
@@ -55,6 +76,17 @@ class ContactAddressesExtendedDiscoInfoProviderTest {
         Fixtures.clearExistingProperties();
     }
 
+    /**
+     * Verifies that the provider returns a properly formatted data form containing admin contact addresses
+     * when administrators are configured on the server.
+     *
+     * <p>The form should include:
+     * <ul>
+     *   <li>A hidden FORM_TYPE field with value "http://jabber.org/network/serverinfo"</li>
+     *   <li>A list_multi field called admin-addresses containing XMPP addresses</li>
+     * </ul>
+     * </p>
+     */
     @Test
     public void testReturnsContactAddressesWhenAdminsExist() {
         // Setup
@@ -87,10 +119,14 @@ class ContactAddressesExtendedDiscoInfoProviderTest {
         // Email addresses might be included if UserManager can resolve the user
     }
 
+    /**
+     * Verifies that the provider returns an empty set when admin exposure is disabled
+     * via the "admin.disable-exposure" system property
+     */
     @Test
     public void testReturnsEmptyWhenAdminExposureDisabled() {
         // Setup
-        JiveGlobals.setProperty("admin.disable-exposure", "true");
+        IQDiscoInfoHandler.DISABLE_EXPOSURE.setValue(true);
         Set<JID> admins = new HashSet<>();
         admins.add(new JID("admin@" + Fixtures.XMPP_DOMAIN));
         when(xmppServer.getAdmins()).thenReturn(admins);
@@ -103,6 +139,10 @@ class ContactAddressesExtendedDiscoInfoProviderTest {
         assertTrue(forms.isEmpty());
     }
 
+    /**
+     * Verifies that the provider returns an empty set when querying a specific node,
+     * as contact addresses are only provided for the server itself, not for nodes.
+     */
     @Test
     public void testReturnsEmptyWhenNodeIsNotNull() {
         // Setup
@@ -118,6 +158,11 @@ class ContactAddressesExtendedDiscoInfoProviderTest {
         assertTrue(forms.isEmpty());
     }
 
+    /**
+     * Verifies that the provider returns an empty set when querying a domain that
+     * doesn't match the server's domain, as contact addresses are only provided for
+     * the local server.
+     */
     @Test
     public void testReturnsEmptyWhenDomainDoesNotMatchServerDomain() {
         // Setup
@@ -133,6 +178,10 @@ class ContactAddressesExtendedDiscoInfoProviderTest {
         assertTrue(forms.isEmpty());
     }
 
+    /**
+     * Verifies that the provider returns an empty set when querying a specific user,
+     * as contact addresses are only provided for server-level queries, not user-level queries.
+     */
     @Test
     public void testReturnsEmptyWhenNameIsNotNull() {
         // Setup
@@ -148,6 +197,10 @@ class ContactAddressesExtendedDiscoInfoProviderTest {
         assertTrue(forms.isEmpty());
     }
 
+    /**
+     * Verifies that the provider returns an empty set when no administrators are configured,
+     * as there are no contact addresses to expose.
+     */
     @Test
     public void testReturnsEmptyWhenNoAdmins() {
         // Setup
@@ -161,6 +214,10 @@ class ContactAddressesExtendedDiscoInfoProviderTest {
         assertTrue(forms.isEmpty());
     }
 
+    /**
+     * Verifies that the provider handles null admin sets gracefully by returning an empty set,
+     * preventing null pointer exceptions.
+     */
     @Test
     public void testReturnsEmptyWhenAdminsIsNull() {
         // Setup
@@ -174,6 +231,10 @@ class ContactAddressesExtendedDiscoInfoProviderTest {
         assertTrue(forms.isEmpty());
     }
 
+    /**
+     * Verifies that the provider correctly returns contact addresses when querying
+     * the server domain itself with no node or name specified.
+     */
     @Test
     public void testWorksForServerDomain() {
         // Setup
@@ -189,6 +250,10 @@ class ContactAddressesExtendedDiscoInfoProviderTest {
         assertEquals(1, forms.size());
     }
 
+    /**
+     * Verifies that the provider correctly includes all administrators, including those
+     * with JIDs from external domains, in the admin-addresses field.
+     */
     @Test
     public void testHandlesMultipleAdmins() {
         // Setup
@@ -216,6 +281,10 @@ class ContactAddressesExtendedDiscoInfoProviderTest {
         assertTrue(values.contains("xmpp:admin3@other.domain"));
     }
 
+    /**
+     * Verifies that the returned data form has the correct structure with exactly
+     * two fields: FORM_TYPE and admin-addresses.
+     */
     @Test
     public void testFormStructure() {
         // Setup

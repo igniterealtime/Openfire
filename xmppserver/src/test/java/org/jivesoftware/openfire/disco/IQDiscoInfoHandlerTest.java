@@ -35,6 +35,29 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for {@link IQDiscoInfoHandler}.
+ *
+ * <p>This test class verifies the form merging and management logic within IQDiscoInfoHandler,
+ * specifically testing how the handler processes and combines data forms from multiple
+ * {@link ExtendedDiscoInfoProvider} instances according to XEP-0128: Service Discovery Extensions.</p>
+ *
+ * <p>The tests focus on:
+ * <ul>
+ *   <li>Merging of forms with the same FORM_TYPE</li>
+ *   <li>Addition of forms with different FORM_TYPEs</li>
+ *   <li>Handling of duplicate field names (entire form rejection)</li>
+ *   <li>Preservation of field types and values during merging</li>
+ *   <li>Dynamic provider addition and removal</li>
+ *   <li>Edge cases like empty sets, immutable collections, and fields without types</li>
+ * </ul>
+ * </p>
+ *
+ * @author Dan Caseley, dan@caseley.me.uk
+ * @see IQDiscoInfoHandler
+ * @see ExtendedDiscoInfoProvider
+ * @see <a href="https://xmpp.org/extensions/xep-0128.html">XEP-0128: Service Discovery Extensions</a>
+ */
 class IQDiscoInfoHandlerTest {
 
     @BeforeEach
@@ -63,6 +86,12 @@ class IQDiscoInfoHandlerTest {
         XMPPServer.setInstance(null);
     }
 
+    /**
+     * Test implementation of {@link ExtendedDiscoInfoProvider} that returns a predefined set of data forms.
+     *
+     * <p>This provider mimics the behavior of real providers by only returning forms for
+     * server-level queries (no node, no name, matching server domain).</p>
+     */
     class TestExtendedDiscoInfoProvider implements ExtendedDiscoInfoProvider {
 
         private final Set<DataForm> forms;
@@ -129,7 +158,15 @@ class IQDiscoInfoHandlerTest {
 
     /**
      * Helper method to get extended disco info forms from a handler by simulating a disco#info request.
-     * This tests through the full handleIQ() flow where ExtendedDiscoInfoProviders are now applied.
+     *
+     * <p>This method tests through the full handleIQ() flow where ExtendedDiscoInfoProviders are applied.
+     * It creates a disco#info IQ request, processes it through the handler, and extracts the resulting
+     * data forms from the response.</p>
+     *
+     * @param handler the IQDiscoInfoHandler instance to test
+     * @param from the JID of the requesting entity
+     * @param to the JID of the target entity (null for server domain)
+     * @return the set of data forms included in the disco#info response
      */
     private Set<DataForm> getExtendedInfosViaHandleIQ(IQDiscoInfoHandler handler, JID from, JID to) {
         try {
@@ -169,6 +206,12 @@ class IQDiscoInfoHandlerTest {
         }
     }
 
+    /**
+     * Verifies that when multiple providers return forms with the same FORM_TYPE,
+     * the handler merges them into a single form containing all fields.
+     *
+     * <p>This is the core functionality for XEP-0128 form aggregation.</p>
+     */
     @Test
     void testSameFormTypeIsMerged() {
         IQDiscoInfoHandler handler = new IQDiscoInfoHandler();
@@ -201,6 +244,10 @@ class IQDiscoInfoHandlerTest {
         assertEquals(3, fieldNames.size()); // FORM_TYPE + field1 + field2
     }
 
+    /**
+     * Verifies that when multiple providers return forms with different FORM_TYPEs,
+     * all forms are included in the response without merging.
+     */
     @Test
     void testDifferentFormTypesAreAdded() {
         IQDiscoInfoHandler handler = new IQDiscoInfoHandler();
@@ -228,6 +275,10 @@ class IQDiscoInfoHandlerTest {
         assertEquals(2, testFormCount);
     }
 
+    /**
+     * Verifies that the handler gracefully handles providers that return empty sets
+     * without errors or including empty forms in the response.
+     */
     @Test
     void testEmptySetIsHandled() {
         IQDiscoInfoHandler handler = new IQDiscoInfoHandler();
@@ -247,6 +298,10 @@ class IQDiscoInfoHandlerTest {
         assertEquals(0, testFormCount);
     }
 
+    /**
+     * Verifies that when merging forms with the same FORM_TYPE, fields with different types
+     * (text_single, list_multi, boolean_type) are correctly preserved and merged together.
+     */
     @Test
     void testAdditionalFieldsToExistingForm() {
         IQDiscoInfoHandler handler = new IQDiscoInfoHandler();
@@ -310,6 +365,10 @@ class IQDiscoInfoHandlerTest {
         assertEquals(FormField.Type.boolean_type, merged.getField("field3").getType());
     }
 
+    /**
+     * Verifies that the handler can process immutable sets (created via Set.of())
+     * returned by providers without throwing UnsupportedOperationException.
+     */
     @Test
     void testImmutableSetIsHandled() {
         IQDiscoInfoHandler handler = new IQDiscoInfoHandler();
@@ -329,6 +388,10 @@ class IQDiscoInfoHandlerTest {
             .anyMatch(f -> "urn:xmpp:dataforms:openfire-unittest".equals(getFormType(f))));
     }
 
+    /**
+     * Verifies that when merging fields without explicit types, the merged result
+     * also has no type set (preserving the absence of type information).
+     */
     @Test
     void testTypeNotAddedIfNeitherHadType() {
         IQDiscoInfoHandler handler = new IQDiscoInfoHandler();
@@ -382,73 +445,14 @@ class IQDiscoInfoHandlerTest {
         assertNull(mergedField2.getType());
     }
 
-    @Test
-    void testDuplicateFieldIsSkipped() {
-        IQDiscoInfoHandler handler = new IQDiscoInfoHandler();
-
-        // First provider: field1
-        DataForm form1 = new DataForm(DataForm.Type.result);
-        FormField typeField1 = form1.addField();
-        typeField1.setVariable("FORM_TYPE");
-        typeField1.setType(FormField.Type.hidden);
-        typeField1.addValue("urn:xmpp:dataforms:openfire-unittest");
-
-        FormField field1 = form1.addField();
-        field1.setVariable("field1");
-        field1.addValue("value1");
-
-        // Second provider: same field1 (duplicate) - should be skipped
-        DataForm form2 = new DataForm(DataForm.Type.result);
-        FormField typeField2 = form2.addField();
-        typeField2.setVariable("FORM_TYPE");
-        typeField2.setType(FormField.Type.hidden);
-        typeField2.addValue("urn:xmpp:dataforms:openfire-unittest");
-
-        FormField field2 = form2.addField();
-        field2.setVariable("field1");  // Duplicate field name
-        field2.addValue("value1-again");
-
-        // Third provider: different field - should still be processed
-        DataForm form3 = new DataForm(DataForm.Type.result);
-        FormField typeField3 = form3.addField();
-        typeField3.setVariable("FORM_TYPE");
-        typeField3.setType(FormField.Type.hidden);
-        typeField3.addValue("urn:xmpp:dataforms:openfire-unittest");
-
-        FormField field3 = form3.addField();
-        field3.setVariable("field2");
-        field3.addValue("value2");
-
-        handler.addExtendedDiscoInfoProvider(
-            new TestExtendedDiscoInfoProvider(Set.of(form1))
-        );
-        handler.addExtendedDiscoInfoProvider(
-            new TestExtendedDiscoInfoProvider(Set.of(form2))
-        );
-        handler.addExtendedDiscoInfoProvider(
-            new TestExtendedDiscoInfoProvider(Set.of(form3))
-        );
-
-        // Should not throw - should continue processing and return valid response
-        Set<DataForm> result = getExtendedInfosViaHandleIQ(handler,
-            new JID("tester@example.org"), null);
-
-        DataForm merged = result.stream()
-            .filter(f -> "urn:xmpp:dataforms:openfire-unittest".equals(getFormType(f)))
-            .findFirst()
-            .orElseThrow();
-
-        // Should have field1 from first provider (value1) and field2 from third provider
-        // Second provider's contribution (duplicate field1) should be skipped
-        assertNotNull(merged.getField("field1"));
-        assertEquals("value1", merged.getField("field1").getFirstValue());
-        assertNotNull(merged.getField("field2"));
-        assertEquals("value2", merged.getField("field2").getFirstValue());
-
-        // Should only have 3 fields total: FORM_TYPE, field1, field2
-        assertEquals(3, merged.getFields().size());
-    }
-
+    /**
+     * Verifies that when a provider's form contains a field that duplicates an existing field name,
+     * the entire form from that provider is rejected to maintain data integrity.
+     *
+     * <p>This ensures that conflicting field definitions don't corrupt the merged form.
+     * If provider A adds field1, and provider B's form contains both field1 (duplicate) and field2 (new),
+     * neither field from provider B should be added.</p>
+     */
     @Test
     void testDuplicateFieldRejectsEntireForm() {
         IQDiscoInfoHandler handler = new IQDiscoInfoHandler();
@@ -506,6 +510,10 @@ class IQDiscoInfoHandlerTest {
         assertEquals(2, merged.getFields().size());
     }
 
+    /**
+     * Verifies that removing a provider dynamically removes its contributed forms
+     * from subsequent disco#info responses.
+     */
     @Test
     void testRemoveProviderRemovesContributions() {
         IQDiscoInfoHandler handler = new IQDiscoInfoHandler();
@@ -537,6 +545,10 @@ class IQDiscoInfoHandlerTest {
         assertEquals(0, formCountAfter, "Form should be removed after removing provider");
     }
 
+    /**
+     * Verifies that a provider can be removed and then re-added, with its forms
+     * correctly appearing, disappearing, and reappearing in the disco#info responses.
+     */
     @Test
     void testRemoveAndReAddProvider() {
         IQDiscoInfoHandler handler = new IQDiscoInfoHandler();

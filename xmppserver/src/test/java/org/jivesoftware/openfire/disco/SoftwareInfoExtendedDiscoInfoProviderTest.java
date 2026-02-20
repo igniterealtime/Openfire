@@ -32,6 +32,29 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Unit tests for {@link SoftwareInfoExtendedDiscoInfoProvider}.
+ *
+ * <p>This test class verifies the behavior of the SoftwareInfoExtendedDiscoInfoProvider,
+ * which provides software and operating system information in service discovery responses
+ * according to XEP-0232: Software Information.</p>
+ *
+ * <p>The tests cover various scenarios including:
+ * <ul>
+ *   <li>Inclusion of software/OS information when enabled</li>
+ *   <li>Exclusion when disabled via system property</li>
+ *   <li>Exclusion when admin exposure is disabled</li>
+ *   <li>Proper filtering based on domain, node, and name parameters</li>
+ *   <li>Dynamic enable/disable behavior</li>
+ *   <li>Correct form structure with all required fields (os, os_version, software, software_version)</li>
+ *   <li>SystemProperty configuration validation</li>
+ * </ul>
+ * </p>
+ *
+ * @author Dan Caseley, dan@caseley.me.uk
+ * @see SoftwareInfoExtendedDiscoInfoProvider
+ * @see <a href="https://xmpp.org/extensions/xep-0232.html">XEP-0232: Software Information</a>
+ */
 class SoftwareInfoExtendedDiscoInfoProviderTest {
 
     private SoftwareInfoExtendedDiscoInfoProvider provider;
@@ -63,6 +86,20 @@ class SoftwareInfoExtendedDiscoInfoProviderTest {
         Fixtures.clearExistingProperties();
     }
 
+    /**
+     * Verifies that the provider returns a properly formatted data form containing software and
+     * operating system information when enabled (the default state).
+     *
+     * <p>The form should include:
+     * <ul>
+     *   <li>A hidden FORM_TYPE field with value "urn:xmpp:dataforms:softwareinfo"</li>
+     *   <li>An os field containing the operating system name</li>
+     *   <li>An os_version field containing OS version, architecture, and Java version</li>
+     *   <li>A software field containing the software name</li>
+     *   <li>A software_version field containing the software version</li>
+     * </ul>
+     * </p>
+     */
     @Test
     public void testReturnsSoftwareInfoWhenEnabled() {
         // Setup - ENABLED defaults to true
@@ -111,6 +148,10 @@ class SoftwareInfoExtendedDiscoInfoProviderTest {
         assertNotNull(softwareVersion.getFirstValue());
     }
 
+    /**
+     * Verifies that the provider returns an empty set when disabled via the ENABLED
+     * system property, allowing administrators to suppress software information disclosure.
+     */
     @Test
     public void testReturnsEmptyWhenDisabled() {
         // Setup
@@ -124,10 +165,14 @@ class SoftwareInfoExtendedDiscoInfoProviderTest {
         assertTrue(forms.isEmpty());
     }
 
+    /**
+     * Verifies that the provider returns an empty set when admin exposure is disabled
+     * via the "admin.disable-exposure" system property, respecting the broader privacy setting.
+     */
     @Test
     public void testReturnsEmptyWhenAdminExposureDisabled() {
         // Setup
-        JiveGlobals.setProperty("admin.disable-exposure", "true");
+        IQDiscoInfoHandler.DISABLE_EXPOSURE.setValue(true);
 
         // Execute
         Set<DataForm> forms = provider.getExtendedInfos(Fixtures.XMPP_DOMAIN, null, null, new JID("user@" + Fixtures.XMPP_DOMAIN));
@@ -137,6 +182,10 @@ class SoftwareInfoExtendedDiscoInfoProviderTest {
         assertTrue(forms.isEmpty());
     }
 
+    /**
+     * Verifies that the provider returns an empty set when querying a specific node,
+     * as software information is only provided for the server itself, not for nodes.
+     */
     @Test
     public void testReturnsEmptyWhenNodeIsNotNull() {
         // Execute
@@ -147,6 +196,11 @@ class SoftwareInfoExtendedDiscoInfoProviderTest {
         assertTrue(forms.isEmpty());
     }
 
+    /**
+     * Verifies that the provider returns an empty set when querying a domain that
+     * doesn't match the server's domain, as software information is only provided for
+     * the local server.
+     */
     @Test
     public void testReturnsEmptyWhenDomainDoesNotMatchServerDomain() {
         // Execute
@@ -157,6 +211,10 @@ class SoftwareInfoExtendedDiscoInfoProviderTest {
         assertTrue(forms.isEmpty());
     }
 
+    /**
+     * Verifies that the provider returns an empty set when querying a specific user,
+     * as software information is only provided for server-level queries, not user-level queries.
+     */
     @Test
     public void testReturnsEmptyWhenNameIsNotNull() {
         // Execute
@@ -167,6 +225,10 @@ class SoftwareInfoExtendedDiscoInfoProviderTest {
         assertTrue(forms.isEmpty());
     }
 
+    /**
+     * Verifies that the provider correctly returns software information when querying
+     * the server domain itself with no node or name specified.
+     */
     @Test
     public void testWorksForServerDomain() {
         // Execute with domain matching server domain
@@ -177,6 +239,12 @@ class SoftwareInfoExtendedDiscoInfoProviderTest {
         assertEquals(1, forms.size());
     }
 
+    /**
+     * Verifies that the provider dynamically responds to changes in the ENABLED system property.
+     *
+     * <p>This test confirms that the SystemProperty is configured as dynamic, allowing
+     * administrators to enable/disable software information exposure without restarting the server.</p>
+     */
     @Test
     public void testRespectsEnabledPropertyChanges() {
         // Initial state - enabled
@@ -194,24 +262,40 @@ class SoftwareInfoExtendedDiscoInfoProviderTest {
         assertFalse(forms.isEmpty());
     }
 
+    /**
+     * Verifies that the ENABLED SystemProperty is configured with the correct key
+     * for consistent configuration management.
+     */
     @Test
     public void testEnabledPropertyHasCorrectKey() {
         // Verify the property key is correct
         assertEquals("xmpp.iqdiscoinfo.xformsoftwareversion", SoftwareInfoExtendedDiscoInfoProvider.ENABLED.getKey());
     }
 
+    /**
+     * Verifies that the ENABLED SystemProperty defaults to true, enabling software
+     * information disclosure by default while allowing administrators to opt out.
+     */
     @Test
     public void testEnabledPropertyDefaultsToTrue() {
         // Verify the default value is true
         assertTrue(SoftwareInfoExtendedDiscoInfoProvider.ENABLED.getDefaultValue());
     }
 
+    /**
+     * Verifies that the ENABLED SystemProperty is configured as dynamic, allowing
+     * runtime changes without server restart.
+     */
     @Test
     public void testEnabledPropertyIsDynamic() {
         // Verify the property is dynamic
         assertTrue(SoftwareInfoExtendedDiscoInfoProvider.ENABLED.isDynamic());
     }
 
+    /**
+     * Verifies that the returned data form contains all required fields per XEP-0232:
+     * FORM_TYPE, os, os_version, software, and software_version.
+     */
     @Test
     public void testAllFieldsArePresent() {
         // Execute

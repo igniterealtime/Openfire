@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import io.netty.handler.traffic.ChannelTrafficShapingHandler;
+import io.netty.util.concurrent.EventExecutorGroup;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.nio.*;
 import org.jivesoftware.util.SystemProperty;
@@ -59,10 +60,20 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
     private final ConnectionConfiguration configuration;
     private final Set<NettyChannelHandlerFactory> channelHandlerFactories; // This is a collection that is managed by the invoking entity.
 
-    public NettyServerInitializer(ConnectionConfiguration configuration, ChannelGroup allChannels, Set<NettyChannelHandlerFactory> channelHandlerFactories) {
+    /**
+     * Executor group for pipeline handlers that may perform blocking or long-running operations.
+     *
+     * This executor group is shared across all channels created by this acceptor and is used to offload work such as
+     * authentication, routing, persistence, or calls into legacy/blocking APIs. Using this group ensures that Netty
+     * EventLoop threads remain responsive and dedicated to I/O.
+     */
+    private final EventExecutorGroup blockingHandlerExecutor;
+
+    public NettyServerInitializer(ConnectionConfiguration configuration, ChannelGroup allChannels, Set<NettyChannelHandlerFactory> channelHandlerFactories, EventExecutorGroup blockingHandlerExecutor) {
         this.allChannels = allChannels;
         this.configuration = configuration;
         this.channelHandlerFactories = channelHandlerFactories;
+        this.blockingHandlerExecutor = blockingHandlerExecutor;
     }
 
     @Override
@@ -80,12 +91,12 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
             .addLast(new NettyXMPPDecoder())
             .addLast(new StringEncoder(StandardCharsets.UTF_8))
             .addLast("stalledSessionHandler", new WriteTimeoutHandler(Math.toIntExact(WRITE_TIMEOUT_SECONDS.getValue().getSeconds())))
-            .addLast(businessLogicHandler);
+            .addLast(blockingHandlerExecutor, businessLogicHandler);
 
         // Add ChannelHandler providers implemented by plugins, if any.
         channelHandlerFactories.forEach(factory -> {
             try {
-                factory.addNewHandlerTo(ch.pipeline());
+                factory.addNewHandlerTo(ch.pipeline(), blockingHandlerExecutor);
             } catch (Throwable t) {
                 Log.warn("Unable to add ChannelHandler from '{}' to pipeline of new channel: {}", factory, ch, t);
             }

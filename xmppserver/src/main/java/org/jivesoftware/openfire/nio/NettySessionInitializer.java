@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,8 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.timeout.IdleStateHandler;
+import io.netty.util.concurrent.DefaultEventExecutorGroup;
+import io.netty.util.concurrent.EventExecutorGroup;
 import org.dom4j.*;
 import org.jivesoftware.openfire.net.RespondingServerStanzaHandler;
 import org.jivesoftware.openfire.net.SocketUtil;
@@ -34,6 +36,7 @@ import org.jivesoftware.openfire.spi.ConnectionAcceptor;
 import org.jivesoftware.openfire.spi.ConnectionListener;
 import org.jivesoftware.openfire.spi.NettyConnectionAcceptor;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.NamedThreadFactory;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
@@ -49,6 +52,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -85,13 +89,39 @@ public class NettySessionInitializer {
     private final int port;
     private boolean directTLS = false;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
-    private final EventLoopGroup workerGroup;
+
+    /**
+     * EventLoopGroup responsible for non-blocking I/O on established connections.
+     *
+     * This group (often referred to as the "worker" group) handles read/write operations and propagates I/O events
+     * through the Netty pipeline for each accepted connection. Handlers running on this group must remain strictly
+     * non-blocking to avoid starving the event loop.
+     */
+    private final EventLoopGroup ioWorkerGroup;
+
+    /**
+     * Executor group for pipeline handlers that may perform blocking or long-running operations.
+     *
+     * This executor group is shared across all channels created by this acceptor and is used to offload work such as
+     * authentication, routing, persistence, or calls into legacy/blocking APIs. Using this group ensures that Netty
+     * EventLoop threads remain responsive and dedicated to I/O.
+     */
+    private final EventExecutorGroup blockingHandlerExecutor;
+
     private Channel channel;
 
     public NettySessionInitializer(DomainPair domainPair, int port) {
         this.domainPair = domainPair;
         this.port = port;
-        this.workerGroup = new NioEventLoopGroup();
+
+        // TODO The event loop and executor should be re-used for all instances of this class, rather than each instance creating their own instance. OF-3182
+        final String name = "socket_s2s_outbound" + (/*this.directTLS*/ port == 5223 ? "_ssl" : "");
+
+        final ThreadFactory ioWorkerGroupThreadFactory = new NamedThreadFactory(name + "-worker-" + domainPair.getRemote() + "-", null, false, Thread.NORM_PRIORITY);
+        this.ioWorkerGroup = new NioEventLoopGroup(ioWorkerGroupThreadFactory);
+
+        final ThreadFactory blockingHandlerGroupThreadFactory = new NamedThreadFactory(name + "-handler-" + domainPair.getRemote() + "-", null, false, Thread.NORM_PRIORITY);
+        this.blockingHandlerExecutor = new DefaultEventExecutorGroup(Math.max(1, Runtime.getRuntime().availableProcessors()) * 2, blockingHandlerGroupThreadFactory);
     }
 
     public Future<LocalSession> init(ConnectionListener listener) {
@@ -117,7 +147,7 @@ public class NettySessionInitializer {
 
         try {
             Bootstrap b = new Bootstrap();
-            b.group(workerGroup);
+            b.group(ioWorkerGroup);
             b.channel(NioSocketChannel.class);
             b.option(ChannelOption.SO_KEEPALIVE, true);
             b.handler(new ChannelInitializer<SocketChannel>() {
@@ -130,13 +160,13 @@ public class NettySessionInitializer {
                     ch.pipeline().addLast("keepAliveHandler", new NettyIdleStateKeepAliveHandler(false));
                     ch.pipeline().addLast(new NettyXMPPDecoder());
                     ch.pipeline().addLast(new StringEncoder(StandardCharsets.UTF_8));
-                    ch.pipeline().addLast(businessLogicHandler);
+                    ch.pipeline().addLast(blockingHandlerExecutor, businessLogicHandler);
 
                     final ConnectionAcceptor connectionAcceptor = listener.getConnectionAcceptor();
                     if (connectionAcceptor instanceof NettyConnectionAcceptor) {
                         ((NettyConnectionAcceptor) connectionAcceptor).getChannelHandlerFactories().forEach(factory -> {
                             try {
-                                factory.addNewHandlerTo(ch.pipeline());
+                                factory.addNewHandlerTo(ch.pipeline(), blockingHandlerExecutor);
                             } catch (Throwable t) {
                                 Log.warn("Unable to add ChannelHandler from '{}' to pipeline of new channel: {}", factory, ch, t);
                             }
@@ -202,7 +232,8 @@ public class NettySessionInitializer {
             }
             channel.close();
         }
-        workerGroup.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
+        ioWorkerGroup.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
+        blockingHandlerExecutor.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
     }
 
     private Future<LocalSession> waitForSession(Channel channel) {
@@ -237,7 +268,7 @@ public class NettySessionInitializer {
             "domainPair=" + domainPair +
             ", port=" + port +
             ", directTLS=" + directTLS +
-            ", workerGroup=" + workerGroup +
+            ", workerGroup=" + ioWorkerGroup +
             ", channel=" + channel +
             '}';
     }

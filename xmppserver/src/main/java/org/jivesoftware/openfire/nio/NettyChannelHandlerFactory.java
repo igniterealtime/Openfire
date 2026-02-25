@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jivesoftware.openfire.nio;
 
 import io.netty.channel.ChannelPipeline;
+import io.netty.util.concurrent.EventExecutorGroup;
 
 /**
  * Defines a factory for {@link io.netty.channel.ChannelHandler} instances. The instances created by an implementation
@@ -31,13 +32,14 @@ public interface NettyChannelHandlerFactory
      * It is assumed, but not required, that for each invocation, a new ChannelHandler is created.
      *
      * @param pipeline The pipeline to which a ChannelHandler is to be added.
+     * @param executor the EventExecutorGroup which will be used to execute the ChannelHandlers methods.
      */
-    void addNewHandlerTo(final ChannelPipeline pipeline);
+    void addNewHandlerTo(final ChannelPipeline pipeline, final EventExecutorGroup executor);
 
     /**
      * Remove a ChannelHandler from the provided pipeline.
      *
-     * Implementations should ensure that ChannelHandlers added via {@link #addNewHandlerTo(ChannelPipeline)} can be
+     * Implementations should ensure that ChannelHandlers added via {@link #addNewHandlerTo(ChannelPipeline, EventExecutorGroup)} can be
      * removed again by invocation of this method.
      *
      * @param pipeline The pipeline to which a ChannelHandler is to be added.

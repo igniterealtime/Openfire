@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.util.concurrent.DefaultEventExecutorGroup;
+import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.nio.NettyChannelHandlerFactory;
@@ -59,19 +61,31 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
     // and may be even configurable via a constructor.
 
     /**
-     * A multithreaded event loop that handles I/O operation
-     * <p>
-     * The parent 'boss' accepts an incoming connection.
+     * EventLoopGroup responsible for accepting incoming socket connections.
+     *
+     * This group (often referred to as the "boss" group in Netty terminology) listens for incoming connection attempts
+     * and hands off each accepted {@link io.netty.channel.Channel} to the I/O worker group for further processing. No
+     * application or protocol logic should execute on threads from this group.
      */
-    private final EventLoopGroup parentGroup;
+    private final EventLoopGroup acceptorGroup;
 
     /**
-     * A multithreaded event loop that handles I/O operation
-     * <p>
-     * The child 'worker', handles the traffic of the accepted connection once the parent accepts the connection
-     * and registers the accepted connection to the worker.
+     * EventLoopGroup responsible for non-blocking I/O on established connections.
+     *
+     * This group (often referred to as the "worker" group) handles read/write operations and propagates I/O events
+     * through the Netty pipeline for each accepted connection. Handlers running on this group must remain strictly
+     * non-blocking to avoid starving the event loop.
      */
-    private final EventLoopGroup childGroup;
+    private final EventLoopGroup ioWorkerGroup;
+
+    /**
+     * Executor group for pipeline handlers that may perform blocking or long-running operations.
+     *
+     * This executor group is shared across all channels created by this acceptor and is used to offload work such as
+     * authentication, routing, persistence, or calls into legacy/blocking APIs. Using this group ensures that Netty
+     * EventLoop threads remain responsive and dedicated to I/O.
+     */
+    private final EventExecutorGroup blockingHandlerExecutor;
 
     /**
      * A thread-safe Set containing all open Channels associated with this ConnectionAcceptor
@@ -99,12 +113,14 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
         final String name = configuration.getType().toString().toLowerCase() + (isDirectTLSConfigured() ? "_ssl" : "");
 
         // The configuration of threads is based on defaults used by io.netty.util.concurrent.DefaultThreadFactory (OF-3028)
-        final ThreadFactory parentGroupthreadFactory = new NamedThreadFactory(name + "-acceptor-", null, false, Thread.NORM_PRIORITY);
-        parentGroup = new NioEventLoopGroup(parentGroupthreadFactory);
+        final ThreadFactory acceptorGroupThreadFactory = new NamedThreadFactory(name + "-acceptor-", null, false, Thread.NORM_PRIORITY);
+        acceptorGroup = new NioEventLoopGroup(acceptorGroupThreadFactory);
 
-        final ThreadFactory childGroupthreadFactory = new NamedThreadFactory(name + "-worker-", null, false, Thread.NORM_PRIORITY);
-        childGroup = new NioEventLoopGroup(configuration.getMaxThreadPoolSize(), childGroupthreadFactory);
+        final ThreadFactory ioWorkerGroupThreadFactory = new NamedThreadFactory(name + "-worker-", null, false, Thread.NORM_PRIORITY);
+        ioWorkerGroup = new NioEventLoopGroup(ioWorkerGroupThreadFactory);
 
+        final ThreadFactory blockingHandlerGroupThreadFactory = new NamedThreadFactory(name + "-handler-", null, false, Thread.NORM_PRIORITY);
+        blockingHandlerExecutor = new DefaultEventExecutorGroup(configuration.getMaxThreadPoolSize(), blockingHandlerGroupThreadFactory);
         Log = LoggerFactory.getLogger( NettyConnectionAcceptor.class.getName() + "[" + name + "]" );
     }
 
@@ -119,11 +135,11 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
         try {
             // ServerBootstrap is a helper class that sets up a server
             ServerBootstrap serverBootstrap = new ServerBootstrap();
-            serverBootstrap.group(parentGroup, childGroup)
+            serverBootstrap.group(acceptorGroup, ioWorkerGroup)
                 // Instantiate a new Channel to accept incoming connections.
                 .channel(NioServerSocketChannel.class)
                 // The handler specified here will always be evaluated by a newly accepted Channel.
-                .childHandler(new NettyServerInitializer(configuration, allChannels, channelHandlerFactories))
+                .childHandler(new NettyServerInitializer(configuration, allChannels, channelHandlerFactories, blockingHandlerExecutor))
                 // Set the listen backlog (queue) length.
                 .option(ChannelOption.SO_BACKLOG, JiveGlobals.getIntProperty("xmpp.socket.backlog", 50))
                 // option() is for the NioServerSocketChannel that accepts incoming connections.
@@ -160,7 +176,7 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
                 .channel();
 
         } catch (InterruptedException e) {
-            Log.error("Error starting: " + configuration.getPort(), e);
+            Log.error("Error starting: {}", configuration.getPort(), e);
             closeMainChannel();
         }
     }
@@ -172,11 +188,14 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
     @Override
     public synchronized void stop() {
         closeMainChannel();
-        if (!parentGroup.isShuttingDown()) {
-            parentGroup.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
+        if (!acceptorGroup.isShuttingDown()) {
+            acceptorGroup.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
         }
-        if (!childGroup.isShuttingDown()) {
-            childGroup.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
+        if (!ioWorkerGroup.isShuttingDown()) {
+            ioWorkerGroup.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
+        }
+        if (!blockingHandlerExecutor.isShuttingDown()) {
+            blockingHandlerExecutor.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
         }
     }
 
@@ -267,7 +286,7 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
         // Add to channels that already exist.
         this.allChannels.forEach(channel -> {
             try {
-                factory.addNewHandlerTo(channel.pipeline());
+                factory.addNewHandlerTo(channel.pipeline(), blockingHandlerExecutor);
             } catch (Throwable t) {
                 Log.warn("Unable to add ChannelHandler from '{}' to pipeline of pre-existing channel: {}", factory, channel, t);
             }

@@ -15,6 +15,8 @@
  */
 package org.jivesoftware.openfire.spi;
 
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.group.ChannelGroup;
@@ -84,6 +86,10 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
         NettyConnectionHandler businessLogicHandler = NettyConnectionHandlerFactory.createConnectionHandler(configuration);
         Duration maxIdleTimeBeforeClosing = businessLogicHandler.getMaxIdleTime().isNegative() ? Duration.ZERO : businessLogicHandler.getMaxIdleTime();
 
+        // Disable auto-read to prevent incoming data before pipeline is ready (which leads to race-conditions, sometimes preventing data from a new socket from being processed).
+        ch.config().setAutoRead(false);
+
+        // Add pipeline handlers.
         ch.pipeline()
             .addLast(TRAFFIC_HANDLER_NAME, new ChannelTrafficShapingHandler(0))
             .addLast("idleStateHandler", new IdleStateHandler(maxIdleTimeBeforeClosing.dividedBy(2).toMillis(), 0, 0, TimeUnit.MILLISECONDS))
@@ -99,6 +105,16 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
                 factory.addNewHandlerTo(ch.pipeline(), blockingHandlerExecutor);
             } catch (Throwable t) {
                 Log.warn("Unable to add ChannelHandler from '{}' to pipeline of new channel: {}", factory, ch, t);
+            }
+        });
+
+        // Re-enable autoRead after the channel is fully registered.
+        ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
+            @Override
+            public void channelRegistered(ChannelHandlerContext ctx) {
+                // Schedule enabling auto-read on the blocking executor to ensure pipeline is fully ready.
+                blockingHandlerExecutor.execute(() -> ctx.channel().config().setAutoRead(true));
+                ctx.fireChannelRegistered();
             }
         });
 

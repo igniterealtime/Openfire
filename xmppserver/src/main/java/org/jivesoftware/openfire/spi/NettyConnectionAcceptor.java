@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetSocketAddress;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
@@ -175,6 +176,12 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
                 .sync()
                 .channel();
 
+            // bind().sync() waits for the bind operation to complete but does not wait for the boss EventLoop to drain
+            // its task queue. Add a barrier task that runs on the boss event loop after bind completes. This guarantees
+            // that The boss EventLoop has processed startup tasks and Netty is ready to accept connections.
+            final CountDownLatch readyLatch = new CountDownLatch(1);
+            mainChannel.eventLoop().execute(readyLatch::countDown);
+            readyLatch.await();
         } catch (InterruptedException e) {
             Log.error("Error starting: {}", configuration.getPort(), e);
             closeMainChannel();

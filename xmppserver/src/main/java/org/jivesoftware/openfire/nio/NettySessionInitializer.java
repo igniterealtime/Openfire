@@ -153,6 +153,9 @@ public class NettySessionInitializer {
             b.handler(new ChannelInitializer<SocketChannel>() {
                 @Override
                 public void initChannel(SocketChannel ch) throws Exception {
+                    // Disable auto-read to prevent incoming data before pipeline is ready (which leads to race-conditions, sometimes preventing data from a new socket from being processed).
+                    ch.config().setAutoRead(false);
+
                     NettyConnectionHandler businessLogicHandler = new NettyOutboundConnectionHandler(listener.generateConnectionConfiguration(), domainPair, port);
                     Duration maxIdleTimeBeforeClosing = businessLogicHandler.getMaxIdleTime().isNegative() ? Duration.ZERO : businessLogicHandler.getMaxIdleTime();
 
@@ -173,7 +176,16 @@ public class NettySessionInitializer {
                         });
                     }
 
-                    // Should have a connection
+                    // Re-enable autoRead after the channel is fully registered.
+                    ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
+                        @Override
+                        public void channelRegistered(ChannelHandlerContext ctx) {
+                            // Schedule enabling auto-read on the blocking executor to ensure pipeline is fully ready.
+                            blockingHandlerExecutor.execute(() -> ctx.channel().config().setAutoRead(true));
+                            ctx.fireChannelRegistered();
+                        }
+                    });
+
                     if (directTLS) {
                         ch.attr(CONNECTION).get().startTLS(true, true);
                     }

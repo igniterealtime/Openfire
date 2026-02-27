@@ -76,9 +76,17 @@ jobs:
       # This 'integration' job should then need the 'build-and-push-docker' job as a dependency.
       - uses: actions/checkout@v4
 
-      - name: Build Docker Image
-        run: |
-          docker build -t openfire:latest .
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image (cached)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true                 # makes image available locally
+          tags: openfire:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Checkout Integration Tests
         uses: actions/checkout@v4

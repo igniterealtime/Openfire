@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.CertificateStoreConfiguration;
 import org.jivesoftware.openfire.net.SocketConnection;
+import org.jivesoftware.openfire.nio.NettySessionInitializer;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -231,6 +232,9 @@ public class ConnectionListener
                     }
                 });
                 connectionAcceptor.stop();
+                if (getType() == ConnectionType.SOCKET_S2S) {
+                    NettySessionInitializer.stopSharedResources(); // Stop the shared resources for outbound S2S connections.
+                }
             }
         }
 
@@ -244,6 +248,9 @@ public class ConnectionListener
             }
         });
         connectionAcceptor.start();
+        if (getType() == ConnectionType.SOCKET_S2S) {
+            NettySessionInitializer.startSharedResources(); // Start the shared resources for outbound S2S connections.
+        }
         Log.info( "Started." );
     }
 
@@ -324,7 +331,8 @@ public class ConnectionListener
                     Log.warn("SocketAcceptorEventListener '{}' threw exception while processing acceptor stopping event for acceptor: {}", eventListener, connectionAcceptor, t);
                 }
             });
-            connectionAcceptor.stop();
+            connectionAcceptor.stop(); // Stop accepting inbound S2S connections.
+            NettySessionInitializer.stopSharedResources(); // Stop the shared resources for outbound S2S connections.
         }
         finally
         {

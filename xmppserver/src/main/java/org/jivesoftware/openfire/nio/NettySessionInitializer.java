@@ -41,6 +41,7 @@ import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.concurrent.GuardedBy;
 import javax.net.ssl.SSLException;
 import java.io.IOException;
 import java.net.Socket;
@@ -56,7 +57,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jivesoftware.openfire.nio.NettyConnectionHandler.CONNECTION;
-
 
 /**
  * Initialises an outgoing netty channel for outbound S2S
@@ -84,44 +84,115 @@ public class NettySessionInitializer {
         .build();
 
     private static final Logger Log = LoggerFactory.getLogger(NettySessionInitializer.class);
-    private final DomainPair domainPair;
-    private final int port;
-    private boolean directTLS = false;
-    private final AtomicBoolean isStopped = new AtomicBoolean(false);
 
     /**
-     * EventLoopGroup responsible for non-blocking I/O on established connections.
+     * EventLoopGroup responsible for non-blocking I/O on established connections, shared by all
+     * {@link NettySessionInitializer} instances.
      *
      * This group (often referred to as the "worker" group) handles read/write operations and propagates I/O events
      * through the Netty pipeline for each accepted connection. Handlers running on this group must remain strictly
      * non-blocking to avoid starving the event loop.
+     *
+     * Lifecycle is managed explicitly via {@link #startSharedResources()} and {@link #stopSharedResources()}.
      */
-    private final EventLoopGroup ioWorkerGroup;
+    @GuardedBy("sharedResourceLock")
+    private static EventLoopGroup ioWorkerGroup;
 
     /**
-     * Executor group for pipeline handlers that may perform blocking or long-running operations.
+     * Executor group for pipeline handlers that may perform blocking or long-running operations, shared by all
+     * {@link NettySessionInitializer} instances.
      *
-     * This executor group is created per {@link NettySessionInitializer} instance and is shared across all channels
-     * that are initialized by that instance. It is used to offload work such as authentication, routing, persistence,
-     * or calls into legacy/blocking APIs. Using this group ensures that Netty EventLoop threads remain responsive and
-     * dedicated to I/O.
+     * This executor group is used to offload work such as authentication, routing, persistence, or calls into
+     * legacy/blocking APIs. Using this group ensures that Netty EventLoop threads remain responsive and dedicated to
+     * I/O.
+     *
+     * Lifecycle is managed explicitly via {@link #startSharedResources()} and {@link #stopSharedResources()}.
      */
-    private final EventExecutorGroup blockingHandlerExecutor;
+    @GuardedBy("sharedResourceLock")
+    private static EventExecutorGroup blockingHandlerExecutor;
 
+    /**
+     * Guards the lifecycle management of shared resources.
+     */
+    private static final Object sharedResourceLock = new Object();
+
+    /**
+     * Initializes the shared Netty thread pools for outbound S2S connections. Should be called once during startup of
+     * the corresponding S2S networking code.
+     */
+    public static void startSharedResources()
+    {
+        synchronized (sharedResourceLock)
+        {
+            if (ioWorkerGroup != null && !ioWorkerGroup.isShuttingDown())
+            {
+                Log.warn("startSharedResources() called but shared resources are already running. Ignoring.");
+                return;
+            }
+            Log.debug("Initialising shared Netty resources for outbound S2S.");
+            final ThreadFactory ioFactory = new NamedThreadFactory("socket_s2s_outbound-worker-", null, false, Thread.NORM_PRIORITY);
+            ioWorkerGroup = new NioEventLoopGroup(ioFactory);
+
+            final int handlerThreads = Math.max(1, Runtime.getRuntime().availableProcessors()) * 2;
+            final ThreadFactory handlerFactory = new NamedThreadFactory("socket_s2s_outbound-handler-", null, false, Thread.NORM_PRIORITY);
+            blockingHandlerExecutor = new DefaultEventExecutorGroup(handlerThreads, handlerFactory);
+            Log.debug("Shared Netty resources for outbound S2S initialised ({} handler threads).", handlerThreads);
+        }
+    }
+
+    /**
+     * Shuts down the shared Netty thread pools for outbound S2S connections. This method blocks until all resources
+     * are shut down. Should be called once during shutdown of the corresponding S2S networking code.
+     */
+    public static void stopSharedResources()
+    {
+        synchronized (sharedResourceLock) {
+            Log.debug("Shutting down shared Netty resources for outbound S2S.");
+            if (ioWorkerGroup != null) {
+                try {
+                    ioWorkerGroup.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS)
+                        .sync(); // wait until shutdown completes
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    Log.warn("Interrupted while shutting down ioWorkerGroup", e);
+                } finally {
+                    ioWorkerGroup = null;
+                }
+            }
+
+            if (blockingHandlerExecutor != null) {
+                try {
+                    blockingHandlerExecutor.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS)
+                        .sync(); // wait until shutdown completes
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    Log.warn("Interrupted while shutting down blockingHandlerExecutor", e);
+                } finally {
+                    blockingHandlerExecutor = null;
+                }
+            }
+
+            Log.debug("Shared Netty resources for outbound S2S shut down.");
+        }
+    }
+
+    private final DomainPair domainPair;
+    private final int port;
+    private boolean directTLS = false;
+    private final AtomicBoolean isStopped = new AtomicBoolean(false);
     private Channel channel;
 
     public NettySessionInitializer(DomainPair domainPair, int port) {
         this.domainPair = domainPair;
         this.port = port;
 
-        // TODO The event loop and executor should be re-used for all instances of this class, rather than each instance creating their own instance. OF-3182
-        final String name = "socket_s2s_outbound" + (/*this.directTLS*/ port == 5223 ? "_ssl" : "");
-
-        final ThreadFactory ioWorkerGroupThreadFactory = new NamedThreadFactory(name + "-worker-" + domainPair.getRemote() + "-", null, false, Thread.NORM_PRIORITY);
-        this.ioWorkerGroup = new NioEventLoopGroup(ioWorkerGroupThreadFactory);
-
-        final ThreadFactory blockingHandlerGroupThreadFactory = new NamedThreadFactory(name + "-handler-" + domainPair.getRemote() + "-", null, false, Thread.NORM_PRIORITY);
-        this.blockingHandlerExecutor = new DefaultEventExecutorGroup(Math.max(1, Runtime.getRuntime().availableProcessors()) * 2, blockingHandlerGroupThreadFactory);
+        synchronized (sharedResourceLock) {
+            if (ioWorkerGroup == null || ioWorkerGroup.isShuttingDown()) {
+                // Defensive fallback: shouldn't happen in normal operation if lifecycle is managed correctly.
+                Log.warn("Shared Netty resources are not available. This suggests a lifecycle management problem. Please report this as a bug. Resources are started on-demand as a defensive fallback.");
+                startSharedResources();
+            }
+        }
     }
 
     public Future<LocalSession> init(ConnectionListener listener) {
@@ -244,8 +315,6 @@ public class NettySessionInitializer {
             }
             channel.close();
         }
-        ioWorkerGroup.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
-        blockingHandlerExecutor.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
     }
 
     /**

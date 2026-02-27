@@ -32,9 +32,26 @@ public interface NettyChannelHandlerFactory
      * It is assumed, but not required, that for each invocation, a new ChannelHandler is created.
      *
      * @param pipeline The pipeline to which a ChannelHandler is to be added.
-     * @param executor the EventExecutorGroup which will be used to execute the ChannelHandlers methods.
+     * @deprecated Use {@link #addNewHandlerTo(ChannelPipeline, EventExecutorGroup)} instead.
      */
-    void addNewHandlerTo(final ChannelPipeline pipeline, final EventExecutorGroup executor);
+    @Deprecated(forRemoval = true, since = "5.1.0") // Remove in or after Openfire 5.2.0
+    void addNewHandlerTo(final ChannelPipeline pipeline);
+
+    /**
+     * Add a new ChannelHandler to the provided pipeline using the given executor.
+     *
+     * It is assumed, but not required, that for each invocation, a new ChannelHandler is created.
+     *
+     * Implementations should ensure that the handler is executed on the given {@link EventExecutorGroup}.
+     * By default, this delegates to {@link #addNewHandlerTo(ChannelPipeline)} for backward compatibility.
+     *
+     * @param pipeline The pipeline to which a ChannelHandler is to be added.
+     * @param executor the EventExecutorGroup which will be used to execute the ChannelHandler methods.
+     */
+    default void addNewHandlerTo(final ChannelPipeline pipeline, final EventExecutorGroup executor) {
+        // Delegate to old method by default
+        addNewHandlerTo(pipeline);
+    }
 
     /**
      * Remove a ChannelHandler from the provided pipeline.

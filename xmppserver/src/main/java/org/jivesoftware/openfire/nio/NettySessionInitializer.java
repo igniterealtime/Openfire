@@ -101,9 +101,10 @@ public class NettySessionInitializer {
     /**
      * Executor group for pipeline handlers that may perform blocking or long-running operations.
      *
-     * This executor group is shared across all channels created by this acceptor and is used to offload work such as
-     * authentication, routing, persistence, or calls into legacy/blocking APIs. Using this group ensures that Netty
-     * EventLoop threads remain responsive and dedicated to I/O.
+     * This executor group is created per {@link NettySessionInitializer} instance and is shared across all channels
+     * that are initialized by that instance. It is used to offload work such as authentication, routing, persistence,
+     * or calls into legacy/blocking APIs. Using this group ensures that Netty EventLoop threads remain responsive and
+     * dedicated to I/O.
      */
     private final EventExecutorGroup blockingHandlerExecutor;
 

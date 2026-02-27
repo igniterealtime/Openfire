@@ -26,7 +26,6 @@ import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
 import org.dom4j.*;
-import org.jivesoftware.openfire.net.RespondingServerStanzaHandler;
 import org.jivesoftware.openfire.net.SocketUtil;
 import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.session.ConnectionSettings;
@@ -156,7 +155,7 @@ public class NettySessionInitializer {
                     // Disable auto-read to prevent incoming data before pipeline is ready (which leads to race-conditions, sometimes preventing data from a new socket from being processed).
                     ch.config().setAutoRead(false);
 
-                    NettyConnectionHandler businessLogicHandler = new NettyOutboundConnectionHandler(listener.generateConnectionConfiguration(), domainPair, port);
+                    NettyOutboundConnectionHandler businessLogicHandler = new NettyOutboundConnectionHandler(listener.generateConnectionConfiguration(), domainPair, port);
                     Duration maxIdleTimeBeforeClosing = businessLogicHandler.getMaxIdleTime().isNegative() ? Duration.ZERO : businessLogicHandler.getMaxIdleTime();
 
                     ch.pipeline().addLast("idleStateHandler", new IdleStateHandler(maxIdleTimeBeforeClosing.dividedBy(2).toMillis(), 0, 0, TimeUnit.MILLISECONDS));
@@ -248,10 +247,32 @@ public class NettySessionInitializer {
         blockingHandlerExecutor.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * Returns a {@link Future} that completes when the outbound server-to-server session for the given Netty
+     * {@link Channel} has either been authenticated or when all authentication mechanisms have been attempted.
+     *
+     * The returned future completes with the established {@link LocalSession} (or {@code null} if session establishment
+     * failed), or completes exceptionally if the required pipeline handler is missing or an error occurs.
+     *
+     * @param channel the Netty channel associated with the outbound connection
+     * @return a future that completes when session establishment finishes
+     */
     private Future<LocalSession> waitForSession(Channel channel) {
-        RespondingServerStanzaHandler stanzaHandler = (RespondingServerStanzaHandler) channel.attr(NettyConnectionHandler.HANDLER).get();
-        return CompletableFuture.anyOf(stanzaHandler.isSessionAuthenticated(), stanzaHandler.haveAttemptedAllAuthenticationMethods())
-            .thenApply(o -> stanzaHandler.getSession());
+        final NettyOutboundConnectionHandler handler = channel.pipeline().get(NettyOutboundConnectionHandler.class);
+
+        if (handler == null) {
+            return CompletableFuture.failedFuture(
+                new IllegalStateException("NettyOutboundConnectionHandler not found in pipeline")
+            );
+        }
+        return handler.getStanzaHandlerFuture()
+            .thenCompose(stanzaHandler -> {
+                // Complete when either authentication succeeds or all methods are exhausted
+                final CompletableFuture<Void> authenticated = stanzaHandler.isSessionAuthenticated();
+                final CompletableFuture<Void> exhausted = stanzaHandler.haveAttemptedAllAuthenticationMethods();
+                return authenticated.applyToEither(exhausted, ignored -> stanzaHandler.getSession());
+            }
+        );
     }
 
     private void sendOpeningStreamHeader(Channel channel) {

@@ -34,6 +34,7 @@ import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.StreamError;
 
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 
 import static org.jivesoftware.openfire.spi.NettyServerInitializer.TRAFFIC_HANDLER_NAME;
 
@@ -57,6 +58,7 @@ public abstract class NettyConnectionHandler<H extends StanzaHandler> extends Si
     static final AttributeKey<StanzaHandler> HANDLER = AttributeKey.valueOf("HANDLER");
     public static final AttributeKey<Boolean> IDLE_FLAG = AttributeKey.valueOf("IDLE_FLAG");
 
+    private final CompletableFuture<H> stanzaHandlerFuture = new CompletableFuture<>();
 
     protected static final ThreadLocal<XMPPPacketReader> PARSER_CACHE = new ThreadLocal<>()
     {
@@ -96,6 +98,15 @@ public abstract class NettyConnectionHandler<H extends StanzaHandler> extends Si
 
     abstract NettyConnection createNettyConnection(ChannelHandlerContext ctx);
 
+    /**
+     * Creates the {@link StanzaHandler} instance that will process inbound XML stanzas for the given connection.
+     *
+     * The returned handler is specific to the concrete connection type (e.g. C2S, S2S) and is created during
+     * {@link #handlerAdded}. Its type is constrained by the handler generic parameter of this class.
+     *
+     * @param connection the Netty-backed connection for which the handler is created
+     * @return a newly created stanza handler instance
+     */
     abstract H createStanzaHandler(NettyConnection connection);
 
     /**
@@ -117,7 +128,23 @@ public abstract class NettyConnectionHandler<H extends StanzaHandler> extends Si
         ctx.channel().attr(CONNECTION).set(nettyConnection);
         ctx.channel().attr(READ_BYTES).set(0L);
 
-        ctx.channel().attr(HANDLER).set(createStanzaHandler(nettyConnection));
+        final H stanzaHandler = createStanzaHandler(nettyConnection);
+        ctx.channel().attr(HANDLER).set(stanzaHandler);
+        stanzaHandlerFuture.complete(stanzaHandler);
+    }
+
+    /**
+     * Returns a future that completes when the {@link StanzaHandler} for this connection has been created and added to
+     * the Netty pipeline.
+     *
+     * This is used to safely coordinate with asynchronous Netty handler initialization and avoids race conditions where
+     * the handler is accessed before {@link #handlerAdded} has executed.
+     *
+     * @return a future that completes with the stanza handler once it is available
+     */
+    public CompletableFuture<H> getStanzaHandlerFuture()
+    {
+        return stanzaHandlerFuture;
     }
 
     @Override

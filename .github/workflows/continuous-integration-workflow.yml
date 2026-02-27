@@ -134,7 +134,7 @@ jobs:
           sparse-checkout: |
             .github
       - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: Openfire Distribution Java 17
           path: .
@@ -232,7 +232,7 @@ jobs:
           sparse-checkout: |
             .github
       - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: Openfire Distribution Java 17
           path: .
@@ -261,7 +261,7 @@ jobs:
           sparse-checkout: |
             .github
       - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: Openfire Distribution Java 17
           path: .
@@ -348,7 +348,7 @@ jobs:
           distribution: zulu
           cache: maven
       - name: Restore mvn repo artifacts from build job
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: Maven Repository
           path: ~/.m2/repository/org/igniterealtime/openfire/
@@ -386,7 +386,7 @@ jobs:
           distribution: zulu
           cache: maven
       - name: Restore mvn repo artifacts from build job
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: Maven Repository
           path: ~/.m2/repository/org/igniterealtime/openfire/
@@ -431,7 +431,7 @@ jobs:
           distribution: zulu
           cache: maven
       - name: Restore mvn repo artifacts from build job
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: Maven Repository
           path: ~/.m2/repository/org/igniterealtime/openfire/
@@ -470,7 +470,7 @@ jobs:
           distribution: zulu
           cache: maven
       - name: Restore mvn repo artifacts from build job
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: Maven Repository
           path: ~/.m2/repository/org/igniterealtime/openfire/
@@ -510,7 +510,7 @@ jobs:
           distribution: zulu
           cache: maven
       - name: Restore mvn repo artifacts from build job
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: Maven Repository
           path: ~/.m2/repository/org/igniterealtime/openfire/
@@ -547,7 +547,7 @@ jobs:
           distribution: zulu
           cache: maven
       - name: Restore mvn repo artifacts from build job
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: Maven Repository
           path: ~/.m2/repository/org/igniterealtime/openfire/
@@ -587,7 +587,7 @@ jobs:
           distribution: zulu
           cache: maven
       - name: Restore mvn repo artifacts from build job
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: Maven Repository
           path: ~/.m2/repository/org/igniterealtime/openfire/
@@ -626,7 +626,7 @@ jobs:
           distribution: zulu
           cache: maven
       - name: Restore mvn repo artifacts from build job
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: Maven Repository
           path: ~/.m2/repository/org/igniterealtime/openfire/
@@ -668,7 +668,7 @@ jobs:
           distribution: zulu
           cache: maven
       - name: Restore mvn repo artifacts from build job
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: Maven Repository
           path: ~/.m2/repository/org/igniterealtime/openfire/
@@ -707,7 +707,7 @@ jobs:
           distribution: zulu
           cache: maven
       - name: Restore mvn repo artifacts from build job
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: Maven Repository
           path: ~/.m2/repository/org/igniterealtime/openfire/
@@ -824,7 +824,7 @@ jobs:
           # We want the one that's been tested, rather than the head of main
           ref: ${{ github.event.push.after }}
       - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: Openfire Distribution Java 17
           path: .

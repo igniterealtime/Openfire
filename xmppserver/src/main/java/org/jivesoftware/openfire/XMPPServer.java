@@ -75,6 +75,9 @@ import org.jivesoftware.util.cert.CertificateExpiryChecker;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+
+import java.security.Provider;
+import java.security.Security;
 import org.xmpp.packet.Message;
 
 import java.io.*;
@@ -363,6 +366,22 @@ public class XMPPServer {
     }
 
     private void initialize() throws FileNotFoundException {
+        // Register Bouncy Castle providers early
+        try {
+            final Class<?> bcProviderClass = Class.forName("org.bouncycastle.jce.provider.BouncyCastleProvider");
+            if (Security.getProvider("BC") == null) {
+                logger.debug("Adding Bouncy Castle Provider");
+                Security.addProvider((Provider) bcProviderClass.getDeclaredConstructor().newInstance());
+            }
+            final Class<?> bcJsseProviderClass = Class.forName("org.bouncycastle.jsse.provider.BouncyCastleJsseProvider");
+            if (Security.getProvider("BCJSSE") == null) {
+                logger.debug("Adding Bouncy Castle JSSE Provider");
+                Security.addProvider((Provider) bcJsseProviderClass.getDeclaredConstructor().newInstance());
+            }
+        } catch (Exception e) {
+            logger.warn("Unable to register Bouncy Castle providers. Some features (like certain channel binding types) may not be available.", e);
+        }
+
         locateOpenfire();
 
         if ("true".equals(JiveGlobals.getXMLProperty("setup"))) {

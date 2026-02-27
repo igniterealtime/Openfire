@@ -185,6 +185,7 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
         } catch (InterruptedException e) {
             Log.error("Error starting: {}", configuration.getPort(), e);
             closeMainChannel();
+            Thread.currentThread().interrupt(); // Restore the interrupt-flag.
         }
     }
 

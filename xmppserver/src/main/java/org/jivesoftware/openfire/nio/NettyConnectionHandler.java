@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ import static org.jivesoftware.openfire.spi.NettyServerInitializer.TRAFFIC_HANDL
  * @author Matthew Vivian
  * @author Alex Gidman
  */
-public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler<String> {
+public abstract class NettyConnectionHandler<H extends StanzaHandler> extends SimpleChannelInboundHandler<String> {
 
     private static final Logger Log = LoggerFactory.getLogger(NettyConnectionHandler.class);
     static final AttributeKey<XMLLightweightParser> XML_PARSER = AttributeKey.valueOf("XML-PARSER");
@@ -96,7 +96,7 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
 
     abstract NettyConnection createNettyConnection(ChannelHandlerContext ctx);
 
-    abstract StanzaHandler createStanzaHandler(NettyConnection connection);
+    abstract H createStanzaHandler(NettyConnection connection);
 
     /**
      * Returns the time that a connection can be idle before being closed.

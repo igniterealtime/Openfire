@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2007-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import java.time.Duration;
  *
  * @author Alex Gidman
  */
-public class NettyComponentConnectionHandler extends NettyConnectionHandler {
+public class NettyComponentConnectionHandler extends NettyConnectionHandler<ComponentStanzaHandler> {
 
     /**
      * Enable / disable backup delivery of stanzas to the XMPP server itself when a stanza failed to be delivered on a
@@ -55,7 +55,7 @@ public class NettyComponentConnectionHandler extends NettyConnectionHandler {
     }
 
     @Override
-    StanzaHandler createStanzaHandler(NettyConnection connection) {
+    ComponentStanzaHandler createStanzaHandler(NettyConnection connection) {
         return new ComponentStanzaHandler(XMPPServer.getInstance().getPacketRouter(), connection);
     }
 

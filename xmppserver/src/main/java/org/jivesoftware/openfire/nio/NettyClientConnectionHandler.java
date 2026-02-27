@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import java.time.Duration;
  * @author Matthew Vivian
  * @author Alex Gidman
  */
-public class NettyClientConnectionHandler extends NettyConnectionHandler{
+public class NettyClientConnectionHandler extends NettyConnectionHandler<ClientStanzaHandler> {
 
     /**
      * Enable / disable backup delivery of stanzas to the 'offline message store' of the corresponding user when a stanza
@@ -58,9 +58,8 @@ public class NettyClientConnectionHandler extends NettyConnectionHandler{
     }
 
     @Override
-    StanzaHandler createStanzaHandler(NettyConnection connection) {
+    ClientStanzaHandler createStanzaHandler(NettyConnection connection) {
         return new ClientStanzaHandler(XMPPServer.getInstance ().getPacketRouter(), connection);
-
     }
 
     @Override

@@ -208,7 +208,7 @@ public abstract class NettyConnectionHandler<H extends StanzaHandler> extends Si
                 NettyConnection connection = ctx.channel().attr(NettyConnectionHandler.CONNECTION).get();
                 connection.setEncrypted(true);
                 Log.debug("TLS negotiation was successful on channel {}", ctx.channel().remoteAddress() == null ? ctx.channel().localAddress() : ctx.channel().localAddress() + "--" + ctx.channel().remoteAddress());
-                ctx.fireChannelActive();
+                ctx.pipeline().fireChannelActive(); // restart from head so all handlers receive channelActive
             }
         }
 

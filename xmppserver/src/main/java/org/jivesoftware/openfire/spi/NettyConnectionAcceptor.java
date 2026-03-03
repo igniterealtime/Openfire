@@ -181,11 +181,18 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
             // that The boss EventLoop has processed startup tasks and Netty is ready to accept connections.
             final CountDownLatch readyLatch = new CountDownLatch(1);
             mainChannel.eventLoop().execute(readyLatch::countDown);
-            readyLatch.await();
+
+            final int startupLatchTimeoutSeconds = JiveGlobals.getIntProperty("xmpp.socket.startup-latch-timeout", 30);
+            if (!readyLatch.await(startupLatchTimeoutSeconds, TimeUnit.SECONDS)) {
+                Log.warn("Boss EventLoop did not execute startup barrier task within {} seconds; startup may be incomplete.", startupLatchTimeoutSeconds);
+            }
         } catch (InterruptedException e) {
-            Log.error("Error starting: {}", configuration.getPort(), e);
+            Log.error("Startup interrupted on port {}", configuration.getPort(), e);
             closeMainChannel();
-            Thread.currentThread().interrupt(); // Restore the interrupt-flag.
+            Thread.currentThread().interrupt(); // Restore interrupt flag
+        } catch (Exception e) {
+            Log.error("Error starting Netty acceptor on port {}", configuration.getPort(), e);
+            closeMainChannel();
         }
     }
 

@@ -102,7 +102,12 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
                 public void channelActive(ChannelHandlerContext ctx) {
                     try {
                         if (isDirectTLSConfigured()) {
-                            ctx.channel().attr(CONNECTION).get().startTLS(false, true);
+                            final NettyConnection connection = ctx.channel().attr(CONNECTION).get();
+                            if (!connection.isEncrypted()) {
+                                connection.startTLS(false, true);
+                                ctx.channel().config().setAutoRead(true);
+                            }
+                            return; // Do not propagate channelActive - userEventTriggered will fire it after TLS handshake completes.
                         }
                     } catch (Exception e) {
                         Log.error("Failed to start DirectTLS on channel {}: {}", ctx.channel(), e.getMessage(), e);
@@ -110,7 +115,7 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
                         return; // avoid enabling autoRead on a failed channel.
                     }
 
-                    // Enable auto-read safely after TLS handshake has started.
+                    // Non-DirectTLS: safe to enable autoRead and propagate channelActive immediately.
                     ctx.channel().config().setAutoRead(true);
 
                     ctx.fireChannelActive();

@@ -97,7 +97,26 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
             .addLast(new NettyXMPPDecoder())
             .addLast(new StringEncoder(StandardCharsets.UTF_8))
             .addLast("stalledSessionHandler", new WriteTimeoutHandler(Math.toIntExact(WRITE_TIMEOUT_SECONDS.getValue().getSeconds())))
-            .addLast(blockingHandlerExecutor, businessLogicHandler);
+            .addLast("tlsAndAutoReadHandler", new ChannelInboundHandlerAdapter() {
+                @Override
+                public void channelActive(ChannelHandlerContext ctx) {
+                    try {
+                        if (isDirectTLSConfigured()) {
+                            ctx.channel().attr(CONNECTION).get().startTLS(false, true);
+                        }
+                    } catch (Exception e) {
+                        Log.error("Failed to start DirectTLS on channel {}: {}", ctx.channel(), e.getMessage(), e);
+                        ctx.channel().close();
+                        return; // avoid enabling autoRead on a failed channel.
+                    }
+
+                    // Enable auto-read safely after TLS handshake has started.
+                    ctx.channel().config().setAutoRead(true);
+
+                    ctx.fireChannelActive();
+                }
+            })
+            .addLast(blockingHandlerExecutor, "businessLogicHandler", businessLogicHandler);
 
         // Add ChannelHandler providers implemented by plugins, if any.
         channelHandlerFactories.forEach(factory -> {
@@ -105,26 +124,6 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
                 factory.addNewHandlerTo(ch.pipeline(), blockingHandlerExecutor);
             } catch (Throwable t) {
                 Log.warn("Unable to add ChannelHandler from '{}' to pipeline of new channel: {}", factory, ch, t);
-            }
-        });
-
-        ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
-            @Override
-            public void channelActive(ChannelHandlerContext ctx) {
-                try {
-                    if (isDirectTLSConfigured()) {
-                        ctx.channel().attr(CONNECTION).get().startTLS(false, true);
-                    }
-                } catch (Exception e) {
-                    Log.error("Failed to start DirectTLS on channel {}: {}", ctx.channel(), e.getMessage(), e);
-                    ctx.channel().close();
-                    return; // avoid enabling autoRead on a failed channel.
-                }
-
-                // Enable auto-read safely after TLS handshake has started.
-                ctx.channel().config().setAutoRead(true);
-
-                ctx.fireChannelActive();
             }
         });
 

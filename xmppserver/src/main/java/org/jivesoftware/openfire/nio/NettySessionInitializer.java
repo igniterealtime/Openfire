@@ -234,7 +234,25 @@ public class NettySessionInitializer {
                     ch.pipeline().addLast("keepAliveHandler", new NettyIdleStateKeepAliveHandler(false));
                     ch.pipeline().addLast(new NettyXMPPDecoder());
                     ch.pipeline().addLast(new StringEncoder(StandardCharsets.UTF_8));
-                    ch.pipeline().addLast(blockingHandlerExecutor, businessLogicHandler);
+                    ch.pipeline().addLast("tlsAndAutoReadHandler", new ChannelInboundHandlerAdapter() {
+                        @Override
+                        public void channelActive(ChannelHandlerContext ctx) {
+                            try {
+                                if (directTLS) {
+                                    ctx.channel().attr(CONNECTION).get().startTLS(true, true);
+                                }
+                            } catch (Exception e) {
+                                Log.error("Failed to start DirectTLS on channel {}: {}", ctx.channel(), e.getMessage(), e);
+                                // Close the channel safely to prevent inconsistent state.
+                                ctx.channel().close();
+                                return;
+                            }
+                            // Safe to enable auto-read after TLS is started.
+                            ctx.channel().config().setAutoRead(true);
+                            ctx.fireChannelActive();
+                        }
+                    });
+                    ch.pipeline().addLast(blockingHandlerExecutor, "businessLogicHandler", businessLogicHandler);
 
                     final ConnectionAcceptor connectionAcceptor = listener.getConnectionAcceptor();
                     if (connectionAcceptor instanceof NettyConnectionAcceptor) {
@@ -246,27 +264,6 @@ public class NettySessionInitializer {
                             }
                         });
                     }
-
-                    ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
-                        @Override
-                        public void channelActive(ChannelHandlerContext ctx) {
-                            try {
-                                if (directTLS) {
-                                    ctx.channel().attr(CONNECTION).get().startTLS(true, true);
-                                }
-                            } catch (Exception e) {
-                                Log.error("Failed to start DirectTLS on channel {}: {}", ctx.channel(), e.getMessage(), e);
-                                // Close the channel safely to prevent inconsistent state.
-                                ctx.channel().close();
-                                return; // exit early to avoid enabling autoRead on a failed channel.
-                            }
-
-                            // Safe to enable auto-read after TLS is started.
-                            ctx.channel().config().setAutoRead(true);
-
-                            ctx.fireChannelActive();
-                        }
-                    });
                 }
 
                 @Override

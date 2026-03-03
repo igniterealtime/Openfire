@@ -23,7 +23,13 @@ COPY --from=poms /usr/src/ .
 # I don't know why we need all three either.
 RUN --mount=type=cache,target=/tmp/m2_repo,id=openfire_build ./mvnw -e -B dependency:resolve-plugins -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo
 RUN --mount=type=cache,target=/tmp/m2_repo,id=openfire_build ./mvnw -e -B de.qaware.maven:go-offline-maven-plugin:resolve-dependencies -Dmaven.repo.local=/tmp/m2_repo
-RUN --mount=type=cache,target=/tmp/m2_repo,id=openfire_build ./mvnw -e -B dependency:get -DgroupId=org.codehaus.plexus -DartifactId=plexus-utils -Dpackaging=jar -Dversion=1.1 -Dmaven.repo.local=/tmp/m2_repo
+# The go-offline plugin and dependency:resolve-plugins do not reliably resolve BOM POMs referenced
+# via <scope>import</scope> in <dependencyManagement>. Fetch them explicitly so they are present
+# in the cache before the offline build runs. Add any newly introduced BOMs here in the same way.
+RUN --mount=type=cache,target=/tmp/m2_repo,id=openfire_build \
+    ./mvnw -e -B dependency:get -DgroupId=org.codehaus.plexus -DartifactId=plexus-utils -Dpackaging=jar -Dversion=1.1 -Dmaven.repo.local=/tmp/m2_repo && \
+    ./mvnw -e -B dependency:get -DgroupId=org.junit -DartifactId=junit-bom -Dpackaging=pom -Dversion=5.13.4 -Dmaven.repo.local=/tmp/m2_repo && \
+    ./mvnw -e -B dependency:get -DgroupId=org.mockito -DartifactId=mockito-bom -Dpackaging=pom -Dversion=5.4.0 -Dmaven.repo.local=/tmp/m2_repo
 
 # Above here is only affected by the pom.xml files, so the cache is stable.
 

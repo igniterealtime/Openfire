@@ -79,14 +79,18 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Compute pom.xml hash for Docker cache key
+        id: pom-hash
+        run: echo "hash=${{ hashFiles('**/pom.xml') }}" >> $GITHUB_OUTPUT
+
       - name: Build Docker image (cached)
         uses: docker/build-push-action@v6
         with:
           context: .
           load: true                 # makes image available locally
           tags: openfire:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=gha,scope=openfire-${{ steps.pom-hash.outputs.hash }}
+          cache-to: type=gha,mode=max,scope=openfire-${{ steps.pom-hash.outputs.hash }}
 
       - name: Checkout Integration Tests
         uses: actions/checkout@v6

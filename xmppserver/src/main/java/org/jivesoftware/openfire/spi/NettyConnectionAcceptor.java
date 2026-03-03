@@ -30,12 +30,14 @@ import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.nio.NettyChannelHandlerFactory;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.NamedThreadFactory;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
@@ -54,6 +56,83 @@ import static org.jivesoftware.openfire.nio.NettySessionInitializer.GRACEFUL_SHU
  * @author Alex Gidman
  */
 public class NettyConnectionAcceptor extends ConnectionAcceptor {
+
+    /**
+     * Sets the maximum number of incoming connection requests that can be queued before the OS starts rejecting new connections.
+     */
+    public static final SystemProperty<Integer> SOCKET_BACKLOG = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.socket.backlog")
+        .setDefaultValue(50)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * Enables TCP keep-alive on the socket to periodically check if the connection is still alive and prevent idle connections from being silently dropped.
+     */
+    public static final SystemProperty<Boolean> SOCKET_KEEP_ALIVE_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.socket.keepalive")
+        .setDefaultValue(true)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * Controls whether the Nagle algorithm is disabled (true) to send small packets immediately or enabled (false) to coalesce them.
+     */
+    public static final SystemProperty<Boolean> TCP_NODELAY_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.socket.tcp-nodelay")
+        .setDefaultValue(true)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * Allows the socket to bind to a port even if a previous connection on that port is in the TIME_WAIT state, enabling faster server restarts.
+     */
+    public static final SystemProperty<Boolean> SOCKET_REUSE_ADDRESS_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.socket.tcp-reuseaddr")
+        .setDefaultValue(true)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * Defines the size (in bytes) of the TCP send buffer for accepted sockets.
+     */
+    public static final SystemProperty<Integer> SOCKET_SEND_BUFFER_SIZE = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.socket.buffer.send")
+        .setDefaultValue(-1)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * Defines the size (in bytes) of the TCP receive buffer for accepted sockets.
+     */
+    public static final SystemProperty<Integer> SOCKET_RECEIVE_BUFFER_SIZE = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.socket.buffer.receive")
+        .setDefaultValue(-1)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * Specifies how long a socket should wait to send remaining data when closed; negative disables SO_LINGER.
+     */
+    public static final SystemProperty<Duration> SOCKET_LINGER_DURATION = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.socket.linger")
+        .setChronoUnit(ChronoUnit.SECONDS)
+        .setDefaultValue(Duration.ofSeconds(-1))
+        .setDynamic(false)
+        .setMaxValue(Duration.ofSeconds(Integer.MAX_VALUE))
+        .build();
+
+    /**
+     * Timeout in seconds to wait for the boss EventLoop to process the startup barrier task before logging a warning.
+     */
+    public static final SystemProperty<Duration> STARTUP_LATCH_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.socket.startup-latch-timeout")
+        .setChronoUnit(ChronoUnit.SECONDS)
+        .setDefaultValue(Duration.ofSeconds(30))
+        .setDynamic(false)
+        .setMaxValue(Duration.ofSeconds(Integer.MAX_VALUE))
+        .build();
+
     // NioEventLoopGroup is a multithreaded event loop that handles I/O operation.
     // The first one, often called 'boss', accepts an incoming connection.
     // The second one, often called 'worker', handles the traffic of the accepted connection once the boss
@@ -142,27 +221,27 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
                 // The handler specified here will always be evaluated by a newly accepted Channel.
                 .childHandler(new NettyServerInitializer(configuration, allChannels, channelHandlerFactories, blockingHandlerExecutor))
                 // Set the listen backlog (queue) length.
-                .option(ChannelOption.SO_BACKLOG, JiveGlobals.getIntProperty("xmpp.socket.backlog", 50))
+                .option(ChannelOption.SO_BACKLOG, SOCKET_BACKLOG.getValue())
                 // option() is for the NioServerSocketChannel that accepts incoming connections.
                 // childOption() is for the Channels accepted by the parent ServerChannel,
                 // which is NioSocketChannel in this case.
-                .childOption(ChannelOption.SO_KEEPALIVE, true)
+                .childOption(ChannelOption.SO_KEEPALIVE, SOCKET_KEEP_ALIVE_ENABLED.getValue())
                 // Setting TCP_NODELAY to false enables the Nagle algorithm, which delays sending small successive packets
-                .childOption(ChannelOption.TCP_NODELAY, JiveGlobals.getBooleanProperty( "xmpp.socket.tcp-nodelay", true))
+                .childOption(ChannelOption.TCP_NODELAY, TCP_NODELAY_ENABLED.getValue())
                 // Set that it will be possible to bind a socket if there is a connection in the timeout state.
-                .childOption(ChannelOption.SO_REUSEADDR, true);
+                .childOption(ChannelOption.SO_REUSEADDR, SOCKET_REUSE_ADDRESS_ENABLED.getValue());
 
-            final int sendBuffer = JiveGlobals.getIntProperty( "xmpp.socket.buffer.send", -1 );
+            final int sendBuffer = SOCKET_SEND_BUFFER_SIZE.getValue();
             if ( sendBuffer > 0 ) {
                 // SO_SNDBUF = Socket Option - Send Buffer Size in Bytes
                 serverBootstrap.childOption(ChannelOption.SO_SNDBUF, sendBuffer);
             }
-            final int receiveBuffer = JiveGlobals.getIntProperty( "xmpp.socket.buffer.receive", -1 );
+            final int receiveBuffer = SOCKET_RECEIVE_BUFFER_SIZE.getValue();
             if ( receiveBuffer > 0 ) {
                 // SO_RCVBUF = Socket Option - Receive Buffer Size in Bytes
                 serverBootstrap.childOption(ChannelOption.SO_RCVBUF, receiveBuffer);
             }
-            final int linger = JiveGlobals.getIntProperty( "xmpp.socket.linger", -1 );
+            final int linger = (int) SOCKET_LINGER_DURATION.getValue().getSeconds();
             if ( linger > 0 ) {
                 serverBootstrap.childOption(ChannelOption.SO_LINGER, linger);
             }
@@ -182,7 +261,7 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
             final CountDownLatch readyLatch = new CountDownLatch(1);
             mainChannel.eventLoop().execute(readyLatch::countDown);
 
-            final int startupLatchTimeoutSeconds = JiveGlobals.getIntProperty("xmpp.socket.startup-latch-timeout", 30);
+            final int startupLatchTimeoutSeconds = (int) STARTUP_LATCH_TIMEOUT.getValue().getSeconds();
             if (!readyLatch.await(startupLatchTimeoutSeconds, TimeUnit.SECONDS)) {
                 Log.warn("Boss EventLoop did not execute startup barrier task within {} seconds; startup may be incomplete.", startupLatchTimeoutSeconds);
             }

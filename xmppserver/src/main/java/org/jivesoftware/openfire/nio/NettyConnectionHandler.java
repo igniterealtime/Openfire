@@ -119,18 +119,23 @@ public abstract class NettyConnectionHandler<H extends StanzaHandler> extends Si
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) {
         Log.trace("Netty XMPP handler added: {}", ctx.channel().remoteAddress() == null ? ctx.channel().localAddress() : ctx.channel().localAddress() + "--" + ctx.channel().remoteAddress());
+        try {
+            // Create a new XML parser for the new connection. The parser will be used by the XMPPDecoder filter.
+            ctx.channel().attr(XML_PARSER).set(new XMLLightweightParser());
 
-        // Create a new XML parser for the new connection. The parser will be used by the XMPPDecoder filter.
-        ctx.channel().attr(XML_PARSER).set(new XMLLightweightParser());
+            // Create a new Connection for the new session
+            final NettyConnection nettyConnection = createNettyConnection(ctx);
+            ctx.channel().attr(CONNECTION).set(nettyConnection);
+            ctx.channel().attr(READ_BYTES).set(0L);
 
-        // Create a new Connection for the new session
-        final NettyConnection nettyConnection = createNettyConnection(ctx);
-        ctx.channel().attr(CONNECTION).set(nettyConnection);
-        ctx.channel().attr(READ_BYTES).set(0L);
-
-        final H stanzaHandler = createStanzaHandler(nettyConnection);
-        ctx.channel().attr(HANDLER).set(stanzaHandler);
-        stanzaHandlerFuture.complete(stanzaHandler);
+            final H stanzaHandler = createStanzaHandler(nettyConnection);
+            ctx.channel().attr(HANDLER).set(stanzaHandler);
+            stanzaHandlerFuture.complete(stanzaHandler);
+        } catch (Throwable t) {
+            Log.warn("Failed to initialize Netty XMPP handler for channel {}", ctx.channel(), t);
+            ctx.channel().close();
+            stanzaHandlerFuture.completeExceptionally(t);
+        }
     }
 
     /**

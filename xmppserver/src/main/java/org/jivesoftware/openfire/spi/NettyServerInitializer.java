@@ -108,19 +108,25 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
             }
         });
 
-        // Re-enable autoRead after the channel is fully registered.
         ch.pipeline().addLast(new ChannelInboundHandlerAdapter() {
             @Override
-            public void channelRegistered(ChannelHandlerContext ctx) {
-                // Schedule enabling auto-read on the blocking executor to ensure pipeline is fully ready.
-                blockingHandlerExecutor.execute(() -> ctx.channel().config().setAutoRead(true));
-                ctx.fireChannelRegistered();
+            public void channelActive(ChannelHandlerContext ctx) {
+                try {
+                    if (isDirectTLSConfigured()) {
+                        ctx.channel().attr(CONNECTION).get().startTLS(false, true);
+                    }
+                } catch (Exception e) {
+                    Log.error("Failed to start DirectTLS on channel {}: {}", ctx.channel(), e.getMessage(), e);
+                    ctx.channel().close();
+                    return; // avoid enabling autoRead on a failed channel.
+                }
+
+                // Enable auto-read safely after TLS handshake has started.
+                ctx.channel().config().setAutoRead(true);
+
+                ctx.fireChannelActive();
             }
         });
-
-        if (isDirectTLSConfigured()) {
-            ch.attr(CONNECTION).get().startTLS(false, true);
-        }
 
         allChannels.add(ch);
     }

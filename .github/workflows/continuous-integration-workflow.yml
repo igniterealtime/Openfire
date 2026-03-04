@@ -66,35 +66,72 @@ jobs:
           retention-days: 1
 
 
-  integration:
-    name: Execute Integration CI tests
+  build-docker:
+
+    name: Build and push ephemeral Docker image
     runs-on: ubuntu-latest
     needs: build
     permissions:
       contents: read
-      packages: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    outputs:
+      image-digest: ${{ steps.push.outputs.digest }}
+      image-tag: ${{ env.REGISTRY }}/igniterealtime/${{ env.IMAGE_NAME }}:ci-${{ github.sha }}
 
     steps:
-      # The first 2 steps (checking out, and building from Openfire Dockerfile)
-      # can be removed when the docker image is published to a registry.
-      # This 'integration' job should then need the 'build-and-push-docker' job as a dependency.
-      - uses: actions/checkout@v6
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Checkout repository
+        uses: actions/checkout@v6
 
       - name: Compute pom.xml hash for Docker cache key
         id: pom-hash
         run: echo "hash=${{ hashFiles('**/pom.xml') }}" >> $GITHUB_OUTPUT
 
-      - name: Build Docker image (cached)
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push ephemeral CI image
+        id: push
         uses: docker/build-push-action@v6
         with:
           context: .
-          load: true                 # makes image available locally
-          tags: openfire:latest
+          push: true
+          tags: ${{ env.REGISTRY }}/igniterealtime/${{ env.IMAGE_NAME }}:ci-${{ github.sha }}
           cache-from: type=gha,scope=openfire-${{ steps.pom-hash.outputs.hash }}
           cache-to: type=gha,mode=max,scope=openfire-${{ steps.pom-hash.outputs.hash }}
+
+
+  integration:
+    name: Execute Integration CI tests
+    runs-on: ubuntu-latest
+    needs: build-docker
+    permissions:
+      contents: read
+      packages: read
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull pre-built CI image and retag for local use
+        run: |
+          docker pull ${{ needs.build-docker.outputs.image-tag }}
+          docker tag ${{ needs.build-docker.outputs.image-tag }} openfire:latest
 
       - name: Checkout Integration Tests
         uses: actions/checkout@v6
@@ -768,7 +805,7 @@ jobs:
   build-and-push-docker:
     name: Publish to GitHub's Docker registry
     runs-on: ubuntu-latest
-    needs: [aioxmpp, connectivity, integration, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
+    needs: [aioxmpp, connectivity, integration, xitf, build-docker, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
     if: |
       github.event_name == 'push' && 
       (contains(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
@@ -796,26 +833,30 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/igniterealtime/${{ env.IMAGE_NAME }}
 
-      - name: Setup buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build and push Docker image
-        id: push
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Retag and push final image from ephemeral CI image
+        run: |
+          docker pull ${{ needs.build-docker.outputs.image-tag }}
+          for tag in ${{ steps.meta.outputs.tags }}; do
+            docker tag ${{ needs.build-docker.outputs.image-tag }} $tag
+            docker push $tag
+          done
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v4
         with:
-          subject-name: ${{ env.REGISTRY }}/igniterealtime/${{ env.IMAGE_NAME}}
-          subject-digest: ${{ steps.push.outputs.digest }}
+          subject-name: ${{ env.REGISTRY }}/igniterealtime/${{ env.IMAGE_NAME }}
+          subject-digest: ${{ needs.build-docker.outputs.image-digest }}
           push-to-registry: true
+
+      - name: Delete ephemeral CI image
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api \
+            --method DELETE \
+            "/orgs/igniterealtime/packages/container/${{ env.IMAGE_NAME }}/versions" \
+            --field tag="ci-${{ github.sha }}" \
+            || echo "Ephemeral image cleanup failed (non-fatal)"
 
   build-deb-artifact:
     name: Generate DEB artifact

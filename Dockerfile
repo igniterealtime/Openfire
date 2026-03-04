@@ -29,7 +29,7 @@ RUN --mount=type=cache,target=/tmp/m2_repo,id=openfire_build ./mvnw -e -B de.qaw
 RUN --mount=type=cache,target=/tmp/m2_repo,id=openfire_build \
     ./mvnw -e -B dependency:get -DgroupId=org.codehaus.plexus -DartifactId=plexus-utils -Dpackaging=jar -Dversion=1.1 -Dmaven.repo.local=/tmp/m2_repo && \
     ./mvnw -e -B dependency:get -DgroupId=org.junit -DartifactId=junit-bom -Dpackaging=pom -Dversion=5.13.4 -Dmaven.repo.local=/tmp/m2_repo && \
-    ./mvnw -e -B dependency:get -DgroupId=org.mockito -DartifactId=mockito-bom -Dpackaging=pom -Dversion=5.4.0 -Dmaven.repo.local=/tmp/m2_repo
+    ./mvnw -e -B dependency:get -DgroupId=org.mockito -DartifactId=mockito-bom -Dpackaging=pom -Dversion=5.22.0 -Dmaven.repo.local=/tmp/m2_repo
 
 # Above here is only affected by the pom.xml files, so the cache is stable.
 

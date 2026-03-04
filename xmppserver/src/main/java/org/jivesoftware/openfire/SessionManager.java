@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,6 @@ import org.jivesoftware.openfire.nio.OfflinePacketDeliverer;
 import org.jivesoftware.openfire.server.OutgoingSessionPromise;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
-import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.openfire.streammanagement.TerminationDelegate;
 import org.jivesoftware.util.JiveGlobals;
@@ -1404,29 +1403,27 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                 return CompletableFuture.completedFuture(null);
             }
 
-            Log.debug("Closing client session with address {} and streamID {} that does not have SM resume.", session.getAddress(), session.getStreamID());
+            CompletableFuture<Void> result = CompletableFuture.runAsync(() -> Log.debug("Closing client session with address {} and streamID {} that does not have SM resume.", session.getAddress(), session.getStreamID()));
 
-            try
-            {
-                if ((session.getPresence().isAvailable() || !session.wasAvailable()) && routingTable.hasClientRoute(session.getAddress()))
-                {
-                    // Send an unavailable presence to the user's subscribers. This gives us a chance to send an
-                    // unavailable presence to the entities that the user sent directed presences
-                    final Presence presence = new Presence();
-                    presence.setType(Presence.Type.unavailable);
-                    presence.setFrom(session.getAddress());
-                    router.route(presence);
-                }
-            } finally {
+            if ((session.getPresence().isAvailable() || !session.wasAvailable()) && routingTable.hasClientRoute(session.getAddress())) {
+                // Send an unavailable presence to the user's subscribers. This gives us a chance to send an
+                // unavailable presence to the entities that the user sent directed presences
+                final Presence presence = new Presence();
+                presence.setType(Presence.Type.unavailable);
+                presence.setFrom(session.getAddress());
+
+                result = result.thenRunAsync(() -> router.route(presence));
+            }
+
+            // In the completion stage remove the session (which means it'll be removed no matter if the previous stage had exceptions).
+            return result.whenComplete((v,t) -> {
                 try {
                     session.getStreamManager().onClose(router, serverAddress);
                 } finally {
-                    // Ensure that the session is removed (no matter if the previous stage had exceptions).
+                    // Note that the session can't be removed before the unavailable presence has been sent (as session-provided data is used by the broadcast).
                     removeSession(session);
                 }
-            }
-
-            return CompletableFuture.completedFuture(null);
+            });
         }
 
         @Override
@@ -1449,21 +1446,15 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         {
             final LocalIncomingServerSession session = (LocalIncomingServerSession)handback;
 
-            Log.debug("Closing incoming server session with address {} and streamID {}.", session.getAddress(), session.getStreamID());
-
-            final ConnectionManagerImpl connectionManager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
-            if (connectionManager == null) {
-                Log.info("No ConnectionManager available (server is likely shutting down). Skipping execution of close listener for incoming server session with address {} and streamID {}.", session.getAddress(), session.getStreamID());
-                return CompletableFuture.failedFuture(new IllegalStateException("No ConnectionManager available (server is likely shutting down)."));
-            }
+            CompletableFuture<Void> result = CompletableFuture.runAsync(() -> Log.debug("Closing incoming server session with address {} and streamID {}.", session.getAddress(), session.getStreamID()));
 
             // Remove all the domains that were registered for this server session.
             final Collection<CompletableFuture<Void>> tasks = new ArrayList<>();
-            for (final String domain : session.getValidatedDomains()) {
-                tasks.add(connectionManager.runConnectionEventTaskAsync(() -> unregisterIncomingServerSession(domain, session)));
+            for (String domain : session.getValidatedDomains()) {
+                tasks.add(CompletableFuture.runAsync(() -> unregisterIncomingServerSession(domain, session)));
             }
 
-            return CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0]));
+            return result.thenCompose(e -> CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])));
         }
 
         @Override
@@ -1486,21 +1477,15 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         {
             final OutgoingServerSession session = (OutgoingServerSession)handback;
 
-            Log.debug("Closing outgoing server session with address {} and streamID {}.", session.getAddress(), session.getStreamID());
-
-            final ConnectionManagerImpl connectionManager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
-            if (connectionManager == null) {
-                Log.info("No ConnectionManager available (server is likely shutting down). Skipping execution of close listener for outgoing server session with address {} and streamID {}.", session.getAddress(), session.getStreamID());
-                return CompletableFuture.failedFuture(new IllegalStateException("No ConnectionManager available (server is likely shutting down)."));
-            }
+            CompletableFuture<Void> result = CompletableFuture.runAsync(() -> Log.debug("Closing outgoing server session with address {} and streamID {}.", session.getAddress(), session.getStreamID()));
 
             // Remove all the domains that were registered for this server session.
             final Collection<CompletableFuture<Void>> tasks = new ArrayList<>();
             for (DomainPair domainPair : session.getOutgoingDomainPairs()) {
-                tasks.add(connectionManager.runConnectionEventTaskAsync(() -> server.getRoutingTable().removeServerRoute(domainPair)));
+                tasks.add(CompletableFuture.runAsync(() -> server.getRoutingTable().removeServerRoute(domainPair)));
             }
 
-            return CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0]));
+            return result.thenCompose(e -> CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])));
         }
 
         @Override
@@ -1524,21 +1509,21 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             final ConnectionMultiplexerSession session = (ConnectionMultiplexerSession)handback;
             final String domain = session.getAddress().getDomain();
 
-            Log.debug("Closing multiplexer session with address {} and streamID {}.", session.getAddress(), session.getStreamID());
+            CompletableFuture<Void> result = CompletableFuture.runAsync(() -> Log.debug("Closing multiplexer session with address {} and streamID {}.", session.getAddress(), session.getStreamID()));
 
             // Remove all the domains that were registered for this server session
-            localSessionManager.getConnnectionManagerSessions().remove(session.getAddress().toString());
+            result = result.thenRunAsync(() -> localSessionManager.getConnnectionManagerSessions().remove(session.getAddress().toString()));
 
             // Remove track of the cluster node hosting the CM connection
-            multiplexerSessionsCache.remove(session.getAddress().toString());
+            result = result.thenRunAsync(() -> multiplexerSessionsCache.remove(session.getAddress().toString()));
 
             if (getConnectionMultiplexerSessions(domain).isEmpty()) {
                 // Terminate ClientSessions originated from this connection manager
                 // that are still active since the connection manager has gone down
-                ConnectionMultiplexerManager.getInstance().multiplexerUnavailable(domain);
+                result = result.thenRunAsync(() -> ConnectionMultiplexerManager.getInstance().multiplexerUnavailable(domain));
             }
 
-            return CompletableFuture.completedFuture(null);
+            return result;
         }
 
         @Override

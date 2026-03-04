@@ -68,18 +68,9 @@ jobs:
 
   build-docker:
 
-    name: Build and push ephemeral Docker image
+    name: Build Docker image
     runs-on: ubuntu-latest
     needs: build
-    permissions:
-      contents: read
-      packages: write
-      attestations: write
-      id-token: write
-
-    outputs:
-      image-digest: ${{ steps.push.outputs.digest }}
-      image-tag: ${{ env.REGISTRY }}/igniterealtime/${{ env.IMAGE_NAME }}:ci-${{ github.sha }}
 
     steps:
       - name: Checkout repository
@@ -89,49 +80,46 @@ jobs:
         id: pom-hash
         run: echo "hash=${{ hashFiles('**/pom.xml') }}" >> $GITHUB_OUTPUT
 
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build and push ephemeral CI image
-        id: push
+      - name: Build Docker image
         uses: docker/build-push-action@v6
         with:
           context: .
-          push: true
-          tags: ${{ env.REGISTRY }}/igniterealtime/${{ env.IMAGE_NAME }}:ci-${{ github.sha }}
+          load: true
+          tags: ${{ env.IMAGE_NAME }}:ci-${{ github.sha }}
           cache-from: type=gha,scope=openfire-${{ steps.pom-hash.outputs.hash }}
           cache-to: type=gha,mode=max,scope=openfire-${{ steps.pom-hash.outputs.hash }}
+
+      - name: Save Docker image to tar archive
+        run: docker save ${{ env.IMAGE_NAME }}:ci-${{ github.sha }} | gzip > openfire-docker-image.tar.gz
+
+      - name: Upload Docker image archive
+        uses: actions/upload-artifact@v7
+        with:
+          name: Openfire Docker Image
+          path: openfire-docker-image.tar.gz
+          retention-days: 1
 
 
   integration:
     name: Execute Integration CI tests
     runs-on: ubuntu-latest
     needs: build-docker
-    permissions:
-      contents: read
-      packages: read
-
     steps:
       - uses: actions/checkout@v6
 
-      - name: Log in to the Container registry
-        uses: docker/login-action@v3
+      - name: Download Docker image archive
+        uses: actions/download-artifact@v8
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          name: Openfire Docker Image
+          path: .
 
-      - name: Pull pre-built CI image and retag for local use
+      - name: Load Docker image
         run: |
-          docker pull ${{ needs.build-docker.outputs.image-tag }}
-          docker tag ${{ needs.build-docker.outputs.image-tag }} openfire:latest
+          docker load < openfire-docker-image.tar.gz
+          docker tag ${{ env.IMAGE_NAME }}:ci-${{ github.sha }} openfire:latest
 
       - name: Checkout Integration Tests
         uses: actions/checkout@v6
@@ -802,10 +790,10 @@ jobs:
           IGNITE_REALTIME_MAVEN_USERNAME: ${{ secrets.IGNITE_REALTIME_MAVEN_USERNAME }}
           IGNITE_REALTIME_MAVEN_PASSWORD: ${{ secrets.IGNITE_REALTIME_MAVEN_PASSWORD }}
 
-  build-and-push-docker:
+  publish-docker:
     name: Publish to GitHub's Docker registry
     runs-on: ubuntu-latest
-    needs: [aioxmpp, connectivity, integration, xitf, build-docker, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
+    needs: [build-docker, aioxmpp, connectivity, integration, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
     if: |
       github.event_name == 'push' && 
       (contains(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
@@ -820,6 +808,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
+      - name: Download Docker image archive
+        uses: actions/download-artifact@v8
+        with:
+          name: Openfire Docker Image
+          path: .
+
+      - name: Load Docker image
+        run: docker load < openfire-docker-image.tar.gz
+
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
@@ -833,30 +830,24 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/igniterealtime/${{ env.IMAGE_NAME }}
 
-      - name: Retag and push final image from ephemeral CI image
+      - name: Retag and push final image
+        id: push
         run: |
-          docker pull ${{ needs.build-docker.outputs.image-tag }}
-          for tag in ${{ steps.meta.outputs.tags }}; do
-            docker tag ${{ needs.build-docker.outputs.image-tag }} $tag
+          FIRST_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
+          docker tag ${{ env.IMAGE_NAME }}:ci-${{ github.sha }} $FIRST_TAG
+          DIGEST=$(docker push $FIRST_TAG | grep -oP 'digest: \K\S+')
+          for tag in $(echo "${{ steps.meta.outputs.tags }}" | tail -n +2); do
+            docker tag $FIRST_TAG $tag
             docker push $tag
           done
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
 
       - name: Generate artifact attestation
         uses: actions/attest-build-provenance@v4
         with:
           subject-name: ${{ env.REGISTRY }}/igniterealtime/${{ env.IMAGE_NAME }}
-          subject-digest: ${{ needs.build-docker.outputs.image-digest }}
+          subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
-
-      - name: Delete ephemeral CI image
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh api \
-            --method DELETE \
-            "/orgs/igniterealtime/packages/container/${{ env.IMAGE_NAME }}/versions" \
-            --field tag="ci-${{ github.sha }}" \
-            || echo "Ephemeral image cleanup failed (non-fatal)"
 
   build-deb-artifact:
     name: Generate DEB artifact

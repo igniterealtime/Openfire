@@ -816,7 +816,7 @@ jobs:
   build-deb-artifact:
     name: Generate DEB artifact
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [aioxmpp, connectivity, integration, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
     steps:
       - uses: actions/checkout@v6
         with:

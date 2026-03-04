@@ -76,12 +76,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Compute pom.xml hash for Docker cache key
-        id: pom-hash
-        run: echo "hash=${{ hashFiles('**/pom.xml') }}" >> $GITHUB_OUTPUT
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      - name: Compute Docker cache key hash
+        id: cache-hash
+        run: echo "hash=${{ hashFiles('**/pom.xml', 'Dockerfile', 'build/docker/entrypoint.sh') }}" >> $GITHUB_OUTPUT
 
       - name: Build Docker image
         uses: docker/build-push-action@v6
@@ -89,8 +89,8 @@ jobs:
           context: .
           load: true
           tags: ${{ env.IMAGE_NAME }}:ci-${{ github.sha }}
-          cache-from: type=gha,scope=openfire-${{ steps.pom-hash.outputs.hash }}
-          cache-to: type=gha,mode=max,scope=openfire-${{ steps.pom-hash.outputs.hash }}
+          cache-from: type=gha,scope=openfire-${{ steps.cache-hash.outputs.hash }}
+          cache-to: type=gha,mode=max,scope=openfire-${{ steps.cache-hash.outputs.hash }}-${{ github.sha }}
 
       - name: Save Docker image to tar archive
         run: docker save ${{ env.IMAGE_NAME }}:ci-${{ github.sha }} | gzip > openfire-docker-image.tar.gz

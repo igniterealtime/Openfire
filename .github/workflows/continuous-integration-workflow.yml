@@ -737,7 +737,7 @@ jobs:
   publish-maven:
     name: Publish to Maven
     runs-on: ubuntu-latest
-    needs: [aioxmpp, connectivity, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
+    needs: [aioxmpp, connectivity, integration, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
     if: ${{github.repository == 'igniterealtime/Openfire' && github.event_name == 'push' && needs.check_branch.outputs.is_publishable_branch == 'true'}}
 
     steps:
@@ -764,7 +764,7 @@ jobs:
   build-and-push-docker:
     name: Publish to GitHub's Docker registry
     runs-on: ubuntu-latest
-    needs: [aioxmpp, connectivity, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
+    needs: [aioxmpp, connectivity, integration, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
     if: |
       github.event_name == 'push' && 
       (contains(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')

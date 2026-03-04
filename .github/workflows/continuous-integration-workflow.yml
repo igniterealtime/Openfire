@@ -145,7 +145,7 @@ jobs:
       - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
         run: tar -xf distribution-artifact.tar
       - name: Checkout aioxmpp devel/head
-        run: git clone https://codeberg.org/jssfr/aioxmpp.git aioxmpp
+        run: git clone --depth 1 https://codeberg.org/jssfr/aioxmpp.git aioxmpp
       - name: Set up Python
         uses: actions/setup-python@v6
         with:

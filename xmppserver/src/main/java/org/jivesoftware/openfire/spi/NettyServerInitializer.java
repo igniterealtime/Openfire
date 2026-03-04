@@ -105,7 +105,12 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
                             final NettyConnection connection = ctx.channel().attr(CONNECTION).get();
                             if (!connection.isEncrypted()) {
                                 connection.startTLS(false, true);
-                                ctx.channel().config().setAutoRead(true);
+                                // We're now ready to process incoming data, assuming that the business logic handler is ready to accept it.
+                                businessLogicHandler.getStanzaHandlerFuture().thenRun(() ->
+                                    ctx.channel().eventLoop().execute(() ->
+                                        ctx.channel().config().setAutoRead(true)
+                                    )
+                                );
                             }
                             return; // Do not propagate channelActive - userEventTriggered will fire it after TLS handshake completes.
                         }
@@ -115,9 +120,12 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
                         return; // avoid enabling autoRead on a failed channel.
                     }
 
-                    // Non-DirectTLS: safe to enable autoRead and propagate channelActive immediately.
-                    ctx.channel().config().setAutoRead(true);
-
+                    // Non-DirectTLS: safe to propagate channelActive and process incoming data immediately, assuming that the business logic handler is ready to accept it.
+                    businessLogicHandler.getStanzaHandlerFuture().thenRun(() ->
+                        ctx.channel().eventLoop().execute(() ->
+                            ctx.channel().config().setAutoRead(true)
+                        )
+                    );
                     ctx.fireChannelActive();
                 }
             })

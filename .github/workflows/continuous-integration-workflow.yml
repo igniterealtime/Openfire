@@ -312,7 +312,7 @@ jobs:
 
   xcheck-database-version:
     name: Cross check that any new database upgrades match the code version
-    needs: [build, should-do-database-tests, check_branch]
+    needs: [should-do-database-tests, check_branch]
     runs-on: ubuntu-latest
     if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:

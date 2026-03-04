@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2026 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.jivesoftware.openfire.spi;
 
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionManager;
-import org.jivesoftware.openfire.JMXManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.container.PluginManager;
@@ -26,59 +25,26 @@ import org.jivesoftware.openfire.container.PluginManagerListener;
 import org.jivesoftware.openfire.http.HttpBindManager;
 import org.jivesoftware.openfire.keystore.CertificateStore;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
-import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegate;
-import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegateMBean;
 import org.jivesoftware.openfire.session.ConnectionSettings;
-import org.jivesoftware.util.*;
+import org.jivesoftware.util.CertificateEventListener;
+import org.jivesoftware.util.CertificateManager;
+import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.PropertyEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.ObjectName;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.*;
-import java.util.function.Supplier;
 
 public class ConnectionManagerImpl extends BasicModule implements ConnectionManager, CertificateEventListener, PropertyEventListener
 {
+
     private static final Logger Log = LoggerFactory.getLogger(ConnectionManagerImpl.class);
-
-    /**
-     * Number of threads used to process connection events.
-     */
-    public static final SystemProperty<Integer> EVENTEXECUTOR_POOL_SIZE = SystemProperty.Builder.ofType(Integer.class)
-        .setKey("xmpp.connectionmanager.eventexecutor.threads")
-        .setDynamic(false)
-        .setDefaultValue(16)
-        .setMinValue(2) // Tasks can submit subtasks on the same executor. Prevent deadlocks by having no fewer than 2 threads.
-        .build();
-
-    /**
-     * Duration that unused, surplus threads that once processed connection events are kept alive.
-     */
-    public static final SystemProperty<Duration> EVENTEXECUTOR_POOL_KEEP_ALIVE = SystemProperty.Builder.ofType(Duration.class)
-        .setKey("xmpp.connectionmanager.eventexecutor.timeout")
-        .setChronoUnit(ChronoUnit.SECONDS)
-        .setDefaultValue(Duration.ofSeconds(60))
-        .setDynamic(false)
-        .build();
-
-    /**
-     * Executor service that processes connection-related events.
-     */
-    private ThreadPoolExecutor connectionEventExecutor;
-
-    /**
-     * Object name used to register delegate MBean (JMX) for the 'connectionEventExecutor' thread pool executor.
-     */
-    private ObjectName connectionEventExecutorObjectName;
 
     private final ConnectionListener clientListener;
     private final ConnectionListener clientSslListener;
@@ -638,56 +604,6 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         getListener( type, startInDirectTlsMode ).setPort( port );
     }
 
-    /**
-     * Executes the given task asynchronously using the connection event executor.
-     *
-     * This method is intended for running non-blocking tasks related to connection events, such as session cleanup,
-     * route updates, or listener notifications. Any exceptions thrown by the task are logged and propagated as a
-     * {@link CompletionException} in the returned future.
-     *
-     * All tasks submitted via this method are executed on the same thread pool used for connection event handling,
-     * ensuring consistent resource management and error handling.
-     *
-     * @param task The task to execute asynchronously
-     * @return A CompletableFuture that completes when the task finishes, or exceptionally if the task throws an exception
-     */
-    public CompletableFuture<Void> runConnectionEventTaskAsync(final Runnable task) {
-        return supplyConnectionEventTaskAsync(() -> {
-            task.run();
-            return null;
-        });
-    }
-
-    /**
-     * Executes the given task asynchronously using the connection event executor.
-     *
-     * This method is intended for running non-blocking tasks related to connection events, such as session cleanup,
-     * route updates, or listener notifications. Any exceptions thrown by the task are logged and propagated as a
-     * {@link CompletionException} in the returned future.
-     *
-     * All tasks submitted via this method are executed on the same thread pool used for connection event handling,
-     * ensuring consistent resource management and error handling.
-     *
-     * @param <T> The type of the value returned by the task
-     * @param task The task to execute asynchronously
-     * @return A CompletableFuture that completes with the task's result, or exceptionally if the task throws an exception
-     */
-    public <T> CompletableFuture<T> supplyConnectionEventTaskAsync(final Supplier<T> task) {
-        if (connectionEventExecutor == null || connectionEventExecutor.isShutdown()) {
-            return CompletableFuture.failedFuture(new IllegalStateException("Connection event executor is not available (server is likely shutting down)."));
-        }
-        return CompletableFuture.supplyAsync(
-            () -> {
-                try {
-                    return task.get();
-                } catch (Exception e) {
-                    Log.warn("Connection task failed", e);
-                    throw e; // Causes the CompletableFuture to complete exceptionally.
-                }
-            },
-            connectionEventExecutor
-        );
-    }
 
     // #####################################################################
     // Certificates events
@@ -750,22 +666,6 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     // #####################################################################
 
     @Override
-    public void initialize(XMPPServer server)
-    {
-        super.initialize(server);
-        connectionEventExecutor = new ThreadPoolExecutor(EVENTEXECUTOR_POOL_SIZE.getValue(), EVENTEXECUTOR_POOL_SIZE.getValue(), EVENTEXECUTOR_POOL_KEEP_ALIVE.getValue().toSeconds(), TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>(), // unbounded task queue
-            new NamedThreadFactory( "conman-events-worker-", true, null, Thread.currentThread().getThreadGroup(), null )
-        );
-        connectionEventExecutor.allowCoreThreadTimeOut(true);
-
-        if (JMXManager.isEnabled()) {
-            final ThreadPoolExecutorDelegateMBean mBean = new ThreadPoolExecutorDelegate(connectionEventExecutor);
-            connectionEventExecutorObjectName = JMXManager.tryRegister(mBean, ThreadPoolExecutorDelegateMBean.BASE_OBJECT_NAME + "ConManEvents");
-        }
-    }
-
-    @Override
     public void start() {
         super.start();
         startListeners();
@@ -777,24 +677,5 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         CertificateManager.removeListener(this);
         stopListeners();
         super.stop();
-    }
-
-    @Override
-    public void destroy()
-    {
-        super.destroy();
-
-        if (connectionEventExecutorObjectName != null) {
-            JMXManager.tryUnregister(connectionEventExecutorObjectName);
-            connectionEventExecutorObjectName = null;
-        }
-        connectionEventExecutor.shutdown();
-        try {
-            if (!connectionEventExecutor.awaitTermination(2, TimeUnit.SECONDS)) {
-                Log.info("Failed to cleanly shutdown connection event executor within 2 seconds.");
-            }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
     }
 }

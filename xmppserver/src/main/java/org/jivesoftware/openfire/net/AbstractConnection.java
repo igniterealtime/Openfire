@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2026 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,13 @@ package org.jivesoftware.openfire.net;
 import org.dom4j.Namespace;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionCloseListener;
-import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.LocalSession;
-import org.jivesoftware.openfire.spi.ConnectionManagerImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * A partial implementation of the {@link org.jivesoftware.openfire.Connection} interface, implementing functionality
@@ -147,11 +145,8 @@ public abstract class AbstractConnection implements Connection
     }
 
     /**
-     * Notifies all registered {@link ConnectionCloseListener}s that the connection is being closed.
-     *
-     * Listener invocation is performed asynchronously and is explicitly offloaded from the thread that initiates the
-     * close operation. This prevents blocking or long-running listener implementations (for example, those performing
-     * database or network I/O) from interfering with connection shutdown or I/O processing performed by subclasses.
+     * Notifies all close listeners that the connection has been closed. Used by subclasses to properly finish closing
+     * the connection.
      *
      * Listeners are executed in order of their priority, with higher priority values being executed first.
      * Built-in listeners (such as those for client, server, or component sessions) use high priority values to ensure
@@ -169,24 +164,13 @@ public abstract class AbstractConnection implements Connection
      * Exceptions thrown by listeners, whether synchronously during invocation or asynchronously during completion of
      * their returned Future, are captured and propagated via the returned Future.
      *
-     * When the ConnectionManager instance or its event executor is not available, this method skips invocation
-     * of registered listeners and returns a failed Future. It is assumed that this happens only when the server is
-     * shutting down.
-     *
      * @return A Future that completes when all close listeners have been invoked and all listener-provided asynchronous
      *         work has completed.
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3180">OF-3180: Ensure ConnectionCloseListener invocation cannot execute blocking logic on Netty event loop threads</a>
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3179">OF-3179: Ensure deterministic execution order for ConnectionCloseListeners</a>
      */
     protected CompletableFuture<?> notifyCloseListeners()
     {
         Log.debug("Notifying close listeners of connection {}", this);
-
-        final ConnectionManagerImpl connectionManager = (ConnectionManagerImpl) XMPPServer.getInstance().getConnectionManager();
-        if (connectionManager == null) {
-            Log.info("No ConnectionManager available (server is likely shutting down). Skipping notifyCloseListeners.");
-            return CompletableFuture.failedFuture(new IllegalStateException("No ConnectionManager available (server is likely shutting down)."));
-        }
 
         // Sort listeners by priority (highest first), then by insertion order for ties.
         final List<Map.Entry<ConnectionCloseListener, Object>> sortedListeners = new ArrayList<>(closeListeners.entrySet());
@@ -206,11 +190,16 @@ public abstract class AbstractConnection implements Connection
             final ConnectionCloseListener listener = entry.getKey();
             if (listener != null) {
                 final Object handback = entry.getValue();
-                result = result.thenCompose(v ->
-                    connectionManager
-                        .supplyConnectionEventTaskAsync(() -> listener.onConnectionClosing(handback))
-                        .thenCompose(f -> f) // flatten listener-provided future.
-                );
+                result = result.thenCompose(v -> {
+                    try {
+                        final CompletableFuture<?> listenerFuture = listener.onConnectionClosing(handback);
+                        // Flatten the listener-provided future, treating null as an already-completed future.
+                        return listenerFuture != null ? listenerFuture : CompletableFuture.completedFuture(null);
+                    } catch (Exception e) {
+                        // Capture synchronous exceptions and propagate via the returned future.
+                        return CompletableFuture.failedFuture(e);
+                    }
+                });
             }
         }
 

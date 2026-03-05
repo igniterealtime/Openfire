@@ -22,6 +22,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.string.StringEncoder;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
@@ -238,7 +239,12 @@ public class NettySessionInitializer {
                         @Override
                         public void channelActive(ChannelHandlerContext ctx) {
                             if (directTLS) {
-                                // DirectTLS path.
+                                if (ctx.pipeline().get(SslHandler.class) != null) {
+                                    // TLS is already up. This is the post-handshake re-fire. Let it through.
+                                    ctx.fireChannelActive();
+                                    return;
+                                }
+                                // First call: TLS not yet established. Defer and suppress propagation.
                                 businessLogicHandler.getStanzaHandlerFuture().thenRun(() ->
                                     ctx.channel().eventLoop().execute(() -> {
                                         try {
@@ -247,14 +253,15 @@ public class NettySessionInitializer {
                                                 connection.startTLS(true, true);
                                                 ctx.channel().config().setAutoRead(true);
                                             }
-                                            // Do not propagate channelActive - userEventTriggered will fire it after TLS handshake completes.
+                                            // Do not propagate channelActive here. userEventTriggered will re-fire channelActive
+                                            // after the TLS handshake completes, and we'll let that one through above.
                                         } catch (Exception e) {
                                             Log.error("Failed to start DirectTLS on channel {}: {}", ctx.channel(), e.getMessage(), e);
                                             ctx.channel().close();
                                         }
                                     })
                                 );
-                                return; // Defer everything; don't propagate channelActive now.
+                                return; // SslHandler not yet present; TLS initiation scheduled above. Suppress propagation until post-handshake re-fire.
                             }
 
                             // Non-DirectTLS path.

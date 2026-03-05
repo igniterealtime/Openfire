@@ -70,6 +70,7 @@ RUN mv ${OPENFIRE_DIR}/conf ${OPENFIRE_DIR}/conf_org \
 
 LABEL org.opencontainers.image.authors="dave@cridland.net,dan@caseley.me.uk"
 WORKDIR /usr/local/openfire
+HEALTHCHECK --interval=1m --timeout=10s --start-period=3m --retries=3  CMD bash -c "(echo > /dev/tcp/localhost/5222) 2>/dev/null || exit 1"
 
 EXPOSE 3478 3479 5005 5222 5223 5229 5262 5263 5275 5276 7070 7443 7777 9090 9091
 VOLUME ["${OPENFIRE_DATA_DIR}"]

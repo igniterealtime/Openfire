@@ -93,7 +93,7 @@ public class NettySessionInitializer {
      * through the Netty pipeline for each accepted connection. Handlers running on this group must remain strictly
      * non-blocking to avoid starving the event loop.
      *
-     * Lifecycle is managed explicitly via {@link #startSharedResources()} and {@link #stopSharedResources()}.
+     * Lifecycle is managed explicitly via {@link #initializeSharedResources()} and {@link #destroySharedResources()}.
      */
     @GuardedBy("sharedResourceLock")
     private static EventLoopGroup ioWorkerGroup;
@@ -106,7 +106,7 @@ public class NettySessionInitializer {
      * legacy/blocking APIs. Using this group ensures that Netty EventLoop threads remain responsive and dedicated to
      * I/O.
      *
-     * Lifecycle is managed explicitly via {@link #startSharedResources()} and {@link #stopSharedResources()}.
+     * Lifecycle is managed explicitly via {@link #initializeSharedResources()} and {@link #destroySharedResources()}.
      */
     @GuardedBy("sharedResourceLock")
     private static EventExecutorGroup blockingHandlerExecutor;
@@ -120,13 +120,13 @@ public class NettySessionInitializer {
      * Initializes the shared Netty thread pools for outbound S2S connections. Should be called once during startup of
      * the corresponding S2S networking code.
      */
-    public static void startSharedResources()
+    public static void initializeSharedResources()
     {
         synchronized (sharedResourceLock)
         {
             if (ioWorkerGroup != null && !ioWorkerGroup.isShuttingDown())
             {
-                Log.warn("startSharedResources() called but shared resources are already running. Ignoring.");
+                Log.warn("initializeSharedResources() called but shared resources are already running. Ignoring.");
                 return;
             }
             Log.debug("Initialising shared Netty resources for outbound S2S.");
@@ -144,7 +144,7 @@ public class NettySessionInitializer {
      * Shuts down the shared Netty thread pools for outbound S2S connections. This method blocks until all resources
      * are shut down. Should be called once during shutdown of the corresponding S2S networking code.
      */
-    public static void stopSharedResources()
+    public static void destroySharedResources()
     {
         synchronized (sharedResourceLock) {
             Log.debug("Shutting down shared Netty resources for outbound S2S.");
@@ -190,7 +190,7 @@ public class NettySessionInitializer {
             if (ioWorkerGroup == null || ioWorkerGroup.isShuttingDown()) {
                 // Defensive fallback: shouldn't happen in normal operation if lifecycle is managed correctly.
                 Log.warn("Shared Netty resources are not available. This suggests a lifecycle management problem. Please report this as a bug. Resources are started on-demand as a defensive fallback.");
-                startSharedResources();
+                initializeSharedResources();
             }
         }
     }

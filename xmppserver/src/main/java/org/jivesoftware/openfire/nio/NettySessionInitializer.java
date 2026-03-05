@@ -237,27 +237,27 @@ public class NettySessionInitializer {
                     ch.pipeline().addLast("tlsAndAutoReadHandler", new ChannelInboundHandlerAdapter() {
                         @Override
                         public void channelActive(ChannelHandlerContext ctx) {
-                            try {
-                                if (directTLS) {
-                                    final NettyConnection connection = ctx.channel().attr(CONNECTION).get();
-                                    if (!connection.isEncrypted()) {
-                                        connection.startTLS(true, true);
-                                        businessLogicHandler.getStanzaHandlerFuture().thenRun(() ->
-                                            ctx.channel().eventLoop().execute(() ->
-                                                ctx.channel().config().setAutoRead(true)
-                                            )
-                                        );
-                                    }
-                                    return; // Do not propagate channelActive - userEventTriggered will fire it after TLS handshake completes.
-                                }
-                            } catch (Exception e) {
-                                Log.error("Failed to start DirectTLS on channel {}: {}", ctx.channel(), e.getMessage(), e);
-                                // Close the channel safely to prevent inconsistent state.
-                                ctx.channel().close();
-                                return;
+                            if (directTLS) {
+                                // DirectTLS path.
+                                businessLogicHandler.getStanzaHandlerFuture().thenRun(() ->
+                                    ctx.channel().eventLoop().execute(() -> {
+                                        try {
+                                            final NettyConnection connection = ctx.channel().attr(CONNECTION).get();
+                                            if (!connection.isEncrypted()) {
+                                                connection.startTLS(true, true);
+                                                ctx.channel().config().setAutoRead(true);
+                                            }
+                                            // Do not propagate channelActive - userEventTriggered will fire it after TLS handshake completes.
+                                        } catch (Exception e) {
+                                            Log.error("Failed to start DirectTLS on channel {}: {}", ctx.channel(), e.getMessage(), e);
+                                            ctx.channel().close();
+                                        }
+                                    })
+                                );
+                                return; // Defer everything; don't propagate channelActive now.
                             }
 
-                            // Non-DirectTLS: safe to enable autoRead and propagate channelActive immediately.
+                            // Non-DirectTLS path.
                             businessLogicHandler.getStanzaHandlerFuture().thenRun(() ->
                                 ctx.channel().eventLoop().execute(() ->
                                     ctx.channel().config().setAutoRead(true)

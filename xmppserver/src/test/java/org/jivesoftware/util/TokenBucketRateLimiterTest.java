@@ -32,6 +32,46 @@ import static org.junit.jupiter.api.Assertions.*;
 class TokenBucketRateLimiterTest
 {
     /**
+     * Verifies that constructing a rate limiter with zero permits per second throws an exception.
+     */
+    @Test
+    void testConstructorRejectsZeroPermitsPerSecond()
+    {
+        assertThrows(IllegalArgumentException.class, () -> new TokenBucketRateLimiter(0, 10),
+            "Zero permits per second should be rejected");
+    }
+
+    /**
+     * Verifies that constructing a rate limiter with a negative permits-per-second value throws an exception.
+     */
+    @Test
+    void testConstructorRejectsNegativePermitsPerSecond()
+    {
+        assertThrows(IllegalArgumentException.class, () -> new TokenBucketRateLimiter(-1, 10),
+            "Negative permits per second should be rejected");
+    }
+
+    /**
+     * Verifies that constructing a rate limiter with a zero max burst value throws an exception.
+     */
+    @Test
+    void testConstructorRejectsZeroMaxBurst()
+    {
+        assertThrows(IllegalArgumentException.class, () -> new TokenBucketRateLimiter(5, 0),
+            "Zero max burst should be rejected");
+    }
+
+    /**
+     * Verifies that constructing a rate limiter with a negative max burst value throws an exception.
+     */
+    @Test
+    void testConstructorRejectsNegativeMaxBurst()
+    {
+        assertThrows(IllegalArgumentException.class, () -> new TokenBucketRateLimiter(5, -1),
+            "Negative max burst should be rejected");
+    }
+
+    /**
      * Verifies that the initial burst capacity is immediately available after construction and that acquiring more than
      * the burst capacity results in rejection.
      */
@@ -67,7 +107,7 @@ class TokenBucketRateLimiterTest
         limiter.tryAcquire();
         limiter.tryAcquire(); // Exhaust and reject
 
-        Thread.sleep(2_000); // Allow more than enough time for refill
+        Thread.sleep(2_000); // Allow more than enough time for full refill.
 
         // Verify result.
         assertEquals(3, limiter.getAvailableTokens(), "Available tokens must not exceed max burst");
@@ -84,8 +124,8 @@ class TokenBucketRateLimiterTest
         final TokenBucketRateLimiter limiter = new TokenBucketRateLimiter(1, 1);
 
         // Execute system under test.
-        assertTrue(limiter.tryAcquire());
-        assertFalse(limiter.tryAcquire());
+        assertTrue(limiter.tryAcquire(), "First acquire should succeed on a full bucket");
+        assertFalse(limiter.tryAcquire(), "Second acquire should fail on an exhausted bucket");
 
         Thread.sleep(1_100);
 
@@ -93,6 +133,25 @@ class TokenBucketRateLimiterTest
 
         // Verify result.
         assertTrue(acquiredAfterRefill, "Limiter should allow one permit after refill interval");
+    }
+
+    /**
+     * Verifies that getAvailableTokens reflects a refill after sufficient time has elapsed.
+     */
+    @Test
+    void testGetAvailableTokensReflectsRefill() throws InterruptedException
+    {
+        // Setup test fixture.
+        final TokenBucketRateLimiter limiter = new TokenBucketRateLimiter(1, 2);
+
+        // Execute system under test.
+        limiter.tryAcquire();
+        limiter.tryAcquire(); // Exhaust
+
+        Thread.sleep(1_100);
+
+        // Verify result.
+        assertEquals(1, limiter.getAvailableTokens(), "getAvailableTokens should reflect tokens added by refill");
     }
 
     /**
@@ -130,6 +189,22 @@ class TokenBucketRateLimiterTest
 
         // Verify result.
         assertEquals(0.5, limiter.getAcceptanceRatio(), 0.0001, "Acceptance ratio should be 0.5");
+    }
+
+    /**
+     * Verifies that the acceptance ratio is reported as {@code 1.0} when no events have been processed.
+     */
+    @Test
+    void testNoEventsAcceptanceRatioIsOne()
+    {
+        // Setup test fixture.
+        final TokenBucketRateLimiter limiter = new TokenBucketRateLimiter(1, 1);
+
+        // Execute system under test.
+        final double acceptanceRatio = limiter.getAcceptanceRatio();
+
+        // Verify result.
+        assertEquals(1.0, acceptanceRatio, "Acceptance ratio should be 1.0 when no events have occurred");
     }
 
     /**
@@ -189,34 +264,18 @@ class TokenBucketRateLimiterTest
     }
 
     /**
-     * Verifies that the acceptance ratio is reported as {@code 1.0} when no events have been processed.
-     */
-    @Test
-    void testNoEventsAcceptanceRatioIsOne()
-    {
-        // Setup test fixture.
-        final TokenBucketRateLimiter limiter = new TokenBucketRateLimiter(1, 1);
-
-        // Execute system under test.
-        final double acceptanceRatio = limiter.getAcceptanceRatio();
-
-        // Verify result.
-        assertEquals(1.0, acceptanceRatio, "Acceptance ratio should be 1.0 when no events have occurred");
-    }
-
-    /**
      * Verifies that the {@link TokenBucketRateLimiter#unlimited()} instance never rejects events.
      */
     @Test
     void testUnlimitedLimiterNeverRejects()
     {
         // Setup test fixture.
-        final TokenBucketRateLimiter unlimitedLimiter = TokenBucketRateLimiter.unlimited();
+        final TokenBucketRateLimiter limiter = TokenBucketRateLimiter.unlimited();
 
         // Execute system under test.
         boolean allAcquired = true;
-        for (int i = 0; i < 1000; i++) {
-            allAcquired &= unlimitedLimiter.tryAcquire();
+        for (int i = 0; i < 1_000; i++) {
+            allAcquired &= limiter.tryAcquire();
         }
 
         // Verify result.
@@ -224,21 +283,19 @@ class TokenBucketRateLimiterTest
     }
 
     /**
-     * Verifies that multiple calls to {@link TokenBucketRateLimiter#unlimited()} produce independent instances.
+     * Verifies that the unlimited limiter reports configuration getters as {@link Long#MAX_VALUE} to indicate that no
+     * limit is in effect.
      */
     @Test
-    void testUnlimitedLimiterInstancesAreIndependent()
+    void testUnlimitedLimiterConfigurationGetters()
     {
         // Setup test fixture.
-        final TokenBucketRateLimiter limiter1 = TokenBucketRateLimiter.unlimited();
-        final TokenBucketRateLimiter limiter2 = TokenBucketRateLimiter.unlimited();
-
-        // Execute system under test.
-        limiter1.tryAcquire();
-        limiter2.tryAcquire();
+        final TokenBucketRateLimiter limiter = TokenBucketRateLimiter.unlimited();
 
         // Verify result.
-        assertNotSame(limiter1, limiter2, "Each unlimited limiter instance should be independent");
+        assertEquals(Long.MAX_VALUE, limiter.getPermitsPerSecond(), "Unlimited limiter should report Long.MAX_VALUE for permits per second");
+        assertEquals(Long.MAX_VALUE, limiter.getMaxBurst(), "Unlimited limiter should report Long.MAX_VALUE for max burst");
+        assertEquals(Long.MAX_VALUE, limiter.getAvailableTokens(), "Unlimited limiter should report Long.MAX_VALUE for available tokens");
     }
 
     /**
@@ -259,5 +316,48 @@ class TokenBucketRateLimiterTest
         assertEquals(0, limiter.getRejectedEvents(), "Rejected events should always be zero for unlimited limiter");
         assertEquals(2, limiter.getTotalEvents(), "Total events should match the sum of accepted and rejected events");
         assertEquals(1.0, limiter.getAcceptanceRatio(), 0.0001, "Acceptance ratio should always be 1.0 for unlimited limiter");
+    }
+
+    /**
+     * Verifies that two rate limiter instances maintain independent state and metrics and do not interfere with each other.
+     */
+    @Test
+    void testLimiterInstancesAreIndependent()
+    {
+        // Setup test fixture.
+        final TokenBucketRateLimiter limiter1 = new TokenBucketRateLimiter(5, 3);
+        final TokenBucketRateLimiter limiter2 = new TokenBucketRateLimiter(5, 3);
+
+        // Execute system under test.
+        limiter1.tryAcquire();
+        limiter1.tryAcquire();
+        limiter1.tryAcquire();
+        limiter1.tryAcquire(); // One rejection
+
+        // Verify result.
+        assertEquals(3, limiter1.getAcceptedEvents(), "Limiter1 should count only its own accepted events");
+        assertEquals(1, limiter1.getRejectedEvents(), "Limiter1 should count only its own rejected events");
+        assertEquals(0, limiter2.getAcceptedEvents(), "Limiter2 should not be affected by events on limiter1");
+        assertEquals(3, limiter2.getAvailableTokens(), "Limiter2 tokens should be unaffected by limiter1 consumption");
+    }
+
+    /**
+     * Verifies that two unlimited limiter instances maintain independent metrics and do not share state.
+     */
+    @Test
+    void testUnlimitedLimiterInstancesAreIndependent()
+    {
+        // Setup test fixture.
+        final TokenBucketRateLimiter limiter1 = TokenBucketRateLimiter.unlimited();
+        final TokenBucketRateLimiter limiter2 = TokenBucketRateLimiter.unlimited();
+
+        // Execute system under test.
+        limiter1.tryAcquire();
+        limiter1.tryAcquire();
+        limiter1.tryAcquire();
+
+        // Verify result.
+        assertEquals(3, limiter1.getAcceptedEvents(), "Limiter1 should count only its own accepted events");
+        assertEquals(0, limiter2.getAcceptedEvents(), "Limiter2 should not be affected by events on limiter1");
     }
 }

@@ -16,11 +16,9 @@
 package org.jivesoftware.util;
 
 import java.time.Duration;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.LongAdder;
 
 /**
- * A reusable, thread-safe, non-blocking token-bucket rate limiter with metrics.
+ * A thread-safe, synchronized token-bucket rate limiter with metrics.
  *
  * This class limits the rate of arbitrary events. It is not tied to any specific domain such as networking or
  * connections.
@@ -32,13 +30,31 @@ public final class TokenBucketRateLimiter
     private final long capacity;
     private final long refillTokensPerSecond;
 
-    private final AtomicLong availableTokens;
-    private volatile long lastRefillTimeNanos;
+    private long availableTokens;
+    private long lastRefillTimeNanos;
 
-    private final LongAdder acceptedEvents = new LongAdder();
-    private final LongAdder rejectedEvents = new LongAdder();
+    private long acceptedEvents;
+    private long rejectedEvents;
 
     private final long startTimeNanos;
+
+    /**
+     * When {@code true}, {@link #tryAcquire()} always succeeds and token bucket accounting is bypassed.
+     */
+    private final boolean unlimited;
+
+    /**
+     * Creates an unlimited rate limiter. Use {@link #unlimited()} to obtain an instance.
+     */
+    private TokenBucketRateLimiter()
+    {
+        this.unlimited = true;
+        this.refillTokensPerSecond = 0;
+        this.capacity = 0;
+        this.availableTokens = 0;
+        this.lastRefillTimeNanos = 0;
+        this.startTimeNanos = System.nanoTime();
+    }
 
     /**
      * Creates a new rate limiter.
@@ -55,9 +71,10 @@ public final class TokenBucketRateLimiter
             throw new IllegalArgumentException("maxBurst must be > 0");
         }
 
+        this.unlimited = false;
         this.refillTokensPerSecond = permitsPerSecond;
         this.capacity = maxBurst;
-        this.availableTokens = new AtomicLong(maxBurst);
+        this.availableTokens = maxBurst;
         this.lastRefillTimeNanos = System.nanoTime();
         this.startTimeNanos = this.lastRefillTimeNanos;
     }
@@ -69,7 +86,7 @@ public final class TokenBucketRateLimiter
      */
     public static TokenBucketRateLimiter unlimited()
     {
-        return new TokenBucketRateLimiter(Integer.MAX_VALUE, Integer.MAX_VALUE);
+        return new TokenBucketRateLimiter();
     }
 
     /**
@@ -77,20 +94,20 @@ public final class TokenBucketRateLimiter
      *
      * @return {@code true} if the event is allowed, {@code false} otherwise
      */
-    public boolean tryAcquire()
+    public synchronized boolean tryAcquire()
     {
-        refillIfNeeded();
-
-        final long remaining = availableTokens.getAndUpdate(
-            current -> current > 0 ? current - 1 : 0
-        );
-
-        if (remaining > 0) {
-            acceptedEvents.increment();
+        if (unlimited) {
+            acceptedEvents++;
             return true;
         }
 
-        rejectedEvents.increment();
+        refillIfNeeded();
+        if (availableTokens > 0) {
+            availableTokens--;
+            acceptedEvents++;
+            return true;
+        }
+        rejectedEvents++;
         return false;
     }
 
@@ -100,32 +117,25 @@ public final class TokenBucketRateLimiter
     private void refillIfNeeded()
     {
         final long now = System.nanoTime();
-        final long elapsedNanos = now - lastRefillTimeNanos;
-
-        if (elapsedNanos <= 0) {
+        final long elapsed = now - lastRefillTimeNanos;
+        if (elapsed <= 0) {
             return;
         }
 
-        final long tokensToAdd = (elapsedNanos * refillTokensPerSecond) / 1_000_000_000L;
-
-        if (tokensToAdd <= 0) {
-            return;
+        // If the multiplication would overflow, elapsed time is so large that the bucket would be completely refilled
+        // regardless, so cap directly at capacity.
+        final long tokensToAdd;
+        if (elapsed > Long.MAX_VALUE / refillTokensPerSecond) {
+            tokensToAdd = capacity;
+        } else {
+            tokensToAdd = Math.min(capacity, (elapsed * refillTokensPerSecond) / 1_000_000_000L);
         }
 
-        synchronized (this) {
-            final long currentNow = System.nanoTime();
-            final long elapsed = currentNow - lastRefillTimeNanos;
-
-            final long refill = (elapsed * refillTokensPerSecond) / 1_000_000_000L;
-
-            if (refill > 0) {
-                final long newValue = Math.min(
-                    capacity,
-                    availableTokens.get() + refill
-                );
-                availableTokens.set(newValue);
-                lastRefillTimeNanos = currentNow;
-            }
+        if (tokensToAdd > 0) {
+            availableTokens = tokensToAdd >= capacity - availableTokens ? capacity : availableTokens + tokensToAdd;
+            // Only advance the timestamp when tokens are actually added, so that sub-token elapsed time is preserved
+            // and contributes to the next refill rather than being discarded.
+            lastRefillTimeNanos = now;
         }
     }
 
@@ -135,7 +145,7 @@ public final class TokenBucketRateLimiter
      * @return permits per second
      */
     public long getPermitsPerSecond() {
-        return refillTokensPerSecond;
+        return unlimited ? Long.MAX_VALUE : refillTokensPerSecond;
     }
 
     /**
@@ -144,7 +154,7 @@ public final class TokenBucketRateLimiter
      * @return maximum number of permits that can accumulate
      */
     public long getMaxBurst() {
-        return capacity;
+        return unlimited ? Long.MAX_VALUE : capacity;
     }
 
     /**
@@ -152,9 +162,12 @@ public final class TokenBucketRateLimiter
      *
      * @return available permits
      */
-    public long getAvailableTokens() {
+    public synchronized long getAvailableTokens() {
+        if (unlimited) {
+            return Long.MAX_VALUE;
+        }
         refillIfNeeded();
-        return availableTokens.get();
+        return availableTokens;
     }
 
     /**
@@ -162,8 +175,8 @@ public final class TokenBucketRateLimiter
      *
      * @return number of accepted events
      */
-    public long getAcceptedEvents() {
-        return acceptedEvents.sum();
+    public synchronized long getAcceptedEvents() {
+        return acceptedEvents;
     }
 
     /**
@@ -171,8 +184,8 @@ public final class TokenBucketRateLimiter
      *
      * @return number of rejected events
      */
-    public long getRejectedEvents() {
-        return rejectedEvents.sum();
+    public synchronized long getRejectedEvents() {
+        return rejectedEvents;
     }
 
     /**
@@ -182,8 +195,8 @@ public final class TokenBucketRateLimiter
      *
      * @return total number of events
      */
-    public long getTotalEvents() {
-        return getAcceptedEvents() + getRejectedEvents();
+    public synchronized long getTotalEvents() {
+        return acceptedEvents + rejectedEvents;
     }
 
     /**
@@ -194,9 +207,9 @@ public final class TokenBucketRateLimiter
      *
      * @return acceptance ratio in the range {@code [0.0, 1.0]}
      */
-    public double getAcceptanceRatio() {
-        final long total = getTotalEvents();
-        return total == 0 ? 1.0 : (double) getAcceptedEvents() / total;
+    public synchronized double getAcceptanceRatio() {
+        final long total = acceptedEvents + rejectedEvents;
+        return total == 0 ? 1.0 : (double) acceptedEvents / total;
     }
 
     /**
@@ -217,8 +230,8 @@ public final class TokenBucketRateLimiter
      *
      * @return average accepted events per second
      */
-    public double getAverageAcceptedRatePerSecond() {
+    public synchronized double getAverageAcceptedRatePerSecond() {
         final long seconds = Math.max(1L, getUptime().getSeconds());
-        return (double) getAcceptedEvents() / seconds;
+        return (double) acceptedEvents / seconds;
     }
 }

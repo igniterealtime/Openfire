@@ -84,7 +84,7 @@ jobs:
         run: echo "hash=${{ hashFiles('**/pom.xml', 'Dockerfile', 'build/docker/entrypoint.sh') }}" >> $GITHUB_OUTPUT
 
       - name: Build Docker image
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           load: true

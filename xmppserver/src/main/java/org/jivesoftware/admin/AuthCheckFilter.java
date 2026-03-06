@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -316,8 +316,11 @@ public class AuthCheckFilter implements Filter {
 
     @Override
     public void destroy() {
-        // reset excludes to an empty set to prevent state carry over
-        excludes = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        // Intentionally left empty. The static 'excludes' set is shared across filter instances
+        // so that plugin-registered excludes survive admin-console restarts. Plugins are
+        // responsible for calling removeExclude() in their destroyPlugin() lifecycle.
+        // Web.xml excludes are re-added by init() on each restart (Set semantics prevent duplicates).
+        // Setup-mode excludes are cleaned up explicitly in AdminConsolePlugin.startup().
     }
 
     private String getRedirectURL(HttpServletRequest request, String loginPage,

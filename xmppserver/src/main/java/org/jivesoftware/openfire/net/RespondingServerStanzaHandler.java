@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -189,23 +189,25 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
             // Encryption ------
             if (shouldUseTls() && remoteFeaturesContainsStartTLS(doc)) {
-                LOG.debug("Both us and the remote server support the STARTTLS feature. Encrypt and authenticate the connection with TLS & SASL...");
+                LOG.debug("Both us and the remote domain '{}' support the STARTTLS feature. Encrypt and authenticate the connection with TLS & SASL...", domainPair.getRemote());
                 LOG.debug("Indicating we want TLS and wait for response.");
                 connection.deliverRawText("<starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>");
                 startedTLS = true;
                 return true;
             } else if (mustUseTls() && !connection.isEncrypted()) {
-                LOG.debug("I MUST use TLS but I have no StartTLS in features.");
+                LOG.debug("I MUST use TLS but I have no StartTLS in features from remote domain '{}'", domainPair.getRemote());
                 abandonSessionInitiation();
-                return false;
+                connection.close(new StreamError(StreamError.Condition.policy_violation, "Encryption (TLS) required by our server configuration, but not offered by you."));
+                return true;
             } else if (cannotUseTls() && remoteFeaturesRequiresStartTLS(doc)) {
-                LOG.debug("I CANNOT use TLS but remote server requires the STARTTLS feature.");
+                LOG.debug("I CANNOT use TLS but remote domain '{}' requires the STARTTLS feature.", domainPair.getRemote());
                 abandonSessionInitiation();
-                return false;
+                connection.close(new StreamError(StreamError.Condition.policy_violation, "Encryption (TLS) disabled by our server configuration, but required by you."));
+                return true;
             }
 
             // Authentication ------
-            LOG.debug("Check if both us as well as the remote server have enabled STARTTLS and/or dialback ...");
+            LOG.debug("Check if both us as well as the remote domain '{}' have enabled STARTTLS and/or dialback ...", domainPair.getRemote());
             final boolean saslExternalOffered = isSaslExternalOfferred(doc);
             final boolean dialbackOffered = isDialbackOffered(doc);
             LOG.debug("Remote server is offering dialback: {}, EXTERNAL SASL: {}", dialbackOffered, saslExternalOffered);
@@ -213,8 +215,6 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
             // First, try SASL
             if (saslExternalOffered) {
                 LOG.debug("Trying to authenticate with EXTERNAL SASL.");
-                LOG.debug("Starting EXTERNAL SASL for: " + domainPair);
-
                 final Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"));
                 auth.addAttribute("mechanism", "EXTERNAL");
                 // XMPP does not _require_ an authzid to be sent (see RFC-6120, section 6.3.8). XEP-0178 suggests doing so for backwards compatibility.
@@ -225,23 +225,23 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 }
                 connection.deliverRawText(auth.asXML());
                 startedSASL = true;
-                return true;
             } else if (dialbackOffered && (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned())) {
                 // Next, try dialback
                 LOG.debug("Trying to authenticate using dialback.");
                 LOG.debug("[Acting as Originating Server: Authenticate domain: " + domainPair.getLocal() + " with a RS in the domain of: " + domainPair.getRemote() + " (id: " + session.getStreamID() + ")]");
                 ServerDialback dialback = new ServerDialback(connection, domainPair);
                 dialback.createAndSendDialbackKey(session.getStreamID().getID());
-                return true;
             } else {
                 LOG.debug("No authentication mechanism available.");
                 abandonSessionInitiation();
-                return false;
+                connection.close(new StreamError(StreamError.Condition.policy_violation, "No applicable authentication mechanism available."));
             }
+            return true;
         }
 
         // Handle dialback result
         if ("db".equals(doc.getNamespacePrefix()) && "result".equals(rootTagName)) {
+            LOG.debug("Received dialback result from remote domain '{}'", domainPair.getRemote());
             if ("valid".equals(doc.attributeValue("type"))) {
                 LOG.debug("Authentication succeeded!");
                 LOG.debug("Dialback was successful.");
@@ -260,13 +260,16 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
             } else {
                 LOG.debug("Dialback failed");
                 LOG.debug("Failed to authenticate domain: the validation response was received, but did not grant authentication.");
-                return false;
+
+                session.markNonResumable();
+                session.close();
+                return true;
             }
         }
 
         // Handles SASL failure
         if ("failure".equals(rootTagName)) {
-            LOG.debug("EXTERNAL SASL failed.");
+            LOG.debug("Remote domain '{}' reports that EXTERNAL SASL failed.", domainPair.getRemote());
 
             // Try dialback
             if (ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) {
@@ -278,12 +281,14 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 return true;
             }
 
-            return false;
+            session.markNonResumable();
+            session.close();
+            return true;
         }
 
         // Handles SASL success
         if ("success".equals(rootTagName)) {
-            LOG.debug("EXTERNAL SASL was successful.");
+            LOG.debug("Remote domain '{}' reports that EXTERNAL SASL was successful.", domainPair.getRemote());
 
             // SASL was successful so initiate a new stream
             final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
@@ -302,8 +307,9 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
             if (session instanceof LocalOutgoingServerSession) {
                 ((LocalOutgoingServerSession) session).setAuthenticationMethod(ServerSession.AuthenticationMethod.SASL_EXTERNAL);
             } else {
-                LOG.warn("Expected session to be a LocalOutgoingServerSession but it isn't, unable to setAuthenticationMethod(). Session: {}", session);
-                return false;
+                LOG.warn("Expected session with remote domain '{}' to be a LocalOutgoingServerSession but it isn't, unable to setAuthenticationMethod(). Session: {}", domainPair.getRemote(), session);
+                connection.close(new StreamError(StreamError.Condition.internal_server_error, "Unexpected session type."));
+                return true;
             }
 
             // Make sure to set 'authenticated' only after the internal state of 'session' itself is updated, to avoid race conditions.
@@ -313,14 +319,16 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
         // Handles proceed (prior to TLS negotiation)
         if (rootTagName.equals("proceed")) {
-            LOG.debug("Received 'proceed' from remote server. Negotiating TLS...");
+            LOG.debug("Received 'proceed' from remote domain '{}'. Negotiating TLS...", domainPair.getRemote());
 
             try {
                 LOG.debug("Encrypting and authenticating connection ...");
                 connection.startTLS(true, false);
             } catch (Exception e) {
-                LOG.debug("TLS negotiation failed to start: " + e.getMessage());
-                return false;
+                LOG.debug("An error occurred while encrypting the connection.", e);
+                session.markNonResumable();
+                session.close();
+                return true;
             }
             return true;
         }

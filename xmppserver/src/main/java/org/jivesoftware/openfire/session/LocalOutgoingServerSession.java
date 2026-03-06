@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 /**
@@ -267,6 +268,10 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 "to the domain. This is typically caused by an outage (the remote server may be turned off) or a network configuration " +
                 "issue (eg: missing or invalid DNS records, restrictive firewalls, etc.).", domainPair.getRemote(), domainPair.getLocal());
             sessionInitialiser.stop();
+        } catch (TimeoutException e) {
+            Log.warn("Cannot connect to XMPP domain '{}' (from '{}'): The connection attempt timed out after {}. This is typically caused by a " +
+                "network configuration issue (eg: missing or invalid DNS records, restrictive firewalls, etc.).",
+                INITIALISE_TIMEOUT_SECONDS.getValue(), domainPair.getRemote(), domainPair.getLocal());
         } catch (Exception e) {
             // This might be RFC6120, section 5.4.2.2 "Failure Case" or even an unrelated problem. Handle 'normally'.
             log.warn("An exception occurred while creating a session. Closing connection.", e);

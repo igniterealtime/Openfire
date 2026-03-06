@@ -695,7 +695,8 @@ public abstract class StanzaHandler {
             }
         }
         catch (final StreamErrorException ex) {
-            Log.warn("Failed to create a session. Closing connection: {}", connection, ex);
+            Log.warn("Failed to create a session, as the stream opened by the peer has a problem: {} - '{}' (a full stack trace is logged on debug level). Closing connection: {}", ex.getStreamError().getCondition(), ex.getStreamError().getText(), connection);
+            Log.debug("Failed to create a session.", ex);
             final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
             final Document document = DocumentHelper.createDocument(stream);
             document.setXMLEncoding(StandardCharsets.UTF_8.toString());

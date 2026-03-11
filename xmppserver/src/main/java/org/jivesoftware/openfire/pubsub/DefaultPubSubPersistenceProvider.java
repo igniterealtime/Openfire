@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1116,7 +1116,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 pstmt = con.prepareStatement(DELETE_SUBSCRIPTION);
                 pstmt.setString(1, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
                 pstmt.setString(2, encodeNodeID(node.getNodeID()));
-                pstmt.setString(2, subscription.getID());
+                pstmt.setString(3, subscription.getID());
                 pstmt.executeUpdate();
             }
             else {

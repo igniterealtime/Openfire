@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import java.net.UnknownHostException;
 import java.security.cert.Certificate;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletionStage;
 
 /**
  * Represents a connection on the server.
@@ -209,9 +210,13 @@ public interface Connection extends Closeable {
     void systemShutdown();
 
     /**
-     * Returns true if the connection/session is closed.
+     * Returns true if this connection is in the process of closing or has been closed.
      *
-     * @return true if the connection is closed.
+     * Note that a return value of {@code true} does not mean teardown is complete. Physical transport closure and
+     * {@link ConnectionCloseListener} notification may still be in progress. Use {@link #getCloseFuture()} to be
+     * notified when all close processing has finished.
+     *
+     * @return true if the connection is closed or closing.
      */
     boolean isClosed();
 
@@ -244,6 +249,27 @@ public interface Connection extends Closeable {
      * @param listener the listener to deregister for close events.
      */
     void removeCloseListener( ConnectionCloseListener listener );
+
+    /**
+     * Returns a stage that completes when ALL close operations for this connection have finished, including the
+     * physical transport closure and the invocation of all registered {@link ConnectionCloseListener} instances.
+     *
+     * The stage completes normally with {@code null} regardless of whether individual close listeners encountered
+     * errors. Listener errors are logged but do not cause the stage to complete exceptionally.
+     *
+     * Callers that must not establish a replacement connection until this one is fully torn down (e.g. to prevent
+     * duplicate session conflicts in server-to-server scenarios) should chain on this stage rather than relying on
+     * {@link #isClosed()} alone. {@code isClosed()} returning {@code true} only indicates that the <em>intent</em>
+     * to close has been recorded; teardown may still be in progress.
+     *
+     * The stage will only complete if {@link #close()} or {@link #close(StreamError)} is eventually invoked.
+     * Callers that choose to await this stage should account for the possibility that close is never called on
+     * abandoned connections.
+     *
+     * @return a {@link CompletionStage} that completes once all close processing is done. The returned stage is
+     *         read-only; it cannot be used to externally trigger or cancel the close sequence.
+     */
+    CompletionStage<Void> getCloseFuture();
 
     /**
      * Delivers the packet to this connection without checking the recipient.

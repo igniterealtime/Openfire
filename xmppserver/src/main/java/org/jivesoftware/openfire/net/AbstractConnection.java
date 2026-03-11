@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 /**
  * A partial implementation of the {@link org.jivesoftware.openfire.Connection} interface, implementing functionality
@@ -67,6 +68,8 @@ public abstract class AbstractConnection implements Connection
      * for multiple connection closures.
      */
     final protected LinkedHashMap<ConnectionCloseListener, Object> closeListeners = new LinkedHashMap<>();
+
+    private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
 
     /**
      * The session that owns this connection.
@@ -145,27 +148,25 @@ public abstract class AbstractConnection implements Connection
     }
 
     /**
-     * Notifies all close listeners that the connection has been closed. Used by subclasses to properly finish closing
-     * the connection.
+     * Notifies all registered close listeners that this connection has been closed.
      *
-     * Listeners are executed in order of their priority, with higher priority values being executed first.
-     * Built-in listeners (such as those for client, server, or component sessions) use high priority values to ensure
-     * they are executed before third-party listeners. This guarantees that critical cleanup logic (e.g., session
-     * removal from routing tables) occurs before any other listeners are invoked.
+     * Listeners are executed sequentially in descending priority order. Built-in listeners (such as those for client,
+     * server, or component sessions) use high-priority values to ensure critical cleanup logic (e.g. session removal
+     * from routing tables) occurs before any lower-priority or third-party listeners are invoked. For listeners sharing
+     * the same priority, the registration order is preserved.
      *
-     * <b>Execution Order:</b>
-     * Listeners are executed sequentially, in priority order. Each listener is only invoked after all higher-priority
-     * listeners have completed. This ensures that lower-priority listeners always observe a consistent, post-cleanup state.
+     * Each listener may return a {@link CompletableFuture} representing asynchronous work. The next listener is not
+     * invoked until the previous listener's future has completed. The future returned by this method completes only
+     * after all listeners have been invoked and all listener-provided futures have completed.
      *
-     * Each listener may return a {@link CompletableFuture} to represent asynchronous work that continues after the
-     * listener is invoked. The Future returned by this method completes only after all listeners have been invoked and
-     * all listener-provided Futures have completed.
+     * Exceptions thrown by listeners, whether synchronously during invocation or asynchronously via their returned
+     * future, are captured and propagated through the returned future rather than being swallowed or thrown directly.
      *
-     * Exceptions thrown by listeners, whether synchronously during invocation or asynchronously during completion of
-     * their returned Future, are captured and propagated via the returned Future.
+     * Subclasses must call {@link #completeCloseFuture()} within the {@code whenComplete} handler of the future
+     * returned by this method, after all remaining teardown work for that connection type has finished. It must be
+     * called unconditionally — regardless of whether listeners completed normally or exceptionally.
      *
-     * @return A Future that completes when all close listeners have been invoked and all listener-provided asynchronous
-     *         work has completed.
+     * @return a future that completes when all close listeners and their asynchronous work have finished.
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3179">OF-3179: Ensure deterministic execution order for ConnectionCloseListeners</a>
      */
     protected CompletableFuture<?> notifyCloseListeners()
@@ -204,5 +205,25 @@ public abstract class AbstractConnection implements Connection
         }
 
         return result;
+    }
+
+    @Override
+    public CompletionStage<Void> getCloseFuture() {
+        return closeFuture;
+    }
+
+    /**
+     * Signals that all close operations for this connection have finished, completing the stage returned by
+     * {@link #getCloseFuture()}.
+     *
+     * Must be called by subclasses at the very end of their close sequence, after the physical transport has been
+     * closed and all {@link ConnectionCloseListener} instances have been notified. Calling this method more than once
+     * is safe. Subsequent calls have no effect.
+     *
+     * Subclasses that fail to call this method will leave any callers awaiting {@link #getCloseFuture()} suspended
+     * indefinitely.
+     */
+    protected void completeCloseFuture() {
+        closeFuture.complete(null);
     }
 }

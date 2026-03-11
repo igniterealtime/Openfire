@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -187,7 +187,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             "WHERE serviceID=? AND nodeID=? ORDER BY creationDate DESC FETCH FIRST ? ROWS ONLY";
     private static final String LOAD_LAST_ITEMS_LIMIT =
             "SELECT id,jid,creationDate,payload FROM ofPubsubItem " +
-            "WHERE serviceID=? AND nodeID=? ORDER BY creationDate LIMIT ?";
+            "WHERE serviceID=? AND nodeID=? ORDER BY creationDate DESC LIMIT ?";
 
     private static final String ADD_ITEM =
             "INSERT INTO ofPubsubItem (serviceID,nodeID,id,jid,creationDate,payload) " +

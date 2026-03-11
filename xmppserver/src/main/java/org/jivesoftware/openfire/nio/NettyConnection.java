@@ -205,15 +205,21 @@ public class NettyConnection extends AbstractConnection
                 // Ensure that the state of this connection, its session and the Netty Channel are eventually closed.
                 session.setStatus(Session.Status.CLOSED);
 
-                // Only send errors or stream closures if the open <stream:stream> occurred, inferred by having a session.
-                // TODO: Are there edge cases here?
-                String rawEndStream = "";
-                if (error != null) {
-                    rawEndStream = error.toXML();
+                // Only attempt to write the stream close if the channel is still active. If connectivity was lost
+                // (e.g., the socket was closed by the peer or a network error), the channel will already be inactive
+                // and there is no point in attempting a write, as it would only produce noisy ClosedChannelException
+                // log entries. The cleanup listeners must still run either way. OF-3195
+                if (channelHandlerContext.channel().isActive()) {
+                    String rawEndStream = "";
+                    if (error != null) {
+                        rawEndStream = error.toXML();
+                    }
+                    rawEndStream += "</stream:stream>";
+                    f = channelHandlerContext.writeAndFlush(rawEndStream);
+                } else {
+                    Log.trace("Channel is no longer active; skipping stream close stanza for {}", this);
+                    f = channelHandlerContext.newSucceededFuture();
                 }
-                rawEndStream += "</stream:stream>";
-
-                f = channelHandlerContext.writeAndFlush(rawEndStream);
             } else {
                 f = channelHandlerContext.newSucceededFuture();
             }

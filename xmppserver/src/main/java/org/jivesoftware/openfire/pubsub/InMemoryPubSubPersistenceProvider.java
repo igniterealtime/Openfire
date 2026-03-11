@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2020-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -375,7 +375,7 @@ public class InMemoryPubSubPersistenceProvider implements PubSubPersistenceProvi
             lock.unlock();
         }
 
-        CacheUtil.removeValueFromMultiValuedCache( serviceIdToNodesCache, leafNode );
+        CacheUtil.removeValueFromMultiValuedCache( serviceIdToNodesCache, leafNode.getUniqueIdentifier().getServiceIdentifier(), leafNode );
     }
 
     @Override

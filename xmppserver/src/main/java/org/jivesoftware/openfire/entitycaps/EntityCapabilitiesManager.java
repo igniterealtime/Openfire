@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -143,6 +143,22 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
     private Map<String, EntityCapabilities> verAttributes;
 
     /**
+     * Tracks 'ver' hashes for which a disco#info query is currently in-flight.
+     *
+     * When a presence packet is received with an unrecognised 'ver' hash, a disco#info request is dispatched and the
+     * hash is added to this set. Subsequent presence packets advertising the same 'ver' hash (from other contacts of
+     * the same entity) will find the hash already present and skip sending a duplicate request.
+     *
+     * The entry is removed once a response (or timeout) is received, at which point the resolved capabilities will have
+     * been written into {@link #entityCapabilitiesMap} and future lookups will hit the cache directly.
+     *
+     * Access to this set must be guarded by synchronizing on it.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3194">OF-3194</a>
+     */
+    private final Set<String> pendingVerAttributes = new HashSet<>();
+
+    /**
      * Listeners that are invoked when new or changed capabilities for an entity are detected.
      */
     private final Set<EntityCapabilitiesListener> allUserCapabilitiesListeners = new CopyOnWriteArraySet<>();
@@ -238,6 +254,17 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
                 || packet.getChildElement("x", "http://jabber.org/protocol/muc#admin") != null
                 || packet.getChildElement("x", "http://jabber.org/protocol/muc#owner") != null) {
                 return;
+            }
+
+            // Guard against sending duplicate disco#info requests for the same 'ver' hash. Multiple local contacts may
+            // receive presence from the same entity simultaneously, each triggering this method before any response has
+            // been received and cached. Without this check, every such invocation would dispatch its own query. OF-3194
+            synchronized (pendingVerAttributes) {
+                if (pendingVerAttributes.contains(newVerAttribute)) {
+                    Log.trace( "Skipping disco#info query for '{}': a query for ver '{}' is already in-flight", packet.getFrom(), newVerAttribute );
+                    return;
+                }
+                pendingVerAttributes.add(newVerAttribute);
             }
 
             final Lock lock = this.entityCapabilitiesUserMap.getLock(packet.getFrom().asBareJID());
@@ -391,7 +418,12 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
     public void answerTimeout(String packetId) {
         // If we never received an answer, we can discard the cached
         // 'ver' attribute.
-        verAttributes.remove(packetId);
+        final EntityCapabilities timedOut = verAttributes.remove(packetId);
+        if (timedOut != null) {
+            synchronized (pendingVerAttributes) {
+                pendingVerAttributes.remove(timedOut.getVerAttribute());
+            }
+        }
     }
 
     @Override
@@ -424,7 +456,12 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
         }
 
         // Remove cached 'ver' attribute.
-        verAttributes.remove(packetId);
+        final EntityCapabilities answered = verAttributes.remove(packetId);
+        if (answered != null) {
+            synchronized (pendingVerAttributes) {
+                pendingVerAttributes.remove(answered.getVerAttribute());
+            }
+        }
     }
 
     /**
@@ -807,13 +844,14 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
         return null;
     }
 
-    /** Exposed for test use only */
+    @VisibleForTesting
     void clearCaches()
     {
         entityCapabilitiesMap.clear();
         entityCapabilitiesUserMap.clear();
         verAttributes.clear();
         capabilitiesBeingUpdated.clear();
+        pendingVerAttributes.clear();
     }
 
     @Override

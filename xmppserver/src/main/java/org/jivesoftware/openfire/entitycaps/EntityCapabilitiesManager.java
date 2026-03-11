@@ -267,39 +267,47 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
                 pendingVerAttributes.add(newVerAttribute);
             }
 
-            final Lock lock = this.entityCapabilitiesUserMap.getLock(packet.getFrom().asBareJID());
-            lock.lock();
             try {
-                // If this entity previously had another registration, that now no longer is valid.
-                final String ver = entityCapabilitiesUserMap.remove(packet.getFrom());
-                if ( ver != null ) {
-                    capabilitiesBeingUpdated.put( packet.getFrom(), ver );
+                final Lock lock = this.entityCapabilitiesUserMap.getLock(packet.getFrom().asBareJID());
+                lock.lock();
+                try {
+                    // If this entity previously had another registration, that now no longer is valid.
+                    final String ver = entityCapabilitiesUserMap.remove(packet.getFrom());
+                    if ( ver != null ) {
+                        capabilitiesBeingUpdated.put( packet.getFrom(), ver );
+                    }
+                } finally {
+                    lock.unlock();
                 }
-            } finally {
-                lock.unlock();
+
+                // The 'ver' hash is not in the cache so send out a disco#info query
+                // so that we may begin recognizing this 'ver' hash.
+                IQ iq = new IQ(IQ.Type.get);
+                iq.setTo(packet.getFrom());
+
+                String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+                iq.setFrom(serverName);
+
+                iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
+
+                String packetId = iq.getID();
+
+                caps = new EntityCapabilities();
+                caps.setHashAttribute(hashAttribute);
+                caps.setVerAttribute(newVerAttribute);
+                Log.trace( "Querying 'ver' for unrecognized caps. Querying: {}", packet.getFrom() );
+                verAttributes.put(packetId, caps);
+
+                final IQRouter iqRouter = XMPPServer.getInstance().getIQRouter();
+                iqRouter.addIQResultListener(packetId, this);
+                iqRouter.route(iq);
+            } catch ( RuntimeException e ) {
+                // If any subsequent step fails, the pending marker must be removed so that future presence packets for this 'ver' hash are not permanently suppressed.
+                synchronized (pendingVerAttributes) {
+                    pendingVerAttributes.remove(newVerAttribute);
+                }
+                throw e;
             }
-
-            // The 'ver' hash is not in the cache so send out a disco#info query
-            // so that we may begin recognizing this 'ver' hash.
-            IQ iq = new IQ(IQ.Type.get);
-            iq.setTo(packet.getFrom());
-
-            String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
-            iq.setFrom(serverName);
-
-            iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
-
-            String packetId = iq.getID();
-            
-            caps = new EntityCapabilities();
-            caps.setHashAttribute(hashAttribute);
-            caps.setVerAttribute(newVerAttribute);
-            Log.trace( "Querying 'ver' for unrecognized caps. Querying: {}", packet.getFrom() );
-            verAttributes.put(packetId, caps);
-
-            final IQRouter iqRouter = XMPPServer.getInstance().getIQRouter();
-            iqRouter.addIQResultListener(packetId, this);
-            iqRouter.route(iq);
         }
     }
 

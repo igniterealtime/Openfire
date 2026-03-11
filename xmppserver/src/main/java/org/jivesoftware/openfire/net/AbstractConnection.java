@@ -160,7 +160,7 @@ public abstract class AbstractConnection implements Connection
      * after all listeners have been invoked and all listener-provided futures have completed.
      *
      * Exceptions thrown by listeners, whether synchronously during invocation or asynchronously via their returned
-     * future, are captured and propagated through the returned future rather than being swallowed or thrown directly.
+     * future, are aggregated and propagated through the returned future rather than being swallowed or thrown directly.
      *
      * Subclasses must call {@link #completeCloseFuture()} within the {@code whenComplete} handler of the future
      * returned by this method, after all remaining teardown work for that connection type has finished. It must be
@@ -184,27 +184,45 @@ public abstract class AbstractConnection implements Connection
             return 0;
         });
 
+        final List<Throwable> collectedFailures = new ArrayList<>();
+
         // Execute listeners sequentially, in priority order.
         CompletableFuture<?> result = CompletableFuture.completedFuture(null);
         for (final Map.Entry<ConnectionCloseListener, Object> entry : sortedListeners)
         {
             final ConnectionCloseListener listener = entry.getKey();
-            if (listener != null) {
-                final Object handback = entry.getValue();
-                result = result.thenCompose(v -> {
-                    try {
-                        final CompletableFuture<?> listenerFuture = listener.onConnectionClosing(handback);
-                        // Flatten the listener-provided future, treating null as an already-completed future.
-                        return listenerFuture != null ? listenerFuture : CompletableFuture.completedFuture(null);
-                    } catch (Exception e) {
-                        // Capture synchronous exceptions and propagate via the returned future.
-                        return CompletableFuture.failedFuture(e);
-                    }
-                });
+            if (listener == null) {
+                continue;
             }
+            final Object handback = entry.getValue();
+            result = result.thenCompose(v -> {
+                try {
+                    final CompletableFuture<?> listenerFuture = listener.onConnectionClosing(handback);
+                    return listenerFuture != null ? listenerFuture : CompletableFuture.completedFuture(null);
+                } catch (Exception e) {
+                    return CompletableFuture.failedFuture(e);
+                }
+            }).handle((v, ex) -> {
+                if (ex != null) {
+                    // Log and collect (but do NOT re-throw) so the next listener still runs. Logging on trace, as the aggregate will be logged more verbosely by the caller.
+                    Log.debug("Close listener {} threw an exception for connection {}", listener, this, ex);
+                    collectedFailures.add(ex);
+                }
+                return null; // always recover
+            });
         }
 
-        return result;
+        // After all listeners have run, surface any collected failures as a single exception.
+        return result.thenCompose(v -> {
+            if (collectedFailures.isEmpty()) {
+                return CompletableFuture.completedFuture(null);
+            }
+            final RuntimeException aggregate = new RuntimeException(
+                collectedFailures.size() + " close listener(s) failed for connection " + this
+            );
+            collectedFailures.forEach(aggregate::addSuppressed);
+            return CompletableFuture.failedFuture(aggregate);
+        });
     }
 
     @Override

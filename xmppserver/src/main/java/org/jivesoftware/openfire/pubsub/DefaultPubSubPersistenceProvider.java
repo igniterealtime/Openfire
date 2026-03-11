@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -651,7 +651,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 			// their children)
 			pstmt = con.prepareStatement(LOAD_NODE);
 			pstmt.setString(1, nodeIdentifier.getServiceIdentifier().getServiceId());
-			pstmt.setString(2, nodeIdentifier.getNodeId());
+			pstmt.setString(2, encodeNodeID(nodeIdentifier.getNodeId()));
 			rs = pstmt.executeQuery();
 			Map<Node.UniqueIdentifier, Node.UniqueIdentifier> parentMapping = new HashMap<>();
 			
@@ -664,7 +664,25 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             Node.UniqueIdentifier parentId = parentMapping.get(nodeIdentifier);
 			
 			if (parentId != null) {
-                nodes.get(nodeIdentifier).changeParent((CollectionNode)nodes.get(parentId));
+				// The parent was not fetched as part of this query (only a single node was loaded),
+				// so issue a separate query to hydrate it before resolving the parent-child relationship. OF-3199
+				pstmt = con.prepareStatement(LOAD_NODE);
+				pstmt.setString(1, parentId.getServiceIdentifier().getServiceId());
+				pstmt.setString(2, encodeNodeID(parentId.getNodeId()));
+				rs = pstmt.executeQuery();
+				if (rs.next()) {
+					// Load the parent into the same nodes map, discarding any grandparent mapping
+					// as resolving the full ancestry chain is the responsibility of loadNodes(), not here.
+					loadNode(parentId.getServiceIdentifier(), nodes, new HashMap<>(), rs);
+				} else {
+					log.warn("Could not find parent node {} for node {}", parentId, nodeIdentifier);
+				}
+				DbConnectionManager.fastcloseStmt(rs, pstmt);
+
+				CollectionNode parent = (CollectionNode) nodes.get(parentId);
+				if (parent != null) {
+					nodes.get(nodeIdentifier).changeParent(parent);
+				}
 			}
 				
 			// Get JIDs associated with all nodes

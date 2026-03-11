@@ -315,6 +315,9 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     void deliver(Packet packet) throws UnauthorizedException {
         if (!conn.isClosed()) {
             conn.deliver(packet);
+        } else {
+            Log.warn("Dropping stanza to {} because the connection is closed. Returning error to sender.", packet.getTo());
+            returnErrorToSenderAsync(packet);
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,6 +83,14 @@ public class OutgoingSessionPromise {
         .setKey("xmpp.server.outgoing.threads-timeout")
         .setDynamic(false)
         .setDefaultValue(Duration.ofSeconds(60))
+        .setChronoUnit(ChronoUnit.MILLIS)
+        .setMinValue(Duration.ZERO)
+        .build();
+
+    public static final SystemProperty<Duration> CLOSE_WAIT_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.server.outgoing.close-wait-timeout")
+        .setDynamic(true)
+        .setDefaultValue(Duration.ofSeconds(5))
         .setChronoUnit(ChronoUnit.MILLIS)
         .setMinValue(Duration.ZERO)
         .build();
@@ -278,8 +286,27 @@ public class OutgoingSessionPromise {
 
         private LocalOutgoingServerSession establishConnection() throws Exception {
             Log.debug("Start establishing a connection for {}", domainPair);
-            // Create a connection to the remote server from the domain where the packet has been sent
+
             boolean created;
+
+            // Wait for any previous session for this domain pair to fully complete its teardown before attempting to
+            // establish a new one. isClosed() returning true only signals the intent to close. Close listeners
+            // (including removal from the routing table) may still be in progress. Proceeding before they finish
+            // risks the new session colliding with stale state in the routing table.
+            final OutgoingServerSession existingRoute = routingTable.getServerRoute(domainPair);
+            if (existingRoute instanceof LocalOutgoingServerSession localExisting && localExisting.isClosed()) {
+                try {
+                    localExisting.getConnection().getCloseFuture().toCompletableFuture().get(CLOSE_WAIT_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    Log.warn("Interrupted while waiting for previous outgoing session for {} to fully close. Proceeding with new session establishment regardless.", domainPair);
+                } catch (TimeoutException e) {
+                    Log.warn("Timed out waiting for previous outgoing session for {} to fully close. Proceeding with new session establishment regardless.", domainPair);
+                } catch (ExecutionException e) {
+                    Log.warn("Exception while waiting for previous outgoing session for {} to fully close. Proceeding with new session establishment regardless.", domainPair, e);
+                }
+            }
+
             // Make sure that only one cluster node is creating the outgoing connection
             final Lock lock = serversCache.getLock(domainPair);
             lock.lock();

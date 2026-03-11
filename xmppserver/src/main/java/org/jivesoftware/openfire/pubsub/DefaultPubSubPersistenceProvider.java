@@ -40,7 +40,6 @@ import java.sql.SQLException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
-import java.util.stream.Collectors;
 
 /**
  * A manager responsible for ensuring node persistence.
@@ -542,7 +541,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
     @Override
     public void loadNodes(PubSubService service) {
         log.debug( "Loading nodes for service: {}", service.getServiceID() );
-
+        final PubSubService.UniqueIdentifier serviceID = service.getUniqueIdentifier();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -558,7 +557,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             
             // Rebuild loaded non-leaf nodes
             while(rs.next()) {
-                loadNode(service.getUniqueIdentifier(), nodes, parentMappings, rs);
+                loadNode(serviceID, nodes, parentMappings, rs);
             }
             DbConnectionManager.fastcloseStmt(rs, pstmt);
 
@@ -584,7 +583,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             rs = pstmt.executeQuery();
             // Add to each node the associated JIDs
             while(rs.next()) {
-                loadAssociatedJIDs(nodes, rs);
+                loadAssociatedJIDs(serviceID, nodes, rs);
             }
             DbConnectionManager.fastcloseStmt(rs, pstmt);
 
@@ -594,7 +593,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             rs = pstmt.executeQuery();
             // Add to each node the associated Groups
             while(rs.next()) {
-                loadAssociatedGroups(nodes, rs);
+                loadAssociatedGroups(serviceID, nodes, rs);
             }
             DbConnectionManager.fastcloseStmt(rs, pstmt);
 
@@ -604,7 +603,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             rs = pstmt.executeQuery();
             // Add to each node the correspondiding affiliates
             while(rs.next()) {
-                loadAffiliations(nodes, rs);
+                loadAffiliations(serviceID, nodes, rs);
             }
             DbConnectionManager.fastcloseStmt(rs, pstmt);
 
@@ -614,12 +613,12 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             rs = pstmt.executeQuery();
             // Add to each node the correspondiding subscriptions
             while(rs.next()) {
-                loadSubscriptions(nodes, rs);
+                loadSubscriptions(serviceID, nodes, rs);
             }
             DbConnectionManager.fastcloseStmt(rs, pstmt);
         }
         catch (SQLException sqle) {
-            log.error("An exception occurred while loading nodes for a service ({}) from the database.", service.getUniqueIdentifier(), sqle);
+            log.error("An exception occurred while loading nodes for a service ({}) from the database.", serviceID, sqle);
         }
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
@@ -675,7 +674,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 			// Add to each node the associated JIDs
 			while (rs.next())
 			{
-				loadAssociatedJIDs(nodes, rs);
+				loadAssociatedJIDs(nodeIdentifier.getServiceIdentifier(), nodes, rs);
 			}
 			DbConnectionManager.fastcloseStmt(rs, pstmt);
 
@@ -687,7 +686,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 			// Add to each node the associated Groups
 			while (rs.next())
 			{
-				loadAssociatedGroups(nodes, rs);
+				loadAssociatedGroups(nodeIdentifier.getServiceIdentifier(), nodes, rs);
 			}
 			DbConnectionManager.fastcloseStmt(rs, pstmt);
 
@@ -699,7 +698,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 			// Add to each node the corresponding affiliates
 			while (rs.next())
 			{
-				loadAffiliations(nodes, rs);
+				loadAffiliations(nodeIdentifier.getServiceIdentifier(), nodes, rs);
 			}
 			DbConnectionManager.fastcloseStmt(rs, pstmt);
 
@@ -711,7 +710,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 			// Add to each node the corresponding subscriptions
 			while (rs.next())
 			{
-				loadSubscriptions(nodes, rs);
+				loadSubscriptions(nodeIdentifier.getServiceIdentifier(), nodes, rs);
 			}
 			DbConnectionManager.fastcloseStmt(rs, pstmt);
 		}
@@ -797,22 +796,15 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         }
     }
 
-    private static Node lookupNode(Map<Node.UniqueIdentifier, Node> nodes, String nodeID) {
-        Set<Node> matchingNodes = nodes.values().stream().filter(n -> n.getNodeID().equals(nodeID)).collect(Collectors.toSet());
-        if (matchingNodes.isEmpty()) {
-            return null;
-        }
-        if (matchingNodes.size() > 1) {
-            // This is a coding error.
-            throw new IllegalStateException( "Identifier does not uniquely identify node in provided map: " + nodeID );
-        }
-        return matchingNodes.iterator().next();
+    private static Node lookupNode(Map<Node.UniqueIdentifier, Node> nodes, PubSubService.UniqueIdentifier serviceId, String nodeID) {
+        final Node.UniqueIdentifier nodeId = new Node.UniqueIdentifier(serviceId, nodeID);
+        return nodes.get(nodeId);
     }
 
-    private void loadAssociatedJIDs(Map<Node.UniqueIdentifier, Node> nodes, ResultSet rs) {
+    private void loadAssociatedJIDs(PubSubService.UniqueIdentifier serviceId, Map<Node.UniqueIdentifier, Node> nodes, ResultSet rs) {
         try {
             String nodeID = decodeNodeID(rs.getString(1));
-            Node node = lookupNode(nodes, nodeID);
+            Node node = lookupNode(nodes, serviceId, nodeID);
             if (node == null) {
                 log.warn("JID associated to a non-existent node: {}", nodeID);
                 return;
@@ -837,10 +829,10 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         }
     }
 
-    private void loadAssociatedGroups(Map<Node.UniqueIdentifier, Node> nodes, ResultSet rs) {
+    private void loadAssociatedGroups(PubSubService.UniqueIdentifier serviceId, Map<Node.UniqueIdentifier, Node> nodes, ResultSet rs) {
         try {
             String nodeID = decodeNodeID(rs.getString(1));
-            Node node = lookupNode(nodes, nodeID);
+            Node node = lookupNode(nodes, serviceId, nodeID);
             if (node == null) {
                 log.warn("Roster Group associated to a non-existent node: {}", nodeID);
                 return;
@@ -852,10 +844,10 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         }
     }
 
-    private void loadAffiliations(Map<Node.UniqueIdentifier, Node> nodes, ResultSet rs) {
+    private void loadAffiliations(PubSubService.UniqueIdentifier serviceId, Map<Node.UniqueIdentifier, Node> nodes, ResultSet rs) {
         try {
             String nodeID = decodeNodeID(rs.getString(1));
-            Node node = lookupNode(nodes, nodeID);
+            Node node = lookupNode(nodes, serviceId, nodeID);
             if (node == null) {
                 log.warn("Affiliations found for a non-existent node: {}", nodeID);
                 return;
@@ -892,7 +884,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 			// Add to each node the corresponding subscription
 			if (rs.next())
 			{
-				loadSubscriptions(nodes, rs);
+				loadSubscriptions(node.getUniqueIdentifier().getServiceIdentifier(), nodes, rs);
 			}
 		}
 		catch (SQLException sqle)
@@ -957,10 +949,10 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         return result;
     }
 
-    private void loadSubscriptions(Map<Node.UniqueIdentifier, Node> nodes, ResultSet rs) {
+    private void loadSubscriptions(PubSubService.UniqueIdentifier serviceId, Map<Node.UniqueIdentifier, Node> nodes, ResultSet rs) {
         try {
             String nodeID = decodeNodeID(rs.getString(1));
-            Node node = lookupNode(nodes, nodeID);
+            Node node = lookupNode(nodes, serviceId, nodeID);
             if (node == null) {
                 log.warn("Subscription found for a non-existent node: {}", nodeID);
                 return;

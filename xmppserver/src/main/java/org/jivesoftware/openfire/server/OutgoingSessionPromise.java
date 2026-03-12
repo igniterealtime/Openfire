@@ -239,6 +239,8 @@ public class OutgoingSessionPromise {
         @Nonnull
         private final Queue<Packet> packetQueue = new ArrayBlockingQueue<>( QUEUE_SIZE.getValue() );
 
+        private volatile boolean done = false;
+
         public PacketsProcessor(@Nonnull final DomainPair domainPair) {
             this.domainPair = domainPair;
         }
@@ -280,6 +282,7 @@ public class OutgoingSessionPromise {
 
                 // Remove the processor to ensure that it cannot accept new stanzas to be queued.
                 packetsProcessors.remove(domainPair);
+                done = true;
             }
             Log.trace("Finished processing {}", domainPair);
         }
@@ -442,7 +445,7 @@ public class OutgoingSessionPromise {
         }
 
         public boolean isDone() {
-            return packetQueue.isEmpty();
+            return done;
         }
     }
 }

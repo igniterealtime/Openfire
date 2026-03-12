@@ -271,7 +271,8 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         } catch (TimeoutException e) {
             Log.warn("Cannot connect to XMPP domain '{}' (from '{}'): The connection attempt timed out after {}. This is typically caused by a " +
                 "network configuration issue (eg: missing or invalid DNS records, restrictive firewalls, etc.).",
-                INITIALISE_TIMEOUT_SECONDS.getValue(), domainPair.getRemote(), domainPair.getLocal());
+                domainPair.getRemote(), domainPair.getLocal(), INITIALISE_TIMEOUT_SECONDS.getValue());
+            sessionInitialiser.stop();
         } catch (Exception e) {
             // This might be RFC6120, section 5.4.2.2 "Failure Case" or even an unrelated problem. Handle 'normally'.
             log.warn("An exception occurred while creating a session. Closing connection.", e);

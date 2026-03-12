@@ -214,7 +214,17 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                         log.debug("Created a new session.");
 
                         session.addOutgoingDomainPair(domainPair);
-                        sessionManager.outgoingServerSessionCreated((LocalOutgoingServerSession) session);
+                        try {
+                            sessionManager.outgoingServerSessionCreated((LocalOutgoingServerSession) session);
+                        } catch (Exception e) {
+                            log.debug("Failed to register close listener for newly created session to '{}'. Rolling back route registration to prevent an orphaned route.", remoteDomain, e);
+                            // Explicitly remove all routes that were just added, as the close listener that would normally do may never have been registered.
+                            for (DomainPair pair : session.getOutgoingDomainPairs()) {
+                                XMPPServer.getInstance().getRoutingTable().removeServerRoute(pair);
+                            }
+                            throw e;
+                        }
+
                         log.debug("Authentication successful.");
                         //inform all listeners as well.
                         ServerSessionEventDispatcher.dispatchEvent(session, ServerSessionEventDispatcher.EventType.session_created);

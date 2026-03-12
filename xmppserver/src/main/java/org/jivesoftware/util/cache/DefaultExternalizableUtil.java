@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class DefaultExternalizableUtil implements ExternalizableUtilStrategy {
 
     /**
      * Writes a Map of String key and value pairs. This method handles the
-     * case when the Map is <tt>null</tt>.
+     * case when the Map is {@code null}.
      *
      * @param out       the output stream.
      * @param stringMap the Map of String key/value pairs.
@@ -58,7 +58,7 @@ public class DefaultExternalizableUtil implements ExternalizableUtilStrategy {
 
     /**
      * Reads a Map of String key and value pairs. This method will return
-     * <tt>null</tt> if the Map written to the stream was <tt>null</tt>.
+     * {@code null} if the Map written to the stream was {@code null}.
      *
      * @param in the input stream.
      * @return a Map of String key/value pairs.
@@ -69,8 +69,8 @@ public class DefaultExternalizableUtil implements ExternalizableUtilStrategy {
     }
 
     /**
-     * Writes a Map of String key and Set of Strings value pairs. This method DOES NOT handle the
-     * case when the Map is <tt>null</tt>.
+     * Writes a Map of String key and Set of Strings value pairs. This method handles the
+     * case when the Map is {@code null}.
      *
      * @param out       the output stream.
      * @param map       the Map of String key and Set of Strings value pairs.
@@ -97,7 +97,7 @@ public class DefaultExternalizableUtil implements ExternalizableUtilStrategy {
 
     /**
      * Writes a Map of Long key and Integer value pairs. This method handles
-     * the case when the Map is <tt>null</tt>.
+     * the case when the Map is {@code null}.
      *
      * @param out the output stream.
      * @param map the Map of Long key/Integer value pairs.
@@ -109,7 +109,7 @@ public class DefaultExternalizableUtil implements ExternalizableUtilStrategy {
 
     /**
      * Reads a Map of Long key and Integer value pairs. This method will return
-     * <tt>null</tt> if the Map written to the stream was <tt>null</tt>.
+     * {@code null} if the Map written to the stream was {@code null}.
      *
      * @param in the input stream.
      * @return a Map of Long key/Integer value pairs.
@@ -121,7 +121,7 @@ public class DefaultExternalizableUtil implements ExternalizableUtilStrategy {
 
     /**
      * Writes a List of Strings. This method handles the case when the List is
-     * <tt>null</tt>.
+     * {@code null}.
      *
      * @param out        the output stream.
      * @param stringList the List of Strings.
@@ -132,8 +132,8 @@ public class DefaultExternalizableUtil implements ExternalizableUtilStrategy {
     }
 
     /**
-     * Reads a List of Strings. This method will return <tt>null</tt> if the List
-     * written to the stream was <tt>null</tt>.
+     * Reads a List of Strings. This method will return {@code null} if the List
+     * written to the stream was {@code null}.
      *
      * @param in the input stream.
      * @return a List of Strings.
@@ -145,7 +145,7 @@ public class DefaultExternalizableUtil implements ExternalizableUtilStrategy {
 
     /**
      * Writes an array of long values. This method handles the case when the
-     * array is <tt>null</tt>.
+     * array is {@code null}.
      *
      * @param out   the output stream.
      * @param array the array of long values.
@@ -156,8 +156,8 @@ public class DefaultExternalizableUtil implements ExternalizableUtilStrategy {
     }
 
     /**
-     * Reads an array of long values. This method will return <tt>null</tt> if
-     * the array written to the stream was <tt>null</tt>.
+     * Reads an array of long values. This method will return {@code null} if
+     * the array written to the stream was {@code null}.
      *
      * @param in the input stream.
      * @return an array of long values.
@@ -275,7 +275,7 @@ public class DefaultExternalizableUtil implements ExternalizableUtilStrategy {
 
     /**
      * Writes a Map of String key and value pairs. This method handles the
-     * case when the Map is <tt>null</tt>.
+     * case when the Map is {@code null}.
      *
      * @param out       the output stream.
      * @param map       the Map of String key and Externalizable value pairs.
@@ -287,7 +287,7 @@ public class DefaultExternalizableUtil implements ExternalizableUtilStrategy {
 
     /**
      * Writes a Map of Serializable key and value pairs. This method handles the
-     * case when the Map is <tt>null</tt>.
+     * case when the Map is {@code null}.
      *
      * @param out       the output stream.
      * @param map       the Map of Serializable key and value pairs.
@@ -299,7 +299,7 @@ public class DefaultExternalizableUtil implements ExternalizableUtilStrategy {
 
     /**
      * Reads a Map of String key and value pairs. This method will return
-     * <tt>null</tt> if the Map written to the stream was <tt>null</tt>.
+     * {@code null} if the Map written to the stream was {@code null}.
      *
      * @param in the input stream.
      * @param map a Map of String key and Externalizable value pairs.
@@ -316,7 +316,7 @@ public class DefaultExternalizableUtil implements ExternalizableUtilStrategy {
 
     /**
      * Reads a Map of Serializable key and value pairs. This method will return
-     * <tt>null</tt> if the Map written to the stream was <tt>null</tt>.
+     * {@code null} if the Map written to the stream was {@code null}.
      *
      * @param in the input stream.
      * @param map a Map of Serializable key and value pairs.
@@ -324,10 +324,11 @@ public class DefaultExternalizableUtil implements ExternalizableUtilStrategy {
      * @throws IOException if an error occurs.
      * @return the number of elements added to the collection.
      */
+    @SuppressWarnings("unchecked")
     public int readSerializableMap(DataInput in, Map<? extends Serializable, ? extends Serializable> map, ClassLoader loader) throws IOException {
-        Map<String, Serializable> result = (Map<String, Serializable>) readObject(loader, in);
+        Map<Serializable, Serializable> result = (Map<Serializable, Serializable>) readObject(loader, in);
         if (result == null) return 0;
-        ((Map<String, Serializable>)map).putAll(result);
+        ((Map<Serializable, Serializable>)map).putAll(result);
         return result.size();
     }
 
@@ -376,13 +377,14 @@ public class DefaultExternalizableUtil implements ExternalizableUtilStrategy {
             out.write((byte[]) obj);
         } else {
             out.writeByte(10);
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(obj);
-            oos.close();
-            byte[] buf = bos.toByteArray();
-            out.writeInt(buf.length);
-            out.write(buf);
+            try (final ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                 final ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+                oos.writeObject(obj);
+                oos.flush();
+                byte[] buf = bos.toByteArray();
+                out.writeInt(buf.length);
+                out.write(buf);
+            }
         }
     }
 
@@ -474,8 +476,8 @@ public class DefaultExternalizableUtil implements ExternalizableUtilStrategy {
         return Class.forName(className);
     }
 
-    private static final Class[] PRIMITIVE_CLASSES_ARRAY = {int.class, long.class, boolean.class, byte.class,
-        float.class, double.class, byte.class, char.class, short.class, void.class};
+    private static final Class<?>[] PRIMITIVE_CLASSES_ARRAY = {int.class, long.class, boolean.class, byte.class,
+        float.class, double.class, char.class, short.class, void.class};
     private static final int MAX_PRIM_CLASSNAME_LENGTH = 7; // boolean.class.getName().length();
 
 

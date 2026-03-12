@@ -187,7 +187,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             "WHERE serviceID=? AND nodeID=? ORDER BY creationDate DESC FETCH FIRST ? ROWS ONLY";
     private static final String LOAD_LAST_ITEMS_LIMIT =
             "SELECT id,jid,creationDate,payload FROM ofPubsubItem " +
-            "WHERE serviceID=? AND nodeID=? ORDER BY creationDate LIMIT ?";
+            "WHERE serviceID=? AND nodeID=? ORDER BY creationDate DESC LIMIT ?";
 
     private static final String ADD_ITEM =
             "INSERT INTO ofPubsubItem (serviceID,nodeID,id,jid,creationDate,payload) " +

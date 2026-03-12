@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2021-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Unit tests that verify the functionality as implemented in {@link XMLLightweightParser}
@@ -363,5 +362,184 @@ public class XMLLightweightParserTest {
 
         // Verify result.
         assertEquals(6, in.readerIndex());
+    }
+
+    /**
+     * Asserts that multiple stanzas written into a single buffer are each individually parsed
+     * and returned by {@link XMLLightweightParser#getMsgs()}.
+     */
+    @Test
+    public void testMultipleStanzasInSingleBuffer() throws Exception
+    {
+        // Setup test fixture.
+        final String stanza1 = "<presence/>";
+        final String stanza2 = "<message to='foo@example.org'><body>Hello</body></message>";
+        final String input = stanza1 + stanza2;
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(input.getBytes(StandardCharsets.UTF_8).length);
+        buffer.writeCharSequence(input, StandardCharsets.UTF_8);
+        final XMLLightweightParser parser = new XMLLightweightParser();
+
+        // Execute system under test.
+        parser.read(buffer);
+        final String[] result = parser.getMsgs();
+
+        // Verify results.
+        assertNotNull(result);
+        assertEquals(2, result.length);
+        assertEquals(stanza1, result[0]);
+        assertEquals(stanza2, result[1]);
+    }
+
+    /**
+     * Asserts that a stanza containing a CDATA section is parsed correctly as a single message.
+     */
+    @Test
+    public void testStanzaWithCdataSection() throws Exception
+    {
+        // Setup test fixture.
+        final String input = "<message to='foo@example.org'><body><![CDATA[<not-xml>&amp;]]></body></message>";
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(input.getBytes(StandardCharsets.UTF_8).length);
+        buffer.writeCharSequence(input, StandardCharsets.UTF_8);
+        final XMLLightweightParser parser = new XMLLightweightParser();
+
+        // Execute system under test.
+        parser.read(buffer);
+        final String[] result = parser.getMsgs();
+
+        // Verify results.
+        assertNotNull(result);
+        assertEquals(1, result.length);
+        assertEquals(input, result[0]);
+    }
+
+    /**
+     * Asserts that an XMPP stream header ({@code <stream:stream>}) is treated as a self-terminating element
+     * and returned as a message by the parser.
+     */
+    @Test
+    public void testStreamOpenIsReturnedAsMessage() throws Exception
+    {
+        // Setup test fixture.
+        final String input = "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' to='example.org' version='1.0'>";
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(input.getBytes(StandardCharsets.UTF_8).length);
+        buffer.writeCharSequence(input, StandardCharsets.UTF_8);
+        final XMLLightweightParser parser = new XMLLightweightParser();
+
+        // Execute system under test.
+        parser.read(buffer);
+        final String[] result = parser.getMsgs();
+
+        // Verify results.
+        assertNotNull(result);
+        assertEquals(1, result.length, "The stream open element should be returned as a message.");
+    }
+
+    /**
+     * Asserts that a stream close element ({@code </stream:stream>}) is parsed and returned as a message,
+     * after first receiving an open stream element.
+     */
+    @Test
+    public void testStreamCloseIsReturnedAsMessage() throws Exception
+    {
+        // Setup test fixture.
+        final String streamOpen = "<stream:stream xmlns='jabber:client' xmlns:stream='http://etherx.jabber.org/streams' to='example.org' version='1.0'>";
+        final String streamClose = "</stream:stream>";
+        final XMLLightweightParser parser = new XMLLightweightParser();
+
+        ByteBuf openBuffer = ByteBufAllocator.DEFAULT.buffer(streamOpen.getBytes(StandardCharsets.UTF_8).length);
+        openBuffer.writeCharSequence(streamOpen, StandardCharsets.UTF_8);
+        parser.read(openBuffer);
+        parser.getMsgs(); // consume the open message
+
+        ByteBuf closeBuffer = ByteBufAllocator.DEFAULT.buffer(streamClose.getBytes(StandardCharsets.UTF_8).length);
+        closeBuffer.writeCharSequence(streamClose, StandardCharsets.UTF_8);
+
+        // Execute system under test.
+        parser.read(closeBuffer);
+        final String[] result = parser.getMsgs();
+
+        // Verify results.
+        assertNotNull(result);
+        assertEquals(1, result.length, "The stream close element should be returned as a message.");
+        assertEquals(streamClose, result[0]);
+    }
+
+    /**
+     * Asserts that XML stanzas with nested child elements are parsed correctly as a single message.
+     */
+    @Test
+    public void testNestedElementsAreReturnedAsOneMessage() throws Exception
+    {
+        // Setup test fixture.
+        final String input = "<iq type='get' id='1'><query xmlns='jabber:iq:roster'><item jid='user@example.org'/></query></iq>";
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(input.getBytes(StandardCharsets.UTF_8).length);
+        buffer.writeCharSequence(input, StandardCharsets.UTF_8);
+        final XMLLightweightParser parser = new XMLLightweightParser();
+
+        // Execute system under test.
+        parser.read(buffer);
+        final String[] result = parser.getMsgs();
+
+        // Verify results.
+        assertNotNull(result);
+        assertEquals(1, result.length);
+        assertEquals(input, result[0]);
+    }
+
+    /**
+     * Asserts that a stanza containing an illegal XML control character (in the range 0x00-0x08)
+     * causes an exception to be thrown by the parser.
+     */
+    @Test
+    public void testIllegalControlCharacterThrowsException() throws Exception
+    {
+        // Setup test fixture: include a NUL character (0x00) in the stanza body, which is illegal in XML 1.0
+        final String input = "<message><body>\u0001</body></message>";
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(input.getBytes(StandardCharsets.UTF_8).length);
+        buffer.writeCharSequence(input, StandardCharsets.UTF_8);
+        final XMLLightweightParser parser = new XMLLightweightParser();
+
+        // Execute system under test.
+        assertThrows(Exception.class, () -> parser.read(buffer),
+            "Parsing a stanza with an illegal control character should throw an exception.");
+    }
+
+    /**
+     * Asserts that after the parser's maximum buffer size is exceeded, the
+     * {@link XMLLightweightParser#isMaxBufferSizeExceeded()} flag is set.
+     * <p>
+     * The buffer-size check in the parser happens at the <em>start</em> of each {@code read()} call,
+     * so this test first fills the internal buffer by writing data that exceeds the limit, and then
+     * triggers the check by performing a second read.
+     * </p>
+     */
+    @Test
+    public void testMaxBufferSizeExceededFlagIsSet() throws Exception
+    {
+        // Setup test fixture: build a partial stanza whose byte count exceeds the parser's max buffer size.
+        final long maxSize = XMLLightweightParser.XMPP_PARSER_BUFFER_SIZE.getValue();
+        final StringBuilder body = new StringBuilder("<message><body>");
+        while (body.length() <= maxSize) {
+            body.append("x".repeat(1024));
+        }
+        // Do NOT close the stanza - we need the parser to accumulate data without completing a message.
+        final byte[] inputBytes = body.toString().getBytes(StandardCharsets.UTF_8);
+
+        final XMLLightweightParser parser = new XMLLightweightParser();
+
+        // First read: fills the internal buffer past the limit.
+        ByteBuf firstBuffer = ByteBufAllocator.DEFAULT.buffer(inputBytes.length);
+        firstBuffer.writeBytes(inputBytes);
+        parser.read(firstBuffer); // no exception yet - check happens at start of read, before appending
+
+        // Second read: the check at the top of read() detects the oversized buffer and throws.
+        ByteBuf secondBuffer = ByteBufAllocator.DEFAULT.buffer(1);
+        secondBuffer.writeCharSequence("x", StandardCharsets.UTF_8);
+        assertThrows(Exception.class, () -> parser.read(secondBuffer),
+            "A second read after exceeding the buffer limit should throw an exception.");
+
+        // Verify results.
+        assertTrue(parser.isMaxBufferSizeExceeded(),
+            "The maxBufferSizeExceeded flag should be set after exceeding the parser's buffer limit.");
     }
 }

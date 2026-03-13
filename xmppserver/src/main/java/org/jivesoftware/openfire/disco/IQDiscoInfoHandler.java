@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package org.jivesoftware.openfire.disco;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
-import org.jivesoftware.admin.AdminConsole;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
@@ -45,12 +44,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
-import org.xmpp.forms.FormField.Type;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.resultsetmanagement.ResultSet;
 
+import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -91,10 +90,20 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
     private List<UserIdentitiesProvider> registeredUserIdentityProviders = new ArrayList<>();
     private List<UserFeaturesProvider> anonymousUserFeatureProviders = new ArrayList<>();
     private List<UserFeaturesProvider> registeredUserFeatureProviders = new ArrayList<>();
+    private List<ExtendedDiscoInfoProvider> extendedDiscoInfoProviders = new ArrayList<>();
 
-    public static final SystemProperty<Boolean> ENABLED = SystemProperty.Builder.ofType(Boolean.class)
-        .setKey("xmpp.iqdiscoinfo.xformsoftwareversion")
-        .setDefaultValue(Boolean.TRUE)
+    private final ContactAddressesExtendedDiscoInfoProvider contactAddressesProvider = new ContactAddressesExtendedDiscoInfoProvider();
+    private final SoftwareInfoExtendedDiscoInfoProvider softwareInfoProvider = new SoftwareInfoExtendedDiscoInfoProvider();
+
+    /**
+     * Controls whether extended service discovery information that may expose
+     * administrative details (e.g. contact addresses, software versions) should be
+     * included in disco#info responses. When set to true, such information is
+     * suppressed for security/privacy reasons.
+     */
+    public static final SystemProperty<Boolean> DISABLE_EXPOSURE = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("admin.disable-exposure")
+        .setDefaultValue(Boolean.FALSE)
         .setDynamic(Boolean.TRUE)
         .build();
 
@@ -212,10 +221,18 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                         }
                     }
                     // Add to the reply the multiple extended info (XDataForm) provided by the DiscoInfoProvider
-                    final Set<DataForm> dataForms = infoProvider.getExtendedInfos(name, node, packet.getFrom());
-                    if (dataForms != null) {
-                        dataForms.forEach(dataForm -> queryElement.add(dataForm.getElement()));
+                    Set<DataForm> dataForms = infoProvider.getExtendedInfos(name, node, packet.getFrom());
+                    if (dataForms == null) {
+                        dataForms = new HashSet<>();
                     }
+
+                    // Apply global ExtendedDiscoInfoProviders (creates mutable copy and merges)
+                    final String targetDomain = packet.getTo() == null ?
+                        XMPPServer.getInstance().getServerInfo().getXMPPDomain() : packet.getTo().getDomain();
+                    final Set<DataForm> enrichedForms = applyExtendedDiscoInfoProviders(dataForms, targetDomain, name, node, packet.getFrom());
+
+                    // Add all forms to the response (clone elements to avoid parent conflicts)
+                    enrichedForms.forEach(dataForm -> queryElement.add(dataForm.getElement().createCopy()));
                 } else {
                     // If the DiscoInfoProvider has no information for the requested name and node
                     // then answer a not found error
@@ -450,6 +467,11 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         serverFeatures = CacheFactory.createCache("Disco Server Features");
         addServerFeature(NAMESPACE_DISCO_INFO);
         setProvider(server.getServerInfo().getXMPPDomain(), getServerInfoProvider());
+
+        // Register built-in ExtendedDiscoInfoProviders
+        addExtendedDiscoInfoProvider(contactAddressesProvider);
+        addExtendedDiscoInfoProvider(softwareInfoProvider);
+
         // Listen to cluster events
         ClusterManager.addListener(this);
     }
@@ -575,6 +597,151 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
                 }
             }
         }
+    }
+
+    /**
+     * Adds a provider that contributes extended information (as per XEP-0128) to disco#info responses.
+     * This allows plugins to add custom data forms or additional fields to existing forms.
+     * <p>
+     * Providers are called for all disco#info requests and their forms are merged with existing forms.
+     * Forms with the same FORM_TYPE are merged, assuming field names are unique.
+     *
+     * @param provider The provider of extended disco info forms.
+     * @see ExtendedDiscoInfoProvider
+     */
+    public void addExtendedDiscoInfoProvider(ExtendedDiscoInfoProvider provider){
+        extendedDiscoInfoProviders.add(provider);
+    }
+
+    /**
+     * Removes a previously registered extended disco info provider.
+     * This should be called when a plugin is unloaded.
+     *
+     * @param provider The provider to remove.
+     */
+    public void removeExtendedDiscoInfoProvider(ExtendedDiscoInfoProvider provider) {
+        extendedDiscoInfoProviders.remove(provider);
+    }
+
+    /**
+     * Merges incoming forms into the result set, combining forms with matching FORM_TYPE.
+     * Forms with the same FORM_TYPE have their fields merged. If duplicate field names
+     * are detected, the offending provider's contribution is skipped with a warning.
+     */
+    private void merge(Set<DataForm> result, Set<DataForm> incoming) {
+        for (DataForm incomingForm : incoming) {
+            String incomingType = getFormType(incomingForm);
+            if (incomingType == null || incomingType.isBlank()) {
+                continue; // Only possible for bad DataForms
+            }
+
+            DataForm target = result.stream()
+                .filter(existing -> incomingType.equals(getFormType(existing)))
+                .findFirst()
+                .orElse(null);
+
+            if (target != null) {
+                // Form exists - attempt to merge fields
+                try {
+                    mergeFields(target, incomingForm);
+                } catch (IllegalArgumentException e) {
+                    // Duplicate field detected - log error and skip this provider's contribution
+                    Log.warn("Skipping extended disco info contribution due to duplicate field: {}", e.getMessage());
+                    // Don't add the form, continue processing other providers
+                }
+            } else {
+                // No matching form - add the entire form
+                result.add(incomingForm);
+            }
+        }
+    }
+
+    @Nullable
+    private String getFormType(DataForm form) {
+        return form.getFields().stream()
+            .filter(f -> "FORM_TYPE".equals(f.getVariable()))
+            .map(FormField::getFirstValue)
+            .findFirst()
+            .orElse(null);
+    }
+
+    /**
+     * Merges fields from an incoming form into a target form.
+     * <p>
+     * Each field should be contributed by only one provider. If a duplicate field is detected
+     * (a field with the same variable name already exists in the target form), an
+     * {@link IllegalArgumentException} is thrown to signal the conflict.
+     * </p>
+     *
+     * @param target The form to merge fields into
+     * @param incoming The form whose fields should be merged
+     * @throws IllegalArgumentException if a duplicate field is detected
+     */
+    private void mergeFields(DataForm target, DataForm incoming) {
+        // First pass: Validate all fields to ensure atomicity
+        // (either all fields are added, or none are)
+        for (FormField incomingField : incoming.getFields()) {
+            String fieldName = incomingField.getVariable();
+
+            // Skip FORM_TYPE - it's the same for both forms
+            if ("FORM_TYPE".equals(fieldName)) {
+                continue;
+            }
+
+            // Check if field already exists
+            FormField existingField = target.getField(fieldName);
+            if (existingField != null) {
+                // Duplicate field - throw exception to be caught by caller
+                String formType = target.getField("FORM_TYPE").getFirstValue();
+                throw new IllegalArgumentException(
+                    String.format("Duplicate field '%s' in form FORM_TYPE '%s'",
+                        fieldName, formType)
+                );
+            }
+        }
+
+        // Second pass: Add all fields (we know none are duplicates)
+        for (FormField incomingField : incoming.getFields()) {
+            String fieldName = incomingField.getVariable();
+
+            // Skip FORM_TYPE - it's the same for both forms
+            if ("FORM_TYPE".equals(fieldName)) {
+                continue;
+            }
+
+            // Add the field
+            FormField newField = target.addField(
+                incomingField.getVariable(),
+                incomingField.getLabel(),
+                incomingField.getType()
+            );
+            incomingField.getValues().forEach(newField::addValue);
+        }
+    }
+
+    /**
+     * Applies all registered extended disco info providers to a set of data forms.
+     * Creates a mutable copy of the input, applies all providers, and returns the merged result.
+     *
+     * @param existingForms The existing set of data forms (from component provider)
+     * @param targetDomain The domain of the target entity
+     * @param name The node part of the target JID
+     * @param node The requested disco node parameter
+     * @param senderJID The sender of the disco request
+     * @return A new set containing the merged forms (never null)
+     */
+    private Set<DataForm> applyExtendedDiscoInfoProviders(Set<DataForm> existingForms, String targetDomain,
+                                                           String name, String node, JID senderJID) {
+        // Create mutable copy of existing forms
+        Set<DataForm> result = new HashSet<>(existingForms != null ? existingForms : Collections.emptySet());
+
+        // Apply each registered provider
+        for (final ExtendedDiscoInfoProvider provider : extendedDiscoInfoProviders) {
+            Set<DataForm> extended = provider.getExtendedInfos(targetDomain, name, node, senderJID);
+            merge(result, extended);
+        }
+
+        return result;
     }
 
     /**
@@ -739,94 +906,21 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
 
             @Override
             public Set<DataForm> getExtendedInfos(String name, String node, JID senderJID) {
+                Set<DataForm> result = new HashSet<>();
                 if (node != null && serverNodeProviders.get(node) != null) {
                     // Redirect the request to the disco info provider of the specified node
-                    return serverNodeProviders.get(node).getExtendedInfos(name, node, senderJID);
+                    result.addAll(serverNodeProviders.get(node).getExtendedInfos(name, node, senderJID));
                 }
-                if (name == null || name.equals(XMPPServer.getInstance().getServerInfo().getXMPPDomain())) {
-                    // Answer extended info of the server itself.
-
-                    // XEP-0157 Contact addresses for XMPP Services
-                    if ( !JiveGlobals.getBooleanProperty( "admin.disable-exposure" ) )
-                    {
-                        final Collection<JID> admins = XMPPServer.getInstance().getAdmins();
-                        if ( admins == null || admins.isEmpty() )
-                        {
-                            return null;
-                        }
-
-                        final DataForm dataForm = new DataForm(DataForm.Type.result);
-
-                        final FormField fieldType = dataForm.addField();
-                        fieldType.setVariable("FORM_TYPE");
-                        fieldType.setType(FormField.Type.hidden);
-                        fieldType.addValue("http://jabber.org/network/serverinfo");
-
-                        final FormField fieldAdminAddresses = dataForm.addField();
-                        fieldAdminAddresses.setVariable("admin-addresses");
-                        fieldAdminAddresses.setType(Type.list_multi);
-
-                        final UserManager userManager = UserManager.getInstance();
-                        for ( final JID admin : admins )
-                        {
-                            fieldAdminAddresses.addValue( "xmpp:" + admin.asBareJID() );
-                            if ( admin.getDomain().equals( XMPPServer.getInstance().getServerInfo().getXMPPDomain() ) ) {
-                                try
-                                {
-                                    final String email = userManager.getUser( admin.getNode() ).getEmail();
-                                    if ( email != null && !email.trim().isEmpty() )
-                                    {
-                                        fieldAdminAddresses.addValue( "mailto:" + email );
-                                    }
-                                }
-                                catch (Exception e)
-                                {
-                                    continue;
-                                }
-                            }
-                        }
-
-                        //XEP-0232 includes extended information about Software Version in a data form
-                        final DataForm dataFormSoftwareVersion = new DataForm(DataForm.Type.result);
-
-                        final FormField fieldTypeSoftwareVersion = dataFormSoftwareVersion.addField();
-                        fieldTypeSoftwareVersion.setVariable("FORM_TYPE");
-                        fieldTypeSoftwareVersion.setType(FormField.Type.hidden);
-                        fieldTypeSoftwareVersion.addValue("urn:xmpp:dataforms:softwareinfo");
-
-                        final FormField fieldOs = dataFormSoftwareVersion.addField();
-                        fieldOs.setType(Type.text_single);
-                        fieldOs.setVariable("os");
-                        fieldOs.addValue( System.getProperty("os.name"));
-
-                        final FormField fieldOsVersion = dataFormSoftwareVersion.addField();
-                        fieldOsVersion.setType(Type.text_single);
-                        fieldOsVersion.setVariable("os_version");
-                        fieldOsVersion.addValue(System.getProperty("os.version")+" "+System.getProperty("os.arch")+" - Java " + System.getProperty("java.version"));
-
-                        final FormField fieldSoftware = dataFormSoftwareVersion.addField();
-                        fieldSoftware.setType(Type.text_single);
-                        fieldSoftware.setVariable("software");
-                        fieldSoftware.addValue(AdminConsole.getAppName());
-
-                        final FormField fieldSoftwareVersion = dataFormSoftwareVersion.addField();
-                        fieldSoftwareVersion.setType(Type.text_single);
-                        fieldSoftwareVersion.setVariable("software_version");
-                        fieldSoftwareVersion.addValue(AdminConsole.getVersionString());
-
-                        final Set<DataForm> dataForms = new HashSet<>();
-                        if (ENABLED.getValue()){
-                            dataForms.add(dataFormSoftwareVersion);
-                        }
-                        dataForms.add(dataForm);
-                        return dataForms;
-                    }
+                else if (node != null && name != null) {
+                    result.addAll(XMPPServer.getInstance().getIQPEPHandler().getExtendedInfos(name, node, senderJID));
                 }
-                if (node != null && name != null) {
-                    return XMPPServer.getInstance().getIQPEPHandler().getExtendedInfos(name, node, senderJID);
-                }
-                return Collections.emptySet();
+
+                // Note: Global ExtendedDiscoInfoProviders are now applied in handleIQ (line ~215)
+                // to avoid double-application
+
+                return result;
             }
+
         };
     }
 }

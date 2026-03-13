@@ -21,7 +21,10 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.ratelimit.NewConnectionLimiterRegistry;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.TokenBucketRateLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -175,6 +178,15 @@ public class HttpBindServlet extends HttpServlet {
 
     protected void createNewSession(AsyncContext context, HttpBindBody body) throws IOException
     {
+        // Rate limiting is applied per logical connection category (e.g., client-to-server, server-to-server),
+        // with unlimited limiters for unsupported or disabled categories.
+        final TokenBucketRateLimiter limiter = NewConnectionLimiterRegistry.getLimiter(ConnectionType.BOSH_C2S);
+        if (!limiter.tryAcquire()) {
+            NewConnectionLimiterRegistry.maybeLogRejection(ConnectionType.BOSH_C2S);
+            sendLegacyError(context, BoshBindingError.internalServerError, "Too many new connections; please try again later.");
+            return;
+        }
+
         try {
             final HttpConnection connection = new HttpConnection(body, context);
 

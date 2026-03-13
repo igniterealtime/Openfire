@@ -7,6 +7,10 @@ env:
 
 on: [push, pull_request]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
 
@@ -18,9 +22,9 @@ jobs:
         distribution: [ zulu ] # We could add more here: temurin, adopt, liberica, microsoft, corretto
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up JDK ${{ matrix.java }} ${{ matrix.distribution }}
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: ${{ matrix.java }}
           distribution: ${{ matrix.distribution }}
@@ -33,7 +37,7 @@ jobs:
             ./mvnw -B install
           fi
       - name: Upload failed test reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: Openfire Build Java ${{ matrix.java }} JUnit Test reports
@@ -43,57 +47,82 @@ jobs:
         run: tar -cf distribution-artifact.tar distribution/target/distribution-base
       - name: Upload distribution
         if: ${{ matrix.distribution == 'zulu' }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Openfire Distribution Java ${{ matrix.java }}
           path: distribution-artifact.tar
       - name: Upload coverage report for 'xmppserver' module
         if: ${{ matrix.distribution == 'zulu' && matrix.java == 17 && github.ref_name == 'main'}}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Openfire Build Java ${{ matrix.java }} Unit Test Coverage Report (for 'xmppserver' module)
           path: xmppserver/target/site/jacoco/
       - name: Temporarily stash openfire artifacts from the mvn repo for later jobs
         if: ${{ matrix.distribution == 'zulu' && matrix.java == 17 }}
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Maven Repository
           path: ~/.m2/repository/org/igniterealtime/openfire/
           retention-days: 1
 
 
+  build-docker:
+
+    name: Build Docker image
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Compute Docker cache key hash
+        id: cache-hash
+        run: echo "hash=${{ hashFiles('**/pom.xml', 'Dockerfile', 'build/docker/entrypoint.sh') }}" >> $GITHUB_OUTPUT
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          load: true
+          tags: ${{ env.IMAGE_NAME }}:ci-${{ github.sha }}
+          cache-from: type=gha,scope=openfire-${{ steps.cache-hash.outputs.hash }}
+          cache-to: type=gha,mode=max,scope=openfire-${{ steps.cache-hash.outputs.hash }}-${{ github.sha }}
+
+      - name: Save Docker image to tar archive
+        run: docker save ${{ env.IMAGE_NAME }}:ci-${{ github.sha }} | gzip > openfire-docker-image.tar.gz
+
+      - name: Upload Docker image archive
+        uses: actions/upload-artifact@v7
+        with:
+          name: Openfire Docker Image
+          path: openfire-docker-image.tar.gz
+          retention-days: 1
+
+
   integration:
     name: Execute Integration CI tests
     runs-on: ubuntu-latest
-    needs: build
-    permissions:
-      contents: read
-      packages: read
-
+    needs: build-docker
     steps:
-      # The first 2 steps (checking out, and building from Openfire Dockerfile)
-      # can be removed when the docker image is published to a registry.
-      # This 'integration' job should then need the 'build-and-push-docker' job as a dependency.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Compute pom.xml hash for Docker cache key
-        id: pom-hash
-        run: echo "hash=${{ hashFiles('**/pom.xml') }}" >> $GITHUB_OUTPUT
-
-      - name: Build Docker image (cached)
-        uses: docker/build-push-action@v6
+      - name: Download Docker image archive
+        uses: actions/download-artifact@v8
         with:
-          context: .
-          load: true                 # makes image available locally
-          tags: openfire:latest
-          cache-from: type=gha,scope=openfire-${{ steps.pom-hash.outputs.hash }}
-          cache-to: type=gha,mode=max,scope=openfire-${{ steps.pom-hash.outputs.hash }}
+          name: Openfire Docker Image
+          path: .
+
+      - name: Load Docker image
+        run: |
+          docker load < openfire-docker-image.tar.gz
+          docker tag ${{ env.IMAGE_NAME }}:ci-${{ github.sha }} openfire:latest
 
       - name: Checkout Integration Tests
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: igniterealtime/openfire-integration-tests
           path: openfire-integration-tests
@@ -104,7 +133,7 @@ jobs:
           git submodule update --init
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
           java-version: '17'
@@ -115,7 +144,7 @@ jobs:
         run: ./mvnw -B verify
 
       - name: Upload test reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
           name: Integration Test Reports
@@ -129,21 +158,21 @@ jobs:
 
     steps:
       - name: Checkout local actions (that are invoked in the 'startCIServer' and 'stopCIServer' steps) # Do this _before_ untarring the distribution, as the checkout will empty the directory prior to the checkout!
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           sparse-checkout: |
             .github
       - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: Openfire Distribution Java 17
           path: .
       - name: untar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
         run: tar -xf distribution-artifact.tar
       - name: Checkout aioxmpp devel/head
-        run: git clone https://codeberg.org/jssfr/aioxmpp.git aioxmpp
+        run: git clone --depth 1 https://codeberg.org/jssfr/aioxmpp.git aioxmpp
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.11
           check-latest: true # attempt to prevent to use 3.11.3 by enticing the runner to update (to something later)
@@ -185,7 +214,7 @@ jobs:
           if [ ${PIPESTATUS[0]} -ne 0 ]; then false; fi;
       - name: Expose test output
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Aioxmpp Test Output
           path: aioxmpp/output
@@ -194,7 +223,7 @@ jobs:
         uses: ./.github/actions/stopserver-action
       - name: Expose openfire output
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: Aioxmpp Test Openfire logs
           path: distribution/target/distribution-base/logs/*
@@ -228,12 +257,12 @@ jobs:
 
     steps:
       - name: Checkout local actions (that are invoked in the 'startCIServer' and 'stopCIServer' steps) # Do this _before_ untarring the distribution, as the checkout will empty the directory prior to the checkout!
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           sparse-checkout: |
             .github
       - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: Openfire Distribution Java 17
           path: .
@@ -250,19 +279,19 @@ jobs:
         if: ${{ always() && steps.startCIServer.conclusion == 'success' }} # TODO figure out if this is correct. The intent is to have the server stopped if it was successfully started, even if the tests fail. Failing tests should still cause the job to fail.
         uses: ./.github/actions/stopserver-action
 
-  smack:
-    name: Execute Smack-based CI tests
+  xitf:
+    name: Execute XMPP Interop Testing Framework
     runs-on: ubuntu-latest
     needs: build
 
     steps:
       - name: Checkout local actions (that are invoked in the 'startCIServer' and 'stopCIServer' steps) # Do this _before_ untarring the distribution, as the checkout will empty the directory prior to the checkout!
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           sparse-checkout: |
             .github
       - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: Openfire Distribution Java 17
           path: .
@@ -273,8 +302,8 @@ jobs:
         uses: ./.github/actions/startserver-action
         with:
           logLevel: debug
-      - name: Run Smack tests against server
-        uses: XMPP-Interop-Testing/xmpp-interop-tests-action@main # TODO replace 'main' with a proper versioned tag, like 'v1'.
+      - name: Run XMPP Interop Testing Framework tests against server
+        uses: XMPP-Interop-Testing/xmpp-interop-tests-action@v1.7.2
         with:
           domain: 'example.org'
           adminAccountUsername: 'admin'
@@ -293,7 +322,7 @@ jobs:
       check: ${{ steps.filter.outputs.database-relevant-files }}
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Check for differences
         uses: dorny/paths-filter@v3
         id: filter
@@ -307,6 +336,33 @@ jobs:
               - 'xmppserver/src/main/java/org/jivesoftware/database/**'
 
 
+  xcheck-database-version:
+    name: Cross check that any new database upgrades match the code version
+    needs: [should-do-database-tests, check_branch]
+    runs-on: ubuntu-latest
+    if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
+    steps:
+      - name: Checkout Openfire
+        uses: actions/checkout@v6
+      - name: Cross check DATABASE_VERSION
+        run: |
+          set -e
+          CODE_SAYS=$(grep 'int DATABASE_VERSION =' xmppserver/src/main/java/org/jivesoftware/database/SchemaManager.java | sed -e 's/.*= //' -e 's/;//')
+          NEXT=$((CODE_SAYS + 1))
+          for dbname in db2 hsqldb mysql oracle postgresql sqlserver sybase; do
+            # Ensure that a file exists for CODE_SAYS
+            if [ ! -f distribution/src/database/upgrade/${CODE_SAYS}/openfire_${dbname}.sql ]; then
+              echo "ERROR: Expected to find a database upgrade script for ${dbname} and version ${CODE_SAYS}, but no such file exists."
+              exit 1
+            fi
+          done
+          # Ensure that the next increment does not have a directory
+          if [ -d distribution/src/database/upgrade/${NEXT} ]; then
+            echo "ERROR: Found a directory for the next database version ${NEXT}, but the code still says ${CODE_SAYS}. Please increment the DATABASE_VERSION in SchemaManager.java."
+            exit 1
+          fi
+
+
   hsqldb-install:
     name: Test HSQLDB install script
     needs: [build, should-do-database-tests, check_branch]
@@ -314,15 +370,15 @@ jobs:
     if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up JDK 17 Zulu
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: 17
           distribution: zulu
           cache: maven
       - name: Restore mvn repo artifacts from build job
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: Maven Repository
           path: ~/.m2/repository/org/igniterealtime/openfire/
@@ -352,15 +408,15 @@ jobs:
     if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up JDK 17 Zulu
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: 17
           distribution: zulu
           cache: maven
       - name: Restore mvn repo artifacts from build job
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: Maven Repository
           path: ~/.m2/repository/org/igniterealtime/openfire/
@@ -397,15 +453,15 @@ jobs:
     if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up JDK 17 Zulu
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: 17
           distribution: zulu
           cache: maven
       - name: Restore mvn repo artifacts from build job
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: Maven Repository
           path: ~/.m2/repository/org/igniterealtime/openfire/
@@ -436,15 +492,15 @@ jobs:
     if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up JDK 17 Zulu
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: 17
           distribution: zulu
           cache: maven
       - name: Restore mvn repo artifacts from build job
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: Maven Repository
           path: ~/.m2/repository/org/igniterealtime/openfire/
@@ -476,15 +532,15 @@ jobs:
     if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up JDK 17 Zulu
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: 17
           distribution: zulu
           cache: maven
       - name: Restore mvn repo artifacts from build job
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: Maven Repository
           path: ~/.m2/repository/org/igniterealtime/openfire/
@@ -513,15 +569,15 @@ jobs:
     if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up JDK 17 Zulu
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: 17
           distribution: zulu
           cache: maven
       - name: Restore mvn repo artifacts from build job
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: Maven Repository
           path: ~/.m2/repository/org/igniterealtime/openfire/
@@ -553,15 +609,15 @@ jobs:
     if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up JDK 17 Zulu
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: 17
           distribution: zulu
           cache: maven
       - name: Restore mvn repo artifacts from build job
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: Maven Repository
           path: ~/.m2/repository/org/igniterealtime/openfire/
@@ -592,15 +648,15 @@ jobs:
     if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up JDK 17 Zulu
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: 17
           distribution: zulu
           cache: maven
       - name: Restore mvn repo artifacts from build job
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: Maven Repository
           path: ~/.m2/repository/org/igniterealtime/openfire/
@@ -634,15 +690,15 @@ jobs:
     if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up JDK 17 Zulu
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: 17
           distribution: zulu
           cache: maven
       - name: Restore mvn repo artifacts from build job
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: Maven Repository
           path: ~/.m2/repository/org/igniterealtime/openfire/
@@ -673,15 +729,15 @@ jobs:
     if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
     steps:
       - name: Checkout Openfire
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Set up JDK 17 Zulu
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: 17
           distribution: zulu
           cache: maven
       - name: Restore mvn repo artifacts from build job
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: Maven Repository
           path: ~/.m2/repository/org/igniterealtime/openfire/
@@ -711,17 +767,17 @@ jobs:
   publish-maven:
     name: Publish to Maven
     runs-on: ubuntu-latest
-    needs: [aioxmpp, connectivity, smack, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
+    needs: [aioxmpp, connectivity, integration, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
     if: ${{github.repository == 'igniterealtime/Openfire' && github.event_name == 'push' && needs.check_branch.outputs.is_publishable_branch == 'true'}}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # Defend against another commit quickly following the first
           # We want the one that's been tested, rather than the head of main
           ref: ${{ github.event.push.after }}
       - name: Set up Java for publishing
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           java-version: 17
           distribution: zulu
@@ -735,10 +791,10 @@ jobs:
           IGNITE_REALTIME_MAVEN_USERNAME: ${{ secrets.IGNITE_REALTIME_MAVEN_USERNAME }}
           IGNITE_REALTIME_MAVEN_PASSWORD: ${{ secrets.IGNITE_REALTIME_MAVEN_PASSWORD }}
 
-  build-and-push-docker:
+  publish-docker:
     name: Publish to GitHub's Docker registry
     runs-on: ubuntu-latest
-    needs: [aioxmpp, connectivity, smack, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
+    needs: [build-docker, aioxmpp, connectivity, integration, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
     if: |
       github.event_name == 'push' && 
       (contains(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
@@ -751,10 +807,19 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+
+      - name: Download Docker image archive
+        uses: actions/download-artifact@v8
+        with:
+          name: Openfire Docker Image
+          path: .
+
+      - name: Load Docker image
+        run: docker load < openfire-docker-image.tar.gz
 
       - name: Log in to the Container registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -762,38 +827,41 @@ jobs:
 
       - name: Extract metadata (tags, labels) for image registry
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/igniterealtime/${{ env.IMAGE_NAME }}
 
-      - name: Build and push Docker image
+      - name: Retag and push final image
         id: push
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+        run: |
+          FIRST_TAG=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
+          docker tag ${{ env.IMAGE_NAME }}:ci-${{ github.sha }} $FIRST_TAG
+          DIGEST=$(docker push $FIRST_TAG | grep -oP 'digest: \K\S+')
+          for tag in $(echo "${{ steps.meta.outputs.tags }}" | tail -n +2); do
+            docker tag $FIRST_TAG $tag
+            docker push $tag
+          done
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
 
       - name: Generate artifact attestation
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
-          subject-name: ${{ env.REGISTRY }}/igniterealtime/${{ env.IMAGE_NAME}}
+          subject-name: ${{ env.REGISTRY }}/igniterealtime/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.push.outputs.digest }}
           push-to-registry: true
 
   build-deb-artifact:
     name: Generate DEB artifact
     runs-on: ubuntu-latest
-    needs: [build]
+    needs: [aioxmpp, connectivity, integration, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # Defend against another commit quickly following the first
           # We want the one that's been tested, rather than the head of main
           ref: ${{ github.event.push.after }}
       - name: Download distribution artifact from build job.
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: Openfire Distribution Java 17
           path: .

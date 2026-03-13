@@ -360,9 +360,9 @@
             <version>1.6.2</version>
         </dependency>
         <dependency>
-            <groupId>jmdns</groupId>
+            <groupId>org.jmdns</groupId>
             <artifactId>jmdns</artifactId>
-            <version>1.0</version>
+            <version>3.6.3</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>

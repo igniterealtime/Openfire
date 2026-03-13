@@ -108,17 +108,17 @@ public class MulticastDNSService extends BasicModule {
                 }
                 try {
                     if (jmdns == null) {
-                        jmdns = new JmDNS();
+                        jmdns = JmDNS.create();
                     }
                     String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
 
                     if (clientPortNum != -1) {
-                        ServiceInfo clientService = new ServiceInfo("_xmpp-client._tcp.local.",
+                        ServiceInfo clientService = ServiceInfo.create("_xmpp-client._tcp.local.",
                                 serverName + "._xmpp-client._tcp.local.", clientPortNum, "XMPP Server");
                         jmdns.registerService(clientService);
                     }
                     if (componentPortNum != -1) {
-                        ServiceInfo componentService = new ServiceInfo("_xmpp-component._tcp.local.",
+                        ServiceInfo componentService = ServiceInfo.create("_xmpp-component._tcp.local.",
                                 serverName +  "._xmpp-component._tcp.local.", componentPortNum, "XMPP Component Server");
                         jmdns.registerService(componentService);
                     }

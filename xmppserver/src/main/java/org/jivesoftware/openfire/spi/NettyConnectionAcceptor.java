@@ -21,9 +21,10 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.MultiThreadIoEventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
@@ -133,7 +134,7 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
         .setMaxValue(Duration.ofSeconds(Integer.MAX_VALUE))
         .build();
 
-    // NioEventLoopGroup is a multithreaded event loop that handles I/O operation.
+    // MultiThreadIoEventLoopGroup is a multithreaded event loop that handles I/O operation.
     // The first one, often called 'boss', accepts an incoming connection.
     // The second one, often called 'worker', handles the traffic of the accepted connection once the boss
     // accepts the connection and registers the accepted connection to the worker. How many Threads are
@@ -194,10 +195,10 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
 
         // The configuration of threads is based on defaults used by io.netty.util.concurrent.DefaultThreadFactory (OF-3028)
         final ThreadFactory acceptorGroupThreadFactory = new NamedThreadFactory(name + "-acceptor-", null, false, Thread.NORM_PRIORITY);
-        acceptorGroup = new NioEventLoopGroup(acceptorGroupThreadFactory);
+        acceptorGroup = new MultiThreadIoEventLoopGroup(acceptorGroupThreadFactory, NioIoHandler.newFactory());
 
         final ThreadFactory ioWorkerGroupThreadFactory = new NamedThreadFactory(name + "-worker-", null, false, Thread.NORM_PRIORITY);
-        ioWorkerGroup = new NioEventLoopGroup(ioWorkerGroupThreadFactory);
+        ioWorkerGroup = new MultiThreadIoEventLoopGroup(ioWorkerGroupThreadFactory, NioIoHandler.newFactory());
 
         final ThreadFactory blockingHandlerGroupThreadFactory = new NamedThreadFactory(name + "-handler-", null, false, Thread.NORM_PRIORITY);
         blockingHandlerExecutor = new DefaultEventExecutorGroup(configuration.getMaxThreadPoolSize(), blockingHandlerGroupThreadFactory);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2018-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,7 +144,7 @@ public class SocketUtil
                 final HappyEyeballsResolver resolver = new HappyEyeballsResolver(new LinkedList<>(prioritySet), preferIpv4, RESOLUTION_DELAY.getValue());
                 try {
                     resolver.start();
-                    while (!resolver.isDone() && !executor.isTerminating() && !executor.isTerminated() && !executor.isShutdown() && Instant.now().isBefore(deadline)) {
+                    while (!resolver.isExhausted() && !executor.isTerminating() && !executor.isTerminated() && !executor.isShutdown() && Instant.now().isBefore(deadline)) {
                         final ResolvedServiceAddress resolvedAddress = resolver.getNext(); // Blocks.
                         Log.trace("Next resolved address for '{}': {}", xmppDomain, resolvedAddress);
                         if (resolvedAddress == null) {

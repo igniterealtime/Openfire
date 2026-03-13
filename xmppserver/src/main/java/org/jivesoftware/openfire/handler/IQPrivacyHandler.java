@@ -347,13 +347,13 @@ public class IQPrivacyHandler extends IQHandler
             // Update existing list
             list.updateList(listElement);
             provider.updatePrivacyList(from.getNode(), list);
-            // Make sure that existing user sessions that are using the updated list are poining
+            // Make sure that existing user sessions that are using the updated list are pointing
             // to the updated instance. This may happen since PrivacyListManager uses a Cache that
             // may expire so it's possible to have many instances representing the same privacy
             // list. Therefore, if a list is modified then we need to make sure that all
             // instances are replaced with the updated instance. An OR Mapping Tool would have
             // avoided this issue since identity is ensured.
-            for (ClientSession session : sessionManager.getSessions(from.getNode())) {
+            for (ClientSession session : sessionManager.getSessions(from.asBareJID())) {
                 if (list.equals(session.getDefaultList())) {
                     session.setDefaultList(list);
                 }
@@ -387,7 +387,7 @@ public class IQPrivacyHandler extends IQHandler
         else {
             currentSession = sessionManager.getSession(from);
             // Check if the list is being used by another session
-            for (ClientSession session : sessionManager.getSessions(from.getNode())) {
+            for (ClientSession session : sessionManager.getSessions(from.asBareJID())) {
                 if (currentSession == session) {
                     // Ignore the active session for this checking
                     continue;

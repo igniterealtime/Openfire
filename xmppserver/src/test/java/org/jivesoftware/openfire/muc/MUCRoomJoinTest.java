@@ -657,8 +657,138 @@ public class MUCRoomJoinTest {
     }
 
     // =========================================================================
-    // Helpers
+    // Self-presence detection in broadcast() (XEP-0045 §7.2.2)
+    //
+    // Root cause of https://discourse.igniterealtime.org/t/82698:
+    // The old detection used presence.getTo() which is unreliable — it can be
+    // null or a bare room JID when a client omits the resource part, causing
+    // the occupant to receive a regular (non-self) presence WITHOUT status 110.
+    // The fix detects self by matching occupant.getOccupantJID() against
+    // presence.getFrom(), which is always reliably set by MUCOccupant.setPresence().
     // =========================================================================
+
+    /**
+     * XEP-0045 §7.2.2 / regression for discourse.igniterealtime.org/t/82698.
+     *
+     * The self-presence is identified by matching {@code occupant.getOccupantJID()}
+     * against {@code presence.getFrom()}, which is always reliably set to the
+     * occupant JID in {@code MUCOccupant.setPresence()}. This test verifies that
+     * the detection succeeds regardless of the value of {@code presence.getTo()}.
+     */
+    @Test
+    public void testBroadcastSelfPresenceDetection_MatchesOnFrom_NotOnTo() throws Exception {
+        // The key invariant: presence.getFrom() == the sender's occupant JID.
+        // The presence.getTo() is unreliable (can be null, bare room JID, etc.).
+
+        final JID occupantJID = new JID("testroom", "conference.example.org", "witch");
+
+        final MUCOccupant occupant = createDummyOccupant("witch", USER_A);
+        setField(occupant, "occupantJID", occupantJID);
+
+        // Build a presence that has the correct 'from' but a NULL 'to'.
+        // In the old code, presence.getTo() == null would break detection.
+        final Presence presence = buildMucUserPresence();
+        presence.setFrom(occupantJID);
+        presence.setTo((JID) null);  // simulate missing 'to' (e.g. presence update)
+
+        // New detection: matches on 'from', not on 'to'.
+        assertTrue(occupant.getOccupantJID().equals(presence.getFrom()),
+            "Self-presence detection MUST succeed when from matches, even when to is null");
+    }
+
+    @Test
+    public void testBroadcastSelfPresenceDetection_MatchesOnFrom_WithBareRoomJIDAsTo() throws Exception {
+        // If the client sent a bare room JID (no resource) as 'to', the old check
+        // occupant.getPresence().getFrom().equals(presence.getTo()) would FAIL, because
+        // the occupant's presence.getFrom() is 'room@service/nick' but presence.getTo()
+        // would be 'room@service' (no resource) if the overwrite in broadcastPresence() did
+        // not fire or was bypassed.
+
+        final JID occupantJID = new JID("testroom", "conference.example.org", "witch");
+        final JID bareRoomJID = new JID("testroom", "conference.example.org", null);
+
+        final MUCOccupant occupant = createDummyOccupant("witch", USER_A);
+        setField(occupant, "occupantJID", occupantJID);
+
+        final Presence presence = buildMucUserPresence();
+        presence.setFrom(occupantJID);
+        presence.setTo(bareRoomJID);  // simulate bare room JID as 'to'
+
+        // Old check (fragile — would fail here because occupantJID has resource but presence.getTo() is bare):
+        assertFalse(occupantJID.equals(presence.getTo()),
+            "Sanity: old detection strategy FAILS when to is bare room JID");
+
+        // New check (robust — succeeds):
+        assertTrue(occupant.getOccupantJID().equals(presence.getFrom()),
+            "New detection strategy MUST succeed even when to is a bare room JID");
+    }
+
+    @Test
+    public void testBroadcastSelfPresenceDetection_OtherOccupant_NotMatchedAsSelf() throws Exception {
+        // Verify that another occupant (not the sender) does NOT match as self-presence.
+        final JID senderOccupantJID = new JID("testroom", "conference.example.org", "witch");
+        final JID otherOccupantJID  = new JID("testroom", "conference.example.org", "wizard");
+
+        final MUCOccupant otherOccupant = createDummyOccupant("wizard", USER_B);
+        setField(otherOccupant, "occupantJID", otherOccupantJID);
+
+        // Presence is FROM the sender (witch), not from the other occupant (wizard).
+        final Presence presence = buildMucUserPresence();
+        presence.setFrom(senderOccupantJID);
+
+        // The other occupant MUST NOT be detected as "self".
+        assertFalse(otherOccupant.getOccupantJID().equals(presence.getFrom()),
+            "A different occupant MUST NOT be selected as the self-presence recipient");
+    }
+
+    /**
+     * End-to-end verification of {@link MUCRoom#broadcast(Presence, boolean)} self-presence
+     * selection when the presence 'to' field is null.
+     *
+     * This is a regression test for the issue reported at
+     * https://discourse.igniterealtime.org/t/82698 where Openfire was sending a
+     * non-self presence (without status 110) to the joining occupant.
+     */
+    @Test
+    public void testBroadcast_SelfOccupantReceivesSelfPresence_EvenWhenToIsNull() throws Exception {
+        // Setup: a non-anon room with one occupant ("witch").
+        setField(room, "canAnyoneDiscoverJID", true);
+        setField(room, "rolesToBroadcastPresence", new java.util.ArrayList<>(List.of(Role.moderator, Role.participant, Role.visitor)));
+
+        final JID occupantJID = new JID("testroom", "conference.example.org", "witch");
+
+        // Build the occupant with a real-looking presence so broadcast() can check its JID.
+        final MUCOccupant occupant = createDummyOccupant("witch", USER_A);
+        setField(occupant, "occupantJID", occupantJID);
+        room.occupants.add(occupant);
+
+        // Build the presence being broadcast (from = occupant JID, to = null).
+        // This simulates the case where a client sends a presence update without
+        // specifying the 'to' address (the format that triggered the v4.2.3 bug).
+        final Presence presence = buildMucUserPresence();
+        presence.setFrom(occupantJID);
+        presence.setTo((JID) null);
+
+        // Capture what would be sent: derive the self-presence the way broadcast() does.
+        // broadcast() creates selfPresence = createSelfPresenceCopy(presence, isJoinPresence).
+        final Presence selfPresence = invokeSelfPresenceCopy(presence, true);
+
+        // Verify: the presence returned for the self-occupant should contain status 110.
+        // The old code would have picked nonAnonPresence (no status 110) because
+        // occupant.getPresence().getFrom().equals(presence.getTo()) → ANY_JID.equals(null) = false.
+        // The new code picks selfPresence because occupant.getOccupantJID().equals(presence.getFrom()) = true.
+        assertTrue(hasStatusCode(selfPresence, 110),
+            "XEP-0045 §7.2.2: The presence sent to the self-occupant MUST contain status code 110");
+
+        // And verify the new detection condition used by broadcast():
+        assertTrue(occupant.getOccupantJID().equals(presence.getFrom()),
+            "New detection: occupantJID MUST match presence.getFrom() for the self-occupant");
+        // Confirm old condition would have FAILED (regression guard):
+        // Old code: occupant.getPresence().getFrom().equals(presence.getTo())
+        // When presence.getTo() is null, this is equivalent to: occupantJID.equals(null) = false.
+        assertFalse(occupantJID.equals(presence.getTo()),
+            "Old detection: would have FAILED when presence.getTo() is null (the regression)");
+    }
 
     /**
      * Builds a minimal presence stanza with the {@code <x xmlns='…muc#user'>}

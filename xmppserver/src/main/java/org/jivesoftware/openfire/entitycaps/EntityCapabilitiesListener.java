@@ -25,7 +25,7 @@ import java.util.Set;
  * for events.
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
- * @see <a href="https://xmpp.org/extensions/xep-0115.html>XEP-0115: Entity Capabilities</a>
+ * @see <a href="https://xmpp.org/extensions/xep-0115.html">XEP-0115: Entity Capabilities</a>
  */
 public interface EntityCapabilitiesListener
 {

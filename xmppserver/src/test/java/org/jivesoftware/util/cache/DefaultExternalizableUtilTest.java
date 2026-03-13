@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2020-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.jivesoftware.util.cache;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
@@ -55,7 +54,7 @@ public class DefaultExternalizableUtilTest
         final Map<String, String> result = new DefaultExternalizableUtil().readStringMap(bus.getDataInput());
 
         // Verify result.
-        assertTrue(areEqualString(input, result ));
+        assertEquals(input, result);
     }
 
     /**
@@ -75,7 +74,7 @@ public class DefaultExternalizableUtilTest
         final Map<String, String> result = new DefaultExternalizableUtil().readStringMap(bus.getDataInput());
 
         // Verify result.
-        assertTrue(areEqualString(input, result ));
+        assertEquals(input, result);
     }
 
     /**
@@ -93,7 +92,22 @@ public class DefaultExternalizableUtilTest
         final Map<String, String> result = new DefaultExternalizableUtil().readStringMap(bus.getDataInput());
 
         // Verify result.
-        assertTrue(areEqualString(input, result ));
+        assertEquals(input, result);
+    }
+
+    /**
+     * Asserts that writing a null map of Strings through the {@link DefaultExternalizableUtil} implementation
+     * and reading it back results in null.
+     */
+    @Test
+    public void testWriteReadStringMapNull() throws Exception
+    {
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeStringMap(bus.getDataOutput(), null);
+        final Map<String, String> result = new DefaultExternalizableUtil().readStringMap(bus.getDataInput());
+
+        // Verify result.
+        assertNull(result);
     }
 
     /**
@@ -122,7 +136,7 @@ public class DefaultExternalizableUtilTest
 
         // Verify result.
         assertEquals(2, reportedCount);
-        assertTrue(areEqualStrings(input, result));
+        assertEquals(input, result);
     }
 
     /**
@@ -148,7 +162,7 @@ public class DefaultExternalizableUtilTest
 
         // Verify result.
         assertEquals(2, reportedCount);
-        assertTrue(areEqualStrings(input, result));
+        assertEquals(input, result);
     }
 
     /**
@@ -178,7 +192,7 @@ public class DefaultExternalizableUtilTest
 
         // Verify result.
         assertEquals(2, reportedCount);
-        assertTrue(areEqualStrings(input, result));
+        assertEquals(input, result);
     }
 
     /**
@@ -198,7 +212,7 @@ public class DefaultExternalizableUtilTest
 
         // Verify result.
         assertEquals(0, reportedCount);
-        assertTrue(areEqualStrings(input, result));
+        assertEquals(input, result);
     }
 
     /**
@@ -218,7 +232,7 @@ public class DefaultExternalizableUtilTest
         final Map<Long, Integer> result = new DefaultExternalizableUtil().readLongIntMap(bus.getDataInput());
 
         // Verify result.
-        assertTrue(areEqualLongInt(input, result ));
+        assertEquals(input, result);
     }
 
     /**
@@ -238,7 +252,7 @@ public class DefaultExternalizableUtilTest
         final Map<Long, Integer> result = new DefaultExternalizableUtil().readLongIntMap(bus.getDataInput());
 
         // Verify result.
-        assertTrue(areEqualLongInt(input, result ));
+        assertEquals(input, result);
     }
 
     /**
@@ -256,7 +270,7 @@ public class DefaultExternalizableUtilTest
         final Map<Long, Integer> result = new DefaultExternalizableUtil().readLongIntMap(bus.getDataInput());
 
         // Verify result.
-        assertTrue(areEqualLongInt(input, result ));
+        assertEquals(input, result);
     }
 
     /**
@@ -337,7 +351,7 @@ public class DefaultExternalizableUtilTest
 
     /**
      * Asserts that the process of writing and reading an Array of Long through the {@link DefaultExternalizableUtil}
-     * implementation results in a value that is equal to the original input, when the array is empty
+     * implementation results in a value that is equal to the original input, when the array is empty.
      */
     @Test
     public void testWriteReadLongArrayEmpty() throws Exception
@@ -353,6 +367,20 @@ public class DefaultExternalizableUtilTest
         assertArrayEquals( input, result );
     }
 
+    /**
+     * Asserts that writing a null long array through the {@link DefaultExternalizableUtil} implementation
+     * and reading it back results in null.
+     */
+    @Test
+    public void testWriteReadLongArrayNull() throws Exception
+    {
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeLongArray(bus.getDataOutput(), null);
+        final long[] result = new DefaultExternalizableUtil().readLongArray(bus.getDataInput());
+
+        // Verify result.
+        assertNull(result);
+    }
 
     /**
      * Asserts that the process of writing and reading a long value through the {@link DefaultExternalizableUtil}
@@ -370,6 +398,21 @@ public class DefaultExternalizableUtilTest
 
         // Verify result.
         assertEquals( input, result );
+    }
+
+    /**
+     * Asserts that writing and reading Long.MAX_VALUE through the {@link DefaultExternalizableUtil}
+     * implementation results in a value that is equal to the original input.
+     */
+    @Test
+    public void testWriteReadLongMaxValue() throws Exception
+    {
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeLong(bus.getDataOutput(), Long.MAX_VALUE);
+        final long result = new DefaultExternalizableUtil().readLong(bus.getDataInput());
+
+        // Verify result.
+        assertEquals(Long.MAX_VALUE, result);
     }
 
     /**
@@ -409,6 +452,21 @@ public class DefaultExternalizableUtilTest
     }
 
     /**
+     * Asserts that writing a null byte array through the {@link DefaultExternalizableUtil} implementation
+     * and reading it back results in null.
+     */
+    @Test
+    public void testWriteReadByteArrayNull() throws Exception
+    {
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeByteArray(bus.getDataOutput(), null);
+        final byte[] result = new DefaultExternalizableUtil().readByteArray(bus.getDataInput());
+
+        // Verify result.
+        assertNull(result);
+    }
+
+    /**
      * Asserts that the process of writing and reading an int value through the {@link DefaultExternalizableUtil}
      * implementation results in a value that is equal to the original input.
      */
@@ -427,21 +485,63 @@ public class DefaultExternalizableUtilTest
     }
 
     /**
-     * Asserts that the process of writing and reading a boolean value through the {@link DefaultExternalizableUtil}
-     * implementation results in a value that is equal to the original input.
+     * Asserts that writing and reading Integer.MIN_VALUE through the {@link DefaultExternalizableUtil}
+     * implementation results in a value equal to the original input.
      */
     @Test
-    public void testWriteReadBoolean() throws Exception
+    public void testWriteReadIntMinValue() throws Exception
     {
-        // Setup fixture.
-        final boolean input = true;
-
         // Execute system under test.
-        new DefaultExternalizableUtil().writeBoolean(bus.getDataOutput(), input);
+        new DefaultExternalizableUtil().writeInt(bus.getDataOutput(), Integer.MIN_VALUE);
+        final int result = new DefaultExternalizableUtil().readInt(bus.getDataInput());
+
+        // Verify result.
+        assertEquals(Integer.MIN_VALUE, result);
+    }
+
+    /**
+     * Asserts that writing and reading Integer.MAX_VALUE through the {@link DefaultExternalizableUtil}
+     * implementation results in a value equal to the original input.
+     */
+    @Test
+    public void testWriteReadIntMaxValue() throws Exception
+    {
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeInt(bus.getDataOutput(), Integer.MAX_VALUE);
+        final int result = new DefaultExternalizableUtil().readInt(bus.getDataInput());
+
+        // Verify result.
+        assertEquals(Integer.MAX_VALUE, result);
+    }
+
+    /**
+     * Asserts that the process of writing and reading a boolean value of {@code true} through the
+     * {@link DefaultExternalizableUtil} implementation results in a value that is equal to the original input.
+     */
+    @Test
+    public void testWriteReadBooleanTrue() throws Exception
+    {
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeBoolean(bus.getDataOutput(), true);
         final boolean result = new DefaultExternalizableUtil().readBoolean(bus.getDataInput());
 
         // Verify result.
-        assertEquals( input, result );
+        assertTrue(result);
+    }
+
+    /**
+     * Asserts that the process of writing and reading a boolean value of {@code false} through the
+     * {@link DefaultExternalizableUtil} implementation results in a value that is equal to the original input.
+     */
+    @Test
+    public void testWriteReadBooleanFalse() throws Exception
+    {
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeBoolean(bus.getDataOutput(), false);
+        final boolean result = new DefaultExternalizableUtil().readBoolean(bus.getDataInput());
+
+        // Verify result.
+        assertFalse(result);
     }
 
     /**
@@ -460,6 +560,21 @@ public class DefaultExternalizableUtilTest
 
         // Verify result.
         assertEquals( input, result );
+    }
+
+    /**
+     * Asserts that writing a null Serializable through the {@link DefaultExternalizableUtil} implementation
+     * and reading it back results in null.
+     */
+    @Test
+    public void testWriteReadSerializableNull() throws Exception
+    {
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeSerializable(bus.getDataOutput(), null);
+        final Serializable result = new DefaultExternalizableUtil().readSerializable(bus.getDataInput());
+
+        // Verify result.
+        assertNull(result);
     }
 
     /**
@@ -501,104 +616,429 @@ public class DefaultExternalizableUtilTest
     }
 
     /**
-     * Asserts that the process of writing and reading a collection of Externalizable objects through the {@link DefaultExternalizableUtil}
-     * implementation results in a value that is equal to the original input.
+     * Asserts that writing a null String through the {@link DefaultExternalizableUtil} implementation
+     * and reading it back results in null.
      */
-    @Test @Disabled
+    @Test
+    public void testWriteReadSafeUTFNull() throws Exception
+    {
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeSafeUTF(bus.getDataOutput(), null);
+        final String result = new DefaultExternalizableUtil().readSafeUTF(bus.getDataInput());
+
+        // Verify result.
+        assertNull(result);
+    }
+
+    /**
+     * Asserts that the process of writing and reading a collection of Externalizable objects through the
+     * {@link DefaultExternalizableUtil} implementation results in a value that is equal to the original input.
+     */
+    @Test
     public void testWriteReadExternalizableCollection() throws Exception
     {
-        // TODO implement me (and variants for collections that are empty or contain null values).
+        // Setup fixture.
+        final List<TestExternalizable> input = new ArrayList<>();
+        input.add(new TestExternalizable("alpha"));
+        input.add(new TestExternalizable("beta"));
+
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeExternalizableCollection(bus.getDataOutput(), input);
+        final List<TestExternalizable> result = new ArrayList<>();
+        final int reportedCount = new DefaultExternalizableUtil().readExternalizableCollection(
+            bus.getDataInput(), result, getClass().getClassLoader());
+
+        // Verify result.
+        assertEquals(2, reportedCount);
+        assertEquals(input, result);
     }
 
     /**
-     * Asserts that the process of writing and reading a collection of Serializable objects through the {@link DefaultExternalizableUtil}
-     * implementation results in a value that is equal to the original input.
+     * Asserts that the process of writing and reading a collection of Externalizable objects through the
+     * {@link DefaultExternalizableUtil} implementation results in a value that is equal to the original input,
+     * when the collection is empty.
      */
-    @Test @Disabled
+    @Test
+    public void testWriteReadExternalizableCollectionEmpty() throws Exception
+    {
+        // Setup fixture.
+        final List<TestExternalizable> input = new ArrayList<>();
+
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeExternalizableCollection(bus.getDataOutput(), input);
+        final List<TestExternalizable> result = new ArrayList<>();
+        final int reportedCount = new DefaultExternalizableUtil().readExternalizableCollection(
+            bus.getDataInput(), result, getClass().getClassLoader());
+
+        // Verify result.
+        assertEquals(0, reportedCount);
+        assertEquals(input, result);
+    }
+
+    /**
+     * Asserts that the process of writing and reading a collection of Externalizable objects through the
+     * {@link DefaultExternalizableUtil} implementation results in a value that is equal to the original input,
+     * when the collection contains a null value.
+     */
+    @Test
+    public void testWriteReadExternalizableCollectionNullValue() throws Exception
+    {
+        // Setup fixture.
+        final List<TestExternalizable> input = new ArrayList<>();
+        input.add(new TestExternalizable("alpha"));
+        input.add(null);
+
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeExternalizableCollection(bus.getDataOutput(), input);
+        final List<TestExternalizable> result = new ArrayList<>();
+        final int reportedCount = new DefaultExternalizableUtil().readExternalizableCollection(
+            bus.getDataInput(), result, getClass().getClassLoader());
+
+        // Verify result.
+        assertEquals(2, reportedCount);
+        assertEquals(input, result);
+    }
+
+    /**
+     * Asserts that the process of writing and reading a collection of Serializable objects through the
+     * {@link DefaultExternalizableUtil} implementation results in a value that is equal to the original input.
+     */
+    @Test
     public void testWriteReadSerializableCollection() throws Exception
     {
-        // TODO implement me (and variants for collections that are empty or contain null values).
+        // Setup fixture.
+        final List<UUID> input = new ArrayList<>();
+        input.add(UUID.fromString("00000000-0000-0000-0000-000000000001"));
+        input.add(UUID.fromString("00000000-0000-0000-0000-000000000002"));
+
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeSerializableCollection(bus.getDataOutput(), input);
+        final List<UUID> result = new ArrayList<>();
+        final int reportedCount = new DefaultExternalizableUtil().readSerializableCollection(
+            bus.getDataInput(), result, getClass().getClassLoader());
+
+        // Verify result.
+        assertEquals(2, reportedCount);
+        assertEquals(input, result);
     }
 
     /**
-     * Asserts that the process of writing and reading a Map of String to Externalizable objects through the {@link DefaultExternalizableUtil}
-     * implementation results in a value that is equal to the original input.
+     * Asserts that the process of writing and reading a collection of Serializable objects through the
+     * {@link DefaultExternalizableUtil} implementation results in a value that is equal to the original input,
+     * when the collection is empty.
      */
-    @Test @Disabled
+    @Test
+    public void testWriteReadSerializableCollectionEmpty() throws Exception
+    {
+        // Setup fixture.
+        final List<UUID> input = new ArrayList<>();
+
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeSerializableCollection(bus.getDataOutput(), input);
+        final List<UUID> result = new ArrayList<>();
+        final int reportedCount = new DefaultExternalizableUtil().readSerializableCollection(
+            bus.getDataInput(), result, getClass().getClassLoader());
+
+        // Verify result.
+        assertEquals(0, reportedCount);
+        assertEquals(input, result);
+    }
+
+    /**
+     * Asserts that the process of writing and reading a collection of Serializable objects through the
+     * {@link DefaultExternalizableUtil} implementation results in a value that is equal to the original input,
+     * when the collection contains a null value.
+     */
+    @Test
+    public void testWriteReadSerializableCollectionNullValue() throws Exception
+    {
+        // Setup fixture.
+        final List<UUID> input = new ArrayList<>();
+        input.add(UUID.fromString("00000000-0000-0000-0000-000000000001"));
+        input.add(null);
+
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeSerializableCollection(bus.getDataOutput(), input);
+        final List<UUID> result = new ArrayList<>();
+        final int reportedCount = new DefaultExternalizableUtil().readSerializableCollection(
+            bus.getDataInput(), result, getClass().getClassLoader());
+
+        // Verify result.
+        assertEquals(2, reportedCount);
+        assertEquals(input, result);
+    }
+
+    /**
+     * Asserts that the process of writing and reading a Map of String to Externalizable objects through the
+     * {@link DefaultExternalizableUtil} implementation results in a value that is equal to the original input.
+     */
+    @Test
     public void testWriteReadExternalizableMap() throws Exception
     {
-        // TODO implement me (and variants for collections that are empty or contain null values).
+        // Setup fixture.
+        final Map<String, TestExternalizable> input = new HashMap<>();
+        input.put("first", new TestExternalizable("alpha"));
+        input.put("second", new TestExternalizable("beta"));
+
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeExternalizableMap(bus.getDataOutput(), input);
+        final Map<String, TestExternalizable> result = new HashMap<>();
+        final int reportedCount = new DefaultExternalizableUtil().readExternalizableMap(
+            bus.getDataInput(), result, getClass().getClassLoader());
+
+        // Verify result.
+        assertEquals(2, reportedCount);
+        assertEquals(input, result);
     }
 
     /**
-     * Asserts that the process of writing and reading a Map of Serializable to Serializable objects through the {@link DefaultExternalizableUtil}
-     * implementation results in a value that is equal to the original input.
+     * Asserts that the process of writing and reading a Map of String to Externalizable objects through the
+     * {@link DefaultExternalizableUtil} implementation results in a value that is equal to the original input,
+     * when the map is empty.
      */
-    @Test @Disabled
-    public void testWriteReadSerializableMap() throws Exception
+    @Test
+    public void testWriteReadExternalizableMapEmpty() throws Exception
     {
-        // TODO implement me (and variants for collections that are empty or contain null values).
+        // Setup fixture.
+        final Map<String, TestExternalizable> input = new HashMap<>();
+
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeExternalizableMap(bus.getDataOutput(), input);
+        final Map<String, TestExternalizable> result = new HashMap<>();
+        final int reportedCount = new DefaultExternalizableUtil().readExternalizableMap(
+            bus.getDataInput(), result, getClass().getClassLoader());
+
+        // Verify result.
+        assertEquals(0, reportedCount);
+        assertEquals(input, result);
     }
 
     /**
-     * Asserts that the process of writing and reading a Collection of Strings through the {@link DefaultExternalizableUtil}
-     * implementation results in a value that is equal to the original input.
+     * Asserts that the process of writing and reading a Map of String to Externalizable objects through the
+     * {@link DefaultExternalizableUtil} implementation results in a value that is equal to the original input,
+     * when the map contains a null value.
      */
-    @Test @Disabled
+    @Test
+    public void testWriteReadExternalizableMapNullValue() throws Exception
+    {
+        // Setup fixture.
+        final Map<String, TestExternalizable> input = new HashMap<>();
+        input.put("first", new TestExternalizable("alpha"));
+        input.put("second", null);
+
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeExternalizableMap(bus.getDataOutput(), input);
+        final Map<String, TestExternalizable> result = new HashMap<>();
+        final int reportedCount = new DefaultExternalizableUtil().readExternalizableMap(
+            bus.getDataInput(), result, getClass().getClassLoader());
+
+        // Verify result.
+        assertEquals(2, reportedCount);
+        assertEquals(input, result);
+    }
+
+    /**
+     * Asserts that the process of writing and reading a Map of Serializable to Serializable objects through the
+     * {@link DefaultExternalizableUtil} implementation results in a value that is equal to the original input,
+     * using String keys.
+     */
+    @Test
+    public void testWriteReadSerializableMapStringKeys() throws Exception
+    {
+        // Setup fixture.
+        final Map<String, UUID> input = new HashMap<>();
+        input.put("first", UUID.fromString("00000000-0000-0000-0000-000000000001"));
+        input.put("second", UUID.fromString("00000000-0000-0000-0000-000000000002"));
+
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeSerializableMap(bus.getDataOutput(), input);
+        final Map<String, UUID> result = new HashMap<>();
+        final int reportedCount = new DefaultExternalizableUtil().readSerializableMap(
+            bus.getDataInput(), result, getClass().getClassLoader());
+
+        // Verify result.
+        assertEquals(2, reportedCount);
+        assertEquals(input, result);
+    }
+
+    /**
+     * Asserts that the process of writing and reading a Map of Serializable to Serializable objects through the
+     * {@link DefaultExternalizableUtil} implementation results in a value that is equal to the original input,
+     * using non-String Serializable keys (Integer). This specifically exercises the fix for the bug where the
+     * deserialized result was incorrectly narrowed to {@code Map<String, Serializable>}.
+     */
+    @Test
+    public void testWriteReadSerializableMapNonStringKeys() throws Exception
+    {
+        // Setup fixture.
+        final Map<Integer, UUID> input = new HashMap<>();
+        input.put(1, UUID.fromString("00000000-0000-0000-0000-000000000001"));
+        input.put(2, UUID.fromString("00000000-0000-0000-0000-000000000002"));
+
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeSerializableMap(bus.getDataOutput(), input);
+        final Map<Integer, UUID> result = new HashMap<>();
+        final int reportedCount = new DefaultExternalizableUtil().readSerializableMap(
+            bus.getDataInput(), result, getClass().getClassLoader());
+
+        // Verify result.
+        assertEquals(2, reportedCount);
+        assertEquals(input, result);
+    }
+
+    /**
+     * Asserts that the process of writing and reading a Map of Serializable to Serializable objects through the
+     * {@link DefaultExternalizableUtil} implementation results in a value that is equal to the original input,
+     * when the map is empty.
+     */
+    @Test
+    public void testWriteReadSerializableMapEmpty() throws Exception
+    {
+        // Setup fixture.
+        final Map<String, UUID> input = new HashMap<>();
+
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeSerializableMap(bus.getDataOutput(), input);
+        final Map<String, UUID> result = new HashMap<>();
+        final int reportedCount = new DefaultExternalizableUtil().readSerializableMap(
+            bus.getDataInput(), result, getClass().getClassLoader());
+
+        // Verify result.
+        assertEquals(0, reportedCount);
+        assertEquals(input, result);
+    }
+
+    /**
+     * Asserts that the process of writing and reading a Map of Serializable to Serializable objects through the
+     * {@link DefaultExternalizableUtil} implementation results in a value that is equal to the original input,
+     * when the map contains a null value.
+     */
+    @Test
+    public void testWriteReadSerializableMapNullValue() throws Exception
+    {
+        // Setup fixture.
+        final Map<String, UUID> input = new HashMap<>();
+        input.put("first", UUID.fromString("00000000-0000-0000-0000-000000000001"));
+        input.put("second", null);
+
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeSerializableMap(bus.getDataOutput(), input);
+        final Map<String, UUID> result = new HashMap<>();
+        final int reportedCount = new DefaultExternalizableUtil().readSerializableMap(
+            bus.getDataInput(), result, getClass().getClassLoader());
+
+        // Verify result.
+        assertEquals(2, reportedCount);
+        assertEquals(input, result);
+    }
+
+    /**
+     * Asserts that the process of writing and reading a Collection of Strings through the
+     * {@link DefaultExternalizableUtil} implementation results in a value that is equal to the original input.
+     */
+    @Test
     public void testWriteReadStringCollection() throws Exception
     {
-        // TODO implement me (and variants for collections that are empty or contain null values).
+        // Setup fixture.
+        final List<String> input = new ArrayList<>();
+        input.add("foo");
+        input.add("\uD834\uDD1E");
+
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeStrings(bus.getDataOutput(), input);
+        final List<String> result = new ArrayList<>();
+        final int reportedCount = new DefaultExternalizableUtil().readStrings(bus.getDataInput(), result);
+
+        // Verify result.
+        assertEquals(2, reportedCount);
+        assertEquals(input, result);
     }
 
     /**
-     * Checks if two maps are equal.
-     *
-     * @param first A map
-     * @param second Another map
-     * @return if both maps are equal, otherwise false.
+     * Asserts that the process of writing and reading a Collection of Strings through the
+     * {@link DefaultExternalizableUtil} implementation results in a value that is equal to the original input,
+     * when the collection is empty.
      */
-    private static boolean areEqualString(Map<String, String> first, Map<String, String> second) {
-        if (first.size() != second.size()) {
-            return false;
-        }
+    @Test
+    public void testWriteReadStringCollectionEmpty() throws Exception
+    {
+        // Setup fixture.
+        final List<String> input = new ArrayList<>();
 
-        return first.entrySet().stream()
-            .allMatch(e -> (e.getValue() == null && second.get(e.getKey()) == null)
-                        || (e.getValue().equals(second.get(e.getKey()))) );
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeStrings(bus.getDataOutput(), input);
+        final List<String> result = new ArrayList<>();
+        final int reportedCount = new DefaultExternalizableUtil().readStrings(bus.getDataInput(), result);
+
+        // Verify result.
+        assertEquals(0, reportedCount);
+        assertEquals(input, result);
     }
 
     /**
-     * Checks if two maps are equal.
-     *
-     * @param first A map
-     * @param second Another map
-     * @return if both maps are equal, otherwise false.
+     * Asserts that the process of writing and reading a Collection of Strings through the
+     * {@link DefaultExternalizableUtil} implementation results in a value that is equal to the original input,
+     * when the collection contains a null value.
      */
-    private static boolean areEqualStrings(Map<String, Set<String>> first, Map<String, Set<String>> second) {
-        if (first.size() != second.size()) {
-            return false;
-        }
+    @Test
+    public void testWriteReadStringCollectionNullValue() throws Exception
+    {
+        // Setup fixture.
+        final List<String> input = new ArrayList<>();
+        input.add("foo");
+        input.add(null);
 
-        return first.entrySet().stream()
-            .allMatch(e -> (e.getValue() == null && second.get(e.getKey()) == null)
-                || (e.getValue().equals(second.get(e.getKey()))) );
+        // Execute system under test.
+        new DefaultExternalizableUtil().writeStrings(bus.getDataOutput(), input);
+        final List<String> result = new ArrayList<>();
+        final int reportedCount = new DefaultExternalizableUtil().readStrings(bus.getDataInput(), result);
+
+        // Verify result.
+        assertEquals(2, reportedCount);
+        assertEquals(input, result);
     }
 
     /**
-     * Checks if two maps are equal.
-     *
-     * @param first A map
-     * @param second Another map
-     * @return if both maps are equal, otherwise false.
+     * A minimal {@link Externalizable} implementation for use in tests. Two instances are considered equal if
+     * their {@code value} fields are equal.
      */
-    private static boolean areEqualLongInt(Map<Long, Integer> first, Map<Long, Integer> second) {
-        if (first.size() != second.size()) {
-            return false;
+    public static class TestExternalizable implements Externalizable
+    {
+        private String value;
+
+        /** Required no-arg constructor for {@link Externalizable}. */
+        public TestExternalizable() {}
+
+        public TestExternalizable(final String value) {
+            this.value = value;
         }
 
-        return first.entrySet().stream()
-            .allMatch(e -> (e.getValue() == null && second.get(e.getKey()) == null)
-                || (e.getValue().equals(second.get(e.getKey()))) );
+        @Override
+        public void writeExternal(final ObjectOutput out) throws IOException {
+            DefaultExternalizableUtil.writeObject((DataOutput) out, value);
+        }
+
+        @Override
+        public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
+            value = (String) DefaultExternalizableUtil.readObject((DataInput) in);
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (!(o instanceof TestExternalizable)) return false;
+            return Objects.equals(value, ((TestExternalizable) o).value);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hashCode(value);
+        }
+
+        @Override
+        public String toString() {
+            return "TestExternalizable{value='" + value + "'}";
+        }
     }
 
     /**

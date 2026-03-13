@@ -325,8 +325,8 @@ public class ExternalizableUtil {
     }
 
     /**
-     * Writes a Map of String key and Set of Strings value pairs. This method DOES NOT handle the
-     * case when the Map is {@code null}.
+     * Writes a Map of String key and Set of Strings value pairs. This method handles the
+     * case when the Map is <tt>null</tt>.
      *
      * @param out       the output stream.
      * @param map       the Map of String key and Set of Strings value pairs.

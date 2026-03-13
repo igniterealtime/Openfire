@@ -27,8 +27,8 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title><fmt:message key="short.title" /> <fmt:message key="setup.completed.setup" /></title>
-<link rel="stylesheet" href="style/framework/css/bootstrap.min.css" type="text/css">
-<link rel="stylesheet" href="style/framework/css/font-awesome.min.css" type="text/css">
+<link rel="stylesheet" href="../style/framework/css/bootstrap.min.css" type="text/css">
+<link rel="stylesheet" href="../style/framework/css/font-awesome.min.css" type="text/css">
 <link rel="stylesheet" type="text/css" href="../style/setup.css">
 </head>
 

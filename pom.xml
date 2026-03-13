@@ -126,7 +126,7 @@
         <bouncycastle.version>1.83</bouncycastle.version>
         <slf4j.version>2.0.17</slf4j.version>
         <log4j.version>2.25.3</log4j.version>
-        <ojdbc.version>23.7.0.25.01</ojdbc.version>
+        <ojdbc.version>23.26.1.0.0</ojdbc.version>
     </properties>
 
     <profiles>

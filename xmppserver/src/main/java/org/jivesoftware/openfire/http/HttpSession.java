@@ -532,6 +532,15 @@ public class HttpSession extends LocalClientSession {
 
         checkOveractivity(connection);
 
+        // Process the client's 'ack' attribute (XEP-0124 §9.2): clean up sentElements that have been acknowledged.
+        final Long clientAck = body.getAck();
+        if (clientAck != null) {
+            synchronized (sentElements) {
+                sentElements.removeIf(delivered -> delivered.getRequestID() <= clientAck);
+            }
+            Log.trace("Session {}: client acknowledged responses up to rid {}; cleaned up sentElements buffer.", getStreamID(), clientAck);
+        }
+
         // Schedule the connection for consumption.
         processConnection(connection, context);
         resetInactivityTimeout();
@@ -716,7 +725,7 @@ public class HttpSession extends LocalClientSession {
                     if (queuedConnection.isTerminate()) {
                         Log.debug("Connection (for session {}) with request ID ({}) is a request to terminate.", getStreamID(), queuedRequestID);
                         iter.remove(); // This connection will be consumed here.
-                        queuedConnection.deliverBody(createEmptyBody(true), true);
+                        queuedConnection.deliverBody(createEmptyBody(true, queuedRequestID), true);
                         mustClose = true;
                     } else if (queuedConnection.isRestart()) {
                         Log.debug("Connection (for session {}) with request ID ({}) is a request to restart.", getStreamID(), queuedRequestID);
@@ -731,7 +740,7 @@ public class HttpSession extends LocalClientSession {
                         } else {
                             Log.debug("Connection (for session {}) with request ID ({}) is a request to pause (for {}).", getStreamID(), queuedRequestID, queuedConnection.getPause());
                             pause(queuedConnection.getPause());
-                            queuedConnection.deliverBody(createEmptyBody(false), true);
+                            queuedConnection.deliverBody(createEmptyBody(false, queuedRequestID), true);
                             setLastResponseEmpty(true);
                         }
                         iter.remove(); // This connection will be consumed by this block. It should not be processed by the 'pause' method.
@@ -780,7 +789,7 @@ public class HttpSession extends LocalClientSession {
 
                     // Consume this connection.
                     connectionQueue.poll();
-                    openConnection.deliverBody(createEmptyBody(false), true);
+                    openConnection.deliverBody(createEmptyBody(false, openConnection.getRequestId()), true);
                 }
             }
         }
@@ -829,7 +838,7 @@ public class HttpSession extends LocalClientSession {
             Log.warn("Deliverable unavailable for {} in session {}", connection.getRequestId(), getStreamID());
             throw new HttpBindException("Unexpected RID error.", BoshBindingError.itemNotFound);
         }
-        connection.deliverBody(asBodyText(deliverable.get().deliverables), true);
+        connection.deliverBody(asBodyText(deliverable.get().deliverables, connection.getRequestId()), true);
     }
 
     private enum OveractivityType {
@@ -858,7 +867,10 @@ public class HttpSession extends LocalClientSession {
 
         Instant time = Instant.now();
         Duration deltaFromLastPoll = Duration.between(lastPoll, time).abs();
-        if(pendingConnections >= maxRequests) {
+        // XEP-0124 §11: The client MAY make one additional request if it is to pause or terminate a session.
+        final boolean isPauseOrTerminate = connection.isTerminate() || connection.getPause() != null;
+        final int maxSimultaneousRequests = isPauseOrTerminate ? maxRequests + 1 : maxRequests;
+        if(pendingConnections >= maxSimultaneousRequests) {
             overactivity = OveractivityType.TOO_MANY_SIM_REQS;
         }
         else if(connection.isPoll()) {
@@ -1021,7 +1033,7 @@ public class HttpSession extends LocalClientSession {
         throws HttpConnectionClosedException, IOException
     {
         Log.trace("Delivering {} deliverables to the client on session {}, using connection with RID {}", deliverables.size(), getStreamID(), connection.getRequestId());
-        connection.deliverBody(asBodyText(deliverables), async);
+        connection.deliverBody(asBodyText(deliverables, connection.getRequestId()), async);
         lastAnsweredRequestID = connection.getRequestId();
 
         lastActivity = Instant.now();
@@ -1065,7 +1077,7 @@ public class HttpSession extends LocalClientSession {
                             final String body;
                             if (isFirst) {
                                 isFirst = false;
-                                body = this.createEmptyBody(true);
+                                body = this.createEmptyBody(true, toClose.getRequestId());
                             } else {
                                 body = null;
                             }
@@ -1118,14 +1130,23 @@ public class HttpSession extends LocalClientSession {
      * Returns the textual representation of the provided element, wrapped in a httpbind 'body' element. The intended
      * usage of this method is to generate data that can be included in HTTP responses returned to the client.
      *
+     * Per XEP-0124 §9.1, the 'ack' attribute SHOULD NOT be included in any response if its value would be the
+     * 'rid' of the request being responded to (since that would be redundant).
+     *
      * @param elements The data to be transformed (can be empty).
+     * @param respondingToRid The 'rid' of the request being responded to.
      * @return The text representation (wrapped in a body element) of the provided elements.
      */
     @Nonnull
-    private String asBodyText(@Nonnull final List<Deliverable> elements) {
+    private String asBodyText(@Nonnull final List<Deliverable> elements, final long respondingToRid) {
+        final long ack = getLastAcknowledged();
         StringBuilder builder = new StringBuilder();
-        builder.append("<body xmlns='http://jabber.org/protocol/httpbind' ack='")
-            .append(getLastAcknowledged()).append("'>");
+        builder.append("<body xmlns='http://jabber.org/protocol/httpbind'");
+        // XEP-0124 §9.1: SHOULD NOT include 'ack' if it would equal the rid of the request being responded to.
+        if (ack != respondingToRid) {
+            builder.append(" ack='").append(ack).append("'");
+        }
+        builder.append(">");
 
         setLastResponseEmpty(elements.isEmpty());
         for (Deliverable child : elements) {
@@ -1138,18 +1159,41 @@ public class HttpSession extends LocalClientSession {
     /**
      * Creates an empty BOSH 'body' element, optionally including a 'terminate' type attribute (that, in BOSH,
      * signifies the end of a session). The element will include an 'ack' attribute, of which the value is the highest
+     * request ID (rid) the server has received where it has also received all requests with lower request ID values,
+     * unless that value equals the rid of the request being responded to (per XEP-0124 §9.1).
+     *
+     * @param terminate Whether to include a type attribute with value 'terminate'.
+     * @param respondingToRid The 'rid' of the request being responded to, used to determine whether the 'ack'
+     *                        attribute should be included. Pass -1 when not responding to a specific request.
+     * @return The string representation of an empty BOSH 'body' element.
+     */
+    @Nonnull
+    protected String createEmptyBody(final boolean terminate, final long respondingToRid)
+    {
+        final Element body = DocumentHelper.createElement( QName.get( "body", "http://jabber.org/protocol/httpbind" ) );
+        if (terminate) { body.addAttribute("type", "terminate"); }
+        final long ack = getLastAcknowledged();
+        // XEP-0124 §9.1: SHOULD NOT include 'ack' if it would equal the rid of the request being responded to.
+        if (ack != respondingToRid) {
+            body.addAttribute("ack", String.valueOf(ack));
+        }
+        return body.asXML();
+    }
+
+    /**
+     * Creates an empty BOSH 'body' element, optionally including a 'terminate' type attribute (that, in BOSH,
+     * signifies the end of a session). The element will include an 'ack' attribute, of which the value is the highest
      * request ID (rid) the server has received where it has also received all requests with lower request ID values.
      *
      * @param terminate Whether to include a type attribute with value 'terminate'.
      * @return The string representation of an empty BOSH 'body' element.
+     * @deprecated Use {@link #createEmptyBody(boolean, long)} when the responding-to rid is available.
      */
     @Nonnull
+    @Deprecated
     protected String createEmptyBody(final boolean terminate)
     {
-        final Element body = DocumentHelper.createElement( QName.get( "body", "http://jabber.org/protocol/httpbind" ) );
-        if (terminate) { body.addAttribute("type", "terminate"); }
-        body.addAttribute("ack", String.valueOf(getLastAcknowledged()));
-        return body.asXML();
+        return createEmptyBody(terminate, -1);
     }
 
     /**

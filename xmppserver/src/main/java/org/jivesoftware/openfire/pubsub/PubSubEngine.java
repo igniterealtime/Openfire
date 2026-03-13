@@ -37,6 +37,7 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.*;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
@@ -410,6 +411,16 @@ public class PubSubEngine
                         "invalid-payload", "http://jabber.org/protocol/pubsub#errors"));
                 sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
                 return;
+            }
+            // Check that the payload size does not exceed the node's configured maximum (XEP-0060 §7.1.3.5)
+            if (payload != null) {
+                final int payloadSize = payload.asXML().getBytes(StandardCharsets.UTF_8).length;
+                if (payloadSize > leafNode.getMaxPayloadSize()) {
+                    Element pubsubError = DocumentHelper.createElement(QName.get(
+                            "payload-too-big", "http://jabber.org/protocol/pubsub#errors"));
+                    sendErrorPacket(iq, PacketError.Condition.not_acceptable, pubsubError);
+                    return;
+                }
             }
             items.add(item);
         }
@@ -1574,19 +1585,19 @@ public class PubSubEngine
             sendErrorPacket(iq, PacketError.Condition.forbidden, null);
             return;
         }
-        if (!((LeafNode) node).isPersistPublishedItems()) {
-            // Node does not persist items. Return feature-not-implemented error
-            Element pubsubError = DocumentHelper.createElement(
-                    QName.get("unsupported", "http://jabber.org/protocol/pubsub#errors"));
-            pubsubError.addAttribute("feature", "persistent-items");
-            sendErrorPacket(iq, PacketError.Condition.feature_not_implemented, pubsubError);
-            return;
-        }
         if (node.isCollectionNode()) {
             // Node is a collection node. Return feature-not-implemented error
             Element pubsubError = DocumentHelper.createElement(
                     QName.get("unsupported", "http://jabber.org/protocol/pubsub#errors"));
             pubsubError.addAttribute("feature", "purge-nodes");
+            sendErrorPacket(iq, PacketError.Condition.feature_not_implemented, pubsubError);
+            return;
+        }
+        if (!((LeafNode) node).isPersistPublishedItems()) {
+            // Node does not persist items. Return feature-not-implemented error
+            Element pubsubError = DocumentHelper.createElement(
+                    QName.get("unsupported", "http://jabber.org/protocol/pubsub#errors"));
+            pubsubError.addAttribute("feature", "persistent-items");
             sendErrorPacket(iq, PacketError.Condition.feature_not_implemented, pubsubError);
             return;
         }

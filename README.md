@@ -53,7 +53,7 @@ The directory structure is fairly straightforward. The main code is contained in
 
 * `Openfire/xmppserver` - a Maven module representing the core code for Openfire itself
 
-Other folders are:  
+Other folders are:
 * `Openfire/build` - various files use to create installers for different platforms
 * `Openfire/distribution` - a Maven module used to bring all the parts together
 * `Openfire/documentation` - the documentation hosted at [igniterealtime.org](https://www.igniterealtime.org/projects/openfire/documentation.jsp)

@@ -55,7 +55,7 @@ public class HappyEyeballsResolverTest
     static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO0_IPV6ONLY = () -> IndexedResolvedServiceAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV6_ADDRESS}, 5269, false);
     static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO0_BOTHFAMS = () -> IndexedResolvedServiceAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV4_ADDRESS, HOST_PRIO0_IPV6_ADDRESS}, 5269, false);
     static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO0_IPV4ONLY_DELAYED_SHORT = () -> {
-        try { Thread.sleep(RESOLUTION_DELAY.dividedBy(2).toMillis()); } catch (InterruptedException e) { throw new RuntimeException(e); }
+        try { Thread.sleep(RESOLUTION_DELAY.dividedBy(10).toMillis()); } catch (InterruptedException e) { throw new RuntimeException(e); }
         return IndexedResolvedServiceAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV4_ADDRESS}, 5269, false);
     };
     static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO0_IPV4ONLY_DELAYED_LONG = () -> {
@@ -63,7 +63,7 @@ public class HappyEyeballsResolverTest
         return IndexedResolvedServiceAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV4_ADDRESS}, 5269, false);
     };
     static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO0_IPV6ONLY_DELAYED_SHORT = () -> {
-        try { Thread.sleep(RESOLUTION_DELAY.dividedBy(2).toMillis()); } catch (InterruptedException e) { throw new RuntimeException(e); }
+        try { Thread.sleep(RESOLUTION_DELAY.dividedBy(10).toMillis()); } catch (InterruptedException e) { throw new RuntimeException(e); }
         return IndexedResolvedServiceAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV6_ADDRESS}, 5269, false);
     };
     static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO0_IPV6ONLY_DELAYED_LONG = () -> {
@@ -71,7 +71,7 @@ public class HappyEyeballsResolverTest
         return IndexedResolvedServiceAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV6_ADDRESS}, 5269, false);
     };
     static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO0_BOTHFAMS_DELAYED_SHORT = () -> {
-        try { Thread.sleep((RESOLUTION_DELAY.dividedBy(2)).toMillis()); } catch (InterruptedException e) { throw new RuntimeException(e); }
+        try { Thread.sleep((RESOLUTION_DELAY.dividedBy(10)).toMillis()); } catch (InterruptedException e) { throw new RuntimeException(e); }
         return IndexedResolvedServiceAddress.from(0, new InetAddress[]{HOST_PRIO0_IPV4_ADDRESS, HOST_PRIO0_IPV6_ADDRESS}, 5269, false);
     };
     static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO0_BOTHFAMS_DELAYED_LONG = () -> {
@@ -97,7 +97,7 @@ public class HappyEyeballsResolverTest
     static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO1_IPV6ONLY = () -> IndexedResolvedServiceAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV6_ADDRESS}, 5269, false);
     static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO1_BOTHFAMS = () -> IndexedResolvedServiceAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV4_ADDRESS, HOST_PRIO1_IPV6_ADDRESS}, 5269, false);
     static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO1_IPV4ONLY_DELAYED_SHORT = () -> {
-        try { Thread.sleep(RESOLUTION_DELAY.dividedBy(2).toMillis()); } catch (InterruptedException e) { throw new RuntimeException(e); }
+        try { Thread.sleep(RESOLUTION_DELAY.dividedBy(10).toMillis()); } catch (InterruptedException e) { throw new RuntimeException(e); }
         return IndexedResolvedServiceAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV4_ADDRESS}, 5269, false);
     };
     static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO1_IPV4ONLY_DELAYED_LONG = () -> {
@@ -105,7 +105,7 @@ public class HappyEyeballsResolverTest
         return IndexedResolvedServiceAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV4_ADDRESS}, 5269, false);
     };
     static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO1_IPV6ONLY_DELAYED_SHORT = () -> {
-        try { Thread.sleep(RESOLUTION_DELAY.dividedBy(2).toMillis()); } catch (InterruptedException e) { throw new RuntimeException(e); }
+        try { Thread.sleep(RESOLUTION_DELAY.dividedBy(10).toMillis()); } catch (InterruptedException e) { throw new RuntimeException(e); }
         return IndexedResolvedServiceAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV6_ADDRESS}, 5269, false);
     };
     static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO1_IPV6ONLY_DELAYED_LONG = () -> {
@@ -113,7 +113,7 @@ public class HappyEyeballsResolverTest
         return IndexedResolvedServiceAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV6_ADDRESS}, 5269, false);
     };
     static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO1_BOTHFAMS_DELAYED_SHORT = () -> {
-        try { Thread.sleep(RESOLUTION_DELAY.dividedBy(2).toMillis()); } catch (InterruptedException e) { throw new RuntimeException(e); }
+        try { Thread.sleep(RESOLUTION_DELAY.dividedBy(10).toMillis()); } catch (InterruptedException e) { throw new RuntimeException(e); }
         return IndexedResolvedServiceAddress.from(1, new InetAddress[]{HOST_PRIO1_IPV4_ADDRESS, HOST_PRIO1_IPV6_ADDRESS}, 5269, false);
     };
     static final Supplier<Set<IndexedResolvedServiceAddress>> SOLVER_PRIO1_BOTHFAMS_DELAYED_LONG = () -> {

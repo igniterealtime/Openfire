@@ -35,7 +35,8 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class HappyEyeballsResolverTest
 {
-    static final Duration RESOLUTION_DELAY = Duration.ofMillis(50); // If this test is giving flappy results, try increasing this value. If it needs to increase over 50ms, then the implementation is not efficient enough on the server to comply with the specification.
+    // If this test is giving flappy results, try increasing this value. If it needs to increase over 50ms, then the implementation is not efficient enough on the server to comply with the specification.
+    static final Duration RESOLUTION_DELAY = Duration.ofMillis(System.getProperty("os.name").toLowerCase().contains("mac") ? 500 : 50); // OF-3119 - MacOS is known to be not very strict with clocks. Relax things on that platform only.
 
     // Host 'prio0' configuration.
     static final SrvRecord HOST_PRIO0 = new SrvRecord("prio0.example.org", 5269, false);

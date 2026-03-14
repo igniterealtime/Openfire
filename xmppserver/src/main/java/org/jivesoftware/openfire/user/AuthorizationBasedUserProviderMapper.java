@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 IgniteRealtime.org, 2017-2019 Ignite Realtime Foundation. All rights reserved
+ * Copyright (C) 2016 IgniteRealtime.org, 2017-2026 Ignite Realtime Foundation. All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package org.jivesoftware.openfire.user;
 
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.admin.AdminManager;
-import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.xmpp.packet.JID;
 
 import java.util.LinkedHashSet;
@@ -47,13 +47,23 @@ public class AuthorizationBasedUserProviderMapper implements UserProviderMapper
      * Name of the property of which the value is expected to be the classname of the UserProvider which will serve the
      * administrative users.
      */
-    public static final String PROPERTY_ADMINPROVIDER_CLASSNAME = "authorizationBasedUserMapper.adminProvider.className";
+    public static final SystemProperty<Class> PROPERTY_ADMINPROVIDER_CLASSNAME = SystemProperty.Builder.ofType(Class.class)
+        .setKey("authorizationBasedUserMapper.adminProvider.className")
+        .setDynamic(false)
+        .setDefaultValue(null)
+        .setBaseClass(UserProvider.class)
+        .build();
 
     /**
      * Name of the property of which the value is expected to be the classname of the UserProvider which will serve the
      * regular, non-administrative users.
      */
-    public static final String PROPERTY_USERPROVIDER_CLASSNAME = "authorizationBasedUserMapper.userProvider.className";
+    public static final SystemProperty<Class> PROPERTY_USERPROVIDER_CLASSNAME = SystemProperty.Builder.ofType(Class.class)
+        .setKey("authorizationBasedUserMapper.userProvider.className")
+        .setDynamic(false)
+        .setDefaultValue(null)
+        .setBaseClass(UserProvider.class)
+        .build();
 
     /**
      * Serves the administrative users.
@@ -67,10 +77,6 @@ public class AuthorizationBasedUserProviderMapper implements UserProviderMapper
 
     public AuthorizationBasedUserProviderMapper()
     {
-        // Migrate properties.
-        JiveGlobals.migrateProperty( PROPERTY_ADMINPROVIDER_CLASSNAME );
-        JiveGlobals.migrateProperty( PROPERTY_USERPROVIDER_CLASSNAME );
-
         // Instantiate providers.
         adminProvider = UserMultiProvider.instantiate( PROPERTY_ADMINPROVIDER_CLASSNAME );
         if ( adminProvider == null )

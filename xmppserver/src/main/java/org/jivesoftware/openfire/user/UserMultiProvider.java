@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 IgniteRealtime.org, 2018-2025 Ignite Realtime Foundation. All rights reserved
+ * Copyright (C) 2016 IgniteRealtime.org, 2018-2026 Ignite Realtime Foundation. All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 package org.jivesoftware.openfire.user;
 
-import org.jivesoftware.util.ClassUtils;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,41 +35,6 @@ import java.util.stream.Collectors;
 public abstract class UserMultiProvider implements UserProvider
 {
     private final static Logger Log = LoggerFactory.getLogger( UserMultiProvider.class );
-
-    /**
-     * Instantiates a UserProvider based on a property value (that is expected to be a class name). When the property
-     * is not set, this method returns null. When the property is set, but an exception occurs while instantiating
-     * the class, this method logs the error and returns null.
-     *
-     * UserProvider classes are required to have a public, no-argument constructor.
-     *
-     * @param propertyName A property name (cannot be null).
-     * @return A user provider (can be null).
-     * @deprecated Use {@link #instantiate(SystemProperty)} or {@link #instantiate(SystemProperty, SystemProperty)} instead.
-     */
-    @Deprecated(forRemoval = true, since = "5.0.0") // TODO Remove in or after Openfire 5.1.0
-    public static UserProvider instantiate( String propertyName )
-    {
-        final String className = JiveGlobals.getProperty( propertyName );
-        if ( className == null )
-        {
-            Log.debug( "Property '{}' is undefined. Skipping.", propertyName );
-            return null;
-        }
-        Log.debug( "About to to instantiate an UserProvider '{}' based on the value of property '{}'.", className, propertyName );
-        try
-        {
-            final Class c = ClassUtils.forName( className );
-            final UserProvider provider = (UserProvider) c.newInstance();
-            Log.debug( "Instantiated UserProvider '{}'", className );
-            return provider;
-        }
-        catch ( Exception e )
-        {
-            Log.error( "Unable to load UserProvider '{}'. Users in this provider will be disabled.", className, e );
-            return null;
-        }
-    }
 
     /**
      * Instantiates a UserProvider based on Class-based system property. When the property is not set, this

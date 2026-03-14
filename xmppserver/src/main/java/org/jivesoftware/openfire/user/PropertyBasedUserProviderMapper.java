@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Ignite Realtime Foundation. All rights reserved
+ * Copyright (C) 2018-2026 Ignite Realtime Foundation. All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire.user;
 
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 
 import java.util.*;
 
@@ -57,6 +58,13 @@ import java.util.*;
  */
 public class PropertyBasedUserProviderMapper implements UserProviderMapper
 {
+    public static final SystemProperty<Class> FALLBACKPROVIDER_CLASSNAME = SystemProperty.Builder.ofType(Class.class)
+        .setKey("propertyBasedUserMapper.fallbackProvider.className")
+        .setDynamic(false)
+        .setDefaultValue(null)
+        .setBaseClass(UserProvider.class)
+        .build();
+
     protected final Map<String, UserProvider> providersByPrefix = new HashMap<>();
 
     protected UserProvider fallbackProvider;
@@ -67,7 +75,7 @@ public class PropertyBasedUserProviderMapper implements UserProviderMapper
         JiveGlobals.migratePropertyTree( "propertyBasedUserMapper" );
 
         // Instantiate the fallback provider
-        fallbackProvider = UserMultiProvider.instantiate( "propertyBasedUserMapper.fallbackProvider.className" );
+        fallbackProvider = UserMultiProvider.instantiate(FALLBACKPROVIDER_CLASSNAME);
         if ( fallbackProvider == null )
         {
             throw new IllegalStateException( "Expected a UserProvider class name in property 'propertyBasedUserMapper.fallbackProvider.className'" );
@@ -76,7 +84,13 @@ public class PropertyBasedUserProviderMapper implements UserProviderMapper
         final List<String> setProperties = JiveGlobals.getPropertyNames( "propertyBasedUserMapper.set" );
         for ( final String setProperty : setProperties )
         {
-            final UserProvider provider = UserMultiProvider.instantiate( setProperty + ".provider.className" );
+            final SystemProperty<Class> dynamicProperty = SystemProperty.Builder.ofType(Class.class)
+                .setKey(setProperty + ".provider.className")
+                .setDynamic(false)
+                .setDefaultValue(null)
+                .setBaseClass(UserProvider.class)
+                .build();
+            final UserProvider provider = UserMultiProvider.instantiate(dynamicProperty);
             if ( provider == null )
             {
                 throw new IllegalStateException( "Expected a UserProvider class name in property '" + setProperty + ".provider.className'" );

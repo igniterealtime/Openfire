@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2021-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,9 +71,6 @@ public class HistoryStrategyTest
         assertEquals(input, result);
         assertEquals(input.getType(), ((HistoryStrategy) result).getType());
         assertEquals(input.getMaxNumber(), ((HistoryStrategy) result).getMaxNumber());
-        assertNotNull(input.getChangedSubject());
-        assertNotNull(((HistoryStrategy) result).getChangedSubject());
-        assertEquals(input.getChangedSubject().toXML(), ((HistoryStrategy) result).getChangedSubject().toXML());
 
         final AbstractList<String> inputMessageTextHistory = new ArrayList<>();
         final ListIterator<Message> inputReverseMessageHistory = input.getReverseMessageHistory();

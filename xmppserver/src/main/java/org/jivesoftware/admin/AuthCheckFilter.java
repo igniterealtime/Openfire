@@ -358,7 +358,7 @@ public class AuthCheckFilter implements Filter {
     public static boolean passesBlocklist(@Nonnull final ServletRequest req) {
         // In a proxied setup, org.jivesoftware.openfire.container.AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED should be
         // set to 'true' to have the below report the true 'peer' address.
-        final String remoteAddr = removeBracketsFromIpv6Address(req.getRemoteAddr());
+        final String remoteAddr = IpUtils.removeBracketsFromIpv6Address(req.getRemoteAddr());
         final boolean result = !IpUtils.isAddressInAnyOf(remoteAddr, IP_ACCESS_BLOCKLIST.getValue());
         Log.debug("IP address '{}' {} pass the block list.", remoteAddr, result ? "does" : "does not");
         return result;
@@ -375,44 +375,11 @@ public class AuthCheckFilter implements Filter {
     public static boolean passesAllowList(@Nonnull final ServletRequest req) {
         // In a proxied setup, org.jivesoftware.openfire.container.AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED should be
         // set to 'true' to have the below report the true 'peer' address.
-        final String remoteAddr = removeBracketsFromIpv6Address(req.getRemoteAddr());
+        final String remoteAddr = IpUtils.removeBracketsFromIpv6Address(req.getRemoteAddr());
         final Set<String> allowList = IP_ACCESS_ALLOWLIST.getValue();
         final boolean result = allowList.isEmpty() || IpUtils.isAddressInAnyOf(remoteAddr, allowList);
         Log.debug("IP address '{}' {} pass the allow list.", remoteAddr, result ? "does" : "does not");
         return result;
-    }
-
-    /**
-     * Checks if a particular IP address is on a list of addresses.
-     *
-     * The IP address is expected to be an IPv4 or IPv6 address. The list can contain IPv4 and IPv6 addresses, but also
-     * IPv4 and IP46 address ranges. Ranges can be expressed as dash separated strings (eg: "192.168.0.0-192.168.255.255")
-     * or in CIDR notation (eg: "192.168.0.0/16", "2001:db8::/48").
-     *
-     * @param list The list of addresses
-     * @param ipAddress the address to check
-     * @return <tt>true</tt> if the address is detected in the list, otherwise <tt>false</tt>.
-     * @deprecated Replaced by {@link IpUtils#isAddressInAnyOf(String, Set)}
-     */
-    @Deprecated(since = "5.0.0", forRemoval = true) // Remove in Openfire 5.1 or later.
-    public static boolean isOnList(@Nonnull final Set<String> list, @Nonnull final String ipAddress) {
-        return IpUtils.isAddressInAnyOf(ipAddress, list);
-    }
-
-    /**
-     * When the provided input is an IPv6 literal that is enclosed in brackets (the [] style as expressed in
-     * https://tools.ietf.org/html/rfc2732 and https://tools.ietf.org/html/rfc6874), this method returns the value
-     * stripped from those brackets (the IPv6 address, instead of the literal). In all other cases, the input value is
-     * returned.
-     *
-     * @param address The value from which to strip brackets.
-     * @return the input value, stripped from brackets if applicable.
-     * @deprecated Moved to {@link IpUtils#removeBracketsFromIpv6Address(String)}
-     */
-    @Deprecated(since = "5.0.0", forRemoval = true) // Remove in Openfire 5.1 or later.
-    @Nonnull
-    public static String removeBracketsFromIpv6Address(@Nonnull final String address) {
-        return IpUtils.removeBracketsFromIpv6Address(address);
     }
 
     public static void loadSetupExcludes() {

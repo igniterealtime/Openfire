@@ -230,9 +230,10 @@ public class PluginLoadingComplexHierarchyTest
         Thread.sleep(1); // Ensure that, upon reinstall, the 'last install time' is different.
 
         // Execute system under test.
-        pluginManager.reloadPlugin("node_a", true);
+        final boolean result = pluginManager.reloadPlugin("node_a", true);
 
         // Verify results.
+        assertTrue(result, "Expected the plugin manager to report success after reloading (but it did not).");
         final Instant reloadTime = getLastInstallTime("node_a");
         assertTrue(reloadTime.isAfter(installTime), "Expected the plugin to have been re-installed (but it was not).");
         assertIsActive("node_a");
@@ -267,9 +268,11 @@ public class PluginLoadingComplexHierarchyTest
         Thread.sleep(1); // Ensure that, upon reinstall, the 'last install time' is different.
 
         // Execute system under test.
-        pluginManager.reloadPlugin("node_a_b", true);
+        final boolean result = pluginManager.reloadPlugin("node_a_b", true);
 
         // Verify results.
+        assertTrue(result, "Expected the plugin manager to report success after reloading (but it did not).");
+
         final Instant reloadTime = getLastInstallTime("node_a_b");
         assertTrue(reloadTime.isAfter(installTime), "Expected the plugin to have been re-installed (but it was not).");
         assertIsActive("node_a");
@@ -304,9 +307,10 @@ public class PluginLoadingComplexHierarchyTest
         Thread.sleep(1); // Ensure that, upon reinstall, the 'last install time' is different.
 
         // Execute system under test.
-        pluginManager.reloadPlugin("node_a_c", true);
+        final boolean result = pluginManager.reloadPlugin("node_a_c", true);
 
         // Verify results.
+        assertTrue(result, "Expected the plugin manager to report success after reloading (but it did not).");
         final Instant reloadTime = getLastInstallTime("node_a_c");
         assertTrue(reloadTime.isAfter(installTime), "Expected the plugin to have been re-installed (but it was not).");
         assertIsActive("node_a");
@@ -341,9 +345,10 @@ public class PluginLoadingComplexHierarchyTest
         Thread.sleep(1); // Ensure that, upon reinstall, the 'last install time' is different.
 
         // Execute system under test.
-        pluginManager.reloadPlugin("node_a_c_d", true);
+        final boolean result = pluginManager.reloadPlugin("node_a_c_d", true);
 
         // Verify results.
+        assertTrue(result, "Expected the plugin manager to report success after reloading (but it did not).");
         final Instant reloadTime = getLastInstallTime("node_a_c_d");
         assertTrue(reloadTime.isAfter(installTime), "Expected the plugin to have been re-installed (but it was not).");
         assertIsActive("node_a");
@@ -378,9 +383,10 @@ public class PluginLoadingComplexHierarchyTest
         Thread.sleep(1); // Ensure that, upon reinstall, the 'last install time' is different.
 
         // Execute system under test.
-        pluginManager.reloadPlugin("node_a_c_e", true);
+        final boolean result = pluginManager.reloadPlugin("node_a_c_e", true);
 
         // Verify results.
+        assertTrue(result, "Expected the plugin manager to report success after reloading (but it did not).");
         final Instant reloadTime = getLastInstallTime("node_a_c_e");
         assertTrue(reloadTime.isAfter(installTime), "Expected the plugin to have been re-installed (but it was not).");
         assertIsActive("node_a");

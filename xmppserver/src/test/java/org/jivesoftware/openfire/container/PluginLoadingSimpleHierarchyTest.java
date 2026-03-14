@@ -149,9 +149,10 @@ public class PluginLoadingSimpleHierarchyTest
         Thread.sleep(1); // Ensure that, upon reinstall, the 'last install time' is different.
 
         // Execute system under test.
-        pluginManager.reloadPlugin("node_a", true);
+        final boolean result = pluginManager.reloadPlugin("node_a", true);
 
         // Verify results.
+        assertTrue(result, "Expected the plugin manager to report success after reloading (but it did not).");
         final Instant reloadTime = getLastInstallTime("node_a");
         assertTrue(reloadTime.isAfter(installTime), "Expected the plugin to have been re-installed (but it was not).");
         assertTrue(pluginManager.isInstalled("node_a"), "Expected the 'plugins' directory to contain the plugin jar file (but it does not).");
@@ -238,9 +239,10 @@ public class PluginLoadingSimpleHierarchyTest
         Thread.sleep(1); // Ensure that, upon reinstall, the 'last install time' is different.
 
         // Execute system under test.
-        pluginManager.reloadPlugin("node_a_b", true);
+        final boolean result = pluginManager.reloadPlugin("node_a_b", true);
 
         // Verify results.
+        assertTrue(result, "Expected the plugin manager to report success after reloading (but it did not).");
         final Instant reloadTime = getLastInstallTime("node_a_b");
         assertTrue(reloadTime.isAfter(installTime), "Expected the plugin to have been re-installed (but it was not).");
         assertTrue(pluginManager.isInstalled("node_a_b"), "Expected the 'plugins' directory to contain the child plugin jar file (but it does not).");
@@ -296,9 +298,10 @@ public class PluginLoadingSimpleHierarchyTest
         Thread.sleep(1); // Ensure that, upon reinstall, the 'last install time' is different.
 
         // Execute system under test.
-        pluginManager.reloadPlugin("node_a", true);
+        final boolean result = pluginManager.reloadPlugin("node_a", true);
 
         // Verify results.
+        assertTrue(result, "Expected the plugin manager to report success after reloading (but it did not).");
         final Instant reloadTime = getLastInstallTime("node_a");
         assertTrue(reloadTime.isAfter(installTime), "Expected the plugin to have been re-installed (but it was not).");
         assertTrue(pluginManager.isInstalled("node_a"), "Expected the 'plugins' directory to contain the parent plugin jar file (but it does not).");
@@ -363,9 +366,10 @@ public class PluginLoadingSimpleHierarchyTest
         Thread.sleep(1); // Ensure that, upon reinstall, the 'last install time' is different.
 
         // Execute system under test.
-        pluginManager.reloadPlugin("node_a_b", true);
+        final boolean result = pluginManager.reloadPlugin("node_a_b", true);
 
         // Verify results.
+        assertTrue(result, "Expected the plugin manager to report success after reloading (but it did not).");
         final Instant reloadTime = getLastInstallTime("node_a_b");
         assertTrue(reloadTime.isAfter(installTime), "Expected the plugin to have been re-installed (but it was not).");
         assertTrue(pluginManager.isInstalled("node_a_b"), "Expected the 'plugins' directory to contain the reloaded child plugin jar file (but it does not).");

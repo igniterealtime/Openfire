@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -292,7 +292,21 @@ public class PluginMonitor implements PropertyEventListener
                         final Path dir = pluginsDirectory.resolve( canonicalPluginName );
 
                         // If the JAR needs to be exploded, do so.
-                        if ( Files.notExists( dir ) )
+                        boolean mustExplodeJar = Files.notExists( dir );
+
+                        if (Files.exists(dir)) {
+                            final FileTime jarModified = Files.getLastModifiedTime(jarFile);
+                            final FileTime dirModified = Files.getLastModifiedTime(dir);
+                            if (jarModified.toInstant().isAfter(dirModified.toInstant())) {
+                                // JAR is newer: directory is stale, force re-extraction.
+                                mustExplodeJar = true;
+
+                                // Best-effort delete; on Windows this may partially fail due to locks (OF-3209).
+                                PluginManager.deleteDir(dir);
+                            }
+                        }
+
+                        if (mustExplodeJar)
                         {
                             if (!unzipPlugin( canonicalPluginName, jarFile, dir ) )
                             {
@@ -308,7 +322,7 @@ public class PluginMonitor implements PropertyEventListener
                     // Load all plugins that need to be loaded. Make sure that the admin plugin is loaded first (as that
                     // should be available as soon as possible), followed by all other plugins. Ensure that parent plugins
                     // are loaded before their children.
-                    try ( final DirectoryStream<Path> ds = Files.newDirectoryStream( pluginsDirectory, Files::isDirectory) )
+                    try (final DirectoryStream<Path> ds = Files.newDirectoryStream( pluginsDirectory, path -> Files.isDirectory(path) && (jarsByPluginName.containsKey(PluginMetadataHelper.getCanonicalName(path)) || PluginMetadataHelper.getCanonicalName(path).equals("admin"))) )
                     {
                         // Look for extra plugin directories specified as a system property.
                         final Set<Path> devPlugins = new HashSet<>();

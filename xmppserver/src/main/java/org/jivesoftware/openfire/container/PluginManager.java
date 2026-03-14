@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -979,8 +979,16 @@ public class PluginManager
     /**
      * Deletes the directory in which the plugin's jar file is extracted.
      *
+     * On Unix-like systems this typically succeeds immediately. On Windows, the JVM holds mandatory file locks on
+     * JAR/class files that were opened via the plugin's class loader; those locks are only released once the underlying
+     * {@code ZipFile}/{@code JarFile} handles are garbage-collected. The method therefore retries several times,
+     * requesting GC and finalization between attempts. If the directory still cannot be deleted after all retries,
+     * every remaining file and the directory itself are registered with {@link java.io.File#deleteOnExit()} so they are
+     * removed when the JVM exits.
+     *
      * @param canonicalName The name of the plugin for which to delete the plugin directory.
      * @param plugin the instance of the plugin for which to delete the plugin directory.
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3208">OF-3208</a>
      */
     private void doDestroyExtractedFiles(final String canonicalName, final Plugin plugin)
     {
@@ -992,8 +1000,9 @@ public class PluginManager
         try
         {
             Thread.sleep( 2000 );
-            // Ask the system to clean up references.
+            // Ask the system to clean up references (OF-3208)
             System.gc();
+            System.runFinalization();
             int count = 0;
             while ( !deleteDir( dir ) && count++ < 5 )
             {
@@ -1001,7 +1010,50 @@ public class PluginManager
                 Thread.sleep( 8000 );
                 // Ask the system to clean up references.
                 System.gc();
+                System.runFinalization();
             }
+            // If the directory still exists after all retries (common on Windows, where the JVM holds mandatory file
+            // locks on JAR/class files until they are garbage-collected), register every remaining file and directory
+            // for deletion when the JVM exits. postVisitDirectory registers each directory *after* its contents, which
+            // matches the JVM's LIFO deleteOnExit processing order and ensures no directory is deleted while it still
+            // has children.
+            if ( Files.exists( dir ) ) {
+                Log.warn( "Unable to fully delete plugin directory for '{}' after retries. Registering remaining files for deletion on JVM exit: {}", canonicalName, dir );
+                try {
+                    Files.walkFileTree( dir, new SimpleFileVisitor<>() {
+                        @Nonnull
+                        @Override
+                        public FileVisitResult visitFile(@Nonnull Path file, @Nonnull BasicFileAttributes attrs) {
+                            file.toFile().deleteOnExit();
+                            return FileVisitResult.CONTINUE;
+                        }
+
+                        @Nonnull
+                        @Override
+                        public FileVisitResult visitFileFailed(@Nonnull Path file, @Nonnull IOException exc) {
+                            Log.warn("Unable to register file for deletion on exit for plugin '{}': {}", canonicalName, file, exc);
+                            file.toFile().deleteOnExit();
+                            final Path parent = file.getParent();
+                            if (parent != null) {
+                                parent.toFile().deleteOnExit();
+                            }
+                            return FileVisitResult.CONTINUE;
+                        }
+
+                        @Nonnull
+                        @Override
+                        public FileVisitResult postVisitDirectory(@Nonnull Path subDir, IOException exc) {
+                            subDir.toFile().deleteOnExit();
+                            return FileVisitResult.CONTINUE;
+                        }
+                    } );
+                }
+                catch (IOException e) {
+                    Log.warn( "Unable to register plugin '{}' directory for deletion on exit: {}", canonicalName, dir, e );
+                    dir.toFile().deleteOnExit(); // Even when traversal fails, at least attempt to delete the plugin directory itself on JVM exit.
+                }
+            }
+
             pluginDirs.remove(canonicalName);
         }
         catch ( InterruptedException e )
@@ -1053,16 +1105,19 @@ public class PluginManager
 
         doInPluginHierarchy(canonicalName, plugin, this::doDestroyPlugin);
         doInPluginHierarchy(canonicalName, plugin, this::doDestroyClassLoader);
-        doInPluginHierarchy(canonicalName, plugin, this::doDestroyExtractedFiles);
-        doInPluginHierarchy(canonicalName, plugin, this::doDestroyCaches); // TODO document if/why this is done here (and not as part of doDestroyPlugin, for example).
-        doInPluginHierarchy(canonicalName, plugin, this::firePluginDestroyedEvent);
 
-        // Clean up the data structures that are used to maintain the plugin hierarchy.
+        // Remove from the loaded-plugin registry immediately after the classloader is torn down, so that isLoaded()
+        // reflects the logical state even if physical file deletion is slow (e.g. on Windows where the JVM holds file
+        // locks until GC). See OF-3208
         doInPluginHierarchy(canonicalName, plugin, (String name, Plugin plug) -> {
             pluginsLoaded.remove(name);
             childPluginMap.remove(plug);
             parentPluginMap.remove(plug);
         });
+
+        doInPluginHierarchy(canonicalName, plugin, this::doDestroyExtractedFiles);
+        doInPluginHierarchy(canonicalName, plugin, this::doDestroyCaches); // TODO document if/why this is done here (and not as part of doDestroyPlugin, for example).
+        doInPluginHierarchy(canonicalName, plugin, this::firePluginDestroyedEvent);
 
         Log.info( "Successfully unloaded plugin '{}'.", canonicalName );
     }
@@ -1172,8 +1227,9 @@ public class PluginManager
             {
                 Files.walkFileTree( dir, new SimpleFileVisitor<>()
                 {
+                    @Nonnull
                     @Override
-                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException
+                    public FileVisitResult visitFile(@Nonnull Path file, @Nonnull BasicFileAttributes attrs) throws IOException
                     {
                         try {
                             Files.deleteIfExists(file);
@@ -1184,8 +1240,9 @@ public class PluginManager
                         return FileVisitResult.CONTINUE;
                     }
 
+                    @Nonnull
                     @Override
-                    public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException
+                    public FileVisitResult postVisitDirectory(@Nonnull Path dir, IOException exc) throws IOException
                     {
                         try {
                             Files.deleteIfExists(dir);

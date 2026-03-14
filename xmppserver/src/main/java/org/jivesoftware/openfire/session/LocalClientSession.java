@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -347,11 +347,6 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         {
             return false;
         }
-    }
-
-    @Deprecated(forRemoval = true, since = "5.0.0") // Remove in Openfire 5.1 or later.
-    public static boolean isAddressInRange( byte[] address, Set<String> ranges ) {
-        return IpUtils.isAddressInAnyOf(address, ranges);
     }
 
     /**

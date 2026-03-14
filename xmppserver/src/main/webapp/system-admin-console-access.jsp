@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2022-2024 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2022-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -191,7 +191,7 @@
     pageContext.setAttribute("blockedIPs", AuthCheckFilter.IP_ACCESS_BLOCKLIST.getValue().stream().sorted().collect(Collectors.toList()));
     pageContext.setAttribute("allowedIPs", AuthCheckFilter.IP_ACCESS_ALLOWLIST.getValue().stream().sorted().collect(Collectors.toList()));
     pageContext.setAttribute("ignoreExcludes", errors.isEmpty() ? AuthCheckFilter.IP_ACCESS_IGNORE_EXCLUDES.getValue() : ignoreExcludes);
-    pageContext.setAttribute("formattedRemoteAddress", AuthCheckFilter.removeBracketsFromIpv6Address(pageContext.getRequest().getRemoteAddr()));
+    pageContext.setAttribute("formattedRemoteAddress", IpUtils.removeBracketsFromIpv6Address(pageContext.getRequest().getRemoteAddr()));
     pageContext.setAttribute("blockValue", blockValue);
     pageContext.setAttribute("allowValue", allowValue);
 

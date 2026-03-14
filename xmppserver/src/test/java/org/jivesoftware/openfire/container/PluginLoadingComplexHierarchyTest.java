@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2025-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -133,6 +133,10 @@ public class PluginLoadingComplexHierarchyTest
             try (final Stream<Path> paths = Files.walk(tempPluginDirectory)) {
                 paths.sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
             }
+
+            // Windows is notoriously stubborn with releasing files (OF-3208)
+            System.gc();
+            System.runFinalization();
         }
 
         Fixtures.clearExistingProperties();

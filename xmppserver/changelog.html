@@ -160,6 +160,35 @@ hr {
     
     <div id="pageBody">
 
+<h2>5.0.4 -- <span style="font-weight: normal;">March 17, 2026</span></h2>
+<h2>Improvement</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3156">OF-3156</a>] - Improve error handling when MUC service creation fails in admin console</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3160">OF-3160</a>] - Bump BouncyCastle.version from 1.78.1 to 1.83</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3164">OF-3164</a>] - High CPU usage caused by exception-based control flow in UserManager.isRegisteredUser()</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3177">OF-3177</a>] - Improve logging when TrustManager initialization fails (exception currently suppressed)</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3200">OF-3200</a>] - Improve InMemoryPubSubPersistenceProvider.purgeNode() to target the service cache entry directly instead of scanning all entries</li>
+</ul>
+
+<h2>Task</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3161">OF-3161</a>] - Upgrade Netty to 4.1.131 version</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3162">OF-3162</a>] - Upgrade Apache commons-text from 1.10.0 to 1.15.0</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3178">OF-3178</a>] - Update install4j to 12.0.2</li>
+</ul>
+
+<h2>Bug</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2637">OF-2637</a>] - Admin Console -&gt; Logs viewer. Selecting 'All' lines causes exception</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3132">OF-3132</a>] - When obtaining user sessions for bare JID, not all sessions are returned</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3165">OF-3165</a>] - Fix incorrect message in closeNeverEncryptedConnection method</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3175">OF-3175</a>] - Openfire startup deadlocks during autosetup when encrypted XML properties are processed</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3197">OF-3197</a>] - updateSubscription() sets wrong parameter index when deleting a subscription in state none, silently failing to delete the correct row</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3198">OF-3198</a>] - LOAD_LAST_ITEMS_LIMIT query returns items in ascending order, causing incorrect results for non-SQL Server, non-Oracle databases</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3205">OF-3205</a>] - always update lastPublished when same item is overwritten (XEP-0060 §7.1.2)</li>
+</ul>
+
+
 <h2>5.0.3 -- <span style="font-weight: normal;">December 12, 2025</span></h2>
 <h2>Improvement</h2>
 <ul>

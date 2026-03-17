@@ -312,4 +312,238 @@ public class EntityCapabilitiesManagerTest {
         // Verify results.
         assertEquals("89D/mEGBT1K0RtY28gEkGRbV2rc=", result);
     }
+
+    /**
+     * Tests that a data form without a FORM_TYPE field is excluded from the verification string
+     * per XEP-0115 §5.4 item 6.
+     */
+    @Test
+    public void testFormWithoutFormTypeIsIgnored() throws Exception {
+        // Setup: a simple IQ with one identity, one feature, and a data form without FORM_TYPE.
+        final IQ iq = new IQ(IQ.Type.result);
+        iq.setFrom("test@example.com/res");
+        iq.setTo("server@example.com");
+        iq.setID("test1");
+
+        final Element query = iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
+
+        final Element identity = query.addElement("identity");
+        identity.addAttribute("category", "client");
+        identity.addAttribute("type", "pc");
+        identity.addAttribute("name", "TestClient");
+
+        query.addElement("feature").addAttribute("var", "http://jabber.org/protocol/caps");
+
+        // Add a data form WITHOUT a FORM_TYPE field – should be ignored.
+        final Element formWithoutFormType = query.addElement(QName.get("x", "jabber:x:data"));
+        formWithoutFormType.addAttribute("type", "result");
+        final Element customField = formWithoutFormType.addElement("field");
+        customField.addAttribute("var", "custom");
+        customField.addElement("value").setText("custom-value");
+
+        // Compute the ver hash including the form, as the old (incorrect) code would.
+        // This should produce the same hash as a response without any data form,
+        // because the form without FORM_TYPE must be ignored.
+        final IQ iqWithoutForm = new IQ(IQ.Type.result);
+        iqWithoutForm.setFrom("test@example.com/res");
+        iqWithoutForm.setTo("server@example.com");
+        iqWithoutForm.setID("test2");
+        final Element query2 = iqWithoutForm.setChildElement("query", "http://jabber.org/protocol/disco#info");
+        final Element identity2 = query2.addElement("identity");
+        identity2.addAttribute("category", "client");
+        identity2.addAttribute("type", "pc");
+        identity2.addAttribute("name", "TestClient");
+        query2.addElement("feature").addAttribute("var", "http://jabber.org/protocol/caps");
+
+        // Execute.
+        final String hashWithIgnoredForm = EntityCapabilitiesManager.generateVerHash(iq, "sha-1");
+        final String hashWithoutForm = EntityCapabilitiesManager.generateVerHash(iqWithoutForm, "sha-1");
+
+        // Verify: the form without FORM_TYPE should be ignored, so hashes must be equal.
+        assertEquals(hashWithoutForm, hashWithIgnoredForm,
+            "A data form without a FORM_TYPE field must be ignored when computing the ver hash.");
+    }
+
+    /**
+     * Tests that a data form with a FORM_TYPE field that is not of type 'hidden' is excluded
+     * from the verification string per XEP-0115 §5.4 item 6.
+     */
+    @Test
+    public void testFormWithNonHiddenFormTypeIsIgnored() throws Exception {
+        // Setup: a simple IQ with one identity, one feature, and a data form with non-hidden FORM_TYPE.
+        final IQ iq = new IQ(IQ.Type.result);
+        iq.setFrom("test@example.com/res");
+        iq.setTo("server@example.com");
+        iq.setID("test3");
+
+        final Element query = iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
+
+        final Element identity = query.addElement("identity");
+        identity.addAttribute("category", "client");
+        identity.addAttribute("type", "pc");
+        identity.addAttribute("name", "TestClient");
+
+        query.addElement("feature").addAttribute("var", "http://jabber.org/protocol/caps");
+
+        // A form with FORM_TYPE of type 'text-single' (not 'hidden') – should be ignored.
+        final Element formWithNonHiddenFormType = query.addElement(QName.get("x", "jabber:x:data"));
+        formWithNonHiddenFormType.addAttribute("type", "result");
+        final Element formTypeField = formWithNonHiddenFormType.addElement("field");
+        formTypeField.addAttribute("var", "FORM_TYPE");
+        formTypeField.addAttribute("type", "text-single");  // NOT hidden
+        formTypeField.addElement("value").setText("urn:example:form");
+
+        // Compute reference without any form.
+        final IQ iqWithoutForm = new IQ(IQ.Type.result);
+        iqWithoutForm.setFrom("test@example.com/res");
+        iqWithoutForm.setTo("server@example.com");
+        iqWithoutForm.setID("test4");
+        final Element query2 = iqWithoutForm.setChildElement("query", "http://jabber.org/protocol/disco#info");
+        final Element identity2 = query2.addElement("identity");
+        identity2.addAttribute("category", "client");
+        identity2.addAttribute("type", "pc");
+        identity2.addAttribute("name", "TestClient");
+        query2.addElement("feature").addAttribute("var", "http://jabber.org/protocol/caps");
+
+        // Execute.
+        final String hashWithIgnoredForm = EntityCapabilitiesManager.generateVerHash(iq, "sha-1");
+        final String hashWithoutForm = EntityCapabilitiesManager.generateVerHash(iqWithoutForm, "sha-1");
+
+        // Verify: the form with non-hidden FORM_TYPE should be ignored.
+        assertEquals(hashWithoutForm, hashWithIgnoredForm,
+            "A data form whose FORM_TYPE field is not of type 'hidden' must be ignored when computing the ver hash.");
+    }
+
+    /**
+     * Tests that a disco#info response with duplicate identities is considered ill-formed
+     * per XEP-0115 §5.4 item 3.
+     */
+    @Test
+    public void testWellFormedCheckRejectsDuplicateIdentities() throws Exception {
+        final IQ iq = new IQ(IQ.Type.result);
+        iq.setFrom("test@example.com/res");
+        iq.setTo("server@example.com");
+        iq.setID("test5");
+
+        final Element query = iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
+
+        // Two identical identities – ill-formed.
+        final Element id1 = query.addElement("identity");
+        id1.addAttribute("category", "client");
+        id1.addAttribute("type", "pc");
+        id1.addAttribute("name", "TestClient");
+
+        final Element id2 = query.addElement("identity");
+        id2.addAttribute("category", "client");
+        id2.addAttribute("type", "pc");
+        id2.addAttribute("name", "TestClient");
+
+        assertFalse(EntityCapabilitiesManager.isWellFormed(iq),
+            "A response with duplicate identities must be considered ill-formed.");
+    }
+
+    /**
+     * Tests that a disco#info response with duplicate features is considered ill-formed
+     * per XEP-0115 §5.4 item 4.
+     */
+    @Test
+    public void testWellFormedCheckRejectsDuplicateFeatures() throws Exception {
+        final IQ iq = new IQ(IQ.Type.result);
+        iq.setFrom("test@example.com/res");
+        iq.setTo("server@example.com");
+        iq.setID("test6");
+
+        final Element query = iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
+
+        query.addElement("feature").addAttribute("var", "http://jabber.org/protocol/caps");
+        // Duplicate feature – ill-formed.
+        query.addElement("feature").addAttribute("var", "http://jabber.org/protocol/caps");
+
+        assertFalse(EntityCapabilitiesManager.isWellFormed(iq),
+            "A response with duplicate features must be considered ill-formed.");
+    }
+
+    /**
+     * Tests that a disco#info response with two extended forms sharing the same FORM_TYPE is
+     * considered ill-formed per XEP-0115 §5.4 item 5.
+     */
+    @Test
+    public void testWellFormedCheckRejectsDuplicateFormTypes() throws Exception {
+        final IQ iq = new IQ(IQ.Type.result);
+        iq.setFrom("test@example.com/res");
+        iq.setTo("server@example.com");
+        iq.setID("test7");
+
+        final Element query = iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
+
+        // Two forms with the same FORM_TYPE – ill-formed.
+        for (int i = 0; i < 2; i++) {
+            final Element form = query.addElement(QName.get("x", "jabber:x:data"));
+            form.addAttribute("type", "result");
+            final Element ft = form.addElement("field");
+            ft.addAttribute("var", "FORM_TYPE");
+            ft.addAttribute("type", "hidden");
+            ft.addElement("value").setText("urn:example:form");
+        }
+
+        assertFalse(EntityCapabilitiesManager.isWellFormed(iq),
+            "A response with two forms sharing the same FORM_TYPE must be considered ill-formed.");
+    }
+
+    /**
+     * Tests that a disco#info response with a FORM_TYPE field having multiple different values is
+     * considered ill-formed per XEP-0115 §5.4 item 5.
+     */
+    @Test
+    public void testWellFormedCheckRejectsFormTypeWithMultipleDifferentValues() throws Exception {
+        final IQ iq = new IQ(IQ.Type.result);
+        iq.setFrom("test@example.com/res");
+        iq.setTo("server@example.com");
+        iq.setID("test8");
+
+        final Element query = iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
+
+        final Element form = query.addElement(QName.get("x", "jabber:x:data"));
+        form.addAttribute("type", "result");
+        final Element ft = form.addElement("field");
+        ft.addAttribute("var", "FORM_TYPE");
+        ft.addAttribute("type", "hidden");
+        // Two different values for FORM_TYPE – ill-formed.
+        ft.addElement("value").setText("urn:example:form-a");
+        ft.addElement("value").setText("urn:example:form-b");
+
+        assertFalse(EntityCapabilitiesManager.isWellFormed(iq),
+            "A response with a FORM_TYPE field that has multiple different values must be considered ill-formed.");
+    }
+
+    /**
+     * Tests that a well-formed disco#info response passes the well-formedness check.
+     */
+    @Test
+    public void testWellFormedCheckAcceptsValidResponse() throws Exception {
+        final IQ iq = new IQ(IQ.Type.result);
+        iq.setFrom("test@example.com/res");
+        iq.setTo("server@example.com");
+        iq.setID("test9");
+
+        final Element query = iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
+
+        final Element identity = query.addElement("identity");
+        identity.addAttribute("category", "client");
+        identity.addAttribute("type", "pc");
+        identity.addAttribute("name", "TestClient");
+
+        query.addElement("feature").addAttribute("var", "http://jabber.org/protocol/caps");
+        query.addElement("feature").addAttribute("var", "http://jabber.org/protocol/disco#info");
+
+        final Element form = query.addElement(QName.get("x", "jabber:x:data"));
+        form.addAttribute("type", "result");
+        final Element ft = form.addElement("field");
+        ft.addAttribute("var", "FORM_TYPE");
+        ft.addAttribute("type", "hidden");
+        ft.addElement("value").setText("urn:example:form");
+
+        assertTrue(EntityCapabilitiesManager.isWellFormed(iq),
+            "A well-formed disco#info response must pass the well-formedness check.");
+    }
 }

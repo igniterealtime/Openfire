@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [ 17, 21 ]
+        java: [ 17, 21, 25 ]
         distribution: [ zulu ] # We could add more here: temurin, adopt, liberica, microsoft, corretto
 
     steps:

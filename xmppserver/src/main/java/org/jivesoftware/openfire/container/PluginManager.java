@@ -36,7 +36,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.jar.JarFile;
@@ -809,16 +808,7 @@ public class PluginManager
             throw new IllegalStateException( "Unable to determine installation path of plugin: " + pluginName );
         }
 
-        try
-        {
-            Files.setLastModifiedTime( path, FileTime.fromMillis( 0 ) );
-        }
-        catch ( IOException e )
-        {
-            Log.warn( "Unable to reload plugin '{}'. Unable to reset the 'last modified time' of the plugin path. Try removing and restoring the plugin jar file manually.", pluginName );
-            return false;
-        }
-
+        pluginMonitor.flagForReload( PluginMetadataHelper.getCanonicalName(plugin) );
         pluginMonitor.runNow( blockUntilDone );
         return true;
     }

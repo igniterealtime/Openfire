@@ -39,6 +39,8 @@ import org.jivesoftware.util.PropertyEventListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
+
 /**
  * A service that monitors the plugin directory for plugins. It periodically checks for new plugin JAR files and
  * extracts them if they haven't already been extracted. Then, any new plugin directories are loaded, using the
@@ -56,6 +58,8 @@ public class PluginMonitor implements PropertyEventListener
     private ScheduledFuture<?> monitorTaskScheduledFuture;
 
     private boolean isTaskRunning = false;
+
+    private final Set<String> canonicalNamesFlaggedForReload = new HashSet<>();
 
     public PluginMonitor( final PluginManager pluginManager )
     {
@@ -197,6 +201,16 @@ public class PluginMonitor implements PropertyEventListener
         propertySet( property, params );
     }
 
+    /**
+     * Marks a plugin for reload.
+     *
+     * @param canonicalName the canonical name of the plugin to be reloaded.
+     */
+    public synchronized void flagForReload(@Nonnull final String canonicalName)
+    {
+        canonicalNamesFlaggedForReload.add(canonicalName);
+    }
+
     private class MonitorTask implements Runnable
     {
         @Override
@@ -255,29 +269,33 @@ public class PluginMonitor implements PropertyEventListener
                         }
                     }
 
-                    // See if any JAR is newer than the directory. If so, the plugin needs to be unloaded and then reloaded.
+                    // See if any plugin needs to be unloaded and reloaded.
                     for (final Map.Entry<String, Path> entry : jarsByPluginName.entrySet())
                     {
                         final String canonicalPluginName = entry.getKey();
                         final Path jarFile = entry.getValue();
                         final Path dir = pluginsDirectory.resolve( canonicalPluginName );
 
-                        if ( Files.exists( dir ) && Files.getLastModifiedTime( jarFile ).toMillis() > Files.getLastModifiedTime( dir ).toMillis() )
+                        if ( Files.exists( dir ))
                         {
-                            // If this is the first time that the monitor process is running, then plugins won't be loaded yet. Therefore, just delete the directory.
-                            if ( !pluginManager.isExecuted() )
-                            {
-                                int count = 0;
-                                // Attempt to delete the folder for up to 5 seconds.
-                                while ( !PluginManager.deleteDir( dir ) && count++ < 5 )
-                                {
-                                    Thread.sleep( 1000 );
+                            // See if any JAR is newer than the directory. If so, the plugin needs to be unloaded and then reloaded.
+                            final FileTime jarModified = Files.getLastModifiedTime(jarFile);
+                            final FileTime dirModified = Files.getLastModifiedTime(dir);
+                            final boolean isNewerJar = jarModified.toInstant().isAfter(dirModified.toInstant());
+                            final boolean isFlagged = canonicalNamesFlaggedForReload.contains(canonicalPluginName); // We can't trust modifcation dates on all operating systems. This flag is more reliable.
+
+                            if (isNewerJar || isFlagged) {
+                                // If this is the first time that the monitor process is running, then plugins won't be loaded yet. Therefore, just delete the directory.
+                                if (!pluginManager.isExecuted()) {
+                                    int count = 0;
+                                    // Attempt to delete the folder for up to 5 seconds.
+                                    while (!PluginManager.deleteDir(dir) && count++ < 5) {
+                                        Thread.sleep(1000);
+                                    }
+                                } else {
+                                    // Not the first time? Properly unload the plugin.
+                                    pluginManager.unloadPlugin(canonicalPluginName);
                                 }
-                            }
-                            else
-                            {
-                                // Not the first time? Properly unload the plugin.
-                                pluginManager.unloadPlugin( canonicalPluginName );
                             }
                         }
                     }
@@ -297,8 +315,10 @@ public class PluginMonitor implements PropertyEventListener
                         if (Files.exists(dir)) {
                             final FileTime jarModified = Files.getLastModifiedTime(jarFile);
                             final FileTime dirModified = Files.getLastModifiedTime(dir);
-                            if (jarModified.toInstant().isAfter(dirModified.toInstant())) {
-                                // JAR is newer: directory is stale, force re-extraction.
+                            final boolean isNewerJar = jarModified.toInstant().isAfter(dirModified.toInstant());
+                            final boolean isFlagged = canonicalNamesFlaggedForReload.contains(canonicalPluginName); // We can't trust modifcation dates on all operating systems. This flag is more reliable.
+                            if (isNewerJar || isFlagged) {
+                                // JAR is newer (directory is stale) or plugin is explicitly flagged for reload: force re-extraction.
                                 mustExplodeJar = true;
 
                                 // Best-effort delete; on Windows this may partially fail due to locks (OF-3209).
@@ -419,6 +439,7 @@ public class PluginMonitor implements PropertyEventListener
                 }
                 finally
                 {
+                    canonicalNamesFlaggedForReload.clear();
                     isTaskRunning = false;
                 }
             }

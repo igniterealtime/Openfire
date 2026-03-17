@@ -32,6 +32,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -81,6 +83,16 @@ public class PluginLoadingComplexHierarchyTest
      */
     private Path tempPluginDirectory;
 
+    /**
+     * Records the time when a plugin, identified by its canonical name, was last installed.
+     */
+    private final Map<String, Instant> lastInstallTimes = new HashMap<>();
+
+    /**
+     * Records the time when a plugin, identified by its canonical name, was last installed.
+     */
+    private final Map<String, Instant> lastDestroyTimes = new HashMap<>();
+
     @BeforeAll
     public static void setUpClass() throws Exception {
         Fixtures.reconfigureOpenfireHome();
@@ -96,6 +108,24 @@ public class PluginLoadingComplexHierarchyTest
 
         // Create a new instance of the plugin manager.
         pluginManager = new PluginManager(tempPluginDirectory);
+
+        // Set up listeners to be able to track if (and when) a plugin is installed/removed.
+        lastInstallTimes.clear();
+        lastDestroyTimes.clear();
+        pluginManager.addPluginListener(new PluginListener()
+        {
+            @Override
+            public void pluginCreated(String pluginName, Plugin plugin)
+            {
+                lastInstallTimes.put(pluginName, Instant.now());
+            }
+
+            @Override
+            public void pluginDestroyed(String pluginName, Plugin plugin)
+            {
+                lastDestroyTimes.put(pluginName, Instant.now());
+            }
+        });
         pluginManager.start();
 
         // Mock the XMPPServer instance so that it returns our system-under-test.
@@ -418,7 +448,6 @@ public class PluginLoadingComplexHierarchyTest
      */
     private Instant getLastInstallTime(final String canonicalPluginName) throws IOException
     {
-        final Path explodedPluginPath = tempPluginDirectory.resolve(canonicalPluginName);
-        return Files.getLastModifiedTime(explodedPluginPath).toInstant();
+        return lastInstallTimes.get(canonicalPluginName);
     }
 }

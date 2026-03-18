@@ -30,6 +30,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -80,6 +81,10 @@ public class PluginLoadingSimpleHierarchyTest
     @BeforeEach
     public void setUp() throws IOException
     {
+        // Speed up tests by reducing default timeouts.
+        PluginManager.PLUGIN_DIRECTORY_DESTROY_DELAY.setValue(Duration.ofMillis(500));
+        PluginManager.PLUGIN_DIRECTORY_DESTROY_TIMEOUT.setValue(Duration.ofMillis(5000));
+
         // Create a new, empty directory to be used as the base directory for the plugin manager.
         tempPluginDirectory = Files.createTempDirectory("openfire-unittest-pluginloading");
         tempPluginDirectory.toFile().deleteOnExit();

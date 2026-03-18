@@ -36,6 +36,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.jar.JarFile;
@@ -66,6 +68,28 @@ import java.util.zip.ZipException;
 public class PluginManager
 {
     private static final Logger Log = LoggerFactory.getLogger( PluginManager.class );
+
+    /**
+     * A delay that is observed between the time a plugin's unloading starts, and the plugin directory actually being removed.
+     */
+    public static final SystemProperty<Duration> PLUGIN_DIRECTORY_DESTROY_DELAY = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("plugins.unloading.directory.destroy.delay")
+        .setChronoUnit(ChronoUnit.MILLIS)
+        .setDefaultValue(Duration.ofSeconds(2))
+        .setDynamic(true)
+        .setMinValue(Duration.ZERO)
+        .build();
+
+    /**
+     * The maximum time that Openfire will wait for a plugin directory to be destroyed after the plugin is unloaded.
+     */
+    public static final SystemProperty<Duration> PLUGIN_DIRECTORY_DESTROY_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("plugins.unloading.directory.destroy.timeout")
+        .setChronoUnit(ChronoUnit.MILLIS)
+        .setDefaultValue(Duration.ofSeconds(40))
+        .setDynamic(true)
+        .setMinValue(Duration.ZERO)
+        .build();
 
     private final Path pluginDirectory;
 
@@ -986,29 +1010,46 @@ public class PluginManager
         // the plugin was successfully removed. Otherwise, some objects created by the
         // plugin are still in memory.
         Path dir = pluginDirectory.resolve( canonicalName );
-        // Give the plugin 2 seconds to unload.
         try
         {
-            Thread.sleep( 2000 );
             // Ask the system to clean up references (OF-3208)
             System.gc();
             System.runFinalization();
-            int count = 0;
-            while ( !deleteDir( dir ) && count++ < 5 )
+
+            // Give the plugin some time to unload.
+            if (!PLUGIN_DIRECTORY_DESTROY_DELAY.getValue().isNegative() && PLUGIN_DIRECTORY_DESTROY_DELAY.getValue().isZero())
             {
-                Log.warn( "Error unloading plugin '{}'. Will attempt again momentarily.", canonicalName );
-                Thread.sleep( 8000 );
-                // Ask the system to clean up references.
+                Thread.sleep(PLUGIN_DIRECTORY_DESTROY_DELAY.getValue().toMillis());
+
+                // Ask the system to clean up references (OF-3208)
                 System.gc();
                 System.runFinalization();
             }
+
+            final int maxIterations = 20;
+            if (!PLUGIN_DIRECTORY_DESTROY_TIMEOUT.getValue().isNegative() && !PLUGIN_DIRECTORY_DESTROY_TIMEOUT.getValue().isZero())
+            {
+                final Duration iterationDuration = PLUGIN_DIRECTORY_DESTROY_TIMEOUT.getValue().dividedBy(maxIterations);
+
+                int count = 0;
+                while ( !deleteDir( dir ) && count++ < maxIterations )
+                {
+                    Log.debug( "Unable to remove files for the unloaded plugin '{}'. Will attempt again for attempt {} of {} in {}.", canonicalName, count, maxIterations, iterationDuration );
+                    Thread.sleep( iterationDuration.toMillis() );
+
+                    // Ask the system to clean up references.
+                    System.gc();
+                    System.runFinalization();
+                }
+            }
+
             // If the directory still exists after all retries (common on Windows, where the JVM holds mandatory file
             // locks on JAR/class files until they are garbage-collected), register every remaining file and directory
             // for deletion when the JVM exits. postVisitDirectory registers each directory *after* its contents, which
             // matches the JVM's LIFO deleteOnExit processing order and ensures no directory is deleted while it still
             // has children.
             if ( Files.exists( dir ) ) {
-                Log.warn( "Unable to fully delete plugin directory for '{}' after retries. Registering remaining files for deletion on JVM exit: {}", canonicalName, dir );
+                Log.warn( "Unable to fully delete plugin directory for '{}' after {} retries. Registering remaining files for deletion on JVM exit: {}", canonicalName, maxIterations, dir );
                 try {
                     Files.walkFileTree( dir, new SimpleFileVisitor<>() {
                         @Nonnull

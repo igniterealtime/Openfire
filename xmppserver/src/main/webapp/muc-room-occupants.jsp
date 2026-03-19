@@ -133,7 +133,7 @@
     <tbody>
         <tr>
             <td><%= StringUtils.escapeHTMLTags(room.getName()) %></td>
-            <td><%= room.getOccupantsCount() %> / <%= room.getMaxUsers() %></td>
+            <td><%= room.getOccupantsCount() %><% if (room.getMaxUsers() > 0) { %> / <%= room.getMaxUsers() %><% } %></td>
             <td><%= dateFormatter.format(room.getCreationDate()) %></td>
             <td><%= dateFormatter.format(room.getModificationDate()) %></td>
         </tr>

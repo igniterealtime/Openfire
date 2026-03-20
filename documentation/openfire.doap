@@ -206,7 +206,6 @@
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0128.html"/>
-                <xmpp:note xml:lang='en'>Provided by the 'MUC Service Discovery Extensions' plugin</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -245,6 +244,11 @@
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0156.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0157.html"/>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -322,6 +326,11 @@
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0223.html"/>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0232.html"/>
             </xmpp:SupportedXep>
         </implements>
         <implements>

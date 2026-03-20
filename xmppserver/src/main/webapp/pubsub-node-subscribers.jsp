@@ -241,7 +241,7 @@
                     <c:param name="csrf" value="${csrf}" />
                     <c:param name="owner" value="${owner}"/>
                 </c:url>
-                <a href="${url}" title="<fmt:message key="global.click_delete" />">
+                <a href="${url}" title="<fmt:message key="global.click_delete" />" onclick="return confirm('<fmt:message key="pubsub.node.subscribers.confirm_delete" />');">
                     <img src="images/delete-16x16.gif" alt="">
                 </a>
             </td>

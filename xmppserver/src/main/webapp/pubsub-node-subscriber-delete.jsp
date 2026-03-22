@@ -15,21 +15,18 @@
   - limitations under the License.
 --%>
 <%@ page contentType="text/html; charset=UTF-8" %>
-<%@page import="org.jivesoftware.openfire.pep.PEPServiceInfo,
-                org.jivesoftware.openfire.pubsub.NodeAffiliate,
-                org.jivesoftware.openfire.pubsub.NodeSubscription,
-                org.jivesoftware.openfire.pubsub.PubSubServiceInfo,
-                org.jivesoftware.util.*,
-                org.jivesoftware.openfire.pubsub.Node,
-                org.jivesoftware.openfire.XMPPServer,
-                org.xmpp.packet.JID,
-                java.net.URLEncoder,
-                java.util.HashMap,
-                java.util.Map"
-        errorPage="error.jsp"
+<%@ page import="org.jivesoftware.openfire.pep.PEPServiceInfo,
+                 org.jivesoftware.openfire.pubsub.NodeSubscription,
+                 org.jivesoftware.openfire.pubsub.PubSubServiceInfo,
+                 org.jivesoftware.util.*,
+                 org.jivesoftware.openfire.pubsub.Node,
+                 org.jivesoftware.openfire.XMPPServer,
+                 org.xmpp.packet.JID,
+                 java.net.URLEncoder,
+                 java.util.HashMap,
+                 java.util.Map"
+         errorPage="error.jsp"
 %>
-<%@ page import="java.util.HashMap" %>
-<%@ page import="java.util.Map" %>
 <%@ page import="java.nio.charset.StandardCharsets" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
@@ -46,8 +43,7 @@
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
     String nodeID = ParamUtils.getParameter(request,"nodeID");
-    String affiliateJID = ParamUtils.getParameter(request,"affiliateJID");
-    String affiliationParam = ParamUtils.getParameter(request,"affiliation");
+    String deleteID = ParamUtils.getParameter(request,"deleteID");
 
     final Map<String, String> errors = new HashMap<>();
 
@@ -79,7 +75,7 @@
 
     // Handle a cancel
     if (cancel) {
-        response.sendRedirect("pubsub-node-affiliates.jsp?nodeID="+URLEncoder.encode(nodeID, StandardCharsets.UTF_8) + (owner != null ? "&owner=" + URLEncoder.encode(owner.toBareJID(), StandardCharsets.UTF_8) : ""));
+        response.sendRedirect("pubsub-node-subscribers.jsp?nodeID="+URLEncoder.encode(nodeID, StandardCharsets.UTF_8) + (owner != null ? "&owner=" + URLEncoder.encode(owner.toBareJID(), StandardCharsets.UTF_8) : ""));
         return;
     }
 
@@ -95,39 +91,27 @@
 
     // Load the node object
     Node node = pubSubServiceInfo.getNode(nodeID);
-    NodeAffiliate affiliate = node.getAffiliate(new JID(affiliateJID));
+    if (node == null) {
+        // The requested node does not exist so return to the list of the existing node
+        response.sendRedirect("pubsub-node-summary.jsp" + (owner != null ? "?owner=" + URLEncoder.encode(owner.toBareJID(), StandardCharsets.UTF_8) : ""));
+        return;
+    }
+    
+    NodeSubscription subscription = node.getSubscription(deleteID);
 
-    // Handle a affiliate delete:
+    // Handle a subscriber delete:
     if (errors.isEmpty() && delete) {
-        if (affiliate != null) {
-            JID jid = new JID(affiliateJID);
-
-            for (NodeSubscription subscription: affiliate.getSubscriptions()) {
-                node.cancelSubscription(subscription);
-            }
-
-            switch(affiliate.getAffiliation()) {
-                case outcast:
-                    node.removeOutcast(jid);
-                    break;
-                case publisher:
-                    node.removePublisher(jid);
-                    break;
-                case owner:
-                    node.removeOwner(jid);
-                    break;
-                case none:
-                    //None affiliation will have been removed as a result of removing the subscriptions.
-                    break;
-            }
+        if (subscription != null) {
+            node.cancelSubscription(subscription);
 
             // Log the event
-            webManager.logEvent("Deleted Affiliation for : " + affiliate + ", from Node " + nodeID, null);
+            webManager.logEvent("Cancelled subscription ID: " + deleteID +  ", from node ID: " + nodeID, "Owner: " + subscription.getOwner().toBareJID());
         }
         // Done, so redirect
-        response.sendRedirect("pubsub-node-affiliates.jsp?nodeID="+URLEncoder.encode( nodeID, StandardCharsets.UTF_8)
+        response.sendRedirect("pubsub-node-subscribers.jsp?nodeID=" + URLEncoder.encode(nodeID, StandardCharsets.UTF_8)
+                + "&deleteSuccess=true"
                 + (owner != null ? "&owner=" + URLEncoder.encode(owner.toBareJID(), StandardCharsets.UTF_8) : "")
-                +"&deleteSuccess=true&affiliateJID="+URLEncoder.encode( affiliateJID, StandardCharsets.UTF_8));
+                + (subscription != null ? "&ownerOfDeleted=" + URLEncoder.encode(subscription.getOwner().toBareJID(), StandardCharsets.UTF_8) : ""));
         return;
     }
 
@@ -135,28 +119,22 @@
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
     pageContext.setAttribute("csrf", csrfParam);
 
-    String affiliation = affiliationParam;
-    if (affiliation == null && affiliate != null) {
-        affiliation = affiliate.getAffiliation().name();
-    }
-
     pageContext.setAttribute("node", node);
-    pageContext.setAttribute("affiliate", affiliate);
-    pageContext.setAttribute("affiliation", affiliation);
+    pageContext.setAttribute("subscription", subscription);
     pageContext.setAttribute("owner", owner);
     pageContext.setAttribute("errors", errors);
 %>
 
 <html>
     <head>
-        <title><fmt:message key="pubsub.node.affiliates.delete.title"/></title>
+        <title><fmt:message key="pubsub.node.subscribers.delete.title"/></title>
         <c:choose>
             <c:when test="${not empty owner and owner.domain eq webManager.serverInfo.XMPPDomain}">
                 <meta name="subPageID" content="user-pep-node-summary"/>
                 <meta name="extraParams" content="username=${admin:urlEncode(owner.node)}&nodeID=${admin:urlEncode(node.nodeID)}" />
             </c:when>
             <c:otherwise>
-                <meta name="subPageID" content="pubsub-node-affiliates"/>
+                <meta name="subPageID" content="pubsub-node-subscribers"/>
                 <meta name="extraParams" content="nodeID=${admin:urlEncode(node.nodeID)}"/>
             </c:otherwise>
         </c:choose>
@@ -178,20 +156,45 @@
     </c:forEach>
 
     <p>
-        <fmt:message key="pubsub.node.affiliates.delete.confirm">
-            <fmt:param value="<b>${fn:escapeXml(affiliateJID)}</b>" />
-            <fmt:param value="<b>${fn:escapeXml(nodeID)}</b>" />
-        </fmt:message>
+        <fmt:message key="pubsub.node.subscribers.delete.info" />
     </p>
 
-    <form action="pubsub-node-affiliates-delete.jsp">
+    <div class="jive-table">
+        <table style="width: 100%">
+            <thead>
+                <tr>
+                    <th scope="col"><fmt:message key="pubsub.node.subscribers.owner" /></th>
+                    <th scope="col"><fmt:message key="pubsub.node.subscribers.resource" /></th>
+                    <th scope="col"><fmt:message key="pubsub.node.subscribers.affiliation" /></th>
+                    <th scope="col"><fmt:message key="pubsub.node.subscribers.status" /></th>
+                    <th scope="col"><fmt:message key="pubsub.node.subscribers.expires" /></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><c:out value="${subscription.owner.toBareJID()}"/></td>
+                    <td><c:out value="${subscription.JID.resource}"/></td>
+                    <td><c:out value="${subscription.affiliate.affiliation.name()}"/></td>
+                    <td><c:out value="${subscription.state.name()}"/></td>
+                    <td><fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${subscription.expire}" /></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <br>
+    <br>
+    <p>
+        <fmt:message key="pubsub.node.subscribers.delete.info3" />
+    </p>
+
+    <form action="pubsub-node-subscriber-delete.jsp">
         <input type="hidden" name="csrf" value="${csrf}">
         <input type="hidden" name="nodeID" value="${fn:escapeXml(node.nodeID)}">
         <input type="hidden" name="owner" value="${fn:escapeXml(owner)}">
-        <input type="hidden" name="affiliateJID" value="${fn:escapeXml(affiliate.JID.toBareJID())}">
-        <input type="hidden" name="affiliation" value="${fn:escapeXml(affiliation)}">
+        <input type="hidden" name="deleteID" value="${fn:escapeXml(subscription.ID)}">
 
-        <input type="submit" name="delete" value="<fmt:message key="pubsub.node.affiliates.delete.delete_affiliate" />">
+        <input type="submit" name="delete" value="<fmt:message key="pubsub.node.subscribers.delete.delete_subscriber" />">
         <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">
     </form>
 

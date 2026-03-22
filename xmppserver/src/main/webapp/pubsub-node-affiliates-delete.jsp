@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@
     String csrfParam = ParamUtils.getParameter(request, "csrf");
     String nodeID = ParamUtils.getParameter(request,"nodeID");
     String affiliateJID = ParamUtils.getParameter(request,"affiliateJID");
+    String affiliationParam = ParamUtils.getParameter(request,"affiliation");
 
     final Map<String, String> errors = new HashMap<>();
 
@@ -134,8 +135,14 @@
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
     pageContext.setAttribute("csrf", csrfParam);
 
+    String affiliation = affiliationParam;
+    if (affiliation == null && affiliate != null) {
+        affiliation = affiliate.getAffiliation().name();
+    }
+
     pageContext.setAttribute("node", node);
     pageContext.setAttribute("affiliate", affiliate);
+    pageContext.setAttribute("affiliation", affiliation);
     pageContext.setAttribute("owner", owner);
     pageContext.setAttribute("errors", errors);
 %>
@@ -171,74 +178,10 @@
     </c:forEach>
 
     <p>
-        <fmt:message key="pubsub.node.affiliates.delete.info" />
-    </p>
-
-    <div class="jive-table">
-        <table style="width: 100%">
-            <thead>
-                <tr>
-                    <th scope="col"><fmt:message key="pubsub.node.summary.id" /></th>
-                    <th scope="col"><fmt:message key="pubsub.node.affiliates.jid" /></th>
-                    <th scope="col"><fmt:message key="pubsub.node.affiliates.affiliation" /></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><c:out value="${node.nodeID}"/></td>
-                    <td><c:out value="${affiliate.JID.toBareJID()}"/></td>
-                    <td><c:out value="${affiliate.affiliation.name()}"/></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-    <br>
-    <br>
-    <p>
-        <fmt:message key="pubsub.node.affiliates.delete.info2" />
-    </p>
-
-    <div class="jive-table">
-        <table style="width: 100%">
-            <thead>
-                <tr>
-                    <th scope="col"><fmt:message key="pubsub.node.subscribers.owner" /></th>
-                    <th scope="col"><fmt:message key="pubsub.node.subscribers.resource" /></th>
-                    <th scope="col"><fmt:message key="pubsub.node.subscribers.status" /></th>
-                    <th scope="col"><fmt:message key="pubsub.node.subscribers.expires" /></th>
-                </tr>
-            </thead>
-            <tbody>
-                <c:if test="${empty affiliate.subscriptions}">
-                    <tr>
-                        <td style="text-align: center" colspan="4">
-                            <fmt:message key="pubsub.node.affiliates.delete.table.no_subscriptions" />
-                        </td>
-                    </tr>
-                </c:if>
-                <c:forEach var="subscription" items="${affiliate.subscriptions}">
-                    <tr>
-                        <td>
-                        <c:out value="${subscription.owner.toBareJID()}"/>
-                        </td>
-                        <td>
-                        <c:out value="${subscription.JID.resource}"/>
-                        </td>
-                        <td>
-                        <c:out value="${subscription.state.name()}"/>
-                        </td>
-                        <td>
-                        <fmt:formatDate type="both" dateStyle="medium" timeStyle="short" value="${subscription.expire}" />
-                        </td>
-                    </tr>
-                </c:forEach>
-            </tbody>
-        </table>
-    </div>
-    <br>
-    <br>
-    <p>
-        <fmt:message key="pubsub.node.affiliates.delete.info3" />
+        <fmt:message key="pubsub.node.affiliates.delete.confirm">
+            <fmt:param value="<b>${fn:escapeXml(affiliateJID)}</b>" />
+            <fmt:param value="<b>${fn:escapeXml(nodeID)}</b>" />
+        </fmt:message>
     </p>
 
     <form action="pubsub-node-affiliates-delete.jsp">
@@ -246,6 +189,7 @@
         <input type="hidden" name="nodeID" value="${fn:escapeXml(node.nodeID)}">
         <input type="hidden" name="owner" value="${fn:escapeXml(owner)}">
         <input type="hidden" name="affiliateJID" value="${fn:escapeXml(affiliate.JID.toBareJID())}">
+        <input type="hidden" name="affiliation" value="${fn:escapeXml(affiliation)}">
 
         <input type="submit" name="delete" value="<fmt:message key="pubsub.node.affiliates.delete.delete_affiliate" />">
         <input type="submit" name="cancel" value="<fmt:message key="global.cancel" />">

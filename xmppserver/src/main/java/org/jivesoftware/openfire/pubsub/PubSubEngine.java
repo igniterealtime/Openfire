@@ -1585,19 +1585,19 @@ public class PubSubEngine
             sendErrorPacket(iq, PacketError.Condition.forbidden, null);
             return;
         }
-        if (!((LeafNode) node).isPersistPublishedItems()) {
-            // Node does not persist items. Return feature-not-implemented error
-            Element pubsubError = DocumentHelper.createElement(
-                    QName.get("unsupported", "http://jabber.org/protocol/pubsub#errors"));
-            pubsubError.addAttribute("feature", "persistent-items");
-            sendErrorPacket(iq, PacketError.Condition.feature_not_implemented, pubsubError);
-            return;
-        }
         if (node.isCollectionNode()) {
             // Node is a collection node. Return feature-not-implemented error
             Element pubsubError = DocumentHelper.createElement(
                     QName.get("unsupported", "http://jabber.org/protocol/pubsub#errors"));
             pubsubError.addAttribute("feature", "purge-nodes");
+            sendErrorPacket(iq, PacketError.Condition.feature_not_implemented, pubsubError);
+            return;
+        }
+        if (!((LeafNode) node).isPersistPublishedItems()) {
+            // Node does not persist items. Return feature-not-implemented error
+            Element pubsubError = DocumentHelper.createElement(
+                    QName.get("unsupported", "http://jabber.org/protocol/pubsub#errors"));
+            pubsubError.addAttribute("feature", "persistent-items");
             sendErrorPacket(iq, PacketError.Condition.feature_not_implemented, pubsubError);
             return;
         }

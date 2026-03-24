@@ -37,6 +37,7 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.*;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
@@ -410,6 +411,16 @@ public class PubSubEngine
                         "invalid-payload", "http://jabber.org/protocol/pubsub#errors"));
                 sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
                 return;
+            }
+            // Check that the payload size does not exceed the node's configured maximum (XEP-0060 §7.1.3.5)
+            if (payload != null) {
+                final int payloadSize = payload.asXML().getBytes(StandardCharsets.UTF_8).length;
+                if (payloadSize > leafNode.getMaxPayloadSize()) {
+                    Element pubsubError = DocumentHelper.createElement(QName.get(
+                            "payload-too-big", "http://jabber.org/protocol/pubsub#errors"));
+                    sendErrorPacket(iq, PacketError.Condition.not_acceptable, pubsubError);
+                    return;
+                }
             }
             items.add(item);
         }

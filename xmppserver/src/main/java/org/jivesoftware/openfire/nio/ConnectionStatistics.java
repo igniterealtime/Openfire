@@ -82,6 +82,8 @@ public class ConnectionStatistics {
             if (newValue <= 0) {
                 // Only remove if the value is still the same empty counter
                 connectionsByIp.remove(ip, count);
+                // Clean up timestamp data when IP connection count reaches zero
+                connectionTimestampsByIp.remove(ip);
             }
             return Math.max(0, newValue);
         }

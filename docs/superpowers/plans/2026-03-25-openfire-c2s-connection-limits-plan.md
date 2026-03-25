@@ -16,7 +16,7 @@
 |------|----------|------|
 | Create | `xmppserver/src/main/java/org/jivesoftware/openfire/nio/ConnectionStatistics.java` | 连接统计数据持有类 |
 | Create | `xmppserver/src/main/java/org/jivesoftware/openfire/nio/ConnectionLimiter.java` | 主限制处理器 |
-| Create | `xmppserver/src/test/java/org/jivesoftware/openfire/nio/ConnectionLimiterTest.java` | 单元测试 |
+| Create | `xmppserver/src/test/java/org/jivesoftware/openfire/nio/ConnectionStatisticsTest.java` | 单元测试 |
 | Modify | `xmppserver/src/main/java/org/jivesoftware/openfire/spi/NettyServerInitializer.java` | 在 Pipeline 中添加 ConnectionLimiter |
 
 ---
@@ -25,7 +25,7 @@
 
 **Files:**
 - Create: `xmppserver/src/main/java/org/jivesoftware/openfire/nio/ConnectionStatistics.java`
-- Test: `xmppserver/src/test/java/org/jivesoftware/openfire/nio/ConnectionLimiterTest.java` (后续添加)
+- Test: `xmppserver/src/test/java/org/jivesoftware/openfire/nio/ConnectionStatisticsTest.java` (后续添加)
 
 - [ ] **Step 1: 创建 ConnectionStatistics.java**
 
@@ -504,6 +504,12 @@ import org.jivesoftware.openfire.nio.ConnectionLimiter;
             .addLast(businessLogicHandler);
 ```
 
+**注意：** 上述代码中，`ch.pipeline()` 每次调用都返回同一个 Pipeline 对象，因此可以继续链式调用。但如果希望更清晰，可以在 `initChannel` 方法开头添加：
+```java
+ChannelPipeline pipeline = ch.pipeline();
+```
+然后使用 `pipeline.addLast(...)` 替代所有 `ch.pipeline().addLast(...)`。
+
 - [ ] **Step 2: Commit**
 
 ```bash
@@ -515,10 +521,10 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 
 ---
 
-## Task 4: 创建 ConnectionLimiter 单元测试
+## Task 4: 创建 ConnectionStatistics 单元测试
 
 **Files:**
-- Create: `xmppserver/src/test/java/org/jivesoftware/openfire/nio/ConnectionLimiterTest.java`
+- Create: `xmppserver/src/test/java/org/jivesoftware/openfire/nio/ConnectionStatisticsTest.java`
 
 - [ ] **Step 1: 创建测试文件**
 
@@ -548,7 +554,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Unit tests for {@link ConnectionStatistics}.
  */
-public class ConnectionLimiterTest {
+public class ConnectionStatisticsTest {
 
     private ConnectionStatistics stats;
 
@@ -668,7 +674,7 @@ public class ConnectionLimiterTest {
 - [ ] **Step 2: 运行测试验证**
 
 ```bash
-cd /home/h00913487/code/Openfire && ./mvnw test -pl xmppserver -Dtest=ConnectionLimiterTest -q
+cd /home/h00913487/code/Openfire && ./mvnw test -pl xmppserver -Dtest=ConnectionStatisticsTest -q
 ```
 
 预期输出：所有测试通过
@@ -676,8 +682,8 @@ cd /home/h00913487/code/Openfire && ./mvnw test -pl xmppserver -Dtest=Connection
 - [ ] **Step 3: Commit**
 
 ```bash
-git add xmppserver/src/test/java/org/jivesoftware/openfire/nio/ConnectionLimiterTest.java
-git commit -m "test: add ConnectionLimiterTest unit tests
+git add xmppserver/src/test/java/org/jivesoftware/openfire/nio/ConnectionStatisticsTest.java
+git commit -m "test: add ConnectionStatisticsTest unit tests
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ```
@@ -741,7 +747,7 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 ./mvnw compile -pl xmppserver -q
 
 # 运行单元测试
-./mvnw test -pl xmppserver -Dtest=ConnectionLimiterTest -q
+./mvnw test -pl xmppserver -Dtest=ConnectionStatisticsTest -q
 
 # 完整编译（检查是否有编译错误）
 ./mvnw compile -q

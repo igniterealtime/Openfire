@@ -79,6 +79,21 @@ public class ConnectionLimiter extends ChannelInboundHandlerAdapter {
     }
 
     /**
+     * Shutdown the scheduler. Should be called when Openfire shuts down.
+     */
+    public static void shutdown() {
+        SCHEDULER.shutdown();
+        try {
+            if (!SCHEDULER.awaitTermination(5, TimeUnit.SECONDS)) {
+                SCHEDULER.shutdownNow();
+            }
+        } catch (InterruptedException e) {
+            SCHEDULER.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    /**
      * Get the singleton statistics instance.
      * @return the connection statistics
      */

@@ -417,4 +417,147 @@ public class EntityCapabilitiesManagerTest {
         assertEquals(hashWithoutForm, hashWithIgnoredForm,
             "A data form whose FORM_TYPE field is not of type 'hidden' must be ignored when computing the ver hash.");
     }
+
+    /**
+     * Tests that a disco#info response with duplicate identities is considered ill-formed
+     * per XEP-0115 §5.4 item 3c.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3218">OF-3218</a>
+     */
+    @Test
+    public void testWellFormedCheckRejectsDuplicateIdentities() throws Exception {
+        final IQ iq = new IQ(IQ.Type.result);
+        iq.setFrom("test@example.com/res");
+        iq.setTo("server@example.com");
+        iq.setID("test5");
+
+        final Element query = iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
+
+        // Two identical identities – ill-formed.
+        final Element id1 = query.addElement("identity");
+        id1.addAttribute("category", "client");
+        id1.addAttribute("type", "pc");
+        id1.addAttribute("name", "TestClient");
+
+        final Element id2 = query.addElement("identity");
+        id2.addAttribute("category", "client");
+        id2.addAttribute("type", "pc");
+        id2.addAttribute("name", "TestClient");
+
+        assertFalse(EntityCapabilitiesManager.isWellFormed(iq),
+            "A response with duplicate identities must be considered ill-formed.");
+    }
+
+    /**
+     * Tests that a disco#info response with duplicate features is considered ill-formed
+     * per XEP-0115 §5.4 item 3d.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3218">OF-3218</a>
+     */
+    @Test
+    public void testWellFormedCheckRejectsDuplicateFeatures() throws Exception {
+        final IQ iq = new IQ(IQ.Type.result);
+        iq.setFrom("test@example.com/res");
+        iq.setTo("server@example.com");
+        iq.setID("test6");
+
+        final Element query = iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
+
+        query.addElement("feature").addAttribute("var", "http://jabber.org/protocol/caps");
+        // Duplicate feature – ill-formed.
+        query.addElement("feature").addAttribute("var", "http://jabber.org/protocol/caps");
+
+        assertFalse(EntityCapabilitiesManager.isWellFormed(iq),
+            "A response with duplicate features must be considered ill-formed.");
+    }
+
+    /**
+     * Tests that a disco#info response with two extended forms sharing the same FORM_TYPE is
+     * considered ill-formed per XEP-0115 §5.4 item 3e.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3218">OF-3218</a>
+     */
+    @Test
+    public void testWellFormedCheckRejectsDuplicateFormTypes() throws Exception {
+        final IQ iq = new IQ(IQ.Type.result);
+        iq.setFrom("test@example.com/res");
+        iq.setTo("server@example.com");
+        iq.setID("test7");
+
+        final Element query = iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
+
+        // Two forms with the same FORM_TYPE – ill-formed.
+        for (int i = 0; i < 2; i++) {
+            final Element form = query.addElement(QName.get("x", "jabber:x:data"));
+            form.addAttribute("type", "result");
+            final Element ft = form.addElement("field");
+            ft.addAttribute("var", "FORM_TYPE");
+            ft.addAttribute("type", "hidden");
+            ft.addElement("value").setText("urn:example:form");
+        }
+
+        assertFalse(EntityCapabilitiesManager.isWellFormed(iq),
+            "A response with two forms sharing the same FORM_TYPE must be considered ill-formed.");
+    }
+
+    /**
+     * Tests that a disco#info response with a FORM_TYPE field having multiple different values is
+     * considered ill-formed per XEP-0115 §5.4 item 3e.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3218">OF-3218</a>
+     */
+    @Test
+    public void testWellFormedCheckRejectsFormTypeWithMultipleDifferentValues() throws Exception {
+        final IQ iq = new IQ(IQ.Type.result);
+        iq.setFrom("test@example.com/res");
+        iq.setTo("server@example.com");
+        iq.setID("test8");
+
+        final Element query = iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
+
+        final Element form = query.addElement(QName.get("x", "jabber:x:data"));
+        form.addAttribute("type", "result");
+        final Element ft = form.addElement("field");
+        ft.addAttribute("var", "FORM_TYPE");
+        ft.addAttribute("type", "hidden");
+        // Two different values for FORM_TYPE – ill-formed.
+        ft.addElement("value").setText("urn:example:form-a");
+        ft.addElement("value").setText("urn:example:form-b");
+
+        assertFalse(EntityCapabilitiesManager.isWellFormed(iq),
+            "A response with a FORM_TYPE field that has multiple different values must be considered ill-formed.");
+    }
+
+    /**
+     * Tests that a well-formed disco#info response passes the well-formedness check.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3218">OF-3218</a>
+     */
+    @Test
+    public void testWellFormedCheckAcceptsValidResponse() throws Exception {
+        final IQ iq = new IQ(IQ.Type.result);
+        iq.setFrom("test@example.com/res");
+        iq.setTo("server@example.com");
+        iq.setID("test9");
+
+        final Element query = iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
+
+        final Element identity = query.addElement("identity");
+        identity.addAttribute("category", "client");
+        identity.addAttribute("type", "pc");
+        identity.addAttribute("name", "TestClient");
+
+        query.addElement("feature").addAttribute("var", "http://jabber.org/protocol/caps");
+        query.addElement("feature").addAttribute("var", "http://jabber.org/protocol/disco#info");
+
+        final Element form = query.addElement(QName.get("x", "jabber:x:data"));
+        form.addAttribute("type", "result");
+        final Element ft = form.addElement("field");
+        ft.addAttribute("var", "FORM_TYPE");
+        ft.addAttribute("type", "hidden");
+        ft.addElement("value").setText("urn:example:form");
+
+        assertTrue(EntityCapabilitiesManager.isWellFormed(iq),
+            "A well-formed disco#info response must pass the well-formedness check.");
+    }
 }

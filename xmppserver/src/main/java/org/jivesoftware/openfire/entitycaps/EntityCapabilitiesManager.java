@@ -419,7 +419,7 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
                         while (valIter != null && valIter.hasNext()) {
                             formTypeValues.add(valIter.next().getText());
                         }
-                        // FORM_TYPE must have exactly one value.
+                        // FORM_TYPE cannot have more than one value.
                         if (new HashSet<>(formTypeValues).size() > 1) {
                             Log.debug("Disco#info response contains FORM_TYPE field with multiple different values; treating as ill-formed. Offending stanza: {}", packet);
                             return false;

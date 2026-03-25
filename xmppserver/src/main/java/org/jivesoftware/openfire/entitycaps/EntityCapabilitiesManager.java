@@ -369,12 +369,12 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
     }
 
     /**
-     * Checks whether a disco#info response is well-formed per XEP-0115 §5.4 items 3-5.
+     * Checks whether a disco#info response is well-formed per XEP-0115 §5.4 items 3c-3e.
      *
      * <ul>
-     *   <li>Item 3: No duplicate identities (same category/type/lang/name).</li>
-     *   <li>Item 4: No duplicate features.</li>
-     *   <li>Item 5: No two extended service discovery information forms with the same FORM_TYPE, and
+     *   <li>Item 3c: No duplicate identities (same category/type/lang/name).</li>
+     *   <li>Item 3d: No duplicate features.</li>
+     *   <li>Item 3e: No two extended service discovery information forms with the same FORM_TYPE, and
      *               no FORM_TYPE field with more than one value with different XML character data.</li>
      * </ul>
      *
@@ -388,21 +388,21 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
             return true;
         }
 
-        // Item 3: Check for duplicate identities.
+        // Item 3c: Check for duplicate identities.
         final List<String> identities = getIdentitiesFrom(packet);
         if (identities.size() != new HashSet<>(identities).size()) {
             Log.debug("Disco#info response contains duplicate identities; treating as ill-formed.");
             return false;
         }
 
-        // Item 4: Check for duplicate features.
+        // Item 3d: Check for duplicate features.
         final List<String> features = getFeaturesFrom(packet);
         if (features.size() != new HashSet<>(features).size()) {
             Log.debug("Disco#info response contains duplicate features; treating as ill-formed.");
             return false;
         }
 
-        // Item 5: Check for duplicate FORM_TYPE values and FORM_TYPE with multiple different values.
+        // Item 3e: Check for duplicate FORM_TYPE values and FORM_TYPE with multiple different values.
         final Set<String> formTypes = new HashSet<>();
         final Iterator<Element> extensionIterator = query.elementIterator(QName.get("x", "jabber:x:data"));
         if (extensionIterator != null) {
@@ -655,7 +655,7 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
      * Extracts a list of extended service discovery information from an IQ
      * packet.
      *
-     * Per XEP-0115 §5.4, forms where the FORM_TYPE field is not of type "hidden" or where the form does not include a
+     * Per XEP-0115 §5.4 item 3f, forms where the FORM_TYPE field is not of type "hidden" or where the form does not include a
      * FORM_TYPE field are ignored.
      * 
      * @param packet
@@ -675,7 +675,7 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
                 Element extensionElement = extensionIterator.next();
 
                 // Find the FORM_TYPE field first to determine if this form should be included.
-                // Per XEP-0115 §5.4 item 6: if no FORM_TYPE field exists, or if FORM_TYPE is not type='hidden',
+                // Per XEP-0115 §5.4 item 3f: if no FORM_TYPE field exists, or if FORM_TYPE is not type='hidden',
                 // ignore the form but continue processing other forms.
                 Element formTypeField = null;
                 Iterator<Element> fieldCheckIterator = extensionElement.elementIterator("field");
@@ -688,7 +688,7 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
                 }
 
                 if (formTypeField == null || !"hidden".equals(formTypeField.attributeValue("type"))) {
-                    // Ignore this form as per XEP-0115 §5.4 item 6.
+                    // Ignore this form as per XEP-0115 §5.4 item 3f.
                     continue;
                 }
 

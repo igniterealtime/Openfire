@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -315,7 +315,7 @@ public class EntityCapabilitiesManagerTest {
 
     /**
      * Tests that a data form without a FORM_TYPE field is excluded from the verification string
-     * per XEP-0115 §5.4 item 6.
+     * per XEP-0115 §5.4 item 3f.
      */
     @Test
     public void testFormWithoutFormTypeIsIgnored() throws Exception {
@@ -366,7 +366,7 @@ public class EntityCapabilitiesManagerTest {
 
     /**
      * Tests that a data form with a FORM_TYPE field that is not of type 'hidden' is excluded
-     * from the verification string per XEP-0115 §5.4 item 6.
+     * from the verification string per XEP-0115 §5.4 item 3f.
      */
     @Test
     public void testFormWithNonHiddenFormTypeIsIgnored() throws Exception {
@@ -416,7 +416,7 @@ public class EntityCapabilitiesManagerTest {
 
     /**
      * Tests that a disco#info response with duplicate identities is considered ill-formed
-     * per XEP-0115 §5.4 item 3.
+     * per XEP-0115 §5.4 item 3c.
      */
     @Test
     public void testWellFormedCheckRejectsDuplicateIdentities() throws Exception {
@@ -444,7 +444,7 @@ public class EntityCapabilitiesManagerTest {
 
     /**
      * Tests that a disco#info response with duplicate features is considered ill-formed
-     * per XEP-0115 §5.4 item 4.
+     * per XEP-0115 §5.4 item 3d.
      */
     @Test
     public void testWellFormedCheckRejectsDuplicateFeatures() throws Exception {
@@ -465,7 +465,7 @@ public class EntityCapabilitiesManagerTest {
 
     /**
      * Tests that a disco#info response with two extended forms sharing the same FORM_TYPE is
-     * considered ill-formed per XEP-0115 §5.4 item 5.
+     * considered ill-formed per XEP-0115 §5.4 item 3e.
      */
     @Test
     public void testWellFormedCheckRejectsDuplicateFormTypes() throws Exception {
@@ -492,7 +492,7 @@ public class EntityCapabilitiesManagerTest {
 
     /**
      * Tests that a disco#info response with a FORM_TYPE field having multiple different values is
-     * considered ill-formed per XEP-0115 §5.4 item 5.
+     * considered ill-formed per XEP-0115 §5.4 item 3e.
      */
     @Test
     public void testWellFormedCheckRejectsFormTypeWithMultipleDifferentValues() throws Exception {

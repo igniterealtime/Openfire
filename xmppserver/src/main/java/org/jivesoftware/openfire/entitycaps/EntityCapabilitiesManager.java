@@ -382,10 +382,11 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
      * @return true if the response is well-formed, false otherwise.
      */
     @VisibleForTesting
-    public static boolean isWellFormed(IQ packet) {
+    static boolean isWellFormed(IQ packet) {
         final Element query = packet.getChildElement();
         if (query == null) {
-            return true;
+            Log.debug("Disco#info response is missing required <query/> element; treating as ill-formed.");
+            return false;
         }
 
         // Item 3c: Check for duplicate identities.

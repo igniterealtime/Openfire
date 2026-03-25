@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.jivesoftware.util;
+package org.jivesoftware.openfire.entitycaps;
 
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;

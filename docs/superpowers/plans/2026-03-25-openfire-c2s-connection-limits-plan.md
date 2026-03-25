@@ -598,7 +598,7 @@ public class ConnectionStatisticsTest {
 
         stats.decrementForIp("192.168.1.1");
         assertEquals(0, stats.getForIp("192.168.1.1"));
-        assertFalse(stats.getTopIps(10).length > 0);
+        assertEquals(0, stats.getTopIps(10).length);
     }
 
     @Test
@@ -674,7 +674,7 @@ public class ConnectionStatisticsTest {
 - [ ] **Step 2: 运行测试验证**
 
 ```bash
-cd /home/h00913487/code/Openfire && ./mvnw test -pl xmppserver -Dtest=ConnectionStatisticsTest -q
+cd /home/h00913487/code/Openfire && mvn test -pl xmppserver -Dtest=ConnectionStatisticsTest -q
 ```
 
 预期输出：所有测试通过
@@ -744,11 +744,11 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>"
 
 ```bash
 # 编译
-./mvnw compile -pl xmppserver -q
+mvn compile -pl xmppserver -q
 
 # 运行单元测试
-./mvnw test -pl xmppserver -Dtest=ConnectionStatisticsTest -q
+mvn test -pl xmppserver -Dtest=ConnectionStatisticsTest -q
 
 # 完整编译（检查是否有编译错误）
-./mvnw compile -q
+mvn compile -q
 ```

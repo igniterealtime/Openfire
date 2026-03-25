@@ -135,6 +135,7 @@ public class ConnectionLimiter extends ChannelInboundHandlerAdapter {
         String ip = getClientIp(ctx);
         if (ip == null) {
             Log.warn("Unable to determine client IP for connection from {}, allowing", ctx.channel().remoteAddress());
+            super.handlerAdded(ctx);
             return;
         }
 

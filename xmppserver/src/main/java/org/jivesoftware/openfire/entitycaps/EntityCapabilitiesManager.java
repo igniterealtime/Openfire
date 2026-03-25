@@ -335,9 +335,17 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
      * was valid by comparing its 'ver' hash (identities+features encapsulated
      * hash) with the 'ver' hash of the original caps packet that the
      * disco#info query was sent on behalf of.
+     *
+     * Per XEP-0115 §5.4, the response is also checked for well-formedness:
+     * <ul>
+     *   <li>No duplicate service discovery identities (same category/type/lang/name)</li>
+     *   <li>No duplicate service discovery features</li>
+     *   <li>No two extended service discovery forms with the same FORM_TYPE</li>
+     *   <li>FORM_TYPE fields must not have more than one value with different character data</li>
+     * </ul>
      * 
      * @param packet the disco#info result packet.
-     * @return true if the packet's generated 'ver' hash matches the 'ver'
+     * @return true if the packet is well-formed and its generated 'ver' hash matches the 'ver'
      *         hash of the original CAPS packet.
      */
     private boolean isValid(IQ packet) {
@@ -348,9 +356,87 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
         if (original == null) {
             return false;
         }
+
+        // Per XEP-0115 §5.4, check the response for well-formedness before computing the hash.
+        if (!isWellFormed(packet)) {
+            Log.debug("Received ill-formed disco#info response from '{}'; ignoring.", packet.getFrom());
+            return false;
+        }
+
         final String newVerHash = generateVerHash(packet, original.getHashAttribute());
 
         return newVerHash.equals(original.getVerAttribute());
+    }
+
+    /**
+     * Checks whether a disco#info response is well-formed per XEP-0115 §5.4 items 3c-3e.
+     *
+     * <ul>
+     *   <li>Item 3c: No duplicate identities (same category/type/lang/name).</li>
+     *   <li>Item 3d: No duplicate features.</li>
+     *   <li>Item 3e: No two extended service discovery information forms with the same FORM_TYPE, and
+     *               no FORM_TYPE field with more than one value with different XML character data.</li>
+     * </ul>
+     *
+     * @param packet the disco#info result packet.
+     * @return true if the response is well-formed, false otherwise.
+     */
+    @VisibleForTesting
+    public static boolean isWellFormed(IQ packet) {
+        final Element query = packet.getChildElement();
+        if (query == null) {
+            return true;
+        }
+
+        // Item 3c: Check for duplicate identities.
+        final List<String> identities = getIdentitiesFrom(packet);
+        if (identities.size() != new HashSet<>(identities).size()) {
+            Log.debug("Disco#info response contains duplicate identities; treating as ill-formed.");
+            return false;
+        }
+
+        // Item 3d: Check for duplicate features.
+        final List<String> features = getFeaturesFrom(packet);
+        if (features.size() != new HashSet<>(features).size()) {
+            Log.debug("Disco#info response contains duplicate features; treating as ill-formed.");
+            return false;
+        }
+
+        // Item 3e: Check for duplicate FORM_TYPE values and FORM_TYPE with multiple different values.
+        final Set<String> formTypes = new HashSet<>();
+        final Iterator<Element> extensionIterator = query.elementIterator(QName.get("x", "jabber:x:data"));
+        if (extensionIterator != null) {
+            while (extensionIterator.hasNext()) {
+                final Element extensionElement = extensionIterator.next();
+                final Iterator<Element> fieldIterator = extensionElement.elementIterator("field");
+                while (fieldIterator != null && fieldIterator.hasNext()) {
+                    final Element fieldElement = fieldIterator.next();
+                    if ("FORM_TYPE".equals(fieldElement.attributeValue("var"))) {
+                        // Collect all values of the FORM_TYPE field.
+                        final List<String> formTypeValues = new ArrayList<>();
+                        final Iterator<Element> valIter = fieldElement.elementIterator("value");
+                        while (valIter != null && valIter.hasNext()) {
+                            formTypeValues.add(valIter.next().getText());
+                        }
+                        // FORM_TYPE must have exactly one value.
+                        if (new HashSet<>(formTypeValues).size() > 1) {
+                            Log.debug("Disco#info response contains FORM_TYPE field with multiple different values; treating as ill-formed.");
+                            return false;
+                        }
+                        if (!formTypeValues.isEmpty()) {
+                            final String formTypeValue = formTypeValues.get(0);
+                            if (!formTypes.add(formTypeValue)) {
+                                Log.debug("Disco#info response contains duplicate FORM_TYPE '{}'; treating as ill-formed.", formTypeValue);
+                                return false;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        return true;
     }
 
     /**

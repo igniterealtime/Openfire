@@ -385,21 +385,21 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
     static boolean isWellFormed(IQ packet) {
         final Element query = packet.getChildElement();
         if (query == null) {
-            Log.debug("Disco#info response is missing required <query/> element; treating as ill-formed.");
+            Log.debug("Disco#info response is missing required <query/> element; treating as ill-formed. Offending stanza: {}", packet);
             return false;
         }
 
         // Item 3c: Check for duplicate identities.
         final List<String> identities = getIdentitiesFrom(packet);
         if (identities.size() != new HashSet<>(identities).size()) {
-            Log.debug("Disco#info response contains duplicate identities; treating as ill-formed.");
+            Log.debug("Disco#info response contains duplicate identities; treating as ill-formed. Offending stanza: {}", packet);
             return false;
         }
 
         // Item 3d: Check for duplicate features.
         final List<String> features = getFeaturesFrom(packet);
         if (features.size() != new HashSet<>(features).size()) {
-            Log.debug("Disco#info response contains duplicate features; treating as ill-formed.");
+            Log.debug("Disco#info response contains duplicate features; treating as ill-formed. Offending stanza: {}", packet);
             return false;
         }
 
@@ -645,7 +645,10 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
             while (featuresIterator.hasNext()) {
                 Element featureElement = featuresIterator.next();
                 String discoFeature = featureElement.attributeValue("var");
-
+                if (discoFeature == null || discoFeature.isEmpty()) {
+                    Log.debug("Disco#info response contains feature with missing or empty var attribute; Ignoring this feature. Offending stanza: {}", packet);
+                    continue;
+                }
                 discoFeatures.add(discoFeature);
             }
         }

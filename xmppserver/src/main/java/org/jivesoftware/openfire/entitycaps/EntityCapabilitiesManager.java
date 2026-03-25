@@ -421,13 +421,13 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
                         }
                         // FORM_TYPE must have exactly one value.
                         if (new HashSet<>(formTypeValues).size() > 1) {
-                            Log.debug("Disco#info response contains FORM_TYPE field with multiple different values; treating as ill-formed.");
+                            Log.debug("Disco#info response contains FORM_TYPE field with multiple different values; treating as ill-formed. Offending stanza: {}", packet);
                             return false;
                         }
                         if (!formTypeValues.isEmpty()) {
                             final String formTypeValue = formTypeValues.get(0);
                             if (!formTypes.add(formTypeValue)) {
-                                Log.debug("Disco#info response contains duplicate FORM_TYPE '{}'; treating as ill-formed.", formTypeValue);
+                                Log.debug("Disco#info response contains duplicate FORM_TYPE '{}'; treating as ill-formed. Offending stanza: {}", formTypeValue, packet);
                                 return false;
                             }
                         }
@@ -695,9 +695,14 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
                     // Ignore this form as per XEP-0115 §5.4 item 3f.
                     continue;
                 }
+                final String formTypeValue = formTypeField.element("value") == null ? null : formTypeField.element("value").getText();
+                if (formTypeValue == null || formTypeValue.isEmpty()) {
+                    // Ignore this form (not _explicitly_ defined in XEP-0115 §5.4 item 3f, but seems close enough).
+                    continue;
+                }
 
                 final StringBuilder formType = new StringBuilder();
-                formType.append(formTypeField.element("value").getText());
+                formType.append(formTypeValue);
                 formType.append('<');
 
                 Iterator<Element> fieldIterator = extensionElement

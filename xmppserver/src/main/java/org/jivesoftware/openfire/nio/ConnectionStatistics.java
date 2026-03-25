@@ -104,7 +104,17 @@ public class ConnectionStatistics {
      * @param timestamp current time in milliseconds
      */
     public void recordTimestamp(String ip, long timestamp) {
-        connectionTimestampsByIp.computeIfAbsent(ip, k -> new ConcurrentLinkedQueue<>()).offer(timestamp);
+        ConcurrentLinkedQueue<Long> timestamps = connectionTimestampsByIp.computeIfAbsent(ip, k -> new ConcurrentLinkedQueue<>());
+        // Clean old timestamps before adding new one (use 60s window to avoid frequent cleanup)
+        long cutoff = timestamp - 60_000;
+        while (!timestamps.isEmpty() && timestamps.peek() < cutoff) {
+            timestamps.poll();
+        }
+        timestamps.offer(timestamp);
+        // Remove empty queue to prevent memory accumulation
+        if (timestamps.isEmpty()) {
+            connectionTimestampsByIp.remove(ip);
+        }
     }
 
     /**
@@ -121,6 +131,10 @@ public class ConnectionStatistics {
         long cutoff = System.currentTimeMillis() - windowMs;
         while (!timestamps.isEmpty() && timestamps.peek() < cutoff) {
             timestamps.poll();
+        }
+        // Remove empty queue to prevent memory accumulation
+        if (timestamps.isEmpty()) {
+            connectionTimestampsByIp.remove(ip);
         }
         return timestamps.size();
     }
@@ -148,6 +162,7 @@ public class ConnectionStatistics {
      */
     public String[][] getTopIps(int limit) {
         return connectionsByIp.entrySet().stream()
+            .filter(e -> e.getValue().get() > 0)
             .sorted((a, b) -> Integer.compare(b.getValue().get(), a.getValue().get()))
             .limit(limit)
             .map(e -> new String[]{e.getKey(), String.valueOf(e.getValue().get())})

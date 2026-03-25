@@ -560,31 +560,54 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
     /**
      * Extracts a list of extended service discovery information from an IQ
      * packet.
+     *
+     * Per XEP-0115 §5.4 item 3f, forms where the FORM_TYPE field is not of type "hidden" or where the form does not include a
+     * FORM_TYPE field are ignored.
      * 
      * @param packet
      *            the packet
-     * @return a list of extended service discoverin information features.
+     * @return a list of extended service discovery information features.
      */
     private static List<String> getExtendedDataForms(IQ packet) {
         List<String> results = new ArrayList<>();
         Element query = packet.getChildElement();
+        if (query == null) {
+            return results;
+        }
         Iterator<Element> extensionIterator = query.elementIterator(QName.get(
                 "x", "jabber:x:data"));
         if (extensionIterator != null) {
             while (extensionIterator.hasNext()) {
                 Element extensionElement = extensionIterator.next();
+
+                // Find the FORM_TYPE field first to determine if this form should be included.
+                // Per XEP-0115 §5.4 item 3f: if no FORM_TYPE field exists, or if FORM_TYPE is not type='hidden',
+                // ignore the form but continue processing other forms.
+                Element formTypeField = null;
+                Iterator<Element> fieldCheckIterator = extensionElement.elementIterator("field");
+                while (fieldCheckIterator != null && fieldCheckIterator.hasNext()) {
+                    Element fieldEl = fieldCheckIterator.next();
+                    if ("FORM_TYPE".equals(fieldEl.attributeValue("var"))) {
+                        formTypeField = fieldEl;
+                        break;
+                    }
+                }
+
+                if (formTypeField == null || !"hidden".equals(formTypeField.attributeValue("type"))) {
+                    // Ignore this form as per XEP-0115 §5.4 item 3f.
+                    continue;
+                }
+
                 final StringBuilder formType = new StringBuilder();
+                formType.append(formTypeField.element("value").getText());
+                formType.append('<');
 
                 Iterator<Element> fieldIterator = extensionElement
                         .elementIterator("field");
                 List<String> vars = new ArrayList<>();
                 while (fieldIterator != null && fieldIterator.hasNext()) {
                     final Element fieldElement = fieldIterator.next();
-                    if (fieldElement.attributeValue("var").equals("FORM_TYPE")) {
-                        formType
-                                .append(fieldElement.element("value").getText());
-                        formType.append('<');
-                    } else {
+                    if (!"FORM_TYPE".equals(fieldElement.attributeValue("var"))) {
                         final StringBuilder var = new StringBuilder();
                         var.append(fieldElement.attributeValue("var"));
                         var.append('<');

@@ -312,4 +312,109 @@ public class EntityCapabilitiesManagerTest {
         // Verify results.
         assertEquals("89D/mEGBT1K0RtY28gEkGRbV2rc=", result);
     }
+
+    /**
+     * Tests that a data form without a FORM_TYPE field is excluded from the verification string
+     * per XEP-0115 §5.4 item 3f.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3217">OF-3217</a>
+     */
+    @Test
+    public void testFormWithoutFormTypeIsIgnored() throws Exception {
+        // Setup: a simple IQ with one identity, one feature, and a data form without FORM_TYPE.
+        final IQ iq = new IQ(IQ.Type.result);
+        iq.setFrom("test@example.com/res");
+        iq.setTo("server@example.com");
+        iq.setID("test1");
+
+        final Element query = iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
+
+        final Element identity = query.addElement("identity");
+        identity.addAttribute("category", "client");
+        identity.addAttribute("type", "pc");
+        identity.addAttribute("name", "TestClient");
+
+        query.addElement("feature").addAttribute("var", "http://jabber.org/protocol/caps");
+
+        // Add a data form WITHOUT a FORM_TYPE field – should be ignored.
+        final Element formWithoutFormType = query.addElement(QName.get("x", "jabber:x:data"));
+        formWithoutFormType.addAttribute("type", "result");
+        final Element customField = formWithoutFormType.addElement("field");
+        customField.addAttribute("var", "custom");
+        customField.addElement("value").setText("custom-value");
+
+        // Compute the ver hash including the form, as the old (incorrect) code would.
+        // This should produce the same hash as a response without any data form,
+        // because the form without FORM_TYPE must be ignored.
+        final IQ iqWithoutForm = new IQ(IQ.Type.result);
+        iqWithoutForm.setFrom("test@example.com/res");
+        iqWithoutForm.setTo("server@example.com");
+        iqWithoutForm.setID("test2");
+        final Element query2 = iqWithoutForm.setChildElement("query", "http://jabber.org/protocol/disco#info");
+        final Element identity2 = query2.addElement("identity");
+        identity2.addAttribute("category", "client");
+        identity2.addAttribute("type", "pc");
+        identity2.addAttribute("name", "TestClient");
+        query2.addElement("feature").addAttribute("var", "http://jabber.org/protocol/caps");
+
+        // Execute.
+        final String hashWithIgnoredForm = EntityCapabilitiesManager.generateVerHash(iq, "sha-1");
+        final String hashWithoutForm = EntityCapabilitiesManager.generateVerHash(iqWithoutForm, "sha-1");
+
+        // Verify: the form without FORM_TYPE should be ignored, so hashes must be equal.
+        assertEquals(hashWithoutForm, hashWithIgnoredForm,
+            "A data form without a FORM_TYPE field must be ignored when computing the ver hash.");
+    }
+
+    /**
+     * Tests that a data form with a FORM_TYPE field that is not of type 'hidden' is excluded
+     * from the verification string per XEP-0115 §5.4 item 3f.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3217">OF-3217</a>
+     */
+    @Test
+    public void testFormWithNonHiddenFormTypeIsIgnored() throws Exception {
+        // Setup: a simple IQ with one identity, one feature, and a data form with non-hidden FORM_TYPE.
+        final IQ iq = new IQ(IQ.Type.result);
+        iq.setFrom("test@example.com/res");
+        iq.setTo("server@example.com");
+        iq.setID("test3");
+
+        final Element query = iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
+
+        final Element identity = query.addElement("identity");
+        identity.addAttribute("category", "client");
+        identity.addAttribute("type", "pc");
+        identity.addAttribute("name", "TestClient");
+
+        query.addElement("feature").addAttribute("var", "http://jabber.org/protocol/caps");
+
+        // A form with FORM_TYPE of type 'text-single' (not 'hidden') – should be ignored.
+        final Element formWithNonHiddenFormType = query.addElement(QName.get("x", "jabber:x:data"));
+        formWithNonHiddenFormType.addAttribute("type", "result");
+        final Element formTypeField = formWithNonHiddenFormType.addElement("field");
+        formTypeField.addAttribute("var", "FORM_TYPE");
+        formTypeField.addAttribute("type", "text-single");  // NOT hidden
+        formTypeField.addElement("value").setText("urn:example:form");
+
+        // Compute reference without any form.
+        final IQ iqWithoutForm = new IQ(IQ.Type.result);
+        iqWithoutForm.setFrom("test@example.com/res");
+        iqWithoutForm.setTo("server@example.com");
+        iqWithoutForm.setID("test4");
+        final Element query2 = iqWithoutForm.setChildElement("query", "http://jabber.org/protocol/disco#info");
+        final Element identity2 = query2.addElement("identity");
+        identity2.addAttribute("category", "client");
+        identity2.addAttribute("type", "pc");
+        identity2.addAttribute("name", "TestClient");
+        query2.addElement("feature").addAttribute("var", "http://jabber.org/protocol/caps");
+
+        // Execute.
+        final String hashWithIgnoredForm = EntityCapabilitiesManager.generateVerHash(iq, "sha-1");
+        final String hashWithoutForm = EntityCapabilitiesManager.generateVerHash(iqWithoutForm, "sha-1");
+
+        // Verify: the form with non-hidden FORM_TYPE should be ignored.
+        assertEquals(hashWithoutForm, hashWithIgnoredForm,
+            "A data form whose FORM_TYPE field is not of type 'hidden' must be ignored when computing the ver hash.");
+    }
 }

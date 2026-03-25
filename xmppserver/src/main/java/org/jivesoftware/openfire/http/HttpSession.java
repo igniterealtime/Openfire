@@ -867,7 +867,10 @@ public class HttpSession extends LocalClientSession {
 
         Instant time = Instant.now();
         Duration deltaFromLastPoll = Duration.between(lastPoll, time).abs();
-        if(pendingConnections >= maxRequests) {
+        // XEP-0124 §11: The client MAY make one additional request if it is to pause or terminate a session.
+        final boolean isPauseOrTerminate = connection.isTerminate() || connection.getPause() != null;
+        final int maxSimultaneousRequests = isPauseOrTerminate ? maxRequests + 1 : maxRequests;
+        if(pendingConnections >= maxSimultaneousRequests) {
             overactivity = OveractivityType.TOO_MANY_SIM_REQS;
         }
         else if(connection.isPoll()) {

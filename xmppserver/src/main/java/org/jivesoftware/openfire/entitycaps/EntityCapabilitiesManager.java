@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 
 /**
  * Implements server side mechanics for XEP-0115: "Entity Capabilities"
- * Version 1.4
+ * Version 1.5
  * 
  * In particular, EntityCapabilitiesManager is useful for processing
  * "filtered-notifications" for use with Pubsub (XEP-0060) for contacts that
@@ -61,7 +61,7 @@ import java.util.stream.Collectors;
  * sharing those same entity capabilities.
  * 
  * @author Armando Jagucki
- * @see <a href="https://xmpp.org/extensions/xep-0115.html>XEP-0115: Entity Capabilities</a>
+ * @see <a href="https://xmpp.org/extensions/xep-0115.html">XEP-0115: Entity Capabilities</a>
  */
 public class EntityCapabilitiesManager extends BasicModule implements IQResultListener, UserEventListener, ServerFeaturesProvider
 {
@@ -236,6 +236,9 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
             return;
         }
 
+        // Read the 'node' attribute, used to construct the disco#info request node per XEP-0115 §6.2.
+        final String nodeAttribute = capsElement.attributeValue("node");
+
         // Check to see if the 'ver' hash is already in our cache.
         EntityCapabilities caps;
         if ((caps = entityCapabilitiesMap.get(newVerAttribute)) != null) {
@@ -288,7 +291,12 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
                 String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
                 iq.setFrom(serverName);
 
-                iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
+                // Per XEP-0115 §6.2, the disco 'node' attribute MUST be included for backwards-compatibility.
+                // Its value is the caps node concatenated with '#' and the ver hash.
+                final Element queryElement = iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
+                if (nodeAttribute != null && !nodeAttribute.trim().isEmpty()) {
+                    queryElement.addAttribute("node", nodeAttribute + "#" + newVerAttribute);
+                }
 
                 String packetId = iq.getID();
 

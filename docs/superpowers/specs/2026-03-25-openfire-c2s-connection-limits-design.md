@@ -134,3 +134,28 @@ public class ConnectionStatistics {
 
 - 如果无法获取客户端 IP（如代理场景），记录警告并放行连接
 - 如果配置值非法（如负数），使用默认值并记录警告
+
+## 10. 配置示例
+
+在 Openfire 的 `openfire.xml` 配置文件中添加：
+
+```xml
+<connection-limits>
+    <!-- 全局最大连接数，默认 50000 -->
+    <max-total>50000</max-total>
+
+    <!-- 单 IP 最大连接数，默认 100 -->
+    <max-per-ip>100</max-per-ip>
+
+    <!-- 速率限制：时间窗口秒数，默认 1 -->
+    <rate-limit-window-seconds>1</rate-limit-window-seconds>
+
+    <!-- 速率限制：时间窗口内最大连接数，默认 10 -->
+    <rate-limit-max-connections>10</rate-limit-max-connections>
+</connection-limits>
+```
+
+**说明：**
+- 这些配置项是可选的。如果不配置，将使用默认值。
+- 配置修改后需要重启 Openfire 生效。
+- 统计日志每 60 秒打印一次，使用 INFO 级别输出到 Openfire 日志。

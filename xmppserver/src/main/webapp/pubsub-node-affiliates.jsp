@@ -183,7 +183,7 @@
     <tbody>
         <c:if test="${empty affiliates}">
         <tr>
-            <td style="text-align: center" colspan="4">
+            <td style="text-align: center" colspan="5">
                 <fmt:message key="pubsub.node.affiliates.table.no_affiliates" />
             </td>
         </tr>

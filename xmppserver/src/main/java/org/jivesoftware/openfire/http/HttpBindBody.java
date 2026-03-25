@@ -181,6 +181,7 @@ public class HttpBindBody
      *
      * @return the acknowledged request ID, or null if absent
      * @see <a href="https://xmpp.org/extensions/xep-0124.html#ack">XEP-0124 §9 Acknowledgements</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3220">OF-3220</a>
      */
     public Long getAck()
     {

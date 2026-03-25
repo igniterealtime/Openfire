@@ -30,6 +30,7 @@ public class HttpBindBodyTest
      * Verifies that the 'ack' attribute is returned when present in a request body.
      *
      * @see <a href="https://xmpp.org/extensions/xep-0124.html#ack">XEP-0124 §9 Acknowledgements</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3220">OF-3220</a>
      */
     @Test
     public void testGetAckWhenPresent() throws Exception
@@ -49,6 +50,7 @@ public class HttpBindBodyTest
      * Verifies that null is returned when no 'ack' attribute is present in a request body.
      *
      * @see <a href="https://xmpp.org/extensions/xep-0124.html#ack">XEP-0124 §9 Acknowledgements</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3220">OF-3220</a>
      */
     @Test
     public void testGetAckWhenAbsent() throws Exception
@@ -67,6 +69,7 @@ public class HttpBindBodyTest
      * Verifies that null is returned when the 'ack' attribute has an invalid (non-numeric) value.
      *
      * @see <a href="https://xmpp.org/extensions/xep-0124.html#ack">XEP-0124 §9 Acknowledgements</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3220">OF-3220</a>
      */
     @Test
     public void testGetAckWhenInvalid() throws Exception
@@ -86,6 +89,7 @@ public class HttpBindBodyTest
      * This is the case when a client indicates it will use acknowledgements throughout the session.
      *
      * @see <a href="https://xmpp.org/extensions/xep-0124.html#ack">XEP-0124 §9.2 Response Acknowledgements</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3220">OF-3220</a>
      */
     @Test
     public void testGetAckInitialValue() throws Exception
@@ -103,6 +107,8 @@ public class HttpBindBodyTest
 
     /**
      * Verifies that the RID attribute is parsed correctly.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3220">OF-3220</a>
      */
     @Test
     public void testGetRid() throws Exception
@@ -122,6 +128,7 @@ public class HttpBindBodyTest
      * Verifies that a body without a 'pause' or 'type=terminate' and with empty content is considered a poll request.
      *
      * @see <a href="https://xmpp.org/extensions/xep-0124.html#poll">XEP-0124 §12 Polling Sessions</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3219">OF-3219</a>
      */
     @Test
     public void testIsPollWhenEmpty() throws Exception
@@ -140,6 +147,7 @@ public class HttpBindBodyTest
      * Verifies that a body with 'type=terminate' is NOT considered a poll request.
      *
      * @see <a href="https://xmpp.org/extensions/xep-0124.html#terminate">XEP-0124 §13 Terminating the BOSH Session</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3219">OF-3219</a>
      */
     @Test
     public void testIsPollWhenTerminate() throws Exception
@@ -158,6 +166,7 @@ public class HttpBindBodyTest
      * Verifies that a body with a 'pause' attribute is NOT considered a poll request.
      *
      * @see <a href="https://xmpp.org/extensions/xep-0124.html#inactive">XEP-0124 §10 Inactivity</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3219">OF-3219</a>
      */
     @Test
     public void testIsPollWhenPause() throws Exception

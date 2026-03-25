@@ -174,6 +174,25 @@ public class HttpBindBody
         return Integer.parseInt( getVersion().split( "\\." )[1] );
     }
 
+    /**
+     * Returns the 'ack' attribute value from this request body, representing the highest 'rid'
+     * of a request for which the client has received a response. Returns null if no 'ack' attribute
+     * is present.
+     *
+     * @return the acknowledged request ID, or null if absent
+     * @see <a href="https://xmpp.org/extensions/xep-0124.html#ack">XEP-0124 §9 Acknowledgements</a>
+     */
+    public Long getAck()
+    {
+        final String value = document.getRootElement().attributeValue( "ack" );
+        if ( value == null )
+        {
+            return null;
+        }
+        final long parsed = getLongAttribute( value, -1 );
+        return parsed >= 0 ? parsed : null;
+    }
+
     public String getType()
     {
         return document.getRootElement().attributeValue( "type" );

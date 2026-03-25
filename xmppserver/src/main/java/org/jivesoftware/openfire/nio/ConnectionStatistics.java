@@ -80,10 +80,10 @@ public class ConnectionStatistics {
         if (count != null) {
             int newValue = count.decrementAndGet();
             if (newValue <= 0) {
-                connectionsByIp.remove(ip);
-                return 0;
+                // Only remove if the value is still the same empty counter
+                connectionsByIp.remove(ip, count);
             }
-            return newValue;
+            return Math.max(0, newValue);
         }
         return 0;
     }

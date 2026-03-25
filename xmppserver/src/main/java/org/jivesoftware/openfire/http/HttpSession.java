@@ -532,6 +532,15 @@ public class HttpSession extends LocalClientSession {
 
         checkOveractivity(connection);
 
+        // Process the client's 'ack' attribute (XEP-0124 §9.2): clean up sentElements that have been acknowledged.
+        final Long clientAck = body.getAck();
+        if (clientAck != null) {
+            synchronized (sentElements) {
+                sentElements.removeIf(delivered -> delivered.getRequestID() <= clientAck);
+            }
+            Log.trace("Session {}: client acknowledged responses up to rid {}; cleaned up sentElements buffer.", getStreamID(), clientAck);
+        }
+
         // Schedule the connection for consumption.
         processConnection(connection, context);
         resetInactivityTimeout();

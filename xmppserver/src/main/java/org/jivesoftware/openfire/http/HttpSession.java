@@ -227,10 +227,7 @@ public class HttpSession extends LocalClientSession {
 
         // If authentication has not happened yet, include available authentication mechanisms.
         if (getAuthToken() == null) {
-            final Element sasl = SASLAuthentication.getSASLMechanismsElement(this);
-            if (sasl != null) {
-                elements.add(sasl);
-            }
+            SASLAuthentication.addSASLMechanisms(elements, this);
         }
 
         if (XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled()) {

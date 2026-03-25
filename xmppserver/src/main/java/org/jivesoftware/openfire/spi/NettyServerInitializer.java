@@ -76,7 +76,14 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
         ch.pipeline()
             .addLast(TRAFFIC_HANDLER_NAME, new ChannelTrafficShapingHandler(0))
             .addLast("idleStateHandler", new IdleStateHandler(maxIdleTimeBeforeClosing.dividedBy(2).toMillis(), 0, 0, TimeUnit.MILLISECONDS))
-            .addLast("keepAliveHandler", new NettyIdleStateKeepAliveHandler(isClientConnection))
+            .addLast("keepAliveHandler", new NettyIdleStateKeepAliveHandler(isClientConnection));
+
+        // Add ConnectionLimiter only for C2S connections
+        if (isClientConnection) {
+            ch.pipeline().addLast("connectionLimiter", new ConnectionLimiter());
+        }
+
+        ch.pipeline()
             .addLast(new NettyXMPPDecoder())
             .addLast(new StringEncoder(StandardCharsets.UTF_8))
             .addLast("stalledSessionHandler", new WriteTimeoutHandler(Math.toIntExact(WRITE_TIMEOUT_SECONDS.getValue().getSeconds())))

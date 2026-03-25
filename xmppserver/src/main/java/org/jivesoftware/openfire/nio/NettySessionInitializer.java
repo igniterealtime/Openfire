@@ -18,7 +18,8 @@ package org.jivesoftware.openfire.nio;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.MultiThreadIoEventLoopGroup;
+import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.string.StringEncoder;
@@ -132,7 +133,7 @@ public class NettySessionInitializer {
             }
             Log.debug("Initialising shared Netty resources for outbound S2S.");
             final ThreadFactory ioFactory = new NamedThreadFactory("socket_s2s_outbound-worker-", null, false, Thread.NORM_PRIORITY);
-            ioWorkerGroup = new NioEventLoopGroup(ioFactory);
+            ioWorkerGroup = new MultiThreadIoEventLoopGroup(ioFactory, NioIoHandler.newFactory());
 
             final int handlerThreads = Math.max(1, Runtime.getRuntime().availableProcessors()) * 2;
             final ThreadFactory handlerFactory = new NamedThreadFactory("socket_s2s_outbound-handler-", null, false, Thread.NORM_PRIORITY);
@@ -310,7 +311,7 @@ public class NettySessionInitializer {
 
             this.channel = b.connect(socketAddress).sync().channel();
 
-            // Make sure we free up resources (worker group NioEventLoopGroup) when the channel is closed
+            // Make sure we free up resources (worker group MultiThreadIoEventLoopGroup) when the channel is closed
             this.channel.closeFuture().addListener(future -> stop());
 
             // When using directTLS a Netty SSLHandler is added to the pipeline from instantiation. This initiates the TLS handshake, and as such we do not need to send an opening stream element.

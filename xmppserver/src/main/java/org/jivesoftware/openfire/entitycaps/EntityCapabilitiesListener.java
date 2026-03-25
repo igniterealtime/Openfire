@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2020-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ import java.util.Set;
  * for events.
  *
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
- * @see <a href="https://xmpp.org/extensions/xep-0115.html>XEP-0115: Entity Capabilities</a>
+ * @see <a href="https://xmpp.org/extensions/xep-0115.html">XEP-0115: Entity Capabilities</a>
  */
 public interface EntityCapabilitiesListener
 {

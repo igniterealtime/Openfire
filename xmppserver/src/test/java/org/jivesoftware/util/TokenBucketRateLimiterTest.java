@@ -98,10 +98,11 @@ class TokenBucketRateLimiterTest
      * idle period.
      */
     @Test
-    void testBurstIsCapped() throws InterruptedException
+    void testBurstIsCapped()
     {
         // Setup test fixture.
-        final TokenBucketRateLimiter limiter = new TokenBucketRateLimiter(2, 3);
+        final FakeNanoClock clock = new FakeNanoClock();
+        final TokenBucketRateLimiter limiter = new TokenBucketRateLimiter(2, 3, clock);
 
         // Execute system under test.
         limiter.tryAcquire();
@@ -109,7 +110,7 @@ class TokenBucketRateLimiterTest
         limiter.tryAcquire();
         limiter.tryAcquire(); // Exhaust and reject
 
-        Thread.sleep(2_000); // Allow more than enough time for full refill.
+        clock.advanceNanos(2_000_000_000L); // Allow more than enough time for full refill.
 
         // Verify result.
         assertEquals(3, limiter.getAvailableTokens(), "Available tokens must not exceed max burst");
@@ -120,16 +121,17 @@ class TokenBucketRateLimiterTest
      * sustained rate.
      */
     @Test
-    void testRateRefillAllowsNewPermits() throws InterruptedException
+    void testRateRefillAllowsNewPermits()
     {
         // Setup test fixture.
-        final TokenBucketRateLimiter limiter = new TokenBucketRateLimiter(1, 1);
+        final FakeNanoClock clock = new FakeNanoClock();
+        final TokenBucketRateLimiter limiter = new TokenBucketRateLimiter(1, 1, clock);
 
         // Execute system under test.
         assertTrue(limiter.tryAcquire(), "First acquire should succeed on a full bucket");
         assertFalse(limiter.tryAcquire(), "Second acquire should fail on an exhausted bucket");
 
-        Thread.sleep(1_100);
+        clock.advanceNanos(1_100_000_000L);
 
         final boolean acquiredAfterRefill = limiter.tryAcquire();
 
@@ -141,16 +143,17 @@ class TokenBucketRateLimiterTest
      * Verifies that getAvailableTokens reflects a refill after sufficient time has elapsed.
      */
     @Test
-    void testGetAvailableTokensReflectsRefill() throws InterruptedException
+    void testGetAvailableTokensReflectsRefill()
     {
         // Setup test fixture.
-        final TokenBucketRateLimiter limiter = new TokenBucketRateLimiter(1, 2);
+        final FakeNanoClock clock = new FakeNanoClock();
+        final TokenBucketRateLimiter limiter = new TokenBucketRateLimiter(1, 2, clock);
 
         // Execute system under test.
         limiter.tryAcquire();
         limiter.tryAcquire(); // Exhaust
 
-        Thread.sleep(1_100);
+        clock.advanceNanos(1_100_000_000L);
 
         // Verify result.
         assertEquals(1, limiter.getAvailableTokens(), "getAvailableTokens should reflect tokens added by refill");
@@ -273,14 +276,15 @@ class TokenBucketRateLimiterTest
      * Verifies that the reported uptime increases monotonically as time passes.
      */
     @Test
-    void testUptimeIncreases() throws InterruptedException
+    void testUptimeIncreases()
     {
         // Setup test fixture.
-        final TokenBucketRateLimiter limiter = new TokenBucketRateLimiter(1, 1);
+        final FakeNanoClock clock = new FakeNanoClock();
+        final TokenBucketRateLimiter limiter = new TokenBucketRateLimiter(1, 1, clock);
 
         // Execute system under test.
         final Duration initialUptime = limiter.getUptime();
-        Thread.sleep(50);
+        clock.advanceNanos(50_000_000L);
         final Duration laterUptime = limiter.getUptime();
 
         // Verify result.
@@ -291,20 +295,21 @@ class TokenBucketRateLimiterTest
      * Verifies that the average accepted rate is non-negative after events have been processed.
      */
     @Test
-    void testAverageAcceptedRateIsNonNegative() throws InterruptedException
+    void testAverageAcceptedRateIsNonNegative()
     {
         // Setup test fixture.
-        final TokenBucketRateLimiter limiter = new TokenBucketRateLimiter(5, 5);
+        final FakeNanoClock clock = new FakeNanoClock();
+        final TokenBucketRateLimiter limiter = new TokenBucketRateLimiter(5, 5, clock);
 
         // Execute system under test.
         limiter.tryAcquire();
         limiter.tryAcquire();
-        Thread.sleep(200);
+        clock.advanceNanos(2_000_000_000L);
 
         final double averageRate = limiter.getAverageAcceptedRatePerSecond();
 
         // Verify result.
-        assertTrue(averageRate >= 0.0, "Average accepted rate must not be negative");
+        assertEquals(1.0, averageRate, 0.0001, "Average accepted rate should match accepted events per elapsed second");
     }
 
     /**

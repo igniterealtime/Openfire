@@ -15,7 +15,11 @@
  */
 package org.jivesoftware.util;
 
+import com.google.common.annotations.VisibleForTesting;
+
 import java.time.Duration;
+import java.util.Objects;
+import java.util.function.LongSupplier;
 
 /**
  * A thread-safe, synchronized token-bucket rate limiter with metrics.
@@ -29,9 +33,12 @@ public final class TokenBucketRateLimiter
 {
     private final long capacity;
     private final long refillTokensPerSecond;
+    private final LongSupplier nanoTimeSupplier;
 
     private long availableTokens;
     private long lastRefillTimeNanos;
+    // Leftover refill value in scaled units (1 token = 1_000_000_000 units).
+    private long refillRemainder;
 
     private long acceptedEvents;
     private long rejectedEvents;
@@ -46,14 +53,16 @@ public final class TokenBucketRateLimiter
     /**
      * Creates an unlimited rate limiter. Use {@link #unlimited()} to obtain an instance.
      */
-    private TokenBucketRateLimiter()
+    private TokenBucketRateLimiter(final LongSupplier nanoTimeSupplier)
     {
+        this.nanoTimeSupplier = Objects.requireNonNull(nanoTimeSupplier, "nanoTimeSupplier must not be null");
         this.unlimited = true;
         this.refillTokensPerSecond = 0;
         this.capacity = 0;
         this.availableTokens = 0;
         this.lastRefillTimeNanos = 0;
-        this.startTimeNanos = System.nanoTime();
+        this.refillRemainder = 0;
+        this.startTimeNanos = nanoTime();
     }
 
     /**
@@ -64,6 +73,21 @@ public final class TokenBucketRateLimiter
      */
     public TokenBucketRateLimiter(final long permitsPerSecond, final long maxBurst)
     {
+        this(permitsPerSecond, maxBurst, System::nanoTime);
+    }
+
+    /**
+     * Creates a new rate limiter with a custom clock.
+     *
+     * Normally, the system clock is used. This constructor mainly exists for tests.
+     *
+     * @param permitsPerSecond sustained rate of permits
+     * @param maxBurst         maximum number of permits that can accumulate
+     * @param nanoTimeSupplier custom clock
+     */
+    @VisibleForTesting
+    TokenBucketRateLimiter(final long permitsPerSecond, final long maxBurst, final LongSupplier nanoTimeSupplier)
+    {
         if (permitsPerSecond <= 0) {
             throw new IllegalArgumentException("permitsPerSecond must be > 0");
         }
@@ -71,11 +95,13 @@ public final class TokenBucketRateLimiter
             throw new IllegalArgumentException("maxBurst must be > 0");
         }
 
+        this.nanoTimeSupplier = Objects.requireNonNull(nanoTimeSupplier, "nanoTimeSupplier must not be null");
         this.unlimited = false;
         this.refillTokensPerSecond = permitsPerSecond;
         this.capacity = maxBurst;
         this.availableTokens = maxBurst;
-        this.lastRefillTimeNanos = System.nanoTime();
+        this.lastRefillTimeNanos = nanoTime();
+        this.refillRemainder = 0;
         this.startTimeNanos = this.lastRefillTimeNanos;
     }
 
@@ -86,7 +112,19 @@ public final class TokenBucketRateLimiter
      */
     public static TokenBucketRateLimiter unlimited()
     {
-        return new TokenBucketRateLimiter();
+        return new TokenBucketRateLimiter(System::nanoTime);
+    }
+
+    /**
+     * Returns the current time in nanoseconds from this instance clock.
+     *
+     * Usually this is the system clock, but tests can provide a custom clock.
+     *
+     * @return The time in nanoseconds.
+     */
+    private long nanoTime()
+    {
+        return nanoTimeSupplier.getAsLong();
     }
 
     /**
@@ -112,30 +150,54 @@ public final class TokenBucketRateLimiter
     }
 
     /**
-     * Refills tokens based on elapsed time.
+     * Adds tokens based on elapsed time.
      */
     private void refillIfNeeded()
     {
-        final long now = System.nanoTime();
+        final long now = nanoTime();
         final long elapsed = now - lastRefillTimeNanos;
+        // With very small intervals, no time may have passed yet.
         if (elapsed <= 0) {
             return;
         }
 
-        // If the multiplication would overflow, elapsed time is so large that the bucket would be completely refilled
-        // regardless, so cap directly at capacity.
-        final long tokensToAdd;
-        if (elapsed > Long.MAX_VALUE / refillTokensPerSecond) {
-            tokensToAdd = capacity;
-        } else {
-            tokensToAdd = Math.min(capacity, (elapsed * refillTokensPerSecond) / 1_000_000_000L);
+        if (availableTokens >= capacity) {
+            // When already full, do not store extra time as hidden credit.
+            lastRefillTimeNanos = now;
+            refillRemainder = 0;
+            return;
         }
 
-        if (tokensToAdd > 0) {
-            availableTokens = tokensToAdd >= capacity - availableTokens ? capacity : availableTokens + tokensToAdd;
-            // Only advance the timestamp when tokens are actually added, so that sub-token elapsed time is preserved
-            // and contributes to the next refill rather than being discarded.
+        final long remainingCapacity = capacity - availableTokens;
+
+        // Refill is calculated in scaled integer units: (elapsed * rate) + previous leftover.
+        // If this overflows, elapsed time is so large that the bucket must be full.
+        if (elapsed > (Long.MAX_VALUE - refillRemainder) / refillTokensPerSecond) {
+            availableTokens = capacity;
             lastRefillTimeNanos = now;
+            refillRemainder = 0;
+            return;
+        }
+
+        // Convert elapsed time to scaled units (1_000_000_000 units = 1 token).
+        final long refillUnits = elapsed * refillTokensPerSecond + refillRemainder;
+        final long tokensToGenerate = refillUnits / 1_000_000_000L;
+        // Keep leftover units until they become at least one full token.
+        if (tokensToGenerate <= 0) {
+            return;
+        }
+
+        final long tokensToAdd = Math.min(remainingCapacity, tokensToGenerate);
+        availableTokens += tokensToAdd;
+
+        if (availableTokens >= capacity) {
+            // Once capacity is reached, drop any extra accrued value.
+            lastRefillTimeNanos = now;
+            refillRemainder = 0;
+        } else {
+            // Keep the leftover fraction so refill speed stays accurate over time.
+            lastRefillTimeNanos = now;
+            refillRemainder = refillUnits % 1_000_000_000L;
         }
     }
 
@@ -220,7 +282,7 @@ public final class TokenBucketRateLimiter
      * @return uptime duration
      */
     public Duration getUptime() {
-        return Duration.ofNanos(System.nanoTime() - startTimeNanos);
+        return Duration.ofNanos(nanoTime() - startTimeNanos);
     }
 
     /**

@@ -18,6 +18,8 @@ package org.jivesoftware.util;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.LongSupplier;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -152,6 +154,48 @@ class TokenBucketRateLimiterTest
 
         // Verify result.
         assertEquals(1, limiter.getAvailableTokens(), "getAvailableTokens should reflect tokens added by refill");
+    }
+
+    /**
+     * Verifies that sub-token elapsed time is preserved and contributes to a later refill.
+     */
+    @Test
+    void testFractionalElapsedTimeIsPreservedAcrossRefills()
+    {
+        // Setup test fixture.
+        final FakeNanoClock clock = new FakeNanoClock();
+        final TokenBucketRateLimiter limiter = new TokenBucketRateLimiter(1, 2, clock);
+
+        // Execute system under test.
+        assertTrue(limiter.tryAcquire(), "First acquire should consume one of the initial burst tokens");
+        assertTrue(limiter.tryAcquire(), "Second acquire should consume the second initial burst token");
+        assertFalse(limiter.tryAcquire(), "Bucket should now be exhausted");
+
+        clock.advanceNanos(1_500_000_000L);
+        assertTrue(limiter.tryAcquire(), "1.5 seconds should refill exactly one token");
+        assertFalse(limiter.tryAcquire(), "Only one token should have been refilled so far");
+
+        clock.advanceNanos(500_000_000L);
+        assertTrue(limiter.tryAcquire(), "Remaining 0.5 second should combine with prior remainder to refill one token");
+    }
+
+    /**
+     * Verifies that elapsed time while the bucket is full does not become hidden credit.
+     */
+    @Test
+    void testElapsedTimeIsNotBankedWhileBucketIsFull()
+    {
+        // Setup test fixture.
+        final FakeNanoClock clock = new FakeNanoClock();
+        final TokenBucketRateLimiter limiter = new TokenBucketRateLimiter(1, 2, clock);
+
+        // Execute system under test.
+        clock.advanceNanos(5_000_000_000L);
+        assertEquals(2, limiter.getAvailableTokens(), "Bucket should remain capped at burst capacity");
+
+        assertTrue(limiter.tryAcquire(), "One token should be immediately available");
+        assertTrue(limiter.tryAcquire(), "Second token should be immediately available");
+        assertFalse(limiter.tryAcquire(), "No hidden refill credit should exist after draining a full bucket");
     }
 
     /**
@@ -359,5 +403,24 @@ class TokenBucketRateLimiterTest
         // Verify result.
         assertEquals(3, limiter1.getAcceptedEvents(), "Limiter1 should count only its own accepted events");
         assertEquals(0, limiter2.getAcceptedEvents(), "Limiter2 should not be affected by events on limiter1");
+    }
+
+    /**
+     * A fake {@link System#nanoTime()} implementation that allows for manual increments of time.
+     */
+    private static final class FakeNanoClock implements LongSupplier
+    {
+        private final AtomicLong nowNanos = new AtomicLong();
+
+        @Override
+        public long getAsLong()
+        {
+            return nowNanos.get();
+        }
+
+        void advanceNanos(final long nanos)
+        {
+            nowNanos.addAndGet(nanos);
+        }
     }
 }

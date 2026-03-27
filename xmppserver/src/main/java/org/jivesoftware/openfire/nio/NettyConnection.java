@@ -121,6 +121,15 @@ public class NettyConnection extends AbstractConnection
     }
 
     @Override
+    public int getRemotePort() {
+        final SocketAddress remoteAddress = channelHandlerContext.channel().remoteAddress();
+        if (remoteAddress != null && remoteAddress instanceof InetSocketAddress) {
+            return ((InetSocketAddress) remoteAddress).getPort();
+        }
+        return 0;
+    }
+
+    @Override
     public String getHostName() throws UnknownHostException {
         final SocketAddress remoteAddress = channelHandlerContext.channel().remoteAddress();
         if (remoteAddress == null) throw new UnknownHostException();

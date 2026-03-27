@@ -143,6 +143,13 @@ public abstract class RemoteSessionTask implements ClusterTask<Object> {
                 Log.error("Error getting address of session: {}", getSession(), e);
             }
         }
+        else if (operation == Operation.getHostPort) {
+            if (getSession().isDetached()) {
+                Log.debug("Unable to get host-port of detached session: {}", getSession());
+            } else {
+                result = getSession().getHostPort();
+            }
+        }
         else if (operation == Operation.validate) {
             result = getSession().validate();
         }
@@ -211,6 +218,7 @@ public abstract class RemoteSessionTask implements ClusterTask<Object> {
         isEncrypted,
         getHostAddress,
         getHostName,
+        getHostPort,
         validate,
         removeDetached,
         markNonResumable,

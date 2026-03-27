@@ -271,6 +271,11 @@ public class SocketConnection extends AbstractConnection {
         return socket.getPort();
     }
 
+    @Override
+    public int getRemotePort() {
+        return getPort();
+    }
+
     /**
      * Returns the Writer used to send data to the connection. The writer should be
      * used with caution. In the majority of cases, the {@link #deliver(Packet)}

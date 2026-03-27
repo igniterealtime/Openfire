@@ -195,6 +195,15 @@ public interface Session extends RoutableChannelHandler {
      * @throws java.net.UnknownHostException if IP address of host could not be determined.
      */
     String getHostAddress() throws UnknownHostException;
+    
+    /**
+     * Returns the remote port used by the connection.
+     *
+     * @return the remote port, or 0 when unavailable.
+     */
+    default int getRemotePort() {
+        return 0;
+    }
 
     /**
      * Gets the host name for this IP address.

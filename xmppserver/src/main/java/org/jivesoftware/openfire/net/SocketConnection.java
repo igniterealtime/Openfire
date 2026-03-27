@@ -263,12 +263,17 @@ public class SocketConnection extends AbstractConnection {
     }
 
     /**
-     * Returns the port that the connection uses.
+     * Returns the remote port used by the connection.
      *
-     * @return the port that the connection uses.
+     * @return the remote port, or 0 when unavailable.
      */
     public int getPort() {
         return socket.getPort();
+    }
+
+    @Override
+    public int getRemotePort() {
+        return getPort();
     }
 
     /**

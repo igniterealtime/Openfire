@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.jivesoftware.openfire.handler.PresenceUpdateHandler;
 import org.jivesoftware.openfire.server.OutgoingSessionPromise;
 import org.jivesoftware.openfire.server.RemoteServerManager;
 import org.jivesoftware.openfire.session.*;
+import org.jivesoftware.openfire.stanzaid.StanzaIDUtil;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.TaskEngine;
@@ -364,6 +365,11 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         }
         else {
             // RFC 6121 section 8.5.3. localpart@domainpart/resourcepart (Packet sent to a full JID of a user)
+            // Add stanza ID for one-on-one messages sent to full JIDs as per XEP-0359
+            if (packet instanceof Message message) {
+                StanzaIDUtil.ensureUniqueAndStableStanzaID(message, jid.asBareJID());
+            }
+
             ClientRoute clientRoute = getClientRouteForLocalUser(jid);
             if (clientRoute != null) {
                 // RFC-6121 section 8.5.3.1. Resource Matches
@@ -624,6 +630,10 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
      * @return true if at least one target session was found
      */
     private boolean routeToBareJID(JID recipientJID, Message packet) {
+        // Add stanza ID for one-on-one messages as per XEP-0359
+        // The assigning entity for one-on-one messages is the receiving user's bare JID
+        StanzaIDUtil.ensureUniqueAndStableStanzaID(packet, recipientJID.asBareJID());
+
         List<ClientSession> sessions = new ArrayList<>();
         // Get existing AVAILABLE sessions of this user or AVAILABLE to the sender of the packet
         for (JID address : getRoutes(recipientJID, packet.getFrom())) {

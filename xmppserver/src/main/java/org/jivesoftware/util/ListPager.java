@@ -31,26 +31,36 @@ import org.apache.commons.text.StringEscapeUtils;
 
 /**
  * <p>
- * This class provides an easy way to page through a filterable list of items from a JSP page.
+ * This class provides an easy way to page through a filterable list of items
+ * from a JSP page.
  * </p>
  *
  * <p>
- * It is up to the caller of the class to specify the filter, if required, in the form of a
- * {@link java.util.function.Predicate predicate}. To ensure that search parameters are maintained when paging through
- * the list, it's also necessary to supply a list of input field identifiers that should be included as part of the
- * request when accessing another page. These field identifiers are used to extract the value of the field, and copy it
- * to a hidden form that is used for the actual submission. This means each search criteria has two form fields
- * associated with it - the visible field that the users types in, and in the hidden form that is submitted.
+ * It is up to the caller of the class to specify the filter, if required, in
+ * the form of a
+ * {@link java.util.function.Predicate predicate}. To ensure that search
+ * parameters are maintained when paging through
+ * the list, it's also necessary to supply a list of input field identifiers
+ * that should be included as part of the
+ * request when accessing another page. These field identifiers are used to
+ * extract the value of the field, and copy it
+ * to a hidden form that is used for the actual submission. This means each
+ * search criteria has two form fields
+ * associated with it - the visible field that the users types in, and in the
+ * hidden form that is submitted.
  * </p>
  *
  * <p>
- * The reason for this is that the location of the input fields on the screen may not always be appropriate for a
- * form - for example, if the fields are location within a table, the form must wrap the whole table, which would
+ * The reason for this is that the location of the input fields on the screen
+ * may not always be appropriate for a
+ * form - for example, if the fields are location within a table, the form must
+ * wrap the whole table, which would
  * preclude the use of any other forms within cells in that table.
  * </p>
  *
  * <p>
- * These input fields will also be modified so that pressing Enter/Return when the fields has focus will automatically
+ * These input fields will also be modified so that pressing Enter/Return when
+ * the fields has focus will automatically
  * submit the form.
  * </p>
  *
@@ -64,7 +74,7 @@ public class ListPager<T> {
     private static final String REQUEST_PARAMETER_KEY_SORT_COLUMN_NUMBER = "sortColumnNumber";
     private static final String PAGINATION_FORM_ID = "paginationForm";
     private static final int DEFAULT_PAGE_SIZE = 25;
-    private static final int[] PAGE_SIZES = {25, 50, 100, 1000};
+    private static final int[] PAGE_SIZES = { 25, 50, 100, 1000 };
 
     /**
      * Descending sort (ie 3, 2, 1...).
@@ -88,6 +98,7 @@ public class ListPager<T> {
     private final int sortOrder;
     private final String[] additionalFormFields;
     private final HttpServletRequest request;
+    private boolean inlineJsDisabled = false;
 
     /**
      * Creates a unfiltered list pager.
@@ -95,9 +106,12 @@ public class ListPager<T> {
      * @param request              the request object for the page in question
      * @param response             the response object for the page in question
      * @param items                the list of items to display on the page
-     * @param additionalFormFields 0 or more input field identifiers (<strong>NOT form field names</strong>) to include in requests for other pages
+     * @param additionalFormFields 0 or more input field identifiers (<strong>NOT
+     *                             form field names</strong>) to include in requests
+     *                             for other pages
      */
-    public ListPager(final HttpServletRequest request, final HttpServletResponse response, final List<T> items, final String... additionalFormFields) {
+    public ListPager(final HttpServletRequest request, final HttpServletResponse response, final List<T> items,
+            final String... additionalFormFields) {
         this(request, response, items, item -> true, additionalFormFields);
     }
 
@@ -108,9 +122,12 @@ public class ListPager<T> {
      * @param response             the response object for the page in question
      * @param items                the complete list of items to display on the page
      * @param filter               the filter to apply to the complete list
-     * @param additionalFormFields 0 or more input field identifiers (<strong>NOT form field names</strong>) to include in requests for other pages
+     * @param additionalFormFields 0 or more input field identifiers (<strong>NOT
+     *                             form field names</strong>) to include in requests
+     *                             for other pages
      */
-    public ListPager(final HttpServletRequest request, final HttpServletResponse response, final List<T> items, final Predicate<T> filter, final String... additionalFormFields) {
+    public ListPager(final HttpServletRequest request, final HttpServletResponse response, final List<T> items,
+            final Predicate<T> filter, final String... additionalFormFields) {
         this(request, response, items, filter, 0, false, additionalFormFields);
     }
 
@@ -120,12 +137,18 @@ public class ListPager<T> {
      * @param request              the request object for the page in question
      * @param response             the response object for the page in question
      * @param items                the complete list of items to display on the page
-     * @param sortColumnNumber     the index of the column (0-based) of which values are to be ordered
-     * @param sortDescending       true if the column is to be in descending order, false for ascending order.
+     * @param sortColumnNumber     the index of the column (0-based) of which values
+     *                             are to be ordered
+     * @param sortDescending       true if the column is to be in descending order,
+     *                             false for ascending order.
      * @param filter               the filter to apply to the complete list
-     * @param additionalFormFields 0 or more input field identifiers (<strong>NOT form field names</strong>) to include in requests for other pages
+     * @param additionalFormFields 0 or more input field identifiers (<strong>NOT
+     *                             form field names</strong>) to include in requests
+     *                             for other pages
      */
-    public ListPager(final HttpServletRequest request, final HttpServletResponse response, final List<T> items, final Predicate<T> filter, final int sortColumnNumber, final boolean sortDescending, final String... additionalFormFields) {
+    public ListPager(final HttpServletRequest request, final HttpServletResponse response, final List<T> items,
+            final Predicate<T> filter, final int sortColumnNumber, final boolean sortDescending,
+            final String... additionalFormFields) {
         final HttpSession session = request.getSession();
         final WebManager webManager = new WebManager();
         webManager.init(request, response, session, session.getServletContext());
@@ -136,14 +159,17 @@ public class ListPager<T> {
         this.request = request;
         this.totalItemCount = items.size();
         this.filteredItemCount = filteredItems.size();
-        this.pageSize = bound(ParamUtils.getIntParameter(request, REQUEST_PARAMETER_KEY_PAGE_SIZE, initialPageSize), PAGE_SIZES[PAGE_SIZES.length - 1]);
+        this.pageSize = bound(ParamUtils.getIntParameter(request, REQUEST_PARAMETER_KEY_PAGE_SIZE, initialPageSize),
+                PAGE_SIZES[PAGE_SIZES.length - 1]);
         // Even with no filtered items, we want to display at least one page
-        this.totalPages = Math.max(1, (int) Math.ceil((double)filteredItemCount / (double)pageSize));
+        this.totalPages = Math.max(1, (int) Math.ceil((double) filteredItemCount / (double) pageSize));
         // Bound the current page between 1 and the total number of pages
-        this.currentPage = bound(ParamUtils.getIntParameter(request, REQUEST_PARAMETER_KEY_CURRENT_PAGE, 1), totalPages);
+        this.currentPage = bound(ParamUtils.getIntParameter(request, REQUEST_PARAMETER_KEY_CURRENT_PAGE, 1),
+                totalPages);
         this.firstItemOnPage = filteredItemCount == 0 ? 0 : (currentPage - 1) * pageSize + 1;
         this.lastItemOnPage = filteredItemCount == 0 ? 0 : Math.min(currentPage * pageSize, filteredItemCount);
-        this.itemsOnPage = filteredItemCount == 0 ? Collections.emptyList() : filteredItems.subList(firstItemOnPage - 1, lastItemOnPage);
+        this.itemsOnPage = filteredItemCount == 0 ? Collections.emptyList()
+                : filteredItems.subList(firstItemOnPage - 1, lastItemOnPage);
         this.sortOrder = sortDescending ? DESCENDING : ASCENDING;
         this.sortColumnNumber = sortColumnNumber;
         this.additionalFormFields = additionalFormFields;
@@ -214,7 +240,8 @@ public class ListPager<T> {
     }
 
     /**
-     * @return {@code true} if the supplied filter has restricted the number of items to display, otherwise {@code false}
+     * @return {@code true} if the supplied filter has restricted the number of
+     *         items to display, otherwise {@code false}
      */
     public boolean isFiltered() {
         return totalItemCount != filteredItemCount;
@@ -228,14 +255,24 @@ public class ListPager<T> {
         return sortOrder == DESCENDING;
     }
 
+    public boolean isInlineJsDisabled() {
+        return inlineJsDisabled;
+    }
+
+    public void setInlineJsDisabled(boolean inlineJsDisabled) {
+        this.inlineJsDisabled = inlineJsDisabled;
+    }
+
     /**
      * @return a string that contains HTML for selecting the page size
      */
     public String getPageSizeSelection() {
         final StringBuilder sb = new StringBuilder();
-        sb.append(String.format("<select name='%s' onchange='return setPageSize(this.value);'>", REQUEST_PARAMETER_KEY_PAGE_SIZE));
+        sb.append(String.format("<select name='%s'%s>", REQUEST_PARAMETER_KEY_PAGE_SIZE, inlineJsDisabled ? ""
+                : String.format(" onchange='return setPageSize(this.value);'", REQUEST_PARAMETER_KEY_PAGE_SIZE)));
         for (final int optionSize : PAGE_SIZES) {
-            sb.append(String.format("<option value='%d'%s>%d</option>", optionSize, pageSize == optionSize ? " selected" : "", optionSize));
+            sb.append(String.format("<option value='%d'%s>%d</option>", optionSize,
+                    pageSize == optionSize ? " selected" : "", optionSize));
         }
         sb.append("</select>");
         return sb.toString();
@@ -281,60 +318,70 @@ public class ListPager<T> {
             cssClass = "";
         }
 
-        sb.append(String.format("\n<a href='%s' onclick='return jumpToPage(%d)'%s>%s</a>",
-            String.format("?%s=%d", REQUEST_PARAMETER_KEY_CURRENT_PAGE, pageToLink),
-            pageToLink,
-            cssClass,
-            pageToLink));
+        sb.append(String.format("\n<a href='%s'%s%s>%s</a>",
+                String.format("?%s=%d", REQUEST_PARAMETER_KEY_CURRENT_PAGE, pageToLink),
+                inlineJsDisabled ? "" : String.format(" onclick='return jumpToPage(%d)'", pageToLink),
+                cssClass,
+                pageToLink));
     }
 
     /**
-     * @return the list of hidden fields required to maintain the current list pager state
+     * @return the list of hidden fields required to maintain the current list pager
+     *         state
      */
     public String getHiddenFields() {
         final StringBuilder sb = new StringBuilder("\n")
-            .append(String.format("\t<input type='hidden' name='%s' value='%d'>\n", REQUEST_PARAMETER_KEY_PAGE_SIZE, pageSize))
-            .append(String.format("\t<input type='hidden' name='%s' value='%d'>\n", REQUEST_PARAMETER_KEY_CURRENT_PAGE, currentPage))
-            .append(String.format("\t<input type='hidden' name='%s' value='%d'>\n", REQUEST_PARAMETER_KEY_SORT_ORDER, sortOrder))
-            .append(String.format("\t<input type='hidden' name='%s' value='%d'>\n", REQUEST_PARAMETER_KEY_SORT_COLUMN_NUMBER, sortColumnNumber));
+                .append(String.format("\t<input type='hidden' name='%s' value='%d'>\n", REQUEST_PARAMETER_KEY_PAGE_SIZE,
+                        pageSize))
+                .append(String.format("\t<input type='hidden' name='%s' value='%d'>\n",
+                        REQUEST_PARAMETER_KEY_CURRENT_PAGE, currentPage))
+                .append(String.format("\t<input type='hidden' name='%s' value='%d'>\n",
+                        REQUEST_PARAMETER_KEY_SORT_ORDER, sortOrder))
+                .append(String.format("\t<input type='hidden' name='%s' value='%d'>\n",
+                        REQUEST_PARAMETER_KEY_SORT_COLUMN_NUMBER, sortColumnNumber));
         for (final String additionalFormField : additionalFormFields) {
             final String formFieldValue = ParamUtils.getStringParameter(request, additionalFormField, "");
-            sb.append(String.format("\t<input type='hidden' name='%s' value='%s'%s>\n",
-                additionalFormField,
-                StringEscapeUtils.escapeXml11(formFieldValue),
-                formFieldValue.isEmpty() ? " disabled" : ""));
+            sb.append(String.format(
+                    "<input type='hidden' name='%s' value='%s'>",
+                    additionalFormField,
+                    StringEscapeUtils.escapeXml11(formFieldValue)));
         }
         return sb.toString();
     }
 
     /**
-     * @param request The request to retrieve the values from
-     * @param prefix The first char of the query string - either `?` or `&amp;`
-     * @param additionalFormFields 0 or more form field names to include in requests for other pages
+     * @param request              The request to retrieve the values from
+     * @param prefix               The first char of the query string - either `?`
+     *                             or `&amp;`
+     * @param additionalFormFields 0 or more form field names to include in requests
+     *                             for other pages
      * @return a query string required to maintain the current list pager state
      */
-    public static String getQueryString(final HttpServletRequest request, final char prefix, final String... additionalFormFields) {
+    public static String getQueryString(final HttpServletRequest request, final char prefix,
+            final String... additionalFormFields) {
         final StringBuilder sb = new StringBuilder();
         char conjunction = prefix;
         final int currentPage = ParamUtils.getIntParameter(request, REQUEST_PARAMETER_KEY_CURRENT_PAGE, 1);
         if (currentPage > 1) {
             sb.append(conjunction)
-                .append(String.format("%s=%d", REQUEST_PARAMETER_KEY_CURRENT_PAGE, currentPage));
+                    .append(String.format("%s=%d", REQUEST_PARAMETER_KEY_CURRENT_PAGE, currentPage));
             conjunction = '&';
         }
-        final int pageSize = bound(ParamUtils.getIntParameter(request, REQUEST_PARAMETER_KEY_PAGE_SIZE, DEFAULT_PAGE_SIZE), PAGE_SIZES[PAGE_SIZES.length - 1]);
+        final int pageSize = bound(
+                ParamUtils.getIntParameter(request, REQUEST_PARAMETER_KEY_PAGE_SIZE, DEFAULT_PAGE_SIZE),
+                PAGE_SIZES[PAGE_SIZES.length - 1]);
         if (pageSize != DEFAULT_PAGE_SIZE) {
             sb.append(conjunction)
-                .append(String.format("%s=%d", REQUEST_PARAMETER_KEY_PAGE_SIZE, pageSize));
+                    .append(String.format("%s=%d", REQUEST_PARAMETER_KEY_PAGE_SIZE, pageSize));
             conjunction = '&';
         }
         for (final String additionalFormField : additionalFormFields) {
             final String formFieldValue = ParamUtils.getStringParameter(request, additionalFormField, "").trim();
-            if(!formFieldValue.isEmpty()) {
+            if (!formFieldValue.isEmpty()) {
                 String encodedValue;
                 encodedValue = URLEncoder.encode(formFieldValue, StandardCharsets.UTF_8);
                 sb.append(conjunction)
-                    .append(String.format("%s=%s", additionalFormField, encodedValue));
+                        .append(String.format("%s=%s", additionalFormField, encodedValue));
                 conjunction = '&';
             }
         }
@@ -342,21 +389,26 @@ public class ListPager<T> {
     }
 
     /**
-     * @return a string with an HTML form containing hidden fields, used for navigating between pages
+     * @return a string with an HTML form containing hidden fields, used for
+     *         navigating between pages
      */
     public String getJumpToPageForm() {
         return "\n" +
-            String.format("<form id='%s'>\n", PAGINATION_FORM_ID) +
-            getHiddenFields() +
-            "</form>\n";
+                String.format("<form id='%s'>\n", PAGINATION_FORM_ID) +
+                getHiddenFields() +
+                "</form>\n";
     }
 
     /**
-     * @return a string containing JavaScript that helps with navigation between pages
+     * @return a string containing JavaScript that helps with navigation between
+     *         pages
      */
     public String getPageFunctions() {
+        if (inlineJsDisabled) {
+            return "";
+        }
         final StringBuilder sb = new StringBuilder("\n")
-            .append("\tvar additionalFormFields = [");
+                .append("\tvar additionalFormFields = [");
         // The list of additional form fields
         for (final String additionalFormField : additionalFormFields) {
             if (!additionalFormField.equals(additionalFormFields[0])) {
@@ -367,84 +419,96 @@ public class ListPager<T> {
         sb.append("];\n\n");
 
         sb.append("\tfunction jumpToPage(pageNumber) {\n")
-            // Changes the current page number, and submits the form
-            .append(String.format("\t\tvar formObject = document.getElementById('%s');\n", PAGINATION_FORM_ID))
-            .append(String.format("\t\tformObject.%s.value = pageNumber;\n", REQUEST_PARAMETER_KEY_CURRENT_PAGE))
-            .append("\t\tsubmitForm();\n")
-            .append("\t\treturn false;\n")
-            .append("\t}\n")
-            .append("\n");
+                // Changes the current page number, and submits the form
+                .append(String.format("\t\tvar formObject = document.getElementById('%s');\n", PAGINATION_FORM_ID))
+                .append(String.format("\t\tformObject.%s.value = pageNumber;\n", REQUEST_PARAMETER_KEY_CURRENT_PAGE))
+                .append("\t\tsubmitForm();\n")
+                .append("\t\treturn false;\n")
+                .append("\t}\n")
+                .append("\n");
 
         sb.append("\tfunction setPageSize(pageSize) {\n")
-            // Changes the current page size, and submits the form
-            .append(String.format("\t\tvar formObject = document.getElementById('%s');\n", PAGINATION_FORM_ID))
-            .append(String.format("\t\tformObject.%s.value = pageSize;\n", REQUEST_PARAMETER_KEY_PAGE_SIZE))
-            .append("\t\tsubmitForm();\n")
-            .append("\t\treturn false;\n")
-            .append("\t}\n")
-            .append("\n");
+                // Changes the current page size, and submits the form
+                .append(String.format("\t\tvar formObject = document.getElementById('%s');\n", PAGINATION_FORM_ID))
+                .append(String.format("\t\tformObject.%s.value = pageSize;\n", REQUEST_PARAMETER_KEY_PAGE_SIZE))
+                .append("\t\tsubmitForm();\n")
+                .append("\t\treturn false;\n")
+                .append("\t}\n")
+                .append("\n");
 
         sb.append("\tfunction toggleColumnOrder(sortColumnNumber) {\n")
-            // Orders based on a particular column, reversing the order if that column was already ordered on.
-            .append(String.format("\t\tvar formObject = document.getElementById('%s');\n", PAGINATION_FORM_ID))
-            .append(String.format("\t\tvar previousSortColumnNumber = formObject.%s.value || '0';\n", REQUEST_PARAMETER_KEY_SORT_COLUMN_NUMBER))
-            .append(String.format("\t\tvar previousSortOrder = formObject.%s.value || '1';\n", REQUEST_PARAMETER_KEY_SORT_ORDER))
-            .append(String.format("\t\tformObject.%s.value = sortColumnNumber;\n", REQUEST_PARAMETER_KEY_SORT_COLUMN_NUMBER))
-            .append(String.format("\t\tformObject.%s.value = parseInt(previousSortColumnNumber) === sortColumnNumber ? 1-previousSortOrder : 1;\n", REQUEST_PARAMETER_KEY_SORT_ORDER))
-            .append("\t\tsubmitForm();\n")
-            .append("\t\treturn false;\n")
-            .append("\t}\n")
-            .append("\n");
+                // Orders based on a particular column, reversing the order if that column was
+                // already ordered on.
+                .append(String.format("\t\tvar formObject = document.getElementById('%s');\n", PAGINATION_FORM_ID))
+                .append(String.format("\t\tvar previousSortColumnNumber = formObject.%s.value || '0';\n",
+                        REQUEST_PARAMETER_KEY_SORT_COLUMN_NUMBER))
+                .append(String.format("\t\tvar previousSortOrder = formObject.%s.value || '1';\n",
+                        REQUEST_PARAMETER_KEY_SORT_ORDER))
+                .append(String.format("\t\tformObject.%s.value = sortColumnNumber;\n",
+                        REQUEST_PARAMETER_KEY_SORT_COLUMN_NUMBER))
+                .append(String.format(
+                        "\t\tformObject.%s.value = parseInt(previousSortColumnNumber) === sortColumnNumber ? 1-previousSortOrder : 1;\n",
+                        REQUEST_PARAMETER_KEY_SORT_ORDER))
+                .append("\t\tsubmitForm();\n")
+                .append("\t\treturn false;\n")
+                .append("\t}\n")
+                .append("\n");
 
         sb.append("\tfunction submitForm() {\n")
-            // Extracts any of the additional form field values, and adds them to the form before submitting it
-            .append(String.format("\t\tvar formObject = document.getElementById('%s');\n", PAGINATION_FORM_ID))
-            .append(String.format("\t\tfor(var i = 0; i < %d; i++) {\n", additionalFormFields.length))
-            .append("\t\t\tvar field = document.getElementById(additionalFormFields[i]);\n")
-            .append("\t\t\tif (field !== null) {\n")
-            .append("\t\t\t\tvar formField = formObject[additionalFormFields[i]];\n")
-            .append("\t\t\t\tif (typeof field !== 'object' || field.value === '') {\n")
-            .append("\t\t\t\t\tformField.disabled = true;\n")
-            .append("\t\t\t\t} else {\n")
-            .append("\t\t\t\t\tformField.disabled = false;\n")
-            .append("\t\t\t\t\tformField.value = field.value;\n")
-            .append("\t\t\t\t}\n")
-            .append("\t\t\t}\n")
-            .append("\t\t}\n")
-            .append("\t\t\n")
-            .append("\t\tif (formObject['").append(REQUEST_PARAMETER_KEY_PAGE_SIZE).append("'].value === '").append(pageSize).append("') formObject['").append(REQUEST_PARAMETER_KEY_PAGE_SIZE).append("'].disabled=true;\n")
-            .append("\t\tif (formObject['").append(REQUEST_PARAMETER_KEY_CURRENT_PAGE).append("'].value === '1') formObject['").append(REQUEST_PARAMETER_KEY_CURRENT_PAGE).append("'].disabled=true;\n")
-            .append("\t\t\n")
-            .append("\t\tformObject.submit();\n")
-            .append("\t\treturn false;\n")
-            .append("\t}\n")
-            .append("\n");
+                // Extracts any of the additional form field values, and adds them to the form
+                // before submitting it
+                .append(String.format("\t\tvar formObject = document.getElementById('%s');\n", PAGINATION_FORM_ID))
+                .append(String.format("\t\tfor(var i = 0; i < %d; i++) {\n", additionalFormFields.length))
+                .append("\t\t\tvar field = document.getElementById(additionalFormFields[i]);\n")
+                .append("\t\t\tif (field !== null) {\n")
+                .append("\t\t\t\tvar formField = formObject[additionalFormFields[i]];\n")
+                .append("\t\t\t\tif (typeof field !== 'object' || field.value === '') {\n")
+                .append("\t\t\t\t\tformField.disabled = true;\n")
+                .append("\t\t\t\t} else {\n")
+                .append("\t\t\t\t\tformField.disabled = false;\n")
+                .append("\t\t\t\t\tformField.value = field.value;\n")
+                .append("\t\t\t\t}\n")
+                .append("\t\t\t}\n")
+                .append("\t\t}\n")
+                .append("\t\t\n")
+                .append("\t\tif (formObject['").append(REQUEST_PARAMETER_KEY_PAGE_SIZE).append("'].value === '")
+                .append(pageSize).append("') formObject['").append(REQUEST_PARAMETER_KEY_PAGE_SIZE)
+                .append("'].disabled=true;\n")
+                .append("\t\tif (formObject['").append(REQUEST_PARAMETER_KEY_CURRENT_PAGE)
+                .append("'].value === '1') formObject['").append(REQUEST_PARAMETER_KEY_CURRENT_PAGE)
+                .append("'].disabled=true;\n")
+                .append("\t\t\n")
+                .append("\t\tformObject.submit();\n")
+                .append("\t\treturn false;\n")
+                .append("\t}\n")
+                .append("\n");
 
-        // Add mechanisms to auto-submit the form when hitting enter (two mechanisms for different browsers)
+        // Add mechanisms to auto-submit the form when hitting enter (two mechanisms for
+        // different browsers)
         sb.append("\tfunction inputFieldOnKeyDownEventListener(e) {\n")
-            .append("\t\tif (e.keyCode === 13) {\n")
-            .append("\t\t\tsubmitForm();\n")
-            .append("\t\t\treturn false;\n")
-            .append("\t\t}\n")
-            .append("\t}\n")
-            .append("\n");
+                .append("\t\tif (e.keyCode === 13) {\n")
+                .append("\t\t\tsubmitForm();\n")
+                .append("\t\t\treturn false;\n")
+                .append("\t\t}\n")
+                .append("\t}\n")
+                .append("\n");
 
         sb.append("\tfunction inputFieldOnInputEventListener() {\n")
-            .append("\t\tif (this.value === '') {\n")
-            .append("\t\t\tsubmitFilterForm();\n")
-            .append("\t\t\treturn false;\n")
-            .append("\t\t}\n")
-            .append("\t};\n")
-            .append("\n");
+                .append("\t\tif (this.value === '') {\n")
+                .append("\t\t\tsubmitFilterForm();\n")
+                .append("\t\t\treturn false;\n")
+                .append("\t\t}\n")
+                .append("\t};\n")
+                .append("\n");
 
         // Finally, bind the functions to the fields
         sb.append(String.format("\tfor(var i = 0; i < %d; i++) {\n", additionalFormFields.length))
-            .append("\t\tvar field = document.getElementById(additionalFormFields[i]);\n")
-            .append("\t\tif (field !== null && typeof field === 'object') {\n")
-            .append("\t\t\tfield.onkeydown = inputFieldOnKeyDownEventListener;\n")
-            .append("\t\t\tfield.addEventListener('input', inputFieldOnInputEventListener);\n")
-            .append("\t\t}\n")
-            .append("\t}\n");
+                .append("\t\tvar field = document.getElementById(additionalFormFields[i]);\n")
+                .append("\t\tif (field !== null && typeof field === 'object') {\n")
+                .append("\t\t\tfield.onkeydown = inputFieldOnKeyDownEventListener;\n")
+                .append("\t\t\tfield.addEventListener('input', inputFieldOnInputEventListener);\n")
+                .append("\t\t}\n")
+                .append("\t}\n");
 
         return sb.toString();
     }

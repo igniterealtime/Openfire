@@ -19,6 +19,7 @@
 
 <%@ page import="org.jivesoftware.util.*,
                  org.jivesoftware.openfire.muc.MUCRoom,
+                 org.jivesoftware.openfire.muc.ForbiddenException,
                  java.net.URLEncoder"
     errorPage="error.jsp"
 %>
@@ -59,17 +60,22 @@
     MUCRoom room = webManager.getMultiUserChatManager().getMultiUserChatService(roomJID).getChatRoom(roomName);
 
     // Handle a room clear:
+    String errorMessage = null;
     if (clear) {
         // Clear the room
         if (room != null) {
-            // finalWebManager is a final variable that references webManager
-            // allowing webManager to be used inside the lambda expression without causing a compilation error
-            final WebManager finalWebManager = webManager;
-            room.clearChatHistory().thenRun(() -> finalWebManager.logEvent("Cleared the chat history of MUC room ", roomJID.toString()));
+            try {
+                // finalWebManager is a final variable that references webManager
+                // allowing webManager to be used inside the lambda expression without causing a compilation error
+                final WebManager finalWebManager = webManager;
+                room.clearChatHistory().thenRun(() -> finalWebManager.logEvent("Cleared the chat history of MUC room ", roomJID.toString()));
+                // Done, so redirect to the room edit form
+                response.sendRedirect("muc-room-edit-form.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), StandardCharsets.UTF_8)+"&clearchatsuccess=true");
+                return;
+            } catch (ForbiddenException e) {
+                errorMessage = "muc.room.clear_chat.error.not_empty";
+            }
         }
-        // Done, so redirect to the room edit form
-        response.sendRedirect("muc-room-edit-form.jsp?roomJID="+URLEncoder.encode(roomJID.toBareJID(), StandardCharsets.UTF_8)+"&clearchatsuccess=true");
-        return;
     }
 
     pageContext.setAttribute("roomBareJid", roomJID.toBareJID());
@@ -82,6 +88,19 @@
         <meta name="extraParams" content="roomJID=${admin:escapeHTMLTags(roomBareJid)}"/>
     </head>
     <body>
+        <% if (errorMessage != null) { %>
+            <div class="jive-error">
+            <table cellpadding="0" cellspacing="0" border="0">
+            <tbody>
+                <tr><td class="jive-icon"><img src="images/error-16x16.gif" width="16" height="16" border="0" alt=""></td>
+                <td class="jive-icon-label">
+                <fmt:message key="<%= errorMessage %>" />
+                </td></tr>
+            </tbody>
+            </table>
+            </div><br>
+        <% } %>
+
         <p>
         <fmt:message key="muc.room.clear_chat.info" />
         <b><a href="muc-room-edit-form.jsp?roomJID=${admin:urlEncode(roomBareJid)}"><c:out value="${roomBareJid}"/></a></b>

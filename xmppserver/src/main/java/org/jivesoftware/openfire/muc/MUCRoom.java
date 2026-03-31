@@ -1324,8 +1324,13 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
     /**
      * Asynchronously remove the chat history of a room from run-time memory and database storage.
      * If bulk message retraction is enabled, it sends message retraction stanzas to all occupants.
+     *
+     * @throws ForbiddenException If the room still has occupants.
      */
-    public CompletableFuture<Void> clearChatHistory() {
+    public CompletableFuture<Void> clearChatHistory() throws ForbiddenException {
+        if (!occupants.isEmpty()) {
+            throw new ForbiddenException("Room must be empty to clear history");
+        }
         return CompletableFuture.runAsync(() -> {
             if(BULK_MSG_RETRACTION_ENABLED.getValue()) {
                 ListIterator<Message> reverseMessageHistory = roomHistory.getReverseMessageHistory();

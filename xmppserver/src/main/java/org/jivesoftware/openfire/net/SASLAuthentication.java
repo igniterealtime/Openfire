@@ -143,6 +143,12 @@ public class SASLAuthentication {
 
     private static Set<String> mechanisms = new HashSet<>();
 
+    public static final SystemProperty<Boolean> CHANNEL_BINDING_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("sasl.channel-binding.enabled")
+        .setDefaultValue(true)
+        .setDynamic(true)
+        .build();
+
     static
     {
         // Add (proprietary) Providers of SASL implementation to the Java security context.
@@ -259,6 +265,21 @@ public class SASLAuthentication {
     {
         final Element result = DocumentHelper.createElement( new QName( "mechanisms", new Namespace( "", SASL_NAMESPACE ) ) );
         for (String mech : getSupportedMechanisms()) {
+            if (mech.endsWith("-PLUS")) {
+                if (!CHANNEL_BINDING_ENABLED.getValue()) {
+                    continue;
+                }
+                if (!session.isEncrypted()) {
+                    continue;
+                }
+                final Connection connection = ((LocalClientSession) session).getConnection();
+                if (connection == null || (!connection.getChannelBindingData("tls-server-endpoint").isPresent()
+                                        && !connection.getChannelBindingData("tls-unique").isPresent()
+                                        && !connection.getChannelBindingData("tls-exporter").isPresent())) {
+                    continue;
+                }
+            }
+
             if (mech.equals("EXTERNAL")) {
                 boolean trustedCert = false;
                 if (session.isEncrypted()) {
@@ -363,8 +384,14 @@ public class SASLAuthentication {
                     // Construct the configuration properties
                     final Map<String, Object> props = new HashMap<>();
                     props.put( LocalSession.class.getCanonicalName(), session );
-                    props.put(Sasl.POLICY_NOANONYMOUS, Boolean.toString(!AnonymousSaslServer.ENABLED.getValue()));
+                    props.put( Sasl.POLICY_NOANONYMOUS, Boolean.toString(!AnonymousSaslServer.ENABLED.getValue()) );
                     props.put( "com.sun.security.sasl.digest.realm", serverInfo.getXMPPDomain() );
+
+                    // If the session has a connection, and that connection is encrypted, add it to properties.
+                    // This is needed for channel binding support in SCRAM-SHA-1-PLUS.
+                    if ( session.getConnection() != null && session.getConnection().isEncrypted() ) {
+                        props.put( Connection.class.getCanonicalName(), session.getConnection() );
+                    }
 
                     SaslServer saslServer = Sasl.createSaslServer( mechanismName, "xmpp", serverName, props, new XMPPCallbackHandler() );
                     if ( saslServer == null )

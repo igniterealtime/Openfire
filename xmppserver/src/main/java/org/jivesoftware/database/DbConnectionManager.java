@@ -851,6 +851,7 @@ public class DbConnectionManager {
 
         // Get the database name so that we can perform meta data settings.
         String dbName = metaData.getDatabaseProductName().toLowerCase();
+        String dbVersion = metaData.getDatabaseProductVersion().toLowerCase();
         String driverName = metaData.getDriverName().toLowerCase();
 
         // Oracle properties.
@@ -866,6 +867,14 @@ public class DbConnectionManager {
             }
         }
         // Postgres properties
+        // CockroachDB must be checked first: it is wire-protocol compatible with PostgreSQL and
+        // may report "postgresql" as the product name when accessed via the PostgreSQL JDBC driver,
+        // but always identifies itself via the version string.
+        else if (dbName.contains("cockroach") || dbVersion.contains("cockroach")) {
+            databaseType = DatabaseType.cockroachdb;
+            scrollResultsSupported = false;
+            fetchSizeSupported = false;
+        }
         else if (dbName.contains("postgres")) {
             databaseType = DatabaseType.postgresql;
             // Postgres blows, so disable scrolling result sets.
@@ -1011,6 +1020,8 @@ public class DbConnectionManager {
         oracle,
 
         postgresql,
+
+        cockroachdb,
 
         mysql("rank"),
 

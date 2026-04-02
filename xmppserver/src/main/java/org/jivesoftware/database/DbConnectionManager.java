@@ -864,6 +864,7 @@ public class DbConnectionManager {
         fetchSizeSupported = true;
 
         String dbName      = metaData.getDatabaseProductName().toLowerCase(Locale.ROOT);
+        String dbVersion   = metaData.getDatabaseProductVersion().toLowerCase(Locale.ROOT);
         String driverName  = metaData.getDriverName().toLowerCase(Locale.ROOT);
         int    driverMajor = metaData.getDriverMajorVersion();
 
@@ -887,7 +888,16 @@ public class DbConnectionManager {
             }
         }
 
-        // PostgreSQL
+        // CockroachDB must be checked first: it is wire-protocol compatible with PostgreSQL and
+        // may report "postgresql" as the product name when accessed via the PostgreSQL JDBC driver,
+        // but always identifies itself via the version string.
+        else if (dbName.contains("cockroach") || dbVersion.contains("cockroach")) {
+            databaseType = DatabaseType.cockroachdb;
+            scrollResultsSupported = false;
+            fetchSizeSupported = false;
+        }
+
+        // Postgres properties
         else if (dbName.contains("postgres")) {
             databaseType = DatabaseType.postgresql;
 
@@ -1210,6 +1220,8 @@ public class DbConnectionManager {
         oracle,
 
         postgresql,
+
+        cockroachdb,
 
         mysql("rank"),
 

@@ -373,10 +373,10 @@ public class RemoteReceivingServerDummy extends AbstractRemoteServerDummy implem
             final SSLContext sc = SSLContext.getInstance("TLSv1.3");
 
             sc.init(createKeyManager(generatedPKIX == null ? null : generatedPKIX.getKeyPair(), generatedPKIX == null ? null : generatedPKIX.getCertificateChain()), createTrustManagerThatTrustsAll(), new java.security.SecureRandom());
-            SSLContext.setDefault(sc);
 
-            final SSLSocket sslSocket = (SSLSocket) ((SSLSocketFactory) SSLSocketFactory.getDefault()).createSocket(socket, null, true);
+            final SSLSocket sslSocket = (SSLSocket) sc.getSocketFactory().createSocket(socket, null, true);
             sslSocket.setSoTimeout((int) SO_TIMEOUT.toMillis());
+            sslSocket.setUseClientMode(false);
 
             // Just indicate that we would like to authenticate the client but if client
             // certificates are self-signed or have no certificate chain then we are still

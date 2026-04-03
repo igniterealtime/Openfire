@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2018-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,7 +160,8 @@ public class EncryptionArtifactFactory
         }
         catch ( Exception e )
         {
-            Log.debug( "Unable to instantiate '{}' using the four-argument constructor that is proprietary to Openfire. Trying to use a no-arg constructor instead...", trustManagerClass );
+            Log.debug( "Unable to instantiate '{}' using the four-argument constructor that is proprietary to Openfire. ", trustManagerClass, e );
+            Log.debug( "Trying to use a no-arg constructor instead...");
             try
             {
                 final TrustManager trustManager = trustManagerClass.newInstance();
@@ -416,6 +417,10 @@ public class EncryptionArtifactFactory
         // createClientModeSslContext is only used when the Openfire server is acting as a client when
         // making outbound S2S connections so the first stanza we send should be encrypted hence startTls(false)
 
+        // Netty 4.2 changed the default for endpointIdentificationAlgorithm from null (disabled) to "HTTPS".
+        // XMPP S2S certificate validation is handled by Openfire's own trust manager (getTrustManagers()), which
+        // applies XMPP-specific rules (RFC 6120). Enabling Netty's HTTPS hostname verification on top would be
+        // redundant and could reject valid XMPP servers whose certificates do not conform to HTTPS naming conventions.
         return SslContextBuilder
             .forClient()
             .protocols(protocols)
@@ -423,6 +428,7 @@ public class EncryptionArtifactFactory
             .keyManager(getKeyManagerFactory())
             .trustManager(getTrustManagers()[0]) // The existing implementation never returns more than one trust manager.
             .startTls(false) // Acting as client making outbound S2S connection so encrypt next stanza
+            .endpointIdentificationAlgorithm(null) // Disable Netty's built-in hostname verification; Openfire's trust manager handles XMPP certificate validation.
             .build();
     }
 

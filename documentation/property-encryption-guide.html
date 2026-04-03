@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Openfire: Property Encryption Guide</title>
+    <link type="text/css" rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<article>
+
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
+        <h1>Property Encryption Guide</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </nav>
+
+    <section id="intro">
+
+        <h2>Introduction</h2>
+
+        <p>
+            This guide describes how Openfire encrypts sensitive configuration properties to protect credentials
+            such as database passwords, LDAP bind passwords, and API keys. Openfire automatically encrypts these
+            values to prevent unauthorised access when configuration files are viewed or backed up.
+        </p>
+
+        <p>Topics covered in this document:</p>
+
+        <nav>
+            <ul>
+                <li><a href="#quick-reference">Quick Reference: XML vs Database</a></li>
+                <li><a href="#encryption-overview">Encryption Overview</a></li>
+                <li><a href="#storage-locations">Property Storage Locations</a></li>
+                <li><a href="#property-encryption">How Property Encryption Works</a></li>
+                <li><a href="#which-properties">Which Properties to Encrypt</a></li>
+                <li><a href="#automatic-upgrade">Automatic Security Upgrades (XML Only)</a></li>
+                <li><a href="#limitations">Security Limitations</a></li>
+                <li><a href="#backup-restore">Backup and Restore</a></li>
+                <li><a href="#configuration">Configuration Options</a></li>
+                <li><a href="#troubleshooting">Troubleshooting</a></li>
+                <li><a href="#further">Further Reading</a></li>
+            </ul>
+        </nav>
+
+    </section>
+
+    <section id="quick-reference">
+
+        <h2>Quick Reference: XML vs Database Property Encryption</h2>
+
+        <p>
+            Openfire stores encrypted properties in two locations with different encryption implementations.
+            This table summarises the key differences:
+        </p>
+
+        <table class="general" style="border-collapse: collapse;">
+            <thead>
+            <tr>
+                <th>Feature</th>
+                <th>XML Properties</th>
+                <th>Database Properties</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr style="border-bottom: 1px solid #ccc;">
+                <td>Storage location</td>
+                <td><code>conf/openfire.xml</code></td>
+                <td><code>ofProperty</code> table</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #ccc;">
+                <td>Random IV support</td>
+                <td>Openfire 5.1+</td>
+                <td>Supported for several major versions</td>
+            </tr>
+            <tr style="border-bottom: 1px solid #ccc;">
+                <td>Auto-upgrade applies</td>
+                <td>Yes</td>
+                <td>No (not needed)</td>
+            </tr>
+            <tr>
+                <td>IV storage</td>
+                <td>XML attribute</td>
+                <td>Database column</td>
+            </tr>
+            </tbody>
+        </table>
+
+    </section>
+
+    <section id="encryption-overview">
+
+        <h2>Encryption Overview</h2>
+
+        <p>
+            Openfire protects sensitive configuration values using AES encryption. This prevents passwords
+            and other credentials from being readable in configuration files and database backups.
+        </p>
+
+        <h3>Security Improvements in Openfire 5.1</h3>
+
+        <p>
+            Openfire 5.1 included significant security improvements to XML property encryption
+            (properties stored in <code>openfire.xml</code>):
+        </p>
+        <ul>
+            <li><strong>Random initialisation vectors</strong> &ndash; XML properties now use unique random IVs,
+                preventing pattern analysis attacks where identical plaintext produces identical ciphertext.
+                (Database properties have used random IVs for several major versions.)</li>
+            <li><strong>Automatic upgrades</strong> &ndash; Legacy encrypted XML properties are automatically upgraded
+                to use stronger encryption when accessed</li>
+            <li><strong>Backward compatibility</strong> &ndash; Existing installations work without manual intervention</li>
+        </ul>
+
+    </section>
+
+    <section id="storage-locations">
+
+        <h2>Property Storage Locations</h2>
+
+        <p>
+            Openfire stores properties in two different locations, and encryption works for both:
+        </p>
+
+        <h3>Configuration File (<code>openfire.xml</code>)</h3>
+
+        <p>
+            Contains bootstrap properties needed before the database is available,
+            such as database connection settings and server domain. These properties
+            are specific to each server instance and stored in <code>conf/openfire.xml</code>.
+        </p>
+        <p>
+            Common encrypted properties in <code>openfire.xml</code>:
+        </p>
+        <ul>
+            <li>Database password (<code>database.defaultProvider.password</code>)</li>
+            <li>LDAP bind password (<code>ldap.adminPassword</code>)</li>
+        </ul>
+
+        <h3>Database (<code>ofProperty</code> table)</h3>
+
+        <p>
+            Contains runtime properties that are shared across all servers in a clustered
+            deployment. Most properties set via the admin console are stored here.
+        </p>
+        <p>
+            Common encrypted properties in the database:
+        </p>
+        <ul>
+            <li>Email server passwords (<code>mail.smtp.password</code>)</li>
+            <li>Plugin settings and API keys</li>
+            <li>Integration credentials configured via admin console</li>
+        </ul>
+
+    </section>
+
+    <section id="property-encryption">
+
+        <h2>How Property Encryption Works</h2>
+
+        <h3>Encryption Process</h3>
+
+        <p>
+            When a property is marked for encryption, Openfire automatically encrypts its value before
+            saving it to the configuration file or database. The encrypted value is stored with additional
+            metadata that allows Openfire to decrypt it when needed.
+        </p>
+
+        <p>
+            Example of an encrypted property in <code>openfire.xml</code>:
+        </p>
+        <pre>&lt;database&gt;
+    &lt;password encrypted="true" iv="MTIzNDU2Nzg5MDEyMzQ1Ng=="&gt;
+        EncryptedPasswordValueHere
+    &lt;/password&gt;
+&lt;/database&gt;</pre>
+
+        <p>
+            The <code>encrypted="true"</code> attribute indicates the value is encrypted. The <code>iv</code>
+            attribute contains the initialisation vector used for encryption (Base64-encoded).
+        </p>
+
+        <h3>Database Storage Format</h3>
+
+        <p>
+            For properties stored in the database, the encrypted value and IV are stored in separate columns
+            of the <code>ofProperty</code> table:
+        </p>
+
+        <ul>
+            <li><code>propValue</code> &ndash; The encrypted value (Base64-encoded)</li>
+            <li><code>encrypted</code> &ndash; Boolean flag indicating encryption</li>
+            <li><code>iv</code> &ndash; The initialisation vector (Base64-encoded)</li>
+        </ul>
+
+        <p>
+            Database properties have used random IVs for several major versions, so there is no "legacy format"
+            concern for database-stored properties.
+        </p>
+
+        <h3>Marking Properties for Encryption</h3>
+
+        <p>
+            To encrypt a property value via the admin console:
+        </p>
+        <ol>
+            <li>Navigate to <strong>Server &rarr; Server Manager &rarr; System Properties</strong></li>
+            <li>Find the property you want to encrypt</li>
+            <li>Click <strong>Edit Property</strong></li>
+            <li>Check the <strong>Encrypt property value</strong> checkbox</li>
+            <li>Click <strong>Save Property</strong></li>
+        </ol>
+
+        <p>
+            The property value will be encrypted the next time it is saved.
+        </p>
+
+    </section>
+
+    <section id="which-properties">
+
+        <h2>Which Properties to Encrypt</h2>
+
+        <h3>Good Candidates for Encryption</h3>
+
+        <p>
+            The following property types should be encrypted:
+        </p>
+        <ul>
+            <li>Database passwords</li>
+            <li>LDAP/Active Directory bind passwords</li>
+            <li>Email/SMTP server passwords</li>
+            <li>API keys and tokens</li>
+            <li>Integration service passwords</li>
+            <li>OAuth client secrets</li>
+        </ul>
+
+        <h3>Properties That Should NOT Be Encrypted</h3>
+
+        <p>
+            Not all properties benefit from encryption. Non-sensitive values should remain unencrypted
+            for easier troubleshooting and debugging:
+        </p>
+        <ul>
+            <li>Server names and hostnames</li>
+            <li>Port numbers</li>
+            <li>Feature flags (boolean settings)</li>
+            <li>Timeout values</li>
+            <li>Cache size settings</li>
+            <li>Log levels</li>
+        </ul>
+
+        <p>
+            <strong>Best practice:</strong> Only encrypt values that represent credentials or secrets.
+            Over-encryption makes troubleshooting more difficult without providing additional security benefits.
+        </p>
+
+    </section>
+
+    <section id="automatic-upgrade">
+
+        <h2>Automatic Security Upgrades (XML Properties Only)</h2>
+
+        <p>
+            <strong>Note:</strong> This section applies only to properties stored in <code>openfire.xml</code>.
+            Database properties (stored in the <code>ofProperty</code> table) have used random IVs for several
+            major versions and do not require upgrading.
+        </p>
+
+        <h3>Legacy XML Encryption Format</h3>
+
+        <p>
+            Older versions of Openfire (pre 5.1) used a weaker encryption method for XML properties that could
+            be vulnerable to pattern analysis attacks. Properties encrypted with the legacy method lack the
+            <code>iv</code> attribute.
+        </p>
+
+        <p>
+            Example of a legacy encrypted property:
+        </p>
+        <pre>&lt;password encrypted="true"&gt;EncryptedValue&lt;/password&gt;</pre>
+
+        <h3>Automatic Upgrade Process</h3>
+
+        <p>
+            Openfire automatically upgrades legacy encrypted properties to use stronger encryption when they
+            are accessed. This happens transparently during normal operation:
+        </p>
+        <ol>
+            <li>Openfire reads a property with legacy encryption</li>
+            <li>The value is decrypted using the legacy method</li>
+            <li>The value is immediately re-encrypted using the modern method with a random IV</li>
+            <li>The configuration is updated with the new encrypted value</li>
+        </ol>
+
+        <p>
+            <strong>No administrator action is required.</strong> The upgrade happens automatically and
+            does not interrupt service.
+        </p>
+
+        <h3>Monitoring Upgrades</h3>
+
+        <p>
+            Openfire logs when properties are auto-upgraded. Look for log entries like:
+        </p>
+        <pre>Auto-upgrading legacy encrypted property 'database.defaultProvider.password' to use random IV</pre>
+
+        <p>
+            Once all properties have been upgraded, these log messages will no longer appear.
+        </p>
+
+    </section>
+
+    <section id="limitations">
+
+        <h2>Security Limitations</h2>
+
+        <h3>What Property Encryption Protects</h3>
+
+        <p>
+            Property encryption protects credentials <strong>at rest</strong> in configuration files
+            and database backups. It prevents:
+        </p>
+        <ul>
+            <li>Casual viewing of passwords in configuration files</li>
+            <li>Accidental exposure when configuration files are shared or committed to version control</li>
+            <li>Password leakage in database backups</li>
+        </ul>
+
+        <h3>What Property Encryption Does NOT Protect Against</h3>
+
+        <p>
+            Property encryption is <strong>not</strong> a complete security solution. It does NOT protect against:
+        </p>
+        <ul>
+            <li><strong>Users with access to the Java process memory</strong> &ndash; Passwords are decrypted
+                in memory during normal operation and can be extracted by users who can attach debuggers
+                or dump process memory</li>
+            <li><strong>Users with root/administrator access to the server</strong> &ndash; They can extract
+                the encryption keys from <code>security.xml</code> and decrypt all properties</li>
+            <li><strong>Network eavesdropping</strong> &ndash; Use TLS to protect credentials in transit
+                (see <a href="ssl-guide.html">TLS Guide</a>)</li>
+            <li><strong>Compromised admin accounts</strong> &ndash; Whilst administrators cannot view
+                encrypted property values, they can change them to attacker-controlled values, potentially
+                causing denial of service</li>
+            <li><strong>Malicious code running on the server</strong> &ndash; Any code running with
+                Openfire's permissions can decrypt properties</li>
+        </ul>
+
+        <p>
+            <strong>Defense in depth:</strong> Property encryption is one layer in a comprehensive
+            security strategy. Combine it with proper access controls, network security, regular
+            security updates, and monitoring for best protection.
+        </p>
+
+    </section>
+
+    <section id="backup-restore">
+
+        <h2>Backup and Restore Considerations</h2>
+
+        <h3>Understanding Encryption Keys</h3>
+
+        <p>
+            Encrypted properties can only be decrypted using the correct encryption keys from
+            <code>conf/security.xml</code>. By default, each Openfire server generates its own
+            unique encryption keys on first startup, but keys can be shared between servers if
+            needed (for example, in clustered deployments where maintaining consistent keys simplifies
+            operations, or when migrating between servers).
+        </p>
+
+        <h3>Backup Procedures</h3>
+
+        <p>
+            When backing up Openfire, <strong>always include</strong>:
+        </p>
+        <ul>
+            <li><code>conf/openfire.xml</code> &ndash; Configuration including encrypted properties</li>
+            <li><code>conf/security.xml</code> &ndash; Encryption keys</li>
+            <li>Database backup (if using external database)</li>
+            <li><code>embedded-db/</code> directory (if using embedded database)</li>
+        </ul>
+
+        <h3>Restore Scenarios</h3>
+
+        <h4>Restoring to the same server</h4>
+        <p>
+            Works normally. The existing encryption keys will decrypt all properties.
+        </p>
+
+        <h4>Restoring to a different server (same installation)</h4>
+        <p>
+            If you previously copied <code>security.xml</code> to maintain consistent keys,
+            restore will work normally.
+        </p>
+
+        <h4>Restoring to a different server (different installation)</h4>
+        <p>
+            You must restore <code>conf/security.xml</code> along with <code>conf/openfire.xml</code>
+            to maintain the correct encryption keys. Without matching keys:
+        </p>
+        <ul>
+            <li>Encrypted properties cannot be decrypted</li>
+            <li>Openfire may fail to start (if database password cannot be decrypted)</li>
+            <li>You will need to reconfigure all encrypted properties manually</li>
+        </ul>
+
+        <h3>Disaster Recovery Best Practice</h3>
+
+        <p>
+            Always test your backup and restore procedures before a disaster occurs. Verify that
+            you can successfully restore Openfire and that all encrypted properties decrypt correctly.
+        </p>
+
+    </section>
+
+    <section id="configuration">
+
+        <h2>Configuration Options</h2>
+
+        <h3>Disabling Automatic Upgrades (XML Properties)</h3>
+
+        <p>
+            The auto-upgrade feature only affects XML properties in <code>openfire.xml</code>.
+            In rare cases, you may want to disable it (for example, to maintain exact
+            configuration file compatibility during troubleshooting or for controlled migration testing).
+        </p>
+
+        <p>
+            To disable auto-upgrade, add a Java system property to the Openfire startup configuration:
+        </p>
+
+        <ol>
+            <li>Edit the Openfire startup script (for example):
+                <ul>
+                    <li><strong>Linux/Unix:</strong> <code>bin/openfire.sh</code></li>
+                </ul>
+            </li>
+            <li>Add the following Java system property:
+                <pre>-Dopenfire.xmlproperties.encryption.autoupgrade=false</pre>
+            </li>
+            <li>Restart Openfire</li>
+        </ol>
+
+        <p>
+            <span style="color: red;"><strong>Warning:</strong></span>
+            Disabling automatic upgrades is not recommended for production systems. Legacy encryption
+            is less secure and should only be used for backward compatibility testing or during
+            controlled migration periods.
+        </p>
+
+        <h3>Re-enabling Automatic Upgrades</h3>
+
+        <p>
+            To re-enable automatic upgrades:
+        </p>
+        <ol>
+            <li>Remove the <code>-Dopenfire.xmlproperties.encryption.autoupgrade=false</code> property from the startup script</li>
+            <li>Or change it to <code>-Dopenfire.xmlproperties.encryption.autoupgrade=true</code></li>
+            <li>Restart Openfire</li>
+        </ol>
+
+        <p>
+            Automatic upgrades are enabled by default and do not require explicit configuration.
+        </p>
+
+    </section>
+
+    <section id="troubleshooting">
+
+        <h2>Troubleshooting</h2>
+
+        <h3>Property Won't Decrypt After Restore</h3>
+
+        <p>
+            <strong>Symptom:</strong> After restoring from backup, Openfire cannot decrypt properties.
+            You may see errors like "Failed to decrypt property" or Openfire fails to start.
+        </p>
+
+        <p>
+            <strong>Solution:</strong> Restore <code>conf/security.xml</code> from the same backup
+            to restore the encryption keys that were used to encrypt the properties.
+        </p>
+
+        <h3>Auto-Upgrade Not Working</h3>
+
+        <p>
+            <strong>Symptom:</strong> Legacy encrypted properties remain in the old format and are
+            not being upgraded.
+        </p>
+
+        <p>
+            <strong>Solution:</strong>
+        </p>
+        <ol>
+            <li>Check that auto-upgrade is not disabled in the startup script
+                (<code>openfire.xmlproperties.encryption.autoupgrade</code> system property)</li>
+            <li>Check logs for warnings about disabled auto-upgrade</li>
+            <li>Verify the property is actually being accessed (auto-upgrade happens on first access)</li>
+        </ol>
+
+        <h3>Encryption Keys Lost</h3>
+
+        <p>
+            <strong>Symptom:</strong> <code>security.xml</code> was deleted or corrupted and encrypted
+            properties cannot be decrypted.
+        </p>
+
+        <p>
+            <strong>Solution:</strong> Unfortunately, without the encryption keys, encrypted properties
+            cannot be recovered. You will need to:
+        </p>
+        <ol>
+            <li>Restore <code>security.xml</code> from backup, or</li>
+            <li>Manually reconfigure all encrypted properties (database passwords, LDAP passwords, etc.)</li>
+        </ol>
+
+        <p>
+            This is why it's critical to include <code>security.xml</code> in your backup procedures.
+        </p>
+
+    </section>
+
+    <section id="further">
+
+        <h2>Further Reading</h2>
+    <p>
+        For additional security topics, see:
+    </p>
+    <ul>
+        <li><a href="ssl-guide.html">TLS Guide</a> &ndash; Certificate management and secure connections</li>
+        <li><a href="ldap-guide.html">LDAP Integration Guide</a> &ndash; Securing LDAP authentication</li>
+        <li><a href="one-time-access-token-guide.html">Recovery of an Admin Password</a> &ndash; Regaining admin access</li>
+    </ul>
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
+
+</body>
+</html>

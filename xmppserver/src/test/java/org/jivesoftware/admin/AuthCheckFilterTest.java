@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.jivesoftware.admin;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.auth.AuthToken;
+import org.jivesoftware.util.IpUtils;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -213,7 +214,7 @@ public class AuthCheckFilterTest {
         list.add(input);
 
         // Execute system under test.
-        final boolean result = AuthCheckFilter.isOnList(list, input);
+        final boolean result = IpUtils.isAddressInAnyOf(input, list);
 
         // Verify result.
         assertTrue(result);
@@ -227,7 +228,7 @@ public class AuthCheckFilterTest {
         list.add("192.0.2.2");
 
         // Execute system under test.
-        final boolean result = AuthCheckFilter.isOnList(list, input);
+        final boolean result = IpUtils.isAddressInAnyOf(input, list);
 
         // Verify result.
         assertFalse(result);
@@ -240,7 +241,7 @@ public class AuthCheckFilterTest {
         final Set<String> list = new HashSet<>();
 
         // Execute system under test.
-        final boolean result = AuthCheckFilter.isOnList(list, input);
+        final boolean result = IpUtils.isAddressInAnyOf(input, list);
 
         // Verify result.
         assertFalse(result);
@@ -254,7 +255,7 @@ public class AuthCheckFilterTest {
         list.add("203.0.113.25-203.0.113.251");
 
         // Execute system under test.
-        final boolean result = AuthCheckFilter.isOnList(list, input);
+        final boolean result = IpUtils.isAddressInAnyOf(input, list);
 
         // Verify result.
         assertTrue(result);
@@ -268,7 +269,7 @@ public class AuthCheckFilterTest {
         list.add("203.0.113.0/24");
 
         // Execute system under test.
-        final boolean result = AuthCheckFilter.isOnList(list, input);
+        final boolean result = IpUtils.isAddressInAnyOf(input, list);
 
         // Verify result.
         assertTrue(result);
@@ -534,7 +535,7 @@ public class AuthCheckFilterTest {
         final String input = "[0:0:0:0:0:0:0:1]";
 
         // Execute system under test.
-        final String result = AuthCheckFilter.removeBracketsFromIpv6Address(input);
+        final String result = IpUtils.removeBracketsFromIpv6Address(input);
 
         // Verify result.
         assertEquals("0:0:0:0:0:0:0:1", result);
@@ -546,7 +547,7 @@ public class AuthCheckFilterTest {
         final String input = "0:0:0:0:0:0:0:1";
 
         // Execute system under test.
-        final String result = AuthCheckFilter.removeBracketsFromIpv6Address(input);
+        final String result = IpUtils.removeBracketsFromIpv6Address(input);
 
         // Verify result.
         assertEquals(input, result);
@@ -558,7 +559,7 @@ public class AuthCheckFilterTest {
         final String input = "[192.168.0.1]";
 
         // Execute system under test.
-        final String result = AuthCheckFilter.removeBracketsFromIpv6Address(input);
+        final String result = IpUtils.removeBracketsFromIpv6Address(input);
 
         // Verify result.
         assertEquals(input, result); // Should only strip brackets from IPv6, not IPv4.
@@ -570,7 +571,7 @@ public class AuthCheckFilterTest {
         final String input = "[Foo Bar]";
 
         // Execute system under test.
-        final String result = AuthCheckFilter.removeBracketsFromIpv6Address(input);
+        final String result = IpUtils.removeBracketsFromIpv6Address(input);
 
         // Verify result.
         assertEquals(input, result); // Should only strip brackets from IPv6, nothing else.
@@ -582,7 +583,7 @@ public class AuthCheckFilterTest {
         final String input = "Foo Bar";
 
         // Execute system under test.
-        final String result = AuthCheckFilter.removeBracketsFromIpv6Address(input);
+        final String result = IpUtils.removeBracketsFromIpv6Address(input);
 
         // Verify result.
         assertEquals(input, result); // Should only strip brackets from IPv6, nothing else.

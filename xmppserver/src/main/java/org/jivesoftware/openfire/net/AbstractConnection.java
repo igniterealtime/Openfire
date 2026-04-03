@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 /**
  * A partial implementation of the {@link org.jivesoftware.openfire.Connection} interface, implementing functionality
@@ -66,7 +67,9 @@ public abstract class AbstractConnection implements Connection
      * An optional handback object can be associated with the registration if the same listener is registered to listen
      * for multiple connection closures.
      */
-    final protected Map<ConnectionCloseListener, Object> closeListeners = new HashMap<>();
+    final protected LinkedHashMap<ConnectionCloseListener, Object> closeListeners = new LinkedHashMap<>();
+
+    private final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
 
     /**
      * The session that owns this connection.
@@ -145,25 +148,100 @@ public abstract class AbstractConnection implements Connection
     }
 
     /**
-     * Notifies all close listeners that the connection has been closed. Used by subclasses to properly finish closing
-     * the connection.
+     * Notifies all registered close listeners that this connection has been closed.
      *
-     * @return A Future that represents the state of the close listeners invocations.
+     * Listeners are executed sequentially in descending priority order. Built-in listeners (such as those for client,
+     * server, or component sessions) use high-priority values to ensure critical cleanup logic (e.g. session removal
+     * from routing tables) occurs before any lower-priority or third-party listeners are invoked. For listeners sharing
+     * the same priority, the registration order is preserved.
+     *
+     * Each listener may return a {@link CompletableFuture} representing asynchronous work. The next listener is not
+     * invoked until the previous listener's future has completed. The future returned by this method completes only
+     * after all listeners have been invoked and all listener-provided futures have completed.
+     *
+     * Exceptions thrown by listeners, whether synchronously during invocation or asynchronously via their returned
+     * future, are aggregated and propagated through the returned future rather than being swallowed or thrown directly.
+     *
+     * Subclasses must call {@link #completeCloseFuture()} within the {@code whenComplete} handler of the future
+     * returned by this method, after all remaining teardown work for that connection type has finished. It must be
+     * called unconditionally — regardless of whether listeners completed normally or exceptionally.
+     *
+     * @return a future that completes when all close listeners and their asynchronous work have finished.
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3179">OF-3179: Ensure deterministic execution order for ConnectionCloseListeners</a>
      */
     protected CompletableFuture<?> notifyCloseListeners()
     {
         Log.debug("Notifying close listeners of connection {}", this);
-        final ArrayList<CompletableFuture<?>> futures = new ArrayList<>();
 
-        for (final Map.Entry<ConnectionCloseListener, Object> entry : closeListeners.entrySet() )
+        // Sort listeners by priority (highest first), then by insertion order for ties.
+        final List<Map.Entry<ConnectionCloseListener, Object>> sortedListeners = new ArrayList<>(closeListeners.entrySet());
+        sortedListeners.sort((e1, e2) -> {
+            int priorityCompare = Integer.compare(e2.getKey().getPriority(), e1.getKey().getPriority());
+            if (priorityCompare != 0) {
+                return priorityCompare;
+            }
+            // For listeners with the same priority, preserve insertion order.
+            return 0;
+        });
+
+        final List<Throwable> collectedFailures = new ArrayList<>();
+
+        // Execute listeners sequentially, in priority order.
+        CompletableFuture<?> result = CompletableFuture.completedFuture(null);
+        for (final Map.Entry<ConnectionCloseListener, Object> entry : sortedListeners)
         {
             final ConnectionCloseListener listener = entry.getKey();
-            if (listener != null) {
-                final Object handback = entry.getValue();
-                futures.add(listener.onConnectionClosing(handback));
+            if (listener == null) {
+                continue;
             }
+            final Object handback = entry.getValue();
+            result = result.thenCompose(v -> {
+                try {
+                    final CompletableFuture<?> listenerFuture = listener.onConnectionClosing(handback);
+                    return listenerFuture != null ? listenerFuture : CompletableFuture.completedFuture(null);
+                } catch (Exception e) {
+                    return CompletableFuture.failedFuture(e);
+                }
+            }).handle((v, ex) -> {
+                if (ex != null) {
+                    // Log and collect (but do NOT re-throw) so the next listener still runs. Logging on trace, as the aggregate will be logged more verbosely by the caller.
+                    Log.debug("Close listener {} threw an exception for connection {}", listener, this, ex);
+                    collectedFailures.add(ex);
+                }
+                return null; // always recover
+            });
         }
 
-        return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+        // After all listeners have run, surface any collected failures as a single exception.
+        return result.thenCompose(v -> {
+            if (collectedFailures.isEmpty()) {
+                return CompletableFuture.completedFuture(null);
+            }
+            final RuntimeException aggregate = new RuntimeException(
+                collectedFailures.size() + " close listener(s) failed for connection " + this
+            );
+            collectedFailures.forEach(aggregate::addSuppressed);
+            return CompletableFuture.failedFuture(aggregate);
+        });
+    }
+
+    @Override
+    public CompletionStage<Void> getCloseFuture() {
+        return closeFuture;
+    }
+
+    /**
+     * Signals that all close operations for this connection have finished, completing the stage returned by
+     * {@link #getCloseFuture()}.
+     *
+     * Must be called by subclasses at the very end of their close sequence, after the physical transport has been
+     * closed and all {@link ConnectionCloseListener} instances have been notified. Calling this method more than once
+     * is safe. Subsequent calls have no effect.
+     *
+     * Subclasses that fail to call this method will leave any callers awaiting {@link #getCloseFuture()} suspended
+     * indefinitely.
+     */
+    protected void completeCloseFuture() {
+        closeFuture.complete(null);
     }
 }

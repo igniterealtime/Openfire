@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2024-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Iterator;
-import java.util.List;
-import java.util.PriorityQueue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Supplier;
 
@@ -98,11 +95,24 @@ public class HappyEyeballsResolver
     @VisibleForTesting
     void solve(final Supplier<Set<IndexedResolvedServiceAddress>> supplier, final int index) {
         CompletableFuture.supplyAsync(supplier, executor)
-            .exceptionally(t -> { addException(t, index); return null; })
+            .exceptionally(t -> { addException(t, index); return Collections.emptySet(); })
             .thenAccept(results -> addResults(results, index));
     }
 
-    public synchronized boolean isDone() {
+    /**
+     * Returns {@code true} if this resolver has been fully exhausted: all DNS resolution tasks have completed and all
+     * resolved addresses have been consumed via {@link #getNext()}.
+     *
+     * Note that this method returning {@code false} does not necessarily mean that resolution is still in progress. It
+     * may also indicate that resolution has finished but unconsumed addresses remain in the queue. Callers should
+     * continue invoking {@link #getNext()} until this method returns {@code true}.
+     *
+     * Once this method returns {@code true}, any subsequent call to {@link #getNext()} will return {@code null}.
+     *
+     * @return {@code true} if all resolution tasks have completed and all resolved addresses have been consumed;
+     *         {@code false} otherwise.
+     */
+    public synchronized boolean isExhausted() {
         return executor.getCompletedTaskCount() == serviceRecords.size() && resolvedHosts.isEmpty();
     }
 

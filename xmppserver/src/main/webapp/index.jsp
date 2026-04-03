@@ -120,6 +120,9 @@
     pageContext.setAttribute( "serverUpdate", serverUpdate );
 
     pageContext.setAttribute( "hasPluginWarnings", XMPPServer.getInstance().getPluginManager().hasLoadWarnings());
+
+    // Check if Blowfish migration is needed
+    pageContext.setAttribute( "needsBlowfishMigration", JiveGlobals.isBlowfishMigrationNeeded() );
 %>
 
     <c:if test="${not empty serverUpdate}">
@@ -152,6 +155,15 @@
         <admin:infoBox type="warning">
             <fmt:message key="index.plugin.load-warning">
                 <fmt:param value="<a href=\"./plugin-admin.jsp\">" />
+                <fmt:param value="</a>"/>
+            </fmt:message>
+        </admin:infoBox>
+    </c:if>
+
+    <c:if test="${needsBlowfishMigration}">
+        <admin:infoBox type="warning">
+            <fmt:message key="index.blowfish-migration.warning">
+                <fmt:param value="<a href=\"./security-blowfish-migration.jsp\">" />
                 <fmt:param value="</a>"/>
             </fmt:message>
         </admin:infoBox>

@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -183,7 +183,7 @@
     <tbody>
         <c:if test="${empty affiliates}">
         <tr>
-            <td style="text-align: center" colspan="4">
+            <td style="text-align: center" colspan="5">
                 <fmt:message key="pubsub.node.affiliates.table.no_affiliates" />
             </td>
         </tr>
@@ -220,6 +220,7 @@
                     <c:param name="nodeID" value="${node.nodeID}" />
                     <c:param name="owner" value="${owner}" />
                     <c:param name="affiliateJID" value="${affiliate.JID.toBareJID()}" />
+                    <c:param name="affiliation" value="${affiliate.affiliation.name()}" />
                 </c:url>
                 <a href="${url}" title="<fmt:message key="global.click_delete" />">
                     <img src="images/delete-16x16.gif" alt="">

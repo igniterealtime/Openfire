@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,18 @@
  */
 package org.jivesoftware.openfire.spi;
 
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.string.StringEncoder;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
 import io.netty.handler.traffic.ChannelTrafficShapingHandler;
+import io.netty.util.concurrent.EventExecutorGroup;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.nio.*;
 import org.jivesoftware.util.SystemProperty;
@@ -59,10 +63,20 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
     private final ConnectionConfiguration configuration;
     private final Set<NettyChannelHandlerFactory> channelHandlerFactories; // This is a collection that is managed by the invoking entity.
 
-    public NettyServerInitializer(ConnectionConfiguration configuration, ChannelGroup allChannels, Set<NettyChannelHandlerFactory> channelHandlerFactories) {
+    /**
+     * Executor group for pipeline handlers that may perform blocking or long-running operations.
+     *
+     * This executor group is shared across all channels created by this acceptor and is used to offload work such as
+     * authentication, routing, persistence, or calls into legacy/blocking APIs. Using this group ensures that Netty
+     * EventLoop threads remain responsive and dedicated to I/O.
+     */
+    private final EventExecutorGroup blockingHandlerExecutor;
+
+    public NettyServerInitializer(ConnectionConfiguration configuration, ChannelGroup allChannels, Set<NettyChannelHandlerFactory> channelHandlerFactories, EventExecutorGroup blockingHandlerExecutor) {
         this.allChannels = allChannels;
         this.configuration = configuration;
         this.channelHandlerFactories = channelHandlerFactories;
+        this.blockingHandlerExecutor = blockingHandlerExecutor;
     }
 
     @Override
@@ -73,6 +87,10 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
         NettyConnectionHandler businessLogicHandler = NettyConnectionHandlerFactory.createConnectionHandler(configuration);
         Duration maxIdleTimeBeforeClosing = businessLogicHandler.getMaxIdleTime().isNegative() ? Duration.ZERO : businessLogicHandler.getMaxIdleTime();
 
+        // Disable auto-read to prevent incoming data before pipeline is ready (which leads to race-conditions, sometimes preventing data from a new socket from being processed).
+        ch.config().setAutoRead(false);
+
+        // Add pipeline handlers.
         ch.pipeline()
             .addLast(TRAFFIC_HANDLER_NAME, new ChannelTrafficShapingHandler(0))
             .addLast("idleStateHandler", new IdleStateHandler(maxIdleTimeBeforeClosing.dividedBy(2).toMillis(), 0, 0, TimeUnit.MILLISECONDS))
@@ -80,20 +98,55 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
             .addLast(new NettyXMPPDecoder())
             .addLast(new StringEncoder(StandardCharsets.UTF_8))
             .addLast("stalledSessionHandler", new WriteTimeoutHandler(Math.toIntExact(WRITE_TIMEOUT_SECONDS.getValue().getSeconds())))
-            .addLast(businessLogicHandler);
+            .addLast("tlsAndAutoReadHandler", new ChannelInboundHandlerAdapter() {
+                @Override
+                public void channelActive(ChannelHandlerContext ctx) {
+                    if (isDirectTLSConfigured()) {
+                        // DirectTLS path.
+                        if (ctx.pipeline().get(SslHandler.class) != null) {
+                            // TLS is already up. This is the post-handshake re-fire. Let it through.
+                            ctx.fireChannelActive();
+                            return;
+                        }
+                        // First call: TLS not yet established. Defer and suppress propagation.
+                        businessLogicHandler.getStanzaHandlerFuture().thenRun(() ->
+                            ctx.channel().eventLoop().execute(() -> {
+                                try {
+                                    final NettyConnection connection = ctx.channel().attr(CONNECTION).get();
+                                    if (!connection.isEncrypted()) {
+                                        connection.startTLS(false, true);
+                                        ctx.channel().config().setAutoRead(true);
+                                    }
+                                    // Do not propagate channelActive here. userEventTriggered will re-fire channelActive
+                                    // after the TLS handshake completes, and we'll let that one through above.
+                                } catch (Exception e) {
+                                    Log.error("Failed to start DirectTLS on channel {}: {}", ctx.channel(), e.getMessage(), e);
+                                    ctx.channel().close();
+                                }
+                            })
+                        );
+                        return; // SslHandler not yet present; TLS initiation scheduled above. Suppress propagation until post-handshake re-fire.
+                    }
+
+                    // Non-DirectTLS path.
+                    businessLogicHandler.getStanzaHandlerFuture().thenRun(() ->
+                        ctx.channel().eventLoop().execute(() ->
+                            ctx.channel().config().setAutoRead(true)
+                        )
+                    );
+                    ctx.fireChannelActive();
+                }
+            })
+            .addLast(blockingHandlerExecutor, "businessLogicHandler", businessLogicHandler);
 
         // Add ChannelHandler providers implemented by plugins, if any.
         channelHandlerFactories.forEach(factory -> {
             try {
-                factory.addNewHandlerTo(ch.pipeline());
+                factory.addNewHandlerTo(ch.pipeline(), blockingHandlerExecutor);
             } catch (Throwable t) {
                 Log.warn("Unable to add ChannelHandler from '{}' to pipeline of new channel: {}", factory, ch, t);
             }
         });
-
-        if (isDirectTLSConfigured()) {
-            ch.attr(CONNECTION).get().startTLS(false, true);
-        }
 
         allChannels.add(ch);
     }

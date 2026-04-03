@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import java.time.Duration;
  *
  * @author Alex Gidman
  */
-public class NettyMultiplexerConnectionHandler extends NettyConnectionHandler {
+public class NettyMultiplexerConnectionHandler extends NettyConnectionHandler<MultiplexerStanzaHandler> {
 
     /**
      * Enable / disable backup delivery of stanzas to other connections in the same connection manager when a stanza
@@ -57,7 +57,7 @@ public class NettyMultiplexerConnectionHandler extends NettyConnectionHandler {
     }
 
     @Override
-    StanzaHandler createStanzaHandler(NettyConnection connection) {
+    MultiplexerStanzaHandler createStanzaHandler(NettyConnection connection) {
         return new MultiplexerStanzaHandler(XMPPServer.getInstance().getPacketRouter(), connection);
     }
 

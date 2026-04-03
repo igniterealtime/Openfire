@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import org.jivesoftware.openfire.commands.AdHocCommand;
 import org.jivesoftware.openfire.commands.SessionData;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
-import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.util.LocaleUtils;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
@@ -123,7 +122,7 @@ public class GetListGroups extends AdHocCommand {
 
         // Add groups to the result
         for (Group group : GroupManager.getInstance().getGroups(nStart, maxItems)) {
-            boolean isSharedGroup = RosterManager.isSharedGroup(group);
+            boolean isSharedGroup = group.isShared();
             Map<String, String> properties = group.getProperties();
             Map<String,Object> fields = new HashMap<>();
             fields.put("name", group.getName());

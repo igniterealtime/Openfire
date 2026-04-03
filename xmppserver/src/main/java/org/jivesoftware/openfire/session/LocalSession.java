@@ -422,42 +422,18 @@ public abstract class LocalSession implements Session {
     }
 
     /**
-     * Returns true if the specified packet can be delivered to the entity. Subclasses will use different
-     * criterias to determine of processing is allowed or not. For instance, client sessions will use
-     * privacy lists while outgoing server sessions will always allow this action.
-     *
-     * @param packet the packet to analyze if it must be blocked.
-     * @return false if the specified packet must be blocked.
-     */
-    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.1.0.
-    boolean canProcess(Packet packet) {
-        return true;
-    }
-
-    /**
      * Returns true if the specified stanza can be delivered to the entity.
      *
      * Subclasses will use different criteria to determine of processing is allowed or not. For instance, client
      * sessions will use privacy lists while component sessions will always allow this action.
      *
-     * When a stanza is cannot be delivered, an implementation must take responsibility for error handling. If, for
+     * When a stanza cannot be delivered, an implementation must take responsibility for error handling. If, for
      * example, an error stanza is to be sent back to the sender, this is to be performed by the implementation.
      *
      * @param stanza the stanza to analyze if it must be blocked.
      * @return false if the specified stanza must be blocked.
      */
-    boolean canDeliver(@Nonnull final Packet stanza) {
-        // This implementation exists only for backwards compatibility purposes. When #canProcess() is removed, this
-        // implementation will also be removed (every subclass is then expected to provide its own implementation of
-        // the #canDeliver interface method).
-        final boolean canProcess = canProcess(stanza);
-
-        if (!canProcess) {
-            LocalClientSession.returnPrivacyListErrorToSender(stanza);
-        }
-
-        return canProcess;
-    }
+    abstract boolean canDeliver(@Nonnull final Packet stanza);
 
     abstract void deliver(Packet packet) throws UnauthorizedException;
 

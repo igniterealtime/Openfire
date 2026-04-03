@@ -100,7 +100,10 @@
     // Get parameters
     String log = ParamUtils.getParameter(request, "log");
     String numLinesParam = ParamUtils.getParameter(request,"lines");
-    int numLines = ParamUtils.getIntParameter(request,"lines",50);
+    int numLines = -1;
+    if ( !("All".equals(numLinesParam)) ) {
+      numLines = ParamUtils.getIntParameter(request,"lines",50);
+    }
     String refreshParam = ParamUtils.getParameter(request,"refresh");
     String mode = ParamUtils.getParameter(request,"mode");
     boolean clearLog = ParamUtils.getBooleanParameter(request,"clearLog");

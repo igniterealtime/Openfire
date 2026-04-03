@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,16 @@ package org.jivesoftware.openfire.nio;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.MultiThreadIoEventLoopGroup;
+import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.string.StringEncoder;
+import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.timeout.IdleStateHandler;
+import io.netty.util.concurrent.DefaultEventExecutorGroup;
+import io.netty.util.concurrent.EventExecutorGroup;
 import org.dom4j.*;
-import org.jivesoftware.openfire.net.RespondingServerStanzaHandler;
 import org.jivesoftware.openfire.net.SocketUtil;
 import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.session.ConnectionSettings;
@@ -34,11 +37,13 @@ import org.jivesoftware.openfire.spi.ConnectionAcceptor;
 import org.jivesoftware.openfire.spi.ConnectionListener;
 import org.jivesoftware.openfire.spi.NettyConnectionAcceptor;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.NamedThreadFactory;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.concurrent.GuardedBy;
 import javax.net.ssl.SSLException;
 import java.io.IOException;
 import java.net.Socket;
@@ -49,11 +54,11 @@ import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jivesoftware.openfire.nio.NettyConnectionHandler.CONNECTION;
-
 
 /**
  * Initialises an outgoing netty channel for outbound S2S
@@ -81,17 +86,115 @@ public class NettySessionInitializer {
         .build();
 
     private static final Logger Log = LoggerFactory.getLogger(NettySessionInitializer.class);
+
+    /**
+     * EventLoopGroup responsible for non-blocking I/O on established connections, shared by all
+     * {@link NettySessionInitializer} instances.
+     *
+     * This group (often referred to as the "worker" group) handles read/write operations and propagates I/O events
+     * through the Netty pipeline for each accepted connection. Handlers running on this group must remain strictly
+     * non-blocking to avoid starving the event loop.
+     *
+     * Lifecycle is managed explicitly via {@link #initializeSharedResources()} and {@link #destroySharedResources()}.
+     */
+    @GuardedBy("sharedResourceLock")
+    private static EventLoopGroup ioWorkerGroup;
+
+    /**
+     * Executor group for pipeline handlers that may perform blocking or long-running operations, shared by all
+     * {@link NettySessionInitializer} instances.
+     *
+     * This executor group is used to offload work such as authentication, routing, persistence, or calls into
+     * legacy/blocking APIs. Using this group ensures that Netty EventLoop threads remain responsive and dedicated to
+     * I/O.
+     *
+     * Lifecycle is managed explicitly via {@link #initializeSharedResources()} and {@link #destroySharedResources()}.
+     */
+    @GuardedBy("sharedResourceLock")
+    private static EventExecutorGroup blockingHandlerExecutor;
+
+    /**
+     * Guards the lifecycle management of shared resources.
+     */
+    private static final Object sharedResourceLock = new Object();
+
+    /**
+     * Initializes the shared Netty thread pools for outbound S2S connections. Should be called once during startup of
+     * the corresponding S2S networking code.
+     */
+    public static void initializeSharedResources()
+    {
+        synchronized (sharedResourceLock)
+        {
+            if (ioWorkerGroup != null && !ioWorkerGroup.isShuttingDown())
+            {
+                Log.warn("initializeSharedResources() called but shared resources are already running. Ignoring.");
+                return;
+            }
+            Log.debug("Initialising shared Netty resources for outbound S2S.");
+            final ThreadFactory ioFactory = new NamedThreadFactory("socket_s2s_outbound-worker-", null, false, Thread.NORM_PRIORITY);
+            ioWorkerGroup = new MultiThreadIoEventLoopGroup(ioFactory, NioIoHandler.newFactory());
+
+            final int handlerThreads = Math.max(1, Runtime.getRuntime().availableProcessors()) * 2;
+            final ThreadFactory handlerFactory = new NamedThreadFactory("socket_s2s_outbound-handler-", null, false, Thread.NORM_PRIORITY);
+            blockingHandlerExecutor = new DefaultEventExecutorGroup(handlerThreads, handlerFactory);
+            Log.debug("Shared Netty resources for outbound S2S initialised ({} handler threads).", handlerThreads);
+        }
+    }
+
+    /**
+     * Shuts down the shared Netty thread pools for outbound S2S connections. This method blocks until all resources
+     * are shut down. Should be called once during shutdown of the corresponding S2S networking code.
+     */
+    public static void destroySharedResources()
+    {
+        synchronized (sharedResourceLock) {
+            Log.debug("Shutting down shared Netty resources for outbound S2S.");
+            if (ioWorkerGroup != null) {
+                try {
+                    ioWorkerGroup.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS)
+                        .sync(); // wait until shutdown completes
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    Log.warn("Interrupted while shutting down ioWorkerGroup", e);
+                } finally {
+                    ioWorkerGroup = null;
+                }
+            }
+
+            if (blockingHandlerExecutor != null) {
+                try {
+                    blockingHandlerExecutor.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS)
+                        .sync(); // wait until shutdown completes
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    Log.warn("Interrupted while shutting down blockingHandlerExecutor", e);
+                } finally {
+                    blockingHandlerExecutor = null;
+                }
+            }
+
+            Log.debug("Shared Netty resources for outbound S2S shut down.");
+        }
+    }
+
     private final DomainPair domainPair;
     private final int port;
     private boolean directTLS = false;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
-    private final EventLoopGroup workerGroup;
     private Channel channel;
 
     public NettySessionInitializer(DomainPair domainPair, int port) {
         this.domainPair = domainPair;
         this.port = port;
-        this.workerGroup = new NioEventLoopGroup();
+
+        synchronized (sharedResourceLock) {
+            if (ioWorkerGroup == null || ioWorkerGroup.isShuttingDown()) {
+                // Defensive fallback: shouldn't happen in normal operation if lifecycle is managed correctly.
+                Log.warn("Shared Netty resources are not available. This suggests a lifecycle management problem. Please report this as a bug. Resources are started on-demand as a defensive fallback.");
+                initializeSharedResources();
+            }
+        }
     }
 
     public Future<LocalSession> init(ConnectionListener listener) {
@@ -117,35 +220,71 @@ public class NettySessionInitializer {
 
         try {
             Bootstrap b = new Bootstrap();
-            b.group(workerGroup);
+            b.group(ioWorkerGroup);
             b.channel(NioSocketChannel.class);
             b.option(ChannelOption.SO_KEEPALIVE, true);
             b.handler(new ChannelInitializer<SocketChannel>() {
                 @Override
                 public void initChannel(SocketChannel ch) throws Exception {
-                    NettyConnectionHandler businessLogicHandler = new NettyOutboundConnectionHandler(listener.generateConnectionConfiguration(), domainPair, port);
+                    // Disable auto-read to prevent incoming data before pipeline is ready (which leads to race-conditions, sometimes preventing data from a new socket from being processed).
+                    ch.config().setAutoRead(false);
+
+                    NettyOutboundConnectionHandler businessLogicHandler = new NettyOutboundConnectionHandler(listener.generateConnectionConfiguration(), domainPair, port);
                     Duration maxIdleTimeBeforeClosing = businessLogicHandler.getMaxIdleTime().isNegative() ? Duration.ZERO : businessLogicHandler.getMaxIdleTime();
 
                     ch.pipeline().addLast("idleStateHandler", new IdleStateHandler(maxIdleTimeBeforeClosing.dividedBy(2).toMillis(), 0, 0, TimeUnit.MILLISECONDS));
                     ch.pipeline().addLast("keepAliveHandler", new NettyIdleStateKeepAliveHandler(false));
                     ch.pipeline().addLast(new NettyXMPPDecoder());
                     ch.pipeline().addLast(new StringEncoder(StandardCharsets.UTF_8));
-                    ch.pipeline().addLast(businessLogicHandler);
+                    ch.pipeline().addLast("tlsAndAutoReadHandler", new ChannelInboundHandlerAdapter() {
+                        @Override
+                        public void channelActive(ChannelHandlerContext ctx) {
+                            if (directTLS) {
+                                if (ctx.pipeline().get(SslHandler.class) != null) {
+                                    // TLS is already up. This is the post-handshake re-fire. Let it through.
+                                    ctx.fireChannelActive();
+                                    return;
+                                }
+                                // First call: TLS not yet established. Defer and suppress propagation.
+                                businessLogicHandler.getStanzaHandlerFuture().thenRun(() ->
+                                    ctx.channel().eventLoop().execute(() -> {
+                                        try {
+                                            final NettyConnection connection = ctx.channel().attr(CONNECTION).get();
+                                            if (!connection.isEncrypted()) {
+                                                connection.startTLS(true, true);
+                                                ctx.channel().config().setAutoRead(true);
+                                            }
+                                            // Do not propagate channelActive here. userEventTriggered will re-fire channelActive
+                                            // after the TLS handshake completes, and we'll let that one through above.
+                                        } catch (Exception e) {
+                                            Log.error("Failed to start DirectTLS on channel {}: {}", ctx.channel(), e.getMessage(), e);
+                                            ctx.channel().close();
+                                        }
+                                    })
+                                );
+                                return; // SslHandler not yet present; TLS initiation scheduled above. Suppress propagation until post-handshake re-fire.
+                            }
+
+                            // Non-DirectTLS path.
+                            businessLogicHandler.getStanzaHandlerFuture().thenRun(() ->
+                                ctx.channel().eventLoop().execute(() ->
+                                    ctx.channel().config().setAutoRead(true)
+                                )
+                            );
+                            ctx.fireChannelActive();
+                        }
+                    });
+                    ch.pipeline().addLast(blockingHandlerExecutor, "businessLogicHandler", businessLogicHandler);
 
                     final ConnectionAcceptor connectionAcceptor = listener.getConnectionAcceptor();
                     if (connectionAcceptor instanceof NettyConnectionAcceptor) {
                         ((NettyConnectionAcceptor) connectionAcceptor).getChannelHandlerFactories().forEach(factory -> {
                             try {
-                                factory.addNewHandlerTo(ch.pipeline());
+                                factory.addNewHandlerTo(ch.pipeline(), blockingHandlerExecutor);
                             } catch (Throwable t) {
                                 Log.warn("Unable to add ChannelHandler from '{}' to pipeline of new channel: {}", factory, ch, t);
                             }
                         });
-                    }
-
-                    // Should have a connection
-                    if (directTLS) {
-                        ch.attr(CONNECTION).get().startTLS(true, true);
                     }
                 }
 
@@ -172,7 +311,7 @@ public class NettySessionInitializer {
 
             this.channel = b.connect(socketAddress).sync().channel();
 
-            // Make sure we free up resources (worker group NioEventLoopGroup) when the channel is closed
+            // Make sure we free up resources (worker group MultiThreadIoEventLoopGroup) when the channel is closed
             this.channel.closeFuture().addListener(future -> stop());
 
             // When using directTLS a Netty SSLHandler is added to the pipeline from instantiation. This initiates the TLS handshake, and as such we do not need to send an opening stream element.
@@ -202,13 +341,34 @@ public class NettySessionInitializer {
             }
             channel.close();
         }
-        workerGroup.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
     }
 
+    /**
+     * Returns a {@link Future} that completes when the outbound server-to-server session for the given Netty
+     * {@link Channel} has either been authenticated or when all authentication mechanisms have been attempted.
+     *
+     * The returned future completes with the established {@link LocalSession} (or {@code null} if session establishment
+     * failed), or completes exceptionally if the required pipeline handler is missing or an error occurs.
+     *
+     * @param channel the Netty channel associated with the outbound connection
+     * @return a future that completes when session establishment finishes
+     */
     private Future<LocalSession> waitForSession(Channel channel) {
-        RespondingServerStanzaHandler stanzaHandler = (RespondingServerStanzaHandler) channel.attr(NettyConnectionHandler.HANDLER).get();
-        return CompletableFuture.anyOf(stanzaHandler.isSessionAuthenticated(), stanzaHandler.haveAttemptedAllAuthenticationMethods())
-            .thenApply(o -> stanzaHandler.getSession());
+        final NettyOutboundConnectionHandler handler = channel.pipeline().get(NettyOutboundConnectionHandler.class);
+
+        if (handler == null) {
+            return CompletableFuture.failedFuture(
+                new IllegalStateException("NettyOutboundConnectionHandler not found in pipeline")
+            );
+        }
+        return handler.getStanzaHandlerFuture()
+            .thenCompose(stanzaHandler -> {
+                // Complete when either authentication succeeds or all methods are exhausted
+                final CompletableFuture<Void> authenticated = stanzaHandler.isSessionAuthenticated();
+                final CompletableFuture<Void> exhausted = stanzaHandler.haveAttemptedAllAuthenticationMethods();
+                return authenticated.applyToEither(exhausted, ignored -> stanzaHandler.getSession());
+            }
+        );
     }
 
     private void sendOpeningStreamHeader(Channel channel) {
@@ -237,7 +397,7 @@ public class NettySessionInitializer {
             "domainPair=" + domainPair +
             ", port=" + port +
             ", directTLS=" + directTLS +
-            ", workerGroup=" + workerGroup +
+            ", workerGroup=" + ioWorkerGroup +
             ", channel=" + channel +
             '}';
     }

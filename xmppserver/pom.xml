@@ -23,7 +23,7 @@
                     <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
-                        <version>0.8.13</version>
+                        <version>0.8.14</version>
                         <configuration>
                             <excludes>
                                 <exclude>**/*_jsp.class</exclude>
@@ -48,7 +48,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <version>3.5.3</version>
+                        <version>3.5.4</version>
                         <configuration>
                             <systemPropertyVariables>
                                 <log4j.configurationFile>${project.build.directory}/test-classes/log4j2-test-mvn.xml</log4j.configurationFile>
@@ -180,7 +180,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.5.3</version>
+                <version>3.5.4</version>
                 <configuration>
                     <systemPropertyVariables>
                         <log4j.configurationFile>${project.build.directory}/test-classes/log4j2-test-mvn.xml</log4j.configurationFile>
@@ -198,14 +198,14 @@
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
-                <version>5.13.4</version>
+                <version>6.0.3</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>org.mockito</groupId>
                 <artifactId>mockito-bom</artifactId>
-                <version>5.4.0</version>
+                <version>5.23.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -351,6 +351,7 @@
         <dependency>
             <groupId>org.fusesource.jansi</groupId>
             <artifactId>jansi</artifactId>
+            <!-- Although there are newer versions of this library, those no longer contain the functionality that we're using it for. See https://github.com/fusesource/jansi/issues/210 -->
             <version>1.18</version>
         </dependency>
         <dependency>
@@ -359,9 +360,9 @@
             <version>1.6.2</version>
         </dependency>
         <dependency>
-            <groupId>jmdns</groupId>
+            <groupId>org.jmdns</groupId>
             <artifactId>jmdns</artifactId>
-            <version>1.0</version>
+            <version>3.6.3</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
@@ -387,12 +388,12 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <version>3.18.0</version>
+            <version>3.20.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-text</artifactId>
-            <version>1.10.0</version>
+            <version>1.15.0</version>
         </dependency>
         <dependency>
             <groupId>commons-codec</groupId>
@@ -431,7 +432,7 @@
         <dependency>
             <groupId>com.twelvemonkeys.imageio</groupId>
             <artifactId>imageio-bmp</artifactId>
-            <version>3.9.4</version>
+            <version>3.12.0</version>
         </dependency>
         <dependency>
             <groupId>org.json</groupId>
@@ -453,7 +454,7 @@
         <dependency>
             <groupId>org.hsqldb</groupId>
             <artifactId>hsqldb</artifactId>
-            <version>2.7.1</version>
+            <version>2.7.4</version>
         </dependency>
         <dependency>
             <groupId>com.mysql</groupId>
@@ -559,7 +560,7 @@
         <dependency>
             <groupId>org.awaitility</groupId>
             <artifactId>awaitility</artifactId>
-            <version>3.1.6</version>
+            <version>4.3.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>

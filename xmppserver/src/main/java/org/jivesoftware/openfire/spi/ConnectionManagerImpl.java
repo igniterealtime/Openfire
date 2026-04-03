@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.jivesoftware.openfire.container.PluginManagerListener;
 import org.jivesoftware.openfire.http.HttpBindManager;
 import org.jivesoftware.openfire.keystore.CertificateStore;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
+import org.jivesoftware.openfire.nio.NettySessionInitializer;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.util.CertificateEventListener;
 import org.jivesoftware.util.CertificateManager;
@@ -664,6 +665,24 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     // #####################################################################
     // Module management
     // #####################################################################
+
+    @Override
+    public void initialize(XMPPServer server)
+    {
+        super.initialize(server);
+
+        // Initialize the shared resources for outbound S2S connections.
+        NettySessionInitializer.initializeSharedResources();
+    }
+
+    @Override
+    public void destroy()
+    {
+        super.destroy();
+
+        // Shut down the shared resources for outbound S2S connections.
+        NettySessionInitializer.destroySharedResources();
+    }
 
     @Override
     public void start() {

@@ -1509,23 +1509,123 @@ public class Blowfish implements Encryptor {
         return decrypt(value);
     }
 
-    @Override
-    public void setKey(String key) {
-        
-        String password = key == null ? DEFAULT_KEY : key;
-        // hash down the password to a 160bit key
-        MessageDigest digest = null;
-        try {
-            digest = MessageDigest.getInstance("SHA1");
-            digest.update(password.getBytes());
+    /**
+     * Derives a key using legacy SHA1 hashing (for backward compatibility).
+     *
+     * @param password The password to hash
+     * @return The SHA1 hash of the password
+     * @throws Exception if SHA1 hashing fails
+     */
+    private static byte[] deriveKeySHA1(String password) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA1");
+        digest.update(password.getBytes());
+        byte[] key = digest.digest();
+        digest.reset();
+        return key;
+    }
+
+    /**
+     * Derives a cryptographically strong encryption key from a password using PBKDF2-HMAC-SHA512.
+     * This method uses 100,000 iterations as recommended by OWASP for password-based key derivation.
+     *
+     * @param password The password to derive the key from
+     * @param salt A random salt (must be at least 16 bytes, 32 bytes recommended)
+     * @return The derived key suitable for Blowfish encryption (256 bits / 32 bytes)
+     * @throws Exception if key derivation fails
+     */
+    static byte[] deriveKeyPBKDF2(String password, byte[] salt) throws Exception {
+        if (password == null || password.isEmpty()) {
+            throw new IllegalArgumentException("Password cannot be null or empty");
         }
-        catch (Exception e) {
-            Log.error(e.getMessage(), e);
+        if (salt == null || salt.length < 16) {
+            throw new IllegalArgumentException("Salt must be at least 16 bytes");
         }
 
-        // setup the encryptor (use a dummy IV)
-        m_bfish = new BlowfishCBC(digest.digest(), 0);
-        digest.reset();
+        // PBKDF2-HMAC-SHA512 with 100,000 iterations (OWASP recommended minimum)
+        final int iterations = 100_000;
+        final int keyLength = 256; // 256 bits for strong key derivation
+
+        javax.crypto.spec.PBEKeySpec spec = new javax.crypto.spec.PBEKeySpec(
+            password.toCharArray(),
+            salt,
+            iterations,
+            keyLength
+        );
+
+        javax.crypto.SecretKeyFactory factory = javax.crypto.SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
+        javax.crypto.SecretKey key = factory.generateSecret(spec);
+
+        // Clear the password from memory
+        spec.clearPassword();
+
+        return key.getEncoded();
+    }
+
+    /**
+     * Derives a PBKDF2 key using the salt stored in security.xml.
+     *
+     * @param password The password to derive the key from
+     * @return The derived key
+     * @throws Exception if key derivation fails or salt cannot be retrieved
+     */
+    private static byte[] deriveKeyPBKDF2WithStoredSalt(String password) throws Exception {
+        String saltBase64 = JiveGlobals.getBlowfishSalt();
+        byte[] salt = java.util.Base64.getDecoder().decode(saltBase64);
+        return deriveKeyPBKDF2(password, salt);
+    }
+
+    /**
+     * Sets the password to be used for encryption/decryption using the KDF configured in security.xml.
+     *
+     * @param key The password to use for encryption
+     */
+    @Override
+    public void setKey(String key) {
+        String kdf = JiveGlobals.getBlowfishKdf();
+        setKey(key, kdf);
+    }
+
+    /**
+     * Sets the password to be used for encryption/decryption with an explicit KDF.
+     *
+     * This overload is primarily used during migration from SHA1 to PBKDF2,
+     * where we need two Blowfish instances with different KDFs operating
+     * simultaneously (one to decrypt with SHA1, one to encrypt with PBKDF2).
+     *
+     * @param key The password to use for encryption
+     * @param kdf The key derivation function to use ("sha1" or "pbkdf2")
+     * @since 5.1.0
+     */
+    public void setKey(String key, String kdf) {
+        String password = key == null ? DEFAULT_KEY : key;
+        byte[] derivedKey = null;
+
+        try {
+            // Determine which key derivation function to use
+            boolean usePBKDF2 = JiveGlobals.BLOWFISH_KDF_PBKDF2.equalsIgnoreCase(kdf);
+
+            if (usePBKDF2) {
+                // Use PBKDF2-HMAC-SHA512 with salt for strong key derivation
+                derivedKey = deriveKeyPBKDF2WithStoredSalt(password);
+                Log.debug("Using PBKDF2-HMAC-SHA512 for Blowfish key derivation");
+            } else {
+                // Use legacy SHA1 for backward compatibility
+                derivedKey = deriveKeySHA1(password);
+                Log.debug("Using legacy SHA1 for Blowfish key derivation");
+            }
+        } catch (Exception e) {
+            Log.error("Error deriving Blowfish key, falling back to legacy SHA1", e);
+            // Fallback to legacy SHA1 on any error
+            try {
+                derivedKey = deriveKeySHA1(password);
+            } catch (Exception fallbackException) {
+                Log.error("Critical error: Unable to derive Blowfish key", fallbackException);
+                throw new RuntimeException("Unable to derive Blowfish key", fallbackException);
+            }
+        }
+
+        // Setup the encryptor (use a dummy IV)
+        m_bfish = new BlowfishCBC(derivedKey, 0);
     }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2019-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 package org.jivesoftware.openfire.user;
-
 
 import org.dom4j.Element;
 import org.jivesoftware.Fixtures;
@@ -135,17 +134,12 @@ public class UserManagerTest {
     	usernames = userManager.getUsernames();
     	assertThat(usernames.contains("tobedeleted"), is(false));
     }
-    
-    
-    
+
     @Test
     public void verifyUserCountIsTwo()  throws Exception{
     	final int result = userManager.getUserCount();
         assertThat(result, is(2));
     }
-    
-    
-
 
     @Test
     public void isRegisteredUserFalseWillReturnTrueForLocalUsers() {
@@ -292,5 +286,54 @@ public class UserManagerTest {
 
         assertThat(result, is(false));
         verify(iqRouter).route(any());
+    }
+
+    @Test
+    public void isRegisteredUserReturnsFalseForDomainOnlyJid() {
+        // A JID with no node part (e.g. a server/component address) should never be a registered user
+        final boolean result = userManager.isRegisteredUser(new JID(null, Fixtures.XMPP_DOMAIN, null), false);
+        assertThat(result, is(false));
+    }
+
+    @Test
+    public void isRegisteredUserReturnsFalseForRemoteDomainOnlyJid() {
+        final boolean result = userManager.isRegisteredUser(new JID(null, REMOTE_XMPP_DOMAIN, null), true);
+        assertThat(result, is(false));
+    }
+
+    @Test
+    public void getUserByJidReturnsUserForExistingLocalUser() throws Exception {
+        final User result = userManager.getUser(new JID(USER_ID, Fixtures.XMPP_DOMAIN, null));
+        assertThat(result.getUsername(), is(USER_ID));
+    }
+
+    @Test
+    public void getUserByJidThrowsForRemoteUser() {
+        assertThrows(UserNotFoundException.class, () -> userManager.getUser(new JID(USER_ID, REMOTE_XMPP_DOMAIN, null)));
+    }
+
+    @Test
+    public void getUserByJidThrowsForUnknownLocalUser() {
+        assertThrows(UserNotFoundException.class, () -> userManager.getUser(new JID("unknown-user", Fixtures.XMPP_DOMAIN, null)));
+    }
+
+    @Test
+    public void createUserWithNullUsernameThrowsIllegalArgument() {
+        assertThrows(IllegalArgumentException.class, () -> userManager.createUser(null, "password", "Name", "email@example.com"));
+    }
+
+    @Test
+    public void createUserWithEmptyUsernameThrowsIllegalArgument() {
+        assertThrows(IllegalArgumentException.class, () -> userManager.createUser("", "password", "Name", "email@example.com"));
+    }
+
+    @Test
+    public void createUserWithNullPasswordThrowsIllegalArgument() {
+        assertThrows(IllegalArgumentException.class, () -> userManager.createUser("new-user", null, "Name", "email@example.com"));
+    }
+
+    @Test
+    public void createUserWithEmptyPasswordThrowsIllegalArgument() {
+        assertThrows(IllegalArgumentException.class, () -> userManager.createUser("new-user", "", "Name", "email@example.com"));
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,8 +113,10 @@ public abstract class VirtualConnection extends AbstractConnection
     }
 
     /**
-     * Closes the session, the virtual connection and notifies listeners that the connection
-     * has been closed.
+     * Closes the session, the virtual connection and notifies listeners that the connection has been closed.
+     *
+     * Upon completion of all listeners and the virtual connection teardown, the stage returned by
+     * {@link #getCloseFuture()} is completed.
      *
      * @param error If non-null, the end-stream tag will be preceded with this error.
      */
@@ -147,6 +149,8 @@ public abstract class VirtualConnection extends AbstractConnection
                     closeVirtualConnection(error);
                 } catch (Exception e) {
                     Log.error(LocaleUtils.getLocalizedString("admin.error.close") + "\n" + toString(), e);
+                } finally {
+                    completeCloseFuture();
                 }
             });
         }

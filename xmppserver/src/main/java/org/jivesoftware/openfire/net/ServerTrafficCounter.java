@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,9 +48,16 @@ public class ServerTrafficCounter {
      */
     private static final AtomicLong incomingCounter = new AtomicLong(0);
 
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0.
     private static final String trafficStatGroup = "server_bytes";
-    private static final String incomingStatKey = "server_bytes_in";
-    private static final String outgoingStatKey = "server_bytes_out";
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0.
+    private static final String incomingRateStatKey = "server_bytes_in";
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0.
+    private static final String outgoingRateStatKey = "server_bytes_out";
+
+    private static final String trafficAmountStatGroup = "server_bytes_amt";
+    private static final String incomingAmountStatKey = "server_bytes_in_amt";
+    private static final String outgoingAmountStatKey = "server_bytes_out_amt";
 
     /**
      * Creates and adds statistics to statistic manager.
@@ -119,8 +126,13 @@ public class ServerTrafficCounter {
     }
 
     private static void addReadBytesStat() {
-        // Register a statistic.
-        Statistic statistic = new Statistic() {
+        /*
+         * Replaced by 'statisticAmount' (see below) because of issue OF-3142.
+         */
+        @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0
+        Statistic statisticRate = new Statistic() {
+            private long previousSample = 0;
+
             @Override
             public String getName() {
                 return LocaleUtils.getLocalizedString("server_bytes.stats.incoming.name");
@@ -129,6 +141,11 @@ public class ServerTrafficCounter {
             @Override
             public Type getStatType() {
                 return Type.rate;
+            }
+
+            @Override
+            public RepresentationSemantics getRepresentationSemantics() {
+                return RepresentationSemantics.RATE;
             }
 
             @Override
@@ -144,7 +161,13 @@ public class ServerTrafficCounter {
             @Override
             public double sample() {
                 // Divide result by 1024 so that we return the result in Kb.
-                return incomingCounter.getAndSet(0)/1024d;
+                final long current = incomingCounter.get();
+                long delta;
+                synchronized(this) {
+                    delta = current - previousSample;
+                    previousSample = current;
+                }
+                return delta /1024d;
             }
 
             @Override
@@ -153,12 +176,57 @@ public class ServerTrafficCounter {
             }
         };
         StatisticsManager.getInstance()
-                .addMultiStatistic(incomingStatKey, trafficStatGroup, statistic);
+                .addMultiStatistic(incomingRateStatKey, trafficStatGroup, statisticRate);
+
+        Statistic statisticAmount = new Statistic() {
+            @Override
+            public String getName() {
+                return LocaleUtils.getLocalizedString("server_bytes.stats.incoming.amount.name");
+            }
+
+            @Override
+            public Type getStatType() {
+                return Type.amount;
+            }
+
+            @Override
+            public RepresentationSemantics getRepresentationSemantics() {
+                return RepresentationSemantics.RATE;
+            }
+
+            @Override
+            public String getDescription() {
+                return LocaleUtils.getLocalizedString("server_bytes.stats.incoming.amount.description");
+            }
+
+            @Override
+            public String getUnits() {
+                return LocaleUtils.getLocalizedString("server_bytes.stats.incoming.amount.label");
+            }
+
+            @Override
+            public double sample() {
+                // Divide result by 1024 so that we return the result in Kb.
+                return incomingCounter.get()/1024d;
+            }
+
+            @Override
+            public boolean isPartialSample() {
+                return true;
+            }
+        };
+        StatisticsManager.getInstance()
+            .addMultiStatistic(incomingAmountStatKey, trafficAmountStatGroup, statisticAmount);
     }
 
     private static void addWrittenBytesStat() {
-        // Register a statistic.
-        Statistic statistic = new Statistic() {
+        /*
+         * Replaced by 'statisticAmount' (see below) because of issue OF-3142.
+         */
+        @Deprecated(forRemoval = true) // Remove in or after Openfire 5.2.0
+        Statistic statisticRate = new Statistic() {
+            private long previousSample = 0;
+
             @Override
             public String getName() {
                 return LocaleUtils.getLocalizedString("server_bytes.stats.outgoing.name");
@@ -181,7 +249,14 @@ public class ServerTrafficCounter {
 
             @Override
             public double sample() {
-                return outgoingCounter.getAndSet(0)/1024d;
+                // Divide result by 1024 so that we return the result in Kb.
+                final long current = outgoingCounter.get();
+                long delta;
+                synchronized(this) {
+                    delta = current - previousSample;
+                    previousSample = current;
+                }
+                return delta /1024d;
             }
 
             @Override
@@ -190,7 +265,42 @@ public class ServerTrafficCounter {
             }
         };
         StatisticsManager.getInstance()
-                .addMultiStatistic(outgoingStatKey, trafficStatGroup, statistic);
+                .addMultiStatistic(outgoingRateStatKey, trafficStatGroup, statisticRate);
+
+        // Register a statistic.
+        Statistic statisticAmount = new Statistic() {
+            @Override
+            public String getName() {
+                return LocaleUtils.getLocalizedString("server_bytes.stats.outgoing.amount.name");
+            }
+
+            @Override
+            public Type getStatType() {
+                return Type.amount;
+            }
+
+            @Override
+            public String getDescription() {
+                return LocaleUtils.getLocalizedString("server_bytes.stats.outgoing.amount.description");
+            }
+
+            @Override
+            public String getUnits() {
+                return LocaleUtils.getLocalizedString("server_bytes.stats.outgoing.amount.label");
+            }
+
+            @Override
+            public double sample() {
+                return outgoingCounter.get()/1024d;
+            }
+
+            @Override
+            public boolean isPartialSample() {
+                return true;
+            }
+        };
+        StatisticsManager.getInstance()
+            .addMultiStatistic(outgoingAmountStatKey, trafficAmountStatGroup, statisticAmount);
     }
 
     /**

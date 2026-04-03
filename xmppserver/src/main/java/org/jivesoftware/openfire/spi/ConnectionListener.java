@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -324,7 +324,7 @@ public class ConnectionListener
                     Log.warn("SocketAcceptorEventListener '{}' threw exception while processing acceptor stopping event for acceptor: {}", eventListener, connectionAcceptor, t);
                 }
             });
-            connectionAcceptor.stop();
+            connectionAcceptor.stop(); // Stop accepting inbound S2S connections.
         }
         finally
         {

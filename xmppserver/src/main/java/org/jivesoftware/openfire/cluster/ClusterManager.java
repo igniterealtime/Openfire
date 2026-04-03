@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,6 +55,7 @@ public class ClusterManager {
     private static final Logger Log = LoggerFactory.getLogger(ClusterManager.class);
 
     public static String CLUSTER_PROPERTY_NAME = "clustering.enabled";
+    public static String NODEID_PROPERTY_NAME = "clustering.nodeid";
     private static Queue<Pair<Integer, ClusterEventListener>> listeners = new ConcurrentLinkedQueue<>();
     private static BlockingQueue<Event> events = new LinkedBlockingQueue<>(10000);
     private static Thread dispatcher;

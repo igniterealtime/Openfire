@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1999-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 1999-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package org.jivesoftware.openfire.stats;
+
+import org.jivesoftware.openfire.JMXManager;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,6 +46,9 @@ public class StatisticsManager {
      * @param definition the statistic to be tracked.
      */
     public void addStatistic(String statKey, Statistic definition) {
+        if (JMXManager.isEnabled()) {
+            JMXManager.tryRegister(new StatisticDynamicMBean(definition), "org.igniterealtime.openfire:type=Statistic,name=" + statKey);
+        }
         statistics.put(statKey, definition);
     }
 
@@ -91,6 +96,8 @@ public class StatisticsManager {
      */
     public void removeStatistic(String statKey) {
         statistics.remove(statKey);
+        if (JMXManager.isEnabled()) {
+            JMXManager.tryUnregister("org.igniterealtime.openfire:type=Statistic,name=" + statKey);
+        }
     }
-
 }

@@ -81,6 +81,12 @@
                 These Connection Listeners each create new NettyConnectionAcceptors which bootstraps networking
                 connection listeners using Netty.
             </p>
+            <p>
+                In addition to Netty's standard acceptor (boss) and I/O worker event loop groups, Openfire introduces a
+                dedicated executor for handlers that may perform blocking or long-running operations. This executor is
+                shared across all channels created by a connection acceptor and is used to ensure that Netty EventLoop
+                threads remain strictly non-blocking and responsive.
+            </p>
 
             <figure>
                 <a href="images/netty-in-openfire.png"><img src="images/netty-in-openfire.png" alt="Diagram showing how Netty fits into Openfire"></a>
@@ -91,8 +97,9 @@
                 Zooming in on the above diagram to the S2S and C2S child-group channel pipelines we can see specific
                 <a href="https://netty.io/4.1/api/io/netty/channel/ChannelHandler.html">ChannelHandler</a>
                 implementations that handle TLS, XMPP stanza decoding, stalled session logic, and the core Openfire
-                "business logic", with a different business logic connection handler depending on whether this is
-                a Server to Server connection or a Client to Server connection.
+                "business logic". While protocol framing and I/O-related handlers execute on Netty's I/O worker event
+                loops, handlers that may perform blocking or long-running work (such as authentication, routing, or
+                persistence) are explicitly offloaded to a dedicated blocking handler executor.
             </p>
 
             <figure>
@@ -132,6 +139,13 @@
                 enough detail, on top of the information presented above, to enable developers to orientate themselves
                 in the codebase and discover the finer details of the network message processing and stanza parsing
                 systems within Openfire.
+            </p>
+
+            <p>
+                It is important to note that not all message processing occurs on Netty EventLoop threads. While
+                socket reads and writes are handled by the I/O worker event loops, Openfire ensures that handlers
+                which may block or take significant time to execute are invoked on a separate blocking handler
+                executor. This design prevents EventLoop starvation and ensures consistent throughput under load.
             </p>
 
             <figure>

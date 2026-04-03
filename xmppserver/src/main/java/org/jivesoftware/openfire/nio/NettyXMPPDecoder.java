@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,20 +26,39 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.StreamError;
 
 import javax.net.ssl.SSLHandshakeException;
-import java.io.IOException;
 import java.net.SocketException;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.jivesoftware.openfire.nio.NettyConnectionHandler.CONNECTION;
 
 /**
- * Decoder that parses ByteBuffers and generates XML stanzas. Generated
- * stanzas are then passed to the next filters.
+ * A Netty pipeline decoder that parses raw bytes from an XMPP connection into discrete XML stanzas.
+ *
+ * This decoder sits in the Netty channel pipeline and delegates to a per-channel {@link XMLLightweightParser} to
+ * incrementally parse incoming data. Fully parsed stanzas are passed to the next handler in the pipeline via the
+ * {@code out} list.
+ *
+ * As a security measure, connections that attempt to send a single stanza exceeding the configured maximum buffer size
+ * are closed with a {@code policy-violation} stream error.
  */
 public class NettyXMPPDecoder extends ByteToMessageDecoder {
     private static final Logger Log = LoggerFactory.getLogger(NettyXMPPDecoder.class);
 
+    /**
+     * Decodes incoming bytes from the channel into one or more XMPP stanzas.
+     *
+     * Retrieves the {@link XMLLightweightParser} associated with this channel and feeds it the available bytes. Any
+     * fully parsed stanzas are added to {@code out} for processing by subsequent handlers in the pipeline.
+     *
+     * If the parser's internal buffer has exceeded the maximum allowed size, the connection is closed immediately with
+     * a {@code policy-violation} stream error and no further parsing is attempted.
+     *
+     * @param ctx the channel handler context, used to retrieve channel attributes
+     * @param in  the incoming byte buffer containing raw XMPP data
+     * @param out the list to which fully decoded stanzas are added
+     * @throws Exception if an error occurs during parsing
+     */
     @Override
     protected void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         // Get the XML parser from the channel
@@ -53,7 +72,7 @@ public class NettyXMPPDecoder extends ByteToMessageDecoder {
             // no need to call in.release() as this will cause an IllegalReferenceCountException.
             in.clear();
             NettyConnection connection = ctx.channel().attr(CONNECTION).get();
-            Log.warn("Maximum buffer size was exceeded, closing connection: " + connection);
+            Log.warn("Maximum buffer size was exceeded (peer possibly sent a stanza that was too large), closing connection: {}", connection);
             connection.close(new StreamError(StreamError.Condition.policy_violation, "Maximum stanza length exceeded"));
             return;
         }
@@ -63,40 +82,71 @@ public class NettyXMPPDecoder extends ByteToMessageDecoder {
 
         // Add any decoded messages to our outbound list to be processed by subsequent channelRead() events
         if (parser.areThereMsgs()) {
-            out.addAll(Arrays.asList(parser.getMsgs()));
+            Collections.addAll(out, parser.getMsgs());
         }
     }
 
+    /**
+     * Handles exceptions thrown during decoding or elsewhere in the pipeline.
+     *
+     * Categorises the cause and closes the connection with an appropriate stream error.
+     * Full stack traces are intentionally logged at DEBUG level only, to avoid excessive log
+     * noise during production operation where port scanners and misconfigured clients can
+     * produce a high volume of these exceptions.
+     *
+     * If no {@link NettyConnection} has been associated with the channel yet (e.g. an
+     * exception occurs during early channel setup before registration), the exception is
+     * logged but no close attempt is made.
+     *
+     * @param ctx   the channel handler context
+     * @param cause the exception that was caught
+     * @throws Exception if an error occurs while handling the exception
+     */
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
         final NettyConnection connection = ctx.channel().attr(CONNECTION).get();
 
         if (isSslHandshakeError(cause)) {
-            connection.close();
+            Log.debug("SSL Handshake error caught, closing connection: {}", connection);
+            if (connection != null) {
+                connection.close();
+            } else {
+                ctx.channel().close();
+            }
             return;
         }
 
         if (isNotSslRecord(cause)) {
-            Log.warn("Closing connection with {}, as unencrypted data was received, while encrypted data was expected (A full stack trace will be logged on the ‘debug’ level).", connection.getPeer() == null ? "(unknown)" : connection.getPeer(), cause);
+            Log.warn("Closing connection with {}, as unencrypted data was received, while encrypted data was expected (A full stack trace will be logged on the 'debug' level).", (connection == null || connection.getPeer() == null) ? "(unknown)" : connection.getPeer());
             Log.debug("Error occurred while decoding XMPP stanza: {}", connection, cause);
-            connection.close(new StreamError(StreamError.Condition.internal_server_error, "Received unencrypted data while encrypted data was expected."));
+            if (connection != null) {
+                connection.close(new StreamError(StreamError.Condition.internal_server_error, "Received unencrypted data while encrypted data was expected."));
+            } else {
+                ctx.channel().close();
+            }
             return;
         }
 
         if (isConnectionReset(cause)) {
-            if (connection.getConfiguration().getType().isClientOriented()) {
-                // For clients, a connection reset is very common (eg: network connectivity issue, mobile app killed in the background). Don't log as a warning (OF-3038)
-                Log.debug("Closing client connection, as the socket connection was reset: {}", connection, cause);
-            } else {
-                // For non-clients, a connection reset is less common. They're expected to be connected to more reliable network configuration. Log at a higher level.
-                Log.warn("Closing (non-client) connection, as the socket connection was reset: {}", connection, cause);
-            }
+            Log.debug("Closing connection, as the socket connection was reset: {}", connection, cause);
         } else {
-            Log.warn("Error occurred while decoding XMPP stanza, closing connection: {}", connection, cause);
+            Log.warn("Closing connection, as an error occurred while decoding XMPP stanza (A full stack trace will be logged on the 'debug' level): {} on connection {}", (cause != null ? cause.getMessage() : "Unknown error"), connection);
+            Log.debug("Error occurred while decoding XMPP stanza: {}", connection, cause);
         }
-        connection.close(new StreamError(StreamError.Condition.internal_server_error, "An error occurred in XMPP Decoder"));
+        if (connection != null) {
+            connection.close(new StreamError(StreamError.Condition.internal_server_error, "An error occurred while attempting to decode XMPP data."));
+        } else {
+            ctx.channel().close();
+        }
     }
 
+    /**
+     * Determines whether the given throwable represents a non-SSL record error, which occurs when unencrypted data is
+     * received on a TLS-expecting connection.
+     *
+     * @param t the throwable to inspect
+     * @return {@code true} if the cause is a {@link NotSslRecordException}, {@code false} otherwise
+     */
     private boolean isNotSslRecord(Throwable t)
     {
         // Unwrap DecoderException to check for potential SSLHandshakeException
@@ -107,6 +157,12 @@ public class NettyXMPPDecoder extends ByteToMessageDecoder {
         return (t instanceof NotSslRecordException);
     }
 
+    /**
+     * Determines whether the given throwable represents a TLS handshake failure.
+     *
+     * @param t the throwable to inspect
+     * @return {@code true} if the cause is an {@link SSLHandshakeException}, {@code false} otherwise
+     */
     private boolean isSslHandshakeError(Throwable t) {
         // Unwrap DecoderException to check for potential SSLHandshakeException
         if (t instanceof DecoderException) {
@@ -116,7 +172,17 @@ public class NettyXMPPDecoder extends ByteToMessageDecoder {
         return (t instanceof SSLHandshakeException);
     }
 
+    /**
+     * Determines whether the given throwable represents a TCP connection reset by the remote peer.
+     *
+     * @param t the throwable to inspect
+     * @return {@code true} if the cause is a {@link SocketException} with the message
+     *         {@code "Connection reset"}, {@code false} otherwise
+     */
     private boolean isConnectionReset(Throwable t) {
+        if (t instanceof DecoderException) {
+            t = t.getCause();
+        }
         return (t instanceof SocketException)
             && "Connection reset".equalsIgnoreCase(t.getMessage());
     }

@@ -138,6 +138,11 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
             public CompletableFuture<Void> onConnectionClosing(@Nullable Object handback) {
                 return CompletableFuture.runAsync(() -> SessionManager.getInstance().removeComponentSession((LocalComponentSession) handback));
             }
+            @Override
+            public int getPriority() {
+                // Openfire's built-in listeners should use a higher priority than listeners implemented by plugins / third parties.
+                return ConnectionCloseListener.PRIO_BUILT_IN;
+            }
         }, session);
         session.component = new LocalExternalComponent(session, connection);
 
@@ -240,6 +245,11 @@ public class LocalComponentSession extends LocalSession implements ComponentSess
                     @Override
                     public CompletableFuture<Void> onConnectionClosing(@Nullable Object handback) {
                         return CompletableFuture.runAsync(() -> InternalComponentManager.getInstance().removeComponent(defaultSubdomain, (ExternalComponent) handback));
+                    }
+                    @Override
+                    public int getPriority() {
+                        // Openfire's built-in listeners should use a higher priority than listeners implemented by plugins / third parties.
+                        return ConnectionCloseListener.PRIO_BUILT_IN;
                     }
                 }, component);
                 Log.debug("LocalComponentSession: [ExComp] External component was registered SUCCESSFULLY with domain: {}", defaultSubdomain);

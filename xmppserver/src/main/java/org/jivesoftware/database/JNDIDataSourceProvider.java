@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,6 @@ public class JNDIDataSourceProvider implements ConnectionProvider {
      * Keys of JNDI properties to query PropertyManager for.
      */
     public static final String[] jndiPropertyKeys = {
-        Context.APPLET,
         Context.AUTHORITATIVE,
         Context.BATCHSIZE,
         Context.DNS_URL,

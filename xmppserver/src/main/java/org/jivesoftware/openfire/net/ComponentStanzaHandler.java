@@ -111,6 +111,11 @@ public class ComponentStanzaHandler extends StanzaHandler {
                             public CompletableFuture<Void> onConnectionClosing(@Nullable Object handback) {
                                 return CompletableFuture.runAsync(() -> InternalComponentManager.getInstance().removeComponent(subdomain, (ComponentSession.ExternalComponent) handback));
                             }
+                            @Override
+                            public int getPriority() {
+                                // Openfire's built-in listeners should use a higher priority than listeners implemented by plugins / third parties.
+                                return ConnectionCloseListener.PRIO_BUILT_IN;
+                            }
                         }, component);
                         // Send confirmation that the new domain has been registered
                         connection.deliverRawText("<bind/>");

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -205,15 +205,21 @@ public class NettyConnection extends AbstractConnection
                 // Ensure that the state of this connection, its session and the Netty Channel are eventually closed.
                 session.setStatus(Session.Status.CLOSED);
 
-                // Only send errors or stream closures if the open <stream:stream> occurred, inferred by having a session.
-                // TODO: Are there edge cases here?
-                String rawEndStream = "";
-                if (error != null) {
-                    rawEndStream = error.toXML();
+                // Only attempt to write the stream close if the channel is still active. If connectivity was lost
+                // (e.g., the socket was closed by the peer or a network error), the channel will already be inactive
+                // and there is no point in attempting a write, as it would only produce noisy ClosedChannelException
+                // log entries. The cleanup listeners must still run either way. OF-3195
+                if (channelHandlerContext.channel().isActive()) {
+                    String rawEndStream = "";
+                    if (error != null) {
+                        rawEndStream = error.toXML();
+                    }
+                    rawEndStream += "</stream:stream>";
+                    f = channelHandlerContext.writeAndFlush(rawEndStream);
+                } else {
+                    Log.trace("Channel is no longer active; skipping stream close stanza for {}", this);
+                    f = channelHandlerContext.newSucceededFuture();
                 }
-                rawEndStream += "</stream:stream>";
-
-                f = channelHandlerContext.writeAndFlush(rawEndStream);
             } else {
                 f = channelHandlerContext.newSucceededFuture();
             }
@@ -228,6 +234,7 @@ public class NettyConnection extends AbstractConnection
                             if (t != null) {
                                 Log.warn("Exception while invoking close listeners for {}", this, t);
                             }
+                            completeCloseFuture();
                         });
                 })
                 .addListener(e -> Log.trace("Finished closing connection."));
@@ -328,7 +335,7 @@ public class NettyConnection extends AbstractConnection
     private void updateWrittenBytesCounter(ChannelHandlerContext ctx) {
         ChannelTrafficShapingHandler handler = (ChannelTrafficShapingHandler) ctx.channel().pipeline().get(TRAFFIC_HANDLER_NAME);
         if (handler != null) {
-            long currentBytes = handler.trafficCounter().lastWrittenBytes();
+            long currentBytes = handler.trafficCounter().currentWrittenBytes();
             Long prevBytes = ctx.channel().attr(WRITTEN_BYTES).get();
             long delta;
             if (prevBytes == null) {

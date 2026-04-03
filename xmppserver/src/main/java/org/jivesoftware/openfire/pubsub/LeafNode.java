@@ -79,8 +79,6 @@ public class LeafNode extends Node {
      */
     private transient PublishedItem lastPublished;
 
-    // TODO Add checking of max payload size. Return <not-acceptable> plus a application specific error condition of <payload-too-big/>.
-
     public LeafNode( PubSubService.UniqueIdentifier serviceId, CollectionNode parentNode, String nodeID, JID creator, boolean subscriptionEnabled, boolean deliverPayloads, boolean notifyConfigChanges, boolean notifyDelete, boolean notifyRetract, boolean presenceBasedDelivery, AccessModel accessModel, PublisherModel publisherModel, String language, ItemReplyPolicy replyPolicy, boolean persistPublishedItems, int maxPublishedItems, int maxPayloadSize, boolean sendItemSubscribe)
     {
         super(serviceId, parentNode, nodeID, creator, subscriptionEnabled, deliverPayloads, notifyConfigChanges, notifyDelete, notifyRetract, presenceBasedDelivery, accessModel, publisherModel, language, replyPolicy);
@@ -184,7 +182,17 @@ public class LeafNode extends Node {
 
     public synchronized void setLastPublishedItem(PublishedItem item)
     {
-        if ((lastPublished == null) || (item != null) && item.getCreationDate().after(lastPublished.getCreationDate())) {
+        // Always update when:
+        // 1. There is no last-published item yet (initial state).
+        // 2. The incoming item overwrites the current last-published item (same unique identifier).
+        //    XEP-0060 §7.1.2 requires the server to replace an existing item with the same ID.
+        //    Even if both items share the same creation-date (e.g. published in the same millisecond),
+        //    the in-memory cache must reflect the new payload so that getPublishedItem() does not
+        //    serve the stale first item.
+        // 3. The incoming item is strictly newer than the current last-published item.
+        if (item != null && (lastPublished == null
+                || lastPublished.getUniqueIdentifier().equals(item.getUniqueIdentifier())
+                || item.getCreationDate().after(lastPublished.getCreationDate()))) {
             Log.trace("Set last published item to: {}", item.getID());
             lastPublished = item;
         }

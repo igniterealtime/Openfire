@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,21 +21,27 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.MultiThreadIoEventLoopGroup;
 import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.util.concurrent.DefaultEventExecutorGroup;
+import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.GlobalEventExecutor;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.nio.NettyChannelHandlerFactory;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.NamedThreadFactory;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
@@ -51,7 +57,84 @@ import static org.jivesoftware.openfire.nio.NettySessionInitializer.GRACEFUL_SHU
  * @author Alex Gidman
  */
 public class NettyConnectionAcceptor extends ConnectionAcceptor {
-    // NioEventLoopGroup is a multithreaded event loop that handles I/O operation.
+
+    /**
+     * Sets the maximum number of incoming connection requests that can be queued before the OS starts rejecting new connections.
+     */
+    public static final SystemProperty<Integer> SOCKET_BACKLOG = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.socket.backlog")
+        .setDefaultValue(50)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * Enables TCP keep-alive on the socket to periodically check if the connection is still alive and prevent idle connections from being silently dropped.
+     */
+    public static final SystemProperty<Boolean> SOCKET_KEEP_ALIVE_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.socket.keepalive")
+        .setDefaultValue(true)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * Controls whether the Nagle algorithm is disabled (true) to send small packets immediately or enabled (false) to coalesce them.
+     */
+    public static final SystemProperty<Boolean> TCP_NODELAY_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.socket.tcp-nodelay")
+        .setDefaultValue(true)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * Allows the socket to bind to a port even if a previous connection on that port is in the TIME_WAIT state, enabling faster server restarts.
+     */
+    public static final SystemProperty<Boolean> SOCKET_REUSE_ADDRESS_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.socket.tcp-reuseaddr")
+        .setDefaultValue(true)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * Defines the size (in bytes) of the TCP send buffer for accepted sockets.
+     */
+    public static final SystemProperty<Integer> SOCKET_SEND_BUFFER_SIZE = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.socket.buffer.send")
+        .setDefaultValue(-1)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * Defines the size (in bytes) of the TCP receive buffer for accepted sockets.
+     */
+    public static final SystemProperty<Integer> SOCKET_RECEIVE_BUFFER_SIZE = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.socket.buffer.receive")
+        .setDefaultValue(-1)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * Specifies how long a socket should wait to send remaining data when closed; negative disables SO_LINGER.
+     */
+    public static final SystemProperty<Duration> SOCKET_LINGER_DURATION = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.socket.linger")
+        .setChronoUnit(ChronoUnit.SECONDS)
+        .setDefaultValue(Duration.ofSeconds(-1))
+        .setDynamic(false)
+        .setMaxValue(Duration.ofSeconds(Integer.MAX_VALUE))
+        .build();
+
+    /**
+     * Timeout in seconds to wait for the boss EventLoop to process the startup barrier task before logging a warning.
+     */
+    public static final SystemProperty<Duration> STARTUP_LATCH_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.socket.startup-latch-timeout")
+        .setChronoUnit(ChronoUnit.SECONDS)
+        .setDefaultValue(Duration.ofSeconds(30))
+        .setDynamic(false)
+        .setMaxValue(Duration.ofSeconds(Integer.MAX_VALUE))
+        .build();
+
+    // MultiThreadIoEventLoopGroup is a multithreaded event loop that handles I/O operation.
     // The first one, often called 'boss', accepts an incoming connection.
     // The second one, often called 'worker', handles the traffic of the accepted connection once the boss
     // accepts the connection and registers the accepted connection to the worker. How many Threads are
@@ -59,19 +142,31 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
     // and may be even configurable via a constructor.
 
     /**
-     * A multithreaded event loop that handles I/O operation
-     * <p>
-     * The parent 'boss' accepts an incoming connection.
+     * EventLoopGroup responsible for accepting incoming socket connections.
+     *
+     * This group (often referred to as the "boss" group in Netty terminology) listens for incoming connection attempts
+     * and hands off each accepted {@link io.netty.channel.Channel} to the I/O worker group for further processing. No
+     * application or protocol logic should execute on threads from this group.
      */
-    private final EventLoopGroup parentGroup;
+    private final EventLoopGroup acceptorGroup;
 
     /**
-     * A multithreaded event loop that handles I/O operation
-     * <p>
-     * The child 'worker', handles the traffic of the accepted connection once the parent accepts the connection
-     * and registers the accepted connection to the worker.
+     * EventLoopGroup responsible for non-blocking I/O on established connections.
+     *
+     * This group (often referred to as the "worker" group) handles read/write operations and propagates I/O events
+     * through the Netty pipeline for each accepted connection. Handlers running on this group must remain strictly
+     * non-blocking to avoid starving the event loop.
      */
-    private final EventLoopGroup childGroup;
+    private final EventLoopGroup ioWorkerGroup;
+
+    /**
+     * Executor group for pipeline handlers that may perform blocking or long-running operations.
+     *
+     * This executor group is shared across all channels created by this acceptor and is used to offload work such as
+     * authentication, routing, persistence, or calls into legacy/blocking APIs. Using this group ensures that Netty
+     * EventLoop threads remain responsive and dedicated to I/O.
+     */
+    private final EventExecutorGroup blockingHandlerExecutor;
 
     /**
      * A thread-safe Set containing all open Channels associated with this ConnectionAcceptor
@@ -99,12 +194,14 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
         final String name = configuration.getType().toString().toLowerCase() + (isDirectTLSConfigured() ? "_ssl" : "");
 
         // The configuration of threads is based on defaults used by io.netty.util.concurrent.DefaultThreadFactory (OF-3028)
-        final ThreadFactory parentGroupthreadFactory = new NamedThreadFactory(name + "-acceptor-", null, false, Thread.NORM_PRIORITY);
-        parentGroup = new NioEventLoopGroup(parentGroupthreadFactory);
+        final ThreadFactory acceptorGroupThreadFactory = new NamedThreadFactory(name + "-acceptor-", null, false, Thread.NORM_PRIORITY);
+        acceptorGroup = new MultiThreadIoEventLoopGroup(acceptorGroupThreadFactory, NioIoHandler.newFactory());
 
-        final ThreadFactory childGroupthreadFactory = new NamedThreadFactory(name + "-worker-", null, false, Thread.NORM_PRIORITY);
-        childGroup = new NioEventLoopGroup(configuration.getMaxThreadPoolSize(), childGroupthreadFactory);
+        final ThreadFactory ioWorkerGroupThreadFactory = new NamedThreadFactory(name + "-worker-", null, false, Thread.NORM_PRIORITY);
+        ioWorkerGroup = new MultiThreadIoEventLoopGroup(ioWorkerGroupThreadFactory, NioIoHandler.newFactory());
 
+        final ThreadFactory blockingHandlerGroupThreadFactory = new NamedThreadFactory(name + "-handler-", null, false, Thread.NORM_PRIORITY);
+        blockingHandlerExecutor = new DefaultEventExecutorGroup(configuration.getMaxThreadPoolSize(), blockingHandlerGroupThreadFactory);
         Log = LoggerFactory.getLogger( NettyConnectionAcceptor.class.getName() + "[" + name + "]" );
     }
 
@@ -119,33 +216,33 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
         try {
             // ServerBootstrap is a helper class that sets up a server
             ServerBootstrap serverBootstrap = new ServerBootstrap();
-            serverBootstrap.group(parentGroup, childGroup)
+            serverBootstrap.group(acceptorGroup, ioWorkerGroup)
                 // Instantiate a new Channel to accept incoming connections.
                 .channel(NioServerSocketChannel.class)
                 // The handler specified here will always be evaluated by a newly accepted Channel.
-                .childHandler(new NettyServerInitializer(configuration, allChannels, channelHandlerFactories))
+                .childHandler(new NettyServerInitializer(configuration, allChannels, channelHandlerFactories, blockingHandlerExecutor))
                 // Set the listen backlog (queue) length.
-                .option(ChannelOption.SO_BACKLOG, JiveGlobals.getIntProperty("xmpp.socket.backlog", 50))
+                .option(ChannelOption.SO_BACKLOG, SOCKET_BACKLOG.getValue())
                 // option() is for the NioServerSocketChannel that accepts incoming connections.
                 // childOption() is for the Channels accepted by the parent ServerChannel,
                 // which is NioSocketChannel in this case.
-                .childOption(ChannelOption.SO_KEEPALIVE, true)
+                .childOption(ChannelOption.SO_KEEPALIVE, SOCKET_KEEP_ALIVE_ENABLED.getValue())
                 // Setting TCP_NODELAY to false enables the Nagle algorithm, which delays sending small successive packets
-                .childOption(ChannelOption.TCP_NODELAY, JiveGlobals.getBooleanProperty( "xmpp.socket.tcp-nodelay", true))
+                .childOption(ChannelOption.TCP_NODELAY, TCP_NODELAY_ENABLED.getValue())
                 // Set that it will be possible to bind a socket if there is a connection in the timeout state.
-                .childOption(ChannelOption.SO_REUSEADDR, true);
+                .childOption(ChannelOption.SO_REUSEADDR, SOCKET_REUSE_ADDRESS_ENABLED.getValue());
 
-            final int sendBuffer = JiveGlobals.getIntProperty( "xmpp.socket.buffer.send", -1 );
+            final int sendBuffer = SOCKET_SEND_BUFFER_SIZE.getValue();
             if ( sendBuffer > 0 ) {
                 // SO_SNDBUF = Socket Option - Send Buffer Size in Bytes
                 serverBootstrap.childOption(ChannelOption.SO_SNDBUF, sendBuffer);
             }
-            final int receiveBuffer = JiveGlobals.getIntProperty( "xmpp.socket.buffer.receive", -1 );
+            final int receiveBuffer = SOCKET_RECEIVE_BUFFER_SIZE.getValue();
             if ( receiveBuffer > 0 ) {
                 // SO_RCVBUF = Socket Option - Receive Buffer Size in Bytes
                 serverBootstrap.childOption(ChannelOption.SO_RCVBUF, receiveBuffer);
             }
-            final int linger = JiveGlobals.getIntProperty( "xmpp.socket.linger", -1 );
+            final int linger = (int) SOCKET_LINGER_DURATION.getValue().getSeconds();
             if ( linger > 0 ) {
                 serverBootstrap.childOption(ChannelOption.SO_LINGER, linger);
             }
@@ -159,8 +256,22 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
                 .sync()
                 .channel();
 
+            // bind().sync() waits for the bind operation to complete but does not wait for the boss EventLoop to drain
+            // its task queue. Add a barrier task that runs on the boss event loop after bind completes. This guarantees
+            // that The boss EventLoop has processed startup tasks and Netty is ready to accept connections.
+            final CountDownLatch readyLatch = new CountDownLatch(1);
+            mainChannel.eventLoop().execute(readyLatch::countDown);
+
+            final int startupLatchTimeoutSeconds = (int) STARTUP_LATCH_TIMEOUT.getValue().getSeconds();
+            if (!readyLatch.await(startupLatchTimeoutSeconds, TimeUnit.SECONDS)) {
+                Log.warn("Boss EventLoop did not execute startup barrier task within {} seconds; startup may be incomplete.", startupLatchTimeoutSeconds);
+            }
         } catch (InterruptedException e) {
-            Log.error("Error starting: " + configuration.getPort(), e);
+            Log.error("Startup interrupted on port {}", configuration.getPort(), e);
+            closeMainChannel();
+            Thread.currentThread().interrupt(); // Restore interrupt flag
+        } catch (Exception e) {
+            Log.error("Error starting Netty acceptor on port {}", configuration.getPort(), e);
             closeMainChannel();
         }
     }
@@ -172,11 +283,14 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
     @Override
     public synchronized void stop() {
         closeMainChannel();
-        if (!parentGroup.isShuttingDown()) {
-            parentGroup.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
+        if (!acceptorGroup.isShuttingDown()) {
+            acceptorGroup.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
         }
-        if (!childGroup.isShuttingDown()) {
-            childGroup.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
+        if (!ioWorkerGroup.isShuttingDown()) {
+            ioWorkerGroup.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
+        }
+        if (!blockingHandlerExecutor.isShuttingDown()) {
+            blockingHandlerExecutor.shutdownGracefully(GRACEFUL_SHUTDOWN_QUIET_PERIOD.getValue().toMillis(), GRACEFUL_SHUTDOWN_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
         }
     }
 
@@ -267,7 +381,7 @@ public class NettyConnectionAcceptor extends ConnectionAcceptor {
         // Add to channels that already exist.
         this.allChannels.forEach(channel -> {
             try {
-                factory.addNewHandlerTo(channel.pipeline());
+                factory.addNewHandlerTo(channel.pipeline(), blockingHandlerExecutor);
             } catch (Throwable t) {
                 Log.warn("Unable to add ChannelHandler from '{}' to pipeline of pre-existing channel: {}", factory, channel, t);
             }

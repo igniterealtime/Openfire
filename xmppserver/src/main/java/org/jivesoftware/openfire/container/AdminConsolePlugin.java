@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -283,8 +283,12 @@ public class AdminConsolePlugin implements Plugin {
         try {
             adminServer.start(); // excludes initialised
 
-            if(XMPPServer.getInstance().isSetupMode()) {
+            if (XMPPServer.getInstance().isSetupMode()) {
                 AuthCheckFilter.loadSetupExcludes();
+            } else {
+                // Explicitly remove setup-only excludes. If the admin console is restarting
+                // after setup completion, destroy() no longer clears them automatically.
+                Arrays.stream(JiveGlobals.setupExcludePaths).forEach(AuthCheckFilter::removeExclude);
             }
 
             // Log the ports that the admin server is listening on.

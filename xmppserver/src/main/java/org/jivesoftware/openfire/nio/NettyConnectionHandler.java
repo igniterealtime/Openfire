@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.StreamError;
 
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 
 import static org.jivesoftware.openfire.spi.NettyServerInitializer.TRAFFIC_HANDLER_NAME;
 
@@ -47,7 +48,7 @@ import static org.jivesoftware.openfire.spi.NettyServerInitializer.TRAFFIC_HANDL
  * @author Matthew Vivian
  * @author Alex Gidman
  */
-public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler<String> {
+public abstract class NettyConnectionHandler<H extends StanzaHandler> extends SimpleChannelInboundHandler<String> {
 
     private static final Logger Log = LoggerFactory.getLogger(NettyConnectionHandler.class);
     static final AttributeKey<XMLLightweightParser> XML_PARSER = AttributeKey.valueOf("XML-PARSER");
@@ -57,6 +58,7 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
     static final AttributeKey<StanzaHandler> HANDLER = AttributeKey.valueOf("HANDLER");
     public static final AttributeKey<Boolean> IDLE_FLAG = AttributeKey.valueOf("IDLE_FLAG");
 
+    private final CompletableFuture<H> stanzaHandlerFuture = new CompletableFuture<>();
 
     protected static final ThreadLocal<XMPPPacketReader> PARSER_CACHE = new ThreadLocal<>()
     {
@@ -96,7 +98,16 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
 
     abstract NettyConnection createNettyConnection(ChannelHandlerContext ctx);
 
-    abstract StanzaHandler createStanzaHandler(NettyConnection connection);
+    /**
+     * Creates the {@link StanzaHandler} instance that will process inbound XML stanzas for the given connection.
+     *
+     * The returned handler is specific to the concrete connection type (e.g. C2S, S2S) and is created during
+     * {@link #handlerAdded}. Its type is constrained by the handler generic parameter of this class.
+     *
+     * @param connection the Netty-backed connection for which the handler is created
+     * @return a newly created stanza handler instance
+     */
+    abstract H createStanzaHandler(NettyConnection connection);
 
     /**
      * Returns the time that a connection can be idle before being closed.
@@ -108,16 +119,37 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) {
         Log.trace("Netty XMPP handler added: {}", ctx.channel().remoteAddress() == null ? ctx.channel().localAddress() : ctx.channel().localAddress() + "--" + ctx.channel().remoteAddress());
+        try {
+            // Create a new XML parser for the new connection. The parser will be used by the XMPPDecoder filter.
+            ctx.channel().attr(XML_PARSER).set(new XMLLightweightParser());
 
-        // Create a new XML parser for the new connection. The parser will be used by the XMPPDecoder filter.
-        ctx.channel().attr(XML_PARSER).set(new XMLLightweightParser());
+            // Create a new Connection for the new session
+            final NettyConnection nettyConnection = createNettyConnection(ctx);
+            ctx.channel().attr(CONNECTION).set(nettyConnection);
+            ctx.channel().attr(READ_BYTES).set(0L);
 
-        // Create a new Connection for the new session
-        final NettyConnection nettyConnection = createNettyConnection(ctx);
-        ctx.channel().attr(CONNECTION).set(nettyConnection);
-        ctx.channel().attr(READ_BYTES).set(0L);
+            final H stanzaHandler = createStanzaHandler(nettyConnection);
+            ctx.channel().attr(HANDLER).set(stanzaHandler);
+            stanzaHandlerFuture.complete(stanzaHandler);
+        } catch (Throwable t) {
+            Log.warn("Failed to initialize Netty XMPP handler for channel {}", ctx.channel(), t);
+            ctx.channel().close();
+            stanzaHandlerFuture.completeExceptionally(t);
+        }
+    }
 
-        ctx.channel().attr(HANDLER).set(createStanzaHandler(nettyConnection));
+    /**
+     * Returns a future that completes when the {@link StanzaHandler} for this connection has been created and added to
+     * the Netty pipeline.
+     *
+     * This is used to safely coordinate with asynchronous Netty handler initialization and avoids race conditions where
+     * the handler is accessed before {@link #handlerAdded} has executed.
+     *
+     * @return a future that completes with the stanza handler once it is available
+     */
+    public CompletableFuture<H> getStanzaHandlerFuture()
+    {
+        return stanzaHandlerFuture;
     }
 
     @Override
@@ -176,7 +208,7 @@ public abstract class NettyConnectionHandler extends SimpleChannelInboundHandler
                 NettyConnection connection = ctx.channel().attr(NettyConnectionHandler.CONNECTION).get();
                 connection.setEncrypted(true);
                 Log.debug("TLS negotiation was successful on channel {}", ctx.channel().remoteAddress() == null ? ctx.channel().localAddress() : ctx.channel().localAddress() + "--" + ctx.channel().remoteAddress());
-                ctx.fireChannelActive();
+                ctx.pipeline().fireChannelActive(); // restart from head so all handlers receive channelActive
             }
         }
 

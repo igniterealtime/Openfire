@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -652,7 +652,7 @@ public abstract class StanzaHandler {
      */
     protected void closeNeverEncryptedConnection() {
         // Send a stream error and close the underlying connection.
-        connection.close(new StreamError(StreamError.Condition.not_authorized, "TLS is mandatory, but was established."));
+        connection.close(new StreamError(StreamError.Condition.not_authorized, "TLS is mandatory, but was not established."));
         // Log a warning so that admins can track this case from the server side
         Log.warn("TLS was required by the server and connection was never encrypted. Closing connection: {}", connection);
     }
@@ -706,7 +706,8 @@ public abstract class StanzaHandler {
             }
         }
         catch (final StreamErrorException ex) {
-            Log.warn("Failed to create a session. Closing connection: {}", connection, ex);
+            Log.warn("Failed to create a session, as the stream opened by the peer has a problem: {} - '{}' (a full stack trace is logged on debug level). Closing connection: {}", ex.getStreamError().getCondition(), ex.getStreamError().getText(), connection);
+            Log.debug("Failed to create a session.", ex);
             final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
             final Document document = DocumentHelper.createDocument(stream);
             document.setXMLEncoding(StandardCharsets.UTF_8.toString());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2019-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ import java.util.List;
  * @see <a href="https://search.jabbercat.org/docs/api">https://search.jabbercat.org/docs/api</a>
  * @deprecated The protocol defined herein was formalized (with minor changes) as XEP-0433, which is implemented in {@link IQExtendedChannelSearchHandler}
  */
-@Deprecated(since = "5.0.0", forRemoval = true) // Remove in or after 5.1.0.
+@Deprecated(since = "5.0.0", forRemoval = true) // Remove after search.jabber.network switches to using XEP-0433.
 public class IQMuclumbusSearchHandler
 {
     public static final String VAR_SINNAME = "sinname";

@@ -300,17 +300,7 @@
                                     </td>
                                 </c:if>
                                 <td>
-                                    <c:choose>
-                                        <c:when test="${session.isUsingServerDialback()}">
-                                            <fmt:message key="server.session.details.dialback"/>
-                                        </c:when>
-                                        <c:when test="${session.isUsingSaslExternal()}">
-                                            <fmt:message key="server.session.details.tlsauth"/>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <fmt:message key="server.session.details.unknown"/>
-                                        </c:otherwise>
-                                    </c:choose>
+                                    <fmt:message key="${session.authenticationMethod.i18nKey}"/>
                                 <td><c:out value="${session.TLSProtocolName}"/></td>
                                 <td><c:out value="${session.cipherSuiteName}"/></td>
                                 <td ><fmt:formatDate type="both" value="${session.creationDate}"/></td>
@@ -365,17 +355,7 @@
                                     </td>
                                 </c:if>
                                 <td >
-                                    <c:choose>
-                                        <c:when test="${session.isUsingServerDialback()}">
-                                            <fmt:message key="server.session.details.dialback"/>
-                                        </c:when>
-                                        <c:when test="${session.isUsingSaslExternal()}">
-                                            <fmt:message key="server.session.details.tlsauth"/>
-                                        </c:when>
-                                        <c:otherwise>
-                                            <fmt:message key="server.session.details.unknown"/>
-                                        </c:otherwise>
-                                    </c:choose>
+                                    <fmt:message key="${session.authenticationMethod.i18nKey}"/>
                                 <td><c:out value="${session.TLSProtocolName}"/></td>
                                 <td><c:out value="${session.cipherSuiteName}"/></td>
                                 <td ><fmt:formatDate type="both" value="${session.creationDate}"/></td>

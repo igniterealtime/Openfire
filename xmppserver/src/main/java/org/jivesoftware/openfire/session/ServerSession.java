@@ -18,9 +18,19 @@ package org.jivesoftware.openfire.session;
 public interface ServerSession extends Session {
 
     enum AuthenticationMethod {
-        DIALBACK,
-        SASL_EXTERNAL,
-        OTHER
+        DIALBACK("server.session.details.dialback"),
+        SASL_EXTERNAL("server.session.details.sasl_external"),
+        OTHER("server.session.details.unknown");
+
+        private final String i18nKey;
+
+        AuthenticationMethod(String i18nKey) {
+            this.i18nKey = i18nKey;
+        }
+
+        public String getI18nKey() {
+            return i18nKey;
+        }
     }
 
     /**

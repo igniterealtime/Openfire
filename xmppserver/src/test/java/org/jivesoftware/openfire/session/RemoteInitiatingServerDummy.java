@@ -15,9 +15,10 @@
  */
 package org.jivesoftware.openfire.session;
 
+import org.awaitility.Awaitility;
+import org.awaitility.core.ConditionTimeoutException;
 import org.dom4j.*;
 import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
@@ -33,26 +34,25 @@ import java.security.KeyPair;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
 {
     private ServerSocket dialbackAuthoritativeServer;
     private Thread dialbackAcceptThread;
-    private DialbackAcceptor dialbackAcceptor = new DialbackAcceptor();
+    private final DialbackAcceptor dialbackAcceptor = new DialbackAcceptor();
 
     private final String connectTo;
     boolean attemptedEncryptionNegotiation = false;
     boolean alreadyTriedSaslExternal = false;
     boolean peerSupportsDialback;
     private ExecutorService processingService;
-    private final List<StreamID> receivedStreamIDs = new ArrayList<>();
-    private final List<StreamID> processedStreamIDs = new ArrayList<>();
-    private final List<String> receivedStreamFromValues = new ArrayList<>();
-    private final List<String> receivedStreamToValues = new ArrayList<>();
+    private final List<StreamID> receivedStreamIDs = Collections.synchronizedList(new ArrayList<>());
+    private final List<StreamID> processedStreamIDs = Collections.synchronizedList(new ArrayList<>());
+    private final List<String> receivedStreamFromValues = Collections.synchronizedList(new ArrayList<>());
+    private final List<String> receivedStreamToValues = Collections.synchronizedList(new ArrayList<>());
 
     /**
      * A monitor that is used to flag when this dummy has finished trying to set up a connection to Openfire. This is to
@@ -104,21 +104,13 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
             // continuing to prevent a race condition.
             final StreamID lastReceivedID = getNonProcessedStreamIDs().get(getNonProcessedStreamIDs().size()-1);
             log("Wait for stream to be registered in the session manager: " + lastReceivedID);
-            final Instant stopWaiting = Instant.now().plus(500, ChronoUnit.MILLIS);
             try {
-                final SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
-                boolean found = false;
-                while (Instant.now().isBefore(stopWaiting)) {
-                    if (sessionManager.getIncomingServerSession( lastReceivedID ) != null) {
-                        log("Found stream registered in the session manager: " + lastReceivedID);
-                        found = true;
-                        break;
-                    }
-                    Thread.sleep(10);
-                }
-                if (!found) log("NEVER FOUND STREAM WE WERE (pointlessly?) WAITING FOR: " + lastReceivedID);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
+                Awaitility.await()
+                    .atMost(500, TimeUnit.MILLISECONDS)
+                    .until(() -> XMPPServer.getInstance().getSessionManager().getIncomingServerSession(lastReceivedID), Objects::nonNull);
+                log("Found stream registered in the session manager: " + lastReceivedID);
+            } catch (ConditionTimeoutException ex) {
+                log("NEVER FOUND STREAM WE WERE (pointlessly?) WAITING FOR: " + lastReceivedID);
             }
         }
 
@@ -343,6 +335,7 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
          * to time out for a certain number of times, before treating this as a terminal exception.
          */
         private int allowableSocketTimeouts = 0;
+        private final AtomicBoolean doneSignalled = new AtomicBoolean(false);
 
         private SocketProcessor(int port) throws IOException
         {
@@ -475,11 +468,17 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
                 log("Ending read loop" + (socket instanceof SSLSocket ? " (encrypted)" : ""));
             } catch (Throwable t) {
                 // Log exception only when not cleanly closed.
-                if (doLog && !processingService.isShutdown()) {
+                if (doLog && !processingService.isShutdown() && !doneSignalled.get()) {
                     t.printStackTrace();
                 }
             } finally {
                 log("Stopped reading from socket" + (socket instanceof SSLSocket ? " (encrypted)" : ""));
+                signalDone();
+            }
+        }
+
+        private void signalDone() {
+            if (doneSignalled.compareAndSet(false, true)) {
                 done();
             }
         }
@@ -598,12 +597,12 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
             }
 
             sc.init(km, tm , random);
-            SSLContext.setDefault(sc);
 
-            final SSLSocket sslSocket = (SSLSocket) ((SSLSocketFactory) SSLSocketFactory.getDefault()).createSocket(socket, null, socket.getPort(), true);
+            final SSLSocket sslSocket = (SSLSocket) sc.getSocketFactory().createSocket(socket, null, socket.getPort(), true);
             sslSocket.setSoTimeout((int) SO_TIMEOUT.multipliedBy(10).toMillis()); // TLS handshaking is resource intensive. Relax the SO_TIMEOUT value a bit, to prevent test failures in constraint environments.
+            sslSocket.setUseClientMode(true);
             sslSocket.addHandshakeCompletedListener(event -> log("SSL handshake completed: " + event));
-                sslSocket.startHandshake();
+            sslSocket.startHandshake();
 
             // Just indicate that we would like to authenticate the client but if client
             // certificates are self-signed or have no certificate chain then we are still
@@ -665,7 +664,8 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
             }
 
             log("Successfully authenticated using Server Dialback! We're done setting up a connection.");
-            done();
+            signalDone();
+            throw new InterruptedIOException("Server Dialback authentication completed; stop processing further inbound data.");
         }
 
         private boolean processSaslResponse(final Element result) throws IOException {

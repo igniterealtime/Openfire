@@ -270,7 +270,7 @@
         </p>
         <p>
         <label for="userJIDtf"><fmt:message key="muc.create.permission.add_jid" /></label>
-        <input type="text" name="userJID" size="30" maxlength="100" value="<%= (userJID != null ? userJID : "") %>"
+        <input type="text" name="userJID" size="30" maxlength="100" value="<%= StringUtils.escapeForXML(userJID != null ? userJID : "") %>"
          id="userJIDtf">
         <input type="submit" value="Add">
         </p>

@@ -1,0 +1,16 @@
+services:
+  db:
+    image: firebirdsql/firebird:5.0.3
+    ports:
+      - "3050:3050"
+    environment:
+      - FIREBIRD_DATABASE=openfire.fdb
+      - FIREBIRD_ROOT_PASSWORD=${CONNECTION_PASSWORD}
+    healthcheck:
+      test: [ "CMD-SHELL", "echo 'select 1 from rdb$$database;' | /opt/firebird/bin/isql -user SYSDBA -password $$FIREBIRD_ROOT_PASSWORD localhost/3050:/var/lib/firebird/data/$$FIREBIRD_DATABASE >/dev/null 2>&1" ]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+    volumes:
+      - ${GITHUB_WORKSPACE}/olddb:/var/lib/firebird/data
+

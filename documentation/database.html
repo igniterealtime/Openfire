@@ -28,7 +28,7 @@
         <p>
             JDBC drivers are required for Openfire to communicate with your database. Suggested drivers for particular
             databases are noted below where applicable. Openfire bundles JDBC drivers for MySQL, Oracle, PostgreSQL,
-            Microsoft SQL Server, and HSQLDB.
+            Microsoft SQL Server, Firebird, and HSQLDB.
         </p>
         <p>
             All supported database schemas can be found in the <code>resources/database</code> directory of the
@@ -48,6 +48,7 @@
                 <li><a href="#oracle">Oracle</a></li>
                 <li><a href="#sqlserver">Microsoft SQL Server</a></li>
                 <li><a href="#postgres">PostgreSQL</a></li>
+                <li><a href="#firebird">Firebird</a></li>
                 <li><a href="#db2">IBM DB2</a></li>
                 <li><a href="#hsql">HSQLDB</a></li>
             </ul>
@@ -327,6 +328,65 @@
             </p>
             <ul>
                 <li><a href="https://jdbc.postgresql.org/documentation/use/#connecting-to-the-database">Postgres Configuration and Connection documentation</a></li>
+            </ul>
+
+        </section>
+
+    </section>
+
+    <section id="firebird">
+
+        <h2>Firebird</h2>
+
+        <section id="firebird-jdbc-drivers">
+
+            <h3>JDBC Drivers</h3>
+
+            <p>
+                The JDBC driver for Firebird is bundled with Openfire, so you do not need to download and install a
+                separate driver.
+            </p>
+            <p>
+                In the Openfire web-based setup tool, use the following values:
+            </p>
+            <ul style="list-style: none">
+                <li><span class="short-tab">driver:</span> <code>org.firebirdsql.jdbc.FBDriver</code></li>
+                <li><span class="short-tab">server:</span> <code>jdbc:firebirdsql://HOSTNAME:PORT//ABSOLUTE_PATH_TO_DATABASE_FILE</code></li>
+            </ul>
+            <p>
+                where HOSTNAME, PORT and ABSOLUTE_PATH_TO_DATABASE_FILE are the values for your setup. The default
+                Firebird port is <code>3050</code>.
+            </p>
+
+        </section>
+
+        <section id="firebird-setup-instructions">
+
+            <h3>Setup Instructions</h3>
+
+            <ol>
+                <li>
+                    Create an empty Firebird database file that will be used by Openfire.
+                </li>
+                <li>
+                    Ensure the configured user has read/write permissions on that database file.
+                </li>
+                <li>
+                    Start the Openfire setup tool and configure the Firebird JDBC connection values.
+                </li>
+                <li>
+                    Openfire will automatically install the schema from <code>resources/database/openfire_firebird.sql</code>.
+                </li>
+            </ol>
+
+        </section>
+
+        <section id="firebird-further-help">
+
+            <h3>Further Help</h3>
+
+            <ul>
+                <li><a href="https://firebirdsql.github.io/jaybird-manual/jaybird_manual.html">Jaybird JDBC documentation</a></li>
             </ul>
 
         </section>

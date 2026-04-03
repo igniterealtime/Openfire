@@ -156,6 +156,7 @@
         </p>
         <dl>
             <dt>MySQL</dt><dd><code>jdbc:mysql://HOSTNAME:3306/DATABASENAME</code></dd>
+            <dt>MariaDB</dt><dd><code>jdbc:mariadb://HOSTNAME:3306/DATABASENAME</code></dd>
             <dt>Microsoft SQL Server</dt><dd><code>jdbc:sqlserver://HOSTNAME:1433;databaseName=DATABASENAME;applicationName=Openfire</code></dd>
             <dt>PostgreSQL</dt><dd><code>jdbc:postgresql://HOSTNAME:5432/DATABASENAME</code></dd>
         </dl>
@@ -173,6 +174,7 @@
         </p>
         <dl>
             <dt>MySQL</dt><dd><code>jdbc:mysql://PRIMARYHOSTNAME:3306,SECONDARYHOST:3306/DATABASENAME?failOverReadOnly=false</code></dd>
+            <dt>MariaDB</dt><dd><code>jdbc:mariadb://PRIMARYHOSTNAME:3306,SECONDARYHOST:3306/DATABASENAME</code></dd>
             <dt>Microsoft SQL Server</dt><dd><code>jdbc:sqlserver://HOSTNAME:1433;databaseName=DATABASENAME;applicationName=Openfire;multiSubnetFailover=true</code></dd>
             <dt>PostgreSQL</dt><dd><code>jdbc:postgresql://PRIMARYHOSTNAME:5432,SECONDARYHOSTNAME:5432/DATABASENAME?targetServerType=primary</code></dd>
         </dl>
@@ -183,6 +185,7 @@
 
             <ul>
                 <li><a href="https://dev.mysql.com/doc/connector-j/8.0/en/connector-j-multi-host-connections.html">MySQL Connector/J 8.0 Developer Guide: Multi-Host Connections</a></li>
+                <li><a href="https://mariadb.com/kb/en/failover-and-high-availability-with-mariadb-connector-j/">MariaDB Connector/J: Failover and High Availability</a></li>
                 <li><a href="https://learn.microsoft.com/en-us/sql/connect/jdbc/jdbc-driver-support-for-high-availability-disaster-recovery?view=sql-server-ver16">Microsoft SQL Server: JDBC driver support for High Availability, disaster recovery</a></li>
                 <li><a href="https://jdbc.postgresql.org/documentation/use/#connection-fail-over">PostgreSQL JDBC: Connection failover</a></li>
             </ul>

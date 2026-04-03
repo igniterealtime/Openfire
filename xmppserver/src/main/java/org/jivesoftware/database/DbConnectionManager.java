@@ -918,8 +918,13 @@ public class DbConnectionManager {
             databaseType = DatabaseType.sqlserver;
         }
 
-        // MySQL / MariaDB
-        else if (dbName.contains("mysql") || dbName.contains("maria")) {
+        // MariaDB properties (must be checked before MySQL, as MariaDB reports its product name as "MariaDB")
+        else if (dbName.contains("maria")) {
+            databaseType = DatabaseType.mariadb;
+        }
+
+        // MySQLproperties
+        else if (dbName.contains("mysql")) {
             databaseType = DatabaseType.mysql;
         }
 
@@ -1207,6 +1212,8 @@ public class DbConnectionManager {
         postgresql,
 
         mysql("rank"),
+
+        mariadb("rank"),
 
         hsqldb,
 

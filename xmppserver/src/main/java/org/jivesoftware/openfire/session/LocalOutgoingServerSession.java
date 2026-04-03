@@ -369,11 +369,11 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 final Throwable cause = ex instanceof CompletionException && ex.getCause() != null ? ex.getCause() : ex;
                 if (cause instanceof TimeoutException) {
                     // The teardown did not complete within the configured window. We cannot safely re-route.
-                    Log.warn("Timed out after {}s waiting for connection teardown to complete for {}; dropping stanza and returning error to sender. Packet: {}", timeoutSeconds, stanza.getTo(), stanza);
+                    Log.warn("Timed out after {}s waiting for connection teardown to complete for {}; dropping stanza and attempting to notify sender if appropriate. Packet: {}", timeoutSeconds, stanza.getTo(), stanza);
                     returnErrorToSenderAsync(stanza);
                 } else if (cause != null) {
-                    // Unexpected exception (e.g. CancellationException). Log with stack trace and return an error.
-                    Log.warn("Unexpected exception while waiting for connection teardown to complete for {}; dropping stanza and returning error to sender. Packet: {}", stanza.getTo(), stanza, cause);
+                    // Unexpected exception (e.g. CancellationException). Log with stack trace and attempt sender notification when appropriate.
+                    Log.warn("Unexpected exception while waiting for connection teardown to complete for {}; dropping stanza and attempting to notify sender if appropriate. Packet: {}", stanza.getTo(), stanza, cause);
                     returnErrorToSenderAsync(stanza);
                 } else {
                     // Teardown is complete. The route for this session has been removed. Delegate back to the packet

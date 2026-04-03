@@ -867,6 +867,11 @@ public class DbConnectionManager {
         String dbVersion   = metaData.getDatabaseProductVersion().toLowerCase(Locale.ROOT);
         String driverName  = metaData.getDriverName().toLowerCase(Locale.ROOT);
         int    driverMajor = metaData.getDriverMajorVersion();
+        String dbUrl = metaData.getURL();
+        if (dbUrl == null) {
+            dbUrl = "";
+        }
+        dbUrl = dbUrl.toLowerCase(Locale.ROOT);
 
         // Oracle
         if (dbName.contains("oracle")) {
@@ -889,9 +894,9 @@ public class DbConnectionManager {
         }
 
         // CockroachDB must be checked first: it is wire-protocol compatible with PostgreSQL and
-        // may report "postgresql" as the product name when accessed via the PostgreSQL JDBC driver,
-        // but always identifies itself via the version string.
-        else if (dbName.contains("cockroach") || dbVersion.contains("cockroach")) {
+        // may report "postgresql" as the product name when accessed via the PostgreSQL JDBC driver.
+        else if (dbName.contains("cockroach") || dbVersion.contains("cockroach") ||
+                isCockroachCompatiblePostgreSQLConnection(con, dbName, driverName, dbUrl)) {
             databaseType = DatabaseType.cockroachdb;
             scrollResultsSupported = false;
             fetchSizeSupported = false;
@@ -1080,6 +1085,31 @@ public class DbConnectionManager {
                 }
             }
         }
+    }
+
+    /**
+     * CockroachDB uses PostgreSQL wire protocol and often the PostgreSQL JDBC driver.
+     * If metadata is ambiguous, run a lightweight probe to prevent selecting PostgreSQL scripts.
+     */
+    private static boolean isCockroachCompatiblePostgreSQLConnection(Connection con, String dbName, String driverName, String dbUrl) {
+        final boolean likelyPostgreSqlCompatible =
+                dbName.contains("postgres") || driverName.contains("postgres") || dbUrl.startsWith("jdbc:postgresql:");
+        if (!likelyPostgreSqlCompatible) {
+            return false;
+        }
+
+        try (Statement stmt = con.createStatement();
+             ResultSet rs = stmt.executeQuery("SELECT version()")) {
+            if (rs.next()) {
+                final String version = rs.getString(1);
+                return version != null && version.toLowerCase().contains("cockroach");
+            }
+        }
+        catch (SQLException e) {
+            Log.debug("Unable to execute CockroachDB detection probe. Falling back to PostgreSQL detection.", e);
+        }
+
+        return false;
     }
 
     /**

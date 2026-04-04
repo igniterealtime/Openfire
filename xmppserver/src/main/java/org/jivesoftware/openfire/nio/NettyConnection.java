@@ -104,29 +104,48 @@ public class NettyConnection extends AbstractConnection
 
     @Override
     public byte[] getAddress() throws UnknownHostException {
-        final SocketAddress remoteAddress = channelHandlerContext.channel().remoteAddress();
-        if (remoteAddress == null) throw new UnknownHostException();
-        final InetSocketAddress socketAddress = (InetSocketAddress) remoteAddress;
+        final InetSocketAddress socketAddress = resolvePeerSocketAddress();
         final InetAddress address = socketAddress.getAddress();
+        if (address == null) {
+            throw new UnknownHostException();
+        }
         return address.getAddress();
     }
 
     @Override
     public String getHostAddress() throws UnknownHostException {
-        final SocketAddress remoteAddress = channelHandlerContext.channel().remoteAddress();
-        if (remoteAddress == null) throw new UnknownHostException();
-        final InetSocketAddress socketAddress = (InetSocketAddress) remoteAddress;
+        final InetSocketAddress socketAddress = resolvePeerSocketAddress();
         final InetAddress inetAddress = socketAddress.getAddress();
+        if (inetAddress == null) {
+            throw new UnknownHostException();
+        }
         return inetAddress.getHostAddress();
     }
 
     @Override
     public String getHostName() throws UnknownHostException {
-        final SocketAddress remoteAddress = channelHandlerContext.channel().remoteAddress();
-        if (remoteAddress == null) throw new UnknownHostException();
-        final InetSocketAddress socketAddress = (InetSocketAddress) remoteAddress;
+        final InetSocketAddress socketAddress = resolvePeerSocketAddress();
         final InetAddress inetAddress = socketAddress.getAddress();
+        if (inetAddress == null) {
+            throw new UnknownHostException();
+        }
         return inetAddress.getHostName();
+    }
+
+    private InetSocketAddress resolvePeerSocketAddress() throws UnknownHostException {
+        SocketAddress socketAddress = channelHandlerContext.channel().remoteAddress();
+        if (socketAddress instanceof InetSocketAddress inetSocketAddress) {
+            return inetSocketAddress;
+        }
+
+        if (channelHandlerContext.channel().parent() != null) {
+            socketAddress = channelHandlerContext.channel().parent().remoteAddress();
+            if (socketAddress instanceof InetSocketAddress inetSocketAddress) {
+                return inetSocketAddress;
+            }
+        }
+
+        throw new UnknownHostException();
     }
 
     @Override

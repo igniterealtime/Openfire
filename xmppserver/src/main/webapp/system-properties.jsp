@@ -22,6 +22,8 @@
 <jsp:useBean scope="request" id="successMessage" class="java.lang.String"/>
 <jsp:useBean scope="request" id="csrf" type="java.lang.String"/>
 <jsp:useBean scope="request" id="listPager" type="org.jivesoftware.util.ListPager"/>
+<%-- Refactor; disable inline JS in ListPager and use list-pager.js --%>
+<% listPager.setInlineJsDisabled(true); %>
 <jsp:useBean scope="request" id="search" type="org.jivesoftware.admin.servlet.SystemPropertiesServlet.Search"/>
 <jsp:useBean scope="request" id="plugins" type="java.util.List"/>
 
@@ -30,19 +32,20 @@
     <title><fmt:message key="server.properties.title"/></title>
     <meta name="pageID" content="server-props"/>
     <meta name="helpPage" content="manage_system_properties.html"/>
+    <script src="js/list-pager.js"></script>
+    <script src="js/system-properties.js"></script>
     <style>
         .nameColumn {
-            text-overflow: ellipsis;
-            overflow: hidden;
-            white-space: nowrap;
-            max-width: 200px;
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+            max-width: 250px;
         }
 
         .valueColumn {
-            text-overflow: ellipsis;
-            overflow: hidden;
-            white-space: nowrap;
             max-width: 250px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .hidden {
@@ -107,31 +110,29 @@
             <td nowrap>
                 <input type="search"
                        id="searchName"
-                       size="40"
+                       size="20"
                        value="<c:out value="${search.name}"/>"/>
                 <img src="images/search-16x16.png"
                      width="16" height="16"
                      class="clickable"
                      alt="Search" title="Search"
                      style="vertical-align: middle;"
-                     onclick="submitForm();"
                 >
             </td>
             <td nowrap>
                 <input type="search"
                        id="searchValue"
-                       size="40"
+                       size="20"
                        value="<c:out value="${search.value}"/>"/>
                 <img src="images/search-16x16.png"
                      width="16" height="16"
                      class="clickable"
                      alt="Search" title="Search"
                      style="vertical-align: middle;"
-                     onclick="submitForm();"
                 >
             </td>
             <td nowrap>
-                <select id="searchDefaultValue" onchange="submitForm();">
+                <select id="searchDefaultValue">
                     <option value="" <c:if test="${search.defaultValue == ''}">selected</c:if>><fmt:message key="server.properties.search_all"/></option>
                     <option value="unchanged" <c:if test="${search.defaultValue == 'unchanged'}">selected</c:if>><fmt:message key="server.properties.default.search_unchanged"/></option>
                     <option value="changed" <c:if test="${search.defaultValue == 'changed'}">selected</c:if>><fmt:message key="server.properties.default.search_changed"/></option>
@@ -139,7 +140,7 @@
                 </select>
             </td>
             <td nowrap>
-                <select id="searchPlugin" onchange="submitForm();">
+                <select id="searchPlugin">
                     <option value="" <c:if test="${search.plugin == ''}">selected</c:if>><fmt:message key="server.properties.search_all"/></option>
                     <option value="none" <c:if test="${search.plugin == 'none'}">selected</c:if>><fmt:message key="server.properties.search_none"/></option>
                     <c:forEach var="plugin" items="${plugins}">
@@ -157,11 +158,10 @@
                      class="clickable"
                      alt="Search" title="Search"
                      style="vertical-align: middle;"
-                     onclick="submitForm();"
                 >
             </td>
             <td nowrap style="text-align: center">
-                <select id="searchDynamic" onchange="submitForm();">
+                <select id="searchDynamic">
                     <option value="" <c:if test="${search.dynamic == ''}">selected</c:if>><fmt:message key="server.properties.search_all"/></option>
                     <option value="true" <c:if test="${search.dynamic == 'true'}">selected</c:if>><fmt:message key="server.properties.dynamic.search.true"/></option>
                     <option value="false" <c:if test="${search.dynamic == 'false'}">selected</c:if>><fmt:message key="server.properties.dynamic.search.false"/></option>
@@ -170,7 +170,7 @@
                 </select>
             </td>
             <td nowrap style="text-align: center">
-                <select id="searchSetByUser" onchange="submitForm();">
+                <select id="searchSetByUser">
                     <option value="" <c:if test="${search.setByUser == ''}">selected</c:if>><fmt:message key="server.properties.search_all"/></option>
                     <option value="true" <c:if test="${search.setByUser == 'true'}">selected</c:if>><fmt:message key="server.properties.setbyuser.search.true"/></option>
                     <option value="false" <c:if test="${search.setByUser == 'false'}">selected</c:if>><fmt:message key="server.properties.setbyuser.search.false"/></option>
@@ -208,7 +208,7 @@
                             <span class="hidden">none</span>
                         </c:when>
                         <c:otherwise>
-                            <span><c:out value="${property.valueAsSaved}"/></span>
+                            <span title="<c:out value="${property.valueAsSaved}"/>"><c:out value="${property.valueAsSaved}"/></span>
                             <c:if test="${property.valueAsSaved != property.displayValue}">
                                 (<c:out value="${property.displayValue}"/>)
                             </c:if>
@@ -224,7 +224,7 @@
                             <span class="hidden">none</span>
                         </c:when>
                         <c:otherwise>
-                            <c:out value="${property.defaultDisplayValue}"/>
+                            <span title="<c:out value="${property.defaultDisplayValue}"/>"><c:out value="${property.defaultDisplayValue}"/></span>
                         </c:otherwise>
                     </c:choose>
                 </td>
@@ -259,7 +259,9 @@
                     <img class="clickable"
                         src="images/edit-16x16.gif"
                         width="16" height="16"
-                        onclick="doEdit(this, <c:out value='${property.hidden}'/>, <c:out value='${property.encrypted}'/>, <c:out value='${property.displayValue == null}'/>)"
+                        data-hidden="<c:out value='${property.hidden}'/>"
+                        data-encrypted="<c:out value='${property.encrypted}'/>"
+                        data-null-value="<c:out value='${property.displayValue == null}'/>"
                         alt="<fmt:message key="server.properties.alt_edit"/>">
                 </td>
                 <td style="text-align:center">
@@ -272,7 +274,6 @@
                             <img class="clickable"
                                 src="images/add-16x16.gif"
                                 width="16" height="16"
-                                onclick="doEncrypt(this);"
                                 alt="<fmt:message key="server.properties.alt_encrypt"/>">
                         </c:otherwise>
                     </c:choose>
@@ -281,7 +282,6 @@
                     <img class="clickable"
                         src="images/delete-16x16.gif"
                         width="16" height="16"
-                        onclick="doDelete(this);"
                         alt="<fmt:message key="server.properties.alt_delete"/>">
                 </td>
             </tr>
@@ -290,7 +290,11 @@
     </table>
 </div>
 <p><fmt:message key="global.pages"/>: [ ${listPager.pageLinks} ]</p>
-${listPager.jumpToPageForm}
+<form id='paginationForm'
+      data-additional-form-fields='["searchName", "searchValue", "searchDefaultValue", "searchPlugin", "searchDescription", "searchDynamic", "searchSetByUser"]'
+      data-page-size='${listPager.pageSize}'>
+    ${listPager.hiddenFields}
+</form>
 
 <div class="jive-table">
     <table>
@@ -356,8 +360,8 @@ ${listPager.jumpToPageForm}
         <tfoot>
         <tr>
             <td colspan="2">
-                <input type="button" value="<fmt:message key="global.save_property" />" onclick="submitEditForm(true);">
-                <input type="button" value="<fmt:message key="global.cancel" />" onclick="submitEditForm(false);">
+                <input type="button" id="savePropertyBtn" value="<fmt:message key="global.save_property" />">
+                <input type="button" id="cancelPropertyBtn" value="<fmt:message key="global.cancel" />">
             </td>
         </tr>
         </tfoot>
@@ -365,86 +369,17 @@ ${listPager.jumpToPageForm}
 </div>
 
 
-<form method="post" id="actionForm">
-    <%=listPager.getHiddenFields()%>
+<fmt:message key="server.properties.encrypt_confirm" var="encryptConfirm"/>
+<fmt:message key="server.properties.delete_confirm" var="deleteConfirm"/>
+<form method="post" id="actionForm"
+      data-encrypt-confirm="<c:out value='${encryptConfirm}'/>"
+      data-delete-confirm="<c:out value='${deleteConfirm}'/>">
+    ${listPager.hiddenFields}
     <input type="hidden" name="csrf" value="<c:out value='${csrf}'/>">
     <input type="hidden" name="action">
     <input type="hidden" name="key">
     <input type="hidden" name="value">
     <input type="hidden" name="encrypt">
 </form>
-
-<script>
-    ${listPager.pageFunctions}
-
-    function getKey(imgObject) {
-        return imgObject.parentNode.parentNode.childNodes[1].childNodes[1].textContent;
-    }
-
-    function doEdit(imgObject, hidden, encrypted, nullValue) {
-        document.getElementById("editPropertyName").value = getKey(imgObject);
-        let valueField = document.getElementById("editPropertyValue");
-        if (encrypted || hidden || nullValue) {
-            valueField.value = "";
-        } else {
-            valueField.value = imgObject.parentNode.parentNode.childNodes[3].childNodes[1].textContent;
-        }
-
-        let defaultValueField = document.getElementById("defaultPropertyValue");
-        defaultValueField.innerText = imgObject.parentNode.parentNode.childNodes[5].childNodes[0].textContent.trim();
-
-        document.getElementById(encrypted ? "editPropertyEncryptTrue" : "editPropertyEncryptFalse").checked = true;
-        document.getElementById("newPropertyTitle").style.display = "none";
-        document.getElementById("editPropertyTitle").style.display = "";
-        valueField.focus();
-        valueField.selectionEnd = 0;
-        window.scrollTo(0, document.body.scrollHeight);
-    }
-
-    function doEncrypt(imgObject) {
-        if (confirm('<fmt:message key="server.properties.encrypt_confirm"/>')) {
-            submitActionForm("encrypt", getKey(imgObject));
-        }
-    }
-
-    function doDelete(imgObject) {
-        if (confirm('<fmt:message key="server.properties.delete_confirm"/>')) {
-            submitActionForm("delete", getKey(imgObject));
-        }
-    }
-
-    function submitEditForm(save) {
-        let action = save ? "save" : "cancel";
-        let key = document.getElementById("editPropertyName").value;
-        if (key.trim() === "") {
-            <%-- There's no need to submit the form --%>
-            return;
-        }
-        if (save) {
-            let value = document.getElementById("editPropertyValue").value;
-            let encrypt = document.getElementById("editPropertyEncryptTrue").checked;
-            submitActionForm(action, key, value, encrypt);
-        } else {
-            submitActionForm(action, key);
-        }
-    }
-
-    function submitActionForm(action, key, value, encrypt) {
-        let form = document.getElementById("actionForm");
-        form["action"].value = action;
-        form["key"].value = key;
-        if(typeof value !== "undefined") {
-            form["value"].value = value;
-        } else {
-            form["value"].disabled = true;
-        }
-        if(typeof encrypt !== "undefined") {
-            form["encrypt"].value = encrypt;
-        } else {
-            form["encrypt"].disabled = true;
-        }
-        form.submit();
-    }
-</script>
 </body>
 </html>

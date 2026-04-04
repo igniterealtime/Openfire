@@ -238,6 +238,7 @@ public class LocalOutgoingServerSessionTest
         AbstractRemoteServerDummy.log("Executing test:\n - Local Server (Initiator, Openfire, System under test) Settings: " + localServerSettings + "\n - Remote Server (Recipient, dummy/mock server) Settings: " + remoteServerSettings + "\nExpected outcome: " + expected.getConnectionState());
 
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
+        JiveGlobals.setProperty("xmpp.server.session.initialise-timeout", Long.toString(5));
         // Avoid CI jitter causing intermittent setup timeouts.
         JiveGlobals.setProperty("xmpp.server.session.initialise-timeout", Long.toString(10));
 

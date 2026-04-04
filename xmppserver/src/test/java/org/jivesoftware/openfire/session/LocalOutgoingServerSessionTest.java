@@ -204,6 +204,9 @@ public class LocalOutgoingServerSessionTest
         Fixtures.clearExistingProperties(
             Set.of(
                 "xmpp.domain",
+                "xmpp.server.session.initialise-timeout",
+                ConnectionSettings.Server.TLS_POLICY,
+                ConnectionSettings.Server.DIALBACK_ENABLED,
                 "xmpp.socket.netty.graceful-shutdown.quiet-period",
                 "xmpp.socket.netty.graceful-shutdown.timeout"
             ));
@@ -236,6 +239,8 @@ public class LocalOutgoingServerSessionTest
 
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
         JiveGlobals.setProperty("xmpp.server.session.initialise-timeout", Long.toString(5));
+        // Avoid CI jitter causing intermittent setup timeouts.
+        JiveGlobals.setProperty("xmpp.server.session.initialise-timeout", Long.toString(10));
 
         try {
             AbstractRemoteServerDummy.log("Setup fixture: (start setting up fixture)");

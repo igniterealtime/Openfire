@@ -301,16 +301,17 @@
                                 </c:if>
                                 <td>
                                     <c:choose>
-                                        <c:when test="${session.isUsingServerDialback()}">
+                                        <c:when test="${session.usingServerDialback}">
                                             <fmt:message key="server.session.details.dialback"/>
                                         </c:when>
-                                        <c:when test="${session.isUsingSaslExternal()}">
-                                            <fmt:message key="server.session.details.tlsauth"/>
+                                        <c:when test="${session.usingSaslExternal}">
+                                            <fmt:message key="server.session.details.sasl_external"/>
                                         </c:when>
                                         <c:otherwise>
                                             <fmt:message key="server.session.details.unknown"/>
                                         </c:otherwise>
                                     </c:choose>
+                                </td>
                                 <td><c:out value="${session.TLSProtocolName}"/></td>
                                 <td><c:out value="${session.cipherSuiteName}"/></td>
                                 <td ><fmt:formatDate type="both" value="${session.creationDate}"/></td>
@@ -366,16 +367,17 @@
                                 </c:if>
                                 <td >
                                     <c:choose>
-                                        <c:when test="${session.isUsingServerDialback()}">
+                                        <c:when test="${session.usingServerDialback}">
                                             <fmt:message key="server.session.details.dialback"/>
                                         </c:when>
-                                        <c:when test="${session.isUsingSaslExternal()}">
-                                            <fmt:message key="server.session.details.tlsauth"/>
+                                        <c:when test="${session.usingSaslExternal}">
+                                            <fmt:message key="server.session.details.sasl_external"/>
                                         </c:when>
                                         <c:otherwise>
                                             <fmt:message key="server.session.details.unknown"/>
                                         </c:otherwise>
                                     </c:choose>
+                                </td>
                                 <td><c:out value="${session.TLSProtocolName}"/></td>
                                 <td><c:out value="${session.cipherSuiteName}"/></td>
                                 <td ><fmt:formatDate type="both" value="${session.creationDate}"/></td>

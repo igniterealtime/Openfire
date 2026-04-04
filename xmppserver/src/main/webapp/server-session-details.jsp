@@ -268,6 +268,7 @@
                             <th><fmt:message key="server.session.details.authentication"/></th>
                             <th><fmt:message key="server.session.details.tls_version"/></th>
                             <th><fmt:message key="server.session.details.cipher"/></th>
+                            <th><fmt:message key="ports.port"/></th>
                             <th><fmt:message key="server.session.label.creation" /></th>
                             <th><fmt:message key="server.session.label.last_active" /></th>
                             <th><fmt:message key="server.session.details.incoming_statistics" /></th>
@@ -313,6 +314,14 @@
                                     </c:choose>
                                 <td><c:out value="${session.TLSProtocolName}"/></td>
                                 <td><c:out value="${session.cipherSuiteName}"/></td>
+                                <td>
+                                    <c:choose>
+                                        <c:when test="${session.hostPort gt 0}">
+                                            <c:out value="${session.hostPort}"/>
+                                        </c:when>
+                                        <c:otherwise>&nbsp;</c:otherwise>
+                                    </c:choose>
+                                </td>
                                 <td ><fmt:formatDate type="both" value="${session.creationDate}"/></td>
                                 <td ><fmt:formatDate type="both" value="${session.lastActiveDate}"/></td>
                                 <td style="text-align: center" ><fmt:formatNumber type="number" value="${session.numClientPackets}"/></td>
@@ -333,6 +342,7 @@
                             <th><fmt:message key="server.session.details.authentication"/></th>
                             <th><fmt:message key="server.session.details.tls_version"/></th>
                             <th><fmt:message key="server.session.details.cipher"/></th>
+                            <th><fmt:message key="ports.port"/></th>
                             <th><fmt:message key="server.session.label.creation" /></th>
                             <th><fmt:message key="server.session.label.last_active" /></th>
                             <th><fmt:message key="server.session.details.incoming_statistics" /></th>
@@ -378,6 +388,7 @@
                                     </c:choose>
                                 <td><c:out value="${session.TLSProtocolName}"/></td>
                                 <td><c:out value="${session.cipherSuiteName}"/></td>
+                                <td><c:out value="${session.hostPort}"/></td>
                                 <td ><fmt:formatDate type="both" value="${session.creationDate}"/></td>
                                 <td ><fmt:formatDate type="both" value="${session.lastActiveDate}"/></td>
                                 <td style="text-align: center" ><fmt:formatNumber type="number" value="${session.numClientPackets}"/></td>

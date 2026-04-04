@@ -137,10 +137,18 @@ public interface Connection extends Closeable {
     Certificate[] getPeerCertificates();
 
     /**
-     * Keeps track if the other peer of this session presented a self-signed certificate. When
-     * using self-signed certificate for server-2-server sessions then SASL EXTERNAL will not be
-     * used and instead server-dialback will be preferred for verifying the identify of the remote
-     * server.
+     * Returns the port of the peer.
+     * 
+     * @return the port of the peer, or 0 if not available.
+     */
+    default int getRemotePort() {
+        return 0;
+    }
+
+    /**
+     * Keeps track of whether the other peer of this session presented a self-signed certificate. When
+     * using a self-signed certificate for server-to-server sessions, SASL EXTERNAL will not be
+     * used and instead server dialback will be preferred for verifying the identity of the remote
      *
      * @param isSelfSigned true if the other peer presented a self-signed certificate.
      */

@@ -106,10 +106,7 @@ abstract class SocketReadingMode {
 
         // Offer stream features including SASL Mechanisms
         final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
-        final Element mechanisms = SASLAuthentication.getSASLMechanisms(socketReader.session);
-        if (mechanisms != null) {
-            features.add(mechanisms);
-        }
+        SASLAuthentication.addSASLMechanisms(features, socketReader.session);
         final List<Element> specificFeatures = socketReader.session.getAvailableStreamFeatures();
         if (specificFeatures != null) {
             for (final Element feature : specificFeatures) {
@@ -121,7 +118,7 @@ abstract class SocketReadingMode {
         socketReader.connection.deliverRawText(StringUtils.asUnclosedStream(document));
     }
 
-    protected boolean authenticateClient(Element doc) throws DocumentException, IOException,
+    protected boolean authenticateClient(Element doc, boolean usingSASL2) throws DocumentException, IOException,
             XmlPullParserException {
         // Ensure that connection was encrypted if TLS was required
         if (socketReader.connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required &&
@@ -133,7 +130,7 @@ abstract class SocketReadingMode {
         boolean isComplete = false;
         boolean success = false;
         while (!isComplete) {
-            SASLAuthentication.Status status = SASLAuthentication.handle(socketReader.session, doc);
+            SASLAuthentication.Status status = SASLAuthentication.handle(socketReader.session, doc, usingSASL2);
             if (status == SASLAuthentication.Status.needResponse) {
                 // Get the next answer since we are not done yet
                 doc = socketReader.reader.parseDocument().getRootElement();
@@ -145,6 +142,10 @@ abstract class SocketReadingMode {
             else {
                 isComplete = true;
                 success = status == SASLAuthentication.Status.authenticated;
+                if (success && usingSASL2) {
+                    Element features = generateFeatures();
+                    socketReader.session.deliverRawText(features.asXML());
+                }
             }
         }
         return success;
@@ -159,6 +160,13 @@ abstract class SocketReadingMode {
     protected void saslSuccessful() throws XmlPullParserException, IOException
     {
         final Document document = getStreamHeader();
+        final Element features = generateFeatures();
+        document.getRootElement().add(features);
+
+        socketReader.connection.deliverRawText(StringUtils.asUnclosedStream(document));
+    }
+
+    protected Element generateFeatures() {
         final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
 
         // Include specific features such as resource binding and session establishment for client sessions
@@ -168,9 +176,8 @@ abstract class SocketReadingMode {
                 features.add(feature);
             }
         }
-        document.getRootElement().add(features);
 
-        socketReader.connection.deliverRawText(StringUtils.asUnclosedStream(document));
+        return features;
     }
 
     /**
@@ -248,14 +255,8 @@ abstract class SocketReadingMode {
         final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
         document.getRootElement().add(features);
 
-        // Include SASL mechanisms only if client has not been authenticated
-        if (!socketReader.session.isAuthenticated()) {
-            // Include available SASL Mechanisms
-            final Element saslMechanisms = SASLAuthentication.getSASLMechanisms(socketReader.session);
-            if (saslMechanisms != null) {
-                features.add(saslMechanisms);
-            }
-        }
+        // Include available SASL Mechanisms
+        SASLAuthentication.addSASLMechanisms(features, socketReader.session);
         // Include specific features such as resource binding and session establishment for client sessions.
         final List<Element> specificFeatures = socketReader.session.getAvailableStreamFeatures();
         if (specificFeatures != null) {

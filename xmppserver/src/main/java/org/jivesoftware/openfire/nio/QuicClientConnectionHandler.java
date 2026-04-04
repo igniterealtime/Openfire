@@ -17,6 +17,9 @@
 package org.jivesoftware.openfire.nio;
 
 import io.netty.channel.ChannelHandlerContext;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.net.ClientStanzaHandler;
+import org.jivesoftware.openfire.net.QuicClientStanzaHandler;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 
 /**
@@ -24,9 +27,17 @@ import org.jivesoftware.openfire.spi.ConnectionConfiguration;
  */
 public class QuicClientConnectionHandler extends NettyClientConnectionHandler
 {
+    private final QuicSessionStreamRouter streamRouter;
+
     public QuicClientConnectionHandler(final ConnectionConfiguration configuration)
     {
+        this(configuration, null);
+    }
+
+    public QuicClientConnectionHandler(final ConnectionConfiguration configuration, final QuicSessionStreamRouter streamRouter)
+    {
         super(configuration);
+        this.streamRouter = streamRouter;
     }
 
     @Override
@@ -34,6 +45,18 @@ public class QuicClientConnectionHandler extends NettyClientConnectionHandler
     {
         final NettyConnection connection = super.createNettyConnection(ctx);
         connection.setEncrypted(true); // QUIC always runs on top of TLS.
+        if (streamRouter != null) {
+            streamRouter.registerInboundConnection(connection);
+        }
         return connection;
+    }
+
+    @Override
+    ClientStanzaHandler createStanzaHandler(final NettyConnection connection)
+    {
+        if (streamRouter == null) {
+            return super.createStanzaHandler(connection);
+        }
+        return new QuicClientStanzaHandler(XMPPServer.getInstance().getPacketRouter(), connection, streamRouter);
     }
 }

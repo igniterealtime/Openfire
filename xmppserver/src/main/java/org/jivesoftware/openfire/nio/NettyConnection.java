@@ -104,6 +104,11 @@ public class NettyConnection extends AbstractConnection
         return channelHandlerContext.channel().remoteAddress();
     }
 
+    Channel getChannel()
+    {
+        return channelHandlerContext.channel();
+    }
+
     @Override
     public byte[] getAddress() throws UnknownHostException {
         final InetSocketAddress socketAddress = resolvePeerSocketAddress();
@@ -218,6 +223,8 @@ public class NettyConnection extends AbstractConnection
             Log.trace("Closing {} with optional error: {}", this, error);
 
             ChannelFuture f;
+            final QuicSessionStreamRouter quicSessionStreamRouter = QuicSessionStreamRouter.find(channelHandlerContext.channel());
+            final boolean closeSession = quicSessionStreamRouter == null || quicSessionStreamRouter.shouldCloseSessionOnStreamClose(this);
 
             if (session != null) {
                 // If the stream was ended because of an error, it should not be possible to resume it (OF-2751).
@@ -225,8 +232,10 @@ public class NettyConnection extends AbstractConnection
                     session.getStreamManager().formalClose();
                 }
 
-                // Ensure that the state of this connection, its session and the Netty Channel are eventually closed.
-                session.setStatus(Session.Status.CLOSED);
+                if (closeSession) {
+                    // Ensure that the state of this connection, its session and the Netty Channel are eventually closed.
+                    session.setStatus(Session.Status.CLOSED);
+                }
 
                 // Only attempt to write the stream close if the channel is still active. If connectivity was lost
                 // (e.g., the socket was closed by the peer or a network error), the channel will already be inactive
@@ -297,6 +306,15 @@ public class NettyConnection extends AbstractConnection
 
     @Override
     public void deliver(Packet packet) throws UnauthorizedException {
+        final QuicSessionStreamRouter quicSessionStreamRouter = QuicSessionStreamRouter.find(channelHandlerContext.channel());
+        if (quicSessionStreamRouter != null && !isClosed()) {
+            final boolean delivered = quicSessionStreamRouter.writeStanza(packet, packet.getElement().asXML());
+            if (delivered) {
+                session.incrementServerPacketCount();
+                return;
+            }
+        }
+
         if (isClosed()) {
             if (backupDeliverer != null) {
                 backupDeliverer.deliver(packet);

@@ -94,8 +94,15 @@ public final class ConnectionSettings {
         public static final String QUIC_AUTH_PER_CLIENTCERT_POLICY = "xmpp.quic.client.cert.policy";
         public static final SystemProperty<Integer> QUIC_MAX_STREAMS = SystemProperty.Builder.ofType(Integer.class)
             .setKey("xmpp.quic.client.max-streams")
-            .setDefaultValue(1)
+            .setDefaultValue(25)
             .setMinValue(1)
+            .setDynamic(Boolean.TRUE)
+            .build();
+
+        public static final SystemProperty<Integer> QUIC_MAX_OUTBOUND_STREAMS = SystemProperty.Builder.ofType(Integer.class)
+            .setKey("xmpp.quic.client.max-outbound-streams")
+            .setDefaultValue(20)
+            .setMinValue(0)
             .setDynamic(Boolean.TRUE)
             .build();
 

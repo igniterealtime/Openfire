@@ -43,6 +43,7 @@ import org.jivesoftware.openfire.nio.NettyConnectionHandler;
 import org.jivesoftware.openfire.nio.NettyXMPPDecoder;
 import org.jivesoftware.openfire.nio.NewConnectionRateLimitHandler;
 import org.jivesoftware.openfire.nio.QuicClientConnectionHandler;
+import org.jivesoftware.openfire.nio.QuicSessionStreamRouter;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.util.NamedThreadFactory;
 import org.jivesoftware.util.SystemProperty;
@@ -127,7 +128,8 @@ public class QuicConnectionAcceptor extends ConnectionAcceptor
                             return;
                         }
 
-                        final QuicClientConnectionHandler businessLogicHandler = new QuicClientConnectionHandler(configuration);
+                        final QuicSessionStreamRouter streamRouter = QuicSessionStreamRouter.getOrCreate(channel.parent());
+                        final QuicClientConnectionHandler businessLogicHandler = new QuicClientConnectionHandler(configuration, streamRouter);
                         final Duration maxIdleTimeBeforeClosing = businessLogicHandler.getMaxIdleTime().isNegative()
                             ? Duration.ZERO
                             : businessLogicHandler.getMaxIdleTime();

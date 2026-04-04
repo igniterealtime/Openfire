@@ -173,6 +173,7 @@
                     <ul>
                         <li>PostgreSQL: <code>pg_dump openfire &gt; openfire_backup.sql</code></li>
                         <li>MySQL: <code>mysqldump openfire &gt; openfire_backup.sql</code></li>
+                        <li>MariaDB: <code>mariadb-dump openfire &gt; openfire_backup.sql</code></li>
                         <li>Embedded HSQLDB: <code>cp -r embedded-db/ embedded-db.backup/</code></li>
                     </ul>
                     <p>
@@ -293,6 +294,7 @@ cp /opt/openfire/conf/openfire.xml /opt/openfire/conf/openfire.xml.backup</pre>
                     <ul>
                         <li>PostgreSQL: <code>psql openfire &lt; openfire_backup.sql</code></li>
                         <li>MySQL: <code>mysql openfire &lt; openfire_backup.sql</code></li>
+                        <li>MariaDB: <code>mariadb openfire &lt; openfire_backup.sql</code></li>
                         <li>Embedded HSQLDB: <code>rm -rf embedded-db/ && cp -r embedded-db.backup/ embedded-db/</code></li>
                     </ul>
                 </li>
@@ -431,6 +433,7 @@ systemctl stop openfire  # On Node 3
                     <ul>
                         <li>PostgreSQL: <code>pg_dump openfire &gt; openfire_backup.sql</code></li>
                         <li>MySQL: <code>mysqldump openfire &gt; openfire_backup.sql</code></li>
+                        <li>MariaDB: <code>mariadb-dump openfire &gt; openfire_backup.sql</code></li>
                     </ul>
 
                     <p>Backup <code>security.xml</code> and <code>openfire.xml</code> on all nodes:</p>
@@ -680,6 +683,7 @@ systemctl start openfire  # On Node 3
                     <ul>
                         <li>PostgreSQL: <code>psql openfire &lt; openfire_backup.sql</code></li>
                         <li>MySQL: <code>mysql openfire &lt; openfire_backup.sql</code></li>
+                        <li>MariaDB: <code>mariadb openfire &lt; openfire_backup.sql</code></li>
                     </ul>
                 </li>
 

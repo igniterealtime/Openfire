@@ -19,6 +19,8 @@ package org.jivesoftware.openfire.nio;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.Channel;
+import io.netty.handler.codec.quic.QuicChannel;
 import io.netty.handler.codec.compression.JZlibDecoder;
 import io.netty.handler.codec.compression.JZlibEncoder;
 import io.netty.handler.ssl.SslContext;
@@ -133,13 +135,15 @@ public class NettyConnection extends AbstractConnection
     }
 
     private InetSocketAddress resolvePeerSocketAddress() throws UnknownHostException {
-        SocketAddress socketAddress = channelHandlerContext.channel().remoteAddress();
-        if (socketAddress instanceof InetSocketAddress inetSocketAddress) {
-            return inetSocketAddress;
-        }
+        for (Channel channel = channelHandlerContext.channel(); channel != null; channel = channel.parent()) {
+            if (channel instanceof QuicChannel quicChannel) {
+                final SocketAddress remoteSocketAddress = quicChannel.remoteSocketAddress();
+                if (remoteSocketAddress instanceof InetSocketAddress inetSocketAddress) {
+                    return inetSocketAddress;
+                }
+            }
 
-        if (channelHandlerContext.channel().parent() != null) {
-            socketAddress = channelHandlerContext.channel().parent().remoteAddress();
+            final SocketAddress socketAddress = channel.remoteAddress();
             if (socketAddress instanceof InetSocketAddress inetSocketAddress) {
                 return inetSocketAddress;
             }

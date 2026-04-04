@@ -17,6 +17,7 @@ package org.jivesoftware.openfire.nio;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.quic.QuicChannel;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.InvocationHandler;
@@ -38,7 +39,7 @@ public class NettyConnectionTest
     {
         final NettyConnection connection = createConnection(
             new InetSocketAddress("203.0.113.10", 31337),
-            null
+            (SocketAddress) null
         );
 
         assertEquals("203.0.113.10", connection.getHostAddress());
@@ -58,6 +59,19 @@ public class NettyConnectionTest
     }
 
     @Test
+    public void shouldResolveAddressFromQuicChannelRemoteSocketAddress() throws Exception
+    {
+        final Channel quicParent = createQuicParentChannel(
+            new QuicStreamSocketAddress(),
+            new InetSocketAddress("192.0.2.90", 5222)
+        );
+        final NettyConnection connection = createConnection(new QuicStreamSocketAddress(), quicParent);
+
+        assertEquals("192.0.2.90", connection.getHostAddress());
+        assertArrayEquals(InetAddress.getByName("192.0.2.90").getAddress(), connection.getAddress());
+    }
+
+    @Test
     public void shouldThrowUnknownHostWhenNoInetSocketAddressIsAvailable()
     {
         final NettyConnection connection = createConnection(
@@ -73,9 +87,27 @@ public class NettyConnectionTest
     private NettyConnection createConnection(final SocketAddress remoteAddress, final SocketAddress parentRemoteAddress)
     {
         final Channel parent = parentRemoteAddress == null ? null : createChannel(parentRemoteAddress, null);
+        return createConnection(remoteAddress, parent);
+    }
+
+    private NettyConnection createConnection(final SocketAddress remoteAddress, final Channel parent)
+    {
         final Channel channel = createChannel(remoteAddress, parent);
         final ChannelHandlerContext context = createContext(channel);
         return new NettyConnection(context, null, null);
+    }
+
+    private Channel createQuicParentChannel(final SocketAddress remoteAddress, final SocketAddress remoteSocketAddress)
+    {
+        return createProxy(new Class[] {QuicChannel.class}, (proxy, method, args) -> {
+            if ("remoteAddress".equals(method.getName())) {
+                return remoteAddress;
+            }
+            if ("remoteSocketAddress".equals(method.getName())) {
+                return remoteSocketAddress;
+            }
+            return defaultValue(method);
+        });
     }
 
     private Channel createChannel(final SocketAddress remoteAddress, final Channel parent)
@@ -99,7 +131,12 @@ public class NettyConnectionTest
 
     private <T> T createProxy(final Class<T> type, final InvocationHandler invocationHandler)
     {
-        return type.cast(Proxy.newProxyInstance(type.getClassLoader(), new Class[] {type}, invocationHandler));
+        return createProxy(new Class[] {type}, invocationHandler);
+    }
+
+    private <T> T createProxy(final Class[] types, final InvocationHandler invocationHandler)
+    {
+        return (T) Proxy.newProxyInstance(types[0].getClassLoader(), types, invocationHandler);
     }
 
     private Object defaultValue(final Method method)
@@ -142,5 +179,10 @@ public class NettyConnectionTest
             return '\0';
         }
         return null;
+    }
+
+    private static final class QuicStreamSocketAddress extends SocketAddress
+    {
+        private static final long serialVersionUID = 1L;
     }
 }

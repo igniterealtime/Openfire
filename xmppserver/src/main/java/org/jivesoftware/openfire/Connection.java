@@ -146,10 +146,9 @@ public interface Connection extends Closeable {
     }
 
     /**
-     * Keep track if the other peer of this session presented a self-signed certificate. When
-     * using self-signed certificate for server-2-server sessions then SASL EXTERNAL will not be
-     * used and instead server-dialback will be preferred for verifying the identify of the remote
-     * server.
+     * Keeps track of whether the other peer of this session presented a self-signed certificate. When
+     * using a self-signed certificate for server-to-server sessions, SASL EXTERNAL will not be
+     * used and instead server dialback will be preferred for verifying the identity of the remote
      *
      * @param isSelfSigned true if the other peer presented a self-signed certificate.
      */

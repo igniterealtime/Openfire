@@ -314,7 +314,14 @@
                                     </c:choose>
                                 <td><c:out value="${session.TLSProtocolName}"/></td>
                                 <td><c:out value="${session.cipherSuiteName}"/></td>
-                                <td><c:out value="${session.hostPort}"/></td>
+                                <td>
+                                    <c:choose>
+                                        <c:when test="${session.hostPort gt 0}">
+                                            <c:out value="${session.hostPort}"/>
+                                        </c:when>
+                                        <c:otherwise>&nbsp;</c:otherwise>
+                                    </c:choose>
+                                </td>
                                 <td ><fmt:formatDate type="both" value="${session.creationDate}"/></td>
                                 <td ><fmt:formatDate type="both" value="${session.lastActiveDate}"/></td>
                                 <td style="text-align: center" ><fmt:formatNumber type="number" value="${session.numClientPackets}"/></td>

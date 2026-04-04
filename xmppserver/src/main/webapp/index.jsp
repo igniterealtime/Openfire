@@ -493,6 +493,7 @@
             <%
                 final String typeName = switch (connectionListener.getType()) {
                     case SOCKET_C2S -> LocaleUtils.getLocalizedString("ports.client_to_server");
+                    case QUIC_C2S -> LocaleUtils.getLocalizedString("ports.client_to_server_quic");
                     case SOCKET_S2S -> LocaleUtils.getLocalizedString("ports.server_to_server");
                     case COMPONENT  -> LocaleUtils.getLocalizedString("ports.external_components");
                     case WEBADMIN   -> LocaleUtils.getLocalizedString("ports.admin_console");
@@ -516,6 +517,13 @@
                     <fmt:message key="ports.client_to_server.desc_old_ssl"/>
                     <fmt:message key="ports.directtls.desc">
                         <fmt:param><a href='connection-settings-socket-c2s.jsp'></fmt:param>
+                        <fmt:param></a></fmt:param>
+                    </fmt:message>
+                </c:when>
+                <c:when test="${connectionListener.type eq 'QUIC_C2S'}">
+                    <fmt:message key="ports.client_to_server_quic.desc"/>
+                    <fmt:message key="ports.directtls.desc">
+                        <fmt:param><a href='connection-settings-quic-c2s.jsp'></fmt:param>
                         <fmt:param></a></fmt:param>
                     </fmt:message>
                 </c:when>

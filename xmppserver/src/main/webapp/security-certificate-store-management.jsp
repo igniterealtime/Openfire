@@ -217,6 +217,7 @@
             <c:set var="title">
                 <c:choose>
                     <c:when test="${connectionType eq 'SOCKET_C2S'}"><fmt:message key="ssl.certificates.store-management.socket-c2s-stores.title"/></c:when>
+                    <c:when test="${connectionType eq 'QUIC_C2S'}"><fmt:message key="ssl.certificates.store-management.quic-c2s-stores.title"/></c:when>
                     <c:when test="${connectionType eq 'SOCKET_S2S'}"><fmt:message key="ssl.certificates.store-management.socket-s2s-stores.title"/></c:when>
                     <c:when test="${connectionType eq 'BOSH_C2S'}"><fmt:message key="ssl.certificates.store-management.bosh-c2s-stores.title"/></c:when>
                     <c:when test="${connectionType eq 'WEBADMIN'}"><fmt:message key="ssl.certificates.store-management.admin-console-stores.title"/></c:when>
@@ -228,6 +229,7 @@
             <c:set var="description">
                 <c:choose>
                     <c:when test="${connectionType eq 'SOCKET_C2S'}"><fmt:message key="ssl.certificates.store-management.socket-c2s-stores.info"/></c:when>
+                    <c:when test="${connectionType eq 'QUIC_C2S'}"><fmt:message key="ssl.certificates.store-management.quic-c2s-stores.info"/></c:when>
                     <c:when test="${connectionType eq 'SOCKET_S2S'}"><fmt:message key="ssl.certificates.store-management.socket-s2s-stores.info"/></c:when>
                     <c:when test="${connectionType eq 'BOSH_C2S'}"><fmt:message key="ssl.certificates.store-management.bosh-c2s-stores.info"/></c:when>
                     <c:when test="${connectionType eq 'WEBADMIN'}"><fmt:message key="ssl.certificates.store-management.admin-console-stores.info"/></c:when>

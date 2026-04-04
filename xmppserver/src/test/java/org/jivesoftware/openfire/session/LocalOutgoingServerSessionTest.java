@@ -204,9 +204,6 @@ public class LocalOutgoingServerSessionTest
         Fixtures.clearExistingProperties(
             Set.of(
                 "xmpp.domain",
-                "xmpp.server.session.initialise-timeout",
-                ConnectionSettings.Server.TLS_POLICY,
-                ConnectionSettings.Server.DIALBACK_ENABLED,
                 "xmpp.socket.netty.graceful-shutdown.quiet-period",
                 "xmpp.socket.netty.graceful-shutdown.timeout"
             ));

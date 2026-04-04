@@ -269,7 +269,7 @@ public class ListPager<T> {
     public String getPageSizeSelection() {
         final StringBuilder sb = new StringBuilder();
         sb.append(String.format("<select name='%s'%s>", REQUEST_PARAMETER_KEY_PAGE_SIZE, inlineJsDisabled ? ""
-                : String.format(" onchange='return setPageSize(this.value);'", REQUEST_PARAMETER_KEY_PAGE_SIZE)));
+                : " onchange='return setPageSize(this.value);'"));
         for (final int optionSize : PAGE_SIZES) {
             sb.append(String.format("<option value='%d'%s>%d</option>", optionSize,
                     pageSize == optionSize ? " selected" : "", optionSize));

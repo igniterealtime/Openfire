@@ -142,19 +142,5 @@
             cancelBtn.addEventListener('click', () => submitEditForm(false));
         }
 
-        // Global keydown for Enter on search inputs
-        const searchInputs = ["searchName", "searchValue", "searchDescription"];
-        searchInputs.forEach(id => {
-            const input = document.getElementById(id);
-            if (input) {
-                input.addEventListener('keydown', function(e) {
-                    if (e.keyCode === 13) {
-                        if (typeof ListPager !== 'undefined') {
-                            ListPager.submitForm();
-                        }
-                    }
-                });
-            }
-        });
     });
 })();

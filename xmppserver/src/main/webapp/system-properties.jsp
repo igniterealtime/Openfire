@@ -22,6 +22,8 @@
 <jsp:useBean scope="request" id="successMessage" class="java.lang.String"/>
 <jsp:useBean scope="request" id="csrf" type="java.lang.String"/>
 <jsp:useBean scope="request" id="listPager" type="org.jivesoftware.util.ListPager"/>
+<%-- Refactor; disable inline JS in ListPager and use list-pager.js --%>
+<% listPager.setInlineJsDisabled(true); %>
 <jsp:useBean scope="request" id="search" type="org.jivesoftware.admin.servlet.SystemPropertiesServlet.Search"/>
 <jsp:useBean scope="request" id="plugins" type="java.util.List"/>
 
@@ -367,9 +369,11 @@
 </div>
 
 
+<fmt:message key="server.properties.encrypt_confirm" var="encryptConfirm"/>
+<fmt:message key="server.properties.delete_confirm" var="deleteConfirm"/>
 <form method="post" id="actionForm"
-      data-encrypt-confirm="<fmt:message key="server.properties.encrypt_confirm"/>"
-      data-delete-confirm="<fmt:message key="server.properties.delete_confirm"/>">
+      data-encrypt-confirm="<c:out value='${encryptConfirm}'/>"
+      data-delete-confirm="<c:out value='${deleteConfirm}'/>">
     ${listPager.hiddenFields}
     <input type="hidden" name="csrf" value="<c:out value='${csrf}'/>">
     <input type="hidden" name="action">
@@ -377,7 +381,5 @@
     <input type="hidden" name="value">
     <input type="hidden" name="encrypt">
 </form>
-<%-- Refactor; disable inline JS in ListPager and use list-pager.js --%>
-<% listPager.setInlineJsDisabled(true); %>
 </body>
 </html>

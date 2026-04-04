@@ -92,6 +92,7 @@ public class NettyServerInitializer extends ChannelInitializer<SocketChannel> {
 
         // Add pipeline handlers.
         ch.pipeline()
+            .addFirst("rateLimitHandler", new NewConnectionRateLimitHandler(configuration.getType()))
             .addLast(TRAFFIC_HANDLER_NAME, new ChannelTrafficShapingHandler(0))
             .addLast("idleStateHandler", new IdleStateHandler(maxIdleTimeBeforeClosing.dividedBy(2).toMillis(), 0, 0, TimeUnit.MILLISECONDS))
             .addLast("keepAliveHandler", new NettyIdleStateKeepAliveHandler(isClientConnection))

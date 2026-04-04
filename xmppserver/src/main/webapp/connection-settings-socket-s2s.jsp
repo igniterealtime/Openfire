@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2016-2025 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2016-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@
 <%@ page import="org.jivesoftware.openfire.server.RemoteServerConfiguration" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.jivesoftware.openfire.ConnectionManager" %>
+<%@ page import="org.jivesoftware.openfire.ratelimit.NewConnectionLimiterRegistry" %>
 <%@ page errorPage="error.jsp" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
@@ -70,27 +71,69 @@
 
     if ( update && errors.isEmpty() )
     {
-        // plaintext
-        final boolean plaintextEnabled = ParamUtils.getBooleanParameter( request, "plaintext-enabled" );
-        final int plaintextTcpPort = ParamUtils.getIntParameter( request, "plaintext-tcpPort", plaintextConfiguration.getPort() );
+        final boolean s2sRateLimitEnabled = ParamUtils.getBooleanParameter(request, "ratelimit-enabled");
+        final String requestedPermits = ParamUtils.getParameter(request, "ratelimit-permits");
+        final String requestedMaxBurst = ParamUtils.getParameter(request, "ratelimit-max-burst");
+        String s2sRateLimitPermits = String.valueOf(NewConnectionLimiterRegistry.S2S_PERMITS_PER_SECOND.getValue());
+        String s2sRateLimitMaxBurst = String.valueOf(NewConnectionLimiterRegistry.S2S_MAX_BURST.getValue());
+        if (requestedPermits != null) {
+            s2sRateLimitPermits = requestedPermits.trim();
+        }
+        if (requestedMaxBurst != null) {
+            s2sRateLimitMaxBurst = requestedMaxBurst.trim();
+        }
 
-        // Direct TLS
-        final boolean directtlsEnabled      = ParamUtils.getBooleanParameter( request, "directtls-enabled" );
-        final int directtlsTcpPort          = ParamUtils.getIntParameter( request, "directtls-tcpPort", directtlsConfiguration.getPort() );
+        int parsedPermits = 0;
+        int parsedMaxBurst = 0;
+        try {
+            parsedPermits = Integer.parseInt(s2sRateLimitPermits);
+            if (parsedPermits <= 0) {
+                errors.put("ratelimit-permits", "invalid");
+            }
+        }
+        catch (final Exception e)
+        {
+            errors.put("ratelimit-permits", "invalid");
+        }
+        try {
+            parsedMaxBurst = Integer.parseInt(s2sRateLimitMaxBurst);
+            if (parsedMaxBurst <= 0) {
+                errors.put("ratelimit-max-burst", "invalid");
+            }
+        }
+        catch (final Exception e)
+        {
+            errors.put("ratelimit-max-burst", "invalid");
+        }
 
-        // Apply
-        final ConnectionListener plaintextListener = manager.getListener( connectionType, false );
-        final ConnectionListener directtlsListener = manager.getListener( connectionType, true  );
+        if (errors.isEmpty()) {
+            // plaintext
+            final boolean plaintextEnabled = ParamUtils.getBooleanParameter( request, "plaintext-enabled" );
+            final int plaintextTcpPort = ParamUtils.getIntParameter( request, "plaintext-tcpPort", plaintextConfiguration.getPort() );
 
-        plaintextListener.enable( plaintextEnabled );
-        plaintextListener.setPort( plaintextTcpPort );
+            // Direct TLS
+            final boolean directtlsEnabled      = ParamUtils.getBooleanParameter( request, "directtls-enabled" );
+            final int directtlsTcpPort          = ParamUtils.getIntParameter( request, "directtls-tcpPort", directtlsConfiguration.getPort() );
 
-        directtlsListener.enable( directtlsEnabled );
-        directtlsListener.setPort( directtlsTcpPort );
+            // Apply
+            final ConnectionListener plaintextListener = manager.getListener( connectionType, false );
+            final ConnectionListener directtlsListener = manager.getListener( connectionType, true  );
 
-        // Log the event
-        webManager.logEvent( "Updated connection settings for " + connectionType, "plain: enabled=" + plaintextEnabled + ", port=" + plaintextTcpPort + "\nDirect TLS: enabled=" + directtlsEnabled+ ", port=" + directtlsTcpPort+ "\n" );
-        response.sendRedirect( "connection-settings-socket-s2s.jsp?success=update" );
+            plaintextListener.enable( plaintextEnabled );
+            plaintextListener.setPort( plaintextTcpPort );
+
+            directtlsListener.enable( directtlsEnabled );
+            directtlsListener.setPort( directtlsTcpPort );
+
+            NewConnectionLimiterRegistry.S2S_PERMITS_PER_SECOND.setValue(parsedPermits);
+            NewConnectionLimiterRegistry.S2S_MAX_BURST.setValue(parsedMaxBurst);
+            NewConnectionLimiterRegistry.S2S_ENABLED.setValue(s2sRateLimitEnabled);
+
+            // Log the event
+            webManager.logEvent( "Updated connection settings for " + connectionType, "plain: enabled=" + plaintextEnabled + ", port=" + plaintextTcpPort + "\nDirect TLS: enabled=" + directtlsEnabled+ ", port=" + directtlsTcpPort+ "\nRate limit: enabled=" + s2sRateLimitEnabled + ", permits_per_second=" + parsedPermits + ", max_burst=" + parsedMaxBurst + "\n" );
+            response.sendRedirect( "connection-settings-socket-s2s.jsp?success=update" );
+            return;
+        }
     }
     else if ( permissionUpdate && errors.isEmpty() )
     {
@@ -98,6 +141,7 @@
         RemoteServerManager.setPermissionPolicy(permissionFilter);
         webManager.logEvent( "Updated s2s permission policy to: " + permissionFilter, null);
         response.sendRedirect( "connection-settings-socket-s2s.jsp?success=update" );
+        return;
     }
     else if ( closeSettings && errors.isEmpty() )
     {
@@ -238,6 +282,9 @@
 
     pageContext.setAttribute( "allowedServers", RemoteServerManager.getAllowedServers() );
     pageContext.setAttribute( "blockedServers", RemoteServerManager.getBlockedServers() );
+    pageContext.setAttribute( "s2sRateLimitEnabled", NewConnectionLimiterRegistry.S2S_ENABLED.getValue() );
+    pageContext.setAttribute( "s2sRateLimitPermits", NewConnectionLimiterRegistry.S2S_PERMITS_PER_SECOND.getValue() );
+    pageContext.setAttribute( "s2sRateLimitMaxBurst", NewConnectionLimiterRegistry.S2S_MAX_BURST.getValue() );
 %>
 <html>
 <head>
@@ -260,20 +307,25 @@
         </admin:infoBox>
     </c:when>
     <c:otherwise>
+        <c:if test="${not empty errors['csrf']}">
+            <admin:infobox type="error"><fmt:message key="admin.error"/>: <c:out value="${errors['csrf']}"/></admin:infobox>
+        </c:if>
         <c:forEach var="err" items="${errors}">
-            <admin:infobox type="error">
-                <c:choose>
-                    <c:when test="${err.key eq 'idletime'}"><fmt:message key="server2server.settings.valid.idle_minutes"/></c:when>
-                    <c:when test="${err.key eq 'domain'}"><fmt:message key="server2server.settings.valid.domain"/></c:when>
-                    <c:when test="${err.key eq 'remotePort'}"><fmt:message key="server2server.settings.valid.remotePort"/></c:when>
-                    <c:otherwise>
-                        <c:if test="${not empty err.value}">
-                            <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
-                        </c:if>
-                        (<c:out value="${err.key}"/>)
-                    </c:otherwise>
-                </c:choose>
-            </admin:infobox>
+            <c:if test="${err.key ne 'csrf' and err.key ne 'ratelimit-permits' and err.key ne 'ratelimit-max-burst'}">
+                <admin:infobox type="error">
+                    <c:choose>
+                        <c:when test="${err.key eq 'idletime'}"><fmt:message key="server2server.settings.valid.idle_minutes"/></c:when>
+                        <c:when test="${err.key eq 'domain'}"><fmt:message key="server2server.settings.valid.domain"/></c:when>
+                        <c:when test="${err.key eq 'remotePort'}"><fmt:message key="server2server.settings.valid.remotePort"/></c:when>
+                        <c:otherwise>
+                            <c:if test="${not empty err.value}">
+                                <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
+                            </c:if>
+                            (<c:out value="${err.key}"/>)
+                        </c:otherwise>
+                    </c:choose>
+                </admin:infobox>
+            </c:if>
         </c:forEach>
     </c:otherwise>
 </c:choose>
@@ -299,7 +351,7 @@
             </tr>
             <tr id="plaintext-config">
                 <td style="width: 1%; white-space: nowrap"><label for="plaintext-tcpPort"><fmt:message key="ports.port"/></label></td>
-                <td><input type="text" name="plaintext-tcpPort" id="plaintext-tcpPort" value="${plaintextConfiguration.port}"/></td>
+                <td><input type="number" name="plaintext-tcpPort" id="plaintext-tcpPort" value="${plaintextConfiguration.port}" min="1" max="65535" step="1"/></td>
             </tr>
             <tr>
                 <td colspan="2"><a href="./connection-settings-advanced.jsp?connectionType=SOCKET_S2S&connectionMode=plain"><fmt:message key="ssl.settings.server.label_custom_info"/>...</a></td>
@@ -319,13 +371,46 @@
             </tr>
             <tr id="directtls-config">
                 <td style="width: 1%; white-space: nowrap"><label for="directtls-tcpPort"><fmt:message key="ports.port"/></label></td>
-                <td><input type="text" name="directtls-tcpPort" id="directtls-tcpPort" value="${directtlsConfiguration.port}"></td>
+                <td><input type="number" name="directtls-tcpPort" id="directtls-tcpPort" value="${directtlsConfiguration.port}" min="1" max="65535" step="1"></td>
             </tr>
             <tr>
                 <td colspan="2"><a href="./connection-settings-advanced.jsp?connectionType=SOCKET_S2S&connectionMode=directtls"><fmt:message key="ssl.settings.server.label_custom_info"/>...</a></td>
             </tr>
         </table>
 
+    </admin:contentBox>
+
+    <fmt:message key="server2server.settings.ratelimit.title" var="rateLimitTitle"/>
+    <admin:contentBox title="${rateLimitTitle}">
+        <p><fmt:message key="server2server.settings.ratelimit.info"/></p>
+        <table>
+            <tr>
+                <td colspan="2">
+                    <input type="checkbox" name="ratelimit-enabled" id="ratelimit-enabled" ${s2sRateLimitEnabled ? 'checked' : ''}/>
+                    <label for="ratelimit-enabled"><fmt:message key="server2server.settings.ratelimit.enable"/></label>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 1%; white-space: nowrap"><label for="ratelimit-permits"><fmt:message key="server2server.settings.ratelimit.permits"/></label></td>
+                <td>
+                    <input type="number" name="ratelimit-permits" id="ratelimit-permits" value="${s2sRateLimitPermits}" min="1" max="2147483647" step="1"/>
+                    <c:if test="${not empty errors['ratelimit-permits']}">
+                        <br/>
+                        <span class="jive-error-text"><fmt:message key="server2server.settings.ratelimit.permits.invalid"/></span>
+                    </c:if>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 1%; white-space: nowrap"><label for="ratelimit-max-burst"><fmt:message key="server2server.settings.ratelimit.max_burst"/></label></td>
+                <td>
+                    <input type="number" name="ratelimit-max-burst" id="ratelimit-max-burst" value="${s2sRateLimitMaxBurst}" min="1" max="2147483647" step="1"/>
+                    <c:if test="${not empty errors['ratelimit-max-burst']}">
+                        <br/>
+                        <span class="jive-error-text"><fmt:message key="server2server.settings.ratelimit.max_burst.invalid"/></span>
+                    </c:if>
+                </td>
+            </tr>
+        </table>
     </admin:contentBox>
 
     <input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
@@ -349,7 +434,7 @@
                     </c:if>
 
                     <label for="rb04"><fmt:message key="server2server.settings.close_session" /></label>
-                    <input type="text" name="idletime" id="idletime" size="5" maxlength="5" onclick="this.form.closeEnabled[0].checked=true;" value="${webManager.sessionManager.serverSessionIdleTime le -1 ? 30 : minutes}">
+                    <input type="number" name="idletime" id="idletime" size="5" min="1" max="35791" step="1" onclick="this.form.closeEnabled[0].checked=true;" value="${webManager.sessionManager.serverSessionIdleTime le -1 ? 30 : minutes}">
                     <label for="idletime"><fmt:message key="global.minutes" /></label>.
                 </td>
             </tr>
@@ -446,7 +531,7 @@
                     <input type="text" size="40" name="domain" id="domainAllowed" value="${param.serverAllowed ? param.domain : ''}"/>
                     &nbsp;
                     <label for="remotePort"><fmt:message key="server2server.settings.remotePort" /></label>
-                    <input type="text" size="5" name="remotePort" id="remotePort" value="${param.serverAllowed ? param.remotePort : '5269'}"/>
+                    <input type="number" size="5" name="remotePort" id="remotePort" value="${param.serverAllowed ? param.remotePort : '5269'}" min="1" max="65535" step="1"/>
                     <input type="submit" name="serverAllowed" value="<fmt:message key="server2server.settings.allow" />">
                 </td>
             </tr>

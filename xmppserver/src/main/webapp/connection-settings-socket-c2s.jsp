@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionConfiguration" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionListener" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
+<%@ page import="org.jivesoftware.openfire.ratelimit.NewConnectionLimiterRegistry" %>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
@@ -58,45 +59,81 @@
 
     if ( update && errors.isEmpty() )
     {
-        // plaintext
-        final boolean plaintextEnabled      = ParamUtils.getBooleanParameter( request, "plaintext-enabled" );
-        final int plaintextTcpPort          = ParamUtils.getIntParameter( request, "plaintext-tcpPort", plaintextConfiguration.getPort() );
-
-        // Direct TLS
-        final boolean directtlsEnabled      = ParamUtils.getBooleanParameter( request, "directtls-enabled" );
-        final int directtlsTcpPort          = ParamUtils.getIntParameter( request, "directtls-tcpPort", directtlsConfiguration.getPort() );
-
-        // Apply
-        final ConnectionListener plaintextListener = manager.getListener( connectionType, false );
-        final ConnectionListener directtlsListener = manager.getListener( connectionType, true  );
-
-        plaintextListener.enable( plaintextEnabled );
-        plaintextListener.setPort( plaintextTcpPort );
-
-        directtlsListener.enable( directtlsEnabled );
-        directtlsListener.setPort( directtlsTcpPort );
-
-        // Log the event
-        webManager.logEvent( "Updated connection settings for " + connectionType, "plain: enabled=" + plaintextEnabled + ", port=" + plaintextTcpPort + "\nDirect TLS: enabled=" + directtlsEnabled+ ", port=" + directtlsTcpPort+ "\n" );
-        response.sendRedirect( "connection-settings-socket-c2s.jsp?success=true" );
-
-
-        // TODO below is the 'idle connection' handing. This should go into the connection configuration, like all other configuration.
-        final int clientIdle = 1000* ParamUtils.getIntParameter(request, "clientIdle", -1);
-        final boolean idleDisco = ParamUtils.getBooleanParameter(request, "idleDisco");
-        final boolean pingIdleClients = ParamUtils.getBooleanParameter(request, "pingIdleClients");
-
-        if (!idleDisco) {
-            ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.setValue(Duration.ofMillis(-1));
-        } else {
-            ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.setValue(Duration.ofMillis(clientIdle));
+        // New connection rate limiting.
+        final boolean c2sRateLimitEnabled = ParamUtils.getBooleanParameter(request, "ratelimit-enabled");
+        final String requestedPermits = ParamUtils.getParameter(request, "ratelimit-permits");
+        final String requestedMaxBurst = ParamUtils.getParameter(request, "ratelimit-max-burst");
+        String c2sRateLimitPermits = String.valueOf(NewConnectionLimiterRegistry.C2S_PERMITS_PER_SECOND.getValue());
+        String c2sRateLimitMaxBurst = String.valueOf(NewConnectionLimiterRegistry.C2S_MAX_BURST.getValue());
+        if (requestedPermits != null) {
+            c2sRateLimitPermits = requestedPermits.trim();
         }
-        ConnectionSettings.Client.KEEP_ALIVE_PING_PROPERTY.setValue(pingIdleClients);
+        if (requestedMaxBurst != null) {
+            c2sRateLimitMaxBurst = requestedMaxBurst.trim();
+        }
 
-        webManager.logEvent("set server property " + ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getKey(), ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getKey() + " = " + ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getDisplayValue());
-        webManager.logEvent("set server property " + ConnectionSettings.Client.KEEP_ALIVE_PING_PROPERTY.getKey(), ConnectionSettings.Client.KEEP_ALIVE_PING_PROPERTY.getKey() + " = " + ConnectionSettings.Client.KEEP_ALIVE_PING_PROPERTY.getDisplayValue());
+        int parsedPermits = 0;
+        int parsedMaxBurst = 0;
+        try {
+            parsedPermits = Integer.parseInt(c2sRateLimitPermits);
+            if (parsedPermits <= 0) {
+                errors.put("ratelimit-permits", "invalid");
+            }
+        } catch (final Exception e) {
+            errors.put("ratelimit-permits", "invalid");
+        }
+        try {
+            parsedMaxBurst = Integer.parseInt(c2sRateLimitMaxBurst);
+            if (parsedMaxBurst <= 0) {
+                errors.put("ratelimit-max-burst", "invalid");
+            }
+        } catch (final Exception e) {
+            errors.put("ratelimit-max-burst", "invalid");
+        }
 
-        return;
+        if (errors.isEmpty()) {
+            // plaintext
+            final boolean plaintextEnabled      = ParamUtils.getBooleanParameter( request, "plaintext-enabled" );
+            final int plaintextTcpPort          = ParamUtils.getIntParameter( request, "plaintext-tcpPort", plaintextConfiguration.getPort() );
+
+            // Direct TLS
+            final boolean directtlsEnabled      = ParamUtils.getBooleanParameter( request, "directtls-enabled" );
+            final int directtlsTcpPort          = ParamUtils.getIntParameter( request, "directtls-tcpPort", directtlsConfiguration.getPort() );
+
+            // Apply
+            final ConnectionListener plaintextListener = manager.getListener( connectionType, false );
+            final ConnectionListener directtlsListener = manager.getListener( connectionType, true  );
+
+            plaintextListener.enable( plaintextEnabled );
+            plaintextListener.setPort( plaintextTcpPort );
+
+            directtlsListener.enable( directtlsEnabled );
+            directtlsListener.setPort( directtlsTcpPort );
+
+            NewConnectionLimiterRegistry.C2S_PERMITS_PER_SECOND.setValue(parsedPermits);
+            NewConnectionLimiterRegistry.C2S_MAX_BURST.setValue(parsedMaxBurst);
+            NewConnectionLimiterRegistry.C2S_ENABLED.setValue(c2sRateLimitEnabled);
+
+            // TODO below is the 'idle connection' handing. This should go into the connection configuration, like all other configuration.
+            final int clientIdle = 1000* ParamUtils.getIntParameter(request, "clientIdle", -1);
+            final boolean idleDisco = ParamUtils.getBooleanParameter(request, "idleDisco");
+            final boolean pingIdleClients = ParamUtils.getBooleanParameter(request, "pingIdleClients");
+
+            if (!idleDisco) {
+                ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.setValue(Duration.ofMillis(-1));
+            } else {
+                ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.setValue(Duration.ofMillis(clientIdle));
+            }
+            ConnectionSettings.Client.KEEP_ALIVE_PING_PROPERTY.setValue(pingIdleClients);
+
+            // Log the event
+            webManager.logEvent( "Updated connection settings for " + connectionType, "plain: enabled=" + plaintextEnabled + ", port=" + plaintextTcpPort + "\nDirect TLS: enabled=" + directtlsEnabled+ ", port=" + directtlsTcpPort+ "\nRate limit: enabled=" + c2sRateLimitEnabled + ", permits_per_second=" + parsedPermits + ", max_burst=" + parsedMaxBurst + "\n" );
+            webManager.logEvent("set server property " + ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getKey(), ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getKey() + " = " + ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getDisplayValue());
+            webManager.logEvent("set server property " + ConnectionSettings.Client.KEEP_ALIVE_PING_PROPERTY.getKey(), ConnectionSettings.Client.KEEP_ALIVE_PING_PROPERTY.getKey() + " = " + ConnectionSettings.Client.KEEP_ALIVE_PING_PROPERTY.getDisplayValue());
+
+            response.sendRedirect( "connection-settings-socket-c2s.jsp?success=true" );
+            return;
+        }
     }
 
     pageContext.setAttribute( "errors",                 errors );
@@ -104,6 +141,9 @@
     pageContext.setAttribute( "directtlsConfiguration", directtlsConfiguration );
     pageContext.setAttribute( "clientIdle",             ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getValue().toMillis());
     pageContext.setAttribute( "pingIdleClients",        ConnectionSettings.Client.KEEP_ALIVE_PING_PROPERTY.getValue());
+    pageContext.setAttribute( "c2sRateLimitEnabled",    NewConnectionLimiterRegistry.C2S_ENABLED.getValue() );
+    pageContext.setAttribute( "c2sRateLimitPermits",    NewConnectionLimiterRegistry.C2S_PERMITS_PER_SECOND.getValue() );
+    pageContext.setAttribute( "c2sRateLimitMaxBurst",   NewConnectionLimiterRegistry.C2S_MAX_BURST.getValue() );
 
 
 %>
@@ -117,6 +157,10 @@
 
 <c:if test="${param.success and empty errors}">
     <admin:infoBox type="success"><fmt:message key="client.connections.settings.confirm.updated" /></admin:infoBox>
+</c:if>
+
+<c:if test="${not empty errors['csrf']}">
+    <admin:infobox type="error"><fmt:message key="admin.error"/>: <c:out value="${errors['csrf']}"/></admin:infobox>
 </c:if>
 
 <p>
@@ -140,7 +184,7 @@
             </tr>
             <tr id="plaintext-config">
                 <td style="width: 1%; white-space: nowrap"><label for="plaintext-tcpPort"><fmt:message key="ports.port"/></label></td>
-                <td><input type="text" name="plaintext-tcpPort" id="plaintext-tcpPort" value="${plaintextConfiguration.port}"/></td>
+                <td><input type="number" name="plaintext-tcpPort" id="plaintext-tcpPort" value="${plaintextConfiguration.port}" min="1" max="65535" step="1"/></td>
             </tr>
             <tr>
                 <td colspan="2"><a href="./connection-settings-advanced.jsp?connectionType=SOCKET_C2S&connectionMode=plain"><fmt:message key="ssl.settings.client.label_custom_info"/>...</a></td>
@@ -160,7 +204,7 @@
             </tr>
             <tr id="directtls-config">
                 <td style="width: 1%; white-space: nowrap"><label for="directtls-tcpPort"><fmt:message key="ports.port"/></label></td>
-                <td><input type="text" name="directtls-tcpPort" id="directtls-tcpPort" value="${directtlsConfiguration.port}"></td>
+                <td><input type="number" name="directtls-tcpPort" id="directtls-tcpPort" value="${directtlsConfiguration.port}" min="1" max="65535" step="1"></td>
             </tr>
             <tr>
                 <td colspan="2"><a href="./connection-settings-advanced.jsp?connectionType=SOCKET_C2S&connectionMode=directtls"><fmt:message key="ssl.settings.client.label_custom_info"/>...</a></td>
@@ -191,7 +235,7 @@
                     <c:if test="${clientIdle gt 0}">
                         <fmt:parseNumber integerOnly="true" var="seconds">${clientIdle div 1000}</fmt:parseNumber>
                     </c:if>
-                    <input type="text" name="clientIdle" value="${clientIdle gt 0 ? seconds : ''}" size="5" maxlength="5">&nbsp;<fmt:message key="global.seconds" />
+                    <input type="number" name="clientIdle" value="${clientIdle gt 0 ? seconds : ''}" size="5" min="1" max="2147483" step="1">&nbsp;<fmt:message key="global.seconds" />
                     <c:if test="${not empty errors['clientIdle']}">
                         <br/>
                         <span class="jive-error-text">
@@ -229,6 +273,39 @@
     </admin:contentBox>
 
     <!-- END 'Idle Connection Policy' -->
+
+    <fmt:message key="client.connections.settings.ratelimit.title" var="rateLimitTitle"/>
+    <admin:contentBox title="${rateLimitTitle}">
+        <p><fmt:message key="client.connections.settings.ratelimit.info"/></p>
+        <table>
+            <tr>
+                <td colspan="2">
+                    <input type="checkbox" name="ratelimit-enabled" id="ratelimit-enabled" ${c2sRateLimitEnabled ? 'checked' : ''}/>
+                    <label for="ratelimit-enabled"><fmt:message key="client.connections.settings.ratelimit.enable"/></label>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 1%; white-space: nowrap"><label for="ratelimit-permits"><fmt:message key="client.connections.settings.ratelimit.permits"/></label></td>
+                <td>
+                    <input type="number" name="ratelimit-permits" id="ratelimit-permits" value="${c2sRateLimitPermits}" size="8" min="1" max="2147483647" step="1"/>
+                    <c:if test="${not empty errors['ratelimit-permits']}">
+                        <br/>
+                        <span class="jive-error-text"><fmt:message key="client.connections.settings.ratelimit.permits.invalid"/></span>
+                    </c:if>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 1%; white-space: nowrap"><label for="ratelimit-max-burst"><fmt:message key="client.connections.settings.ratelimit.max_burst"/></label></td>
+                <td>
+                    <input type="number" name="ratelimit-max-burst" id="ratelimit-max-burst" value="${c2sRateLimitMaxBurst}" size="8" min="1" max="2147483647" step="1"/>
+                    <c:if test="${not empty errors['ratelimit-max-burst']}">
+                        <br/>
+                        <span class="jive-error-text"><fmt:message key="client.connections.settings.ratelimit.max_burst.invalid"/></span>
+                    </c:if>
+                </td>
+            </tr>
+        </table>
+    </admin:contentBox>
 
     <input type="submit" name="update" value="<fmt:message key="global.save_settings" />">
 </form>

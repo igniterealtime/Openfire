@@ -44,6 +44,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -81,6 +83,18 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     public static final SystemProperty<Duration> INITIALISE_TIMEOUT_SECONDS = SystemProperty.Builder.ofType(Duration.class)
         .setKey("xmpp.server.session.initialise-timeout")
         .setDefaultValue(Duration.ofSeconds(10))
+        .setMinValue(Duration.ZERO)
+        .setChronoUnit(ChronoUnit.SECONDS)
+        .setDynamic(true)
+        .build();
+
+    /**
+     * Maximum time to wait for an outgoing server session's teardown to complete before abandoning a stanza re-delivery attempt.
+     */
+    public static final SystemProperty<Duration> REDELIVERY_TIMEOUT_SECONDS = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.server.session.redelivery-timeout")
+        .setDefaultValue(Duration.ofSeconds(30))
+        .setMinValue(Duration.ZERO)
         .setChronoUnit(ChronoUnit.SECONDS)
         .setDynamic(true)
         .build();
@@ -326,10 +340,49 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     void deliver(Packet packet) throws UnauthorizedException {
         if (!conn.isClosed()) {
             conn.deliver(packet);
-        } else {
-            Log.warn("Dropping stanza to {} because the connection is closed. Returning error to sender.", packet.getTo());
-            returnErrorToSenderAsync(packet);
+            return;
         }
+
+        // Guard against a double bounce: if re-routing this error stanza fails (i.e. the remote server is still
+        // unreachable after teardown), OutgoingSessionPromise would attempt to return an error to the original sender,
+        // producing an error in response to an error.
+        if (packet.getError() != null) {
+            Log.debug("Dropping error stanza to {} on closed connection to avoid a double-bounce: {}", packet.getTo(), packet);
+            return;
+        }
+
+        // The connection is closed but teardown may still be in progress - the routing table entry for this session
+        // might not yet be removed. Waiting for closeFuture guarantees that all ConnectionCloseListeners (including
+        // route removal) have finished before we re-route, so the packet router will not hand the stanza straight back
+        // to this dying session. OF-3176
+        Log.info("Connection to {} is closed; will attempt re-delivery once teardown completes.", packet.getTo());
+
+        final Packet stanza = packet.createCopy(); // Make a defensive copy before scheduling the callback to ensure that the original data gets rescheduled.
+        final long timeoutSeconds = REDELIVERY_TIMEOUT_SECONDS.getValue().toSeconds();
+        final CompletableFuture<Void> closeFuture = conn.getCloseFuture().toCompletableFuture();
+        final CompletableFuture<Void> timeoutFuture = new CompletableFuture<>();
+        CompletableFuture.delayedExecutor(timeoutSeconds, TimeUnit.SECONDS)
+            .execute(() -> timeoutFuture.completeExceptionally(new TimeoutException("Timed out waiting for connection teardown.")));
+
+        CompletableFuture.anyOf(closeFuture, timeoutFuture)
+            .whenCompleteAsync((v, ex) -> {
+                final Throwable cause = ex instanceof CompletionException && ex.getCause() != null ? ex.getCause() : ex;
+                if (cause instanceof TimeoutException) {
+                    // The teardown did not complete within the configured window. We cannot safely re-route.
+                    Log.warn("Timed out after {}s waiting for connection teardown to complete for {}; dropping stanza and attempting to notify sender if appropriate. Packet: {}", timeoutSeconds, stanza.getTo(), stanza);
+                    returnErrorToSenderAsync(stanza);
+                } else if (cause != null) {
+                    // Unexpected exception (e.g. CancellationException). Log with stack trace and attempt sender notification when appropriate.
+                    Log.warn("Unexpected exception while waiting for connection teardown to complete for {}; dropping stanza and attempting to notify sender if appropriate. Packet: {}", stanza.getTo(), stanza, cause);
+                    returnErrorToSenderAsync(stanza);
+                } else {
+                    // Teardown is complete. The route for this session has been removed. Delegate back to the packet
+                    // router, which will either find a concurrently-established session or trigger authenticateDomain()
+                    // to create a new one.
+                    Log.debug("Connection teardown complete; re-routing stanza to {}.", stanza.getTo());
+                    XMPPServer.getInstance().getPacketRouter().route(stanza);
+                }
+            });
     }
 
     @Override

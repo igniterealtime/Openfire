@@ -53,6 +53,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.jivesoftware.openfire.nio.NettyConnectionHandler.IDLE_FLAG;
@@ -180,7 +181,11 @@ public class QuicConnectionAcceptor extends ConnectionAcceptor
     {
         final EncryptionArtifactFactory encryptionArtifactFactory = new EncryptionArtifactFactory(configuration);
         final QuicSslContextBuilder builder = QuicSslContextBuilder.forServer(encryptionArtifactFactory.getKeyManagerFactory(), null);
-        builder.applicationProtocols("xmpp");
+        final List<String> alpnValues = ConnectionSettings.Client.QUIC_ALPN.getValue();
+        if (alpnValues.isEmpty()) {
+            throw new IllegalStateException("No ALPN values are configured for QUIC. Configure at least one value in xmpp.quic.client.alpn.");
+        }
+        builder.applicationProtocols(alpnValues.toArray(String[]::new));
         builder.trustManager(encryptionArtifactFactory.getTrustManagers()[0]);
 
         final Connection.ClientAuth clientAuth = configuration.getClientAuth();

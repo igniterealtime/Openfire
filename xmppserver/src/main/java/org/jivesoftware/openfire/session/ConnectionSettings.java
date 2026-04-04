@@ -20,6 +20,7 @@ import org.jivesoftware.util.SystemProperty;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 public final class ConnectionSettings {
 
@@ -105,6 +106,12 @@ public final class ConnectionSettings {
             .setChronoUnit(ChronoUnit.MILLIS)
             .setDynamic(Boolean.TRUE)
             .build();
+
+        public static final SystemProperty<List<String>> QUIC_ALPN = SystemProperty.Builder.ofType(List.class)
+            .setKey("xmpp.quic.client.alpn")
+            .setDefaultValue(List.of("xmpp-client"))
+            .setDynamic(Boolean.TRUE)
+            .buildList(String.class);
     }
 
     public static final class Server {

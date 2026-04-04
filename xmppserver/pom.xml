@@ -302,6 +302,18 @@
             <artifactId>netty-all</artifactId>
             <version>${netty.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-classes-quic</artifactId>
+            <version>${netty.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-native-quic</artifactId>
+            <version>${netty.version}</version>
+            <classifier>linux-x86_64</classifier>
+            <scope>runtime</scope>
+        </dependency>
 
         <!-- JZLib -->
         <dependency>

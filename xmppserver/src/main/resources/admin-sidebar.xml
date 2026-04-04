@@ -79,6 +79,11 @@
             <item id="client-connections-settings" name="${sidebar.client-connections-settings}"
                   url="connection-settings-socket-c2s.jsp"
                   description="${sidebar.client-connections-settings.descr}"/>
+
+            <!-- QUIC client connections settings-->
+            <item id="quic-client-connections-settings" name="${sidebar.quic-client-connections-settings}"
+                  url="connection-settings-quic-c2s.jsp"
+                  description="${sidebar.quic-client-connections-settings.descr}"/>
                   
             <!-- Server to server -->
             <item id="server2server-settings" name="${sidebar.server2server-settings}"
@@ -157,6 +162,18 @@
 
                     <item id="sidebar-certificate-store-socket_c2s-trust-store" name="${sidebar.trust-store}"
                           url="security-truststore.jsp?connectionType=SOCKET_C2S"
+                          description="${sidebar.trust-store.descr}"/>
+
+                </sidebar>
+
+                <sidebar id="sidebar-certificate-store-quic-c2s" name="${sidebar.quic-client-connections-settings}">
+
+                    <item id="sidebar-certificate-store-quic_c2s-identity-store" name="${sidebar.identity-store}"
+                          url="security-keystore.jsp?connectionType=QUIC_C2S"
+                          description="${sidebar.identity-store.descr}"/>
+
+                    <item id="sidebar-certificate-store-quic_c2s-trust-store" name="${sidebar.trust-store}"
+                          url="security-truststore.jsp?connectionType=QUIC_C2S"
                           description="${sidebar.trust-store.descr}"/>
 
                 </sidebar>

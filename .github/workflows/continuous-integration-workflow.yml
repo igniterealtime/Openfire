@@ -603,6 +603,123 @@ jobs:
           ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
 
 
+  cockroachdb-install:
+    name: Test CockroachDB install script
+    needs: [build, should-do-database-tests, check_branch]
+    runs-on: ubuntu-latest
+    if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
+    steps:
+      - name: Checkout Openfire
+        uses: actions/checkout@v6
+      - name: Set up JDK 17 Zulu
+        uses: actions/setup-java@v5
+        with:
+          java-version: 17
+          distribution: zulu
+          cache: maven
+      - name: Restore mvn repo artifacts from build job
+        uses: actions/download-artifact@v8
+        with:
+          name: Maven Repository
+          path: ~/.m2/repository/org/igniterealtime/openfire/
+      - name: Set environment variables
+        run: |
+          echo "CONNECTION_STRING=jdbc:postgresql://localhost:26257/openfire?sslmode=disable" >> $GITHUB_ENV
+          echo "CONNECTION_DRIVER=org.postgresql.Driver" >> $GITHUB_ENV
+          echo "CONNECTION_USERNAME=root" >> $GITHUB_ENV
+          echo "CONNECTION_PASSWORD=" >> $GITHUB_ENV
+          OPENFIREVSN=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
+          echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
+      - name: Start database server and create empty database
+        run: |
+          docker compose -f ./build/ci/compose/cockroachdb.yml up --wait
+          docker compose -f ./build/ci/compose/cockroachdb.yml exec db /cockroach/cockroach sql --insecure --execute="CREATE DATABASE openfire;"
+      - name: Execute Openfire's database install script
+        run: |
+          pushd ./build/ci/updater
+          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
+
+
+  # CockroachDB support was added recently and upgrade scripts are not available yet by virtue of support being new.
+  # Skip CockroachDB upgrade execution until the target upgrade directory exists. This step can be removed completely
+  # after things have matured.
+  cockroachdb-upgrade-precheck:
+    name: Check CockroachDB upgrade prerequisites
+    needs: [should-do-database-tests, check_branch]
+    runs-on: ubuntu-latest
+    if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
+    outputs:
+      upgrade-dir-exists: ${{ steps.check-cockroachdb-upgrade-dir.outputs.exists }}
+    steps:
+      - name: Checkout Openfire
+        uses: actions/checkout@v6
+      - name: Check if CockroachDB upgrade directory exists
+        id: check-cockroachdb-upgrade-dir
+        # CockroachDB support was added recently and upgrade scripts are not available yet by virtue of support being new.
+        # Skip CockroachDB upgrade execution until the target upgrade directory exists.
+        run: |
+          if [ -d distribution/src/database/upgrade/39 ]; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "Skipping cockroachdb-upgrade: CockroachDB support is new and upgrade scripts are not available yet."
+          fi
+
+
+  cockroachdb-upgrade:
+    name: Test CockroachDB upgrade scripts
+    needs: [build, should-do-database-tests, check_branch, cockroachdb-upgrade-precheck]
+    runs-on: ubuntu-latest
+    if: ${{ needs.should-do-database-tests.outputs.check == 'true' || needs.check_branch.outputs.is_publishable_branch == 'true'}}
+    steps:
+      - name: Skip CockroachDB upgrade test when scripts are not available yet
+        if: ${{ needs.cockroachdb-upgrade-precheck.outputs.upgrade-dir-exists != 'true' }}
+        run: 'echo "Skipping cockroachdb-upgrade: CockroachDB support is new and upgrade scripts are not available yet."'
+      - name: Checkout Openfire
+        if: ${{ needs.cockroachdb-upgrade-precheck.outputs.upgrade-dir-exists == 'true' }}
+        uses: actions/checkout@v6
+      - name: Set up JDK 17 Zulu
+        if: ${{ needs.cockroachdb-upgrade-precheck.outputs.upgrade-dir-exists == 'true' }}
+        uses: actions/setup-java@v5
+        with:
+          java-version: 17
+          distribution: zulu
+          cache: maven
+      - name: Restore mvn repo artifacts from build job
+        if: ${{ needs.cockroachdb-upgrade-precheck.outputs.upgrade-dir-exists == 'true' }}
+        uses: actions/download-artifact@v8
+        with:
+          name: Maven Repository
+          path: ~/.m2/repository/org/igniterealtime/openfire/
+      - name: Set environment variables
+        if: ${{ needs.cockroachdb-upgrade-precheck.outputs.upgrade-dir-exists == 'true' }}
+        run: |
+          echo "CONNECTION_STRING=jdbc:postgresql://localhost:26257/openfire?sslmode=disable" >> $GITHUB_ENV
+          echo "CONNECTION_DRIVER=org.postgresql.Driver" >> $GITHUB_ENV
+          echo "CONNECTION_USERNAME=root" >> $GITHUB_ENV
+          echo "CONNECTION_PASSWORD=" >> $GITHUB_ENV
+          OPENFIREVSN=$(./mvnw help:evaluate -Dexpression=project.version -q -DforceStdout)
+          echo "OPENFIREVSN=$OPENFIREVSN" >> $GITHUB_ENV
+          echo "JAVA_HOME=$(echo $JAVA_HOME_17_X64)" >> $GITHUB_ENV
+      - name: Download an old Openfire database installation script
+        if: ${{ needs.cockroachdb-upgrade-precheck.outputs.upgrade-dir-exists == 'true' }}
+        run: |
+          mkdir olddb
+          curl https://raw.githubusercontent.com/igniterealtime/Openfire/v5.1.0/distribution/src/database/openfire_cockroachdb.sql > $GITHUB_WORKSPACE/olddb/openfire_cockroachdb.sql
+      - name: Start database server, install old version of the Openfire database
+        if: ${{ needs.cockroachdb-upgrade-precheck.outputs.upgrade-dir-exists == 'true' }}
+        run: |
+          docker compose -f ./build/ci/compose/cockroachdb.yml up --wait
+          docker compose -f ./build/ci/compose/cockroachdb.yml exec db /cockroach/cockroach sql --insecure --execute="CREATE DATABASE openfire;"
+          docker compose -f ./build/ci/compose/cockroachdb.yml exec -T db /cockroach/cockroach sql --insecure --database=openfire < "$GITHUB_WORKSPACE/olddb/openfire_cockroachdb.sql"
+      - name: Execute Openfire's database upgrade scripts
+        if: ${{ needs.cockroachdb-upgrade-precheck.outputs.upgrade-dir-exists == 'true' }}
+        run: |
+          pushd ./build/ci/updater
+          ./mvnw -B clean package exec:java -Dexec.args="$GITHUB_WORKSPACE"
+
+
   mysql-install:
     name: Test MySQL install script
     needs: [build, should-do-database-tests, check_branch]
@@ -768,7 +885,7 @@ jobs:
   publish-maven:
     name: Publish to Maven
     runs-on: ubuntu-latest
-    needs: [aioxmpp, connectivity, integration, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
+    needs: [aioxmpp, connectivity, integration, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, cockroachdb-install, cockroachdb-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
     if: ${{github.repository == 'igniterealtime/Openfire' && github.event_name == 'push' && needs.check_branch.outputs.is_publishable_branch == 'true'}}
 
     steps:
@@ -795,7 +912,7 @@ jobs:
   publish-docker:
     name: Publish to GitHub's Docker registry
     runs-on: ubuntu-latest
-    needs: [build-docker, aioxmpp, connectivity, integration, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
+    needs: [build-docker, aioxmpp, connectivity, integration, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, cockroachdb-install, cockroachdb-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
     if: |
       github.event_name == 'push' && 
       (contains(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
@@ -854,7 +971,7 @@ jobs:
   build-deb-artifact:
     name: Generate DEB artifact
     runs-on: ubuntu-latest
-    needs: [aioxmpp, connectivity, integration, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
+    needs: [aioxmpp, connectivity, integration, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, cockroachdb-install, cockroachdb-upgrade, mysql-install, mysql-upgrade, oracle-install, oracle-upgrade]
     steps:
       - uses: actions/checkout@v6
         with:

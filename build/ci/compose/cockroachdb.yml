@@ -1,0 +1,14 @@
+version: '3.7'
+
+services:
+  db:
+    image: cockroachdb/cockroach:latest-v24.3
+    command: start-single-node --insecure
+    ports:
+      - "26257:26257"
+    healthcheck:
+      test: [ "CMD", "/cockroach/cockroach", "sql", "--insecure", "-e", "select 1" ]
+      interval: 5s
+      timeout: 10s
+      retries: 30
+

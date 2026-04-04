@@ -28,7 +28,7 @@
         <p>
             JDBC drivers are required for Openfire to communicate with your database. Suggested drivers for particular
             databases are noted below where applicable. Openfire bundles JDBC drivers for MySQL, Oracle, PostgreSQL,
-            Microsoft SQL Server, and HSQLDB.
+            CockroachDB, Microsoft SQL Server, and HSQLDB.
         </p>
         <p>
             All supported database schemas can be found in the <code>resources/database</code> directory of the
@@ -48,6 +48,7 @@
                 <li><a href="#oracle">Oracle</a></li>
                 <li><a href="#sqlserver">Microsoft SQL Server</a></li>
                 <li><a href="#postgres">PostgreSQL</a></li>
+                <li><a href="#cockroachdb">CockroachDB</a></li>
                 <li><a href="#db2">IBM DB2</a></li>
                 <li><a href="#hsql">HSQLDB</a></li>
             </ul>
@@ -327,6 +328,72 @@
             </p>
             <ul>
                 <li><a href="https://jdbc.postgresql.org/documentation/use/#connecting-to-the-database">Postgres Configuration and Connection documentation</a></li>
+            </ul>
+
+        </section>
+
+    </section>
+
+    <section id="cockroachdb">
+
+        <h2>CockroachDB</h2>
+
+        <section id="cockroachdb-jdbc-drivers">
+
+            <h3>JDBC Drivers</h3>
+
+            <p>
+                CockroachDB is wire-protocol compatible with PostgreSQL. The PostgreSQL JDBC driver bundled with
+                Openfire can be used to connect to CockroachDB without installing a separate driver.
+            </p>
+            <p>
+                In the Openfire web-based setup tool, use the following values:
+            </p>
+            <ul style="list-style: none">
+                <li><span class="short-tab">driver:</span> <code>org.postgresql.Driver</code></li>
+                <li><span class="short-tab">server:</span> <code>jdbc:postgresql://HOSTNAME:26257/DATABASENAME</code></li>
+            </ul>
+            <p>
+                The default CockroachDB port is <code>26257</code>. You can optionally add an <code>sslmode</code>
+                parameter to the JDBC URL to match your CockroachDB TLS configuration. For secure deployments, use a
+                secure mode such as <code>sslmode=require</code> (or <code>verify-full</code> with appropriate
+                certificates). Use <code>sslmode=disable</code> only when connecting to a CockroachDB cluster started
+                with <code>--insecure</code> for local development.
+            </p>
+
+        </section>
+
+        <section id="cockroachdb-setup-instructions">
+
+            <h3>Setup Instructions</h3>
+
+            <ol>
+                <li>
+                    Create a dedicated database for Openfire:
+                    <ul style="list-style: none">
+                        <li><code>cockroach sql --execute="CREATE DATABASE openfire;"</code></li>
+                    </ul>
+                </li>
+                <li>
+                    Create a user and grant access:
+                    <ul style="list-style: none">
+                        <li><code>cockroach sql --execute="CREATE USER openfireuser WITH PASSWORD 'secret'; GRANT ALL ON DATABASE openfire TO openfireuser;"</code></li>
+                    </ul>
+                </li>
+                <li>
+                    Start the Openfire setup tool and configure the connection using the values above.
+                    Openfire will automatically install the schema.
+                </li>
+            </ol>
+
+        </section>
+
+        <section id="cockroachdb-further-help">
+
+            <h3>Further Help</h3>
+
+            <ul>
+                <li><a href="https://www.cockroachlabs.com/docs/stable/connect-to-the-database.html?filters=java">CockroachDB Java connection documentation</a></li>
             </ul>
 
         </section>

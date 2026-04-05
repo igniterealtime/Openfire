@@ -99,10 +99,19 @@
 <%
     // Get parameters
     String log = ParamUtils.getParameter(request, "log");
-    String numLinesParam = ParamUtils.getParameter(request,"lines");
-    int numLines = -1;
-    if ( !("All".equals(numLinesParam)) ) {
-      numLines = ParamUtils.getIntParameter(request,"lines",50);
+    String numLinesParam = ParamUtils.getParameter(request, "lines");
+    int numLines;
+
+    if (numLinesParam == null || numLinesParam.trim().isEmpty()) {
+        numLines = 50;
+    } else if ("All".equalsIgnoreCase(numLinesParam)) {
+        numLines = -1;
+    } else {
+        try {
+            numLines = Integer.parseInt(numLinesParam.trim());
+        } catch (NumberFormatException e) {
+            numLines = 50;
+        }
     }
     String refreshParam = ParamUtils.getParameter(request,"refresh");
     String mode = ParamUtils.getParameter(request,"mode");
@@ -410,7 +419,7 @@ IFRAME {
 
 <br><br>
 
-<iframe src="log.jsp?log=<%= URLEncoder.encode(log, StandardCharsets.UTF_8) %>&mode=<%= URLEncoder.encode(mode, StandardCharsets.UTF_8) %>&lines=<%= ("All".equals(numLinesParam) ? "All" : String.valueOf(numLines)) %>"
+<iframe src="log.jsp?log=<%= URLEncoder.encode(log, StandardCharsets.UTF_8) %>&mode=<%= URLEncoder.encode(mode, StandardCharsets.UTF_8) %>&lines=<%= ("All".equalsIgnoreCase(numLinesParam) ? "All" : String.valueOf(numLines)) %>"
     frameborder="0" height="600" style="width: 100%" marginheight="0" marginwidth="0" scrolling="auto"></iframe>
 
 </form>

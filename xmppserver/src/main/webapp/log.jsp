@@ -108,10 +108,19 @@
 <%
     // Get parameters
     String log = ParamUtils.getParameter(request,"log");
-    String numLinesParam = ParamUtils.getParameter(request,"lines");
-    int numLines = -1;
-    if ( !("All".equals(numLinesParam)) ) {
-      numLines = ParamUtils.getIntParameter(request,"lines",50);
+    String numLinesParam = ParamUtils.getParameter(request, "lines");
+    int numLines;
+
+    if (numLinesParam == null || numLinesParam.trim().isEmpty()) {
+        numLines = 50;
+    } else if ("All".equalsIgnoreCase(numLinesParam)) {
+        numLines = -1;
+    } else {
+        try {
+            numLines = Integer.parseInt(numLinesParam.trim());
+        } catch (NumberFormatException e) {
+            numLines = 50;
+        }
     }
     String mode = ParamUtils.getParameter(request,"mode");
 
@@ -148,7 +157,7 @@
         	}
         }
         // adjust the 'numLines' var to match totalNumLines if 'all' was passed in:
-        if ("All".equals(numLinesParam)) {
+        if ("All".equalsIgnoreCase(numLinesParam)) {
             numLines = totalNumLines;
         }
         lines = new String[numLines];

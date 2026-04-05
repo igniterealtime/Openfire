@@ -171,18 +171,18 @@
                 <td>
                     <c:out value="${event.summary}"/>
                     <c:if test="${not empty event.details}">
-                        <span id='showDetails<c:out value="${event.msgID}"/>'>
-                            <a href="" onclick='document.getElementById("showDetails<c:out value='${event.msgID}'/>").style.display="none"; document.getElementById("hideDetails<c:out value='${event.msgID}'/>").style.display=""; document.getElementById("detailsRow<c:out value='${event.msgID}'/>").style.display=""; return false;'><fmt:message key="security.audit.viewer.show_details"/></a>
+                        <span id="showDetails<c:out value='${event.msgID}'/>">
+                            <a href="" onclick="document.getElementById('showDetails<c:out value='${event.msgID}'/>').style.display='none'; document.getElementById('hideDetails<c:out value='${event.msgID}'/>').style.display=''; document.getElementById('detailsRow<c:out value='${event.msgID}'/>').style.display=''; return false;"><fmt:message key="security.audit.viewer.show_details"/></a>
                         </span>
-                        <span id='hideDetails<c:out value="${event.msgID}"/>' style='display:none'>
-                            <a href="" onclick='document.getElementById("showDetails<c:out value='${event.msgID}'/>").style.display=""; document.getElementById("hideDetails<c:out value='${event.msgID}'/>").style.display="none"; document.getElementById("detailsRow<c:out value='${event.msgID}'/>").style.display="none"; return false;'><fmt:message key="security.audit.viewer.hide_details"/></a>
+                        <span id="hideDetails<c:out value='${event.msgID}'/>" style="display:none">
+                            <a href="" onclick="document.getElementById('showDetails<c:out value='${event.msgID}'/>').style.display=''; document.getElementById('hideDetails<c:out value='${event.msgID}'/>').style.display='none'; document.getElementById('detailsRow<c:out value='${event.msgID}'/>').style.display='none'; return false;"><fmt:message key="security.audit.viewer.hide_details"/></a>
                         </span>
                     </c:if>
                 </td>
                 <td><c:out value="${admin:formatDateTime(event.eventStamp)}"/></td>
             </tr>
             <tr id='detailsRow<c:out value="${event.msgID}"/>' style="display:none">
-                <td colspan="5"><c:out value="${event.details}"/></td>
+                <td colspan="5" style="white-space: pre-wrap;"><c:out value="${event.details}"/></td>
             </tr>
         </c:forEach>
         </tbody>

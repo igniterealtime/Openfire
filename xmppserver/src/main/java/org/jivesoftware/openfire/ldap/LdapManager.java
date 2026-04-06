@@ -991,7 +991,7 @@ public class LdapManager {
                     }
                 }
                 catch (NamingException e) {
-                    Log.debug("Caught a naming exception when creating InitialContext", ne);
+                    Log.debug("Caught a naming exception when creating InitialContext", e);
                     return false;
                 }
             }

@@ -1007,7 +1007,7 @@ public class LdapManager {
                 }
             }
             catch (Exception e) {
-                Log.error("An exception occurred while trying to close the context after an authentication attempt.");
+                Log.error("An exception occurred while trying to close the context after an authentication attempt.",e);
             }
         }
         return true;

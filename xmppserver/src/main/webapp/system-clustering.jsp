@@ -20,6 +20,11 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib prefix="admin" uri="admin" %>
 
+<%@ page import="java.util.concurrent.ExecutorService" %>
+<%@ page import="java.util.concurrent.Executors" %>
+<%@ page import="java.util.concurrent.Future" %>
+<%@ page import="java.util.concurrent.TimeUnit" %>
+<%@ page import="java.util.concurrent.TimeoutException" %>
 <%@ page import="org.jivesoftware.database.DbConnectionManager" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.cluster.ClusterManager" errorPage="error.jsp" %>
@@ -163,8 +168,27 @@
     clusterNodesInfo.sort(Comparator.comparing(ClusterNodeInfo::getHostName));
     // Get some basic statistics from the cluster nodes
     // TODO Set a timeout so the page can load fast even if a node is taking too long to answer
-    Collection<Map<String, Object>> statistics =
-            CacheFactory.doSynchronousClusterTask(new GetBasicStatistics(), true);
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+Collection<Map<String, Object>> statistics;
+
+try {
+    Future<Collection<Map<String, Object>>> future = executor.submit(() ->
+        CacheFactory.doSynchronousClusterTask(new GetBasicStatistics(), true)
+    );
+
+    statistics = future.get(3, TimeUnit.SECONDS);
+
+} catch (TimeoutException e) {
+    LOGGER.warn("Cluster statistics request timed out", e);
+    statistics = Collections.emptyList();
+
+} catch (Exception e) {
+    LOGGER.error("Failed to retrieve cluster statistics", e);
+    statistics = Collections.emptyList();
+
+} finally {
+    executor.shutdownNow();
+}
     // Calculate percentages
     int clients = 0;
     int incoming = 0;

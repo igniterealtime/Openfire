@@ -20,8 +20,6 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib prefix="admin" uri="admin" %>
 
-<%@ page import="java.util.concurrent.ExecutorService" %>
-<%@ page import="java.util.concurrent.Executors" %>
 <%@ page import="java.util.concurrent.Future" %>
 <%@ page import="java.util.concurrent.TimeUnit" %>
 <%@ page import="java.util.concurrent.TimeoutException" %>
@@ -168,27 +166,29 @@
     // Get some basic statistics from the cluster nodes.
     // Limit the request to 3 seconds so the page can still load quickly if a node is slow to answer;
     // if the request times out or otherwise fails, fall back to an empty result set.
-    ExecutorService executor = Executors.newSingleThreadExecutor();
-Collection<Map<String, Object>> statistics;
+    Collection<Map<String, Object>> statistics;
 
-try {
-    Future<Collection<Map<String, Object>>> future = executor.submit(() ->
-        CacheFactory.doSynchronousClusterTask(new GetBasicStatistics(), true)
-    );
+    try {
+        Future<Collection<Map<String, Object>>> future =
+            org.jivesoftware.util.TaskEngine.getInstance().submit(() ->
+                CacheFactory.doSynchronousClusterTask(new GetBasicStatistics(), true)
+            );
 
-    statistics = future.get(3, TimeUnit.SECONDS);
+        statistics = future.get(3, TimeUnit.SECONDS);
 
-} catch (TimeoutException e) {
-    LOGGER.warn("Cluster statistics request timed out", e);
-    statistics = Collections.emptyList();
+    } catch (TimeoutException e) {
+        LOGGER.warn("Cluster statistics request timed out", e);
+        statistics = Collections.emptyList();
 
-} catch (Exception e) {
-    LOGGER.error("Failed to retrieve cluster statistics", e);
-    statistics = Collections.emptyList();
+    } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        LOGGER.warn("Cluster statistics request was interrupted", e);
+        statistics = Collections.emptyList();
 
-} finally {
-    executor.shutdownNow();
-}
+    } catch (Exception e) {
+        LOGGER.error("Failed to retrieve cluster statistics", e);
+        statistics = Collections.emptyList();
+    }
     // Calculate percentages
     int clients = 0;
     int incoming = 0;

@@ -417,6 +417,7 @@ public class DNSUtil {
      * @param name The name to check against a pattern (cannot be null or empty).
      * @param pattern the pattern (cannot be null or empty).
      * @return true when the name is covered by the pattern, otherwise false.
+     * @throws IllegalArgumentException if either name or pattern is null or empty.
      */
     public static boolean isNameCoveredByPattern( String name, String pattern )
     {

@@ -42,7 +42,6 @@
 <%@ page import="java.text.DecimalFormat" %>
 <%@ page import="org.jivesoftware.openfire.cluster.ClusterEventListener" %>
 <%@ page import="java.util.concurrent.Semaphore" %>
-<%@ page import="java.util.concurrent.TimeUnit" %>
 <%@ page import="org.jivesoftware.openfire.cluster.NodeID" %>
 <%@ page import="com.google.common.collect.Table" %>
 <%@ page import="com.google.common.collect.HashBasedTable" %>
@@ -166,8 +165,9 @@
     final List<ClusterNodeInfo> clusterNodesInfo = new ArrayList<>(ClusterManager.getNodesInfo());
     // Sort them so they are always consistent in order
     clusterNodesInfo.sort(Comparator.comparing(ClusterNodeInfo::getHostName));
-    // Get some basic statistics from the cluster nodes
-    // TODO Set a timeout so the page can load fast even if a node is taking too long to answer
+    // Get some basic statistics from the cluster nodes.
+    // Limit the request to 3 seconds so the page can still load quickly if a node is slow to answer;
+    // if the request times out or otherwise fails, fall back to an empty result set.
     ExecutorService executor = Executors.newSingleThreadExecutor();
 Collection<Map<String, Object>> statistics;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,8 +49,10 @@ public class DNSUtil {
     private static Cache<String, CacheableOptional<SrvRecord[]>> LOOKUP_CACHE;
 
     /**
-     * Internal DNS that allows to specify target IP addresses and ports to use for domains.
-     * The internal DNS will be checked up before performing an actual DNS SRV lookup.
+     * Internal DNS overrides for XMPP domain resolution.
+     *
+     * Keys are matched literally against the requested domain. A key of {@code *} is treated as a global fallback.
+     * Keys such as {@code *.example.org} are not interpreted as wildcard patterns.
      */
     private static Map<String, SrvRecord> dnsOverride;
 
@@ -93,6 +95,10 @@ public class DNSUtil {
      * specified default port.
      *
      * As an example, a lookup for "example.com" may return "im.example.com:5269".
+     *
+     * DNS overrides are evaluated before DNS lookups. Resolution first checks for an exact key match in
+     * {@code dnsOverride}. If none exists, the special key {@code *} is used as a global fallback. Other wildcard-like
+     * keys, such as {@code *.example.org}, are treated as literal keys and do not match by pattern.
      *
      * The returned collection is a list of sets of host names. The 'inner'
      * collection, the sets of host names, are grouping host names that have an
@@ -173,24 +179,24 @@ public class DNSUtil {
     }
 
     /**
-     * Returns the internal DNS that allows to specify target IP addresses and ports
-     * to use for domains. The internal DNS will be checked up before performing an
-     * actual DNS SRV lookup.
+     * Returns DNS override entries that are checked before DNS SRV lookups.
      *
-     * @return the internal DNS that allows to specify target IP addresses and ports
-     *         to use for domains.
+     * Entries are keyed by literal domain values. The key {@code *} acts as a global fallback.
+     * Keys such as {@code *.example.org} are not pattern-matched.
+     *
+     * @return configured DNS override entries, or null when no overrides are configured.
      */
     public static Map<String, SrvRecord> getDnsOverride() {
         return dnsOverride;
     }
 
     /**
-     * Sets the internal DNS that allows to specify target IP addresses and ports
-     * to use for domains. The internal DNS will be checked up before performing an
-     * actual DNS SRV lookup.
+     * Sets DNS override entries that are checked before DNS SRV lookups.
      *
-     * @param dnsOverride the internal DNS that allows to specify target IP addresses and ports
-     *        to use for domains.
+     * Keys are matched literally against requested domains. The key {@code *} is a global fallback.
+     * Keys such as {@code *.example.org} are stored and matched literally, not as wildcard patterns.
+     *
+     * @param dnsOverride DNS override entries keyed by domain.
      */
     public static void setDnsOverride(Map<String, SrvRecord> dnsOverride) {
         DNSUtil.dnsOverride = dnsOverride;

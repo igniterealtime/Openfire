@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,13 @@
 package org.jivesoftware.openfire.net;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -27,6 +32,21 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Guus der Kinderen, guus.der.kinderen@gmail.com
  */
 public class DNSUtilTest {
+
+    private Map<String, SrvRecord> originalDnsOverride;
+
+    @BeforeEach
+    public void storeOriginalDnsOverride()
+    {
+        final Map<String, SrvRecord> current = DNSUtil.getDnsOverride();
+        originalDnsOverride = current == null ? null : new HashMap<>(current);
+    }
+
+    @AfterEach
+    public void restoreOriginalDnsOverride()
+    {
+        DNSUtil.setDnsOverride(originalDnsOverride == null ? null : new HashMap<>(originalDnsOverride));
+    }
 
     /**
      * A test that verifies that {@link DNSUtil#isNameCoveredByPattern(String, String)} finds a match when both
@@ -43,7 +63,7 @@ public class DNSUtilTest {
         final boolean result = DNSUtil.isNameCoveredByPattern( name, pattern );
 
         // verify
-        assertTrue( result );
+        assertTrue(result, "Expected exact name match to be covered by pattern, but it was not.");
     }
 
     /**
@@ -61,7 +81,7 @@ public class DNSUtilTest {
         final boolean result = DNSUtil.isNameCoveredByPattern( name, pattern );
 
         // verify
-        assertFalse( result );
+        assertFalse(result, "Expected different names to not match, but they were considered covered.");
     }
 
     /**
@@ -79,7 +99,7 @@ public class DNSUtilTest {
         final boolean result = DNSUtil.isNameCoveredByPattern( name, pattern );
 
         // verify
-        assertFalse( result );
+        assertFalse(result, "Expected subdomain to not match non-wildcard parent pattern, but it did.");
     }
 
     /**
@@ -97,7 +117,7 @@ public class DNSUtilTest {
         final boolean result = DNSUtil.isNameCoveredByPattern( name, pattern );
 
         // verify
-        assertFalse( result );
+        assertFalse(result, "Expected partial suffix match without dot-boundary to fail, but it matched.");
     }
 
     /**
@@ -115,7 +135,7 @@ public class DNSUtilTest {
         final boolean result = DNSUtil.isNameCoveredByPattern( name, pattern );
 
         // verify
-        assertTrue( result );
+        assertTrue(result, "Expected wildcard pattern to match subdomain, but it did not.");
     }
 
     /**
@@ -133,7 +153,7 @@ public class DNSUtilTest {
         final boolean result = DNSUtil.isNameCoveredByPattern( name, pattern );
 
         // verify
-        assertTrue( result );
+        assertTrue(result, "Expected wildcard pattern to match deeper subdomain, but it did not.");
     }
 
     /**
@@ -153,7 +173,43 @@ public class DNSUtilTest {
         final boolean result = DNSUtil.isNameCoveredByPattern( name, pattern );
 
         // verify
-        assertTrue( result );
+        assertTrue(result, "Expected wildcard pattern to cover same-domain value used by certificate logic, but it did not.");
+    }
+
+    /**
+     * Verifies that {@link DNSUtil#isNameCoveredByPattern(String, String)} rejects a null name.
+     */
+    @Test
+    public void testNameCoverageRejectsNullName() throws Exception
+    {
+        assertThrows(IllegalArgumentException.class, () -> DNSUtil.isNameCoveredByPattern(null, "*.example.org"), "Expected null name to be rejected.");
+    }
+
+    /**
+     * Verifies that {@link DNSUtil#isNameCoveredByPattern(String, String)} rejects an empty name.
+     */
+    @Test
+    public void testNameCoverageRejectsEmptyName() throws Exception
+    {
+        assertThrows(IllegalArgumentException.class, () -> DNSUtil.isNameCoveredByPattern("", "*.example.org"), "Expected empty name to be rejected.");
+    }
+
+    /**
+     * Verifies that {@link DNSUtil#isNameCoveredByPattern(String, String)} rejects a null pattern.
+     */
+    @Test
+    public void testNameCoverageRejectsNullPattern() throws Exception
+    {
+        assertThrows(IllegalArgumentException.class, () -> DNSUtil.isNameCoveredByPattern("xmpp.example.org", null), "Expected null pattern to be rejected.");
+    }
+
+    /**
+     * Verifies that {@link DNSUtil#isNameCoveredByPattern(String, String)} rejects an empty pattern.
+     */
+    @Test
+    public void testNameCoverageRejectsEmptyPattern() throws Exception
+    {
+        assertThrows(IllegalArgumentException.class, () -> DNSUtil.isNameCoveredByPattern("xmpp.example.org", ""), "Expected empty pattern to be rejected.");
     }
 
     /**
@@ -171,6 +227,115 @@ public class DNSUtilTest {
         final String result = DNSUtil.constructLookup(service, protocol, name);
 
         // Verify results.
-        assertEquals("_xmpp-client._tcp.igniterealtime.org.", result);
+        assertEquals("_xmpp-client._tcp.igniterealtime.org.", result, "Expected DNS lookup query to be constructed in '_service._proto.name.' format.");
+    }
+
+    /**
+     * Verifies that exact DNS override entries are used before a global wildcard override.
+     */
+    @Test
+    public void testResolveXMPPDomainUsesExactOverride() throws Exception
+    {
+        // Setup test fixture.
+        final SrvRecord exact = new SrvRecord("chat1.external.com", 5269, false);
+        final SrvRecord global = new SrvRecord("fallback.external.com", 5269, false);
+        DNSUtil.setDnsOverride(Map.of("chat1.example.org", exact, "*", global));
+
+        // Execute system under test.
+        final List<Set<SrvRecord>> result = DNSUtil.resolveXMPPDomain("chat1.example.org", 5269);
+
+        // Verify results.
+        assertEquals(List.of(Set.of(exact)), result, "Expected exact domain override to take precedence over global '*' override.");
+    }
+
+    /**
+     * Verifies that a global '*' DNS override entry is used when no exact domain override exists.
+     */
+    @Test
+    public void testResolveXMPPDomainUsesGlobalWildcardOverride() throws Exception
+    {
+        // Setup test fixture.
+        final SrvRecord global = new SrvRecord("fallback.external.com", 5269, false);
+        DNSUtil.setDnsOverride(Map.of("*", global));
+
+        // Execute system under test.
+        final List<Set<SrvRecord>> result = DNSUtil.resolveXMPPDomain("chat2.example.org", 5269);
+
+        // Verify results.
+        assertEquals(List.of(Set.of(global)), result, "Expected global '*' override to be used when no exact override exists.");
+    }
+
+    /**
+     * Verifies that wildcard domain entries like '*.example.org' are not interpreted as patterns.
+     */
+    @Test
+    public void testResolveXMPPDomainDoesNotUseDomainWildcardOverride() throws Exception
+    {
+        // Setup test fixture.
+        final SrvRecord domainWildcard = new SrvRecord("chat-wildcard.external.com", 5269, false);
+        final SrvRecord global = new SrvRecord("fallback.external.com", 5269, false);
+        DNSUtil.setDnsOverride(Map.of("*.external.com", domainWildcard, "*", global));
+
+        // Execute system under test.
+        final List<Set<SrvRecord>> result = DNSUtil.resolveXMPPDomain("chat2.location2.external.com", 5269);
+
+        // Verify results.
+        assertEquals(List.of(Set.of(global)), result, "Expected '*.domain' override key to be treated as literal and fall back to global '*' override.");
+        assertNotEquals(List.of(Set.of(domainWildcard)), result, "Expected '*.domain' override key to not be interpreted as a wildcard pattern.");
+    }
+
+    /**
+     * Verifies that malformed wildcard keys are ignored and do not match as wildcard patterns.
+     */
+    @Test
+    public void testResolveXMPPDomainIgnoresMalformedWildcardKeys() throws Exception
+    {
+        // Setup test fixture.
+        final SrvRecord malformedWildcard = new SrvRecord("malformed-wildcard.external.com", 5269, false);
+        final SrvRecord global = new SrvRecord("fallback.external.com", 5269, false);
+        DNSUtil.setDnsOverride(Map.of("*external.com", malformedWildcard, "*", global));
+
+        // Execute system under test.
+        final List<Set<SrvRecord>> result = DNSUtil.resolveXMPPDomain("chat1.external.com", 5269);
+
+        // Verify results.
+        assertEquals(List.of(Set.of(global)), result, "Expected malformed wildcard key to be ignored and global '*' fallback to be used.");
+    }
+
+    /**
+     * Verifies that a global '*' DNS override entry is used when neither exact nor wildcard overrides match.
+     */
+    @Test
+    public void testResolveXMPPDomainUsesGlobalWildcardWhenNoWildcardMatches() throws Exception
+    {
+        // Setup test fixture.
+        final SrvRecord wildcard = new SrvRecord("wildcard.external.com", 5269, false);
+        final SrvRecord global = new SrvRecord("fallback.external.com", 5269, false);
+        DNSUtil.setDnsOverride(Map.of("*.example.org", wildcard, "*", global));
+
+        // Execute system under test.
+        final List<Set<SrvRecord>> result = DNSUtil.resolveXMPPDomain("chat1.external.com", 5269);
+
+        // Verify results.
+        assertEquals(List.of(Set.of(global)), result, "Expected global '*' override to be used when no exact or wildcard override matches.");
+    }
+
+    /**
+     * Verifies that DNS/default fallback is used when no DNS overrides are configured.
+     */
+    @Test
+    public void testResolveXMPPDomainUsesFallbackWhenNoOverridesConfigured() throws Exception
+    {
+        // Setup test fixture.
+        final String domain = "chat1.invalid";
+        final int defaultPort = 5269;
+        final SrvRecord expectedFallback = new SrvRecord(domain, defaultPort, false, Integer.MAX_VALUE, 0);
+        DNSUtil.setDnsOverride(null);
+
+        // Execute system under test.
+        final List<Set<SrvRecord>> result = DNSUtil.resolveXMPPDomain(domain, defaultPort);
+
+        // Verify results.
+        assertTrue(result.stream().flatMap(Set::stream).anyMatch(expectedFallback::equals), "Expected fallback record based on requested domain and default port when no overrides are configured.");
     }
 }

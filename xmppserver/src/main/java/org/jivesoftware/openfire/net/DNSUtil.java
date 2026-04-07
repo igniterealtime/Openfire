@@ -33,6 +33,7 @@ import javax.naming.directory.Attributes;
 import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -54,7 +55,7 @@ public class DNSUtil {
      * Resolution precedence is exact domain match, then most-specific wildcard pattern, then global fallback
      * {@code *}. Wildcard patterns are expected in the form {@code *.example.org}.
      */
-    private static Map<String, SrvRecord> dnsOverride;
+    private static volatile Map<String, SrvRecord> dnsOverride;
 
     static {
         try {
@@ -64,7 +65,7 @@ public class DNSUtil {
 
             String property = JiveGlobals.getProperty("dnsutil.dnsOverride");
             if (property != null) {
-                dnsOverride = decode(property);
+                dnsOverride = new ConcurrentHashMap<>(decode(property));
                 dnsOverride.forEach((domain, override) -> logger.debug("Detected DNS override configuration for {} to {}", domain, override));
             }
         }
@@ -203,7 +204,7 @@ public class DNSUtil {
      * @param dnsOverride DNS override entries keyed by domain or wildcard pattern.
      */
     public static void setDnsOverride(Map<String, SrvRecord> dnsOverride) {
-        DNSUtil.dnsOverride = dnsOverride;
+        DNSUtil.dnsOverride = dnsOverride == null ? null : new ConcurrentHashMap<>(dnsOverride);
         JiveGlobals.setProperty("dnsutil.dnsOverride", encode(dnsOverride));
     }
 
@@ -218,10 +219,16 @@ public class DNSUtil {
      */
     private static SrvRecord findMostSpecificWildcardOverride(final String domain)
     {
+        // Get a snapshot reference to avoid ConcurrentModificationException
+        final Map<String, SrvRecord> currentOverrides = dnsOverride;
+        if (currentOverrides == null) {
+            return null;
+        }
+
         SrvRecord bestMatch = null;
         int bestKeyLength = -1;
 
-        for (final Map.Entry<String, SrvRecord> entry : dnsOverride.entrySet()) {
+        for (final Map.Entry<String, SrvRecord> entry : currentOverrides.entrySet()) {
             final String key = entry.getKey();
             if (!key.startsWith("*.")) {
                 continue;

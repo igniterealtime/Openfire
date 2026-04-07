@@ -15,6 +15,8 @@
  */
 package org.jivesoftware.openfire.session;
 
+import org.awaitility.Awaitility;
+import org.awaitility.core.ConditionTimeoutException;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.keystore.*;
@@ -284,13 +286,23 @@ public class LocalIncomingServerSessionTest
             AbstractRemoteServerDummy.log("Execute system under test: done connecting.");
 
             AbstractRemoteServerDummy.log("Execute system under test: get the incoming server session object.");
-            final LocalIncomingServerSession result;
+            LocalIncomingServerSession result;
             if (remoteInitiatingServerDummy.getReceivedStreamIDs().isEmpty()) {
                 result = null;
             } else {
                 // Get the _last_ stream ID.
                 final StreamID lastReceivedID = remoteInitiatingServerDummy.getReceivedStreamIDs().get(remoteInitiatingServerDummy.getReceivedStreamIDs().size()-1);
-                result = XMPPServer.getInstance().getSessionManager().getIncomingServerSession( lastReceivedID );
+                if (expected.getConnectionState() == ExpectedOutcome.ConnectionState.NO_CONNECTION) {
+                    result = XMPPServer.getInstance().getSessionManager().getIncomingServerSession(lastReceivedID);
+                } else {
+                    try {
+                        result = Awaitility.await()
+                            .atMost(5, TimeUnit.SECONDS)
+                            .until(() -> XMPPServer.getInstance().getSessionManager().getIncomingServerSession(lastReceivedID), Objects::nonNull);
+                    } catch (ConditionTimeoutException ex) {
+                        result = null;
+                    }
+                }
             }
             AbstractRemoteServerDummy.log("Execute system under test: (done with execution)");
 

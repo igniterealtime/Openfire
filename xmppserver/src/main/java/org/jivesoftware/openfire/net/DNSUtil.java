@@ -205,9 +205,9 @@ public class DNSUtil {
      * @param dnsOverride DNS override entries keyed by domain or wildcard pattern.
      */
     public static void setDnsOverride(Map<String, SrvRecord> dnsOverride) {
-        if (dnsOverride == null) {
+        if (dnsOverride == null || dnsOverride.isEmpty()) {
             DNSUtil.dnsOverride = null;
-            JiveGlobals.setProperty("dnsutil.dnsOverride", encode(null));
+            JiveGlobals.deleteProperty("dnsutil.dnsOverride");
         } else {
             // Normalize keys to lowercase for case-insensitive DNS name handling
             Map<String, SrvRecord> normalizedOverrides = new ConcurrentHashMap<>();

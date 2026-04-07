@@ -51,8 +51,8 @@ public class DNSUtil {
     /**
      * Internal DNS overrides for XMPP domain resolution.
      *
-     * Keys are matched literally against the requested domain. A key of {@code *} is treated as a global fallback.
-     * Keys such as {@code *.example.org} are not interpreted as wildcard patterns.
+     * Resolution precedence is exact domain match, then most-specific wildcard pattern, then global fallback
+     * {@code *}. Wildcard patterns are expected in the form {@code *.example.org}.
      */
     private static Map<String, SrvRecord> dnsOverride;
 
@@ -97,8 +97,9 @@ public class DNSUtil {
      * As an example, a lookup for "example.com" may return "im.example.com:5269".
      *
      * DNS overrides are evaluated before DNS lookups. Resolution first checks for an exact key match in
-     * {@code dnsOverride}. If none exists, the special key {@code *} is used as a global fallback. Other wildcard-like
-     * keys, such as {@code *.example.org}, are treated as literal keys and do not match by pattern.
+     * {@code dnsOverride}. If none exists, wildcard entries in the form {@code *.example.org} are considered.
+     * When multiple wildcard entries match, the most-specific match is selected. If no wildcard entry matches,
+     * the special key {@code *} is used as a global fallback.
      *
      * The returned collection is a list of sets of host names. The 'inner'
      * collection, the sets of host names, are grouping host names that have an
@@ -123,6 +124,9 @@ public class DNSUtil {
         List<Set<SrvRecord>> results = new LinkedList<>();
         if (dnsOverride != null) {
             SrvRecord serviceRecord = dnsOverride.get(domain);
+            if (serviceRecord == null) {
+                serviceRecord = findMostSpecificWildcardOverride(domain);
+            }
             if (serviceRecord == null) {
                 serviceRecord = dnsOverride.get("*");
             }
@@ -181,8 +185,8 @@ public class DNSUtil {
     /**
      * Returns DNS override entries that are checked before DNS SRV lookups.
      *
-     * Entries are keyed by literal domain values. The key {@code *} acts as a global fallback.
-     * Keys such as {@code *.example.org} are not pattern-matched.
+     * Resolution precedence is exact key match, then most-specific wildcard key in the form
+     * {@code *.example.org}, then global fallback key {@code *}.
      *
      * @return configured DNS override entries, or null when no overrides are configured.
      */
@@ -193,14 +197,47 @@ public class DNSUtil {
     /**
      * Sets DNS override entries that are checked before DNS SRV lookups.
      *
-     * Keys are matched literally against requested domains. The key {@code *} is a global fallback.
-     * Keys such as {@code *.example.org} are stored and matched literally, not as wildcard patterns.
+     * Exact keys are matched first. Wildcard keys in the form {@code *.example.org} are matched by suffix,
+     * preferring the most-specific wildcard when multiple entries match. The key {@code *} is a global fallback.
      *
-     * @param dnsOverride DNS override entries keyed by domain.
+     * @param dnsOverride DNS override entries keyed by domain or wildcard pattern.
      */
     public static void setDnsOverride(Map<String, SrvRecord> dnsOverride) {
         DNSUtil.dnsOverride = dnsOverride;
         JiveGlobals.setProperty("dnsutil.dnsOverride", encode(dnsOverride));
+    }
+
+    /**
+     * Finds the most-specific wildcard DNS override that matches a domain.
+     *
+     * Wildcard patterns are expected in the form {@code *.example.org}. When multiple patterns match,
+     * the longest pattern key is selected.
+     *
+     * @param domain The domain being resolved.
+     * @return A matching wildcard override, or null when no wildcard pattern matches.
+     */
+    private static SrvRecord findMostSpecificWildcardOverride(final String domain)
+    {
+        SrvRecord bestMatch = null;
+        int bestKeyLength = -1;
+
+        for (final Map.Entry<String, SrvRecord> entry : dnsOverride.entrySet()) {
+            final String key = entry.getKey();
+            if (!key.startsWith("*.")) {
+                continue;
+            }
+
+            if (!isNameCoveredByPattern(domain, key)) {
+                continue;
+            }
+
+            if (key.length() > bestKeyLength) {
+                bestMatch = entry.getValue();
+                bestKeyLength = key.length();
+            }
+        }
+
+        return bestMatch;
     }
 
     private static String encode(Map<String, SrvRecord> internalDNS) {

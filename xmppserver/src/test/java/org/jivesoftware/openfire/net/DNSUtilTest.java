@@ -231,21 +231,22 @@ public class DNSUtilTest {
     }
 
     /**
-     * Verifies that exact DNS override entries are used before a global wildcard override.
+     * Verifies that exact DNS override entries are used before wildcard and global wildcard overrides.
      */
     @Test
     public void testResolveXMPPDomainUsesExactOverride() throws Exception
     {
         // Setup test fixture.
         final SrvRecord exact = new SrvRecord("chat1.external.com", 5269, false);
+        final SrvRecord wildcard = new SrvRecord("domain-wildcard.external.com", 5269, false);
         final SrvRecord global = new SrvRecord("fallback.external.com", 5269, false);
-        DNSUtil.setDnsOverride(Map.of("chat1.example.org", exact, "*", global));
+        DNSUtil.setDnsOverride(Map.of("chat1.example.org", exact, "*.example.org", wildcard, "*", global));
 
         // Execute system under test.
         final List<Set<SrvRecord>> result = DNSUtil.resolveXMPPDomain("chat1.example.org", 5269);
 
         // Verify results.
-        assertEquals(List.of(Set.of(exact)), result, "Expected exact domain override to take precedence over global '*' override.");
+        assertEquals(List.of(Set.of(exact)), result, "Expected exact domain override to take precedence over wildcard and global '*' overrides.");
     }
 
     /**
@@ -266,22 +267,39 @@ public class DNSUtilTest {
     }
 
     /**
-     * Verifies that wildcard domain entries like '*.example.org' are not interpreted as patterns.
+     * Verifies that the most-specific wildcard domain override is preferred when multiple wildcards match.
      */
     @Test
-    public void testResolveXMPPDomainDoesNotUseDomainWildcardOverride() throws Exception
+    public void testResolveXMPPDomainUsesMostSpecificWildcardOverride() throws Exception
     {
         // Setup test fixture.
-        final SrvRecord domainWildcard = new SrvRecord("chat-wildcard.external.com", 5269, false);
+        final SrvRecord broadWildcard = new SrvRecord("broad-wildcard.external.com", 5269, false);
+        final SrvRecord specificWildcard = new SrvRecord("specific-wildcard.external.com", 5269, false);
         final SrvRecord global = new SrvRecord("fallback.external.com", 5269, false);
-        DNSUtil.setDnsOverride(Map.of("*.external.com", domainWildcard, "*", global));
+        DNSUtil.setDnsOverride(Map.of("*.external.com", broadWildcard, "*.location2.external.com", specificWildcard, "*", global));
 
         // Execute system under test.
         final List<Set<SrvRecord>> result = DNSUtil.resolveXMPPDomain("chat2.location2.external.com", 5269);
 
         // Verify results.
-        assertEquals(List.of(Set.of(global)), result, "Expected '*.domain' override key to be treated as literal and fall back to global '*' override.");
-        assertNotEquals(List.of(Set.of(domainWildcard)), result, "Expected '*.domain' override key to not be interpreted as a wildcard pattern.");
+        assertEquals(List.of(Set.of(specificWildcard)), result, "Expected most-specific wildcard override to be used when multiple wildcard patterns match.");
+    }
+
+    /**
+     * Verifies that wildcard domain overrides are matched case-insensitively.
+     */
+    @Test
+    public void testResolveXMPPDomainUsesWildcardOverrideCaseInsensitively() throws Exception
+    {
+        // Setup test fixture.
+        final SrvRecord wildcard = new SrvRecord("case-insensitive-wildcard.external.com", 5269, false);
+        DNSUtil.setDnsOverride(Map.of("*.EXTERNAL.COM", wildcard));
+
+        // Execute system under test.
+        final List<Set<SrvRecord>> result = DNSUtil.resolveXMPPDomain("ChAt1.ExTeRnAl.CoM", 5269);
+
+        // Verify results.
+        assertEquals(List.of(Set.of(wildcard)), result, "Expected wildcard override matching to be case-insensitive.");
     }
 
     /**
@@ -318,6 +336,24 @@ public class DNSUtilTest {
 
         // Verify results.
         assertEquals(List.of(Set.of(global)), result, "Expected global '*' override to be used when no exact or wildcard override matches.");
+    }
+
+    /**
+     * Verifies that a broader wildcard DNS override is used when it is the only wildcard match.
+     */
+    @Test
+    public void testResolveXMPPDomainUsesBroaderWildcardWhenOnlyWildcardMatch() throws Exception
+    {
+        // Setup test fixture.
+        final SrvRecord broadWildcard = new SrvRecord("broad.external.com", 5269, false);
+        final SrvRecord global = new SrvRecord("global.external.com", 5269, false);
+        DNSUtil.setDnsOverride(Map.of("*.external.com", broadWildcard, "*.location2.external.com", new SrvRecord("specific.external.com", 5269, false), "*", global));
+
+        // Execute system under test.
+        final List<Set<SrvRecord>> result = DNSUtil.resolveXMPPDomain("chat3.external.com", 5269);
+
+        // Verify results.
+        assertEquals(List.of(Set.of(broadWildcard)), result, "Expected broader wildcard override to be used when it is the only matching wildcard.");
     }
 
     /**

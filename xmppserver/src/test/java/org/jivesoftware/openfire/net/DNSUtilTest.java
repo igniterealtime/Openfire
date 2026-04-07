@@ -374,4 +374,41 @@ public class DNSUtilTest {
         // Verify results.
         assertTrue(result.stream().flatMap(Set::stream).anyMatch(expectedFallback::equals), "Expected fallback record based on requested domain and default port when no overrides are configured.");
     }
+
+    /**
+     * A test that verifies that {@link DNSUtil#isNameCoveredByPattern(String, String)} does not find a match when the
+     * last part of the needle/name equals the pattern suffix but is not a proper subdomain.
+     * This test catches the vulnerability where "notexternal.com" would incorrectly match "*.external.com".
+     */
+    @Test
+    public void testNameCoverageWildcardPartialMatchButNoSubdomain() throws Exception
+    {
+        // setup
+        final String name = "notexternal.com";
+        final String pattern = "*.external.com";
+
+        // do magic
+        final boolean result = DNSUtil.isNameCoveredByPattern( name, pattern );
+
+        // verify
+        assertFalse(result, "Expected partial suffix match with wildcard but no dot-boundary to fail, but it matched.");
+    }
+
+    /**
+     * A test that verifies that {@link DNSUtil#isNameCoveredByPattern(String, String)} finds a match when the
+     * name exactly equals the domain part of a wildcard pattern (certificate edge case).
+     */
+    @Test
+    public void testNameCoverageWildcardExactDomainMatch() throws Exception
+    {
+        // setup
+        final String name = "external.com";
+        final String pattern = "*.external.com";
+
+        // do magic
+        final boolean result = DNSUtil.isNameCoveredByPattern( name, pattern );
+
+        // verify
+        assertTrue(result, "Expected exact domain match against wildcard pattern to succeed for certificate compatibility, but it failed.");
+    }
 }

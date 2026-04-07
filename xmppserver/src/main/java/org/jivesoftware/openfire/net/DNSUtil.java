@@ -207,6 +207,7 @@ public class DNSUtil {
     public static void setDnsOverride(Map<String, SrvRecord> dnsOverride) {
         if (dnsOverride == null) {
             DNSUtil.dnsOverride = null;
+            JiveGlobals.setProperty("dnsutil.dnsOverride", encode(null));
         } else {
             // Normalize keys to lowercase for case-insensitive DNS name handling
             Map<String, SrvRecord> normalizedOverrides = new ConcurrentHashMap<>();
@@ -214,8 +215,8 @@ public class DNSUtil {
                 normalizedOverrides.put(entry.getKey().toLowerCase(), entry.getValue());
             }
             DNSUtil.dnsOverride = normalizedOverrides;
+            JiveGlobals.setProperty("dnsutil.dnsOverride", encode(normalizedOverrides));
         }
-        JiveGlobals.setProperty("dnsutil.dnsOverride", encode(dnsOverride));
     }
 
     /**

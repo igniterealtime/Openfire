@@ -466,6 +466,7 @@ public class DNSUtilTest {
      * A test that verifies that {@link DNSUtil#isNameCoveredByPattern(String, String)} does not find a match when the
      * last part of the needle/name equals the pattern suffix but is not a proper subdomain.
      * This test catches the vulnerability where "notexternal.invalid" would incorrectly match "*.external.invalid".
+     * This is a critical security boundary test to prevent overly-broad DNS override routing.
      */
     @Test
     public void testNameCoverageWildcardPartialMatchButNoSubdomain() throws Exception
@@ -479,6 +480,78 @@ public class DNSUtilTest {
 
         // verify
         assertFalse(result, "Expected partial suffix match with wildcard but no dot-boundary to fail, but it matched.");
+    }
+
+    /**
+     * Security boundary test: Verifies that wildcard patterns do not match direct suffix concatenation.
+     * Prevents DNS override misrouting where "evilexternal.com" might incorrectly match "*.external.com".
+     */
+    @Test
+    public void testNameCoverageWildcardRejectsDirectSuffixConcatenation() throws Exception
+    {
+        // setup
+        final String name = "evilexternal.com";
+        final String pattern = "*.external.com";
+
+        // do magic
+        final boolean result = DNSUtil.isNameCoveredByPattern(name, pattern);
+
+        // verify
+        assertFalse(result, "Wildcard should not match direct suffix concatenation without dot boundary");
+    }
+
+    /**
+     * Security boundary test: Verifies that wildcard patterns do not match partial domain name overlap.
+     * Prevents DNS override misrouting where "maliciousexample.org" might incorrectly match "*.example.org".
+     */
+    @Test
+    public void testNameCoverageWildcardRejectsPartialDomainOverlap() throws Exception
+    {
+        // setup
+        final String name = "maliciousexample.org";
+        final String pattern = "*.example.org";
+
+        // do magic
+        final boolean result = DNSUtil.isNameCoveredByPattern(name, pattern);
+
+        // verify
+        assertFalse(result, "Wildcard should not match when domain name is concatenated without dot");
+    }
+
+    /**
+     * Security boundary test: Verifies that wildcard patterns do not match TLD boundary violations.
+     * Prevents DNS override misrouting where "example.orgmalicious" might incorrectly match "*.example.org".
+     */
+    @Test
+    public void testNameCoverageWildcardRejectsTldBoundaryViolation() throws Exception
+    {
+        // setup
+        final String name = "example.orgmalicious";
+        final String pattern = "*.example.org";
+
+        // do magic
+        final boolean result = DNSUtil.isNameCoveredByPattern(name, pattern);
+
+        // verify
+        assertFalse(result, "Wildcard should not match when TLD is concatenated");
+    }
+
+    /**
+     * Positive control test: Verifies that legitimate subdomains still match wildcard patterns correctly.
+     * Ensures that security boundary fixes don't break normal wildcard functionality.
+     */
+    @Test
+    public void testNameCoverageWildcardMatchesLegitimateSubdomain() throws Exception
+    {
+        // setup
+        final String name = "legitimate.external.com";
+        final String pattern = "*.external.com";
+
+        // do magic
+        final boolean result = DNSUtil.isNameCoveredByPattern(name, pattern);
+
+        // verify
+        assertTrue(result, "Wildcard should match legitimate subdomain with proper dot boundary");
     }
 
     /**

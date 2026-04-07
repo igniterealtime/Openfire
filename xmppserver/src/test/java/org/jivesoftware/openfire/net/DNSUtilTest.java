@@ -303,6 +303,45 @@ public class DNSUtilTest {
     }
 
     /**
+     * Verifies that exact domain overrides are matched case-insensitively.
+     * This test ensures that an exact override configured as "Example.org" will
+     * match a lookup for "example.org", maintaining consistency with DNS standards.
+     */
+    @Test
+    public void testResolveXMPPDomainUsesExactOverrideCaseInsensitively() throws Exception
+    {
+        // Setup test fixture.
+        final SrvRecord exact = new SrvRecord("case-insensitive-exact.external.invalid", 5269, false);
+        final SrvRecord wildcard = new SrvRecord("fallback-wildcard.external.invalid", 5269, false);
+        DNSUtil.setDnsOverride(Map.of("Chat1.Example.Invalid", exact, "*.example.invalid", wildcard));
+
+        // Execute system under test.
+        final List<Set<SrvRecord>> result = DNSUtil.resolveXMPPDomain("chat1.example.invalid", 5269);
+
+        // Verify results.
+        assertEquals(List.of(Set.of(exact)), result, "Expected exact override matching to be case-insensitive.");
+    }
+
+    /**
+     * Verifies that exact domain overrides take precedence even when configured in different cases.
+     * This test ensures mixed-case exact overrides work correctly and take precedence over wildcards.
+     */
+    @Test
+    public void testResolveXMPPDomainExactOverridePrecedenceWithMixedCase() throws Exception
+    {
+        // Setup test fixture.
+        final SrvRecord exact = new SrvRecord("mixed-case-exact.external.invalid", 5269, false);
+        final SrvRecord wildcard = new SrvRecord("wildcard-fallback.external.invalid", 5269, false);
+        DNSUtil.setDnsOverride(Map.of("CHAT.EXAMPLE.INVALID", exact, "*.EXAMPLE.INVALID", wildcard));
+
+        // Execute system under test with different casing
+        final List<Set<SrvRecord>> result = DNSUtil.resolveXMPPDomain("chat.example.invalid", 5269);
+
+        // Verify results.
+        assertEquals(List.of(Set.of(exact)), result, "Expected exact override to take precedence over wildcard even with mixed case configuration.");
+    }
+
+    /**
      * Verifies that malformed wildcard keys are ignored and do not match as wildcard patterns.
      */
     @Test

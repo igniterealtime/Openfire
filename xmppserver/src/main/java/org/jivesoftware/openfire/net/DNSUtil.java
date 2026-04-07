@@ -124,7 +124,8 @@ public class DNSUtil {
         // Check if there is an entry in the internal DNS for the specified domain
         List<Set<SrvRecord>> results = new LinkedList<>();
         if (dnsOverride != null) {
-            SrvRecord serviceRecord = dnsOverride.get(domain);
+            // DNS names are case-insensitive, normalize domain for exact match lookup
+            SrvRecord serviceRecord = dnsOverride.get(domain.toLowerCase());
             if (serviceRecord == null) {
                 serviceRecord = findMostSpecificWildcardOverride(domain);
             }
@@ -204,7 +205,16 @@ public class DNSUtil {
      * @param dnsOverride DNS override entries keyed by domain or wildcard pattern.
      */
     public static void setDnsOverride(Map<String, SrvRecord> dnsOverride) {
-        DNSUtil.dnsOverride = dnsOverride == null ? null : new ConcurrentHashMap<>(dnsOverride);
+        if (dnsOverride == null) {
+            DNSUtil.dnsOverride = null;
+        } else {
+            // Normalize keys to lowercase for case-insensitive DNS name handling
+            Map<String, SrvRecord> normalizedOverrides = new ConcurrentHashMap<>();
+            for (Map.Entry<String, SrvRecord> entry : dnsOverride.entrySet()) {
+                normalizedOverrides.put(entry.getKey().toLowerCase(), entry.getValue());
+            }
+            DNSUtil.dnsOverride = normalizedOverrides;
+        }
         JiveGlobals.setProperty("dnsutil.dnsOverride", encode(dnsOverride));
     }
 
@@ -274,7 +284,8 @@ public class DNSUtil {
                 host = host.substring(0, host.length()-1);
             }
             int port = Integer.parseInt(st.nextToken());
-            answer.put(key, new SrvRecord(host, port, false));
+            // Normalize keys to lowercase for case-insensitive DNS name handling
+            answer.put(key.toLowerCase(), new SrvRecord(host, port, false));
         }
         return answer;
     }

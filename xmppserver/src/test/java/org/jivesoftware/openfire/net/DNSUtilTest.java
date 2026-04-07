@@ -396,70 +396,65 @@ public class DNSUtilTest {
     }
 
     /**
-     * Verifies that DNS/default fallback is used when no DNS overrides match the requested domain.
-     *
-     * This test avoids actual DNS lookups by using a global wildcard override that simulates
-     * "no matching DNS records found" scenario, then verifies the fallback logic separately.
+     * Verifies that a global '*' DNS override is returned when no exact or wildcard domain matches exist.
+     * This test validates the DNS override precedence logic, not the DNS fallback behavior.
      */
     @Test
-    public void testResolveXMPPDomainFallbackLogic() throws Exception
+    public void testResolveXMPPDomainUsesGlobalOverrideWhenConfigured() throws Exception
     {
         // Setup test fixture.
-        final String domain = "test-fallback.example";
+        final String domain = "test-override.example";
         final int defaultPort = 5269;
 
-        // Use a global wildcard that returns an empty result to simulate DNS failure
-        // This prevents actual network calls while testing fallback logic
-        final SrvRecord emptyResult = new SrvRecord("", 0, false, Integer.MAX_VALUE, Integer.MAX_VALUE);
-        DNSUtil.setDnsOverride(Map.of("*", emptyResult));
+        // Use a global wildcard override to test the override path
+        final SrvRecord globalOverride = new SrvRecord("override-server.external.invalid", 5555, false, Integer.MAX_VALUE, Integer.MAX_VALUE);
+        DNSUtil.setDnsOverride(Map.of("*", globalOverride));
 
         // Execute system under test
         final List<Set<SrvRecord>> result = DNSUtil.resolveXMPPDomain(domain, defaultPort);
 
-        // Verify results - should only contain the global override (simulating DNS failure)
+        // Verify results - should contain only the global override
         assertFalse(result.isEmpty(), "Expected override result to be returned.");
         assertEquals(1, result.size(), "Expected exactly one priority group.");
         assertEquals(1, result.get(0).size(), "Expected exactly one record in the priority group.");
 
         final SrvRecord actualRecord = result.get(0).iterator().next();
-        assertEquals(emptyResult, actualRecord, "Expected the global wildcard override to be returned.");
+        assertEquals(globalOverride, actualRecord, "Expected the global wildcard override to be returned.");
     }
 
     /**
-     * Verifies the fallback addition logic by testing a scenario where DNS returns empty results
-     * and ensuring the domain+port fallback is added correctly.
-     *
-     * Note: This test demonstrates the issue mentioned in the original problem - it may perform
-     * actual DNS lookups for domains that don't have overrides, which can be slow in CI.
-     * For a production fix, consider extracting the fallback logic or using dependency injection.
+     * Verifies the DNS fallback logic that appends domain+defaultPort when DNS lookups return no results.
+     * This test clears DNS overrides to exercise the actual DNS resolution and fallback append behavior.
+     * Uses .invalid TLD per RFC 6761 to ensure DNS lookups fail quickly and deterministically.
      */
-    @Test  
-    public void testResolveXMPPDomainWithActualDnsLookup() throws Exception
+    @Test
+    public void testResolveXMPPDomainAppendsFallbackWhenDnsEmpty() throws Exception
     {
-        // Setup test fixture - using .invalid TLD per RFC 6761 (should fail DNS quickly)
-        final String domain = "nonexistent.invalid";
+        // Setup test fixture - use .invalid TLD that should fail DNS lookups quickly
+        final String domain = "no-srv-records.invalid";
         final int defaultPort = 5269;
 
-        // Clear overrides to trigger actual DNS resolution
+        // Clear all overrides to force actual DNS resolution path
         DNSUtil.setDnsOverride(Map.of());
 
-        // Execute system under test - this WILL make DNS calls
+        // Execute system under test - will perform real DNS lookups
         final List<Set<SrvRecord>> result = DNSUtil.resolveXMPPDomain(domain, defaultPort);
 
-        // Verify fallback behavior
-        assertFalse(result.isEmpty(), "Expected at least the fallback record.");
+        // Verify fallback behavior - should contain the domain+port fallback
+        assertFalse(result.isEmpty(), "Expected at least the fallback record when DNS returns no SRV records.");
 
-        // Find the fallback record (priority = Integer.MAX_VALUE)
+        // Find the fallback record (domain+defaultPort with priority = Integer.MAX_VALUE)
         boolean foundFallback = result.stream()
             .flatMap(Set::stream)
             .anyMatch(record -> 
                 record.getHostname().equals(domain) && 
                 record.getPort() == defaultPort && 
                 !record.isDirectTLS() &&
-                record.getPriority() == Integer.MAX_VALUE);
+                record.getPriority() == Integer.MAX_VALUE &&
+                record.getWeight() == 0);
                 
         assertTrue(foundFallback, 
-            "Expected fallback record when DNS lookups fail for domain: " + domain);
+            "Expected fallback record (domain+defaultPort) to be appended when DNS lookups return no SRV records for domain: " + domain);
     }
 
     /**

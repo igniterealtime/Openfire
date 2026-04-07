@@ -385,6 +385,13 @@ public class DNSUtil {
      * Checks if the provided DNS pattern matches the provided name. For example, this method will:
      * return <em>true</em>  for name: {@code xmpp.example.org}, pattern: {@code *.example.org}
      * return <em>false</em> for name: {@code xmpp.example.org}, pattern: {@code example.org}
+     * return <em>false</em> for name: {@code notexample.org}, pattern: {@code *.example.org}
+     * return <em>true</em>  for name: {@code xmpp.example.org}, pattern: {@code *.xmpp.example.org} (certificate edge case)
+     *
+     * Note: This method includes special handling for certificate compatibility where a domain name
+     * can match a wildcard pattern for that same domain (e.g., {@code xmpp.example.org} matches
+     * {@code *.xmpp.example.org}). While this behavior is non-standard for DNS wildcards, it is
+     * required for Openfire's certificate management functionality.
      *
      * This method is not case sensitive.
      *
@@ -407,7 +414,17 @@ public class DNSUtil {
         }
 
         if ( hayStack.startsWith( "*." ) ) {
-            return needle.endsWith( hayStack.substring( 2 ) );
+            final String suffix = hayStack.substring( 2 ); // Remove "*."
+            if ( needle.endsWith( suffix ) ) {
+                // Check that the match is at a proper dot boundary or exact match
+                final int suffixStart = needle.length() - suffix.length();
+                if ( suffixStart == 0 ) {
+                    // Exact match: needle equals the suffix (certificate edge case)
+                    return true;
+                }
+                // Subdomain match: must have a dot before the suffix
+                return needle.charAt( suffixStart - 1 ) == '.';
+            }
         }
         return false;
     }

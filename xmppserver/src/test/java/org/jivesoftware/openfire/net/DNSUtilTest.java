@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -283,6 +284,58 @@ public class DNSUtilTest {
 
         // Verify results.
         assertEquals(List.of(Set.of(specificWildcard)), result, "Expected most-specific wildcard override to be used when multiple wildcard patterns match.");
+    }
+
+    /**
+     * Verifies that DNS override entries are returned ordered by resolution precedence.
+     */
+    @Test
+    public void testGetDnsOverrideEntriesByPrecedence() throws Exception
+    {
+        // Setup test fixture.
+        DNSUtil.setDnsOverride(Map.of(
+            "chat.example.invalid", new SrvRecord("chat.example.invalid", 5269, false),
+            "alpha.example.invalid", new SrvRecord("alpha.example.invalid", 5269, false),
+            "*.example.invalid", new SrvRecord("wildcard-broad.example.invalid", 5269, false),
+            "*.a.example.invalid", new SrvRecord("wildcard-specific-a.example.invalid", 5269, false),
+            "*.b.example.invalid", new SrvRecord("wildcard-specific-b.example.invalid", 5269, false),
+            "*", new SrvRecord("fallback.example.invalid", 5269, false)
+        ));
+
+        // Execute system under test.
+        final List<String> sortedKeys = DNSUtil.getDnsOverrideEntriesByPrecedence().stream()
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toList());
+
+        // Verify results.
+        assertEquals(
+            List.of(
+                "alpha.example.invalid",
+                "chat.example.invalid",
+                "*.a.example.invalid",
+                "*.b.example.invalid",
+                "*.example.invalid",
+                "*"
+            ),
+            sortedKeys,
+            "Expected DNS override keys to be ordered as exact, wildcard-most-specific-first, then global fallback."
+        );
+    }
+
+    /**
+     * Verifies that no configured DNS overrides produce an empty ordered entry list.
+     */
+    @Test
+    public void testGetDnsOverrideEntriesByPrecedenceWithoutConfiguration() throws Exception
+    {
+        // Setup test fixture.
+        DNSUtil.setDnsOverride(null);
+
+        // Execute system under test.
+        final List<Map.Entry<String, SrvRecord>> result = DNSUtil.getDnsOverrideEntriesByPrecedence();
+
+        // Verify results.
+        assertTrue(result.isEmpty(), "Expected no ordered entries when no DNS override configuration exists.");
     }
 
     /**

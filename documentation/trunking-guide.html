@@ -112,11 +112,11 @@
 
         <p>
             The server that is sending the message will attempt to establish a server-to-server connection with the target server. The sending server perform DNS lookups based on the domain name of the target server. The results of this lookup must be manipulated
-            in such a way that the resulting IP address is that of the trunking server. Openfire can facilitate such DNS manipulation, as it allows DNS lookups to be skipped in favor of preconfigured hard-coded values. To configure such values, the
-            property <code>dnsutil.dnsOverride</code> can be used. Note that these changes are needed only on the server(s) that send data through the trunking server. The trunking server itself should not need them.
+            in such a way that the resulting IP address is that of the trunking server. Openfire can facilitate such DNS manipulation, as it allows DNS lookups to be skipped in favor of preconfigured hard-coded values. Configure these values in the Admin Console at
+            <code>Server / Server Settings / DNS Overrides</code>. Note that these changes are needed only on the server(s) that send data through the trunking server. The trunking server itself should not need them.
         </p>
         <p>
-            The expected format of the value of the <code>dnsutil.dnsOverride</code> property is a comma-sparated list of <code>{HOST,IP:PORT}</code>. Note that whitespace is not allowed, as shown in <a href="#example-dnsutil-propvalue">example 1</a>:
+            For advanced or scripted deployments, you can configure this directly with the <code>dnsutil.dnsOverride</code> property. The expected format of that property value is a comma-separated list of <code>{HOST,IP:PORT}</code>. Note that whitespace is not allowed, as shown in <a href="#example-dnsutil-propvalue">example 1</a>:
         </p>
 
         <fieldset id="example-dnsutil-propvalue">
@@ -157,7 +157,7 @@
                     <p>
                         When a user of <code>saturn.example.org</code> sends a stanza to one of the users of <code>mercury.example.net</code>, <code>saturn.example.org</code> will attempt to establish a server-to-server connection to <code>mercury.example.net</code>. The objective here is to
                         ensure that <code>saturn.example.org</code> is made to believe that the IP address of <code>mercury.example.net</code> is <code>198.51.100.4</code>, instead of its actual address <code>233.252.0.6</code>. This will cause the server-to-server connection to be established
-                        to <code>trunk.example.org</code> instead of to <code>mercury.example.net</code>. To this end, the property <code>dnsutil.dnsOverride</code> is configured with the following value on <code>saturn.example.org</code>: <code>{mercury.example.net,198.51.100.4:5269}</code>
+                        to <code>trunk.example.org</code> instead of to <code>mercury.example.net</code>. To this end, configure a DNS override on <code>saturn.example.org</code> (Admin Console: <code>Server / Server Settings / DNS Overrides</code>) for <code>mercury.example.net</code> to <code>198.51.100.4:5269</code>. The equivalent property value is: <code>{mercury.example.net,198.51.100.4:5269}</code>
                     </p>
 
                     <figure id="figure-dns-override">
@@ -169,8 +169,7 @@
                 <li>
                     <p>
                         Typically, users will want to be able to respond to messages that they receive. To allow users of <code>mercury.example.net</code> to send back messages to users of <code>saturn.example.org</code>, a configuration change needs to be applied on <code>mercury.example.net</code>:
-                        it needs to resolve the IP address of <code>saturn.example.org</code> to a value that equals that of the trunking server: <code>198.51.100.4</code>. Similar to what was done on the other server, the property <code>dnsutil.dnsOverride</code> on <code>mercury.example.net</code> is
-                        configured with the value: <code>{saturn.example.org,198.51.100.4:5269}</code>
+                        it needs to resolve the IP address of <code>saturn.example.org</code> to a value that equals that of the trunking server: <code>198.51.100.4</code>. Similar to what was done on the other server, configure a DNS override on <code>mercury.example.net</code> (Admin Console: <code>Server / Server Settings / DNS Overrides</code>) for <code>saturn.example.org</code> to <code>198.51.100.4:5269</code>. The equivalent property value is: <code>{saturn.example.org,198.51.100.4:5269}</code>
                     </p>
                 </li>
             </ol>

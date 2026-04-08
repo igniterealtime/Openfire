@@ -887,8 +887,12 @@ public class DbConnectionManager {
                 maxRowsSupported = false;
             }
         }
+        // MariaDB properties (must be checked before MySQL, as MariaDB reports its product name as "MariaDB")
+        else if (dbName.contains("maria")) {
+            databaseType = DatabaseType.mariadb;
+        }
         // MySQL properties
-        else if (dbName.contains("mysql") || dbName.contains("maria")) {
+        else if (dbName.contains("mysql")) {
             databaseType = DatabaseType.mysql;
             // transactionsSupported = false; /* comment and test this, it should be supported since 5.0 */
         }
@@ -1013,6 +1017,8 @@ public class DbConnectionManager {
         postgresql,
 
         mysql("rank"),
+
+        mariadb("rank"),
 
         hsqldb,
 

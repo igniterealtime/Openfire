@@ -100,6 +100,11 @@
                   url="http-bind.jsp"
                   description="${sidebar.http-bind.descr}"/>
 
+            <!-- DNS overrides -->
+            <item id="dns-overrides" name="${sidebar.dns-overrides}"
+                  url="dns-overrides.jsp"
+                  description="${sidebar.dns-overrides.descr}"/>
+
             <!-- Manage updates -->
             <item id="manage-updates" name="${sidebar.manage-updates}"
                   url="manage-updates.jsp"

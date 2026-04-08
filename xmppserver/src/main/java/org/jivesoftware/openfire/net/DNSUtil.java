@@ -197,6 +197,25 @@ public class DNSUtil {
     }
 
     /**
+     * Returns DNS override entries ordered by resolution precedence.
+     *
+     * The order is exact domain keys first, wildcard keys in the form {@code *.example.org} next (most-specific first),
+     * and the global fallback key {@code *} last.
+     *
+     * @return an ordered snapshot of configured DNS override entries, never null.
+     */
+    public static List<Map.Entry<String, SrvRecord>> getDnsOverrideEntriesByPrecedence()
+    {
+        if (dnsOverride == null || dnsOverride.isEmpty()) {
+            return List.of();
+        }
+
+        final List<Map.Entry<String, SrvRecord>> result = new ArrayList<>(dnsOverride.entrySet());
+        result.sort(DNS_OVERRIDE_PRECEDENCE);
+        return result;
+    }
+
+    /**
      * Sets DNS override entries that are checked before DNS SRV lookups.
      *
      * Exact keys are matched first. Wildcard keys in the form {@code *.example.org} are matched by suffix,
@@ -448,4 +467,29 @@ public class DNSUtil {
         }
         return false;
     }
+
+    /**
+     * Orders DNS override entries by resolution precedence: exact keys first, wildcard keys next (most-specific first),
+     * and the global fallback key ({@code *}) last.
+     */
+    private static final Comparator<Map.Entry<String, SrvRecord>> DNS_OVERRIDE_PRECEDENCE = (left, right) -> {
+        final String leftKey = left.getKey();
+        final String rightKey = right.getKey();
+
+        // Categorise: 0 = exact domain, 1 = wildcard *.x, 2 = global fallback *
+        final int leftCategory  = "*".equals(leftKey)  ? 2 : leftKey.startsWith("*.")  ? 1 : 0;
+        final int rightCategory = "*".equals(rightKey) ? 2 : rightKey.startsWith("*.") ? 1 : 0;
+        if (leftCategory != rightCategory) {
+            return Integer.compare(leftCategory, rightCategory);
+        }
+
+        if (leftCategory == 1) {
+            final int specificityComparison = Integer.compare(rightKey.length(), leftKey.length());
+            if (specificityComparison != 0) {
+                return specificityComparison;
+            }
+        }
+
+        return leftKey.compareTo(rightKey);
+    };
 }

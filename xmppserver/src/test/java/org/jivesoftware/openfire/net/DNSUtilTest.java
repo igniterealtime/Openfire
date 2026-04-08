@@ -21,6 +21,7 @@ import org.junit.jupiter.api.BeforeEach;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -232,6 +233,35 @@ public class DNSUtilTest {
     }
 
     /**
+     * Verifies that {@link DNSUtil#constructLookup(String, String, String)} lowercases independently of default JVM locale.
+     */
+    @Test
+    public void testConstructLookupWithTurkishDefaultLocale() throws Exception
+    {
+        // Setup test fixture.
+        final Locale originalLocale = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+            final String service = "XmPP-CLIENT";
+            final String protocol = "TCP";
+            final String name = "IGniterealtime.Invalid";
+
+            // Execute system under test.
+            final String result = DNSUtil.constructLookup(service, protocol, name);
+
+            // Verify results.
+            assertEquals(
+                "_xmpp-client._tcp.igniterealtime.invalid.",
+                result,
+                "Expected constructLookup to produce locale-independent lowercase output."
+            );
+        } finally {
+            // Tear down test fixture.
+            Locale.setDefault(originalLocale);
+        }
+    }
+
+    /**
      * Verifies that exact DNS override entries are used before wildcard and global wildcard overrides.
      */
     @Test
@@ -373,6 +403,56 @@ public class DNSUtilTest {
 
         // Verify results.
         assertEquals(List.of(Set.of(exact)), result, "Expected exact override matching to be case-insensitive.");
+    }
+
+    /**
+     * Verifies that exact DNS override matching does not depend on the default JVM locale.
+     */
+    @Test
+    public void testResolveXMPPDomainUsesExactOverrideWithTurkishDefaultLocale() throws Exception
+    {
+        // Setup test fixture.
+        final Locale originalLocale = Locale.getDefault();
+        final SrvRecord exact = new SrvRecord("locale-safe-exact.external.invalid", 5269, false);
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+            DNSUtil.setDnsOverride(Map.of("CHAT.EXAMPLE.INVALID", exact));
+
+            // Execute system under test.
+            final List<Set<SrvRecord>> result = DNSUtil.resolveXMPPDomain("chat.example.invalid", 5269);
+
+            // Verify results.
+            assertEquals(
+                List.of(Set.of(exact)),
+                result,
+                "Expected exact override matching to remain stable when default locale is Turkish."
+            );
+        } finally {
+            // Tear down test fixture.
+            Locale.setDefault(originalLocale);
+        }
+    }
+
+    /**
+     * Verifies that wildcard pattern matching does not depend on the default JVM locale.
+     */
+    @Test
+    public void testNameCoverageWildcardMatchWithTurkishDefaultLocale() throws Exception
+    {
+        // Setup test fixture.
+        final Locale originalLocale = Locale.getDefault();
+        try {
+            Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+
+            // Execute system under test.
+            final boolean result = DNSUtil.isNameCoveredByPattern("chat.external.invalid", "*.EXTERNAL.INVALID");
+
+            // Verify results.
+            assertTrue(result, "Expected wildcard match to remain stable when default locale is Turkish.");
+        } finally {
+            // Tear down test fixture.
+            Locale.setDefault(originalLocale);
+        }
     }
 
     /**

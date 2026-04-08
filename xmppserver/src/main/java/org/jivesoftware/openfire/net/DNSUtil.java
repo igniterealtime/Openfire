@@ -125,7 +125,7 @@ public class DNSUtil {
         List<Set<SrvRecord>> results = new LinkedList<>();
         if (dnsOverride != null) {
             // DNS names are case-insensitive, normalize domain for exact match lookup
-            SrvRecord serviceRecord = dnsOverride.get(domain.toLowerCase());
+            SrvRecord serviceRecord = dnsOverride.get(domain.toLowerCase(Locale.ROOT));
             if (serviceRecord == null) {
                 serviceRecord = findMostSpecificWildcardOverride(domain);
             }
@@ -231,7 +231,7 @@ public class DNSUtil {
             // Normalize keys to lowercase for case-insensitive DNS name handling
             Map<String, SrvRecord> normalizedOverrides = new ConcurrentHashMap<>();
             for (Map.Entry<String, SrvRecord> entry : dnsOverride.entrySet()) {
-                normalizedOverrides.put(entry.getKey().toLowerCase(), entry.getValue());
+                normalizedOverrides.put(entry.getKey().toLowerCase(Locale.ROOT), entry.getValue());
             }
             DNSUtil.dnsOverride = normalizedOverrides;
             JiveGlobals.setProperty("dnsutil.dnsOverride", encode(normalizedOverrides));
@@ -305,7 +305,7 @@ public class DNSUtil {
             }
             int port = Integer.parseInt(st.nextToken());
             // Normalize keys to lowercase for case-insensitive DNS name handling
-            answer.put(key.toLowerCase(), new SrvRecord(host, port, false));
+            answer.put(key.toLowerCase(Locale.ROOT), new SrvRecord(host, port, false));
         }
         return answer;
     }
@@ -416,7 +416,7 @@ public class DNSUtil {
             lookup += ".";
         }
 
-        return lookup.toLowerCase();
+        return lookup.toLowerCase(Locale.ROOT);
     }
 
     /**
@@ -445,8 +445,8 @@ public class DNSUtil {
             throw new IllegalArgumentException( "Arguments cannot be null or empty." );
         }
 
-        final String needle = name.toLowerCase();
-        final String hayStack = pattern.toLowerCase();
+        final String needle = name.toLowerCase(Locale.ROOT);
+        final String hayStack = pattern.toLowerCase(Locale.ROOT);
 
         if ( needle.equals( hayStack )) {
             return true;

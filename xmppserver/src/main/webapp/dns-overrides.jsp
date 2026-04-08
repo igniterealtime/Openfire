@@ -81,6 +81,32 @@
             errors.put("targetPort.required", null);
         }
 
+        // Protect DNSUtil's property encoding format from delimiter collisions in user-provided values.
+        final String persistenceDelimiters = "{},:";
+        if (!errors.containsKey("domainPattern.required") && domainPattern != null) {
+            final String trimmedDomainPattern = domainPattern.trim();
+            for (char delimiter : persistenceDelimiters.toCharArray()) {
+                if (trimmedDomainPattern.indexOf(delimiter) >= 0) {
+                    errors.put("domainPattern.invalid-delimiters", null);
+                    break;
+                }
+            }
+        }
+
+        if (!errors.containsKey("targetHost.required") && targetHost != null) {
+            final String trimmedTargetHost = targetHost.trim();
+            if (trimmedTargetHost.indexOf(':') >= 0) {
+                errors.put("targetHost.ipv6-not-supported", null);
+            } else {
+                for (char delimiter : "{},".toCharArray()) {
+                    if (trimmedTargetHost.indexOf(delimiter) >= 0) {
+                        errors.put("targetHost.invalid-delimiters", null);
+                        break;
+                    }
+                }
+            }
+        }
+
         // Parse and range-check the port number (must be 1–65535).
         Integer parsedPort = null;
         if (!errors.containsKey("targetPort.required") && targetPort != null) {
@@ -149,7 +175,10 @@
                 <c:choose>
                     <c:when test="${err.key eq 'csrf'}"><fmt:message key="global.csrf.failed"/></c:when>
                     <c:when test="${err.key eq 'domainPattern.required'}"><fmt:message key="dns.overrides.error.domain.required"/></c:when>
+                    <c:when test="${err.key eq 'domainPattern.invalid-delimiters'}"><fmt:message key="dns.overrides.error.domain.invalid-delimiters"/></c:when>
                     <c:when test="${err.key eq 'targetHost.required'}"><fmt:message key="dns.overrides.error.target-host.required"/></c:when>
+                    <c:when test="${err.key eq 'targetHost.invalid-delimiters'}"><fmt:message key="dns.overrides.error.target-host.invalid-delimiters"/></c:when>
+                    <c:when test="${err.key eq 'targetHost.ipv6-not-supported'}"><fmt:message key="dns.overrides.error.target-host.ipv6-not-supported"/></c:when>
                     <c:when test="${err.key eq 'targetPort.required'}"><fmt:message key="dns.overrides.error.target-port.required"/></c:when>
                     <c:when test="${err.key eq 'targetPort.invalid'}"><fmt:message key="dns.overrides.error.target-port.invalid"/></c:when>
                     <c:otherwise>
@@ -207,7 +236,7 @@
                                 <c:param name="deletePattern" value="${override.key}"/>
                                 <c:param name="csrf" value="${csrf}"/>
                             </c:url>
-                            <a href="#" onclick="if (confirm('<fmt:message key="dns.overrides.delete.confirm"><fmt:param><c:out value="${override.key}"/></fmt:param></fmt:message>')) { location.replace('${deleteUrl}'); }" title="<fmt:message key="global.click_delete"/>"><img src="images/delete-16x16.gif" alt="<fmt:message key="global.click_delete"/>"></a>
+                            <a href="${deleteUrl}" data-confirm="<fmt:message key="dns.overrides.delete.confirm"><fmt:param><c:out value="${override.key}"/></fmt:param></fmt:message>" onclick="return confirm(this.getAttribute('data-confirm'));" title="<fmt:message key="global.click_delete"/>"><img src="images/delete-16x16.gif" alt="<fmt:message key="global.click_delete"/>"></a>
                         </td>
                     </tr>
                 </c:forEach>
@@ -229,7 +258,7 @@
                     <label for="domainPattern"><b><fmt:message key="dns.overrides.pattern"/></b></label>
                 </td>
                 <td>
-                    <input type="text" size="40" name="domainPattern" id="domainPattern" value="${fn:escapeXml(domainPattern)}" placeholder="<fmt:message key="dns.overrides.pattern.placeholder"/>" required ${not empty errors['domainPattern.required'] ? 'autofocus style=\'background-color: #ffdddd;\'' : ''}>
+                    <input type="text" size="40" name="domainPattern" id="domainPattern" value="${fn:escapeXml(domainPattern)}" placeholder="<fmt:message key="dns.overrides.pattern.placeholder"/>" required ${not empty errors['domainPattern.required'] or not empty errors['domainPattern.invalid-delimiters'] ? 'autofocus="autofocus" style="background-color: #ffdddd;"' : ''}>
                 </td>
             </tr>
             <tr>
@@ -237,7 +266,7 @@
                     <label for="targetHost"><b><fmt:message key="dns.overrides.target-host"/></b></label>
                 </td>
                 <td>
-                    <input type="text" size="40" name="targetHost" id="targetHost" value="${fn:escapeXml(targetHost)}" required ${not empty errors['targetHost.required'] ? 'autofocus style=\'background-color: #ffdddd;\'' : ''}>
+                    <input type="text" size="40" name="targetHost" id="targetHost" value="${fn:escapeXml(targetHost)}" required ${not empty errors['targetHost.required'] or not empty errors['targetHost.invalid-delimiters'] or not empty errors['targetHost.ipv6-not-supported'] ? 'autofocus="autofocus" style="background-color: #ffdddd;"' : ''}>
                 </td>
             </tr>
             <tr>
@@ -245,7 +274,7 @@
                     <label for="targetPort"><b><fmt:message key="dns.overrides.target-port"/></b></label>
                 </td>
                 <td>
-                    <input type="number" size="8" name="targetPort" id="targetPort" value="${fn:escapeXml(targetPort)}" min="1" max="65535" required ${not empty errors['targetPort.required'] or not empty errors['targetPort.invalid'] ? 'autofocus style=\'background-color: #ffdddd;\'' : ''}>
+                    <input type="number" size="8" name="targetPort" id="targetPort" value="${fn:escapeXml(targetPort)}" min="1" max="65535" required ${not empty errors['targetPort.required'] or not empty errors['targetPort.invalid'] ? 'autofocus="autofocus" style="background-color: #ffdddd;"' : ''}>
                 </td>
             </tr>
             </tbody>

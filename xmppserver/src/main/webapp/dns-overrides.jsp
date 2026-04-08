@@ -55,7 +55,7 @@
     pageContext.setAttribute("csrf", csrfParam);
 
     if (deletePattern != null && errors.isEmpty()) {
-        final String normalizedPattern = deletePattern.trim().toLowerCase();
+        final String normalizedPattern = deletePattern.trim().toLowerCase(Locale.ROOT);
         final Map<String, SrvRecord> current = DNSUtil.getDnsOverride();
         if (current != null && current.containsKey(normalizedPattern)) {
             final Map<String, SrvRecord> updated = new HashMap<>(current);
@@ -97,7 +97,7 @@
 
         if (errors.isEmpty()) {
             // Normalise the key to lowercase, copy the existing map, add/replace the entry.
-            final String normalizedPattern = domainPattern.trim().toLowerCase();
+            final String normalizedPattern = domainPattern.trim().toLowerCase(Locale.ROOT);
             final Map<String, SrvRecord> current = DNSUtil.getDnsOverride();
             final Map<String, SrvRecord> updated = (current != null) ? new HashMap<>(current) : new HashMap<>();
             updated.put(normalizedPattern, new SrvRecord(targetHost.trim(), parsedPort, false));
@@ -118,7 +118,7 @@
      * if found, its values are placed in the form fields so the operator can modify and re-save.
      */
     if ((domainPattern == null || domainPattern.trim().isEmpty()) && editPattern != null && configuredOverrides != null) {
-        final String normalizedEditPattern = editPattern.trim().toLowerCase();
+        final String normalizedEditPattern = editPattern.trim().toLowerCase(Locale.ROOT);
         final SrvRecord existingOverride = configuredOverrides.get(normalizedEditPattern);
         if (existingOverride != null) {
             domainPattern = normalizedEditPattern;

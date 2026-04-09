@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -991,7 +991,7 @@ public class LdapManager {
                     }
                 }
                 catch (NamingException e) {
-                    Log.debug("Caught a naming exception when creating InitialContext", ne);
+                    Log.debug("Caught a naming exception when creating InitialContext", e);
                     return false;
                 }
             }
@@ -1007,7 +1007,7 @@ public class LdapManager {
                 }
             }
             catch (Exception e) {
-                Log.error("An exception occurred while trying to close the context after an authentication attempt.");
+                Log.error("An exception occurred while trying to close the context after an authentication attempt.",e);
             }
         }
         return true;

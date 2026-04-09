@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
 
 /**
  * Implements server side mechanics for XEP-0115: "Entity Capabilities"
- * Version 1.4
+ * Version 1.5
  * 
  * In particular, EntityCapabilitiesManager is useful for processing
  * "filtered-notifications" for use with Pubsub (XEP-0060) for contacts that
@@ -61,7 +61,7 @@ import java.util.stream.Collectors;
  * sharing those same entity capabilities.
  * 
  * @author Armando Jagucki
- * @see <a href="https://xmpp.org/extensions/xep-0115.html>XEP-0115: Entity Capabilities</a>
+ * @see <a href="https://xmpp.org/extensions/xep-0115.html">XEP-0115: Entity Capabilities</a>
  */
 public class EntityCapabilitiesManager extends BasicModule implements IQResultListener, UserEventListener, ServerFeaturesProvider
 {
@@ -236,6 +236,9 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
             return;
         }
 
+        // Read the 'node' attribute, used to construct the disco#info request node per XEP-0115 §6.2.
+        final String nodeAttribute = capsElement.attributeValue("node");
+
         // Check to see if the 'ver' hash is already in our cache.
         EntityCapabilities caps;
         if ((caps = entityCapabilitiesMap.get(newVerAttribute)) != null) {
@@ -288,7 +291,12 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
                 String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
                 iq.setFrom(serverName);
 
-                iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
+                // Per XEP-0115 §6.2, the disco 'node' attribute MUST be included for backwards-compatibility.
+                // Its value is the caps node concatenated with '#' and the ver hash.
+                final Element queryElement = iq.setChildElement("query", "http://jabber.org/protocol/disco#info");
+                if (nodeAttribute != null && !nodeAttribute.trim().isEmpty()) {
+                    queryElement.addAttribute("node", nodeAttribute + "#" + newVerAttribute);
+                }
 
                 String packetId = iq.getID();
 
@@ -327,9 +335,17 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
      * was valid by comparing its 'ver' hash (identities+features encapsulated
      * hash) with the 'ver' hash of the original caps packet that the
      * disco#info query was sent on behalf of.
+     *
+     * Per XEP-0115 §5.4, the response is also checked for well-formedness:
+     * <ul>
+     *   <li>No duplicate service discovery identities (same category/type/lang/name)</li>
+     *   <li>No duplicate service discovery features</li>
+     *   <li>No two extended service discovery forms with the same FORM_TYPE</li>
+     *   <li>FORM_TYPE fields must not have more than one value with different character data</li>
+     * </ul>
      * 
      * @param packet the disco#info result packet.
-     * @return true if the packet's generated 'ver' hash matches the 'ver'
+     * @return true if the packet is well-formed and its generated 'ver' hash matches the 'ver'
      *         hash of the original CAPS packet.
      */
     private boolean isValid(IQ packet) {
@@ -340,9 +356,88 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
         if (original == null) {
             return false;
         }
+
+        // Per XEP-0115 §5.4, check the response for well-formedness before computing the hash.
+        if (!isWellFormed(packet)) {
+            Log.debug("Received ill-formed disco#info response from '{}'; ignoring.", packet.getFrom());
+            return false;
+        }
+
         final String newVerHash = generateVerHash(packet, original.getHashAttribute());
 
         return newVerHash.equals(original.getVerAttribute());
+    }
+
+    /**
+     * Checks whether a disco#info response is well-formed per XEP-0115 §5.4 items 3c-3e.
+     *
+     * <ul>
+     *   <li>Item 3c: No duplicate identities (same category/type/lang/name).</li>
+     *   <li>Item 3d: No duplicate features.</li>
+     *   <li>Item 3e: No two extended service discovery information forms with the same FORM_TYPE, and
+     *               no FORM_TYPE field with more than one value with different XML character data.</li>
+     * </ul>
+     *
+     * @param packet the disco#info result packet.
+     * @return true if the response is well-formed, false otherwise.
+     */
+    @VisibleForTesting
+    static boolean isWellFormed(IQ packet) {
+        final Element query = packet.getChildElement();
+        if (query == null) {
+            Log.debug("Disco#info response is missing required <query/> element; treating as ill-formed. Offending stanza: {}", packet);
+            return false;
+        }
+
+        // Item 3c: Check for duplicate identities.
+        final List<String> identities = getIdentitiesFrom(packet);
+        if (identities.size() != new HashSet<>(identities).size()) {
+            Log.debug("Disco#info response contains duplicate identities; treating as ill-formed. Offending stanza: {}", packet);
+            return false;
+        }
+
+        // Item 3d: Check for duplicate features.
+        final List<String> features = getFeaturesFrom(packet);
+        if (features.size() != new HashSet<>(features).size()) {
+            Log.debug("Disco#info response contains duplicate features; treating as ill-formed. Offending stanza: {}", packet);
+            return false;
+        }
+
+        // Item 3e: Check for duplicate FORM_TYPE values and FORM_TYPE with multiple different values.
+        final Set<String> formTypes = new HashSet<>();
+        final Iterator<Element> extensionIterator = query.elementIterator(QName.get("x", "jabber:x:data"));
+        if (extensionIterator != null) {
+            while (extensionIterator.hasNext()) {
+                final Element extensionElement = extensionIterator.next();
+                final Iterator<Element> fieldIterator = extensionElement.elementIterator("field");
+                while (fieldIterator != null && fieldIterator.hasNext()) {
+                    final Element fieldElement = fieldIterator.next();
+                    if ("FORM_TYPE".equals(fieldElement.attributeValue("var"))) {
+                        // Collect all values of the FORM_TYPE field.
+                        final List<String> formTypeValues = new ArrayList<>();
+                        final Iterator<Element> valIter = fieldElement.elementIterator("value");
+                        while (valIter != null && valIter.hasNext()) {
+                            formTypeValues.add(valIter.next().getText());
+                        }
+                        // FORM_TYPE cannot have more than one value.
+                        if (new HashSet<>(formTypeValues).size() > 1) {
+                            Log.debug("Disco#info response contains FORM_TYPE field with multiple different values; treating as ill-formed. Offending stanza: {}", packet);
+                            return false;
+                        }
+                        if (!formTypeValues.isEmpty()) {
+                            final String formTypeValue = formTypeValues.get(0);
+                            if (!formTypes.add(formTypeValue)) {
+                                Log.debug("Disco#info response contains duplicate FORM_TYPE '{}'; treating as ill-formed. Offending stanza: {}", formTypeValue, packet);
+                                return false;
+                            }
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -550,7 +645,10 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
             while (featuresIterator.hasNext()) {
                 Element featureElement = featuresIterator.next();
                 String discoFeature = featureElement.attributeValue("var");
-
+                if (discoFeature == null || discoFeature.isEmpty()) {
+                    Log.debug("Disco#info response contains feature with missing or empty var attribute; Ignoring this feature. Offending stanza: {}", packet);
+                    continue;
+                }
                 discoFeatures.add(discoFeature);
             }
         }
@@ -560,31 +658,59 @@ public class EntityCapabilitiesManager extends BasicModule implements IQResultLi
     /**
      * Extracts a list of extended service discovery information from an IQ
      * packet.
+     *
+     * Per XEP-0115 §5.4 item 3f, forms where the FORM_TYPE field is not of type "hidden" or where the form does not include a
+     * FORM_TYPE field are ignored.
      * 
      * @param packet
      *            the packet
-     * @return a list of extended service discoverin information features.
+     * @return a list of extended service discovery information features.
      */
     private static List<String> getExtendedDataForms(IQ packet) {
         List<String> results = new ArrayList<>();
         Element query = packet.getChildElement();
+        if (query == null) {
+            return results;
+        }
         Iterator<Element> extensionIterator = query.elementIterator(QName.get(
                 "x", "jabber:x:data"));
         if (extensionIterator != null) {
             while (extensionIterator.hasNext()) {
                 Element extensionElement = extensionIterator.next();
+
+                // Find the FORM_TYPE field first to determine if this form should be included.
+                // Per XEP-0115 §5.4 item 3f: if no FORM_TYPE field exists, or if FORM_TYPE is not type='hidden',
+                // ignore the form but continue processing other forms.
+                Element formTypeField = null;
+                Iterator<Element> fieldCheckIterator = extensionElement.elementIterator("field");
+                while (fieldCheckIterator != null && fieldCheckIterator.hasNext()) {
+                    Element fieldEl = fieldCheckIterator.next();
+                    if ("FORM_TYPE".equals(fieldEl.attributeValue("var"))) {
+                        formTypeField = fieldEl;
+                        break;
+                    }
+                }
+
+                if (formTypeField == null || !"hidden".equals(formTypeField.attributeValue("type"))) {
+                    // Ignore this form as per XEP-0115 §5.4 item 3f.
+                    continue;
+                }
+                final String formTypeValue = formTypeField.element("value") == null ? null : formTypeField.element("value").getText();
+                if (formTypeValue == null || formTypeValue.isEmpty()) {
+                    // Ignore this form (not _explicitly_ defined in XEP-0115 §5.4 item 3f, but seems close enough).
+                    continue;
+                }
+
                 final StringBuilder formType = new StringBuilder();
+                formType.append(formTypeValue);
+                formType.append('<');
 
                 Iterator<Element> fieldIterator = extensionElement
                         .elementIterator("field");
                 List<String> vars = new ArrayList<>();
                 while (fieldIterator != null && fieldIterator.hasNext()) {
                     final Element fieldElement = fieldIterator.next();
-                    if (fieldElement.attributeValue("var").equals("FORM_TYPE")) {
-                        formType
-                                .append(fieldElement.element("value").getText());
-                        formType.append('<');
-                    } else {
+                    if (!"FORM_TYPE".equals(fieldElement.attributeValue("var"))) {
                         final StringBuilder var = new StringBuilder();
                         var.append(fieldElement.attributeValue("var"));
                         var.append('<');

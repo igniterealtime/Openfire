@@ -27,14 +27,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.sql.Statement;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.MissingResourceException;
-import java.util.UUID;
+import java.util.*;
 
 import org.jivesoftware.util.ClassUtils;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -660,6 +657,17 @@ public class DbConnectionManager {
 
                 // Check to see if the database schema needs to be upgraded.
                 schemaManager.checkOpenfireSchema(con);
+
+                // Probe string-based large text I/O only after the Openfire schema has been verified.
+                if (databaseType == DatabaseType.oracle) {
+                    final DatabaseMetaData metaData = con.getMetaData();
+                    final String driverName = metaData.getDriverName().toLowerCase(Locale.ROOT);
+                    final int driverMajor = metaData.getDriverMajorVersion();
+
+                    if (driverMajor >= 12 && !driverName.contains("auguro")) {
+                        streamTextRequired = probeStreamingRequired(con);
+                    }
+                }
             }
             catch (MissingResourceException mre) {
                 Log.error(mre.getMessage());
@@ -855,8 +863,8 @@ public class DbConnectionManager {
         maxRowsSupported   = true;
         fetchSizeSupported = true;
 
-        String dbName      = metaData.getDatabaseProductName().toLowerCase();
-        String driverName  = metaData.getDriverName().toLowerCase();
+        String dbName      = metaData.getDatabaseProductName().toLowerCase(Locale.ROOT);
+        String driverName  = metaData.getDriverName().toLowerCase(Locale.ROOT);
         int    driverMajor = metaData.getDriverMajorVersion();
 
         // Oracle
@@ -865,14 +873,10 @@ public class DbConnectionManager {
 
             // Oracle JDBC 12.1+ (ojdbc8/ojdbc11) can read moderate-sized CLOBs via getString() without streaming.
             // Below 12, streaming is required to avoid ORA-17023 / ORA-17011 on CLOB columns. Very large CLOBs
-            // (> ~32 KB) may still need streaming on all versions; probeStreamingRequired() below is only a
-            // best-effort startup sanity check for small-value non-streaming reads/writes, not a definitive test
-            // for large CLOB handling.
+            // (> ~32 KB) may still need streaming on all versions. For newer drivers, a best-effort probe against
+            // a CLOB-backed Openfire table is executed later, after schema verification.
             if (driverMajor < 12) {
                 streamTextRequired = true;
-            } else {
-                // Probe at startup to confirm; fall back to streaming if the probe fails.
-                streamTextRequired = probeStreamingRequired(con);
             }
 
             // i-net AUGURO is an old third-party Oracle driver. Still harmless to keep.
@@ -938,8 +942,8 @@ public class DbConnectionManager {
      * plain getString()/setString().
      *
      * This is needed when the JDBC driver cannot natively coerce between its CLOB/NCLOB/TEXT type and a Java String for
-     * large values. The probe writes a small string to an existing large-text column and reads it back; if the driver
-     * throws, streaming is needed.
+     * large values. The probe writes a large string (8192 characters) to the CLOB-backed {@code ofPubsubItem.payload}
+     * column and reads it back; if the driver throws, returns null, or returns a different value, streaming is needed.
      *
      * This is a best-effort probe: if the probe itself fails for an unexpected reason, we conservatively return
      * {@code true} (streaming required).
@@ -949,9 +953,11 @@ public class DbConnectionManager {
      */
     private static boolean probeStreamingRequired(Connection con)
     {
-        // Use a per-run key to avoid mutating or deleting any user-provided property value.
-        final String probeKey = "--streaming_probe--" + UUID.randomUUID();
-        final String probeValue = "probe";
+        // Use per-run identifiers to avoid mutating or deleting any user-provided data.
+        final String probeKey = "streaming-probe-" + UUID.randomUUID();
+        final String probeJid = "streaming-probe@example.org";
+        final String probeCreationDate = StringUtils.dateToMillis(new Date());
+        final String probeValue = StringUtils.randomString(8192);
         final boolean autoCommit;
         Savepoint probeSavepoint = null;
 
@@ -975,9 +981,13 @@ public class DbConnectionManager {
 
         // Insert only. Updating shouldn't be needed, as a per-run unique key is used.
         boolean probeRowInserted = false;
-        try (PreparedStatement insert = con.prepareStatement("INSERT INTO ofProperty (name, propValue) VALUES (?, ?)")) {
+        try (PreparedStatement insert = con.prepareStatement("INSERT INTO ofPubsubItem (serviceID, nodeID, id, jid, creationDate, payload) VALUES (?, ?, ?, ?, ?, ?)")) {
             insert.setString(1, probeKey);
-            insert.setString(2, probeValue);
+            insert.setString(2, probeKey);
+            insert.setString(3, probeKey);
+            insert.setString(4, probeJid);
+            insert.setString(5, probeCreationDate);
+            insert.setString(6, probeValue);
             probeRowInserted = insert.executeUpdate() > 0;
         } catch (SQLException ex) {
             Log.debug("Unable to insert a test row used for the database streaming probe.", ex);
@@ -1000,8 +1010,10 @@ public class DbConnectionManager {
             return true;
         }
 
-        try (PreparedStatement read = con.prepareStatement("SELECT propValue FROM ofProperty WHERE name = ?")) {
+        try (PreparedStatement read = con.prepareStatement("SELECT payload FROM ofPubsubItem WHERE serviceID = ? AND nodeID = ? AND id = ?")) {
             read.setString(1, probeKey);
+            read.setString(2, probeKey);
+            read.setString(3, probeKey);
 
             try (ResultSet rs = read.executeQuery()) {
                 if (!rs.next()) {
@@ -1010,11 +1022,15 @@ public class DbConnectionManager {
                 }
 
                 final String result = rs.getString(1);
-                // Streaming not required only when getString() returned a concrete value.
-                return result == null;
+                // Streaming is required if: exception occurs (caught below), result is null, or result differs from original.
+                boolean streamingRequired = result == null || !probeValue.equals(result);
+                if (streamingRequired) {
+                    Log.debug("Database streaming probe detected that getString()/setString() cannot reliably handle large text values; enabling stream-based I/O.");
+                }
+                return streamingRequired;
             }
         } catch (SQLException e) {
-            Log.debug("Streaming probe via setString()/getString() failed ({}); enabling stream-based large text I/O.", e.getMessage());
+            Log.debug("Streaming probe via setString()/getString() failed; enabling stream-based large text I/O.", e);
             return true;
         } catch (Exception e) {
             Log.info("Unexpected error during database streaming probe; defaulting to streaming.", e);
@@ -1034,8 +1050,10 @@ public class DbConnectionManager {
                 }
             } else {
                 // Cleanup our test row for auto-commit connections.
-                try (PreparedStatement delete = con.prepareStatement("DELETE FROM ofProperty WHERE name = ?")) {
+                try (PreparedStatement delete = con.prepareStatement("DELETE FROM ofPubsubItem WHERE serviceID = ? AND nodeID = ? AND id = ?")) {
                     delete.setString(1, probeKey);
+                    delete.setString(2, probeKey);
+                    delete.setString(3, probeKey);
                     delete.execute();
                 } catch (SQLException ex) {
                     Log.debug("Unable to clean up a test row used by the database streaming probe.", ex);

@@ -19,6 +19,7 @@ import org.dom4j.Element;
 import org.junit.jupiter.api.Test;
 import org.xmpp.packet.IQ;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.TimeZone;
 
@@ -52,13 +53,12 @@ public class IQEntityTimeHandlerTest {
 
         String actual = iqEntityTimeHandler.getUtcDate(date);
 
-        String expected = java.time.format.DateTimeFormatter.ISO_INSTANT
-                .format(date.toInstant());
+        // Parse the produced timestamp and compare instants directly,
+        // avoiding fragile regex-based string normalization.
+        Instant actualInstant = Instant.parse(actual);
+        Instant expectedInstant = date.toInstant();
 
-        expected = expected.replaceAll("\\.\\d+Z$", "Z");
-        actual = actual.replaceAll("\\.\\d+Z$", "Z");
-
-        assertEquals(expected, actual);
+        assertEquals(expectedInstant, actualInstant);
     }
 
     @Test

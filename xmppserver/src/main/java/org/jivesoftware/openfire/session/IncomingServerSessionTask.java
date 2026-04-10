@@ -66,6 +66,8 @@ public class IncomingServerSessionTask extends RemoteSessionTask {
             case getValidatedDomains:
                 result = ((IncomingServerSession) getSession()).getValidatedDomains();
                 break;
+            default:
+                break;
         }
     }
 

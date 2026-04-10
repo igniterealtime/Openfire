@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -901,6 +901,10 @@ public class DbConnectionManager {
         else if (dbName.contains("db2")) {
             databaseType = DatabaseType.db2;
         }
+        // Firebird properties.
+        else if (dbName.contains("firebird")) {
+            databaseType = DatabaseType.firebird;
+        }
     }
 
     /**
@@ -994,6 +998,9 @@ public class DbConnectionManager {
         else if (driver.contains("oracle")) {
             return "select 1 from dual";
         }
+        else if (driver.contains("firebird")) {
+            return "select 1 from rdb$database";
+        }
         else {
             return "select 1";
         }
@@ -1017,6 +1024,8 @@ public class DbConnectionManager {
         hsqldb,
 
         db2,
+
+        firebird,
 
         sqlserver,
 

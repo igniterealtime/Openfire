@@ -95,14 +95,10 @@
 
         if (!errors.containsKey("targetHost.required") && targetHost != null) {
             final String trimmedTargetHost = targetHost.trim();
-            if (trimmedTargetHost.indexOf(':') >= 0) {
-                errors.put("targetHost.ipv6-not-supported", null);
-            } else {
-                for (char delimiter : "{},".toCharArray()) {
-                    if (trimmedTargetHost.indexOf(delimiter) >= 0) {
-                        errors.put("targetHost.invalid-delimiters", null);
-                        break;
-                    }
+            for (char delimiter : "{},".toCharArray()) {
+                if (trimmedTargetHost.indexOf(delimiter) >= 0) {
+                    errors.put("targetHost.invalid-delimiters", null);
+                    break;
                 }
             }
         }
@@ -178,7 +174,6 @@
                     <c:when test="${err.key eq 'domainPattern.invalid-delimiters'}"><fmt:message key="dns.overrides.error.domain.invalid-delimiters"/></c:when>
                     <c:when test="${err.key eq 'targetHost.required'}"><fmt:message key="dns.overrides.error.target-host.required"/></c:when>
                     <c:when test="${err.key eq 'targetHost.invalid-delimiters'}"><fmt:message key="dns.overrides.error.target-host.invalid-delimiters"/></c:when>
-                    <c:when test="${err.key eq 'targetHost.ipv6-not-supported'}"><fmt:message key="dns.overrides.error.target-host.ipv6-not-supported"/></c:when>
                     <c:when test="${err.key eq 'targetPort.required'}"><fmt:message key="dns.overrides.error.target-port.required"/></c:when>
                     <c:when test="${err.key eq 'targetPort.invalid'}"><fmt:message key="dns.overrides.error.target-port.invalid"/></c:when>
                     <c:otherwise>
@@ -266,7 +261,7 @@
                     <label for="targetHost"><b><fmt:message key="dns.overrides.target-host"/></b></label>
                 </td>
                 <td>
-                    <input type="text" size="40" name="targetHost" id="targetHost" value="${fn:escapeXml(targetHost)}" required ${not empty errors['targetHost.required'] or not empty errors['targetHost.invalid-delimiters'] or not empty errors['targetHost.ipv6-not-supported'] ? 'autofocus="autofocus" style="background-color: #ffdddd;"' : ''}>
+                    <input type="text" size="40" name="targetHost" id="targetHost" value="${fn:escapeXml(targetHost)}" required ${not empty errors['targetHost.required'] or not empty errors['targetHost.invalid-delimiters'] ? 'autofocus="autofocus" style="background-color: #ffdddd;"' : ''}>
                 </td>
             </tr>
             <tr>

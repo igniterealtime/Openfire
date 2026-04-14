@@ -55,16 +55,28 @@ public class SrvRecord implements Serializable
 
     public SrvRecord(final @Nonnull String hostname, final int port, final boolean isDirectTLS)
     {
-        this(hostname, port, isDirectTLS, 0, 0);
+        this(normalizeHostname(hostname), port, isDirectTLS, 0, 0);
     }
 
     public SrvRecord(final @Nonnull String hostname, final int port, final boolean isDirectTLS, final int priority, final int weight)
     {
-        this.hostname = hostname;
+        this.hostname = normalizeHostname(hostname);
         this.port = port;
         this.isDirectTLS = isDirectTLS;
         this.priority = priority;
         this.weight = weight;
+    }
+
+    /**
+     * Normalize the hostname: if it's an IPv6 literal in brackets, strip the brackets for storage.
+     */
+    private static String normalizeHostname(String hostname) {
+        if (hostname == null) return null;
+        if (hostname.startsWith("[") && hostname.endsWith("]")) {
+            // Optionally, validate it's a valid IPv6 address here, or just always strip
+            return hostname.substring(1, hostname.length() - 1);
+        }
+        return hostname;
     }
 
     public String getHostname() {

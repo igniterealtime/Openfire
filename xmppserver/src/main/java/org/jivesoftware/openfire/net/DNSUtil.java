@@ -36,6 +36,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import static org.jivesoftware.util.IpUtils.isValidIpv6;
+
 /**
  * Utility class to perform DNS lookups for XMPP services.
  *
@@ -367,7 +369,12 @@ public class DNSUtil {
                 sb.append(',');
             }
             sb.append('{').append(key).append(',');
-            sb.append(internalDNS.get(key).getHostname()).append(':');
+            String host = internalDNS.get(key).getHostname();
+            // If it's an IPv6 address, encode with brackets
+            if (isValidIpv6(host)) {
+                host = "[" + host + "]";
+            }
+            sb.append(host).append(':');
             sb.append(internalDNS.get(key).getPort()).append('}');
         }
         return sb.toString();
@@ -382,6 +389,10 @@ public class DNSUtil {
             // Host entries in DNS should end with a ".".
             if (host.endsWith(".")) {
                 host = host.substring(0, host.length()-1);
+            }
+            // If host is an IPv6 literal with brackets, strip them for storage
+            if (host.startsWith("[") && host.endsWith("]")) {
+                host = host.substring(1, host.length()-1);
             }
             int port = Integer.parseInt(st.nextToken());
             // Normalize keys to lowercase for case-insensitive DNS name handling

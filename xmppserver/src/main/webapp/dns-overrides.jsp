@@ -261,7 +261,7 @@
                     <label for="targetHost"><b><fmt:message key="dns.overrides.target-host"/></b></label>
                 </td>
                 <td>
-                    <input type="text" size="40" name="targetHost" id="targetHost" value="${fn:escapeXml(targetHost)}" required ${not empty errors['targetHost.required'] or not empty errors['targetHost.invalid-delimiters'] ? 'autofocus="autofocus" style="background-color: #ffdddd;"' : ''}>
+                    <input type="text" size="40" name="targetHost" id="targetHost" value="${fn:escapeXml(targetHost)}" placeholder="<fmt:message key="dns.overrides.host.placeholder"/>" required ${not empty errors['targetHost.required'] or not empty errors['targetHost.invalid-delimiters'] ? 'autofocus="autofocus" style="background-color: #ffdddd;"' : ''}>
                 </td>
             </tr>
             <tr>

@@ -699,4 +699,106 @@ public class DNSUtilTest {
         // verify
         assertTrue(result, "Expected exact domain match against wildcard pattern to succeed for certificate compatibility, but it failed.");
     }
+
+    /**
+     * Verifies that DNS override chains are resolved recursively (A → B → C).
+     */
+    @Test
+    public void testResolveXMPPDomainRecursiveOverrideChain() throws Exception
+    {
+        // Setup test fixture.
+        final SrvRecord recordA = new SrvRecord("B.example.invalid", 5269, false);
+        final SrvRecord recordB = new SrvRecord("C.example.invalid", 5269, false);
+        final SrvRecord recordC = new SrvRecord("final.external.invalid", 5269, false);
+        DNSUtil.setDnsOverride(Map.of(
+            "A.example.invalid", recordA,
+            "B.example.invalid", recordB,
+            "C.example.invalid", recordC
+        ));
+
+        // Execute system under test.
+        final List<Set<SrvRecord>> result = DNSUtil.resolveXMPPDomain("A.example.invalid", 5269);
+
+        // Verify results: should resolve to the final target.
+        assertEquals(List.of(Set.of(new SrvRecord("final.external.invalid", 5269, false))), result,
+            "Expected recursive override chain to resolve to the final target.");
+    }
+
+    /**
+     * Verifies that recursive DNS override chains with a cycle (A → B → A) are detected and aborted.
+     */
+    @Test
+    public void testResolveXMPPDomainRecursiveOverrideCycle() throws Exception
+    {
+        // Setup test fixture.
+        final SrvRecord recordA = new SrvRecord("B.example.invalid", 5269, false);
+        final SrvRecord recordB = new SrvRecord("A.example.invalid", 5269, false);
+        DNSUtil.setDnsOverride(Map.of(
+            "A.example.invalid", recordA,
+            "B.example.invalid", recordB
+        ));
+
+        // Execute system under test.
+        final List<Set<SrvRecord>> result = DNSUtil.resolveXMPPDomain("A.example.invalid", 5269);
+
+        // Verify results: should abort and return fallback (A.example.invalid + port).
+        assertTrue(result.stream().flatMap(Set::stream).anyMatch(r ->
+            r.getHostname().equals("A.example.invalid") && r.getPort() == 5269),
+            "Expected fallback record when recursive override cycle is detected.");
+    }
+
+    /**
+     * Verifies that recursion depth limit is enforced in recursive DNS override chains.
+     */
+    @Test
+    public void testResolveXMPPDomainRecursiveOverrideDepthLimit() throws Exception
+    {
+        // Setup test fixture: create a chain longer than the max recursion depth (10).
+        final Map<String, SrvRecord> overrides = new HashMap<>();
+        String prev = "start.example.invalid";
+        for (int i = 0; i < 100; i++) {
+            String next = "step" + i + ".example.invalid";
+            overrides.put(prev, new SrvRecord(next, 5269, false));
+            prev = next;
+        }
+        // The last in the chain points to a real target.
+        overrides.put(prev, new SrvRecord("final.external.invalid", 5269, false));
+        DNSUtil.setDnsOverride(overrides);
+
+        // Execute system under test.
+        final List<Set<SrvRecord>> result = DNSUtil.resolveXMPPDomain("start.example.invalid", 5269);
+
+        // Verify results: should abort and return fallback (start.example.invalid + port).
+        assertTrue(result.stream().flatMap(Set::stream).anyMatch(r ->
+            r.getHostname().equals("start.example.invalid") && r.getPort() == 5269),
+            "Expected fallback record when recursion depth limit is exceeded.");
+    }
+
+    /**
+     * Verifies that the visited set is properly cleaned up after each resolution chain. If not, a false cycle would be
+     * detected in subsequent, independent lookups.
+     */
+    @Test
+    public void testVisitedSetIsolationBetweenIndependentResolutions() throws Exception
+    {
+        // Setup test fixture: two domains, both pointing to a shared intermediate, which points to a final target.
+        final SrvRecord recordA = new SrvRecord("shared.example.invalid", 5269, false);
+        final SrvRecord recordB = new SrvRecord("shared.example.invalid", 5269, false);
+        final SrvRecord recordShared = new SrvRecord("final.external.invalid", 5269, false);
+        DNSUtil.setDnsOverride(Map.of(
+            "A.example.invalid", recordA,
+            "B.example.invalid", recordB,
+            "shared.example.invalid", recordShared
+        ));
+
+        // Execute system under test: resolve both domains in sequence.
+        final List<Set<SrvRecord>> resultA = DNSUtil.resolveXMPPDomain("A.example.invalid", 5269);
+        final List<Set<SrvRecord>> resultB = DNSUtil.resolveXMPPDomain("B.example.invalid", 5269);
+
+        // Verify results: both should resolve to the final target.
+        assertEquals(List.of(Set.of(new SrvRecord("final.external.invalid", 5269, false))), resultA,
+            "Expected A.example.invalid to resolve to the final target.");
+        assertEquals(List.of(Set.of(new SrvRecord("final.external.invalid", 5269, false))), resultB,
+            "Expected B.example.invalid to resolve to the final target.");
+    }
 }

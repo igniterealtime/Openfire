@@ -49,6 +49,8 @@ public class DNSUtil {
 
     private static Cache<String, CacheableOptional<SrvRecord[]>> LOOKUP_CACHE;
 
+    private static final int MAX_RECURSION_DEPTH = 50;
+
     /**
      * Internal DNS overrides for XMPP domain resolution.
      *
@@ -121,22 +123,13 @@ public class DNSUtil {
      * @see <a href="https://xmpp.org/extensions/xep-0368.html">XEP-0368</a>
      */
     public static List<Set<SrvRecord>> resolveXMPPDomain(String domain, int defaultPort) {
-        // Check if there is an entry in the internal DNS for the specified domain
-        List<Set<SrvRecord>> results = new LinkedList<>();
-        if (dnsOverride != null) {
-            // DNS names are case-insensitive, normalize domain for exact match lookup
-            SrvRecord serviceRecord = dnsOverride.get(domain.toLowerCase(Locale.ROOT));
-            if (serviceRecord == null) {
-                serviceRecord = findMostSpecificWildcardOverride(domain);
-            }
-            if (serviceRecord == null) {
-                serviceRecord = dnsOverride.get("*");
-            }
-            if (serviceRecord != null) {
-                logger.debug("Answering lookup for domain '{}' from DNS override property. Returning: {}", domain, serviceRecord);
-                results.add(Set.of(serviceRecord));
-                return results;
-            }
+        // Recursive DNS override lookup with cycle/depth protection
+        final List<Set<SrvRecord>> results = new LinkedList<>();
+        final SrvRecord serviceRecord = resolveOverrideRecursively(domain, new HashSet<>(), 0);
+        if (serviceRecord != null) {
+            logger.debug("Answering lookup for domain '{}' from DNS override property. Returning: {}", domain, serviceRecord);
+            results.add(Set.of(serviceRecord));
+            return results;
         }
 
         // Attempt the SRV lookup.
@@ -182,6 +175,93 @@ public class DNSUtil {
             }
         }
         return results;
+    }
+
+    /**
+     * Resolves a DNS override for the given domain, following chained override targets recursively.
+     *
+     * Resolution order:
+     * <ol>
+     *   <li>Exact domain match</li>
+     *   <li>Most-specific wildcard match</li>
+     *   <li>Global fallback ({@code *})</li>
+     * </ol>
+     *
+     * If an override points to another hostname that is also present in the override map, the method follows the chain
+     * until a terminal hostname is reached.
+     *
+     * @param domain  the domain name to resolve
+     * @param visited the set of domains visited in the current resolution chain, used for loop detection
+     * @param depth   the current recursion depth
+     * @return the resolved {@link SrvRecord}, or {@code null} if no override exists or resolution fails
+     */
+    private static SrvRecord resolveOverrideRecursively(final String domain, final Set<String> visited, final int depth)
+    {
+        if (dnsOverride == null) {
+            return null;
+        }
+
+        final String normalizedDomain = domain.toLowerCase(Locale.ROOT);
+
+        if (!visited.add(normalizedDomain)) {
+            logger.warn("Detected recursive DNS override for '{}'. Aborting to prevent infinite loop.", domain);
+            return null;
+        }
+
+        if (depth >= MAX_RECURSION_DEPTH) {
+            logger.warn("DNS override recursion depth exceeded for '{}'. Aborting.", domain);
+            return null;
+        }
+
+        try {
+            SrvRecord override = dnsOverride.get(normalizedDomain);
+            if (override == null) {
+                override = findMostSpecificWildcardOverride(normalizedDomain);
+            }
+            if (override == null) {
+                override = dnsOverride.get("*");
+            }
+
+            return resolveChainedOverride(normalizedDomain, override, visited, depth);
+        }
+        finally
+        {
+           visited.remove(normalizedDomain);
+        }
+    }
+
+    /**
+     * Resolves a possibly chained DNS override.
+     *
+     * If the override target hostname is itself a configured override key, recursively resolves the target and returns
+     * a new record if one is defined.
+     *
+     * @param currentDomain the domain currently being resolved
+     * @param override      the override record for the current domain
+     * @param visited       visited domains in the current resolution path
+     * @param depth         current recursion depth
+     * @return the resolved {@link SrvRecord}, or {@code null} if resolution fails
+     */
+    private static SrvRecord resolveChainedOverride(final String currentDomain, final SrvRecord override, final Set<String> visited, final int depth)
+    {
+        if (override == null || override.getHostname() == null) {
+            return override;
+        }
+
+        final String nextHost = override.getHostname().toLowerCase(Locale.ROOT);
+
+        if (!nextHost.equals(currentDomain) && dnsOverride.containsKey(nextHost))
+        {
+            final SrvRecord resolved = resolveOverrideRecursively(nextHost, visited, depth + 1);
+            if (resolved == null) {
+                logger.warn("Failed to resolve chained DNS override: '{}' -> '{}'", currentDomain, nextHost);
+                return null;
+            }
+
+            return resolved;
+        }
+
+        return override;
     }
 
     /**

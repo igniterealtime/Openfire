@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-2002 Markus Hahn <markus_hahn@gmx.net>, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (c) 1997-2002 Markus Hahn <markus_hahn@gmx.net>, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Adapted from Markus Hahn's Blowfish package so that all functionality is
  * in a single source file. Please visit the following URL for his excellent
@@ -123,7 +123,7 @@ public class Blowfish implements Encryptor {
 
 
     /**
-     * decrypts a hexbin string (handling is case sensitive)
+     * decrypts a hexbin string (handling is case-sensitive)
      * @param sCipherText hexbin string to decrypt
      * @return decrypted string (null equals an error)
      */

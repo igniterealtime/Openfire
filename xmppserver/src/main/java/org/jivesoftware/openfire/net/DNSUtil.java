@@ -431,7 +431,7 @@ public class DNSUtil {
      * {@code *.xmpp.example.org}). While this behavior is non-standard for DNS wildcards, it is
      * required for Openfire's certificate management functionality.
      *
-     * This method is not case sensitive.
+     * This method is not case-sensitive.
      *
      * @param name The name to check against a pattern (cannot be null or empty).
      * @param pattern the pattern (cannot be null or empty).

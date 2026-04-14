@@ -20,6 +20,7 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.util.CacheableOptional;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -45,6 +46,14 @@ import static org.jivesoftware.util.IpUtils.isValidIpv6;
  */
 public class DNSUtil {
 
+    /**
+     * Specifies custom hostnames or IP addresses (IPv4 or IPv6) and ports for XMPP domains, overriding standard DNS lookups for outgoing server-to-server connections.
+     */
+    public static final SystemProperty<String> DNS_OVERRIDE = SystemProperty.Builder.ofType(String.class) // Strictly speaking, this could be a collection of Strings. Switching to that may introduce backwards compatibility issues with encoding/decoding values. Let's stick with one String value for now.
+        .setKey("dnsutil.dnsOverride")
+        .setDynamic(false)
+        .build();
+
     private static DirContext context;
 
     private static final Logger logger = LoggerFactory.getLogger(DNSUtil.class);
@@ -67,7 +76,7 @@ public class DNSUtil {
             env.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
             context = new InitialDirContext(env);
 
-            String property = JiveGlobals.getProperty("dnsutil.dnsOverride");
+            String property = DNS_OVERRIDE.getValue();
             if (property != null) {
                 dnsOverride = new ConcurrentHashMap<>(decode(property));
                 dnsOverride.forEach((domain, override) -> logger.debug("Detected DNS override configuration for {} to {}", domain, override));
@@ -308,7 +317,7 @@ public class DNSUtil {
     public static void setDnsOverride(Map<String, SrvRecord> dnsOverride) {
         if (dnsOverride == null || dnsOverride.isEmpty()) {
             DNSUtil.dnsOverride = null;
-            JiveGlobals.deleteProperty("dnsutil.dnsOverride");
+            DNS_OVERRIDE.setValue(null);
         } else {
             // Normalize keys to lowercase for case-insensitive DNS name handling
             Map<String, SrvRecord> normalizedOverrides = new ConcurrentHashMap<>();
@@ -316,7 +325,7 @@ public class DNSUtil {
                 normalizedOverrides.put(entry.getKey().toLowerCase(Locale.ROOT), entry.getValue());
             }
             DNSUtil.dnsOverride = normalizedOverrides;
-            JiveGlobals.setProperty("dnsutil.dnsOverride", encode(normalizedOverrides));
+            DNS_OVERRIDE.setValue(encode(normalizedOverrides));
         }
     }
 

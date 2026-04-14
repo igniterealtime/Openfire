@@ -445,25 +445,19 @@ public class DNSUtil {
             throw new IllegalArgumentException( "Arguments cannot be null or empty." );
         }
 
-        final String needle = name.toLowerCase(Locale.ROOT);
-        final String hayStack = pattern.toLowerCase(Locale.ROOT);
-
-        if ( needle.equals( hayStack )) {
+        final String nameToMatch = name.toLowerCase(Locale.ROOT);
+        final String patternToMatch = pattern.toLowerCase(Locale.ROOT);
+        if ( nameToMatch.equals( patternToMatch )) {
             return true;
         }
-
-        if ( hayStack.startsWith( "*." ) ) {
-            final String suffix = hayStack.substring( 2 ); // Remove "*."
-            if ( needle.endsWith( suffix ) ) {
-                // Check that the match is at a proper dot boundary or exact match
-                final int suffixStart = needle.length() - suffix.length();
-                if ( suffixStart == 0 ) {
-                    // Exact match: needle equals the suffix (certificate edge case)
-                    return true;
-                }
-                // Subdomain match: must have a dot before the suffix
-                return needle.charAt( suffixStart - 1 ) == '.';
+        if ( patternToMatch.startsWith( "*." ) ) {
+            final String wildcardedHostName = patternToMatch.substring( 2 ); // Remove "*."
+            if (nameToMatch.equals(wildcardedHostName)) {
+                // Exact match: needle equals the suffix (certificate edge case, see docs above)
+                return true;
             }
+            // Subdomain match: must have a dot before the suffix
+            return nameToMatch.endsWith('.' + wildcardedHostName);
         }
         return false;
     }

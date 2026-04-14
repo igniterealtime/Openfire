@@ -174,7 +174,7 @@
             <admin:infobox type="error">
                 <c:choose>
                     <c:when test="${err.key eq 'csrf'}"><fmt:message key="global.csrf.failed"/></c:when>
-                    <c:when test="${err.key eq 'domainPattern.required'}"><fmt:message key="dns.overrides.error.domain.required"/></c:when>
+                    <c:when test="${err.key eq 'domainPattern.required'}"><fmt:message key="dns.overrides.error.pattern.required"/></c:when>
                     <c:when test="${err.key eq 'domainPattern.invalid-delimiters'}"><fmt:message key="dns.overrides.error.domain.invalid-delimiters"/></c:when>
                     <c:when test="${err.key eq 'targetHost.required'}"><fmt:message key="dns.overrides.error.target-host.required"/></c:when>
                     <c:when test="${err.key eq 'targetHost.invalid-delimiters'}"><fmt:message key="dns.overrides.error.target-host.invalid-delimiters"/></c:when>

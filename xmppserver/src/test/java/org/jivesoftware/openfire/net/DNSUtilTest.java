@@ -801,4 +801,88 @@ public class DNSUtilTest {
         assertEquals(List.of(Set.of(new SrvRecord("final.external.invalid", 5269, false))), resultB,
             "Expected B.example.invalid to resolve to the final target.");
     }
+
+    /**
+     * Verifies that DNS override entries with IPv6 address literals (without brackets) are handled correctly.
+     */
+    @Test
+    public void testResolveXMPPDomainWithIPv6Override() throws Exception
+    {
+        // Setup test fixture: override with IPv6 address (no brackets)
+        final String ipv6 = "2001:db8:1::1";
+        final SrvRecord ipv6Override = new SrvRecord(ipv6, 5269, false);
+        DNSUtil.setDnsOverride(Map.of("ipv6.example.invalid", ipv6Override));
+
+        // Execute system under test.
+        final List<Set<SrvRecord>> result = DNSUtil.resolveXMPPDomain("ipv6.example.invalid", 5269);
+
+        // Verify results.
+        assertEquals(1, result.size());
+        final SrvRecord actual = result.get(0).iterator().next();
+        assertEquals(ipv6, actual.getHostname());
+        assertEquals(5269, actual.getPort());
+        assertFalse(actual.isDirectTLS());
+    }
+
+    /**
+     * Verifies that DNS override entries with IPv6 address literals (with brackets) are handled correctly.
+     */
+    public void testResolveXMPPDomainWithIPv6OverrideBracketed() throws Exception
+    {
+        // Setup test fixture: override with IPv6 address (with brackets)
+        final String ipv6Bracketed = "[2001:db8:2::2]";
+        final SrvRecord ipv6BracketedOverride = new SrvRecord(ipv6Bracketed, 5269, false);
+        DNSUtil.setDnsOverride(Map.of("ipv6b.example.invalid", ipv6BracketedOverride));
+
+        // Execute system under test.
+        final List<Set<SrvRecord>> resultBracketed = DNSUtil.resolveXMPPDomain("ipv6b.example.invalid", 5269);
+
+        // Verify results.
+        assertEquals(1, resultBracketed.size());
+        final SrvRecord actualBracketed = resultBracketed.get(0).iterator().next();
+        assertEquals("2001:db8:2::2", actualBracketed.getHostname());
+        assertEquals(5269, actualBracketed.getPort());
+        assertFalse(actualBracketed.isDirectTLS());
+    }
+
+    /**
+     * Verifies that a mix of IPv4 and IPv6 DNS overrides works as expected.
+     */
+    @Test
+    public void testResolveXMPPDomainWithMixedIPv4AndIPv6Overrides() throws Exception
+    {
+        // Setup test fixture.
+        final SrvRecord ipv4Override = new SrvRecord("192.0.2.1", 5269, false);
+        final SrvRecord ipv6Override = new SrvRecord("2001:db8:5::5", 5269, false);
+        DNSUtil.setDnsOverride(Map.of(
+            "ipv4.example.invalid", ipv4Override,
+            "ipv6.example.invalid", ipv6Override
+        ));
+
+        // Execute system under test (IPv4).
+        final List<Set<SrvRecord>> result4 = DNSUtil.resolveXMPPDomain("ipv4.example.invalid", 5269);
+        final SrvRecord actual4 = result4.get(0).iterator().next();
+        assertEquals("192.0.2.1", actual4.getHostname());
+
+        // Execute system under test (IPv6).
+        final List<Set<SrvRecord>> result6 = DNSUtil.resolveXMPPDomain("ipv6.example.invalid", 5269);
+        final SrvRecord actual6 = result6.get(0).iterator().next();
+        assertEquals("2001:db8:5::5", actual6.getHostname());
+    }
+
+    /**
+     * Verifies that wildcard DNS overrides work with IPv6 address literals.
+     */
+    @Test
+    public void testResolveXMPPDomainWithWildcardIPv6Override() throws Exception
+    {
+        // Setup test fixture.
+        final SrvRecord wildcardIPv6 = new SrvRecord("2001:db8:6::6", 5269, false);
+        DNSUtil.setDnsOverride(Map.of("*.ipv6wild.example.invalid", wildcardIPv6));
+
+        // Execute system under test.
+        final List<Set<SrvRecord>> result = DNSUtil.resolveXMPPDomain("host1.ipv6wild.example.invalid", 5269);
+        final SrvRecord actual = result.get(0).iterator().next();
+        assertEquals("2001:db8:6::6", actual.getHostname());
+    }
 }

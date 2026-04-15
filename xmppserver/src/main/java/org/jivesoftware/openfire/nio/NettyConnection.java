@@ -19,6 +19,8 @@ package org.jivesoftware.openfire.nio;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.Channel;
+import io.netty.handler.codec.quic.QuicChannel;
 import io.netty.handler.codec.compression.JZlibDecoder;
 import io.netty.handler.codec.compression.JZlibEncoder;
 import io.netty.handler.ssl.SslContext;
@@ -104,29 +106,50 @@ public class NettyConnection extends AbstractConnection
 
     @Override
     public byte[] getAddress() throws UnknownHostException {
-        final SocketAddress remoteAddress = channelHandlerContext.channel().remoteAddress();
-        if (remoteAddress == null) throw new UnknownHostException();
-        final InetSocketAddress socketAddress = (InetSocketAddress) remoteAddress;
+        final InetSocketAddress socketAddress = resolvePeerSocketAddress();
         final InetAddress address = socketAddress.getAddress();
+        if (address == null) {
+            throw new UnknownHostException();
+        }
         return address.getAddress();
     }
 
     @Override
     public String getHostAddress() throws UnknownHostException {
-        final SocketAddress remoteAddress = channelHandlerContext.channel().remoteAddress();
-        if (remoteAddress == null) throw new UnknownHostException();
-        final InetSocketAddress socketAddress = (InetSocketAddress) remoteAddress;
+        final InetSocketAddress socketAddress = resolvePeerSocketAddress();
         final InetAddress inetAddress = socketAddress.getAddress();
+        if (inetAddress == null) {
+            throw new UnknownHostException();
+        }
         return inetAddress.getHostAddress();
     }
 
     @Override
     public String getHostName() throws UnknownHostException {
-        final SocketAddress remoteAddress = channelHandlerContext.channel().remoteAddress();
-        if (remoteAddress == null) throw new UnknownHostException();
-        final InetSocketAddress socketAddress = (InetSocketAddress) remoteAddress;
+        final InetSocketAddress socketAddress = resolvePeerSocketAddress();
         final InetAddress inetAddress = socketAddress.getAddress();
+        if (inetAddress == null) {
+            throw new UnknownHostException();
+        }
         return inetAddress.getHostName();
+    }
+
+    private InetSocketAddress resolvePeerSocketAddress() throws UnknownHostException {
+        for (Channel channel = channelHandlerContext.channel(); channel != null; channel = channel.parent()) {
+            if (channel instanceof QuicChannel quicChannel) {
+                final SocketAddress remoteSocketAddress = quicChannel.remoteSocketAddress();
+                if (remoteSocketAddress instanceof InetSocketAddress inetSocketAddress) {
+                    return inetSocketAddress;
+                }
+            }
+
+            final SocketAddress socketAddress = channel.remoteAddress();
+            if (socketAddress instanceof InetSocketAddress inetSocketAddress) {
+                return inetSocketAddress;
+            }
+        }
+
+        throw new UnknownHostException();
     }
 
     @Override

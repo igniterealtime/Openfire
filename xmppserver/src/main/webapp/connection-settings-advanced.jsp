@@ -152,6 +152,9 @@
         <c:when test="${connectionType eq 'SOCKET_C2S'}">
             <fmt:message key="connection-type.socket-c2s"/>
         </c:when>
+        <c:when test="${connectionType eq 'QUIC_C2S'}">
+            <fmt:message key="connection-type.quic-c2s"/>
+        </c:when>
         <c:when test="${connectionType eq 'BOSH_C2S'}">
             <fmt:message key="connection-type.bosh-c2s"/>
         </c:when>
@@ -193,6 +196,10 @@
             <title><fmt:message key="client.connections.settings.title"/></title>
             <meta name="pageID" content="client-connections-settings"/>
         </c:when>
+        <c:when test="${connectionType eq 'QUIC_C2S'}">
+            <title><fmt:message key="quic.client.connections.settings.title"/></title>
+            <meta name="pageID" content="quic-client-connections-settings"/>
+        </c:when>
         <c:when test="${connectionType eq 'COMPONENT'}">
             <title><fmt:message key="component.settings.title"/></title>
             <meta name="pageID" content="external-components-settings"/>
@@ -232,6 +239,9 @@
             </c:when>
             <c:when test="${connectionType eq 'SOCKET_C2S'}">
                 <fmt:message key="client.connections.settings.confirm.updated" />
+            </c:when>
+            <c:when test="${connectionType eq 'QUIC_C2S'}">
+                <fmt:message key="quic.client.connections.settings.confirm.updated" />
             </c:when>
             <c:when test="${connectionType eq 'COMPONENT'}">
                 <fmt:message key="component.settings.confirm.updated" />

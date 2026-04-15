@@ -47,6 +47,15 @@ public class ConnectionTypeTest
     }
 
     /**
+     * Verifies that the QUIC_C2S ConnectionType returns the appropriate 'client orientated' value.
+     */
+    @Test
+    public void testQUIC_C2SConnectionTypeHasCorrectIsClientOriented()
+    {
+        assertTrue(ConnectionType.QUIC_C2S.isClientOriented());
+    }
+
+    /**
      * Verifies that the BOSH_C2S ConnectionType returns the appropriate 'client orientated' value.
      */
     @Test

@@ -20,6 +20,7 @@ import org.jivesoftware.util.SystemProperty;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 public final class ConnectionSettings {
 
@@ -85,6 +86,32 @@ public final class ConnectionSettings {
         public static final String MAX_THREADS_SSL = "xmpp.client_ssl.processing.threads";
         public static final String MAX_READ_BUFFER_SSL = "xmpp.client_ssl.maxReadBufferSize";
         public static final String TLS_ALGORITHM = "xmpp.socket.ssl.algorithm";
+
+        public static final String QUIC_SOCKET_ACTIVE = "xmpp.quic.client.active";
+        public static final String QUIC_PORT = "xmpp.quic.client.port";
+        public static final String QUIC_MAX_THREADS = "xmpp.quic.client.processing.threads";
+        public static final String QUIC_MAX_READ_BUFFER = "xmpp.quic.client.maxReadBufferSize";
+        public static final String QUIC_AUTH_PER_CLIENTCERT_POLICY = "xmpp.quic.client.cert.policy";
+        public static final SystemProperty<Integer> QUIC_MAX_STREAMS = SystemProperty.Builder.ofType(Integer.class)
+            .setKey("xmpp.quic.client.max-streams")
+            .setDefaultValue(1)
+            .setMinValue(1)
+            .setDynamic(Boolean.TRUE)
+            .build();
+
+        public static final SystemProperty<Duration> QUIC_IDLE_TIMEOUT_PROPERTY = SystemProperty.Builder.ofType(Duration.class)
+            .setKey("xmpp.quic.client.idle")
+            .setDefaultValue(Duration.ofMinutes(6))
+            .setMinValue(Duration.ofMillis(-1))
+            .setChronoUnit(ChronoUnit.MILLIS)
+            .setDynamic(Boolean.TRUE)
+            .build();
+
+        public static final SystemProperty<List<String>> QUIC_ALPN = SystemProperty.Builder.ofType(List.class)
+            .setKey("xmpp.quic.client.alpn")
+            .setDefaultValue(List.of("xmpp-client"))
+            .setDynamic(Boolean.TRUE)
+            .buildList(String.class);
     }
 
     public static final class Server {

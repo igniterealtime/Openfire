@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -192,7 +192,7 @@
             <fmt:message key="server.db.house_keeping_sleep" />
         </td>
         <td class="c2">
-            <%=StringUtils.getFullElapsedTime(defaultConnectionProvider.getTimeBetweenEvictionRunsMillis())%>
+            <%=StringUtils.getFullElapsedTime(defaultConnectionProvider.getDurationBetweenEvictionRuns())%>
         </td>
     </tr>
     <tr>

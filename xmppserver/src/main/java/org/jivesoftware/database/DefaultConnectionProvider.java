@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,8 +103,8 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         final ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(serverURL, username, password);
         final PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
         poolableConnectionFactory.setValidationQuery(testSQL);
-        poolableConnectionFactory.setValidationQueryTimeout((int)testTimeout.toSeconds());
-        poolableConnectionFactory.setMaxConnLifetimeMillis(connectionTimeout.toMillis());
+        poolableConnectionFactory.setValidationQueryTimeout(testTimeout);
+        poolableConnectionFactory.setMaxConn(connectionTimeout);
 
         final GenericObjectPoolConfig<PoolableConnection> poolConfig = new GenericObjectPoolConfig<>();
         poolConfig.setTestOnBorrow(testBeforeUse);
@@ -115,9 +115,9 @@ public class DefaultConnectionProvider implements ConnectionProvider {
             poolConfig.setMaxIdle(minConnections);
         }
         poolConfig.setMaxTotal(maxConnections);
-        poolConfig.setTimeBetweenEvictionRunsMillis(timeBetweenEvictionRuns.toMillis());
-        poolConfig.setSoftMinEvictableIdleTimeMillis(minIdleTime.toMillis());
-        poolConfig.setMaxWaitMillis(maxWaitTime.toMillis());
+        poolConfig.setTimeBetweenEvictionRuns(timeBetweenEvictionRuns);
+        poolConfig.setSoftMinEvictableIdleDuration(minIdleTime);
+        poolConfig.setMaxWait(maxWaitTime);
         connectionPool = new GenericObjectPool<>(poolableConnectionFactory, poolConfig);
         poolableConnectionFactory.setPool(connectionPool);
         dataSource = new PoolingDataSource<>(connectionPool);
@@ -298,12 +298,20 @@ public class DefaultConnectionProvider implements ConnectionProvider {
         return testTimeout;
     }
 
+    /**
+     * @deprecated Replaced by {@link #getDurationBetweenEvictionRuns()}
+     */
+    @Deprecated
     public Duration getTimeBetweenEvictionRunsMillis() {
-        return Duration.ofMillis(connectionPool.getTimeBetweenEvictionRunsMillis());
+        return getDurationBetweenEvictionRuns();
+    }
+
+    public Duration getDurationBetweenEvictionRuns() {
+        return connectionPool.getDurationBetweenEvictionRuns();
     }
 
     public Duration getMinIdleTime() {
-        return Duration.ofMillis(connectionPool.getSoftMinEvictableIdleTimeMillis());
+        return connectionPool.getSoftMinEvictableIdleDuration();
     }
 
     public int getActiveConnections() {
@@ -323,15 +331,15 @@ public class DefaultConnectionProvider implements ConnectionProvider {
     }
 
     public Duration getMaxWaitTime() {
-        return Duration.ofMillis(connectionPool.getMaxWaitMillis());
+        return connectionPool.getMaxWaitDuration();
     }
 
     public Duration getMeanBorrowWaitTime() {
-        return Duration.ofMillis(connectionPool.getMeanBorrowWaitTimeMillis());
+        return connectionPool.getMeanBorrowWaitDuration();
     }
 
     public Duration getMaxBorrowWaitTime() {
-        return Duration.ofMillis(connectionPool.getMaxBorrowWaitTimeMillis());
+        return connectionPool.getMaxBorrowWaitDuration();
     }
 
     /**

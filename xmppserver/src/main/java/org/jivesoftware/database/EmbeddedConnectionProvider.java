@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ public class EmbeddedConnectionProvider implements ConnectionProvider {
         serverURL = "jdbc:hsqldb:" + databaseDir.resolve("openfire");
         final ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(serverURL, "sa", "");
         final PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
-        poolableConnectionFactory.setMaxConnLifetimeMillis(Duration.ofHours(12).toMillis());
+        poolableConnectionFactory.setMaxConn(Duration.ofHours(12));
 
         final GenericObjectPoolConfig<PoolableConnection> poolConfig = new GenericObjectPoolConfig<>();
         poolConfig.setMinIdle(3);

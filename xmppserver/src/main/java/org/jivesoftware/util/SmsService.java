@@ -24,6 +24,7 @@ import org.jsmpp.bean.*;
 import org.jsmpp.extra.NegativeResponseException;
 import org.jsmpp.session.BindParameter;
 import org.jsmpp.session.SMPPSession;
+import org.jsmpp.session.SubmitSmResult;
 import org.jsmpp.util.AbsoluteTimeFormatter;
 import org.jsmpp.util.TimeFormatter;
 import org.slf4j.Logger;
@@ -427,14 +428,14 @@ public class SmsService
             final SMPPSession session = sessionPool.borrowObject();
             try
             {
-                final String messageId = session.submitShortMessage(
+                final SubmitSmResult result = session.submitShortMessage(
                     serviceType,
                     sourceTon, sourceNpi, sourceAddress,
                     destinationTon, destinationNpi, destinationAddress,
                     esm, protocolId, priorityFlag,
                     scheduleDeliveryTime, validityPeriod, registeredDelivery, replaceIfPresentFlag,
                     dataCoding, smDefaultMsgId, message );
-                Log.debug( "Message submitted, message_id is '{}'.", messageId );
+                Log.debug( "Message submitted, message_id is '{}'.", result.getMessageId() );
             }
             finally
             {

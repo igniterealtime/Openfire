@@ -151,6 +151,10 @@ public class PEPServiceManager implements EntityCapabilitiesListener {
                     pepService.initialize();
                 }
                 pepServices.put(jid, CacheableOptional.of(pepService));
+                if (pepService != null) {
+                    // Save new root node (which can happen only _after_ the service has been registered to the cache).
+                    pepService.getRootCollectionNode().saveToDB();
+                }
             }
 
             if ( pepService != null ) {
@@ -198,6 +202,8 @@ public class PEPServiceManager implements EntityCapabilitiesListener {
                 pepService = new PEPService(XMPPServer.getInstance(), bareJID);
                 pepService.initialize();
                 pepServices.put(bareJID, CacheableOptional.of(pepService));
+                // Save new root node (which can happen only _after_ the service has been registered to the cache).
+                pepService.getRootCollectionNode().saveToDB();
 
                 Log.debug("PEPService created for: '{}'", bareJID);
             }

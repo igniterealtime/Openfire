@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,20 +174,23 @@ public class PEPService implements PubSubService, Cacheable {
     public void initialize() {
         // Load nodes to memory
         XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().loadNodes(this);
-        // Ensure that we have a root collection node
-        if (nodes.isEmpty()) {
-            // Create root collection node
-            rootCollectionNode = new CollectionNode(this.getUniqueIdentifier(), null, this.serviceOwner.toString(), this.serviceOwner, collectionDefaultConfiguration);
 
-            // Save new root node
-            rootCollectionNode.saveToDB();
+        // Ensure that we have a root collection node.
+        final Node rootNode = getNode(this.serviceOwner.toString());
+        if (rootNode instanceof CollectionNode) {
+            rootCollectionNode = (CollectionNode) rootNode;
+            return;
+        }
 
-            // Add the creator as the node owner
-            rootCollectionNode.addOwner(this.serviceOwner);
+        if (rootNode != null || !nodes.isEmpty()) {
+            Log.warn("PEP service '{}' has nodes but no root collection node. Recreating missing root node.", getServiceID());
         }
-        else {
-            rootCollectionNode = (CollectionNode) getNode(this.serviceOwner.toString());
-        }
+
+        // Create root collection node
+        rootCollectionNode = new CollectionNode(this.getUniqueIdentifier(), null, this.serviceOwner.toString(), this.serviceOwner, collectionDefaultConfiguration);
+
+        // Add the creator as the node owner
+        rootCollectionNode.addOwner(this.serviceOwner);
     }
 
     @Override

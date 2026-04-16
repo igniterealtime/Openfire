@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,9 +147,13 @@ public class PEPServiceManager implements EntityCapabilitiesListener {
             } else {
                 // lookup in database.
                 pepService = XMPPServer.getInstance().getPubSubModule().getPersistenceProvider().loadPEPServiceFromDB(jid);
-                pepServices.put(jid, CacheableOptional.of(pepService));
                 if ( pepService != null ) {
                     pepService.initialize();
+                }
+                pepServices.put(jid, CacheableOptional.of(pepService));
+                if (pepService != null) {
+                    // Save new root node (which can happen only _after_ the service has been registered to the cache).
+                    pepService.getRootCollectionNode().saveToDB();
                 }
             }
 
@@ -196,8 +200,10 @@ public class PEPServiceManager implements EntityCapabilitiesListener {
 
             if (pepService == null) {
                 pepService = new PEPService(XMPPServer.getInstance(), bareJID);
-                pepServices.put(bareJID, CacheableOptional.of(pepService));
                 pepService.initialize();
+                pepServices.put(bareJID, CacheableOptional.of(pepService));
+                // Save new root node (which can happen only _after_ the service has been registered to the cache).
+                pepService.getRootCollectionNode().saveToDB();
 
                 Log.debug("PEPService created for: '{}'", bareJID);
             }

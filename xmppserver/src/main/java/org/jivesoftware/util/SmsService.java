@@ -288,7 +288,7 @@ public class SmsService
      * Checks if an exception in the chain of the provided throwable contains a 'command status' that can be
      * translated in a somewhat more helpful error message.
      *
-     * The list of error messages was taken from <a href="http://www.smssolutions.net/tutorials/smpp/smpperrorcodes/">http://www.smssolutions.net/tutorials/smpp/smpperrorcodes/</a>
+     * The list of error messages was taken from <a href="https://www.smssolutions.net/tutorials/smpp/smpperrorcodes/">https://www.smssolutions.net/tutorials/smpp/smpperrorcodes/</a>
      *
      * @param ex The exception in which to search for a command status.
      * @return a human-readable error message.

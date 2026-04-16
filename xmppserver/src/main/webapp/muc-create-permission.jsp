@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -126,6 +126,7 @@
         if (add) {
             mucService.addUsersAllowedToCreate(allowedJIDs);
             mucService.setAllRegisteredUsersAllowedToCreate(allowAllRegisteredUsers);
+            mucService.setRoomCreationRestricted(true);
             // Log the event
             webManager.logEvent("updated MUC room creation permissions for service "+mucname, null);
             response.sendRedirect("muc-create-permission.jsp?addsuccess=true&mucname="+URLEncoder.encode(mucname, StandardCharsets.UTF_8));
@@ -151,6 +152,22 @@
 <meta name="subPageID" content="muc-perms"/>
 <meta name="extraParams" content="<%= "mucname="+URLEncoder.encode(mucname, StandardCharsets.UTF_8) %>"/>
 <meta name="helpPage" content="set_group_chat_room_creation_permissions.html"/>
+<script>
+    function toggleAllowedUsers() {
+        const isRestricted = document.getElementById('rb02').checked;
+        const container = document.getElementById('allowedUsersContainer');
+        const input = document.getElementById('userJIDtf');
+
+        if (isRestricted) {
+            container.style.display = 'block';
+            if (input) {
+                input.focus();
+            }
+        } else {
+            container.style.display = 'none';
+        }
+    }
+</script>
 </head>
 <body>
 
@@ -202,6 +219,7 @@
             <tr>
                 <td style="width: 1%">
                     <input type="radio" name="openPerms" value="true" id="rb01"
+                     onchange="toggleAllowedUsers()"
                      <%= ((!mucService.isRoomCreationRestricted()) ? "checked" : "") %>>
                 </td>
                 <td>
@@ -211,7 +229,7 @@
             <tr>
                 <td style="width: 1%">
                     <input type="radio" name="openPerms" value="false" id="rb02"
-                     onfocus="this.form.userJID.focus();"
+                     onchange="toggleAllowedUsers()"
                      <%= ((mucService.isRoomCreationRestricted()) ? "checked" : "") %>>
                 </td>
                 <td>
@@ -227,8 +245,7 @@
 
 <br>
 
-
-<%  if (mucService.isRoomCreationRestricted()) { %>
+<div id="allowedUsersContainer" style="display: <%= (mucService.isRoomCreationRestricted() ? "block" : "none") %>">
 <!-- BEGIN 'Allowed Users' -->
 <form action="muc-create-permission.jsp?add" method="post">
     <input type="hidden" name="csrf" value="${csrf}">
@@ -238,13 +255,13 @@
     </div>
     <div class="jive-contentBox">
         <p>
-            <input type="checkbox" id="allowAllRegisteredUsers" name="allowAllRegisteredUsers" <%=mucService.isAllRegisteredUsersAllowedToCreate()?"checked":""%> onChange="this.form.submit()">
+            <input type="checkbox" id="allowAllRegisteredUsers" name="allowAllRegisteredUsers" <%=mucService.isAllRegisteredUsersAllowedToCreate()?"checked":""%>>
             <label for="allowAllRegisteredUsers"><fmt:message key="muc.create.permission.allow_registered" /></label>
         </p>
         <p>
         <label for="groupJIDs"><fmt:message key="muc.create.permission.add_group" /></label><br/>
         <select name="groupNames" size="6" multiple style="width:400px;font-family:verdana,arial,helvetica,sans-serif;font-size:8pt;" 
-         onclick="this.form.openPerms[1].checked=true;" id="groupJIDs">
+         id="groupJIDs">
         <%  for (Group g : webManager.getGroupManager().getGroups()) {	%>
             <option value="<%= URLEncoder.encode(g.getName(), StandardCharsets.UTF_8) %>"
              <%= (StringUtils.contains(groupNames, g.getName()) ? "selected" : "") %>
@@ -254,8 +271,8 @@
         </p>
         <p>
         <label for="userJIDtf"><fmt:message key="muc.create.permission.add_jid" /></label>
-        <input type="text" name="userJID" size="30" maxlength="100" value="<%= (userJID != null ? userJID : "") %>"
-         onclick="this.form.openPerms[1].checked=true;" id="userJIDtf">
+        <input type="text" name="userJID" size="30" maxlength="100" value="<%= StringUtils.escapeForXML(userJID != null ? userJID : "") %>"
+         id="userJIDtf">
         <input type="submit" value="Add">
         </p>
 
@@ -308,7 +325,7 @@
 </form>
 <!-- END 'Allowed Users' -->
 
-<%  } %>
+</div>
 
 
 </body>

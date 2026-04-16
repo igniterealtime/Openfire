@@ -73,7 +73,7 @@ public class SmsService
         .build();
 
     /**
-     * Time after which idle MPPP connections used by the SMS Service are allowed to be evicted.
+     * Time after which idle SMPP connections used by the SMS Service are allowed to be evicted.
      */
     public static final SystemProperty<Duration> SMPP_CONNECTIONS_IDLE = SystemProperty.Builder.ofType(Duration.class)
         .setKey("sms.smpp.connections.idleMillis")

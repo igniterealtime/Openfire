@@ -34,12 +34,15 @@ import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
+import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.StreamError;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -403,6 +406,18 @@ public class NettyConnection extends AbstractConnection
     @Override
     public boolean isCompressed() {
         return channelHandlerContext.channel().pipeline().get(JZlibDecoder.class) != null;
+    }
+
+    @Override
+    public Optional<byte[]> getChannelBindingData(@Nonnull final String cbPrefix)
+    {
+        final SslHandler sslhandler = (SslHandler) channelHandlerContext.channel().pipeline().get(SSL_HANDLER_NAME);
+        if (sslhandler == null) {
+            return Optional.empty();
+        }
+
+        final SSLEngine engine = sslhandler.engine();
+        return ChannelBindingProviderManager.getInstance().getChannelBinding(cbPrefix, engine);
     }
 
     @Override

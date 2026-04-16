@@ -137,6 +137,33 @@ public interface Connection extends Closeable {
     Certificate[] getPeerCertificates();
 
     /**
+     * Returns channel binding data for this connection, as defined by the provided type.
+     *
+     * Channel binding data is used to bind higher-level authentication to the underlying transport layer, improving
+     * security against man-in-the-middle attacks.
+     *
+     * The type, identified by a unique prefix that's typically defined in an RFC, determines which channel binding
+     * mechanism is used, such as:
+     * <ul>
+     *     <li><code>tls-exporter</code>: TLS exporter-based channel binding.</li>
+     *     <li><code>tls-server-end-point</code>: Uses the hash of the server certificate (RFC 5929).</li>
+     * </ul>
+     *
+     * Note that channel binding type prefixes are case-sensitive.
+     *
+     * If the connection is not encrypted, or the requested channel binding type is not available, returns {@link Optional#empty()}.
+     *
+     * @param cbPrefix the RFC-defined unique prefix for the channel binding type (must not be null)
+     * @return An Optional containing the channel binding data, or empty if not available.
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc5705">RFC 5705: Keying Material Exporters for Transport Layer Security (TLS)</a>
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc5929">RFC 5929: Channel Bindings for TLS</a>
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc9266">RFC 9266: Channel Bindings for TLS 1.3</a>
+     */
+    default Optional<byte[]> getChannelBindingData(@Nonnull final String cbPrefix) {
+        return Optional.empty();
+    }
+
+    /**
      * Keeps track if the other peer of this session presented a self-signed certificate. When
      * using self-signed certificate for server-2-server sessions then SASL EXTERNAL will not be
      * used and instead server-dialback will be preferred for verifying the identify of the remote

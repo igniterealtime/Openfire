@@ -1212,7 +1212,11 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             pstmt.setString(3, item.getID());
             pstmt.setString(4, item.getPublisher().toString());
             pstmt.setString(5, StringUtils.dateToMillis( item.getCreationDate()));
-            pstmt.setString(6, item.getPayloadXML());
+            if (item.getPayloadXML() == null) {
+                pstmt.setString(6, null);
+            } else {
+                DbConnectionManager.setLargeTextField(pstmt, 6, item.getPayloadXML());
+            }
             pstmt.execute();
         } catch (SQLException ex) {
             log.error("Published item could not be created in database: {}\n{}", item.getUniqueIdentifier(), item.getPayloadXML(), ex);
@@ -1232,7 +1236,11 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             pstmt = con.prepareStatement(UPDATE_ITEM);
             pstmt.setString(1, item.getPublisher().toString());
             pstmt.setString(2, StringUtils.dateToMillis( item.getCreationDate()));
-            pstmt.setString(3, item.getPayloadXML());
+            if (item.getPayloadXML() == null) {
+                pstmt.setString(3, null);
+            } else {
+                DbConnectionManager.setLargeTextField(pstmt, 3, item.getPayloadXML());
+            }
             pstmt.setString(4, item.getNode().getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(5, encodeNodeID(item.getNodeID()));
             pstmt.setString(6, item.getID());
@@ -1262,7 +1270,11 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 pstmt.setString(3, item.getID());
                 pstmt.setString(4, item.getPublisher().toString());
                 pstmt.setString(5, StringUtils.dateToMillis(item.getCreationDate()));
-                pstmt.setString(6, item.getPayloadXML());
+                if (item.getPayloadXML() == null) {
+                    pstmt.setString(6, null);
+                } else {
+                    DbConnectionManager.setLargeTextField(pstmt, 6, item.getPayloadXML());
+                }
                 if ( batch ) {
                     hasBatchItems = true;
                     pstmt.addBatch();
@@ -1646,8 +1658,9 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 // Create the item
                 PublishedItem item = new PublishedItem(node, publisher, itemID, creationDate);
                 // Add the extra fields to the published item
-                if (rs.getString(4) != null) {
-                	item.setPayloadXML(rs.getString(4));
+                final String payload = DbConnectionManager.getLargeTextField(rs, 4);
+                if (payload != null) {
+                    item.setPayloadXML(payload);
                 }
                 // Add the published item to the node
 				if (descending) {
@@ -1689,8 +1702,9 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 // Create the item
                 final PublishedItem result = new PublishedItem(node, publisher, itemIdentifier.getItemId(), creationDate);
                 // Add the extra fields to the published item
-                if (rs.getString(3) != null) {
-                    result.setPayloadXML(rs.getString(3));
+                final String payload = DbConnectionManager.getLargeTextField(rs, 3);
+                if (payload != null) {
+                    result.setPayloadXML(payload);
                 }
                 return result;
             }

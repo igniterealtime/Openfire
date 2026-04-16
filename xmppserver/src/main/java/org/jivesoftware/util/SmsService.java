@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2018-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,14 @@ import org.jsmpp.bean.*;
 import org.jsmpp.extra.NegativeResponseException;
 import org.jsmpp.session.BindParameter;
 import org.jsmpp.session.SMPPSession;
+import org.jsmpp.session.SubmitSmResult;
 import org.jsmpp.util.AbsoluteTimeFormatter;
 import org.jsmpp.util.TimeFormatter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 /**
@@ -59,7 +62,145 @@ public class SmsService
 {
     private static final Logger Log = LoggerFactory.getLogger( SmsService.class );
 
-    private static TimeFormatter timeFormatter = new AbsoluteTimeFormatter();
+    /**
+     * The maximum amount of SMPP connections that the SMS Service will maintain.
+     */
+    public static final SystemProperty<Integer> SMPP_CONNECTIONS_MAX_AMOUNT = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("sms.smpp.connections.maxAmount")
+        .setDefaultValue(1)
+        .setDynamic(true)
+        .addListener(l -> SmsService.getInstance().sessionPool.processPropertyChange("sms.smpp.connections.maxAmount"))
+        .build();
+
+    /**
+     * Time after which idle SMPP connections used by the SMS Service are allowed to be evicted.
+     */
+    public static final SystemProperty<Duration> SMPP_CONNECTIONS_IDLE = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("sms.smpp.connections.idleMillis")
+        .setDefaultValue(Duration.ofMinutes(2))
+        .setDynamic(true)
+        .setChronoUnit(ChronoUnit.MILLIS)
+        .addListener(l -> SmsService.getInstance().sessionPool.processPropertyChange("sms.smpp.connections.idleMillis"))
+        .build();
+
+    /**
+     * The type-of-number value for the source of SMS messages.
+     */
+    public static final SystemProperty<TypeOfNumber> SMPP_SOURCE_TON = SystemProperty.Builder.ofType(TypeOfNumber.class)
+        .setKey("sms.smpp.source.ton")
+        .setDefaultValue(TypeOfNumber.UNKNOWN)
+        .setDynamic(true)
+        .addListener(l -> SmsService.getInstance().sessionPool.processPropertyChange("sms.smpp.source.ton"))
+        .build();
+
+    /**
+     * The number-plan-indicator value for the source of SMS messages.
+     */
+    public static final SystemProperty<NumberingPlanIndicator> SMPP_SOURCE_NPI = SystemProperty.Builder.ofType(NumberingPlanIndicator.class)
+        .setKey("sms.smpp.source.npi")
+        .setDefaultValue(NumberingPlanIndicator.UNKNOWN)
+        .setDynamic(true)
+        .addListener(l -> SmsService.getInstance().sessionPool.processPropertyChange("sms.smpp.source.npi"))
+        .build();
+
+    /**
+     * The source address of SMS messages.
+     */
+    public static final SystemProperty<String> SMPP_SOURCE_ADDRESS = SystemProperty.Builder.ofType(String.class)
+        .setKey("sms.smpp.source.address")
+        .setDynamic(true)
+        .addListener(l -> SmsService.getInstance().sessionPool.processPropertyChange("sms.smpp.source.address"))
+        .build();
+
+    /**
+     * The type-of-number value for the destination of SMS messages.
+     */
+    public static final SystemProperty<TypeOfNumber> SMPP_DESTINATION_TON = SystemProperty.Builder.ofType(TypeOfNumber.class)
+        .setKey("sms.smpp.destination.ton")
+        .setDefaultValue(TypeOfNumber.UNKNOWN)
+        .setDynamic(true)
+        .addListener(l -> SmsService.getInstance().sessionPool.processPropertyChange("sms.smpp.destination.ton"))
+        .build();
+
+    /**
+     * The number-plan-indicator value for the destination of SMS messages.
+     */
+    public static final SystemProperty<NumberingPlanIndicator> SMPP_DESTINATION_NPI = SystemProperty.Builder.ofType(NumberingPlanIndicator.class)
+        .setKey("sms.smpp.destination.npi")
+        .setDefaultValue(NumberingPlanIndicator.UNKNOWN)
+        .setDynamic(true)
+        .addListener(l -> SmsService.getInstance().sessionPool.processPropertyChange("sms.smpp.destination.npi"))
+        .build();
+
+    /**
+     * The host name of your SMPP Server or SMSC, i.e. smsc.example.org.
+     */
+    public static final SystemProperty<String> SMPP_HOST = SystemProperty.Builder.ofType(String.class)
+        .setKey("sms.smpp.host")
+        .setDefaultValue("localhost")
+        .setDynamic(true)
+        .addListener(l -> SmsService.getInstance().sessionPool.processPropertyChange("sms.smpp.host"))
+        .build();
+
+    /**
+     * The port on which the SMSC is listening.
+     */
+    public static final SystemProperty<Integer> SMPP_PORT = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("sms.smpp.port")
+        .setDefaultValue(2775)
+        .setDynamic(true)
+        .addListener(l -> SmsService.getInstance().sessionPool.processPropertyChange("sms.smpp.port"))
+        .build();
+
+    /**
+     * The 'user name' to use when connecting to the SMSC.
+     */
+    public static final SystemProperty<String> SMPP_SYSTEMID = SystemProperty.Builder.ofType(String.class)
+        .setKey("sms.smpp.systemId")
+        .setDynamic(true)
+        .addListener(l -> SmsService.getInstance().sessionPool.processPropertyChange("sms.smpp.systemId"))
+        .build();
+
+    /**
+     * The password that authenticates the systemId value when connecting to the SMSC.
+     */
+    public static final SystemProperty<String> SMPP_PASSWORD = SystemProperty.Builder.ofType(String.class)
+        .setKey("sms.smpp.password")
+        .setEncrypted(true)
+        .setDynamic(true)
+        .addListener(l -> SmsService.getInstance().sessionPool.processPropertyChange("sms.smpp.password"))
+        .build();
+
+    /**
+     * An optional system type, which, if defined, will be used when connecting to the SMSC.
+     */
+    public static final SystemProperty<String> SMPP_SYSTEMTYPE = SystemProperty.Builder.ofType(String.class)
+        .setKey("sms.smpp.systemType")
+        .setDynamic(true)
+        .addListener(l -> SmsService.getInstance().sessionPool.processPropertyChange("sms.smpp.systemType"))
+        .build();
+
+    /**
+     * The type-of-number value for 'receiving' SMS messages.
+     */
+    public static final SystemProperty<TypeOfNumber> SMPP_RECEIVE_TON = SystemProperty.Builder.ofType(TypeOfNumber.class)
+        .setKey("sms.smpp.receive.ton")
+        .setDefaultValue(TypeOfNumber.UNKNOWN)
+        .setDynamic(true)
+        .addListener(l -> SmsService.getInstance().sessionPool.processPropertyChange("sms.smpp.receive.ton"))
+        .build();
+
+    /**
+     * The number-plan-indicator value for 'receiving' SMS messages.
+     */
+    public static final SystemProperty<NumberingPlanIndicator> SMPP_RECEIVE_NPI = SystemProperty.Builder.ofType(NumberingPlanIndicator.class)
+        .setKey("sms.smpp.receive.npi")
+        .setDefaultValue(NumberingPlanIndicator.UNKNOWN)
+        .setDynamic(true)
+        .addListener(l -> SmsService.getInstance().sessionPool.processPropertyChange("sms.smpp.receive.npi"))
+        .build();
+
+    private static final TimeFormatter timeFormatter = new AbsoluteTimeFormatter();
 
     private static SmsService INSTANCE;
 
@@ -147,10 +288,10 @@ public class SmsService
      * Checks if an exception in the chain of the provided throwable contains a 'command status' that can be
      * translated in a somewhat more helpful error message.
      *
-     * The list of error messages was taken from http://www.smssolutions.net/tutorials/smpp/smpperrorcodes/
+     * The list of error messages was taken from <a href="https://www.smssolutions.net/tutorials/smpp/smpperrorcodes/">https://www.smssolutions.net/tutorials/smpp/smpperrorcodes/</a>
      *
      * @param ex The exception in which to search for a command status.
-     * @return a human readable error message.
+     * @return a human-readable error message.
      */
     public static String getDescriptiveMessage( Throwable ex )
     {
@@ -238,13 +379,13 @@ public class SmsService
         private final ObjectPool<SMPPSession> sessionPool;
 
         // Settings that apply to source of an SMS message.
-        private final TypeOfNumber sourceTon = JiveGlobals.getEnumProperty( "sms.smpp.source.ton", TypeOfNumber.class, TypeOfNumber.UNKNOWN );
-        private final NumberingPlanIndicator sourceNpi = JiveGlobals.getEnumProperty( "sms.smpp.source.npi", NumberingPlanIndicator.class, NumberingPlanIndicator.UNKNOWN );
-        private final String sourceAddress = JiveGlobals.getProperty( "sms.smpp.source.address" );
+        private final TypeOfNumber sourceTon = SMPP_SOURCE_TON.getValue();
+        private final NumberingPlanIndicator sourceNpi = SMPP_SOURCE_NPI.getValue();
+        private final String sourceAddress = SMPP_SOURCE_ADDRESS.getValue();
 
         // Settings that apply to destination of an SMS message.
-        private final TypeOfNumber destinationTon = JiveGlobals.getEnumProperty( "sms.smpp.destination.ton", TypeOfNumber.class, TypeOfNumber.UNKNOWN );
-        private final NumberingPlanIndicator destinationNpi = JiveGlobals.getEnumProperty( "sms.smpp.destination.npi", NumberingPlanIndicator.class, NumberingPlanIndicator.UNKNOWN );
+        private final TypeOfNumber destinationTon = SMPP_DESTINATION_TON.getValue();
+        private final NumberingPlanIndicator destinationNpi = SMPP_DESTINATION_NPI.getValue();
 
         private final String destinationAddress;
         private final byte[] message;
@@ -287,14 +428,14 @@ public class SmsService
             final SMPPSession session = sessionPool.borrowObject();
             try
             {
-                final String messageId = session.submitShortMessage(
+                final SubmitSmResult result = session.submitShortMessage(
                     serviceType,
                     sourceTon, sourceNpi, sourceAddress,
                     destinationTon, destinationNpi, destinationAddress,
                     esm, protocolId, priorityFlag,
                     scheduleDeliveryTime, validityPeriod, registeredDelivery, replaceIfPresentFlag,
                     dataCoding, smDefaultMsgId, message );
-                Log.debug( "Message submitted, message_id is '{}'.", messageId );
+                Log.debug( "Message submitted, message_id is '{}'.", result.getMessageId() );
             }
             finally
             {
@@ -316,15 +457,15 @@ public class SmsService
         public SMPPSession create() throws Exception
         {
             // SMSC connection settings
-            final String host = JiveGlobals.getProperty( "sms.smpp.host", "localhost" );
-            final int port = JiveGlobals.getIntProperty( "sms.smpp.port", 2775 );
-            final String systemId = JiveGlobals.getProperty( "sms.smpp.systemId" );
-            final String password = JiveGlobals.getProperty( "sms.smpp.password" );
-            final String systemType = JiveGlobals.getProperty( "sms.smpp.systemType" );
+            final String host = SMPP_HOST.getValue();
+            final int port = SMPP_PORT.getValue();
+            final String systemId = SMPP_SYSTEMID.getValue();
+            final String password = SMPP_PASSWORD.getValue();
+            final String systemType = SMPP_SYSTEMTYPE.getValue();
 
-            // Settings that apply to 'receiving' SMS. Should not apply to this implementation, as we're not receiving anything..
-            final TypeOfNumber receiveTon = JiveGlobals.getEnumProperty( "sms.smpp.receive.ton", TypeOfNumber.class, TypeOfNumber.UNKNOWN );
-            final NumberingPlanIndicator receiveNpi = JiveGlobals.getEnumProperty( "sms.smpp.receive.npi", NumberingPlanIndicator.class, NumberingPlanIndicator.UNKNOWN );
+            // Settings that apply to 'receiving' SMS. Should not apply to this implementation, as we're not receiving anything.
+            final TypeOfNumber receiveTon = SMPP_RECEIVE_TON.getDefaultValue();
+            final NumberingPlanIndicator receiveNpi = SMPP_RECEIVE_NPI.getValue();
 
             Log.debug( "Creating a new sesssion (host: '{}', port: '{}', systemId: '{}'.", host, port, systemId );
             final SMPPSession session = new SMPPSession();
@@ -358,13 +499,13 @@ public class SmsService
     }
 
     /**
-     * Implementation of an Object pool that manages instances of SMPPSession. The intend of this pool is to have a
+     * Implementation of an Object pool that manages instances of SMPPSession. The intent of this pool is to have a
      * single session, that's allowed to be idle for at least two minutes before being closed.
      *
      * The pool reacts to Openfire property changes, clearing all (inactive) sessions when a property used to create
      * a session is modified. Note that sessions that are borrowed from the pool are not affected by such a change. When
      * a property change occurs while a session is borrowed, a warning is logged (the property change will be applied
-     * when that session is eventually rotated out of the pool by the eviction strategy.
+     * when that session is eventually rotated out of the pool by the eviction strategy).
      *
      * @author Guus der Kinderen, guus.der.kinderen@gmail.com
      */
@@ -375,13 +516,13 @@ public class SmsService
         SMPPSessionPool()
         {
             super( new SMPPSessionFactory() );
-            setMaxTotal( JiveGlobals.getIntProperty( "sms.smpp.connections.maxAmount", 1 ) );
+            setMaxTotal(SMPP_CONNECTIONS_MAX_AMOUNT.getValue());
             setNumTestsPerEvictionRun( getMaxTotal() );
 
-            setMinEvictableIdleTimeMillis( JiveGlobals.getLongProperty( "sms.smpp.connections.idleMillis", 1000 * 60 * 2 ) );
-            if ( getMinEvictableIdleTimeMillis() > 0 )
+            setMinEvictableIdleDuration(SMPP_CONNECTIONS_IDLE.getValue());
+            if ( !getMinEvictableIdleDuration().isNegative() && !getMinEvictableIdleDuration().isZero() )
             {
-                setTimeBetweenEvictionRunsMillis( getMinEvictableIdleTimeMillis() / 10 );
+                setDurationBetweenEvictionRuns( getMinEvictableIdleDuration().dividedBy(10) );
             }
 
             setTestOnBorrow( true );
@@ -413,16 +554,16 @@ public class SmsService
             // No need to clear the sessions for these properties:
             if ( propertyName.equals( "sms.smpp.connections.maxAmount" ) )
             {
-                setMaxTotal( JiveGlobals.getIntProperty( "sms.smpp.connections.maxAmount", 1 ) );
+                setMaxTotal(SMPP_CONNECTIONS_MAX_AMOUNT.getValue());
                 setNumTestsPerEvictionRun( getMaxTotal() );
             }
 
             if ( propertyName.equals( "sms.smpp.connections.idleMillis" ) )
             {
-                setMinEvictableIdleTimeMillis( JiveGlobals.getLongProperty( "sms.smpp.connections.idleMillis", 1000 * 60 * 2 ) );
-                if ( getMinEvictableIdleTimeMillis() > 0 )
+                setMinEvictableIdleDuration(SMPP_CONNECTIONS_IDLE.getValue());
+                if ( !getMinEvictableIdleDuration().isNegative() && !getMinEvictableIdleDuration().isZero() )
                 {
-                    setTimeBetweenEvictionRunsMillis( getMinEvictableIdleTimeMillis() / 10 );
+                    setDurationBetweenEvictionRuns( getMinEvictableIdleDuration().dividedBy(10) );
                 }
             }
         }

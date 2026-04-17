@@ -29,6 +29,7 @@ import org.xmpp.packet.JID;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -59,6 +60,8 @@ import static org.mockito.Mockito.*;
  * @see <a href="https://xmpp.org/extensions/xep-0128.html">XEP-0128: Service Discovery Extensions</a>
  */
 class IQDiscoInfoHandlerTest {
+
+    private final Set<IQDiscoInfoHandler> initializedHandlers = Collections.newSetFromMap(new IdentityHashMap<>());
 
     @BeforeEach
     public void setUp() throws Exception {
@@ -170,9 +173,11 @@ class IQDiscoInfoHandlerTest {
      */
     private Set<DataForm> getExtendedInfosViaHandleIQ(IQDiscoInfoHandler handler, JID from, JID to) {
         try {
-            // Initialize the handler (this registers the server disco info provider)
-            handler.initialize(XMPPServer.getInstance());
-            handler.start();
+            // Initialize the handler (this registers the server disco info provider), if not already done.
+            if (initializedHandlers.add(handler)) {
+                handler.initialize(XMPPServer.getInstance());
+                handler.start();
+            }
 
             // Create disco#info request
             org.xmpp.packet.IQ request = new org.xmpp.packet.IQ(org.xmpp.packet.IQ.Type.get);

@@ -52,6 +52,7 @@ import org.xmpp.resultsetmanagement.ResultSet;
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.locks.Lock;
 
@@ -90,7 +91,7 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
     private List<UserIdentitiesProvider> registeredUserIdentityProviders = new ArrayList<>();
     private List<UserFeaturesProvider> anonymousUserFeatureProviders = new ArrayList<>();
     private List<UserFeaturesProvider> registeredUserFeatureProviders = new ArrayList<>();
-    private List<ExtendedDiscoInfoProvider> extendedDiscoInfoProviders = new ArrayList<>();
+    private List<ExtendedDiscoInfoProvider> extendedDiscoInfoProviders = new CopyOnWriteArrayList<>();
 
     private final ContactAddressesExtendedDiscoInfoProvider contactAddressesProvider = new ContactAddressesExtendedDiscoInfoProvider();
     private final SoftwareInfoExtendedDiscoInfoProvider softwareInfoProvider = new SoftwareInfoExtendedDiscoInfoProvider();

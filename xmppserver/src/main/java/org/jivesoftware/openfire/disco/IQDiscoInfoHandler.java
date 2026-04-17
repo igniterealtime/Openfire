@@ -611,6 +611,10 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
      * @see ExtendedDiscoInfoProvider
      */
     public void addExtendedDiscoInfoProvider(ExtendedDiscoInfoProvider provider){
+        if ( provider == null )
+        {
+            throw new NullPointerException( "Argument 'provider' cannot be null." );
+        }
         extendedDiscoInfoProviders.add(provider);
     }
 
@@ -629,7 +633,11 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
      * Forms with the same FORM_TYPE have their fields merged. If duplicate field names
      * are detected, the offending provider's contribution is skipped with a warning.
      */
-    private void merge(Set<DataForm> result, Set<DataForm> incoming) {
+    private void merge(Set<DataForm> result, @Nullable Set<DataForm> incoming) {
+        if (incoming == null) {
+            Log.debug("Extended disco info provider returned null DataForms; treating as empty set.");
+            return;
+        }
         for (DataForm incomingForm : incoming) {
             String incomingType = getFormType(incomingForm);
             if (incomingType == null || incomingType.isBlank()) {

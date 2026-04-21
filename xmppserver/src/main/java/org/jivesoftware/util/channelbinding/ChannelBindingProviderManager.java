@@ -44,6 +44,10 @@ public class ChannelBindingProviderManager
 
     private static final ChannelBindingProviderManager INSTANCE = new ChannelBindingProviderManager();
 
+    static {
+        INSTANCE.addProvider(new TlsServerEndPointChannelBindingProvider());
+    }
+
     // Map from RFC-defined unique prefix to ordered list of providers for that type.
     private final Map<String, List<ChannelBindingProvider>> providers = new ConcurrentHashMap<>();
 

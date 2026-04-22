@@ -49,7 +49,9 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
+import java.util.Collections;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.jcraft.jzlib.JZlib.Z_BEST_COMPRESSION;
@@ -86,10 +88,13 @@ public class NettyConnection extends AbstractConnection
     private final AtomicReference<State> state = new AtomicReference<>(State.OPEN);
     private boolean isEncrypted = false;
 
+    private ChannelBindingProviderManager channelBindingProviderManager; // TODO allow this to be set for unit testing.
+
     public NettyConnection(ChannelHandlerContext channelHandlerContext, @Nullable PacketDeliverer packetDeliverer, ConnectionConfiguration configuration ) {
         this.channelHandlerContext = channelHandlerContext;
         this.backupDeliverer = packetDeliverer;
         this.configuration = configuration;
+        this.channelBindingProviderManager = ChannelBindingProviderManager.getInstance();
     }
 
     @Override
@@ -417,7 +422,17 @@ public class NettyConnection extends AbstractConnection
         }
 
         final SSLEngine engine = sslhandler.engine();
-        return ChannelBindingProviderManager.getInstance().getChannelBinding(cbPrefix, engine);
+        return channelBindingProviderManager.getChannelBinding(cbPrefix, engine);
+    }
+
+    @Override
+    public Set<String> getSupportedChannelBindingTypes()
+    {
+        final SslHandler sslhandler = (SslHandler) channelHandlerContext.channel().pipeline().get(SSL_HANDLER_NAME);
+        if (sslhandler == null) {
+            return Collections.emptySet();
+        }
+        return channelBindingProviderManager.getSupportedChannelBindingTypes();
     }
 
     @Override

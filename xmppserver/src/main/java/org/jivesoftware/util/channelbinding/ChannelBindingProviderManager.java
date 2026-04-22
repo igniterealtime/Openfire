@@ -70,7 +70,7 @@ public class ChannelBindingProviderManager
      * returned by getInstance().
      */
     @VisibleForTesting
-    ChannelBindingProviderManager()
+    public ChannelBindingProviderManager() // TODO: It is not ideal to have this test-only constructor be 'public', but that's currently required for ScramSha1SaslServerTest. Can this be refactored to avoid such wide access?
     {
     }
 

@@ -461,6 +461,9 @@ public class SASLAuthentication {
                     authenticationSuccessful( session, saslServer.getAuthorizationID(), challenge );
                     session.removeSessionData( "SaslServer" );
                     session.setSessionData("SaslMechanism", saslServer.getMechanismName());
+                    if (saslServer.getMechanismName().endsWith("-PLUS")) {
+                        session.setSessionData("ChannelBindingType", saslServer.getNegotiatedProperty(ScramSha1SaslServer.PROPNAME_CHANNELBINDINGTYPE));
+                    }
                     return Status.authenticated;
 
                 default:

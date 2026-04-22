@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -457,6 +457,16 @@
                     </td>
                     <td>
                         <%=StringUtils.escapeHTMLTags(((LocalSession) currentSess).getSessionData("SaslMechanism").toString())%>
+                    </td>
+                </tr>
+                <% } %>
+                <% if (currentSess instanceof LocalSession && ((LocalSession) currentSess).getSessionData("ChannelBindingType") != null) { %>
+                <tr>
+                    <td class="c1">
+                        <fmt:message key="session.details.channel-binding-type"/>:
+                    </td>
+                    <td>
+                        <%=StringUtils.escapeHTMLTags(((LocalSession) currentSess).getSessionData("ChannelBindingType").toString())%>
                     </td>
                 </tr>
                 <% } %>

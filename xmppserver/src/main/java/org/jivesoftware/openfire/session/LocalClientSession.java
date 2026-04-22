@@ -40,6 +40,7 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -294,6 +295,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             // Include available SASL Mechanisms
             final Element saslMechanisms = SASLAuthentication.getSASLMechanisms(session);
             if (saslMechanisms != null) {
+                ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(saslMechanisms).ifPresent(features::add);
                 features.add(saslMechanisms);
             }
             // Include Stream features

@@ -16,6 +16,10 @@
 package org.jivesoftware.util.channelbinding;
 
 import com.google.common.annotations.VisibleForTesting;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.dom4j.Namespace;
+import org.dom4j.QName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -200,5 +204,34 @@ public class ChannelBindingProviderManager
     public Set<String> getSupportedChannelBindingTypes()
     {
         return Collections.unmodifiableSet(providers.keySet());
+    }
+
+    /**
+     * Returns an XML element that describes the supported SASL channel binding types, if applicable.
+     *
+     * This method inspects the provided SASL mechanisms element. If at least one mechanism ends with "-PLUS"
+     * and the server supports one or more channel binding types, it returns an element that advertises these types.
+     * Otherwise, it returns an empty Optional.
+     *
+     * @param saslMechanisms The XML element containing SASL mechanisms to inspect.
+     * @return An Optional containing the capability element if channel binding types should be advertised, or empty otherwise.
+     * @see <a href="https://xmpp.org/extensions/xep-0440.html">XEP-0440: SASL Channel-Binding Type Capability</a>
+     */
+    public Optional<Element> getSASLChannelBindingTypeCapabilityElement(@Nonnull final Element saslMechanisms)
+    {
+        if (saslMechanisms.elements("mechanism").stream().noneMatch(mech -> mech.getText().endsWith("-PLUS"))) {
+            return Optional.empty();
+        }
+
+        final Set<String> supportedChannelBindingTypes = this.getSupportedChannelBindingTypes();
+        if (supportedChannelBindingTypes.isEmpty()) {
+            return Optional.empty();
+        }
+
+        final Element result = DocumentHelper.createElement(new QName("sasl-channel-binding", new Namespace("", "urn:xmpp:sasl-cb:0")));
+        for (final String channelBindingType : supportedChannelBindingTypes) {
+            result.addElement("channel-binding").addAttribute("type", channelBindingType);
+        }
+        return Optional.of(result);
     }
 }

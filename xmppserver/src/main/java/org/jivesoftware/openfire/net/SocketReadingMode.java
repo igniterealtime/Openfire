@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import org.dom4j.*;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
@@ -108,6 +109,7 @@ abstract class SocketReadingMode {
         final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
         final Element mechanisms = SASLAuthentication.getSASLMechanisms(socketReader.session);
         if (mechanisms != null) {
+            ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(mechanisms).ifPresent(features::add);
             features.add(mechanisms);
         }
         final List<Element> specificFeatures = socketReader.session.getAvailableStreamFeatures();
@@ -253,6 +255,7 @@ abstract class SocketReadingMode {
             // Include available SASL Mechanisms
             final Element saslMechanisms = SASLAuthentication.getSASLMechanisms(socketReader.session);
             if (saslMechanisms != null) {
+                ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(saslMechanisms).ifPresent(features::add);
                 features.add(saslMechanisms);
             }
         }

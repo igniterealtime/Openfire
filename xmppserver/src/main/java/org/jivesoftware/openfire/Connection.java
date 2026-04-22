@@ -28,6 +28,7 @@ import javax.annotation.Nullable;
 import java.io.Closeable;
 import java.net.UnknownHostException;
 import java.security.cert.Certificate;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
@@ -161,6 +162,22 @@ public interface Connection extends Closeable {
      */
     default Optional<byte[]> getChannelBindingData(@Nonnull final String cbPrefix) {
         return Optional.empty();
+    }
+
+    /**
+     * Returns the unique prefixes of the channel binding types that are supported by this connection in its current
+     * state. Notably, this may change if the connection is encrypted or if the underlying TLS implementation changes.
+     * When no channel binding types are supported, an empty set is returned.
+     *
+     * <b>Implementation note:</b> This method is used to determine if SASL -PLUS mechanisms (such as SCRAM-SHA-1-PLUS)
+     * should be offered to the client. If channel binding is not supported in the current state (e.g., not encrypted,
+     * or the connection type does not support channel binding), this method <b>must</b> return an empty set.
+     *
+     * @return supported channel binding types.
+     */
+    default Set<String> getSupportedChannelBindingTypes()
+    {
+        return Collections.emptySet();
     }
 
     /**

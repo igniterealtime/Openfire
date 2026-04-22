@@ -28,10 +28,7 @@ import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.keystore.TrustStore;
 import org.jivesoftware.openfire.lockout.LockOutManager;
-import org.jivesoftware.openfire.sasl.AnonymousSaslServer;
-import org.jivesoftware.openfire.sasl.Failure;
-import org.jivesoftware.openfire.sasl.JiveSharedSecretSaslServer;
-import org.jivesoftware.openfire.sasl.SaslFailureException;
+import org.jivesoftware.openfire.sasl.*;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CertificateManager;
@@ -279,9 +276,16 @@ public class SASLAuthentication {
                 }
             }
             if (mech.endsWith("-PLUS")) {
-                // Channel binding would be a binding to TLS.
-                if (!session.isEncrypted()) {
-                    continue; // Cannot bind to TLS when there's no TLS.
+                // Prevent offering channel binding if the Connection implementation does not support it.
+                final Connection connection = ( (LocalClientSession) session ).getConnection();
+                assert connection != null; // While the client is performing a SASL negotiation, the connection can't be null.
+                if (connection.getSupportedChannelBindingTypes().isEmpty()) {
+                    continue;
+                }
+
+                // Channel binding would be a binding to TLS, thus encryption is required for channel binding.
+                if (!session.isEncrypted()) { // This aught to be redundant, as getSupportedChannelBindingTypes() will return an empty set if not encrypted.
+                    continue;
                 }
             }
             final Element mechanism = result.addElement("mechanism");

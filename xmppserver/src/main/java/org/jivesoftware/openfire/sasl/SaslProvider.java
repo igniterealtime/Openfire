@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ public class SaslProvider extends Provider {
      */
     public SaslProvider()
     {
-        super("JiveSoftware", 1.1, "JiveSoftware Openfire SASL provider v1.1" );
+        super("JiveSoftware", 1.2, "JiveSoftware Openfire SASL provider v1.2" );
 
         final SaslServerFactoryImpl serverFactory = new SaslServerFactoryImpl();
         for ( final String name : serverFactory.getMechanismNames( null ) )

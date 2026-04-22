@@ -38,6 +38,7 @@ import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.util.SystemProperty;
+import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -275,6 +276,12 @@ public class SASLAuthentication {
                 }
                 if ( !trustedCert ) {
                     continue; // Do not offer EXTERNAL.
+                }
+            }
+            if (mech.endsWith("-PLUS")) {
+                // Channel binding would be a binding to TLS.
+                if (!session.isEncrypted()) {
+                    continue; // Cannot bind to TLS when there's no TLS.
                 }
             }
             final Element mechanism = result.addElement("mechanism");
@@ -639,6 +646,12 @@ public class SASLAuthentication {
                 continue;
             }
 
+            if (mechanism.endsWith("-PLUS") && ChannelBindingProviderManager.getInstance().getSupportedChannelBindingTypes().isEmpty()) {
+                Log.trace( "Cannot support '{}' as there's no implementation available for channel binding.", mechanism );
+                it.remove();
+                continue;
+            }
+
             switch ( mechanism )
             {
                 case "CRAM-MD5": // intended fall-through
@@ -651,7 +664,8 @@ public class SASLAuthentication {
                     }
                     break;
 
-                case "SCRAM-SHA-1":
+                case "SCRAM-SHA-1": // intended fall-through
+                case "SCRAM-SHA-1-PLUS":
                     if ( !AuthFactory.supportsScram() )
                     {
                         Log.trace( "Cannot support '{}' as the AuthFactory that's in use does not support SCRAM.", mechanism );
@@ -728,7 +742,7 @@ public class SASLAuthentication {
      */
     public static List<String> getEnabledMechanisms()
     {
-        return JiveGlobals.getListProperty("sasl.mechs", Arrays.asList( "ANONYMOUS","PLAIN","DIGEST-MD5","CRAM-MD5","SCRAM-SHA-1","JIVE-SHAREDSECRET","GSSAPI","EXTERNAL" ) );
+        return JiveGlobals.getListProperty("sasl.mechs", Arrays.asList( "ANONYMOUS","PLAIN","DIGEST-MD5","CRAM-MD5","SCRAM-SHA-1","SCRAM-SHA-1-PLUS","JIVE-SHAREDSECRET","GSSAPI","EXTERNAL" ) );
     }
 
     /**

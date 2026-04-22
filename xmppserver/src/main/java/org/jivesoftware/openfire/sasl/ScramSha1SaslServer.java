@@ -20,6 +20,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -36,9 +39,12 @@ import org.jivesoftware.openfire.auth.ConnectionException;
 import org.jivesoftware.openfire.auth.DefaultAuthProvider;
 import org.jivesoftware.openfire.auth.InternalUnauthenticatedException;
 import org.jivesoftware.openfire.auth.ScramUtils;
+import org.jivesoftware.openfire.net.SASLAuthentication;
+import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.SystemProperty;
+import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,6 +99,8 @@ public class ScramSha1SaslServer implements SaslServer {
         return SERVER_SECRET_NONEXISTENT_USERS.getValue();
     }
 
+    public static final String PROPNAME_CHANNELBINDINGTYPE = "channelbindingtype";
+
     public static final SystemProperty<Integer> ITERATION_COUNT = SystemProperty.Builder.ofType(Integer.class)
         .setKey("sasl.scram-sha-1.iteration-count")
         .setDefaultValue(ScramUtils.DEFAULT_ITERATION_COUNT)
@@ -103,20 +111,27 @@ public class ScramSha1SaslServer implements SaslServer {
             CLIENT_FIRST_MESSAGE = Pattern.compile("^(([pny])=?([^,]*),([^,]*),)(m?=?[^,]*,?n=([^,]*),r=([^,]*),?.*)$"),
             CLIENT_FINAL_MESSAGE = Pattern.compile("(c=([^,]*),r=([^,]*)),p=(.*)$");
 
+    private final boolean isPlusMechanism;
+    private final Map<String, ?> props;
     private String username;
     private State state = State.INITIAL;
     private String nonce;
     private String serverFirstMessage;
     private String clientFirstMessageBare;
-    private SecureRandom random = new SecureRandom();
+    private final SecureRandom random = new SecureRandom();
+    private byte[] expectedChannelBindingPayloadInFinalClientMessage;
+    private String gs2CbindName;
 
     private enum State {
         INITIAL,
         IN_PROGRESS,
         COMPLETE;
     }
-    
-    public ScramSha1SaslServer() {
+
+    public ScramSha1SaslServer(final boolean isPlusMechanism, final Map<String, ?> props)
+    {
+        this.isPlusMechanism = isPlusMechanism;
+        this.props = props;
     }
 
     /**
@@ -126,7 +141,7 @@ public class ScramSha1SaslServer implements SaslServer {
      */
     @Override
     public String getMechanismName() {
-        return "SCRAM-SHA-1";
+        return isPlusMechanism ? "SCRAM-SHA-1-PLUS" : "SCRAM-SHA-1";
     }
 
     /**
@@ -194,18 +209,108 @@ public class ScramSha1SaslServer implements SaslServer {
         if (!m.matches()) {
             throw new SaslException("Invalid first client message");
         }
-//        String gs2Header = m.group(1);
-//        String gs2CbindFlag = m.group(2);
-//        String gs2CbindName = m.group(3);
+        String gs2Header = m.group(1);
+        String gs2CbindFlag = m.group(2);
+        gs2CbindName = m.group(3);
 //        String authzId = m.group(4);
         clientFirstMessageBare = m.group(5);
         username = m.group(6);
         String clientNonce = m.group(7);
+
+        if (username == null || username.isEmpty()) {
+            throw new SaslException("Invalid first client message: Username cannot be empty");
+        }
+        if (clientNonce == null || clientNonce.isEmpty()) {
+            throw new SaslException("Invalid first client message: Client nonce cannot be empty");
+        }
+
+        if (isPlusMechanism)
+        {
+            // https://www.rfc-editor.org/rfc/rfc5802.html#section-6: If the flag is set to "y" and the server supports
+            // channel binding, the server MUST fail authentication. This is because if the client sets the channel binding
+            // flag to "y", then the client must have believed that the server did not support channel binding -- if the
+            // server did in fact support channel binding, then this is an indication that there has been a downgrade attack
+            // (e.g., an attacker changed the server's mechanism list to exclude the -PLUS suffixed SCRAM mechanism name(s)).
+            final boolean clientSupportsChannelBindingButThinksServerDoesNot = "y".equals(gs2CbindFlag);
+            final boolean serverSupportsChannelBinding = SASLAuthentication.getSupportedMechanisms().stream().anyMatch(mechanism -> mechanism.endsWith("-PLUS"));
+            if (clientSupportsChannelBindingButThinksServerDoesNot && serverSupportsChannelBinding) {
+                throw new SaslException("Client supports channel binding, but thinks the server does not (while it does). Rejecting authentication to prevent downgrade attack.");
+            }
+
+            final boolean clientRequiresChannelBinding = "p".equals(gs2CbindFlag);
+            if (!clientRequiresChannelBinding) {
+                throw new SaslException("Channel binding required for -PLUS. Rejecting authentication.");
+            }
+
+            if (!serverSupportsChannelBinding) {
+                throw new SaslException("Client requires channel binding, but server does not support channel binding. Rejecting authentication.");
+            }
+
+            // https://www.rfc-editor.org/rfc/rfc5802.html#section-6: If the channel binding flag was "p" and the server
+            // does not support the indicated channel binding type, then the server MUST fail authentication.
+            if (gs2CbindName == null || gs2CbindName.isEmpty() || !ChannelBindingProviderManager.getInstance().supportsChannelBinding(gs2CbindName)) {
+                throw new SaslException("Client requires channel binding, but server does not support the indicated channel binding type '" + gs2CbindName + "'. Rejecting authentication.");
+            }
+
+            // Prepare channel binding data.
+            final LocalSession session = (LocalSession) props.get(LocalSession.class.getCanonicalName());
+            if (session == null || session.getConnection() == null) {
+                throw new SaslException("Local session not found in properties. Rejecting authentication.");
+            }
+            final Optional<byte[]> channelBindingData = session.getConnection().getChannelBindingData(gs2CbindName);
+            if (channelBindingData.isEmpty()) {
+                Log.debug("Unable to retrieve channel binding data for '{}'. Rejecting authentication.", gs2CbindName);
+                throw new SaslException("Unable to retrieve channel binding data for '" + gs2CbindName + "'. Rejecting authentication.");
+            }
+
+            // In the final client message, we expect to find a combination of the gs2 header and channel binding data.
+            final byte[] gs2_header = extractRawGS2Header(response); // Using raw header to prevent any normalization issues that might pop up when using something like: gs2Header.getBytes(StandardCharsets.UTF_8);
+            final byte[] cb_data = channelBindingData.get();
+            expectedChannelBindingPayloadInFinalClientMessage = new byte[gs2_header.length + cb_data.length];
+            System.arraycopy(gs2_header, 0, expectedChannelBindingPayloadInFinalClientMessage, 0        , gs2_header.length);
+            System.arraycopy(cb_data,    0, expectedChannelBindingPayloadInFinalClientMessage, gs2_header.length, cb_data.length);
+        }
+
         nonce = clientNonce + UUID.randomUUID().toString();
 
         serverFirstMessage = String.format("r=%s,s=%s,i=%d", nonce, DatatypeConverter.printBase64Binary(getOrCreateSalt(username)),
                 getIterations(username));
         return serverFirstMessage.getBytes(StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Extracts the raw GS2 header from a SCRAM client-first-message byte array.
+     *
+     * The GS2 header is defined in RFC 5802 as:
+     * <pre>
+     * gs2-header = gs2-cbind-flag "," [authzid] ","
+     * </pre>
+     * and always terminates with a trailing comma.
+     *
+     * This method performs a byte-level scan of the input and returns a copy of the original byte array from index
+     * {@code 0} up to and including the second comma (i.e., the full GS2 header including its trailing comma).
+     *
+     * No character decoding or normalization is performed. This ensures that the returned GS2 header is byte-for-
+     * byte identical to the original input, which is required for correct SCRAM-SHA-1-PLUS channel binding validation.
+     *
+     * @param data the raw SCRAM client-first-message bytes
+     * @return a byte array containing the complete GS2 header including the trailing comma
+     * @throws SaslException if the input does not contain a valid GS2 header
+     */
+    @VisibleForTesting
+    static byte[] extractRawGS2Header(final byte[] data) throws SaslException
+    {
+        // The GS2 header ends at the second comma.
+        int commaCount = 0;
+        for (int i = 0; i < data.length; i++) {
+            if (data[i] == ',') {
+                commaCount++;
+                if (commaCount == 2) {
+                    return Arrays.copyOfRange(data, 0, i+1); // +1 to include the comma itself.
+                }
+            }
+        }
+        throw new SaslException("Invalid GS2 header format");
     }
 
     /**
@@ -218,13 +323,37 @@ public class ScramSha1SaslServer implements SaslServer {
             throw new SaslException("Invalid client final message");
         }
 
-        String clientFinalMessageWithoutProof = m.group(1);
-//        String channelBinding = m.group(2);
-        String clientNonce = m.group(3);
-        String proof = m.group(4);
+        // client-final-message regex: (c=([^,]*),r=([^,]*)),p=(.*)$")
+        final String clientFinalMessageWithoutProof = m.group(1); // (c=([^,]*),r=([^,]*))
+        final String channelBinding = m.group(2);                 // c=([^,]*)
+        final String clientNonce = m.group(3);                    // r=([^,]*)
+        final String proof = m.group(4);                          // p=(.*)
 
+        if (proof == null || proof.isEmpty()) {
+            throw new SaslException("Invalid client final message: missing proof attribute");
+        }
+
+        if (isPlusMechanism && (channelBinding == null || channelBinding.isEmpty())) {
+            throw new SaslException("Invalid client final message: missing channel binding attribute");
+        }
+
+        if (clientNonce == null || clientNonce.isEmpty()) {
+            throw new SaslException("Invalid client final message: missing nonce attribute");
+        }
+
+        // Verify nonce: RFC 5802 §5: must equal client_nonce (from initial client response) + server_nonce (from initial server response)
         if (!nonce.equals(clientNonce)) { // Constant-time operation is important for keys, not for public protocol values like nonces.
-            throw new SaslException("Client final message has incorrect nonce value");
+            // Possible replay or tampering
+            throw new SaslException("Invalid client final message: incorrect nonce attribute value");
+        }
+
+        // Verify channel binding payload.
+        if (isPlusMechanism)
+        {
+            final byte[] decodedChannelBinding = DatatypeConverter.parseBase64Binary(channelBinding);
+            if (!Arrays.equals(expectedChannelBindingPayloadInFinalClientMessage, decodedChannelBinding)) {
+                throw new SaslException("Invalid client final message: channel binding payload does not match expected payload");
+            }
         }
 
         try {
@@ -325,6 +454,8 @@ public class ScramSha1SaslServer implements SaslServer {
         if (isComplete()) {
             if (propName.equals(Sasl.QOP)) {
                 return "auth";
+            } else if (isPlusMechanism && propName.equals(PROPNAME_CHANNELBINDINGTYPE)) {
+                return gs2CbindName;
             } else {
                 return null;
             }

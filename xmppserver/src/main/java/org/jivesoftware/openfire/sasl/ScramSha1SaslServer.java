@@ -23,6 +23,7 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -49,9 +50,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Implements the SCRAM-SHA-1 server-side mechanism.
+ * Implements the SCRAM-SHA-1 (and it's channel binding -PLUS variant) server-side mechanism.
  *
- * @author Richard Midwinter
+ * @author Richard Midwinter, Guus der Kinderen
  */
 public class ScramSha1SaslServer implements SaslServer {
 
@@ -111,6 +112,9 @@ public class ScramSha1SaslServer implements SaslServer {
             CLIENT_FIRST_MESSAGE = Pattern.compile("^(([pny])=?([^,]*),([^,]*),)(m?=?[^,]*,?n=([^,]*),r=([^,]*),?.*)$"),
             CLIENT_FINAL_MESSAGE = Pattern.compile("(c=([^,]*),r=([^,]*)),p=(.*)$");
 
+    private final ChannelBindingProviderManager channelBindingProviderManager;
+    private final Set<String> serverSupportedSaslMechanismNames;
+
     private final boolean isPlusMechanism;
     private final Map<String, ?> props;
     private String username;
@@ -132,6 +136,20 @@ public class ScramSha1SaslServer implements SaslServer {
     {
         this.isPlusMechanism = isPlusMechanism;
         this.props = props;
+        this.channelBindingProviderManager = ChannelBindingProviderManager.getInstance();
+        this.serverSupportedSaslMechanismNames = SASLAuthentication.getSupportedMechanisms();
+    }
+
+    /**
+     * Constructor for testing purposes.
+     */
+    @VisibleForTesting
+    ScramSha1SaslServer(final boolean isPlusMechanism, final Map<String, ?> props, final ChannelBindingProviderManager channelBindingProviderManager, final Set<String> serverSupportedSaslMechanismNames)
+    {
+        this.isPlusMechanism = isPlusMechanism;
+        this.props = props;
+        this.channelBindingProviderManager = channelBindingProviderManager;
+        this.serverSupportedSaslMechanismNames = serverSupportedSaslMechanismNames;
     }
 
     /**
@@ -187,6 +205,7 @@ public class ScramSha1SaslServer implements SaslServer {
                         challenge = new byte[0];
                         break;
                     }
+                    throw new SaslException("Unexpected response after authentication completed");
                 default:
                     throw new SaslException("No response expected in state " + state);
 
@@ -209,7 +228,8 @@ public class ScramSha1SaslServer implements SaslServer {
         if (!m.matches()) {
             throw new SaslException("Invalid first client message");
         }
-        String gs2Header = m.group(1);
+        final byte[] gs2_header = extractRawGS2Header(response); // Using raw header to prevent any normalization issues that might pop up when using something like: gs2Header.getBytes(StandardCharsets.UTF_8);
+//        String gs2Header = m.group(1);
         String gs2CbindFlag = m.group(2);
         gs2CbindName = m.group(3);
 //        String authzId = m.group(4);
@@ -224,20 +244,24 @@ public class ScramSha1SaslServer implements SaslServer {
             throw new SaslException("Invalid first client message: Client nonce cannot be empty");
         }
 
+        // https://www.rfc-editor.org/rfc/rfc5802.html#section-6: If the flag is set to "y" and the server supports
+        // channel binding, the server MUST fail authentication. This is because if the client sets the channel binding
+        // flag to "y", then the client must have believed that the server did not support channel binding -- if the
+        // server did in fact support channel binding, then this is an indication that there has been a downgrade attack
+        // (e.g., an attacker changed the server's mechanism list to exclude the -PLUS suffixed SCRAM mechanism name(s)).
+        final boolean clientSupportsChannelBindingButThinksServerDoesNot = "y".equals(gs2CbindFlag);
+        final boolean serverSupportsChannelBinding = serverSupportedSaslMechanismNames.stream().anyMatch(mechanism -> mechanism.endsWith("-PLUS"));
+        if (clientSupportsChannelBindingButThinksServerDoesNot && serverSupportsChannelBinding) {
+            throw new SaslException("Client supports channel binding, but thinks the server does not (while it does). Rejecting authentication to prevent downgrade attack.");
+        }
+
+        final boolean clientRequiresChannelBinding = "p".equals(gs2CbindFlag);
+        if (clientRequiresChannelBinding && !isPlusMechanism) {
+            throw new SaslException("Client requires channel binding, but is not using a -PLUS mechanism. Rejecting authentication.");
+        }
+
         if (isPlusMechanism)
         {
-            // https://www.rfc-editor.org/rfc/rfc5802.html#section-6: If the flag is set to "y" and the server supports
-            // channel binding, the server MUST fail authentication. This is because if the client sets the channel binding
-            // flag to "y", then the client must have believed that the server did not support channel binding -- if the
-            // server did in fact support channel binding, then this is an indication that there has been a downgrade attack
-            // (e.g., an attacker changed the server's mechanism list to exclude the -PLUS suffixed SCRAM mechanism name(s)).
-            final boolean clientSupportsChannelBindingButThinksServerDoesNot = "y".equals(gs2CbindFlag);
-            final boolean serverSupportsChannelBinding = SASLAuthentication.getSupportedMechanisms().stream().anyMatch(mechanism -> mechanism.endsWith("-PLUS"));
-            if (clientSupportsChannelBindingButThinksServerDoesNot && serverSupportsChannelBinding) {
-                throw new SaslException("Client supports channel binding, but thinks the server does not (while it does). Rejecting authentication to prevent downgrade attack.");
-            }
-
-            final boolean clientRequiresChannelBinding = "p".equals(gs2CbindFlag);
             if (!clientRequiresChannelBinding) {
                 throw new SaslException("Channel binding required for -PLUS. Rejecting authentication.");
             }
@@ -248,7 +272,7 @@ public class ScramSha1SaslServer implements SaslServer {
 
             // https://www.rfc-editor.org/rfc/rfc5802.html#section-6: If the channel binding flag was "p" and the server
             // does not support the indicated channel binding type, then the server MUST fail authentication.
-            if (gs2CbindName == null || gs2CbindName.isEmpty() || !ChannelBindingProviderManager.getInstance().supportsChannelBinding(gs2CbindName)) {
+            if (gs2CbindName == null || gs2CbindName.isEmpty() || !channelBindingProviderManager.supportsChannelBinding(gs2CbindName)) {
                 throw new SaslException("Client requires channel binding, but server does not support the indicated channel binding type '" + gs2CbindName + "'. Rejecting authentication.");
             }
 
@@ -264,11 +288,14 @@ public class ScramSha1SaslServer implements SaslServer {
             }
 
             // In the final client message, we expect to find a combination of the gs2 header and channel binding data.
-            final byte[] gs2_header = extractRawGS2Header(response); // Using raw header to prevent any normalization issues that might pop up when using something like: gs2Header.getBytes(StandardCharsets.UTF_8);
             final byte[] cb_data = channelBindingData.get();
             expectedChannelBindingPayloadInFinalClientMessage = new byte[gs2_header.length + cb_data.length];
             System.arraycopy(gs2_header, 0, expectedChannelBindingPayloadInFinalClientMessage, 0        , gs2_header.length);
             System.arraycopy(cb_data,    0, expectedChannelBindingPayloadInFinalClientMessage, gs2_header.length, cb_data.length);
+        } else {
+            // If this is _not_ a -PLUS mechanism, we still need to verify the channel binding payload in the final client message.
+            // In that case, it should not have trailing channel binding data.
+            expectedChannelBindingPayloadInFinalClientMessage = gs2_header;
         }
 
         nonce = clientNonce + UUID.randomUUID().toString();
@@ -333,7 +360,7 @@ public class ScramSha1SaslServer implements SaslServer {
             throw new SaslException("Invalid client final message: missing proof attribute");
         }
 
-        if (isPlusMechanism && (channelBinding == null || channelBinding.isEmpty())) {
+        if (channelBinding == null || channelBinding.isEmpty()) {
             throw new SaslException("Invalid client final message: missing channel binding attribute");
         }
 
@@ -348,12 +375,9 @@ public class ScramSha1SaslServer implements SaslServer {
         }
 
         // Verify channel binding payload.
-        if (isPlusMechanism)
-        {
-            final byte[] decodedChannelBinding = DatatypeConverter.parseBase64Binary(channelBinding);
-            if (!Arrays.equals(expectedChannelBindingPayloadInFinalClientMessage, decodedChannelBinding)) {
-                throw new SaslException("Invalid client final message: channel binding payload does not match expected payload");
-            }
+        final byte[] decodedChannelBinding = DatatypeConverter.parseBase64Binary(channelBinding);
+        if (!Arrays.equals(expectedChannelBindingPayloadInFinalClientMessage, decodedChannelBinding)) {
+            throw new SaslException("Invalid client final message: channel binding payload does not match expected payload");
         }
 
         try {
@@ -366,6 +390,9 @@ public class ScramSha1SaslServer implements SaslServer {
             
             byte[] clientKey = clientSignature.clone();
             byte[] decodedProof = DatatypeConverter.parseBase64Binary(proof);
+            if (decodedProof.length != clientKey.length) {
+                throw new SaslException("Invalid proof length: expected " + clientKey.length + " bytes, got " + decodedProof.length);
+            }
             for (int i = 0; i < clientKey.length; i++) {
                 clientKey[i] ^= decodedProof[i];
             }
@@ -474,6 +501,11 @@ public class ScramSha1SaslServer implements SaslServer {
     @Override
     public void dispose() throws SaslException {
         username = null;
+        nonce = null;
+        serverFirstMessage = null;
+        clientFirstMessageBare = null;
+        expectedChannelBindingPayloadInFinalClientMessage = null;
+        gs2CbindName = null;
         state = State.INITIAL;
     }
 

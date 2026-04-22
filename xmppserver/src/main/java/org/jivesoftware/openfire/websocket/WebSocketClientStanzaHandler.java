@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.StreamErrorException;
+import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -166,6 +167,7 @@ public class WebSocketClientStanzaHandler extends ClientStanzaHandler
             // Include available SASL Mechanisms
             final Element saslMechanisms = SASLAuthentication.getSASLMechanisms(session);
             if (saslMechanisms != null) {
+                ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(saslMechanisms).ifPresent(features::add);
                 features.add(saslMechanisms);
             }
         }

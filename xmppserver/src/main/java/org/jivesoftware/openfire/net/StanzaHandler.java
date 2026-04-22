@@ -29,6 +29,7 @@ import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.*;
+import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -494,7 +495,8 @@ public abstract class StanzaHandler {
         // Include available SASL Mechanisms
         final Element mechanismsElement=SASLAuthentication.getSASLMechanisms(session);
         if (mechanismsElement!=null) {
-        	features.add(mechanismsElement);
+            ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(mechanismsElement).ifPresent(features::add);
+            features.add(mechanismsElement);
         }
 
         // Include specific features such as auth and register for client sessions
@@ -597,6 +599,7 @@ public abstract class StanzaHandler {
         if (!session.isAuthenticated()) {
             final Element saslMechanisms = SASLAuthentication.getSASLMechanisms(session);
             if (saslMechanisms != null) {
+                ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(saslMechanisms).ifPresent(features::add);
                 features.add(saslMechanisms);
             }
         }

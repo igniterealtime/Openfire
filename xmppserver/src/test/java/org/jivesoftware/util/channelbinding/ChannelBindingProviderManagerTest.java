@@ -15,6 +15,8 @@
  */
 package org.jivesoftware.util.channelbinding;
 
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -263,5 +265,72 @@ class ChannelBindingProviderManagerTest
         manager.removeProvider(exporter);
         assertFalse(manager.getSupportedChannelBindingTypes().contains("tls-exporter"), "Should not contain tls-exporter after removal");
         assertTrue(manager.getSupportedChannelBindingTypes().contains("tls-server-end-point"), "Should still contain tls-server-end-point");
+    }
+
+    /**
+     * Test when no mechanism ends with -PLUS, the result of #getSASLChannelBindingTypeCapabilityElement should be empty.
+     */
+    @Test
+    void testNoPlusMechanismReturnsEmpty()
+    {
+        // Setup test fixture
+        final ChannelBindingProviderManager mgr = new ChannelBindingProviderManager();
+        final Element mechanisms = DocumentHelper.createElement("mechanisms");
+        mechanisms.addElement("mechanism").setText("PLAIN");
+
+        // Execute system under test
+        final Optional<Element> result = mgr.getSASLChannelBindingTypeCapabilityElement(mechanisms);
+
+        // Verify result
+        assertTrue(result.isEmpty(), "Should return empty when no -PLUS mechanism is present");
+    }
+
+    /**
+     * Test when a -PLUS mechanism is present but no supported channel binding types, the result of
+     * #getSASLChannelBindingTypeCapabilityElement should be empty.
+     */
+    @Test
+    void testPlusMechanismNoChannelBindingTypesReturnsEmpty()
+    {
+        // Setup test fixture
+        final ChannelBindingProviderManager mgr = new ChannelBindingProviderManager();
+        final Element mechanisms = DocumentHelper.createElement("mechanisms");
+        mechanisms.addElement("mechanism").setText("SCRAM-SHA-1-PLUS");
+
+        // Execute system under test
+        Optional<Element> result = mgr.getSASLChannelBindingTypeCapabilityElement(mechanisms);
+
+        // Verify result
+        assertTrue(result.isEmpty(), "Should return empty when no channel binding types are supported");
+    }
+
+    /**
+     * Test when a -PLUS mechanism and supported channel binding types are present, the result of
+     * #getSASLChannelBindingTypeCapabilityElement should contain the expected element.
+     */
+    @Test
+    void testPlusMechanismWithChannelBindingTypesReturnsElement()
+    {
+        // Setup test fixture
+        final ChannelBindingProviderManager mgr = new ChannelBindingProviderManager();
+        final Element mechanisms = DocumentHelper.createElement("mechanisms");
+        mechanisms.addElement("mechanism").setText("SCRAM-SHA-1-PLUS");
+        // Register mock providers for two channel binding types
+        final ChannelBindingProvider cbp1 = mock(ChannelBindingProvider.class);
+        when(cbp1.getType()).thenReturn("tls-server-end-point");
+        final ChannelBindingProvider cbp2 = mock(ChannelBindingProvider.class);
+        when(cbp2.getType()).thenReturn("tls-exporter");
+        mgr.addProvider(cbp1);
+        mgr.addProvider(cbp2);
+
+        // Execute system under test
+        final Optional<Element> result = mgr.getSASLChannelBindingTypeCapabilityElement(mechanisms);
+
+        // Verify result
+        assertTrue(result.isPresent(), "Should return element when -PLUS mechanism and channel binding types are present");
+        final Element cbElement = result.get();
+        assertEquals("sasl-channel-binding", cbElement.getName(), "Element name should be sasl-channel-binding");
+        assertEquals("urn:xmpp:sasl-cb:0", cbElement.getNamespaceURI(), "Namespace should be urn:xmpp:sasl-cb:0");
+        assertEquals(2, cbElement.elements("channel-binding").size(), "Should have two channel-binding elements");
     }
 }

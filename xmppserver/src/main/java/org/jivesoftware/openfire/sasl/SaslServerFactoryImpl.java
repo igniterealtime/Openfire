@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ public class SaslServerFactoryImpl implements SaslServerFactory
         allMechanisms.add( new Mechanism( "ANONYMOUS", true, true ) );
         allMechanisms.add( new Mechanism( "PLAIN", false, true ) );
         allMechanisms.add( new Mechanism( "SCRAM-SHA-1", false, false ) );
+        allMechanisms.add( new Mechanism( "SCRAM-SHA-1-PLUS", false, false ) );
         allMechanisms.add( new Mechanism( "JIVE-SHAREDSECRET", true, false ) );
         allMechanisms.add( new Mechanism( "EXTERNAL", false, false ) );
     }
@@ -78,7 +79,10 @@ public class SaslServerFactoryImpl implements SaslServerFactory
                 return new SaslServerPlainImpl( protocol, serverName, props, cbh );
 
             case "SCRAM-SHA-1":
-                return new ScramSha1SaslServer();
+                return new ScramSha1SaslServer(false, props);
+
+            case "SCRAM-SHA-1-PLUS":
+                return new ScramSha1SaslServer(true, props);
 
             case "ANONYMOUS":
                 if ( !props.containsKey( LocalSession.class.getCanonicalName() ) )

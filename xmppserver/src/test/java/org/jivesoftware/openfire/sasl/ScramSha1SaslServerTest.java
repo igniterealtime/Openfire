@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,9 @@ import javax.security.sasl.SaslException;
 import javax.xml.bind.DatatypeConverter;
 import java.nio.charset.StandardCharsets;
 import java.security.spec.KeySpec;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -83,7 +85,7 @@ public class ScramSha1SaslServerTest
         authFactory.when(() -> AuthFactory.getServerKey(any())).thenReturn(DatatypeConverter.printBase64Binary(StringUtils.decodeHex("0fe09258b3ac852ba502cc62ba903eaacdbf7d31")));
 
         // Setup test fixture: prepare initial client message.
-        final ScramSha1SaslServer server = new ScramSha1SaslServer();
+        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>());
         final byte[] initialMessage = ("n,,n=user,r=" + hardCodedClientNonce).getBytes(StandardCharsets.UTF_8);
 
         // Execute system under test: getting the first server message.
@@ -142,5 +144,116 @@ public class ScramSha1SaslServerTest
         } catch (SaslException e) {
             fail("Authentication should not fail (but it did)");
         }
+    }
+
+    /**
+     * Verifies GS2 header extraction when an authzid is present.
+     */
+    @Test
+    void extractsGs2Header_withAuthzId() throws Exception
+    {
+        // Setup test fixture
+        final byte[] input = "p=tls,,n=user,r=abc123,rest".getBytes(StandardCharsets.UTF_8);
+
+        // Execute system under test
+        final byte[] result = ScramSha1SaslServer.extractRawGS2Header(input);
+
+        // Verify result
+        assertEquals("p=tls,,", new String(result, StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Verifies GS2 header extraction when no authzid is present.
+     */
+    @Test
+    void extractsGs2Header_withoutAuthzId() throws Exception
+    {
+        // Setup test fixture
+        final byte[] input = "n,,n=user,r=abc123,rest".getBytes(StandardCharsets.UTF_8);
+
+        // Execute system under test
+        final byte[] result = ScramSha1SaslServer.extractRawGS2Header(input);
+
+        // Verify result
+        assertEquals("n,,", new String(result, StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Ensures the GS2 header includes a trailing comma as specified.
+     */
+    @Test
+    void includesTrailingComma_exactlyAsSpecified() throws Exception
+    {
+        // Setup test fixture
+        final byte[] input = "p=tls,,n=user,r=abc123".getBytes(StandardCharsets.UTF_8);
+
+        // Execute system under test
+        final byte[] result = ScramSha1SaslServer.extractRawGS2Header(input);
+
+        // Verify result
+        assertEquals(',', result[result.length - 1], "GS2 header must end with a comma");
+    }
+
+    /**
+     * Ensures GS2 header extraction preserves the exact bytes, with no re-encoding.
+     */
+    @Test
+    void preservesExactBytes_noReEncoding() throws Exception
+    {
+        // Setup test fixture
+        final byte[] input = "p=tls,,n=user,r=abc123".getBytes(StandardCharsets.UTF_8);
+
+        // Execute system under test
+        final byte[] result = ScramSha1SaslServer.extractRawGS2Header(input);
+
+        // Verify result
+        byte[] expected = Arrays.copyOfRange(input, 0, result.length);
+        assertArrayEquals(expected, result, "Must be exact prefix of original bytes");
+    }
+
+    /**
+     * Verifies that an exception is thrown when the GS2 header does not contain a second comma.
+     */
+    @Test
+    void throwsException_whenNoSecondComma()
+    {
+        // Setup test fixture
+        final byte[] input = "p=tls,n=user".getBytes(StandardCharsets.UTF_8);
+
+        // Execute System under test & Verify result
+        assertThrows(SaslException.class, () ->
+            ScramSha1SaslServer.extractRawGS2Header(input));
+    }
+
+    /**
+     * Verifies that the minimal valid GS2 header is handled correctly.
+     */
+    @Test
+    void handlesMinimalValidGs2Header() throws Exception
+    {
+        // Setup test fixture
+        final byte[] input = "n,,rest".getBytes(StandardCharsets.UTF_8);
+
+        // Execute system under test
+        final byte[] result = ScramSha1SaslServer.extractRawGS2Header(input);
+
+        // Verify result
+        assertEquals("n,,", new String(result, StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Ensures GS2 header extraction stops at the second comma only.
+     */
+    @Test
+    void stopsAtSecondComma_only() throws Exception
+    {
+        // Setup test fixture
+        final byte[] input = "p=tls,,n=user,r=abc,extra,stuff".getBytes(StandardCharsets.UTF_8);
+
+        // Execute system under test
+        final byte[] result = ScramSha1SaslServer.extractRawGS2Header(input);
+
+        // Verify result
+        assertEquals("p=tls,,", new String(result, StandardCharsets.UTF_8));
     }
 }

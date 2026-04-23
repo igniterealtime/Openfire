@@ -25,6 +25,8 @@ import io.netty.channel.MultiThreadIoEventLoopGroup;
 import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.handler.codec.quic.Quic;
+import io.netty.handler.codec.quic.QLogConfiguration;
+import io.netty.handler.codec.quic.QuicChannelOption;
 import io.netty.handler.codec.quic.QuicServerCodecBuilder;
 import io.netty.handler.codec.quic.QuicSslContext;
 import io.netty.handler.codec.quic.QuicSslContextBuilder;
@@ -74,6 +76,20 @@ public class QuicConnectionAcceptor extends ConnectionAcceptor
         .setDynamic(true)
         .build();
 
+    /**
+     * Directory in which per-connection qlog files are written (one file per QUIC connection).
+     * qlog captures transport parameters, stream events, and flow-control frames and is invaluable
+     * for diagnosing stream-credit and idle-timeout issues.
+     * Set to an empty string (the default) to disable qlog.
+     * The directory must exist and be writable by the Openfire process.
+     * Each connection produces a file named &lt;uuid&gt;.qlog in that directory.
+     */
+    public static final SystemProperty<String> QUIC_QLOG_DIR = SystemProperty.Builder.ofType(String.class)
+        .setKey("xmpp.quic.client.qlog-dir")
+        .setDefaultValue("")
+        .setDynamic(false)
+        .build();
+
     private final EventLoopGroup ioEventLoopGroup;
     private final EventExecutorGroup blockingHandlerExecutor;
     private volatile Channel datagramChannel;
@@ -109,17 +125,37 @@ public class QuicConnectionAcceptor extends ConnectionAcceptor
         try {
             final QuicSslContext sslContext = createSslContext();
 
+            final long initialMaxData = 10 * 1024 * 1024;
+            final long initialMaxStreamDataBidiLocal = 10 * 1024 * 1024;
+            final long initialMaxStreamDataBidiRemote = 10 * 1024 * 1024;
+            final long initialMaxStreamsBidi = ConnectionSettings.Client.QUIC_MAX_STREAMS.getValue();
+            final long maxIdleTimeoutMs = ConnectionSettings.Client.QUIC_IDLE_TIMEOUT_PROPERTY.getValue().toMillis();
+            final List<String> alpn = ConnectionSettings.Client.QUIC_ALPN.getValue();
+
+            // Log all transport parameters at startup so they can be verified without a qlog capture.
+            // These are the values advertised to the client in the TLS handshake.
+            Log.info("QUIC transport parameters for listener on port {}:", configuration.getPort());
+            Log.info("  QUIC stack          : Netty/quiche (netty-codec-quic 4.2.x)");
+            Log.info("  ALPN                : {}", alpn);
+            Log.info("  max_idle_timeout    : {} ms", maxIdleTimeoutMs);
+            Log.info("  initial_max_data    : {} bytes", initialMaxData);
+            Log.info("  initial_max_stream_data_bidi_local  : {} bytes", initialMaxStreamDataBidiLocal);
+            Log.info("  initial_max_stream_data_bidi_remote : {} bytes", initialMaxStreamDataBidiRemote);
+            Log.info("  initial_max_streams_bidi : {} (client may open this many bidi streams toward server)", initialMaxStreamsBidi);
+            Log.info("  initial_max_streams_uni  : 0 (unidirectional streams not used)");
+
             final QuicServerCodecBuilder serverCodecBuilder = new QuicServerCodecBuilder()
                 .sslContext(sslContext)
                 // TODO: Replace InsecureQuicTokenHandler with a real address-validation token handler before
                 // any production deployment. The insecure handler accepts all tokens, making the server
                 // trivially vulnerable to UDP amplification attacks.
                 .tokenHandler(InsecureQuicTokenHandler.INSTANCE)
-                .maxIdleTimeout(ConnectionSettings.Client.QUIC_IDLE_TIMEOUT_PROPERTY.getValue().toMillis(), TimeUnit.MILLISECONDS)
-                .initialMaxData(10 * 1024 * 1024)
-                .initialMaxStreamDataBidirectionalLocal(10 * 1024 * 1024)
-                .initialMaxStreamDataBidirectionalRemote(10 * 1024 * 1024)
-                .initialMaxStreamsBidirectional(ConnectionSettings.Client.QUIC_MAX_STREAMS.getValue())
+                .maxIdleTimeout(maxIdleTimeoutMs, TimeUnit.MILLISECONDS)
+                .initialMaxData(initialMaxData)
+                .initialMaxStreamDataBidirectionalLocal(initialMaxStreamDataBidiLocal)
+                .initialMaxStreamDataBidirectionalRemote(initialMaxStreamDataBidiRemote)
+                .initialMaxStreamsBidirectional(initialMaxStreamsBidi)
+                .initialMaxStreamsUnidirectional(0)
                 .handler(new NewConnectionRateLimitHandler(ConnectionType.QUIC_C2S))
                 .streamHandler(new ChannelInitializer<QuicStreamChannel>()
                 {
@@ -163,6 +199,16 @@ public class QuicConnectionAcceptor extends ConnectionAcceptor
                         channel.config().setAutoRead(false);
                     }
                 });
+
+            // Enable qlog if a directory is configured. Each connection writes one file named <uuid>.qlog.
+            // qlog captures transport_parameters_set, stream events, and max_streams frames — use qvis
+            // (https://qvis.quictools.info/) or similar to inspect the files.
+            final String qlogDir = QUIC_QLOG_DIR.getValue();
+            if (qlogDir != null && !qlogDir.isBlank()) {
+                Log.info("QUIC qlog enabled; writing per-connection files to: {}", qlogDir);
+                serverCodecBuilder.option(QuicChannelOption.QLOG,
+                    new QLogConfiguration(qlogDir, "openfire-quic", "XMPP-over-QUIC C2S connection"));
+            }
 
             datagramChannel = new Bootstrap()
                 .group(ioEventLoopGroup)

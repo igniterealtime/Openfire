@@ -128,7 +128,7 @@ public class QuicConnectionAcceptor extends ConnectionAcceptor
                             return;
                         }
 
-                        final QuicSessionStreamRouter streamRouter = QuicSessionStreamRouter.getOrCreate(channel.parent());
+                        final QuicSessionStreamRouter streamRouter = QuicSessionStreamRouter.getOrCreate(channel.parent(), configuration, blockingHandlerExecutor);
                         final QuicClientConnectionHandler businessLogicHandler = new QuicClientConnectionHandler(configuration, streamRouter);
                         final Duration maxIdleTimeBeforeClosing = businessLogicHandler.getMaxIdleTime().isNegative()
                             ? Duration.ZERO

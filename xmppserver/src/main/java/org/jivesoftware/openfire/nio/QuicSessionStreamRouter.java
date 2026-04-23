@@ -16,17 +16,22 @@
 package org.jivesoftware.openfire.nio;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.quic.QuicChannel;
 import io.netty.handler.codec.quic.QuicStreamChannel;
 import io.netty.handler.codec.quic.QuicStreamType;
 import io.netty.handler.codec.string.StringEncoder;
+import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.handler.timeout.WriteTimeoutHandler;
+import io.netty.handler.traffic.ChannelTrafficShapingHandler;
 import io.netty.util.AttributeKey;
+import io.netty.util.concurrent.EventExecutorGroup;
 import io.netty.util.concurrent.Future;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.QuicConnectionAcceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +39,10 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.ArrayList;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +50,9 @@ import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static org.jivesoftware.openfire.nio.NettyConnectionHandler.IDLE_FLAG;
+import static org.jivesoftware.openfire.spi.NettyServerInitializer.TRAFFIC_HANDLER_NAME;
 
 /**
  * Tracks all QUIC streams associated with one QUIC connection and provides deterministic outbound stream selection.
@@ -52,20 +63,28 @@ public class QuicSessionStreamRouter
     private static final AttributeKey<QuicSessionStreamRouter> ROUTER_KEY = AttributeKey.valueOf("OF-QUIC-STREAM-ROUTER");
 
     private final QuicChannel quicChannel;
+    private final ConnectionConfiguration configuration;
+    private final EventExecutorGroup blockingHandlerExecutor;
     private final List<NettyConnection> inboundConnections = new CopyOnWriteArrayList<>();
     private final List<QuicStreamChannel> outboundChannels = new CopyOnWriteArrayList<>();
     private final Map<String, QuicStreamChannel> streamAssignmentsByFromBareJid = new HashMap<>();
+    /** Stanzas queued while a new outbound stream is being opened asynchronously. */
+    private final Deque<String> pendingStanzas = new ArrayDeque<>();
 
     private volatile LocalClientSession session;
     private volatile NettyConnection primaryInboundConnection;
     private int nextNonPrimaryStreamIndex = 0;
+    /** True while an async stream-open is in flight; prevents opening multiple streams concurrently. */
+    private boolean streamOpenInFlight = false;
 
-    private QuicSessionStreamRouter(final QuicChannel quicChannel)
+    private QuicSessionStreamRouter(final QuicChannel quicChannel, final ConnectionConfiguration configuration, final EventExecutorGroup blockingHandlerExecutor)
     {
         this.quicChannel = quicChannel;
+        this.configuration = configuration;
+        this.blockingHandlerExecutor = blockingHandlerExecutor;
     }
 
-    public static QuicSessionStreamRouter getOrCreate(final Channel channel)
+    public static QuicSessionStreamRouter getOrCreate(final Channel channel, final ConnectionConfiguration configuration, final EventExecutorGroup blockingHandlerExecutor)
     {
         final QuicChannel quicChannel = findOwningQuicChannel(channel);
         if (quicChannel == null) {
@@ -74,7 +93,7 @@ public class QuicSessionStreamRouter
         synchronized (quicChannel) {
             QuicSessionStreamRouter router = quicChannel.attr(ROUTER_KEY).get();
             if (router == null) {
-                router = new QuicSessionStreamRouter(quicChannel);
+                router = new QuicSessionStreamRouter(quicChannel, configuration, blockingHandlerExecutor);
                 quicChannel.attr(ROUTER_KEY).set(router);
             }
             return router;
@@ -131,8 +150,12 @@ public class QuicSessionStreamRouter
 
     public synchronized boolean writeStanza(final Packet packet, final String serializedStanza)
     {
-        final QuicStreamChannel stream = selectOutboundStream(packet);
-        if (stream == null || !stream.isActive()) {
+        final QuicStreamChannel stream = selectOutboundStream(packet, serializedStanza);
+        if (stream == null) {
+            // Stanza has been queued for delivery once the async stream open completes.
+            return true;
+        }
+        if (!stream.isActive()) {
             return false;
         }
 
@@ -140,7 +163,11 @@ public class QuicSessionStreamRouter
         return true;
     }
 
-    private QuicStreamChannel selectOutboundStream(final Packet packet)
+    /**
+     * Selects the outbound stream for the given packet. Returns null if a new stream is being opened
+     * asynchronously and the stanza has been queued for later delivery.
+     */
+    private QuicStreamChannel selectOutboundStream(final Packet packet, final String serializedStanza)
     {
         final QuicStreamChannel primaryStream = getPrimaryStream();
         if (primaryStream == null) {
@@ -157,23 +184,36 @@ public class QuicSessionStreamRouter
             return assigned;
         }
 
-        final QuicStreamChannel selected = chooseNonPrimaryStream(primaryStream);
-        streamAssignmentsByFromBareJid.put(fromBareJid, selected);
-        return selected;
+        return chooseNonPrimaryStream(primaryStream, fromBareJid, serializedStanza);
     }
 
-    private QuicStreamChannel chooseNonPrimaryStream(final QuicStreamChannel primaryStream)
+    /**
+     * Chooses or opens a non-primary stream. Returns null (and queues the stanza) when an async
+     * stream open has been initiated.
+     */
+    private QuicStreamChannel chooseNonPrimaryStream(final QuicStreamChannel primaryStream, final String fromBareJid, final String serializedStanza)
     {
-        final QuicStreamChannel newlyOpened = openOutboundStream();
-        if (newlyOpened != null) {
-            return newlyOpened;
+        // If a stream open is already in flight, queue and wait.
+        if (streamOpenInFlight) {
+            pendingStanzas.add(serializedStanza);
+            return null;
         }
 
         final List<QuicStreamChannel> candidates = activeNonPrimaryStreams(primaryStream);
         if (!candidates.isEmpty()) {
-            return chooseRoundRobin(candidates);
+            final QuicStreamChannel selected = chooseRoundRobin(candidates);
+            streamAssignmentsByFromBareJid.put(fromBareJid, selected);
+            return selected;
         }
 
+        // Try to open a new stream asynchronously.
+        final boolean opening = openOutboundStreamAsync(fromBareJid);
+        if (opening) {
+            pendingStanzas.add(serializedStanza);
+            return null;
+        }
+
+        // Could not open a new stream; fall back to primary.
         return primaryStream;
     }
 
@@ -206,44 +246,100 @@ public class QuicSessionStreamRouter
         return candidates.get(index);
     }
 
-    private QuicStreamChannel openOutboundStream()
+    /**
+     * Initiates an async open of a new server-initiated bidirectional QUIC stream with a full inbound+outbound
+     * pipeline. Returns true if the open was initiated (stanza should be queued), false if it could not be started.
+     * Must be called while holding {@code this} monitor.
+     */
+    private boolean openOutboundStreamAsync(final String fromBareJid)
     {
         final int maxOutboundStreams = ConnectionSettings.Client.QUIC_MAX_OUTBOUND_STREAMS.getValue();
         if (maxOutboundStreams <= 0 || outboundChannels.size() >= maxOutboundStreams) {
-            return null;
+            return false;
         }
         if (quicChannel.peerAllowedStreams(QuicStreamType.BIDIRECTIONAL) <= 0) {
-            return null;
+            return false;
         }
 
-        final Future<QuicStreamChannel> openResult = quicChannel.newStreamBootstrap()
+        streamOpenInFlight = true;
+
+        final QuicSessionStreamRouter self = this;
+        quicChannel.newStreamBootstrap()
             .type(QuicStreamType.BIDIRECTIONAL)
             .handler(new ChannelInitializer<QuicStreamChannel>()
             {
                 @Override
                 protected void initChannel(final QuicStreamChannel channel)
                 {
-                    final ChannelPipeline pipeline = channel.pipeline();
-                    pipeline.addLast(new StringEncoder(StandardCharsets.UTF_8));
-                    pipeline.addLast("stalledSessionHandler", new WriteTimeoutHandler(Math.toIntExact(QuicConnectionAcceptor.WRITE_TIMEOUT_SECONDS.getValue().getSeconds())));
+                    final QuicClientConnectionHandler businessLogicHandler = new QuicClientConnectionHandler(configuration, self);
+                    final Duration maxIdleTimeBeforeClosing = businessLogicHandler.getMaxIdleTime().isNegative()
+                        ? Duration.ZERO
+                        : businessLogicHandler.getMaxIdleTime();
+
+                    channel.pipeline()
+                        .addLast(TRAFFIC_HANDLER_NAME, new ChannelTrafficShapingHandler(0))
+                        .addLast("idleStateHandler", new IdleStateHandler(maxIdleTimeBeforeClosing.dividedBy(2).toMillis(), 0, 0, TimeUnit.MILLISECONDS))
+                        .addLast("keepAliveHandler", new NettyIdleStateKeepAliveHandler(true))
+                        .addLast(new NettyXMPPDecoder())
+                        .addLast(new StringEncoder(StandardCharsets.UTF_8))
+                        .addLast("stalledSessionHandler", new WriteTimeoutHandler(Math.toIntExact(QuicConnectionAcceptor.WRITE_TIMEOUT_SECONDS.getValue().getSeconds())))
+                        .addLast(new ChannelInboundHandlerAdapter()
+                        {
+                            @Override
+                            public void channelActive(final ChannelHandlerContext ctx) throws Exception
+                            {
+                                businessLogicHandler.getStanzaHandlerFuture().thenRun(() ->
+                                    ctx.channel().eventLoop().execute(() -> {
+                                        ctx.channel().attr(IDLE_FLAG).set(null);
+                                        ctx.channel().config().setAutoRead(true);
+                                    })
+                                );
+                                super.channelActive(ctx);
+                            }
+                        })
+                        .addLast(blockingHandlerExecutor, "businessLogicHandler", businessLogicHandler);
+
+                    channel.config().setAutoRead(false);
                 }
             })
-            .create();
-        openResult.awaitUninterruptibly(250, TimeUnit.MILLISECONDS);
+            .create()
+            .addListener((Future<QuicStreamChannel> future) -> {
+                synchronized (self) {
+                    streamOpenInFlight = false;
+                    if (!future.isSuccess()) {
+                        Log.debug("Unable to open an outbound QUIC stream for session multiplexing.", future.cause());
+                        // Drain pending stanzas to primary stream as fallback.
+                        final QuicStreamChannel primary = getPrimaryStream();
+                        if (primary != null && primary.isActive()) {
+                            String stanza;
+                            while ((stanza = pendingStanzas.poll()) != null) {
+                                primary.writeAndFlush(stanza);
+                            }
+                        } else {
+                            pendingStanzas.clear();
+                        }
+                        return;
+                    }
 
-        if (!openResult.isSuccess()) {
-            Log.debug("Unable to open an outbound QUIC stream for session multiplexing.", openResult.cause());
-            return null;
-        }
+                    final QuicStreamChannel streamChannel = future.getNow();
+                    if (streamChannel == null) {
+                        pendingStanzas.clear();
+                        return;
+                    }
 
-        final QuicStreamChannel streamChannel = openResult.getNow();
-        if (streamChannel == null) {
-            return null;
-        }
+                    streamChannel.closeFuture().addListener(ignored -> removeClosedOutboundChannel(streamChannel));
+                    outboundChannels.add(streamChannel);
+                    streamAssignmentsByFromBareJid.put(fromBareJid, streamChannel);
 
-        streamChannel.closeFuture().addListener(ignored -> removeClosedOutboundChannel(streamChannel));
-        outboundChannels.add(streamChannel);
-        return streamChannel;
+                    // Flush queued stanzas onto the new stream.
+                    String stanza;
+                    while ((stanza = pendingStanzas.poll()) != null) {
+                        streamChannel.writeAndFlush(stanza);
+                    }
+                }
+            });
+
+        return true;
     }
 
     private synchronized void removeClosedOutboundChannel(final QuicStreamChannel streamChannel)

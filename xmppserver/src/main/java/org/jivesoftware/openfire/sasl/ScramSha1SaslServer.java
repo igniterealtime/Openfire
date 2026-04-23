@@ -230,14 +230,8 @@ public class ScramSha1SaslServer implements SaslServer {
 
         try {
             String authMessage = clientFirstMessageBare + "," + serverFirstMessage + "," + clientFinalMessageWithoutProof;
-            byte[] storedKey = getStoredKey( username );
-            if (storedKey == null) {
-                throw new SaslException("No stored key for user '"+username+"'");
-            }
-            byte[] serverKey = getServerKey(username);
-            if (serverKey == null) {
-                throw new SaslException("No server key for user '"+username+"'");
-            }
+            byte[] storedKey = getOrFakeStoredKey(username);
+            byte[] serverKey = getOrFakeServerKey(username);
 
             byte[] clientSignature = ScramUtils.computeHmac(storedKey, authMessage);
             byte[] serverSignature = ScramUtils.computeHmac(serverKey, authMessage);
@@ -253,18 +247,18 @@ public class ScramSha1SaslServer implements SaslServer {
             }
             return ("v=" + DatatypeConverter.printBase64Binary(serverSignature))
                     .getBytes(StandardCharsets.UTF_8);
-        } catch (UserNotFoundException | NoSuchAlgorithmException e) {
+        } catch (NoSuchAlgorithmException e) {
             throw new SaslException(e.getMessage(), e);
         }
     }
 
     /**
-      * Determines whether the authentication exchange has completed.
-      * This method is typically called after each invocation of
-      * {@code evaluateResponse()} to determine whether the
-      * authentication has completed successfully or should be continued.
-      * @return true if the authentication exchange has completed; false otherwise.
-      */
+     * Determines whether the authentication exchange has completed.
+     * This method is typically called after each invocation of
+     * {@code evaluateResponse()} to determine whether the
+     * authentication has completed successfully or should be continued.
+     * @return true if the authentication exchange has completed; false otherwise.
+     */
     @Override
     public boolean isComplete() {
         return state == State.COMPLETE;
@@ -352,7 +346,7 @@ public class ScramSha1SaslServer implements SaslServer {
         username = null;
         state = State.INITIAL;
     }
-    
+
     /**
      * Retrieve the salt for a given username.
      *
@@ -484,7 +478,28 @@ public class ScramSha1SaslServer implements SaslServer {
             return ITERATION_COUNT.getValue();
         }
     }
-    
+
+    /**
+     * Retrieve the server key from the database for a given username, but returns a fake key if none is found.
+     *
+     * Returning a fake key helps guard against timing attacks: instead of short-circuiting the operation,
+     * a fake key is generated to ensure consistent response times and prevent potential timing attacks.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3257">OF-3257: Guard against timing attacks in ScramSha1SaslServer</a>
+     */
+    @VisibleForTesting
+    byte[] getOrFakeServerKey(String username) {
+        try {
+            byte[] key = getServerKey(username);
+            if (key != null) {
+                return key;
+            }
+        } catch (UserNotFoundException ignored) {
+            // fall through
+        }
+        return generateFakeKey("server-key-" + username);
+    }
+
     /**
      * Retrieve the server key from the database for a given username.
      */
@@ -496,7 +511,28 @@ public class ScramSha1SaslServer implements SaslServer {
             return DatatypeConverter.parseBase64Binary( serverKey );
         }
     }
-    
+
+    /**
+     * Retrieve the stored key from the database for a given username, but returns a fake key if none is found.
+     *
+     * Returning a fake key helps guard against timing attacks: instead of short-circuiting the operation,
+     * a fake key is generated to ensure consistent response times and prevent potential timing attacks.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3257">OF-3257: Guard against timing attacks in ScramSha1SaslServer</a>
+     */
+    @VisibleForTesting
+    byte[] getOrFakeStoredKey(final String username) {
+        try {
+            byte[] key = getStoredKey(username);
+            if (key != null) {
+                return key;
+            }
+        } catch (UserNotFoundException ignored) {
+            // fall through
+        }
+        return generateFakeKey("stored-key-" + username);
+    }
+
     /**
      * Retrieve the stored key from the database for a given username.
      */
@@ -506,6 +542,26 @@ public class ScramSha1SaslServer implements SaslServer {
             return null;
         } else {
             return DatatypeConverter.parseBase64Binary( storedKey );
+        }
+    }
+
+    /**
+     * Generate a fake key to guard against timing attacks (see OF-3258).
+     *
+     * @param input a string input for which to generate a fake key
+     * @return a fake key
+     */
+    private byte[] generateFakeKey(String input)
+    {
+        try {
+            return ScramUtils.computeHmac(
+                SERVER_SECRET_NONEXISTING_USERS.getValue().getBytes(StandardCharsets.UTF_8),
+                input
+            );
+        } catch (SaslException e) {
+            byte[] fallback = new byte[24];
+            random.nextBytes(fallback);
+            return fallback;
         }
     }
 }

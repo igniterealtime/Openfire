@@ -223,8 +223,8 @@ public class ScramSha1SaslServer implements SaslServer {
 //        String channelBinding = m.group(2);
         String clientNonce = m.group(3);
         String proof = m.group(4);
-        
-        if (!nonce.equals(clientNonce)) {
+
+        if (!nonce.equals(clientNonce)) { // Constant-time operation is important for keys, not for public protocol values like nonces.
             throw new SaslException("Client final message has incorrect nonce value");
         }
 
@@ -242,7 +242,7 @@ public class ScramSha1SaslServer implements SaslServer {
                 clientKey[i] ^= decodedProof[i];
             }
 
-            if (!Arrays.equals(storedKey, MessageDigest.getInstance("SHA-1").digest(clientKey))) {
+            if (!MessageDigest.isEqual(storedKey, MessageDigest.getInstance("SHA-1").digest(clientKey))) {
                 throw new SaslException("Authentication failed for: '"+username+"'");
             }
             return ("v=" + DatatypeConverter.printBase64Binary(serverSignature))

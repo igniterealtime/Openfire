@@ -99,9 +99,14 @@ public final class ConnectionSettings {
             .setDynamic(Boolean.TRUE)
             .build();
 
+        /**
+         * Maximum number of server-initiated (outbound) QUIC streams per connection used for session multiplexing.
+         * Defaults to 0 (disabled) to avoid advertising more streams than the client permits via
+         * {@link #QUIC_MAX_STREAMS}. Increase only when clients are known to support server-initiated streams.
+         */
         public static final SystemProperty<Integer> QUIC_MAX_OUTBOUND_STREAMS = SystemProperty.Builder.ofType(Integer.class)
             .setKey("xmpp.quic.client.max-outbound-streams")
-            .setDefaultValue(20)
+            .setDefaultValue(0)
             .setMinValue(0)
             .setDynamic(Boolean.TRUE)
             .build();
@@ -114,6 +119,11 @@ public final class ConnectionSettings {
             .setDynamic(Boolean.TRUE)
             .build();
 
+        /**
+         * ALPN token(s) advertised for XMPP-over-QUIC. The value "xmpp-client" is used as a placeholder
+         * pending finalisation of the IETF XMPP-over-QUIC draft. Update this value once the specification
+         * assigns an official ALPN identifier.
+         */
         public static final SystemProperty<List<String>> QUIC_ALPN = SystemProperty.Builder.ofType(List.class)
             .setKey("xmpp.quic.client.alpn")
             .setDefaultValue(List.of("xmpp-client"))

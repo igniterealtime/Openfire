@@ -111,6 +111,9 @@ public class QuicConnectionAcceptor extends ConnectionAcceptor
 
             final QuicServerCodecBuilder serverCodecBuilder = new QuicServerCodecBuilder()
                 .sslContext(sslContext)
+                // TODO: Replace InsecureQuicTokenHandler with a real address-validation token handler before
+                // any production deployment. The insecure handler accepts all tokens, making the server
+                // trivially vulnerable to UDP amplification attacks.
                 .tokenHandler(InsecureQuicTokenHandler.INSTANCE)
                 .maxIdleTimeout(ConnectionSettings.Client.QUIC_IDLE_TIMEOUT_PROPERTY.getValue().toMillis(), TimeUnit.MILLISECONDS)
                 .initialMaxData(10 * 1024 * 1024)

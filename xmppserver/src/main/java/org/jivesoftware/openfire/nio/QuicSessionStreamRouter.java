@@ -47,7 +47,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -65,8 +64,8 @@ public class QuicSessionStreamRouter
     private final QuicChannel quicChannel;
     private final ConnectionConfiguration configuration;
     private final EventExecutorGroup blockingHandlerExecutor;
-    private final List<NettyConnection> inboundConnections = new CopyOnWriteArrayList<>();
-    private final List<QuicStreamChannel> outboundChannels = new CopyOnWriteArrayList<>();
+    private final List<NettyConnection> inboundConnections = new ArrayList<>();
+    private final List<QuicStreamChannel> outboundChannels = new ArrayList<>();
     private final Map<String, QuicStreamChannel> streamAssignmentsByFromBareJid = new HashMap<>();
     /** Stanzas queued while a new outbound stream is being opened asynchronously. */
     private final Deque<String> pendingStanzas = new ArrayDeque<>();

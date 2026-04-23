@@ -25,18 +25,41 @@ import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.StringUtils;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Client stanza handler variant that allows multiple QUIC streams to share one client session.
  */
 public class QuicClientStanzaHandler extends ClientStanzaHandler
 {
+    private static final Logger Log = LoggerFactory.getLogger(QuicClientStanzaHandler.class);
+
     private final QuicSessionStreamRouter streamRouter;
 
     public QuicClientStanzaHandler(final PacketRouter router, final Connection connection, final QuicSessionStreamRouter streamRouter)
     {
         super(router, connection);
         this.streamRouter = streamRouter;
+    }
+
+    /**
+     * Initialises this handler as an aux stream without requiring the client to send a stream open.
+     * The server proactively sends a stream-open response using the existing session's parameters,
+     * and the stream is immediately ready to carry stanzas.
+     *
+     * @param existingSession the already-authenticated session to attach to
+     */
+    public void initAsAuxStream(final LocalClientSession existingSession)
+    {
+        session = existingSession;
+        sessionCreated = true;
+        if (connection instanceof NettyConnection nettyConnection) {
+            nettyConnection.reinit(existingSession);
+        }
+        connection.setXMPPVersion(Session.MAJOR_VERSION, Session.MINOR_VERSION);
+        connection.deliverRawText(StringUtils.asUnclosedStream(getStreamHeader()));
+        Log.debug("Aux QUIC stream initialised without client stream-open for session {}", existingSession.getStreamID());
     }
 
     @Override
@@ -51,9 +74,15 @@ public class QuicClientStanzaHandler extends ClientStanzaHandler
             return;
         }
 
-        session = existingSession;
-        if (connection instanceof NettyConnection nettyConnection) {
-            nettyConnection.reinit(existingSession);
+        // Client sent a stream-open on an aux stream. If we already initialised this stream
+        // proactively (initAsAuxStream), just send another stream-open response and continue.
+        // If not yet initialised, do so now.
+        if (!sessionCreated) {
+            session = existingSession;
+            sessionCreated = true;
+            if (connection instanceof NettyConnection nettyConnection) {
+                nettyConnection.reinit(existingSession);
+            }
         }
         connection.setAdditionalNamespaces(XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(xpp));
         connection.setXMPPVersion(Session.MAJOR_VERSION, Session.MINOR_VERSION);

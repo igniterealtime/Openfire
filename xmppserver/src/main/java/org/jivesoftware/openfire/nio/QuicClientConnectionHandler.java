@@ -20,13 +20,18 @@ import io.netty.channel.ChannelHandlerContext;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.ClientStanzaHandler;
 import org.jivesoftware.openfire.net.QuicClientStanzaHandler;
+import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * C2S business-logic handler for QUIC channels.
  */
 public class QuicClientConnectionHandler extends NettyClientConnectionHandler
 {
+    private static final Logger Log = LoggerFactory.getLogger(QuicClientConnectionHandler.class);
+
     private final QuicSessionStreamRouter streamRouter;
 
     public QuicClientConnectionHandler(final ConnectionConfiguration configuration)
@@ -38,6 +43,28 @@ public class QuicClientConnectionHandler extends NettyClientConnectionHandler
     {
         super(configuration);
         this.streamRouter = streamRouter;
+    }
+
+    @Override
+    public void handlerAdded(final ChannelHandlerContext ctx)
+    {
+        super.handlerAdded(ctx); // creates NettyConnection + QuicClientStanzaHandler, stores in channel attrs
+
+        if (streamRouter == null) {
+            return;
+        }
+        final LocalClientSession existingSession = streamRouter.getSession();
+        if (existingSession == null) {
+            return; // primary stream — normal stream-open handshake required
+        }
+
+        // Aux stream: proactively initialise without waiting for a client stream-open.
+        final QuicClientStanzaHandler handler = (QuicClientStanzaHandler) ctx.channel().attr(HANDLER).get();
+        if (handler != null) {
+            handler.initAsAuxStream(existingSession);
+        } else {
+            Log.warn("Could not find QuicClientStanzaHandler on aux stream channel {} — stream-open will be required from client", ctx.channel());
+        }
     }
 
     @Override

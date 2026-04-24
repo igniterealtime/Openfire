@@ -545,7 +545,7 @@ public class ScramSha1SaslServer implements SaslServer {
     }
 
     /**
-     * Generate a fake key to guard against timing attacks (see OF-3258).
+     * Generate a fake key to guard against timing attacks (see OF-3257).
      *
      * @param input a string input for which to generate a fake key
      * @return a fake key

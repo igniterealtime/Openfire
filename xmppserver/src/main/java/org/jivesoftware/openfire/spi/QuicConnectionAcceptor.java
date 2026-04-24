@@ -26,11 +26,13 @@ import io.netty.channel.nio.NioIoHandler;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.handler.codec.quic.Quic;
 import io.netty.handler.codec.quic.QLogConfiguration;
+import io.netty.handler.codec.quic.QuicChannel;
 import io.netty.handler.codec.quic.QuicChannelOption;
 import io.netty.handler.codec.quic.QuicServerCodecBuilder;
 import io.netty.handler.codec.quic.QuicSslContext;
 import io.netty.handler.codec.quic.QuicSslContextBuilder;
 import io.netty.handler.codec.quic.QuicStreamChannel;
+import io.netty.handler.codec.quic.QuicStreamLimitChangedEvent;
 import io.netty.handler.codec.quic.QuicStreamType;
 import io.netty.handler.codec.quic.InsecureQuicTokenHandler;
 import io.netty.handler.codec.string.StringEncoder;
@@ -156,7 +158,41 @@ public class QuicConnectionAcceptor extends ConnectionAcceptor
                 .initialMaxStreamDataBidirectionalRemote(initialMaxStreamDataBidiRemote)
                 .initialMaxStreamsBidirectional(initialMaxStreamsBidi)
                 .initialMaxStreamsUnidirectional(0)
-                .handler(new NewConnectionRateLimitHandler(ConnectionType.QUIC_C2S))
+                .handler(new ChannelInitializer<QuicChannel>()
+                {
+                    @Override
+                    protected void initChannel(final QuicChannel ch)
+                    {
+                        ch.pipeline()
+                            .addLast(new NewConnectionRateLimitHandler(ConnectionType.QUIC_C2S))
+                            .addLast(new ChannelInboundHandlerAdapter()
+                            {
+                                @Override
+                                public void channelActive(final ChannelHandlerContext ctx) throws Exception
+                                {
+                                    final QuicChannel qc = (QuicChannel) ctx.channel();
+                                    Log.info("QUIC connection established: remote={}, peerAllowedBidiStreams={}, peerAllowedUniStreams={}",
+                                        qc.remoteSocketAddress(),
+                                        qc.peerAllowedStreams(QuicStreamType.BIDIRECTIONAL),
+                                        qc.peerAllowedStreams(QuicStreamType.UNIDIRECTIONAL));
+                                    super.channelActive(ctx);
+                                }
+
+                                @Override
+                                public void userEventTriggered(final ChannelHandlerContext ctx, final Object evt) throws Exception
+                                {
+                                    if (evt instanceof QuicStreamLimitChangedEvent) {
+                                        final QuicChannel qc = (QuicChannel) ctx.channel();
+                                        Log.info("QUIC stream limit changed: remote={}, peerAllowedBidiStreams={}, peerAllowedUniStreams={}",
+                                            qc.remoteSocketAddress(),
+                                            qc.peerAllowedStreams(QuicStreamType.BIDIRECTIONAL),
+                                            qc.peerAllowedStreams(QuicStreamType.UNIDIRECTIONAL));
+                                    }
+                                    super.userEventTriggered(ctx, evt);
+                                }
+                            });
+                    }
+                })
                 .streamHandler(new ChannelInitializer<QuicStreamChannel>()
                 {
                     @Override

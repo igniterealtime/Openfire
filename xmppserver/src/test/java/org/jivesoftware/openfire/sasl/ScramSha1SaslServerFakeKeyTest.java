@@ -41,6 +41,13 @@ public class ScramSha1SaslServerFakeKeyTest
         Fixtures.disableDatabasePersistence();
     }
 
+    @AfterEach
+    public void resetProperty() throws Exception
+    {
+        // Prevent order-dependent failures by resetting the property after each test.
+        ScramSha1SaslServer.SERVER_SECRET_NONEXISTENT_USERS.setValue(null);
+    }
+
     /**
      * The fake key for a given username and secret should be deterministic.
      */

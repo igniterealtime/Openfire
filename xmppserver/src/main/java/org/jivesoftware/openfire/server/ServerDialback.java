@@ -135,7 +135,14 @@ public class ServerDialback {
      * certificate.
      */
     public static boolean isEnabledForSelfSigned() {
-        return JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false);
+        // Check the legacy property name first for backwards compatibility.
+        if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false)) {
+            return true;
+        }
+        // Also check the current property name written by ConnectionListener.setAcceptSelfSignedCertificates().
+        // The two names diverged when ConnectionListener introduced per-connection-type prefixed properties
+        // (OF-2273), but the readers in this class were not updated at that time.
+        return JiveGlobals.getBooleanProperty(ConnectionType.SOCKET_S2S.getPrefix() + "certificate.accept-selfsigned", false);
     }
 
     /**

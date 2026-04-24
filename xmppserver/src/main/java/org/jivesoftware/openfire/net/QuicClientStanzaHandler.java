@@ -22,7 +22,6 @@ import org.jivesoftware.openfire.nio.NettyConnection;
 import org.jivesoftware.openfire.nio.QuicSessionStreamRouter;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.Session;
-import org.jivesoftware.util.StringUtils;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.slf4j.Logger;
@@ -58,7 +57,8 @@ public class QuicClientStanzaHandler extends ClientStanzaHandler
             nettyConnection.reinit(existingSession);
         }
         connection.setXMPPVersion(Session.MAJOR_VERSION, Session.MINOR_VERSION);
-        connection.deliverRawText(StringUtils.asUnclosedStream(getStreamHeader()));
+        // No stream-open is sent: aux streams inherit the session from the primary stream
+        // and are immediately ready to carry stanzas without any stream-open exchange.
         Log.debug("Aux QUIC stream initialised without client stream-open for session {}", existingSession.getStreamID());
     }
 
@@ -74,9 +74,9 @@ public class QuicClientStanzaHandler extends ClientStanzaHandler
             return;
         }
 
-        // Client sent a stream-open on an aux stream. If we already initialised this stream
-        // proactively (initAsAuxStream), just send another stream-open response and continue.
-        // If not yet initialised, do so now.
+        // Client sent a stream-open on an aux stream (unexpected — the server initialises aux
+        // streams proactively and no stream-open exchange is required). Wire up the session if
+        // not already done, but do NOT send a stream-open response.
         if (!sessionCreated) {
             session = existingSession;
             sessionCreated = true;
@@ -86,6 +86,6 @@ public class QuicClientStanzaHandler extends ClientStanzaHandler
         }
         connection.setAdditionalNamespaces(XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(xpp));
         connection.setXMPPVersion(Session.MAJOR_VERSION, Session.MINOR_VERSION);
-        connection.deliverRawText(StringUtils.asUnclosedStream(getStreamHeader()));
+        // No stream-open response: aux streams carry bare stanzas with no stream framing.
     }
 }

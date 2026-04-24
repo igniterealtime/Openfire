@@ -162,7 +162,14 @@ public class QuicConnectionAcceptor extends ConnectionAcceptor
                     @Override
                     protected void initChannel(final QuicStreamChannel channel)
                     {
+                        // Log every inbound stream initialisation so we can verify client open_bi() requests
+                        // are actually arriving at the server and being accepted by the codec.
+                        Log.info("QUIC inbound stream initialised: streamId={}, type={}, parentConn={}, remote={}",
+                            channel.streamId(), channel.type(), channel.parent(),
+                            channel.parent() == null ? "?" : channel.parent().remoteSocketAddress());
+
                         if (channel.type() != QuicStreamType.BIDIRECTIONAL) {
+                            Log.info("QUIC inbound stream {} is unidirectional; closing (only bidirectional streams are supported).", channel.streamId());
                             channel.close();
                             return;
                         }

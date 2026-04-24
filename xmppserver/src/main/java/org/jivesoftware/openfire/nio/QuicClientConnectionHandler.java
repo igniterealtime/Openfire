@@ -51,14 +51,18 @@ public class QuicClientConnectionHandler extends NettyClientConnectionHandler
         super.handlerAdded(ctx); // creates NettyConnection + QuicClientStanzaHandler, stores in channel attrs
 
         if (streamRouter == null) {
+            Log.info("QUIC stream {} has no stream router; treating as standalone (no aux-stream support on this connection).", ctx.channel());
             return;
         }
         final LocalClientSession existingSession = streamRouter.getSession();
         if (existingSession == null) {
+            Log.info("QUIC stream {} classified as PRIMARY (no session yet on this QUIC connection); awaiting <stream:stream> from client.", ctx.channel());
             return; // primary stream — normal stream-open handshake required
         }
 
         // Aux stream: proactively initialise without waiting for a client stream-open.
+        Log.info("QUIC stream {} classified as AUX (session {} already bound on this QUIC connection); initialising server-side without requiring client <stream:stream>.",
+            ctx.channel(), existingSession.getAddress());
         final QuicClientStanzaHandler handler = (QuicClientStanzaHandler) ctx.channel().attr(HANDLER).get();
         if (handler != null) {
             handler.initAsAuxStream(existingSession);

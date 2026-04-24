@@ -48,7 +48,7 @@ public class ScramSha1SaslServerFakeKeyTest
     void fakeKeyIsDeterministicForSameInput()
     {
         // Setup test fixture
-        ScramSha1SaslServer.SERVER_SECRET_NONEXISTING_USERS.setValue(SERVER_SECRET_1);
+        ScramSha1SaslServer.SERVER_SECRET_NONEXISTENT_USERS.setValue(SERVER_SECRET_1);
         final ScramSha1SaslServer server = new ScramSha1SaslServer();
 
         // Execute system under test
@@ -66,7 +66,7 @@ public class ScramSha1SaslServerFakeKeyTest
     void fakeKeysDifferForDifferentUsernames()
     {
         // Setup test fixture
-        ScramSha1SaslServer.SERVER_SECRET_NONEXISTING_USERS.setValue(SERVER_SECRET_1);
+        ScramSha1SaslServer.SERVER_SECRET_NONEXISTENT_USERS.setValue(SERVER_SECRET_1);
         final ScramSha1SaslServer server = new ScramSha1SaslServer();
 
         // Execute system under test
@@ -84,12 +84,12 @@ public class ScramSha1SaslServerFakeKeyTest
     void fakeKeyChangesWhenServerSecretChanges()
     {
         // Setup test fixture
-        ScramSha1SaslServer.SERVER_SECRET_NONEXISTING_USERS.setValue(SERVER_SECRET_1);
+        ScramSha1SaslServer.SERVER_SECRET_NONEXISTENT_USERS.setValue(SERVER_SECRET_1);
         final ScramSha1SaslServer server = new ScramSha1SaslServer();
 
         // Execute system under test
         final byte[] key1 = server.getOrFakeStoredKey(USERNAME1);
-        ScramSha1SaslServer.SERVER_SECRET_NONEXISTING_USERS.setValue(SERVER_SECRET_2);
+        ScramSha1SaslServer.SERVER_SECRET_NONEXISTENT_USERS.setValue(SERVER_SECRET_2);
         final byte[] key2 = server.getOrFakeStoredKey(USERNAME1);
 
         // Verify result
@@ -103,7 +103,7 @@ public class ScramSha1SaslServerFakeKeyTest
     void fakeKeyHasExpectedLength()
     {
         // Setup test fixture
-        ScramSha1SaslServer.SERVER_SECRET_NONEXISTING_USERS.setValue(SERVER_SECRET_1);
+        ScramSha1SaslServer.SERVER_SECRET_NONEXISTENT_USERS.setValue(SERVER_SECRET_1);
         final ScramSha1SaslServer server = new ScramSha1SaslServer();
 
         // Execute system under test
@@ -120,7 +120,7 @@ public class ScramSha1SaslServerFakeKeyTest
     void storedAndServerKeysDifferForSameUsername()
     {
         // Setup test fixture
-        ScramSha1SaslServer.SERVER_SECRET_NONEXISTING_USERS.setValue(SERVER_SECRET_1);
+        ScramSha1SaslServer.SERVER_SECRET_NONEXISTENT_USERS.setValue(SERVER_SECRET_1);
         final ScramSha1SaslServer server = new ScramSha1SaslServer();
 
         // Execute system under test

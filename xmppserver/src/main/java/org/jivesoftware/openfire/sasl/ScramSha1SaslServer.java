@@ -555,7 +555,7 @@ public class ScramSha1SaslServer implements SaslServer {
     {
         try {
             return ScramUtils.computeHmac(
-                SERVER_SECRET_NONEXISTING_USERS.getValue().getBytes(StandardCharsets.UTF_8),
+                SERVER_SECRET_NONEXISTENT_USERS.getValue().getBytes(StandardCharsets.UTF_8),
                 input
             );
         } catch (SaslException e) {

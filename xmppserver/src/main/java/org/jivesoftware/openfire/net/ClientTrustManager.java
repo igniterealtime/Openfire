@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -173,6 +173,8 @@ public class ClientTrustManager implements X509TrustManager {
 
         loadCRL();
 
+        final ConnectionListener connectionListener = XMPPServer.getInstance().getConnectionManager().getListener(ConnectionType.SOCKET_C2S, false);
+
         boolean verify = JiveGlobals.getBooleanProperty("xmpp.client.certificate.verify", true);
         if (verify) {
             int nSize = x509Certificates.length;
@@ -254,7 +256,7 @@ public class ClientTrustManager implements X509TrustManager {
                 }
             }
 
-            if (JiveGlobals.getBooleanProperty("xmpp.client.certificate.verify.validity", true)) {
+            if (connectionListener.verifyCertificateValidity()) {
                 // For every certificate in the chain, verify that the certificate
                 // is valid at the current time.
                 Date date = new Date();

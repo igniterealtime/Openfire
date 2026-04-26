@@ -723,6 +723,9 @@ public class ConnectionListener
             if (currentType == ConnectionType.SOCKET_S2S && JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, defaultValue)) {
                 return true;
             }
+            if (currentType.isClientOriented() && JiveGlobals.getBooleanProperty("xmpp.client.certificate.accept-selfsigned", defaultValue)) {
+                return true;
+            }
 
             // This checks the 'new' properties.
             final String propertyName = currentType.getPrefix() + "certificate.accept-selfsigned";
@@ -766,18 +769,30 @@ public class ConnectionListener
      */
     public boolean verifyCertificateValidity()
     {
-        // TODO these are new properties! Deprecate (migrate?) all existing 'verify / verify-validity properties' (Eg: org.jivesoftware.openfire.session.ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY_VALIDITY )
-        final String propertyName = type.getPrefix() + "certificate.verify.validity";
         final boolean defaultValue = true;
 
-        if ( type.getFallback() == null )
+        // Recursively check the old properties at every step in the fallback chain.
+        ConnectionType currentType = type;
+        while (currentType != null)
         {
-            return JiveGlobals.getBooleanProperty( propertyName, defaultValue );
+            // This checks the 'old' properties, that have been marked as deprecated in Openfire 5.1.0 (OF-3259)
+            if (currentType == ConnectionType.SOCKET_S2S && !JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY_VALIDITY, defaultValue)) {
+                return false;
+            }
+            if (currentType.isClientOriented() && !JiveGlobals.getBooleanProperty("xmpp.client.certificate.verify.validity", defaultValue)) {
+                return false;
+            }
+
+            // This checks the 'new' properties.
+            final String propertyName = currentType.getPrefix() + "certificate.verify.validity";
+            if (JiveGlobals.getProperty(propertyName) != null) {
+                return JiveGlobals.getBooleanProperty(propertyName, defaultValue);
+            }
+
+            // Recursively check the fallback properties.
+            currentType = currentType.getFallback();
         }
-        else
-        {
-            return JiveGlobals.getBooleanProperty( propertyName, getConnectionListener( type.getFallback() ).verifyCertificateValidity() );
-        }
+        return defaultValue;
     }
 
     /**

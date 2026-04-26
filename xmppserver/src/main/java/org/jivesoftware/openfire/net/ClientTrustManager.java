@@ -48,6 +48,9 @@ import java.util.*;
 
 import javax.net.ssl.X509TrustManager;
 
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.spi.ConnectionListener;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
@@ -335,7 +338,8 @@ public class ClientTrustManager implements X509TrustManager {
 
     @Override
     public X509Certificate[] getAcceptedIssuers() {
-        if (JiveGlobals.getBooleanProperty("xmpp.client.certificate.accept-selfsigned", false)) {
+        final ConnectionListener connectionListener = XMPPServer.getInstance().getConnectionManager().getListener(ConnectionType.SOCKET_C2S, false);
+        if (connectionListener.acceptSelfSignedCertificates()) {
             // Answer an empty list since we accept any issuer
             return new X509Certificate[0];
         }

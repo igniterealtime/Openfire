@@ -20,6 +20,7 @@ import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.CertificateStoreConfiguration;
 import org.jivesoftware.openfire.net.SocketConnection;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -712,18 +713,27 @@ public class ConnectionListener
      */
     public boolean acceptSelfSignedCertificates()
     {
-        // TODO these are new properties! Deprecate (migrate?) all existing 'accept-selfsigned properties' (Eg: org.jivesoftware.openfire.session.ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS )
-        final String propertyName = type.getPrefix() + "certificate.accept-selfsigned";
         final boolean defaultValue = false;
 
-        if ( type.getFallback() == null )
+        // Recursively check the old properties at every step in the fallback chain.
+        ConnectionType currentType = type;
+        while (currentType != null)
         {
-            return JiveGlobals.getBooleanProperty( propertyName, defaultValue );
+            // This checks the 'old' properties, that have been marked as deprecated in Openfire 5.1.0 (OF-3259)
+            if (currentType == ConnectionType.SOCKET_S2S && JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, defaultValue)) {
+                return true;
+            }
+
+            // This checks the 'new' properties.
+            final String propertyName = currentType.getPrefix() + "certificate.accept-selfsigned";
+            if (JiveGlobals.getProperty(propertyName) != null) {
+                return JiveGlobals.getBooleanProperty(propertyName, defaultValue);
+            }
+
+            // Recursively check the fallback properties.
+            currentType = currentType.getFallback();
         }
-        else
-        {
-            return JiveGlobals.getBooleanProperty( propertyName, getConnectionListener( type.getFallback() ).acceptSelfSignedCertificates() );
-        }
+        return defaultValue;
     }
 
     /**

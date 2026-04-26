@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 
 package org.jivesoftware.openfire.net;
 
-import org.jivesoftware.openfire.session.ConnectionSettings;
-import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -86,7 +86,8 @@ public class ServerTrustManager implements X509TrustManager {
 
     @Override
     public X509Certificate[] getAcceptedIssuers() {
-        if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false)) {
+        final boolean acceptSelfSignedCertificates = XMPPServer.getInstance().getConnectionManager().getListener(ConnectionType.SOCKET_S2S, false).acceptSelfSignedCertificates();
+        if (acceptSelfSignedCertificates) {
             // Answer an empty list since we accept any issuer
             return new X509Certificate[0];
         }

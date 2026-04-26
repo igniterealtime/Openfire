@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,29 +135,21 @@ public class ServerDialback {
      * certificate.
      */
     public static boolean isEnabledForSelfSigned() {
-        // Check the legacy property name first for backwards compatibility.
-        if (JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, false)) {
-            return true;
-        }
-        // Also check the current property name written by ConnectionListener.setAcceptSelfSignedCertificates().
-        // The two names diverged when ConnectionListener introduced per-connection-type prefixed properties
-        // (OF-2273), but the readers in this class were not updated at that time.
-        return JiveGlobals.getBooleanProperty(ConnectionType.SOCKET_S2S.getPrefix() + "certificate.accept-selfsigned", false);
+        // Allowance for self-signed certificates is based on the configuration for all server-to-server connections.
+        return XMPPServer.getInstance().getConnectionManager().getListener(ConnectionType.SOCKET_S2S, false).acceptSelfSignedCertificates();
     }
 
     /**
-     * Sets if server dialback can be used when the remote server presented a self-signed
-     * certificate. During TLS the remote server can present a self-signed certificate, if this
-     * setting is enabled then the self-signed certificate will be accepted and if SASL EXTERNAL
-     * is not offered then server dialback will be used for verifying the remote server.<p>
+     * This (unexpectedly/incorrectly) affected the configuration of all socket-s2s connections, not just those of
+     * Dialback connections. This is unlikely what is desired.
      *
-     * If self-signed certificates are accepted then server dialback over TLS is enabled.
-     *
-     * @param enabled if server dialback can be used when the remote server presented a self-signed
-     * certificate.
+     * @param enabled if server dialback can be used when the remote server presented a self-signed certificate.
+     * @deprecated Instead, set the connection listener property for socket-s2s connections in {@link org.jivesoftware.openfire.spi.ConnectionListener#setAcceptSelfSignedCertificates(boolean)}
      */
-    public static void setEnabledForSelfSigned(boolean enabled) {
-        JiveGlobals.setProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, Boolean.toString(enabled));
+    @Deprecated(forRemoval = true, since = "5.1.0")
+    public static void setEnabledForSelfSigned(boolean enabled)
+    {
+        XMPPServer.getInstance().getConnectionManager().getListener(ConnectionType.SOCKET_S2S, false).setAcceptSelfSignedCertificates(enabled);
     }
 
     /**

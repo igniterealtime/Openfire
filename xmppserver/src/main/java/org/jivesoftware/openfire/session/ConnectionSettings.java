@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,6 +108,10 @@ public final class ConnectionSettings {
         public static final String DIALBACK_ENABLED = "xmpp.server.dialback.enabled";
         public static final String TLS_POLICY = "xmpp.server.tls.policy";
 
+        /**
+         * @deprecated Use {@link org.jivesoftware.openfire.spi.ConnectionListener#acceptSelfSignedCertificates()} and {@link org.jivesoftware.openfire.spi.ConnectionListener#setAcceptSelfSignedCertificates(boolean)} instead.
+         */
+        @Deprecated(forRemoval = true, since = "5.1.0")
         public static final String TLS_ACCEPT_SELFSIGNED_CERTS = "xmpp.server.certificate.accept-selfsigned";
         public static final String TLS_CERTIFICATE_VERIFY = "xmpp.server.certificate.verify";
         public static final String TLS_CERTIFICATE_VERIFY_VALIDITY = "xmpp.server.certificate.verify.validity";

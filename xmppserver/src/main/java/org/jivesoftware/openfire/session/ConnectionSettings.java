@@ -113,8 +113,15 @@ public final class ConnectionSettings {
          */
         @Deprecated(forRemoval = true, since = "5.1.0")
         public static final String TLS_ACCEPT_SELFSIGNED_CERTS = "xmpp.server.certificate.accept-selfsigned";
+
         public static final String TLS_CERTIFICATE_VERIFY = "xmpp.server.certificate.verify";
+
+        /**
+         * @deprecated Use {@link org.jivesoftware.openfire.spi.ConnectionListener#verifyCertificateValidity()} and {@link org.jivesoftware.openfire.spi.ConnectionListener#setVerifyCertificateValidity(boolean)} instead.
+         */
+        @Deprecated(forRemoval = true, since = "5.1.0")
         public static final String TLS_CERTIFICATE_VERIFY_VALIDITY = "xmpp.server.certificate.verify.validity";
+
         public static final String TLS_CERTIFICATE_ROOT_VERIFY = "xmpp.server.certificate.verify.root";
         public static final String TLS_CERTIFICATE_CHAIN_VERIFY = "xmpp.server.certificate.verify.chain";
         public static final String TLS_ON_PLAIN_DETECTION_ALLOW_NONDIRECTTLS_FALLBACK = "xmpp.server.tls.on-plain-detection-allow-nondirecttls-fallback";

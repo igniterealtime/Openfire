@@ -28,8 +28,19 @@ import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.keystore.TrustStore;
 import org.jivesoftware.openfire.lockout.LockOutManager;
-import org.jivesoftware.openfire.sasl.*;
-import org.jivesoftware.openfire.session.*;
+import org.jivesoftware.openfire.sasl.AnonymousSaslServer;
+import org.jivesoftware.openfire.sasl.Failure;
+import org.jivesoftware.openfire.sasl.JiveSharedSecretSaslServer;
+import org.jivesoftware.openfire.sasl.SaslFailureException;
+import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
+import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.session.ConnectionSettings;
+import org.jivesoftware.openfire.session.IncomingServerSession;
+import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.LocalIncomingServerSession;
+import org.jivesoftware.openfire.session.LocalSession;
+import org.jivesoftware.openfire.session.ServerSession;
+import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
@@ -284,7 +295,7 @@ public class SASLAuthentication {
                 }
 
                 // Channel binding would be a binding to TLS, thus encryption is required for channel binding.
-                if (!session.isEncrypted()) { // This aught to be redundant, as getSupportedChannelBindingTypes() will return an empty set if not encrypted.
+                if (!session.isEncrypted()) { // This ought to be redundant, as getSupportedChannelBindingTypes() will return an empty set if not encrypted.
                     continue;
                 }
             }
@@ -666,7 +677,7 @@ public class SASLAuthentication {
                     // Check if the user provider in use supports passwords retrieval. Access to the users passwords will be required by the CallbackHandler.
                     if ( !AuthFactory.supportsPasswordRetrieval() )
                     {
-                        Log.trace( "Cannot support '{}' as the AuthFactory that's in use does not support password retrieval.", mechanism );
+                        Log.trace( "Cannot support '{}' as the AuthProvider that's in use does not support password retrieval.", mechanism );
                         it.remove();
                     }
                     break;
@@ -675,7 +686,7 @@ public class SASLAuthentication {
                 case "SCRAM-SHA-1-PLUS":
                     if ( !AuthFactory.supportsScram() )
                     {
-                        Log.trace( "Cannot support '{}' as the AuthFactory that's in use does not support SCRAM.", mechanism );
+                        Log.trace( "Cannot support '{}' as the AuthProvider that's in use does not support SCRAM.", mechanism );
                         it.remove();
                     }
                     break;

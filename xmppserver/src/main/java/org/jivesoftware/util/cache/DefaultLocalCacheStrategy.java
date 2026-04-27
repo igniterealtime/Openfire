@@ -24,7 +24,7 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * CacheFactoryStrategy for use in Openfire. It creates and manages local caches, and it's cluster
+ * CacheFactoryStrategy for use in Openfire. It creates and manages local caches, and its cluster
  * related method implementations do nothing.
  *
  * @see Cache

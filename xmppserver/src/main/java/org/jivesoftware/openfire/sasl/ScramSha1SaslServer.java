@@ -50,7 +50,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Implements the SCRAM-SHA-1 (and it's channel binding -PLUS variant) server-side mechanism.
+ * Implements the SCRAM-SHA-1 (and its channel binding -PLUS variant) server-side mechanism.
  *
  * @author Richard Midwinter, Guus der Kinderen
  */

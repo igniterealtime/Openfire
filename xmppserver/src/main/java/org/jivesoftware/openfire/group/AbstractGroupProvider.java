@@ -148,7 +148,7 @@ public abstract class AbstractGroupProvider implements GroupProvider {
             sharedGroupMetaCache.clear();
         }
 
-        return null; // aught to be overridden.
+        return null; // ought to be overridden.
     }
 
     /**

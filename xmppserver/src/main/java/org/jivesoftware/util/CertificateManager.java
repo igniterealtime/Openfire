@@ -628,7 +628,7 @@ public class CertificateManager {
     }
 
     /**
-     * Finds all values that aught to be added as a Subject Alternate Name of the dnsName type to a certificate that
+     * Finds all values that ought to be added as a Subject Alternate Name of the dnsName type to a certificate that
      * identifies this XMPP server.
      *
      * @return A set of names, possibly empty, never null.

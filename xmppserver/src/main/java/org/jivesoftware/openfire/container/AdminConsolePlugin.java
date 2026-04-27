@@ -545,7 +545,7 @@ public class AdminConsolePlugin implements Plugin {
     }
 
     /**
-     * Restart the admin console (and it's HTTP server) without restarting the plugin.
+     * Restart the admin console (and its HTTP server) without restarting the plugin.
      */
     public void restart() {
         try {

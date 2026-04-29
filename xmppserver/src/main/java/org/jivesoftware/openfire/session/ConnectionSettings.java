@@ -111,9 +111,14 @@ public final class ConnectionSettings {
             .setDynamic(Boolean.TRUE)
             .build();
 
+        /**
+         * Maximum idle timeout for the QUIC connection. Per XEP-0467 §2 (#8) the QUIC idle timeout
+         * SHOULD be at most 600 seconds. The default tracks that recommendation; operators may lower
+         * it but should not raise it.
+         */
         public static final SystemProperty<Duration> QUIC_IDLE_TIMEOUT_PROPERTY = SystemProperty.Builder.ofType(Duration.class)
             .setKey("xmpp.quic.client.idle")
-            .setDefaultValue(Duration.ofMinutes(6))
+            .setDefaultValue(Duration.ofSeconds(600))
             .setMinValue(Duration.ofMillis(-1))
             .setChronoUnit(ChronoUnit.MILLIS)
             .setDynamic(Boolean.TRUE)

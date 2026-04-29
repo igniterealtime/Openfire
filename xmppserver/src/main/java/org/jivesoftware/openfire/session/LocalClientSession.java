@@ -829,7 +829,13 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             result.add(session);
 
             // Offer XEP-0198 stream management capabilities if enabled.
-            if(StreamManager.isStreamManagementActive()) {
+            // Per XEP-0467 §3.3, XEP-0198 MUST NOT be advertised or negotiated over QUIC: QUIC's own
+            // reliability and ordering guarantees subsume stanza-level acknowledgement, and the multi-stream
+            // model (XEP-0467 §3.2) breaks XEP-0198's single-stream stanza-counting assumptions.
+            final boolean isQuic = getConnection() != null
+                && getConnection().getConfiguration() != null
+                && getConnection().getConfiguration().getType() == org.jivesoftware.openfire.spi.ConnectionType.QUIC_C2S;
+            if(StreamManager.isStreamManagementActive() && !isQuic) {
                 result.add(DocumentHelper.createElement(QName.get("sm", StreamManager.NAMESPACE_V2)));
                 result.add(DocumentHelper.createElement(QName.get("sm", StreamManager.NAMESPACE_V3)));
             }

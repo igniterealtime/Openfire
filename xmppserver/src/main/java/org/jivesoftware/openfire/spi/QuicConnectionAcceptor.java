@@ -157,7 +157,7 @@ public class QuicConnectionAcceptor extends ConnectionAcceptor
                 .initialMaxStreamDataBidirectionalLocal(initialMaxStreamDataBidiLocal)
                 .initialMaxStreamDataBidirectionalRemote(initialMaxStreamDataBidiRemote)
                 .initialMaxStreamsBidirectional(initialMaxStreamsBidi)
-                .initialMaxStreamsUnidirectional(0)
+                .initialMaxStreamsUnidirectional(1024)
                 .handler(new ChannelInitializer<QuicChannel>()
                 {
                     @Override

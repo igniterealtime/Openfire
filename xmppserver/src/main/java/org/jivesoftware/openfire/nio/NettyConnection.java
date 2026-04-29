@@ -247,7 +247,16 @@ public class NettyConnection extends AbstractConnection
                         rawEndStream = error.toXML();
                     }
                     rawEndStream += "</stream:stream>";
-                    f = channelHandlerContext.writeAndFlush(rawEndStream);
+                    // Per XEP-0467 §3.2, stream errors and stream-close MUST be sent on QUIC stream id=0
+                    // only. If this connection is on an aux stream, route the close through the primary.
+                    final QuicSessionStreamRouter router = QuicSessionStreamRouter.find(channelHandlerContext.channel());
+                    final io.netty.handler.codec.quic.QuicStreamChannel primary =
+                        router != null ? router.getPrimaryStream() : null;
+                    if (primary != null && primary != channelHandlerContext.channel() && primary.isActive()) {
+                        f = primary.writeAndFlush(rawEndStream);
+                    } else {
+                        f = channelHandlerContext.writeAndFlush(rawEndStream);
+                    }
                 } else {
                     Log.trace("Channel is no longer active; skipping stream close stanza for {}", this);
                     f = channelHandlerContext.newSucceededFuture();

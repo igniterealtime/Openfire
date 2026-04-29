@@ -63,6 +63,19 @@ public class QuicClientConnectionHandler extends NettyClientConnectionHandler
         // Aux stream: proactively initialise without waiting for a client stream-open.
         Log.info("QUIC stream {} classified as AUX (session {} already bound on this QUIC connection); initialising server-side without requiring client <stream:stream>.",
             ctx.channel(), existingSession.getAddress());
+
+        // Aux streams must not have their own idle/keepalive handlers: the QUIC connection-level
+        // idle timeout handles liveness, and per-stream idle handlers would fire independently
+        // (even while the QUIC connection is active) and send stream:error on the wrong stream.
+        // Per XEP-0467 §3.2, stream errors MUST go on stream id=0 only; removing these handlers
+        // here is simpler and more correct than trying to re-route their output.
+        if (ctx.pipeline().get("idleStateHandler") != null) {
+            ctx.pipeline().remove("idleStateHandler");
+        }
+        if (ctx.pipeline().get("keepAliveHandler") != null) {
+            ctx.pipeline().remove("keepAliveHandler");
+        }
+
         final QuicClientStanzaHandler handler = (QuicClientStanzaHandler) ctx.channel().attr(HANDLER).get();
         if (handler != null) {
             handler.initAsAuxStream(existingSession);

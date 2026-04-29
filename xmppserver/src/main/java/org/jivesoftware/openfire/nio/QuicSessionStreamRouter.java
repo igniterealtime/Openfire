@@ -347,7 +347,13 @@ public class QuicSessionStreamRouter
         streamAssignmentsByFromBareJid.entrySet().removeIf(entry -> entry.getValue() == streamChannel);
     }
 
-    private QuicStreamChannel getPrimaryStream()
+    /**
+     * Returns the primary (stream id 0) QuicStreamChannel for this connection, or {@code null}
+     * if no primary stream is currently active. Per XEP-0467 §3.2 top-level non-stanza elements
+     * (stream errors, CSI toggles, &lt;proceed/&gt;-style framing, etc.) MUST be sent on stream id 0
+     * only; callers that need to deliver such elements should route them through this stream.
+     */
+    public QuicStreamChannel getPrimaryStream()
     {
         final NettyConnection primary = primaryInboundConnection;
         if (primary == null || !(primary.getChannel() instanceof QuicStreamChannel stream)) {

@@ -357,6 +357,21 @@ public class NettyConnection extends AbstractConnection
     public void deliverRawText(String text) {
         if (!isClosed()) {
             Log.trace("Sending: {}", text);
+            // Per XEP-0467 §3.2, top-level non-stanza elements (stream errors, framing, CSI toggles, etc.)
+            // delivered via deliverRawText MUST be sent on QUIC stream id 0 only. If this NettyConnection
+            // belongs to a QUIC session and a stream router is present, route the text to the primary
+            // stream rather than whatever channel this connection currently sits on (which could be an
+            // aux stream).
+            final QuicSessionStreamRouter quicSessionStreamRouter = QuicSessionStreamRouter.find(channelHandlerContext.channel());
+            if (quicSessionStreamRouter != null) {
+                final io.netty.handler.codec.quic.QuicStreamChannel primary = quicSessionStreamRouter.getPrimaryStream();
+                if (primary != null && primary != channelHandlerContext.channel()) {
+                    primary.writeAndFlush(text).addListener(l ->
+                        updateWrittenBytesCounter(channelHandlerContext)
+                    );
+                    return;
+                }
+            }
             channelHandlerContext.writeAndFlush(text).addListener(l ->
                 updateWrittenBytesCounter(channelHandlerContext)
             );

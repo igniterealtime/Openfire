@@ -25,6 +25,8 @@ import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+
 /**
  * C2S business-logic handler for QUIC channels.
  */
@@ -45,6 +47,20 @@ public class QuicClientConnectionHandler extends NettyClientConnectionHandler
         this.streamRouter = streamRouter;
     }
 
+    /**
+     * Disables the application-level idle timeout for QUIC connections.
+     * QUIC has its own transport-level idle timeout ({@code max_idle_timeout}) and keepalive
+     * mechanism; an additional application-level ping/timeout cycle would generate unnecessary
+     * traffic and can fire spuriously (e.g. when the QUIC connection is perfectly healthy but
+     * no XMPP stanzas have been exchanged). Returning a negative value here causes
+     * {@link org.jivesoftware.openfire.spi.QuicConnectionAcceptor} to omit the
+     * {@code IdleStateHandler} and {@code NettyIdleStateKeepAliveHandler} from the pipeline.
+     */
+    @Override
+    public Duration getMaxIdleTime() {
+        return Duration.ofMillis(-1);
+    }
+
     @Override
     public void handlerAdded(final ChannelHandlerContext ctx)
     {
@@ -63,18 +79,6 @@ public class QuicClientConnectionHandler extends NettyClientConnectionHandler
         // Aux stream: proactively initialise without waiting for a client stream-open.
         Log.info("QUIC stream {} classified as AUX (session {} already bound on this QUIC connection); initialising server-side without requiring client <stream:stream>.",
             ctx.channel(), existingSession.getAddress());
-
-        // Aux streams must not have their own idle/keepalive handlers: the QUIC connection-level
-        // idle timeout handles liveness, and per-stream idle handlers would fire independently
-        // (even while the QUIC connection is active) and send stream:error on the wrong stream.
-        // Per XEP-0467 §3.2, stream errors MUST go on stream id=0 only; removing these handlers
-        // here is simpler and more correct than trying to re-route their output.
-        if (ctx.pipeline().get("idleStateHandler") != null) {
-            ctx.pipeline().remove("idleStateHandler");
-        }
-        if (ctx.pipeline().get("keepAliveHandler") != null) {
-            ctx.pipeline().remove("keepAliveHandler");
-        }
 
         final QuicClientStanzaHandler handler = (QuicClientStanzaHandler) ctx.channel().attr(HANDLER).get();
         if (handler != null) {

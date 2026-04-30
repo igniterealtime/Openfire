@@ -212,14 +212,19 @@ public class QuicConnectionAcceptor extends ConnectionAcceptor
 
                         final QuicSessionStreamRouter streamRouter = QuicSessionStreamRouter.getOrCreate(channel.parent(), configuration, blockingHandlerExecutor);
                         final QuicClientConnectionHandler businessLogicHandler = new QuicClientConnectionHandler(configuration, streamRouter);
-                        final Duration maxIdleTimeBeforeClosing = businessLogicHandler.getMaxIdleTime().isNegative()
-                            ? Duration.ZERO
-                            : businessLogicHandler.getMaxIdleTime();
+                        // QUIC connections rely on the transport-level max_idle_timeout for liveness;
+                        // application-level idle checks (XEP-0199 ping / connection-timeout) are disabled
+                        // by QuicClientConnectionHandler.getMaxIdleTime() returning a negative value.
+                        final Duration maxIdleTime = businessLogicHandler.getMaxIdleTime();
+                        final boolean useAppIdleHandler = !maxIdleTime.isNegative();
 
-                        channel.pipeline()
-                            .addLast(TRAFFIC_HANDLER_NAME, new ChannelTrafficShapingHandler(0))
-                            .addLast("idleStateHandler", new IdleStateHandler(maxIdleTimeBeforeClosing.dividedBy(2).toMillis(), 0, 0, TimeUnit.MILLISECONDS))
-                            .addLast("keepAliveHandler", new NettyIdleStateKeepAliveHandler(true))
+                        final io.netty.channel.ChannelPipeline pipeline = channel.pipeline();
+                        pipeline.addLast(TRAFFIC_HANDLER_NAME, new ChannelTrafficShapingHandler(0));
+                        if (useAppIdleHandler) {
+                            pipeline.addLast("idleStateHandler", new IdleStateHandler(maxIdleTime.dividedBy(2).toMillis(), 0, 0, TimeUnit.MILLISECONDS));
+                            pipeline.addLast("keepAliveHandler", new NettyIdleStateKeepAliveHandler(true));
+                        }
+                        pipeline
                             .addLast(new NettyXMPPDecoder())
                             .addLast(new StringEncoder(StandardCharsets.UTF_8))
                             .addLast("stalledSessionHandler", new WriteTimeoutHandler(Math.toIntExact(WRITE_TIMEOUT_SECONDS.getValue().getSeconds())))

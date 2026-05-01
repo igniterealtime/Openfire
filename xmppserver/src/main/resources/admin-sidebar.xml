@@ -80,11 +80,6 @@
                   url="connection-settings-socket-c2s.jsp"
                   description="${sidebar.client-connections-settings.descr}"/>
 
-            <!-- QUIC client connections settings-->
-            <item id="quic-client-connections-settings" name="${sidebar.quic-client-connections-settings}"
-                  url="connection-settings-quic-c2s.jsp"
-                  description="${sidebar.quic-client-connections-settings.descr}"/>
-                  
             <!-- Server to server -->
             <item id="server2server-settings" name="${sidebar.server2server-settings}"
                   url="connection-settings-socket-s2s.jsp"

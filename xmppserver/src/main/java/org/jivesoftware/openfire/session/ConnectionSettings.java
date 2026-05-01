@@ -100,13 +100,16 @@ public final class ConnectionSettings {
             .build();
 
         /**
-         * Maximum number of server-initiated (outbound) QUIC streams per connection used for session multiplexing.
-         * Defaults to 0 (disabled) to avoid advertising more streams than the client permits via
-         * {@link #QUIC_MAX_STREAMS}. Increase only when clients are known to support server-initiated streams.
+         * Maximum number of server-initiated (outbound) QUIC streams per connection used for session
+         * multiplexing. Per XEP-0467 §3.2, traffic that is not to/from the user's own bare JID or the
+         * server's own JID SHOULD be sharded onto auxiliary streams (i.e. streams other than id 0) to
+         * avoid head-of-line blocking on the control stream. The default of 16 leaves headroom for the
+         * control stream and any client-initiated aux streams within the {@link #QUIC_MAX_STREAMS}
+         * budget. Set to 0 to disable server-initiated aux streams entirely (all traffic on stream id 0).
          */
         public static final SystemProperty<Integer> QUIC_MAX_OUTBOUND_STREAMS = SystemProperty.Builder.ofType(Integer.class)
             .setKey("xmpp.quic.client.max-outbound-streams")
-            .setDefaultValue(0)
+            .setDefaultValue(16)
             .setMinValue(0)
             .setDynamic(Boolean.TRUE)
             .build();

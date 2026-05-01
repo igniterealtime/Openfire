@@ -42,9 +42,11 @@ import java.util.ArrayList;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -187,6 +189,17 @@ public class QuicSessionStreamRouter
     /**
      * Chooses or opens a non-primary stream. Returns null (and queues the stanza) when an async
      * stream open has been initiated.
+     *
+     * <p>Selection policy (in order):</p>
+     * <ol>
+     *   <li>Prefer an <em>unallocated</em> client-initiated (inbound) stream — these were already
+     *       opened by the client and cost nothing to reuse, so we should consume them before
+     *       paying the cost (and stream-credit budget) of a server-initiated open.</li>
+     *   <li>Otherwise prefer an unallocated server-initiated (outbound) stream we previously opened.</li>
+     *   <li>Otherwise try to open a new server-initiated stream asynchronously.</li>
+     *   <li>Otherwise reuse an already-allocated non-primary stream round-robin.</li>
+     *   <li>As a last resort, fall back to the primary stream.</li>
+     * </ol>
      */
     private QuicStreamChannel chooseNonPrimaryStream(final QuicStreamChannel primaryStream, final String fromBareJid, final String serializedStanza)
     {
@@ -196,6 +209,21 @@ public class QuicSessionStreamRouter
             return null;
         }
 
+        // 1 + 2: prefer any currently-unallocated non-primary stream (inbound first, then outbound).
+        final QuicStreamChannel unallocated = pickUnallocatedNonPrimaryStream(primaryStream);
+        if (unallocated != null) {
+            streamAssignmentsByFromBareJid.put(fromBareJid, unallocated);
+            return unallocated;
+        }
+
+        // 3: try to open a new server-initiated stream.
+        final boolean opening = openOutboundStreamAsync(fromBareJid);
+        if (opening) {
+            pendingStanzas.add(serializedStanza);
+            return null;
+        }
+
+        // 4: reuse an already-allocated non-primary stream round-robin.
         final List<QuicStreamChannel> candidates = activeNonPrimaryStreams(primaryStream);
         if (!candidates.isEmpty()) {
             final QuicStreamChannel selected = chooseRoundRobin(candidates);
@@ -203,15 +231,44 @@ public class QuicSessionStreamRouter
             return selected;
         }
 
-        // Try to open a new stream asynchronously.
-        final boolean opening = openOutboundStreamAsync(fromBareJid);
-        if (opening) {
-            pendingStanzas.add(serializedStanza);
-            return null;
+        // 5: fall back to primary.
+        return primaryStream;
+    }
+
+    /**
+     * Returns an active non-primary stream that has no current {@link #streamAssignmentsByFromBareJid}
+     * mapping pointing at it, or {@code null} if every active non-primary stream is already in use.
+     * Client-initiated (inbound) streams are preferred over server-initiated (outbound) streams.
+     */
+    private QuicStreamChannel pickUnallocatedNonPrimaryStream(final QuicStreamChannel primaryStream)
+    {
+        final Set<QuicStreamChannel> assigned = new HashSet<>(streamAssignmentsByFromBareJid.values());
+
+        // Inbound (client-initiated) first.
+        for (final NettyConnection connection : inboundConnections) {
+            final Channel channel = connection.getChannel();
+            if (!(channel instanceof QuicStreamChannel stream)) {
+                continue;
+            }
+            if (stream == primaryStream || !stream.isActive()) {
+                continue;
+            }
+            if (!assigned.contains(stream)) {
+                return stream;
+            }
         }
 
-        // Could not open a new stream; fall back to primary.
-        return primaryStream;
+        // Then outbound (server-initiated).
+        for (final QuicStreamChannel stream : outboundChannels) {
+            if (!stream.isActive()) {
+                continue;
+            }
+            if (!assigned.contains(stream)) {
+                return stream;
+            }
+        }
+
+        return null;
     }
 
     private List<QuicStreamChannel> activeNonPrimaryStreams(final QuicStreamChannel primaryStream)

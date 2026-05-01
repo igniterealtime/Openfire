@@ -29,8 +29,15 @@
     errorPage="error.jsp"
 %>
 <%@ page import="org.jivesoftware.openfire.nio.NettyConnection" %>
+<%@ page import="org.jivesoftware.openfire.nio.QuicSessionStreamRouter" %>
+<%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.openfire.websocket.WebSocketConnection" %>
 <%@ page import="org.jivesoftware.openfire.http.HttpSession" %>
+<%@ page import="io.netty.handler.codec.quic.QuicChannel" %>
+<%@ page import="io.netty.handler.codec.quic.QuicConnectionStats" %>
+<%@ page import="io.netty.handler.codec.quic.QuicConnectionPathStats" %>
+<%@ page import="io.netty.handler.codec.quic.QuicStreamType" %>
+<%@ page import="java.util.concurrent.TimeUnit" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.TreeMap" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
@@ -360,6 +367,10 @@
                     <td>
                     <% if (s.isDetached()) {
                     %><fmt:message key="session.details.sm-detached"/><%
+                    } else if (s.getConnection() instanceof NettyConnection
+                        && s.getConnection().getConfiguration() != null
+                        && s.getConnection().getConfiguration().getType() == ConnectionType.QUIC_C2S) {
+                    %>QUIC<%
                     } else if (s.getConnection() instanceof NettyConnection) {
                     %>TCP<%
                     } else if (s.getConnection() instanceof WebSocketConnection) {
@@ -407,6 +418,97 @@
             </tbody>
         </table>
     </div>
+
+    <%
+        // QUIC details panel: only when this session is on a QUIC connection.
+        QuicSessionStreamRouter quicRouter = null;
+        QuicConnectionStats quicStats = null;
+        QuicConnectionPathStats quicPathStats = null;
+        long quicPeerBidiCredits = -1;
+        if (currentSess instanceof LocalClientSession) {
+            LocalClientSession s = (LocalClientSession) currentSess;
+            if (!s.isDetached()
+                && s.getConnection() instanceof NettyConnection
+                && s.getConnection().getConfiguration() != null
+                && s.getConnection().getConfiguration().getType() == ConnectionType.QUIC_C2S) {
+                final NettyConnection nc = (NettyConnection) s.getConnection();
+                quicRouter = QuicSessionStreamRouter.find(nc.getChannel());
+                final QuicChannel qc = quicRouter != null ? quicRouter.getQuicChannel() : null;
+                if (qc != null) {
+                    try { quicPeerBidiCredits = qc.peerAllowedStreams(QuicStreamType.BIDIRECTIONAL); } catch (Throwable ignored) {}
+                    try { quicStats = qc.collectStats().get(250, TimeUnit.MILLISECONDS); } catch (Throwable ignored) {}
+                    try { quicPathStats = qc.collectPathStats(0).get(250, TimeUnit.MILLISECONDS); } catch (Throwable ignored) {}
+                }
+            }
+        }
+        if (quicRouter != null) {
+    %>
+
+    <br>
+
+    <div class="jive-table">
+        <table style="width: 100%">
+            <thead>
+                <tr>
+                    <th colspan="2"><fmt:message key="session.details.quic.title"/></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="c1"><fmt:message key="session.details.quic.streams"/>:</td>
+                    <td>
+                        <%= quicRouter.getInboundStreamCount() %> client-opened,
+                        <%= quicRouter.getOutboundStreamCount() %> server-opened
+                        (primary stream id <%= quicRouter.getPrimaryStreamId() %>;
+                        <%= quicRouter.getActiveStreamAssignmentCount() %> remote bare-JID(s) mapped to non-primary streams)
+                    </td>
+                </tr>
+                <tr>
+                    <td class="c1"><fmt:message key="session.details.quic.peer-credits"/>:</td>
+                    <td>
+                        <%= quicPeerBidiCredits >= 0 ? String.valueOf(quicPeerBidiCredits) : "(unavailable)" %>
+                    </td>
+                </tr>
+                <% if (quicPathStats != null) { %>
+                <tr>
+                    <td class="c1"><fmt:message key="session.details.quic.rtt"/>:</td>
+                    <td>
+                        <%= String.format("%.1f ms", quicPathStats.rtt() / 1_000_000.0) %>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="c1"><fmt:message key="session.details.quic.cwnd"/>:</td>
+                    <td>
+                        <%= numFormatter.format(quicPathStats.cwnd()) %> bytes
+                        (PMTU <%= numFormatter.format(quicPathStats.pmtu()) %> bytes,
+                        delivery rate <%= numFormatter.format(quicPathStats.deliveryRate()) %> bytes/s)
+                    </td>
+                </tr>
+                <% } %>
+                <% if (quicStats != null) { %>
+                <tr>
+                    <td class="c1"><fmt:message key="session.details.quic.packets"/>:</td>
+                    <td>
+                        sent <%= numFormatter.format(quicStats.sent()) %>,
+                        received <%= numFormatter.format(quicStats.recv()) %>,
+                        lost <%= numFormatter.format(quicStats.lost()) %>,
+                        retransmitted <%= numFormatter.format(quicStats.retrans()) %>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="c1"><fmt:message key="session.details.quic.bytes"/>:</td>
+                    <td>
+                        sent <%= numFormatter.format(quicStats.sentBytes()) %>,
+                        received <%= numFormatter.format(quicStats.recvBytes()) %>,
+                        lost <%= numFormatter.format(quicStats.lostBytes()) %>
+                    </td>
+                </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+
+    <% } %>
 
     <br>
 

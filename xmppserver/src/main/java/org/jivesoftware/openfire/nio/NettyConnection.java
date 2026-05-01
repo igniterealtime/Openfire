@@ -104,7 +104,7 @@ public class NettyConnection extends AbstractConnection
         return channelHandlerContext.channel().remoteAddress();
     }
 
-    Channel getChannel()
+    public Channel getChannel()
     {
         return channelHandlerContext.channel();
     }

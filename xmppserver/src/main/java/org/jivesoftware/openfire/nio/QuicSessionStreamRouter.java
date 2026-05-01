@@ -125,6 +125,52 @@ public class QuicSessionStreamRouter
         return session;
     }
 
+    /**
+     * Returns the underlying QUIC connection. Used by the admin UI to surface link-quality stats.
+     */
+    public QuicChannel getQuicChannel()
+    {
+        return quicChannel;
+    }
+
+    /**
+     * Number of client-initiated (inbound) QUIC streams currently associated with this session.
+     */
+    public synchronized int getInboundStreamCount()
+    {
+        return inboundConnections.size();
+    }
+
+    /**
+     * Number of server-initiated (outbound) QUIC streams currently associated with this session.
+     */
+    public synchronized int getOutboundStreamCount()
+    {
+        return outboundChannels.size();
+    }
+
+    /**
+     * Number of distinct remote bare-JIDs currently mapped to a non-primary stream.
+     */
+    public synchronized int getActiveStreamAssignmentCount()
+    {
+        return streamAssignmentsByFromBareJid.size();
+    }
+
+    /**
+     * Returns the QUIC stream id of the primary (control) stream, or -1 if none has been bound yet.
+     */
+    public synchronized long getPrimaryStreamId()
+    {
+        if (primaryInboundConnection == null) {
+            return -1;
+        }
+        if (primaryInboundConnection.getChannel() instanceof QuicStreamChannel streamChannel) {
+            return streamChannel.streamId();
+        }
+        return -1;
+    }
+
     public synchronized void bindPrimarySession(final LocalClientSession session, final NettyConnection primaryConnection)
     {
         if (this.session == null) {

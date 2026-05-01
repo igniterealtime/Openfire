@@ -24,7 +24,6 @@ import io.netty.handler.codec.quic.QuicStreamChannel;
 import io.netty.handler.codec.quic.QuicStreamType;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.timeout.IdleStateHandler;
-import io.netty.handler.timeout.WriteTimeoutHandler;
 import io.netty.handler.traffic.ChannelTrafficShapingHandler;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.EventExecutorGroup;
@@ -32,7 +31,6 @@ import io.netty.util.concurrent.Future;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
-import org.jivesoftware.openfire.spi.QuicConnectionAcceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -281,7 +279,9 @@ public class QuicSessionStreamRouter
                         .addLast("keepAliveHandler", new NettyIdleStateKeepAliveHandler(true))
                         .addLast(new NettyXMPPDecoder())
                         .addLast(new StringEncoder(StandardCharsets.UTF_8))
-                        .addLast("stalledSessionHandler", new WriteTimeoutHandler(Math.toIntExact(QuicConnectionAcceptor.WRITE_TIMEOUT_SECONDS.getValue().getSeconds())))
+                        // No WriteTimeoutHandler on QUIC streams: QUIC liveness is the transport's
+                        // max_idle_timeout; an app-level write timeout would disconnect slow but
+                        // healthy clients. See QuicConnectionAcceptor for the matching rationale.
                         .addLast(new ChannelInboundHandlerAdapter()
                         {
                             @Override

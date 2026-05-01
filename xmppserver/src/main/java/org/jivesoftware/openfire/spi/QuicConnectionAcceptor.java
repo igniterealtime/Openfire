@@ -37,7 +37,6 @@ import io.netty.handler.codec.quic.QuicStreamType;
 import io.netty.handler.codec.quic.InsecureQuicTokenHandler;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.timeout.IdleStateHandler;
-import io.netty.handler.timeout.WriteTimeoutHandler;
 import io.netty.handler.traffic.ChannelTrafficShapingHandler;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
@@ -227,7 +226,13 @@ public class QuicConnectionAcceptor extends ConnectionAcceptor
                         pipeline
                             .addLast(new NettyXMPPDecoder())
                             .addLast(new StringEncoder(StandardCharsets.UTF_8))
-                            .addLast("stalledSessionHandler", new WriteTimeoutHandler(Math.toIntExact(WRITE_TIMEOUT_SECONDS.getValue().getSeconds())))
+                            // Note: WriteTimeoutHandler intentionally NOT added on QUIC streams. Unlike a TCP
+                            // socket, a QUIC stream may legitimately hold a write for tens of seconds on a
+                            // congested or high-latency/lossy link while the QUIC layer paces, retransmits and
+                            // honours flow / congestion control. Liveness is handled by the QUIC transport's
+                            // max_idle_timeout (see QUIC_IDLE_TIMEOUT_PROPERTY) and quiche's loss-detection /
+                            // PTO machinery. An app-level write timeout here would just disconnect slow but
+                            // healthy clients (per XEP-0467 §2 #8).
                             .addLast(new ChannelInboundHandlerAdapter()
                             {
                                 @Override

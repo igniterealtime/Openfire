@@ -611,6 +611,7 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
             phaser.register();
 
             final SocketProcessor sslSocketProcessor = new SocketProcessor(sslSocket);
+            sslSocketProcessor.allowableSocketTimeouts = 10; // TLS exchanges can be slow on loaded CI runners; allow retries rather than dying on a single timeout.
             processingService.submit(sslSocketProcessor);
         }
 

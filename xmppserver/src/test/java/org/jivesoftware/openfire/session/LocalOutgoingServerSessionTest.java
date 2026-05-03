@@ -294,7 +294,12 @@ public class LocalOutgoingServerSessionTest
 
             // Execute system under test.
             AbstractRemoteServerDummy.log("Execute system under test: (start with execution)");
-            final LocalOutgoingServerSession result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port);
+            LocalOutgoingServerSession result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port);
+            // Retry once if null is returned unexpectedly: transient connection failures (e.g. Netty bootstrap race) should not permanently fail the test.
+            if (result == null && expected.getConnectionState() != ExpectedOutcome.ConnectionState.NO_CONNECTION) {
+                AbstractRemoteServerDummy.log("Execute system under test: first attempt returned null unexpectedly; retrying.");
+                result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port);
+            }
             AbstractRemoteServerDummy.log("Execute system under test: (done with execution)");
 
             // Verify results

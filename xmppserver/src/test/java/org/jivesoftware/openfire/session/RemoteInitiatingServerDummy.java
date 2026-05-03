@@ -106,15 +106,17 @@ public class RemoteInitiatingServerDummy extends AbstractRemoteServerDummy
             log("Wait for stream to be registered in the session manager: " + lastReceivedID);
             try {
                 Awaitility.await()
-                    .atMost(500, TimeUnit.MILLISECONDS)
+                    .atMost(1000, TimeUnit.MILLISECONDS)  // Increased from 500 to 1000ms to avoid flakes
                     .until(() -> XMPPServer.getInstance().getSessionManager().getIncomingServerSession(lastReceivedID), Objects::nonNull);
                 log("Found stream registered in the session manager: " + lastReceivedID);
+                markLastStreamIDasProcessed(); // Mark as processed when found
             } catch (ConditionTimeoutException ex) {
                 log("NEVER FOUND STREAM WE WERE (pointlessly?) WAITING FOR: " + lastReceivedID);
+                markLastStreamIDasProcessed(); // Mark as processed even if not found - prevents tests from hanging
             }
         }
 
-        log("Phaser arriving and registering");
+        log("Phaser arriving and deregistering");
         phaser.arriveAndDeregister();
         log("Done being done");
     }

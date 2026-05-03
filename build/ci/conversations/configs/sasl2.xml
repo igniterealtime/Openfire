@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jive>
+  <adminConsole>
+      <port>9090</port>
+      <securePort>9091</securePort>
+  </adminConsole>
+  <connectionProvider>
+    <className>org.jivesoftware.database.EmbeddedConnectionProvider</className>
+  </connectionProvider>
+  <autosetup>
+      <run>true</run>
+      <locale>en</locale>
+      <xmpp>
+          <auth>
+              <anonymous>true</anonymous>
+          </auth>
+          <domain>example.org</domain>
+          <fqdn>example.org</fqdn>
+      </xmpp>
+      <database>
+          <mode>embedded</mode>
+      </database>
+      <admin>
+          <email>admin@example.com</email>
+          <password>admin</password>
+      </admin>
+      <users>
+          <user1>
+              <username>john</username>
+              <password>secret</password>
+              <name>John Doe</name>
+              <email>john.doe@example.com</email>
+              <roster>
+                  <item1>
+                      <jid>jane@example.org</jid>
+                      <nickname>Jane</nickname>
+                  </item1>
+                  <item2>
+                      <jid>juan@example.org</jid>
+                      <nickname>Juan</nickname>
+                  </item2>
+              </roster>
+          </user1>
+          <user2>
+              <username>jane</username>
+              <password>secret</password>
+              <name>Jane Doe</name>
+              <email>jane.doe@example.com</email>
+              <roster>
+                  <item1>
+                      <jid>john@example.org</jid>
+                      <nickname>John</nickname>
+                  </item1>
+                  <item2>
+                      <jid>juan@example.org</jid>
+                      <nickname>Juan</nickname>
+                  </item2>
+              </roster>
+          </user2>
+          <user3>
+              <username>juan</username>
+              <password>secret</password>
+              <name>Juan Doe</name>
+              <email>juan.doe@example.com</email>
+              <roster>
+                  <item1>
+                      <jid>john@example.org</jid>
+                      <nickname>John</nickname>
+                  </item1>
+                  <item2>
+                      <jid>jane@example.org</jid>
+                      <nickname>Jane</nickname>
+                  </item2>
+              </roster>
+          </user3>
+      </users>
+  </autosetup>
+  <properties>
+    <!-- TODO: Add SASL2-enabling system properties here. -->
+    <!-- These are likely defined in the SASL2 plugin or as xmpp.auth.* core properties. -->
+  </properties>
+</jive>

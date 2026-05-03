@@ -1,0 +1,65 @@
+name: 'Run Conversations Maestro Tests'
+description: >
+  Runs the Maestro UI test suite for Conversations against an Openfire instance.
+  Requires Openfire running on the host with domain example.org and user jane/secret —
+  the Android emulator reaches the host at 10.0.2.2.
+
+inputs:
+  includeTags:
+    description: 'Comma-separated Maestro tag filter (--include-tags). Runs all flows if omitted.'
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Java 17
+      uses: actions/setup-java@v5
+      with:
+        distribution: temurin
+        java-version: '17'
+
+    - name: Install Maestro CLI
+      shell: bash
+      run: |
+        curl -Ls "https://get.maestro.mobile.dev" | bash
+        echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
+
+    - name: Enable KVM group perms
+      shell: bash
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+
+    - name: Run Android emulator and tests
+      uses: reactivecircus/android-emulator-runner@v2
+      with:
+        api-level: 34
+        arch: x86_64
+        profile: Nexus 6
+        script: ${{ github.action_path }}/run-tests.sh ${{ inputs.includeTags }}
+
+    - name: Upload ADB logcat on failure
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: adb-logcat
+        path: adb_logcat.log
+        retention-days: 7
+
+    - name: Upload sidecar log on failure
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: sidecar-log
+        path: ${{ runner.temp }}/sidecar.log
+        retention-days: 7
+
+    - name: Upload maestro artifacts on failure
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: maestro-logs
+        path: ~/.maestro/tests
+        retention-days: 7
+        include-hidden-files: true

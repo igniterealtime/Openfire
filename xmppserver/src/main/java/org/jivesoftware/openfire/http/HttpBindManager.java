@@ -176,6 +176,16 @@ public final class HttpBindManager implements CertificateEventListener {
         .setDefaultValue(false)
         .build();
 
+
+    /**
+     * The HTTP header name for 'forwarded' (per RFC 7239).
+     */
+    public static final SystemProperty<String> HTTP_BIND_FORWARDED_HEADER = SystemProperty.Builder.ofType(String.class)
+        .setKey("httpbind.forwarded.header")
+        .setDynamic(false) // TODO This can easily be made dynamic with <tt>.addListener(HttpBindManager.getInstance()::restartServer)</tt>. Existing implementation was not dynamic. Should it?
+        .setDefaultValue(HttpHeader.FORWARDED.toString())
+        .build();
+
     /**
      * The HTTP header name for 'forwarded for'
      */
@@ -562,6 +572,11 @@ public final class HttpBindManager implements CertificateEventListener {
         // Refer to http://eclipse.org/jetty/documentation/current/configuring-connectors.html
         if (HTTP_BIND_FORWARDED.getValue()) {
             ForwardedRequestCustomizer customizer = new ForwardedRequestCustomizer();
+            // default: "Forwarded"
+            String forwardedHeader = HTTP_BIND_FORWARDED_HEADER.getValue();
+            if (forwardedHeader != null) {
+                customizer.setForwardedHeader(forwardedHeader);
+            }
             // default: "X-Forwarded-For"
             String forwardedForHeader = HTTP_BIND_FORWARDED_FOR.getValue();
             if (forwardedForHeader != null) {

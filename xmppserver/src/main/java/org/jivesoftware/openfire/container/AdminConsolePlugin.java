@@ -84,6 +84,16 @@ public class AdminConsolePlugin implements Plugin {
         .build();
 
     /**
+     * The HTTP header name for 'forwarded' (per RFC 7239).
+     */
+    public static final SystemProperty<String> ADMIN_CONSOLE_FORWARDED_HEADER = SystemProperty.Builder.ofType(String.class)
+        .setKey("adminConsole.forwarded.header")
+        .setDynamic(false)
+        .setDefaultValue(HttpHeader.FORWARDED.toString())
+        .addListener(enabled -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
+        .build();
+
+    /**
      * The HTTP header name for 'forwarded for'
      */
     public static final SystemProperty<String> ADMIN_CONSOLE_FORWARDED_FOR = SystemProperty.Builder.ofType(String.class)
@@ -435,6 +445,11 @@ public class AdminConsolePlugin implements Plugin {
         // Refer to http://eclipse.org/jetty/documentation/current/configuring-connectors.html
         if (ADMIN_CONSOLE_FORWARDED.getValue()) {
             ForwardedRequestCustomizer customizer = new ForwardedRequestCustomizer();
+            // default: "Forwarded"
+            String forwardedHeader = ADMIN_CONSOLE_FORWARDED_HEADER.getValue();
+            if (forwardedHeader != null) {
+                customizer.setForwardedHeader(forwardedHeader);
+            }
             // default: "X-Forwarded-For"
             String forwardedForHeader = ADMIN_CONSOLE_FORWARDED_FOR.getValue();
             if (forwardedForHeader != null) {

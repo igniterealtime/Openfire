@@ -106,6 +106,6 @@ public class ConnectivityTest
         }
 
         // Verify result.
-        Assertions.assertTrue(iterations >= result * .9, "Expected all TCP connection attempts to result in an authenticated session, but not all did."); // FIXME make this an _exact_ comparison after stability of the BOSH connectivity is achieved.
+        Assertions.assertEquals(iterations, result, "Expected all TCP connection attempts to result in an authenticated session, but not all did.");
     }
 }

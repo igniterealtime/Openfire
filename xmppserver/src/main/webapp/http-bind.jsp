@@ -96,6 +96,13 @@
                     HttpBindManager.HTTP_BIND_ALLOWED_ORIGINS.setValue(update);
                     HttpBindManager.HTTP_BIND_FORWARDED.setValue(isXFFEnabled);
 
+                final String fHeader = ParamUtils.getParameter( request, "FHeader" );
+                if (fHeader == null || fHeader.trim().isEmpty()) {
+                    HttpBindManager.HTTP_BIND_FORWARDED_HEADER.setValue(null);
+                } else {
+                    HttpBindManager.HTTP_BIND_FORWARDED_HEADER.setValue(fHeader.trim());
+                }
+
                     final String xffHeader = ParamUtils.getParameter(request, "XFFHeader");
                     if (xffHeader == null || xffHeader.trim().isEmpty()) {
                         HttpBindManager.HTTP_BIND_FORWARDED_FOR.setValue(null);
@@ -197,6 +204,7 @@
             $("rb07").disabled = !enabled;
             $("rb08").disabled = !enabled;
             $("CORSDomains").disabled = !enabled;
+            $("FHeader").disabled = !enabled;
             $("XFFHeader").disabled = !enabled;
             $("XFFServerHeader").disabled = !enabled;
             $("XFFHostHeader").disabled = !enabled;
@@ -366,6 +374,10 @@
                 <td>
                     <label for="rb07"><b><fmt:message key="httpbind.settings.xff.label_enable"/></b> - <fmt:message key="httpbind.settings.xff.label_enable_info"/></label>
                     <table>
+                        <tr>
+                            <td><label for="FHeader"><fmt:message key="httpbind_settings.xff.forwarded"/></label></td>
+                            <td><input id="FHeader" type="text" size="40" name="FHeader" value="${fn:escapeXml(HttpBindManager.HTTP_BIND_FORWARDED_HEADER.value == null ? "" : HttpBindManager.HTTP_BIND_FORWARDED_HEADER.value)}"></td>
+                        </tr>
                         <tr>
                             <td><label for="XFFHeader"><fmt:message key="httpbind.settings.xff.forwarded_for"/></label></td>
                             <td><input id="XFFHeader" type="text" size="40" name="XFFHeader" value="${fn:escapeXml(HttpBindManager.HTTP_BIND_FORWARDED_FOR.value == null ? "" : HttpBindManager.HTTP_BIND_FORWARDED_FOR.value)}"></td>

@@ -144,6 +144,13 @@
                 {
                     AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED.setValue( isXFFEnabled );
 
+                    final String fHeader = ParamUtils.getParameter( request, "FHeader" );
+                    if (fHeader == null || fHeader.trim().isEmpty()) {
+                        AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_HEADER.setValue(null);
+                    } else {
+                        AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_HEADER.setValue(fHeader.trim());
+                    }
+
                     final String xffHeader = ParamUtils.getParameter( request, "XFFHeader" );
                     if (xffHeader == null || xffHeader.trim().isEmpty()) {
                         AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_FOR.setValue(null);
@@ -175,7 +182,7 @@
                     AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_TRUSTED_PROXIES.setValue(newTrustedProxies);
 
                     // Log the event
-                    webManager.logEvent("Updated Admin Console access configuration (X-Forwarded-For).", "X-Forwarded-For enabled: " + isXFFEnabled + "\nHeader: " + xffHeader + "\nServer Header: " + xffServerHeader + "\nHost Name: " + name + "\nTrusted proxies: " + (newTrustedProxies == null || newTrustedProxies.isEmpty() ? "(none)" : String.join(", ", newTrustedProxies)));
+                    webManager.logEvent("Updated Admin Console access configuration (Forwarded).", "X-Forwarded-For enabled: " + isXFFEnabled + "\nRFC-Header: " + fHeader + "\nLegacy Header: " + xffHeader + "\nServer Header: " + xffServerHeader + "\nHost Name: " + name + "\nTrusted proxies: " + (newTrustedProxies == null || newTrustedProxies.isEmpty() ? "(none)" : String.join(", ", newTrustedProxies)));
                     response.sendRedirect("system-admin-console-access.jsp?success=true");
                     return;
                 }
@@ -396,6 +403,10 @@
                 <td>
                     <label for="rb07"><b><fmt:message key="system.admin.console.xff.label_enable"/></b> - <fmt:message key="system.admin.console.xff.label_enable_info"/></label>
                     <table>
+                        <tr>
+                            <td><label for="FHeader"><fmt:message key="system.admin.console.xff.forwarded"/></label></td>
+                            <td><input id="FHeader" type="text" size="40" name="FHeader" value="${fn:escapeXml(AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_HEADER.value == null ? "" : AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_HEADER.value)}"></td>
+                        </tr>
                         <tr>
                             <td><label for="XFFHeader"><fmt:message key="system.admin.console.xff.forwarded_for"/></label></td>
                             <td><input id="XFFHeader" type="text" size="40" name="XFFHeader" value="${fn:escapeXml(AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_FOR.value == null ? "" : AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_FOR.value)}"></td>

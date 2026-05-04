@@ -7,7 +7,6 @@ SIDECAR_JAR="$WORK_DIR/maestro-logcat-sidecar-${SIDECAR_VERSION}.jar"
 SIDECAR_URL="https://github.com/Fishbowler/maestro-logcat-sidecar/releases/download/v${SIDECAR_VERSION}/maestro-logcat-sidecar-${SIDECAR_VERSION}.jar"
 PID_FILE="$WORK_DIR/.sidecar.pid"
 LOG_FILE="$WORK_DIR/sidecar.log"
-PORT="${PORT:-17777}"
 LOGCAT_TAGS="${LOGCAT_TAGS:-conversations:V *:S}"
 
 if [ ! -f "$SIDECAR_JAR" ]; then
@@ -15,13 +14,15 @@ if [ ! -f "$SIDECAR_JAR" ]; then
     curl -fsSL -o "$SIDECAR_JAR" "$SIDECAR_URL"
 fi
 
-LOGCAT_TAGS="$LOGCAT_TAGS" java -jar "$SIDECAR_JAR" >"$LOG_FILE" 2>&1 &
+LOGCAT_TAGS="$LOGCAT_TAGS" \
+  java -jar "$SIDECAR_JAR" >"$LOG_FILE" 2>&1 &
+
 SIDECAR_PID=$!
 echo "$SIDECAR_PID" >"$PID_FILE"
 
 for _ in $(seq 1 30); do
-    if curl -sf "http://localhost:${PORT}/health" >/dev/null 2>&1; then
-        echo "Sidecar ready on port ${PORT}"
+    if curl -sf "http://localhost:17777/health" >/dev/null 2>&1; then
+        echo "Sidecar ready on port 17777"
         exit 0
     fi
     sleep 0.5

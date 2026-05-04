@@ -6,8 +6,8 @@ description: >
 
 inputs:
   includeTags:
-    description: 'Comma-separated Maestro tag filter (--include-tags). Runs all flows if omitted.'
-    required: false
+    description: 'Comma-separated Maestro tag filter (--include-tags). Required: suites use incompatible Openfire configurations and must not be mixed.'
+    required: true
 
 runs:
   using: composite

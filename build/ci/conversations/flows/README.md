@@ -31,7 +31,7 @@ Build the distribution and start the server.
 
 The `demoboot` flows need no extra configuration beyond launching Openfire with `-demoboot`.
 For flows with a specific config, copy the matching file from `build/ci/conversations/configs/`
-into your distribution's `conf/` directory as `openfire.xml` before starting demoboot mode.
+into your distribution's `conf/` directory as `openfire-demoboot.xml` before starting demoboot mode.
 
 ### 2. Start an Android emulator
 
@@ -74,7 +74,7 @@ directly (e.g. for flow authoring), start and stop the sidecar yourself:
 
 `start-sidecar-api.sh` downloads the sidecar JAR from GitHub Releases (if not already
 cached), starts it in the background, and polls `GET /health` until it responds.
-Logs are written to `/tmp/sidecar.log`.
+Logs are written to `/tmp/sidecar.log` (or `$RUNNER_TEMP/sidecar.log` in GitHub Actions).
 
 To pin a specific sidecar version:
 ```bash
@@ -96,8 +96,7 @@ for the full API reference.
 
 | Variable | Default | Effect |
 |----------|---------|--------|
-| `PORT` | `17777` | HTTP port the sidecar listens on |
-| `LOGCAT_TAGS` | `Conversations:* *:S` | Tags passed to `adb logcat`. Space-separated. |
+| `LOGCAT_TAGS` | `conversations:V *:S` | Tags passed to `adb logcat`. Space-separated. |
 | `SIDECAR_VERSION` | `1.0.0` | Which release of maestro-logcat-sidecar to download |
 
 The `LOGCAT_TAGS` default filters to Conversations output only — override to capture additional tags if needed.

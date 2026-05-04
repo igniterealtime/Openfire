@@ -1,4 +1,4 @@
-const pattern = PATTERN;
+const pattern = typeof PATTERN !== 'undefined' ? PATTERN : undefined;
 if (!pattern) throw new Error('PATTERN env var is required');
 
 const res = http.get('http://localhost:17777/assert?pattern=' + encodeURIComponent(pattern));

@@ -29,4 +29,6 @@ for _ in $(seq 1 30); do
 done
 
 echo "ERROR: sidecar did not become ready within 15 seconds. Check $LOG_FILE" >&2
+kill "$SIDECAR_PID" 2>/dev/null || true
+rm -f "$PID_FILE"
 exit 1

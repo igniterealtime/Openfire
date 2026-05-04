@@ -142,7 +142,7 @@
                         AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_SERVER.setValue(xffServerHeader.trim());
                     }
 
-                    final String xffHostHeader = ParamUtils.getParameter( request, "xffHostHeader" );
+                    final String xffHostHeader = ParamUtils.getParameter( request, "XFFHostHeader" );
                     if (xffHostHeader == null || xffHostHeader.trim().isEmpty()) {
                         AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_HOST.setValue(null);
                     } else {

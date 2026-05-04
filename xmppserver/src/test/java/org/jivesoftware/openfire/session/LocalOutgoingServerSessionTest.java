@@ -119,7 +119,6 @@ public class LocalOutgoingServerSessionTest
     @BeforeEach
     public void setUpEach() throws Exception {
         final XMPPServer xmppServer = Fixtures.mockXMPPServer();
-        XMPPServer.setInstance(xmppServer);
         final File tmpDir = new File(System.getProperty("java.io.tmpdir"));
 
         // Use a temporary file to hold the identity store that is used by the tests.
@@ -148,6 +147,9 @@ public class LocalOutgoingServerSessionTest
         doReturn(connectionListener).when(connectionManager).getListener(any(ConnectionType.class), anyBoolean());
         doReturn(connectionManager).when(xmppServer).getConnectionManager();
         doReturn(routingTable).when(xmppServer).getRoutingTable();
+
+        // Expose the singleton only after stubs are ready: lingering Netty threads from the prior test call getInstance() during cleanup, racing stub setup and corrupting Mockito's InvocationContainerImpl.
+        XMPPServer.setInstance(xmppServer);
 
         setUp();
     }

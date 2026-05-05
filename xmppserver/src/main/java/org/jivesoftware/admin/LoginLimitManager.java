@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2009 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2009 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class LoginLimitManager {
     public static final SystemProperty<Long> MAX_ATTEMPTS_PER_IP = SystemProperty.Builder.ofType(Long.class)
         .setKey("adminConsole.maxAttemptsPerIP")
         .setDynamic(true)
-        .setDefaultValue(10L)
+        .setDefaultValue(40L)
         .setMinValue(1L)
         .build();
 
@@ -86,10 +86,33 @@ public class LoginLimitManager {
         .setMinValue(Duration.ofMillis(1))
         .build();
 
+    // Max number of attempts per username/address combination that can be performed in a given time frame
+    public static final SystemProperty<Long> MAX_ATTEMPTS_PER_PAIR = SystemProperty.Builder.ofType(Long.class)
+        .setKey("adminConsole.maxAttemptsPerUsernameAddressPair")
+        .setDynamic(true)
+        .setDefaultValue(10L)
+        .setMinValue(1L)
+        .build();
+
+    // Time frame before attempts per username/address combination are reset
+    public static final SystemProperty<Duration> PER_PAIR_ATTEMPT_RESET_INTERVAL = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("adminConsole.perUsernameAddressPairAttemptResetInterval")
+        .setDynamic(false)
+        .setChronoUnit(ChronoUnit.MILLIS)
+        .setDefaultValue(Duration.ofMinutes(15))
+        .setMinValue(Duration.ofMillis(1))
+        .build();
+
     // Record of attempts per IP address
-    private Map<String,Long> attemptsPerIP;
+    private final Map<String,Long> attemptsPerIP;
+
     // Record of attempts per username
-    private Map<String,Long> attemptsPerUsername;
+    private final Map<String,Long> attemptsPerUsername;
+
+    // Record of attempts per (IP address, username) pair. Keyed by pair rather than address alone so that a
+    // single shared/NAT'd address (or a reverse-proxy address such as 127.0.0.1) cannot be used by one client
+    // to lock out unrelated users behind the same address.
+    private final Map<String,Long> attemptsPerPair;
 
     /**
      * Constructs a new login limit manager.
@@ -106,15 +129,18 @@ public class LoginLimitManager {
         // Set up initial maps
         attemptsPerIP = new ConcurrentHashMap<>();
         attemptsPerUsername = new ConcurrentHashMap<>();
+        attemptsPerPair = new ConcurrentHashMap<>();
 
         // Set up per username attempt reset task
         taskEngine.scheduleAtFixedRate(new PerUsernameTask(), Duration.ZERO, PER_USERNAME_ATTEMPT_RESET_INTERVAL.getValue());
         // Set up per IP attempt reset task
         taskEngine.scheduleAtFixedRate(new PerIPAddressTask(), Duration.ZERO, PER_IP_ATTEMPT_RESET_INTERVAL.getValue());
+        // Set up per Pair attempt reset task
+        taskEngine.scheduleAtFixedRate(new PerPairTask(), Duration.ZERO, PER_PAIR_ATTEMPT_RESET_INTERVAL.getValue());
     }
 
     /**
-     * Returns true of the entered username or connecting IP address has hit it's attempt limit.
+     * Returns true of the entered username or connecting IP address has hit its attempt limit.
      *
      * @param username Username being checked.
      * @param address IP address that is connecting.
@@ -127,8 +153,16 @@ public class LoginLimitManager {
         if (attemptsPerUsername.get(username) != null && attemptsPerUsername.get(username) > MAX_ATTEMPTS_PER_USERNAME.getValue()) {
             return true;
         }
+        final Long perPairCount = attemptsPerPair.get(perPairKey(username, address));
+        if (perPairCount != null && perPairCount > MAX_ATTEMPTS_PER_PAIR.getValue()) {
+            return true;
+        }
         // No problem then, no limit hit.
         return false;
+    }
+
+    private static String perPairKey(String username, String address) {
+        return (address == null ? "" : address) + "\u0000" + (username == null ? "" : username);
     }
 
     /**
@@ -148,7 +182,7 @@ public class LoginLimitManager {
         attemptsPerIP.put(address, cnt);
         final StringBuilder sb = new StringBuilder();
         if (cnt > MAX_ATTEMPTS_PER_IP.getValue()) {
-            Log.warn("Login attempt limit breached for address "+address);
+            Log.warn("Login attempt limit breached for address {}", address);
             sb.append("Future login attempts from this address will be temporarily locked out. ");
         }
 
@@ -159,8 +193,19 @@ public class LoginLimitManager {
         cnt++;
         attemptsPerUsername.put(username, cnt);
         if (cnt > MAX_ATTEMPTS_PER_USERNAME.getValue()) {
-            Log.warn("Login attempt limit breached for username "+username);
+            Log.warn("Login attempt limit breached for username {}", username);
             sb.append("Future login attempts for this user will be temporarily locked out. ");
+        }
+
+        cnt = (long)0;
+        if (attemptsPerPair.get(perPairKey(username, address)) != null) {
+            cnt = attemptsPerPair.get(perPairKey(username, address));
+        }
+        cnt++;
+        attemptsPerPair.put(perPairKey(username, address), cnt);
+        if (cnt > MAX_ATTEMPTS_PER_PAIR.getValue()) {
+            Log.warn("Login attempt limit breached for username/address combination {}/{}", username, address);
+            sb.append("Future login attempts for this user/address combination will be temporarily locked out. ");
         }
 
         securityAuditManager.logEvent(username, "Failed admin console login attempt", "A failed login attempt to the admin console was made from address " + address + ". " + sb);
@@ -174,7 +219,25 @@ public class LoginLimitManager {
      * @param address IP address that is attempting.
      */
     public void recordSuccessfulAttempt(String username, String address) {
-        attemptsPerIP.remove(address);
+        // Clear pair failures for this username across all addresses.
+        final String usernameSuffix = "\u0000" + (username == null ? "" : username);
+        attemptsPerPair.forEach((pairKey, pairCount) -> {
+            if (pairCount == null || pairCount <= 0 || !pairKey.endsWith(usernameSuffix)) {
+                return;
+            }
+
+            // Remove only if unchanged, to avoid racing with concurrent updates.
+            if (!attemptsPerPair.remove(pairKey, pairCount)) {
+                return;
+            }
+
+            final int separator = pairKey.indexOf('\u0000');
+            final String pairAddress = separator < 0 ? pairKey : pairKey.substring(0, separator);
+            attemptsPerIP.computeIfPresent(pairAddress, (ip, ipCount) -> {
+                final long remaining = ipCount - pairCount;
+                return remaining > 0 ? remaining : null;
+            });
+        });
         attemptsPerUsername.remove(username);
         securityAuditManager.logEvent(username, "Successful admin console login attempt", "The user logged in successfully to the admin console from address " + address + ". ");
     }
@@ -207,4 +270,17 @@ public class LoginLimitManager {
         }
     }
 
+    /**
+     * Runs at configured interval to clear out attempts per username/ip address pair, thereby wiping lockouts.
+     */
+    private class PerPairTask extends TimerTask {
+
+        /**
+         * Wipes failed attempt list for username/ip addresses pair.
+         */
+        @Override
+        public void run() {
+            attemptsPerPair.clear();
+        }
+    }
 }

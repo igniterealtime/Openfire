@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2018-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -68,6 +70,68 @@ public class LoginLimitManagerTest {
         }
 
         verify(securityAuditManager, times(10)).logEvent(username, "Failed admin console login attempt", "A failed login attempt to the admin console was made from address a.b.c.f. ");
-        verify(securityAuditManager, times(1)).logEvent(username, "Failed admin console login attempt", "A failed login attempt to the admin console was made from address a.b.c.f. Future login attempts from this address will be temporarily locked out. Future login attempts for this user will be temporarily locked out. ");
+        verify(securityAuditManager, times(1)).logEvent(username, "Failed admin console login attempt", "A failed login attempt to the admin console was made from address a.b.c.f. Future login attempts for this user will be temporarily locked out. Future login attempts for this user/address combination will be temporarily locked out. ");
+    }
+
+    @Test
+    public void successfulLoginClearsUsernameFailuresAcrossAllIPs() {
+        final String username = "test-user-d-" + StringUtils.randomString(10);
+        final String firstAddress = "a.b.c.g";
+        final String secondAddress = "a.b.c.h";
+
+        for (int i = 0; i < 11; i++) {
+            loginLimitManager.recordFailedAttempt(username, firstAddress);
+            loginLimitManager.recordFailedAttempt(username, secondAddress);
+        }
+
+        assertTrue(loginLimitManager.hasHitConnectionLimit(username, firstAddress));
+        assertTrue(loginLimitManager.hasHitConnectionLimit(username, secondAddress));
+
+        loginLimitManager.recordSuccessfulAttempt(username, firstAddress);
+
+        assertFalse(loginLimitManager.hasHitConnectionLimit(username, firstAddress));
+        assertFalse(loginLimitManager.hasHitConnectionLimit(username, secondAddress));
+    }
+
+    @Test
+    public void successfulLoginDoesNotClearOtherUserOnSameIP() {
+        final String firstUsername = "test-user-e-" + StringUtils.randomString(10);
+        final String secondUsername = "test-user-f-" + StringUtils.randomString(10);
+        final String address = "a.b.c.i";
+
+        for (int i = 0; i < 11; i++) {
+            loginLimitManager.recordFailedAttempt(firstUsername, address);
+            loginLimitManager.recordFailedAttempt(secondUsername, address);
+        }
+
+        assertTrue(loginLimitManager.hasHitConnectionLimit(firstUsername, address));
+        assertTrue(loginLimitManager.hasHitConnectionLimit(secondUsername, address));
+
+        loginLimitManager.recordSuccessfulAttempt(firstUsername, address);
+
+        assertFalse(loginLimitManager.hasHitConnectionLimit(firstUsername, address));
+        assertTrue(loginLimitManager.hasHitConnectionLimit(secondUsername, address));
+    }
+
+    @Test
+    public void successfulLoginStillSubjectToSecondaryIPGate() {
+        final String username = "test-user-g-" + StringUtils.randomString(10);
+        final String address = "a.b.c.j";
+        final String otherAddress = "a.b.c.k";
+
+        for (int i = 0; i < 11; i++) {
+            loginLimitManager.recordFailedAttempt(username, address);
+        }
+
+        for (int i = 0; i < 41; i++) {
+            loginLimitManager.recordFailedAttempt("other-user-" + i + '-' + StringUtils.randomString(4), address);
+        }
+
+        assertTrue(loginLimitManager.hasHitConnectionLimit(username, address));
+        loginLimitManager.recordSuccessfulAttempt(username, address);
+
+        // Username lockout is cleared globally, but the shared IP gate can still block this address.
+        assertTrue(loginLimitManager.hasHitConnectionLimit(username, address));
+        assertFalse(loginLimitManager.hasHitConnectionLimit(username, otherAddress));
     }
 }

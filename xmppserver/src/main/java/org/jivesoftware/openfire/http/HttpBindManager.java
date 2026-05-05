@@ -41,7 +41,7 @@ import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
 import org.jivesoftware.openfire.websocket.OpenfireWebSocketServlet;
 import org.jivesoftware.util.*;
-import org.jivesoftware.util.netty.TrustedForwardedRequestCustomizer;
+import org.jivesoftware.util.jetty.TrustedForwardedRequestCustomizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -220,7 +220,7 @@ public final class HttpBindManager implements CertificateEventListener {
      * If the peer is not trusted, these headers are ignored and the request's original remote address is used instead.
      *
      * This setting helps prevent spoofing of client IP addresses via forged forwarding headers and should be configured
-     * when the admin console is deployed behind one or more reverse proxies.
+     * when Openfire is deployed behind one or more reverse proxies.
      *
      * Values can be individual IP addresses (IPv4 or IPv6) as well as IP ranges (for example, in CIDR notation).
      *

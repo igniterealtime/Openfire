@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jivesoftware.util.netty;
+package org.jivesoftware.util.jetty;
 
 import org.eclipse.jetty.http.HttpFields;
 import org.eclipse.jetty.http.HttpHeader;
@@ -22,6 +22,7 @@ import org.eclipse.jetty.server.ForwardedRequestCustomizer;
 import org.eclipse.jetty.server.Request;
 import org.junit.jupiter.api.Test;
 
+import java.net.Inet6Address;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.util.Set;
@@ -257,6 +258,34 @@ public class TrustedForwardedRequestCustomizerTest
         // Verify result
         assertSame(wrappedRequest, result, "Customizer must propagate the wrapped request returned by the trusted delegate.");
         verify(delegate).customize(request, responseHeaders);
+    }
+
+    /**
+     * Verifies that a link-local IPv6 address carrying a zone/scope ID (e.g. "fe80::1%eth0") does not cause an
+     * exception and is still evaluated correctly against the trusted proxy list.
+     *
+     * {@link java.net.InetAddress#getHostAddress()} appends the scope ID, so any code path that converts an
+     * {@link java.net.Inet6Address} to a String before matching must strip it first.
+     */
+    @Test
+    public void isTrustedHandlesScopedIpv6AddressWithoutException() throws Exception
+    {
+        // Setup test fixture: build an Inet6Address that carries a numeric scope ID.
+        // byte[] for 2001:db8::1
+        final byte[] addr = new byte[]{
+            0x20, 0x01, 0x0d, (byte)0xb8, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 1
+        };
+        // scope_id 1 – produces getHostAddress() == "2001:db8::1%1" on most JVMs
+        final Inet6Address scopedAddress = Inet6Address.getByAddress(null, addr, 1);
+        final InetSocketAddress remoteAddress = new InetSocketAddress(scopedAddress, 5222);
+        final TrustedForwardedRequestCustomizer customizer = new TrustedForwardedRequestCustomizer(new ForwardedRequestCustomizer(), Set.of("2001:db8::/32"));
+
+        // Execute system under test – must not throw IllegalArgumentException
+        final boolean result = customizer.isTrusted(remoteAddress);
+
+        // Verify result
+        assertTrue(result, "A scoped IPv6 address whose bare address falls inside a trusted range must be trusted.");
     }
 
     /**

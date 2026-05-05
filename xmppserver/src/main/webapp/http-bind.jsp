@@ -69,7 +69,7 @@
             if (trustedProxiesString == null || trustedProxiesString.trim().isEmpty()) {
                 newTrustedProxies = null;
             } else {
-                newTrustedProxies = new HashSet<>(trustedProxiesString.length());
+                newTrustedProxies = new HashSet<>();
                 final StringTokenizer tokenizer = new StringTokenizer(trustedProxiesString, ", \t\n\r\f");
                 while (tokenizer.hasMoreTokens()) {
                     String trustedProxy = tokenizer.nextToken();

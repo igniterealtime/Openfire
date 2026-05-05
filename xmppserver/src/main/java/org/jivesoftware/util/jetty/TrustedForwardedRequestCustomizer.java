@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jivesoftware.util.netty;
+package org.jivesoftware.util.jetty;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.eclipse.jetty.http.HttpFields;
@@ -112,7 +112,7 @@ public class TrustedForwardedRequestCustomizer implements HttpConfiguration.Cust
                 Log.trace("Unable to determine IP address of remote socket (unresolved address): {}", addr);
                 return false;
             }
-            return IpUtils.isAddressInAnyOf(address.getAddress().getHostAddress(), trustedProxies);
+            return IpUtils.isAddressInAnyOf(address.getAddress(), trustedProxies);
         }
 
         Log.trace("Unable to determine IP address of remote socket (unsupported remote socket type: {}): {}", addr.getClass(), addr);

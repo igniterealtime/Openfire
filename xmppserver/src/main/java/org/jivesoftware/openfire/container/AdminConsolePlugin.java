@@ -38,7 +38,7 @@ import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
 import org.jivesoftware.util.*;
-import org.jivesoftware.util.netty.TrustedForwardedRequestCustomizer;
+import org.jivesoftware.util.jetty.TrustedForwardedRequestCustomizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

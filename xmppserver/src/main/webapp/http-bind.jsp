@@ -25,6 +25,7 @@
 <%@ page import="org.slf4j.LoggerFactory" %>
 <%@ page import="java.util.*" %>
 <%@ page import="org.jivesoftware.openfire.ConnectionManager" %>
+<%@ page import="org.jivesoftware.util.IpUtils" %>
 <%@ page contentType="text/html;charset=UTF-8" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
@@ -63,6 +64,22 @@
                 mutualAuthentication = Connection.ClientAuth.valueOf( mutualAuthenticationText );
             }
 
+            final Set<String> newTrustedProxies;
+            final String trustedProxiesString = ParamUtils.getParameter( request,"XFFTrustedProxies" );
+            if (trustedProxiesString == null || trustedProxiesString.trim().isEmpty()) {
+                newTrustedProxies = null;
+            } else {
+                newTrustedProxies = new HashSet<>(trustedProxiesString.length());
+                final StringTokenizer tokenizer = new StringTokenizer(trustedProxiesString, ", \t\n\r\f");
+                while (tokenizer.hasMoreTokens()) {
+                    String trustedProxy = tokenizer.nextToken();
+                    if (IpUtils.isValidIpAddressOrRange(trustedProxy)) {
+                        newTrustedProxies.add(trustedProxy);
+                    } else {
+                        errorMap.put("trusted-proxy", "invalid-syntax");
+                    }
+                }
+            }
             try
             {
                 HttpBindManager.HTTP_BIND_PORT.setValue(requestedPort);
@@ -105,6 +122,8 @@
                 } else {
                     HttpBindManager.HTTP_BIND_FORWARDED_HOST_NAME.setValue(name.trim());
                 }
+
+                HttpBindManager.HTTP_BIND_FORWARDED_TRUSTED_PROXIES.setValue(newTrustedProxies);
 
                 HttpBindManager.HTTP_BIND_CONTENT_SECURITY_POLICY_ENABLED.setValue( isCSPEnabled );
                 if (cspValue == null || cspValue.trim().isEmpty()) {
@@ -157,6 +176,7 @@
     pageContext.setAttribute( "errors", errorMap );
     pageContext.setAttribute( "serverManager", serverManager );
     pageContext.setAttribute( "configuration", configuration );
+    pageContext.setAttribute("trustedProxies", HttpBindManager.HTTP_BIND_FORWARDED_TRUSTED_PROXIES.getValue() == null ? "" : String.join(", ", HttpBindManager.HTTP_BIND_FORWARDED_TRUSTED_PROXIES.getValue()));
 %>
 
 <html>
@@ -181,6 +201,7 @@
             $("XFFServerHeader").disabled = !enabled;
             $("XFFHostHeader").disabled = !enabled;
             $("XFFHostName").disabled = !enabled;
+            $("XFFTrustedProxies").disabled = !enabled;
         };
         window.onload = setTimeout(setEnabled, 500);
     </script>
@@ -191,6 +212,7 @@
     <admin:infobox type="error">
         <c:choose>
             <c:when test="${err.key eq 'port'}"><fmt:message key="httpbind.settings.error.port"/></c:when>
+            <c:when test="${err.key eq 'trusted-proxy'}"><fmt:message key="httpbind.settings.xff.trusted-proxy.invalid-hint"><fmt:param><c:out value="${err.value}"/></fmt:param></fmt:message></c:when>
             <c:otherwise>
                 <c:if test="${not empty err.value}">
                     <fmt:message key="httpbind.settings.error.general"/>
@@ -359,6 +381,13 @@
                         <tr>
                             <td><label for="XFFHostName"><fmt:message key="httpbind.settings.xff.host_name"/></label></td>
                             <td><input id="XFFHostName" type="text" size="40" name="XFFHostName" value="${fn:escapeXml(HttpBindManager.HTTP_BIND_FORWARDED_HOST_NAME.value == null ? "" : HttpBindManager.HTTP_BIND_FORWARDED_HOST_NAME.value)}"></td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align: top"><label for="XFFTrustedProxies"><fmt:message key="httpbind.settings.xff.trusted_proxies"/></label></td>
+                            <td>
+                                <textarea id="XFFTrustedProxies" name="XFFTrustedProxies" cols="40" rows="3"><c:out value="${trustedProxies}"/></textarea>
+                                <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="httpbind.settings.xff.trusted_proxies_help"/></span></div>
+                            </td>
                         </tr>
                     </table>
                 </td>

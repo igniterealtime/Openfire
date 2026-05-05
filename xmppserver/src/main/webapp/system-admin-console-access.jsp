@@ -123,6 +123,22 @@
                 break;
 
             case "xff":
+                final Set<String> newTrustedProxies;
+                final String trustedProxiesString = ParamUtils.getParameter( request,"XFFTrustedProxies" );
+                if (trustedProxiesString == null || trustedProxiesString.trim().isEmpty()) {
+                    newTrustedProxies = null;
+                } else {
+                    newTrustedProxies = new HashSet<>(trustedProxiesString.length());
+                    final StringTokenizer tokenizer = new StringTokenizer(trustedProxiesString, ", \t\n\r\f");
+                    while (tokenizer.hasMoreTokens()) {
+                        String trustedProxy = tokenizer.nextToken();
+                        if (IpUtils.isValidIpAddressOrRange(trustedProxy)) {
+                            newTrustedProxies.add(trustedProxy);
+                        } else {
+                            errors.put("trusted-proxy", "invalid-syntax");
+                        }
+                    }
+                }
 
                 if (errors.isEmpty())
                 {
@@ -156,8 +172,10 @@
                         AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_HOST_NAME.setValue(name.trim());
                     }
 
+                    AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_TRUSTED_PROXIES.setValue(newTrustedProxies);
+
                     // Log the event
-                    webManager.logEvent("Updated Admin Console access configuration (X-Forwarded-For).", "X-Forwarded-For enabled: " + isXFFEnabled + "\nHeader: " + xffHeader + "\nServer Header: " + xffServerHeader + "\nHost Name: " + name );
+                    webManager.logEvent("Updated Admin Console access configuration (X-Forwarded-For).", "X-Forwarded-For enabled: " + isXFFEnabled + "\nHeader: " + xffHeader + "\nServer Header: " + xffServerHeader + "\nHost Name: " + name + "\nTrusted proxies: " + (newTrustedProxies == null || newTrustedProxies.isEmpty() ? "(none)" : String.join(", ", newTrustedProxies)));
                     response.sendRedirect("system-admin-console-access.jsp?success=true");
                     return;
                 }
@@ -194,6 +212,7 @@
     pageContext.setAttribute("formattedRemoteAddress", IpUtils.removeBracketsFromIpv6Address(pageContext.getRequest().getRemoteAddr()));
     pageContext.setAttribute("blockValue", blockValue);
     pageContext.setAttribute("allowValue", allowValue);
+    pageContext.setAttribute("trustedProxies", AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_TRUSTED_PROXIES.getValue() == null ? "" : String.join(", ", AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_TRUSTED_PROXIES.getValue()));
 
 %>
 
@@ -219,6 +238,7 @@
                     <c:when test="${err.key eq 'csrf'}"><fmt:message key="global.csrf.failed" /></c:when>
                     <c:when test="${err.key eq 'invalid-blocklist-ips'}"><fmt:message key="system.admin.console.access.iplists.blocklist.invalid-hint"><fmt:param><c:out value="${err.value}"/></fmt:param></fmt:message></c:when>
                     <c:when test="${err.key eq 'invalid-allowlist-ips'}"><fmt:message key="system.admin.console.access.iplists.allowlist.invalid-hint"><fmt:param><c:out value="${err.value}"/></fmt:param></fmt:message></c:when>
+                    <c:when test="${err.key eq 'trusted-proxy'}"><fmt:message key="system.admin.console.xff.trusted-proxy.invalid-hint"><fmt:param><c:out value="${err.value}"/></fmt:param></fmt:message></c:when>
                     <c:otherwise>
                         <c:if test="${not empty err.value}">
                             <fmt:message key="admin.error"/>: <c:out value="${err.value}"/>
@@ -391,6 +411,13 @@
                         <tr>
                             <td><label for="XFFHostName"><fmt:message key="system.admin.console.xff.host_name"/></label></td>
                             <td><input id="XFFHostName" type="text" size="40" name="XFFHostName" value="${fn:escapeXml(AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_HOST_NAME.value == null ? "" : AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_HOST_NAME.value)}"></td>
+                        </tr>
+                        <tr>
+                            <td style="vertical-align: top"><label for="XFFTrustedProxies"><fmt:message key="system.admin.console.xff.trusted_proxies"/></label></td>
+                            <td>
+                                <textarea id="XFFTrustedProxies" name="XFFTrustedProxies" cols="40" rows="3"><c:out value="${trustedProxies}"/></textarea>
+                                <div class="openfire-helpicon-with-tooltip"><span class="helpicon"></span><span class="tooltiptext"><fmt:message key="system.admin.console.xff.trusted_proxies_help"/></span></div>
+                            </td>
                         </tr>
                     </table>
                 </td>

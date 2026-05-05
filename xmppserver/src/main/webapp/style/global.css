@@ -948,6 +948,45 @@ th.jive-table-th-center {
 }
 
 /* --------------------------------------------- */
+/*  Tooltip styles                               */
+/* --------------------------------------------- */
+.openfire-helpicon-with-tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.openfire-helpicon-with-tooltip .helpicon {
+    display: block;
+    float: left;
+    width: 14px;
+    height: 14px;
+    background: transparent url('../images/setup_helpicon.gif') no-repeat;
+}
+
+.openfire-helpicon-with-tooltip .tooltiptext {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: small;
+    visibility: hidden;
+    width: 240px;
+    background-color: #FFFBE2;
+    color: black;
+    text-align: center;
+    border: 1px solid #bbb;
+    padding: 5px;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -120px;
+    word-wrap:break-word;
+    white-space: normal;
+}
+
+.openfire-helpicon-with-tooltip:hover .tooltiptext {
+    visibility: visible;
+}
+
+/* --------------------------------------------- */
 /*  Footer                                       */
 /* --------------------------------------------- */
 

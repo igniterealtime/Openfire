@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
 import org.jivesoftware.openfire.websocket.OpenfireWebSocketServlet;
 import org.jivesoftware.util.*;
+import org.jivesoftware.util.netty.TrustedForwardedRequestCustomizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -210,6 +211,26 @@ public final class HttpBindManager implements CertificateEventListener {
         .setDynamic(false) // TODO This can easily be made dynamic with <tt>.addListener(HttpBindManager.getInstance()::restartServer)</tt>. Existing implementation was not dynamic. Should it?
         .setDefaultValue(null)
         .build();
+
+    /**
+     * Defines the set of trusted reverse proxies.
+     *
+     * When this property is configured (non-empty), 'Forwarded' and 'X-Forwarded-*' HTTP headers are only honored if
+     * the direct peer (the socket-level remote address) of the request matches one of the configured trusted proxies.
+     * If the peer is not trusted, these headers are ignored and the request's original remote address is used instead.
+     *
+     * This setting helps prevent spoofing of client IP addresses via forged forwarding headers and should be configured
+     * when the admin console is deployed behind one or more reverse proxies.
+     *
+     * Values can be individual IP addresses (IPv4 or IPv6) as well as IP ranges (for example, in CIDR notation).
+     *
+     * @see org.jivesoftware.openfire.container.AdminConsolePlugin#ADMIN_CONSOLE_FORWARDED_TRUSTED_PROXIES for a similar configuration in the admin console.
+     */
+    public static final SystemProperty<Set<String>> HTTP_BIND_FORWARDED_TRUSTED_PROXIES = SystemProperty.Builder.ofType(Set.class)
+        .setKey("httpbind.forwarded.trusted.proxies")
+        .setDynamic(false)  // TODO This can easily be made dynamic with <tt>.addListener(HttpBindManager.getInstance()::restartServer)</tt>. Existing implementation was not dynamic. Should it?
+        .setDefaultValue(new HashSet<>())
+        .buildSet(String.class);
 
     // http binding CORS default properties
 
@@ -561,7 +582,14 @@ public final class HttpBindManager implements CertificateEventListener {
                 customizer.setHostHeader(hostName);
             }
 
-            httpConfig.addCustomizer(customizer);
+            final HttpConfiguration.Customizer possiblyWrappedCustomizer;
+            final Set<String> trustedProxies = HTTP_BIND_FORWARDED_TRUSTED_PROXIES.getValue();
+            if (trustedProxies != null && !trustedProxies.isEmpty()) {
+                possiblyWrappedCustomizer = new TrustedForwardedRequestCustomizer(customizer, trustedProxies);
+            } else {
+                possiblyWrappedCustomizer = customizer;
+            }
+            httpConfig.addCustomizer(possiblyWrappedCustomizer);
         }
         httpConfig.setRequestHeaderSize(HTTP_BIND_REQUEST_HEADER_SIZE.getValue());
    }

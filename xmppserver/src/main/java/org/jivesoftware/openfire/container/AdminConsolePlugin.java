@@ -38,6 +38,7 @@ import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.openfire.spi.EncryptionArtifactFactory;
 import org.jivesoftware.util.*;
+import org.jivesoftware.util.netty.TrustedForwardedRequestCustomizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,6 +122,27 @@ public class AdminConsolePlugin implements Plugin {
         .setDefaultValue(null)
         .addListener(enabled -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
         .build();
+
+    /**
+     * Defines the set of trusted reverse proxies.
+     *
+     * When this property is configured (non-empty), 'Forwarded' and 'X-Forwarded-*' HTTP headers are only honored if
+     * the direct peer (the socket-level remote address) of the request matches one of the configured trusted proxies.
+     * If the peer is not trusted, these headers are ignored and the request's original remote address is used instead.
+     *
+     * This setting helps prevent spoofing of client IP addresses via forged forwarding headers and should be configured
+     * when the admin console is deployed behind one or more reverse proxies.
+     *
+     * Values can be individual IP addresses (IPv4 or IPv6) as well as IP ranges (for example, in CIDR notation).
+     *
+     * @see org.jivesoftware.openfire.http.HttpBindManager#HTTP_BIND_FORWARDED_TRUSTED_PROXIES for a similar configuration in the web-binding client endpoints.
+     */
+    public static final SystemProperty<Set<String>> ADMIN_CONSOLE_FORWARDED_TRUSTED_PROXIES = SystemProperty.Builder.ofType(Set.class)
+        .setKey("adminConsole.forwarded.trusted.proxies")
+        .setDynamic(false)
+        .setDefaultValue(new HashSet<>())
+        .addListener(enabled -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
+        .buildSet(String.class);
 
     /**
      * Enable / Disable adding a 'Content-Security-Policy' HTTP header to the response to requests made against the admin console.
@@ -433,7 +455,14 @@ public class AdminConsolePlugin implements Plugin {
                 customizer.setHostHeader(hostName);
             }
 
-            httpConfig.addCustomizer(customizer);
+            final HttpConfiguration.Customizer possiblyWrappedCustomizer;
+            final Set<String> trustedProxies = ADMIN_CONSOLE_FORWARDED_TRUSTED_PROXIES.getValue();
+            if (trustedProxies != null && !trustedProxies.isEmpty()) {
+                possiblyWrappedCustomizer = new TrustedForwardedRequestCustomizer(customizer, trustedProxies);
+            } else {
+                possiblyWrappedCustomizer = customizer;
+            }
+            httpConfig.addCustomizer(possiblyWrappedCustomizer);
         }
     }
 

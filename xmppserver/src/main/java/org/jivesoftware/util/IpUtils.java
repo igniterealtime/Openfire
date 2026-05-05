@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2024-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public class IpUtils
             return isAddressInAnyOf(Ipv4.of(address), addressesAndRanges);
         }
         if (isValidIpv6(address)) {
-            return isAddressInAnyOf(Ipv6.of(address), addressesAndRanges);
+            return isAddressInAnyOf(Ipv6.of(stripIpv6ZoneId(address)), addressesAndRanges);
         }
         throw new IllegalArgumentException("Unrecognized address type: " + address);
     }
@@ -258,6 +258,10 @@ public class IpUtils
     /**
      * Checks if the provided value is a representation of an IPv6 address.
      *
+     * An optional zone/scope ID suffix (e.g. {@code %eth0} or {@code %1} as appended by
+     * {@link java.net.InetAddress#getHostAddress()}) is silently stripped before the check so that
+     * scoped link-local addresses such as {@code fe80::1%eth0} are recognised as valid.
+     *
      * @param value the value to check
      * @return true if the provided value is an IPv6 address, otherwise false.
      */
@@ -267,11 +271,27 @@ public class IpUtils
             return false;
         }
         try {
-            Ipv6.parse(value);
+            Ipv6.parse(stripIpv6ZoneId(value));
         } catch (IllegalArgumentException e) {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Strips the IPv6 zone/scope ID suffix from an address string if one is present.
+     *
+     * For example, {@code "fe80::1%eth0"} becomes {@code "fe80::1"}. Strings that contain no {@code '%'} character are
+     * returned unchanged. This handles the suffix that {@link java.net.InetAddress#getHostAddress()} appends for scoped
+     * IPv6 addresses.
+     *
+     * @param address the address string to normalise; must not be {@code null}
+     * @return the address string with any zone/scope ID removed
+     */
+    private static String stripIpv6ZoneId(@Nonnull final String address)
+    {
+        final int zoneIndex = address.indexOf('%');
+        return zoneIndex >= 0 ? address.substring(0, zoneIndex) : address;
     }
 
     /**

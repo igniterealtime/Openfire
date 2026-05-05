@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2024-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2028,5 +2028,43 @@ public class IpUtilsTest
 
         // Verify results.
         assertTrue(result);
+    }
+
+    /**
+     * Asserts that {@link IpUtils#isAddressInAnyOf(String, Set)} correctly handles an IPv6 address string that contains
+     * a zone/scope ID suffix (e.g. "fe80::1%eth0"), as produced by {@link java.net.InetAddress#getHostAddress()}.
+     * The zone ID must be stripped before matching so that no {@link IllegalArgumentException} is thrown and the
+     * address is still resolved against the configured ranges.
+     */
+    @Test
+    public void testIsAddressInAnyOfStringScopedIpv6MatchesTrueWhenInRange()
+    {
+        // Setup test fixture.
+        final String scopedAddress = "2001:db8::1%eth0";
+        final Set<String> ranges = Set.of("2001:db8::/32");
+
+        // Execute system under test.
+        final boolean result = IpUtils.isAddressInAnyOf(scopedAddress, ranges);
+
+        // Verify results.
+        assertTrue(result, "A scoped IPv6 address (with %zone suffix) must match when the bare address is inside a configured range.");
+    }
+
+    /**
+     * Asserts that {@link IpUtils#isAddressInAnyOf(String, Set)} correctly handles an IPv6 address string that contains
+     * a zone/scope ID suffix when the bare address is NOT in any configured range.
+     */
+    @Test
+    public void testIsAddressInAnyOfStringScopedIpv6ReturnsFalseWhenOutOfRange()
+    {
+        // Setup test fixture.
+        final String scopedAddress = "fe80::1%eth0";
+        final Set<String> ranges = Set.of("2001:db8::/32");
+
+        // Execute system under test.
+        final boolean result = IpUtils.isAddressInAnyOf(scopedAddress, ranges);
+
+        // Verify results.
+        assertFalse(result, "A scoped IPv6 address (with %zone suffix) must not match when the bare address is outside all configured ranges.");
     }
 }

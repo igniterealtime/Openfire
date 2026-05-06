@@ -174,42 +174,27 @@ public class LoginLimitManager {
     public void recordFailedAttempt(String username, String address) {
         Log.warn("Failed admin console login attempt by "+username+" from "+address);
 
-        Long cnt = (long)0;
-        if (attemptsPerIP.get(address) != null) {
-            cnt = attemptsPerIP.get(address);
-        }
-        cnt++;
-        attemptsPerIP.put(address, cnt);
+        final long ipAttempts = attemptsPerIP.merge(address, 1L, Long::sum);
         final StringBuilder sb = new StringBuilder();
-        if (cnt > MAX_ATTEMPTS_PER_IP.getValue()) {
+        if (ipAttempts > MAX_ATTEMPTS_PER_IP.getValue()) {
             Log.warn("Login attempt limit breached for address {}", address);
             sb.append("Future login attempts from this address will be temporarily locked out. ");
         }
 
-        cnt = (long)0;
-        if (attemptsPerUsername.get(username) != null) {
-            cnt = attemptsPerUsername.get(username);
-        }
-        cnt++;
-        attemptsPerUsername.put(username, cnt);
-        if (cnt > MAX_ATTEMPTS_PER_USERNAME.getValue()) {
+        final long usernameAttempts = attemptsPerUsername.merge(username, 1L, Long::sum);
+        if (usernameAttempts > MAX_ATTEMPTS_PER_USERNAME.getValue()) {
             Log.warn("Login attempt limit breached for username {}", username);
             sb.append("Future login attempts for this user will be temporarily locked out. ");
         }
 
-        cnt = (long)0;
-        if (attemptsPerPair.get(perPairKey(username, address)) != null) {
-            cnt = attemptsPerPair.get(perPairKey(username, address));
-        }
-        cnt++;
-        attemptsPerPair.put(perPairKey(username, address), cnt);
-        if (cnt > MAX_ATTEMPTS_PER_PAIR.getValue()) {
+        final String pairKey = perPairKey(username, address);
+        final long pairAttempts = attemptsPerPair.merge(pairKey, 1L, Long::sum);
+        if (pairAttempts > MAX_ATTEMPTS_PER_PAIR.getValue()) {
             Log.warn("Login attempt limit breached for username/address combination {}/{}", username, address);
             sb.append("Future login attempts for this user/address combination will be temporarily locked out. ");
         }
 
         securityAuditManager.logEvent(username, "Failed admin console login attempt", "A failed login attempt to the admin console was made from address " + address + ". " + sb);
-
     }
 
     /**
@@ -220,7 +205,7 @@ public class LoginLimitManager {
      */
     public void recordSuccessfulAttempt(String username, String address) {
         // Clear pair failures only for the successful username/address combination.
-        final String pairKey = (address == null ? "" : address) + '\u0000' + (username == null ? "" : username);
+        final String pairKey = perPairKey(username, address);
         attemptsPerPair.remove(pairKey);
         attemptsPerUsername.remove(username);
         securityAuditManager.logEvent(username, "Successful admin console login attempt", "The user logged in successfully to the admin console from address " + address + ". ");

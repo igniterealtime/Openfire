@@ -1691,6 +1691,22 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
         final Presence anonPresence = createAnonCopy(presence);
         final Presence selfPresence = createSelfPresenceCopy(presence, isJoinPresence);
 
+        // Resolve the sender occupant (needed for MUC2 per-recipient from rewriting).
+        // The presence 'from' resource is the sender's nickname.
+        MUCOccupant senderOccupant = null;
+        final String senderNick = presence.getFrom().getResource();
+        if (senderNick != null) {
+            try {
+                final List<MUCOccupant> senders = getOccupantsByNickname(senderNick);
+                if (!senders.isEmpty()) {
+                    senderOccupant = senders.get(0);
+                }
+            } catch (UserNotFoundException e) {
+                Log.trace("Could not resolve sender occupant by nick '{}' for MUC2 rewriting.", senderNick);
+            }
+        }
+        final MUCOccupant resolvedSender = senderOccupant;
+
         for (final MUCOccupant occupant : getOccupants())
         {
             try
@@ -1717,8 +1733,26 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
                     toSend = nonAnonPresence;
                 }
 
-                // Send stanza to this occupant.
-                occupant.send(toSend);
+                // For MUC2 recipients, rewrite the 'from' to the sender's MUC2 occupant JID and
+                // replace <occupant-id> with <nickname xmlns='urn:xmpp:muc:0'> in the stanza.
+                if (occupant.isMuc2Session() && resolvedSender != null) {
+                    final Presence muc2Copy = resolvedSender.createMuc2PresenceCopy();
+                    // Preserve status codes and other per-recipient modifications from toSend
+                    final Element toSendX = toSend.getChildElement("x", "http://jabber.org/protocol/muc#user");
+                    final Element muc2X = muc2Copy.getChildElement("x", "http://jabber.org/protocol/muc#user");
+                    if (toSendX != null && muc2X != null) {
+                        // Copy status elements from toSend into the muc2 copy
+                        toSendX.elements("status").forEach(s -> muc2X.addElement("status").addAttribute("code", s.attributeValue("code")));
+                        // If toSend is anon copy, strip jid from item
+                        if (toSend == anonPresence && muc2X.element("item") != null) {
+                            muc2X.element("item").addAttribute("jid", null);
+                        }
+                    }
+                    occupant.send(muc2Copy);
+                } else {
+                    // Send stanza to this occupant.
+                    occupant.send(toSend);
+                }
             }
             catch ( Exception e )
             {

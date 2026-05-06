@@ -230,6 +230,7 @@ public final class HttpBindManager implements CertificateEventListener {
         .setKey("httpbind.forwarded.trusted.proxies")
         .setDynamic(false)  // TODO This can easily be made dynamic with <tt>.addListener(HttpBindManager.getInstance()::restartServer)</tt>. Existing implementation was not dynamic. Should it?
         .setDefaultValue(new HashSet<>())
+        .setSorted(true)
         .buildSet(String.class);
 
     // http binding CORS default properties

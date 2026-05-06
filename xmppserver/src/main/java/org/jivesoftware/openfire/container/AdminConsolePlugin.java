@@ -141,6 +141,7 @@ public class AdminConsolePlugin implements Plugin {
         .setKey("adminConsole.forwarded.trusted.proxies")
         .setDynamic(false)
         .setDefaultValue(new HashSet<>())
+        .setSorted(true)
         .addListener(enabled -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
         .buildSet(String.class);
 

@@ -16,6 +16,7 @@
 
 package org.jivesoftware.admin;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.jivesoftware.openfire.security.SecurityAuditManager;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
@@ -124,6 +125,7 @@ public class LoginLimitManager {
     /**
      * Constructs a new login limit manager. Exposed for test use only.
      */
+    @VisibleForTesting
     LoginLimitManager(final SecurityAuditManager securityAuditManager, final TaskEngine taskEngine) {
         this.securityAuditManager = securityAuditManager;
         // Set up initial maps

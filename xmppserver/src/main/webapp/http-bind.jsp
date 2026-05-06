@@ -76,7 +76,7 @@
                     if (IpUtils.isValidIpAddressOrRange(trustedProxy)) {
                         newTrustedProxies.add(trustedProxy);
                     } else {
-                        errorMap.put("trusted-proxy", "invalid-syntax");
+                        errorMap.merge("trusted-proxy", trustedProxy, (oldVal, newVal) -> oldVal + ", " + newVal);
                     }
                 }
             }

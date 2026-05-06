@@ -53,7 +53,7 @@ public class LoginLimitManager {
         return LoginLimitManagerContainer.instance;
     }
 
-    // Max number of attempts per ip address that can be performed in given time frame
+    // Maximum number of attempts per IP address that can be performed in given time frame
     public static final SystemProperty<Long> MAX_ATTEMPTS_PER_IP = SystemProperty.Builder.ofType(Long.class)
         .setKey("adminConsole.maxAttemptsPerIP")
         .setDynamic(true)
@@ -61,7 +61,7 @@ public class LoginLimitManager {
         .setMinValue(1L)
         .build();
 
-    // Time frame before attempts per ip addresses are reset
+    // Time frame before attempts per IP addresses are reset
     public static final SystemProperty<Duration> PER_IP_ATTEMPT_RESET_INTERVAL = SystemProperty.Builder.ofType(Duration.class)
         .setKey("adminConsole.perIPAttemptResetInterval")
         .setDynamic(false)
@@ -70,7 +70,7 @@ public class LoginLimitManager {
         .setMinValue(Duration.ofMillis(1))
         .build();
 
-    // Max number of attempts per username that can be performed in a given time frame
+    // Maximum number of attempts per username that can be performed in a given time frame
     public static final SystemProperty<Long> MAX_ATTEMPTS_PER_USERNAME = SystemProperty.Builder.ofType(Long.class)
         .setKey("adminConsole.maxAttemptsPerUsername")
         .setDynamic(true)
@@ -87,7 +87,7 @@ public class LoginLimitManager {
         .setMinValue(Duration.ofMillis(1))
         .build();
 
-    // Max number of attempts per username/address combination that can be performed in a given time frame
+    // Maximum number of attempts per username/address combination that can be performed in a given time frame
     public static final SystemProperty<Long> MAX_ATTEMPTS_PER_PAIR = SystemProperty.Builder.ofType(Long.class)
         .setKey("adminConsole.maxAttemptsPerUsernameAddressPair")
         .setDynamic(true)
@@ -174,7 +174,7 @@ public class LoginLimitManager {
      * @param address IP address that is attempting.
      */
     public void recordFailedAttempt(String username, String address) {
-        Log.warn("Failed admin console login attempt by "+username+" from "+address);
+        Log.warn("Failed admin console login attempt by {} form {}", username, address);
 
         final long ipAttempts = attemptsPerIP.merge(address, 1L, Long::sum);
         final StringBuilder sb = new StringBuilder();
@@ -228,12 +228,12 @@ public class LoginLimitManager {
     }
 
     /**
-     * Runs at configured interval to clear out attempts per ip address, thereby wiping lockouts.
+     * Runs at configured interval to clear out attempts per IP address, thereby wiping lockouts.
      */
     private class PerIPAddressTask extends TimerTask {
 
         /**
-         * Wipes failed attempt list for ip addresses.
+         * Wipes failed attempt list for IP addresses.
          */
         @Override
         public void run() {
@@ -242,12 +242,12 @@ public class LoginLimitManager {
     }
 
     /**
-     * Runs at configured interval to clear out attempts per username/ip address pair, thereby wiping lockouts.
+     * Runs at configured interval to clear out attempts per username/IP address pairs, thereby wiping lockouts.
      */
     private class PerPairTask extends TimerTask {
 
         /**
-         * Wipes failed attempt list for username/ip addresses pair.
+         * Wipes failed attempt list for username/IP address pairs.
          */
         @Override
         public void run() {

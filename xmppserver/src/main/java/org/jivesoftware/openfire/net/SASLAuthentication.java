@@ -453,26 +453,8 @@ public class SASLAuthentication {
                         return Status.needResponse;
                     }
 
-                    // Success!
-                    if ( session instanceof LocalIncomingServerSession )
-                    {
-                        final LocalIncomingServerSession incomingServerSession = (LocalIncomingServerSession) session;
-
-                        // Flag that indicates if certificates of the remote server should be validated.
-                        final boolean verify = JiveGlobals.getBooleanProperty( ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY, true );
-                        if ( verify )
-                        {
-                            if ( verifyCertificates( incomingServerSession.getConnection().getPeerCertificates(), saslServer.getAuthorizationID(), true ) )
-                            {
-                                ( (LocalIncomingServerSession) session ).setAuthenticationMethod(ServerSession.AuthenticationMethod.SASL_EXTERNAL);
-                            }
-                            else
-                            {
-                                throw new SaslFailureException( Failure.NOT_AUTHORIZED, "Server-to-Server certificate verification failed." );
-                            }
-                        }
-                    }
-
+                    // Success! Any mechanism-specific verification (such as certificate checks for EXTERNAL) is
+                    // performed by the SaslServer implementation.
                     authenticationSuccessful( session, saslServer.getAuthorizationID(), challenge );
                     session.removeSessionData( "SaslServer" );
                     session.setSessionData("SaslMechanism", saslServer.getMechanismName());

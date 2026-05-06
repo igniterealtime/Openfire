@@ -1150,4 +1150,12 @@ public class OccupantManager implements MUCEventListener
     public boolean hasBareJidSession(JID userBareJID, JID roomJID) {
         return bareJidSessions.containsKey(bareJidSessionKey(userBareJID, roomJID));
     }
+
+    /**
+     * Returns the bare-JID occupant session for the given user and room, or null if none exists.
+     */
+    @Nullable
+    public BareJidOccupantSession getBareJidSession(JID userBareJID, JID roomJID) {
+        return bareJidSessions.get(bareJidSessionKey(userBareJID, roomJID));
+    }
 }

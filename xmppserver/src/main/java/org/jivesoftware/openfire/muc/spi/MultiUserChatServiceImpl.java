@@ -831,12 +831,23 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         }
         else
         {
-            // MUC2-PAM: if the sender has an active bare-JID session in this room, silently drop groupchat messages
-            // (no error, no delivery, no fan-out) per the muc2-addressing-occupancy spec.
-            if (Message.Type.groupchat == packet.getType()
-                    && occupantManager.hasBareJidSession(packet.getFrom().asBareJID(), room.getJID())) {
-                Log.debug("Silently dropping groupchat message from bare-JID PAM session '{}' to room '{}'.", packet.getFrom(), room.getName());
-                return;
+            // MUC2-PAM: if the sender has an active bare-JID session in this room, treat the message as if it came
+            // from that occupant (look up by nickname) per the muc2-addressing-occupancy spec.
+            if (Message.Type.groupchat == packet.getType()) {
+                final OccupantManager.BareJidOccupantSession bareJidSession =
+                    occupantManager.getBareJidSession(packet.getFrom().asBareJID(), room.getJID());
+                if (bareJidSession != null) {
+                    try {
+                        final List<MUCOccupant> occupants = room.getOccupantsByNickname(bareJidSession.nickname);
+                        if (!occupants.isEmpty()) {
+                            Log.debug("Routing groupchat message from bare-JID PAM session '{}' as occupant '{}' in room '{}'.", packet.getFrom(), bareJidSession.nickname, room.getName());
+                            processOccupantMessage(packet, room, occupants.get(0));
+                            return;
+                        }
+                    } catch (org.jivesoftware.openfire.user.UserNotFoundException e) {
+                        Log.debug("Bare-JID PAM session '{}' has no occupant with nickname '{}' in room '{}'.", packet.getFrom(), bareJidSession.nickname, room.getName());
+                    }
+                }
             }
             Log.debug("Rejecting message stanza sent by '{}' to room '{}': Sender is not an occupant of the room: {}", packet.getFrom(), room.getName(), packet.toXML());
             sendErrorPacket(packet, PacketError.Condition.not_acceptable, "You are not in the room.");
@@ -855,8 +866,10 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         @Nonnull final MUCRoom room,
         @Nonnull final MUCOccupant preExistingOccupantData )
     {
-        // Check and reject conflicting packets with conflicting roles In other words, another user already has this nickname
-        if ( !preExistingOccupantData.getUserAddress().equals(packet.getFrom()) )
+        // Check and reject conflicting packets with conflicting roles In other words, another user already has this nickname.
+        // For MUC2-PAM bare-JID sessions the sender is a bare JID, so also accept a bare-JID match.
+        if ( !preExistingOccupantData.getUserAddress().equals(packet.getFrom())
+                && !preExistingOccupantData.getUserAddress().asBareJID().equals(packet.getFrom().asBareJID()) )
         {
             Log.debug("Rejecting conflicting stanza with conflicting roles: {}", packet.toXML());
             sendErrorPacket(packet, PacketError.Condition.conflict, "Another user uses this nickname.");

@@ -114,7 +114,7 @@ public class IpUtils
      */
     public static boolean isAddressInAnyOf(final @Nonnull Ipv6 address, final @Nonnull Set<String> addressesAndRanges)
     {
-        final Set<Ipv6> addresses = addressesAndRanges.stream().filter(IpUtils::isValidIpv6).map(Ipv6::of).collect(Collectors.toSet());
+        final Set<Ipv6> addresses = addressesAndRanges.stream().filter(IpUtils::isValidIpv6).map(IpUtils::stripIpv6ZoneId).map(Ipv6::of).collect(Collectors.toSet());
         final Set<Ipv6Range> ranges = addressesAndRanges.stream().filter(IpUtils::isValidIpv6Range).map(Ipv6Range::parse).collect(Collectors.toSet());
         return isAddressInAnyOf(address, addresses, ranges);
     }

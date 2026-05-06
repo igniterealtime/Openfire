@@ -810,6 +810,7 @@ public class XMPPServer {
         loadModule(UpdateManager.class.getName());
         loadModule(InternalComponentManager.class.getName());
         loadModule(MultiUserChatManager.class.getName());
+        loadModule(IQMuc2PamHandler.class.getName());
         loadModule(IQMessageCarbonsHandler.class.getName());
         loadModule(ArchiveManager.class.getName());
         loadModule(CertificateStoreManager.class.getName());

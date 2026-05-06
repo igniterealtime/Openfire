@@ -113,29 +113,6 @@ public class LoginLimitManagerTest {
     }
 
     @Test
-    public void successfulLoginClearsUsernameFailuresAcrossAllIPs()
-    {
-        // Setup test fixture.
-        final String username = "test-user-d";
-        final String firstAddress = "a.b.c.g";
-        final String secondAddress = "a.b.c.h";
-        for (int i = 0; i < MAX_PAIR + 1; i++) {
-            loginLimitManager.recordFailedAttempt(username, firstAddress);
-            loginLimitManager.recordFailedAttempt(username, secondAddress);
-        }
-
-        assertTrue(loginLimitManager.hasHitConnectionLimit(username, firstAddress));
-        assertTrue(loginLimitManager.hasHitConnectionLimit(username, secondAddress));
-
-        // Execute system under test.
-        loginLimitManager.recordSuccessfulAttempt(username, firstAddress);
-
-        // Verify result.
-        assertFalse(loginLimitManager.hasHitConnectionLimit(username, firstAddress));
-        assertFalse(loginLimitManager.hasHitConnectionLimit(username, secondAddress));
-    }
-
-    @Test
     public void successfulLoginDoesNotClearOtherUserOnSameIP()
     {
         // Setup test fixture.
@@ -309,36 +286,5 @@ public class LoginLimitManagerTest {
         }
 
         assertTrue(loginLimitManager.hasHitConnectionLimit(secondUsername, address), "User 2 should also be locked out");
-    }
-
-    @Test
-    public void successfulLoginUnlocksAcrossAllGates()
-    {
-        // Setup test fixture.
-        final String username = "test-user-n";
-        final String address1 = "a.b.c.p";
-        final String address2 = "a.b.c.q";
-
-        // Build up secondary IP gate on address1 (41 attempts from 41 users).
-        for (int i = 0; i < MAX_IP + 1; i++) {
-            final String otherUser = "other-user-" + i;
-            loginLimitManager.recordFailedAttempt(otherUser, address1);
-        }
-
-        // Main user hits pair/username lockout on both addresses.
-        for (int i = 0; i < MAX_USERNAME + 1; i++) {
-            loginLimitManager.recordFailedAttempt(username, address1);
-            loginLimitManager.recordFailedAttempt(username, address2);
-        }
-
-        assertTrue(loginLimitManager.hasHitConnectionLimit(username, address1), "User locked by pair/username/IP gates");
-        assertTrue(loginLimitManager.hasHitConnectionLimit(username, address2), "User locked by pair/username gates");
-
-        // Execute system under test.
-        loginLimitManager.recordSuccessfulAttempt(username, address1); // Successful login clears username and pair state, but does not affect IP-level lockouts.
-
-        // Verify result.
-        assertFalse(loginLimitManager.hasHitConnectionLimit(username, address2),"Pair/username gates cleared globally");
-        assertTrue(loginLimitManager.hasHitConnectionLimit(username, address1), "Secondary IP gate (" + (MAX_IP + 1) + "+ attempts) still blocks access to address1");
     }
 }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- log4j2 config file used when running under Maven -->
-<Configuration>
+<Configuration status="OFF">
     <Appenders>
         <File name="file" fileName="target/surefire-reports/test.log">
             <PatternLayout>

@@ -219,25 +219,9 @@ public class LoginLimitManager {
      * @param address IP address that is attempting.
      */
     public void recordSuccessfulAttempt(String username, String address) {
-        // Clear pair failures for this username across all addresses.
-        final String usernameSuffix = "\u0000" + (username == null ? "" : username);
-        attemptsPerPair.forEach((pairKey, pairCount) -> {
-            if (pairCount == null || pairCount <= 0 || !pairKey.endsWith(usernameSuffix)) {
-                return;
-            }
-
-            // Remove only if unchanged, to avoid racing with concurrent updates.
-            if (!attemptsPerPair.remove(pairKey, pairCount)) {
-                return;
-            }
-
-            final int separator = pairKey.indexOf('\u0000');
-            final String pairAddress = separator < 0 ? pairKey : pairKey.substring(0, separator);
-            attemptsPerIP.computeIfPresent(pairAddress, (ip, ipCount) -> {
-                final long remaining = ipCount - pairCount;
-                return remaining > 0 ? remaining : null;
-            });
-        });
+        // Clear pair failures only for the successful username/address combination.
+        final String pairKey = (address == null ? "" : address) + '\u0000' + (username == null ? "" : username);
+        attemptsPerPair.remove(pairKey);
         attemptsPerUsername.remove(username);
         securityAuditManager.logEvent(username, "Successful admin console login attempt", "The user logged in successfully to the admin console from address " + address + ". ");
     }

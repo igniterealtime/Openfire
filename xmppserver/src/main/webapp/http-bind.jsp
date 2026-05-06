@@ -80,67 +80,67 @@
                     }
                 }
             }
-            try
-            {
-                HttpBindManager.HTTP_BIND_PORT.setValue(requestedPort);
-                HttpBindManager.HTTP_BIND_SECURE_PORT.setValue(requestedSecurePort);
-                HttpBindManager.HTTP_BIND_CORS_ENABLED.setValue(isCORSEnabled);
 
-                final Set<String> update = new HashSet<>();
-                if (CORSDomains == null || CORSDomains.trim().isEmpty())
-                    update.add(HttpBindManager.HTTP_BIND_CORS_ALLOW_ORIGIN_ALL);
-                else {
-                    update.addAll(Arrays.asList(CORSDomains.replaceAll("\\s+", "").split(",")));
+            if (errorMap.isEmpty()) {
+                try {
+                    HttpBindManager.HTTP_BIND_PORT.setValue(requestedPort);
+                    HttpBindManager.HTTP_BIND_SECURE_PORT.setValue(requestedSecurePort);
+                    HttpBindManager.HTTP_BIND_CORS_ENABLED.setValue(isCORSEnabled);
+
+                    final Set<String> update = new HashSet<>();
+                    if (CORSDomains == null || CORSDomains.trim().isEmpty())
+                        update.add(HttpBindManager.HTTP_BIND_CORS_ALLOW_ORIGIN_ALL);
+                    else {
+                        update.addAll(Arrays.asList(CORSDomains.replaceAll("\\s+", "").split(",")));
+                    }
+                    HttpBindManager.HTTP_BIND_ALLOWED_ORIGINS.setValue(update);
+                    HttpBindManager.HTTP_BIND_FORWARDED.setValue(isXFFEnabled);
+
+                    final String xffHeader = ParamUtils.getParameter(request, "XFFHeader");
+                    if (xffHeader == null || xffHeader.trim().isEmpty()) {
+                        HttpBindManager.HTTP_BIND_FORWARDED_FOR.setValue(null);
+                    } else {
+                        HttpBindManager.HTTP_BIND_FORWARDED_FOR.setValue(xffHeader.trim());
+                    }
+
+                    final String xffServerHeader = ParamUtils.getParameter(request, "XFFServerHeader");
+                    if (xffServerHeader == null || xffServerHeader.trim().isEmpty()) {
+                        HttpBindManager.HTTP_BIND_FORWARDED_SERVER.setValue(null);
+                    } else {
+                        HttpBindManager.HTTP_BIND_FORWARDED_SERVER.setValue(xffServerHeader.trim());
+                    }
+
+                    final String xffHostHeader = ParamUtils.getParameter( request, "XFFHostHeader" );
+                    if (xffHostHeader == null || xffHostHeader.trim().isEmpty()) {
+                        HttpBindManager.HTTP_BIND_FORWARDED_HOST.setValue(null);
+                    } else {
+                        HttpBindManager.HTTP_BIND_FORWARDED_HOST.setValue(xffHostHeader.trim());
+                    }
+
+                    final String name = ParamUtils.getParameter(request, "XFFHostName");
+                    if (name == null || name.trim().isEmpty()) {
+                        HttpBindManager.HTTP_BIND_FORWARDED_HOST_NAME.setValue(null);
+                    } else {
+                        HttpBindManager.HTTP_BIND_FORWARDED_HOST_NAME.setValue(name.trim());
+                    }
+
+                    HttpBindManager.HTTP_BIND_FORWARDED_TRUSTED_PROXIES.setValue(newTrustedProxies);
+
+                    HttpBindManager.HTTP_BIND_CONTENT_SECURITY_POLICY_ENABLED.setValue(isCSPEnabled);
+                    if (cspValue == null || cspValue.trim().isEmpty()) {
+                        HttpBindManager.HTTP_BIND_CONTENT_SECURITY_POLICY_RESPONSEVALUE.setValue(null);
+                    } else {
+                        HttpBindManager.HTTP_BIND_CONTENT_SECURITY_POLICY_RESPONSEVALUE.setValue(cspValue.trim());
+                    }
+
+                    manager.getListener(ConnectionType.BOSH_C2S, true).setClientAuth(mutualAuthentication);
+                } catch (Exception e) {
+                    LoggerFactory.getLogger("http-bind.jsp").debug("An error has occurred configuring the HTTP binding ports.", e);
+                    errorMap.put("port", e.getMessage());
                 }
-                HttpBindManager.HTTP_BIND_ALLOWED_ORIGINS.setValue(update);
-                HttpBindManager.HTTP_BIND_FORWARDED.setValue( isXFFEnabled );
-
-                final String xffHeader = ParamUtils.getParameter( request, "XFFHeader" );
-                if (xffHeader == null || xffHeader.trim().isEmpty()) {
-                    HttpBindManager.HTTP_BIND_FORWARDED_FOR.setValue(null);
-                } else {
-                    HttpBindManager.HTTP_BIND_FORWARDED_FOR.setValue(xffHeader.trim());
-                }
-
-                final String xffServerHeader = ParamUtils.getParameter( request, "XFFServerHeader" );
-                if (xffServerHeader == null || xffServerHeader.trim().isEmpty()) {
-                    HttpBindManager.HTTP_BIND_FORWARDED_SERVER.setValue(null);
-                } else {
-                    HttpBindManager.HTTP_BIND_FORWARDED_SERVER.setValue(xffServerHeader.trim());
-                }
-
-                final String xffHostHeader = ParamUtils.getParameter( request, "XFFHostHeader" );
-                if (xffHostHeader == null || xffHostHeader.trim().isEmpty()) {
-                    HttpBindManager.HTTP_BIND_FORWARDED_HOST.setValue(null);
-                } else {
-                    HttpBindManager.HTTP_BIND_FORWARDED_HOST.setValue(xffHostHeader.trim());
-                }
-
-                final String name = ParamUtils.getParameter( request, "XFFHostName" );
-                if (name == null || name.trim().isEmpty()) {
-                    HttpBindManager.HTTP_BIND_FORWARDED_HOST_NAME.setValue(null);
-                } else {
-                    HttpBindManager.HTTP_BIND_FORWARDED_HOST_NAME.setValue(name.trim());
-                }
-
-                HttpBindManager.HTTP_BIND_FORWARDED_TRUSTED_PROXIES.setValue(newTrustedProxies);
-
-                HttpBindManager.HTTP_BIND_CONTENT_SECURITY_POLICY_ENABLED.setValue( isCSPEnabled );
-                if (cspValue == null || cspValue.trim().isEmpty()) {
-                    HttpBindManager.HTTP_BIND_CONTENT_SECURITY_POLICY_RESPONSEVALUE.setValue(null);
-                } else {
-                    HttpBindManager.HTTP_BIND_CONTENT_SECURITY_POLICY_RESPONSEVALUE.setValue(cspValue.trim());
-                }
-
-                manager.getListener( ConnectionType.BOSH_C2S, true ).setClientAuth( mutualAuthentication );
+                boolean isScriptSyntaxEnabled = ParamUtils.getBooleanParameter(request, "scriptSyntaxEnabled", serverManager.isScriptSyntaxEnabled());
+                serverManager.setScriptSyntaxEnabled(isScriptSyntaxEnabled);
             }
-            catch ( Exception e )
-            {
-                LoggerFactory.getLogger("http-bind.jsp").debug("An error has occurred configuring the HTTP binding ports.", e);
-                errorMap.put( "port", e.getMessage() );
-            }
-            boolean isScriptSyntaxEnabled = ParamUtils.getBooleanParameter( request, "scriptSyntaxEnabled", serverManager.isScriptSyntaxEnabled() );
-            serverManager.setScriptSyntaxEnabled( isScriptSyntaxEnabled );
         }
         if ( errorMap.isEmpty() )
         {

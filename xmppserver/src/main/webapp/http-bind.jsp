@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -92,7 +92,7 @@
                     HttpBindManager.HTTP_BIND_FORWARDED_SERVER.setValue(xffServerHeader.trim());
                 }
 
-                final String xffHostHeader = ParamUtils.getParameter( request, "xffHostHeader" );
+                final String xffHostHeader = ParamUtils.getParameter( request, "XFFHostHeader" );
                 if (xffHostHeader == null || xffHostHeader.trim().isEmpty()) {
                     HttpBindManager.HTTP_BIND_FORWARDED_HOST.setValue(null);
                 } else {

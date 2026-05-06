@@ -147,6 +147,42 @@ public class IpUtilsTest
     }
 
     /**
+     * Asserts that {@link IpUtils#isAddressInAnyOf(Ipv6, Set)} supports scoped IPv6 configured addresses by
+     * stripping the zone/scope ID before conversion and matching.
+     */
+    @Test
+    public void testIsAddressInAnyOfIpv6NonSplitAddressMatchScopedConfiguredAddress()
+    {
+        // Setup test fixture.
+        final Ipv6 needle = Ipv6.of("fe80::1");
+        final Set<String> addressesAndRanges = Set.of("fe80::1%eth0", "2001:db8::/32");
+
+        // Execute system under test.
+        final boolean result = assertDoesNotThrow(() -> IpUtils.isAddressInAnyOf(needle, addressesAndRanges));
+
+        // Verify results.
+        assertTrue(result);
+    }
+
+    /**
+     * Asserts that {@link IpUtils#isAddressInAnyOf(Ipv6, Set)} does not throw when scoped IPv6 configured addresses
+     * are present and still returns false when no entry matches.
+     */
+    @Test
+    public void testIsAddressInAnyOfIpv6NonSplitNoMatchScopedConfiguredAddress()
+    {
+        // Setup test fixture.
+        final Ipv6 needle = Ipv6.of("fe80::2");
+        final Set<String> addressesAndRanges = Set.of("fe80::1%eth0", "2001:db8::/32");
+
+        // Execute system under test.
+        final boolean result = assertDoesNotThrow(() -> IpUtils.isAddressInAnyOf(needle, addressesAndRanges));
+
+        // Verify results.
+        assertFalse(result);
+    }
+
+    /**
      * Asserts that {@link IpUtils#isAddressInAnyOf(Ipv6, Set, Set)} correctly find the provided address in non-empty
      * sets of addresses and ranges, when one of the ranges contains the provided address.
      */
@@ -2066,5 +2102,23 @@ public class IpUtilsTest
 
         // Verify results.
         assertFalse(result, "A scoped IPv6 address (with %zone suffix) must not match when the bare address is outside all configured ranges.");
+    }
+
+    /**
+     * Asserts that {@link IpUtils#isAddressInAnyOf(String, Set)} supports scoped IPv6 literals in
+     * configured addresses by stripping zone/scope IDs before exact-address matching.
+     */
+    @Test
+    public void testIsAddressInAnyOfStringScopedIpv6MatchesScopedConfiguredAddress()
+    {
+        // Setup test fixture.
+        final String scopedNeedle = "fe80::1%wlan0";
+        final Set<String> addressesAndRanges = Set.of("fe80::1%eth0", "2001:db8::/32");
+
+        // Execute system under test.
+        final boolean result = assertDoesNotThrow(() -> IpUtils.isAddressInAnyOf(scopedNeedle, addressesAndRanges));
+
+        // Verify results.
+        assertTrue(result, "Scoped IPv6 literals should match by bare address even when zone IDs differ.");
     }
 }

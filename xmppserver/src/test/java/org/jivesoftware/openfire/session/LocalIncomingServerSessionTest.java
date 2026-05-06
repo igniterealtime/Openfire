@@ -137,7 +137,6 @@ public class LocalIncomingServerSessionTest
     public void setUpEach() throws Exception {
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
         final XMPPServer xmppServer = Fixtures.mockXMPPServer();
-        XMPPServer.setInstance(xmppServer);
 
         final File tmpDir = new File(System.getProperty("java.io.tmpdir"));
 
@@ -162,6 +161,9 @@ public class LocalIncomingServerSessionTest
         final SessionManager sessionManager = new SessionManager(); // This is the system under test. We do not want to use a mock for this test!
         sessionManager.initialize(xmppServer);
         doReturn(sessionManager).when(xmppServer).getSessionManager();
+
+        // Expose the singleton only after stubs are ready: lingering Netty threads from the prior test call getInstance() during cleanup, racing stub setup and corrupting Mockito's InvocationContainerImpl.
+        XMPPServer.setInstance(xmppServer);
 
         remoteInitiatingServerDummy = new RemoteInitiatingServerDummy(Fixtures.XMPP_DOMAIN);
     }

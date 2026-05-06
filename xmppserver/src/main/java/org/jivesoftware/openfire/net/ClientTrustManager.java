@@ -65,7 +65,9 @@ import org.slf4j.LoggerFactory;
  *
  * @author Gaston Dombiak
  * @author Jay Kline
+ * @deprecated Replaced by org.jivesoftware.openfire.keystore.OpenfireX509TrustManager
  */
+@Deprecated(forRemoval = true, since = "5.1.0") // Remove in or after Openfire 5.2.0
 public class ClientTrustManager implements X509TrustManager {
 
     private static final Logger Log = LoggerFactory.getLogger(ClientTrustManager.class);

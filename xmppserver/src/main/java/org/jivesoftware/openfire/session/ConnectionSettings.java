@@ -114,6 +114,10 @@ public final class ConnectionSettings {
         @Deprecated(forRemoval = true, since = "5.1.0")
         public static final String TLS_ACCEPT_SELFSIGNED_CERTS = "xmpp.server.certificate.accept-selfsigned";
 
+        /**
+         * @deprecated Redundant - setting this property does not seem to have a meaningful effect.
+         */
+        @Deprecated(forRemoval = true, since = "5.1.0") // Remove in or after Openfire 5.2.0
         public static final String TLS_CERTIFICATE_VERIFY = "xmpp.server.certificate.verify";
 
         /**
@@ -122,8 +126,18 @@ public final class ConnectionSettings {
         @Deprecated(forRemoval = true, since = "5.1.0")
         public static final String TLS_CERTIFICATE_VERIFY_VALIDITY = "xmpp.server.certificate.verify.validity";
 
+        /**
+         * @deprecated This property is unused.
+         */
+        @Deprecated(forRemoval = true, since = "5.1.0") // Remove in or after Openfire 5.2.0
         public static final String TLS_CERTIFICATE_ROOT_VERIFY = "xmpp.server.certificate.verify.root";
+
+        /**
+         * @deprecated Redundant - setting this property does not seem to have a meaningful effect.
+         */
+        @Deprecated(forRemoval = true, since = "5.1.0") // Remove in or after Openfire 5.2.0
         public static final String TLS_CERTIFICATE_CHAIN_VERIFY = "xmpp.server.certificate.verify.chain";
+
         public static final String TLS_ON_PLAIN_DETECTION_ALLOW_NONDIRECTTLS_FALLBACK = "xmpp.server.tls.on-plain-detection-allow-nondirecttls-fallback";
 
         /**

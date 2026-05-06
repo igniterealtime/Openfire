@@ -36,7 +36,9 @@ import java.util.Enumeration;
  * certificates or certificates of unknown issuers and manually accept them.
  *
  * @author Gaston Dombiak
+ * @deprecated Replaced by org.jivesoftware.openfire.keystore.OpenfireX509TrustManager
  */
+@Deprecated(forRemoval = true, since = "5.1.0") // Remove in or after Openfire 5.2.0
 public class ServerTrustManager implements X509TrustManager {
 
     private static final Logger Log = LoggerFactory.getLogger(ServerTrustManager.class);

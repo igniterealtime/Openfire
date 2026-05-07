@@ -733,7 +733,7 @@ public class ConnectionListener
      */
     public void setAcceptSelfSignedCertificates( boolean accept )
     {
-        final boolean oldValue = verifyCertificateValidity();
+        final boolean oldValue = acceptSelfSignedCertificates();
 
         // Always set the property explicitly even if it appears the equal to the old value (the old value might be a fallback value).
         JiveGlobals.setProperty( type.getPrefix() + "certificate.accept-selfsigned", Boolean.toString( accept ) );

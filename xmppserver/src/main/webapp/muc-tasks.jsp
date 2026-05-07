@@ -1,10 +1,10 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
-  - you may not use this file except in compliance with the License.
+  - you may not use this file except in compliance with the License.    
   - You may obtain a copy of the License at
   -
   -     http://www.apache.org/licenses/LICENSE-2.0
@@ -279,10 +279,10 @@
                     <input type="checkbox" name="pingEnabled" value="true" id="cb01" ${empty mucService.idleUserPingThreshold ? '' : 'checked'}>
                 </td>
                 <td>
-                    <label for="cb01"><fmt:message key="muc.tasks.ping_user" /></label>
-                    <input type="number" min="1" id="pingtime" name="pingtime" size="5" maxlength="5" onclick="this.form.pingEnabled[1].checked=true;"
-                           value="${empty mucService.idleUserPingThreshold ? '240' : mucService.idleUserPingThreshold.toMinutes()}">
-                    <label for="pingtime"><fmt:message key="global.minutes" /></label>.
+                    <label for="cb01"><fmt:message key="muc.tasks.ping_user"><fmt:param>
+                        <input type="number" min="1" id="pingtime" name="pingtime" size="5" maxlength="5" onclick="this.form.pingEnabled[1].checked=true;"
+                               value="${empty mucService.idleUserPingThreshold ? '240' : mucService.idleUserPingThreshold.toMinutes()}">
+                    </fmt:param></fmt:message></label>
                 </td>
             </tr>
             <tr>
@@ -290,10 +290,10 @@
                     <input type="checkbox" name="kickEnabled" value="true" id="cb02" ${empty mucService.idleUserKickThreshold ? '' : 'checked'}>
                 </td>
                 <td>
-                    <label for="cb02"><fmt:message key="muc.tasks.kick_user" /></label>
-                    <input type="number" min="1" id="idletime" name="idletime" size="5" maxlength="5" onclick="this.form.kickEnabled[1].checked=true;"
-                           value="${empty mucService.idleUserKickThreshold ? '30' : mucService.idleUserKickThreshold.toMinutes()}">
-                    <label for="idletime"><fmt:message key="global.minutes" /></label>.
+                    <label for="cb02"><fmt:message key="muc.tasks.kick_user"><fmt:param>
+                        <input type="number" min="1" id="idletime" name="idletime" size="5" maxlength="5" onclick="this.form.kickEnabled[1].checked=true;"
+                               value="${empty mucService.idleUserKickThreshold ? '30' : mucService.idleUserKickThreshold.toMinutes()}">
+                    </fmt:param></fmt:message></label>
                 </td>
             </tr>
         </tbody>

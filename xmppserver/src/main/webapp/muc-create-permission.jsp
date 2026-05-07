@@ -86,6 +86,7 @@
         }
         else {
             mucService.setRoomCreationRestricted(true);
+            mucService.setAllRegisteredUsersAllowedToCreate(allowAllRegisteredUsers);
             // Log the event
             webManager.logEvent("set MUC room creation to not restricted for service "+mucname, null);
             response.sendRedirect("muc-create-permission.jsp?success=true&mucname="+URLEncoder.encode(mucname, StandardCharsets.UTF_8));
@@ -154,7 +155,7 @@
 <meta name="helpPage" content="set_group_chat_room_creation_permissions.html"/>
 <script>
     function toggleAllowedUsers() {
-        const isRestricted = document.getElementById('rb02').checked;
+        const isRestricted = document.getElementById('restrictedPermissionsRadio').checked;
         const container = document.getElementById('allowedUsersContainer');
         const input = document.getElementById('userJIDtf');
 
@@ -165,6 +166,13 @@
             }
         } else {
             container.style.display = 'none';
+        }
+    }
+    function syncAllowAllRegistered() {
+        const cb = document.getElementById('allowAllRegisteredUsers');
+        const hidden = document.getElementById('allowAllRegisteredUsersHidden');
+        if (cb && hidden) {
+            hidden.value = cb.checked ? 'true' : 'false';
         }
     }
 </script>
@@ -210,6 +218,7 @@
 <form action="muc-create-permission.jsp?save" method="post">
     <input type="hidden" name="csrf" value="${csrf}">
     <input type="hidden" name="mucname" value="<%= StringUtils.escapeForXML(mucname) %>" />
+    <input type="hidden" name="allowAllRegisteredUsers" id="allowAllRegisteredUsersHidden" value="<%= mucService.isAllRegisteredUsersAllowedToCreate() ? "true" : "false" %>" />
     <div class="jive-contentBoxHeader">
         <fmt:message key="muc.create.permission.policy" />
     </div>
@@ -228,7 +237,7 @@
             </tr>
             <tr>
                 <td style="width: 1%">
-                    <input type="radio" name="openPerms" value="false" id="rb02"
+                    <input type="radio" name="openPerms" value="false" id="restrictedPermissionsRadio"
                      onchange="toggleAllowedUsers()"
                      <%= ((mucService.isRoomCreationRestricted()) ? "checked" : "") %>>
                 </td>
@@ -255,7 +264,7 @@
     </div>
     <div class="jive-contentBox">
         <p>
-            <input type="checkbox" id="allowAllRegisteredUsers" name="allowAllRegisteredUsers" <%=mucService.isAllRegisteredUsersAllowedToCreate()?"checked":""%>>
+            <input type="checkbox" id="allowAllRegisteredUsers" name="allowAllRegisteredUsers" onchange="syncAllowAllRegistered()" <%=mucService.isAllRegisteredUsersAllowedToCreate()?"checked":""%>>
             <label for="allowAllRegisteredUsers"><fmt:message key="muc.create.permission.allow_registered" /></label>
         </p>
         <p>

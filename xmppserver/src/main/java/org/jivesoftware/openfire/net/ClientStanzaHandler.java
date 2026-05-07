@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public class ClientStanzaHandler extends StanzaHandler {
 
     @Override
     protected boolean processUnknowPacket(Element doc) {
-        if (CsiManager.isStreamManagementNonza(doc)) {
+        if (CsiManager.isCsiNonza(doc)) {
             Log.trace("Client is sending client state indication nonza.");
             ((LocalClientSession) session).getCsiManager().process(doc);
             return true;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Tom Evans, 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2015 Tom Evans, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class StreamManagementPacketRouter extends SessionPacketRouter {
 
         if (StreamManager.NAMESPACE_V3.equals(wrappedElement.getNamespace().getStringValue())) {
             session.getStreamManager().process(wrappedElement);
-        } else if (CsiManager.isStreamManagementNonza(wrappedElement)) {
+        } else if (CsiManager.isCsiNonza(wrappedElement)) {
             session.getCsiManager().process(wrappedElement);
         } else {
             super.route(wrappedElement);

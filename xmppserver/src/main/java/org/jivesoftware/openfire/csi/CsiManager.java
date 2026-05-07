@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -271,9 +271,17 @@ public class CsiManager
      * @param fragment the XML to evaluate
      * @return true if the XML is recognized as a CSI nonza, otherwise false.
      */
-    public static boolean isStreamManagementNonza(@Nullable final Element fragment) {
+    public static boolean isCsiNonza(@Nullable final Element fragment) {
         return fragment != null
             && NAMESPACE.equals(fragment.getNamespaceURI())
             && Set.of("active", "inactive").contains(fragment.getName());
+    }
+
+    /**
+     * @deprecated Replaced by {@link #isCsiNonza(Element)}
+     */
+    @Deprecated(forRemoval = true, since = "5.1.0")
+    public static boolean isStreamManagementNonza(@Nullable final Element fragment) {
+        return isCsiNonza(fragment);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -78,6 +79,7 @@ import static org.mockito.Mockito.*;
  * @author Guus der Kinderen, guus@goodbytes.nl
  * @author Alex Gidman, alex.gidman@surevine.com
  */
+@Disabled("Despite many efforts, this test does not run consistently on GitHub's workflow, leading to a significant amount of intermittent failures. See OF-3269")
 @ExtendWith(MockitoExtension.class)
 public class LocalIncomingServerSessionTest
 {

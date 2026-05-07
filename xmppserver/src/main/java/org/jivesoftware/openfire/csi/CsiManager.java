@@ -138,12 +138,21 @@ public class CsiManager
     public void activate()
     {
         Log.trace("Session for '{}' to CSI 'active'", session.getAddress());
-        active = true;
 
-        // If there are delayed stanzas, cause them to be delivered by rescheduling the last one.
-        if (!queue.isEmpty()) {
+        // Drain the queue under the lock, then deliver outside it to avoid holding the lock during I/O.
+        final List<Packet> toDeliver;
+        synchronized (this) {
+            active = true;
+            toDeliver = new LinkedList<>(queue);
+            queue.clear();
+            if (!toDeliver.isEmpty()) {
+                lastPush = Instant.now();
+            }
+        }
+
+        for (final Packet packet : toDeliver) {
             try {
-                session.deliver(queue.pollLast());
+                session.deliver(packet);
             } catch (UnauthorizedException e) {
                 Log.error("Unexpected exception while activating CSI.", e);
             }

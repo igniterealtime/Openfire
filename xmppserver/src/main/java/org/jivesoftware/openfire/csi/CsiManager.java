@@ -135,24 +135,17 @@ public class CsiManager
     /**
      * Switch to the client state of 'active'.
      */
-    public void activate()
+    public synchronized void activate()
     {
         Log.trace("Session for '{}' to CSI 'active'", session.getAddress());
+        active = true;
 
-        // Drain the queue under the lock, then deliver outside it to avoid holding the lock during I/O.
-        final List<Packet> toDeliver;
-        synchronized (this) {
-            active = true;
-            toDeliver = new LinkedList<>(queue);
-            queue.clear();
-            if (!toDeliver.isEmpty()) {
-                lastPush = Instant.now();
-            }
-        }
-
-        for (final Packet packet : toDeliver) {
+        // Re-submit the tail of the queue through the normal queueOrPush path. Because active is now true, queueOrPush
+        // will flush the entire queue (including all preceding stanzas) in one atomic operation.
+        final Packet tail = queue.pollLast();
+        if (tail != null) {
             try {
-                session.deliver(packet);
+                session.deliver(tail);
             } catch (UnauthorizedException e) {
                 Log.error("Unexpected exception while activating CSI.", e);
             }
@@ -162,7 +155,7 @@ public class CsiManager
     /**
      * Switch to the client state of 'inactive'.
      */
-    public void deactivate()
+    public synchronized void deactivate()
     {
         Log.trace("Session for '{}' to CSI 'inactive'", session.getAddress());
         active = false;
@@ -202,7 +195,7 @@ public class CsiManager
         final boolean mustPush =
                !DELAY_ENABLED.getValue() // The feature is disabled by configuration. Always send stanzas immediately.
             || active // The client is active! Do not delay.
-            || queue.size() > DELAY_QUEUE_CAPACITY.getValue() // The delay queue has reached its capacity. Flush the entire thing.
+            || queue.size() >= DELAY_QUEUE_CAPACITY.getValue() // The delay queue has reached its capacity. Flush the entire thing.
             || Instant.now().isAfter(lastPush.plus(DELAY_MAX_DURATION.getValue())) // Ensure that periodically, delayed data is sent anyway.
             || !canDelay(packet);
 

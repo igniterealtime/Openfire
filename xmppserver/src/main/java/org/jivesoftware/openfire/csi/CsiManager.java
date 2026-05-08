@@ -107,6 +107,15 @@ public class CsiManager
      */
     private final Deque<Packet> queue = new LinkedList<>();
 
+    /**
+     * Indicates that activation-triggered queue flushing is in progress.
+     *
+     * While true, this field serves two purposes:
+     * 1) queue gating: {@link #queueOrPush(Packet)} keeps new stanzas queued (not pushed) to preserve ordering;
+     * 2) flusher ownership: concurrent {@link #activate()} calls do not start a second flush loop.
+     */
+    private boolean flushingOnActivate = false;
+
     public CsiManager(@Nonnull final LocalClientSession session)
     {
         this.session = session;
@@ -118,7 +127,7 @@ public class CsiManager
      *
      * @param nonza The CSI nonza to be processed.
      */
-    public synchronized void process(@Nonnull final Element nonza)
+    public void process(@Nonnull final Element nonza)
     {
         switch(nonza.getName()) {
             case "active":
@@ -135,19 +144,51 @@ public class CsiManager
     /**
      * Switch to the client state of 'active'.
      */
-    public synchronized void activate()
+    public void activate()
     {
-        Log.trace("Session for '{}' to CSI 'active'", session.getAddress());
-        active = true;
+        synchronized (this)
+        {
+            Log.trace("Session for '{}' to CSI 'active'", session.getAddress());
+            active = true;
 
-        // Re-submit the tail of the queue through the normal queueOrPush path. Because active is now true, queueOrPush
-        // will flush the entire queue (including all preceding stanzas) in one atomic operation.
-        final Packet tail = queue.pollLast();
-        if (tail != null) {
-            try {
-                session.deliver(tail);
-            } catch (UnauthorizedException e) {
-                Log.error("Unexpected exception while activating CSI.", e);
+            // If another thread is already flushing the queue as part of activation, avoid starting a second flusher.
+            if (flushingOnActivate) {
+                return;
+            }
+
+            flushingOnActivate = true;
+        }
+
+        try {
+            while (true) {
+                final List<Packet> stanzasToPush;
+                synchronized (this) {
+                    // Stop flushing as soon as the session became inactive again.
+                    if (!active) {
+                        flushingOnActivate = false;
+                        return;
+                    }
+
+                    stanzasToPush = drainQueue();
+                    if (stanzasToPush.isEmpty()) {
+                        flushingOnActivate = false;
+                        lastPush = Instant.now();
+                        return;
+                    }
+                }
+
+                // I/O is intentionally performed outside the CSI lock.
+                session.pushPackets(stanzasToPush);
+
+                synchronized (this) {
+                    lastPush = Instant.now();
+                }
+            }
+        } catch (UnauthorizedException e) {
+            Log.error("Unexpected exception while activating CSI.", e);
+        } finally {
+            synchronized (this) {
+                flushingOnActivate = false;
             }
         }
     }
@@ -192,12 +233,13 @@ public class CsiManager
     {
         queue.add(packet);
 
-        final boolean mustPush =
-               !DELAY_ENABLED.getValue() // The feature is disabled by configuration. Always send stanzas immediately.
-            || active // The client is active! Do not delay.
-            || queue.size() >= DELAY_QUEUE_CAPACITY.getValue() // The delay queue has reached its capacity. Flush the entire thing.
-            || Instant.now().isAfter(lastPush.plus(DELAY_MAX_DURATION.getValue())) // Ensure that periodically, delayed data is sent anyway.
-            || !canDelay(packet);
+        final boolean mustPush = !flushingOnActivate // Never flush while activation is in progress, as this can cause out-of-order delivery.
+            && (   !DELAY_ENABLED.getValue() // The feature is disabled by configuration. Always send stanzas immediately.
+                || active // The client is active! Do not delay.
+                || queue.size() >= DELAY_QUEUE_CAPACITY.getValue() // The delay queue has reached its capacity. Flush the entire thing.
+                || Instant.now().isAfter(lastPush.plus(DELAY_MAX_DURATION.getValue())) // Ensure that periodically, delayed data is sent anyway.
+                || !canDelay(packet)
+            );
 
         final List<Packet> result = new LinkedList<>();
         if (mustPush) {
@@ -208,6 +250,18 @@ public class CsiManager
         } else {
             Log.trace("Delay delivery of stanza. Current queue size: {}", queue.size());
         }
+        return result;
+    }
+
+    /**
+     * Returns all queued stanzas and clears the queue.
+     *
+     * @return The queued stanzas
+     */
+    private List<Packet> drainQueue()
+    {
+        final List<Packet> result = new LinkedList<>(queue);
+        queue.clear();
         return result;
     }
 

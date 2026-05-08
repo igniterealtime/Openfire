@@ -962,11 +962,25 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     }
 
     @Override
-    public void deliver(Packet queueOrPushStanza) throws UnauthorizedException {
-        // Queue this stanza, possibly returning it immediately in line with any previously queued stanzas if this
-        // stanza needs to be pushed to the client immediately.
+    public void deliver(Packet queueOrPushStanza) throws UnauthorizedException
+    {
         final List<Packet> stanzasToPush = csiManager.queueOrPush(queueOrPushStanza);
+        if (stanzasToPush.isEmpty()) {
+            return;
+        }
+        pushPackets(stanzasToPush);
+    }
 
+    /**
+     * Delivers stanzas to the client, without evaluating CSI.
+     *
+     * This method should generally not be used, as it is designed to be used by the CSI implementation specifically.
+     * Prefer using {@link #deliver(Packet)} instead.
+     *
+     * @param stanzasToPush The stanzas to deliver
+     */
+    public void pushPackets(@Nonnull final List<Packet> stanzasToPush) throws UnauthorizedException
+    {
         if (stanzasToPush.isEmpty()) {
             return;
         }

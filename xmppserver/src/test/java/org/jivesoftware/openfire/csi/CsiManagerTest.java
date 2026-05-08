@@ -34,12 +34,18 @@ import org.jivesoftware.openfire.session.LocalClientSession;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /**
  * Verifies the implementation of {@link CsiManager}
@@ -59,12 +65,7 @@ public class CsiManagerTest
     public void setUp() throws Exception
     {
         csiManager = new CsiManager(mockSession);
-        // Wire the mock so that deliver() forwards the stanza back through queueOrPush(),
-        // mirroring what LocalClientSession.deliver() does in production.
-        doAnswer(invocation -> {
-            csiManager.queueOrPush(invocation.getArgument(0));
-            return Collections.emptyList(); // For some invocations (when 'mustpush==true), this is expected to return the queue, otherwise it returns an empty list. We're picking one of the two here. This is a simplification for testing purposes.
-        }).when(mockSession).deliver(any(Packet.class));
+        doAnswer(invocation -> null).when(mockSession).pushPackets(any());
     }
 
     /**
@@ -268,9 +269,117 @@ public class CsiManagerTest
         csiManager.activate();
 
         // Verify result - after activation, the queue should be flushed
-        // Note: activate() only delivers the tail, but that should trigger a flush as the delivery immediately invokes
-        // the next operation. The queue should be empty after session.deliver() is called with the tail.
         assertEquals(0, csiManager.getDelayQueueSize(), "After activate, the delay queue should be flushed.");
+        verify(mockSession, times(1)).pushPackets(any());
+    }
+
+    /**
+     * Verifies that deactivation interrupts activation-triggered flushing after the in-flight push completes.
+     */
+    @Test
+    public void testDeactivateStopsActivationFlushing() throws Exception
+    {
+        final Packet message1 = createDelayableMessage();
+        final Packet message2 = createDelayableMessage();
+        final Packet message3 = createDelayableMessage();
+        final Packet message4 = createDelayableMessage();
+
+        csiManager.deactivate();
+        csiManager.queueOrPush(message1);
+        csiManager.queueOrPush(message2);
+
+        final CountDownLatch firstPushStarted = new CountDownLatch(1);
+        final CountDownLatch unblockFirstPush = new CountDownLatch(1);
+        final AtomicInteger pushCount = new AtomicInteger(0);
+        final List<Integer> pushedBatchSizes = Collections.synchronizedList(new ArrayList<>());
+
+        doAnswer(invocation -> {
+            final List<Packet> pushed = invocation.getArgument(0);
+            pushedBatchSizes.add(pushed.size());
+            if (pushCount.incrementAndGet() == 1) {
+                firstPushStarted.countDown();
+                assertTrue(unblockFirstPush.await(5, TimeUnit.SECONDS), "Timed out waiting to unblock first push");
+            }
+            return null;
+        }).when(mockSession).pushPackets(any());
+
+        final Thread activation = new Thread(csiManager::activate);
+        activation.start();
+
+        assertTrue(firstPushStarted.await(5, TimeUnit.SECONDS), "First push should start");
+
+        // While activation is flushing, newly queued stanzas should remain queued.
+        assertTrue(csiManager.queueOrPush(message3).isEmpty());
+        csiManager.deactivate();
+
+        unblockFirstPush.countDown();
+        activation.join(5000);
+        assertFalse(activation.isAlive(), "Activation thread should have finished");
+
+        assertFalse(csiManager.isActive(), "Session should be inactive");
+        assertEquals(1, csiManager.getDelayQueueSize(), "Messages queued during flush should remain queued after deactivation");
+
+        // Still inactive: additional delayable stanza is queued, not pushed.
+        assertTrue(csiManager.queueOrPush(message4).isEmpty());
+        assertEquals(2, csiManager.getDelayQueueSize(), "Additional delayable stanza should be queued while inactive");
+
+        // Reactivating should flush the remaining queued stanzas in one batch.
+        csiManager.activate();
+        assertEquals(0, csiManager.getDelayQueueSize());
+        assertEquals(List.of(2, 2), pushedBatchSizes, "Expected one initial batch and one batch after reactivation");
+    }
+
+    /**
+     * Verifies that overlapping activate() calls are handled by one flusher thread.
+     */
+    @Test
+    public void testDualActivateUsesSingleFlusher() throws Exception
+    {
+        final Packet message1 = createDelayableMessage();
+        final Packet message2 = createDelayableMessage();
+        final Packet message3 = createDelayableMessage();
+
+        csiManager.deactivate();
+        csiManager.queueOrPush(message1);
+        csiManager.queueOrPush(message2);
+
+        final CountDownLatch firstPushStarted = new CountDownLatch(1);
+        final CountDownLatch unblockFirstPush = new CountDownLatch(1);
+        final AtomicInteger pushCount = new AtomicInteger(0);
+        final List<Integer> pushedBatchSizes = Collections.synchronizedList(new ArrayList<>());
+
+        doAnswer(invocation -> {
+            final List<Packet> pushed = invocation.getArgument(0);
+            pushedBatchSizes.add(pushed.size());
+
+            if (pushCount.incrementAndGet() == 1) {
+                firstPushStarted.countDown();
+                assertTrue(unblockFirstPush.await(5, TimeUnit.SECONDS), "Timed out waiting to unblock first push");
+            }
+            return null;
+        }).when(mockSession).pushPackets(any());
+
+        final Thread firstActivator = new Thread(csiManager::activate);
+        firstActivator.start();
+
+        assertTrue(firstPushStarted.await(5, TimeUnit.SECONDS), "First activate() should start flushing");
+
+        final Thread secondActivator = new Thread(csiManager::activate);
+        secondActivator.start();
+        secondActivator.join(1000);
+        assertFalse(secondActivator.isAlive(), "Second activate() should return quickly while flush is in progress");
+
+        // While the first flush is in-flight, this stanza should be queued and then flushed by the first activator.
+        assertTrue(csiManager.queueOrPush(message3).isEmpty());
+
+        unblockFirstPush.countDown();
+        firstActivator.join(5000);
+        assertFalse(firstActivator.isAlive(), "First activate() should finish");
+
+        assertTrue(csiManager.isActive(), "Session should remain active");
+        assertEquals(0, csiManager.getDelayQueueSize(), "All queued stanzas should be flushed");
+        assertEquals(2, pushCount.get(), "Only one flusher loop should perform two push cycles");
+        assertEquals(List.of(2, 1), pushedBatchSizes, "Expected initial flush and one follow-up batch");
     }
 
     /**
@@ -591,7 +700,7 @@ public class CsiManagerTest
      * Verifies that a group chat message stanza with a body <em>is not</em> identified as a stanza that can be delayed/queued in context of CSI.
      */
     @Test
-    public void testCanDelayProceedingToGroupChatReturnsFalse() throws Exception
+    public void testCanDelayGroupChatMessageWithBodyReturnsFalse() throws Exception
     {
         // Setup test fixture - Groupchat messages with body are not delayable
         final Packet groupchatMessage = parse("""

@@ -376,6 +376,12 @@ public class SASLAuthentication {
                         throw new SaslFailureException( Failure.INVALID_MECHANISM, "The configuration of Openfire does not contain or allow the mechanism." );
                     }
 
+                    // Enforce session-specific eligibility (as advertised in stream features) See OF-3273.
+                    if ( !getAvailableMechanismsForSession( session ).contains( mechanismName ) )
+                    {
+                        throw new SaslFailureException( Failure.INVALID_MECHANISM, "The mechanism is not available for this session." );
+                    }
+
                     // OF-477: The SASL implementation requires the fully qualified host name (not the domain name!) of this server,
                     // yet, most of the XMPP implemenations of DIGEST-MD5 will actually use the domain name. To account for that,
                     // here, we'll use the host name, unless DIGEST-MD5 is being negotiated!
@@ -723,6 +729,27 @@ public class SASLAuthentication {
         {
             final SaslServerFactory saslServerFactory = saslServerFactories.nextElement();
             Collections.addAll( result, saslServerFactory.getMechanismNames( null ) );
+        }
+        return result;
+    }
+
+    private static Set<String> getAvailableMechanismsForSession( final LocalSession session )
+    {
+        final Element mechanismsElement = getSASLMechanisms( session );
+        if ( mechanismsElement == null )
+        {
+            return Collections.emptySet();
+        }
+
+        final Set<String> result = new HashSet<>();
+        for ( final Iterator<Element> it = mechanismsElement.elementIterator( "mechanism" ); it.hasNext(); )
+        {
+            final Element element = it.next();
+            final String mechanism = element.getTextTrim();
+            if ( mechanism != null && !mechanism.isEmpty() )
+            {
+                result.add( mechanism.toUpperCase() );
+            }
         }
         return result;
     }

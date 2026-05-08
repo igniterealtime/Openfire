@@ -280,7 +280,7 @@
                 </td>
                 <td>
                     <label for="cb01"><fmt:message key="muc.tasks.ping_user"><fmt:param>
-                        <input type="number" min="1" id="pingtime" name="pingtime" size="5" maxlength="5" onclick="this.form.pingEnabled[1].checked=true;"
+                        <input type="number" min="1" id="pingtime" name="pingtime" size="5" maxlength="5" onclick="this.form.pingEnabled.checked=true;"
                                value="${empty mucService.idleUserPingThreshold ? '240' : mucService.idleUserPingThreshold.toMinutes()}">
                     </fmt:param></fmt:message></label>
                 </td>
@@ -291,7 +291,7 @@
                 </td>
                 <td>
                     <label for="cb02"><fmt:message key="muc.tasks.kick_user"><fmt:param>
-                        <input type="number" min="1" id="idletime" name="idletime" size="5" maxlength="5" onclick="this.form.kickEnabled[1].checked=true;"
+                        <input type="number" min="1" id="idletime" name="idletime" size="5" maxlength="5" onclick="this.form.kickEnabled.checked=true;"
                                value="${empty mucService.idleUserKickThreshold ? '30' : mucService.idleUserKickThreshold.toMinutes()}">
                     </fmt:param></fmt:message></label>
                 </td>

@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.net;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
@@ -32,24 +33,19 @@ import org.jivesoftware.openfire.sasl.AnonymousSaslServer;
 import org.jivesoftware.openfire.sasl.Failure;
 import org.jivesoftware.openfire.sasl.JiveSharedSecretSaslServer;
 import org.jivesoftware.openfire.sasl.SaslFailureException;
-import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
-import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.openfire.session.ConnectionSettings;
-import org.jivesoftware.openfire.session.IncomingServerSession;
-import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.openfire.session.LocalIncomingServerSession;
-import org.jivesoftware.openfire.session.LocalSession;
-import org.jivesoftware.openfire.session.ServerSession;
-import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.sasl.SaslProvider;
+import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.PropertyEventDispatcher;
 import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
@@ -165,7 +161,7 @@ public class SASLAuthentication {
 
         initMechanisms();
 
-        org.jivesoftware.util.PropertyEventDispatcher.addListener( new PropertyEventListener()
+        PropertyEventDispatcher.addListener( new PropertyEventListener()
         {
             @Override
             public void propertySet( String property, Map<String, Object> params )
@@ -264,28 +260,30 @@ public class SASLAuthentication {
         }
     }
 
-    public static Element getSASLMechanismsElement( ClientSession session )
+    /**
+     * Generates an XML element that represents the available SASL mechanisms for a given client session.
+     *
+     * Based on the session and server configuration, it optionally returns null if no mechanisms are available and the
+     * configuration suppresses empty mechanism lists.
+     *
+     * @param session the client session for which the available SASL mechanisms are to be retrieved.
+     * @return an XML element listing the available SASL mechanisms, or null if no mechanisms are available
+     *         and the configuration suppresses empty lists.
+     */
+    public static Element getSASLMechanismsElement(@Nonnull final ClientSession session)
     {
-        final Element result = DocumentHelper.createElement( new QName( "mechanisms", new Namespace( "", SASL_NAMESPACE ) ) );
-        for (String mech : getSupportedMechanisms()) {
-            if (mech.equals("EXTERNAL")) {
-                boolean trustedCert = false;
-                if (session.isEncrypted()) {
-                    final Connection connection = ( (LocalClientSession) session ).getConnection();
-                    assert connection != null; // While the client is performing a SASL negotiation, the connection can't be null.
-                    if ( SKIP_PEER_CERT_REVALIDATION_CLIENT.getValue() ) {
-                        // Trust that the peer certificate has been validated when TLS got established.
-                        trustedCert = connection.getPeerCertificates() != null && connection.getPeerCertificates().length > 0;
-                    } else {
-                        // Re-evaluate the validity of the peer certificate.
-                        final TrustStore trustStore = connection.getConfiguration().getTrustStore();
-                        trustedCert = trustStore.isTrusted( connection.getPeerCertificates() );
-                    }
-                }
-                if ( !trustedCert ) {
-                    continue; // Do not offer EXTERNAL.
-                }
-            }
+        final Set<String> availableMechanisms = getAvailableMechanismsForClientSession(session);
+
+        // OF-2072: Return null instead of an empty element, if so configured.
+        if (JiveGlobals.getBooleanProperty("sasl.client.suppressEmpty", false) && availableMechanisms.isEmpty()) {
+            return null;
+        }
+
+        final Element result = DocumentHelper.createElement( new QName("mechanisms", new Namespace("", SASL_NAMESPACE)) );
+        for (final String mech : availableMechanisms) {
+            final Element mechanism = result.addElement("mechanism");
+            mechanism.setText(mech);
+
             if (mech.endsWith("-PLUS")) {
                 // Prevent offering channel binding if the Connection implementation does not support it.
                 final Connection connection = ( (LocalClientSession) session ).getConnection();
@@ -299,41 +297,36 @@ public class SASLAuthentication {
                     continue;
                 }
             }
-            final Element mechanism = result.addElement("mechanism");
-            mechanism.setText(mech);
-        }
-
-        // OF-2072: Return null instead of an empty element, if so configured.
-        if ( JiveGlobals.getBooleanProperty("sasl.client.suppressEmpty", false) && result.elements().isEmpty() ) {
-            return null;
         }
 
         return result;
     }
 
-    public static Element getSASLMechanismsElement( LocalIncomingServerSession session )
+    /**
+     * Generates an XML element that contains the SASL mechanisms available for a given server session.
+     *
+     * Depending on the configuration (property "sasl.server.suppressEmpty"), this method can return {@code null}
+     * instead of an empty mechanisms element if no SASL mechanisms are available.
+     *
+     * @param session the local incoming server session for which the available SASL mechanisms are determined.
+     * @return an XML {@code <mechanisms>} element that lists all available SASL mechanisms for the given session,
+     *         or {@code null} if no mechanisms are available and the configuration suppresses empty elements.
+     */
+    public static Element getSASLMechanismsElement(@Nonnull final LocalIncomingServerSession session)
     {
-        final Element result = DocumentHelper.createElement( new QName( "mechanisms", new Namespace( "", SASL_NAMESPACE ) ) );
-        if (session.isEncrypted()) {
-            final Connection connection   = session.getConnection();
-            final TrustStore trustStore   = connection.getConfiguration().getTrustStore();
-            final X509Certificate trusted = trustStore.getEndEntityCertificate( session.getConnection().getPeerCertificates() );
-
-            boolean haveTrustedCertificate = trusted != null;
-            if (trusted != null && session.getDefaultIdentity() != null) {
-                haveTrustedCertificate = verifyCertificate(trusted, session.getDefaultIdentity());
-            }
-            if (haveTrustedCertificate) {
-                // Offer SASL EXTERNAL only if TLS has already been negotiated and the peer has a trusted cert.
-                final Element mechanism = result.addElement("mechanism");
-                mechanism.setText("EXTERNAL");
-            }
-        }
+        final Set<String> availableMechanisms = getAvailableMechanismsForServerSession(session);
 
         // OF-2072: Return null instead of an empty element, if so configured.
-        if ( JiveGlobals.getBooleanProperty("sasl.server.suppressEmpty", false) && result.elements().isEmpty() ) {
+        if (JiveGlobals.getBooleanProperty("sasl.server.suppressEmpty", false) && availableMechanisms.isEmpty()) {
             return null;
         }
+
+        final Element result = DocumentHelper.createElement( new QName("mechanisms", new Namespace("", SASL_NAMESPACE)) );
+        for (final String mech : availableMechanisms) {
+            final Element mechanism = result.addElement("mechanism");
+            mechanism.setText(mech);
+        }
+
         return result;
     }
 
@@ -539,7 +532,19 @@ public class SASLAuthentication {
         sendElement(session, "challenge", challenge);
     }
 
-    private static void authenticationSuccessful(LocalSession session, String username, String mechanismName, byte[] successData)
+    /**
+     * Processes a successful SASL authentication.
+     *
+     * For client sessions, generates an authentication token. For inbound server sessions, marks the domain as
+     * validated and records the authentication method used.
+     *
+     * @param session the authenticated session (cannot be null).
+     * @param username the authorized identity from SASL (can be null for anonymous).
+     * @param mechanismName the name of the SASL mechanism that was used (cannot be null).
+     * @param successData mechanism-specific success data (can be null).
+     */
+    @VisibleForTesting
+    static void authenticationSuccessful(LocalSession session, String username, String mechanismName, byte[] successData)
     {
         if (username != null && LockOutManager.getInstance().isAccountDisabled(username)) {
             // Interception!  This person is locked out, fail instead!
@@ -731,25 +736,27 @@ public class SASLAuthentication {
         return result;
     }
 
-    private static Set<String> getAvailableMechanismsForSession( final LocalSession session )
+    /**
+     * Returns the set of SASL mechanisms available for the given session.
+     *
+     * @param session the session (cannot be null).
+     * @return a set of available mechanism names for the session (never null, possibly empty).
+     */
+    @VisibleForTesting
+    static Set<String> getAvailableMechanismsForSession( final LocalSession session )
     {
-        final Element mechanismsElement = getSASLMechanisms( session );
-        if ( mechanismsElement == null )
+        if ( session instanceof ClientSession )
+        {
+            return getAvailableMechanismsForClientSession( (ClientSession) session );
+        }
+        else if ( session instanceof LocalIncomingServerSession )
+        {
+            return getAvailableMechanismsForServerSession( (LocalIncomingServerSession) session );
+        }
+        else
         {
             return Collections.emptySet();
         }
-
-        final Set<String> result = new HashSet<>();
-        for ( final Iterator<Element> it = mechanismsElement.elementIterator( "mechanism" ); it.hasNext(); )
-        {
-            final Element element = it.next();
-            final String mechanism = element.getTextTrim();
-            if ( mechanism != null && !mechanism.isEmpty() )
-            {
-                result.add( mechanism.toUpperCase() );
-            }
-        }
-        return result;
     }
 
     /**
@@ -797,5 +804,72 @@ public class SASLAuthentication {
                 Log.warn( "An exception occurred while trying to add support for SASL Mechanism '{}':", propertyValue, ex );
             }
         }
+    }
+
+    /**
+     * Determines and returns the set of SASL mechanisms that are available for a given client session. This includes
+     * mechanisms from the list of supported mechanisms, applying additional checks to ensure mechanism-specific
+     * requirements (e.g., encryption and certificate validation) are met.
+     *
+     * @param session The client session for which available SASL mechanisms need to be determined.
+     *                Must not be null.
+     * @return A set of available SASL mechanism names for the specified client session.
+     *         Will never be null but might be empty if no mechanisms are available.
+     */
+    private static Set<String> getAvailableMechanismsForClientSession(@Nonnull final ClientSession session )
+    {
+        final Set<String> result = new HashSet<>();
+        for (String mech : getSupportedMechanisms()) {
+            if (mech.equals("EXTERNAL")) {
+                boolean trustedCert = false;
+                if (session.isEncrypted()) {
+                    final Connection connection = ( (LocalClientSession) session ).getConnection();
+                    assert connection != null; // While the client is performing a SASL negotiation, the connection can't be null.
+                    if ( SKIP_PEER_CERT_REVALIDATION_CLIENT.getValue() ) {
+                        // Trust that the peer certificate has been validated when TLS got established.
+                        trustedCert = connection.getPeerCertificates() != null && connection.getPeerCertificates().length > 0;
+                    } else {
+                        // Re-evaluate the validity of the peer certificate.
+                        final TrustStore trustStore = connection.getConfiguration().getTrustStore();
+                        trustedCert = trustStore.isTrusted( connection.getPeerCertificates() );
+                    }
+                }
+                if ( !trustedCert ) {
+                    continue; // Do not offer EXTERNAL.
+                }
+            }
+            result.add(mech);
+        }
+        return result;
+    }
+
+    /**
+     * Determines the set of available SASL mechanisms for the given server session. This method checks the session's
+     * encryption status and examines the trust relationship to determine if specific mechanisms (such as SASL EXTERNAL)
+     * can be offered.
+     *
+     * @param session the server session for which the available mechanisms are to be determined.
+     *                Must not be null.
+     * @return a set of SASL mechanism names that can be offered for the specified session.
+     *         If no mechanisms are available, an empty set is returned.
+     */
+    private static Set<String> getAvailableMechanismsForServerSession(@Nonnull final LocalIncomingServerSession session)
+    {
+        final Set<String> result = new HashSet<>();
+        if (session.isEncrypted()) {
+            final Connection connection   = session.getConnection();
+            final TrustStore trustStore   = connection.getConfiguration().getTrustStore();
+            final X509Certificate trusted = trustStore.getEndEntityCertificate( session.getConnection().getPeerCertificates() );
+
+            boolean haveTrustedCertificate = trusted != null;
+            if (trusted != null && session.getDefaultIdentity() != null) {
+                haveTrustedCertificate = verifyCertificate(trusted, session.getDefaultIdentity());
+            }
+            if (haveTrustedCertificate) {
+                // Offer SASL EXTERNAL only if TLS has already been negotiated and the peer has a trusted cert.
+                result.add("EXTERNAL");
+            }
+        }
+        return result;
     }
 }

@@ -23,8 +23,10 @@ import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
+import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.ServerSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.JiveGlobals;
@@ -37,6 +39,7 @@ import org.mockito.ArgumentCaptor;
 import javax.security.sasl.SaslServer;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -204,6 +207,132 @@ public class SASLAuthenticationTest
         assertEquals(ServerSession.AuthenticationMethod.OTHER, session.getAuthenticationMethod(), "Expected incoming server sessions using non-EXTERNAL SASL to be marked as OTHER.");
     }
 
+    /**
+     * Verifies that getAvailableMechanismsForSession returns mechanisms for a ClientSession.
+     */
+    @Test
+    public void shouldReturnAvailableMechanismsForClientSession()
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final Set<String> mechanisms = SASLAuthentication.getAvailableMechanismsForSession(session);
+
+        // Verify result.
+        assertTrue(mechanisms.contains("PLAIN"), "Expected PLAIN to be available for an unencrypted client session.");
+        assertFalse(mechanisms.contains("EXTERNAL"), "Expected EXTERNAL not to be available for an unencrypted client session without a trusted cert.");
+    }
+
+    /**
+     * Verifies that getAvailableMechanismsForSession returns mechanisms for an incoming server session.
+     */
+    @Test
+    public void shouldReturnAvailableMechanismsForIncomingServerSession()
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalIncomingServerSession session = new LocalIncomingServerSession(Fixtures.XMPP_DOMAIN, connection, streamID, "remote.example.org");
+
+        // Execute system under test.
+        final Set<String> mechanisms = SASLAuthentication.getAvailableMechanismsForSession(session);
+
+        // Verify result.
+        assertTrue(mechanisms.isEmpty(), "Expected no mechanisms to be available for an unencrypted server session without a trusted cert.");
+    }
+
+    /**
+     * Verifies that getAvailableMechanismsForSession handles unknown session types gracefully.
+     */
+    @Test
+    public void shouldReturnEmptySetForUnknownSessionType()
+    {
+        // Setup test fixture.
+        final LocalSession unknownSession = mock(LocalSession.class);
+
+        // Execute system under test.
+        final Set<String> mechanisms = SASLAuthentication.getAvailableMechanismsForSession(unknownSession);
+
+        // Verify result.
+        assertTrue(mechanisms.isEmpty(), "Expected empty set for an unknown session type.");
+    }
+
+    /**
+     * Verifies that authenticationSuccessful generates an anonymous auth token for a client with no username.
+     */
+    @Test
+    public void shouldGenerateAnonymousAuthTokenForClientWhenUsernameIsNull()
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        SASLAuthentication.authenticationSuccessful(session, null, "ANONYMOUS", new byte[0]);
+
+        // Verify result.
+        final AuthToken authToken = session.getAuthToken();
+        assertTrue(authToken.isAnonymous(), "Expected an anonymous auth token when username is null.");
+        final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(response.capture());
+        assertTrue(response.getValue().contains("<success"), "Expected success element to be sent.");
+    }
+
+    /**
+     * Verifies that authenticationSuccessful generates a user auth token for a client with a username.
+     */
+    @Test
+    public void shouldGenerateUserAuthTokenForClientWhenUsernameIsProvided()
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        final String username = "testuser";
+
+        // Execute system under test.
+        SASLAuthentication.authenticationSuccessful(session, username, "PLAIN", new byte[0]);
+
+        // Verify result.
+        final AuthToken authToken = session.getAuthToken();
+        assertFalse(authToken.isAnonymous(), "Expected a user auth token when username is provided.");
+        assertEquals(username, authToken.getUsername(), "Expected auth token to contain the provided username.");
+        final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(response.capture());
+        assertTrue(response.getValue().contains("<success"), "Expected success element to be sent.");
+    }
+
+    /**
+     * Verifies that authenticationSuccessful marks the domain as validated for an inbound server session.
+     */
+    @Test
+    public void shouldMarkDomainAsValidatedForIncomingServerSession()
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalIncomingServerSession session = new LocalIncomingServerSession(Fixtures.XMPP_DOMAIN, connection, streamID, "remote.example.org");
+        final String remoteDomain = "remote.example.org";
+
+        // Execute system under test.
+        SASLAuthentication.authenticationSuccessful(session, remoteDomain, "EXTERNAL", new byte[0]);
+
+        // Verify result.
+        assertTrue(session.isValidDomain(remoteDomain), "Expected remote domain to be marked as validated.");
+        final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(response.capture());
+        assertTrue(response.getValue().contains("<success"), "Expected success element to be sent.");
+    }
+
     private static Element authElement(final String mechanism)
     {
         final Element auth = DocumentHelper.createElement(new QName("auth", Namespace.get("", SASL_NAMESPACE)));
@@ -218,7 +347,3 @@ public class SASLAuthenticationTest
         return response;
     }
 }
-
-
-
-

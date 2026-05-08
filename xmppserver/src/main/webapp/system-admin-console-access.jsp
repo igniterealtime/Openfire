@@ -71,7 +71,7 @@
         final Set<String> blocklist = new HashSet<>(AuthCheckFilter.IP_ACCESS_BLOCKLIST.getValue());
         if (blocklist.remove(deleteBlockedIP) ) {
             AuthCheckFilter.IP_ACCESS_BLOCKLIST.setValue(blocklist);
-            webManager.logEvent("Updated Admin Console access configuration (Access Lists).", "Removed from Blocklist: '" + deleteBlockedIP + "', Blocklist now is {" + String.join(", ", blocklist) + "}");
+            webManager.logEvent("Updated Admin Console access configuration (Access Lists).", "Removed from Blocklist: '" + deleteBlockedIP + "', Blocklist now is {" + String.join(", ", AuthCheckFilter.IP_ACCESS_BLOCKLIST.getValue()) + "}");
         }
     }
     if (blockValue != null && errors.isEmpty()) {
@@ -82,7 +82,7 @@
             final Set<String> blocklist = new HashSet<>(AuthCheckFilter.IP_ACCESS_BLOCKLIST.getValue());
             if (blocklist.add(blockValue)) {
                 AuthCheckFilter.IP_ACCESS_BLOCKLIST.setValue(blocklist);
-                webManager.logEvent("Updated Admin Console access configuration (Access Lists).", "Added to Blocklist: '" + blockValue + "', Blocklist now is {" + String.join(", ", blocklist) + "}");
+                webManager.logEvent("Updated Admin Console access configuration (Access Lists).", "Added to Blocklist: '" + blockValue + "', Blocklist now is {" + String.join(", ", AuthCheckFilter.IP_ACCESS_BLOCKLIST.getValue()) + "}");
                 blockValue = null;
             }
         }
@@ -92,7 +92,7 @@
         final Set<String> allowlist = new HashSet<>(AuthCheckFilter.IP_ACCESS_ALLOWLIST.getValue());
         if (allowlist.remove(deleteAllowedIP) ) {
             AuthCheckFilter.IP_ACCESS_ALLOWLIST.setValue(allowlist);
-            webManager.logEvent("Updated Admin Console access configuration (Access Lists).", "Removed from Allowlist: '" + deleteAllowedIP + "', Allowlist now is {" + String.join(", ", allowlist) + "}");
+            webManager.logEvent("Updated Admin Console access configuration (Access Lists).", "Removed from Allowlist: '" + deleteAllowedIP + "', Allowlist now is {" + String.join(", ", AuthCheckFilter.IP_ACCESS_ALLOWLIST.getValue()) + "}");
         }
     }
     if (allowValue != null && errors.isEmpty()) {
@@ -103,7 +103,7 @@
             final Set<String> allowlist = new HashSet<>(AuthCheckFilter.IP_ACCESS_ALLOWLIST.getValue());
             if (allowlist.add(allowValue)) {
                 AuthCheckFilter.IP_ACCESS_ALLOWLIST.setValue(allowlist);
-                webManager.logEvent("Updated Admin Console access configuration (Access Lists).", "Added from Allowlist: '" + allowValue + "', Allowlist now is {" + String.join(", ", allowlist) + "}");
+                webManager.logEvent("Updated Admin Console access configuration (Access Lists).", "Added to Allowlist: '" + allowValue + "', Allowlist now is {" + String.join(", ", AuthCheckFilter.IP_ACCESS_ALLOWLIST.getValue()) + "}");
                 allowValue = null;
             }
         }
@@ -116,7 +116,7 @@
                     AuthCheckFilter.IP_ACCESS_IGNORE_EXCLUDES.setValue(ignoreExcludes);
 
                     // Log the event
-                    webManager.logEvent("Updated Admin Console access configuration (Access Lists).", "Ignore excludes = " + ignoreExcludes);
+                    webManager.logEvent("Updated Admin Console access configuration (Access Lists).", "Ignore excludes = " + AuthCheckFilter.IP_ACCESS_IGNORE_EXCLUDES.getValue());
                     response.sendRedirect("system-admin-console-access.jsp?success=true");
                     return;
                 }
@@ -182,7 +182,16 @@
                     AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_TRUSTED_PROXIES.setValue(newTrustedProxies);
 
                     // Log the event
-                    webManager.logEvent("Updated Admin Console access configuration (Forwarded).", "X-Forwarded-For enabled: " + isXFFEnabled + "\nRFC-Header: " + fHeader + "\nLegacy Header: " + xffHeader + "\nServer Header: " + xffServerHeader + "\nHost Name: " + name + "\nTrusted proxies: " + (newTrustedProxies == null || newTrustedProxies.isEmpty() ? "(none)" : String.join(", ", newTrustedProxies)));
+                    webManager.logEvent(
+                        "Updated Admin Console access configuration (Forwarded).",
+                            "Forwarded enabled: " + isXFFEnabled
+                        + "\nRFC Header: " + AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_HEADER.getValue()
+                        + "\nLegacy Header: " + AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_FOR.getValue()
+                        + "\nServer Header: " + AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_SERVER.getValue()
+                        + "\nHost Header: " + AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_HOST.getValue()
+                        + "\nHost Name: " + AdminConsolePlugin.ADMIN_CONSOLE_FORWARDED_HOST_NAME.getValue()
+                        + "\nTrusted proxies: " + (newTrustedProxies == null || newTrustedProxies.isEmpty() ? "(none)" : String.join(", ", newTrustedProxies))
+                    );
                     response.sendRedirect("system-admin-console-access.jsp?success=true");
                     return;
                 }
@@ -200,7 +209,7 @@
                     }
 
                     // Log the event
-                    webManager.logEvent("Updated Admin Console access configuration (Content-Security-Policy).", "Content-Security-Policy enabled: " + isCSPEnabled + "\nHeader Value: " + cspValue);
+                    webManager.logEvent("Updated Admin Console access configuration (Content-Security-Policy).", "Content-Security-Policy enabled: " + isCSPEnabled + "\nHeader Value: " + AdminConsolePlugin.ADMIN_CONSOLE_CONTENT_SECURITY_POLICY_RESPONSEVALUE.getValue());
                     response.sendRedirect("system-admin-console-access.jsp?success=true");
                     return;
                 }

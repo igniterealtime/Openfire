@@ -461,7 +461,7 @@ public class SASLAuthentication {
 
                     // Success! Any mechanism-specific verification (such as certificate checks for EXTERNAL) is
                     // performed by the SaslServer implementation.
-                    authenticationSuccessful( session, saslServer.getAuthorizationID(), challenge );
+                    authenticationSuccessful( session, saslServer.getAuthorizationID(), saslServer.getMechanismName(), challenge );
                     session.removeSessionData( "SaslServer" );
                     session.setSessionData("SaslMechanism", saslServer.getMechanismName());
                     if (saslServer.getMechanismName().endsWith("-PLUS")) {
@@ -539,8 +539,8 @@ public class SASLAuthentication {
         sendElement(session, "challenge", challenge);
     }
 
-    private static void authenticationSuccessful(LocalSession session, String username,
-            byte[] successData) {
+    private static void authenticationSuccessful(LocalSession session, String username, String mechanismName, byte[] successData)
+    {
         if (username != null && LockOutManager.getInstance().isAccountDisabled(username)) {
             // Interception!  This person is locked out, fail instead!
             LockOutManager.getInstance().recordFailedLogin(username);
@@ -559,13 +559,11 @@ public class SASLAuthentication {
             }
             ((LocalClientSession) session).setAuthToken(authToken);
         }
-        else if (session instanceof IncomingServerSession) {
-            String hostname = username;
-            // Add the validated domain as a valid domain. The remote server can
-            // now send packets from this address
-            ((LocalIncomingServerSession) session).addValidatedDomain(hostname);
-            ((LocalIncomingServerSession) session).setAuthenticationMethod(ServerSession.AuthenticationMethod.SASL_EXTERNAL);
-            Log.info("Inbound Server {} authenticated (via TLS)", username);
+        else if (session instanceof LocalIncomingServerSession serverSession) {
+            // Add the validated domain as a valid domain. The remote server can now send packets from this address.
+            serverSession.addValidatedDomain(username);
+            serverSession.setAuthenticationMethod(ServerSession.AuthenticationMethod.fromSaslMechanismName(mechanismName));
+            Log.info("Inbound Server {} authenticated using SASL mechanism {}", username, mechanismName);
         }
     }
 

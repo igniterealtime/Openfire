@@ -25,6 +25,7 @@ import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
+import org.jivesoftware.openfire.session.ServerSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.JiveGlobals;
 import org.junit.jupiter.api.AfterAll;
@@ -33,12 +34,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import javax.security.sasl.SaslServer;
 import java.util.Arrays;
 import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -127,19 +130,7 @@ public class SASLAuthenticationTest
      * Verifies that an unencrypted client session accepts PLAIN as an eligible mechanism and does not reject it as invalid.
      *
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3273">OF-3273: SASLAuthentication accepts mechanisms not advertised for the current connection/session</a>
-Enforce session-eligible SASL mechanism validation during authentication
-
-Ensure SASL mechanism selection in `SASLAuthentication.handle(...)` is constrained
-to the mechanisms available for the current session, matching stream feature
-advertisement behavior.
-
-Previously, Openfire validated mechanisms against globally enabled configuration
-only, which allowed peers to attempt mechanisms that were not advertised for a
-specific connection/session type. This change adds a session-scoped eligibility
-check and rejects non-available mechanisms with `invalid-mechanism`.
-
-This aligns mechanism acceptance with negotiated capabilities and prevents use of
-mechanisms outside per-session policy.     */
+     */
     @Test
     public void shouldAcceptPlainForUnencryptedClientSessionAsEligibleMechanism()
     {
@@ -161,11 +152,70 @@ mechanisms outside per-session policy.     */
         assertTrue(response.getValue().contains("<challenge"), "Expected a challenge stanza as proof that PLAIN negotiation continued after mechanism validation.");
     }
 
+    /**
+     * Verifies that an incoming server session authenticated with EXTERNAL is marked as SASL_EXTERNAL.
+     */
+    @Test
+    public void shouldMarkIncomingServerSessionAsSaslExternalForExternalMechanism() throws Exception
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalIncomingServerSession session = new LocalIncomingServerSession(Fixtures.XMPP_DOMAIN, connection, streamID, "remote.example.org");
+
+        final SaslServer saslServer = mock(SaslServer.class);
+        when(saslServer.evaluateResponse(any())).thenReturn(new byte[0]);
+        when(saslServer.isComplete()).thenReturn(true);
+        when(saslServer.getAuthorizationID()).thenReturn("remote.example.org");
+        when(saslServer.getMechanismName()).thenReturn("EXTERNAL");
+        session.setSessionData("SaslServer", saslServer);
+
+        // Execute system under test.
+        final SASLAuthentication.Status status = SASLAuthentication.handle(session, responseElement(""));
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.authenticated, status, "Expected authentication to complete for a completed EXTERNAL SASL server.");
+        assertEquals(ServerSession.AuthenticationMethod.SASL_EXTERNAL, session.getAuthenticationMethod(), "Expected incoming server sessions using EXTERNAL to be marked as SASL_EXTERNAL.");
+    }
+
+    /**
+     * Verifies that an incoming server session authenticated with a non-EXTERNAL mechanism is marked as OTHER.
+     */
+    @Test
+    public void shouldMarkIncomingServerSessionAsOtherForNonExternalMechanism() throws Exception
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalIncomingServerSession session = new LocalIncomingServerSession(Fixtures.XMPP_DOMAIN, connection, streamID, "remote.example.org");
+
+        final SaslServer saslServer = mock(SaslServer.class);
+        when(saslServer.evaluateResponse(any())).thenReturn(new byte[0]);
+        when(saslServer.isComplete()).thenReturn(true);
+        when(saslServer.getAuthorizationID()).thenReturn("remote.example.org");
+        when(saslServer.getMechanismName()).thenReturn("PLAIN");
+        session.setSessionData("SaslServer", saslServer);
+
+        // Execute system under test.
+        final SASLAuthentication.Status status = SASLAuthentication.handle(session, responseElement(""));
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.authenticated, status, "Expected authentication to complete for a completed non-EXTERNAL SASL server.");
+        assertEquals(ServerSession.AuthenticationMethod.OTHER, session.getAuthenticationMethod(), "Expected incoming server sessions using non-EXTERNAL SASL to be marked as OTHER.");
+    }
+
     private static Element authElement(final String mechanism)
     {
         final Element auth = DocumentHelper.createElement(new QName("auth", Namespace.get("", SASL_NAMESPACE)));
         auth.addAttribute("mechanism", mechanism);
         return auth;
+    }
+
+    private static Element responseElement(final String value)
+    {
+        final Element response = DocumentHelper.createElement(new QName("response", Namespace.get("", SASL_NAMESPACE)));
+        response.setText(value);
+        return response;
     }
 }
 

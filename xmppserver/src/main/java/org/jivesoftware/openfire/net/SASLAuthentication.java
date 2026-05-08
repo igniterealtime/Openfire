@@ -452,6 +452,12 @@ public class SASLAuthentication {
                         return Status.needResponse;
                     }
 
+                    if (saslServer.getAuthorizationID() != null && LockOutManager.getInstance().isAccountDisabled(saslServer.getAuthorizationID())) {
+                        // Interception!  This person is locked out, fail instead!
+                        LockOutManager.getInstance().recordFailedLogin(saslServer.getAuthorizationID());
+                        throw new SaslFailureException(Failure.ACCOUNT_DISABLED);
+                    }
+
                     // Success! Any mechanism-specific verification (such as certificate checks for EXTERNAL) is
                     // performed by the SaslServer implementation.
                     authenticationSuccessful( session, saslServer.getAuthorizationID(), saslServer.getMechanismName(), challenge );
@@ -546,12 +552,6 @@ public class SASLAuthentication {
     @VisibleForTesting
     static void authenticationSuccessful(LocalSession session, String username, String mechanismName, byte[] successData)
     {
-        if (username != null && LockOutManager.getInstance().isAccountDisabled(username)) {
-            // Interception!  This person is locked out, fail instead!
-            LockOutManager.getInstance().recordFailedLogin(username);
-            authenticationFailed(session, Failure.ACCOUNT_DISABLED);
-            return;
-        }
         sendElement(session, "success", successData);
         if (session instanceof ClientSession) {
             final AuthToken authToken;

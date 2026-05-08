@@ -375,7 +375,7 @@
                     <label for="rb07"><b><fmt:message key="httpbind.settings.xff.label_enable"/></b> - <fmt:message key="httpbind.settings.xff.label_enable_info"/></label>
                     <table>
                         <tr>
-                            <td><label for="FHeader"><fmt:message key="httpbind_settings.xff.forwarded"/></label></td>
+                            <td><label for="FHeader"><fmt:message key="httpbind.settings.xff.forwarded"/></label></td>
                             <td><input id="FHeader" type="text" size="40" name="FHeader" value="${fn:escapeXml(HttpBindManager.HTTP_BIND_FORWARDED_HEADER.value == null ? "" : HttpBindManager.HTTP_BIND_FORWARDED_HEADER.value)}"></td>
                         </tr>
                         <tr>

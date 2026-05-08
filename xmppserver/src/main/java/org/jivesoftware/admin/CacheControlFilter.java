@@ -24,10 +24,8 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 
 /**
  * A servlet filter that sets HTTP Cache-Control headers for the Openfire Admin Console.
@@ -55,14 +53,14 @@ import java.util.Set;
 public class CacheControlFilter implements Filter {
 
     /**
-     * A comma-separated list of file extensions that are considered static resources.
+     * A list of file extensions that are considered static resources.
      * Requests for resources matching these extensions will receive short-term caching headers.
      */
-    public static final SystemProperty<String> STATIC_RESOURCE_EXTENSIONS = SystemProperty.Builder.ofType(String.class)
+    public static final SystemProperty<List<String>> STATIC_RESOURCE_EXTENSIONS = SystemProperty.Builder.ofType(List.class)
         .setKey("adminConsole.static-resource-extensions")
-        .setDefaultValue("js,css,png,jpg,jpeg,gif,svg,woff,woff2,ttf,ico,webp,map")
+        .setDefaultValue(List.of("js", "css", "png", "jpg", "jpeg", "gif", "svg", "woff", "woff2", "ttf", "ico", "webp", "map"))
         .setDynamic(true)
-        .build();
+        .buildList(String.class);
 
     /**
      * The maximum duration that static resources may be cached by browsers and proxies.
@@ -134,31 +132,10 @@ public class CacheControlFilter implements Filter {
         int dotIndex = uri.lastIndexOf('.');
         if (dotIndex != -1 && dotIndex < uri.length() - 1) {
             String extension = uri.substring(dotIndex + 1).toLowerCase(Locale.ROOT);
-            return getStaticExtensions().contains(extension);
+            return STATIC_RESOURCE_EXTENSIONS.getValue().contains(extension);
         }
 
         return false;
-    }
-
-    /**
-     * Parses the current value of {@link #STATIC_RESOURCE_EXTENSIONS} into a {@link Set} of
-     * lowercase extension strings.
-     *
-     * @return an unmodifiable set of recognized static resource extensions.
-     */
-    private Set<String> getStaticExtensions() {
-        String value = STATIC_RESOURCE_EXTENSIONS.getValue();
-        if (value == null || value.trim().isEmpty()) {
-            return Collections.emptySet();
-        }
-        Set<String> extensions = new HashSet<>();
-        for (String ext : value.split("[\\s,]+")) {
-            String trimmed = ext.trim().toLowerCase(Locale.ROOT);
-            if (!trimmed.isEmpty()) {
-                extensions.add(trimmed);
-            }
-        }
-        return Collections.unmodifiableSet(extensions);
     }
 
     @Override

@@ -142,7 +142,7 @@ public class LoginLimitManager {
     }
 
     /**
-     * Returns true of the entered username or connecting IP address has hit its attempt limit.
+     * Returns true if the entered username or connecting IP address has hit its attempt limit.
      *
      * @param username Username being checked.
      * @param address IP address that is connecting.

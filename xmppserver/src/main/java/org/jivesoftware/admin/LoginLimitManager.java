@@ -174,7 +174,7 @@ public class LoginLimitManager {
      * @param address IP address that is attempting.
      */
     public void recordFailedAttempt(String username, String address) {
-        Log.warn("Failed admin console login attempt by {} form {}", username, address);
+        Log.warn("Failed admin console login attempt by {} from {}", username, address);
 
         final long ipAttempts = attemptsPerIP.merge(address, 1L, Long::sum);
         final StringBuilder sb = new StringBuilder();

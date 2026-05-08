@@ -856,6 +856,12 @@ public class SASLAuthentication {
     private static Set<String> getAvailableMechanismsForServerSession(@Nonnull final LocalIncomingServerSession session)
     {
         final Set<String> result = new HashSet<>();
+
+        // Check if EXTERNAL is enabled in the supported mechanisms configuration
+        if (!getSupportedMechanisms().contains("EXTERNAL")) {
+            return result;
+        }
+
         if (session.isEncrypted()) {
             final Connection connection   = session.getConnection();
             final TrustStore trustStore   = connection.getConfiguration().getTrustStore();

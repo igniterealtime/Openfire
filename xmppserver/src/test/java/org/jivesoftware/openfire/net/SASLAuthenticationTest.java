@@ -37,7 +37,10 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 import javax.security.sasl.SaslServer;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
@@ -246,6 +249,39 @@ public class SASLAuthenticationTest
 
         // Verify result.
         assertTrue(mechanisms.isEmpty(), "Expected no mechanisms to be available for an unencrypted server session without a trusted cert.");
+    }
+
+    /**
+     * Verifies that getAvailableMechanismsForSession does not advertise EXTERNAL for an incoming server session
+     * when EXTERNAL is disabled in the global SASL mechanisms configuration.
+     *
+     * Regression test for: Stream features advertise EXTERNAL even when disabled in sasl.mechs
+     */
+    @Test
+    public void shouldNotAdvertiseExternalForIncomingServerSessionWhenDisabledGlobally()
+    {
+        // Save the original enabled mechanisms to restore after the test.
+        final Set<String> originalMechanisms = new HashSet<>(SASLAuthentication.getEnabledMechanisms());
+
+        try {
+            // Setup test fixture: Disable EXTERNAL in the global mechanisms configuration
+            SASLAuthentication.setEnabledMechanisms(Collections.singletonList("PLAIN")); // Only PLAIN, no EXTERNAL
+
+            final Connection connection = mock(Connection.class);
+            when(connection.isEncrypted()).thenReturn(true);
+
+            final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+            final LocalIncomingServerSession session = new LocalIncomingServerSession(Fixtures.XMPP_DOMAIN, connection, streamID, "remote.example.org");
+
+            // Execute system under test.
+            final Set<String> mechanisms = SASLAuthentication.getAvailableMechanismsForSession(session);
+
+            // Verify result.
+            assertFalse(mechanisms.contains("EXTERNAL"), "Expected EXTERNAL not to be advertised when disabled in global mechanisms configuration, even for encrypted sessions.");
+        } finally {
+            // Restore state to prevent affecting other unit tests.
+            SASLAuthentication.setEnabledMechanisms(new ArrayList<>(originalMechanisms));
+        }
     }
 
     /**

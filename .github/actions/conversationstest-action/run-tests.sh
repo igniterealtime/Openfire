@@ -11,8 +11,13 @@ fi
 INCLUDE_TAGS="$1"
 
 # TODO: research F-Droid APIs to resolve the latest Conversations APK dynamically. v2.19.15 is 4217303 (x86_64) and 4217304 (arm64-v8a).
-echo "Downloading Conversations APK..."
-curl -fL --progress-bar -o conversations.apk https://f-droid.org/repo/eu.siacs.conversations_4217303.apk
+# For now, when updating the version number here, update the cache key in conversationstest-action/action.yml
+if [ ! -f conversations.apk ]; then
+  echo "Downloading Conversations APK..."
+  curl -fL --progress-bar -o conversations.apk https://f-droid.org/repo/eu.siacs.conversations_4217303.apk
+else
+  echo "Using cached Conversations APK."
+fi
 
 echo "Installing Conversations APK..."
 adb install -r conversations.apk

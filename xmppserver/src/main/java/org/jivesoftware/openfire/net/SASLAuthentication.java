@@ -33,7 +33,7 @@ import org.jivesoftware.openfire.sasl.AnonymousSaslServer;
 import org.jivesoftware.openfire.sasl.Failure;
 import org.jivesoftware.openfire.sasl.JiveSharedSecretSaslServer;
 import org.jivesoftware.openfire.sasl.SaslFailureException;
-import org.jivesoftware.openfire.sasl.SaslProvider;
+import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CertificateManager;
@@ -553,7 +553,6 @@ public class SASLAuthentication {
             return;
         }
         sendElement(session, "success", successData);
-        // We only support SASL for c2s
         if (session instanceof ClientSession) {
             final AuthToken authToken;
             if (username == null) {

@@ -964,11 +964,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     @Override
     public void deliver(Packet queueOrPushStanza) throws UnauthorizedException
     {
-        final List<Packet> stanzasToPush = csiManager.queueOrPush(queueOrPushStanza);
-        if (stanzasToPush.isEmpty()) {
-            return;
-        }
-        pushPackets(stanzasToPush);
+        pushPackets(csiManager.queueOrPush(queueOrPushStanza));
     }
 
     /**

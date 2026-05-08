@@ -14,7 +14,15 @@ INCLUDE_TAGS="$1"
 # For now, when updating the version number here, update the cache key in conversationstest-action/action.yml
 if [ ! -f conversations.apk ]; then
   echo "Downloading Conversations APK..."
-  curl -fL --progress-bar -o conversations.apk https://f-droid.org/repo/eu.siacs.conversations_4217303.apk
+  curl -fL \
+    --progress-bar \
+    --retry 5 \
+    --retry-all-errors \
+    --retry-delay 2 \
+    --connect-timeout 15 \
+    --max-time 300 \
+    -o conversations.apk \
+    https://f-droid.org/repo/eu.siacs.conversations_4217303.apk
 else
   echo "Using cached Conversations APK."
 fi

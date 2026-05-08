@@ -132,7 +132,10 @@ public class CacheControlFilter implements Filter {
         int dotIndex = uri.lastIndexOf('.');
         if (dotIndex != -1 && dotIndex < uri.length() - 1) {
             String extension = uri.substring(dotIndex + 1).toLowerCase(Locale.ROOT);
-            return STATIC_RESOURCE_EXTENSIONS.getValue().contains(extension);
+            return STATIC_RESOURCE_EXTENSIONS.getValue().stream()
+                                .filter(ext -> ext != null)
+                                .map(ext -> ext.trim().toLowerCase(Locale.ROOT))
+                                .anyMatch(extension::equals);
         }
 
         return false;

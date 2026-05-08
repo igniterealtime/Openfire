@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2018-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,20 @@ public interface ServerSession extends Session {
     enum AuthenticationMethod {
         DIALBACK,
         SASL_EXTERNAL,
-        OTHER
+        OTHER;
+
+        /**
+         * Maps a SASL mechanism name to the matching authentication method.
+         *
+         * @param mechanismName the SASL mechanism name (can be null).
+         * @return SASL_EXTERNAL when mechanismName is EXTERNAL (case-insensitive), otherwise OTHER.
+         */
+        public static AuthenticationMethod fromSaslMechanismName(final String mechanismName) {
+            if (mechanismName != null && mechanismName.equalsIgnoreCase("EXTERNAL")) {
+                return SASL_EXTERNAL;
+            }
+            return OTHER;
+        }
     }
 
     /**

@@ -266,14 +266,16 @@ public class SocketConnection extends AbstractConnection {
      * Returns the remote port used by the connection.
      *
      * @return the remote port, or 0 when unavailable.
+     * @deprecated This method is replaced by {@link #getRemotePort()}
      */
+    @Deprecated(forRemoval = true, since = "5.1.0") // Remove in or after Openfire 5.2.0.
     public int getPort() {
-        return socket.getPort();
+        return getRemotePort();
     }
 
     @Override
     public int getRemotePort() {
-        return getPort();
+        return socket.getPort();
     }
 
     /**

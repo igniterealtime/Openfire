@@ -88,6 +88,7 @@ public class ListPager<T> {
     private final int sortOrder;
     private final String[] additionalFormFields;
     private final HttpServletRequest request;
+    private boolean inlineJsDisabled = false;
 
     /**
      * Creates a unfiltered list pager.
@@ -229,11 +230,29 @@ public class ListPager<T> {
     }
 
     /**
+     * @return {@code true} if inline JavaScript generation is disabled for this pager
+     */
+    public boolean isInlineJsDisabled() {
+        return inlineJsDisabled;
+    }
+
+    /**
+     * When set to {@code true}, methods like {@link #getPageSizeSelection()}, {@link #getPageLinks()},
+     * and {@link #getPageFunctions()} will suppress inline JavaScript attributes (onclick, onchange)
+     * and inline script blocks. This allows pages to use external JavaScript files for CSP compliance.
+     *
+     * @param inlineJsDisabled {@code true} to suppress inline JavaScript output
+     */
+    public void setInlineJsDisabled(boolean inlineJsDisabled) {
+        this.inlineJsDisabled = inlineJsDisabled;
+    }
+
+    /**
      * @return a string that contains HTML for selecting the page size
      */
     public String getPageSizeSelection() {
         final StringBuilder sb = new StringBuilder();
-        sb.append(String.format("<select name='%s' onchange='return setPageSize(this.value);'>", REQUEST_PARAMETER_KEY_PAGE_SIZE));
+        sb.append(String.format("<select name='%s'%s>", REQUEST_PARAMETER_KEY_PAGE_SIZE, inlineJsDisabled ? "" : " onchange='return setPageSize(this.value);'"));
         for (final int optionSize : PAGE_SIZES) {
             sb.append(String.format("<option value='%d'%s>%d</option>", optionSize, pageSize == optionSize ? " selected" : "", optionSize));
         }
@@ -281,9 +300,9 @@ public class ListPager<T> {
             cssClass = "";
         }
 
-        sb.append(String.format("\n<a href='%s' onclick='return jumpToPage(%d)'%s>%s</a>",
+        sb.append(String.format("\n<a href='%s'%s%s>%s</a>",
             String.format("?%s=%d", REQUEST_PARAMETER_KEY_CURRENT_PAGE, pageToLink),
-            pageToLink,
+            inlineJsDisabled ? "" : String.format(" onclick='return jumpToPage(%d)'", pageToLink),
             cssClass,
             pageToLink));
     }
@@ -355,6 +374,9 @@ public class ListPager<T> {
      * @return a string containing JavaScript that helps with navigation between pages
      */
     public String getPageFunctions() {
+        if (inlineJsDisabled) {
+            return "";
+        }
         final StringBuilder sb = new StringBuilder("\n")
             .append("\tvar additionalFormFields = [");
         // The list of additional form fields

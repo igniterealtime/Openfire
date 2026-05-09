@@ -90,7 +90,7 @@ public class AdminConsolePlugin implements Plugin {
         .setKey("adminConsole.forwarded.for.header")
         .setDynamic(false)
         .setDefaultValue(HttpHeader.X_FORWARDED_FOR.toString())
-        .addListener(enabled -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
+        .addListener(header -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
         .build();
 
     /**
@@ -100,7 +100,7 @@ public class AdminConsolePlugin implements Plugin {
         .setKey("adminConsole.forwarded.server.header")
         .setDynamic(false)
         .setDefaultValue(HttpHeader.X_FORWARDED_SERVER.toString())
-        .addListener(enabled -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
+        .addListener(header -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
         .build();
 
     /**
@@ -110,7 +110,7 @@ public class AdminConsolePlugin implements Plugin {
         .setKey("adminConsole.forwarded.host.header")
         .setDynamic(false)
         .setDefaultValue(HttpHeader.X_FORWARDED_HOST.toString())
-        .addListener(enabled -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
+        .addListener(header -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
         .build();
 
     /**
@@ -120,7 +120,7 @@ public class AdminConsolePlugin implements Plugin {
         .setKey("adminConsole.forwarded.host.name")
         .setDynamic(false)
         .setDefaultValue(null)
-        .addListener(enabled -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
+        .addListener(name -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
         .build();
 
     /**
@@ -142,7 +142,7 @@ public class AdminConsolePlugin implements Plugin {
         .setDynamic(false)
         .setDefaultValue(new HashSet<>())
         .setSorted(true)
-        .addListener(enabled -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
+        .addListener(proxies -> XMPPServer.getInstance().getPluginManager().getPluginByCanonicalName("admin").ifPresent(plugin -> ((AdminConsolePlugin) plugin).restartNeeded = true))
         .buildSet(String.class);
 
     /**

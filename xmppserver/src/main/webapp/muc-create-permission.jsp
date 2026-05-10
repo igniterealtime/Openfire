@@ -242,7 +242,7 @@
                      <%= ((mucService.isRoomCreationRestricted()) ? "checked" : "") %>>
                 </td>
                 <td>
-                    <label for="rb02"><fmt:message key="muc.create.permission.specific_created" /></label>
+                    <label for="restrictedPermissionsRadio"><fmt:message key="muc.create.permission.specific_created" /></label>
                 </td>
             </tr>
         </tbody>

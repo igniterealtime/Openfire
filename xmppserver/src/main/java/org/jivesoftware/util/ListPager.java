@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2018-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -252,11 +252,24 @@ public class ListPager<T> {
      */
     public String getPageSizeSelection() {
         final StringBuilder sb = new StringBuilder();
-        sb.append(String.format("<select name='%s'%s>", REQUEST_PARAMETER_KEY_PAGE_SIZE, inlineJsDisabled ? "" : " onchange='return setPageSize(this.value);'"));
+
+        sb.append(String.format("<select name='%s'", REQUEST_PARAMETER_KEY_PAGE_SIZE));
+
+        if (!inlineJsDisabled) {
+            sb.append(" onchange='return setPageSize(this.value);'");
+        }
+        sb.append(">");
+
         for (final int optionSize : PAGE_SIZES) {
-            sb.append(String.format("<option value='%d'%s>%d</option>", optionSize, pageSize == optionSize ? " selected" : "", optionSize));
+            sb.append(String.format(
+                "<option value='%d'%s>%d</option>",
+                optionSize,
+                pageSize == optionSize ? " selected" : "",
+                optionSize
+            ));
         }
         sb.append("</select>");
+
         return sb.toString();
     }
 
@@ -294,17 +307,28 @@ public class ListPager<T> {
 
     private void appendPageLink(final StringBuilder sb, final int pageToLink) {
         final String cssClass;
+
         if (currentPage == pageToLink) {
             cssClass = " class='jive-current'";
         } else {
             cssClass = "";
         }
 
-        sb.append(String.format("\n<a href='%s'%s%s>%s</a>",
-            String.format("?%s=%d", REQUEST_PARAMETER_KEY_CURRENT_PAGE, pageToLink),
-            inlineJsDisabled ? "" : String.format(" onclick='return jumpToPage(%d)'", pageToLink),
-            cssClass,
-            pageToLink));
+        sb.append("\n<a href='");
+        sb.append(String.format("?%s=%d", REQUEST_PARAMETER_KEY_CURRENT_PAGE, pageToLink));
+        sb.append("'");
+
+        if (!inlineJsDisabled) {
+            sb.append(String.format(
+                " onclick='return jumpToPage(%d)'",
+                pageToLink
+            ));
+        }
+
+        sb.append(cssClass);
+        sb.append(">");
+        sb.append(pageToLink);
+        sb.append("</a>");
     }
 
     /**

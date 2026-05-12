@@ -231,9 +231,11 @@ public class ScramSha1SaslServerTest
         }
 
         // Setup test fixture: prepare second client message with channel binding.
-        final String gs2HeaderBase64 = Base64.getEncoder().encodeToString(gs2Header.getBytes(StandardCharsets.UTF_8));
-        final String channelBindingBase64 = Base64.getEncoder().encodeToString(channelBindingData);
-        final String clientFinalMessageBare = "c=" + gs2HeaderBase64 + channelBindingBase64 + ",r=" + serverNonce;
+        final byte[] gs2HeaderBytes = gs2Header.getBytes(StandardCharsets.UTF_8);
+        final byte[] cbindInput = new byte[gs2HeaderBytes.length + channelBindingData.length];
+        System.arraycopy(gs2HeaderBytes, 0, cbindInput, 0, gs2HeaderBytes.length);
+        System.arraycopy(channelBindingData, 0, cbindInput, gs2HeaderBytes.length, channelBindingData.length);
+        final String clientFinalMessageBare = "c=" + Base64.getEncoder().encodeToString(cbindInput) + ",r=" + serverNonce;
 
         final KeySpec saltedPasswordSpec = new PBEKeySpec(hardCodedPassword.toCharArray(), salt, iterations, 20*8);
         final byte[] saltedPassword = HmacSHA1Factory.generateSecret(saltedPasswordSpec).getEncoded();

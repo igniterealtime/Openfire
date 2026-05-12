@@ -85,11 +85,14 @@ public class NewConnectionLimiterRegistryTest {
         // Execute system under test.
         final TokenBucketRateLimiter limiter1 = NewConnectionLimiterRegistry.getLimiter(ConnectionType.SOCKET_C2S);
         final TokenBucketRateLimiter limiter2 = NewConnectionLimiterRegistry.getLimiter(ConnectionType.BOSH_C2S);
+        final TokenBucketRateLimiter limiter3 = NewConnectionLimiterRegistry.getLimiter(ConnectionType.QUIC_C2S);
 
         // Verify result.
         assertNotNull(limiter1);
         assertNotNull(limiter2);
+        assertNotNull(limiter3);
         assertSame(limiter1, limiter2, "All client-to-server types should share the same limiter");
+        assertSame(limiter1, limiter3, "All client-to-server types should share the same limiter");
     }
 
     /**
@@ -146,7 +149,7 @@ public class NewConnectionLimiterRegistryTest {
         // Execute system under test.
         NewConnectionLimiterRegistry.C2S_PERMITS_PER_SECOND.setValue(newPermitsPerSecond);
         NewConnectionLimiterRegistry.C2S_MAX_BURST.setValue(newMaxBurst);
-        final TokenBucketRateLimiter updatedLimiter = NewConnectionLimiterRegistry.getLimiter(ConnectionType.BOSH_C2S);
+        final TokenBucketRateLimiter updatedLimiter = NewConnectionLimiterRegistry.getLimiter(ConnectionType.QUIC_C2S);
 
         // Verify result.
         assertNotSame(originalLimiter, updatedLimiter, "Limiter should be replaced after property update");

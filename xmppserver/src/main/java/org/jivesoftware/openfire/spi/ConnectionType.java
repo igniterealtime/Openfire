@@ -41,6 +41,11 @@ public enum ConnectionType
     SOCKET_C2S( "xmpp.socket.ssl.client.", null ),
 
     /**
+     * QUIC-based client connectivity.
+     */
+    QUIC_C2S( "xmpp.quic.ssl.client.", SOCKET_C2S ),
+
+    /**
      * BOSH (HTTP-bind) based client connectivity.
      */
     BOSH_C2S( "xmpp.bosh.ssl.client.", SOCKET_C2S ),

@@ -39,6 +39,11 @@ public interface ConnectionManager {
      * they are created.
      */
     int DEFAULT_SSL_PORT = 5223;
+
+    /**
+     * The default XMPP over QUIC port for clients.
+     */
+    int DEFAULT_QUIC_PORT = 5224;
     /**
      * The default XMPP port for external components.
      */

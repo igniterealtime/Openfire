@@ -156,6 +156,7 @@
                 <c:choose>
                     <c:when test="${!param.isTrustStore}"><fmt:message key="ssl.certificates.keystore.title"/></c:when>
                     <c:when test="${param.connectionType eq 'SOCKET_C2S'}"><fmt:message key="ssl.certificates.truststore.c2s-title"/></c:when>
+                    <c:when test="${param.connectionType eq 'QUIC_C2S'}"><fmt:message key="ssl.certificates.truststore.quic-c2s-title"/></c:when>
                     <c:when test="${param.connectionType eq 'SOCKET_S2S'}"><fmt:message key="ssl.certificates.truststore.s2s-title"/></c:when>
                 </c:choose>
             </fmt:param>

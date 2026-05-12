@@ -167,7 +167,7 @@ public final class NewConnectionLimiterRegistry
             throw new IllegalArgumentException("ConnectionType cannot be null");
         }
 
-        if (type == ConnectionType.SOCKET_C2S || type == ConnectionType.BOSH_C2S) {
+        if (type == ConnectionType.SOCKET_C2S || type == ConnectionType.QUIC_C2S || type == ConnectionType.BOSH_C2S) {
             return C2S_LIMITER_REF.get();
         }
 

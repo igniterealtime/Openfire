@@ -20,6 +20,7 @@ import org.jivesoftware.util.SystemProperty;
 
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 public final class ConnectionSettings {
 
@@ -85,6 +86,57 @@ public final class ConnectionSettings {
         public static final String MAX_THREADS_SSL = "xmpp.client_ssl.processing.threads";
         public static final String MAX_READ_BUFFER_SSL = "xmpp.client_ssl.maxReadBufferSize";
         public static final String TLS_ALGORITHM = "xmpp.socket.ssl.algorithm";
+
+        public static final String QUIC_SOCKET_ACTIVE = "xmpp.quic.client.active";
+        public static final String QUIC_PORT = "xmpp.quic.client.port";
+        public static final String QUIC_MAX_THREADS = "xmpp.quic.client.processing.threads";
+        public static final String QUIC_MAX_READ_BUFFER = "xmpp.quic.client.maxReadBufferSize";
+        public static final String QUIC_AUTH_PER_CLIENTCERT_POLICY = "xmpp.quic.client.cert.policy";
+        public static final SystemProperty<Integer> QUIC_MAX_STREAMS = SystemProperty.Builder.ofType(Integer.class)
+            .setKey("xmpp.quic.client.max-streams")
+            .setDefaultValue(25)
+            .setMinValue(1)
+            .setDynamic(Boolean.TRUE)
+            .build();
+
+        /**
+         * Maximum number of server-initiated (outbound) QUIC streams per connection used for session
+         * multiplexing. Per XEP-0467 §3.2, traffic that is not to/from the user's own bare JID or the
+         * server's own JID SHOULD be sharded onto auxiliary streams (i.e. streams other than id 0) to
+         * avoid head-of-line blocking on the control stream. The default of 16 leaves headroom for the
+         * control stream and any client-initiated aux streams within the {@link #QUIC_MAX_STREAMS}
+         * budget. Set to 0 to disable server-initiated aux streams entirely (all traffic on stream id 0).
+         */
+        public static final SystemProperty<Integer> QUIC_MAX_OUTBOUND_STREAMS = SystemProperty.Builder.ofType(Integer.class)
+            .setKey("xmpp.quic.client.max-outbound-streams")
+            .setDefaultValue(16)
+            .setMinValue(0)
+            .setDynamic(Boolean.TRUE)
+            .build();
+
+        /**
+         * Maximum idle timeout for the QUIC connection. Per XEP-0467 §2 (#8) the QUIC idle timeout
+         * SHOULD be at most 600 seconds. The default tracks that recommendation; operators may lower
+         * it but should not raise it.
+         */
+        public static final SystemProperty<Duration> QUIC_IDLE_TIMEOUT_PROPERTY = SystemProperty.Builder.ofType(Duration.class)
+            .setKey("xmpp.quic.client.idle")
+            .setDefaultValue(Duration.ofSeconds(600))
+            .setMinValue(Duration.ofMillis(-1))
+            .setChronoUnit(ChronoUnit.MILLIS)
+            .setDynamic(Boolean.TRUE)
+            .build();
+
+        /**
+         * ALPN token(s) advertised for XMPP-over-QUIC. The value "xmpp-client" is used as a placeholder
+         * pending finalisation of the IETF XMPP-over-QUIC draft. Update this value once the specification
+         * assigns an official ALPN identifier.
+         */
+        public static final SystemProperty<List<String>> QUIC_ALPN = SystemProperty.Builder.ofType(List.class)
+            .setKey("xmpp.quic.client.alpn")
+            .setDefaultValue(List.of("xmpp-client"))
+            .setDynamic(Boolean.TRUE)
+            .buildList(String.class);
     }
 
     public static final class Server {

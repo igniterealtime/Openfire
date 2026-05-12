@@ -19,6 +19,8 @@ package org.jivesoftware.openfire.nio;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.Channel;
+import io.netty.handler.codec.quic.QuicChannel;
 import io.netty.handler.codec.compression.JZlibDecoder;
 import io.netty.handler.codec.compression.JZlibEncoder;
 import io.netty.handler.ssl.SslContext;
@@ -102,31 +104,57 @@ public class NettyConnection extends AbstractConnection
         return channelHandlerContext.channel().remoteAddress();
     }
 
+    public Channel getChannel()
+    {
+        return channelHandlerContext.channel();
+    }
+
     @Override
     public byte[] getAddress() throws UnknownHostException {
-        final SocketAddress remoteAddress = channelHandlerContext.channel().remoteAddress();
-        if (remoteAddress == null) throw new UnknownHostException();
-        final InetSocketAddress socketAddress = (InetSocketAddress) remoteAddress;
+        final InetSocketAddress socketAddress = resolvePeerSocketAddress();
         final InetAddress address = socketAddress.getAddress();
+        if (address == null) {
+            throw new UnknownHostException();
+        }
         return address.getAddress();
     }
 
     @Override
     public String getHostAddress() throws UnknownHostException {
-        final SocketAddress remoteAddress = channelHandlerContext.channel().remoteAddress();
-        if (remoteAddress == null) throw new UnknownHostException();
-        final InetSocketAddress socketAddress = (InetSocketAddress) remoteAddress;
+        final InetSocketAddress socketAddress = resolvePeerSocketAddress();
         final InetAddress inetAddress = socketAddress.getAddress();
+        if (inetAddress == null) {
+            throw new UnknownHostException();
+        }
         return inetAddress.getHostAddress();
     }
 
     @Override
     public String getHostName() throws UnknownHostException {
-        final SocketAddress remoteAddress = channelHandlerContext.channel().remoteAddress();
-        if (remoteAddress == null) throw new UnknownHostException();
-        final InetSocketAddress socketAddress = (InetSocketAddress) remoteAddress;
+        final InetSocketAddress socketAddress = resolvePeerSocketAddress();
         final InetAddress inetAddress = socketAddress.getAddress();
+        if (inetAddress == null) {
+            throw new UnknownHostException();
+        }
         return inetAddress.getHostName();
+    }
+
+    private InetSocketAddress resolvePeerSocketAddress() throws UnknownHostException {
+        for (Channel channel = channelHandlerContext.channel(); channel != null; channel = channel.parent()) {
+            if (channel instanceof QuicChannel quicChannel) {
+                final SocketAddress remoteSocketAddress = quicChannel.remoteSocketAddress();
+                if (remoteSocketAddress instanceof InetSocketAddress inetSocketAddress) {
+                    return inetSocketAddress;
+                }
+            }
+
+            final SocketAddress socketAddress = channel.remoteAddress();
+            if (socketAddress instanceof InetSocketAddress inetSocketAddress) {
+                return inetSocketAddress;
+            }
+        }
+
+        throw new UnknownHostException();
     }
 
     @Override
@@ -195,6 +223,8 @@ public class NettyConnection extends AbstractConnection
             Log.trace("Closing {} with optional error: {}", this, error);
 
             ChannelFuture f;
+            final QuicSessionStreamRouter quicSessionStreamRouter = QuicSessionStreamRouter.find(channelHandlerContext.channel());
+            final boolean closeSession = quicSessionStreamRouter == null || quicSessionStreamRouter.shouldCloseSessionOnStreamClose(this);
 
             if (session != null) {
                 // If the stream was ended because of an error, it should not be possible to resume it (OF-2751).
@@ -202,8 +232,10 @@ public class NettyConnection extends AbstractConnection
                     session.getStreamManager().formalClose();
                 }
 
-                // Ensure that the state of this connection, its session and the Netty Channel are eventually closed.
-                session.setStatus(Session.Status.CLOSED);
+                if (closeSession) {
+                    // Ensure that the state of this connection, its session and the Netty Channel are eventually closed.
+                    session.setStatus(Session.Status.CLOSED);
+                }
 
                 // Only attempt to write the stream close if the channel is still active. If connectivity was lost
                 // (e.g., the socket was closed by the peer or a network error), the channel will already be inactive
@@ -215,7 +247,16 @@ public class NettyConnection extends AbstractConnection
                         rawEndStream = error.toXML();
                     }
                     rawEndStream += "</stream:stream>";
-                    f = channelHandlerContext.writeAndFlush(rawEndStream);
+                    // Per XEP-0467 §3.2, stream errors and stream-close MUST be sent on QUIC stream id=0
+                    // only. If this connection is on an aux stream, route the close through the primary.
+                    final QuicSessionStreamRouter router = QuicSessionStreamRouter.find(channelHandlerContext.channel());
+                    final io.netty.handler.codec.quic.QuicStreamChannel primary =
+                        router != null ? router.getPrimaryStream() : null;
+                    if (primary != null && primary != channelHandlerContext.channel() && primary.isActive()) {
+                        f = primary.writeAndFlush(rawEndStream);
+                    } else {
+                        f = channelHandlerContext.writeAndFlush(rawEndStream);
+                    }
                 } else {
                     Log.trace("Channel is no longer active; skipping stream close stanza for {}", this);
                     f = channelHandlerContext.newSucceededFuture();
@@ -274,6 +315,15 @@ public class NettyConnection extends AbstractConnection
 
     @Override
     public void deliver(Packet packet) throws UnauthorizedException {
+        final QuicSessionStreamRouter quicSessionStreamRouter = QuicSessionStreamRouter.find(channelHandlerContext.channel());
+        if (quicSessionStreamRouter != null && !isClosed()) {
+            final boolean delivered = quicSessionStreamRouter.writeStanza(packet, packet.getElement().asXML());
+            if (delivered) {
+                session.incrementServerPacketCount();
+                return;
+            }
+        }
+
         if (isClosed()) {
             if (backupDeliverer != null) {
                 backupDeliverer.deliver(packet);
@@ -316,6 +366,21 @@ public class NettyConnection extends AbstractConnection
     public void deliverRawText(String text) {
         if (!isClosed()) {
             Log.trace("Sending: {}", text);
+            // Per XEP-0467 §3.2, top-level non-stanza elements (stream errors, framing, CSI toggles, etc.)
+            // delivered via deliverRawText MUST be sent on QUIC stream id 0 only. If this NettyConnection
+            // belongs to a QUIC session and a stream router is present, route the text to the primary
+            // stream rather than whatever channel this connection currently sits on (which could be an
+            // aux stream).
+            final QuicSessionStreamRouter quicSessionStreamRouter = QuicSessionStreamRouter.find(channelHandlerContext.channel());
+            if (quicSessionStreamRouter != null) {
+                final io.netty.handler.codec.quic.QuicStreamChannel primary = quicSessionStreamRouter.getPrimaryStream();
+                if (primary != null && primary != channelHandlerContext.channel()) {
+                    primary.writeAndFlush(text).addListener(l ->
+                        updateWrittenBytesCounter(channelHandlerContext)
+                    );
+                    return;
+                }
+            }
             channelHandlerContext.writeAndFlush(text).addListener(l ->
                 updateWrittenBytesCounter(channelHandlerContext)
             );

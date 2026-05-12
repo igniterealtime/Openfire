@@ -34,6 +34,8 @@ public class NettyConnectionHandlerFactory {
         return switch (configuration.getType()) {
             case SOCKET_S2S -> new NettyServerConnectionHandler(configuration);
             case SOCKET_C2S -> new NettyClientConnectionHandler(configuration);
+            case QUIC_C2S -> throw new UnsupportedOperationException(
+                "QUIC_C2S connections require a QuicSessionStreamRouter and must be created directly by QuicConnectionAcceptor, not via this factory.");
             case COMPONENT  -> new NettyComponentConnectionHandler(configuration);
             case CONNECTION_MANAGER -> new NettyMultiplexerConnectionHandler(configuration);
             default ->

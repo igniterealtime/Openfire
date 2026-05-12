@@ -89,7 +89,7 @@ public class ConnectionListener
     private final String clientAuthPolicyPropertyName;
 
     // The entity that performs the acceptance of new (socket) connections.
-    private NettyConnectionAcceptor connectionAcceptor;
+    private ConnectionAcceptor connectionAcceptor;
 
     /**
      * A collection of socket acceptor event listeners, invoked when they are being stopped or started.
@@ -195,15 +195,10 @@ public class ConnectionListener
      */
     public synchronized void start()
     {
-        // TODO Start all connection types here, by supplying more connection acceptors other than a Netty-based one.
-        switch ( getType() )
+        if (getType() == ConnectionType.BOSH_C2S || getType() == ConnectionType.WEBADMIN)
         {
-            case BOSH_C2S:
-            case WEBADMIN:
-                Log.debug( "Not starting a (Netty-based) connection acceptor, as connections of type " + getType() + " depend on another IO technology.");
-                return;
-
-            default:
+            Log.debug( "Not starting a connection acceptor, as connections of type {} depend on another IO technology.", getType());
+            return;
         }
 
         if ( !isEnabled() )
@@ -235,7 +230,7 @@ public class ConnectionListener
         }
 
         Log.debug( "Starting..." );
-        connectionAcceptor = new NettyConnectionAcceptor(generateConnectionConfiguration());
+        connectionAcceptor = instantiateConnectionAcceptor(generateConnectionConfiguration());
         eventListeners.forEach(eventListener -> {
             try {
                 eventListener.acceptorStarting(connectionAcceptor);
@@ -245,6 +240,14 @@ public class ConnectionListener
         });
         connectionAcceptor.start();
         Log.info( "Started." );
+    }
+
+    private ConnectionAcceptor instantiateConnectionAcceptor(final ConnectionConfiguration configuration)
+    {
+        if (getType() == ConnectionType.QUIC_C2S) {
+            return new QuicConnectionAcceptor(configuration);
+        }
+        return new NettyConnectionAcceptor(configuration);
     }
 
     /**
@@ -1146,4 +1149,3 @@ public class ConnectionListener
         void acceptorStopping(final ConnectionAcceptor connectionAcceptor);
     }
 }
-

@@ -1,6 +1,7 @@
 <%--
   -
   - Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
+  - Note: also handles QUIC client connection configuration via embedded panels.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -41,6 +42,7 @@
 
     final ConnectionConfiguration plaintextConfiguration = manager.getListener( connectionType, false ).generateConnectionConfiguration();
     final ConnectionConfiguration directtlsConfiguration = manager.getListener( connectionType, true  ).generateConnectionConfiguration();
+    final ConnectionConfiguration quicConfiguration = manager.getListener( ConnectionType.QUIC_C2S, true ).generateConnectionConfiguration();
 
     boolean update = request.getParameter( "update" ) != null;
     final Map<String, String> errors = new HashMap<>();
@@ -91,6 +93,31 @@
             errors.put("ratelimit-max-burst", "invalid");
         }
 
+        // QUIC validation
+        final boolean quicEnabled = ParamUtils.getBooleanParameter(request, "quic-enabled");
+        final int quicTcpPort = ParamUtils.getIntParameter(request, "quic-tcpPort", quicConfiguration.getPort());
+        final int quicIdleSeconds = ParamUtils.getIntParameter(request, "quic-idleSeconds", (int) ConnectionSettings.Client.QUIC_IDLE_TIMEOUT_PROPERTY.getValue().toSeconds());
+        final int quicMaxStreams = ParamUtils.getIntParameter(request, "quic-maxStreams", ConnectionSettings.Client.QUIC_MAX_STREAMS.getValue());
+        final int quicMaxOutboundStreams = ParamUtils.getIntParameter(request, "quic-maxOutboundStreams", ConnectionSettings.Client.QUIC_MAX_OUTBOUND_STREAMS.getValue());
+        final String quicAlpn = ParamUtils.getParameter(request, "quic-alpn");
+        final String quicQlogDir = ParamUtils.getParameter(request, "quic-qlogDir");
+
+        if (quicTcpPort <= 0 || quicTcpPort > 65535) {
+            errors.put("quic-tcpPort", "invalid");
+        }
+        if (quicIdleSeconds < -1) {
+            errors.put("quic-idleSeconds", "invalid");
+        }
+        if (quicMaxStreams < 1) {
+            errors.put("quic-maxStreams", "invalid");
+        }
+        if (quicMaxOutboundStreams < 0) {
+            errors.put("quic-maxOutboundStreams", "invalid");
+        }
+        if (quicAlpn == null || quicAlpn.trim().isEmpty()) {
+            errors.put("quic-alpn", "invalid");
+        }
+
         if (errors.isEmpty()) {
             // plaintext
             final boolean plaintextEnabled      = ParamUtils.getBooleanParameter( request, "plaintext-enabled" );
@@ -103,12 +130,27 @@
             // Apply
             final ConnectionListener plaintextListener = manager.getListener( connectionType, false );
             final ConnectionListener directtlsListener = manager.getListener( connectionType, true  );
+            final ConnectionListener quicListener = manager.getListener( ConnectionType.QUIC_C2S, true );
 
             plaintextListener.enable( plaintextEnabled );
             plaintextListener.setPort( plaintextTcpPort );
 
             directtlsListener.enable( directtlsEnabled );
             directtlsListener.setPort( directtlsTcpPort );
+
+            quicListener.enable(quicEnabled);
+            quicListener.setPort(quicTcpPort);
+            ConnectionSettings.Client.QUIC_IDLE_TIMEOUT_PROPERTY.setValue(Duration.ofSeconds(quicIdleSeconds));
+            ConnectionSettings.Client.QUIC_MAX_STREAMS.setValue(quicMaxStreams);
+            ConnectionSettings.Client.QUIC_MAX_OUTBOUND_STREAMS.setValue(quicMaxOutboundStreams);
+            final java.util.List<String> quicAlpnList = new java.util.ArrayList<>();
+            for (final String token : quicAlpn.split("[,\\s]+")) {
+                if (!token.isBlank()) {
+                    quicAlpnList.add(token.trim());
+                }
+            }
+            ConnectionSettings.Client.QUIC_ALPN.setValue(quicAlpnList);
+            org.jivesoftware.openfire.spi.QuicConnectionAcceptor.QUIC_QLOG_DIR.setValue(quicQlogDir == null ? "" : quicQlogDir.trim());
 
             NewConnectionLimiterRegistry.C2S_PERMITS_PER_SECOND.setValue(parsedPermits);
             NewConnectionLimiterRegistry.C2S_MAX_BURST.setValue(parsedMaxBurst);
@@ -127,7 +169,7 @@
             ConnectionSettings.Client.KEEP_ALIVE_PING_PROPERTY.setValue(pingIdleClients);
 
             // Log the event
-            webManager.logEvent( "Updated connection settings for " + connectionType, "plain: enabled=" + plaintextEnabled + ", port=" + plaintextTcpPort + "\nDirect TLS: enabled=" + directtlsEnabled+ ", port=" + directtlsTcpPort+ "\nRate limit: enabled=" + c2sRateLimitEnabled + ", permits_per_second=" + parsedPermits + ", max_burst=" + parsedMaxBurst + "\n" );
+            webManager.logEvent( "Updated connection settings for " + connectionType, "plain: enabled=" + plaintextEnabled + ", port=" + plaintextTcpPort + "\nDirect TLS: enabled=" + directtlsEnabled+ ", port=" + directtlsTcpPort+ "\nRate limit: enabled=" + c2sRateLimitEnabled + ", permits_per_second=" + parsedPermits + ", max_burst=" + parsedMaxBurst + "\nQUIC: enabled=" + quicEnabled + ", port=" + quicTcpPort + ", idleSeconds=" + quicIdleSeconds + ", maxStreams=" + quicMaxStreams + ", maxOutboundStreams=" + quicMaxOutboundStreams + ", alpn=" + quicAlpnList + ", qlogDir=" + quicQlogDir + "\n" );
             webManager.logEvent("set server property " + ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getKey(), ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getKey() + " = " + ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getDisplayValue());
             webManager.logEvent("set server property " + ConnectionSettings.Client.KEEP_ALIVE_PING_PROPERTY.getKey(), ConnectionSettings.Client.KEEP_ALIVE_PING_PROPERTY.getKey() + " = " + ConnectionSettings.Client.KEEP_ALIVE_PING_PROPERTY.getDisplayValue());
 
@@ -139,6 +181,12 @@
     pageContext.setAttribute( "errors",                 errors );
     pageContext.setAttribute( "plaintextConfiguration", plaintextConfiguration );
     pageContext.setAttribute( "directtlsConfiguration", directtlsConfiguration );
+    pageContext.setAttribute( "quicConfiguration",      quicConfiguration );
+    pageContext.setAttribute( "quicIdleSeconds",        ConnectionSettings.Client.QUIC_IDLE_TIMEOUT_PROPERTY.getValue().toSeconds());
+    pageContext.setAttribute( "quicMaxStreams",         ConnectionSettings.Client.QUIC_MAX_STREAMS.getValue());
+    pageContext.setAttribute( "quicMaxOutboundStreams", ConnectionSettings.Client.QUIC_MAX_OUTBOUND_STREAMS.getValue());
+    pageContext.setAttribute( "quicAlpn",               String.join(", ", ConnectionSettings.Client.QUIC_ALPN.getValue()));
+    pageContext.setAttribute( "quicQlogDir",            org.jivesoftware.openfire.spi.QuicConnectionAcceptor.QUIC_QLOG_DIR.getValue());
     pageContext.setAttribute( "clientIdle",             ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getValue().toMillis());
     pageContext.setAttribute( "pingIdleClients",        ConnectionSettings.Client.KEEP_ALIVE_PING_PROPERTY.getValue());
     pageContext.setAttribute( "c2sRateLimitEnabled",    NewConnectionLimiterRegistry.C2S_ENABLED.getValue() );
@@ -161,6 +209,22 @@
 
 <c:if test="${not empty errors['csrf']}">
     <admin:infobox type="error"><fmt:message key="admin.error"/>: <c:out value="${errors['csrf']}"/></admin:infobox>
+</c:if>
+
+<c:if test="${not empty errors['quic-tcpPort']}">
+    <admin:infobox type="error"><fmt:message key="quic.client.connections.settings.valid.port"/></admin:infobox>
+</c:if>
+<c:if test="${not empty errors['quic-idleSeconds']}">
+    <admin:infobox type="error"><fmt:message key="quic.client.connections.settings.valid.idle"/></admin:infobox>
+</c:if>
+<c:if test="${not empty errors['quic-maxStreams']}">
+    <admin:infobox type="error"><fmt:message key="quic.client.connections.settings.valid.maxstreams"/></admin:infobox>
+</c:if>
+<c:if test="${not empty errors['quic-maxOutboundStreams']}">
+    <admin:infobox type="error"><fmt:message key="quic.client.connections.settings.valid.maxoutboundstreams"/></admin:infobox>
+</c:if>
+<c:if test="${not empty errors['quic-alpn']}">
+    <admin:infobox type="error"><fmt:message key="quic.client.connections.settings.valid.alpn"/></admin:infobox>
 </c:if>
 
 <p>
@@ -208,6 +272,46 @@
             </tr>
             <tr>
                 <td colspan="2"><a href="./connection-settings-advanced.jsp?connectionType=SOCKET_C2S&connectionMode=directtls"><fmt:message key="ssl.settings.client.label_custom_info"/>...</a></td>
+            </tr>
+        </table>
+
+    </admin:contentBox>
+
+    <fmt:message key="quic.client.connections.settings.boxtitle" var="quicboxtitle"/>
+    <admin:contentBox title="${quicboxtitle}">
+
+        <p><fmt:message key="quic.client.connections.settings.info"/></p>
+
+        <table>
+            <tr>
+                <td colspan="2"><input type="checkbox" name="quic-enabled" id="quic-enabled" ${quicConfiguration.enabled ? 'checked' : ''}/><label for="quic-enabled"><fmt:message key="quic.client.connections.settings.label_enable"/></label></td>
+            </tr>
+            <tr>
+                <td style="width: 1%; white-space: nowrap"><label for="quic-tcpPort"><fmt:message key="ports.port"/></label></td>
+                <td><input type="number" name="quic-tcpPort" id="quic-tcpPort" value="${quicConfiguration.port}" min="1" max="65535" step="1"></td>
+            </tr>
+            <tr>
+                <td style="width: 1%; white-space: nowrap"><label for="quic-idleSeconds"><fmt:message key="quic.client.connections.settings.label_idle"/></label></td>
+                <td><input type="number" name="quic-idleSeconds" id="quic-idleSeconds" value="${quicIdleSeconds}" min="-1" step="1"> <fmt:message key="global.seconds"/></td>
+            </tr>
+            <tr>
+                <td style="width: 1%; white-space: nowrap"><label for="quic-maxStreams"><fmt:message key="quic.client.connections.settings.label_maxstreams"/></label></td>
+                <td><input type="number" name="quic-maxStreams" id="quic-maxStreams" value="${quicMaxStreams}" min="1" step="1"></td>
+            </tr>
+            <tr>
+                <td style="width: 1%; white-space: nowrap"><label for="quic-maxOutboundStreams"><fmt:message key="quic.client.connections.settings.label_maxoutboundstreams"/></label></td>
+                <td><input type="number" name="quic-maxOutboundStreams" id="quic-maxOutboundStreams" value="${quicMaxOutboundStreams}" min="0" step="1"></td>
+            </tr>
+            <tr>
+                <td style="width: 1%; white-space: nowrap"><label for="quic-alpn"><fmt:message key="quic.client.connections.settings.label_alpn"/></label></td>
+                <td><input type="text" name="quic-alpn" id="quic-alpn" value="<c:out value='${quicAlpn}'/>" size="40"></td>
+            </tr>
+            <tr>
+                <td style="width: 1%; white-space: nowrap"><label for="quic-qlogDir"><fmt:message key="quic.client.connections.settings.label_qlogdir"/></label></td>
+                <td><input type="text" name="quic-qlogDir" id="quic-qlogDir" value="<c:out value='${quicQlogDir}'/>" size="60"></td>
+            </tr>
+            <tr>
+                <td colspan="2"><a href="./connection-settings-advanced.jsp?connectionType=QUIC_C2S&connectionMode=directtls"><fmt:message key="ssl.settings.client.label_custom_info"/>...</a></td>
             </tr>
         </table>
 

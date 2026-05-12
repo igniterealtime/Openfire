@@ -516,19 +516,25 @@ public class XMPPServer {
             JiveGlobals.setProperty("user.scramHashedPasswordOnly", "true");
         }
 
-        // steps from setup-admin-settings.jsp
-        try {
-            User adminUser = UserManager.getInstance().getUser("admin");
-            adminUser.setPassword(JiveGlobals.getXMLProperty("autosetup.admin.password"));
-            adminUser.setEmail(JiveGlobals.getXMLProperty("autosetup.admin.email"));
-            Date now = new Date();
-            adminUser.setCreationDate(now);
-            adminUser.setModificationDate(now);
-        } catch (Exception e) {
-            e.printStackTrace();
-            logger.warn("There was an unexpected error encountered when "
-                + "setting the new admin information. Please check your error "
-                + "logs and try to remedy the problem.");
+        // steps from setup-admin-settings.jsp: change attributes of the default admin user
+        if (JiveGlobals.getXMLProperty("autosetup.admin.password") != null || JiveGlobals.getXMLProperty("autosetup.admin.email") != null) {
+            try {
+                User adminUser = UserManager.getInstance().getUser("admin");
+                if (JiveGlobals.getXMLProperty("autosetup.admin.password") != null) {
+                    adminUser.setPassword(JiveGlobals.getXMLProperty("autosetup.admin.password"));
+                }
+                if (JiveGlobals.getXMLProperty("autosetup.admin.email") != null) {
+                    adminUser.setEmail(JiveGlobals.getXMLProperty("autosetup.admin.email"));
+                }
+                Date now = new Date();
+                adminUser.setCreationDate(now);
+                adminUser.setModificationDate(now);
+            } catch (Exception e) {
+                e.printStackTrace();
+                logger.warn("There was an unexpected error encountered when "
+                    + "setting the new admin information. Please check your error "
+                    + "logs and try to remedy the problem.");
+            }
         }
 
         // Import any provisioned users.

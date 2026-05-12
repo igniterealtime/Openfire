@@ -28,6 +28,7 @@ import javax.net.ssl.SSLEngine;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Manages a set of providers that can extract channel binding data of various types from SSL engines.
@@ -130,15 +131,12 @@ public class ChannelBindingProviderManager
         }
 
         Log.trace("Removing channel binding provider {} for prefix '{}'", provider.getClass().getName(), prefix);
-        final List<ChannelBindingProvider> list = providers.get(prefix);
-        boolean removed = false;
-        if (list != null) {
-            removed = list.remove(provider);
-            if (list.isEmpty()) {
-                providers.remove(prefix);
-            }
-        }
-        return removed;
+        final AtomicBoolean removed = new AtomicBoolean(false);
+        providers.computeIfPresent(prefix, (k, list) -> {
+            removed.set(list.remove(provider));
+            return list.isEmpty() ? null : list;
+        });
+        return removed.get();
     }
 
     /**

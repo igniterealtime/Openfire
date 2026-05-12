@@ -31,6 +31,13 @@ jobs:
           java-version: ${{ matrix.java }}
           distribution: ${{ matrix.distribution }}
           cache: maven
+      - name: Cache Maven wrapper distribution
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/wrapper
+          key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-mvn-wrapper-
       - name: Build with Maven while generating code coverage report # We install instead of package, because we want the result in the local mvn repo
         if: ${{ github.ref_name == 'main' }}
         run: ./mvnw -B install -Pcoverage --file pom.xml
@@ -139,6 +146,14 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
           cache: 'maven'
+
+      - name: Cache Maven wrapper distribution
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/wrapper
+          key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('openfire-integration-tests/.mvn/wrapper/maven-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-mvn-wrapper-
 
       - name: Run Integration Tests
         working-directory: openfire-integration-tests
@@ -424,6 +439,13 @@ jobs:
           java-version: 17
           distribution: zulu
           cache: maven
+      - name: Cache Maven wrapper distribution
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/wrapper
+          key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties', 'build/ci/updater/.mvn/wrapper/maven-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-mvn-wrapper-
       - name: Restore mvn repo artifacts from build job
         uses: actions/download-artifact@v8
         with:
@@ -462,6 +484,13 @@ jobs:
           java-version: 17
           distribution: zulu
           cache: maven
+      - name: Cache Maven wrapper distribution
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/wrapper
+          key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties', 'build/ci/updater/.mvn/wrapper/maven-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-mvn-wrapper-
       - name: Restore mvn repo artifacts from build job
         uses: actions/download-artifact@v8
         with:
@@ -507,6 +536,13 @@ jobs:
           java-version: 17
           distribution: zulu
           cache: maven
+      - name: Cache Maven wrapper distribution
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/wrapper
+          key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties', 'build/ci/updater/.mvn/wrapper/maven-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-mvn-wrapper-
       - name: Restore mvn repo artifacts from build job
         uses: actions/download-artifact@v8
         with:
@@ -546,6 +582,13 @@ jobs:
           java-version: 17
           distribution: zulu
           cache: maven
+      - name: Cache Maven wrapper distribution
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/wrapper
+          key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties', 'build/ci/updater/.mvn/wrapper/maven-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-mvn-wrapper-
       - name: Restore mvn repo artifacts from build job
         uses: actions/download-artifact@v8
         with:
@@ -586,6 +629,13 @@ jobs:
           java-version: 17
           distribution: zulu
           cache: maven
+      - name: Cache Maven wrapper distribution
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/wrapper
+          key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties', 'build/ci/updater/.mvn/wrapper/maven-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-mvn-wrapper-
       - name: Restore mvn repo artifacts from build job
         uses: actions/download-artifact@v8
         with:
@@ -623,6 +673,13 @@ jobs:
           java-version: 17
           distribution: zulu
           cache: maven
+      - name: Cache Maven wrapper distribution
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/wrapper
+          key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties', 'build/ci/updater/.mvn/wrapper/maven-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-mvn-wrapper-
       - name: Restore mvn repo artifacts from build job
         uses: actions/download-artifact@v8
         with:
@@ -663,6 +720,13 @@ jobs:
           java-version: 17
           distribution: zulu
           cache: maven
+      - name: Cache Maven wrapper distribution
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/wrapper
+          key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties', 'build/ci/updater/.mvn/wrapper/maven-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-mvn-wrapper-
       - name: Restore mvn repo artifacts from build job
         uses: actions/download-artifact@v8
         with:
@@ -702,6 +766,13 @@ jobs:
           java-version: 17
           distribution: zulu
           cache: maven
+      - name: Cache Maven wrapper distribution
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/wrapper
+          key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties', 'build/ci/updater/.mvn/wrapper/maven-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-mvn-wrapper-
       - name: Restore mvn repo artifacts from build job
         uses: actions/download-artifact@v8
         with:
@@ -744,6 +815,13 @@ jobs:
           java-version: 17
           distribution: zulu
           cache: maven
+      - name: Cache Maven wrapper distribution
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/wrapper
+          key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties', 'build/ci/updater/.mvn/wrapper/maven-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-mvn-wrapper-
       - name: Restore mvn repo artifacts from build job
         uses: actions/download-artifact@v8
         with:
@@ -783,6 +861,13 @@ jobs:
           java-version: 17
           distribution: zulu
           cache: maven
+      - name: Cache Maven wrapper distribution
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/wrapper
+          key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties', 'build/ci/updater/.mvn/wrapper/maven-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-mvn-wrapper-
       - name: Restore mvn repo artifacts from build job
         uses: actions/download-artifact@v8
         with:
@@ -832,6 +917,13 @@ jobs:
           server-id: igniterealtime
           server-username: IGNITE_REALTIME_MAVEN_USERNAME
           server-password: IGNITE_REALTIME_MAVEN_PASSWORD
+      - name: Cache Maven wrapper distribution
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/wrapper
+          key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-mvn-wrapper-
       - name: Publish
         run: ./mvnw -B deploy -Pci -Dmaven.test.skip=true
         env:

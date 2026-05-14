@@ -1143,6 +1143,33 @@ public class DbConnectionManager {
         return identifierQuoteString;
     }
 
+    /**
+     * Returns the keyword or keyword phrase used by the active database to limit result sets.
+     *
+     * Depending on the database, this can be {@link ResultSetLimitKeyword#TOP},
+     * {@link ResultSetLimitKeyword#LIMIT}, or {@link ResultSetLimitKeyword#FETCH_FIRST}.
+     *
+     * @return the result-set limit keyword used by the current database.
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3277">OF-3277</a>
+     */
+    public static ResultSetLimitKeyword getResultSetLimitKeyword()
+    {
+        return databaseType.getResultSetLimitKeyword();
+    }
+
+    /**
+     * Indicates if the result-set limit keyword is used as a prefix before the selected columns.
+     *
+     * This is true for databases such as SQL Server that use {@code SELECT TOP (...) ...}.
+     *
+     * @return {@code true} if the keyword is prefix-style, otherwise {@code false}.
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3277">OF-3277</a>
+     */
+    public static boolean isResultSetLimitKeywordPrefix()
+    {
+        return databaseType.isResultSetLimitKeywordPrefix();
+    }
+
     public static String getTestSQL(String driver) {
         if (driver == null) {
             return "select 1";
@@ -1195,6 +1222,59 @@ public class DbConnectionManager {
             } else {
                 return keyword;
             }
+        }
+
+        /**
+         * Returns the keyword or keyword phrase that should be used to limit result sets for this database type.
+         *
+         * @return the result-set limit keyword, or a sensible default when the database type is unknown.
+         * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3277">OF-3277</a>
+         */
+        public ResultSetLimitKeyword getResultSetLimitKeyword()
+        {
+            return switch (this) {
+                case sqlserver -> ResultSetLimitKeyword.TOP;
+                case oracle, db2 -> ResultSetLimitKeyword.FETCH_FIRST;
+                default -> ResultSetLimitKeyword.LIMIT;
+            };
+        }
+
+        /**
+         * Indicates if the result-set limit keyword is used before the column list in a SELECT statement.
+         *
+         * @return {@code true} when the keyword is prefix-style (for example {@code TOP}), otherwise {@code false}.
+         * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3277">OF-3277</a>
+         */
+        public boolean isResultSetLimitKeywordPrefix()
+        {
+            return getResultSetLimitKeyword().isPrefix();
+        }
+    }
+
+    /**
+     * Identifies how a database limits result sets.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3277">OF-3277</a>
+     */
+    public enum ResultSetLimitKeyword
+    {
+        TOP(true),
+        FETCH_FIRST(false),
+        LIMIT(false);
+
+        private final boolean prefix;
+
+        ResultSetLimitKeyword(final boolean prefix) {
+            this.prefix = prefix;
+        }
+
+        /**
+         * Indicates if the keyword is used before the selected columns in a {@code SELECT} statement.
+         *
+         * @return {@code true} for prefix-style keywords such as {@code TOP}, otherwise {@code false}.
+         */
+        public boolean isPrefix() {
+            return prefix;
         }
     }
 }

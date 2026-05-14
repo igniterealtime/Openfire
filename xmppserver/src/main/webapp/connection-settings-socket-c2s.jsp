@@ -29,6 +29,7 @@
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
 <%@ page import="org.jivesoftware.util.StringUtils" %>
 <%@ page import="org.jivesoftware.openfire.ConnectionManager" %>
+<%@ page import="io.netty.handler.codec.quic.Quic" %>
 <%@ page errorPage="error.jsp" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
@@ -187,6 +188,7 @@
     pageContext.setAttribute( "quicMaxOutboundStreams", ConnectionSettings.Client.QUIC_MAX_OUTBOUND_STREAMS.getValue());
     pageContext.setAttribute( "quicAlpn",               String.join(", ", ConnectionSettings.Client.QUIC_ALPN.getValue()));
     pageContext.setAttribute( "quicQlogDir",            org.jivesoftware.openfire.spi.QuicConnectionAcceptor.QUIC_QLOG_DIR.getValue());
+    pageContext.setAttribute( "quicNativeAvailable",    Quic.isAvailable() );
     pageContext.setAttribute( "clientIdle",             ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getValue().toMillis());
     pageContext.setAttribute( "pingIdleClients",        ConnectionSettings.Client.KEEP_ALIVE_PING_PROPERTY.getValue());
     pageContext.setAttribute( "c2sRateLimitEnabled",    NewConnectionLimiterRegistry.C2S_ENABLED.getValue() );
@@ -281,6 +283,15 @@
     <admin:contentBox title="${quicboxtitle}">
 
         <p><fmt:message key="quic.client.connections.settings.info"/></p>
+
+        <c:choose>
+            <c:when test="${quicNativeAvailable}">
+                <admin:infobox type="info"><fmt:message key="quic.client.connections.settings.native.available"/></admin:infobox>
+            </c:when>
+            <c:otherwise>
+                <admin:infobox type="warning"><fmt:message key="quic.client.connections.settings.native.unavailable"/></admin:infobox>
+            </c:otherwise>
+        </c:choose>
 
         <table>
             <tr>

@@ -141,7 +141,10 @@ public class QuicConnectionAcceptor extends ConnectionAcceptor
         }
 
         if (!Quic.isAvailable()) {
-            Log.error("Unable to start QUIC listener on port {}. Netty QUIC support is unavailable.", configuration.getPort(), Quic.unavailabilityCause());
+            Log.error("Unable to start QUIC listener on port {}. Netty QUIC native support is unavailable on this platform. " +
+                "Supported platforms are: linux-x86_64, linux-aarch_64, osx-x86_64, osx-aarch_64, windows-x86_64. " +
+                "Ensure the matching netty-codec-native-quic JAR is on the classpath.",
+                configuration.getPort(), Quic.unavailabilityCause());
             return;
         }
 

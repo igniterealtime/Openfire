@@ -313,6 +313,39 @@
             <version>${netty.version}</version>
             <classifier>linux-x86_64</classifier>
             <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-native-quic</artifactId>
+            <version>${netty.version}</version>
+            <classifier>linux-aarch_64</classifier>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-native-quic</artifactId>
+            <version>${netty.version}</version>
+            <classifier>osx-x86_64</classifier>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-native-quic</artifactId>
+            <version>${netty.version}</version>
+            <classifier>osx-aarch_64</classifier>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-native-quic</artifactId>
+            <version>${netty.version}</version>
+            <classifier>windows-x86_64</classifier>
+            <scope>runtime</scope>
+            <optional>true</optional>
         </dependency>
 
         <!-- JZLib -->

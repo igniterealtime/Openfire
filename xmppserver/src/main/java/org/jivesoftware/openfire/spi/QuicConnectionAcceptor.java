@@ -93,6 +93,25 @@ public class QuicConnectionAcceptor extends ConnectionAcceptor
         .setDynamic(false)
         .build();
 
+    /**
+     * When {@code true}, the server issues v2 (DCID-bound) address-validation tokens that allow
+     * a QUIC client to migrate to a new UDP 4-tuple (e.g. after a NAT rebinding or Wi-Fi ↔
+     * cellular handover) without losing its XMPP session (RFC 9000 §9).
+     *
+     * <p>When {@code false} (the default), the server issues v1 (IP+port-bound) tokens. A
+     * migrated client will receive a Retry and must complete a fresh handshake from its new
+     * address, which is safe but causes a session interruption.</p>
+     *
+     * <p><strong>Security note:</strong> v2 tokens are not bound to the client's source address,
+     * which slightly weakens UDP amplification protection for the Retry exchange. Enable this
+     * only when clients are expected to migrate (e.g. mobile deployments).</p>
+     */
+    public static final SystemProperty<Boolean> MIGRATION_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.quic.client.migration-enabled")
+        .setDefaultValue(false)
+        .setDynamic(false)
+        .build();
+
     private final EventLoopGroup ioEventLoopGroup;
     private final EventExecutorGroup blockingHandlerExecutor;
     private final QuicSessionRegistry sessionRegistry = new QuicSessionRegistry();
@@ -162,7 +181,7 @@ public class QuicConnectionAcceptor extends ConnectionAcceptor
                 // QuicSessionStreamRouter is stored as a channel attribute and therefore survives
                 // the migration transparently. The QuicSessionRegistry provides a secondary
                 // lookup path keyed on the stable ChannelId for robustness.
-                .tokenHandler(new HmacQuicTokenHandler())
+                .tokenHandler(new HmacQuicTokenHandler(MIGRATION_ENABLED.getValue()))
                 .maxIdleTimeout(maxIdleTimeoutMs, TimeUnit.MILLISECONDS)
                 .initialMaxData(initialMaxData)
                 .initialMaxStreamDataBidirectionalLocal(initialMaxStreamDataBidiLocal)

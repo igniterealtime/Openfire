@@ -30,74 +30,151 @@ import java.util.Arrays;
 /**
  * A stateless address-validation token handler for QUIC that uses HMAC-SHA256.
  *
- * <h2>Token format</h2>
+ * <h2>Token formats</h2>
+ *
+ * <h3>v1 — address-bound (default, migration disabled)</h3>
  * <pre>
  *   [ timestamp : 8 bytes (big-endian ms since epoch) ]
- *   [ HMAC-SHA256(secret, ip | port(2 BE) | dcid | timestamp) : 32 bytes ]
+ *   [ HMAC-SHA256(secret, ip | port(2 BE) | timestamp) : 32 bytes ]
  * </pre>
- * Total: {@value #TOKEN_LENGTH} bytes.
+ * Total: {@value #V1_TOKEN_LENGTH} bytes.
+ * The token is bound to the client's IP address and port. A migrated client will receive a
+ * Retry and must complete a fresh handshake from its new address.
+ *
+ * <h3>v2 — DCID-bound (migration enabled)</h3>
+ * <pre>
+ *   [ version  : 1 byte  = 0x02 ]
+ *   [ timestamp: 8 bytes (big-endian ms since epoch) ]
+ *   [ dcid_len : 1 byte  (0–20) ]
+ *   [ dcid     : dcid_len bytes ]
+ *   [ HMAC-SHA256(secret, dcid | timestamp) : 32 bytes ]
+ * </pre>
+ * Total: 10 + dcid_len + 32 bytes (max {@value #V2_MAX_TOKEN_LENGTH}).
+ * The token is bound to the Destination Connection ID but NOT to the source address, so a
+ * migrated client can present it from a new UDP 4-tuple. v2 tokens are only issued when
+ * {@code migrationEnabled} is {@code true}.
  *
  * <h2>Security properties</h2>
  * <ul>
- *   <li>Tokens are bound to the client's IP address and port, so they cannot be replayed
- *       from a different source address (which is the primary goal of QUIC address validation
- *       per RFC 9000 §8.1).</li>
- *   <li>Tokens are bound to the destination connection ID presented in the Initial packet,
- *       preventing trivial token-reuse across connections.</li>
- *   <li>Tokens expire after {@link #TOKEN_VALIDITY} to limit the replay window.</li>
+ *   <li>v1 tokens are bound to IP+port, preventing replay from a different address.</li>
+ *   <li>v2 tokens are bound to the DCID; they must only be issued <em>after</em> the initial
+ *       address validation has already succeeded (i.e. as part of the Retry flow for a
+ *       connection that has already been validated). Issuing v2 tokens as the first Retry
+ *       would weaken amplification protection.</li>
+ *   <li>Both token types expire after {@link #TOKEN_VALIDITY} to limit the replay window.</li>
  *   <li>The HMAC key is generated fresh at server startup; tokens issued before a restart
- *       are automatically invalidated (clients will simply retry with a new Initial).</li>
+ *       are automatically invalidated.</li>
  * </ul>
- *
- * <h2>Connection migration</h2>
- * Tokens are intentionally bound to the client's source IP and port. This means a token
- * issued to one address will be rejected if the client presents it from a different address
- * (e.g. after a NAT rebinding or deliberate connection migration). The client will receive
- * a Retry and obtain a fresh token for its new address, which is the correct behaviour:
- * address validation must be repeated after a path change (RFC 9000 §9.3.3).
  */
 public final class HmacQuicTokenHandler implements QuicTokenHandler
 {
     private static final String HMAC_ALGORITHM = "HmacSHA256";
-    private static final int HMAC_LENGTH = 32; // SHA-256 output
-    private static final int TIMESTAMP_LENGTH = 8; // long, big-endian
-    /** Total token length in bytes. */
-    static final int TOKEN_LENGTH = TIMESTAMP_LENGTH + HMAC_LENGTH;
+    private static final int HMAC_LENGTH = 32;       // SHA-256 output
+    private static final int TIMESTAMP_LENGTH = 8;   // long, big-endian
+
+    /** Version byte stored at offset 0 of a v2 token. */
+    static final byte V2_VERSION = 0x02;
+
+    /** Total length of a v1 token (no version byte). */
+    static final int V1_TOKEN_LENGTH = TIMESTAMP_LENGTH + HMAC_LENGTH; // 40
+
+    /** Maximum DCID length per RFC 9000 §17.2. */
+    private static final int MAX_DCID_LEN = 20;
+
+    /**
+     * Maximum length of a v2 token:
+     * 1 (version) + 8 (timestamp) + 1 (dcid_len) + 20 (dcid) + 32 (HMAC).
+     */
+    static final int V2_MAX_TOKEN_LENGTH = 1 + TIMESTAMP_LENGTH + 1 + MAX_DCID_LEN + HMAC_LENGTH; // 62
 
     /** Tokens older than this are rejected. */
     private static final Duration TOKEN_VALIDITY = Duration.ofMinutes(5);
 
     private final byte[] secret;
+    private final boolean migrationEnabled;
 
     /**
-     * Creates a new handler with a freshly-generated random secret.
+     * Creates a new handler with a freshly-generated random secret and migration disabled.
      * Tokens issued by this instance are invalidated when the instance is discarded (e.g. on server restart).
      */
     public HmacQuicTokenHandler()
     {
-        secret = new byte[32];
-        new SecureRandom().nextBytes(secret);
+        this(randomSecret(), false);
+    }
+
+    /**
+     * Creates a new handler with a freshly-generated random secret.
+     *
+     * @param migrationEnabled  when {@code true} the handler issues v2 (DCID-bound) tokens that
+     *                          allow a client to migrate to a new UDP 4-tuple without re-handshaking.
+     */
+    public HmacQuicTokenHandler(final boolean migrationEnabled)
+    {
+        this(randomSecret(), migrationEnabled);
     }
 
     /**
      * Creates a new handler with the supplied secret. Useful for testing or for sharing tokens
      * across a cluster (all nodes must use the same secret).
      *
-     * @param secret  32-byte HMAC key material; copied defensively.
+     * @param secret            32-byte HMAC key material; copied defensively.
+     * @param migrationEnabled  when {@code true} the handler issues v2 (DCID-bound) tokens.
      */
-    public HmacQuicTokenHandler(final byte[] secret)
+    public HmacQuicTokenHandler(final byte[] secret, final boolean migrationEnabled)
     {
         if (secret == null || secret.length < 16) {
             throw new IllegalArgumentException("HMAC secret must be at least 16 bytes");
         }
         this.secret = Arrays.copyOf(secret, secret.length);
+        this.migrationEnabled = migrationEnabled;
     }
+
+    // ------------------------------------------------------------------
+    // QuicTokenHandler implementation
+    // ------------------------------------------------------------------
 
     @Override
     public boolean writeToken(final ByteBuf out, final ByteBuf dcid, final InetSocketAddress address)
     {
         final long now = System.currentTimeMillis();
-        final byte[] hmac = computeHmac(address, dcid, now);
+        if (migrationEnabled) {
+            return writeV2Token(out, dcid, now);
+        } else {
+            return writeV1Token(out, address, now);
+        }
+    }
+
+    @Override
+    public int validateToken(final ByteBuf token, final InetSocketAddress address)
+    {
+        if (token.readableBytes() < 1) {
+            return -1;
+        }
+        // Peek at the first byte to determine the token version.
+        // v2 tokens start with V2_VERSION (0x02); v1 tokens start with the high byte of a
+        // millisecond timestamp, which is never 0x02 for any reasonable system clock value
+        // (0x02 would correspond to a timestamp in January 1970, well outside TOKEN_VALIDITY).
+        final byte firstByte = token.getByte(token.readerIndex());
+        if (firstByte == V2_VERSION) {
+            return validateV2Token(token);
+        } else {
+            return validateV1Token(token, address);
+        }
+    }
+
+    @Override
+    public int maxTokenLength()
+    {
+        return migrationEnabled ? V2_MAX_TOKEN_LENGTH : V1_TOKEN_LENGTH;
+    }
+
+    // ------------------------------------------------------------------
+    // v1 token (address-bound)
+    // ------------------------------------------------------------------
+
+    private boolean writeV1Token(final ByteBuf out, final InetSocketAddress address, final long now)
+    {
+        final byte[] hmac = computeV1Hmac(address, now);
         if (hmac == null) {
             return false;
         }
@@ -106,88 +183,143 @@ public final class HmacQuicTokenHandler implements QuicTokenHandler
         return true;
     }
 
-    @Override
-    public int validateToken(final ByteBuf token, final InetSocketAddress address)
+    private int validateV1Token(final ByteBuf token, final InetSocketAddress address)
     {
-        if (token.readableBytes() < TOKEN_LENGTH) {
+        if (token.readableBytes() < V1_TOKEN_LENGTH) {
             return -1;
         }
-
         final long timestamp = token.getLong(token.readerIndex());
-        final long age = System.currentTimeMillis() - timestamp;
-        if (age < 0 || age > TOKEN_VALIDITY.toMillis()) {
+        if (!isTimestampValid(timestamp)) {
             return -1;
         }
-
-        // Note: the dcid is NOT stored in the token — quiche passes the dcid from the
-        // current packet separately via writeToken/validateToken. We receive it implicitly
-        // through the address binding only. To keep the implementation simple and consistent
-        // with the InsecureQuicTokenHandler contract (validateToken receives only token +
-        // address), we bind the HMAC to IP+port+timestamp only (not dcid), which is
-        // sufficient for RFC 9000 §8.1 address validation.
-        final byte[] expected = computeHmacAddressOnly(address, timestamp);
+        final byte[] expected = computeV1Hmac(address, timestamp);
         if (expected == null) {
             return -1;
         }
-
         final byte[] actual = new byte[HMAC_LENGTH];
         token.getBytes(token.readerIndex() + TIMESTAMP_LENGTH, actual);
-
         if (!constantTimeEquals(expected, actual)) {
             return -1;
         }
-
-        return TOKEN_LENGTH;
+        return V1_TOKEN_LENGTH;
     }
 
-    @Override
-    public int maxTokenLength()
-    {
-        return TOKEN_LENGTH;
-    }
-
-    // ------------------------------------------------------------------
-    // Internal helpers
-    // ------------------------------------------------------------------
-
-    private byte[] computeHmac(final InetSocketAddress address, final ByteBuf dcid, final long timestamp)
-    {
-        // Bind to: ip bytes | port (2 bytes, big-endian) | timestamp (8 bytes, big-endian)
-        // The dcid parameter is accepted for API compatibility but not included in the MAC
-        // because validateToken does not receive it (see note in validateToken above).
-        return computeHmacAddressOnly(address, timestamp);
-    }
-
-    private byte[] computeHmacAddressOnly(final InetSocketAddress address, final long timestamp)
+    private byte[] computeV1Hmac(final InetSocketAddress address, final long timestamp)
     {
         try {
             final Mac mac = Mac.getInstance(HMAC_ALGORITHM);
             mac.init(new SecretKeySpec(secret, HMAC_ALGORITHM));
-
-            final byte[] ip = address.getAddress().getAddress(); // 4 or 16 bytes
-            mac.update(ip);
-
+            mac.update(address.getAddress().getAddress()); // 4 or 16 bytes
             final int port = address.getPort();
             mac.update((byte) (port >> 8));
             mac.update((byte) (port & 0xFF));
-
-            final byte[] ts = new byte[TIMESTAMP_LENGTH];
-            long t = timestamp;
-            for (int i = 7; i >= 0; i--) {
-                ts[i] = (byte) (t & 0xFF);
-                t >>>= 8;
-            }
-            mac.update(ts);
-
+            mac.update(longToBytes(timestamp));
             return mac.doFinal();
         } catch (final NoSuchAlgorithmException | InvalidKeyException e) {
-            // HmacSHA256 is mandated by the JVM spec; this should never happen.
             throw new IllegalStateException("HmacSHA256 unavailable", e);
         }
     }
 
+    // ------------------------------------------------------------------
+    // v2 token (DCID-bound, migration-capable)
+    // ------------------------------------------------------------------
+
+    private boolean writeV2Token(final ByteBuf out, final ByteBuf dcid, final long now)
+    {
+        final int dcidLen = Math.min(dcid.readableBytes(), MAX_DCID_LEN);
+        final byte[] dcidBytes = new byte[dcidLen];
+        dcid.getBytes(dcid.readerIndex(), dcidBytes);
+
+        final byte[] hmac = computeV2Hmac(dcidBytes, now);
+        if (hmac == null) {
+            return false;
+        }
+        out.writeByte(V2_VERSION);
+        out.writeLong(now);
+        out.writeByte(dcidLen);
+        out.writeBytes(dcidBytes);
+        out.writeBytes(hmac);
+        return true;
+    }
+
+    private int validateV2Token(final ByteBuf token)
+    {
+        // Layout: version(1) + timestamp(8) + dcid_len(1) + dcid(N) + hmac(32)
+        final int minLen = 1 + TIMESTAMP_LENGTH + 1 + HMAC_LENGTH;
+        if (token.readableBytes() < minLen) {
+            return -1;
+        }
+        int offset = token.readerIndex();
+        offset += 1; // skip version byte (already checked by caller)
+
+        final long timestamp = token.getLong(offset);
+        offset += TIMESTAMP_LENGTH;
+        if (!isTimestampValid(timestamp)) {
+            return -1;
+        }
+
+        final int dcidLen = token.getUnsignedByte(offset);
+        offset += 1;
+        if (dcidLen > MAX_DCID_LEN) {
+            return -1;
+        }
+        if (token.readableBytes() < 1 + TIMESTAMP_LENGTH + 1 + dcidLen + HMAC_LENGTH) {
+            return -1;
+        }
+
+        final byte[] dcidBytes = new byte[dcidLen];
+        token.getBytes(offset, dcidBytes);
+        offset += dcidLen;
+
+        final byte[] expected = computeV2Hmac(dcidBytes, timestamp);
+        if (expected == null) {
+            return -1;
+        }
+        final byte[] actual = new byte[HMAC_LENGTH];
+        token.getBytes(offset, actual);
+
+        if (!constantTimeEquals(expected, actual)) {
+            return -1;
+        }
+        return 1 + TIMESTAMP_LENGTH + 1 + dcidLen + HMAC_LENGTH;
+    }
+
+    private byte[] computeV2Hmac(final byte[] dcidBytes, final long timestamp)
+    {
+        try {
+            final Mac mac = Mac.getInstance(HMAC_ALGORITHM);
+            mac.init(new SecretKeySpec(secret, HMAC_ALGORITHM));
+            mac.update(dcidBytes);
+            mac.update(longToBytes(timestamp));
+            return mac.doFinal();
+        } catch (final NoSuchAlgorithmException | InvalidKeyException e) {
+            throw new IllegalStateException("HmacSHA256 unavailable", e);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Shared helpers
+    // ------------------------------------------------------------------
+
+    private boolean isTimestampValid(final long timestamp)
+    {
+        final long age = System.currentTimeMillis() - timestamp;
+        return age >= 0 && age <= TOKEN_VALIDITY.toMillis();
+    }
+
+    private static byte[] longToBytes(final long value)
+    {
+        final byte[] b = new byte[TIMESTAMP_LENGTH];
+        long v = value;
+        for (int i = 7; i >= 0; i--) {
+            b[i] = (byte) (v & 0xFF);
+            v >>>= 8;
+        }
+        return b;
+    }
+
     /** Constant-time byte-array comparison to prevent timing side-channels. */
-    private static boolean constantTimeEquals(final byte[] a, final byte[] b)
+    static boolean constantTimeEquals(final byte[] a, final byte[] b)
     {
         if (a.length != b.length) {
             return false;
@@ -197,5 +329,12 @@ public final class HmacQuicTokenHandler implements QuicTokenHandler
             diff |= a[i] ^ b[i];
         }
         return diff == 0;
+    }
+
+    private static byte[] randomSecret()
+    {
+        final byte[] s = new byte[32];
+        new SecureRandom().nextBytes(s);
+        return s;
     }
 }

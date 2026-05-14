@@ -34,7 +34,6 @@ import io.netty.handler.codec.quic.QuicSslContextBuilder;
 import io.netty.handler.codec.quic.QuicStreamChannel;
 import io.netty.handler.codec.quic.QuicStreamLimitChangedEvent;
 import io.netty.handler.codec.quic.QuicStreamType;
-import io.netty.handler.codec.quic.InsecureQuicTokenHandler;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.handler.traffic.ChannelTrafficShapingHandler;
@@ -147,10 +146,20 @@ public class QuicConnectionAcceptor extends ConnectionAcceptor
 
             final QuicServerCodecBuilder serverCodecBuilder = new QuicServerCodecBuilder()
                 .sslContext(sslContext)
-                // TODO: Replace InsecureQuicTokenHandler with a real address-validation token handler before
-                // any production deployment. The insecure handler accepts all tokens, making the server
-                // trivially vulnerable to UDP amplification attacks.
-                .tokenHandler(InsecureQuicTokenHandler.INSTANCE)
+                // HmacQuicTokenHandler issues HMAC-SHA256 address-validation tokens bound to the
+                // client's IP, port, and a timestamp. This prevents UDP amplification attacks by
+                // ensuring the server only processes packets from addresses that have proven they
+                // can receive traffic (RFC 9000 §8.1). The secret is generated fresh at startup;
+                // tokens from before a restart are automatically invalidated.
+                //
+                // Connection migration (RFC 9000 §9) is NOT supported by this server. The
+                // QuicSessionStreamRouter is bound to a specific QuicChannel instance, so if a
+                // client migrates to a new UDP 4-tuple the server would create a fresh router and
+                // lose all session and stream state. Tokens are intentionally bound to IP+port so
+                // that a migrated client receives a Retry and re-establishes cleanly rather than
+                // silently losing its session. Supporting migration would require a connection-ID
+                // indexed session registry decoupled from the channel instance.
+                .tokenHandler(new HmacQuicTokenHandler())
                 .maxIdleTimeout(maxIdleTimeoutMs, TimeUnit.MILLISECONDS)
                 .initialMaxData(initialMaxData)
                 .initialMaxStreamDataBidirectionalLocal(initialMaxStreamDataBidiLocal)

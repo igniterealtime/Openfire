@@ -1631,21 +1631,26 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 		{
             con = DbConnectionManager.getConnection();
             // Get published items of the specified node
-            if (DbConnectionManager.getDatabaseType().equals(DbConnectionManager.DatabaseType.sqlserver)) {
-                pstmt = con.prepareStatement(LOAD_LAST_ITEMS_TOP);
-            } else if (DbConnectionManager.getDatabaseType().equals(DbConnectionManager.DatabaseType.oracle)) {
-                pstmt = con.prepareStatement(LOAD_LAST_ITEMS_FETCHFIRST);
-            } else {
-                pstmt = con.prepareStatement(LOAD_LAST_ITEMS_LIMIT);
+            switch (DbConnectionManager.getDatabaseType().getResultSetLimitKeyword()) {
+                case TOP:
+                    pstmt = con.prepareStatement(LOAD_LAST_ITEMS_TOP);
+                    break;
+                case FETCH_FIRST:
+                    pstmt = con.prepareStatement(LOAD_LAST_ITEMS_FETCHFIRST);
+                    break;
+                case LIMIT: // Intended fall-through
+                default:
+                    pstmt = con.prepareStatement(LOAD_LAST_ITEMS_LIMIT);
+                    break;
             }
             pstmt.setMaxRows(max);
             int paramIndex = 0;
-            if (DbConnectionManager.getDatabaseType().equals(DbConnectionManager.DatabaseType.sqlserver)){
+            if (DbConnectionManager.getDatabaseType().isResultSetLimitKeywordPrefix()) {
                 pstmt.setLong(++paramIndex, max);
             }
             pstmt.setString(++paramIndex, node.getUniqueIdentifier().getServiceIdentifier().getServiceId());
             pstmt.setString(++paramIndex, encodeNodeID(node.getNodeID()));
-            if (!DbConnectionManager.getDatabaseType().equals(DbConnectionManager.DatabaseType.sqlserver)){
+            if (!DbConnectionManager.getDatabaseType().isResultSetLimitKeywordPrefix()) {
                 pstmt.setLong(++paramIndex, max);
             }
             rs = pstmt.executeQuery();

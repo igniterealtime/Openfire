@@ -25,7 +25,6 @@ import org.mockito.Mockito;
 
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -36,7 +35,6 @@ public class ScramSha1SaslServerSaltTest
 {
     private static final String NON_EXISTENT_USER = "nonexistentuser";
     private static final String EXISTENT_USER = "existentuser";
-    private static final String EXISTENT_SALT_BASE64 = "QSXCR+Q6sek8bf92";
     private MockedStatic<AuthFactory> authFactoryMock;
 
     /**
@@ -66,7 +64,7 @@ public class ScramSha1SaslServerSaltTest
         authFactoryMock = Mockito.mockStatic(AuthFactory.class);
 
         // Simulate existent user
-        authFactoryMock.when(() -> AuthFactory.getSalt(EXISTENT_USER)).thenReturn(EXISTENT_SALT_BASE64);
+        authFactoryMock.when(() -> AuthFactory.getSalt(EXISTENT_USER)).thenReturn(ScramSha1TestFixtures.SALT);
 
         // Simulate non-existent user
         authFactoryMock.when(() -> AuthFactory.getSalt(NON_EXISTENT_USER)).thenThrow(new UserNotFoundException(NON_EXISTENT_USER));
@@ -90,7 +88,7 @@ public class ScramSha1SaslServerSaltTest
     void fakeSaltIsDeterministicForNonExistentUser()
     {
         // Setup test fixture
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), Set.of("SCRAM-SHA-1", "SCRAM-SHA-1-PLUS"));
+        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
 
         // Execute system under test
         final byte[] salt1 = server.getOrCreateSalt(NON_EXISTENT_USER);
@@ -107,7 +105,7 @@ public class ScramSha1SaslServerSaltTest
     void fakeSaltIsDifferentFromRealUserSalt()
     {
         // Setup test fixture
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), Set.of("SCRAM-SHA-1", "SCRAM-SHA-1-PLUS"));
+        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
 
         // Execute system under test
         final byte[] fakeSalt = server.getOrCreateSalt(NON_EXISTENT_USER);
@@ -124,7 +122,7 @@ public class ScramSha1SaslServerSaltTest
     void fakeSaltChangesWhenServerSecretChanges()
     {
         // Setup test fixture
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), Set.of("SCRAM-SHA-1", "SCRAM-SHA-1-PLUS"));
+        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
 
         // Execute system under test
         final byte[] salt1 = server.getOrCreateSalt(NON_EXISTENT_USER);
@@ -142,7 +140,7 @@ public class ScramSha1SaslServerSaltTest
     void realUserSaltIsConsistent()
     {
         // Setup test fixture
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), Set.of("SCRAM-SHA-1", "SCRAM-SHA-1-PLUS"));
+        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
 
         // Execute system under test
         final byte[] salt1 = server.getOrCreateSalt(EXISTENT_USER);

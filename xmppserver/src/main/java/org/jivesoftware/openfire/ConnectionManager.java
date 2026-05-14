@@ -66,8 +66,11 @@ public interface ConnectionManager {
 
     /**
      * The default XMPP over QUIC port for server-to-server (federation) communication.
+     * Defaults to the same port as {@link #DEFAULT_QUIC_PORT} (5224) so that C2S XMPP,
+     * S2S XMPP, and WebTransport can all share a single UDP socket, distinguished by ALPN.
+     * Set {@code xmpp.quic.server.port} to a different value to use a dedicated S2S port.
      */
-    int DEFAULT_QUIC_S2S_PORT = 5271;
+    int DEFAULT_QUIC_S2S_PORT = DEFAULT_QUIC_PORT;
 
     /**
      * The default XMPP port for connection multiplex.

@@ -152,6 +152,8 @@
             }
             ConnectionSettings.Client.QUIC_ALPN.setValue(quicAlpnList);
             org.jivesoftware.openfire.spi.QuicConnectionAcceptor.QUIC_QLOG_DIR.setValue(quicQlogDir == null ? "" : quicQlogDir.trim());
+            final boolean quicWebTransportEnabled = ParamUtils.getBooleanParameter(request, "quic-webtransport-enabled");
+            org.jivesoftware.openfire.session.ConnectionSettings.Client.QUIC_WEBTRANSPORT_ENABLED.setValue(quicWebTransportEnabled);
 
             NewConnectionLimiterRegistry.C2S_PERMITS_PER_SECOND.setValue(parsedPermits);
             NewConnectionLimiterRegistry.C2S_MAX_BURST.setValue(parsedMaxBurst);
@@ -189,6 +191,7 @@
     pageContext.setAttribute( "quicAlpn",               String.join(", ", ConnectionSettings.Client.QUIC_ALPN.getValue()));
     pageContext.setAttribute( "quicQlogDir",            org.jivesoftware.openfire.spi.QuicConnectionAcceptor.QUIC_QLOG_DIR.getValue());
     pageContext.setAttribute( "quicNativeAvailable",    Quic.isAvailable() );
+    pageContext.setAttribute( "quicWebTransportEnabled", org.jivesoftware.openfire.session.ConnectionSettings.Client.QUIC_WEBTRANSPORT_ENABLED.getValue() );
     pageContext.setAttribute( "clientIdle",             ConnectionSettings.Client.IDLE_TIMEOUT_PROPERTY.getValue().toMillis());
     pageContext.setAttribute( "pingIdleClients",        ConnectionSettings.Client.KEEP_ALIVE_PING_PROPERTY.getValue());
     pageContext.setAttribute( "c2sRateLimitEnabled",    NewConnectionLimiterRegistry.C2S_ENABLED.getValue() );
@@ -320,6 +323,13 @@
             <tr>
                 <td style="width: 1%; white-space: nowrap"><label for="quic-qlogDir"><fmt:message key="quic.client.connections.settings.label_qlogdir"/></label></td>
                 <td><input type="text" name="quic-qlogDir" id="quic-qlogDir" value="<c:out value='${quicQlogDir}'/>" size="60"></td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <input type="checkbox" name="quic-webtransport-enabled" id="quic-webtransport-enabled" ${quicWebTransportEnabled ? 'checked' : ''}/>
+                    <label for="quic-webtransport-enabled"><fmt:message key="quic.client.connections.settings.label_webtransport"/></label>
+                    <br/><small><fmt:message key="quic.client.connections.settings.label_webtransport.info"/></small>
+                </td>
             </tr>
             <tr>
                 <td colspan="2"><a href="./connection-settings-advanced.jsp?connectionType=QUIC_C2S&connectionMode=directtls"><fmt:message key="ssl.settings.client.label_custom_info"/>...</a></td>

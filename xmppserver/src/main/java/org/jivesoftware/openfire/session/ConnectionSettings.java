@@ -137,6 +137,24 @@ public final class ConnectionSettings {
             .setDefaultValue(List.of("xmpp-client"))
             .setDynamic(Boolean.TRUE)
             .buildList(String.class);
+
+        /**
+         * When {@code true}, the QUIC listener accepts HTTP/3 WebTransport connections
+         * (ALPN {@code h3}) in addition to native XMPP-over-QUIC connections (ALPN
+         * {@code xmpp-client}). A browser or WebTransport-capable client opens a QUIC
+         * connection with ALPN {@code h3}, sends an HTTP/3 CONNECT request with
+         * {@code :protocol: webtransport} and {@code :path: /xmpp}, and then exchanges
+         * XMPP stanzas on the upgraded stream (XEP-0468).
+         *
+         * <p>Enabling this option also enables the multiplexed listener
+         * ({@link org.jivesoftware.openfire.spi.QuicMultiplexedConnectionAcceptor}) which
+         * serves C2S XMPP, S2S XMPP, and WebTransport on a single UDP port.</p>
+         */
+        public static final SystemProperty<Boolean> QUIC_WEBTRANSPORT_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+            .setKey("xmpp.quic.client.webtransport.enabled")
+            .setDefaultValue(Boolean.FALSE)
+            .setDynamic(Boolean.FALSE)
+            .build();
     }
 
     public static final class Server {

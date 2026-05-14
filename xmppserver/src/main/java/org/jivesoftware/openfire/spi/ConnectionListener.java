@@ -242,8 +242,19 @@ public class ConnectionListener
         Log.info( "Started." );
     }
 
+    /**
+     * When non-null, this acceptor is used instead of the default one created by
+     * {@link #instantiateConnectionAcceptor}. Set by {@link ConnectionManagerImpl} to
+     * inject a shared {@link QuicMultiplexedConnectionAcceptor} when C2S and S2S QUIC
+     * share the same port.
+     */
+    private ConnectionAcceptor overrideAcceptor = null;
+
     private ConnectionAcceptor instantiateConnectionAcceptor(final ConnectionConfiguration configuration)
     {
+        if (overrideAcceptor != null) {
+            return overrideAcceptor;
+        }
         if (getType() == ConnectionType.QUIC_C2S) {
             return new QuicConnectionAcceptor(configuration);
         }
@@ -251,6 +262,21 @@ public class ConnectionListener
             return new QuicS2SConnectionAcceptor(configuration);
         }
         return new NettyConnectionAcceptor(configuration);
+    }
+
+    /**
+     * Overrides the acceptor that will be used when this listener is next started.
+     * This is used by {@link ConnectionManagerImpl} to inject a shared
+     * {@link QuicMultiplexedConnectionAcceptor} when C2S and S2S QUIC are configured
+     * on the same port.
+     *
+     * <p>Call with {@code null} to revert to the default acceptor for this listener type.</p>
+     *
+     * @param acceptor the acceptor to use, or {@code null} to revert to the default.
+     */
+    synchronized void setOverrideAcceptor(final ConnectionAcceptor acceptor)
+    {
+        this.overrideAcceptor = acceptor;
     }
 
     /**

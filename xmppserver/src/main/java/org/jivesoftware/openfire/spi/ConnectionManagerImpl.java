@@ -307,6 +307,51 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     }
 
     /**
+     * When the QUIC C2S and S2S listeners are configured on the same port (the default),
+     * replaces both listeners' acceptors with a single shared
+     * {@link QuicMultiplexedConnectionAcceptor} that routes connections by ALPN.
+     * When WebTransport is enabled ({@code xmpp.quic.client.webtransport.enabled=true}),
+     * the multiplexed acceptor also accepts {@code h3} connections.
+     *
+     * <p>When the ports differ, each listener uses its own dedicated acceptor
+     * ({@link QuicConnectionAcceptor} for C2S, {@link QuicS2SConnectionAcceptor} for S2S)
+     * and this method is a no-op.</p>
+     */
+    private synchronized void wireMuxAcceptorIfNeeded()
+    {
+        final int c2sPort = quicClientListener.getPort();
+        final int s2sPort = quicServerListener.getPort();
+
+        if ( c2sPort != s2sPort )
+        {
+            // Different ports — each listener uses its own dedicated acceptor.
+            quicClientListener.setOverrideAcceptor( null );
+            quicServerListener.setOverrideAcceptor( null );
+            Log.debug( "QUIC C2S (port {}) and S2S (port {}) are on different ports; using separate acceptors.",
+                c2sPort, s2sPort );
+            return;
+        }
+
+        final boolean webTransportEnabled =
+            org.jivesoftware.openfire.session.ConnectionSettings.Client.QUIC_WEBTRANSPORT_ENABLED.getValue();
+
+        Log.info( "QUIC C2S and S2S share port {}; using multiplexed acceptor (WebTransport: {}).",
+            c2sPort, webTransportEnabled );
+
+        final ConnectionConfiguration c2sConfig = quicClientListener.generateConnectionConfiguration();
+        final ConnectionConfiguration s2sConfig = quicServerListener.generateConnectionConfiguration();
+
+        final QuicMultiplexedConnectionAcceptor muxAcceptor =
+            new QuicMultiplexedConnectionAcceptor( c2sConfig, s2sConfig, webTransportEnabled );
+
+        // The C2S listener owns the mux acceptor lifecycle (start/stop).
+        // The S2S listener receives a SharedConnectionAcceptor wrapper whose start()/stop()
+        // are no-ops, preventing double-start or premature shutdown of the shared acceptor.
+        quicClientListener.setOverrideAcceptor( muxAcceptor );
+        quicServerListener.setOverrideAcceptor( new SharedConnectionAcceptor( muxAcceptor ) );
+    }
+
+    /**
      * Starts all listeners. This ensures that all those that are enabled will start accept connections.
      */
     private synchronized void startListeners()
@@ -332,6 +377,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         }
 
         Log.debug( "Starting listeners..." );
+        wireMuxAcceptorIfNeeded();
         for ( final ConnectionListener listener : getListeners() )
         {
             try

@@ -29,6 +29,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import javax.annotation.Nonnull;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.security.sasl.Sasl;
@@ -85,48 +86,26 @@ public class ScramSha1SaslServerTest
     {
         // Setup test fixture
         final SecretKeyFactory HmacSHA1Factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-
-        authFactory.when(() -> AuthFactory.getSalt(any())).thenReturn(ScramSha1TestFixtures.SALT);
-        authFactory.when(() -> AuthFactory.getIterations(any())).thenReturn(ScramSha1TestFixtures.ITERATIONS);
-        authFactory.when(() -> AuthFactory.getPassword(any())).thenReturn(ScramSha1TestFixtures.PASSWORD);
-        authFactory.when(() -> AuthFactory.getStoredKey(any())).thenReturn(DatatypeConverter.printBase64Binary(StringUtils.decodeHex(ScramSha1TestFixtures.STORED_KEY_BASE64)));
-        authFactory.when(() -> AuthFactory.getServerKey(any())).thenReturn(DatatypeConverter.printBase64Binary(StringUtils.decodeHex(ScramSha1TestFixtures.SERVER_KEY_BASE64)));
+        setupCanonicalAuthData();
 
         // Setup test fixture: prepare initial client message.
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
-        final byte[] initialMessage = ("n,,n=" + ScramSha1TestFixtures.USER + ",r=" + ScramSha1TestFixtures.CLIENT_NONCE).getBytes(StandardCharsets.UTF_8);
+        final ScramSha1SaslServer server = newServer(false);
+        final byte[] initialMessage = createClientInitialMessage("n,,", ScramSha1TestFixtures.USER, ScramSha1TestFixtures.CLIENT_NONCE);
 
         // Execute system under test: getting the first server message.
         final String firstServerResponse = new String(server.evaluateResponse(initialMessage), StandardCharsets.UTF_8); // r=%s,s=%s,i=%d
 
         // Verify result (first server message should match a pattern, and contain a number of properties)
-        final Matcher firstServerResponseMatcher = Pattern.compile("r=([^,]*),s=([^,]*),i=(.*)$").matcher(firstServerResponse);
-        assertTrue(firstServerResponseMatcher.matches(), "First server message does not match expected pattern.");
-        final String serverNonce = firstServerResponseMatcher.group(1);
-        assertTrue(serverNonce != null && !serverNonce.isBlank(), "First server message should contain a non-empty server nonce (but did not)");
-        assertTrue(serverNonce.startsWith(ScramSha1TestFixtures.CLIENT_NONCE), "First server message should contain a server nonce that starts with the client nonce, but did not.");
-
-
-        byte[] salt = null;
-        try {
-            salt = DatatypeConverter.parseBase64Binary(firstServerResponseMatcher.group(2));
-            assertEquals(ScramSha1TestFixtures.SALT, firstServerResponseMatcher.group(2), "First server message should include the 'salt' value configured for this unit test (but did not)");
-        } catch (IllegalArgumentException e) {
-            fail("First server message should contain a valid 'salt' value (but did not).");
-        }
-
-        int iterations = -1;
-        try {
-            iterations = Integer.parseInt(firstServerResponseMatcher.group(3));
-            assertEquals(ScramSha1TestFixtures.ITERATIONS, iterations, "First server message should include the 'iterations' value configured for this unit test (but did not)");
-        } catch (NumberFormatException e) {
-            fail("First server message should contain a valid 'iterations' value (but did not).");
-        }
+        final FirstExchangeResult firstExchangeResult = FirstExchangeResult.fromFirstServerResponse(firstServerResponse);
+        assertTrue(firstExchangeResult.serverNonce != null && !firstExchangeResult.serverNonce.isBlank(), "First server message should contain a non-empty server nonce (but did not)");
+        assertTrue(firstExchangeResult.serverNonce.startsWith(ScramSha1TestFixtures.CLIENT_NONCE), "First server message should contain a server nonce that starts with the client nonce, but did not.");
+        assertArrayEquals(DatatypeConverter.parseBase64Binary(ScramSha1TestFixtures.SALT), firstExchangeResult.salt, "First server message should include the 'salt' value configured for this unit test (but did not)");
+        assertEquals(ScramSha1TestFixtures.ITERATIONS, firstExchangeResult.iterations, "First server message should include the 'iterations' value configured for this unit test (but did not)");
 
         // Setup test fixture: prepare second client message.
-        final String clientFinalMessageBare = "c=biws,r=" + serverNonce;
+        final String clientFinalMessageBare = "c=biws,r=" + firstExchangeResult.serverNonce;
 
-        final KeySpec saltedPasswordSpec = new PBEKeySpec(ScramSha1TestFixtures.PASSWORD.toCharArray(), salt, iterations, 20*8);
+        final KeySpec saltedPasswordSpec = new PBEKeySpec(ScramSha1TestFixtures.PASSWORD.toCharArray(), firstExchangeResult.salt, firstExchangeResult.iterations, 20*8);
         final byte[] saltedPassword = HmacSHA1Factory.generateSecret(saltedPasswordSpec).getEncoded();
 
         final byte[] clientKey = new HmacUtils(HmacAlgorithms.HMAC_SHA_1, saltedPassword).hmac(ScramSha1TestFixtures.CLIENT_KEY);
@@ -177,53 +156,33 @@ public class ScramSha1SaslServerTest
 
         channelBindingProviderManager.addProvider(serverEndPointProvider);
 
-        authFactory.when(() -> AuthFactory.getSalt(any())).thenReturn(ScramSha1TestFixtures.SALT);
-        authFactory.when(() -> AuthFactory.getIterations(any())).thenReturn(ScramSha1TestFixtures.ITERATIONS);
-        authFactory.when(() -> AuthFactory.getPassword(any())).thenReturn(ScramSha1TestFixtures.PASSWORD);
-        authFactory.when(() -> AuthFactory.getStoredKey(any())).thenReturn(DatatypeConverter.printBase64Binary(StringUtils.decodeHex(ScramSha1TestFixtures.STORED_KEY_BASE64)));
-        authFactory.when(() -> AuthFactory.getServerKey(any())).thenReturn(DatatypeConverter.printBase64Binary(StringUtils.decodeHex(ScramSha1TestFixtures.SERVER_KEY_BASE64)));
+        setupCanonicalAuthData();
 
         // Setup test fixture: prepare initial client message with channel binding.
         final Map<String, Object> props = new HashMap<>();
         props.put(LocalSession.class.getCanonicalName(), mockSession);
         final ScramSha1SaslServer server = new ScramSha1SaslServer(true, props, channelBindingProviderManager, ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
         final String gs2Header = "p=" + channelBindingType + ",,";
-        final byte[] initialMessage = (gs2Header + "n=" + ScramSha1TestFixtures.USER + ",r=" + ScramSha1TestFixtures.CLIENT_NONCE).getBytes(StandardCharsets.UTF_8);
+        final byte[] initialMessage = createClientInitialMessage(gs2Header, ScramSha1TestFixtures.USER, ScramSha1TestFixtures.CLIENT_NONCE);
 
         // Execute system under test: getting the first server message.
         final String firstServerResponse = new String(server.evaluateResponse(initialMessage), StandardCharsets.UTF_8);
 
         // Verify result (first server message should match a pattern, and contain a number of properties)
-        final Matcher firstServerResponseMatcher = Pattern.compile("r=([^,]*),s=([^,]*),i=(.*)$").matcher(firstServerResponse);
-        assertTrue(firstServerResponseMatcher.matches(), "First server message does not match expected pattern.");
-        final String serverNonce = firstServerResponseMatcher.group(1);
-        assertTrue(serverNonce != null && !serverNonce.isBlank(), "First server message should contain a non-empty server nonce (but did not)");
-        assertTrue(serverNonce.startsWith(ScramSha1TestFixtures.CLIENT_NONCE), "First server message should contain a server nonce that starts with the client nonce, but did not.");
-
-        byte[] salt = null;
-        try {
-            salt = DatatypeConverter.parseBase64Binary(firstServerResponseMatcher.group(2));
-            assertEquals(ScramSha1TestFixtures.SALT, firstServerResponseMatcher.group(2), "First server message should include the 'salt' value configured for this unit test (but did not)");
-        } catch (IllegalArgumentException e) {
-            fail("First server message should contain a valid 'salt' value (but did not).");
-        }
-
-        int iterations = -1;
-        try {
-            iterations = Integer.parseInt(firstServerResponseMatcher.group(3));
-            assertEquals(ScramSha1TestFixtures.ITERATIONS, iterations, "First server message should include the 'iterations' value configured for this unit test (but did not)");
-        } catch (NumberFormatException e) {
-            fail("First server message should contain a valid 'iterations' value (but did not).");
-        }
+        final FirstExchangeResult firstExchangeResult = FirstExchangeResult.fromFirstServerResponse(firstServerResponse);
+        assertTrue(firstExchangeResult.serverNonce != null && !firstExchangeResult.serverNonce.isBlank(), "First server message should contain a non-empty server nonce (but did not)");
+        assertTrue(firstExchangeResult.serverNonce.startsWith(ScramSha1TestFixtures.CLIENT_NONCE), "First server message should contain a server nonce that starts with the client nonce, but did not.");
+        assertArrayEquals(DatatypeConverter.parseBase64Binary(ScramSha1TestFixtures.SALT), firstExchangeResult.salt, "First server message should include the 'salt' value configured for this unit test (but did not)");
+        assertEquals(ScramSha1TestFixtures.ITERATIONS, firstExchangeResult.iterations, "First server message should include the 'iterations' value configured for this unit test (but did not)");
 
         // Setup test fixture: prepare second client message with channel binding.
         final byte[] gs2HeaderBytes = gs2Header.getBytes(StandardCharsets.UTF_8);
         final byte[] cbindInput = new byte[gs2HeaderBytes.length + channelBindingData.length];
         System.arraycopy(gs2HeaderBytes, 0, cbindInput, 0, gs2HeaderBytes.length);
         System.arraycopy(channelBindingData, 0, cbindInput, gs2HeaderBytes.length, channelBindingData.length);
-        final String clientFinalMessageBare = "c=" + Base64.getEncoder().encodeToString(cbindInput) + ",r=" + serverNonce;
+        final String clientFinalMessageBare = "c=" + Base64.getEncoder().encodeToString(cbindInput) + ",r=" + firstExchangeResult.serverNonce;
 
-        final KeySpec saltedPasswordSpec = new PBEKeySpec(ScramSha1TestFixtures.PASSWORD.toCharArray(), salt, iterations, 20*8);
+        final KeySpec saltedPasswordSpec = new PBEKeySpec(ScramSha1TestFixtures.PASSWORD.toCharArray(), firstExchangeResult.salt, firstExchangeResult.iterations, 20*8);
         final byte[] saltedPassword = HmacSHA1Factory.generateSecret(saltedPasswordSpec).getEncoded();
 
         final byte[] clientKey = new HmacUtils(HmacAlgorithms.HMAC_SHA_1, saltedPassword).hmac(ScramSha1TestFixtures.CLIENT_KEY);
@@ -369,7 +328,7 @@ public class ScramSha1SaslServerTest
     void getMechanismName_returnsScramSha1_forNonPlusMechanism()
     {
         // Setup test fixture
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
+        final ScramSha1SaslServer server = newServer(false);
 
         // Execute system under test
         final String mechanismName = server.getMechanismName();
@@ -385,7 +344,7 @@ public class ScramSha1SaslServerTest
     void getMechanismName_returnsScramSha1Plus_forPlusMechanism()
     {
         // Setup test fixture
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(true, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
+        final ScramSha1SaslServer server = newServer(true);
 
         // Execute system under test
         final String mechanismName = server.getMechanismName();
@@ -401,11 +360,12 @@ public class ScramSha1SaslServerTest
     void rejectsFirstMessage_invalidFormat()
     {
         // Setup test fixture
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
+        final ScramSha1SaslServer server = newServer(false);
+        final byte[] clientInitialMessage = "not-a-valid-scram-message".getBytes(StandardCharsets.UTF_8);
 
         // Execute system under test & Verify result
         assertThrows(SaslException.class,
-            () -> server.evaluateResponse("not-a-valid-scram-message".getBytes(StandardCharsets.UTF_8)),
+            () -> server.evaluateResponse(clientInitialMessage),
             "Malformed first client message should be rejected with SaslException");
     }
 
@@ -416,11 +376,12 @@ public class ScramSha1SaslServerTest
     void rejectsFirstMessage_emptyUsername()
     {
         // Setup test fixture
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
+        final ScramSha1SaslServer server = newServer(false);
+        final byte[] clientInitialMessage = createClientInitialMessage("n,,", "", ScramSha1TestFixtures.CLIENT_NONCE);
 
         // Execute system under test & Verify result
         assertThrows(SaslException.class,
-            () -> server.evaluateResponse("n,,n=,r=clientnonce".getBytes(StandardCharsets.UTF_8)),
+            () -> server.evaluateResponse(clientInitialMessage),
             "First client message with empty username should be rejected");
     }
 
@@ -431,11 +392,12 @@ public class ScramSha1SaslServerTest
     void rejectsFirstMessage_emptyClientNonce()
     {
         // Setup test fixture
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
+        final ScramSha1SaslServer server = newServer(false);
+        final byte[] clientInitialMessage = createClientInitialMessage("n,,", ScramSha1TestFixtures.USER, "");
 
         // Execute system under test & Verify result
         assertThrows(SaslException.class,
-            () -> server.evaluateResponse(("n,,n=" + ScramSha1TestFixtures.USER + ",r=").getBytes(StandardCharsets.UTF_8)),
+            () -> server.evaluateResponse(clientInitialMessage),
             "First client message with empty client nonce should be rejected");
     }
 
@@ -446,11 +408,12 @@ public class ScramSha1SaslServerTest
     void rejectsFirstMessage_channelBindingRequestedOnNonPlusMechanism()
     {
         // Setup test fixture
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
+        final ScramSha1SaslServer server = newServer(false);
+        final byte[] clientInitialMessage = createClientInitialMessage("p=tls-unique,,", ScramSha1TestFixtures.USER, ScramSha1TestFixtures.CLIENT_NONCE);
 
         // Execute system under test & Verify result
         assertThrows(SaslException.class,
-            () -> server.evaluateResponse(("p=tls-unique,,n=" + ScramSha1TestFixtures.USER + ",r=clientnonce").getBytes(StandardCharsets.UTF_8)),
+            () -> server.evaluateResponse(clientInitialMessage),
             "Channel binding requested on non-PLUS mechanism should be rejected");
     }
 
@@ -462,10 +425,11 @@ public class ScramSha1SaslServerTest
     void rejectsFirstMessage_downgradeAttackDetected()
     {
         // Setup test fixture
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
+        final ScramSha1SaslServer server = newServer(false);
+        final byte[] clientInitialMessage = createClientInitialMessage("y,,", ScramSha1TestFixtures.USER, ScramSha1TestFixtures.CLIENT_NONCE);
 
         // Execute system under test & Verify result
-        assertThrows(SaslException.class, () -> server.evaluateResponse("y,,n=user,r=clientnonce".getBytes(StandardCharsets.UTF_8)),
+        assertThrows(SaslException.class, () -> server.evaluateResponse(clientInitialMessage),
             "Downgrade attack (y-flag) should be rejected when -PLUS is advertised");
     }
 
@@ -476,9 +440,9 @@ public class ScramSha1SaslServerTest
     void rejectsFinalMessage_invalidFormat() throws Exception
     {
         // Setup test fixture
-        setupSaltAndIterations();
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
-        server.evaluateResponse(("n,,n=" + ScramSha1TestFixtures.USER + ",r=clientnonce").getBytes(StandardCharsets.UTF_8));
+        setupCanonicalAuthData();
+        final ScramSha1SaslServer server = newServer(false);
+        doFirstExchange(server);
 
         // Execute system under test & Verify result
         assertThrows(SaslException.class, () -> server.evaluateResponse("not-a-valid-final-message".getBytes(StandardCharsets.UTF_8)),
@@ -492,12 +456,13 @@ public class ScramSha1SaslServerTest
     void rejectsFinalMessage_emptyProof() throws Exception
     {
         // Setup test fixture
-        setupSaltAndIterations();
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
-        final String serverNonce = doFirstExchange(server);
+        setupCanonicalAuthData();
+        final ScramSha1SaslServer server = newServer(false);
+        final FirstExchangeResult firstExchangeResult = doFirstExchange(server);
+        final byte[] clientFinalMessage = createClientFinalMessage("biws", firstExchangeResult.serverNonce, "");
 
         // Execute system under test & Verify result
-        assertThrows(SaslException.class, () -> server.evaluateResponse(("c=biws,r=" + serverNonce + ",p=").getBytes(StandardCharsets.UTF_8)),
+        assertThrows(SaslException.class, () -> server.evaluateResponse(clientFinalMessage),
             "Final client message with empty proof should be rejected");
     }
 
@@ -508,12 +473,13 @@ public class ScramSha1SaslServerTest
     void rejectsFinalMessage_emptyChannelBinding() throws Exception
     {
         // Setup test fixture
-        setupSaltAndIterations();
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
-        final String serverNonce = doFirstExchange(server);
+        setupCanonicalAuthData();
+        final ScramSha1SaslServer server = newServer(false);
+        final FirstExchangeResult firstExchangeResult = doFirstExchange(server);
+        final byte[] clientFinalMessage = createClientFinalMessage("", firstExchangeResult.serverNonce, "p=dGVzdA==");
 
         // Execute system under test & Verify result
-        assertThrows(SaslException.class, () -> server.evaluateResponse(("c=,r=" + serverNonce + ",p=dGVzdA==").getBytes(StandardCharsets.UTF_8)),
+        assertThrows(SaslException.class, () -> server.evaluateResponse(clientFinalMessage),
             "Final client message with empty channel binding should be rejected");
     }
 
@@ -524,12 +490,13 @@ public class ScramSha1SaslServerTest
     void rejectsFinalMessage_incorrectNonce() throws Exception
     {
         // Setup test fixture
-        setupSaltAndIterations();
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
-        doFirstExchange(server);
+        setupCanonicalAuthData();
+        final ScramSha1SaslServer server = newServer(false);
+        doFirstExchange(server); // returned nonce is not used in this test, but the first exchange needs to happen to get the engine in the correct state.
+        final byte[] clientFinalMessage = createClientFinalMessage("biws", "completely-wrong-nonce", "p=dGVzdA==");
 
         // Execute system under test & Verify result
-        assertThrows(SaslException.class, () -> server.evaluateResponse("c=biws,r=completely-wrong-nonce,p=dGVzdA==".getBytes(StandardCharsets.UTF_8)),
+        assertThrows(SaslException.class, () -> server.evaluateResponse(clientFinalMessage),
             "Final client message with incorrect nonce should be rejected");
     }
 
@@ -542,13 +509,14 @@ public class ScramSha1SaslServerTest
     void rejectsFinalMessage_incorrectChannelBindingValue_nonPlusMechanism() throws Exception
     {
         // Setup test fixture
-        setupSaltAndIterations();
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
-        final String serverNonce = doFirstExchange(server);
+        setupCanonicalAuthData();
+        final ScramSha1SaslServer server = newServer(false);
+        final FirstExchangeResult firstExchangeResult = doFirstExchange(server);
         final String wrongBinding = Base64.getEncoder().encodeToString("p=tls-unique,,".getBytes(StandardCharsets.UTF_8));
+        final byte[] clientFinalMessage = createClientFinalMessage(wrongBinding, firstExchangeResult.serverNonce, "p=dGVzdA==");
 
         // Execute system under test & Verify result
-        assertThrows(SaslException.class, () -> server.evaluateResponse(("c=" + wrongBinding + ",r=" + serverNonce + ",p=dGVzdA==").getBytes(StandardCharsets.UTF_8)),
+        assertThrows(SaslException.class, () -> server.evaluateResponse(clientFinalMessage),
             "Final client message with incorrect channel binding value should be rejected");
     }
 
@@ -560,13 +528,14 @@ public class ScramSha1SaslServerTest
     void rejectsFinalMessage_proofWithWrongLength() throws Exception
     {
         // Setup test fixture
-        setupSaltAndIterationsAndKeys();
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
-        final String serverNonce = doFirstExchange(server);
+        setupCanonicalAuthData();
+        final ScramSha1SaslServer server = newServer(false);
+        final FirstExchangeResult firstExchangeResult = doFirstExchange(server);
         final String shortProof = Base64.getEncoder().encodeToString(new byte[10]); // 10 bytes, not 20
+        final byte[] clientFinalMessage = createClientFinalMessage("biws", firstExchangeResult.serverNonce, shortProof);
 
         // Execute system under test
-        final SaslException ex = assertThrows(SaslException.class, () -> server.evaluateResponse(("c=biws,r=" + serverNonce + ",p=" + shortProof).getBytes(StandardCharsets.UTF_8)),
+        final SaslException ex = assertThrows(SaslException.class, () -> server.evaluateResponse(clientFinalMessage),
             "Final client message with proof of wrong length should be rejected");
 
         // Verify result
@@ -581,13 +550,14 @@ public class ScramSha1SaslServerTest
     void rejectsFinalMessage_incorrectProof() throws Exception
     {
         // Setup test fixture
-        setupSaltAndIterationsAndKeys();
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
-        final String serverNonce = doFirstExchange(server);
+        setupCanonicalAuthData();
+        final ScramSha1SaslServer server = newServer(false);
+        final FirstExchangeResult firstExchangeResult = doFirstExchange(server);
         final String wrongProof = Base64.getEncoder().encodeToString(new byte[20]); // 20 zero bytes
+        final byte[] clientFinalMessage = createClientFinalMessage("biws", firstExchangeResult.serverNonce, wrongProof);
 
         // Execute system under test & Verify result
-        assertThrows(SaslException.class,() -> server.evaluateResponse(("c=biws,r=" + serverNonce + ",p=" + wrongProof).getBytes(StandardCharsets.UTF_8)),
+        assertThrows(SaslException.class,() -> server.evaluateResponse(clientFinalMessage),
             "Final client message with incorrect proof should be rejected");
     }
 
@@ -598,7 +568,7 @@ public class ScramSha1SaslServerTest
     void isComplete_returnsFalse_initially()
     {
         // Setup test fixture
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
+        final ScramSha1SaslServer server = newServer(false);
 
         // Execute system under test
         final boolean complete = server.isComplete();
@@ -614,9 +584,9 @@ public class ScramSha1SaslServerTest
     void isComplete_returnsFalse_afterFirstExchangeOnly() throws Exception
     {
         // Setup test fixture
-        setupSaltAndIterations();
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
-        server.evaluateResponse(("n,,n=" + ScramSha1TestFixtures.USER + ",r=clientnonce").getBytes(StandardCharsets.UTF_8));
+        setupCanonicalAuthData();
+        final ScramSha1SaslServer server = newServer(false);
+        doFirstExchange(server);
 
         // Execute system under test
         final boolean complete = server.isComplete();
@@ -664,7 +634,7 @@ public class ScramSha1SaslServerTest
     void getAuthorizationID_throwsIllegalStateException_beforeCompletion()
     {
         // Setup test fixture
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
+        final ScramSha1SaslServer server = newServer(false);
 
         // Execute system under test & Verify result
         assertThrows(IllegalStateException.class, server::getAuthorizationID,
@@ -694,7 +664,7 @@ public class ScramSha1SaslServerTest
     void getNegotiatedProperty_throwsIllegalStateException_beforeCompletion()
     {
         // Setup test fixture
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
+        final ScramSha1SaslServer server = newServer(false);
 
         // Execute system under test & Verify result
         assertThrows(IllegalStateException.class, () -> server.getNegotiatedProperty(Sasl.QOP),
@@ -741,7 +711,7 @@ public class ScramSha1SaslServerTest
     void unwrap_throwsIllegalStateException_always()
     {
         // Setup test fixture
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
+        final ScramSha1SaslServer server = newServer(false);
 
         // Execute system under test & Verify result
         assertThrows(IllegalStateException.class, () -> server.unwrap(new byte[]{1, 2, 3}, 0, 3),
@@ -755,7 +725,7 @@ public class ScramSha1SaslServerTest
     void wrap_throwsIllegalStateException_always()
     {
         // Setup test fixture
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
+        final ScramSha1SaslServer server = newServer(false);
 
         // Execute system under test & Verify result
         assertThrows(IllegalStateException.class, () -> server.wrap(new byte[]{1, 2, 3}, 0, 3),
@@ -786,32 +756,23 @@ public class ScramSha1SaslServerTest
     // Private helpers
     // -------------------------------------------------------------------------
 
-    private void setupSaltAndIterations()
+    private void setupCanonicalAuthData()
     {
         authFactory.when(() -> AuthFactory.getSalt(any())).thenReturn(ScramSha1TestFixtures.SALT);
         authFactory.when(() -> AuthFactory.getIterations(any())).thenReturn(ScramSha1TestFixtures.ITERATIONS);
-    }
-
-    private void setupSaltAndIterationsAndKeys()
-    {
-        setupSaltAndIterations();
-        authFactory.when(() -> AuthFactory.getStoredKey(any()))
-            .thenReturn(DatatypeConverter.printBase64Binary(StringUtils.decodeHex(ScramSha1TestFixtures.STORED_KEY_BASE64)));
-        authFactory.when(() -> AuthFactory.getServerKey(any()))
-            .thenReturn(DatatypeConverter.printBase64Binary(StringUtils.decodeHex(ScramSha1TestFixtures.SERVER_KEY_BASE64)));
+        authFactory.when(() -> AuthFactory.getPassword(any())).thenReturn(ScramSha1TestFixtures.PASSWORD);
+        authFactory.when(() -> AuthFactory.getStoredKey(any())).thenReturn(DatatypeConverter.printBase64Binary(StringUtils.decodeHex(ScramSha1TestFixtures.STORED_KEY_BASE64)));
+        authFactory.when(() -> AuthFactory.getServerKey(any())).thenReturn(DatatypeConverter.printBase64Binary(StringUtils.decodeHex(ScramSha1TestFixtures.SERVER_KEY_BASE64)));
     }
 
     /**
      * Performs the first exchange round and returns the composite server nonce.
      */
-    private String doFirstExchange(final ScramSha1SaslServer server) throws SaslException
+    private FirstExchangeResult doFirstExchange(final ScramSha1SaslServer server) throws SaslException
     {
-        final String firstServerResponse = new String(
-            server.evaluateResponse(("n,,n=" + ScramSha1TestFixtures.USER + ",r=clientnonce").getBytes(StandardCharsets.UTF_8)),
-            StandardCharsets.UTF_8);
-        final Matcher m = Pattern.compile("r=([^,]*),.+").matcher(firstServerResponse);
-        assertTrue(m.matches(), "First server response did not match expected pattern");
-        return m.group(1);
+        final byte[] clientInitialMessage = createClientInitialMessage("n,,", ScramSha1TestFixtures.USER, ScramSha1TestFixtures.CLIENT_NONCE);
+        final String firstServerResponse = new String(server.evaluateResponse(clientInitialMessage), StandardCharsets.UTF_8);
+        return FirstExchangeResult.fromFirstServerResponse(firstServerResponse);
     }
 
     /**
@@ -819,26 +780,21 @@ public class ScramSha1SaslServerTest
      */
     private ScramSha1SaslServer completeSuccessfulExchange() throws Exception
     {
-        setupSaltAndIterationsAndKeys();
-        authFactory.when(() -> AuthFactory.getPassword(any())).thenReturn(ScramSha1TestFixtures.PASSWORD);
+        setupCanonicalAuthData();
 
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
-        final byte[] initialMessage = ("n,,n=" + ScramSha1TestFixtures.USER + ",r=" + ScramSha1TestFixtures.CLIENT_NONCE).getBytes(StandardCharsets.UTF_8);
+        final ScramSha1SaslServer server = newServer(false);
+        final byte[] initialMessage = createClientInitialMessage("n,,", ScramSha1TestFixtures.USER, ScramSha1TestFixtures.CLIENT_NONCE);
         final String firstServerResponse = new String(server.evaluateResponse(initialMessage), StandardCharsets.UTF_8);
 
-        final Matcher m = Pattern.compile("r=([^,]*),s=([^,]*),i=(.*)$").matcher(firstServerResponse);
-        assertTrue(m.matches());
-        final String serverNonce = m.group(1);
-        final byte[] salt        = DatatypeConverter.parseBase64Binary(m.group(2));
-        final int    iterations  = Integer.parseInt(m.group(3));
+        final FirstExchangeResult firstExchangeResult = FirstExchangeResult.fromFirstServerResponse(firstServerResponse);
 
         final SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-        final KeySpec spec = new PBEKeySpec(ScramSha1TestFixtures.PASSWORD.toCharArray(), salt, iterations, 160);
+        final KeySpec spec = new PBEKeySpec(ScramSha1TestFixtures.PASSWORD.toCharArray(), firstExchangeResult.salt, firstExchangeResult.iterations, 160);
         final byte[] saltedPassword = factory.generateSecret(spec).getEncoded();
 
         final byte[] clientKey      = new HmacUtils(HmacAlgorithms.HMAC_SHA_1, saltedPassword).hmac(ScramSha1TestFixtures.CLIENT_KEY);
         final byte[] storedKey      = StringUtils.decodeHex(StringUtils.hash(clientKey, "SHA-1"));
-        final String clientFinalBare = "c=biws,r=" + serverNonce;
+        final String clientFinalBare = "c=biws,r=" + firstExchangeResult.serverNonce;
         final String authMessage    = "n=" + ScramSha1TestFixtures.USER + ",r=" + ScramSha1TestFixtures.CLIENT_NONCE + "," + firstServerResponse + "," + clientFinalBare;
         final byte[] clientSignature = new HmacUtils(HmacAlgorithms.HMAC_SHA_1, storedKey).hmac(authMessage);
 
@@ -850,5 +806,68 @@ public class ScramSha1SaslServerTest
         final String clientFinalMessage = clientFinalBare + ",p=" + Base64.getEncoder().encodeToString(clientProof);
         server.evaluateResponse(clientFinalMessage.getBytes(StandardCharsets.UTF_8));
         return server;
+    }
+
+    @Nonnull
+    private ScramSha1SaslServer newServer(final boolean isPlusMechanism)
+    {
+        return new ScramSha1SaslServer(isPlusMechanism, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
+    }
+
+    @Nonnull
+    private byte[] createClientInitialMessage(@Nonnull final String gs2Header, @Nonnull final String username, @Nonnull final String nonce)
+    {
+        return (gs2Header + "n=" + username + ",r=" + nonce).getBytes(StandardCharsets.UTF_8);
+    }
+
+    @Nonnull
+    private byte[] createClientFinalMessage(@Nonnull final String channelBinding, @Nonnull final String serverNonce, @Nonnull final String proof)
+    {
+        return ("c=" + channelBinding + ",r=" + serverNonce + ",p=" + proof).getBytes(StandardCharsets.UTF_8);
+    }
+
+    static class FirstExchangeResult
+    {
+        final String serverNonce;
+        final byte[] salt;
+        final int iterations;
+
+        private FirstExchangeResult(String serverNonce, byte[] salt, int iterations)
+        {
+            this.serverNonce = serverNonce;
+            this.salt = salt;
+            this.iterations = iterations;
+        }
+
+        /**
+         * Parses the first server response and returns a composite result
+         *
+         * This method will throw AssertionFailedError when the first server response does not match the expected pattern.
+         *
+         * @param firstServerResponse the response from the server after the first exchange
+         * @return the parsed result
+         */
+        @Nonnull
+        public static FirstExchangeResult fromFirstServerResponse(final String firstServerResponse)
+        {
+            final Matcher m = Pattern.compile("r=([^,]*),s=([^,]*),i=(.*)$").matcher(firstServerResponse);
+            assertTrue(m.matches(), "First server response did not match expected pattern");
+            final String serverNonce = m.group(1);
+            final byte[] salt;
+            try {
+                salt = DatatypeConverter.parseBase64Binary(m.group(2));
+            } catch (IllegalArgumentException e) {
+                fail("First server message should contain a valid 'salt' value (but did not).", e);
+                return null; // appeasing the compiler: this line will never be executed.
+            }
+            final int iterations;
+            try {
+                iterations = Integer.parseInt(m.group(3));
+            } catch (NumberFormatException e) {
+                fail("First server message should contain a valid 'iterations' value (but did not).", e);
+                return null; // appeasing the compiler: this line will never be executed.
+            }
+            return new FirstExchangeResult(serverNonce, salt, iterations);
+        }
     }
 }

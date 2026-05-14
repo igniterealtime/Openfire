@@ -50,6 +50,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
     private final ConnectionListener clientListener;
     private final ConnectionListener clientSslListener;
     private final ConnectionListener quicClientListener;
+    private final ConnectionListener quicServerListener;
     private final ConnectionListener boshListener;
     private final ConnectionListener boshSslListener;
     private final ConnectionListener serverListener;
@@ -137,6 +138,20 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 bindAddress,
                 certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.QUIC_C2S ),
                 certificateStoreManager.getTrustStoreConfiguration( ConnectionType.QUIC_C2S ),
+                null
+        );
+        quicServerListener = new ConnectionListener(
+                ConnectionType.QUIC_S2S,
+                ConnectionSettings.Server.QUIC_PORT,
+                DEFAULT_QUIC_S2S_PORT,
+                ConnectionSettings.Server.QUIC_SOCKET_ACTIVE,
+                ConnectionSettings.Server.QUIC_MAX_THREADS,
+                null,
+                Connection.TLSPolicy.directTLS.name(),
+                ConnectionSettings.Server.QUIC_AUTH_PER_CLIENTCERT_POLICY,
+                bindAddress,
+                certificateStoreManager.getIdentityStoreConfiguration( ConnectionType.QUIC_S2S ),
+                certificateStoreManager.getTrustStoreConfiguration( ConnectionType.QUIC_S2S ),
                 null
         );
         // BOSH / HTTP-bind
@@ -421,6 +436,7 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         listeners.add( clientListener );
         listeners.add( clientSslListener );
         listeners.add( quicClientListener );
+        listeners.add( quicServerListener );
         listeners.add( boshListener );
         listeners.add( boshSslListener );
         listeners.add( serverListener );
@@ -459,6 +475,9 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
                 }
             case QUIC_C2S:
                 return quicClientListener;
+
+            case QUIC_S2S:
+                return quicServerListener;
 
             case BOSH_C2S:
                 if (startInDirectTlsMode) {
@@ -517,6 +536,10 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
 
             case QUIC_C2S:
                 result.add( quicClientListener );
+                break;
+
+            case QUIC_S2S:
+                result.add( quicServerListener );
                 break;
 
             case BOSH_C2S:

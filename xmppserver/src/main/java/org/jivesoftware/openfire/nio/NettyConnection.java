@@ -160,9 +160,16 @@ public class NettyConnection extends AbstractConnection
     @Override
     public Certificate[] getLocalCertificates() {
         SslHandler sslhandler = (SslHandler) channelHandlerContext.channel().pipeline().get(SSL_HANDLER_NAME);
-
         if (sslhandler != null) {
             return sslhandler.engine().getSession().getLocalCertificates();
+        }
+        // For QUIC streams there is no SslHandler in the pipeline; TLS is handled by the QUIC
+        // codec on the parent QuicChannel. Walk up the channel hierarchy to find it.
+        for (io.netty.channel.Channel ch = channelHandlerContext.channel(); ch != null; ch = ch.parent()) {
+            if (ch instanceof QuicChannel quicChannel) {
+                final Certificate[] certs = quicChannel.sslEngine().getSession().getLocalCertificates();
+                return certs != null ? certs : new Certificate[0];
+            }
         }
         return new Certificate[0];
     }
@@ -180,25 +187,50 @@ public class NettyConnection extends AbstractConnection
                 Log.trace("Peer does not offer certificates in session: " + session, e);
             }
         }
+        // For QUIC streams there is no SslHandler in the pipeline; TLS is handled by the QUIC
+        // codec on the parent QuicChannel. Walk up the channel hierarchy to find it.
+        for (io.netty.channel.Channel ch = channelHandlerContext.channel(); ch != null; ch = ch.parent()) {
+            if (ch instanceof QuicChannel quicChannel) {
+                try {
+                    final Certificate[] certs = quicChannel.sslEngine().getSession().getPeerCertificates();
+                    return certs != null ? certs : new Certificate[0];
+                } catch (SSLPeerUnverifiedException e) {
+                    if (Log.isTraceEnabled()) {
+                        Log.trace("QUIC peer does not offer certificates in session: " + session, e);
+                    }
+                    return new Certificate[0];
+                }
+            }
+        }
         return new Certificate[0];
     }
 
     @Override
     public Optional<String> getTLSProtocolName() {
         SslHandler sslhandler = (SslHandler) channelHandlerContext.channel().pipeline().get(SSL_HANDLER_NAME);
-        if (sslhandler == null) {
-            return Optional.empty();
+        if (sslhandler != null) {
+            return Optional.ofNullable(sslhandler.engine().getSession().getProtocol());
         }
-        return Optional.ofNullable(sslhandler.engine().getSession().getProtocol());
+        for (io.netty.channel.Channel ch = channelHandlerContext.channel(); ch != null; ch = ch.parent()) {
+            if (ch instanceof QuicChannel quicChannel) {
+                return Optional.ofNullable(quicChannel.sslEngine().getSession().getProtocol());
+            }
+        }
+        return Optional.empty();
     }
 
     @Override
     public Optional<String> getCipherSuiteName() {
         SslHandler sslhandler = (SslHandler) channelHandlerContext.channel().pipeline().get(SSL_HANDLER_NAME);
-        if (sslhandler == null) {
-            return Optional.empty();
+        if (sslhandler != null) {
+            return Optional.ofNullable(sslhandler.engine().getSession().getCipherSuite());
         }
-        return Optional.ofNullable(sslhandler.engine().getSession().getCipherSuite());
+        for (io.netty.channel.Channel ch = channelHandlerContext.channel(); ch != null; ch = ch.parent()) {
+            if (ch instanceof QuicChannel quicChannel) {
+                return Optional.ofNullable(quicChannel.sslEngine().getSession().getCipherSuite());
+            }
+        }
+        return Optional.empty();
     }
 
     @Override

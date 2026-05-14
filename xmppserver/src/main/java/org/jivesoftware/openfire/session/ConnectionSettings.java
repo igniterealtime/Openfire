@@ -210,6 +210,33 @@ public final class ConnectionSettings {
             .build();
 
         public static final String STRICT_CERTIFICATE_VALIDATION = "xmpp.socket.ssl.certificate.strict-validation";
+
+        // QUIC-based S2S settings
+        public static final String QUIC_SOCKET_ACTIVE = "xmpp.quic.server.active";
+        public static final String QUIC_PORT = "xmpp.quic.server.port";
+        public static final String QUIC_MAX_THREADS = "xmpp.quic.server.processing.threads";
+        public static final String QUIC_AUTH_PER_CLIENTCERT_POLICY = "xmpp.quic.server.cert.policy";
+
+        /**
+         * Maximum idle timeout for the QUIC S2S connection.
+         */
+        public static final SystemProperty<Duration> QUIC_IDLE_TIMEOUT_PROPERTY = SystemProperty.Builder.ofType(Duration.class)
+            .setKey("xmpp.quic.server.idle")
+            .setDefaultValue(Duration.ofMinutes(30))
+            .setMinValue(Duration.ofMillis(-1))
+            .setChronoUnit(ChronoUnit.MILLIS)
+            .setDynamic(Boolean.TRUE)
+            .build();
+
+        /**
+         * ALPN token(s) advertised for XMPP-over-QUIC S2S. The value "xmpp-server" is used as a placeholder
+         * pending finalisation of the IETF XMPP-over-QUIC draft.
+         */
+        public static final SystemProperty<List<String>> QUIC_ALPN = SystemProperty.Builder.ofType(List.class)
+            .setKey("xmpp.quic.server.alpn")
+            .setDefaultValue(List.of("xmpp-server"))
+            .setDynamic(Boolean.TRUE)
+            .buildList(String.class);
     }
 
     public static final class Multiplex {

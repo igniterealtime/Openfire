@@ -247,6 +247,9 @@ public class ConnectionListener
         if (getType() == ConnectionType.QUIC_C2S) {
             return new QuicConnectionAcceptor(configuration);
         }
+        if (getType() == ConnectionType.QUIC_S2S) {
+            return new QuicS2SConnectionAcceptor(configuration);
+        }
         return new NettyConnectionAcceptor(configuration);
     }
 
@@ -468,7 +471,9 @@ public class ConnectionListener
     protected Connection.ClientAuth getDefaultClientAuth()
     {
         // While SASL EXTERNAL is rarely used for clients, it is commonly used in S2S. It should be enabled by default for S2S, but not for C2S. (OF-2521)
-        if ( Arrays.asList( ConnectionType.SOCKET_S2S ).contains( getType() ) ) {
+        // QUIC_S2S also defaults to 'wanted': the TLS handshake will request a client certificate
+        // (OPTIONAL mode) so that SASL EXTERNAL can be offered when the remote server provides one.
+        if ( Arrays.asList( ConnectionType.SOCKET_S2S, ConnectionType.QUIC_S2S ).contains( getType() ) ) {
             return Connection.ClientAuth.wanted;
         } else {
             return Connection.ClientAuth.disabled;

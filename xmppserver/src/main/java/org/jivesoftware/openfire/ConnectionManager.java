@@ -65,6 +65,11 @@ public interface ConnectionManager {
     int DEFAULT_SERVER_SSL_PORT = 5270;
 
     /**
+     * The default XMPP over QUIC port for server-to-server (federation) communication.
+     */
+    int DEFAULT_QUIC_S2S_PORT = 5271;
+
+    /**
      * The default XMPP port for connection multiplex.
      */
     int DEFAULT_MULTIPLEX_PORT = 5262;

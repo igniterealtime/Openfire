@@ -46,6 +46,11 @@ public enum ConnectionType
     QUIC_C2S( "xmpp.quic.ssl.client.", SOCKET_C2S ),
 
     /**
+     * QUIC-based server-to-server (XMPP federation) connectivity.
+     */
+    QUIC_S2S( "xmpp.quic.ssl.server.", SOCKET_S2S ),
+
+    /**
      * BOSH (HTTP-bind) based client connectivity.
      */
     BOSH_C2S( "xmpp.bosh.ssl.client.", SOCKET_C2S ),

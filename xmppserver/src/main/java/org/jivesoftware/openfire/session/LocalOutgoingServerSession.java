@@ -23,8 +23,10 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.event.ServerSessionEventDispatcher;
+import io.netty.handler.codec.quic.Quic;
 import org.jivesoftware.openfire.nio.NettySessionInitializer;
 import org.jivesoftware.openfire.nio.NetworkEntityUnreachableException;
+import org.jivesoftware.openfire.nio.QuicSessionInitializer;
 import org.jivesoftware.openfire.server.OutgoingServerSocketReader;
 import org.jivesoftware.openfire.server.RemoteServerManager;
 import org.jivesoftware.openfire.server.ServerDialback;
@@ -277,6 +279,38 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         final Logger log = LoggerFactory.getLogger(Log.getName() + "[Create outgoing session for: " + domainPair + "]");
 
         log.debug("Creating new session...");
+
+        // Attempt outbound QUIC S2S first when enabled and the native library is available.
+        // QUIC is discovered via _xmpp-server._quic SRV records; if none exist we fall through
+        // to the standard TCP path transparently.
+        if (ConnectionSettings.Server.QUIC_OUTBOUND_ENABLED.getValue() && Quic.isAvailable()) {
+            log.debug("QUIC outbound is enabled; attempting _xmpp-server._quic SRV lookup for '{}'.", domainPair.getRemote());
+            final ConnectionListener quicListener = XMPPServer
+                .getInstance()
+                .getConnectionManager()
+                .getListener(ConnectionType.QUIC_S2S, false);
+            final QuicSessionInitializer quicInitialiser = new QuicSessionInitializer(domainPair, port);
+            try {
+                final LocalOutgoingServerSession session = (LocalOutgoingServerSession)
+                    quicInitialiser.init(quicListener).get(INITIALISE_TIMEOUT_SECONDS.getValue().getSeconds(), TimeUnit.SECONDS);
+                if (session != null) {
+                    log.debug("Outbound QUIC S2S session established with '{}'.", domainPair.getRemote());
+                    return session;
+                }
+            } catch (NetworkEntityUnreachableException e) {
+                log.debug("No _xmpp-server._quic SRV records found for '{}'; falling back to TCP.", domainPair.getRemote());
+                quicInitialiser.stop();
+            } catch (TimeoutException e) {
+                log.warn("QUIC outbound connection to '{}' timed out after {}; falling back to TCP.",
+                    domainPair.getRemote(), INITIALISE_TIMEOUT_SECONDS.getValue());
+                quicInitialiser.stop();
+            } catch (Exception e) {
+                log.warn("QUIC outbound connection to '{}' failed; falling back to TCP: {}", domainPair.getRemote(), e.getMessage(), e);
+                quicInitialiser.stop();
+            }
+        } else if (ConnectionSettings.Server.QUIC_OUTBOUND_ENABLED.getValue() && !Quic.isAvailable()) {
+            log.warn("QUIC outbound is enabled but the Netty QUIC native library is not available on this platform. Falling back to TCP.");
+        }
 
         ConnectionListener listener = XMPPServer
             .getInstance()

@@ -237,6 +237,20 @@ public final class ConnectionSettings {
             .setDefaultValue(List.of("xmpp-server"))
             .setDynamic(Boolean.TRUE)
             .buildList(String.class);
+
+        /**
+         * When {@code true}, Openfire will attempt to establish outbound S2S connections over QUIC
+         * by resolving {@code _xmpp-server._quic} SRV DNS records before falling back to the
+         * standard TCP-based path. Requires the Netty QUIC native library to be available on the
+         * classpath (see {@link io.netty.handler.codec.quic.Quic#isAvailable()}).
+         *
+         * <p>Disabled by default until {@code _xmpp-server._quic} SRV records are widely deployed.</p>
+         */
+        public static final SystemProperty<Boolean> QUIC_OUTBOUND_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+            .setKey("xmpp.quic.server.outbound.enabled")
+            .setDefaultValue(Boolean.FALSE)
+            .setDynamic(Boolean.TRUE)
+            .build();
     }
 
     public static final class Multiplex {

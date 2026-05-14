@@ -85,6 +85,11 @@
                   url="connection-settings-socket-s2s.jsp"
                   description="${sidebar.server2server-settings.descr}"/>
 
+            <!-- QUIC server to server -->
+            <item id="quic-server2server-settings" name="${sidebar.quic-server2server-settings}"
+                  url="connection-settings-quic-s2s.jsp"
+                  description="${sidebar.quic-server2server-settings.descr}"/>
+
             <!-- External components -->
             <item id="external-components-settings" name="${sidebar.external-components-settings}"
                   url="connection-settings-external-components.jsp"
@@ -169,6 +174,18 @@
 
                     <item id="sidebar-certificate-store-quic_c2s-trust-store" name="${sidebar.trust-store}"
                           url="security-truststore.jsp?connectionType=QUIC_C2S"
+                          description="${sidebar.trust-store.descr}"/>
+
+                </sidebar>
+
+                <sidebar id="sidebar-certificate-store-quic-s2s" name="${sidebar.quic-server2server-settings}">
+
+                    <item id="sidebar-certificate-store-quic_s2s-identity-store" name="${sidebar.identity-store}"
+                          url="security-keystore.jsp?connectionType=QUIC_S2S"
+                          description="${sidebar.identity-store.descr}"/>
+
+                    <item id="sidebar-certificate-store-quic_s2s-trust-store" name="${sidebar.trust-store}"
+                          url="security-truststore.jsp?connectionType=QUIC_S2S"
                           description="${sidebar.trust-store.descr}"/>
 
                 </sidebar>

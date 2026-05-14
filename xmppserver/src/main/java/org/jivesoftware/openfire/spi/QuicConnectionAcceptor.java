@@ -31,6 +31,7 @@ import io.netty.handler.codec.quic.QuicChannelOption;
 import io.netty.handler.codec.quic.QuicServerCodecBuilder;
 import io.netty.handler.codec.quic.QuicSslContext;
 import io.netty.handler.codec.quic.QuicSslContextBuilder;
+import io.netty.handler.codec.quic.QuicPathEvent;
 import io.netty.handler.codec.quic.QuicStreamChannel;
 import io.netty.handler.codec.quic.QuicStreamLimitChangedEvent;
 import io.netty.handler.codec.quic.QuicStreamType;
@@ -45,6 +46,8 @@ import org.jivesoftware.openfire.nio.NettyConnectionHandler;
 import org.jivesoftware.openfire.nio.NettyXMPPDecoder;
 import org.jivesoftware.openfire.nio.NewConnectionRateLimitHandler;
 import org.jivesoftware.openfire.nio.QuicClientConnectionHandler;
+import org.jivesoftware.openfire.nio.QuicConnectionId;
+import org.jivesoftware.openfire.nio.QuicSessionRegistry;
 import org.jivesoftware.openfire.nio.QuicSessionStreamRouter;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.util.NamedThreadFactory;
@@ -92,6 +95,7 @@ public class QuicConnectionAcceptor extends ConnectionAcceptor
 
     private final EventLoopGroup ioEventLoopGroup;
     private final EventExecutorGroup blockingHandlerExecutor;
+    private final QuicSessionRegistry sessionRegistry = new QuicSessionRegistry();
     private volatile Channel datagramChannel;
 
     public QuicConnectionAcceptor(final ConnectionConfiguration configuration)
@@ -152,13 +156,12 @@ public class QuicConnectionAcceptor extends ConnectionAcceptor
                 // can receive traffic (RFC 9000 §8.1). The secret is generated fresh at startup;
                 // tokens from before a restart are automatically invalidated.
                 //
-                // Connection migration (RFC 9000 §9) is NOT supported by this server. The
-                // QuicSessionStreamRouter is bound to a specific QuicChannel instance, so if a
-                // client migrates to a new UDP 4-tuple the server would create a fresh router and
-                // lose all session and stream state. Tokens are intentionally bound to IP+port so
-                // that a migrated client receives a Retry and re-establishes cleanly rather than
-                // silently losing its session. Supporting migration would require a connection-ID
-                // indexed session registry decoupled from the channel instance.
+                // Connection migration (RFC 9000 §9) is supported. When a client migrates to
+                // a new UDP 4-tuple, quiche fires QuicPathEvent.PeerMigrated on the same
+                // QuicChannel object (the channel is reused, not replaced). The
+                // QuicSessionStreamRouter is stored as a channel attribute and therefore survives
+                // the migration transparently. The QuicSessionRegistry provides a secondary
+                // lookup path keyed on the stable ChannelId for robustness.
                 .tokenHandler(new HmacQuicTokenHandler())
                 .maxIdleTimeout(maxIdleTimeoutMs, TimeUnit.MILLISECONDS)
                 .initialMaxData(initialMaxData)
@@ -183,7 +186,22 @@ public class QuicConnectionAcceptor extends ConnectionAcceptor
                                         qc.remoteSocketAddress(),
                                         qc.peerAllowedStreams(QuicStreamType.BIDIRECTIONAL),
                                         qc.peerAllowedStreams(QuicStreamType.UNIDIRECTIONAL));
+                                    // Register the router in the session registry so it can be
+                                    // looked up by connection ID during path migration (RFC 9000 §9).
+                                    final QuicConnectionId cid = new QuicConnectionId(qc.id());
+                                    final QuicSessionStreamRouter router =
+                                        QuicSessionStreamRouter.getOrCreate(qc, configuration, blockingHandlerExecutor);
+                                    sessionRegistry.register(cid, router);
                                     super.channelActive(ctx);
+                                }
+
+                                @Override
+                                public void channelInactive(final ChannelHandlerContext ctx) throws Exception
+                                {
+                                    final QuicChannel qc = (QuicChannel) ctx.channel();
+                                    sessionRegistry.unregister(new QuicConnectionId(qc.id()));
+                                    Log.info("QUIC connection closed: remote={}", qc.remoteSocketAddress());
+                                    super.channelInactive(ctx);
                                 }
 
                                 @Override
@@ -195,6 +213,26 @@ public class QuicConnectionAcceptor extends ConnectionAcceptor
                                             qc.remoteSocketAddress(),
                                             qc.peerAllowedStreams(QuicStreamType.BIDIRECTIONAL),
                                             qc.peerAllowedStreams(QuicStreamType.UNIDIRECTIONAL));
+                                    } else if (evt instanceof QuicPathEvent.PeerMigrated migrated) {
+                                        // The client has migrated to a new UDP 4-tuple. quiche has
+                                        // already validated the new path via PATH_CHALLENGE/RESPONSE
+                                        // (RFC 9000 §9.3) before firing this event. The QuicChannel
+                                        // object is reused, so the QuicSessionStreamRouter channel
+                                        // attribute is still valid — no re-attachment is needed.
+                                        // The registry entry also remains correct because the
+                                        // QuicConnectionId is keyed on the stable ChannelId.
+                                        Log.info("QUIC path migration completed: connection={}, old remote={}, new remote={}",
+                                            ctx.channel().id().asShortText(),
+                                            migrated.remote(), ctx.channel().remoteAddress());
+                                    } else if (evt instanceof QuicPathEvent.New newPath) {
+                                        Log.debug("QUIC new path seen (not yet validated): local={}, remote={}",
+                                            newPath.local(), newPath.remote());
+                                    } else if (evt instanceof QuicPathEvent.Validated validated) {
+                                        Log.debug("QUIC path validated: local={}, remote={}",
+                                            validated.local(), validated.remote());
+                                    } else if (evt instanceof QuicPathEvent.FailedValidation failed) {
+                                        Log.warn("QUIC path validation failed: local={}, remote={}",
+                                            failed.local(), failed.remote());
                                     }
                                     super.userEventTriggered(ctx, evt);
                                 }

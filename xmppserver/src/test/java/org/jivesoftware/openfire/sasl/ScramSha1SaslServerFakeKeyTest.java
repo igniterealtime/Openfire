@@ -18,6 +18,8 @@ package org.jivesoftware.openfire.sasl;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.junit.jupiter.api.*;
+
+import javax.annotation.Nonnull;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -58,7 +60,7 @@ public class ScramSha1SaslServerFakeKeyTest
     {
         // Setup test fixture
         ScramSha1SaslServer.SERVER_SECRET_NONEXISTENT_USERS.setValue(SERVER_SECRET_1);
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
+        final ScramSha1SaslServer server = newServer(false);
 
         // Execute system under test
         final byte[] key1 = server.getOrFakeStoredKey(USERNAME1);
@@ -76,7 +78,7 @@ public class ScramSha1SaslServerFakeKeyTest
     {
         // Setup test fixture
         ScramSha1SaslServer.SERVER_SECRET_NONEXISTENT_USERS.setValue(SERVER_SECRET_1);
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
+        final ScramSha1SaslServer server = newServer(false);
 
         // Execute system under test
         final byte[] key1 = server.getOrFakeStoredKey(USERNAME1);
@@ -94,7 +96,7 @@ public class ScramSha1SaslServerFakeKeyTest
     {
         // Setup test fixture
         ScramSha1SaslServer.SERVER_SECRET_NONEXISTENT_USERS.setValue(SERVER_SECRET_1);
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
+        final ScramSha1SaslServer server = newServer(false);
 
         // Execute system under test
         final byte[] key1 = server.getOrFakeStoredKey(USERNAME1);
@@ -113,7 +115,7 @@ public class ScramSha1SaslServerFakeKeyTest
     {
         // Setup test fixture
         ScramSha1SaslServer.SERVER_SECRET_NONEXISTENT_USERS.setValue(SERVER_SECRET_1);
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
+        final ScramSha1SaslServer server = newServer(false);
 
         // Execute system under test
         final byte[] key = server.getOrFakeStoredKey(USERNAME1);
@@ -130,13 +132,19 @@ public class ScramSha1SaslServerFakeKeyTest
     {
         // Setup test fixture
         ScramSha1SaslServer.SERVER_SECRET_NONEXISTENT_USERS.setValue(SERVER_SECRET_1);
-        final ScramSha1SaslServer server = new ScramSha1SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
+        final ScramSha1SaslServer server = newServer(false);
 
         // Execute system under test
         final byte[] stored = server.getOrFakeStoredKey(USERNAME1);
         final byte[] serverKey = server.getOrFakeServerKey(USERNAME1);
 
         assertFalse(Arrays.equals(stored, serverKey), "Stored key and server key should differ for same username");
+    }
+
+    @Nonnull
+    protected ScramSha1SaslServer newServer(final boolean isPlusMechanism)
+    {
+        return new ScramSha1SaslServer(isPlusMechanism, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
     }
 }
 

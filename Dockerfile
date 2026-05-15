@@ -72,7 +72,24 @@ LABEL org.opencontainers.image.authors="dave@cridland.net,dan@caseley.me.uk"
 WORKDIR /usr/local/openfire
 HEALTHCHECK --interval=1m --timeout=10s --start-period=3m --retries=3  CMD bash -c "(echo > /dev/tcp/localhost/5222) 2>/dev/null || exit 1"
 
-EXPOSE 3478 3479 5005 5222 5223 5229 5262 5263 5275 5276 7070 7443 7777 9090 9091
+# Exposed ports:
+# 3478  - STUN (plain)  \  for Jingle (audio/video) via the
+# 3479  - STUN (TLS)    /  STUN / TURN Service plugin
+# 5005  - Java remote debugging (only useful in dev/debug builds)
+# 5222  - XMPP client connections (plain / STARTTLS)
+# 5223  - XMPP client connections (legacy SSL)
+# 5224  - XMPP client+server connections (QUIC/WebTransport)
+# 5229  - Flash cross-domain handler (legacy)
+# 5262  - XMPP component connections (plain / STARTTLS)
+# 5263  - XMPP component connections (legacy SSL)
+# 5275  - XMPP server-to-server connections (plain / STARTTLS)
+# 5276  - XMPP server-to-server connections (legacy SSL)
+# 7070  - HTTP (BOSH / WebSocket)
+# 7443  - HTTPS (BOSH / WebSocket)
+# 7777  - File transfer proxy
+# 9090  - Admin console (HTTP)
+# 9091  - Admin console (HTTPS)
+EXPOSE 3478 3479 5005 5222 5223 5224 5229 5262 5263 5275 5276 7070 7443 7777 9090 9091
 VOLUME ["${OPENFIRE_DATA_DIR}"]
 VOLUME ["${OPENFIRE_LOG_DIR}"]
 ENTRYPOINT [ "/sbin/entrypoint.sh" ]

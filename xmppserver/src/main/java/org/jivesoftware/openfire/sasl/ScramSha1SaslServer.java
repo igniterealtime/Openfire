@@ -485,8 +485,8 @@ public class ScramSha1SaslServer extends ScramSaslServer {
      *
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3258">OF-3258: Guard against user enumeration in ScramSha1SaslServer</a>
      */
-    @VisibleForTesting
-    byte[] getOrCreateSalt(final String username)
+    @Override
+    protected byte[] getOrCreateSalt(final String username)
     {
         try
         {
@@ -614,8 +614,8 @@ public class ScramSha1SaslServer extends ScramSaslServer {
      *
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3257">OF-3257: Guard against timing attacks in ScramSha1SaslServer</a>
      */
-    @VisibleForTesting
-    byte[] getOrFakeServerKey(String username) {
+    @Override
+    protected byte[] getOrFakeServerKey(String username) {
         try {
             byte[] key = getServerKey(username);
             if (key != null) {
@@ -647,8 +647,8 @@ public class ScramSha1SaslServer extends ScramSaslServer {
      *
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3257">OF-3257: Guard against timing attacks in ScramSha1SaslServer</a>
      */
-    @VisibleForTesting
-    byte[] getOrFakeStoredKey(final String username) {
+    @Override
+    protected byte[] getOrFakeStoredKey(final String username) {
         try {
             byte[] key = getStoredKey(username);
             if (key != null) {

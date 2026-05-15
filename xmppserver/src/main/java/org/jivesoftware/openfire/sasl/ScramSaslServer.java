@@ -22,6 +22,39 @@ import java.util.Arrays;
 public abstract class ScramSaslServer implements SaslServer
 {
     /**
+     * Retrieve the server key from the database for a given username, but returns a fake key if none is found.
+     *
+     * Returning a fake key helps guard against timing attacks: instead of short-circuiting the operation,
+     * a fake key is generated to ensure consistent response times and prevent potential timing attacks.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3257">OF-3257: Guard against timing attacks in ScramSha1SaslServer</a>
+     */
+    abstract byte[] getOrFakeServerKey(String username);
+
+    /**
+     * Retrieve the stored key from the database for a given username, but returns a fake key if none is found.
+     *
+     * Returning a fake key helps guard against timing attacks: instead of short-circuiting the operation,
+     * a fake key is generated to ensure consistent response times and prevent potential timing attacks.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3257">OF-3257: Guard against timing attacks in ScramSha1SaslServer</a>
+     */
+    abstract byte[] getOrFakeStoredKey(final String username);
+
+    /**
+     * Retrieve the salt for a given username.
+     *
+     * When a salt does not currently exist for an existing user, but a password is set, that value is used to create
+     * and persist a new salt for that user.
+     *
+     * Returns a username-specific salt if the user doesn't exist to mimic an invalid password. This also guards against
+     * user enumeration attacks.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3258">OF-3258: Guard against user enumeration in ScramSha1SaslServer</a>
+     */
+    abstract byte[] getOrCreateSalt(final String username);
+
+    /**
      * Extracts the raw GS2 header from a SCRAM client-first-message byte array.
      *
      * The GS2 header is defined in RFC 5802 as:

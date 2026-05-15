@@ -54,7 +54,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Richard Midwinter, Guus der Kinderen
  */
-public class ScramSha1SaslServer implements SaslServer {
+public class ScramSha1SaslServer extends ScramSaslServer {
 
     /**
      * Stores a server-side secret used when handling authentication attempts for non-existing users in SCRAM-SHA-1 (-PLUS).
@@ -303,41 +303,6 @@ public class ScramSha1SaslServer implements SaslServer {
         serverFirstMessage = String.format("r=%s,s=%s,i=%d", nonce, DatatypeConverter.printBase64Binary(getOrCreateSalt(username)),
                 getIterations(username));
         return serverFirstMessage.getBytes(StandardCharsets.UTF_8);
-    }
-
-    /**
-     * Extracts the raw GS2 header from a SCRAM client-first-message byte array.
-     *
-     * The GS2 header is defined in RFC 5802 as:
-     * <pre>
-     * gs2-header = gs2-cbind-flag "," [authzid] ","
-     * </pre>
-     * and always terminates with a trailing comma.
-     *
-     * This method performs a byte-level scan of the input and returns a copy of the original byte array from index
-     * {@code 0} up to and including the second comma (i.e., the full GS2 header including its trailing comma).
-     *
-     * No character decoding or normalization is performed. This ensures that the returned GS2 header is byte-for-
-     * byte identical to the original input, which is required for correct SCRAM-SHA-1-PLUS channel binding validation.
-     *
-     * @param data the raw SCRAM client-first-message bytes
-     * @return a byte array containing the complete GS2 header including the trailing comma
-     * @throws SaslException if the input does not contain a valid GS2 header
-     */
-    @VisibleForTesting
-    static byte[] extractRawGS2Header(final byte[] data) throws SaslException
-    {
-        // The GS2 header ends at the second comma.
-        int commaCount = 0;
-        for (int i = 0; i < data.length; i++) {
-            if (data[i] == ',') {
-                commaCount++;
-                if (commaCount == 2) {
-                    return Arrays.copyOfRange(data, 0, i+1); // +1 to include the comma itself.
-                }
-            }
-        }
-        throw new SaslException("Invalid GS2 header format");
     }
 
     /**

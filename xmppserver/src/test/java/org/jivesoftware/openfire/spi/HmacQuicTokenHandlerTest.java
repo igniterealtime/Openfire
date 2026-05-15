@@ -58,9 +58,11 @@ public class HmacQuicTokenHandlerTest
     {
         final ByteBuf out = Unpooled.buffer();
         assertTrue(v1Handler.writeToken(out, dcid, address), "writeToken should return true");
-        assertEquals(HmacQuicTokenHandler.V1_TOKEN_LENGTH, out.readableBytes());
+        // Token = authenticated prefix (V1_TOKEN_LENGTH) + trailing DCID bytes for Netty/quiche.
+        assertEquals(HmacQuicTokenHandler.V1_TOKEN_LENGTH + dcid.readableBytes(), out.readableBytes());
 
         final int result = v1Handler.validateToken(out, address);
+        // validateToken returns the offset of the trailing DCID, i.e. V1_TOKEN_LENGTH.
         assertEquals(HmacQuicTokenHandler.V1_TOKEN_LENGTH, result, "validateToken should return V1_TOKEN_LENGTH on success");
         out.release();
     }
@@ -124,7 +126,8 @@ public class HmacQuicTokenHandlerTest
     @Test
     public void v1_maxTokenLengthShouldEqualV1TokenLength()
     {
-        assertEquals(HmacQuicTokenHandler.V1_TOKEN_LENGTH, v1Handler.maxTokenLength());
+        // maxTokenLength includes the authenticated prefix plus up to MAX_DCID_LEN trailing DCID bytes.
+        assertEquals(HmacQuicTokenHandler.V1_TOKEN_LENGTH + HmacQuicTokenHandler.MAX_DCID_LEN, v1Handler.maxTokenLength());
     }
 
     @Test
@@ -157,13 +160,14 @@ public class HmacQuicTokenHandlerTest
         final ByteBuf out = Unpooled.buffer();
         assertTrue(v2Handler.writeToken(out, dcid, address), "writeToken should return true");
 
-        // v2 token: 1 (version) + 8 (ts) + 1 (dcid_len) + 4 (dcid) + 32 (hmac) = 46
-        final int expectedLen = 1 + 8 + 1 + dcid.readableBytes() + 32;
-        assertEquals(expectedLen, out.readableBytes(), "v2 token length mismatch");
+        // v2 token: 1 (version) + 8 (ts) + 1 (dcid_len) + 4 (dcid) + 32 (hmac) + 4 (trailing DCID) = 50
+        final int authenticatedPrefixLen = 1 + 8 + 1 + dcid.readableBytes() + 32;
+        final int expectedTotalLen = authenticatedPrefixLen + dcid.readableBytes();
+        assertEquals(expectedTotalLen, out.readableBytes(), "v2 token length mismatch");
 
-        // Validate from the same address — should succeed.
+        // validateToken returns the offset of the trailing DCID (i.e. the authenticated prefix length).
         final int result = v2Handler.validateToken(out, address);
-        assertEquals(expectedLen, result, "validateToken should return token length on success");
+        assertEquals(authenticatedPrefixLen, result, "validateToken should return authenticated prefix length on success");
         out.release();
     }
 
@@ -186,9 +190,11 @@ public class HmacQuicTokenHandlerTest
         final ByteBuf out = Unpooled.buffer();
         v2Handler.writeToken(out, dcid, address);
 
-        // Flip a bit in the last byte (HMAC tail).
-        final int last = out.writerIndex() - 1;
-        out.setByte(last, out.getByte(last) ^ 0xFF);
+        // The HMAC ends before the trailing DCID bytes. Flip a bit in the last HMAC byte:
+        // layout is version(1)+ts(8)+dcid_len(1)+dcid(N)+hmac(32)+dcid(N), so the last HMAC
+        // byte is at index: 1+8+1+dcid.readableBytes()+32-1 = 9+dcid.readableBytes()+31.
+        final int lastHmacByte = 9 + dcid.readableBytes() + 31;
+        out.setByte(lastHmacByte, out.getByte(lastHmacByte) ^ 0xFF);
 
         assertEquals(-1, v2Handler.validateToken(out, address), "Tampered v2 HMAC must be rejected");
         out.release();
@@ -240,7 +246,8 @@ public class HmacQuicTokenHandlerTest
     @Test
     public void v2_maxTokenLengthShouldEqualV2MaxTokenLength()
     {
-        assertEquals(HmacQuicTokenHandler.V2_MAX_TOKEN_LENGTH, v2Handler.maxTokenLength());
+        // maxTokenLength includes the authenticated prefix plus up to MAX_DCID_LEN trailing DCID bytes.
+        assertEquals(HmacQuicTokenHandler.V2_MAX_TOKEN_LENGTH + HmacQuicTokenHandler.MAX_DCID_LEN, v2Handler.maxTokenLength());
     }
 
     @Test

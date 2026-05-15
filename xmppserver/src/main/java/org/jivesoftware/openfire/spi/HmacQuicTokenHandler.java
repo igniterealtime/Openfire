@@ -32,12 +32,21 @@ import java.util.Arrays;
  *
  * <h2>Token formats</h2>
  *
+ * <p>Netty's {@link QuicTokenHandler} contract requires that the raw original DCID bytes are
+ * appended <em>after</em> the authenticated token data. The {@link #validateToken} return value
+ * is the byte offset at which the DCID starts; Netty reads {@code token[offset:]} and passes
+ * those bytes to quiche as the {@code odcid} (original destination connection ID) for the
+ * {@code retry_source_connection_id} transport-parameter check (RFC 9000 §7.3 / §8.1).
+ * Omitting the trailing DCID causes quiche to receive an empty odcid and close the connection
+ * with TRANSPORT_PARAMETER_ERROR / "CID authentication failure".</p>
+ *
  * <h3>v1 — address-bound (default, migration disabled)</h3>
  * <pre>
  *   [ timestamp : 8 bytes (big-endian ms since epoch) ]
  *   [ HMAC-SHA256(secret, ip | port(2 BE) | timestamp) : 32 bytes ]
+ *   [ original DCID : 0–20 bytes  (appended for Netty/quiche; not authenticated separately) ]
  * </pre>
- * Total: {@value #V1_TOKEN_LENGTH} bytes.
+ * Authenticated prefix length: {@value #V1_TOKEN_LENGTH} bytes.
  * The token is bound to the client's IP address and port. A migrated client will receive a
  * Retry and must complete a fresh handshake from its new address.
  *
@@ -48,8 +57,9 @@ import java.util.Arrays;
  *   [ dcid_len : 1 byte  (0–20) ]
  *   [ dcid     : dcid_len bytes ]
  *   [ HMAC-SHA256(secret, dcid | timestamp) : 32 bytes ]
+ *   [ original DCID : 0–20 bytes  (appended for Netty/quiche) ]
  * </pre>
- * Total: 10 + dcid_len + 32 bytes (max {@value #V2_MAX_TOKEN_LENGTH}).
+ * Authenticated prefix length: 10 + dcid_len + 32 bytes (max {@value #V2_MAX_TOKEN_LENGTH}).
  * The token is bound to the Destination Connection ID but NOT to the source address, so a
  * migrated client can present it from a new UDP 4-tuple. v2 tokens are only issued when
  * {@code migrationEnabled} is {@code true}.
@@ -75,14 +85,14 @@ public final class HmacQuicTokenHandler implements QuicTokenHandler
     /** Version byte stored at offset 0 of a v2 token. */
     static final byte V2_VERSION = 0x02;
 
-    /** Total length of a v1 token (no version byte). */
+    /** Length of the authenticated prefix of a v1 token (timestamp + HMAC, no version byte). */
     static final int V1_TOKEN_LENGTH = TIMESTAMP_LENGTH + HMAC_LENGTH; // 40
 
     /** Maximum DCID length per RFC 9000 §17.2. */
-    private static final int MAX_DCID_LEN = 20;
+    static final int MAX_DCID_LEN = 20;
 
     /**
-     * Maximum length of a v2 token:
+     * Maximum length of the authenticated prefix of a v2 token:
      * 1 (version) + 8 (timestamp) + 1 (dcid_len) + 20 (dcid) + 32 (HMAC).
      */
     static final int V2_MAX_TOKEN_LENGTH = 1 + TIMESTAMP_LENGTH + 1 + MAX_DCID_LEN + HMAC_LENGTH; // 62
@@ -137,11 +147,21 @@ public final class HmacQuicTokenHandler implements QuicTokenHandler
     public boolean writeToken(final ByteBuf out, final ByteBuf dcid, final InetSocketAddress address)
     {
         final long now = System.currentTimeMillis();
+        final boolean written;
         if (migrationEnabled) {
-            return writeV2Token(out, dcid, now);
+            written = writeV2Token(out, dcid, now);
         } else {
-            return writeV1Token(out, address, now);
+            written = writeV1Token(out, address, now);
         }
+        // Netty requires the raw original DCID bytes to be appended after the authenticated
+        // token data. It reads token[validateToken(...):]  and passes those bytes to quiche
+        // as the odcid for the retry_source_connection_id transport-parameter check
+        // (RFC 9000 §7.3). Without this, quiche receives an empty odcid and closes the
+        // connection with TRANSPORT_PARAMETER_ERROR / "CID authentication failure".
+        if (written) {
+            out.writeBytes(dcid, dcid.readerIndex(), dcid.readableBytes());
+        }
+        return written;
     }
 
     @Override
@@ -165,7 +185,9 @@ public final class HmacQuicTokenHandler implements QuicTokenHandler
     @Override
     public int maxTokenLength()
     {
-        return migrationEnabled ? V2_MAX_TOKEN_LENGTH : V1_TOKEN_LENGTH;
+        // Each token format appends up to MAX_DCID_LEN raw DCID bytes after the authenticated
+        // prefix so that Netty can extract and pass them to quiche as the odcid.
+        return (migrationEnabled ? V2_MAX_TOKEN_LENGTH : V1_TOKEN_LENGTH) + MAX_DCID_LEN;
     }
 
     // ------------------------------------------------------------------

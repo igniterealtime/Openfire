@@ -78,7 +78,7 @@ HEALTHCHECK --interval=1m --timeout=10s --start-period=3m --retries=3  CMD bash 
 # 5005  - Java remote debugging (only useful in dev/debug builds)
 # 5222  - XMPP client connections (plain / STARTTLS)
 # 5223  - XMPP client connections (legacy SSL)
-# 5224  - XMPP client+server connections (QUIC/WebTransport)
+# 5224  - XMPP client+server connections (QUIC); optionally WebTransport (HTTP/3)
 # 5229  - Flash cross-domain handler (legacy)
 # 5262  - XMPP component connections (plain / STARTTLS)
 # 5263  - XMPP component connections (legacy SSL)

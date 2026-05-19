@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2009 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2009 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,6 +71,21 @@ public interface RosterItemProvider {
     * @return an iterator on the usernames whose roster includes the specified JID.
     */
     Iterator<String> getUsernames(String jid);
+
+    /**
+     * Returns an iterator of usernames whose roster includes one or more entities that are on the
+     * specified remote domain.
+     *
+     * Implementations are encouraged to provide an optimized backend query. The default
+     * implementation indicates that this operation is not supported.
+     *
+     * @param domain the remote domain for which to find roster usage.
+     * @return an iterator of usernames whose roster contains at least one contact on the domain.
+     * @throws UnsupportedOperationException when this provider does not support domain-targeted lookups.
+     */
+    default Iterator<String> getUsernamesByDomain(final String domain) {
+        throw new UnsupportedOperationException("Domain-based roster lookup is not supported by this provider.");
+    }
 
     /**
     * Obtain a count of the number of roster items available for the given user.

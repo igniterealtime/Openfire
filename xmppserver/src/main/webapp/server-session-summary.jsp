@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -89,9 +89,14 @@
     }
 
     // Get the session count
+    final Set<String> connectedDomainNames = new HashSet<>();
+    connectedDomainNames.addAll(sessionManager.getIncomingServers());
+    connectedDomainNames.addAll(sessionManager.getOutgoingServers());
+
     final Set<String> domainNames = new TreeSet<>();
-    domainNames.addAll(sessionManager.getIncomingServers());
-    domainNames.addAll(sessionManager.getOutgoingServers());
+    final Set<String> failedServers = new HashSet<>(sessionManager.getFailedServers());
+    domainNames.addAll(connectedDomainNames);
+    domainNames.addAll(failedServers);
     final int sessionCount = domainNames.size();
 
     // paginator vars
@@ -117,7 +122,10 @@
 <%  } %>
 
 <p>
-<fmt:message key="server.session.summary.active" />: <b><%= domainNames.size() %></b>
+<fmt:message key="server.session.summary.active" />: <b><%= connectedDomainNames.size() %></b>
+<% if (!failedServers.isEmpty()) { %>
+ - <fmt:message key="server.session.summary.failed_count" />: <b><%= failedServers.size() %></b>
+<% } %>
 
 <%  if (numPages > 1) { %>
 
@@ -197,7 +205,8 @@
             count++;
             List<IncomingServerSession> inSessions = sessionManager.getIncomingServerSessions(host);
             List<OutgoingServerSession> outSessions = sessionManager.getOutgoingServerSessions(host);
-            if (inSessions.isEmpty() && outSessions.isEmpty()) {
+            final boolean isFailedSession = failedServers.contains(host); // Potentially shows a functional _inbound_ session next to an erroneous _outbound_ session. Somewhat confusing, but better than not showing an error at all.
+            if (inSessions.isEmpty() && outSessions.isEmpty() && !isFailedSession) {
                 // If the connections were just closed then skip this host
                 continue;
             }

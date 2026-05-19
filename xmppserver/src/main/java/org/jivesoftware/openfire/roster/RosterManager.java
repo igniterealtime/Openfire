@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,6 +172,55 @@ public class RosterManager extends BasicModule implements GroupEventListener, Us
             }
         }
         return roster;
+    }
+
+    /**
+     * Returns local usernames that have one or more roster items on the specified remote domain.
+     *
+     * This method prefers provider-level optimized lookup when available. When not available,
+     * it falls back to scanning rosters.
+     *
+     * @param domain a remote domain.
+     * @return usernames that have roster usage on the specified domain.
+     */
+    public Collection<String> getUsernamesWithRosterItemsOnDomain(final String domain)
+    {
+        final String normalizedDomain;
+        try {
+            normalizedDomain = domain == null || domain.trim().isEmpty() ? "" : new JID(null, domain.trim(), null).getDomain();
+        } catch (IllegalArgumentException e) {
+            return Collections.emptySet();
+        }
+        if (normalizedDomain.isEmpty()) {
+            return Collections.emptySet();
+        }
+
+        final Set<String> result = new TreeSet<>();
+        try {
+            final Iterator<String> usernames = provider.getUsernamesByDomain(normalizedDomain);
+            while (usernames.hasNext()) {
+                result.add(usernames.next());
+            }
+            return result;
+        } catch (UnsupportedOperationException e) {
+            Log.debug("Roster provider {} does not support domain-targeted lookup. Falling back to roster scan.", provider.getClass().getName());
+        }
+
+        // Compatibility fallback for custom providers that don't implement domain-targeted lookup.
+        for (final String username : UserManager.getInstance().getUsernames()) {
+            try {
+                final Roster roster = getRoster(username);
+                for (final RosterItem rosterItem : roster.getRosterItems()) {
+                    if (normalizedDomain.equalsIgnoreCase(rosterItem.getJid().getDomain())) {
+                        result.add(username);
+                        break;
+                    }
+                }
+            } catch (Exception ignored) {
+                // Skip users that cannot be inspected.
+            }
+        }
+        return result;
     }
 
     /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1240,6 +1240,19 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     public Collection<String> getOutgoingServers() {
         return routingTable.getServerHostnames();
     }
+
+    /**
+     * Returns remote domains for which the latest outgoing server-to-server connection establishment
+     * attempt failed.
+     *
+     * Entries are cleared when a subsequent outgoing attempt to the same remote domain succeeds.
+     *
+     * @return a collection of remote server domains.
+     */
+    public Collection<String> getFailedServers() {
+        return OutgoingSessionPromise.getInstance().getFailedServers();
+    }
+
     public Collection<DomainPair> getOutgoingDomainPairs() {
         return routingTable.getServerRoutes();
     }

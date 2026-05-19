@@ -14,8 +14,9 @@
  <%--
    - This page is meant to be included in other pages. It assumes 4 variables:
    -     * 'host', the name of the remote server
-   -     * 'inSession', an  IncomingServerSession object
-   -     * 'outSession', an OutgoingServerSession object
+   -     * 'inSessions', a collection of IncomingServerSession objects
+   -     * 'outSessions', a collection of OutgoingServerSession objects
+   -     * 'isFailedSession', true when no active session exists but a failed S2S attempt is known
    -     * 'count', an int representing the row number we're on.
  --%>
 
@@ -45,24 +46,41 @@
     }
     String isEncryptedAltText = isEncrypted ? String.join(", ", tlsProtocolNames) + " - " + String.join(", ", cipherSuiteNames): "";
 %>
+<%
+    final String detailsPage = isFailedSession ? "server-session-failure-details.jsp" : "server-session-details.jsp";
+%>
 <tr>
     <td style="width: 1%; white-space: nowrap"><%= count %></td>
     <td style="width: 47%; white-space: nowrap">
         <table>
             <tr>
             <td style="width: 1%; padding-right: 0.5em" ><img src="getFavicon?host=<%=URLEncoder.encode(host, StandardCharsets.UTF_8)%>" width="16" height="16" alt=""></td>
-            <td><a href="server-session-details.jsp?hostname=<%= URLEncoder.encode(host, StandardCharsets.UTF_8) %>" title="<fmt:message key='session.row.click' />"><%= StringUtils.escapeHTMLTags(host) %></a></td>
+            <td>
+                <a href="<%= detailsPage %>?hostname=<%= URLEncoder.encode(host, StandardCharsets.UTF_8) %>" title="<fmt:message key='session.row.click' />"><%= StringUtils.escapeHTMLTags(host) %></a>
+                <% if (isFailedSession) { %>
+                    <span style="color: #a94442; margin-left: 0.5em;">(<fmt:message key="server.session.connection.failed" />)</span>
+                <% } %>
+            </td>
             </tr>
         </table>
     </td>
-    <%  if (isEncrypted) { %>
+    <%  if (isFailedSession) { %>
+    <td style="width: 1%">
+        <img src="images/warning-16x16.gif" alt="<fmt:message key='server.session.connection.failed' />">
+    </td>
+    <%  } else if (isEncrypted) { %>
     <td style="width: 1%">
         <img src="images/lock.gif" alt="<%=isEncryptedAltText%>">
     </td>
      <% } else { %>
     <td style="width: 1%"><img src="images/blank.gif" width="1" height="1" alt=""></td>
      <% } %>
-    <% if (!inSessions.isEmpty() && outSessions.isEmpty()) { %>
+    <% if (isFailedSession) { %>
+        <td style="width: 1%">
+            <img src="images/warning-16x16.gif" width="16" height="16" title="<fmt:message key='server.session.connection.failed' />" alt="<fmt:message key='server.session.connection.failed' />">
+        </td>
+        <td><fmt:message key="server.session.connection.failed" /></td>
+    <% } else if (!inSessions.isEmpty() && outSessions.isEmpty()) { %>
         <td style="width: 1%">
             <img src="images/incoming_32x16.gif" width="32" height="16" title="<fmt:message key='server.session.connection.incoming' />" alt="<fmt:message key='server.session.connection.incoming' />">
         </td>
@@ -112,7 +130,9 @@
         final boolean hasIPv4 = hasInIPv4 || hasOutIPv4;
         final boolean hasIPv6 = hasInIPv6 || hasOutIPv6;
     %>
-    <% if (hasIPv4 && hasIPv6) { %>
+    <% if (isFailedSession) { %>
+    <td><fmt:message key="server.session.summary.not_available" /></td>
+    <% } else if (hasIPv4 && hasIPv6) { %>
     <td><fmt:message key="server.session.connection.both" /></td>
     <% } else if (hasIPv4) { %>
     <td><fmt:message key="global.ipv4" /></td>
@@ -172,16 +192,20 @@
     %>
 
     <td style="text-align: center;" nowrap>
-        <%= creationDateString %>
+        <%= isFailedSession ? org.jivesoftware.util.LocaleUtils.getLocalizedString("server.session.summary.not_available") : creationDateString %>
     </td>
     <td style="text-align: center;" nowrap>
-        <%= lastActivityString %>
+        <%= isFailedSession ? org.jivesoftware.util.LocaleUtils.getLocalizedString("server.session.summary.not_available") : lastActivityString %>
     </td>
 
     <td style="width: 1%; white-space: nowrap; text-align: center;">
+        <% if (isFailedSession) { %>
+        <a href="<%= detailsPage %>?hostname=<%= URLEncoder.encode(host, StandardCharsets.UTF_8) %>" title="<fmt:message key='server.session.failure.diagnostics.open' />"><fmt:message key="server.session.failure.diagnostics.open" /></a>
+        <% } else { %>
         <a href="server-session-summary.jsp?hostname=<%= URLEncoder.encode(host, StandardCharsets.UTF_8) %>&close=true&csrf=${csrf}"
          title="<fmt:message key="session.row.click_kill_session" />"
          onclick="return confirm('<fmt:message key="session.row.confirm_close" />');"
          ><img src="images/delete-16x16.gif" alt="Delete"></a>
+        <% } %>
     </td>
 </tr>

@@ -97,6 +97,11 @@ public class OutgoingSessionPromise {
 
     private static final OutgoingSessionPromise instance = new OutgoingSessionPromise();
 
+    /**
+     * Name of the clustered cache that stores the latest failed outgoing S2S attempt per remote domain.
+     */
+    public static final String FAILED_S2S_ATTEMPTS_CACHE_NAME = "Routing Failed Servers Cache";
+
     private final Interner<DomainPair> interner = Interners.newWeakInterner();
 
     /**
@@ -113,6 +118,13 @@ public class OutgoingSessionPromise {
      */
     private Cache<DomainPair, NodeID> serversCache;
 
+    /**
+     * Cache that holds the most recent failed outgoing S2S connection attempt per remote domain.
+     *
+     * Key: remote server domain, Value: diagnostics payload for the latest failed attempt.
+     */
+    private Cache<String, FailedOutgoingServerSessionAttempt> failedServerAttemptsCache;
+
     private RoutingTable routingTable;
 
     private OutgoingSessionPromise() {
@@ -122,6 +134,7 @@ public class OutgoingSessionPromise {
 
     private void init() {
         serversCache = CacheFactory.createCache(RoutingTableImpl.S2S_CACHE_NAME);
+        failedServerAttemptsCache = CacheFactory.createCache(FAILED_S2S_ATTEMPTS_CACHE_NAME);
         routingTable = XMPPServer.getInstance().getRoutingTable();
 
         // Create a pool of threads that will process queued packets.
@@ -229,6 +242,52 @@ public class OutgoingSessionPromise {
         return processor != null && !processor.isDone();
     }
 
+    /**
+     * Returns domains for which the latest outgoing S2S connection establishment attempt failed.
+     *
+     * @return a snapshot of remote domains for which a failure is recorded.
+     */
+    public Collection<String> getFailedServers() {
+        return new HashSet<>(failedServerAttemptsCache.keySet());
+    }
+
+    /**
+     * Returns diagnostics for the latest failed outgoing S2S connection establishment attempt to a remote domain.
+     *
+     * @param remoteDomain The remote domain.
+     * @return diagnostics payload, if available.
+     */
+    public Optional<FailedOutgoingServerSessionAttempt> getFailedServerAttempt(@Nonnull final String remoteDomain) {
+        return Optional.ofNullable(failedServerAttemptsCache.get(remoteDomain));
+    }
+
+    /**
+     * Stores diagnostics for a failed connection establishment attempt.
+     *
+     * This overwrites any previous entry for the same remote domain, intentionally preserving only
+     * the latest known failure.
+     *
+     * @param domainPair the local/remote domain pair for the attempted connection.
+     * @param cause the failure cause.
+     */
+    private void recordFailedAttempt(@Nonnull final DomainPair domainPair, @Nonnull final Throwable cause)
+    {
+        failedServerAttemptsCache.put(domainPair.getRemote(), FailedOutgoingServerSessionAttempt.from(domainPair.getLocal(), domainPair.getRemote(), cause));
+    }
+
+    /**
+     * Removes the latest-failure diagnostics entry for a remote domain.
+     *
+     * This is invoked after a successful connection establishment to ensure stale failure data does
+     * not continue to be presented for an active peer.
+     *
+     * @param domainPair the local/remote domain pair for which failure state should be cleared.
+     */
+    private void clearFailedAttempt(@Nonnull final DomainPair domainPair)
+    {
+        failedServerAttemptsCache.remove(domainPair.getRemote());
+    }
+
     private class PacketsProcessor implements Runnable
     {
         private final Logger Log = LoggerFactory.getLogger( PacketsProcessor.class );
@@ -251,8 +310,10 @@ public class OutgoingSessionPromise {
             LocalOutgoingServerSession channel;
             try {
                 channel = establishConnection();
+                clearFailedAttempt(domainPair);
             } catch (Exception e) {
                 Log.debug("An exception occurred while trying to establish a connection for {}", domainPair, e);
+                recordFailedAttempt(domainPair, e);
                 channel = null;
             }
 

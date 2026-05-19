@@ -86,8 +86,8 @@ public class ScramSha1SaslServerTest extends AbstractScramSaslServerTest
         authFactory.when(() -> AuthFactory.getSalt(any())).thenReturn(ScramSha1TestFixtures.SALT);
         authFactory.when(() -> AuthFactory.getIterations(any())).thenReturn(ScramSha1TestFixtures.ITERATIONS);
         authFactory.when(() -> AuthFactory.getPassword(any())).thenReturn(ScramSha1TestFixtures.PASSWORD);
-        authFactory.when(() -> AuthFactory.getStoredKey(any())).thenReturn(DatatypeConverter.printBase64Binary(StringUtils.decodeHex(ScramSha1TestFixtures.STORED_KEY_BASE64)));
-        authFactory.when(() -> AuthFactory.getServerKey(any())).thenReturn(DatatypeConverter.printBase64Binary(StringUtils.decodeHex(ScramSha1TestFixtures.SERVER_KEY_BASE64)));
+        authFactory.when(() -> AuthFactory.getStoredKey(any())).thenReturn(DatatypeConverter.printBase64Binary(StringUtils.decodeHex(ScramSha1TestFixtures.STORED_KEY_HEX)));
+        authFactory.when(() -> AuthFactory.getServerKey(any())).thenReturn(DatatypeConverter.printBase64Binary(StringUtils.decodeHex(ScramSha1TestFixtures.SERVER_KEY_HEX)));
     }
 
     /**

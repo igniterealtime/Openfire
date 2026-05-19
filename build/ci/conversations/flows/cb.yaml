@@ -1,6 +1,6 @@
 appId: eu.siacs.conversations
 tags:
-    - cb
+    - demoboot
 onFlowStart:
     - runScript: scripts/checkHealth.js
 ---

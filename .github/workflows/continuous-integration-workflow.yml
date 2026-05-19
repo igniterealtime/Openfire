@@ -340,9 +340,6 @@ jobs:
           - name: demoboot
             maestro-tags: demoboot
             config-file: '' # Use default demoboot config
-          - name: Channel Binding
-            maestro-tags: cb
-            config-file: '' # Use default demoboot config
           #- name: sasl2
           #  maestro-tags: sasl2
           #  config-file: build/ci/conversations/configs/sasl2.xml

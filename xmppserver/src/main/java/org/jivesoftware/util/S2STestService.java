@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ import org.jivesoftware.openfire.handler.IQPingHandler;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
+import org.jivesoftware.openfire.server.FailedOutgoingServerSessionAttempt;
+import org.jivesoftware.openfire.server.OutgoingSessionPromise;
 import org.jivesoftware.openfire.server.RemoteServerManager;
 import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.OutgoingServerSession;
@@ -123,7 +125,18 @@ public class S2STestService {
             // Prepare response.
             results.put( "certs", getCertificates() );
             results.put( "stanzas", interceptor.toString() );
-            results.put( "logs", logs.toString() );
+
+            // Build the log output: start with the freeform Log4j-captured log, then append the structured
+            // per-step diagnostic log from the authentication attempt (if one was recorded).
+            final StringBuilder combinedLogs = new StringBuilder( logs.toString() );
+            OutgoingSessionPromise.getInstance().getFailedServerAttempt( domain.getDomain() )
+                .map( FailedOutgoingServerSessionAttempt::getDiagnosticLog )
+                .filter( l -> !l.isEmpty() )
+                .ifPresent( l -> {
+                    combinedLogs.append( "\n\n--- Authentication attempt diagnostic log ---\n" );
+                    l.forEach( line -> combinedLogs.append( line ).append( '\n' ) );
+                } );
+            results.put( "logs", combinedLogs.toString() );
 
             return results;
         }

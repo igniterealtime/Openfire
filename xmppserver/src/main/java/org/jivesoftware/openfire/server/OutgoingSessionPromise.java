@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.NodeID;
 import org.jivesoftware.openfire.session.ConnectionSettings;
+import org.jivesoftware.openfire.session.DomainAuthResult;
 import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.session.OutgoingServerSession;
@@ -267,12 +268,13 @@ public class OutgoingSessionPromise {
      * This overwrites any previous entry for the same remote domain, intentionally preserving only
      * the latest known failure.
      *
-     * @param domainPair the local/remote domain pair for the attempted connection.
-     * @param cause the failure cause.
+     * @param domainPair    the local/remote domain pair for the attempted connection.
+     * @param cause         the failure cause.
+     * @param diagnosticLog ordered log lines collected during the authentication attempt.
      */
-    private void recordFailedAttempt(@Nonnull final DomainPair domainPair, @Nonnull final Throwable cause)
+    private void recordFailedAttempt(@Nonnull final DomainPair domainPair, @Nonnull final Throwable cause, @Nonnull final List<String> diagnosticLog)
     {
-        failedServerAttemptsCache.put(domainPair.getRemote(), FailedOutgoingServerSessionAttempt.from(domainPair.getLocal(), domainPair.getRemote(), cause));
+        failedServerAttemptsCache.put(domainPair.getRemote(), FailedOutgoingServerSessionAttempt.from(domainPair.getLocal(), domainPair.getRemote(), cause, diagnosticLog));
     }
 
     /**
@@ -300,6 +302,15 @@ public class OutgoingSessionPromise {
 
         private volatile boolean done = false;
 
+        /**
+         * Diagnostic log collected during the most recent {@link LocalOutgoingServerSession#authenticateDomain}
+         * invocation. Populated by {@link #establishConnection()} and consumed by {@link #run()} when recording
+         * a failed attempt. Defaults to an empty list so that failures that occur before {@code authenticateDomain}
+         * is even reached (e.g. interrupted wait for prior session teardown) still produce a valid object.
+         */
+        @Nonnull
+        private List<String> lastAuthDiagnosticLog = Collections.emptyList();
+
         public PacketsProcessor(@Nonnull final DomainPair domainPair) {
             this.domainPair = domainPair;
         }
@@ -313,7 +324,7 @@ public class OutgoingSessionPromise {
                 clearFailedAttempt(domainPair);
             } catch (Exception e) {
                 Log.debug("An exception occurred while trying to establish a connection for {}", domainPair, e);
-                recordFailedAttempt(domainPair, e);
+                recordFailedAttempt(domainPair, e, lastAuthDiagnosticLog);
                 channel = null;
             }
 
@@ -351,8 +362,6 @@ public class OutgoingSessionPromise {
         private LocalOutgoingServerSession establishConnection() throws Exception {
             Log.debug("Start establishing a connection for {}", domainPair);
 
-            boolean created;
-
             // Wait for any previous session for this domain pair to fully complete its teardown before attempting to
             // establish a new one. isClosed() returning true only signals the intent to close. Close listeners
             // (including removal from the routing table) may still be in progress. Proceeding before they finish
@@ -375,22 +384,22 @@ public class OutgoingSessionPromise {
             final Lock lock = serversCache.getLock(domainPair);
             lock.lock();
             try {
-                created = LocalOutgoingServerSession.authenticateDomain(domainPair);
+                final DomainAuthResult authResult = LocalOutgoingServerSession.authenticateDomain(domainPair);
+                lastAuthDiagnosticLog = authResult.getDiagnosticLog();
+                if (authResult.isSuccess()) {
+                    final OutgoingServerSession serverRoute = routingTable.getServerRoute(domainPair);
+                    if (serverRoute == null) {
+                        throw new Exception("Route created for " + domainPair + " but not found in routing table! This is likely a concurrency issue within Openfire.");
+                    } else if (!(serverRoute instanceof LocalOutgoingServerSession)) {
+                        throw new Exception("Route created for " + domainPair + " but was not of the expected type " + LocalOutgoingServerSession.class + ", but of " + serverRoute.getClass() + "! This is likely a concurrency issue within Openfire.");
+                    } else {
+                        return (LocalOutgoingServerSession) serverRoute;
+                    }
+                } else {
+                    throw new Exception("Failed to create connection to remote server: " + domainPair);
+                }
             } finally {
                 lock.unlock();
-            }
-            if (created) {
-                final OutgoingServerSession serverRoute = routingTable.getServerRoute(domainPair);
-                if (serverRoute == null) {
-                    throw new Exception("Route created for " + domainPair + " but not found in routing table! This is likely a concurrency issue within Openfire.");
-                } else if (!(serverRoute instanceof LocalOutgoingServerSession)) {
-                    throw new Exception("Route created for " + domainPair + " but was not of the expected type " + LocalOutgoingServerSession.class + ", but of " + serverRoute.getClass() + "! This is likely a concurrency issue within Openfire.");
-                } else {
-                    return (LocalOutgoingServerSession) serverRoute;
-                }
-            }
-            else {
-                throw new Exception("Failed to create connection to remote server: " + domainPair);
             }
         }
 

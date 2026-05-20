@@ -52,6 +52,8 @@
     }
 
     final Optional<FailedOutgoingServerSessionAttempt> failedAttempt = OutgoingSessionPromise.getInstance().getFailedServerAttempt(domainName);
+    final List<String> diagnosticLogLines = failedAttempt.map(FailedOutgoingServerSessionAttempt::getDiagnosticLog).orElse(Collections.emptyList());
+    final String diagnosticLog = String.join("\n", diagnosticLogLines);
 
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
@@ -101,7 +103,7 @@
 
 <p>
     <fmt:message key="server.session.failure.info">
-        <fmt:param value="<b><%= StringUtils.escapeForXML(domainName) %></b>" />
+        <fmt:param><b><%= StringUtils.escapeForXML(domainName) %></b></fmt:param>
     </fmt:message>
 </p>
 
@@ -165,11 +167,20 @@
 <div class="jive-table">
     <table>
         <tr>
-            <th><fmt:message key="server.session.failure.section.initiator"/></th>
+            <th><fmt:message key="server.session.failure.section.diagnostics"/></th>
         </tr>
+        <% if (!diagnosticLogLines.isEmpty()) { %>
         <tr>
-            <td><fmt:message key="server.session.failure.stub.initiator"/></td>
+            <td>
+                <label for="failure-diagnostic-log" style="margin-bottom: 0.5em;"><fmt:message key="server.session.failure.diagnostics.heading"/></label>
+                <textarea id="failure-diagnostic-log" rows="12" readonly style="width: 100%;"><%= StringUtils.escapeForXML(diagnosticLog) %></textarea>
+            </td>
         </tr>
+        <% } else { %>
+        <tr>
+            <td><fmt:message key="server.session.failure.diagnostics.none"/></td>
+        </tr>
+        <% } %>
     </table>
 </div>
 
@@ -211,6 +222,4 @@
 
 </body>
 </html>
-
-
 

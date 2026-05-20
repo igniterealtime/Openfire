@@ -19,6 +19,9 @@ package org.jivesoftware.openfire.server;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -30,13 +33,21 @@ import java.util.Objects;
 public class FailedOutgoingServerSessionAttempt implements Serializable
 {
     @Serial
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private final String localDomain;
     private final String remoteDomain;
     private final Instant when;
     private final String errorType;
     private final String errorMessage;
+
+    /**
+     * Human-readable log lines collected during the authentication attempt (ordered, level-prefixed).
+     *
+     * Stored as {@link ArrayList} (which is {@link Serializable}) so that the field can be safely
+     * exchanged across cluster nodes.
+     */
+    private final ArrayList<String> diagnosticLog;
 
     /**
      * Constructs diagnostics for one failed outgoing S2S connection establishment attempt.
@@ -46,14 +57,31 @@ public class FailedOutgoingServerSessionAttempt implements Serializable
      * @param when timestamp that indicates when the failure was observed.
      * @param errorType fully qualified class name of the throwable that caused the failure, or null.
      * @param errorMessage throwable message that describes the failure, or null.
+     * @param diagnosticLog ordered log lines accumulated during the authentication attempt.
      */
-    public FailedOutgoingServerSessionAttempt(final String localDomain, final String remoteDomain, final Instant when, final String errorType, final String errorMessage)
+    public FailedOutgoingServerSessionAttempt(final String localDomain, final String remoteDomain, final Instant when, final String errorType, final String errorMessage, final List<String> diagnosticLog)
     {
         this.localDomain = localDomain;
         this.remoteDomain = remoteDomain;
         this.when = when;
         this.errorType = errorType;
         this.errorMessage = errorMessage;
+        this.diagnosticLog = new ArrayList<>(diagnosticLog != null ? diagnosticLog : Collections.emptyList());
+    }
+
+    /**
+     * Constructs diagnostics for one failed outgoing S2S connection establishment attempt
+     * without a diagnostic log.
+     *
+     * @param localDomain the local domain from which the outgoing attempt was initiated.
+     * @param remoteDomain the remote peer domain that connection establishment targeted.
+     * @param when timestamp that indicates when the failure was observed.
+     * @param errorType fully qualified class name of the throwable that caused the failure, or null.
+     * @param errorMessage throwable message that describes the failure, or null.
+     */
+    public FailedOutgoingServerSessionAttempt(final String localDomain, final String remoteDomain, final Instant when, final String errorType, final String errorMessage)
+    {
+        this(localDomain, remoteDomain, when, errorType, errorMessage, Collections.emptyList());
     }
 
     /**
@@ -92,6 +120,32 @@ public class FailedOutgoingServerSessionAttempt implements Serializable
     }
 
     /**
+     * Returns an ordered, human-readable log of the steps taken during the authentication attempt.
+     *
+     * @return an unmodifiable, ordered list of diagnostic log lines; never {@code null}.
+     */
+    public List<String> getDiagnosticLog() {
+        return Collections.unmodifiableList(diagnosticLog);
+    }
+
+    /**
+     * Creates diagnostics payload for a failed outgoing S2S connection attempt,
+     * including the structured diagnostic log from the authentication attempt.
+     *
+     * @param localDomain the local domain from which the outgoing attempt was initiated.
+     * @param remoteDomain the remote domain that connection establishment targeted.
+     * @param cause the failure cause.
+     * @param diagnosticLog ordered log lines accumulated during the attempt.
+     * @return a diagnostics payload representing the provided failure.
+     */
+    public static FailedOutgoingServerSessionAttempt from(final String localDomain, final String remoteDomain, final Throwable cause, final List<String> diagnosticLog)
+    {
+        final String type = cause == null ? null : cause.getClass().getName();
+        final String message = cause == null ? null : Objects.toString(cause.getMessage(), null);
+        return new FailedOutgoingServerSessionAttempt(localDomain, remoteDomain, Instant.now(), type, message, diagnosticLog);
+    }
+
+    /**
      * Creates diagnostics payload for a failed outgoing S2S connection attempt.
      *
      * @param localDomain the local domain from which the outgoing attempt was initiated.
@@ -101,10 +155,6 @@ public class FailedOutgoingServerSessionAttempt implements Serializable
      */
     public static FailedOutgoingServerSessionAttempt from(final String localDomain, final String remoteDomain, final Throwable cause)
     {
-        final String type = cause == null ? null : cause.getClass().getName();
-        final String message = cause == null ? null : Objects.toString(cause.getMessage(), null);
-        return new FailedOutgoingServerSessionAttempt(localDomain, remoteDomain, Instant.now(), type, message);
+        return from(localDomain, remoteDomain, cause, Collections.emptyList());
     }
 }
-
-

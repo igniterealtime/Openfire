@@ -318,7 +318,7 @@ public class OutgoingSessionPromise {
         @Override
         public void run() {
             Log.debug("Start for {}", domainPair);
-            LocalOutgoingServerSession channel;
+            OutgoingServerSession channel;
             try {
                 channel = establishConnection();
                 clearFailedAttempt(domainPair);
@@ -359,7 +359,7 @@ public class OutgoingSessionPromise {
             Log.trace("Finished processing {}", domainPair);
         }
 
-        private LocalOutgoingServerSession establishConnection() throws Exception {
+        private OutgoingServerSession establishConnection() throws Exception {
             Log.debug("Start establishing a connection for {}", domainPair);
 
             // Wait for any previous session for this domain pair to fully complete its teardown before attempting to
@@ -384,17 +384,21 @@ public class OutgoingSessionPromise {
             final Lock lock = serversCache.getLock(domainPair);
             lock.lock();
             try {
+                // OF-3283: If another cluster node already has an outgoing session for this domain pair, re-use it to deliver the queued stanzas.
+                final OutgoingServerSession existingRouteWhileLocked = routingTable.getServerRoute(domainPair);
+                if (existingRouteWhileLocked != null) {
+                    Log.debug("Re-using outgoing route for {} that became available while waiting for the cluster lock.", domainPair);
+                    return existingRouteWhileLocked;
+                }
+
                 final DomainAuthResult authResult = LocalOutgoingServerSession.authenticateDomain(domainPair);
                 lastAuthDiagnosticLog = authResult.getDiagnosticLog();
                 if (authResult.isSuccess()) {
                     final OutgoingServerSession serverRoute = routingTable.getServerRoute(domainPair);
                     if (serverRoute == null) {
                         throw new Exception("Route created for " + domainPair + " but not found in routing table! This is likely a concurrency issue within Openfire.");
-                    } else if (!(serverRoute instanceof LocalOutgoingServerSession)) {
-                        throw new Exception("Route created for " + domainPair + " but was not of the expected type " + LocalOutgoingServerSession.class + ", but of " + serverRoute.getClass() + "! This is likely a concurrency issue within Openfire.");
-                    } else {
-                        return (LocalOutgoingServerSession) serverRoute;
                     }
+                    return serverRoute;
                 } else {
                     throw new Exception("Failed to create connection to remote server: " + domainPair);
                 }

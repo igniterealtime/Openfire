@@ -119,6 +119,11 @@ public class MUCOccupant implements Cacheable, Externalizable {
     private JID reportedFmucJID;
 
     /**
+     * Whether this occupant joined using a MUC2 client (presence contained &lt;muc2 xmlns='urn:xmpp:muc:0'&gt;).
+     */
+    private boolean isMuc2Session = false;
+
+    /**
      * A cached value for the cache size of this instance.
      */
     private transient int cacheSize;
@@ -231,6 +236,32 @@ public class MUCOccupant implements Cacheable, Externalizable {
     }
 
     /**
+     * Returns a copy of the presence stanza suitable for sending to a MUC2 recipient.
+     * The 'from' is set to the sender's MUC2 occupant JID (room@domain/"-"+occupantId),
+     * the &lt;occupant-id&gt; element is replaced by a &lt;nickname&gt; element inside the
+     * &lt;x xmlns='http://jabber.org/protocol/muc#user'&gt; element.
+     *
+     * @return a MUC2-addressed copy of the presence.
+     */
+    public synchronized Presence createMuc2PresenceCopy() {
+        final Presence copy = presence.createCopy();
+        copy.setFrom(getMuc2OccupantJID());
+
+        // Remove occupant-id element from the top-level presence
+        copy.getElement().elements(QName.get("occupant-id", "urn:xmpp:occupant-id:0"))
+            .forEach(copy.getElement()::remove);
+
+        // Add <nickname xmlns='urn:xmpp:muc:0'> inside <x xmlns='http://jabber.org/protocol/muc#user'>
+        final Element xEl = copy.getChildElement("x", "http://jabber.org/protocol/muc#user");
+        if (xEl != null) {
+            // Remove any existing nickname elements
+            xEl.elements(QName.get("nickname", "urn:xmpp:muc:0")).forEach(xEl::remove);
+            xEl.addElement(QName.get("nickname", "urn:xmpp:muc:0")).addText(nick);
+        }
+        return copy;
+    }
+
+    /**
      * Call this method to promote or demote a user's role in a chatroom.
      * It is common for the chatroom or other chat room members to change
      * the role of users (a moderator promoting another user to moderator
@@ -308,6 +339,33 @@ public class MUCOccupant implements Cacheable, Externalizable {
      */
     public String getOccupantId() {
         return occupantId;
+    }
+
+    /**
+     * Returns whether this occupant joined using a MUC2 client.
+     *
+     * @return true if this is a MUC2 session.
+     */
+    public boolean isMuc2Session() {
+        return isMuc2Session;
+    }
+
+    /**
+     * Sets whether this occupant joined using a MUC2 client.
+     *
+     * @param muc2Session true if this is a MUC2 session.
+     */
+    public void setMuc2Session(boolean muc2Session) {
+        this.isMuc2Session = muc2Session;
+    }
+
+    /**
+     * Returns the MUC2 occupant JID: room@domain/"-"+occupantId.
+     *
+     * @return the MUC2-addressed occupant JID.
+     */
+    public JID getMuc2OccupantJID() {
+        return new JID(roomJid.getNode(), roomJid.getDomain(), "-" + occupantId);
     }
 
     /**
@@ -584,6 +642,17 @@ public class MUCOccupant implements Cacheable, Externalizable {
 
             Element exi = extendedInformation.createCopy();
             presenceEl.add(exi);
+
+            // For MUC1 sessions, prefix the occupant-id value with "-" per MUC2 addressing spec.
+            // For MUC2 sessions, the occupant-id element is omitted (replaced by nickname at send time via createMuc2PresenceCopy).
+            if (!isMuc2Session && occupantId != null) {
+                presenceEl.elements(QName.get("occupant-id", "urn:xmpp:occupant-id:0")).forEach(presenceEl::remove);
+                presenceEl.addElement("occupant-id", "urn:xmpp:occupant-id:0").addAttribute("id", "-" + occupantId);
+            } else if (isMuc2Session) {
+                // MUC2 sessions: strip occupant-id from the stored presence (it's not sent to MUC2 recipients)
+                presenceEl.elements(QName.get("occupant-id", "urn:xmpp:occupant-id:0")).forEach(presenceEl::remove);
+            }
+
             cacheSize = -1;
         }
     }

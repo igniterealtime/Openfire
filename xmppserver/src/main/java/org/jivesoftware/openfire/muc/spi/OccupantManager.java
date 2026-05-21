@@ -1078,4 +1078,84 @@ public class OccupantManager implements MUCEventListener
                 ")";
         }
     }
+
+    // ---------------------------------------------------------------------------
+    // MUC2-PAM: bare-JID occupant session tracking (in-memory, PoC only)
+    // ---------------------------------------------------------------------------
+
+    /**
+     * Tracks a bare-JID occupant session created via MUC2-PAM (XEP-muc2 / urn:xmpp:muc:pam:0).
+     */
+    public static final class BareJidOccupantSession {
+        public final JID serviceJID;
+        public final JID roomJID;
+        public final JID userBareJID;
+        public final String nickname;
+
+        public BareJidOccupantSession(JID serviceJID, JID roomJID, JID userBareJID, String nickname) {
+            this.serviceJID = serviceJID;
+            this.roomJID = roomJID;
+            this.userBareJID = userBareJID;
+            this.nickname = nickname;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            BareJidOccupantSession that = (BareJidOccupantSession) o;
+            return Objects.equals(roomJID, that.roomJID) && Objects.equals(userBareJID, that.userBareJID);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(roomJID, userBareJID);
+        }
+
+        @Override
+        public String toString() {
+            return "BareJidOccupantSession{user=" + userBareJID + ", room=" + roomJID + ", nick='" + nickname + "'}";
+        }
+    }
+
+    /**
+     * In-memory store of active bare-JID occupant sessions, keyed by userBareJID+roomJID.
+     */
+    private final ConcurrentMap<String, BareJidOccupantSession> bareJidSessions = new ConcurrentHashMap<>();
+
+    private static String bareJidSessionKey(JID userBareJID, JID roomJID) {
+        return userBareJID.asBareJID().toString() + "|" + roomJID.asBareJID().toString();
+    }
+
+    /**
+     * Records a bare-JID occupant session (MUC2-PAM join).
+     */
+    public void addBareJidSession(JID serviceJID, JID roomJID, JID userBareJID, String nickname) {
+        final BareJidOccupantSession session = new BareJidOccupantSession(serviceJID, roomJID.asBareJID(), userBareJID.asBareJID(), nickname);
+        bareJidSessions.put(bareJidSessionKey(userBareJID, roomJID), session);
+        Log.debug("Added bare-JID PAM session: {}", session);
+    }
+
+    /**
+     * Removes a bare-JID occupant session (MUC2-PAM part).
+     */
+    public void removeBareJidSession(JID userBareJID, JID roomJID) {
+        final BareJidOccupantSession removed = bareJidSessions.remove(bareJidSessionKey(userBareJID, roomJID));
+        Log.debug("Removed bare-JID PAM session for user={} room={}: {}", userBareJID, roomJID, removed);
+    }
+
+    /**
+     * Returns true if there is an active bare-JID occupant session for the given user and room.
+     */
+    public boolean hasBareJidSession(JID userBareJID, JID roomJID) {
+        return bareJidSessions.containsKey(bareJidSessionKey(userBareJID, roomJID));
+    }
+
+    /**
+     * Returns the bare-JID occupant session for the given user and room, or null if none exists.
+     */
+    @Nullable
+    public BareJidOccupantSession getBareJidSession(JID userBareJID, JID roomJID) {
+        return bareJidSessions.get(bareJidSessionKey(userBareJID, roomJID));
+    }
 }

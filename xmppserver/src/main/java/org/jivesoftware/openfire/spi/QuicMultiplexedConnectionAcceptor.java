@@ -16,6 +16,8 @@
 package org.jivesoftware.openfire.spi;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -267,6 +269,14 @@ public class QuicMultiplexedConnectionAcceptor extends ConnectionAcceptor
                                 final QuicSessionStreamRouter router =
                                     QuicSessionStreamRouter.getOrCreate(qc, c2sConfiguration, blockingHandlerExecutor);
                                 sessionRegistry.register(cid, router);
+                            }
+                            if (ALPN_H3.equals(alpn)) {
+                                // Per RFC 9114 §6.2 and the WebTransport-over-HTTP/3 spec, the
+                                // server MUST open a unidirectional control stream and send an
+                                // HTTP/3 SETTINGS frame before the client will send any requests.
+                                // Until the browser receives SETTINGS it will not send the
+                                // WebTransport CONNECT request.
+                                sendH3Settings(qc);
                             }
                             super.channelActive(ctx);
                         }
@@ -520,5 +530,84 @@ public class QuicMultiplexedConnectionAcceptor extends ConnectionAcceptor
         // The multiplexed acceptor manages two configurations; reconfigure is a no-op here
         // because changes require a full restart (port/TLS changes affect both protocols).
         Log.debug("reconfigure() called on QuicMultiplexedConnectionAcceptor; restart required for changes to take effect.");
+    }
+
+    /**
+     * Opens a server-initiated unidirectional QUIC control stream and writes an HTTP/3
+     * SETTINGS frame advertising WebTransport support.
+     *
+     * <p>Per RFC 9114 §6.2 and the WebTransport-over-HTTP/3 specification, the server MUST
+     * send this frame before the client will transmit any HTTP/3 requests (including the
+     * WebTransport CONNECT). Without it the browser waits indefinitely and the connection
+     * idles out.</p>
+     *
+     * <p>The frame contains two settings:
+     * <ul>
+     *   <li>{@code H3_DATAGRAM} (id {@code 0x33}) = 1 — enables HTTP/3 datagrams</li>
+     *   <li>{@code SETTINGS_ENABLE_WEBTRANSPORT} (id {@code 0x2b603742}) = 1</li>
+     * </ul>
+     * </p>
+     */
+    private void sendH3Settings(final QuicChannel qc)
+    {
+        qc.createStream(QuicStreamType.UNIDIRECTIONAL, null)
+            .addListener(f -> {
+                if (f.isSuccess()) {
+                    final QuicStreamChannel ctrl = (QuicStreamChannel) f.getNow();
+                    final ByteBuf buf = buildH3SettingsFrame(ctrl.alloc());
+                    ctrl.writeAndFlush(buf).addListener(w -> {
+                        if (w.isSuccess()) {
+                            Log.debug("HTTP/3 SETTINGS sent on control stream {} for connection {}",
+                                ctrl.streamId(), qc.id().asShortText());
+                        } else {
+                            Log.warn("Failed to send HTTP/3 SETTINGS on control stream for connection {}",
+                                qc.id().asShortText(), w.cause());
+                        }
+                    });
+                } else {
+                    Log.warn("Failed to open HTTP/3 control stream for connection {}",
+                        qc.id().asShortText(), f.cause());
+                }
+            });
+    }
+
+    /**
+     * Builds the raw bytes for an HTTP/3 control stream header followed by a SETTINGS frame
+     * that enables WebTransport.
+     *
+     * <pre>
+     * Stream type:  0x00                          (1 byte  — HTTP/3 control stream)
+     * SETTINGS frame:
+     *   type:       0x04                          (1 byte)
+     *   length:     varint (total payload bytes)
+     *   payload:
+     *     id=0x33 (H3_DATAGRAM),              value=0x01   (2 bytes)
+     *     id=0x2b603742 (ENABLE_WEBTRANSPORT), value=0x01  (5 + 1 bytes, 4-byte varint id)
+     * </pre>
+     */
+    private static ByteBuf buildH3SettingsFrame(final io.netty.buffer.ByteBufAllocator alloc)
+    {
+        // Payload: H3_DATAGRAM (id=0x33, value=1) + ENABLE_WEBTRANSPORT (id=0x2b603742, value=1)
+        // id 0x33 fits in 1-byte QUIC varint; value 1 fits in 1-byte varint  → 2 bytes
+        // id 0x2b603742 requires 4-byte QUIC varint (0x80|high bits); value 1 → 1 byte  → 5 bytes
+        // Total payload = 7 bytes; length varint = 1 byte (fits in 6-bit range)
+        final ByteBuf buf = alloc.buffer(10);
+        // Stream type byte: 0x00 = HTTP/3 control stream
+        buf.writeByte(0x00);
+        // SETTINGS frame type: 0x04
+        buf.writeByte(0x04);
+        // SETTINGS payload length: 7 bytes (1-byte varint)
+        buf.writeByte(0x07);
+        // Setting: H3_DATAGRAM (0x33) = 1
+        buf.writeByte(0x33);
+        buf.writeByte(0x01);
+        // Setting: SETTINGS_ENABLE_WEBTRANSPORT (0x2b603742) = 1
+        // 4-byte QUIC variable-length integer: top 2 bits = 10 → 0x80 | rest
+        buf.writeByte(0xAB);  // 0x80 | 0x2b
+        buf.writeByte(0x60);
+        buf.writeByte(0x37);
+        buf.writeByte(0x42);
+        buf.writeByte(0x01);
+        return buf;
     }
 }

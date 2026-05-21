@@ -169,7 +169,7 @@ public class WebTransportConnectionHandler extends ChannelInboundHandlerAdapter
             sendConnectResponse(ctx);
             upgradeToXmppPipeline(ctx);
         } else {
-            Log.warn("WebTransport: CONNECT request missing required headers or wrong path; closing stream.");
+            Log.warn("WebTransport: CONNECT request missing required headers (CONNECT / webtransport); closing stream.");
             sendErrorAndClose(ctx, 400);
         }
     }
@@ -220,22 +220,25 @@ public class WebTransportConnectionHandler extends ChannelInboundHandlerAdapter
 
     /**
      * Checks whether the QPACK-encoded header block contains the required WebTransport
-     * CONNECT pseudo-headers. Uses a simple byte-pattern scan against the QPACK static
-     * table encodings for {@code :method: CONNECT}, {@code :protocol: webtransport}, and
-     * {@code :path: /xmpp}.
+     * CONNECT pseudo-headers. Uses a simple byte-pattern scan for the ASCII strings
+     * {@code "CONNECT"} and {@code "webtransport"} in the QPACK-encoded header block.
      *
      * <p>QPACK static table entries used (RFC 9204 Appendix A):
      * <ul>
      *   <li>Index 15: {@code :method: CONNECT} — encoded as {@code 0xD0} (indexed, static)</li>
-     *   <li>Index 31: {@code :path: /} — we check for literal path value {@code /xmpp}</li>
-     *   <li>{@code :protocol: webtransport} — literal header, name index 0 in dynamic table
-     *       or literal encoding</li>
+     *   <li>{@code :protocol: webtransport} — literal header value, appears as plain ASCII</li>
      * </ul>
      * </p>
      *
-     * <p>In practice, browsers and QUIC clients encode these headers predictably. We scan
-     * for the ASCII strings "CONNECT", "webtransport", and "/xmpp" in the header block as
-     * a pragmatic alternative to full QPACK decoding.</p>
+     * <p>The path is intentionally <em>not</em> checked here: this handler is only installed
+     * on {@code h3} ALPN connections, and the only HTTP/3 use-case on this server is
+     * WebTransport for XMPP. Any path the client sends is acceptable; routing by path is
+     * unnecessary and would only add fragility (e.g. if the browser encodes the path via a
+     * QPACK static-table reference rather than a literal string).</p>
+     *
+     * <p>In practice, browsers encode these headers predictably. We scan for the ASCII
+     * strings "CONNECT" and "webtransport" in the header block as a pragmatic alternative
+     * to full QPACK decoding.</p>
      */
     private static boolean isWebTransportConnect(final byte[] headerBlock)
     {
@@ -244,8 +247,19 @@ public class WebTransportConnectionHandler extends ChannelInboundHandlerAdapter
         // This works because QPACK literal values are encoded as plain ASCII/UTF-8.
         final boolean hasConnect = raw.contains("CONNECT");
         final boolean hasWebtransport = raw.toLowerCase().contains("webtransport");
-        final boolean hasPath = raw.contains(WEBTRANSPORT_PATH);
-        return hasConnect && hasWebtransport && hasPath;
+        Log.debug("WebTransport header check: hasConnect={}, hasWebtransport={}, raw (hex)={}",
+            hasConnect, hasWebtransport, bytesToHex(headerBlock));
+        return hasConnect && hasWebtransport;
+    }
+
+    /** Converts a byte array to a hex string for diagnostic logging. */
+    private static String bytesToHex(final byte[] bytes)
+    {
+        final StringBuilder sb = new StringBuilder(bytes.length * 3);
+        for (final byte b : bytes) {
+            sb.append(String.format("%02x ", b));
+        }
+        return sb.toString().trim();
     }
 
     /**

@@ -149,11 +149,14 @@ public final class ConnectionSettings {
          * <p>Enabling this option also enables the multiplexed listener
          * ({@link org.jivesoftware.openfire.spi.QuicMultiplexedConnectionAcceptor}) which
          * serves C2S XMPP, S2S XMPP, and WebTransport on a single UDP port.</p>
+         *
+         * <p>Defaults to {@code true} when QUIC is enabled. Changes to this property take
+         * effect immediately without a server restart.</p>
          */
         public static final SystemProperty<Boolean> QUIC_WEBTRANSPORT_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
             .setKey("xmpp.quic.client.webtransport.enabled")
-            .setDefaultValue(Boolean.FALSE)
-            .setDynamic(Boolean.FALSE)
+            .setDefaultValue(Boolean.TRUE)
+            .setDynamic(Boolean.TRUE)
             .build();
     }
 

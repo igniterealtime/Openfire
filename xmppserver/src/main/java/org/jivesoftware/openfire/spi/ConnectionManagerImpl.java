@@ -751,6 +751,12 @@ public class ConnectionManagerImpl extends BasicModule implements ConnectionMana
         if ("xmpp.client.cert.policy".equalsIgnoreCase( property )) {
             clientSslListener.restart();
         }
+
+        if (ConnectionSettings.Client.QUIC_WEBTRANSPORT_ENABLED.getKey().equalsIgnoreCase( property )) {
+            Log.info( "WebTransport enabled setting changed; restarting multiplexed QUIC acceptor." );
+            wireMuxAcceptorIfNeeded();
+            quicClientListener.restart();
+        }
     }
 
     // #####################################################################

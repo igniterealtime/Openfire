@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2022-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,12 +111,7 @@ public class DefaultGroupProviderTest extends DBTestCase
 
         // Reset static fields after use (to not confuse other test classes).
         // TODO: this ideally goes in a static @AfterClass method, but that's not supported in JUnit 3.
-        for (String fieldName : Arrays.asList("INSTANCE", "provider")) {
-            final Field field = GroupManager.class.getDeclaredField(fieldName);
-            field.setAccessible(true);
-            field.set(null, null);
-            field.setAccessible(false);
-        }
+        GroupManager.setInstance(null);
 
         final Field field = GroupEventDispatcher.class.getDeclaredField("listeners");
         field.setAccessible(true);

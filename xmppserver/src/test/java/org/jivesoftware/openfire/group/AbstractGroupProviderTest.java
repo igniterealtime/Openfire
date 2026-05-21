@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2022-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.xmpp.packet.JID;
 
-import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
@@ -111,14 +110,8 @@ public class AbstractGroupProviderTest extends DBTestCase {
     public void tearDown() throws Exception {
         super.tearDown();
 
-        // Reset static fields after use (to not confuse other test classes).
         // TODO: this ideally goes in a static @AfterClass method, but that's not supported in JUnit 3.
-        for (String fieldName : Arrays.asList("INSTANCE", "provider")) {
-            Field field = GroupManager.class.getDeclaredField(fieldName);
-            field.setAccessible(true);
-            field.set(null, null);
-            field.setAccessible(false);
-        }
+        GroupManager.setInstance(null);
 
         Fixtures.clearExistingProperties();
     }

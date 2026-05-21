@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software. 2016-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software. 2016-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Interner;
 import com.google.common.collect.Interners;
 import org.apache.commons.lang3.StringUtils;
@@ -47,17 +48,18 @@ import javax.annotation.Nullable;
  */
 public class GroupManager {
 
+    private static GroupManager INSTANCE;
+
     public static final SystemProperty<Class> GROUP_PROVIDER = SystemProperty.Builder.ofType(Class.class)
         .setKey("provider.group.className")
         .setBaseClass(GroupProvider.class)
         .setDefaultValue(DefaultGroupProvider.class)
-        .addListener(GroupManager::initProvider)
+        .addListener(clazz -> { if (INSTANCE != null) { INSTANCE.initProvider(clazz); }})
         .setDynamic(true)
         .build();
 
     private static final Logger Log = LoggerFactory.getLogger(GroupManager.class);
 
-    private static GroupManager INSTANCE;
 
     private static final Interner<JID> userBasedMutex = Interners.newWeakInterner();
     private static final Interner<PagedGroupNameKey> pagedGroupNameKeyInterner = Interners.newWeakInterner();
@@ -82,21 +84,78 @@ public class GroupManager {
         return INSTANCE;
     }
 
+    /**
+     * Replaces the singleton instance of GroupManager.
+     *
+     * This method is intended for use in unit tests, where a pre-configured instance (for example, one constructed with
+     * mock dependencies via {@link #GroupManager(GroupProvider, Cache, Cache)}) needs to be installed as the singleton.
+     * Tests should restore the original instance (or set it to {@code null}) in their teardown to avoid state leaking
+     * between tests.
+     *
+     * @param instance the GroupManager instance to install as the singleton, or {@code null} to clear the current
+     *                 instance so that the next call to {@link #getInstance()} creates a fresh one.
+     */
+    @VisibleForTesting
+    static synchronized void setInstance(GroupManager instance) {
+        INSTANCE = instance;
+    }
+
     private final Cache<String, CacheableOptional<Group>> groupCache;
+
+    /**
+     * A cache for meta-data around groups: count, group names, groups associated with a particular user.
+     */
     private final Cache<String, Serializable> groupMetaCache;
-    private static GroupProvider provider;
 
-    private GroupManager() {
-        // Initialize caches.
-        groupCache = CacheFactory.createCache("Group"); // TODO determine if this works in a cluster (should this be a local cache?)
+    private GroupProvider provider;
 
-        // A cache for meta-data around groups: count, group names, groups associated with
-        // a particular user
-        groupMetaCache = CacheFactory.createCache("Group Metadata Cache"); // TODO determine if this works in a cluster (should this be a local cache?)
+    private GroupManager()
+    {
+        groupCache = createGroupCache();
+        groupMetaCache = createGroupMetaCache();
 
         initProvider(GROUP_PROVIDER.getValue());
 
-        UserEventDispatcher.addListener(new UserEventListener() {
+        registerListeners();
+    }
+
+    /**
+     * Constructs a GroupManager with explicit dependencies, intended for use in unit tests.
+     *
+     * This constructor allows tests to supply lightweight or mock implementations of the provider and caches without
+     * triggering the full Openfire infrastructure (such as {@link CacheFactory} or
+     * {@link org.jivesoftware.openfire.event.UserEventDispatcher}). Listener registration is intentionally omitted; if
+     * listener behaviour needs to be tested, call {@link #registerListeners()} explicitly after construction.
+     *
+     * This constructor does not install the instance as the singleton. Use {@link #setInstance(GroupManager)} for that
+     * if required.
+     *
+     * @param provider       the group provider to use; must not be {@code null}.
+     * @param groupCache     the cache to use for individual group lookups; must not be {@code null}.
+     * @param groupMetaCache the cache to use for group metadata (counts, name lists, per-user group lists); must not be {@code null}.
+     */
+    @VisibleForTesting
+    GroupManager(GroupProvider provider, Cache<String, CacheableOptional<Group>> groupCache, Cache<String, Serializable> groupMetaCache)
+    {
+        this.provider = provider;
+        this.groupCache = groupCache;
+        this.groupMetaCache = groupMetaCache;
+        // deliberately skip listener registration
+    }
+
+    /**
+     * Registers event listeners required for this manager to maintain consistent state.
+     *
+     * Specifically, this registers a {@link UserEventListener} with {@link org.jivesoftware.openfire.event.UserEventDispatcher}
+     * so that group membership is cleaned up when a user is deleted from the system.
+     *
+     * This method is called automatically by the standard no-arg constructor. It is extracted as a protected method so
+     * that subclasses or test fixtures can override it to suppress registration (avoiding side effects during testing)
+     * or substitute alternative listener behaviour.
+     */
+    protected void registerListeners()
+    {
+        registerUserEventListener(new UserEventListener() {
             @Override
             public void userCreated(User user, Map<String, Object> params) {
                 // ignore
@@ -114,7 +173,7 @@ public class GroupManager {
         });
     }
 
-    private static void initProvider(final Class<? extends GroupProvider> clazz) {
+    private void initProvider(final Class<? extends GroupProvider> clazz) {
         if (provider == null || !clazz.equals(provider.getClass())) {
             try {
                 provider = clazz.getDeclaredConstructor().newInstance();
@@ -123,6 +182,81 @@ public class GroupManager {
                 provider = new DefaultGroupProvider();
             }
         }
+    }
+
+    /**
+     * Replaces the group provider used by this manager.
+     *
+     * This method is intended for use in unit tests, allowing a mock or stub {@link GroupProvider} to be injected after
+     * construction. It should not be used in production code; provider configuration is handled via the
+     * {@link #GROUP_PROVIDER} system property.
+     *
+     * @param provider the group provider to use; must not be {@code null}.
+     */
+    @VisibleForTesting
+    void setProvider(GroupProvider provider) {
+        this.provider = provider;
+    }
+
+    /**
+     * Creates the cache used to store individual {@link Group} instances, keyed by group name.
+     *
+     * The default implementation delegates to {@link CacheFactory}, which requires the Openfire cache infrastructure to
+     * be initialised. Subclasses may override this method to return a simpler cache implementation (for example, one
+     * backed by a {@link java.util.concurrent.ConcurrentHashMap}) to avoid that dependency in unit tests.
+     *
+     * @return a new, empty cache for group instances; never {@code null}.
+     */
+    protected Cache<String, CacheableOptional<Group>> createGroupCache() {
+        return CacheFactory.createCache("Group"); // TODO determine if this works in a cluster (should this be a local cache?)
+    }
+
+    /**
+     * Creates the cache used to store group metadata, including total group counts, group name lists (full and
+     * paginated), and per-user group membership lists.
+     *
+     * The default implementation delegates to {@link CacheFactory}, which requires the Openfire cache infrastructure to
+     * be initialised. Subclasses may override this method to return a simpler cache implementation (for example, one
+     * backed by a {@link java.util.concurrent.ConcurrentHashMap}) to avoid that dependency in unit tests.
+     *
+     * @return a new, empty cache for group metadata; never {@code null}.
+     */
+    @VisibleForTesting
+    protected Cache<String, Serializable> createGroupMetaCache() {
+        return CacheFactory.createCache("Group Metadata Cache"); // TODO determine if this works in a cluster (should this be a local cache?)
+    }
+
+    /**
+     * Dispatches a group event via {@link GroupEventDispatcher}.
+     *
+     * All event dispatching within this class is routed through this method rather than calling
+     * {@link GroupEventDispatcher#dispatchEvent} directly. This allows subclasses or test fixtures to override this
+     * method to capture, suppress, or verify dispatched events without requiring a fully initialised event dispatch
+     * infrastructure.
+     *
+     * @param group  the group to which the event relates; must not be {@code null}.
+     * @param type   the type of event being dispatched; must not be {@code null}.
+     * @param params additional parameters describing the event; must not be {@code null},
+     *               but may be empty.
+     */
+    protected void dispatchGroupEvent(Group group, GroupEventDispatcher.EventType type, Map<String, ?> params)
+    {
+        GroupEventDispatcher.dispatchEvent(group, type, params);
+    }
+
+    /**
+     * Registers a listener for user events via {@link UserEventDispatcher}.
+     *
+     * All listener registration within this class is routed through this method rather than calling
+     * {@link UserEventDispatcher#addListener} directly. This allows subclasses or test fixtures to override this method
+     * to suppress registration (to prevent side effects during testing) or to track which listeners have been
+     * registered.
+     *
+     * @param listener the listener to register; must not be {@code null}.
+     */
+    protected void registerUserEventListener(UserEventListener listener)
+    {
+        UserEventDispatcher.addListener(listener);
     }
 
     /**
@@ -649,7 +783,7 @@ public class GroupManager {
         groupCache.put(group.getName(), CacheableOptional.of(group));
 
         // Fire event.
-        GroupEventDispatcher.dispatchEvent(group, GroupEventDispatcher.EventType.group_created, Collections.emptyMap());
+        dispatchGroupEvent(group, GroupEventDispatcher.EventType.group_created, Collections.emptyMap());
     }
 
     /**
@@ -663,7 +797,7 @@ public class GroupManager {
     public void deleteGroupPreProcess(@Nonnull final Group group)
     {
         // Fire event.
-        GroupEventDispatcher.dispatchEvent(group, GroupEventDispatcher.EventType.group_deleting, Collections.emptyMap());
+        dispatchGroupEvent(group, GroupEventDispatcher.EventType.group_deleting, Collections.emptyMap());
     }
 
     /**
@@ -713,9 +847,9 @@ public class GroupManager {
         params.put("admin", admin.toString());
         if (wasMember) {
             params.put("member", admin.toString());
-            GroupEventDispatcher.dispatchEvent(updatedGroup, GroupEventDispatcher.EventType.member_removed, params);
+            dispatchGroupEvent(updatedGroup, GroupEventDispatcher.EventType.member_removed, params);
         }
-        GroupEventDispatcher.dispatchEvent(updatedGroup, GroupEventDispatcher.EventType.admin_added, params);
+        dispatchGroupEvent(updatedGroup, GroupEventDispatcher.EventType.admin_added, params);
     }
 
     /**
@@ -744,7 +878,7 @@ public class GroupManager {
         final Map<String, String> params = new HashMap<>();
         params.put("admin", admin.toString());
 
-        GroupEventDispatcher.dispatchEvent(updatedGroup, GroupEventDispatcher.EventType.admin_removed, params);
+        dispatchGroupEvent(updatedGroup, GroupEventDispatcher.EventType.admin_removed, params);
     }
 
     /**
@@ -775,9 +909,9 @@ public class GroupManager {
         params.put("member", member.toString());
         if (wasAdmin) {
             params.put("admin", member.toString());
-            GroupEventDispatcher.dispatchEvent(updatedGroup, GroupEventDispatcher.EventType.admin_removed, params);
+            dispatchGroupEvent(updatedGroup, GroupEventDispatcher.EventType.admin_removed, params);
         }
-        GroupEventDispatcher.dispatchEvent(updatedGroup, GroupEventDispatcher.EventType.member_added, params);
+        dispatchGroupEvent(updatedGroup, GroupEventDispatcher.EventType.member_added, params);
     }
 
     /**
@@ -806,7 +940,7 @@ public class GroupManager {
         final Map<String, String> params = new HashMap<>();
         params.put("member", member.toString());
 
-        GroupEventDispatcher.dispatchEvent(updatedGroup, GroupEventDispatcher.EventType.member_removed, params);
+        dispatchGroupEvent(updatedGroup, GroupEventDispatcher.EventType.member_removed, params);
     }
 
     /**
@@ -844,7 +978,7 @@ public class GroupManager {
         params.put("originalValue", originalName);
         params.put("originalJID", new GroupJID(originalName));
 
-        GroupEventDispatcher.dispatchEvent(updatedGroup, GroupEventDispatcher.EventType.group_modified, params);
+        dispatchGroupEvent(updatedGroup, GroupEventDispatcher.EventType.group_modified, params);
     }
 
     /**
@@ -873,7 +1007,7 @@ public class GroupManager {
         params.put("type", "descriptionModified");
         params.put("originalValue", originalDescription);
 
-        GroupEventDispatcher.dispatchEvent(updatedGroup, GroupEventDispatcher.EventType.group_modified, params);
+        dispatchGroupEvent(updatedGroup, GroupEventDispatcher.EventType.group_modified, params);
     }
 
     /**
@@ -903,7 +1037,7 @@ public class GroupManager {
         params.put("propertyKey", key);
         params.put("type", "propertyAdded");
 
-        GroupEventDispatcher.dispatchEvent(updatedGroup, GroupEventDispatcher.EventType.group_modified, params);
+        dispatchGroupEvent(updatedGroup, GroupEventDispatcher.EventType.group_modified, params);
     }
 
     /**
@@ -935,7 +1069,7 @@ public class GroupManager {
         params.put("type", "propertyModified");
         params.put("originalValue", originalValue);
 
-        GroupEventDispatcher.dispatchEvent(updatedGroup, GroupEventDispatcher.EventType.group_modified, params);
+        dispatchGroupEvent(updatedGroup, GroupEventDispatcher.EventType.group_modified, params);
     }
 
     /**
@@ -967,7 +1101,7 @@ public class GroupManager {
         params.put("type", "propertyDeleted");
         params.put("originalValue", originalValue);
 
-        GroupEventDispatcher.dispatchEvent(updatedGroup, GroupEventDispatcher.EventType.group_modified, params);
+        dispatchGroupEvent(updatedGroup, GroupEventDispatcher.EventType.group_modified, params);
     }
 
     /**
@@ -993,14 +1127,14 @@ public class GroupManager {
 
         // Make sure that 'shared roster' changes are processed.
         for (final Map.Entry<String, String> entry : originalProperties.entrySet()) {
-            GroupManager.getInstance().propertyChangePostProcess(group, entry.getKey(), entry.getValue());
+            propertyChangePostProcess(updatedGroup, entry.getKey(), entry.getValue());
         }
 
         // Fire event.
         final Map<String, Object> event = new HashMap<>();
         event.put("type", "propertyDeleted");
         event.put("propertyKey", "*");
-        GroupEventDispatcher.dispatchEvent(updatedGroup, GroupEventDispatcher.EventType.group_modified, event);
+        dispatchGroupEvent(updatedGroup, GroupEventDispatcher.EventType.group_modified, event);
     }
 
     // A generic method to process the effect of property changes to contact list sharing. Re-used by all property change post-processing methods.

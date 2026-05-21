@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2022-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -87,7 +88,7 @@ public class GroupManagerNoMockTest extends DBTestCase
         // Initialize Openfire's cache framework.
         CacheFactory.initialize();
 
-        // Mock the XMPPServer implementation that's used internally.
+        // Mock the XMPPServer implementation that is used internally.
         Fixtures.clearExistingProperties();
         XMPPServer.setInstance(Fixtures.mockXMPPServer());
 
@@ -110,12 +111,7 @@ public class GroupManagerNoMockTest extends DBTestCase
 
         // Reset static fields after use (to not confuse other test classes).
         // TODO: this ideally goes in a static @AfterClass method, but that's not supported in JUnit 3.
-        for (String fieldName : Arrays.asList("INSTANCE", "provider")) {
-            final Field field = GroupManager.class.getDeclaredField(fieldName);
-            field.setAccessible(true);
-            field.set(null, null);
-            field.setAccessible(false);
-        }
+        GroupManager.setInstance(null);
 
         final Field field = GroupEventDispatcher.class.getDeclaredField("listeners");
         field.setAccessible(true);
@@ -133,10 +129,10 @@ public class GroupManagerNoMockTest extends DBTestCase
     }
 
     /**
-     * Asserts that a simple test group that is created by the provider can be retrieved again in good order.
+     * Verifies that a newly created group can be retrieved with its configured description, members, and administrators.
      */
     @Test
-    public void testCreateGroup() throws Exception
+    public void testCreatedGroupCanBeRetrievedWithConfiguredData() throws Exception
     {
         // Setup test fixture.
         final GroupManager groupManager = GroupManager.getInstance();
@@ -149,68 +145,82 @@ public class GroupManagerNoMockTest extends DBTestCase
         group.getMembers().add(new JID("jack@example.org"));
         group.getAdmins().add(new JID("jane@example.org"));
 
-        // Verify results.
+        // Verify result.
         final Group result = provider.getGroup("Test Group");
-        assertNotNull(result);
-        assertEquals("Test Group", result.getName());
-        assertEquals("This is test group.", result.getDescription());
-        assertEquals(2, result.getMembers().size());
-        assertTrue(result.getMembers().contains(new JID("john@example.org")));
-        assertTrue(result.getMembers().contains(new JID("jack@example.org")));
-        assertEquals(1, result.getAdmins().size());
-        assertTrue(result.getAdmins().contains(new JID("jane@example.org")));
-        assertEquals(3, result.getAll().size());
-        assertTrue(result.getAll().contains(new JID("john@example.org")));
-        assertTrue(result.getAll().contains(new JID("jack@example.org")));
-        assertTrue(result.getAll().contains(new JID("jane@example.org")));
+        assertNotNull(result, "Group should be retrievable after creation.");
+        assertEquals("Test Group", result.getName(), "Group name should match the configured value.");
+        assertEquals("This is test group.", result.getDescription(), "Group description should match the configured value.");
+        assertEquals(2, result.getMembers().size(), "Group should have exactly two members.");
+        assertTrue(result.getMembers().contains(new JID("john@example.org")), "Members should include john@example.org.");
+        assertTrue(result.getMembers().contains(new JID("jack@example.org")), "Members should include jack@example.org.");
+        assertEquals(1, result.getAdmins().size(), "Group should have exactly one administrator.");
+        assertTrue(result.getAdmins().contains(new JID("jane@example.org")), "Administrators should include jane@example.org.");
+        assertEquals(3, result.getAll().size(), "getAll() should return all members and administrators.");
+        assertTrue(result.getAll().contains(new JID("john@example.org")), "getAll() should include john@example.org.");
+        assertTrue(result.getAll().contains(new JID("jack@example.org")), "getAll() should include jack@example.org.");
+        assertTrue(result.getAll().contains(new JID("jane@example.org")), "getAll() should include jane@example.org.");
     }
 
     /**
-     * Asserts that a with no name cannot be created
+     * Verifies that creating a group with an empty name is rejected.
      */
     @Test
-    public void testCreateGroupWithEmptyNameThrows() throws Exception
+    public void testCreatingGroupWithEmptyNameFails() throws Exception
     {
+        // Setup test fixture.
         final String GROUP_NAME = "";
         final GroupManager groupManager = GroupManager.getInstance();
-        assertThrows(GroupNameInvalidException.class, ()-> groupManager.createGroup(GROUP_NAME));
+
+        // Execute system under test and verify result.
+        assertThrows(GroupNameInvalidException.class, () -> groupManager.createGroup(GROUP_NAME), "Creating a group with an empty name should be rejected.");
     }
 
     /**
-     * Asserts that two groups with the same name cannot be created
+     * Verifies that creating a second group with the same name is rejected.
      */
     @Test
-    public void testCreateGroupWithDuplicateNameThrows() throws Exception
+    public void testCreatingGroupWithDuplicateNameFails() throws Exception
     {
+        // Setup test fixture.
         final String GROUP_NAME = "Test Group A";
         final GroupManager groupManager = GroupManager.getInstance();
+
+        // Execute system under test.
         groupManager.createGroup(GROUP_NAME);
-        assertThrows(GroupAlreadyExistsException.class, ()-> groupManager.createGroup(GROUP_NAME));
+
+        // Verify result.
+        assertThrows(GroupAlreadyExistsException.class, () -> groupManager.createGroup(GROUP_NAME), "Creating a second group with the same name should be rejected.");
     }
 
     /**
-     * Asserts that a group can be created, removed and recreated again, with the same name.
+     * Verifies that a deleted group name can be reused for a new group.
      */
     @Test
-    public void testRecreateGroup() throws Exception
+    public void testDeletedGroupNameCanBeReused() throws Exception
     {
+        // Setup test fixture.
         final String GROUP_NAME = "Test Group A";
         final GroupManager groupManager = GroupManager.getInstance();
+
+        // Execute system under test.
         final Group group = groupManager.createGroup(GROUP_NAME);
         groupManager.deleteGroup(group);
-        groupManager.createGroup(GROUP_NAME);
+        final Group recreatedGroup = groupManager.createGroup(GROUP_NAME);
+
+        // Verify result.
+        assertNotNull(recreatedGroup, "Group should be successfully recreated with the same name.");
     }
 
     /**
-     * Reproduces an issue where adding a member to a group that does not exist would cause the group to be added
-     * to a cache, making it appear that this group exists.
+     * Verifies that mutating a stale reference to a deleted group does not make that group
+     * appear to exist again.
      *
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-2426">Group cache can contain ghost entries</a>
      */
     @Test
-    public void testAddMemberToDeletedGroup() throws Exception
+    public void testDeletedGroupRemainsUnavailableAfterStaleReferenceMutation() throws Exception
     {
-        // Setup test fixture
+        // Setup test fixture.
         final String GROUP_NAME = "Test Group A";
         final GroupManager groupManager = GroupManager.getInstance();
         final Group group = groupManager.createGroup(GROUP_NAME);
@@ -219,12 +229,12 @@ public class GroupManagerNoMockTest extends DBTestCase
         // Execute system under test.
         group.getMembers().add(new JID("test@example.org"));
 
-        // Verify results.
-        assertThrows(GroupNotFoundException.class, ()-> groupManager.getGroup(GROUP_NAME));
+        // Verify result.
+        assertThrows(GroupNotFoundException.class, () -> groupManager.getGroup(GROUP_NAME), "Deleted group should remain unavailable even after mutation of a stale reference.");
     }
 
     /**
-     * Verifies that a group can be retrieved based on the name that it was created with.
+     * Verifies that a group can be retrieved by the name it was created with.
      */
     @Test
     public void testGetGroupByName() throws Exception
@@ -237,13 +247,12 @@ public class GroupManagerNoMockTest extends DBTestCase
         final Group result = groupManager.getGroup("test");
 
         // Verify result.
-        assertNotNull(result);
-        assertEquals("test", result.getName());
+        assertNotNull(result, "Group should be retrievable by name.");
+        assertEquals("test", result.getName(), "Retrieved group name should match the requested name.");
     }
 
     /**
-     * Verifies that a {@link GroupManager#getGroupCount()} returns the correct count of groups when no groups
-     * are present.
+     * Verifies that {@link GroupManager#getGroupCount()} returns zero when no groups are present.
      */
     @Test
     public void testGroupCountEmpty() throws Exception
@@ -255,12 +264,11 @@ public class GroupManagerNoMockTest extends DBTestCase
         final int result = groupManager.getGroupCount();
 
         // Verify result.
-        assertEquals(0, result);
+        assertEquals(0, result, "Group count should be zero when no groups exist.");
     }
 
     /**
-     * Verifies that a {@link GroupManager#getGroupCount()} returns the correct count of groups when one group
-     * is present.
+     * Verifies that {@link GroupManager#getGroupCount()} returns one when one group is present.
      */
     @Test
     public void testGroupCountOne() throws Exception
@@ -273,12 +281,11 @@ public class GroupManagerNoMockTest extends DBTestCase
         final int result = groupManager.getGroupCount();
 
         // Verify result.
-        assertEquals(1, result);
+        assertEquals(1, result, "Group count should be one when exactly one group exists.");
     }
 
     /**
-     * Verifies that a {@link GroupManager#getGroupCount()} returns the correct count of groups when multiple
-     * groups are present.
+     * Verifies that {@link GroupManager#getGroupCount()} returns the expected count when multiple groups are present.
      */
     @Test
     public void testGroupCountMultiple() throws Exception
@@ -292,23 +299,50 @@ public class GroupManagerNoMockTest extends DBTestCase
         final int result = groupManager.getGroupCount();
 
         // Verify result.
-        assertEquals(2, result);
+        assertEquals(2, result, "Group count should match the number of created groups.");
     }
 
     /**
-     * Verifies that {@link GroupManager#deleteGroup(Group)} deletes a shared group, such that it cannot be retrieved
+     * Verifies that deleting a shared group removes it from shared-group results.
      */
     @Test
-    public void testDeleteGroupShared() throws Exception {
+    public void testDeletedSharedGroupIsNoLongerReturned() throws Exception
+    {
+        // Setup test fixture.
         final JID needle = new JID("jane@example.org");
         final GroupManager groupManager = GroupManager.getInstance();
         final Group groupA = groupManager.createGroup("Test Group A");
         groupA.shareWithEverybody("Users in group A");
         groupManager.createGroup("Test Group B");
 
+        // Execute system under test.
         groupManager.deleteGroup(groupA);
         final Collection<Group> result = groupManager.getSharedGroups(needle.getNode());
 
-        assertEquals(0, result.size());
+        // Verify result.
+        assertEquals(0, result.size(), "Deleted shared group should not appear in shared-group results.");
+    }
+
+    /**
+     * Verifies that paginated group listings include newly created groups, even when the same page
+     * has been requested before the new group was added.
+     */
+    @Test
+    public void testPaginatedGroupListingReflectsNewGroupAfterPriorQuery() throws Exception
+    {
+        // Setup test fixture.
+        final GroupManager groupManager = GroupManager.getInstance();
+        groupManager.createGroup("Test Group A");
+
+        // Execute system under test (warm the cache with an initial page query).
+        final Collection<Group> firstPage = groupManager.getGroups(0, 10);
+        assertEquals(1, firstPage.size(), "Pre-condition: exactly one group should be present initially.");
+
+        // Execute system under test (create a new group).
+        groupManager.createGroup("Test Group B");
+        final Collection<Group> updatedPage = groupManager.getGroups(0, 10);
+
+        // Verify result.
+        assertEquals(2, updatedPage.size(), "Paginated query should include the newly created group.");
     }
 }

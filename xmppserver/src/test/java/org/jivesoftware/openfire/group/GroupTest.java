@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.openfire.event.GroupEventListener;
 import org.jivesoftware.util.CacheableOptional;
-import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PersistableMap;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
@@ -28,7 +27,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.xmpp.packet.JID;
 
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -45,6 +43,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class GroupTest
 {
     private static Cache<String, CacheableOptional<Group>> groupCache;
+    private static Cache<String, java.io.Serializable> groupMetaCache;
 
     private GroupManager groupManager;
 
@@ -53,51 +52,42 @@ public class GroupTest
         Fixtures.reconfigureOpenfireHome();
         Fixtures.disableDatabasePersistence();
         groupCache = CacheFactory.createCache("Group");
+        groupMetaCache = CacheFactory.createCache("Group Metadata Cache");
         groupCache.clear();
-        JiveGlobals.setProperty("provider.group.className", GroupTest.TestGroupProvider.class.getName());
+        groupMetaCache.clear();
     }
 
     @BeforeEach
     public void setUp() {
-        // Ensure that Openfire caches are reset before each test to avoid tests to affect each-other.
+        // Reset shared caches before each test, then install a test-owned GroupManager instance.
         Arrays.stream(CacheFactory.getAllCaches()).forEach(Map::clear);
-        groupManager = GroupManager.getInstance();
+
+        groupManager = new GroupManager(new TestGroupProvider(), groupCache, groupMetaCache);
+        // Group instances resolve their manager via GroupManager.getInstance(), so keep the test instance active.
+        GroupManager.setInstance(groupManager);
     }
 
     @AfterEach
     public void tearDown() {
-        // Teardown fixture by removing any groups that have been created.
-        GroupManager.getInstance().getGroups().forEach(group -> {
+        // Remove any groups created during the test to leave the singleton-backed state clean.
+        groupManager.getGroups().forEach(group -> {
             try {
-                GroupManager.getInstance().deleteGroup(group);
+                groupManager.deleteGroup(group);
             } catch (GroupNotFoundException e) {
                 throw new RuntimeException(e);
             }
         });
 
+        GroupManager.setInstance(null);
         groupCache.clear();
+        groupMetaCache.clear();
     }
 
     @AfterAll
-    public static void afterClass() throws Exception {
-
-        // Reset static fields after use (to not confuse other test classes).
-        for (String fieldName : Arrays.asList("INSTANCE", "provider")) {
-            Field field = GroupManager.class.getDeclaredField(fieldName);
-            field.setAccessible(true);
-            field.set(null, null);
-            field.setAccessible(false);
-        }
-
-        GroupManager.getInstance().getGroups().forEach(group -> {
-            try {
-                GroupManager.getInstance().deleteGroup(group);
-            } catch (GroupNotFoundException e) {
-                throw new RuntimeException(e);
-            }
-        });
-
+    public static void afterClass() {
         groupCache.clear();
+        groupMetaCache.clear();
+        GroupManager.setInstance(null);
     }
 
     /**

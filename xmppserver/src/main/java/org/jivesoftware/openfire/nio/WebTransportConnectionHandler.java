@@ -220,36 +220,63 @@ public class WebTransportConnectionHandler extends ChannelInboundHandlerAdapter
 
     /**
      * Checks whether the QPACK-encoded header block contains the required WebTransport
-     * CONNECT pseudo-headers. Uses a simple byte-pattern scan for the ASCII strings
-     * {@code "CONNECT"} and {@code "webtransport"} in the QPACK-encoded header block.
+     * CONNECT pseudo-headers, using fixed byte-pattern matching against known QPACK/Huffman
+     * encodings.
      *
-     * <p>QPACK static table entries used (RFC 9204 Appendix A):
+     * <p>QPACK encodes headers using static table references and Huffman-encoded literals.
+     * Neither {@code :method: CONNECT} nor {@code :protocol: webtransport} appear as plain
+     * ASCII strings in the encoded block:
      * <ul>
-     *   <li>Index 15: {@code :method: CONNECT} — encoded as {@code 0xD0} (indexed, static)</li>
-     *   <li>{@code :protocol: webtransport} — literal header value, appears as plain ASCII</li>
+     *   <li>{@code :method: CONNECT} — QPACK static table index 15, encoded as the single
+     *       byte {@code 0xCF} (indexed field line, static=1, index=15, RFC 9204 §3.2.2).</li>
+     *   <li>{@code :protocol: webtransport} — literal field line with literal name, both
+     *       name and value Huffman-encoded (RFC 7541 Appendix B). The name {@code :protocol}
+     *       always encodes to {@code b9 5d 87 49 c8 7a 3f} and the value {@code webtransport}
+     *       always encodes to {@code f0 58 d3 60 ea 45 67 b1 3f}. These are deterministic
+     *       per the RFC 7541 Huffman table.</li>
      * </ul>
      * </p>
      *
      * <p>The path is intentionally <em>not</em> checked here: this handler is only installed
      * on {@code h3} ALPN connections, and the only HTTP/3 use-case on this server is
-     * WebTransport for XMPP. Any path the client sends is acceptable; routing by path is
-     * unnecessary and would only add fragility (e.g. if the browser encodes the path via a
-     * QPACK static-table reference rather than a literal string).</p>
-     *
-     * <p>In practice, browsers encode these headers predictably. We scan for the ASCII
-     * strings "CONNECT" and "webtransport" in the header block as a pragmatic alternative
-     * to full QPACK decoding.</p>
+     * WebTransport for XMPP.</p>
      */
     private static boolean isWebTransportConnect(final byte[] headerBlock)
     {
-        final String raw = new String(headerBlock, StandardCharsets.ISO_8859_1);
-        // Check for the required pseudo-headers by scanning for their string values.
-        // This works because QPACK literal values are encoded as plain ASCII/UTF-8.
-        final boolean hasConnect = raw.contains("CONNECT");
-        final boolean hasWebtransport = raw.toLowerCase().contains("webtransport");
-        Log.debug("WebTransport header check: hasConnect={}, hasWebtransport={}, raw (hex)={}",
-            hasConnect, hasWebtransport, bytesToHex(headerBlock));
-        return hasConnect && hasWebtransport;
+        // :method: CONNECT — QPACK static table index 15, encoded as single byte 0xCF.
+        boolean hasConnect = false;
+        for (final byte b : headerBlock) {
+            if (b == (byte) 0xCF) {
+                hasConnect = true;
+                break;
+            }
+        }
+
+        // :protocol: webtransport — Huffman-encoded name b9 5d 87 49 c8 7a 3f
+        // followed (not necessarily immediately) by Huffman-encoded value f0 58 d3 60 ea 45 67 b1 3f.
+        // We scan for the Huffman-encoded name bytes as a subarray; their presence is sufficient
+        // to confirm the :protocol header is present with value webtransport.
+        final byte[] PROTOCOL_NAME_HUFFMAN  = { (byte)0xb9, (byte)0x5d, (byte)0x87, (byte)0x49, (byte)0xc8, (byte)0x7a, (byte)0x3f };
+        final byte[] WEBTRANSPORT_VAL_HUFFMAN = { (byte)0xf0, (byte)0x58, (byte)0xd3, (byte)0x60, (byte)0xea, (byte)0x45, (byte)0x67, (byte)0xb1, (byte)0x3f };
+        final boolean hasProtocolName = containsBytes(headerBlock, PROTOCOL_NAME_HUFFMAN);
+        final boolean hasWebtransport = containsBytes(headerBlock, WEBTRANSPORT_VAL_HUFFMAN);
+
+        Log.debug("WebTransport header check: hasConnect={}, hasProtocolName={}, hasWebtransport={}, raw (hex)={}",
+            hasConnect, hasProtocolName, hasWebtransport, bytesToHex(headerBlock));
+        return hasConnect && hasProtocolName && hasWebtransport;
+    }
+
+    /** Returns true if {@code haystack} contains {@code needle} as a contiguous subsequence. */
+    private static boolean containsBytes(final byte[] haystack, final byte[] needle)
+    {
+        outer:
+        for (int i = 0; i <= haystack.length - needle.length; i++) {
+            for (int j = 0; j < needle.length; j++) {
+                if (haystack[i + j] != needle[j]) continue outer;
+            }
+            return true;
+        }
+        return false;
     }
 
     /** Converts a byte array to a hex string for diagnostic logging. */

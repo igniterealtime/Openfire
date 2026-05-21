@@ -246,21 +246,21 @@ public class QuicMultiplexedConnectionAcceptor extends ConnectionAcceptor
             @Override
             protected void initChannel(final QuicChannel ch)
             {
-                // Determine the negotiated ALPN from the TLS session.
-                final String alpn = negotiatedAlpn(ch);
+                // Note: TLS has not yet completed at initChannel time, so negotiatedAlpn() here
+                // returns the fallback. We log it for tracing but do NOT use it for routing.
                 Log.debug("QUIC connection established: remote={}, ALPN='{}'",
-                    ch.remoteSocketAddress(), alpn);
+                    ch.remoteSocketAddress(), negotiatedAlpn(ch));
 
-                // Rate-limit based on the connection type implied by ALPN.
-                final ConnectionType connType = alpnToConnectionType(alpn);
                 ch.pipeline()
-                    .addLast(new NewConnectionRateLimitHandler(connType))
+                    .addLast(new NewConnectionRateLimitHandler(ConnectionType.SOCKET_C2S))
                     .addLast(new ChannelInboundHandlerAdapter()
                     {
                         @Override
                         public void channelActive(final ChannelHandlerContext ctx) throws Exception
                         {
+                            // TLS is complete by channelActive — read the real negotiated ALPN now.
                             final QuicChannel qc = (QuicChannel) ctx.channel();
+                            final String alpn = negotiatedAlpn(qc);
                             Log.info("QUIC connection active: remote={}, ALPN='{}'",
                                 qc.remoteSocketAddress(), alpn);
                             if (ALPN_XMPP_CLIENT.equals(alpn) || ALPN_H3.equals(alpn)) {
@@ -285,6 +285,7 @@ public class QuicMultiplexedConnectionAcceptor extends ConnectionAcceptor
                         public void channelInactive(final ChannelHandlerContext ctx) throws Exception
                         {
                             final QuicChannel qc = (QuicChannel) ctx.channel();
+                            final String alpn = negotiatedAlpn(qc);
                             sessionRegistry.unregister(new QuicConnectionId(qc.id()));
                             Log.info("QUIC connection closed: remote={}, ALPN='{}'",
                                 qc.remoteSocketAddress(), alpn);

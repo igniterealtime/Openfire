@@ -38,6 +38,7 @@ import org.xmpp.packet.*;
 
 import javax.annotation.Nonnull;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.*;
@@ -367,18 +368,7 @@ public class OutgoingSessionPromise {
             // (including removal from the routing table) may still be in progress. Proceeding before they finish
             // risks the new session colliding with stale state in the routing table.
             final OutgoingServerSession existingRoute = routingTable.getServerRoute(domainPair);
-            if (existingRoute instanceof LocalOutgoingServerSession localExisting && localExisting.isClosed()) {
-                try {
-                    localExisting.getConnection().getCloseFuture().toCompletableFuture().get(CLOSE_WAIT_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    Log.warn("Interrupted while waiting for previous outgoing session for {} to fully close. Proceeding with new session establishment regardless.", domainPair);
-                } catch (TimeoutException e) {
-                    Log.warn("Timed out waiting for previous outgoing session for {} to fully close. Proceeding with new session establishment regardless.", domainPair);
-                } catch (ExecutionException e) {
-                    Log.warn("Exception while waiting for previous outgoing session for {} to fully close. Proceeding with new session establishment regardless.", domainPair, e);
-                }
-            }
+            waitForRouteTeardownIfNeeded(existingRoute);
 
             // Make sure that only one cluster node is creating the outgoing connection
             final Lock lock = serversCache.getLock(domainPair);
@@ -387,6 +377,10 @@ public class OutgoingSessionPromise {
                 // OF-3283: If another cluster node already has an outgoing session for this domain pair, re-use it to deliver the queued stanzas.
                 final OutgoingServerSession existingRouteWhileLocked = routingTable.getServerRoute(domainPair);
                 if (existingRouteWhileLocked != null) {
+                    if (existingRouteWhileLocked.isClosed()) {
+                        throw new Exception("A route for " + domainPair + " became available while waiting for the cluster lock, but that route is already closed or closing. This is an edge case that is expected to be very rare, which the current implementation does not handle.");
+                    }
+
                     Log.debug("Re-using outgoing route for {} that became available while waiting for the cluster lock.", domainPair);
                     return existingRouteWhileLocked;
                 }
@@ -406,6 +400,86 @@ public class OutgoingSessionPromise {
                 lock.unlock();
             }
         }
+
+        /**
+         * Waits for teardown of a closing outgoing route to complete.
+         *
+         * For local routes, this uses the underlying connection's close future, which completes only after all close
+         * processing (including route-removal listeners) has finished.
+         *
+         * For remote routes, no equivalent close future is available. In that case, this method polls the routing
+         * table until the closed route disappears or is replaced by a route that is no longer closing.
+         *
+         * If teardown does not complete within {@link #CLOSE_WAIT_TIMEOUT}, this method logs a warning and returns.
+         *
+         * @param route The route that may need to finish teardown.
+         */
+        private void waitForRouteTeardownIfNeeded(final OutgoingServerSession route)
+        {
+            if (route == null) {
+                return;
+            }
+
+            try {
+                if (!route.isClosed()) {
+                    return;
+                }
+
+                if (route instanceof LocalOutgoingServerSession localRoute) {
+                    // A local route exposes its connection close future, which signals that all teardown work is done.
+                    Log.debug("Waiting for previous outgoing session for {} to fully close.", domainPair);
+                    localRoute.getConnection().getCloseFuture().toCompletableFuture().get(CLOSE_WAIT_TIMEOUT.getValue().toMillis(), TimeUnit.MILLISECONDS);
+                    return;
+                }
+
+                // Remote routes do not expose a close future. Poll until the closing route disappears or is replaced.
+                Log.debug("Waiting for previous outgoing session (on another cluster node) for {} to fully close.", domainPair);
+                final Instant deadline = Instant.now().plus(CLOSE_WAIT_TIMEOUT.getValue());
+                final Duration timeBetweenCloseChecks = Duration.ofSeconds(1);
+                Instant nextIsClosedCheck = Instant.now().plus(timeBetweenCloseChecks);
+
+                while (Instant.now().isBefore(deadline))
+                {
+                    final OutgoingServerSession currentRoute = routingTable.getServerRoute(domainPair);
+                    if (currentRoute == null) {
+                        // Stop waiting when the original closing route has disappeared.
+                        Log.debug("Previous outgoing session for {} has fully closed.", domainPair);
+                        return;
+                    }
+
+                    // isClosed() on a remote route is an expensive cluster call; only perform it occasionally.
+                    if (Instant.now().isAfter(nextIsClosedCheck)) {
+                        if (!currentRoute.isClosed()) {
+                            // A new, non-closing route has appeared; no need to wait further.
+                            Log.debug("Previous outgoing session for {} has been replaced with a different session that's not in process of being closed.", domainPair);
+                            return;
+                        }
+                        nextIsClosedCheck = Instant.now().plus(timeBetweenCloseChecks);
+                    }
+
+                    TimeUnit.MILLISECONDS.sleep(50);
+                }
+
+                // One last check that also validates if the route has been replaced by a new route that is _not_ in process of being closed.
+                final OutgoingServerSession currentRoute = routingTable.getServerRoute(domainPair);
+                if (currentRoute == null || !currentRoute.isClosed()) {
+                    Log.debug("Previous outgoing session for {} has fully closed, or has been replaced.", domainPair);
+                    return;
+                }
+
+                Log.warn("Timed out waiting for previous outgoing session for {} to fully close.", domainPair);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                Log.warn("Interrupted while waiting for previous outgoing session for {} to fully close.", domainPair, e);
+            } catch (TimeoutException e) {
+                Log.warn("Timed out waiting for previous outgoing session for {} to fully close.", domainPair, e);
+            } catch (ExecutionException e) {
+                Log.warn("Exception while waiting for previous outgoing session for {} to fully close.", domainPair, e);
+            } catch (Exception e) {
+                Log.warn("Unexpected exception while waiting for previous outgoing session for {} to fully close.", domainPair, e);
+            }
+        }
+
 
         /**
          * Processes stanzas that could not be delivered to a remote domain, by generating error responses where

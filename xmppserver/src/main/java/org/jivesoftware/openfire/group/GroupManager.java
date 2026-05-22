@@ -755,7 +755,7 @@ public class GroupManager {
 
     private void evictCachedUserSharedGroups() {
         groupMetaCache.keySet().stream()
-            .filter(key -> key.startsWith(GROUP_NAMES_KEY))
+            .filter(key -> key.startsWith(USER_GROUPS_KEY))
             .forEach(groupMetaCache::remove);
     }
 

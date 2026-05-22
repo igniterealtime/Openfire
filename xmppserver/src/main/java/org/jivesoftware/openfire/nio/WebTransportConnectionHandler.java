@@ -167,6 +167,8 @@ public class WebTransportConnectionHandler extends ChannelInboundHandlerAdapter
             Log.info("WebTransport CONNECT received on stream {}; upgrading to XMPP C2S pipeline.",
                 ((QuicStreamChannel) ctx.channel()).streamId());
             sendConnectResponse(ctx);
+            Log.debug("WebTransport: sent HTTP/3 200 response on stream {}.",
+                ((QuicStreamChannel) ctx.channel()).streamId());
             upgradeToXmppPipeline(ctx);
         } else {
             Log.warn("WebTransport: CONNECT request missing required headers (CONNECT / webtransport); closing stream.");

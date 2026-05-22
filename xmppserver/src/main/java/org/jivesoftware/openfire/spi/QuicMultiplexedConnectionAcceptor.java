@@ -582,23 +582,29 @@ public class QuicMultiplexedConnectionAcceptor extends ConnectionAcceptor
      *   type:       0x04                          (1 byte)
      *   length:     varint (total payload bytes)
      *   payload:
-     *     id=0x33 (H3_DATAGRAM),              value=0x01   (2 bytes)
-     *     id=0x2b603742 (ENABLE_WEBTRANSPORT), value=0x01  (5 + 1 bytes, 4-byte varint id)
+     *     id=0x33 (H3_DATAGRAM),                       value=0x01   (2 bytes)
+     *     id=0x2b603742 (ENABLE_WEBTRANSPORT),          value=0x01  (5 bytes, 4-byte varint id)
+     *     id=0x2b603743 (WEBTRANSPORT_MAX_SESSIONS),    value=0x01  (5 bytes, 4-byte varint id)
      * </pre>
+     *
+     * <p>Chrome/Edge require {@code SETTINGS_WEBTRANSPORT_MAX_SESSIONS} (id {@code 0x2b603743})
+     * to be present and non-zero in addition to {@code SETTINGS_ENABLE_WEBTRANSPORT}; without
+     * it {@code wt.ready} never resolves.</p>
      */
     private static ByteBuf buildH3SettingsFrame(final io.netty.buffer.ByteBufAllocator alloc)
     {
-        // Payload: H3_DATAGRAM (id=0x33, value=1) + ENABLE_WEBTRANSPORT (id=0x2b603742, value=1)
-        // id 0x33 fits in 1-byte QUIC varint; value 1 fits in 1-byte varint  → 2 bytes
-        // id 0x2b603742 requires 4-byte QUIC varint (0x80|high bits); value 1 → 1 byte  → 5 bytes
-        // Total payload = 7 bytes; length varint = 1 byte (fits in 6-bit range)
-        final ByteBuf buf = alloc.buffer(10);
+        // Payload:
+        //   H3_DATAGRAM (id=0x33, value=1)                      → 2 bytes
+        //   ENABLE_WEBTRANSPORT (id=0x2b603742, value=1)         → 5 bytes (4-byte varint id + 1)
+        //   WEBTRANSPORT_MAX_SESSIONS (id=0x2b603743, value=1)   → 5 bytes (4-byte varint id + 1)
+        // Total payload = 12 bytes; length varint = 1 byte
+        final ByteBuf buf = alloc.buffer(15);
         // Stream type byte: 0x00 = HTTP/3 control stream
         buf.writeByte(0x00);
         // SETTINGS frame type: 0x04
         buf.writeByte(0x04);
-        // SETTINGS payload length: 7 bytes (1-byte varint)
-        buf.writeByte(0x07);
+        // SETTINGS payload length: 12 bytes (1-byte varint)
+        buf.writeByte(0x0C);
         // Setting: H3_DATAGRAM (0x33) = 1
         buf.writeByte(0x33);
         buf.writeByte(0x01);
@@ -608,6 +614,13 @@ public class QuicMultiplexedConnectionAcceptor extends ConnectionAcceptor
         buf.writeByte(0x60);
         buf.writeByte(0x37);
         buf.writeByte(0x42);
+        buf.writeByte(0x01);
+        // Setting: SETTINGS_WEBTRANSPORT_MAX_SESSIONS (0x2b603743) = 1
+        // Required by Chrome/Edge: wt.ready will not resolve without this setting.
+        buf.writeByte(0xAB);  // 0x80 | 0x2b
+        buf.writeByte(0x60);
+        buf.writeByte(0x37);
+        buf.writeByte(0x43);
         buf.writeByte(0x01);
         return buf;
     }

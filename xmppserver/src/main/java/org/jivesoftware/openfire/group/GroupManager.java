@@ -711,6 +711,7 @@ public class GroupManager {
     private Set<Group> getSharedGroups(@Nonnull final Group group) {
         final HashSet<Group> result = new HashSet<>();
         if (provider.isSharingSupported()) {
+            // Note: the option 'users of the same group' is persisted as 'usersOfGroups' with a list of groups that is limited to the own group-name.
             if (group.getSharedWith() == SharedGroupVisibility.usersOfGroups) {
                 final Set<String> groupNames = new HashSet<>(group.getSharedWithUsersInGroupNames());
 

@@ -403,6 +403,53 @@ public class GroupManagerNoMockTest extends DBTestCase
     }
 
     /**
+     * Verifies that enabling sharing with users in the same group is immediately reflected in the shared-group
+     * results of those users.
+     */
+    @Test
+    public void testSharingEnabledForUsersInSameGroupIsImmediatelyReflected() throws Exception
+    {
+        // Setup test fixture.
+        final GroupManager groupManager = GroupManager.getInstance();
+        final JID jane = new JID("jane", XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null);
+        final Group groupA = groupManager.createGroup("Test Group A");
+        groupA.getMembers().add(jane);
+
+        // Execute system under test (warm with pre-change result).
+        final Collection<Group> beforeChange = groupManager.getSharedGroups("jane");
+        groupA.shareWithUsersInSameGroup("Users in Test Group A");
+        final Collection<Group> afterChange = groupManager.getSharedGroups("jane");
+
+        // Verify result.
+        assertFalse(beforeChange.stream().anyMatch(g -> "Test Group A".equals(g.getName())), "Pre-condition: before sharing is enabled, users should not see 'Test Group A' in shared-group results.");
+        assertTrue(afterChange.stream().anyMatch(g -> "Test Group A".equals(g.getName())), "After sharing with users in the same group is enabled, users should immediately see 'Test Group A'.");
+    }
+
+    /**
+     * Verifies that disabling sharing with users in the same group is immediately reflected in the shared-group
+     * results of those users.
+     */
+    @Test
+    public void testSharingDisabledForUsersInSameGroupIsImmediatelyReflected() throws Exception
+    {
+        // Setup test fixture.
+        final GroupManager groupManager = GroupManager.getInstance();
+        final JID jane = new JID("jane", XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null);
+        final Group groupA = groupManager.createGroup("Test Group A");
+        groupA.getMembers().add(jane);
+        groupA.shareWithUsersInSameGroup("Users in Test Group A");
+
+        // Execute system under test (warm with pre-change result).
+        final Collection<Group> beforeChange = groupManager.getSharedGroups("jane");
+        groupA.shareWithNobody();
+        final Collection<Group> afterChange = groupManager.getSharedGroups("jane");
+
+        // Verify result.
+        assertTrue(beforeChange.stream().anyMatch(g -> "Test Group A".equals(g.getName())), "Pre-condition: before sharing is disabled, users should see 'Test Group A' in shared-group results.");
+        assertFalse(afterChange.stream().anyMatch(g -> "Test Group A".equals(g.getName())), "After sharing is disabled, users should immediately stop seeing 'Test Group A'.");
+    }
+
+    /**
      * Verifies that when a group's sharing target list is updated, users that are newly in scope
      * see that group in shared-group results.
      *

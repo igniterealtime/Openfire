@@ -298,13 +298,13 @@ public class WebTransportConnectionHandler extends ChannelInboundHandlerAdapter
      */
     private static void sendConnectResponse(final ChannelHandlerContext ctx)
     {
-        // HTTP/3 HEADERS frame: type=0x01, length=2, QPACK Required Insert Count=0,
+        // HTTP/3 HEADERS frame: type=0x01, length=3, QPACK Required Insert Count=0,
         // S=0, Delta Base=0, then indexed header field: static index 25 (:status: 200).
-        // Encoded: 0x01 (frame type) 0x04 (length=4) 0x00 0x00 (QPACK prefix) 0xD9 (static idx 25)
+        // Encoded: 0x01 (frame type) 0x03 (length=3) 0x00 0x00 (QPACK prefix) 0xD9 (static idx 25)
         // QPACK static table index 25 = :status: 200 (RFC 9204 Appendix A, row 25)
         final byte[] response = new byte[]{
             0x01,       // HEADERS frame type
-            0x04,       // payload length = 4
+            0x03,       // payload length = 3 (QPACK prefix 2 bytes + 1 indexed field line)
             0x00,       // Required Insert Count = 0
             0x00,       // S=0, Delta Base=0
             (byte) 0xD9 // Indexed Field Line, static=1, index=25 (:status: 200)

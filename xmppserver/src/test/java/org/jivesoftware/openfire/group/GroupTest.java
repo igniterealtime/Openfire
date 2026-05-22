@@ -307,6 +307,28 @@ public class GroupTest
     }
 
     /**
+     * Verifies that the corresponding event listener has been invoked after a group has been modified.
+     */
+    @Test
+    public void testEventListenerInvokedGroupModified() throws Exception
+    {
+        // Setup test fixture.
+        final String groupName = "unit-test-group-group-modified";
+        final String newDescription = "This is a changed description";
+        final Group group = groupManager.createGroup(groupName);
+        final RecordingGroupEventListener listener = new RecordingGroupEventListener();
+        GroupEventDispatcher.addListener(listener);
+
+        // Execute system under test.
+        group.setDescription(newDescription);
+
+        // Verify results.
+        assertEquals(groupName, listener.lastGroupModified);
+        assertEquals("descriptionModified", listener.lastParams.get("type"));
+        assertNull(listener.lastParams.get("originalValue"));
+    }
+
+    /**
      * Verifies that the group contained in the Group cache contains an admin user after it has been added to the group.
      */
     @Test
@@ -492,7 +514,7 @@ public class GroupTest
 
         // Verify results.
         List<String> sharedWithGroups = group.getSharedWithUsersInGroupNames();
-        assertEquals( sharedWithGroups.size(), 2);
+        assertEquals(2, sharedWithGroups.size());
         assertTrue(sharedWithGroups.contains(groupName));
         assertTrue(sharedWithGroups.contains(groupNameSharedWith));
     }
@@ -518,10 +540,80 @@ public class GroupTest
 
         // Verify results.
         List<String> sharedWithGroups = group.getSharedWithUsersInGroupNames();
-        assertEquals( sharedWithGroups.size(), 3);
+        assertEquals(3, sharedWithGroups.size());
         assertTrue(sharedWithGroups.contains(groupName));
         assertTrue(sharedWithGroups.contains(groupNameSharedWith1));
         assertTrue(sharedWithGroups.contains(groupNameSharedWith2));
+    }
+
+    /**
+     * Verifies that Group.setDescription() updates the group description.
+     */
+    @Test
+    public void testSetGroupDescription() throws Exception
+    {
+        // Setup test fixture.
+        final String groupName = "unit-test-group-set-description";
+        final String originalDescription = null;
+        final String newDescription = "This is a new description";
+        final Group group = groupManager.createGroup(groupName);
+
+        // Verify initial state
+        assertEquals(originalDescription, group.getDescription());
+
+        // Execute system under test.
+        group.setDescription(newDescription);
+
+        // Verify results.
+        assertEquals(newDescription, group.getDescription());
+    }
+
+    /**
+     * Verifies that Group.setName() doesn't change the name when the group is read-only.
+     */
+    @Test
+    public void testSetGroupNameReadOnly() throws Exception
+    {
+        // Setup test fixture.
+        final String groupName = "unit-test-group-readonly";
+        final String newName = "unit-test-group-new-readonly";
+
+        // Make the provider read-only by using a mock
+        final GroupProvider readOnlyProvider = new TestGroupProviderReadOnly();
+        readOnlyProvider.createGroup(groupName);
+        groupManager = new GroupManager(readOnlyProvider, groupCache, groupMetaCache);
+        GroupManager.setInstance(groupManager);
+        final Group readOnlyGroup = readOnlyProvider.getGroup(groupName);
+
+        // Execute system under test.
+        readOnlyGroup.setName(newName);
+
+        // Verify results - name should not change
+        assertEquals(groupName, readOnlyGroup.getName());
+    }
+
+    /**
+     * Verifies that Group.setDescription() doesn't change the description when the group is read-only.
+     */
+    @Test
+    public void testSetGroupDescriptionReadOnly() throws Exception
+    {
+        // Setup test fixture - use a read-only provider.
+        final String groupName = "unit-test-group-readonly-desc";
+        final String newDescription = "new description";
+
+        // Make the provider read-only by using a mock
+        final GroupProvider readOnlyProvider = new TestGroupProviderReadOnly();
+        readOnlyProvider.createGroup(groupName);
+        groupManager = new GroupManager(readOnlyProvider, groupCache, groupMetaCache);
+        GroupManager.setInstance(groupManager);
+        final Group readOnlyGroup = readOnlyProvider.getGroup(groupName);
+
+        // Execute system under test - try to change description
+        readOnlyGroup.setDescription(newDescription);
+
+        // Verify results - description should not change (remains null since read-only prevents updates)
+        assertNull(readOnlyGroup.getDescription());
     }
 
     /**
@@ -639,7 +731,7 @@ public class GroupTest
             if (!descriptionsByGroupName.containsKey(oldName)) {
                 throw new GroupNotFoundException();
             }
-            if (!descriptionsByGroupName.containsKey(newName)) {
+            if (descriptionsByGroupName.containsKey(newName)) {
                 throw new GroupAlreadyExistsException();
             }
 
@@ -783,6 +875,16 @@ public class GroupTest
                     throw new UnsupportedOperationException();
                 }
             };
+        }
+    }
+
+    /**
+     * A read-only test implementation of GroupProvider for testing read-only scenarios.
+     */
+    public static class TestGroupProviderReadOnly extends TestGroupProvider {
+        @Override
+        public boolean isReadOnly() {
+            return true;
         }
     }
 }

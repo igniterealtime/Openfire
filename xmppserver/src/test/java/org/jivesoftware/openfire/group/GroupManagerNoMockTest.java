@@ -450,6 +450,62 @@ public class GroupManagerNoMockTest extends DBTestCase
     }
 
     /**
+     * Verifies that when a group's sharing target list removes a group, users of that removed group
+     * immediately stop seeing the shared group.
+     */
+    @Test
+    public void testSharedGroupsQueryReflectsCurrentStateAfterSharingTargetListRemoval() throws Exception
+    {
+        // Setup test fixture.
+        final GroupManager groupManager = GroupManager.getInstance();
+
+        final Group groupB = groupManager.createGroup("Test Group B");
+        groupB.shareWithEverybody("Users in Test Group B");
+
+        final Group groupC = groupManager.createGroup("Test Group C");
+
+        final Group groupA = groupManager.createGroup("Test Group A");
+        groupA.shareWithUsersInGroups(List.of("Test Group B", "Test Group C"), "Users in Test Group A");
+
+        // Verify pre-condition.
+        assertTrue(groupManager.getVisibleGroups(groupC).stream().anyMatch(g -> "Test Group A".equals(g.getName())),
+            "Pre-condition: members of 'Test Group C' should see 'Test Group A' before 'Test Group C' is removed from the sharing target list.");
+
+        // Execute system under test.
+        groupA.shareWithUsersInGroups(List.of("Test Group B"), "Users in Test Group A");
+
+        // Verify result.
+        assertFalse(groupManager.getVisibleGroups(groupC).stream().anyMatch(g -> "Test Group A".equals(g.getName())),
+            "After 'Test Group C' is removed from the sharing target list, members of 'Test Group C' should no longer see 'Test Group A'.");
+    }
+
+    /**
+     * Verifies that toggling sharing with everybody is immediately reflected in per-user shared-group results.
+     */
+    @Test
+    public void testSharingChangeToAndFromEverybodyUpdatesUserSharedGroups() throws Exception
+    {
+        // Setup test fixture.
+        final GroupManager groupManager = GroupManager.getInstance();
+        final Group groupA = groupManager.createGroup("Test Group A");
+
+        // Execute system under test.
+        final Collection<Group> beforeChange = groupManager.getSharedGroups("jane");
+        groupA.shareWithEverybody("Users in Test Group A");
+        final Collection<Group> afterEnable = groupManager.getSharedGroups("jane");
+        groupA.shareWithNobody();
+        final Collection<Group> afterDisable = groupManager.getSharedGroups("jane");
+
+        // Verify result.
+        assertFalse(beforeChange.stream().anyMatch(g -> "Test Group A".equals(g.getName())),
+            "Pre-condition: before sharing is enabled, users should not see 'Test Group A' in shared-group results.");
+        assertTrue(afterEnable.stream().anyMatch(g -> "Test Group A".equals(g.getName())),
+            "After sharing with everybody is enabled, users should immediately see 'Test Group A' in shared-group results.");
+        assertFalse(afterDisable.stream().anyMatch(g -> "Test Group A".equals(g.getName())),
+            "After sharing with everybody is disabled, users should immediately stop seeing 'Test Group A' in shared-group results.");
+    }
+
+    /**
      * Verifies that when a group's sharing target list is updated, users that are newly in scope
      * see that group in shared-group results.
      *

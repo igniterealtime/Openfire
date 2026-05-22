@@ -345,4 +345,92 @@ public class GroupManagerNoMockTest extends DBTestCase
         // Verify result.
         assertEquals(2, updatedPage.size(), "Paginated query should include the newly created group.");
     }
+
+    /**
+     * Verifies that changing a group to be shared with everybody makes that group visible to
+     * users outside of that group.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3285">OF-3285: Changes to group sharing visibility are not immediately reflected in users' contact lists</a>
+     */
+    @Test
+    public void testSharingChangeToEverybodyUpdatesVisibleGroups() throws Exception
+    {
+        // Setup test fixture.
+        final GroupManager groupManager = GroupManager.getInstance();
+        final Group groupA = groupManager.createGroup("Test Group A");
+        final Group groupB = groupManager.createGroup("Test Group B");
+
+        // Verify pre-condition.
+        assertFalse(groupManager.getVisibleGroups(groupB).stream().anyMatch(g -> "Test Group A".equals(g.getName())),
+            "Pre-condition: 'Test Group A' should not be visible to 'Test Group B' before it is shared with everybody.");
+
+        // Execute system under test.
+        groupA.shareWithEverybody("Test Group A");
+
+        // Verify result.
+        assertTrue(groupManager.getVisibleGroups(groupB).stream().anyMatch(g -> "Test Group A".equals(g.getName())),
+            "After sharing with everybody, 'Test Group A' should be visible to users outside that group.");
+    }
+
+    /**
+     * Verifies that changing a group from shared-with-everybody to not shared removes that group
+     * from visibility results for users outside of that group.
+     *
+     * This test covers the reverse direction compared to
+     * {@link #testSharingChangeToEverybodyUpdatesVisibleGroups()}.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3285">OF-3285: Changes to group sharing visibility are not immediately reflected in users' contact lists</a>
+     */
+    @Test
+    public void testSharingChangeFromEverybodyUpdatesVisibleGroups() throws Exception
+    {
+        // Setup test fixture.
+        final GroupManager groupManager = GroupManager.getInstance();
+        final Group groupA = groupManager.createGroup("Test Group A");
+        groupA.shareWithEverybody("Test Group A");
+        final Group groupB = groupManager.createGroup("Test Group B");
+
+        // Verify pre-condition.
+        assertTrue(groupManager.getVisibleGroups(groupB).stream().anyMatch(g -> "Test Group A".equals(g.getName())),
+            "Pre-condition: 'Test Group A' should be visible to 'Test Group B' while it is shared with everybody.");
+
+        // Execute system under test.
+        groupA.shareWithNobody();
+
+        // Verify result.
+        assertFalse(groupManager.getVisibleGroups(groupB).stream().anyMatch(g -> "Test Group A".equals(g.getName())),
+            "After sharing is disabled, 'Test Group A' should no longer be visible to users outside that group.");
+    }
+
+    /**
+     * Verifies that when a group's sharing target list is updated, users that are newly in scope
+     * see that group in shared-group results.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3285">OF-3285: Changes to group sharing visibility are not immediately reflected in users' contact lists</a>
+     */
+    @Test
+    public void testSharedGroupsQueryReflectsCurrentStateAfterSharingTargetListChange() throws Exception
+    {
+        // Setup test fixture.
+        final GroupManager groupManager = GroupManager.getInstance();
+
+        final Group groupB = groupManager.createGroup("Test Group B");
+        groupB.shareWithEverybody("Users in Test Group B");
+
+        final Group groupC = groupManager.createGroup("Test Group C");
+
+        final Group groupA = groupManager.createGroup("Test Group A");
+        groupA.shareWithUsersInGroups(List.of("Test Group B"), "Users in Test Group A");
+
+        // Verify pre-condition.
+        assertFalse(groupManager.getVisibleGroups(groupC).stream().anyMatch(g -> "Test Group A".equals(g.getName())),
+            "Pre-condition: members of 'Test Group C' should not see 'Test Group A' before that group is shared with users in 'Test Group C'.");
+
+        // Execute system under test.
+        groupA.shareWithUsersInGroups(List.of("Test Group B", "Test Group C"), "Users in Test Group A");
+
+        // Verify result.
+        assertTrue(groupManager.getVisibleGroups(groupC).stream().anyMatch(g -> "Test Group A".equals(g.getName())),
+            "After the sharing target list is updated, members of 'Test Group C' should see 'Test Group A'.");
+    }
 }

@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.openfire.nio;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -75,6 +76,11 @@ public class QuicSessionStreamRouter
     private int nextNonPrimaryStreamIndex = 0;
     /** True while an async stream-open is in flight; prevents opening multiple streams concurrently. */
     private boolean streamOpenInFlight = false;
+    /**
+     * The stream ID of the WebTransport CONNECT stream, or -1 if this is not a WebTransport session.
+     * Set by {@link #markWebTransportSessionEstablished(long)} when the CONNECT handshake completes.
+     */
+    private long webTransportSessionId = -1;
 
     private QuicSessionStreamRouter(final QuicChannel quicChannel, final ConnectionConfiguration configuration, final EventExecutorGroup blockingHandlerExecutor)
     {
@@ -113,6 +119,38 @@ public class QuicSessionStreamRouter
             }
         }
         return null;
+    }
+
+    /**
+     * Called by {@link WebTransportConnectionHandler} when the HTTP/3 CONNECT handshake completes
+     * successfully. Records the session ID (= CONNECT stream ID) so that data streams can be
+     * associated with this WebTransport session.
+     *
+     * @param connectStreamId the QUIC stream ID of the CONNECT stream (the WebTransport session ID)
+     */
+    public synchronized void markWebTransportSessionEstablished(final long connectStreamId)
+    {
+        this.webTransportSessionId = connectStreamId;
+        Log.debug("WebTransport session established on QUIC connection {}; session ID (CONNECT stream) = {}.",
+            quicChannel.id().asShortText(), connectStreamId);
+    }
+
+    /**
+     * Returns the WebTransport session ID (= CONNECT stream ID), or -1 if this is not a
+     * WebTransport session or the CONNECT handshake has not yet completed.
+     */
+    public synchronized long getWebTransportSessionId()
+    {
+        return webTransportSessionId;
+    }
+
+    /**
+     * Returns true if this router is associated with a WebTransport session (i.e. the CONNECT
+     * handshake has completed).
+     */
+    public synchronized boolean isWebTransportSession()
+    {
+        return webTransportSessionId >= 0;
     }
 
     public synchronized void registerInboundConnection(final NettyConnection connection)
@@ -390,6 +428,18 @@ public class QuicSessionStreamRouter
                             @Override
                             public void channelActive(final ChannelHandlerContext ctx) throws Exception
                             {
+                                // For WebTransport sessions, server-initiated bidirectional streams
+                                // MUST begin with the WEBTRANSPORT_STREAM signal (0x41) followed by
+                                // the session ID (varint) before any application data (draft-ietf-webtrans-http3 §4.2).
+                                if (self.isWebTransportSession()) {
+                                    final long sessionId = self.getWebTransportSessionId();
+                                    final io.netty.buffer.ByteBuf prefix = ctx.alloc().buffer(10);
+                                    prefix.writeByte(0x41); // WEBTRANSPORT_STREAM signal value
+                                    writeVarInt(prefix, sessionId);
+                                    ctx.channel().write(prefix);
+                                    Log.debug("WebTransport outbound stream {}: wrote 0x41 + session_id={} prefix.",
+                                        channel.streamId(), sessionId);
+                                }
                                 businessLogicHandler.getStanzaHandlerFuture().thenRun(() ->
                                     ctx.channel().eventLoop().execute(() -> {
                                         ctx.channel().attr(IDLE_FLAG).set(null);
@@ -442,6 +492,33 @@ public class QuicSessionStreamRouter
             });
 
         return true;
+    }
+
+    /**
+     * Writes a QUIC variable-length integer (RFC 9000 §16) into {@code buf}.
+     */
+    private static void writeVarInt(final ByteBuf buf, final long value)
+    {
+        if (value <= 0x3F) {
+            buf.writeByte((int) value);
+        } else if (value <= 0x3FFF) {
+            buf.writeByte((int) (0x40 | (value >> 8)));
+            buf.writeByte((int) (value & 0xFF));
+        } else if (value <= 0x3FFFFFFF) {
+            buf.writeByte((int) (0x80 | (value >> 24)));
+            buf.writeByte((int) ((value >> 16) & 0xFF));
+            buf.writeByte((int) ((value >> 8) & 0xFF));
+            buf.writeByte((int) (value & 0xFF));
+        } else {
+            buf.writeByte((int) (0xC0 | (value >> 56)));
+            buf.writeByte((int) ((value >> 48) & 0xFF));
+            buf.writeByte((int) ((value >> 40) & 0xFF));
+            buf.writeByte((int) ((value >> 32) & 0xFF));
+            buf.writeByte((int) ((value >> 24) & 0xFF));
+            buf.writeByte((int) ((value >> 16) & 0xFF));
+            buf.writeByte((int) ((value >> 8) & 0xFF));
+            buf.writeByte((int) (value & 0xFF));
+        }
     }
 
     private synchronized void removeClosedOutboundChannel(final QuicStreamChannel streamChannel)

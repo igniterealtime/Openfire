@@ -20,33 +20,23 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.quic.QuicStreamChannel;
-import io.netty.handler.codec.string.StringEncoder;
-import io.netty.handler.traffic.ChannelTrafficShapingHandler;
-import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets;
-
-import static org.jivesoftware.openfire.nio.NettyConnectionHandler.IDLE_FLAG;
-import static org.jivesoftware.openfire.spi.NettyServerInitializer.TRAFFIC_HANDLER_NAME;
-
 /**
- * Handles the HTTP/3 WebTransport upgrade on a QUIC stream and then delegates to the
- * standard C2S XMPP pipeline.
+ * Handles the HTTP/3 WebTransport CONNECT handshake on the CONNECT stream (stream 0).
  *
- * <h2>Protocol flow</h2>
+ * <h2>Protocol flow (draft-ietf-webtrans-http3)</h2>
  * <ol>
- *   <li>The client opens a bidirectional QUIC stream and sends an HTTP/3 CONNECT request
- *       with {@code :protocol: webtransport} and {@code :path: /xmpp}.</li>
- *   <li>This handler reads the raw HTTP/3 CONNECT request bytes, validates the path, and
- *       responds with a {@code 200} status to complete the WebTransport session establishment.</li>
- *   <li>After the upgrade the handler removes itself from the pipeline and installs the
- *       standard XMPP C2S handlers ({@link NettyXMPPDecoder}, {@link StringEncoder},
- *       {@link QuicClientConnectionHandler}), so subsequent bytes on the stream are treated
- *       as XMPP.</li>
+ *   <li>The client opens a bidirectional QUIC stream (stream 0) and sends an HTTP/3 CONNECT
+ *       request with {@code :protocol: webtransport}.</li>
+ *   <li>This handler reads the raw HTTP/3 CONNECT request bytes and validates the required
+ *       pseudo-headers.</li>
+ *   <li>On success it sends a {@code 200} response and removes itself. The CONNECT stream
+ *       remains open for the lifetime of the WebTransport session — it is NOT used for XMPP
+ *       data. XMPP data travels on subsequent bidirectional streams, each prefixed with the
+ *       {@code WEBTRANSPORT_STREAM} signal value ({@code 0x41}) and the session ID.</li>
  * </ol>
  *
  * <h2>HTTP/3 framing</h2>
@@ -73,16 +63,13 @@ public class WebTransportConnectionHandler extends ChannelInboundHandlerAdapter
     /** The WebTransport path this server accepts CONNECT requests on. */
     public static final String WEBTRANSPORT_PATH = "/xmpp";
 
-    private final ConnectionConfiguration configuration;
     private final QuicSessionStreamRouter streamRouter;
 
     /** Accumulation buffer for partial HTTP/3 frames. */
     private ByteBuf accumulator;
 
-    public WebTransportConnectionHandler(final ConnectionConfiguration configuration,
-                                         final QuicSessionStreamRouter streamRouter)
+    public WebTransportConnectionHandler(final QuicSessionStreamRouter streamRouter)
     {
-        this.configuration = configuration;
         this.streamRouter = streamRouter;
     }
 
@@ -184,12 +171,17 @@ public class WebTransportConnectionHandler extends ChannelInboundHandlerAdapter
         buf.readBytes(headerBlock);
 
         if (isWebTransportConnect(headerBlock)) {
-            Log.info("WebTransport CONNECT received on stream {}; upgrading to XMPP C2S pipeline.",
-                ((QuicStreamChannel) ctx.channel()).streamId());
+            final long sessionId = ((QuicStreamChannel) ctx.channel()).streamId();
+            Log.info("WebTransport CONNECT received on stream {}; sending 200 and marking session ready.", sessionId);
             sendConnectResponse(ctx);
-            Log.debug("WebTransport: sent HTTP/3 200 response on stream {}.",
-                ((QuicStreamChannel) ctx.channel()).streamId());
-            upgradeToXmppPipeline(ctx);
+            Log.debug("WebTransport: sent HTTP/3 200 response on stream {}.", sessionId);
+            // Notify the router that the WebTransport session is established.
+            // XMPP data will arrive on subsequent streams (prefixed with 0x41 + session_id).
+            if (streamRouter != null) {
+                streamRouter.markWebTransportSessionEstablished(sessionId);
+            }
+            // Remove this handler — the CONNECT stream stays open as the session lifetime anchor.
+            ctx.pipeline().remove(this);
         } else {
             Log.warn("WebTransport: CONNECT request missing required headers (CONNECT / webtransport); closing stream.");
             sendErrorAndClose(ctx, 400);
@@ -348,51 +340,6 @@ public class WebTransportConnectionHandler extends ChannelInboundHandlerAdapter
         };
         ctx.writeAndFlush(Unpooled.wrappedBuffer(response))
             .addListener(ChannelFutureListener.CLOSE);
-    }
-
-    /**
-     * Removes this handler and installs the standard XMPP C2S pipeline in its place.
-     * Any bytes already buffered beyond the CONNECT frame are re-injected into the pipeline.
-     */
-    private void upgradeToXmppPipeline(final ChannelHandlerContext ctx)
-    {
-        final ChannelPipeline pipeline = ctx.pipeline();
-
-        // Install the XMPP C2S handlers before this handler so they receive subsequent reads.
-        final QuicClientConnectionHandler businessLogicHandler =
-            new QuicClientConnectionHandler(configuration, streamRouter);
-
-        pipeline.addAfter(ctx.name(), TRAFFIC_HANDLER_NAME, new ChannelTrafficShapingHandler(0));
-        pipeline.addAfter(TRAFFIC_HANDLER_NAME, "xmppDecoder", new NettyXMPPDecoder());
-        pipeline.addAfter("xmppDecoder", "stringEncoder", new StringEncoder(StandardCharsets.UTF_8));
-        pipeline.addAfter("stringEncoder", "autoReadEnabler", new ChannelInboundHandlerAdapter()
-        {
-            @Override
-            public void channelActive(final ChannelHandlerContext ctx2) throws Exception
-            {
-                businessLogicHandler.getStanzaHandlerFuture().thenRun(() ->
-                    ctx2.channel().eventLoop().execute(() -> {
-                        ctx2.channel().attr(IDLE_FLAG).set(null);
-                        ctx2.channel().config().setAutoRead(true);
-                    })
-                );
-                super.channelActive(ctx2);
-            }
-        });
-        pipeline.addAfter("autoReadEnabler", "businessLogicHandler", businessLogicHandler);
-
-        // Remove this upgrade handler — it has done its job.
-        pipeline.remove(this);
-
-        // Re-fire channelActive so the XMPP handler initialises its session.
-        ctx.fireChannelActive();
-
-        // If there are leftover bytes after the CONNECT frame, re-inject them.
-        if (accumulator != null && accumulator.isReadable()) {
-            final ByteBuf leftover = accumulator;
-            accumulator = null;
-            ctx.fireChannelRead(leftover);
-        }
     }
 
     @Override

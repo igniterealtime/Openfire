@@ -342,10 +342,10 @@ public class QuicMultiplexedConnectionAcceptor extends ConnectionAcceptor
 
                 if (channel.type() != QuicStreamType.BIDIRECTIONAL) {
                     if (ALPN_H3.equals(alpn)) {
-                        // HTTP/3 uses unidirectional control streams (SETTINGS, QPACK encoder/decoder).
-                        // We don't process them but must not close them abruptly.
-                        Log.debug("HTTP/3 unidirectional control stream {}; ignoring.", channel.streamId());
-                        // Simply do not add any handlers — the stream will be drained and closed by quiche.
+                        // Unidirectional streams for h3 are either HTTP/3 control streams
+                        // (type 0x00, 0x02, 0x03) or WebTransport data streams (type 0x54).
+                        // We install a handler that reads the stream-type varint and routes accordingly.
+                        initH3UnidirectionalStream(channel, parent);
                     } else {
                         Log.info("Unexpected unidirectional QUIC stream {} for ALPN '{}'; closing.",
                             channel.streamId(), alpn);
@@ -427,16 +427,259 @@ public class QuicMultiplexedConnectionAcceptor extends ConnectionAcceptor
         channel.config().setAutoRead(false);
     }
 
-    /** Initialises a WebTransport (HTTP/3 CONNECT) stream pipeline. */
+    /**
+     * Initialises a bidirectional stream for an HTTP/3 (WebTransport) connection.
+     *
+     * <p>Per draft-ietf-webtrans-http3, stream 0 is the CONNECT stream: the client sends an
+     * HTTP/3 CONNECT request and the server responds with 200. All subsequent bidirectional
+     * streams are WebTransport data streams: they begin with the WEBTRANSPORT_STREAM signal
+     * value ({@code 0x41}) followed by the session ID (varint), then application payload.</p>
+     */
     private void initWebTransportStream(final QuicStreamChannel channel, final QuicChannel parent)
     {
         final QuicSessionStreamRouter streamRouter =
             QuicSessionStreamRouter.getOrCreate(parent, c2sConfiguration, blockingHandlerExecutor);
 
-        channel.pipeline()
-            .addLast("webTransportUpgrade",
-                new WebTransportConnectionHandler(c2sConfiguration, streamRouter));
+        if (channel.streamId() == 0) {
+            // Stream 0: the HTTP/3 CONNECT stream — handle the WebTransport handshake.
+            channel.pipeline()
+                .addLast("webTransportUpgrade", new WebTransportConnectionHandler(streamRouter));
+            channel.config().setAutoRead(true);
+        } else {
+            // Subsequent bidirectional streams: WebTransport data streams.
+            // They start with 0x41 (WEBTRANSPORT_STREAM signal) + session_id (varint),
+            // followed by the application (XMPP) payload.
+            initWebTransportDataStream(channel, parent, streamRouter);
+        }
+    }
 
+    /**
+     * Installs a pipeline on a WebTransport data stream that strips the
+     * {@code WEBTRANSPORT_STREAM} prefix ({@code 0x41} + session_id varint) and then
+     * hands off to the standard XMPP C2S pipeline.
+     */
+    private void initWebTransportDataStream(final QuicStreamChannel channel,
+                                             final QuicChannel parent,
+                                             final QuicSessionStreamRouter streamRouter)
+    {
+        final QuicClientConnectionHandler businessLogicHandler =
+            new QuicClientConnectionHandler(c2sConfiguration, streamRouter);
+
+        // Install a one-shot prefix-stripping handler followed by the XMPP pipeline.
+        channel.pipeline()
+            .addLast("wtPrefixStripper", new io.netty.channel.ChannelInboundHandlerAdapter()
+            {
+                /** Accumulation buffer for the prefix bytes. */
+                private ByteBuf prefixBuf;
+
+                @Override
+                public void handlerAdded(final io.netty.channel.ChannelHandlerContext ctx)
+                {
+                    prefixBuf = ctx.alloc().buffer(16);
+                }
+
+                @Override
+                public void handlerRemoved(final io.netty.channel.ChannelHandlerContext ctx)
+                {
+                    if (prefixBuf != null) { prefixBuf.release(); prefixBuf = null; }
+                }
+
+                @Override
+                public void channelRead(final io.netty.channel.ChannelHandlerContext ctx,
+                                        final Object msg) throws Exception
+                {
+                    if (prefixBuf == null) {
+                        // Already stripped — pass through.
+                        ctx.fireChannelRead(msg);
+                        return;
+                    }
+                    final ByteBuf in = (ByteBuf) msg;
+                    prefixBuf.writeBytes(in);
+                    in.release();
+                    tryStripPrefix(ctx);
+                }
+
+                private void tryStripPrefix(final io.netty.channel.ChannelHandlerContext ctx)
+                {
+                    final ByteBuf buf = prefixBuf;
+                    buf.markReaderIndex();
+
+                    // Read signal value (must be 0x41).
+                    if (!buf.isReadable()) { buf.resetReaderIndex(); return; }
+                    final int first = buf.readUnsignedByte();
+                    if (first != 0x41) {
+                        Log.warn("WebTransport data stream {}: unexpected first byte 0x{} (expected 0x41); closing.",
+                            channel.streamId(), Integer.toHexString(first));
+                        ctx.close();
+                        return;
+                    }
+
+                    // Read session_id varint.
+                    final long sessionId = readVarInt(buf);
+                    if (sessionId < 0) {
+                        buf.resetReaderIndex();
+                        return; // wait for more data
+                    }
+
+                    Log.debug("WebTransport data stream {}: prefix stripped, session_id={}.",
+                        channel.streamId(), sessionId);
+
+                    // Prefix consumed — install XMPP pipeline and remove self.
+                    final io.netty.channel.ChannelPipeline pipeline = ctx.pipeline();
+                    pipeline.addAfter(ctx.name(), TRAFFIC_HANDLER_NAME, new io.netty.handler.traffic.ChannelTrafficShapingHandler(0));
+                    pipeline.addAfter(TRAFFIC_HANDLER_NAME, "xmppDecoder", new NettyXMPPDecoder());
+                    pipeline.addAfter("xmppDecoder", "stringEncoder", new io.netty.handler.codec.string.StringEncoder(StandardCharsets.UTF_8));
+                    pipeline.addAfter("stringEncoder", "autoReadEnabler", new io.netty.channel.ChannelInboundHandlerAdapter()
+                    {
+                        @Override
+                        public void channelActive(final io.netty.channel.ChannelHandlerContext ctx2) throws Exception
+                        {
+                            businessLogicHandler.getStanzaHandlerFuture().thenRun(() ->
+                                ctx2.channel().eventLoop().execute(() -> {
+                                    ctx2.channel().attr(NettyConnectionHandler.IDLE_FLAG).set(null);
+                                    ctx2.channel().config().setAutoRead(true);
+                                })
+                            );
+                            super.channelActive(ctx2);
+                        }
+                    });
+                    pipeline.addAfter("autoReadEnabler", "businessLogicHandler", businessLogicHandler);
+                    pipeline.remove(this);
+
+                    // Re-fire channelActive so the XMPP handler initialises its session.
+                    ctx.fireChannelActive();
+
+                    // Re-inject any remaining bytes (the actual XMPP payload).
+                    if (buf.isReadable()) {
+                        final ByteBuf leftover = buf.copy();
+                        prefixBuf = null;
+                        buf.release();
+                        ctx.fireChannelRead(leftover);
+                    } else {
+                        prefixBuf = null;
+                        buf.release();
+                    }
+                }
+
+                /**
+                 * Reads a QUIC variable-length integer from buf; returns -1 if incomplete.
+                 */
+                private long readVarInt(final ByteBuf buf)
+                {
+                    if (!buf.isReadable()) return -1;
+                    final int b0 = buf.readUnsignedByte();
+                    final int prefix = (b0 & 0xC0) >> 6;
+                    switch (prefix) {
+                        case 0: return b0 & 0x3F;
+                        case 1:
+                            if (!buf.isReadable()) return -1;
+                            return ((long)(b0 & 0x3F) << 8) | buf.readUnsignedByte();
+                        case 2:
+                            if (buf.readableBytes() < 3) return -1;
+                            return ((long)(b0 & 0x3F) << 24)
+                                | ((long) buf.readUnsignedByte() << 16)
+                                | ((long) buf.readUnsignedByte() << 8)
+                                | buf.readUnsignedByte();
+                        case 3:
+                            if (buf.readableBytes() < 7) return -1;
+                            return ((long)(b0 & 0x3F) << 56)
+                                | ((long) buf.readUnsignedByte() << 48)
+                                | ((long) buf.readUnsignedByte() << 40)
+                                | ((long) buf.readUnsignedByte() << 32)
+                                | ((long) buf.readUnsignedByte() << 24)
+                                | ((long) buf.readUnsignedByte() << 16)
+                                | ((long) buf.readUnsignedByte() << 8)
+                                | buf.readUnsignedByte();
+                        default: return -1;
+                    }
+                }
+            })
+            .addLast(blockingHandlerExecutor, "businessLogicHandler", businessLogicHandler);
+
+        channel.config().setAutoRead(false);
+    }
+
+    /**
+     * Handles an incoming unidirectional stream on an h3 connection.
+     *
+     * <p>Reads the stream-type varint:
+     * <ul>
+     *   <li>{@code 0x00} — HTTP/3 control stream (SETTINGS etc.): ignore.</li>
+     *   <li>{@code 0x02}, {@code 0x03} — QPACK encoder/decoder streams: ignore.</li>
+     *   <li>{@code 0x54} — WebTransport unidirectional data stream: strip session_id then
+     *       route to XMPP (currently not expected for C2S; logged and closed).</li>
+     *   <li>anything else — unknown; ignore.</li>
+     * </ul>
+     * </p>
+     */
+    private void initH3UnidirectionalStream(final QuicStreamChannel channel, final QuicChannel parent)
+    {
+        channel.pipeline().addLast(new io.netty.channel.ChannelInboundHandlerAdapter()
+        {
+            private ByteBuf typeBuf;
+
+            @Override
+            public void handlerAdded(final io.netty.channel.ChannelHandlerContext ctx)
+            {
+                typeBuf = ctx.alloc().buffer(8);
+            }
+
+            @Override
+            public void handlerRemoved(final io.netty.channel.ChannelHandlerContext ctx)
+            {
+                if (typeBuf != null) { typeBuf.release(); typeBuf = null; }
+            }
+
+            @Override
+            public void channelRead(final io.netty.channel.ChannelHandlerContext ctx,
+                                    final Object msg)
+            {
+                if (typeBuf == null) {
+                    // Already classified — discard (control/QPACK streams).
+                    ((ByteBuf) msg).release();
+                    return;
+                }
+                typeBuf.writeBytes((ByteBuf) msg);
+                ((ByteBuf) msg).release();
+                classifyStream(ctx);
+            }
+
+            private void classifyStream(final io.netty.channel.ChannelHandlerContext ctx)
+            {
+                typeBuf.markReaderIndex();
+                if (!typeBuf.isReadable()) return;
+                final int b0 = typeBuf.readUnsignedByte();
+                final int prefix = (b0 & 0xC0) >> 6;
+                // For stream types < 64 (single-byte varint) we have the type already.
+                // For larger types we need more bytes — but 0x54 fits in one byte (0x54 < 64? No: 0x54=84 > 63).
+                // 0x54 = 0101 0100 — prefix bits = 01 (2-byte varint), value = (0x14 << 8) | next byte.
+                final long streamType;
+                if (prefix == 0) {
+                    streamType = b0 & 0x3F;
+                } else if (prefix == 1) {
+                    if (!typeBuf.isReadable()) { typeBuf.resetReaderIndex(); return; }
+                    streamType = ((long)(b0 & 0x3F) << 8) | typeBuf.readUnsignedByte();
+                } else {
+                    // Longer varints not expected for stream types; just ignore.
+                    streamType = -1;
+                }
+
+                if (streamType == 0x54) {
+                    // WebTransport unidirectional data stream — not expected for C2S XMPP.
+                    Log.debug("WebTransport unidirectional data stream {} (session_id follows); closing (not supported for C2S).",
+                        channel.streamId());
+                    ctx.close();
+                } else {
+                    // HTTP/3 control, QPACK, or unknown — silently drain.
+                    Log.debug("HTTP/3 unidirectional stream {} type=0x{}: ignoring.",
+                        channel.streamId(), Long.toHexString(streamType < 0 ? 0xFF : streamType));
+                    typeBuf.release();
+                    typeBuf = null;
+                    // Remove self; remaining bytes are discarded.
+                    ctx.pipeline().remove(this);
+                }
+            }
+        });
         channel.config().setAutoRead(true);
     }
 

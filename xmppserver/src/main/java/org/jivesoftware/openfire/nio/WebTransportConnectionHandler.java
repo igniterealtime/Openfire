@@ -124,43 +124,63 @@ public class WebTransportConnectionHandler extends ChannelInboundHandlerAdapter
      * If the frame is a valid WebTransport CONNECT request, sends a 200 response and
      * replaces this handler with the XMPP C2S pipeline. If the request is invalid,
      * sends a 400 response and closes the stream.
+     *
+     * <p>Non-HEADERS frames that appear before the HEADERS frame are skipped, as the
+     * browser may send unknown or extension frames first.</p>
      */
     private void tryUpgrade(final ChannelHandlerContext ctx)
     {
         final ByteBuf buf = accumulator;
-        buf.markReaderIndex();
 
-        // Need at least 2 bytes for frame type + length.
-        if (buf.readableBytes() < 2) {
-            return;
+        // Log the raw bytes on first read to aid diagnosis.
+        if (Log.isDebugEnabled() && buf.readableBytes() > 0) {
+            final byte[] raw = new byte[Math.min(buf.readableBytes(), 64)];
+            buf.getBytes(buf.readerIndex(), raw);
+            Log.debug("WebTransport stream {}: raw bytes (first {} of {}): {}",
+                ((QuicStreamChannel) ctx.channel()).streamId(),
+                raw.length, buf.readableBytes(), bytesToHex(raw));
         }
 
-        // Read HTTP/3 variable-length integer for frame type.
-        final long frameType = readVarInt(buf);
-        if (frameType < 0) {
-            return; // incomplete
-        }
+        // Scan frames until we find a HEADERS frame (type 0x01), skipping any others.
+        long headersFrameLength = -1;
+        while (true) {
+            buf.markReaderIndex();
 
-        // Read HTTP/3 variable-length integer for frame length.
-        final long frameLength = readVarInt(buf);
-        if (frameLength < 0) {
-            buf.resetReaderIndex();
-            return; // incomplete
-        }
+            if (buf.readableBytes() < 2) {
+                buf.resetReaderIndex();
+                return; // wait for more data
+            }
 
-        if (buf.readableBytes() < frameLength) {
-            buf.resetReaderIndex();
-            return; // wait for more data
-        }
+            final long frameType = readVarInt(buf);
+            if (frameType < 0) {
+                buf.resetReaderIndex();
+                return; // incomplete varint
+            }
 
-        if (frameType != H3_FRAME_TYPE_HEADERS) {
-            Log.warn("WebTransport: expected HEADERS frame (type=1), got type={}; closing stream.", frameType);
-            sendErrorAndClose(ctx, 400);
-            return;
+            final long frameLength = readVarInt(buf);
+            if (frameLength < 0) {
+                buf.resetReaderIndex();
+                return; // incomplete varint
+            }
+
+            if (buf.readableBytes() < frameLength) {
+                buf.resetReaderIndex();
+                return; // wait for more data
+            }
+
+            if (frameType == H3_FRAME_TYPE_HEADERS) {
+                headersFrameLength = frameLength;
+                break;
+            }
+
+            // Skip non-HEADERS frames (DATA, unknown extension frames, etc.).
+            Log.debug("WebTransport stream {}: skipping frame type={} length={}",
+                ((QuicStreamChannel) ctx.channel()).streamId(), frameType, frameLength);
+            buf.skipBytes((int) frameLength);
         }
 
         // Read the QPACK-encoded header block.
-        final byte[] headerBlock = new byte[(int) frameLength];
+        final byte[] headerBlock = new byte[(int) headersFrameLength];
         buf.readBytes(headerBlock);
 
         if (isWebTransportConnect(headerBlock)) {

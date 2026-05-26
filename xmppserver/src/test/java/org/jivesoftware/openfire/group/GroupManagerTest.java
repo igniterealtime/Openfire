@@ -16,6 +16,7 @@
 package org.jivesoftware.openfire.group;
 
 import org.jivesoftware.Fixtures;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
 import org.jivesoftware.util.CacheableOptional;
 import org.jivesoftware.util.PersistableMap;
@@ -59,6 +60,10 @@ public class GroupManagerTest
     @BeforeAll
     public static void beforeClass() throws Exception
     {
+        // Install a functional XMPPServer fixture used by post-process paths (for example, GroupJID construction).
+        Fixtures.clearExistingProperties();
+        XMPPServer.setInstance(Fixtures.mockXMPPServer());
+
         Fixtures.reconfigureOpenfireHome();
         Fixtures.disableDatabasePersistence();
         groupCache = CacheFactory.createCache("Group");
@@ -80,6 +85,8 @@ public class GroupManagerTest
     {
         groupCache.clear();
         groupMetaCache.clear();
+
+        Fixtures.clearExistingProperties();
     }
 
     /**
@@ -618,10 +625,13 @@ public class GroupManagerTest
      * processes groups returned by getSharedGroups(), which returns empty for non-shared groups, leaving members
      * with stale cache entries.
      *
+     * The test exercises the full rename post-processing flow, including forced refresh of the renamed group and
+     * cache updates for old/new group names.
+     *
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3287">Issue: Group members' user cache not evicted for non-shared groups</a>
      */
     @Test
-    public void renameGroupPostProcessEvictsPerUserCacheForNonSharedGroupMembers() throws Exception
+    public void renameGroupPostProcessEvictsPerUserCacheAndRefreshesGroupCacheForNonSharedGroupMembers() throws Exception
     {
         // Setup test fixture: a non-shared group with members
         final String oldGroupName = "old-group-name";
@@ -634,6 +644,11 @@ public class GroupManagerTest
         when(renamedGroup.getSharedWith()).thenReturn(SharedGroupVisibility.nobody);
         when(renamedGroup.getMembers()).thenReturn(new HashSet<>(List.of(member1)));
         when(renamedGroup.getAdmins()).thenReturn(new HashSet<>(List.of(admin1)));
+        doReturn(renamedGroup).when(groupProvider).getGroup(newGroupName);
+
+        // Simulate stale cache entries before rename: old-name entry should be removed and new-name entry refreshed.
+        groupCache.put(oldGroupName, CacheableOptional.of(cachedGroup));
+        groupCache.put(newGroupName, CacheableOptional.of(cachedGroup));
 
         // Pre-populate per-user group-membership cache with old group name
         final String memberCacheKey = "USER_GROUPS" + member1.toBareJID();
@@ -649,14 +664,17 @@ public class GroupManagerTest
 
         // Verify precondition: cache entry exists before rename
         assertNotNull(groupMetaCache.get(memberCacheKey), "Precondition: member should have cached groups before rename.");
+        assertNotNull(groupCache.get(oldGroupName), "Precondition: old group-name cache entry should exist before rename.");
 
         // Execute system under test: rename a non-shared group
-        // NOTE: This test intentionally does not invoke the full renameGroup flow to avoid XMPPServer dependency.
-        // We test the core cache-eviction behavior directly.
-        manager.deleteGroupPostProcess(renamedGroup);
+        // Exercise full rename post-processing, including cache refresh and event parameter construction.
+        manager.renameGroupPostProcess(renamedGroup, oldGroupName);
 
-        // Verify result: per-user group-membership cache entries must be evicted
+        // Verify result: per-user group-membership cache entries must be evicted and group cache entries refreshed.
         assertNull(groupMetaCache.get(memberCacheKey), "REGRESSION: member's per-user group-membership cache should be evicted after group rename.");
+        assertNull(groupCache.get(oldGroupName), "Old group-name cache entry should be removed after rename.");
+        assertThat("Renamed group should be force-refreshed into cache under its new name.", groupCache.get(newGroupName), is(CacheableOptional.of(renamedGroup)));
+        verify(groupProvider).getGroup(newGroupName);
     }
 
     /**

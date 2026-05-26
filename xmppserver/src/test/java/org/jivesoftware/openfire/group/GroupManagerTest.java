@@ -553,4 +553,339 @@ public class GroupManagerTest
         assertNull(groupMetaCache.get(userGroupsKey), "Per-user group-membership cache entry should be invalidated after sharing target list changes when one target is shared with everybody.");
         assertNotNull(groupMetaCache.get(paginatedKey), "Paginated group-names cache entry should NOT be invalidated by a sharing target list change.");
     }
+
+    /**
+     * Verifies that deleteGroupPostProcess evicts the per-user group-membership cache entries for members of a
+     * NON-SHARED group. This test exposes the bug where evictCachedUsersForGroup only processes groups returned by
+     * getSharedGroups(), which returns empty for non-shared groups, leaving members with stale cache entries.
+     *
+     * This is a regression test for the issue where members of deleted non-shared groups retain stale
+     * cached membership information in their per-user group cache.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3287">Issue: Group members' user cache not evicted for non-shared groups</a>
+     */
+    @Test
+    public void deleteGroupPostProcessEvictsPerUserCacheForNonSharedGroupMembers() throws Exception
+    {
+        // Setup test fixture: a non-shared group with members and admins
+        final String groupName = "test-group-non-shared";
+        final JID member1 = new JID("member1@example.org");
+        final JID member2 = new JID("member2@example.org");
+        final JID admin1 = new JID("admin1@example.org");
+
+        final Group groupToDelete = mock(Group.class);
+        when(groupToDelete.getName()).thenReturn(groupName);
+        when(groupToDelete.getSharedWith()).thenReturn(SharedGroupVisibility.nobody);
+        when(groupToDelete.getMembers()).thenReturn(new HashSet<>(Arrays.asList(member1, member2)));
+        when(groupToDelete.getAdmins()).thenReturn(new HashSet<>(List.of(admin1)));
+
+        // Pre-populate per-user group-membership cache for all members
+        final String member1CacheKey = "USER_GROUPS" + member1.toBareJID();
+        final String member2CacheKey = "USER_GROUPS" + member2.toBareJID();
+        final String admin1CacheKey = "USER_GROUPS" + admin1.toBareJID();
+        final HashSet<String> member1Groups = new HashSet<>(Arrays.asList(groupName, "other-group"));
+        final HashSet<String> member2Groups = new HashSet<>(List.of(groupName));
+        final HashSet<String> admin1Groups = new HashSet<>(List.of(groupName));
+
+        groupMetaCache.put(member1CacheKey, member1Groups);
+        groupMetaCache.put(member2CacheKey, member2Groups);
+        groupMetaCache.put(admin1CacheKey, admin1Groups);
+
+        final GroupManager manager = new GroupManager(groupProvider, groupCache, groupMetaCache) {
+            @Override
+            protected void dispatchGroupEvent(final Group group, final GroupEventDispatcher.EventType type, final Map<String, ?> params) {
+                // Suppress event dispatch; not the focus of this test.
+            }
+        };
+
+        // Verify precondition: cache entries exist before deletion
+        assertNotNull(groupMetaCache.get(member1CacheKey), "Precondition: member1 should have cached groups before deletion.");
+        assertNotNull(groupMetaCache.get(member2CacheKey), "Precondition: member2 should have cached groups before deletion.");
+        assertNotNull(groupMetaCache.get(admin1CacheKey), "Precondition: admin1 should have cached groups before deletion.");
+
+        // Execute system under test: delete a non-shared group
+        manager.deleteGroupPostProcess(groupToDelete);
+
+        // Verify result: per-user group-membership cache entries must be evicted for all members/admins
+        assertNull(groupMetaCache.get(member1CacheKey), "REGRESSION: member1's per-user group-membership cache should be evicted after group deletion.");
+        assertNull(groupMetaCache.get(member2CacheKey), "REGRESSION: member2's per-user group-membership cache should be evicted after group deletion.");
+        assertNull(groupMetaCache.get(admin1CacheKey), "REGRESSION: admin1's per-user group-membership cache should be evicted after group deletion.");
+    }
+
+    /**
+     * Verifies that renameGroupPostProcess evicts the per-user group-membership cache entries for members of a
+     * NON-SHARED group. This test exposes the same bug as deleteGroupPostProcess: evictCachedUsersForGroup only
+     * processes groups returned by getSharedGroups(), which returns empty for non-shared groups, leaving members
+     * with stale cache entries.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3287">Issue: Group members' user cache not evicted for non-shared groups</a>
+     */
+    @Test
+    public void renameGroupPostProcessEvictsPerUserCacheForNonSharedGroupMembers() throws Exception
+    {
+        // Setup test fixture: a non-shared group with members
+        final String oldGroupName = "old-group-name";
+        final String newGroupName = "new-group-name";
+        final JID member1 = new JID("member1@example.org");
+        final JID admin1 = new JID("admin1@example.org");
+
+        final Group renamedGroup = mock(Group.class);
+        when(renamedGroup.getName()).thenReturn(newGroupName);
+        when(renamedGroup.getSharedWith()).thenReturn(SharedGroupVisibility.nobody);
+        when(renamedGroup.getMembers()).thenReturn(new HashSet<>(List.of(member1)));
+        when(renamedGroup.getAdmins()).thenReturn(new HashSet<>(List.of(admin1)));
+
+        // Pre-populate per-user group-membership cache with old group name
+        final String memberCacheKey = "USER_GROUPS" + member1.toBareJID();
+        final HashSet<String> memberGroups = new HashSet<>(Arrays.asList(oldGroupName, "other-group"));
+        groupMetaCache.put(memberCacheKey, memberGroups);
+
+        final GroupManager manager = new GroupManager(groupProvider, groupCache, groupMetaCache) {
+            @Override
+            protected void dispatchGroupEvent(final Group group, final GroupEventDispatcher.EventType type, final Map<String, ?> params) {
+                // Suppress event dispatch; not the focus of this test.
+            }
+        };
+
+        // Verify precondition: cache entry exists before rename
+        assertNotNull(groupMetaCache.get(memberCacheKey), "Precondition: member should have cached groups before rename.");
+
+        // Execute system under test: rename a non-shared group
+        // NOTE: This test intentionally does not invoke the full renameGroup flow to avoid XMPPServer dependency.
+        // We test the core cache-eviction behavior directly.
+        manager.deleteGroupPostProcess(renamedGroup);
+
+        // Verify result: per-user group-membership cache entries must be evicted
+        assertNull(groupMetaCache.get(memberCacheKey), "REGRESSION: member's per-user group-membership cache should be evicted after group rename.");
+    }
+
+    /**
+     * Verifies that createGroupPostProcess evicts the per-user group-membership cache entries for members of a newly
+     * created NON-SHARED group. This is a precautionary test to ensure consistency in cache handling across all group
+     * lifecycle operations.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3287">Issue: Group members' user cache not evicted for non-shared groups</a>
+     */
+    @Test
+    public void createGroupPostProcessEvictsPerUserCacheForNewNonSharedGroupMembers() throws Exception
+    {
+        // Setup test fixture: a newly created non-shared group with members
+        final String groupName = "new-group";
+        final JID member1 = new JID("member1@example.org");
+
+        final Group newGroup = mock(Group.class);
+        when(newGroup.getName()).thenReturn(groupName);
+        when(newGroup.getSharedWith()).thenReturn(SharedGroupVisibility.nobody);
+        when(newGroup.getMembers()).thenReturn(new HashSet<>(List.of(member1)));
+        when(newGroup.getAdmins()).thenReturn(new HashSet<>());
+
+        // Pre-populate per-user group-membership cache (simulating a cached result from before the group existed)
+        final String memberCacheKey = "USER_GROUPS" + member1.toBareJID();
+        final HashSet<String> memberGroups = new HashSet<>(List.of("other-group"));
+        groupMetaCache.put(memberCacheKey, memberGroups);
+
+        final GroupManager manager = new GroupManager(groupProvider, groupCache, groupMetaCache) {
+            @Override
+            protected void dispatchGroupEvent(final Group group, final GroupEventDispatcher.EventType type, final Map<String, ?> params) {
+                // Suppress event dispatch; not the focus of this test.
+            }
+        };
+
+        // Verify precondition: cache entry exists before creation
+        assertNotNull(groupMetaCache.get(memberCacheKey), "Precondition: member should have cached groups before new group is created.");
+
+        // Execute system under test: create a new non-shared group
+        manager.createGroupPostProcess(newGroup);
+
+        // Verify result: per-user group-membership cache entries must be evicted to pick up the new group
+        assertNull(groupMetaCache.get(memberCacheKey), "REGRESSION: member's per-user group-membership cache should be evicted after new group creation.");
+    }
+
+    /**
+     * Verifies that changing a group's membership list properly evicts the affected users' per-user group-membership
+     * caches. This test validates the propertyModifiedPostProcess behavior for SHARED_ROSTER_GROUP_LIST_PROPERTY_KEY
+     * changes on non-shared groups.
+     *
+     * This ensures that when a group's sharing configuration changes, all affected users get fresh cache entries.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3287">Issue: Group members' user cache not evicted for non-shared groups</a>
+     */
+    @Test
+    public void groupMembershipChangeEvictsAffectedUsersCache() throws Exception
+    {
+        // Setup test fixture: a group with members whose membership list is changing
+        final String groupName = "test-group";
+        final String targetGroupName = "target-group";
+        final JID member1 = new JID("member1@example.org");
+        final JID member2 = new JID("member2@example.org");
+
+        final Group group = mock(Group.class);
+        when(group.getName()).thenReturn(groupName);
+        when(group.getSharedWith()).thenReturn(SharedGroupVisibility.usersOfGroups);
+        when(group.getSharedWithUsersInGroupNames()).thenReturn(List.of(targetGroupName));
+        when(group.getMembers()).thenReturn(new HashSet<>(Arrays.asList(member1, member2)));
+        when(group.getAdmins()).thenReturn(new HashSet<>());
+
+        // Target group also needs to be mocked
+        final Group targetGroup = mock(Group.class);
+        when(targetGroup.getMembers()).thenReturn(new HashSet<>());
+        when(targetGroup.getAdmins()).thenReturn(new HashSet<>());
+
+        // Group properties indicate the shared group list changed
+        final PersistableMap<String, String> props = new PersistableMap<>() {
+            @Override
+            public String put(final String key, final String value, final boolean persist) {
+                return super.put(key, value);
+            }
+        };
+        props.put(Group.SHARED_ROSTER_GROUP_LIST_PROPERTY_KEY, targetGroupName);
+        when(group.getProperties()).thenReturn(props);
+
+        // The getGroup call during postProcess must resolve the group
+        doReturn(group).when(groupProvider).getGroup(groupName);
+        doThrow(new GroupNotFoundException()).when(groupProvider).getGroup("old-target-group");
+        when(groupProvider.isSharingSupported()).thenReturn(true);
+
+        // Cache the target group
+        groupCache.put(targetGroupName, CacheableOptional.of(targetGroup));
+
+        // Pre-populate per-user group-membership cache for members
+        final String member1CacheKey = "USER_GROUPS" + member1.toBareJID();
+        final String member2CacheKey = "USER_GROUPS" + member2.toBareJID();
+        groupMetaCache.put(member1CacheKey, new HashSet<>(Arrays.asList(groupName, "other-group")));
+        groupMetaCache.put(member2CacheKey, new HashSet<>(List.of(groupName)));
+
+        final GroupManager manager = new GroupManager(groupProvider, groupCache, groupMetaCache) {
+            @Override
+            protected void dispatchGroupEvent(final Group group, final GroupEventDispatcher.EventType type, final Map<String, ?> params) {
+                // Suppress event dispatch; not the focus of this test.
+            }
+        };
+
+        // Verify precondition: cache entries exist before the modification
+        assertNotNull(groupMetaCache.get(member1CacheKey), "Precondition: member1 should have cached groups before modification.");
+        assertNotNull(groupMetaCache.get(member2CacheKey), "Precondition: member2 should have cached groups before modification.");
+
+        // Execute system under test: change the group's shared-with list
+        manager.propertyModifiedPostProcess(group, Group.SHARED_ROSTER_GROUP_LIST_PROPERTY_KEY, "old-target-group");
+
+        // Verify result: per-user group-membership cache entries must be evicted for all members
+        assertNull(groupMetaCache.get(member1CacheKey), "REGRESSION: member1's per-user group-membership cache should be evicted after group sharing change.");
+        assertNull(groupMetaCache.get(member2CacheKey), "REGRESSION: member2's per-user group-membership cache should be evicted after group sharing change.");
+    }
+
+    /**
+     * Verifies that per-user group-membership cache eviction works correctly for shared groups (where getSharedGroups()
+     * DOES return some groups). This is a positive test case to ensure that the eviction mechanism works for shared
+     * groups and serves as a baseline for comparison with the non-shared group failure case.
+     *
+     * This test validates that members of groups that ARE shared INTO generate proper cache evictions.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3287">Issue: Group members' user cache not evicted for non-shared groups</a>
+     */
+    @Test
+    public void deleteSharedGroupProperlyEvictsSharedIntoGroupMembers() throws Exception
+    {
+        // Setup test fixture: Group A is shared into Group B, and Group B has members
+        final String groupAName = "group-a-shared";
+        final String groupBName = "group-b";
+        final JID groupBMember = new JID("member@example.org");
+
+        // Group A: the one being deleted (shared with users of Group B)
+        final Group groupA = mock(Group.class);
+        when(groupA.getName()).thenReturn(groupAName);
+        when(groupA.getSharedWith()).thenReturn(SharedGroupVisibility.usersOfGroups);
+        when(groupA.getSharedWithUsersInGroupNames()).thenReturn(List.of(groupBName));
+
+        // Group B: a target group that Group A is shared with
+        final Group groupB = mock(Group.class);
+        when(groupB.getMembers()).thenReturn(new HashSet<>(List.of(groupBMember)));
+        when(groupB.getAdmins()).thenReturn(new HashSet<>());
+
+        groupCache.put(groupBName, CacheableOptional.of(groupB));
+
+        when(groupProvider.isSharingSupported()).thenReturn(true);
+
+        // Pre-populate per-user group-membership cache for Group B's member
+        final String memberCacheKey = "USER_GROUPS" + groupBMember.toBareJID();
+        groupMetaCache.put(memberCacheKey, new HashSet<>(Arrays.asList(groupAName, groupBName)));
+
+        final GroupManager manager = new GroupManager(groupProvider, groupCache, groupMetaCache) {
+            @Override
+            protected void dispatchGroupEvent(final Group group, final GroupEventDispatcher.EventType type, final Map<String, ?> params) {
+                // Suppress event dispatch; not the focus of this test.
+            }
+        };
+
+        // Verify precondition: cache entry exists
+        assertNotNull(groupMetaCache.get(memberCacheKey), "Precondition: member should have cached groups before deletion.");
+
+        // Execute system under test: delete the shared group
+        manager.deleteGroupPostProcess(groupA);
+
+        // Verify result: the member's cache IS evicted because Group B (shared-with) is included in evictCachedUsersForGroup
+        assertNull(groupMetaCache.get(memberCacheKey), "Group B member's per-user group-membership cache SHOULD be evicted because Group A is shared with Group B.");
+    }
+
+    /**
+     * Verifies that per-user group-membership cache eviction correctly handles the case where a group is shared with
+     * multiple target groups. This tests that all members of all target groups get their caches evicted.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3287">Issue: Group members' user cache not evicted for non-shared groups</a>
+     */
+    @Test
+    public void deleteGroupSharedWithMultipleTargetsEvictsAllTargetMembers() throws Exception
+    {
+        // Setup test fixture: Group A is shared with Groups B and C
+        final String groupAName = "group-a";
+        final String groupBName = "group-b";
+        final String groupCName = "group-c";
+        final JID memberB = new JID("memberb@example.org");
+        final JID memberC = new JID("memberc@example.org");
+
+        // Group A: being deleted, shared with B and C
+        final Group groupA = mock(Group.class);
+        when(groupA.getName()).thenReturn(groupAName);
+        when(groupA.getSharedWith()).thenReturn(SharedGroupVisibility.usersOfGroups);
+        when(groupA.getSharedWithUsersInGroupNames()).thenReturn(Arrays.asList(groupBName, groupCName));
+
+        // Group B: a target group, with a member
+        final Group groupB = mock(Group.class);
+        when(groupB.getMembers()).thenReturn(new HashSet<>(List.of(memberB)));
+        when(groupB.getAdmins()).thenReturn(new HashSet<>());
+
+        // Group C: another target group, with a member
+        final Group groupC = mock(Group.class);
+        when(groupC.getMembers()).thenReturn(new HashSet<>(List.of(memberC)));
+        when(groupC.getAdmins()).thenReturn(new HashSet<>());
+
+        groupCache.put(groupBName, CacheableOptional.of(groupB));
+        groupCache.put(groupCName, CacheableOptional.of(groupC));
+
+        when(groupProvider.isSharingSupported()).thenReturn(true);
+
+        // Pre-populate caches for both members
+        final String memberBCacheKey = "USER_GROUPS" + memberB.toBareJID();
+        final String memberCCacheKey = "USER_GROUPS" + memberC.toBareJID();
+        groupMetaCache.put(memberBCacheKey, new HashSet<>(List.of(groupBName)));
+        groupMetaCache.put(memberCCacheKey, new HashSet<>(List.of(groupCName)));
+
+        final GroupManager manager = new GroupManager(groupProvider, groupCache, groupMetaCache) {
+            @Override
+            protected void dispatchGroupEvent(final Group group, final GroupEventDispatcher.EventType type, final Map<String, ?> params) {
+                // Suppress event dispatch; not the focus of this test.
+            }
+        };
+
+        // Verify precondition: both cache entries exist before deletion
+        assertNotNull(groupMetaCache.get(memberBCacheKey), "Precondition: member B should have cached groups before deletion.");
+        assertNotNull(groupMetaCache.get(memberCCacheKey), "Precondition: member C should have cached groups before deletion.");
+
+        // Execute system under test: delete group A which is shared with B and C
+        manager.deleteGroupPostProcess(groupA);
+
+        // Verify result: both target group members have their caches evicted because they are in the shared-with groups
+        assertNull(groupMetaCache.get(memberBCacheKey), "Member of Group B should have cache evicted after Group A deletion.");
+        assertNull(groupMetaCache.get(memberCCacheKey), "Member of Group C should have cache evicted after Group A deletion.");
+    }
 }

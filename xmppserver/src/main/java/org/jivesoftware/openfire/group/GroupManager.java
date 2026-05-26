@@ -671,6 +671,9 @@ public class GroupManager {
         // Get all nested groups, removing any cyclic dependency.
         final Set<Group> groups = getSharedGroups( group );
 
+        // Also evict members/admins of the group itself (OF-3287)
+        groups.add(group);
+
         // Evict cached information for affected users.
         synchronized (groupMetaLock) {
             groups.forEach(g -> {

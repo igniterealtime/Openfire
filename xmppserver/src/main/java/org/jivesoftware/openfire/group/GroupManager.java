@@ -21,8 +21,6 @@ import java.util.*;
 import java.util.concurrent.locks.Lock;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Interner;
-import com.google.common.collect.Interners;
 import org.apache.commons.lang3.StringUtils;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.event.GroupEventDispatcher;
@@ -39,6 +37,7 @@ import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.GuardedBy;
 
 /**
  * Manages groups.
@@ -60,17 +59,12 @@ public class GroupManager {
 
     private static final Logger Log = LoggerFactory.getLogger(GroupManager.class);
 
-
-    private static final Interner<JID> userBasedMutex = Interners.newWeakInterner();
-    private static final Interner<PagedGroupNameKey> pagedGroupNameKeyInterner = Interners.newWeakInterner();
-
     private static final String GROUP_COUNT_KEY = "GROUP_COUNT";
     private static final String GROUP_NAMES_KEY = "GROUP_NAMES";
     private static final String USER_GROUPS_KEY = "USER_GROUPS";
 
-    private static final Object GROUP_COUNT_LOCK = new Object();
-    private static final Object GROUP_NAMES_LOCK = new Object();
-    private static final Object USER_GROUPS_LOCK = new Object();
+    // Mutex for metadata cache access
+    private final Object groupMetaLock = new Object();
 
     /**
      * Returns a singleton instance of GroupManager.
@@ -105,6 +99,7 @@ public class GroupManager {
     /**
      * A cache for meta-data around groups: count, group names, groups associated with a particular user.
      */
+    @GuardedBy("groupMetaLock")
     private final Cache<String, Serializable> groupMetaCache;
 
     private GroupProvider provider;
@@ -407,17 +402,15 @@ public class GroupManager {
      * @return the total number of groups.
      */
     public int getGroupCount() {
+        synchronized (groupMetaLock)
+        {
             Integer count = getGroupCountFromCache();
-        if (count == null) {
-            synchronized(GROUP_COUNT_LOCK) {
-                count = getGroupCountFromCache();
-                if (count == null) {
-                    count = provider.getGroupCount();
-                    saveGroupCountInCache(count);
-                }
+            if (count == null) {
+                count = provider.getGroupCount();
+                saveGroupCountInCache(count);
             }
+            return count;
         }
-        return count;
     }
 
     /**
@@ -431,17 +424,15 @@ public class GroupManager {
      * @return an unmodifiable Collection of all groups.
      */
     public Collection<Group> getGroups() {
-        HashSet<String> groupNames = getGroupNamesFromCache();
-        if (groupNames == null) {
-            synchronized(GROUP_NAMES_LOCK) {
-                groupNames = getGroupNamesFromCache();
-                if (groupNames == null) {
-                    groupNames = new HashSet<>(provider.getGroupNames());
-                    saveGroupNamesInCache(groupNames);
-                }
+        synchronized (groupMetaLock)
+        {
+            HashSet<String> groupNames = getGroupNamesFromCache();
+            if (groupNames == null) {
+                groupNames = new HashSet<>(provider.getGroupNames());
+                saveGroupNamesInCache(groupNames);
             }
+            return new GroupCollection(groupNames);
         }
-        return new GroupCollection(groupNames);
     }
 
     /**
@@ -542,18 +533,15 @@ public class GroupManager {
      * @return an Iterator for all groups in the specified range.
      */
     public Collection<Group> getGroups(int startIndex, int numResults) {
-        HashSet<String> groupNames = getPagedGroupNamesFromCache(startIndex, numResults);
-        if (groupNames == null) {
-            // synchronizing on interned string isn't great, but this value is deemed sufficiently unique for this to be safe here.
-            synchronized (pagedGroupNameKeyInterner.intern(getPagedGroupNameKey(startIndex, numResults))) {
-                groupNames = getPagedGroupNamesFromCache(startIndex, numResults);
-                if (groupNames == null) {
-                    groupNames = new HashSet<>(provider.getGroupNames(startIndex, numResults));
-                    savePagedGroupNamesFromCache(groupNames, startIndex, numResults);
-                }
+        synchronized (groupMetaLock)
+        {
+            HashSet<String> groupNames = getPagedGroupNamesFromCache(startIndex, numResults);
+            if (groupNames == null) {
+                groupNames = new HashSet<>(provider.getGroupNames(startIndex, numResults));
+                savePagedGroupNamesFromCache(groupNames, startIndex, numResults);
             }
+            return new GroupCollection(groupNames);
         }
-        return new GroupCollection(groupNames);
     }
 
     /**
@@ -573,17 +561,15 @@ public class GroupManager {
      * @return all groups that an entity belongs to.
      */
     public Collection<Group> getGroups(JID user) {
-        HashSet<String> groupNames = getUserGroupsFromCache(user);
-        if (groupNames == null) {
-            synchronized (userBasedMutex.intern(user)) {
-                groupNames = getUserGroupsFromCache(user);
-                if (groupNames == null) {
-                    groupNames = new HashSet<>(provider.getGroupNames(user));
-                    saveUserGroupsInCache(user, groupNames);
-                }
+        synchronized (groupMetaLock)
+        {
+            HashSet<String> groupNames = getUserGroupsFromCache(user);
+            if (groupNames == null) {
+                groupNames = new HashSet<>(provider.getGroupNames(user));
+                saveUserGroupsInCache(user, groupNames);
             }
+            return new GroupCollection(groupNames);
         }
-        return new GroupCollection(groupNames);
     }
 
     /**
@@ -653,9 +639,7 @@ public class GroupManager {
 
     private void evictCachedUserForGroup(JID user) {
         if (user != null) {
-
-            // remove cache for getGroups
-            synchronized (USER_GROUPS_LOCK) {
+            synchronized(groupMetaLock) {
                 clearUserGroupsCache(user);
             }
         }
@@ -688,14 +672,16 @@ public class GroupManager {
         final Set<Group> groups = getSharedGroups( group );
 
         // Evict cached information for affected users.
-        groups.forEach( g -> {
-            g.getAdmins().forEach( jid -> evictCachedUserForGroup( jid.asBareJID()) );
-            g.getMembers().forEach( jid -> evictCachedUserForGroup( jid.asBareJID()) );
-        });
+        synchronized (groupMetaLock) {
+            groups.forEach(g -> {
+                g.getAdmins().forEach(jid -> clearUserGroupsCache(jid.asBareJID()));
+                g.getMembers().forEach(jid -> clearUserGroupsCache(jid.asBareJID()));
+            });
 
-        // If any of the groups is shared with everybody, evict all cached groups.
-        if ( groups.stream().anyMatch( g -> g.getSharedWith() == SharedGroupVisibility.everybody)) {
-            evictCachedUserSharedGroups();
+            // If any of the groups is shared with everybody, evict all cached groups.
+            if ( groups.stream().anyMatch( g -> g.getSharedWith() == SharedGroupVisibility.everybody)) {
+                evictCachedUserSharedGroups();
+            }
         }
     }
 
@@ -748,12 +734,24 @@ public class GroupManager {
         return result;
     }
 
+    /**
+     * Evicts all paginated group-name cache entries.
+     *
+     * Caller must hold {@code groupMetaLock}.
+     */
+    @GuardedBy("groupMetaLock")
     private void evictCachedPaginatedGroupNames() {
         groupMetaCache.keySet().stream()
             .filter(key -> key.startsWith(GROUP_NAMES_KEY))
             .forEach(groupMetaCache::remove);
     }
 
+    /**
+     * Evicts all user-to-group cache entries.
+     *
+     * Caller must hold {@code groupMetaLock}.
+     */
+    @GuardedBy("groupMetaLock")
     private void evictCachedUserSharedGroups() {
         groupMetaCache.keySet().stream()
             .filter(key -> key.startsWith(USER_GROUPS_KEY))
@@ -776,10 +774,13 @@ public class GroupManager {
         }
 
         // Update caches.
-        clearGroupNameCache();
-        clearGroupCountCache();
+        synchronized (groupMetaLock)
+        {
+            clearGroupNameCache();
+            clearGroupCountCache();
+            evictCachedPaginatedGroupNames();
+        }
         evictCachedUsersForGroup(group);
-        evictCachedPaginatedGroupNames();
 
         groupCache.put(group.getName(), CacheableOptional.of(group));
 
@@ -814,10 +815,13 @@ public class GroupManager {
     {
         // Add a no-hit to the cache.
         groupCache.put(group.getName(), CacheableOptional.of(null));
-        clearGroupNameCache();
-        clearGroupCountCache();
+        synchronized (groupMetaLock)
+        {
+            clearGroupNameCache();
+            clearGroupCountCache();
+            evictCachedPaginatedGroupNames();
+        }
         evictCachedUsersForGroup(group);
-        evictCachedPaginatedGroupNames();
     }
 
     /**
@@ -960,9 +964,12 @@ public class GroupManager {
         if (originalName != null) {
             groupCache.remove(originalName);
         }
-        clearGroupNameCache();
+        synchronized (groupMetaLock)
+        {
+            clearGroupNameCache();
+            evictCachedPaginatedGroupNames();
+        }
         evictCachedUsersForGroup(group);
-        evictCachedPaginatedGroupNames();
 
         final Group updatedGroup;
         try {
@@ -1143,13 +1150,19 @@ public class GroupManager {
     {
         switch (key) {
             case Group.SHARED_ROSTER_SHOW_IN_ROSTER_PROPERTY_KEY: {
-                clearGroupNameCache();
+                synchronized (groupMetaLock)
+                {
+                    clearGroupNameCache();
+                }
 
                 // Check to see if the definition of people to which the shared group is shared has changed
                 final String newValue = group.getProperties().get(Group.SHARED_ROSTER_SHOW_IN_ROSTER_PROPERTY_KEY);
                 if (!StringUtils.equals(originalValue, newValue)) {
                     if ("everybody".equals(originalValue) || "everybody".equals(newValue)) {
-                        evictCachedUserSharedGroups();
+                        synchronized (groupMetaLock)
+                        {
+                            evictCachedUserSharedGroups();
+                        }
                     }
                 }
                 break;
@@ -1179,17 +1192,31 @@ public class GroupManager {
 
     /*
         For reasons currently unclear, this class stores a number of different objects in the groupMetaCache. To
-        better encapsulate this, all access to the groupMetaCache is via these methods
+        better encapsulate this, all access to the groupMetaCache is via these methods.
+
+        Thread-safety contract: callers of the methods below must already hold groupMetaLock.
+     */
+    /**
+     * Caller must hold {@code groupMetaLock}.
      */
     @SuppressWarnings("unchecked")
+    @GuardedBy("groupMetaLock")
     private HashSet<String> getGroupNamesFromCache() {
-        return (HashSet<String>)groupMetaCache.get(GROUP_NAMES_KEY);
+        return (HashSet<String>) groupMetaCache.get(GROUP_NAMES_KEY);
     }
 
+    /**
+     * Caller must hold {@code groupMetaLock}.
+     */
+    @GuardedBy("groupMetaLock")
     private void clearGroupNameCache() {
         groupMetaCache.remove(GROUP_NAMES_KEY);
     }
 
+    /**
+     * Caller must hold {@code groupMetaLock}.
+     */
+    @GuardedBy("groupMetaLock")
     private void saveGroupNamesInCache(final HashSet<String> groupNames) {
         groupMetaCache.put(GROUP_NAMES_KEY, groupNames);
     }
@@ -1228,37 +1255,68 @@ public class GroupManager {
         }
     }
 
+    /**
+     * Caller must hold {@code groupMetaLock}.
+     */
     @SuppressWarnings("unchecked")
+    @GuardedBy("groupMetaLock")
     private HashSet<String> getPagedGroupNamesFromCache(final int startIndex, final int numResults) {
-        return (HashSet<String>)groupMetaCache.get(getPagedGroupNameKey(startIndex, numResults).toString());
+        return (HashSet<String>) groupMetaCache.get(getPagedGroupNameKey(startIndex, numResults).toString());
     }
 
+    /**
+     * Caller must hold {@code groupMetaLock}.
+     */
+    @GuardedBy("groupMetaLock")
     private void savePagedGroupNamesFromCache(final HashSet<String> groupNames, final int startIndex, final int numResults) {
         groupMetaCache.put(getPagedGroupNameKey(startIndex, numResults).toString(), groupNames);
-
     }
 
+    /**
+     * Caller must hold {@code groupMetaLock}.
+     */
+    @GuardedBy("groupMetaLock")
     private Integer getGroupCountFromCache() {
         return (Integer)groupMetaCache.get(GROUP_COUNT_KEY);
     }
 
+    /**
+     * Caller must hold {@code groupMetaLock}.
+     */
+    @GuardedBy("groupMetaLock")
     private void saveGroupCountInCache(final int count) {
         groupMetaCache.put(GROUP_COUNT_KEY, count);
     }
 
+    /**
+     * Caller must hold {@code groupMetaLock}.
+     */
+    @GuardedBy("groupMetaLock")
     private void clearGroupCountCache() {
         groupMetaCache.remove(GROUP_COUNT_KEY);
     }
 
+    /**
+     * Caller must hold {@code groupMetaLock}.
+     */
     @SuppressWarnings("unchecked")
+    @GuardedBy("groupMetaLock")
     private HashSet<String> getUserGroupsFromCache(final JID user) {
-        return (HashSet<String>)groupMetaCache.get(getUserGroupsKey(user));
+        return (HashSet<String>) groupMetaCache.get(getUserGroupsKey(user));
     }
 
+    /**
+     * Caller must hold {@code groupMetaLock}.
+     */
+    @GuardedBy("groupMetaLock")
     private void clearUserGroupsCache(final JID user) {
         groupMetaCache.remove(getUserGroupsKey(user));
     }
 
+    /**
+     * Caller must hold {@code groupMetaLock}.
+     */
+    @GuardedBy("groupMetaLock")
     private void saveUserGroupsInCache(final JID user, final HashSet<String> groupNames) {
         groupMetaCache.put(getUserGroupsKey(user), groupNames);
     }

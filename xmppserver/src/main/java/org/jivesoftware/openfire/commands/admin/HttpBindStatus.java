@@ -86,15 +86,6 @@ public class HttpBindStatus extends AdHocCommand {
             field.setVariable("httpbindsecureaddress");
             field.addValue(manager.getHttpBindSecureAddress());
 
-            String jsUrl = manager.getJavaScriptUrl();
-            if (jsUrl != null) {
-                field = form.addField();
-                field.setType(FormField.Type.text_single);
-                field.setLabel(LocaleUtils.getLocalizedString("commands.admin.httpbindstatus.form.field.javascriptaddress.label", preferredLocale));
-                field.setVariable("javascriptaddress");
-                field.addValue(jsUrl);
-            }
-
             field = form.addField();
             field.setType(FormField.Type.text_single);
             field.setLabel(LocaleUtils.getLocalizedString("commands.admin.httpbindstatus.form.field.websocketaddress.label", preferredLocale));

@@ -110,7 +110,6 @@ public class CacheFactory {
         cacheNames.put("Group", "group");
         cacheNames.put("Group Metadata Cache", "groupMeta");
         cacheNames.put("Group (Shared) Metadata Cache", "groupSharingMeta");
-        cacheNames.put("Javascript Cache", "javascript");
         cacheNames.put("Last Activity Cache", "lastActivity");
         cacheNames.put("Multicast Service", "multicast");
         cacheNames.put("Offline Message Size", "offlinemessage");
@@ -179,8 +178,6 @@ public class CacheFactory {
         cacheProps.put(PROPERTY_PREFIX_CACHE + "username2roster" + PROPERTY_SUFFIX_MAX_LIFE_TIME, Duration.ofMinutes(30).toMillis());
         cacheProps.put(PROPERTY_PREFIX_CACHE + "username2rosterItems" + PROPERTY_SUFFIX_SIZE, 10_485_760L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "username2rosterItems" + PROPERTY_SUFFIX_MAX_LIFE_TIME, Duration.ofMinutes(10).toMillis());
-        cacheProps.put(PROPERTY_PREFIX_CACHE + "javascript" + PROPERTY_SUFFIX_SIZE, 1_048_576L);
-        cacheProps.put(PROPERTY_PREFIX_CACHE + "javascript" + PROPERTY_SUFFIX_MAX_LIFE_TIME, Duration.ofDays(10).toMillis());
         cacheProps.put(PROPERTY_PREFIX_CACHE + "ldap" + PROPERTY_SUFFIX_SIZE, 5_242_880L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "ldap" + PROPERTY_SUFFIX_MAX_LIFE_TIME, Duration.ofHours(2).toMillis());
         cacheProps.put(PROPERTY_PREFIX_CACHE + "listsCache" + PROPERTY_SUFFIX_SIZE, 5_242_880L);

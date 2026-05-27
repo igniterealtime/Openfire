@@ -102,7 +102,7 @@ public class GroupManager {
     @GuardedBy("groupMetaLock")
     private final Cache<String, Serializable> groupMetaCache;
 
-    private GroupProvider provider;
+    private volatile GroupProvider provider;
 
     private GroupManager()
     {
@@ -168,7 +168,7 @@ public class GroupManager {
         });
     }
 
-    private void initProvider(final Class<? extends GroupProvider> clazz) {
+    private synchronized void initProvider(final Class<? extends GroupProvider> clazz) {
         if (provider == null || !clazz.equals(provider.getClass())) {
             try {
                 provider = clazz.getDeclaredConstructor().newInstance();

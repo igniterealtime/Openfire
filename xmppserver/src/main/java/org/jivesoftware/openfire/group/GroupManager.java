@@ -738,12 +738,12 @@ public class GroupManager {
     }
 
     /**
-     * Evicts all paginated group-name cache entries.
+     * Evicts all group-name cache entries, both paginated and the non-paginated one.
      *
      * Caller must hold {@code groupMetaLock}.
      */
     @GuardedBy("groupMetaLock")
-    private void evictCachedPaginatedGroupNames() {
+    private void evictCachedGroupNames() {
         groupMetaCache.keySet().stream()
             .filter(key -> key.startsWith(GROUP_NAMES_KEY))
             .forEach(groupMetaCache::remove);
@@ -779,9 +779,8 @@ public class GroupManager {
         // Update caches.
         synchronized (groupMetaLock)
         {
-            clearGroupNameCache();
             clearGroupCountCache();
-            evictCachedPaginatedGroupNames();
+            evictCachedGroupNames();
         }
         evictCachedUsersForGroup(group);
 
@@ -820,9 +819,8 @@ public class GroupManager {
         groupCache.put(group.getName(), CacheableOptional.of(null));
         synchronized (groupMetaLock)
         {
-            clearGroupNameCache();
             clearGroupCountCache();
-            evictCachedPaginatedGroupNames();
+            evictCachedGroupNames();
         }
         evictCachedUsersForGroup(group);
     }
@@ -969,8 +967,7 @@ public class GroupManager {
         }
         synchronized (groupMetaLock)
         {
-            clearGroupNameCache();
-            evictCachedPaginatedGroupNames();
+            evictCachedGroupNames();
         }
         evictCachedUsersForGroup(group);
 
@@ -1155,7 +1152,7 @@ public class GroupManager {
             case Group.SHARED_ROSTER_SHOW_IN_ROSTER_PROPERTY_KEY: {
                 synchronized (groupMetaLock)
                 {
-                    clearGroupNameCache();
+                    evictCachedGroupNames();
                 }
 
                 // Check to see if the definition of people to which the shared group is shared has changed
@@ -1206,14 +1203,6 @@ public class GroupManager {
     @GuardedBy("groupMetaLock")
     private HashSet<String> getGroupNamesFromCache() {
         return (HashSet<String>) groupMetaCache.get(GROUP_NAMES_KEY);
-    }
-
-    /**
-     * Caller must hold {@code groupMetaLock}.
-     */
-    @GuardedBy("groupMetaLock")
-    private void clearGroupNameCache() {
-        groupMetaCache.remove(GROUP_NAMES_KEY);
     }
 
     /**

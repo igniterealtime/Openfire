@@ -700,10 +700,6 @@ public final class HttpBindManager implements CertificateEventListener {
         return "https://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + HTTP_BIND_SECURE_PORT.getValue() + "/http-bind/";
     }
 
-    public String getJavaScriptUrl() {
-        return "http://" + XMPPServer.getInstance().getServerInfo().getHostname() + ":" + HTTP_BIND_PORT.getValue() + "/scripts/";
-    }
-
     public boolean isAllOriginsAllowed() {
         return HTTP_BIND_ALLOWED_ORIGINS.getValue().contains(HTTP_BIND_CORS_ALLOW_ORIGIN_ALL);
     }

@@ -435,7 +435,7 @@ public class GroupManagerTest
 
         // Verify result.
         assertNull(groupMetaCache.get(userGroupsKey), "USER_GROUPS cache entry should be evicted when group sharing changes to 'everybody'.");
-        assertNotNull(groupMetaCache.get(paginatedKey), "Paginated GROUP_NAMES cache entry should NOT be evicted by evictCachedUserSharedGroups().");
+        assertNull(groupMetaCache.get(paginatedKey), "Paginated GROUP_NAMES cache entry should be evicted by evictCachedUserSharedGroups().");
     }
 
     /**
@@ -487,7 +487,7 @@ public class GroupManagerTest
 
         // Verify result: USER_GROUPS must be evicted; paginated GROUP_NAMES must be left intact.
         assertNull(groupMetaCache.get(userGroupsKey), "USER_GROUPS cache entry should be evicted when group sharing changes from 'everybody'.");
-        assertNotNull(groupMetaCache.get(paginatedKey), "Paginated GROUP_NAMES cache entry should NOT be evicted by evictCachedUserSharedGroups().");
+        assertNull(groupMetaCache.get(paginatedKey), "Paginated GROUP_NAMES cache entry should be evicted by evictCachedUserSharedGroups().");
     }
 
     /**

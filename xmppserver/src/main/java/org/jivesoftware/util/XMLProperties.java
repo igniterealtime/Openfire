@@ -789,21 +789,20 @@ public class XMLProperties {
             final String xmlPropertyValue = getProperty(name);
             if (xmlPropertyValue != null) {
                 final String databasePropertyValue = JiveGlobals.getProperty(name);
+                // Check if property is encrypted BEFORE deletion, since deleteProperty() will remove the XML (OF-3296)
+                final boolean wasEncrypted = JiveGlobals.isXMLPropertyEncrypted(name);
                 if (databasePropertyValue == null) {
-                    Log.debug("JiveGlobals: Migrating XML property '" + name + "' into database.");
-                    JiveGlobals.setProperty(name, xmlPropertyValue);
-                    if (JiveGlobals.isXMLPropertyEncrypted(name)) {
-                        JiveGlobals.setPropertyEncrypted(name, true);
-                    }
+                    Log.debug("JiveGlobals: Migrating XML property '{}' from XML into database. Apply encryption: {}", name, wasEncrypted);
                     deleteProperty(name);
+                    JiveGlobals.setProperty(name, xmlPropertyValue, wasEncrypted);
                 } else if (databasePropertyValue.equals(xmlPropertyValue)) {
-                    Log.debug("JiveGlobals: Deleting duplicate XML property '" + name + "' that is already in database.");
-                    if (JiveGlobals.isXMLPropertyEncrypted(name)) {
+                    Log.debug("JiveGlobals: Deleting XML property '{}' that is already in database, using the same value.", name);
+                    deleteProperty(name);
+                    if (wasEncrypted) {
                         JiveGlobals.setPropertyEncrypted(name, true);
                     }
-                    deleteProperty(name);
                 } else {
-                    Log.warn("XML Property '" + name + "' differs from what is stored in the database.  Please make property changes in the database instead of the configuration file.");
+                    Log.warn("XML Property '{}' differs from what is stored in the database. Please make property changes in the database instead of the configuration file.", name);
                 }
                 SystemProperty.getProperty(name).ifPresent(SystemProperty::migrationComplete);
             }

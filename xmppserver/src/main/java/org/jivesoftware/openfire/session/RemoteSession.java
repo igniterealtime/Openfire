@@ -51,7 +51,7 @@ public abstract class RemoteSession implements Session {
     private String serverName;
     private String hostAddress;
     private String hostName;
-    private int remotePort = -1;
+    private int remotePort = 0;
 
     public RemoteSession(byte[] nodeID, JID address) {
         this.nodeID = nodeID;
@@ -183,10 +183,12 @@ public abstract class RemoteSession implements Session {
 
     @Override
     public int getRemotePort() {
-        if (remotePort == -1) {
+        if (remotePort == 0) {
             ClusterTask<Object> task = getRemoteSessionTask(RemoteSessionTask.Operation.getRemotePort);
             Object result = doSynchronousClusterTask(task);
-            remotePort = result == null ? 0 : (Integer) result;
+            if (result != null) {
+                remotePort = (Integer) result;
+            }
         }
         return remotePort;
     }

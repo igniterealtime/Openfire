@@ -215,18 +215,8 @@
             <h3>Character Encoding Issues</h3>
 
             <p>
-                To ensure proper Unicode support, enable character encoding by adding the following to the JDBC URL:
-            </p>
-            <ul style="list-style: none">
-                <li><code>?useUnicode=true&amp;characterEncoding=UTF-8&amp;characterSetResults=UTF-8</code></li>
-            </ul>
-            <p>
-                You can edit the conf/openfire.xml file to add this value.
-            </p>
-            <p>
-                Note: If the mechanism you use to configure a JDBC URL is XML-based, you will need to use the XML
-                character literal <code>&amp;amp;</code> to separate configuration parameters, as the ampersand is a
-                reserved character for XML.
+                MariaDB Connector/J uses Unicode-capable defaults. If you need to override collation or other
+                connection properties, refer to the MariaDB Connector/J documentation for the supported URL options.
             </p>
 
         </section>

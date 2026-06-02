@@ -174,7 +174,7 @@
         </p>
         <dl>
             <dt>MySQL</dt><dd><code>jdbc:mysql://PRIMARYHOSTNAME:3306,SECONDARYHOST:3306/DATABASENAME?failOverReadOnly=false</code></dd>
-            <dt>MariaDB</dt><dd><code>jdbc:mariadb://PRIMARYHOSTNAME:3306,SECONDARYHOST:3306/DATABASENAME</code></dd>
+            <dt>MariaDB</dt><dd><code>jdbc:mariadb:replication://PRIMARYHOSTNAME:3306,SECONDARYHOST:3306/DATABASENAME</code></dd>
             <dt>Microsoft SQL Server</dt><dd><code>jdbc:sqlserver://HOSTNAME:1433;databaseName=DATABASENAME;applicationName=Openfire;multiSubnetFailover=true</code></dd>
             <dt>PostgreSQL</dt><dd><code>jdbc:postgresql://PRIMARYHOSTNAME:5432,SECONDARYHOSTNAME:5432/DATABASENAME?targetServerType=primary</code></dd>
         </dl>

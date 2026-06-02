@@ -26,7 +26,6 @@ import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.archive.ArchiveManager;
 import org.jivesoftware.openfire.audit.AuditManager;
 import org.jivesoftware.openfire.audit.spi.AuditManagerImpl;
-import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.ClusterMonitor;
 import org.jivesoftware.openfire.cluster.NodeID;
@@ -40,7 +39,6 @@ import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy;
-import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.handler.*;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.keystore.IdentityStore;
@@ -57,7 +55,6 @@ import org.jivesoftware.openfire.roster.RosterItem;
 import org.jivesoftware.openfire.roster.RosterItemProvider;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.sasl.AnonymousSaslServer;
-import org.jivesoftware.openfire.security.SecurityAuditManager;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.RemoteSessionLocator;
 import org.jivesoftware.openfire.session.SoftwareServerVersionManager;
@@ -497,21 +494,6 @@ public class XMPPServer {
 
         // steps from setup-profile-settings.jsp
         if ("default".equals(JiveGlobals.getXMLProperty("autosetup.authprovider.mode", "default"))) {
-            JiveGlobals.setProperty(AuthFactory.AUTH_PROVIDER.getKey(), JiveGlobals.getXMLProperty(AuthFactory.AUTH_PROVIDER.getKey(),
-                AuthFactory.AUTH_PROVIDER.getDefaultValue().getName()));
-            JiveGlobals.setProperty(UserManager.USER_PROVIDER.getKey(), JiveGlobals.getXMLProperty(UserManager.USER_PROVIDER.getKey(),
-                UserManager.USER_PROVIDER.getDefaultValue().getName()));
-            JiveGlobals.setProperty(GroupManager.GROUP_PROVIDER.getKey(), JiveGlobals.getXMLProperty(GroupManager.GROUP_PROVIDER.getKey(),
-                GroupManager.GROUP_PROVIDER.getDefaultValue().getName()));
-            JiveGlobals.setProperty(VCardManager.VCARD_PROVIDER.getKey(), JiveGlobals.getXMLProperty(VCardManager.VCARD_PROVIDER.getKey(),
-                VCardManager.VCARD_PROVIDER.getDefaultValue().getName()));
-            JiveGlobals.setProperty(LockOutManager.LOCKOUT_PROVIDER.getKey(), JiveGlobals.getXMLProperty(LockOutManager.LOCKOUT_PROVIDER.getKey(),
-                LockOutManager.LOCKOUT_PROVIDER.getDefaultValue().getName()));
-            JiveGlobals.setProperty(SecurityAuditManager.AUDIT_PROVIDER.getKey(), JiveGlobals.getXMLProperty(SecurityAuditManager.AUDIT_PROVIDER.getKey(),
-                SecurityAuditManager.AUDIT_PROVIDER.getDefaultValue().getName()));
-            JiveGlobals.setProperty(AdminManager.ADMIN_PROVIDER.getKey(), JiveGlobals.getXMLProperty(AdminManager.ADMIN_PROVIDER.getKey(),
-                AdminManager.ADMIN_PROVIDER.getDefaultValue().getName()));
-
             // make configurable?
             JiveGlobals.setProperty("user.scramHashedPasswordOnly", "true");
         }

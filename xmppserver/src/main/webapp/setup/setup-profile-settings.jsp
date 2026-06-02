@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2006-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2006-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -18,13 +18,6 @@
 <%@ page import="org.jivesoftware.openfire.XMPPServer"%>
 <%@ page import="org.jivesoftware.util.JiveGlobals"%>
 <%@ page import="java.util.Map" %>
-<%@ page import="org.jivesoftware.openfire.admin.AdminManager" %>
-<%@ page import="org.jivesoftware.openfire.group.GroupManager" %>
-<%@ page import="org.jivesoftware.openfire.lockout.LockOutManager" %>
-<%@ page import="org.jivesoftware.openfire.security.SecurityAuditManager" %>
-<%@ page import="org.jivesoftware.openfire.user.UserManager" %>
-<%@ page import="org.jivesoftware.openfire.auth.AuthFactory" %>
-<%@ page import="org.jivesoftware.openfire.vcard.VCardManager" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -50,26 +43,11 @@
         String mode = request.getParameter("mode");
 
         if ("default".equals(mode)) {
-            // Set to default providers by deleting any existing values.
             @SuppressWarnings("unchecked")
             Map<String,String> xmppSettings = (Map<String,String>)session.getAttribute("xmppSettings");
             if (xmppSettings == null){
                 sessionFailure = true;
             } else {
-                xmppSettings.put(AuthFactory.AUTH_PROVIDER.getKey(), JiveGlobals.getXMLProperty(AuthFactory.AUTH_PROVIDER.getKey(),
-                    AuthFactory.AUTH_PROVIDER.getDefaultValue().getName()));
-                xmppSettings.put(UserManager.USER_PROVIDER.getKey(), JiveGlobals.getXMLProperty(UserManager.USER_PROVIDER.getKey(),
-                    UserManager.USER_PROVIDER.getDefaultValue().getName()));
-                xmppSettings.put(GroupManager.GROUP_PROVIDER.getKey(), JiveGlobals.getXMLProperty(GroupManager.GROUP_PROVIDER.getKey(),
-                    GroupManager.GROUP_PROVIDER.getDefaultValue().getName()));
-                xmppSettings.put(VCardManager.VCARD_PROVIDER.getKey(), JiveGlobals.getXMLProperty(VCardManager.VCARD_PROVIDER.getKey(),
-                    VCardManager.VCARD_PROVIDER.getDefaultValue().getName()));
-                xmppSettings.put(LockOutManager.LOCKOUT_PROVIDER.getKey(), JiveGlobals.getXMLProperty(LockOutManager.LOCKOUT_PROVIDER.getKey(),
-                    LockOutManager.LOCKOUT_PROVIDER.getDefaultValue().getName()));
-                xmppSettings.put(SecurityAuditManager.AUDIT_PROVIDER.getKey(), JiveGlobals.getXMLProperty(SecurityAuditManager.AUDIT_PROVIDER.getKey(),
-                    SecurityAuditManager.AUDIT_PROVIDER.getDefaultValue().getName()));
-                xmppSettings.put(AdminManager.ADMIN_PROVIDER.getKey(), JiveGlobals.getXMLProperty(AdminManager.ADMIN_PROVIDER.getKey(),
-                    AdminManager.ADMIN_PROVIDER.getDefaultValue().getName()));
                 if (requestedScramOnly) {
                     JiveGlobals.setProperty("user.scramHashedPasswordOnly", "true");
                 }

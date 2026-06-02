@@ -848,7 +848,7 @@ jobs:
       - name: Start database server and create empty database
         run: |
           docker compose -f ./build/ci/compose/cockroachdb.yml up --wait
-          docker compose -f ./build/ci/compose/cockroachdb.yml exec db /cockroach/cockroach sql --insecure --execute="CREATE DATABASE openfire;"
+          docker compose -f ./build/ci/compose/cockroachdb.yml exec -T db /cockroach/cockroach sql --insecure --execute="CREATE DATABASE openfire;"
       - name: Execute Openfire's database install script
         run: |
           pushd ./build/ci/updater
@@ -925,7 +925,7 @@ jobs:
         if: ${{ needs.cockroachdb-upgrade-precheck.outputs.upgrade-dir-exists == 'true' }}
         run: |
           docker compose -f ./build/ci/compose/cockroachdb.yml up --wait
-          docker compose -f ./build/ci/compose/cockroachdb.yml exec db /cockroach/cockroach sql --insecure --execute="CREATE DATABASE openfire;"
+          docker compose -f ./build/ci/compose/cockroachdb.yml exec -T db /cockroach/cockroach sql --insecure --execute="CREATE DATABASE openfire;"
           docker compose -f ./build/ci/compose/cockroachdb.yml exec -T db /cockroach/cockroach sql --insecure --database=openfire < "$GITHUB_WORKSPACE/olddb/openfire_cockroachdb.sql"
       - name: Execute Openfire's database upgrade scripts
         if: ${{ needs.cockroachdb-upgrade-precheck.outputs.upgrade-dir-exists == 'true' }}

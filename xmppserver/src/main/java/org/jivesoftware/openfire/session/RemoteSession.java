@@ -185,11 +185,9 @@ public abstract class RemoteSession implements Session {
     @Override
     public int getRemotePort() {
         if (remotePort == -1) {
-            ClusterTask<Object> task = getRemoteSessionTask(RemoteSessionTask.Operation.getRemotePort);
-            Object result = doSynchronousClusterTask(task);
-            if (result != null) {
-                remotePort = (Integer) result;
-            }
+            final ClusterTask<Object> task = getRemoteSessionTask(RemoteSessionTask.Operation.getRemotePort);
+            final Object result = doSynchronousClusterTask(task);
+            remotePort = result instanceof Integer ? (Integer) result : 0;
         }
         return remotePort;
     }
@@ -197,11 +195,9 @@ public abstract class RemoteSession implements Session {
     @Override
     public int getLocalPort() {
         if (localPort == -1) {
-            ClusterTask<Object> task = getRemoteSessionTask(RemoteSessionTask.Operation.getLocalPort);
-            Object result = doSynchronousClusterTask(task);
-            if (result != null) {
-                localPort = (Integer) result;
-            }
+            final ClusterTask<Object> task = getRemoteSessionTask(RemoteSessionTask.Operation.getLocalPort);
+            final Object result = doSynchronousClusterTask(task);
+            localPort = result instanceof Integer ? (Integer) result : 0;
         }
         return localPort;
     }

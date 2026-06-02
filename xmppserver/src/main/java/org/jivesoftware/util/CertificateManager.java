@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,7 +117,7 @@ public class CertificateManager {
         if (serverCertMapping.isEmpty()) {
             Log.debug("CertificateManager: No server CertificateIdentityMapping's found. Loading default mappings");
             serverCertMapping.add(new SANCertificateIdentityMapping());
-            serverCertMapping.add(new CNCertificateIdentityMapping());   	
+            // serverCertMapping.add(new CNCertificateIdentityMapping()); // OF-3122: do not enable CN-based mapping by default.
         }
                 
         String clientCertMapList = JiveGlobals.getProperty("provider.clientCertIdentityMap.classList");
@@ -141,7 +141,7 @@ public class CertificateManager {
         if (clientCertMapping.isEmpty()) {
             Log.debug("CertificateManager: No client CertificateIdentityMapping's found. Loading default mappings");
             clientCertMapping.add(new SANCertificateIdentityMapping());
-            clientCertMapping.add(new CNCertificateIdentityMapping());
+            // clientCertMapping.add(new CNCertificateIdentityMapping()); // OF-3122: do not enable CN-based mapping by default.
         }
     }
 
@@ -149,9 +149,9 @@ public class CertificateManager {
     /**
      * Returns the identities of the remote client as defined in the specified certificate. The
      * identities are mapped by the classes in the "provider.clientCertIdentityMap.classList" property. 
-     * By default, the subjectDN of the certificate is used.
+     * By default, a SubjectAlternativeName of the certificate is used.
      *
-     * @param x509Certificate the certificate the holds the identities of the remote server.
+     * @param x509Certificate the certificate that holds the identities of the remote server.
      * @return the identities of the remote client as defined in the specified certificate.
      */
     public static List<String> getClientIdentities(X509Certificate x509Certificate) {
@@ -172,12 +172,9 @@ public class CertificateManager {
     /**
      * Returns the identities of the remote server as defined in the specified certificate. The
      * identities are mapped by the classes in the "provider.serverCertIdentityMap.classList" property.
-     * By default, the identities are defined in the subjectDN of the certificate and it can also be 
-     * defined in the subjectAltName extensions of type "xmpp". When the extension is being used then the
-     * identities defined in the extension are going to be returned. Otherwise, the value stored in
-     * the subjectDN is returned.
+     * By default, identities are derived from SubjectAlternativeName entries (xmppAddr, dnsSRV, DNSName, URI)
      *
-     * @param x509Certificate the certificate the holds the identities of the remote server.
+     * @param x509Certificate the certificate that holds the identities of the remote server.
      * @return the identities of the remote server as defined in the specified certificate.
      */
     public static List<String> getServerIdentities(X509Certificate x509Certificate) {

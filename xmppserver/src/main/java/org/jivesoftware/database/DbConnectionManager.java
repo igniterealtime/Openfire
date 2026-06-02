@@ -933,6 +933,11 @@ public class DbConnectionManager {
             databaseType = DatabaseType.db2;
         }
 
+        // Firebird properties.
+        else if (dbName.contains("firebird")) {
+            databaseType = DatabaseType.firebird;
+        }
+
         Log.debug("Database capabilities: transactions={}, scrollResults={}, batchUpdates={}, subqueries={}, streamText={}, maxRows={}, fetchSize={}, identifierQuoteString={}",
             transactionsSupported, scrollResultsSupported, batchUpdatesSupported, subqueriesSupported, streamTextRequired, maxRowsSupported, fetchSizeSupported, identifierQuoteString);
     }
@@ -1180,6 +1185,9 @@ public class DbConnectionManager {
         else if (driver.contains("oracle")) {
             return "select 1 from dual";
         }
+        else if (driver.contains("firebird")) {
+            return "select 1 from rdb$database";
+        }
         else {
             return "select 1";
         }
@@ -1203,6 +1211,8 @@ public class DbConnectionManager {
         hsqldb,
 
         db2,
+
+        firebird,
 
         sqlserver,
 
@@ -1234,7 +1244,7 @@ public class DbConnectionManager {
         {
             return switch (this) {
                 case sqlserver -> ResultSetLimitKeyword.TOP;
-                case oracle, db2 -> ResultSetLimitKeyword.FETCH_FIRST;
+                case oracle, db2, firebird -> ResultSetLimitKeyword.FETCH_FIRST;
                 default -> ResultSetLimitKeyword.LIMIT;
             };
         }

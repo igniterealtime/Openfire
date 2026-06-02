@@ -1244,7 +1244,7 @@ public class DbConnectionManager {
         {
             return switch (this) {
                 case sqlserver -> ResultSetLimitKeyword.TOP;
-                case oracle, db2 -> ResultSetLimitKeyword.FETCH_FIRST;
+                case oracle, db2, firebird -> ResultSetLimitKeyword.FETCH_FIRST;
                 default -> ResultSetLimitKeyword.LIMIT;
             };
         }

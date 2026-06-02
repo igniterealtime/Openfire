@@ -260,7 +260,8 @@ function checkSubmit() {
         <select size="1" name="presets" id="presets" onchange="populate(this.options[this.selectedIndex].value)">
             <option value=""><fmt:message key="setup.datasource.standard.pick_database" /></option>
             <c:forEach items="${presets}" var="preset" varStatus="status">
-                <option value="${status.index}" ${preset[1] eq driver ? 'selected' : ''}>
+                <c:set var="portFragment" value="${fn:substringBefore(fn:substringAfter(preset[2], 'HOSTNAME'), '/')}"/>
+                <option value="${status.index}" ${preset[1] eq driver && (empty portFragment || fn:contains(serverURL, portFragment)) ? 'selected' : ''}>
                     &#149; <c:out value="${preset[0]}"/>
                 </option>
             </c:forEach>

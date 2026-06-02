@@ -197,11 +197,22 @@ public interface Session extends RoutableChannelHandler {
     String getHostAddress() throws UnknownHostException;
     
     /**
-     * Returns the remote port used by the connection.
+     * Returns the TCP port on the remote peer used by the connection for this session (if such a singular
+     * connection exists).
      *
      * @return the remote port, or 0 when unavailable.
      */
     default int getRemotePort() {
+        return 0;
+    }
+
+    /**
+     * Returns the TCP port on the local host to which the connection for this session is connected (if such a singular
+     * connection exists).
+     *
+     * @return the local port, or 0 when unavailable.
+     */
+    default int getLocalPort() {
         return 0;
     }
 

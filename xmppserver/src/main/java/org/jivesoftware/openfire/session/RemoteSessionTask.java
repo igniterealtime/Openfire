@@ -150,6 +150,13 @@ public abstract class RemoteSessionTask implements ClusterTask<Object> {
                 result = getSession().getRemotePort();
             }
         }
+        else if (operation == Operation.getLocalPort) {
+            if (getSession().isDetached()) {
+                Log.debug("Unable to get local port of detached session: {}", getSession());
+            } else {
+                result = getSession().getLocalPort();
+            }
+        }
         else if (operation == Operation.validate) {
             result = getSession().validate();
         }
@@ -254,6 +261,7 @@ public abstract class RemoteSessionTask implements ClusterTask<Object> {
         getLocalDomain,
         getAddress,
         getValidatedDomains,
-        getRemotePort
+        getRemotePort,
+        getLocalPort
     }
 }

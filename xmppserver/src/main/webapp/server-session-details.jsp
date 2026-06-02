@@ -268,7 +268,8 @@
                             <th><fmt:message key="server.session.details.authentication"/></th>
                             <th><fmt:message key="server.session.details.tls_version"/></th>
                             <th><fmt:message key="server.session.details.cipher"/></th>
-                            <th><fmt:message key="ports.port"/></th>
+                            <th><fmt:message key="server.session.details.local_port"/></th>
+                            <th><fmt:message key="server.session.details.remote_port"/></th>
                             <th><fmt:message key="server.session.label.creation" /></th>
                             <th><fmt:message key="server.session.label.last_active" /></th>
                             <th><fmt:message key="server.session.details.incoming_statistics" /></th>
@@ -316,6 +317,14 @@
                                 <td><c:out value="${session.cipherSuiteName}"/></td>
                                 <td>
                                     <c:choose>
+                                        <c:when test="${session.localPort gt 0}">
+                                            <c:out value="${session.localPort}"/>
+                                        </c:when>
+                                        <c:otherwise>&nbsp;</c:otherwise>
+                                    </c:choose>
+                                </td>
+                                <td>
+                                    <c:choose>
                                         <c:when test="${session.remotePort gt 0}">
                                             <c:out value="${session.remotePort}"/>
                                         </c:when>
@@ -342,7 +351,8 @@
                             <th><fmt:message key="server.session.details.authentication"/></th>
                             <th><fmt:message key="server.session.details.tls_version"/></th>
                             <th><fmt:message key="server.session.details.cipher"/></th>
-                            <th><fmt:message key="ports.port"/></th>
+                            <th><fmt:message key="server.session.details.local_port"/></th>
+                            <th><fmt:message key="server.session.details.remote_port"/></th>
                             <th><fmt:message key="server.session.label.creation" /></th>
                             <th><fmt:message key="server.session.label.last_active" /></th>
                             <th><fmt:message key="server.session.details.incoming_statistics" /></th>
@@ -388,6 +398,14 @@
                                     </c:choose>
                                 <td><c:out value="${session.TLSProtocolName}"/></td>
                                 <td><c:out value="${session.cipherSuiteName}"/></td>
+                                <td>
+                                    <c:choose>
+                                        <c:when test="${session.localPort gt 0}">
+                                            <c:out value="${session.localPort}"/>
+                                        </c:when>
+                                        <c:otherwise>&nbsp;</c:otherwise>
+                                    </c:choose>
+                                </td>
                                 <td>
                                     <c:choose>
                                         <c:when test="${session.remotePort gt 0}">

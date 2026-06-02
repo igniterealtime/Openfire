@@ -514,6 +514,15 @@ public abstract class LocalSession implements Session {
     }
 
     @Override
+    public int getLocalPort() {
+        Connection connection = conn;
+        if (connection == null) {
+            return 0;
+        }
+        return connection.getLocalPort();
+    }
+
+    @Override
     public String getHostName() throws UnknownHostException {
         Connection connection = conn;
         if (connection == null) {

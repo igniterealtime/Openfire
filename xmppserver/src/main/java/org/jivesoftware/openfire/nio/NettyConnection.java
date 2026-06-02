@@ -131,8 +131,17 @@ public class NettyConnection extends AbstractConnection
     @Override
     public int getRemotePort() {
         final SocketAddress remoteAddress = channelHandlerContext.channel().remoteAddress();
-        if (remoteAddress != null && remoteAddress instanceof InetSocketAddress) {
+        if (remoteAddress instanceof InetSocketAddress) {
             return ((InetSocketAddress) remoteAddress).getPort();
+        }
+        return 0;
+    }
+
+    @Override
+    public int getLocalPort() {
+        final SocketAddress localAddress = channelHandlerContext.channel().localAddress();
+        if (localAddress instanceof InetSocketAddress) {
+            return ((InetSocketAddress) localAddress).getPort();
         }
         return 0;
     }

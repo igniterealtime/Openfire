@@ -181,11 +181,20 @@ public interface Connection extends Closeable {
     }
 
     /**
-     * Returns the remote port used by the connection.
+     * Returns the TCP port on the remote peer used by the connection.
      *
      * @return the remote port, or 0 when unavailable.
      */
     default int getRemotePort() {
+        return 0;
+    }
+
+    /**
+     * Returns the TCP port on the local host to which the connection is connected.
+     *
+     * @return the local port, or 0 when unavailable.
+     */
+    default int getLocalPort() {
         return 0;
     }
 

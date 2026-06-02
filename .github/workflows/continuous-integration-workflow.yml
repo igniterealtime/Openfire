@@ -727,7 +727,7 @@ jobs:
           path: ~/.m2/repository/org/igniterealtime/openfire/
       - name: Set environment variables
         run: |
-          echo "CONNECTION_STRING=jdbc:firebirdsql://localhost:3050//var/lib/firebird/data/openfire.fdb" >> $GITHUB_ENV
+          echo "CONNECTION_STRING=jdbc:firebirdsql://localhost:3050/openfire.fdb" >> $GITHUB_ENV
           echo "CONNECTION_DRIVER=org.firebirdsql.jdbc.FBDriver" >> $GITHUB_ENV
           echo "CONNECTION_USERNAME=sysdba" >> $GITHUB_ENV
           echo "CONNECTION_PASSWORD=SecurePa55w0rd" >> $GITHUB_ENV
@@ -795,7 +795,7 @@ jobs:
       - name: Set environment variables
         if: ${{ needs.firebird-upgrade-precheck.outputs.upgrade-dir-exists == 'true' }}
         run: |
-          echo "CONNECTION_STRING=jdbc:firebirdsql://localhost:3050//var/lib/firebird/data/openfire.fdb" >> $GITHUB_ENV
+          echo "CONNECTION_STRING=jdbc:firebirdsql://localhost:3050/openfire.fdb" >> $GITHUB_ENV
           echo "CONNECTION_DRIVER=org.firebirdsql.jdbc.FBDriver" >> $GITHUB_ENV
           echo "CONNECTION_USERNAME=sysdba" >> $GITHUB_ENV
           echo "CONNECTION_PASSWORD=SecurePa55w0rd" >> $GITHUB_ENV

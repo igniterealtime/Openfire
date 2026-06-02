@@ -222,6 +222,7 @@
     presets.add(new String[]{"Oracle","oracle.jdbc.driver.OracleDriver","jdbc:oracle:thin:@HOSTNAME:1521:SID"});
     presets.add(new String[]{"Microsoft SQL Server (legacy)","net.sourceforge.jtds.jdbc.Driver","jdbc:jtds:sqlserver://HOSTNAME/DATABASENAME;appName=Openfire"});
     presets.add(new String[]{"PostgreSQL","org.postgresql.Driver","jdbc:postgresql://HOSTNAME:5432/DATABASENAME"});
+    presets.add(new String[]{"CockroachDB","org.postgresql.Driver","jdbc:postgresql://HOSTNAME:26257/DATABASENAME"});
     presets.add(new String[]{"Firebird","org.firebirdsql.jdbc.FBDriver","jdbc:firebirdsql://HOSTNAME:3050//ABSOLUTE_PATH_TO_DATABASE_FILE"});
     presets.add(new String[]{"IBM DB2","com.ibm.db2.jcc.DB2Driver","jdbc:db2://HOSTNAME:50000/DATABASENAME"});
     presets.add(new String[]{"Microsoft SQL Server","com.microsoft.sqlserver.jdbc.SQLServerDriver","jdbc:sqlserver://HOSTNAME:1433;databaseName=DATABASENAME;applicationName=Openfire"});
@@ -259,7 +260,8 @@ function checkSubmit() {
         <select size="1" name="presets" id="presets" onchange="populate(this.options[this.selectedIndex].value)">
             <option value=""><fmt:message key="setup.datasource.standard.pick_database" /></option>
             <c:forEach items="${presets}" var="preset" varStatus="status">
-                <option value="${status.index}" ${preset[1] eq driver ? 'selected' : ''}>
+                <c:set var="portFragment" value="${fn:substringBefore(fn:substringAfter(preset[2], 'HOSTNAME'), '/')}"/>
+                <option value="${status.index}" ${preset[1] eq driver && (empty portFragment || fn:contains(serverURL, portFragment)) ? 'selected' : ''}>
                     &#149; <c:out value="${preset[0]}"/>
                 </option>
             </c:forEach>

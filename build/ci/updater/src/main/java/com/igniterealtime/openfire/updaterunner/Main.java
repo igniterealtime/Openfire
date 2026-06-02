@@ -49,6 +49,7 @@ public class Main {
         "Oracle","oracle.jdbc.driver.OracleDriver","jdbc:oracle:thin:@HOSTNAME:1521:SID"
         "Microsoft SQL Server (legacy)","net.sourceforge.jtds.jdbc.Driver","jdbc:jtds:sqlserver://HOSTNAME/DATABASENAME;appName=Openfire"
         "PostgreSQL","org.postgresql.Driver","jdbc:postgresql://HOSTNAME:5432/DATABASENAME"
+        "CockroachDB","org.postgresql.Driver","jdbc:postgresql://HOSTNAME:26257/DATABASENAME?sslmode=disable"
         "Firebird","org.firebirdsql.jdbc.FBDriver","jdbc:firebirdsql://HOSTNAME:3050//ABSOLUTE_PATH_TO_DATABASE_FILE"
         "IBM DB2","com.ibm.db2.jcc.DB2Driver","jdbc:db2://HOSTNAME:50000/DATABASENAME"
         "Microsoft SQL Server","com.microsoft.sqlserver.jdbc.SQLServerDriver","jdbc:sqlserver://HOSTNAME:1433;databaseName=DATABASENAME;applicationName=Openfire"

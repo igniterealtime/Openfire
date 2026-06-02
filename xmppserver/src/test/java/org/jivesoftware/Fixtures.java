@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2018-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -322,21 +322,22 @@ public final class Fixtures {
      */
     public static final String expiredX509Certificate = """
         -----BEGIN CERTIFICATE-----
-        MIICsjCCAZoCCQDsFzeWUN/PbjANBgkqhkiG9w0BAQsFADAbMRkwFwYDVQQDDBB0
-        ZXN0LnhtcHAuZG9tYWluMB4XDTIzMDYxNjEzMzE0OFoXDTIzMDYxNzEzMzE0OFow
-        GzEZMBcGA1UEAwwQdGVzdC54bXBwLmRvbWFpbjCCASIwDQYJKoZIhvcNAQEBBQAD
-        ggEPADCCAQoCggEBAKxaCt4vSjqzXwCfui+S0KjnQrxVagDKJOHbyhkxTbRROJYz
-        7SmdAUVHCcFlugOk7UhxTBZ7hHeC3DQTvqilwISRsgyOM8MSAXKV6lvWu2WDRI7s
-        LRg5o6r23Me/kiSMXGpzaWitxMOgZWxYJlLb7CfIJwN16F6UvKsX6npN5ETnvzkV
-        PZNgoWvy/TX2QlPJTiukX0a4FbyX6REkAgtI6WfLJm7lqtJZFw7KoX2g8GO+wk3v
-        akeuuA8OIrtRg5eP5K82a//sF1VoCh9vOryr4mT2BTa8L6x+bF27WMc8+QzXf0JL
-        s+Iy8J5dneQWEZPK13Eh5doE59EBx33fadT90CsCAwEAATANBgkqhkiG9w0BAQsF
-        AAOCAQEAQn05d+0QjKH5osqz7ZKm7wle/pF1KkOmCD9lfU1+Iu02Adz2nUx+WTaH
-        dtB8MtkLQFMcqz6oYquD0ruE3KUvj/A5fmir8wz0m9MG/i3QNrytWepv4vlrcmMr
-        yfZLwSrR3UNcNYk9W01/xjQVgH2JsF1B1nbn7eJt0mzr0arHp7VjtjdDJIfkZEEh
-        5ZpOERffIINoEptoKMCfjbcp2+PLZ1TjL6MxtrVs+TQmX4i9wL03uNgItbFqYeYP
-        RVeb9OaNj4NRMZB49D/jIaqmQWZi6u2ooOQv6AlyzeKInWm+aDmxCAX4IZAod18/
-        1hI2qIN8Xj9GUT7wldL368Dq1fUI5g==
+        MIIC2DCCAcCgAwIBAgIJAOwXN5ZQ389uMA0GCSqGSIb3DQEBCwUAMBsxGTAXBgNV
+        BAMMEHRlc3QueG1wcC5kb21haW4wHhcNMjMwNjE2MTMzMTQ4WhcNMjMwNjE3MTMz
+        MTQ4WjAbMRkwFwYDVQQDDBB0ZXN0LnhtcHAuZG9tYWluMIIBIjANBgkqhkiG9w0B
+        AQEFAAOCAQ8AMIIBCgKCAQEArFoK3i9KOrNfAJ+6L5LQqOdCvFVqAMok4dvKGTFN
+        tFE4ljPtKZ0BRUcJwWW6A6TtSHFMFnuEd4LcNBO+qKXAhJGyDI4zwxIBcpXqW9a7
+        ZYNEjuwtGDmjqvbcx7+SJIxcanNpaK3Ew6BlbFgmUtvsJ8gnA3XoXpS8qxfqek3k
+        ROe/ORU9k2Cha/L9NfZCU8lOK6RfRrgVvJfpESQCC0jpZ8smbuWq0lkXDsqhfaDw
+        Y77CTe9qR664Dw4iu1GDl4/krzZr/+wXVWgKH286vKviZPYFNrwvrH5sXbtYxzz5
+        DNd/Qkuz4jLwnl2d5BYRk8rXcSHl2gTn0QHHfd9p1P3QKwIDAQABox8wHTAbBgNV
+        HREEFDASghB0ZXN0LnhtcHAuZG9tYWluMA0GCSqGSIb3DQEBCwUAA4IBAQAu6NEW
+        iUJZDPau4UPDk5fa5KKLmU4Km650Qkj2st9u+BsRYmhc67qCWOAW9Jf7UlDlzYQd
+        /nL+0vRB7MpnJu01K+R2tV1eBPi9tJCIlkaX09xzW2N4GgwpQ2D5Y/DguZwZoD8i
+        WgV6r35QBZbXytiv4x0hMiMHLM7W03Ppa5IVpBbnxqpoXJ5gzXW94jrRvhdRwCkW
+        abl6MCITbAYwDoCdInqMUwkcTK+7K418gnUpMXBFIN2+X/LnkPsytqwNyCfZCQXM
+        ZtYV+zjGqZq0nK6qVqw23wMbe1oMNfMI2U9xGkTQpm0jBhnV+jeBNkstYCleghSa
+        ymCjFlS9G9CZaABc
         -----END CERTIFICATE-----
         """;
 

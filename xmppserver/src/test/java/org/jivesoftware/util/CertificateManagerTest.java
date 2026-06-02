@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,15 +83,17 @@ public class CertificateManagerTest
     }
 
     /**
-     * {@link CertificateManager#getServerIdentities(X509Certificate)} should return:
+     * {@link CertificateManager#getServerIdentities(X509Certificate)} should return
      * <ul>
-     *     <li>the Common Name</li>
+     *     <li>explicitly not the Common Name (default configuration of Openfire should not return CN-based identities, see OF-3122)</li>
      * </ul>
-     *
+     * <p>
      * when a certificate contains:
      * <ul>
      *     <li>no other identifiers than its CommonName</li>
      * </ul>
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3122">OF-3122</a>
      */
     @Test
     public void testServerIdentitiesCommonNameOnly() throws Exception
@@ -115,8 +117,7 @@ public class CertificateManagerTest
         final List<String> serverIdentities = CertificateManager.getServerIdentities( cert );
 
         // Verify result
-        assertEquals( 1, serverIdentities.size() );
-        assertEquals( subjectCommonName, serverIdentities.get( 0 ) );
+        assertEquals( 0, serverIdentities.size() );
     }
 
     /**

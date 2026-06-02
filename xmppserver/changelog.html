@@ -160,6 +160,133 @@ hr {
     
     <div id="pageBody">
 
+<h2>5.0.5 -- <span style="font-weight: normal;">May 15, 2026</span></h2>
+<h2>Improvement</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-1499">OF-1499</a>] - Do not show 'max users' count for a MUC when it is 0 (unlimited)</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2503">OF-2503</a>] - Display newlines in details of logged SecurityAuditManager events</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3160">OF-3160</a>] - Bump BouncyCastle.version from 1.78.1 to 1.84</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3226">OF-3226</a>] - LDAP context-close failures are logged without their exception stack trace</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3246">OF-3246</a>] - Upgrade MySQL Connector/J driver to 8.4.0 release</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3247">OF-3247</a>] - Upgrade Jetty webserver library to 12.0.35 release</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3274">OF-3274</a>] - Update org.glassfish.jaxb:jaxb-runtime to the latest of the 2.3.x line</li>
+</ul>
+
+<h2>Task</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3230">OF-3230</a>] - Disabled performance benchmark in IQEntityTimeHandlerTest should be removed or converted</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3236">OF-3236</a>] - Fix malformed link markup in upgrade guide (hre instead of href)</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3265">OF-3265</a>] - Update postgresql driver to 42.7.11</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3270">OF-3270</a>] - MultiUserChatServiceImpl#setIdleUserTaskInterval ignores value</li>
+</ul>
+
+<h2>Bug</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3213">OF-3213</a>] - A user's User Group page cannot be used to remove user from group</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3225">OF-3225</a>] - LDAP authentication logs the wrong exception when the alternate base-DN also fails</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3255">OF-3255</a>] - PluginIconServlet does not set HTTP Content-Type header for gif</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3263">OF-3263</a>] - xffHostHeader values not updated</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3266">OF-3266</a>] - Wrong getter used in ConnectionListenser#setAcceptSelfSignedCertificates</li>
+</ul>
+
+<h2>5.0.4 -- <span style="font-weight: normal;">March 17, 2026</span></h2>
+<h2>Improvement</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3156">OF-3156</a>] - Improve error handling when MUC service creation fails in admin console</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3160">OF-3160</a>] - Bump BouncyCastle.version from 1.78.1 to 1.83</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3164">OF-3164</a>] - High CPU usage caused by exception-based control flow in UserManager.isRegisteredUser()</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3177">OF-3177</a>] - Improve logging when TrustManager initialization fails (exception currently suppressed)</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3200">OF-3200</a>] - Improve InMemoryPubSubPersistenceProvider.purgeNode() to target the service cache entry directly instead of scanning all entries</li>
+</ul>
+
+<h2>Task</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3161">OF-3161</a>] - Upgrade Netty to 4.1.131 version</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3162">OF-3162</a>] - Upgrade Apache commons-text from 1.10.0 to 1.15.0</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3178">OF-3178</a>] - Update install4j to 12.0.2</li>
+</ul>
+
+<h2>Bug</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-2637">OF-2637</a>] - Admin Console -&gt; Logs viewer. Selecting 'All' lines causes exception</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3132">OF-3132</a>] - When obtaining user sessions for bare JID, not all sessions are returned</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3165">OF-3165</a>] - Fix incorrect message in closeNeverEncryptedConnection method</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3175">OF-3175</a>] - Openfire startup deadlocks during autosetup when encrypted XML properties are processed</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3197">OF-3197</a>] - updateSubscription() sets wrong parameter index when deleting a subscription in state none, silently failing to delete the correct row</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3198">OF-3198</a>] - LOAD_LAST_ITEMS_LIMIT query returns items in ascending order, causing incorrect results for non-SQL Server, non-Oracle databases</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3205">OF-3205</a>] - always update lastPublished when same item is overwritten (XEP-0060 §7.1.2)</li>
+</ul>
+
+
+<h2>5.0.3 -- <span style="font-weight: normal;">December 12, 2025</span></h2>
+<h2>Improvement</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3130">OF-3130</a>] - Update PostgreSQL JDBC driver to 42.7.8</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3134">OF-3134</a>] - Upgrade HSLQDB from 2.7.1 to 2.7.4</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3135">OF-3135</a>] - Improve wording of TLS Auth setting</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3139">OF-3139</a>] - Remove obsolete transport icons</li>
+</ul>
+
+<h2>Bug</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3127">OF-3127</a>] - ConcurrentModificationException on room join</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3133">OF-3133</a>] - Fix datatype of muc#register_faqentry field</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3144">OF-3144</a>] - Upgrade sqlserver JDBC driver to 10.2.4</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3146">OF-3146</a>] - Chat room count value is incorrect</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3147">OF-3147</a>] - server_bytes_out statistic is not being populated</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3148">OF-3148</a>] - Admin MUC affiliations are not persisted in ofMucAffiliation (lost after restart)</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3149">OF-3149</a>] - IllegalStateException occurs when removing shared groups due to multiple Iterator.remove() calls for a single Iterator.next().</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3155">OF-3155</a>] - Resource policy "Always kick" does not function correctly</li>
+</ul>
+
+<h2>5.0.2 -- <span style="font-weight: normal;">September 15, 2025</span></h2>
+<h2>Improvement</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3104">OF-3104</a>] - When a MUC room's config gets changed, send appropriate status code</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3107">OF-3107</a>] - Synchronize launch scripts</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3110">OF-3110</a>] - Guard against unexpectedly empty input</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3112">OF-3112</a>] - Less strict with regards to whitespace in base64 encoding</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3114">OF-3114</a>] - AdHoc 'end user session' command to report how many sessions were ended</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3116">OF-3116</a>] - IQLastActivityHandler should ignore IQ responses</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3118">OF-3118</a>] - Bump org.apache.commons:commons-lang3 from 3.9 to 3.18.0</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3123">OF-3123</a>] - For client mutual authentication, prefer Subject Alternative Name for identities</li>
+</ul>
+
+<h2>New Feature</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3100">OF-3100</a>] - Have PEP 'process' function return a future</li>
+</ul>
+
+<h2>Bug</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3106">OF-3106</a>] - /etc/init.d/openfire: when JAVA\_HOME is empty it fails to detect the best java version</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3108">OF-3108</a>] - Certificate update breaks functionality</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3109">OF-3109</a>] - HSQLDB database viewer doesn't always start</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3113">OF-3113</a>] - UserNotFoundException in PresenceSubscribeHandler</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3117">OF-3117</a>] - Unit test failures when there's a space in the base path</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3124">OF-3124</a>] - CVE-2025-59154 Potential identity spoofing via unsafe CN parsing</li>
+</ul>
+
+
+<h2>5.0.1 -- <span style="font-weight: normal;">June 30, 2025</span></h2>
+<h2>Improvement</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3095">OF-3095</a>] - Do not warn about cache max lifetime settings with default values</li>
+</ul>
+
+<h2>Task</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3096">OF-3096</a>] - Update bundled Search plugin</li>
+</ul>
+
+<h2>Bug</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3093">OF-3093</a>] - Windows Launcher failure (missing images)</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3094">OF-3094</a>] - Client-to-Server SASL EXTERNAL incorrectly queries for authzid</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3098">OF-3098</a>] - Federated occupants get incorrectly identified as 'ghost'</li>
+</ul>
+
+
 <h2>5.0.0 -- <span style="font-weight: normal;">June 20, 2025</span></h2>
 <h2>Improvement</h2>
 <ul>

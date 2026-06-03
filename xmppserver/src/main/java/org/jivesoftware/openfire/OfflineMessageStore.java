@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -204,8 +204,9 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
         }
 
         // Update the cached size if it exists.
-        if (sizeCache.containsKey(username)) {
-            int size = sizeCache.get(username);
+        Integer cachedSize = sizeCache.get(username);
+        if (cachedSize != null) {
+            int size = cachedSize;
             size += msgXML.length();
             sizeCache.put(username, size);
         }
@@ -438,8 +439,9 @@ public class OfflineMessageStore extends BasicModule implements UserEventListene
      */
     public int getSize(String username) {
         // See if the size is cached.
-        if (sizeCache.containsKey(username)) {
-            return sizeCache.get(username);
+        Integer cachedSize = sizeCache.get(username);
+        if (cachedSize != null) {
+            return cachedSize;
         }
         int size = 0;
         Connection con = null;

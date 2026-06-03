@@ -7,6 +7,8 @@ updates:
       # Check for updates to GitHub Actions every week
       interval: "weekly"
   - package-ecosystem: "maven"
-    directory: "/"
+    # Specify to recursively search for pom.xml files
+    directories:
+      - "**/*"
     schedule:
       interval: "weekly"

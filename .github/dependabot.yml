@@ -15,7 +15,7 @@ updates:
     directories:
       - "**/*"
     groups:
-      github-actions:
+      maven:
         patterns:
           - '*'
     schedule:

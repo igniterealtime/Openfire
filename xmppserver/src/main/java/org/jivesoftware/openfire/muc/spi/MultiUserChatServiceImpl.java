@@ -1567,8 +1567,16 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 PacketError.Condition.feature_not_implemented
             );
 
-            if (stanza.getError() != null && pingErrorsIndicatingClientConnectivity.contains(stanza.getError().getCondition())) {
-                return false;
+            final PacketError error = stanza.getError();
+            if (error != null) {
+                try {
+                    if (pingErrorsIndicatingClientConnectivity.contains(error.getCondition())) {
+                        return false;
+                    }
+                } catch (final IllegalArgumentException e) {
+                    // Condition not recognized. Log and proceed to check if it's a ping response.
+                    Log.debug("Received an error response with an unrecognized condition: {}. Treating as ping response.", stanza.toXML(), e);
+                }
             }
 
             final JID jid = PINGS_SENT.get(iq.getID());
@@ -1588,7 +1596,17 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         );
 
         final PacketError error = stanza.getError();
-        return error != null && deliveryRelatedErrorConditions.contains(error.getCondition());
+        if (error == null) {
+            return false;
+        }
+
+        try {
+            return deliveryRelatedErrorConditions.contains(error.getCondition());
+        } catch (final IllegalArgumentException e) {
+            // Condition not recognized. Log and return false (not a delivery-related error we know about).
+            Log.debug("Received a stanza with an unrecognized error condition,: {}", stanza.toXML(), e);
+            return false;
+        }
     }
 
     @Override

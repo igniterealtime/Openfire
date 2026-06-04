@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2018 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -18,6 +18,52 @@
 --%>
 
 <%
-    // Redirect to muc-room-edit-form and set that a room will be created
-    response.sendRedirect("muc-room-edit-form.jsp?create=true");
+    // OF-31: To select the current conference service automatically on room creation,
+    // we extract the active service context from the HTTP Referer header. This allows us
+    // to preserve context from top-level sidebar navigation links (which are statically
+    // defined in admin-sidebar.xml and do not support dynamic parameters) without having
+    // to introduce session state or perform intrusive layout changes.
+    //
+    // The extraction is done here in the redirector page (muc-room-create.jsp), but the
+    // validation is kept inside muc-room-edit-form.jsp to preserve clean separation of
+    // concerns and fallback behaviors.
+    String referrer = request.getHeader("Referer");
+    String serviceParam = "";
+    if (referrer != null) {
+        if (referrer.contains("mucname=")) {
+            int idx = referrer.indexOf("mucname=");
+            int endIdx = referrer.indexOf("&", idx);
+            if (endIdx == -1) {
+                endIdx = referrer.indexOf("#", idx);
+            }
+            String val = endIdx != -1 ? referrer.substring(idx + 8, endIdx) : referrer.substring(idx + 8);
+            serviceParam = "&mucName=" + val;
+        } else if (referrer.contains("mucName=")) {
+            int idx = referrer.indexOf("mucName=");
+            int endIdx = referrer.indexOf("&", idx);
+            if (endIdx == -1) {
+                endIdx = referrer.indexOf("#", idx);
+            }
+            String val = endIdx != -1 ? referrer.substring(idx + 8, endIdx) : referrer.substring(idx + 8);
+            serviceParam = "&mucName=" + val;
+        } else if (referrer.contains("roomJID=")) {
+            int idx = referrer.indexOf("roomJID=");
+            int endIdx = referrer.indexOf("&", idx);
+            if (endIdx == -1) {
+                endIdx = referrer.indexOf("#", idx);
+            }
+            String val = endIdx != -1 ? referrer.substring(idx + 8, endIdx) : referrer.substring(idx + 8);
+            try {
+                val = java.net.URLDecoder.decode(val, java.nio.charset.StandardCharsets.UTF_8.name());
+                // roomJID is like room@service.domain. Extract the domain part.
+                org.xmpp.packet.JID jid = new org.xmpp.packet.JID(val);
+                serviceParam = "&mucName=" + java.net.URLEncoder.encode(jid.getDomain(), java.nio.charset.StandardCharsets.UTF_8.name());
+            } catch (Exception e) {
+                // Ignore parsing errors and let validation handle fallbacks
+            }
+        }
+    }
+    // Redirect to muc-room-edit-form and set that a room will be created, forwarding the active service parameter if found
+    response.sendRedirect("muc-room-edit-form.jsp?create=true" + serviceParam);
 %>
+

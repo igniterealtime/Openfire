@@ -103,6 +103,8 @@
             webManager.logEvent("set MUC room creation to restricted for service "+mucname, null);
             response.sendRedirect("muc-create-permission.jsp?success=true&mucname="+URLEncoder.encode(mucname, StandardCharsets.UTF_8));
             return;
+        }else{
+            errors.put("openPerms", "openPerms");
         }
     }
 

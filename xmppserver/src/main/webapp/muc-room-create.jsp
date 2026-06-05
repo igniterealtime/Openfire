@@ -16,7 +16,11 @@
   - limitations under the License.
 
 --%>
-
+<%@ page import="java.util.function.BiFunction" %>
+<%@ page import="java.util.regex.Pattern" %>
+<%@ page import="java.util.regex.Matcher" %>
+<%@ page import="static java.nio.charset.StandardCharsets.UTF_8" %>
+<%@ page import="java.net.URLEncoder,java.net.URLDecoder" %>
 <%
     // OF-31: To select the current conference service automatically on room creation,
     // we extract the active service context from the HTTP Referer header. This allows us
@@ -27,87 +31,75 @@
     // The extraction is done here in the redirector page (muc-room-create.jsp), but the
     // validation is kept inside muc-room-edit-form.jsp to preserve clean separation of
     // concerns and fallback behaviors.
+
     String referrer = request.getHeader("Referer");
     String serviceParam = "";
+
+    BiFunction<String, String, String> extractParam = (url, key) -> {
+        Matcher m = Pattern
+            .compile("(?:[?&])" + Pattern.quote(key) + "=([^&#]*)")
+            .matcher(url);
+
+        return m.find() ? m.group(1) : null;
+    };
+
     if (referrer != null) {
-    if (referrer.contains("mucname=")) {
-        int idx = referrer.indexOf("mucname=");
-        int endIdx = referrer.indexOf("&", idx);
-        if (endIdx == -1) {
-            endIdx = referrer.indexOf("#", idx);
-        }
+        String val;
 
-        String val = endIdx != -1
-            ? referrer.substring(idx + 8, endIdx)
-            : referrer.substring(idx + 8);
-
-        try {
-            String decodedVal = java.net.URLDecoder.decode(
-                val,
-                java.nio.charset.StandardCharsets.UTF_8.name()
-            );
-            String encodedVal = java.net.URLEncoder.encode(
-                decodedVal,
-                java.nio.charset.StandardCharsets.UTF_8.name()
-            );
-            serviceParam = "&mucName=" + encodedVal;
-        } catch (Exception e) {
-            // Ignore parsing errors and let validation handle fallbacks
-        }
-    } else if (referrer.contains("mucName=")) {
-        int idx = referrer.indexOf("mucName=");
-        int endIdx = referrer.indexOf("&", idx);
-        if (endIdx == -1) {
-            endIdx = referrer.indexOf("#", idx);
-        }
-
-        String val = endIdx != -1
-            ? referrer.substring(idx + 8, endIdx)
-            : referrer.substring(idx + 8);
-
-        try {
-            String decodedVal = java.net.URLDecoder.decode(
-                val,
-                java.nio.charset.StandardCharsets.UTF_8.name()
-            );
-            String encodedVal = java.net.URLEncoder.encode(
-                decodedVal,
-                java.nio.charset.StandardCharsets.UTF_8.name()
-            );
-            serviceParam = "&mucName=" + encodedVal;
-        } catch (Exception e) {
-            // Ignore parsing errors and let validation handle fallbacks
-        }
-    } else if (referrer.contains("roomJID=")) {
-        int idx = referrer.indexOf("roomJID=");
-        int endIdx = referrer.indexOf("&", idx);
-        if (endIdx == -1) {
-            endIdx = referrer.indexOf("#", idx);
-        }
-
-        String val = endIdx != -1
-            ? referrer.substring(idx + 8, endIdx)
-            : referrer.substring(idx + 8);
-
-        try {
-            val = java.net.URLDecoder.decode(
-                val,
-                java.nio.charset.StandardCharsets.UTF_8.name()
-            );
-
-            org.xmpp.packet.JID jid = new org.xmpp.packet.JID(val);
-
-            serviceParam = "&mucName=" +
-                java.net.URLEncoder.encode(
-                    jid.getDomain(),
-                    java.nio.charset.StandardCharsets.UTF_8.name()
+        if ((val = extractParam.apply(referrer, "mucname")) != null) {
+            try {
+                String decodedVal = URLDecoder.decode(
+                    val,
+                    UTF_8.name()
                 );
-        } catch (Exception e) {
-            // Ignore parsing errors and let validation handle fallbacks
+
+                String encodedVal = URLEncoder.encode(
+                    decodedVal,
+                    UTF_8.name()
+                );
+
+                serviceParam = "&mucName=" + encodedVal;
+            } catch (Exception e) {
+                // Ignore parsing errors and let validation handle fallbacks
+            }
+        } else if ((val = extractParam.apply(referrer, "mucName")) != null) {
+            try {
+                String decodedVal = URLDecoder.decode(
+                    val,
+                    UTF_8.name()
+                );
+
+                String encodedVal = URLEncoder.encode(
+                    decodedVal,
+                    UTF_8.name()
+                );
+
+                serviceParam = "&mucName=" + encodedVal;
+            } catch (Exception e) {
+                // Ignore parsing errors and let validation handle fallbacks
+            }
+        } else if ((val = extractParam.apply(referrer, "roomJID")) != null) {
+            try {
+                val = URLDecoder.decode(
+                    val,
+                    UTF_8.name()
+                );
+
+                org.xmpp.packet.JID jid = new org.xmpp.packet.JID(val);
+
+                serviceParam = "&mucName=" +
+                    URLEncoder.encode(
+                        jid.getDomain(),
+                        UTF_8.name()
+                    );
+            } catch (Exception e) {
+                // Ignore parsing errors and let validation handle fallbacks
+            }
         }
     }
-}
-    // Redirect to muc-room-edit-form and set that a room will be created, forwarding the active service parameter if found
-    response.sendRedirect("muc-room-edit-form.jsp?create=true" + serviceParam);
+
+    response.sendRedirect(
+        "muc-room-edit-form.jsp?create=true" + serviceParam
+    );
 %>
 

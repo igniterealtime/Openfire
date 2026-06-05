@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -970,7 +970,7 @@ public class MUCPersistenceManager {
                 if (reloadLimit != null) {
                     // if the property is defined, but not numeric, default to 2 (days)
                     int reloadLimitDays = JiveGlobals.getIntProperty(MUC_HISTORY_RELOAD_LIMIT, 2);
-                    Log.warn("MUC history reload limit set to " + reloadLimitDays + " days");
+                    Log.info("MUC history reload limit for room '{}' set to {} days", room.getJID(), reloadLimitDays);
                     from = System.currentTimeMillis() - (BigInteger.valueOf(86400000).multiply(BigInteger.valueOf(reloadLimitDays))).longValue();
                 }
 

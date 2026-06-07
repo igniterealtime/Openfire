@@ -255,6 +255,7 @@ The migration tool uses multiple `ClusterManager` methods to detect unsafe clust
 **Migration blocked when**:
 1. `clusteringEnabled && !clusteringStarted` — clustering configured but not yet running (race condition risk: other nodes might be starting simultaneously)
 2. `clusteringStarted && nodeCount > 1` — multiple nodes active in cluster
+3. `!isSecurityPropertiesPersistable()` — `conf/security.xml` cannot be loaded or written (missing, empty, corrupt, or not writable), so the freshly generated PBKDF2 salt and the `kdf=pbkdf2` flag could not be persisted and would be lost on the next restart, leaving the re-encrypted data unreadable (OF-3305)
 
 **Migration allowed when**:
 1. `!clusteringAvailable` — Hazelcast plugin not installed, clustering impossible

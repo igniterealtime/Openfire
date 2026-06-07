@@ -169,6 +169,17 @@ public class BlowfishMigrationServlet extends HttpServlet {
                 return;
             }
 
+            // Block if security.xml cannot be persisted. The migration must store a new PBKDF2 salt
+            // and the kdf=pbkdf2 flag in conf/security.xml; if those writes are silently discarded
+            // (security.xml missing, empty, corrupt or not writable), the re-encrypted data becomes
+            // unrecoverable after a restart. Fail fast here, before any database changes. (OF-3305)
+            if (!JiveGlobals.isSecurityPropertiesPersistable()) {
+                request.getSession().setAttribute("errorMessage",
+                        "security.blowfish.migration.error.security-xml-not-writable");
+                response.sendRedirect("security-blowfish-migration.jsp");
+                return;
+            }
+
             try {
                 // Perform migration
                 MigrationResult result = migrateBlowfishToPBKDF2();
@@ -255,6 +266,16 @@ public class BlowfishMigrationServlet extends HttpServlet {
         if (!ENCRYPTION_ALGORITHM_BLOWFISH.equalsIgnoreCase(encryptionAlgorithm)) {
             throw new IllegalStateException("Encryption algorithm is " + encryptionAlgorithm +
                     ", not Blowfish. Migration only applies to Blowfish.");
+        }
+
+        // Defence in depth: refuse to proceed if security.xml cannot be persisted, so the PBKDF2
+        // salt and KDF flag this migration generates cannot be silently lost. doPost() and
+        // migrateXMLPropertiesFromSHA1ToPBKDF2() also check this; the check here keeps the method
+        // self-protecting regardless of how it is reached. (OF-3305)
+        if (!JiveGlobals.isSecurityPropertiesPersistable()) {
+            throw new IllegalStateException("Cannot migrate: conf/security.xml is not loaded or not writable, "
+                    + "so the new PBKDF2 salt and KDF setting cannot be persisted. "
+                    + "Repair conf/security.xml before migrating.");
         }
 
         Log.info("Starting Blowfish migration from SHA1 to PBKDF2...");
@@ -360,6 +381,13 @@ public class BlowfishMigrationServlet extends HttpServlet {
             // 8. Update security.xml to switch KDF to PBKDF2
             // This only updates the local node's security.xml
             // In clustered deployments, admin must manually sync to other nodes
+            //
+            // Known limitation (OF-3305): persistability was verified before the migration, but this
+            // KDF write happens after the database commit. If security.xml became unwritable in that
+            // narrow window (e.g. conf/ remounted read-only, or the disk filled), this save fails and
+            // is only logged. The salt was already persisted earlier (during setKey), so this state is
+            // recoverable by setting encrypt.blowfish.kdf=pbkdf2 in security.xml by hand. Surfacing this
+            // failure properly is tracked as a follow-up (make security-critical saves report failure).
             JiveGlobals.setBlowfishKdf(JiveGlobals.BLOWFISH_KDF_PBKDF2);
             Log.info("Updated security.xml: encrypt.blowfish.kdf=pbkdf2");
 

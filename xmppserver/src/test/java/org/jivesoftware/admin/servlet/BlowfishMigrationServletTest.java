@@ -37,6 +37,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -403,14 +404,16 @@ public class BlowfishMigrationServletTest {
     // ========== Clustering Tests ==========
 
     /**
-     * Test doPost() allows migration when clustering is not available.
-     * If the Hazelcast plugin isn't installed, clustering is impossible and migration is safe.
+     * Test doPost() does not block on clustering grounds when clustering is not available.
+     * If the Hazelcast plugin isn't installed, clustering is impossible and the clustering gate passes.
      *
      * This test verifies that when ClusterManager.isClusteringAvailable() returns false,
-     * the servlet does NOT block migration due to clustering concerns.
+     * the servlet does NOT block due to clustering concerns. (In the unit-test environment the
+     * migration then stops at the security.xml persistability gate, so this asserts only the
+     * clustering gate.)
      */
     @Test
-    public void testDoPost_ClusteringNotAvailable_AllowsMigration() throws Exception {
+    public void testDoPost_ClusteringNotAvailable_DoesNotBlockOnClustering() throws Exception {
         try (MockedStatic<ClusterManager> clusterManagerMock = mockStatic(ClusterManager.class)) {
             // Setup: Clustering plugin not installed
             clusterManagerMock.when(ClusterManager::isClusteringAvailable).thenReturn(false);
@@ -510,11 +513,12 @@ public class BlowfishMigrationServletTest {
     }
 
     /**
-     * Test doPost() allows migration when clustering is started with only one node.
-     * Single-node cluster is safe for migration.
+     * Test doPost() does not block on clustering grounds when clustering is started with only one node.
+     * A single-node cluster is safe for migration. (In the unit-test environment the migration then
+     * stops at the security.xml persistability gate, so this asserts only the clustering gate.)
      */
     @Test
-    public void testDoPost_ClusteringStartedWithSingleNode_AllowsMigration() throws Exception {
+    public void testDoPost_ClusteringStartedWithSingleNode_DoesNotBlockOnClustering() throws Exception {
         try (MockedStatic<ClusterManager> clusterManagerMock = mockStatic(ClusterManager.class)) {
             // Setup: Clustering active with only 1 node (this node only)
             clusterManagerMock.when(ClusterManager::isClusteringAvailable).thenReturn(true);
@@ -569,5 +573,64 @@ public class BlowfishMigrationServletTest {
             verify(request).setAttribute("clusterNodeCount", 0);
             verify(requestDispatcher).forward(request, response);
         }
+    }
+
+    // ========== security.xml persistability Tests (OF-3305) ==========
+
+    /**
+     * doPost() must block migration and report a clear error when security.xml cannot be persisted,
+     * before any database changes (OF-3305). In the unit-test environment there is no conf/security.xml,
+     * so security properties are a non-persisting dummy and the migration must not proceed.
+     */
+    @Test
+    public void should_blockMigrationAndReportError_when_securityXmlNotPersistable() throws Exception {
+        try (MockedStatic<ClusterManager> clusterManagerMock = mockStatic(ClusterManager.class)) {
+            // Clustering not available so the clustering gates pass and we reach the persistability gate
+            clusterManagerMock.when(ClusterManager::isClusteringAvailable).thenReturn(false);
+            clusterManagerMock.when(ClusterManager::isClusteringEnabled).thenReturn(false);
+            clusterManagerMock.when(ClusterManager::isClusteringStarted).thenReturn(false);
+
+            // Precondition: security.xml is not persistable in the test environment
+            assertFalse(JiveGlobals.isSecurityPropertiesPersistable(),
+                    "Test precondition: security.xml should not be persistable in the test environment");
+
+            // Valid CSRF and all backup confirmations so the earlier gates pass
+            String csrfToken = "valid-token";
+            when(request.getParameter("csrf")).thenReturn(csrfToken);
+            when(request.getCookies()).thenReturn(new Cookie[]{new Cookie("csrf", csrfToken)});
+            when(request.getParameter("action")).thenReturn("migrate");
+            when(request.getParameter("dbBackup")).thenReturn("true");
+            when(request.getParameter("securityBackup")).thenReturn("true");
+            when(request.getParameter("openfireBackup")).thenReturn("true");
+
+            // Execute
+            servlet.doPost(request, response);
+
+            // Verify: migration blocked with the dedicated error, no success, and a redirect
+            verify(session).setAttribute("errorMessage",
+                    "security.blowfish.migration.error.security-xml-not-writable");
+            verify(session, never()).setAttribute(eq("successMessage"), anyString());
+            verify(response).sendRedirect("security-blowfish-migration.jsp");
+        }
+    }
+
+    /**
+     * The migration API itself must refuse to run (throwing, before any database change) when
+     * security.xml is not persistable, so a salt/KDF that cannot be stored is never used to
+     * re-encrypt data (OF-3305).
+     */
+    @Test
+    public void should_throwWithSecurityXmlMessage_when_migratingWhileNotPersistable() {
+        // Precondition: security.xml is not persistable in the test environment
+        assertFalse(JiveGlobals.isSecurityPropertiesPersistable(),
+                "Test precondition: security.xml should not be persistable in the test environment");
+
+        // Ensure the migration preconditions pass (Blowfish algorithm by default; force SHA1 KDF)
+        JiveGlobals.setBlowfishKdf(JiveGlobals.BLOWFISH_KDF_SHA1);
+
+        IllegalStateException ex = assertThrows(IllegalStateException.class,
+                JiveGlobals::migrateXMLPropertiesFromSHA1ToPBKDF2);
+        assertTrue(ex.getMessage().toLowerCase().contains("security.xml"),
+                "Error should explain that security.xml cannot be persisted; was: " + ex.getMessage());
     }
 }

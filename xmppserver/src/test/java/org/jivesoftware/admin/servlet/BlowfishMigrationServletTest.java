@@ -583,7 +583,7 @@ public class BlowfishMigrationServletTest {
      * so security properties are a non-persisting dummy and the migration must not proceed.
      */
     @Test
-    public void should_blockMigrationAndReportError_when_securityXmlNotPersistable() throws Exception {
+    public void testDoPost_SecurityXmlNotPersistable_BlocksMigration() throws Exception {
         try (MockedStatic<ClusterManager> clusterManagerMock = mockStatic(ClusterManager.class)) {
             // Clustering not available so the clustering gates pass and we reach the persistability gate
             clusterManagerMock.when(ClusterManager::isClusteringAvailable).thenReturn(false);
@@ -620,7 +620,7 @@ public class BlowfishMigrationServletTest {
      * re-encrypt data (OF-3305).
      */
     @Test
-    public void should_throwWithSecurityXmlMessage_when_migratingWhileNotPersistable() {
+    public void testMigrateXmlProperties_SecurityXmlNotPersistable_Throws() {
         // Precondition: security.xml is not persistable in the test environment
         assertFalse(JiveGlobals.isSecurityPropertiesPersistable(),
                 "Test precondition: security.xml should not be persistable in the test environment");

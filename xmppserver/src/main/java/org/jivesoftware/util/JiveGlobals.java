@@ -1191,6 +1191,10 @@ public class JiveGlobals {
             byte[] saltBytes = new byte[32];
             new java.security.SecureRandom().nextBytes(saltBytes);
             salt = Base64.getEncoder().encodeToString(saltBytes);
+            // The setProperty result is intentionally not checked: a failed save is logged by
+            // XMLProperties, and the only caller that requires durability (the SHA1-to-PBKDF2 migration)
+            // gates on isSecurityPropertiesPersistable() up front. Do not rely on this save succeeding
+            // from a new call site without that guard. (OF-3305)
             securityProperties.setProperty(BLOWFISH_SALT, salt);
             Log.info("Generated new Blowfish salt for PBKDF2 key derivation");
         }
@@ -1226,6 +1230,9 @@ public class JiveGlobals {
             loadSecurityProperties();
         }
 
+        // The setProperty results below are intentionally not checked: failures are logged by
+        // XMLProperties, and the SHA1-to-PBKDF2 migration gates on isSecurityPropertiesPersistable()
+        // before reaching here. Do not rely on these saves from a new call site without that guard.
         if (BLOWFISH_KDF_PBKDF2.equalsIgnoreCase(kdf)) {
             securityProperties.setProperty(BLOWFISH_KDF, BLOWFISH_KDF_PBKDF2);
             Log.info("Blowfish KDF set to PBKDF2-HMAC-SHA512");
@@ -1236,6 +1243,27 @@ public class JiveGlobals {
 
         // Reinitialise the encryptor cache so new properties use the updated KDF immediately
         reinitialisePropertyEncryptor();
+    }
+
+    /**
+     * Determines whether the security configuration (conf/security.xml) can be persisted to disk.
+     *
+     * When security.xml cannot be loaded (it is missing, empty, corrupt or not writable), JiveGlobals
+     * falls back to a non-persisting, in-memory-only properties object. Any change written to it (such
+     * as the Blowfish PBKDF2 salt or KDF setting) is logged as an error and then silently lost on the
+     * next restart. Operations that depend on such state surviving a restart (notably the Blowfish
+     * SHA1-to-PBKDF2 migration) must verify this before making any irreversible change.
+     *
+     * This reflects the backing established when security.xml was loaded; it is not a live re-check of
+     * filesystem writability (the file-backed constructor verifies writability at load time).
+     *
+     * @return {@code true} if security properties are backed by a file, otherwise {@code false}
+     */
+    public static boolean isSecurityPropertiesPersistable() {
+        if (securityProperties == null) {
+            loadSecurityProperties();
+        }
+        return securityProperties != null && securityProperties.isPersistable();
     }
 
     /**
@@ -1267,6 +1295,17 @@ public class JiveGlobals {
         String currentKdf = getBlowfishKdf();
         if (BLOWFISH_KDF_PBKDF2.equalsIgnoreCase(currentKdf)) {
             throw new IllegalStateException("Cannot migrate: already using PBKDF2");
+        }
+
+        // Refuse to migrate if security.xml cannot be persisted. The migration derives the PBKDF2 key
+        // from a freshly generated salt and records that salt (and the kdf=pbkdf2 flag) in security.xml.
+        // If those writes are silently discarded (security.xml missing, empty, corrupt or not writable),
+        // the salt is lost on the next restart and the re-encrypted data becomes permanently unreadable.
+        // Fail fast here, before any key derivation or database change. (OF-3305)
+        if (!isSecurityPropertiesPersistable()) {
+            throw new IllegalStateException("Cannot migrate: conf/security.xml is not loaded or not writable, "
+                    + "so the new PBKDF2 salt and KDF setting cannot be persisted. "
+                    + "Repair conf/security.xml (ensure it exists, is valid XML, and is writable) before migrating.");
         }
 
         // 2. Get the master encryption key
@@ -1582,7 +1621,7 @@ public class JiveGlobals {
                     }
                 }
                 catch (IOException ioe) {
-                    Log.error("Unable to load default security properties from: {}{}{}", home, File.separator, getConfigName(), ioe);
+                    Log.error("Unable to load security properties from: {}", getSecurityConfigLocation(), ioe);
                     failedLoading = true;
                 }
             }

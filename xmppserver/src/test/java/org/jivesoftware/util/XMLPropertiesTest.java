@@ -20,9 +20,12 @@ import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.Objects;
@@ -568,5 +571,32 @@ public class XMLPropertiesTest {
                 System.clearProperty("openfire.xmlproperties.encryption.autoupgrade");
             }
         }
+    }
+
+    /**
+     * A stream-backed (non-persisted) instance is not backed by a file, so it cannot save changes.
+     * The Blowfish SHA1-to-PBKDF2 migration guard (OF-3305) relies on this to detect an unwritable
+     * security.xml before re-encrypting any data.
+     */
+    @Test
+    public void testIsPersistable_NotFileBacked() throws Exception {
+        XMLProperties props = XMLProperties.getNonPersistedInstance();
+
+        assertFalse(props.isPersistable(),
+                "A non-persisted (stream-backed) instance must report that it cannot be persisted");
+    }
+
+    /**
+     * A file-backed instance can save changes and must report that it is persistable.
+     */
+    @Test
+    public void testIsPersistable_FileBacked(@TempDir Path tempDir) throws Exception {
+        Path file = tempDir.resolve("security.xml");
+        Files.writeString(file, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<security/>\n", StandardCharsets.UTF_8);
+
+        XMLProperties props = new XMLProperties(file);
+
+        assertTrue(props.isPersistable(),
+                "A file-backed instance must report that it can be persisted");
     }
 }

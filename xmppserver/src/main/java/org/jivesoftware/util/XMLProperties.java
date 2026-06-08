@@ -174,6 +174,23 @@ public class XMLProperties {
     }
 
     /**
+     * Determines whether this instance is backed by a file and can therefore persist changes.
+     *
+     * Instances created from an input stream (see {@link #getNonPersistedInstance()}) are not backed
+     * by a file and silently discard any attempt to save (see {@link #saveProperties()}). Callers that
+     * must guarantee a change is durable should check this before writing.
+     *
+     * This reflects whether a backing file was established when the instance was constructed; it is not
+     * a live re-check of filesystem writability (the file-backed constructor verifies readability and
+     * writability at load time, falling back to a non-persisted instance otherwise).
+     *
+     * @return {@code true} if this instance is backed by a file, otherwise {@code false}
+     */
+    public boolean isPersistable() {
+        return file != null;
+    }
+
+    /**
      * Returns the value of the specified property.
      *
      * @param name the name of the property to get.

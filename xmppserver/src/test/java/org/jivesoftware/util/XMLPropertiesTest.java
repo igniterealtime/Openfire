@@ -579,7 +579,7 @@ public class XMLPropertiesTest {
      * security.xml before re-encrypting any data.
      */
     @Test
-    public void should_returnFalseFromIsPersistable_when_instanceIsNotFileBacked() throws Exception {
+    public void testIsPersistable_NotFileBacked() throws Exception {
         XMLProperties props = XMLProperties.getNonPersistedInstance();
 
         assertFalse(props.isPersistable(),
@@ -590,7 +590,7 @@ public class XMLPropertiesTest {
      * A file-backed instance can save changes and must report that it is persistable.
      */
     @Test
-    public void should_returnTrueFromIsPersistable_when_instanceIsFileBacked(@TempDir Path tempDir) throws Exception {
+    public void testIsPersistable_FileBacked(@TempDir Path tempDir) throws Exception {
         Path file = tempDir.resolve("security.xml");
         Files.writeString(file, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<security/>\n", StandardCharsets.UTF_8);
 

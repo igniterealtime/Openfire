@@ -247,10 +247,10 @@ public class SASLAuthenticationTest {
         when(clientSession.isAuthenticated()).thenReturn(true);
         
         // Execute
-        SASLAuthentication.addSASLMechanisms(features, clientSession);
-        
+        final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(clientSession);
+
         // Verify
-        assertTrue(features.elements().isEmpty(), 
+        assertTrue(mechanisms.isEmpty(),
             "No SASL mechanisms should be added for authenticated sessions");
     }
 
@@ -265,14 +265,13 @@ public class SASLAuthenticationTest {
         try {
 
             // Execute
-            SASLAuthentication.addSASLMechanisms(features, clientSession);
+            final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(clientSession);
 
             // Verify
-            List<Element> mechanisms = features.elements();
             assertFalse(mechanisms.isEmpty(), "SASL mechanisms should be added");
 
-            // Should have both SASL and SASL2 mechanisms elements
-            assertEquals(1, mechanisms.size(), "Should have both SASL and SASL2 mechanisms");
+            // Should have no SASL2 mechanisms elements
+            assertEquals(1, mechanisms.size(), "Should have no SASL2 mechanisms");
 
             // Verify both namespaces are present without assuming order
             Set<String> namespaces = mechanisms.stream()
@@ -294,10 +293,9 @@ public class SASLAuthenticationTest {
         when(clientSession.isAuthenticated()).thenReturn(false);
 
         // Execute
-        SASLAuthentication.addSASLMechanisms(features, clientSession);
+        final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(clientSession);
 
         // Verify
-        List<Element> mechanisms = features.elements();
         assertFalse(mechanisms.isEmpty(), "SASL mechanisms should be added");
 
         // Should have both SASL and SASL2 mechanisms elements
@@ -319,10 +317,9 @@ public class SASLAuthenticationTest {
         when(serverSession.isAuthenticated()).thenReturn(false);
         
         // Execute
-        SASLAuthentication.addSASLMechanisms(features, serverSession);
+        final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(serverSession);
 
         // Verify
-        List<Element> mechanisms = features.elements();
         assertFalse(mechanisms.isEmpty(), "SASL mechanisms should be added");
 
         // Should have both SASL and SASL2 mechanisms elements
@@ -345,14 +342,14 @@ public class SASLAuthenticationTest {
         when(clientSession.isAuthenticated()).thenReturn(false);
         
         // Execute
-        SASLAuthentication.addSASLMechanisms(featuresList, clientSession);
+        final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(clientSession);
         
         // Verify
-        assertEquals(2, featuresList.size(),
+        assertEquals(2, mechanisms.size(),
             "Should add both SASL and SASL2 mechanisms to list");
         
         // Verify both namespaces are present without assuming order
-        Set<String> namespaces = featuresList.stream()
+        Set<String> namespaces = mechanisms.stream()
             .map(Element::getNamespaceURI)
             .collect(Collectors.toSet());
         assertTrue(namespaces.contains("urn:ietf:params:xml:ns:xmpp-sasl"),
@@ -368,10 +365,10 @@ public class SASLAuthenticationTest {
         when(unknownSession.isAuthenticated()).thenReturn(false);
         
         // Execute
-        SASLAuthentication.addSASLMechanisms(features, unknownSession);
+        final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(clientSession);
         
         // Verify
-        assertTrue(features.elements().isEmpty(),
+        assertTrue(mechanisms.isEmpty(),
             "Unknown session types should not get any mechanisms");
     }
 

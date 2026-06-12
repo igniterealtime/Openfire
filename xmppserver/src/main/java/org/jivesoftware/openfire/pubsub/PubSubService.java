@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -251,11 +251,11 @@ public interface PubSubService
     void presenceSubscriptionNotRequired(Node node, JID user);
 
     /**
-     * Returns true if a user may have more than one subscription with the node. When
+     * Returns true if a literal subscription JID value may have more than one subscription with a node. When
      * multiple subscriptions is enabled each subscription request, event notification and
      * unsubscription request should include a {@code subid} attribute.
      *
-     * @return true if a user may have more than one subscription with the node.
+     * @return true if a literal subscription JID value may have more than one subscription with a node.
      */
     boolean isMultipleSubscriptionsEnabled();
 

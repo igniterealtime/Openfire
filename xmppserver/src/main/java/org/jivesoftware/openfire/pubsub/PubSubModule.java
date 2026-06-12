@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,11 +108,11 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
      * Manager that keeps the list of ad-hoc commands and processing command requests.
      */
     private final AdHocCommandManager manager;
-    
+
     /**
-     * Flag that indicates if a user may have more than one subscription with the node. When multiple
-     * subscriptions is enabled each subscription request, event notification and unsubscription request
-     * should include a subid attribute.
+     * Flag that indicates if a literal subscription JID value may have more than one subscription
+     * with a node. When multiple subscriptions is enabled each subscription request, event
+     * notification and unsubscription request should include a subid attribute.
      */
     private boolean multipleSubscriptionsEnabled = true;
 
@@ -635,7 +635,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             // Node owners may manage subscriptions.
             features.add("http://jabber.org/protocol/pubsub#manage-subscriptions");
             if (isMultipleSubscriptionsEnabled()) {
-                // A single entity may subscribe to a node multiple times
+                // A single literal subscription JID value may subscribe to a node multiple times
                 features.add( "http://jabber.org/protocol/pubsub#multi-subscribe" );
             }
             // The outcast affiliation is supported

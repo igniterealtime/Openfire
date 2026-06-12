@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -711,13 +711,11 @@ public class PubSubEngine
             }
         }
 
-        // If leaf node does not support multiple subscriptions then check whether subscriber is
-        // creating another subscription or not
+        // If leaf node does not support multiple subscriptions then check whether the same subscription JID is already subscribed.
         if (!node.isCollectionNode() && !node.isMultipleSubscriptionsEnabled()) {
             NodeSubscription existingSubscription = node.getSubscription(subscriberJID);
             if (existingSubscription != null) {
-                // User is trying to create another subscription so
-                // return current subscription state
+                // The same subscription JID is already subscribed, so return current subscription state.
                 existingSubscription.sendSubscriptionState(iq);
                 return;
             }
@@ -735,25 +733,23 @@ public class PubSubEngine
                     }
                 }
             }
-            if (nodeAffiliate != null) {
-                for (NodeSubscription subscription : nodeAffiliate.getSubscriptions()) {
-                    if (isNodeType) {
-                        // User is requesting a subscription of type "nodes"
-                        if (NodeSubscription.Type.nodes == subscription.getType()) {
-                            // Cannot have 2 subscriptions of the same type. Return conflict error
-                            sendErrorPacket(iq, PacketError.Condition.conflict, null);
-                            return;
-                        }
+            for (NodeSubscription subscription : node.getSubscriptionsByJID(subscriberJID)) {
+                if (isNodeType) {
+                    // User is requesting a subscription of type "nodes"
+                    if (NodeSubscription.Type.nodes == subscription.getType()) {
+                        // Cannot have 2 subscriptions of the same type for the same subscription JID. Return conflict error
+                        sendErrorPacket(iq, PacketError.Condition.conflict, null);
+                        return;
                     }
-                    else if (!node.isMultipleSubscriptionsEnabled()) {
-                        // User is requesting a subscription of type "items" and
-                        // multiple subscriptions is not allowed
-                        if (NodeSubscription.Type.items == subscription.getType()) {
-                            // User is trying to create another subscription so
-                            // return current subscription state
-                            subscription.sendSubscriptionState(iq);
-                            return;
-                        }
+                }
+                else if (!node.isMultipleSubscriptionsEnabled()) {
+                    // User is requesting a subscription of type "items" and
+                    // multiple subscriptions for the same subscription JID is not allowed
+                    if (NodeSubscription.Type.items == subscription.getType()) {
+                        // User is trying to create another subscription so
+                        // return current subscription state
+                        subscription.sendSubscriptionState(iq);
+                        return;
                     }
                 }
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,22 +169,24 @@ public abstract class Node implements Cacheable, Externalizable {
      * whitelist then this collection acts as the white list (unless user is an outcast)
      */
     protected Collection<NodeAffiliate> affiliates = new CopyOnWriteArrayList<>();
+
     /**
-     * Map that contains the current subscriptions to the node. A user may have more than one
-     * subscription. Each subscription is uniquely identified by its ID.
+     * Map that contains the current subscriptions to the node. Each subscription is uniquely
+     * identified by its ID.
+     *
      * Key: Subscription ID, Value: the subscription.
      */
-    protected Map<String, NodeSubscription> subscriptionsByID =
-            new ConcurrentHashMap<>();
+    protected Map<String, NodeSubscription> subscriptionsByID = new ConcurrentHashMap<>();
+
     /**
-     * Map that contains the current subscriptions to the node. This map should be used only
-     * when node is not configured to allow multiple subscriptions. When multiple subscriptions
-     * is not allowed the subscriptions can be searched by the subscriber JID. Otherwise searches
-     * should be done using the subscription ID.
-     * Key: Subscriber full JID, Value: the subscription.
+     * Map that contains the current subscriptions to the node by exact subscription JID. This
+     * map can resolve at most one subscription per literal JID value. As a result, callers must
+     * use the subscription ID when {@link #isMultipleSubscriptionsEnabled()} is true, as that
+     * allows multiple subscriptions for the same literal JID value.
+     *
+     * Key: Subscription JID, Value: the subscription.
      */
-    protected Map<String, NodeSubscription> subscriptionsByJID =
-            new ConcurrentHashMap<>();
+    protected Map<String, NodeSubscription> subscriptionsByJID = new ConcurrentHashMap<>();
 
     /**
      * A transient reference to the service that this node belongs to. Note that this value is lazily initialized in
@@ -407,12 +409,11 @@ public abstract class Node implements Cacheable, Externalizable {
     }
 
     /**
-     * Returns the list of subscriptions owned by the specified user. The subscription owner
-     * may have more than one subscription based on {@link #isMultipleSubscriptionsEnabled()}.
-     * Each subscription may have a different subscription JID if the owner wants to receive
-     * notifications in different resources (or even JIDs).
+     * Returns the list of subscriptions owned by the specified user. The returned subscriptions
+     * can target different subscription JID values. When multiple subscriptions are enabled,
+     * more than one subscription can additionally exist for the same literal subscription JID.
      *
-     * @param owner the owner of the subscriptions.
+     * @param owner the owner of the subscriptions. This is typically a bare JID.
      * @return the list of subscriptions owned by the specified user.
      */
     public Collection<NodeSubscription> getSubscriptions(JID owner) {
@@ -1170,12 +1171,12 @@ public abstract class Node implements Cacheable, Externalizable {
     }
 
     /**
-     * Returns true if a user may have more than one subscription with the node. When
-     * multiple subscriptions is enabled each subscription request, event notification and
-     * unsubscription request should include a {@code subid} attribute. By default multiple
+     * Returns true if a literal subscription JID value may have more than one subscription with
+     * the node. When multiple subscriptions is enabled each subscription request, event notification
+     * and unsubscription request should include a {@code subid} attribute. By default multiple
      * subscriptions is enabled.
      *
-     * @return true if a user may have more than one subscription with the node.
+     * @return true if a literal subscription JID value may have more than one subscription with the node.
      */
     public boolean isMultipleSubscriptionsEnabled() {
         return getService().isMultipleSubscriptionsEnabled();
@@ -1884,25 +1885,46 @@ public abstract class Node implements Cacheable, Externalizable {
     }
 
     /**
-     * Returns the subscription whose subscription JID matches the specified JID or {@code null}
-     * if none was found. Accessing subscriptions by subscription JID and not by subscription ID
-     * is only possible when the node does not allow multiple subscriptions from the same entity.
-     * If the node allows multiple subscriptions and this message is sent then an
-     * IllegalStateException exception is going to be thrown.
+     * Returns all subscriptions whose subscription JID exactly matches the specified JID.
+     *
+     * @param subscriberJID the exact subscription JID.
+     * @return the subscriptions whose subscription JID exactly matches the specified JID.
+     */
+    public Collection<NodeSubscription> getSubscriptionsByJID(JID subscriberJID)
+    {
+        final Collection<NodeSubscription> subscriptions = new ArrayList<>();
+        for (final NodeSubscription subscription : subscriptionsByID.values()) {
+            if (subscriberJID.equals(subscription.getJID())) {
+                subscriptions.add(subscription);
+            }
+        }
+        getLogger().trace("Got {} subscription(s) for subscription JID '{}'", subscriptions.size(), subscriberJID);
+        return subscriptions;
+    }
+
+    /**
+     * Returns the subscription whose subscription JID exactly matches the specified JID or
+     * {@code null} if none was found.
+     *
+     * Accessing subscriptions by subscription JID and not by subscription ID is only possible when the node does not
+     * allow multiple subscriptions for the same literal subscription JID value. If the node allows multiple
+     * subscriptions and more than one subscription exists for the specified subscription JID, then an
+     * IllegalStateException exception is thrown.
      *
      * @param subscriberJID the JID of the entity that receives event notifications.
      * @return the subscription whose subscription JID matches the specified JID or {@code null}
      *         if none was found.
-     * @throws IllegalStateException If this message was used when the node supports multiple
-     *         subscriptions.
+     * @throws IllegalStateException If this method was used when more than one subscription exists
+     *         for the specified subscription JID.
      */
     public NodeSubscription getSubscription(JID subscriberJID) {
-        // Check that node does not support multiple subscriptions
-        if (isMultipleSubscriptionsEnabled() && (getSubscriptions(subscriberJID).size() > 1)) {
+        // Check that the subscription JID does not have multiple subscriptions.
+        final Collection<NodeSubscription> matchingSubscriptions = getSubscriptionsByJID(subscriberJID);
+        if (isMultipleSubscriptionsEnabled() && matchingSubscriptions.size() > 1) {
             throw new IllegalStateException("Multiple subscriptions is enabled so subscriptions " +
-                    "should be retrieved using subID.");
+                "should be retrieved using subID.");
         }
-        final NodeSubscription nodeSubscription = subscriptionsByJID.get(subscriberJID.toString());
+        final NodeSubscription nodeSubscription = matchingSubscriptions.stream().findFirst().orElse(null);
         getLogger().trace("Got subscription by JID '{}': {}", subscriberJID, nodeSubscription);
         return nodeSubscription;
     }
@@ -1910,9 +1932,9 @@ public abstract class Node implements Cacheable, Externalizable {
     /**
      * Returns the subscription whose subscription ID matches the specified ID or {@code null}
      * if none was found. Accessing subscriptions by subscription ID is always possible no matter
-     * if the node allows one or multiple subscriptions for the same entity. Even when users can
-     * only subscribe once to the node a subscription ID is going to be internally created though
-     * never returned to the user.
+     * if the node allows one or multiple subscriptions for the same literal subscription JID value.
+     * Even when a JID can only subscribe once to the node, a subscription ID is going to be
+     * internally created though never returned to the user.
      *
      * @param subscriptionID the ID of the subscription.
      * @return the subscription whose subscription ID matches the specified ID or {@code null}
@@ -2179,8 +2201,19 @@ public abstract class Node implements Cacheable, Externalizable {
      *        didn't provide a configuration.
      */
     public void createSubscription(IQ originalIQ, JID owner, JID subscriber,
-            boolean authorizationRequired, DataForm options) {
+                                   boolean authorizationRequired, DataForm options) {
         getLogger().trace("Create subscription for '{}' ('{}'). Authorization required: {}", owner, subscriber, authorizationRequired);
+
+        if (!isMultipleSubscriptionsEnabled()) {
+            final NodeSubscription existingSubscription = getSubscription(subscriber);
+            if (existingSubscription != null) {
+                getLogger().trace("Not creating a second subscription for '{}', because multiple subscriptions are disabled. Returning existing state instead.", subscriber);
+                if (originalIQ != null) {
+                    existingSubscription.sendSubscriptionState(originalIQ);
+                }
+                return;
+            }
+        }
 
         // Create a new affiliation if required
         if (getAffiliate(owner) == null) {
@@ -2276,11 +2309,16 @@ public abstract class Node implements Cacheable, Externalizable {
         getLogger().trace("Cancelling subscription for '{}' (state: {}). Send-to-cluster: {}", subscription.getJID(), subscription.getState(), sendToCluster);
         // Remove subscription from memory
         subscriptionsByID.remove(subscription.getID());
-        subscriptionsByJID.remove(subscription.getJID().toString());
+        if (subscriptionsByJID.get(subscription.getJID().toString()) == subscription) {
+            subscriptionsByJID.remove(subscription.getJID().toString());
+            // In multi-subscribe mode, another exact JID may still exist. If it does, keep subscriptionsByJID as useful as possible by repopulating it.
+            getSubscriptionsByJID(subscription.getJID()).stream().findFirst()
+                .ifPresent(remainingSubscription -> subscriptionsByJID.put(remainingSubscription.getJID().toString(), remainingSubscription));
+        }
         // Check if user has affiliation of type "none" and there are no more subscriptions
         NodeAffiliate affiliate = subscription.getAffiliate();
         if (affiliate != null && affiliate.getAffiliation() == NodeAffiliate.Affiliation.none &&
-                getSubscriptions(subscription.getOwner()).isEmpty()) {
+            getSubscriptions(subscription.getOwner()).isEmpty()) {
             // Remove affiliation of type "none"
             removeAffiliation(affiliate);
         }

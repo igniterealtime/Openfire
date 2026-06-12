@@ -39,7 +39,6 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.stream.Collectors;
 
 import static org.jivesoftware.openfire.muc.spi.IQOwnerHandler.parseFirstValueAsBoolean;
 
@@ -177,16 +176,6 @@ public abstract class Node implements Cacheable, Externalizable {
      * Key: Subscription ID, Value: the subscription.
      */
     protected Map<String, NodeSubscription> subscriptionsByID = new ConcurrentHashMap<>();
-
-    /**
-     * Map that contains the current subscriptions to the node by exact subscription JID. This
-     * map can resolve at most one subscription per literal JID value. As a result, callers must
-     * use the subscription ID when {@link #isMultipleSubscriptionsEnabled()} is true, as that
-     * allows multiple subscriptions for the same literal JID value.
-     *
-     * Key: Subscription JID, Value: the subscription.
-     */
-    protected Map<String, NodeSubscription> subscriptionsByJID = new ConcurrentHashMap<>();
 
     /**
      * A transient reference to the service that this node belongs to. Note that this value is lazily initialized in
@@ -438,20 +427,13 @@ public abstract class Node implements Cacheable, Externalizable {
     }
 
     /**
-     * Returns all subscriptions to the node. If multiple subscriptions are enabled,
-     * this method returns the subscriptions by {@code subId}, otherwise it returns
-     * the subscriptions by {@link JID}.
+     * Returns all subscriptions to the node.
      *
      * @return All subscriptions to the node.
      */
     public Collection<NodeSubscription> getAllSubscriptions() {
-        if (isMultipleSubscriptionsEnabled()) {
-            getLogger().trace("Got {} subscription(s)", subscriptionsByID.size());
-            return subscriptionsByID.values();
-        } else {
-            getLogger().trace("Got {} subscription(s)", subscriptionsByJID.size());
-            return subscriptionsByJID.values();
-        }
+        getLogger().trace("Got {} subscription(s)", subscriptionsByID.size());
+        return subscriptionsByID.values();
     }
 
     /**
@@ -1881,7 +1863,6 @@ public abstract class Node implements Cacheable, Externalizable {
     {
         getLogger().trace("Add subscription for '{}' (state: {}).", subscription.getJID(), subscription.getState());
         subscriptionsByID.put(subscription.getID(), subscription);
-        subscriptionsByJID.put(subscription.getJID().toString(), subscription);
     }
 
     /**
@@ -1893,7 +1874,7 @@ public abstract class Node implements Cacheable, Externalizable {
     public Collection<NodeSubscription> getSubscriptionsByJID(JID subscriberJID)
     {
         final Collection<NodeSubscription> subscriptions = new ArrayList<>();
-        for (final NodeSubscription subscription : subscriptionsByID.values()) {
+        for (final NodeSubscription subscription : subscriptionsByID.values()) { // This is now a linear scan, which is inefficient for large numbers of subscriptions. If this turns out to be a performance issue, consider using a more efficient data structure or a secondary index.
             if (subscriberJID.equals(subscription.getJID())) {
                 subscriptions.add(subscription);
             }
@@ -1907,9 +1888,15 @@ public abstract class Node implements Cacheable, Externalizable {
      * {@code null} if none was found.
      *
      * Accessing subscriptions by subscription JID and not by subscription ID is only possible when the node does not
-     * allow multiple subscriptions for the same literal subscription JID value. If the node allows multiple
-     * subscriptions and more than one subscription exists for the specified subscription JID, then an
-     * IllegalStateException exception is thrown.
+     * allow multiple subscriptions for the same literal subscription JID value. There are two conditions in which
+     * multiple subscriptions for a node can exist:
+     * <ul>
+     * <li>Collection nodes can have a subscription per {@link NodeSubscription.Type}</li>
+     * <li>The service can allow multiple subscriptions through the <tt>multi-subscribe</tt> feature</li>
+     * </ul>
+     *
+     * If the node allows multiple subscriptions and more than one subscription exists for the specified subscription
+     * JID, then an IllegalStateException exception is thrown.
      *
      * @param subscriberJID the JID of the entity that receives event notifications.
      * @return the subscription whose subscription JID matches the specified JID or {@code null}
@@ -1917,12 +1904,12 @@ public abstract class Node implements Cacheable, Externalizable {
      * @throws IllegalStateException If this method was used when more than one subscription exists
      *         for the specified subscription JID.
      */
-    public NodeSubscription getSubscription(JID subscriberJID) {
+    public NodeSubscription getSubscription(JID subscriberJID)
+    {
         // Check that the subscription JID does not have multiple subscriptions.
         final Collection<NodeSubscription> matchingSubscriptions = getSubscriptionsByJID(subscriberJID);
-        if (isMultipleSubscriptionsEnabled() && matchingSubscriptions.size() > 1) {
-            throw new IllegalStateException("Multiple subscriptions is enabled so subscriptions " +
-                "should be retrieved using subID.");
+        if (matchingSubscriptions.size() > 1) {
+            throw new IllegalStateException("Multiple subscriptions detected for subscriber '" + subscriberJID + "' of node '" + getNodeID() + "'. Subscriptions should be retrieved using subID.");
         }
         final NodeSubscription nodeSubscription = matchingSubscriptions.stream().findFirst().orElse(null);
         getLogger().trace("Got subscription by JID '{}': {}", subscriberJID, nodeSubscription);
@@ -1984,7 +1971,6 @@ public abstract class Node implements Cacheable, Externalizable {
         // Clear collections in memory (clear them after broadcast was sent)
         affiliates.clear();
         subscriptionsByID.clear();
-        subscriptionsByJID.clear();
     }
 
     /**
@@ -2105,7 +2091,7 @@ public abstract class Node implements Cacheable, Externalizable {
                 entity.addAttribute("jid", subscription.getJID().toString());
                 //entity.addAttribute("affiliation", affiliate.getAffiliation().name());
                 entity.addAttribute("subscription", subscription.getState().name());
-                if (isMultipleSubscriptionsEnabled()) {
+                if (isMultipleSubscriptionsEnabled() || isCollectionNode()) {
                     entity.addAttribute("subid", subscription.getID());
                 }
             }
@@ -2204,15 +2190,37 @@ public abstract class Node implements Cacheable, Externalizable {
                                    boolean authorizationRequired, DataForm options) {
         getLogger().trace("Create subscription for '{}' ('{}'). Authorization required: {}", owner, subscriber, authorizationRequired);
 
-        if (!isMultipleSubscriptionsEnabled()) {
-            final NodeSubscription existingSubscription = getSubscription(subscriber);
-            if (existingSubscription != null) {
+        final NodeSubscription duplicate = findDuplicate(subscriber, options);
+        if (duplicate != null)
+        {
+            if (!isMultipleSubscriptionsEnabled())
+            {
+                // Multiple subscriptions are not supported: return the current subscription state, as if the
+                // subscription was just approved (XEP-0060 §6.1.6). Note: not an error.
                 getLogger().trace("Not creating a second subscription for '{}', because multiple subscriptions are disabled. Returning existing state instead.", subscriber);
                 if (originalIQ != null) {
-                    existingSubscription.sendSubscriptionState(originalIQ);
+                    duplicate.sendSubscriptionState(originalIQ);
                 }
                 return;
             }
+
+            if (isCollectionNode())
+            {
+                // Even with multi-subscribe, a second same-type subscription to a collection node is redundant (a depth
+                // of "all" subsumes a depth of "1") and SHOULD be rejected with a conflict error (XEP-0248 §6.1.3).
+                getLogger().debug("Not creating a second subscription for '{}', because a second same-type subscription to a collection node is redundant. Returning a conflict error.", subscriber);
+                if (originalIQ != null) {
+                    final IQ response = IQ.createResultIQ(originalIQ);
+                    response.setChildElement(originalIQ.getChildElement().createCopy());
+                    response.setError(PacketError.Condition.conflict);
+                    getService().send(response);
+                }
+                // Silently ignore if this was an internal API call.
+                return;
+            }
+
+            // Leaf node with multi-subscribe enabled: additional subscriptions for the same JID are permitted and
+            // differentiated by SubID (XEP-0060 §6.1.6).
         }
 
         // Create a new affiliation if required
@@ -2239,9 +2247,7 @@ public abstract class Node implements Cacheable, Externalizable {
         }
 
         if ( subscription.isAuthorizationPending() ) {
-            final Set<NodeSubscription> existing = new HashSet<>();
-            existing.add( subscriptionsByJID.get( subscription.getJID().toString() ) ); // potentially null
-            existing.addAll( subscriptionsByID.values().stream().filter( s -> s.getJID().equals( subscription.getJID() ) ).collect( Collectors.toSet()) );
+            final Collection<NodeSubscription> existing = getSubscriptionsByJID(subscription.getJID());
             if (existing.stream().anyMatch( s -> s != null && s.isAuthorizationPending() ) ) {
                 getLogger().debug("This node already has a pending subscription for this JID ('{}'). The XEP forbids this.", subscription.getJID());
 
@@ -2309,12 +2315,7 @@ public abstract class Node implements Cacheable, Externalizable {
         getLogger().trace("Cancelling subscription for '{}' (state: {}). Send-to-cluster: {}", subscription.getJID(), subscription.getState(), sendToCluster);
         // Remove subscription from memory
         subscriptionsByID.remove(subscription.getID());
-        if (subscriptionsByJID.get(subscription.getJID().toString()) == subscription) {
-            subscriptionsByJID.remove(subscription.getJID().toString());
-            // In multi-subscribe mode, another exact JID may still exist. If it does, keep subscriptionsByJID as useful as possible by repopulating it.
-            getSubscriptionsByJID(subscription.getJID()).stream().findFirst()
-                .ifPresent(remainingSubscription -> subscriptionsByJID.put(remainingSubscription.getJID().toString(), remainingSubscription));
-        }
+
         // Check if user has affiliation of type "none" and there are no more subscriptions
         NodeAffiliate affiliate = subscription.getAffiliate();
         if (affiliate != null && affiliate.getAffiliation() == NodeAffiliate.Affiliation.none &&
@@ -2450,6 +2451,62 @@ public abstract class Node implements Cacheable, Externalizable {
             getLogger().debug("Cancel the subscription to the node is it has not been approved: {}", subscription);
             cancelSubscription(subscription);
         }
+    }
+
+    /**
+     * Finds an existing subscription that the provided subscription request duplicates, applying the type exception for
+     * collection nodes (XEP-0248 §6.1.3: one 'nodes' and one 'items' subscription may coexist for the same subscription
+     * JID).
+     *
+     * @param subscriber the JID that will receive the events from a node (distinct from the 'owner' JID of the subscription).
+     * @param optionsForm The form representing the requested subscription.
+     * @return the duplicate subscription, if any.
+     */
+    public NodeSubscription findDuplicate(final JID subscriber, final DataForm optionsForm)
+    {
+        final NodeSubscription.Type requestedType = resolveRequestedType(optionsForm);
+
+        // Detect pre-existing subscriptions for the same subscription JID. This intentionally compares the literal
+        // 'jid' of each subscription (the address that receives event notifications) and not its 'owner': distinct full
+        // JIDs sharing a bare JID may each hold their own subscription, regardless of the multi-subscribe feature
+        // (XEP-0060 §6.1.6).
+        for (final NodeSubscription existing : getSubscriptionsByJID(subscriber))
+        {
+            // On a collection node, one subscription of type "nodes" and one of type "items" may coexist for the same
+            // JID, even without multi-subscribe (XEP-0248 §6.1.3). A subscription of a different type is therefore not
+            // a duplicate.
+            if (isCollectionNode() && existing.getType() != requestedType) {
+                continue;
+            }
+            return existing;
+        }
+        return null;
+    }
+
+    /**
+     * Determine the type of the requested subscription represented by the provided form.
+     *
+     * Subscription types only apply to collection nodes (XEP-0248 §6.1): every subscription to a leaf node concerns
+     * items. For collection nodes the default type is "nodes" (XEP-0248 §6.1).
+     *
+     * @param optionsForm The form representing the requested subscription.
+     * @return The type of the requested subscription.
+     */
+    public NodeSubscription.Type resolveRequestedType(final DataForm optionsForm)
+    {
+        NodeSubscription.Type requestedType = NodeSubscription.Type.items;
+        if (this.isCollectionNode())
+        {
+            requestedType = NodeSubscription.Type.nodes;
+            if (optionsForm != null)
+            {
+                final FormField field = optionsForm.getField("pubsub#subscription_type");
+                if (field != null && !field.getValues().isEmpty() && "items".equals(field.getValues().get(0))) {
+                    requestedType = NodeSubscription.Type.items;
+                }
+            }
+        }
+        return requestedType;
     }
 
     @Override
@@ -2598,7 +2655,6 @@ public abstract class Node implements Cacheable, Externalizable {
         size += CacheSizes.sizeOfBoolean(); // subscriptionConfigurationRequired
         size += CacheSizes.sizeOfBoolean(); // subscriptionEnabled
         size += 350 * subscriptionsByID.size(); // 350 bytes per entry is a guestimate.
-        size += 350 * subscriptionsByJID.size(); // 350 bytes per entry is a guestimate.
         return size;
     }
 
@@ -2652,7 +2708,6 @@ public abstract class Node implements Cacheable, Externalizable {
         util.writeBoolean( out, subscriptionConfigurationRequired );
         util.writeBoolean( out, subscriptionEnabled );
 
-        // write out subscriptions once. When reading, use them to populate both maps.
         final Collection<NodeSubscription> subscriptions = subscriptionsByID.values();
         util.writeInt( out, subscriptions.size() );
         for ( final NodeSubscription subscription : subscriptions )
@@ -2734,7 +2789,6 @@ public abstract class Node implements Cacheable, Externalizable {
             final NodeSubscription subscription = new NodeSubscription( node, owner, jid, state, id );
 
             subscriptionsByID.put( subscription.getID(), subscription );
-            subscriptionsByJID.put( subscription.getJID().toString(), subscription );
         }
     }
 

@@ -900,11 +900,17 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
                 .filter( Node::isSendItemSubscribe )
                 .filter( node -> nodeIDs.contains( node.getUniqueIdentifier().getNodeId()) )
                 .forEach( node -> {
-                    final NodeSubscription subscription = node.getSubscription(entity);
-                    if (subscription != null && subscription.isActive()) {
-                        PublishedItem lastItem = node.getLastPublishedItem();
-                        if (lastItem != null) {
-                            subscription.sendLastPublishedItem(lastItem);
+                    final Collection<NodeSubscription> subscriptions = node.getSubscriptionsByJID(entity);
+                    final HashSet<JID> notifiedJids = new HashSet<>();
+                    final PublishedItem lastItem = node.getLastPublishedItem();
+                    if (lastItem == null) {
+                        return;
+                    }
+                    for (final NodeSubscription subscription : subscriptions) {
+                        if (subscription.canSendPublicationEvent(lastItem.getNode(), lastItem)) {
+                            if (notifiedJids.add(subscription.getJID())) { // XEP-0060 section 6.1.6: When the pubsub service generates event notifications, it SHOULD send only one event notification to an entity that has multiple subscriptions
+                                subscription.sendLastPublishedItem(lastItem);
+                            }
                         }
                     }
                 });

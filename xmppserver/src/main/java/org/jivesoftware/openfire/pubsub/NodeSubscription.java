@@ -798,7 +798,7 @@ public class NodeSubscription {
             entity.addAttribute("node", node.getUniqueIdentifier().getNodeId());
         }
         entity.addAttribute("jid", getJID().toString());
-        if (node.isMultipleSubscriptionsEnabled()) {
+        if (node.isMultipleSubscriptionsEnabled() || node.isCollectionNode()) {
             entity.addAttribute("subid", getID());
         }
         entity.addAttribute("subscription", getState().name());

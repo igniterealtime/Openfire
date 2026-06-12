@@ -12,9 +12,7 @@ import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.util.JiveGlobals;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
@@ -25,7 +23,6 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.xmpp.packet.JID;
 import org.jivesoftware.util.cache.CacheFactory;
-import org.junit.jupiter.api.BeforeAll;
 
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
@@ -58,14 +55,30 @@ public class SASLAuthenticationTest {
     // Create a real map to store session data
     private Map<String, Object> sessionDataMap;
 
+    // Store/restore variables.
+    private static List<String> originalEnabledMechanisms;
+    private static boolean originalSasl2Enabled;
+    private static boolean originalSasl2TLSRequired;
+
     @BeforeAll
     public static void setUpClass() throws Exception {
         CacheFactory.initialize();
         // Set this or I can't set anything else.
         JiveGlobals.setXMLProperty("setup", "true");
+        originalEnabledMechanisms = new ArrayList<>(SASLAuthentication.getEnabledMechanisms());
+        originalSasl2Enabled = SASLAuthentication.ENABLE_SASL2.getValue();
+        originalSasl2TLSRequired = SASLAuthentication.SASL2_REQUIRE_TLS.getValue();
         SASLAuthentication.setEnabledMechanisms(Arrays.asList("BLURDYBLOOP", "TEST-MECHANISM"));
         // Enable SASL2
         SASLAuthentication.ENABLE_SASL2.setValue(true);
+        SASLAuthentication.SASL2_REQUIRE_TLS.setValue(false);
+    }
+
+    @AfterAll
+    public static void tearDownClass() {
+        SASLAuthentication.setEnabledMechanisms(originalEnabledMechanisms);
+        SASLAuthentication.ENABLE_SASL2.setValue(originalSasl2Enabled);
+        SASLAuthentication.SASL2_REQUIRE_TLS.setValue(originalSasl2TLSRequired);
     }
 
     @BeforeEach
@@ -365,7 +378,7 @@ public class SASLAuthenticationTest {
         when(unknownSession.isAuthenticated()).thenReturn(false);
         
         // Execute
-        final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(clientSession);
+        final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(unknownSession);
         
         // Verify
         assertTrue(mechanisms.isEmpty(),

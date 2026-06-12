@@ -195,7 +195,6 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
                 final Element saslMechanisms = features.element("mechanisms");
                 if (saslMechanisms != null) {
                     ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(saslMechanisms).ifPresent(features::add);
-                    features.add(saslMechanisms);
                 }
 
                 if (ServerDialback.isEnabled()) {

@@ -141,6 +141,17 @@ public class SASLAuthentication {
         .setDefaultValue(false)
         .build();
 
+    /**
+     * Require TLS for SASL2. This is currently on by default, and means that SASL2 is not advertised in features without TLS.
+     *
+     * @see <a href="https://xmpp.org/extensions/xep-0388.html">XEP-0388: Extensible SASL Profile</a>
+     */
+    public static final SystemProperty<Boolean> SASL2_REQUIRE_TLS = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.auth.sasl2.require-tls")
+        .setDynamic(true)
+        .setDefaultValue(false)
+        .build();
+
     // http://stackoverflow.com/questions/8571501/how-to-check-whether-the-string-is-base64-encoded-or-not
     // plus an extra regex alternative to catch a single equals sign ('=', see RFC 6120 6.4.2)
     private static final Pattern BASE64_ENCODED = Pattern.compile("^(=|([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==))$");
@@ -272,12 +283,12 @@ public class SASLAuthentication {
     {
         final List<Element> features = new LinkedList<>();
         // Never list these if the session is already authenticated.
-        if (session.isAuthenticated()) return;
+        if (session.isAuthenticated()) return features;
 
         if ( session instanceof ClientSession )
         {
             features.add(getSASLMechanismsElement( (ClientSession) session, false ));
-            if (ENABLE_SASL2.getValue())
+            if (ENABLE_SASL2.getValue() && (!SASL2_REQUIRE_TLS.getValue() || session.isEncrypted()))
             {
                 features.add(getSASLMechanismsElement((ClientSession) session, true));
             }
@@ -285,7 +296,7 @@ public class SASLAuthentication {
         else if ( session instanceof LocalIncomingServerSession )
         {
             features.add(getSASLMechanismsElement( (LocalIncomingServerSession) session, false ));
-            if (ENABLE_SASL2.getValue())
+            if (ENABLE_SASL2.getValue() && (!SASL2_REQUIRE_TLS.getValue() || session.isEncrypted()))
             {
                 features.add(getSASLMechanismsElement((LocalIncomingServerSession) session, true));
             }
@@ -386,7 +397,13 @@ public class SASLAuthentication {
     // if it's true (for auth in SASL1) there's a "=" to indicate genuine empty strings.
     private static byte[] decodeData(Element doc, boolean emptyNull) throws SaslFailureException {
         // Decode any data that is provided in the client response.
-        if (doc == null) return new byte[0];
+        if (doc == null) {
+            if (emptyNull) {
+                // I think this is only for SASL1 where there is a DIGEST-MD5 SASL-IR.
+                return new byte[0];
+            }
+            return null;
+        }
         final String encoded = doc.getTextTrim();
         final byte[] decoded;
         if ( encoded == null )

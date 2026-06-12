@@ -12,7 +12,7 @@ public class Bind2CarbonsHandler implements Bind2InlineHandler {
 
     @Override
     public boolean handleElement(LocalClientSession session, Element bound, Element element) {
-        session.setMessageCarbonsEnabled(element.getName().equals("active"));
+        session.setMessageCarbonsEnabled(element.getName().equals("enable"));
         return true;
     }
 }

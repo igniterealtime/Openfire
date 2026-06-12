@@ -300,7 +300,6 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             Element saslMechanisms = features.element("mechanisms");
             if (saslMechanisms != null) {
                 ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(saslMechanisms).ifPresent(features::add);
-                features.add(saslMechanisms);
             }
             // Include Stream features
             final List<Element> specificFeatures = session.getAvailableStreamFeatures();

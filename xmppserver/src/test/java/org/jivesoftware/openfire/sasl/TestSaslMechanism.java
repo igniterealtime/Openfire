@@ -148,5 +148,6 @@ public class TestSaslMechanism {
 
     public static void unregisterTestMechanism() {
         TestSaslServerFactory.clearSaslServer();
+        Security.removeProvider("Test Provider");
     }
 }

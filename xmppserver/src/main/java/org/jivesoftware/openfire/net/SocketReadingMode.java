@@ -114,7 +114,6 @@ abstract class SocketReadingMode {
         final Element mechanisms = features.element("mechanisms");
         if (mechanisms != null) {
             ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(mechanisms).ifPresent(features::add);
-            features.add(mechanisms);
         }
         final List<Element> specificFeatures = socketReader.session.getAvailableStreamFeatures();
         if (specificFeatures != null) {

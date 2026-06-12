@@ -49,12 +49,12 @@ import static org.jivesoftware.openfire.muc.spi.IQOwnerHandler.parseFirstValueAs
  * required. In any case, the subscriber will not get event notifications until the subscription
  * is active.<p>
  *
- * Depending on the node configuration it may be possible for the same subscriber to subscribe
- * multiple times to the node. Each subscription may have a different configuration like for
- * instance different keywords. Keywords can be used as a way to filter the type of
- * {@link PublishedItem} to be notified of. When the same subscriber has subscribed multiple
- * times to the node a single notification is going to be sent to the subscriber instead of
- * sending a notification for each subscription.
+ * Depending on the node configuration it may be possible for the same subscription JID
+ * value to subscribe multiple times to the node. Each subscription may have a different
+ * configuration like for instance different keywords. Keywords can be used as a way to
+ * filter the type of {@link PublishedItem} to be notified of. When the same literal
+ * subscription JID value has subscribed multiple times to the node, a single notification
+ * is going to be sent to that JID instead of sending a notification for each subscription.
  *
  * @author Matt Tucker
  */
@@ -149,13 +149,13 @@ public class NodeSubscription {
     private boolean savedToDB = false;
 
     /**
-     * Creates a new subscription of the specified user with the node.
+     * Creates a new subscription of the specified JID with the node.
      *
      * @param node Node to which this subscription is interested in.
      * @param owner the JID of the entity that owns this subscription.
-     * @param jid the JID of the user that owns the subscription.
+     * @param jid the JID of the entity that will receive event notifications.
      * @param state the state of the subscription with the node.
-     * @param id the id the uniquely identifies this subscription within the node.
+     * @param id the id that uniquely identifies this subscription within the node.
      */
     public NodeSubscription(Node node, JID owner, JID jid, State state, String id)
     {
@@ -204,10 +204,11 @@ public class NodeSubscription {
     /**
      * Returns the JID of the entity that owns this subscription. The owner entity will have
      * a {@link NodeAffiliate} for the owner JID. The owner may have more than one subscription
-     * with the node based on what this message
-     * {@link org.jivesoftware.openfire.pubsub.Node#isMultipleSubscriptionsEnabled()}.
+     * with the node when those subscriptions use different subscription JID values. If
+     * {@link org.jivesoftware.openfire.pubsub.Node#isMultipleSubscriptionsEnabled()} is true,
+     * more than one subscription may additionally exist for the same literal subscription JID value.
      *
-     * @return he JID of the entity that owns this subscription.
+     * @return the JID of the entity that owns this subscription.
      */
     public JID getOwner() {
         return owner;
@@ -298,23 +299,20 @@ public class NodeSubscription {
     }
 
     /**
-     * The presence states for which an entity wants to receive notifications. When the owner
-     * is in any of the returned presence states then he is allowed to receive notifications.
+     * The presence states for which an entity wants to receive notifications. When the subscription JID is in any of
+     * the returned presence states then it is allowed to receive notifications.
      *
-     * @return the presence states for which an entity wants to receive notifications.
-     *         (e.g. available, away, etc.)
+     * @return the presence states for which an entity wants to receive notifications. (e.g. available, away, etc.)
      */
     public Collection<String> getPresenceStates() {
         return presenceStates;
     }
 
     /**
-     * Returns if the owner has subscribed to receive notification of new items only
-     * or of new nodes only. When subscribed to a Leaf Node then only {@code items}
-     * is available.
+     * Returns if the subscription receives notifications of new items only or of new nodes only. When subscribed to a
+     * Leaf Node then only {@code items} is available.
      *
-     * @return whether the owner has subscribed to receive notification of new items only
-     *         or of new nodes only.
+     * @return whether the subscription receives notifications of new items only or of new nodes only.
      */
     public Type getType() {
         return type;
@@ -786,9 +784,9 @@ public class NodeSubscription {
 
     /**
      * Sends the current subscription status to the user that tried to create a subscription to
-     * the node. The subscription status is sent to the subsciber after the subscription was
-     * created or if the subscriber tries to subscribe many times and the node does not support
-     * multpiple subscriptions.
+     * the node. The subscription status is sent to the subscriber after the subscription was
+     * created or if the subscriber tries to subscribe again using the same subscription JID value
+     * and the node does not support multiple subscriptions for that JID.
      *
      * @param originalRequest the IQ packet sent by the subscriber to create the subscription.
      */

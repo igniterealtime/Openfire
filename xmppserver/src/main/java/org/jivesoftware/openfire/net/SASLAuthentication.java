@@ -56,6 +56,7 @@ import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.*;
 import java.util.Base64;
+import java.util.LinkedList;
 import java.util.regex.Pattern;
 
 /**
@@ -144,8 +145,8 @@ public class SASLAuthentication {
     // plus an extra regex alternative to catch a single equals sign ('=', see RFC 6120 6.4.2)
     private static final Pattern BASE64_ENCODED = Pattern.compile("^(=|([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==))$");
 
-    private static final String SASL_NAMESPACE = "urn:ietf:params:xml:ns:xmpp-sasl";
-    private static final String SASL2_NAMESPACE = "urn:xmpp:sasl:2";
+    public static final String SASL_NAMESPACE = "urn:ietf:params:xml:ns:xmpp-sasl";
+    public static final String SASL2_NAMESPACE = "urn:xmpp:sasl:2";
 
     /**
      * Java's SaslServer does not allow for null values. This makes it hard to distinguish between an empty (initial)
@@ -217,6 +218,13 @@ public class SASLAuthentication {
         FAILURE,
         UNDEF;
 
+        /**
+         * Returns the ElementType corresponding to the given name, performing a case-insensitive lookup.
+         * Returns {@link #UNDEF} if the name is null, empty, or does not match any known element type.
+         *
+         * @param name the element name to look up (may be null or empty)
+         * @return the matching ElementType, or {@link #UNDEF} if no match is found
+         */
         public static ElementType valueOfCaseInsensitive( String name )
         {
             if ( name == null || name.isEmpty() ) {
@@ -252,11 +260,17 @@ public class SASLAuthentication {
     }
 
     /**
-     * addSASLMechanisms adds suitable mechanisms to either an Element (intended to be the features element)
-     * or a List<Element>.
+     * Returns a list of XML elements representing the SASL mechanism features that are applicable to the given session.
+     * The returned elements are suitable for inclusion in the stream features element sent to the peer.
+     * Both SASL (RFC 6120) and SASL2 (XEP-0388) feature elements may be included, depending on configuration.
+     * An empty list is returned if the session is already authenticated or if the session type is not recognized.
+     *
+     * @param session the local session for which to determine applicable SASL mechanism feature elements (cannot be null)
+     * @return a list of XML elements representing SASL mechanism features; never null, possibly empty
      */
-    public static void addSASLMechanisms( @Nonnull Element features, @Nonnull LocalSession session )
+    public static List<Element> getSASLMechanisms( @Nonnull LocalSession session )
     {
+        final List<Element> features = new LinkedList<>();
         // Never list these if the session is already authenticated.
         if (session.isAuthenticated()) return;
 
@@ -280,45 +294,24 @@ public class SASLAuthentication {
         {
             Log.debug( "Unable to determine SASL mechanisms that are applicable to session '{}'. Unrecognized session type.", session );
         }
-    }
 
-    public static void addSASLMechanisms( @Nonnull List<Element> features, @Nonnull LocalSession session )
-    {
-        // Never list these if the session is already authenticated.
-        if (session.isAuthenticated()) return;
-
-        if ( session instanceof ClientSession )
-        {
-            features.add(getSASLMechanismsElement( (ClientSession) session, false ));
-            if (ENABLE_SASL2.getValue()) {
-                features.add(getSASLMechanismsElement((ClientSession) session, true));
-            }
-        }
-        else if ( session instanceof LocalIncomingServerSession )
-        {
-            features.add(getSASLMechanismsElement( (LocalIncomingServerSession) session, false ));
-            if (ENABLE_SASL2.getValue())
-            {
-                features.add(getSASLMechanismsElement((LocalIncomingServerSession) session, true));
-            }
-        }
-        else
-        {
-            Log.debug( "Unable to determine SASL mechanisms that are applicable to session '{}'. Unrecognized session type.", session );
-        }
+        return features;
     }
 
     /**
-     * Generates an XML element that represents the available SASL mechanisms for a given client session.
+     * Returns an XML element advertising the SASL mechanisms available to the given client session.
+     * The element will be in either the SASL (RFC 6120) or SASL2 (XEP-0388) namespace depending on
+     * the {@code usingSASL2} parameter. The EXTERNAL mechanism is only included if the session is
+     * encrypted and the peer has a trusted certificate. May return {@code null} if the resulting
+     * element would be empty and the {@code sasl.client.suppressEmpty} property is set to {@code true}.
      *
-     * Based on the session and server configuration, it optionally returns null if no mechanisms are available and the
-     * configuration suppresses empty mechanism lists.
-     *
-     * @param session the client session for which the available SASL mechanisms are to be retrieved.
-     * @return an XML element listing the available SASL mechanisms, or null if no mechanisms are available
-     *         and the configuration suppresses empty lists.
+     * @param session    the client session for which to generate the mechanisms element (cannot be null)
+     * @param usingSASL2 {@code true} to generate a SASL2 {@code <authentication>} element;
+     *                   {@code false} to generate a SASL1 {@code <mechanisms>} element
+     * @return an XML element listing the available SASL mechanisms, or {@code null} if the element
+     *         would be empty and suppression of empty elements is configured
      */
-    public static Element getSASLMechanismsElement(@Nonnull final ClientSession session)
+    public static Element getSASLMechanismsElement( ClientSession session, boolean usingSASL2 )
     {
         final Set<String> availableMechanisms = getAvailableMechanismsForClientSession(session);
 
@@ -357,16 +350,20 @@ public class SASLAuthentication {
     }
 
     /**
-     * Generates an XML element that contains the SASL mechanisms available for a given server session.
+     * Returns an XML element advertising the SASL mechanisms available to the given incoming server session.
+     * The element will be in either the SASL (RFC 6120) or SASL2 (XEP-0388) namespace depending on
+     * the {@code usingSASL2} parameter. The EXTERNAL mechanism is only offered if the session is
+     * encrypted and the peer has a trusted certificate that matches the session's default identity.
+     * May return {@code null} if the resulting element would be empty and the
+     * {@code sasl.server.suppressEmpty} property is set to {@code true}.
      *
-     * Depending on the configuration (property "sasl.server.suppressEmpty"), this method can return {@code null}
-     * instead of an empty mechanisms element if no SASL mechanisms are available.
-     *
-     * @param session the local incoming server session for which the available SASL mechanisms are determined.
-     * @return an XML {@code <mechanisms>} element that lists all available SASL mechanisms for the given session,
-     *         or {@code null} if no mechanisms are available and the configuration suppresses empty elements.
+     * @param session    the incoming server session for which to generate the mechanisms element (cannot be null)
+     * @param usingSASL2 {@code true} to generate a SASL2 {@code <mechanisms>} element in the SASL2 namespace;
+     *                   {@code false} to generate a SASL1 {@code <mechanisms>} element
+     * @return an XML element listing the available SASL mechanisms, or {@code null} if the element
+     *         would be empty and suppression of empty elements is configured
      */
-    public static Element getSASLMechanismsElement(@Nonnull final LocalIncomingServerSession session, boolean usingSASL2 )
+    public static Element getSASLMechanismsElement( LocalIncomingServerSession session, boolean usingSASL2 )
     {
         final Set<String> availableMechanisms = getAvailableMechanismsForServerSession(session);
 
@@ -433,8 +430,10 @@ public class SASLAuthentication {
      * value indicates whether the authentication has finished either successfully or not or
      * if the entity is expected to send a response to a challenge.
      *
-     * @param session the session that is authenticating with the server.
-     * @param doc the stanza sent by the authenticating entity.
+     * @param session     the session that is authenticating with the server.
+     * @param doc         the stanza sent by the authenticating entity.
+     * @param usingSASL2  {@code true} if the authentication is being performed using SASL2 (XEP-0388);
+     *                    {@code false} if using standard SASL (RFC 6120)
      * @return value that indicates whether the authentication has finished either successfully
      *         or not or if the entity is expected to send a response to a challenge.
      */
@@ -614,6 +613,15 @@ public class SASLAuthentication {
         }
     }
 
+    /**
+     * Verifies that the given X.509 certificate is valid for the specified hostname. The certificate's
+     * server identities are checked against the hostname, with support for wildcard certificates.
+     * A wildcard identity (e.g. {@code *.example.com}) matches any direct subdomain of the base domain.
+     *
+     * @param trustedCert the X.509 certificate to verify (cannot be null)
+     * @param hostname    the hostname to verify the certificate against (cannot be null)
+     * @return {@code true} if the certificate is valid for the given hostname; {@code false} otherwise
+     */
     public static boolean verifyCertificate(X509Certificate trustedCert, String hostname) {
         for (String identity : CertificateManager.getServerIdentities(trustedCert)) {
             // Verify that either the identity is the same as the hostname, or for wildcarded
@@ -628,6 +636,20 @@ public class SASLAuthentication {
         return false;
     }
 
+    /**
+     * Verifies that the end-entity certificate in the given certificate chain is trusted and valid
+     * for the specified hostname. The appropriate trust store is selected based on whether this is
+     * a server-to-server (S2S) or client-to-server (C2S) connection.
+     *
+     * @param chain    the certificate chain to verify; the end-entity certificate will be extracted
+     *                 and checked against the trust store (may be null or empty, in which case
+     *                 verification will fail)
+     * @param hostname the hostname that the certificate must be valid for (cannot be null)
+     * @param isS2S    {@code true} if this is a server-to-server connection (uses the S2S trust store);
+     *                 {@code false} if this is a client-to-server connection (uses the C2S trust store)
+     * @return {@code true} if a trusted end-entity certificate is found in the chain and it is valid
+     *         for the given hostname; {@code false} otherwise
+     */
     public static boolean verifyCertificates(Certificate[] chain, String hostname, boolean isS2S) {
         final CertificateStoreManager certificateStoreManager = XMPPServer.getInstance().getCertificateStoreManager();
         final ConnectionType connectionType = isS2S ? ConnectionType.SOCKET_S2S : ConnectionType.SOCKET_C2S;

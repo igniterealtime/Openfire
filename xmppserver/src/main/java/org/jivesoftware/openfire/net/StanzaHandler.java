@@ -518,7 +518,6 @@ public abstract class StanzaHandler {
         final Element mechanismsElement = features.element("mechanisms");
         if (mechanismsElement!=null) {
             ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(mechanismsElement).ifPresent(features::add);
-            features.add(mechanismsElement);
         }
 
         // Include specific features such as auth and register for client sessions
@@ -631,7 +630,6 @@ public abstract class StanzaHandler {
             final Element saslMechanisms = features.element("mechanisms");
             if (saslMechanisms != null) {
                 ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(saslMechanisms).ifPresent(features::add);
-                features.add(saslMechanisms);
             }
         }
         // Include specific features such as resource binding and session establishment for client sessions

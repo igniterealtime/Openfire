@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ import static org.jivesoftware.openfire.muc.spi.IQOwnerHandler.parseFirstValueAs
  */
 public class NodeSubscription {
 
-    private final Logger Log;
+    private static final Logger Log = LoggerFactory.getLogger(NodeSubscription.class);
 
     private static final XMPPDateTimeFormat xmppDateTime = new XMPPDateTimeFormat();
 
@@ -164,8 +164,6 @@ public class NodeSubscription {
         this.owner = owner;
         this.state = state;
         this.id = id;
-
-        Log = LoggerFactory.getLogger(getClass().getName() + "[" + node + " " + id + " " + owner + "]");
     }
 
     /**
@@ -465,7 +463,7 @@ public class NodeSubscription {
                 try {
                     expire = xmppDateTime.parseString(values.get(0));
                 } catch (ParseException e) {
-                    Log.error("Error parsing date", e);
+                    Log.error("[{} {} {}]: Error parsing date: {}", node, id, owner, values.get(0), e);
                 }
             }
             else if ("pubsub#include_body".equals(field.getVariable())) {
@@ -627,24 +625,24 @@ public class NodeSubscription {
         }
         // Check that any defined keyword was matched (applies only if an item was published)
         if (publishedItem != null && !isKeywordMatched(publishedItem)) {
-            Log.trace("Cannot send publication event: published item does not match the configured keyword filter.");
+            Log.trace("[{} {} {}]: Cannot send publication event: published item does not match the configured keyword filter.", node, id, owner);
             return false;
         }
         // Check special conditions when subscribed to collection node
         if (node.isCollectionNode()) {
             // Check if not subscribe to items
             if (Type.items != type) {
-                Log.trace("Cannot send publication event: not subscribed to 'items' of this collection node.");
+                Log.trace("[{} {} {}]: Cannot send publication event: not subscribed to 'items' of this collection node.", node, id, owner);
                 return false;
             }
             // Check if published node is a first-level child of the subscribed node
             if (getDepth() == 1 && !node.isChildNode(leafNode)) {
-                Log.trace("Cannot send publication event: published node is not a first-level node of this subscribed node.");
+                Log.trace("[{} {} {}]: Cannot send publication event: published node is not a first-level node of this subscribed node.", node, id, owner);
                 return false;
             }
             // Check if published node is a descendant child of the subscribed node
             if (getDepth() == 0 && !node.isDescendantNode(leafNode)) {
-                Log.trace("Cannot send publication event: published node is not a descendant child of the subscribed node.");
+                Log.trace("[{} {} {}]: Cannot send publication event: published node is not a descendant child of the subscribed node.", node, id, owner);
                 return false;
             }
         }
@@ -652,7 +650,7 @@ public class NodeSubscription {
             return false;
         }
 
-        Log.trace("Can send publication node event.");
+        Log.trace("[{} {} {}]: Can send publication node event.", node, id, owner);
         return true;
     }
 
@@ -668,7 +666,7 @@ public class NodeSubscription {
     boolean canSendChildNodeEvent(Node originatingNode) {
         // Check that this is a subscriber to a collection node
         if (!node.isCollectionNode()) {
-            Log.trace("Cannot send child node event: node is not a collection node.");
+            Log.trace("[{} {} {}]: Cannot send child node event: node is not a collection node.", node, id, owner);
             return false;
         }
 
@@ -677,17 +675,17 @@ public class NodeSubscription {
         }
         // Check that subscriber is using type "nodes"
         if (Type.nodes != type) {
-            Log.trace("Cannot send child node event: type is not 'nodes'.");
+            Log.trace("[{} {} {}]: Cannot send child node event: type is not 'nodes'.", node, id, owner);
             return false;
         }
         // Check if added/deleted node is a first-level child of the subscribed node
         if (getDepth() == 1 && !node.isChildNode(originatingNode)) {
-            Log.trace("Cannot send child node event: node is not a first-level child of the subscribed node.");
+            Log.trace("[{} {} {}]: Cannot send child node event: node is not a first-level child of the subscribed node.", node, id, owner);
             return false;
         }
         // Check if added/deleted node is a descendant child of the subscribed node
         if (getDepth() == 0 && !node.isDescendantNode(originatingNode)) {
-            Log.trace("Cannot send child node event: node is not a descendant child of the subscribed node.");
+            Log.trace("[{} {} {}]: Cannot send child node event: node is not a descendant child of the subscribed node.", node, id, owner);
             return false;
         }
 
@@ -695,7 +693,7 @@ public class NodeSubscription {
             return false;
         }
 
-        Log.trace("Can send child node event.");
+        Log.trace("[{} {} {}]: Can send child node event.", node, id, owner);
         return true;
     }
 
@@ -720,19 +718,19 @@ public class NodeSubscription {
     private boolean canSendEvents() {
         // Check if the subscription is active
         if (!isActive()) {
-            Log.trace("Cannot send any events: subscription is not active.");
+            Log.trace("[{} {} {}]: Cannot send any events: subscription is not active.", node, id, owner);
             return false;
         }
         // Check if delivery of notifications is disabled
         if (!shouldDeliverNotifications()) {
-            Log.trace("Cannot send any events: delivery of notifications is disabled.");
+            Log.trace("[{} {} {}]: Cannot send any events: delivery of notifications is disabled.", node, id, owner);
             return false;
         }
         // Check if delivery is subject to presence-based policy
         if (!getPresenceStates().isEmpty()) {
             Collection<String> shows = node.getService().getShowPresences(jid);
             if (shows.isEmpty() || Collections.disjoint(getPresenceStates(), shows)) {
-                Log.trace("Cannot send any events: delivery is subject to presence-based policy that currently does not apply.");
+                Log.trace("[{} {} {}]: Cannot send any events: delivery is subject to presence-based policy that currently does not apply.", node, id, owner);
                 return false;
             }
         }
@@ -741,12 +739,12 @@ public class NodeSubscription {
             // Check that user is online
             if (node.getService().getShowPresences(jid).isEmpty())
             {
-                Log.trace("Cannot send any events: node is only sending events when user is online (and they're not).");
+                Log.trace("[{} {} {}]: Cannot send any events: node is only sending events when user is online (and they're not).", node, id, owner);
                 return false;
             }
         }
 
-        Log.trace("Can send generic node events.");
+        Log.trace("[{} {} {}]: Can send generic node events.", node, id, owner);
         return true;
     }
 
@@ -811,7 +809,7 @@ public class NodeSubscription {
             subscribeOptions.addElement("required");
         }
 
-        Log.trace("Send subscription state in response to a request from '{}'", result.getTo());
+        Log.trace("[{} {} {}]: Send subscription state in response to a request from '{}'", node, id, owner, result.getTo());
         node.getService().send(result);
     }
 
@@ -831,13 +829,13 @@ public class NodeSubscription {
     void sendLastPublishedItem(@Nonnull final PublishedItem publishedItem) {
         // Check to see if we've been disabled
         if (JiveGlobals.getBooleanProperty("xmpp.pubsub.disable-delayed-delivery", false)) {
-            Log.trace("Not sending last published item notification for item '{}', as that has been disabled by configuration.", publishedItem.getID());
+            Log.trace("[{} {} {}]: Not sending last published item notification for item '{}', as that has been disabled by configuration.", node, id, owner, publishedItem.getID());
             return;
         }
 
         // Check if the published item can be sent to the subscriber
         if (!canSendPublicationEvent(publishedItem.getNode(), publishedItem)) {
-            Log.trace("Not sending last published item notification for item '{}', as publication events cannot be sent.", publishedItem.getID());
+            Log.trace("[{} {} {}]: Not sending last published item notification for item '{}', as publication events cannot be sent.", node, id, owner, publishedItem.getID());
             return;
         }
         // Send event notification to the subscriber
@@ -862,7 +860,7 @@ public class NodeSubscription {
                 .addAttribute("stamp", XMPPDateTimeFormat.format(publishedItem.getCreationDate()));
 
         // Send the event notification to the subscriber
-        Log.trace("Sending last published item notification for item '{}'.", publishedItem.getID());
+        Log.trace("[{} {} {}]: Sending last published item notification for item '{}'.", node, id, owner, publishedItem.getID());
         node.getService().sendNotification(node, notification, jid);
     }
 
@@ -904,7 +902,7 @@ public class NodeSubscription {
             return;
         }
 
-        Log.trace("Subscription has been approved by a node owner. Toggling state from {} to {}.", state, State.subscribed);
+        Log.trace("[{} {} {}]: Subscription has been approved by a node owner. Toggling state from {} to {}.", node, id, owner, state, State.subscribed);
         state = State.subscribed;
 
         if (savedToDB) {
@@ -916,7 +914,7 @@ public class NodeSubscription {
         if (node.isSendItemSubscribe() && isActive()) {
             PublishedItem lastItem = node.getLastPublishedItem();
             if (lastItem != null) {
-                Log.trace("Send last published item '{}' as node is leaf node and subscription status is ok.", lastItem.getID());
+                Log.trace("[{} {} {}]: Send last published item '{}' as node is leaf node and subscription status is ok.", node, id, owner, lastItem.getID());
                 sendLastPublishedItem(lastItem);
             }
         }

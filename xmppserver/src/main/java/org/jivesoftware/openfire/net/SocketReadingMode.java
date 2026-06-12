@@ -264,15 +264,12 @@ abstract class SocketReadingMode {
         final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
         document.getRootElement().add(features);
 
-        // Include available SASL Mechanisms
-        final List<Element> mechanismElements = SASLAuthentication.getSASLMechanisms(socketReader.session);
-        for (Element mechanism : mechanismElements) {
-            features.add(mechanism);
-        }
         // Include SASL mechanisms only if client has not been authenticated
         if (!socketReader.session.isAuthenticated()) {
-            // Include available SASL Mechanisms
-            SASLAuthentication.addSASLMechanisms(features, socketReader.session);
+            final List<Element> mechanismElements = SASLAuthentication.getSASLMechanisms(socketReader.session);
+            for (Element mechanism : mechanismElements) {
+                features.add(mechanism);
+            }
             final Element saslMechanisms = features.element("mechanisms");
             if (saslMechanisms != null) {
                 ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(saslMechanisms).ifPresent(features::add);

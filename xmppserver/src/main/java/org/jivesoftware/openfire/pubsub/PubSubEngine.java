@@ -37,6 +37,8 @@ import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.*;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -711,53 +713,8 @@ public class PubSubEngine
             }
         }
 
-        // If leaf node does not support multiple subscriptions then check whether the same subscription JID is already subscribed.
-        if (!node.isCollectionNode() && !node.isMultipleSubscriptionsEnabled()) {
-            NodeSubscription existingSubscription = node.getSubscription(subscriberJID);
-            if (existingSubscription != null) {
-                // The same subscription JID is already subscribed, so return current subscription state.
-                existingSubscription.sendSubscriptionState(iq);
-                return;
-            }
-        }
-
-        // Check if subscribing twice to a collection node using same subscription type
-        if (node.isCollectionNode()) {
-            // By default assume that new subscription is of type node
-            boolean isNodeType = true;
-            if (optionsForm != null) {
-                FormField field = optionsForm.getField("pubsub#subscription_type");
-                if (field != null) {
-                    if ("items".equals(field.getValues().get(0))) {
-                        isNodeType = false;
-                    }
-                }
-            }
-            for (NodeSubscription subscription : node.getSubscriptionsByJID(subscriberJID)) {
-                if (isNodeType) {
-                    // User is requesting a subscription of type "nodes"
-                    if (NodeSubscription.Type.nodes == subscription.getType()) {
-                        // Cannot have 2 subscriptions of the same type for the same subscription JID. Return conflict error
-                        sendErrorPacket(iq, PacketError.Condition.conflict, null);
-                        return;
-                    }
-                }
-                else if (!node.isMultipleSubscriptionsEnabled()) {
-                    // User is requesting a subscription of type "items" and
-                    // multiple subscriptions for the same subscription JID is not allowed
-                    if (NodeSubscription.Type.items == subscription.getType()) {
-                        // User is trying to create another subscription so
-                        // return current subscription state
-                        subscription.sendSubscriptionState(iq);
-                        return;
-                    }
-                }
-            }
-        }
-
-        // Create a subscription and an affiliation if the subscriber doesn't have one
-        node.createSubscription(iq, owner, subscriberJID, accessModel.isAuthorizationRequired(),
-                optionsForm);
+        // Attempt to create a subscription and an affiliation, assuming none exist or duplicates are permissible.
+        node.createSubscription(iq, owner, subscriberJID, accessModel.isAuthorizationRequired(), optionsForm);
     }
 
     private void unsubscribeNode(PubSubService service, IQ iq, Element unsubscribeElement) {
@@ -797,38 +754,13 @@ public class PubSubEngine
                 return;
             }
         }
-        NodeSubscription subscription;
-        JID owner = new JID(jidAttribute);
-        
-        if (node.isMultipleSubscriptionsEnabled()) {
-            if (subID == null) {
-                // No subid was specified and the node supports multiple subscriptions
-                Element pubsubError = DocumentHelper.createElement(
-                        QName.get("subid-required", "http://jabber.org/protocol/pubsub#errors"));
-                sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
-                return;
-            }
-            else {
-                // Check if the specified subID belongs to an existing node subscription
-                subscription = node.getSubscription(subID);
-                if (subscription == null) {
-                    Element pubsubError = DocumentHelper.createElement(
-                            QName.get("invalid-subid", "http://jabber.org/protocol/pubsub#errors"));
-                    sendErrorPacket(iq, PacketError.Condition.not_acceptable, pubsubError);
-                    return;
-                }
-            }
+
+        final JID subscriberJID = new JID(jidAttribute);
+        final NodeSubscription subscription = resolveSubscriptionOrError(iq, node, subID, subscriberJID);
+        if (subscription == null) {
+            return; // An appropriate error response has already been sent by resolveSubscriptionOrError().
         }
-        else {
-            JID subscriberJID = new JID(jidAttribute);
-            subscription = node.getSubscription(subscriberJID);
-            if (subscription == null) {
-                Element pubsubError = DocumentHelper.createElement(
-                        QName.get("not-subscribed", "http://jabber.org/protocol/pubsub#errors"));
-                sendErrorPacket(iq, PacketError.Condition.unexpected_request, pubsubError);
-                return;
-            }
-        }
+
         JID from = iq.getFrom();
         // Check that unsubscriptions to the node are enabled
         if (!node.isSubscriptionEnabled() && !service.isServiceAdmin(from)) {
@@ -850,10 +782,83 @@ public class PubSubEngine
         router.route(IQ.createResultIQ(iq));
     }
 
+    /**
+     * Resolves a subscription on the specified node for the provided subscriber.
+     *
+     * If a subscription ID is provided, this method verifies that it identifies an existing subscription on the node
+     * and returns that subscription. Otherwise, the subscription is inferred from the subscriber JID:
+     *
+     * <ul>
+     *   <li>If the JID has exactly one subscription on the node, that subscription is returned.</li>
+     *   <li>If the JID has no subscriptions, a {@code not-subscribed} PubSub error is returned.</li>
+     *   <li>If the JID has multiple subscriptions, a {@code subid-required} PubSub error is returned.</li>
+     * </ul>
+     *
+     * When a provided subscription ID does not correspond to an existing subscription, an {@code invalid-subid} PubSub
+     * error is returned.
+     *
+     * @param iq the IQ stanza to which any error response should be sent.
+     * @param node the node on which the subscription is to be resolved.
+     * @param subID the subscription ID to resolve, or {@code null} to resolve the subscription based on the subscriber JID.
+     * @param subscriberJID the JID of the subscriber
+     * @return the resolved subscription, or {@code null} if no unique subscription could be resolved. In that case,
+     *         an appropriate error response has already been sent.
+     */
+    private NodeSubscription resolveSubscriptionOrError(@Nonnull final IQ iq, @Nonnull final Node node, @Nullable final String subID, @Nonnull final JID subscriberJID)
+    {
+        NodeSubscription subscription;
+        if (subID != null)
+        {
+            // Check if the specified subID belongs to an existing node subscription
+            subscription = node.getSubscription(subID);
+            if (subscription == null) {
+                Element pubsubError = DocumentHelper.createElement(QName.get("invalid-subid", "http://jabber.org/protocol/pubsub#errors"));
+                sendErrorPacket(iq, PacketError.Condition.not_acceptable, pubsubError);
+                return null;
+            }
+
+            // XEP-0060 6.2.3.5 SubID does not match JID
+            if (!subscription.getJID().equals(subscriberJID)) {
+                Element pubsubError = DocumentHelper.createElement(QName.get("invalid-subid", "http://jabber.org/protocol/pubsub#errors"));
+                sendErrorPacket(iq, PacketError.Condition.not_acceptable, pubsubError);
+                return null;
+            }
+        }
+        else
+        {
+            final Collection<NodeSubscription> subscriptionsByJID = node.getSubscriptionsByJID(subscriberJID);
+            switch (subscriptionsByJID.size()) {
+                case 0:
+                    sendErrorPacket(iq, PacketError.Condition.unexpected_request, DocumentHelper.createElement(QName.get("not-subscribed", "http://jabber.org/protocol/pubsub#errors")));
+                    return null;
+
+                case 1:
+                    // Only one subscription exists for the specified JID, so use that one.
+                    subscription = subscriptionsByJID.iterator().next();
+                    break;
+
+                default:
+                    // No subid was specified, and the node has multiple subscriptions.
+                    sendErrorPacket(iq, PacketError.Condition.bad_request, DocumentHelper.createElement(QName.get("subid-required", "http://jabber.org/protocol/pubsub#errors")));
+                    return null;
+            }
+        }
+        return subscription;
+    }
+
     private void getSubscriptionConfiguration(PubSubService service, IQ iq,
                                               Element childElement, Element optionsElement) {
         String nodeID = optionsElement.attributeValue("node");
         String subID = optionsElement.attributeValue("subid");
+        String jidAttribute = optionsElement.attributeValue("jid");
+
+        if (jidAttribute == null) {
+            // No JID was specified so return an error indicating that jid is required
+            Element pubsubError = DocumentHelper.createElement(
+                QName.get("jid-required", "http://jabber.org/protocol/pubsub#errors"));
+            sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
+            return;
+        }
         Node node;
         if (nodeID == null) {
             if (service.isCollectionNodesSupported()) {
@@ -877,44 +882,11 @@ public class PubSubEngine
                 return;
             }
         }
-        NodeSubscription subscription;
-        if (node.isMultipleSubscriptionsEnabled()) {
-            if (subID == null) {
-                // No subid was specified and the node supports multiple subscriptions
-                Element pubsubError = DocumentHelper.createElement(
-                        QName.get("subid-required", "http://jabber.org/protocol/pubsub#errors"));
-                sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
-                return;
-            }
-            else {
-                // Check if the specified subID belongs to an existing node subscription
-                subscription = node.getSubscription(subID);
-                if (subscription == null) {
-                    Element pubsubError = DocumentHelper.createElement(
-                            QName.get("invalid-subid", "http://jabber.org/protocol/pubsub#errors"));
-                    sendErrorPacket(iq, PacketError.Condition.not_acceptable, pubsubError);
-                    return;
-                }
-            }
-        }
-        else {
-            // Check if the specified JID has a subscription with the node
-            String jidAttribute = optionsElement.attributeValue("jid");
-            if (jidAttribute == null) {
-                // No JID was specified so return an error indicating that jid is required
-                Element pubsubError = DocumentHelper.createElement(
-                        QName.get("jid-required", "http://jabber.org/protocol/pubsub#errors"));
-                sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
-                return;
-            }
-            JID subscriberJID = new JID(jidAttribute);
-            subscription = node.getSubscription(subscriberJID);
-            if (subscription == null) {
-                Element pubsubError = DocumentHelper.createElement(
-                        QName.get("not-subscribed", "http://jabber.org/protocol/pubsub#errors"));
-                sendErrorPacket(iq, PacketError.Condition.unexpected_request, pubsubError);
-                return;
-            }
+
+        final JID subscriberJID = new JID(jidAttribute);
+        final NodeSubscription subscription = resolveSubscriptionOrError(iq, node, subID, subscriberJID);
+        if (subscription == null) {
+            return; // An appropriate error response has already been sent by resolveSubscriptionOrError().
         }
 
         // A subscription was found so check if the user is allowed to get the subscription options
@@ -936,6 +908,15 @@ public class PubSubEngine
     private void configureSubscription(PubSubService service, IQ iq, Element optionsElement) {
         String nodeID = optionsElement.attributeValue("node");
         String subID = optionsElement.attributeValue("subid");
+        String jidAttribute = optionsElement.attributeValue("jid");
+
+        if (jidAttribute == null) {
+            // No JID was specified so return an error indicating that jid is required
+            Element pubsubError = DocumentHelper.createElement(
+                QName.get("jid-required", "http://jabber.org/protocol/pubsub#errors"));
+            sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
+            return;
+        }
         Node node;
         if (nodeID == null) {
             if (service.isCollectionNodesSupported()) {
@@ -959,44 +940,11 @@ public class PubSubEngine
                 return;
             }
         }
-        NodeSubscription subscription;
-        if (node.isMultipleSubscriptionsEnabled()) {
-            if (subID == null) {
-                // No subid was specified and the node supports multiple subscriptions
-                Element pubsubError = DocumentHelper.createElement(
-                        QName.get("subid-required", "http://jabber.org/protocol/pubsub#errors"));
-                sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
-                return;
-            }
-            else {
-                // Check if the specified subID belongs to an existing node subscription
-                subscription = node.getSubscription(subID);
-                if (subscription == null) {
-                    Element pubsubError = DocumentHelper.createElement(
-                            QName.get("invalid-subid", "http://jabber.org/protocol/pubsub#errors"));
-                    sendErrorPacket(iq, PacketError.Condition.not_acceptable, pubsubError);
-                    return;
-                }
-            }
-        }
-        else {
-            // Check if the specified JID has a subscription with the node
-            String jidAttribute = optionsElement.attributeValue("jid");
-            if (jidAttribute == null) {
-                // No JID was specified so return an error indicating that jid is required
-                Element pubsubError = DocumentHelper.createElement(
-                        QName.get("jid-required", "http://jabber.org/protocol/pubsub#errors"));
-                sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
-                return;
-            }
-            JID subscriberJID = new JID(jidAttribute);
-            subscription = node.getSubscription(subscriberJID);
-            if (subscription == null) {
-                Element pubsubError = DocumentHelper.createElement(
-                        QName.get("not-subscribed", "http://jabber.org/protocol/pubsub#errors"));
-                sendErrorPacket(iq, PacketError.Condition.unexpected_request, pubsubError);
-                return;
-            }
+
+        final JID subscriberJID = new JID(jidAttribute);
+        final NodeSubscription subscription = resolveSubscriptionOrError(iq, node, subID, subscriberJID);
+        if (subscription == null) {
+            return; // An appropriate error response has already been sent by resolveSubscriptionOrError().
         }
 
         // A subscription was found so check if the user is allowed to submits
@@ -1054,7 +1002,7 @@ public class PubSubEngine
             }
             subElement.addAttribute("jid", subscription.getJID().toString());
             subElement.addAttribute("subscription", subscription.getState().name());
-            if (node.isMultipleSubscriptionsEnabled()) {
+            if (node.isMultipleSubscriptionsEnabled() || node.isCollectionNode()) {
                 subElement.addAttribute("subid", subscription.getID());
             }
         }
@@ -1152,8 +1100,7 @@ public class PubSubEngine
         NodeSubscription subscription = null;
         if (node.isMultipleSubscriptionsEnabled() && (node.getSubscriptions(owner).size() > 1)) {
             if (subID == null) {
-                // No subid was specified and the node supports multiple subscriptions and the user
-                // has multiple subscriptions
+                // No subid was specified and the node supports multiple subscriptions and the user has multiple subscriptions
                 Element pubsubError = DocumentHelper.createElement(
                         QName.get("subid-required", "http://jabber.org/protocol/pubsub#errors"));
                 sendErrorPacket(iq, PacketError.Condition.bad_request, pubsubError);
@@ -1645,6 +1592,25 @@ public class PubSubEngine
             sendErrorPacket(iq, PacketError.Condition.forbidden, null);
             return;
         }
+        for (Iterator<Element> it = entitiesElement.elementIterator("subscription"); it.hasNext();) {
+            Element entity = it.next();
+            final String jidAttributeValue = entity.attributeValue("jid");
+            final String subidAttributeValue = entity.attributeValue("subid");
+            if (jidAttributeValue == null) {
+                sendErrorPacket(iq, PacketError.Condition.bad_request, null);
+                return;
+            }
+            if (node.isMultipleSubscriptionsEnabled() && subidAttributeValue == null) {
+                // XEP-0060: "If subscription identifiers are supported by the service, the 'subid' attribute MUST be present as well."
+                sendErrorPacket(iq, PacketError.Condition.bad_request, null);
+                return;
+            }
+            if (subidAttributeValue == null && node.getSubscriptionsByJID(new JID(jidAttributeValue)).size() > 1) {
+                // Unable to differentiate between multiple subscriptions with the same JID.
+                sendErrorPacket(iq, PacketError.Condition.conflict, null);
+                return;
+            }
+        }
 
         IQ reply = IQ.createResultIQ(iq);
 
@@ -1657,16 +1623,16 @@ public class PubSubEngine
             String subStatus = entity.attributeValue("subscription");
             String subID = entity.attributeValue("subid");
             // Process subscriptions changes
+
             // Get current subscription (if any)
-            NodeSubscription subscription = null;
-            if (node.isMultipleSubscriptionsEnabled()) {
-                if (subID != null) {
-                    subscription = node.getSubscription(subID);
-                }
-            }
-            else {
+            NodeSubscription subscription;
+            if (subID != null) {
+                subscription = node.getSubscription(subID);
+            } else {
                 subscription = node.getSubscription(subscriber);
             }
+
+            // Apply changes
             if ("none".equals(subStatus) && subscription != null) {
                 // Owner is cancelling an existing subscription
                 node.cancelSubscription(subscription);

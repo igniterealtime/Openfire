@@ -68,19 +68,7 @@ public class SocketConnection extends AbstractConnection {
 
     private static final Map<SocketConnection, String> instances = new ConcurrentHashMap<>();
 
-    /**
-     * Milliseconds a connection has to be idle to be closed. Timeout is disabled by default. It's
-     * up to the connection's owner to configure the timeout value. Sending stanzas to the client
-     * is not considered as activity. We are only considering the connection active when the
-     * client sends some data or heartbeats (i.e. whitespaces) to the server.
-     * The reason for this is that sending data will fail if the connection is closed. And if
-     * the thread is blocked while sending data (because the socket is closed) then the clean up
-     * thread will close the socket anyway.
-     */
-    private long idleTimeout = -1;
-
     private final Socket socket;
-    private SocketReader socketReader;
 
     private Writer writer;
     private final AtomicBoolean writing = new AtomicBoolean(false);
@@ -333,22 +321,6 @@ public class SocketConnection extends AbstractConnection {
             .map(SSLSession::getCipherSuite);
     }
 
-    public long getIdleTimeout() {
-        return idleTimeout;
-    }
-
-    /**
-     * Sets the number of milliseconds a connection has to be idle to be closed. Sending
-     * stanzas to the client is not considered as activity. We are only considering the
-     * connection active when the client sends some data or hearbeats (i.e. whitespaces)
-     * to the server.
-     *
-     * @param timeout the number of milliseconds a connection has to be idle to be closed.
-     */
-    public void setIdleTimeout(long timeout) {
-        this.idleTimeout = timeout;
-    }
-
     @Override
     public Certificate[] getLocalCertificates() {
         if (tlsStreamHandler != null) {
@@ -475,20 +447,6 @@ public class SocketConnection extends AbstractConnection {
             }
             close(new StreamError(StreamError.Condition.connection_timeout, "Unable to validate the connection. Connection has been idle long enough for it to be considered 'unhealthy'."), true);
             return true;
-        }
-        else {
-            // Check if the connection has been idle. A connection is considered idle if the client
-            // has not been receiving data for a period. Sending data to the client is not
-            // considered as activity.
-            if (idleTimeout > -1 && socketReader != null &&
-                    System.currentTimeMillis() - socketReader.getLastActive() > idleTimeout) {
-                // Close the socket
-                if (Log.isDebugEnabled()) {
-                    Log.debug("Closing connection that has been idle: " + this);
-                }
-                close(new StreamError(StreamError.Condition.connection_timeout, "Not received data recently. Connection has been idle long enough for it to be considered 'unhealthy'."), true);
-                return true;
-            }
         }
         return false;
     }
@@ -618,7 +576,4 @@ public class SocketConnection extends AbstractConnection {
         return this.getClass().getSimpleName() + "{socket: " + socket + ", state: " + state + ", session: " + session + "}";
     }
 
-    public void setSocketReader(SocketReader socketReader) {
-        this.socketReader = socketReader;
-    }
 }

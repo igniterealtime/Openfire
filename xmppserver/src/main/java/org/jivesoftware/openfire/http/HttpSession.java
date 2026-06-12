@@ -227,9 +227,9 @@ public class HttpSession extends LocalClientSession {
 
         // If authentication has not happened yet, include available authentication mechanisms.
         if (getAuthToken() == null) {
-            final Element sasl = SASLAuthentication.getSASLMechanismsElement(this);
-            if (sasl != null) {
-                elements.add(sasl);
+            final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(this);
+            for (Element mechanism : mechanisms) {
+                elements.add(mechanism);
             }
         }
 

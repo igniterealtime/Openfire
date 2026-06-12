@@ -188,7 +188,11 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
                 }
 
                 // Include available SASL Mechanisms
-                final Element saslMechanisms = SASLAuthentication.getSASLMechanisms(session);
+                final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(session);
+                for (Element mechanism : mechanisms) {
+                    features.add(mechanism);
+                }
+                final Element saslMechanisms = features.element("mechanisms");
                 if (saslMechanisms != null) {
                     ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(saslMechanisms).ifPresent(features::add);
                     features.add(saslMechanisms);

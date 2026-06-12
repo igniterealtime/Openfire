@@ -16,6 +16,9 @@ import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.mockito.hamcrest.MockitoHamcrest.argThat;
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
 
 /**
  * Tests for the processFeatureRequests method in Bind2Request.
@@ -33,9 +36,27 @@ public class Bind2RequestProcessingTest {
 
     private Bind2Request bind2Request;
     private Element successElement;
-    private Element boundElement;
     private Element featureElement1;
     private Element featureElement2;
+
+    /**
+     * Returns a Mockito argument matcher that matches an Element by its local name and namespace URI,
+     * rather than by object identity.
+     */
+    private static Element elementWithNameAndNS(String localName, String namespaceURI) {
+        return argThat(new BaseMatcher<Element>() {
+            @Override
+            public boolean matches(Object item) {
+                if (!(item instanceof Element)) return false;
+                Element el = (Element) item;
+                return localName.equals(el.getName()) && namespaceURI.equals(el.getNamespaceURI());
+            }
+            @Override
+            public void describeTo(Description description) {
+                description.appendText("Element with name='" + localName + "' and namespace='" + namespaceURI + "'");
+            }
+        });
+    }
 
     @BeforeEach
     public void setUp() {
@@ -43,7 +64,6 @@ public class Bind2RequestProcessingTest {
         
         // Create DOM elements for testing
         successElement = DocumentHelper.createElement("success");
-        boundElement = successElement.addElement(new QName("bound", new Namespace("", "urn:xmpp:bind:0")));
 
         QName feature1 = new QName("feature1", new Namespace("", "http://test1.namespace"));
         featureElement1 = DocumentHelper.createElement(feature1);
@@ -85,8 +105,8 @@ public class Bind2RequestProcessingTest {
 
         // Verify
         assertNotNull(result);
-        verify(mockHandler1).handleElement(any(), eq(boundElement), eq(featureElement1));
-        verify(mockHandler2).handleElement(any(), eq(boundElement), eq(featureElement2));
+        verify(mockHandler1).handleElement(any(), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement1));
+        verify(mockHandler2).handleElement(any(), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement2));
     }
 
     @Test
@@ -112,7 +132,7 @@ public class Bind2RequestProcessingTest {
 
         // Verify
         assertNotNull(result);
-        verify(mockHandler1).handleElement(any(), eq(boundElement), eq(featureElement1));
+        verify(mockHandler1).handleElement(eq(mockSession), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement1));
         verify(mockHandler2, never()).handleElement(any(), any(), any());
     }
 
@@ -129,8 +149,8 @@ public class Bind2RequestProcessingTest {
 
         // Verify processing continues despite exception
         assertNotNull(result);
-        verify(mockHandler1).handleElement(any(), eq(boundElement), eq(featureElement1));
-        verify(mockHandler2).handleElement(any(), eq(boundElement), eq(featureElement2));
+        verify(mockHandler1).handleElement(any(), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement1));
+        verify(mockHandler2).handleElement(any(), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement2));
     }
 
     @Test
@@ -145,7 +165,7 @@ public class Bind2RequestProcessingTest {
 
         // Verify
         assertNotNull(result);
-        verify(mockHandler1).handleElement(any(), eq(boundElement), eq(featureElement1));
+        verify(mockHandler1).handleElement(any(), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement1));
     }
 
     @Test
@@ -155,6 +175,7 @@ public class Bind2RequestProcessingTest {
 
         // Verify bound element is created
         assertNotNull(result);
-        assertEquals(result, boundElement);
+        assertEquals("bound", result.getName());
+        assertEquals("urn:xmpp:bind:0", result.getNamespaceURI());
     }
 }

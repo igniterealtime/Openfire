@@ -11,8 +11,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -21,20 +23,19 @@ import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 
 /**
- * Tests for the processFeatureRequests method in Bind2Request.
+ * Tests for the processFeatureRequests method and featureElement advertisement in Bind2Request.
  */
 public class Bind2RequestProcessingTest {
 
     @Mock
     private Bind2InlineHandler mockHandler1;
-    
+
     @Mock
     private Bind2InlineHandler mockHandler2;
 
     @Mock
     private LocalClientSession mockSession;
 
-    private Bind2Request bind2Request;
     private Element successElement;
     private Element featureElement1;
     private Element featureElement2;
@@ -61,8 +62,7 @@ public class Bind2RequestProcessingTest {
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        
-        // Create DOM elements for testing
+
         successElement = DocumentHelper.createElement("success");
 
         QName feature1 = new QName("feature1", new Namespace("", "http://test1.namespace"));
@@ -71,66 +71,95 @@ public class Bind2RequestProcessingTest {
         QName feature2 = new QName("feature2", new Namespace("", "http://test2.namespace"));
         featureElement2 = DocumentHelper.createElement(feature2);
 
-        // Setup mock handlers
         when(mockHandler1.getNamespace()).thenReturn("http://test1.namespace");
         when(mockHandler2.getNamespace()).thenReturn("http://test2.namespace");
         when(mockHandler1.handleElement(any(), any(), any())).thenReturn(true);
         when(mockHandler2.handleElement(any(), any(), any())).thenReturn(true);
-        
-        // Create a Bind2Request instance with test data
-        // Note: This assumes featureRequests is accessible or there's a way to set it
-        bind2Request = spy(new Bind2Request("clientTag", Arrays.asList(featureElement1, featureElement2)));
-        
-        // Mock the featureRequests list - this may need adjustment based on actual implementation
-        doReturn(Arrays.asList(featureElement1, featureElement2))
-            .when(bind2Request).getFeatureRequests();
     }
 
     @AfterEach
     public void tearDown() {
-        // Clean up registered handlers
         Bind2Request.unregisterElementHandler("http://test1.namespace");
         Bind2Request.unregisterElementHandler("http://test2.namespace");
         Bind2Request.unregisterElementHandler("http://unhandled.namespace");
     }
 
+    // -------------------------------------------------------------------------
+    // processFeatureRequests tests — varying featureRequests content
+    // -------------------------------------------------------------------------
+
     @Test
-    public void testProcessFeatureRequestsWithRegisteredHandlers() {
-        // Setup
+    public void testProcessFeatureRequestsWithBothFeatures() {
+        Bind2Request bind2Request = new Bind2Request("clientTag", Arrays.asList(featureElement1, featureElement2));
         Bind2Request.registerElementHandler(mockHandler1);
         Bind2Request.registerElementHandler(mockHandler2);
 
-        // Execute
         Element result = bind2Request.processFeatureRequests(mockSession, successElement);
 
-        // Verify
         assertNotNull(result);
-        verify(mockHandler1).handleElement(any(), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement1));
-        verify(mockHandler2).handleElement(any(), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement2));
+        assertEquals("bound", result.getName());
+        assertEquals("urn:xmpp:bind:0", result.getNamespaceURI());
+        verify(mockHandler1).handleElement(eq(mockSession), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement1));
+        verify(mockHandler2).handleElement(eq(mockSession), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement2));
+    }
+
+    @Test
+    public void testProcessFeatureRequestsWithOnlyFirstFeature() {
+        Bind2Request bind2Request = new Bind2Request("clientTag", Collections.singletonList(featureElement1));
+        Bind2Request.registerElementHandler(mockHandler1);
+        Bind2Request.registerElementHandler(mockHandler2);
+
+        Element result = bind2Request.processFeatureRequests(mockSession, successElement);
+
+        assertNotNull(result);
+        verify(mockHandler1).handleElement(eq(mockSession), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement1));
+        verify(mockHandler2, never()).handleElement(any(), any(), any());
+    }
+
+    @Test
+    public void testProcessFeatureRequestsWithOnlySecondFeature() {
+        Bind2Request bind2Request = new Bind2Request("clientTag", Collections.singletonList(featureElement2));
+        Bind2Request.registerElementHandler(mockHandler1);
+        Bind2Request.registerElementHandler(mockHandler2);
+
+        Element result = bind2Request.processFeatureRequests(mockSession, successElement);
+
+        assertNotNull(result);
+        verify(mockHandler1, never()).handleElement(any(), any(), any());
+        verify(mockHandler2).handleElement(eq(mockSession), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement2));
+    }
+
+    @Test
+    public void testProcessFeatureRequestsWithNoFeatures() {
+        Bind2Request bind2Request = new Bind2Request("clientTag", Collections.emptyList());
+        Bind2Request.registerElementHandler(mockHandler1);
+        Bind2Request.registerElementHandler(mockHandler2);
+
+        Element result = bind2Request.processFeatureRequests(mockSession, successElement);
+
+        assertNotNull(result);
+        verify(mockHandler1, never()).handleElement(any(), any(), any());
+        verify(mockHandler2, never()).handleElement(any(), any(), any());
     }
 
     @Test
     public void testProcessFeatureRequestsWithNoRegisteredHandlers() {
-        // Execute (no handlers registered)
+        Bind2Request bind2Request = new Bind2Request("clientTag", Arrays.asList(featureElement1, featureElement2));
+
         Element result = bind2Request.processFeatureRequests(mockSession, successElement);
 
-        // Verify - should complete without errors
         assertNotNull(result);
-        
-        // No handlers should be called
         verify(mockHandler1, never()).handleElement(any(), any(), any());
         verify(mockHandler2, never()).handleElement(any(), any(), any());
     }
 
     @Test
     public void testProcessFeatureRequestsWithPartialHandlers() {
-        // Setup - only register handler for first element
+        Bind2Request bind2Request = new Bind2Request("clientTag", Arrays.asList(featureElement1, featureElement2));
         Bind2Request.registerElementHandler(mockHandler1);
 
-        // Execute
         Element result = bind2Request.processFeatureRequests(mockSession, successElement);
 
-        // Verify
         assertNotNull(result);
         verify(mockHandler1).handleElement(eq(mockSession), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement1));
         verify(mockHandler2, never()).handleElement(any(), any(), any());
@@ -138,16 +167,14 @@ public class Bind2RequestProcessingTest {
 
     @Test
     public void testProcessFeatureRequestsWithHandlerException() {
-        // Setup
+        Bind2Request bind2Request = new Bind2Request("clientTag", Arrays.asList(featureElement1, featureElement2));
         when(mockHandler1.handleElement(any(), any(), any())).thenThrow(new RuntimeException("Test exception"));
         Bind2Request.registerElementHandler(mockHandler1);
         Bind2Request.registerElementHandler(mockHandler2);
 
-        // Execute - should not throw exception
-        Element result = assertDoesNotThrow(() -> 
+        Element result = assertDoesNotThrow(() ->
             bind2Request.processFeatureRequests(mockSession, successElement));
 
-        // Verify processing continues despite exception
         assertNotNull(result);
         verify(mockHandler1).handleElement(any(), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement1));
         verify(mockHandler2).handleElement(any(), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement2));
@@ -155,27 +182,105 @@ public class Bind2RequestProcessingTest {
 
     @Test
     public void testProcessFeatureRequestsWithHandlerReturnsFalse() {
-        // Setup
+        Bind2Request bind2Request = new Bind2Request("clientTag", Collections.singletonList(featureElement1));
         when(mockHandler1.handleElement(any(), any(), any())).thenReturn(false);
         Bind2Request.registerElementHandler(mockHandler1);
 
-        // Execute - should not throw exception
-        Element result = assertDoesNotThrow(() -> 
+        Element result = assertDoesNotThrow(() ->
             bind2Request.processFeatureRequests(mockSession, successElement));
 
-        // Verify
         assertNotNull(result);
         verify(mockHandler1).handleElement(any(), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement1));
     }
 
     @Test
     public void testProcessFeatureRequestsCreatesBoundElement() {
-        // Execute
+        Bind2Request bind2Request = new Bind2Request("clientTag", Arrays.asList(featureElement1, featureElement2));
+
         Element result = bind2Request.processFeatureRequests(mockSession, successElement);
 
-        // Verify bound element is created
         assertNotNull(result);
         assertEquals("bound", result.getName());
         assertEquals("urn:xmpp:bind:0", result.getNamespaceURI());
+    }
+
+    @Test
+    public void testProcessFeatureRequestsWithNullClientTag() {
+        Bind2Request bind2Request = new Bind2Request(null, Collections.singletonList(featureElement1));
+        Bind2Request.registerElementHandler(mockHandler1);
+
+        Element result = bind2Request.processFeatureRequests(mockSession, successElement);
+
+        assertNotNull(result);
+        verify(mockHandler1).handleElement(eq(mockSession), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement1));
+    }
+
+    // -------------------------------------------------------------------------
+    // featureElement (stream features advertisement) tests
+    // -------------------------------------------------------------------------
+
+    @Test
+    public void testFeatureElementWithNoHandlers() {
+        Element feature = Bind2Request.featureElement();
+
+        assertNotNull(feature);
+        assertEquals("bind", feature.getName());
+        assertEquals("urn:xmpp:bind:0", feature.getNamespaceURI());
+
+        Element inline = feature.element("inline");
+        assertNotNull(inline);
+        assertTrue(inline.elements("feature").isEmpty(), "Expected no advertised features when no handlers are registered");
+    }
+
+    @Test
+    public void testFeatureElementAdvertisesOneHandler() {
+        Bind2Request.registerElementHandler(mockHandler1);
+
+        Element feature = Bind2Request.featureElement();
+
+        assertNotNull(feature);
+        assertEquals("bind", feature.getName());
+        assertEquals("urn:xmpp:bind:0", feature.getNamespaceURI());
+
+        Element inline = feature.element("inline");
+        assertNotNull(inline);
+        List<Element> features = inline.elements("feature");
+        assertEquals(1, features.size());
+        assertEquals("http://test1.namespace", features.get(0).attributeValue("var"));
+    }
+
+    @Test
+    public void testFeatureElementAdvertisesBothHandlers() {
+        Bind2Request.registerElementHandler(mockHandler1);
+        Bind2Request.registerElementHandler(mockHandler2);
+
+        Element feature = Bind2Request.featureElement();
+
+        assertNotNull(feature);
+        Element inline = feature.element("inline");
+        assertNotNull(inline);
+        List<Element> features = inline.elements("feature");
+        assertEquals(2, features.size());
+
+        List<String> vars = features.stream()
+            .map(e -> e.attributeValue("var"))
+            .collect(Collectors.toList());
+        assertTrue(vars.contains("http://test1.namespace"), "Expected http://test1.namespace to be advertised");
+        assertTrue(vars.contains("http://test2.namespace"), "Expected http://test2.namespace to be advertised");
+    }
+
+    @Test
+    public void testFeatureElementAfterUnregisteringHandler() {
+        Bind2Request.registerElementHandler(mockHandler1);
+        Bind2Request.registerElementHandler(mockHandler2);
+        Bind2Request.unregisterElementHandler("http://test1.namespace");
+
+        Element feature = Bind2Request.featureElement();
+
+        Element inline = feature.element("inline");
+        assertNotNull(inline);
+        List<Element> features = inline.elements("feature");
+        assertEquals(1, features.size());
+        assertEquals("http://test2.namespace", features.get(0).attributeValue("var"));
     }
 }

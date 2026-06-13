@@ -510,11 +510,11 @@ public class PEPService implements PubSubService, Cacheable {
     public void sendLastPublishedItems(JID recipientJID, Set<String> nodeIdFilter) {
         // Ensure the recipient has a subscription to this service's root collection node, or is its owner.
         final boolean isOwner = recipientJID.asBareJID().equals(this.serviceOwner);
-        NodeSubscription subscription = rootCollectionNode.getSubscription(recipientJID);
-        if (subscription == null) {
-            subscription = rootCollectionNode.getSubscription(new JID(recipientJID.toBareJID()));
+        Collection<NodeSubscription> subscriptions = rootCollectionNode.getSubscriptionsByJID(recipientJID);
+        if (subscriptions.isEmpty()) {
+            subscriptions = rootCollectionNode.getSubscriptionsByJID(new JID(recipientJID.toBareJID()));
         }
-        if (subscription == null && !isOwner) {
+        if (subscriptions.isEmpty() && !isOwner) {
             return;
         }
 
@@ -530,8 +530,8 @@ public class PEPService implements PubSubService, Cacheable {
             }
 
             // Check if the published item can be sent to the subscriber
-            if (subscription != null && !subscription.canSendPublicationEvent(leafLastPublishedItem.getNode(), leafLastPublishedItem)) {
-                return;
+            if (!subscriptions.isEmpty() && subscriptions.stream().noneMatch(subscription -> subscription.canSendPublicationEvent(leafLastPublishedItem.getNode(), leafLastPublishedItem))) {
+                continue;
             }
 
             // Send event notification to the subscriber
@@ -547,13 +547,24 @@ public class PEPService implements PubSubService, Cacheable {
                 item.add(leafLastPublishedItem.getPayload().createCopy());
             }
             // Add a message body (if required)
-            if (subscription != null && subscription.isIncludingBody()) {
+            if (!subscriptions.isEmpty() && subscriptions.stream().anyMatch(subscription -> subscription.isIncludingBody())) {
                 notification.setBody(LocaleUtils.getLocalizedString("pubsub.notification.message.body"));
             }
             // Include date when published item was created
             notification.getElement().addElement("delay", "urn:xmpp:delay").addAttribute("stamp", XMPPDateTimeFormat.format(leafLastPublishedItem.getCreationDate()));
-            // Send the event notification to the subscriber
-            this.sendNotification(subscription != null ? subscription.getNode() : leafNode, notification, subscription != null ? subscription.getJID() : recipientJID);
+            if (subscriptions.isEmpty()) {
+                // Because of the 'subscriptions is empty' check above, recipient _must_ be an owner.
+                this.sendNotification(leafNode, notification, recipientJID);
+            } else {
+                // Send the event notification to the subscriber
+                final HashSet<JID> notifiedJids = new HashSet<>(); // XEP-0060 section 6.1.6: When the pubsub service generates event notifications, it SHOULD send only one event notification to an entity that has multiple subscriptions.
+                for (final NodeSubscription subscription : subscriptions) {
+                    final JID notifiedJid = subscription.getJID();
+                    if (notifiedJids.add(notifiedJid)) {
+                        this.sendNotification(subscription.getNode(), notification, notifiedJid);
+                    }
+                }
+            }
         }
     }
 

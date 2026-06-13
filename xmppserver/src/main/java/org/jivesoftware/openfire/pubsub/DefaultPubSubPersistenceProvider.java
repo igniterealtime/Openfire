@@ -983,7 +983,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
                 return;
             }
             NodeSubscription.State state = NodeSubscription.State.valueOf(rs.getString(5));
-			NodeSubscription subscription = new NodeSubscription(node, owner, subscriber, state, subID);
+            NodeSubscription subscription = new NodeSubscription(node, owner, subscriber, state, subID);
             subscription.setShouldDeliverNotifications(rs.getInt(6) == 1);
             subscription.setUsingDigest(rs.getInt(7) == 1);
             subscription.setDigestFrequency(rs.getInt(8));
@@ -995,6 +995,38 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             subscription.setType(NodeSubscription.Type.valueOf(rs.getString(12)));
             subscription.setDepth(rs.getInt(13));
             subscription.setKeyword(rs.getString(14));
+
+            // OF-3306: Skip subscription rows that are redundant under the node's own uniqueness rule.
+            //
+            // On a node that does not allow multiple subscriptions for the same subscription JID (XEP-0060 §6.1.6), at
+            // most one subscription can exist per (subscription JID, subscription type). PEP services (XEP-0163) are
+            // such nodes: a contact's subscription is created automatically from their presence subscription (the
+            // "auto-subscribe" feature), and the service sends at most one notification per subscriber - there is no
+            // PEP semantics under which a single contact holds many subscriptions to one node. A defect that caused the
+            // auto-subscribe path to run repeatedly can therefore leave large numbers of rows that are identical except
+            // for their generated subscription ID. Loading every copy wastes heap (in extreme cases exhausting it) with
+            // no functional value, so only the first equivalent subscription is materialized here. The redundant rows
+            // are left untouched in the database; this only avoids holding duplicate copies in memory.
+            //
+            // Nodes that DO allow multiple subscriptions are unaffected: their same-JID rows are legitimate,
+            // differentiated by subscription ID, and all are loaded. The type comparison preserves the XEP-0248 §6.1.
+            // 3 case where one "nodes" and one "items" subscription may coexist for the same JID on a collection node
+            // (such as the PEP root collection).
+            if (!node.isMultipleSubscriptionsEnabled()) {
+                boolean duplicate = false;
+                for (final NodeSubscription existing : node.getSubscriptionsByJID(subscriber)) {
+                    if (existing.getType() == subscription.getType()) {
+                        duplicate = true;
+                        break;
+                    }
+                }
+                if (duplicate) {
+                    log.trace("Skipping redundant subscription (node: {}, jid: {}, owner: {}, type: {}, id: {}) during load; an equivalent subscription was already loaded.",
+                        node.getUniqueIdentifier(), subscriber, owner, subscription.getType(), subID);
+                    return;
+                }
+            }
+
             // Indicate the subscription that is has already been saved to the database
             subscription.setSavedToDB(true);
             node.addSubscription(subscription);
@@ -1003,7 +1035,6 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             log.error("An exception occurred while loading a subscriptions for nodes of a service from the database.", sqle);
         }
     }
-
     @Override
     public void createAffiliation(Node node, NodeAffiliate affiliate)
     {

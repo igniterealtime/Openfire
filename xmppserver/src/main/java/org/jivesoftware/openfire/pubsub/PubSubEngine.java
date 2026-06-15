@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.pubsub;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Interner;
 import com.google.common.collect.Interners;
 import org.dom4j.DocumentHelper;
@@ -492,16 +493,32 @@ public class PubSubEngine
     }
 
     /**
-     * Checks of the configuration of the node meets the preconditions, as supplied in the dataform.
+     * Checks whether the configuration of a node satisfies the supplied preconditions.
      *
-     * This method returns true only if the configuration of the node at least contains each of the fields
-     * defined in the preconditions (with matching values).
+     * This method is used to evaluate the "publish-options as preconditions" flow of XEP-0060 (§7.1.5):
+     * a publisher supplies a data form naming the configuration fields it requires the (existing) node to
+     * have, and publishing is only allowed if the node already meets them.
      *
-     * @param node The node (cannot be null)
-     * @param preconditions The preconditions (can be null, in which case 'true' is returned).
-     * @return True if all preconditions are met, otherwise false.
+     * For the preconditions to be met, the node's configuration must, for every precondition field, contain
+     * a field with the same variable name whose value(s) include all of the value(s) required by the
+     * precondition. The node may have additional values beyond those required; only the absence of a
+     * required value causes rejection. Value comparison is order-independent: a field's values are treated
+     * as a set rather than an ordered list.
+     *
+     * Comparison follows the boolean equivalences defined by XEP-0004: the values {@code "true"} and
+     * {@code "1"} are considered equal, as are {@code "false"} and {@code "0"}.
+     *
+     * A precondition is not satisfied if the node configuration is missing the named field entirely, or if
+     * any value required by the precondition is absent from the node's value set (after boolean
+     * normalization). The {@code FORM_TYPE} field is ignored and never compared.
+     *
+     * @param node The node whose configuration is checked (cannot be null).
+     * @param preconditions The preconditions to check against. May be null, in which case {@code true} is
+     *                      returned (no preconditions to satisfy).
+     * @return {@code true} if every precondition is met, otherwise {@code false}.
      */
-    private boolean nodeMeetsPreconditions( Node node, DataForm preconditions )
+    @VisibleForTesting
+    static boolean nodeMeetsPreconditions(final Node node, final DataForm preconditions)
     {
         if ( preconditions == null )
         {
@@ -509,9 +526,15 @@ public class PubSubEngine
         }
 
         final DataForm conditions = node.getConfigurationForm(null);
+        if ( conditions == null )
+        {
+            // No configuration to match against; any non-FORM_TYPE precondition cannot be met.
+            return preconditions.getFields().stream().allMatch( f -> "FORM_TYPE".equals( f.getVariable() ) );
+        }
+
         for ( final FormField precondition : preconditions.getFields() )
         {
-            if ( precondition.getVariable().equals( "FORM_TYPE" ) )
+            if ( "FORM_TYPE".equals( precondition.getVariable() ) )
             {
                 continue;
             }
@@ -519,30 +542,43 @@ public class PubSubEngine
             final FormField condition = conditions.getField( precondition.getVariable() );
             if ( condition == null )
             {
-                // Unknown condition. Reject.
+                // Node config does not define this field. Reject.
                 return false;
             }
 
-            if ( condition.getValues().size() > 1 )
+            final Set<String> nodeValues = normalizeValues( condition );
+            final Set<String> requiredValues = normalizeValues( precondition );
+
+            if ( !nodeValues.containsAll( requiredValues ) )
             {
-                if ( !condition.getValues().containsAll( precondition.getValues() ) || !precondition.getValues().containsAll( condition.getValues() ) )
-                {
-                    // The condition value list does contain different values than the precondtion value list.
-                    return false;
-                }
-            }
-            else
-            {
-                final String a = condition.getFirstValue();
-                final String b = precondition.getFirstValue();
-                if ( !a.equals( b ) && !(a.equals( "true" ) && b.equals( "1" )) && !(a.equals( "1" ) && b.equals( "true" ))
-                                    && !(a.equals( "false" ) && b.equals( "0" )) && !(a.equals( "0" ) && b.equals( "false" )) )
-                {
-                    return false;
-                }
+                return false;
             }
         }
+
         return true;
+    }
+
+    private static Set<String> normalizeValues(final FormField field)
+    {
+        final Set<String> normalized = new HashSet<>();
+        if ( field == null )
+        {
+            return normalized;
+        }
+        for ( final String value : field.getValues() )
+        {
+            if ( value == null )
+            {
+                continue;
+            }
+            switch ( value )
+            {
+                case "true":  normalized.add( "1" ); break;
+                case "false": normalized.add( "0" ); break;
+                default:      normalized.add( value );
+            }
+        }
+        return normalized;
     }
 
     private void deleteItems(PubSubService service, IQ iq, Element retractElement) {

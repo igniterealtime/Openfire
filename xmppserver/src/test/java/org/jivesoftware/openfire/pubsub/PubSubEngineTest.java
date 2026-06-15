@@ -23,6 +23,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.xmpp.forms.DataForm;
+import org.xmpp.forms.FormField;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
@@ -127,5 +129,221 @@ public class PubSubEngineTest
         final Element pubsubError = response.getError().getElement()
                 .element("payload-too-big");
         assertNotNull(pubsubError, "Expected a 'payload-too-big' pubsub error element");
+    }
+
+    /**
+     * Tests that a node meets preconditions when the preconditions have more than the one value that matches the node configuration.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3311">OF-3311: nodeMeetsPreconditions() ignores extra precondition values when the node configuration has only one value</a>
+     */
+    @Test
+    public void testNodeMeetsPreconditionsFailsWhenPreconditionHasAdditionalValues()
+    {
+        // Setup node configuration.
+        final Node node = Mockito.mock(Node.class);
+
+        final DataForm configuration = new DataForm(DataForm.Type.form);
+        final FormField configField = configuration.addField();
+        configField.setVariable("pubsub#access_model");
+        configField.addValue("open");
+
+        Mockito.when(node.getConfigurationForm(null)).thenReturn(configuration);
+
+        // Setup preconditions with TWO values.
+        final DataForm preconditions = new DataForm(DataForm.Type.submit);
+        final FormField preconditionField = preconditions.addField();
+        preconditionField.setVariable("pubsub#access_model");
+        preconditionField.addValue("open");
+        preconditionField.addValue("presence");
+
+        // Execute system under test.
+        final boolean result = PubSubEngine.nodeMeetsPreconditions(node, preconditions);
+
+        // Verify result.
+        assertFalse(result);
+    }
+
+    /**
+     * Order-independent equal sets match. (Note: this does not exercise the subset behavior, see
+     * {@link #testNodeMeetsPreconditionsSucceedsWhenConfigHasExtraValues} for that.)
+     */
+    @Test
+    public void testNodeMeetsPreconditionsSucceedsWhenMultiValueFieldsMatchRegardlessOfOrder()
+    {
+        // Setup test fixture.
+        final Node node = Mockito.mock(Node.class);
+        final DataForm configuration = new DataForm(DataForm.Type.form);
+        final FormField configField = configuration.addField();
+        configField.setVariable("pubsub#roster_groups_allowed");
+        configField.addValue("admins");
+        configField.addValue("moderators");
+        Mockito.when(node.getConfigurationForm(null)).thenReturn(configuration);
+
+        final DataForm preconditions = new DataForm(DataForm.Type.submit);
+        final FormField preconditionField = preconditions.addField();
+        preconditionField.setVariable("pubsub#roster_groups_allowed");
+        preconditionField.addValue("moderators");
+        preconditionField.addValue("admins");
+
+        // Execute system under test.
+        final boolean result = PubSubEngine.nodeMeetsPreconditions(node, preconditions);
+
+        // Verify result.
+        assertTrue(result);
+    }
+
+    /**
+     * The node configuration may contain more values than the precondition requires; the precondition is met as long as
+     * all required values are present. This pins the subset (containsAll) semantics, distinguishing them from exact set
+     * equality.
+     */
+    @Test
+    public void testNodeMeetsPreconditionsSucceedsWhenConfigHasExtraValues()
+    {
+        // Setup test fixture.
+        final Node node = Mockito.mock(Node.class);
+        final DataForm configuration = new DataForm(DataForm.Type.form);
+        final FormField configField = configuration.addField();
+        configField.setVariable("pubsub#roster_groups_allowed");
+        configField.addValue("admins");
+        configField.addValue("moderators");
+        configField.addValue("guests");
+        Mockito.when(node.getConfigurationForm(null)).thenReturn(configuration);
+
+        final DataForm preconditions = new DataForm(DataForm.Type.submit);
+        final FormField preconditionField = preconditions.addField();
+        preconditionField.setVariable("pubsub#roster_groups_allowed");
+        preconditionField.addValue("admins");
+        preconditionField.addValue("moderators");
+
+        // Execute system under test.
+        final boolean result = PubSubEngine.nodeMeetsPreconditions(node, preconditions);
+
+        // Verify result.
+        assertTrue(result);
+    }
+
+    /**
+     * XEP-0004 boolean equivalence: "true"/"1" and "false"/"0" are treated as equal.
+     */
+    @Test
+    public void testNodeMeetsPreconditionsTreatsBooleanValuesAsEquivalent()
+    {
+        // Setup test fixture.
+        final Node node = Mockito.mock(Node.class);
+        final DataForm configuration = new DataForm(DataForm.Type.form);
+        final FormField configField = configuration.addField();
+        configField.setVariable("pubsub#persist_items");
+        configField.addValue("true");
+        Mockito.when(node.getConfigurationForm(null)).thenReturn(configuration);
+
+        final DataForm preconditions = new DataForm(DataForm.Type.submit);
+        final FormField preconditionField = preconditions.addField();
+        preconditionField.setVariable("pubsub#persist_items");
+        preconditionField.addValue("1");
+
+        // Execute system under test.
+        final boolean result = PubSubEngine.nodeMeetsPreconditions(node, preconditions);
+
+        // Verify result.
+        assertTrue(result);
+    }
+
+    /**
+     * "true" and "false" (i.e. "0") are not equivalent.
+     */
+    @Test
+    public void testNodeMeetsPreconditionsRejectsMismatchedBooleanValues()
+    {
+        // Setup test fixture.
+        final Node node = Mockito.mock(Node.class);
+        final DataForm configuration = new DataForm(DataForm.Type.form);
+        final FormField configField = configuration.addField();
+        configField.setVariable("pubsub#persist_items");
+        configField.addValue("true");
+        Mockito.when(node.getConfigurationForm(null)).thenReturn(configuration);
+
+        final DataForm preconditions = new DataForm(DataForm.Type.submit);
+        final FormField preconditionField = preconditions.addField();
+        preconditionField.setVariable("pubsub#persist_items");
+        preconditionField.addValue("0");
+
+        // Execute system under test.
+        final boolean result = PubSubEngine.nodeMeetsPreconditions(node, preconditions);
+
+        // Verify result.
+        assertFalse(result);
+    }
+
+    /**
+     * Null preconditions are trivially satisfied.
+     */
+    @Test
+    public void testNodeMeetsPreconditionsReturnsTrueForNullPreconditions()
+    {
+        // Setup test fixture.
+        final Node node = Mockito.mock(Node.class);
+
+        // Execute system under test.
+        final boolean result = PubSubEngine.nodeMeetsPreconditions(node, null);
+
+        // Verify result.
+        assertTrue(result);
+        Mockito.verify(node, Mockito.never()).getConfigurationForm(Mockito.any());
+    }
+
+    /**
+     * A precondition naming a field absent from the node configuration is not met.
+     */
+    @Test
+    public void testNodeMeetsPreconditionsRejectsUnknownField()
+    {
+        // Setup test fixture.
+        final Node node = Mockito.mock(Node.class);
+        final DataForm configuration = new DataForm(DataForm.Type.form);
+        final FormField configField = configuration.addField();
+        configField.setVariable("pubsub#access_model");
+        configField.addValue("open");
+        Mockito.when(node.getConfigurationForm(null)).thenReturn(configuration);
+
+        final DataForm preconditions = new DataForm(DataForm.Type.submit);
+        final FormField preconditionField = preconditions.addField();
+        preconditionField.setVariable("pubsub#persist_items");
+        preconditionField.addValue("1");
+
+        // Execute system under test.
+        final boolean result = PubSubEngine.nodeMeetsPreconditions(node, preconditions);
+
+        // Verify result.
+        assertFalse(result);
+    }
+
+    /**
+     * The FORM_TYPE field is ignored and never compared, even if the node config omits it.
+     */
+    @Test
+    public void testNodeMeetsPreconditionsIgnoresFormType()
+    {
+        // Setup test fixture.
+        final Node node = Mockito.mock(Node.class);
+        final DataForm configuration = new DataForm(DataForm.Type.form);
+        final FormField configField = configuration.addField();
+        configField.setVariable("pubsub#access_model");
+        configField.addValue("open");
+        Mockito.when(node.getConfigurationForm(null)).thenReturn(configuration);
+
+        final DataForm preconditions = new DataForm(DataForm.Type.submit);
+        final FormField formType = preconditions.addField();
+        formType.setVariable("FORM_TYPE");
+        formType.addValue("http://jabber.org/protocol/pubsub#publish-options");
+        final FormField preconditionField = preconditions.addField();
+        preconditionField.setVariable("pubsub#access_model");
+        preconditionField.addValue("open");
+
+        // Execute system under test.
+        final boolean result = PubSubEngine.nodeMeetsPreconditions(node, preconditions);
+
+        // Verify result.
+        assertTrue(result);
     }
 }

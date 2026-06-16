@@ -39,6 +39,7 @@
 <%@ page import="org.jivesoftware.util.*" %>
 <%@ page import="java.util.concurrent.Future" %>
 <%@ page import="java.util.concurrent.TimeUnit" %>
+<%@ page import="org.jivesoftware.admin.servlet.PubSubSubscriptionMaintenanceServlet" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -123,6 +124,9 @@
 
     // Check if Blowfish migration is needed
     pageContext.setAttribute( "needsBlowfishMigration", JiveGlobals.isBlowfishMigrationNeeded() );
+
+    // Cheap, cached check (never blocks; refreshes in the background) for redundant pubsub subscription rows (OF-3306).
+    pageContext.setAttribute( "pubsubCleanupAdvisable", PubSubSubscriptionMaintenanceServlet.isCleanupAdvisable() );
 %>
 
     <c:if test="${not empty serverUpdate}">
@@ -164,6 +168,15 @@
         <admin:infoBox type="warning">
             <fmt:message key="index.blowfish-migration.warning">
                 <fmt:param value="<a href=\"./security-blowfish-migration.jsp\">" />
+                <fmt:param value="</a>"/>
+            </fmt:message>
+        </admin:infoBox>
+    </c:if>
+
+    <c:if test="${pubsubCleanupAdvisable}">
+        <admin:infoBox type="warning">
+            <fmt:message key="index.pubsub-subscription-maintenance.warning">
+                <fmt:param value="<a href=\"./pubsub-subscription-maintenance.jsp\">" />
                 <fmt:param value="</a>"/>
             </fmt:message>
         </admin:infoBox>

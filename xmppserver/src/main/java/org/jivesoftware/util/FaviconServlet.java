@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,9 +127,13 @@ public class FaviconServlet extends HttpServlet {
         final String host = request.getParameter("host");
 
         // OF-1885: Ensure that the provided value is a valid hostname.
-        if (!InetAddresses.isInetAddress(host) && !InternetDomainName.isValid(host)) {
+        if (host == null || (!InetAddresses.isInetAddress(host) && !InternetDomainName.isValid(host))) {
             LOGGER.info("Request for favicon of hostname that can't be parsed as a valid hostname '{}' is ignored.", host);
-            writeBytesToStream(defaultBytes, response);
+            if (defaultBytes != null) {
+                writeBytesToStream(defaultBytes, response);
+            } else {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            }
             return;
         }
 
@@ -141,7 +145,11 @@ public class FaviconServlet extends HttpServlet {
             .findAny();
         if (optionalHost.isEmpty()) {
             LOGGER.info("Request to unconnected host {} ignored - using default response", host);
-            writeBytesToStream(defaultBytes, response);
+            if (defaultBytes != null) {
+                writeBytesToStream(defaultBytes, response);
+            } else {
+                response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            }
             return;
         }
 
@@ -150,6 +158,8 @@ public class FaviconServlet extends HttpServlet {
         byte[] bytes = getImage(hostToUse, defaultBytes);
         if (bytes != null) {
             writeBytesToStream(bytes, response);
+        } else {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         }
     }
 
@@ -158,7 +168,7 @@ public class FaviconServlet extends HttpServlet {
      *
      * @param bytes the bytes to write to the <code>ServletOutputStream</code>.
      */
-    private void writeBytesToStream(byte[] bytes, HttpServletResponse response) {
+    private void writeBytesToStream(@Nonnull byte[] bytes, @Nonnull HttpServletResponse response) {
         response.setContentType(CONTENT_TYPE);
 
         // Send image
@@ -177,22 +187,24 @@ public class FaviconServlet extends HttpServlet {
      * @param host the name of the host to get its favicon.
      * @return the image bytes found, otherwise null.
      */
-    private byte[] getImage(String host, byte[] defaultImage) {
+    private byte[] getImage(@Nonnull String host, byte[] defaultImage) {
         // If we've already attempted to get the favicon twice and failed,
         // return the default image.
-        if (missesCache.get(host) != null && missesCache.get(host) > 1) {
+        final Integer attempts = missesCache.get(host);
+        if (attempts != null && attempts > 1) {
             // Domain does not have a favicon so return default icon
             return defaultImage;
         }
         // See if we've cached the favicon.
-        if (hitsCache.containsKey(host)) {
-            return hitsCache.get(host);
+        final byte[] cachedFavicon = hitsCache.get(host);
+        if (cachedFavicon != null) {
+            return cachedFavicon;
         }
         byte[] bytes = getImage(host);
         if (bytes == null) {
             // Cache that the requested domain does not have a favicon. Check if this
             // is the first cache miss or the second.
-            if (missesCache.get(host) != null) {
+            if (attempts != null) {
                 missesCache.put(host, 2);
             }
             else {

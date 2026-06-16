@@ -808,9 +808,10 @@ public class JiveGlobals {
      *
      * @param name the name of the property being set.
      * @param value the value of the property being set.
+     * @return the previous value of the property, or {@code null} if it didn't exist.
      */
-    public static void setProperty(String name, String value) {
-        setProperty(name, value, false);
+    public static String setProperty(String name, String value) {
+        return setProperty(name, value, false);
     }
 
     /**
@@ -820,15 +821,16 @@ public class JiveGlobals {
      * @param name the name of the property being set.
      * @param value the value of the property being set.
      * @param encrypt {@code true} to encrypt the property in the database, other {@code false}
+     * @return the previous value of the property, or {@code null} if it didn't exist.
      */
-    public static void setProperty(String name, String value, boolean encrypt) {
+    public static String setProperty(String name, String value, boolean encrypt) {
         if (properties == null) {
             if (isSetupMode()) {
-                return;
+                return null;
             }
             properties = JiveProperties.getInstance();
         }
-        properties.put(name, value, encrypt);
+        return properties.put(name, value, encrypt);
     }
 
     /**
@@ -850,14 +852,15 @@ public class JiveGlobals {
      *
      * @param name   the name of the property being set.
      * @param values the values of the property.
+     * @return the previous value of the property, or {@code null} if it didn't exist.
      */
-    public static void setProperty( String name, List<String> values )
+    public static List<String> setProperty(String name, List<String> values)
     {
         if ( properties == null )
         {
             if ( isSetupMode() )
             {
-                return;
+                return null;
             }
             properties = JiveProperties.getInstance();
         }
@@ -866,7 +869,7 @@ public class JiveGlobals {
         if ( existing != null && existing.equals( values ) )
         {
             // no change.
-            return;
+            return existing.isEmpty() ? null : existing;
         }
 
         properties.remove( name );
@@ -893,6 +896,7 @@ public class JiveGlobals {
             params.put("value", values);
             PropertyEventDispatcher.dispatchEvent(name, PropertyEventDispatcher.EventType.property_set, params);
         }
+        return existing == null || existing.isEmpty() ? null : existing;
     }
 
     /**
@@ -919,16 +923,18 @@ public class JiveGlobals {
      * does nothing. All children of the property will be deleted as well.
      *
      * @param name the name of the property to delete.
+     * @return the previous value associated with this property, or null if there was no property.
      */
-    public static void deleteProperty(String name) {
+    public static String deleteProperty(String name) {
         if (properties == null) {
             if (isSetupMode()) {
-                return;
+                return null;
             }
             properties = JiveProperties.getInstance();
         }
-        properties.remove(name);
+        final String removed = properties.remove(name);
         clearXMLPropertyEncryptionEntry(name);
+        return removed;
     }
 
     static void clearXMLPropertyEncryptionEntry(String name) {

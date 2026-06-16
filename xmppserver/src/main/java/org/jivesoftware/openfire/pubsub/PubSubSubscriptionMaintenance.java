@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.pubsub;
 
+import org.jivesoftware.admin.servlet.PubSubSubscriptionMaintenanceServlet;
 import org.jivesoftware.database.DbConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -355,6 +356,10 @@ public class PubSubSubscriptionMaintenance
             Log.error("Cleanup of redundant pubsub subscription rows failed.", e);
             final Progress last = progress.get();
             progress.set(Progress.failed(last.totalToRemove, last.removed, e.getMessage()));
+        }
+        finally {
+            // Reset the flag that indicates that a cleanup is advisable. Without this, the warning that cleanup is needed would continue to show.
+            PubSubSubscriptionMaintenanceServlet.isCleanupAdvisable();
         }
     }
 

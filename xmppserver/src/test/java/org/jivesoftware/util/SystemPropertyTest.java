@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2019-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -679,5 +679,117 @@ public class SystemPropertyTest {
         assertThat(JiveGlobals.getProperty(key), is("TEST_2"));
     }
 
+    @Test
+    public void setValueReturnsNullWhenNoPreviousValueExists() {
 
+        final SystemProperty<Long> longProperty = SystemProperty.Builder.ofType(Long.class)
+            .setKey("a-test-previous-value-absent")
+            .setDefaultValue(42L)
+            .setDynamic(true)
+            .build();
+
+        // Even though a default is configured, nothing has been persisted, so there is no previous value.
+        assertThat(longProperty.setValue(84L), is(nullValue()));
+    }
+
+    @Test
+    public void setValueReturnsThePreviousValue() {
+
+        final SystemProperty<Long> longProperty = SystemProperty.Builder.ofType(Long.class)
+            .setKey("a-test-previous-value-present")
+            .setDefaultValue(42L)
+            .setDynamic(true)
+            .build();
+
+        assertThat(longProperty.setValue(84L), is(nullValue()));
+        assertThat(longProperty.setValue(168L), is(84L));
+        assertThat(longProperty.getValue(), is(168L));
+    }
+
+    @Test
+    public void setValueReturnsThePreviousValueForAStringProperty() {
+
+        final SystemProperty<String> stringProperty = SystemProperty.Builder.ofType(String.class)
+            .setKey("a-test-previous-string-value")
+            .setDefaultValue("this-is-a-default")
+            .setDynamic(true)
+            .build();
+
+        assertThat(stringProperty.setValue("first"), is(nullValue()));
+        assertThat(stringProperty.setValue("second"), is("first"));
+    }
+
+    @Test
+    public void setValueReturnsThePreviousValueConvertedToType() {
+
+        // Confirms the returned previous value is converted back from its stored String form, not returned raw.
+        final SystemProperty<Duration> durationProperty = SystemProperty.Builder.ofType(Duration.class)
+            .setKey("a-test-previous-duration-value")
+            .setDefaultValue(Duration.ofHours(1))
+            .setChronoUnit(ChronoUnit.MINUTES)
+            .setDynamic(true)
+            .build();
+
+        assertThat(durationProperty.setValue(Duration.ofMinutes(30)), is(nullValue()));
+        final Duration previous = durationProperty.setValue(Duration.ofMinutes(90));
+        assertThat(previous, is(Duration.ofMinutes(30)));
+    }
+
+    @Test
+    public void setValueReturnsThePreviousPlaintextValueForAnEncryptedProperty() {
+
+        // The previous value must be returned as decrypted plaintext, converted back to type - not as ciphertext.
+        final SystemProperty<Long> longProperty = SystemProperty.Builder.ofType(Long.class)
+            .setKey("a-test-encrypted-previous-value")
+            .setDefaultValue(42L)
+            .setDynamic(false)
+            .setEncrypted(true)
+            .build();
+
+        assertThat(longProperty.setValue(84L), is(nullValue()));
+        assertThat(JiveGlobals.isPropertyEncrypted("a-test-encrypted-previous-value"), is(true));
+        assertThat(longProperty.setValue(168L), is(84L));
+    }
+
+    @Test
+    public void jiveGlobalsSetPropertyReturnsNullWhenNoPreviousValueExists() {
+        assertThat(JiveGlobals.setProperty("a-test-jiveglobals-absent", "value"), is(nullValue()));
+    }
+
+    @Test
+    public void jiveGlobalsSetPropertyReturnsThePreviousValue() {
+        final String key = "a-test-jiveglobals-present";
+        assertThat(JiveGlobals.setProperty(key, "first"), is(nullValue()));
+        assertThat(JiveGlobals.setProperty(key, "second"), is("first"));
+    }
+
+    @Test
+    public void jiveGlobalsDeletePropertyReturnsThePreviousValue() {
+        final String key = "a-test-jiveglobals-delete";
+        JiveGlobals.setProperty(key, "value-to-delete");
+        assertThat(JiveGlobals.deleteProperty(key), is("value-to-delete"));
+        assertThat(JiveGlobals.deleteProperty(key), is(nullValue()));
+    }
+
+    @Test
+    public void jiveGlobalsSetListPropertyReturnsNullWhenNoPreviousValueExists() {
+        final String key = "a-test-jiveglobals-list-absent";
+        assertThat(JiveGlobals.setProperty(key, Arrays.asList("a", "b")), is(nullValue()));
+    }
+
+    @Test
+    public void jiveGlobalsSetListPropertyReturnsThePreviousValue() {
+        final String key = "a-test-jiveglobals-list-present";
+        assertThat(JiveGlobals.setProperty(key, Arrays.asList("a", "b")), is(nullValue()));
+        assertThat(JiveGlobals.setProperty(key, Arrays.asList("c", "d")), is(Arrays.asList("a", "b")));
+    }
+
+    @Test
+    public void jiveGlobalsSetListPropertyReturnsThePreviousValueOnUnchangedSet() {
+        // The no-change early-return path: a present, unchanged value should still report the prior list (non-empty),
+        // consistent with the changed path returning null only when the prior value was absent/empty.
+        final String key = "a-test-jiveglobals-list-unchanged";
+        JiveGlobals.setProperty(key, Arrays.asList("a", "b"));
+        assertThat(JiveGlobals.setProperty(key, Arrays.asList("a", "b")), is(Arrays.asList("a", "b")));
+    }
 }

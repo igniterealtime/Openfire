@@ -77,14 +77,12 @@ public class FaviconServlet extends HttpServlet {
      * Pool of HTTP connections to use to get the favicons
      */
     private CloseableHttpClient client;
+
     /**
-     * Cache the domains that a favicon was not found.
+     * Cache of favicons. A present value holds the favicon bytes; an absent value
+     * records that the host was checked and has no (usable) favicon.
      */
-    private Cache<String, Integer> missesCache;
-    /**
-     * Cache the favicons that we've found.
-     */
-    private Cache<String, byte[]> hitsCache;
+    private Cache<String, CacheableOptional<byte[]>> faviconCache;
 
     @Override
     public void init(ServletConfig config) throws ServletException {
@@ -101,9 +99,8 @@ public class FaviconServlet extends HttpServlet {
         catch (final IOException e) {
             LOGGER.warn("Unable to retrieve default favicon", e);
         }
-        // Initialize caches.
-        missesCache = CacheFactory.createCache("Favicon Misses");
-        hitsCache = CacheFactory.createCache("Favicon Hits");
+        // Initialize cache.
+        faviconCache = CacheFactory.createCache("Favicon Cache");
     }
 
     @Override
@@ -175,7 +172,7 @@ public class FaviconServlet extends HttpServlet {
      */
     private void writeBytesToStream(@Nonnull byte[] bytes, @Nonnull HttpServletResponse response) {
         response.setContentType(CONTENT_TYPE);
-
+        response.setHeader("Cache-Control", "public, max-age=86400");
         // Send image
         try (ServletOutputStream sos = response.getOutputStream()) {
             sos.write(bytes);
@@ -183,6 +180,7 @@ public class FaviconServlet extends HttpServlet {
         }
         catch (IOException e) {
             // Do nothing
+            LOGGER.trace("Unable to write favicon to response", e);
         }
     }
 
@@ -193,36 +191,13 @@ public class FaviconServlet extends HttpServlet {
      * @return the image bytes found, otherwise null.
      */
     private byte[] getImage(@Nonnull String host, byte[] defaultImage) {
-        // If we've already attempted to get the favicon twice and failed,
-        // return the default image.
-        final Integer attempts = missesCache.get(host);
-        if (attempts != null && attempts > 1) {
-            // Domain does not have a favicon so return default icon
-            return defaultImage;
+        final CacheableOptional<byte[]> cached = faviconCache.get(host);
+        if (cached != null) {
+            return cached.isPresent() ? cached.get() : defaultImage;
         }
-        // See if we've cached the favicon.
-        final byte[] cachedFavicon = hitsCache.get(host);
-        if (cachedFavicon != null) {
-            return cachedFavicon;
-        }
-        byte[] bytes = getImage(host);
-        if (bytes == null) {
-            // Cache that the requested domain does not have a favicon. Check if this
-            // is the first cache miss or the second.
-            if (attempts != null) {
-                missesCache.put(host, 2);
-            }
-            else {
-                missesCache.put(host, 1);
-            }
-            // Return byte of default icon
-            bytes = defaultImage;
-        }
-        // Cache the favicon.
-        else {
-            hitsCache.put(host, bytes);
-        }
-        return bytes;
+        final byte[] bytes = getImage(host);
+        faviconCache.put(host, CacheableOptional.of(bytes));
+        return bytes != null ? bytes : defaultImage;
     }
 
     private byte[] getImage(@Nonnull final String host) {

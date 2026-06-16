@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.pubsub.PubSubModule;
 import org.jivesoftware.openfire.pubsub.PubSubSubscriptionMaintenance;
 import org.jivesoftware.util.CookieUtils;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.WebManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -325,6 +326,9 @@ public class PubSubSubscriptionMaintenanceServlet extends HttpServlet {
             if (started) {
                 request.getSession().setAttribute("successMessage", "pubsub.subscription.maintenance.started");
                 request.getSession().setAttribute("justStarted", Boolean.TRUE);
+                final WebManager webManager = new WebManager();
+                webManager.init(request, response, request.getSession(), request.getServletContext());
+                webManager.logEvent("Started pub/sub subscription cleanup", null);
             } else {
                 // A cleanup was already running; not an error, just informational.
                 request.getSession().setAttribute("successMessage", "pubsub.subscription.maintenance.already-running");

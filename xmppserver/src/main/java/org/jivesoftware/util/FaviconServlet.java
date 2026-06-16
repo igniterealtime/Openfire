@@ -18,6 +18,7 @@ package org.jivesoftware.util;
 
 import com.google.common.net.InetAddresses;
 import com.google.common.net.InternetDomainName;
+import org.apache.http.Header;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -26,7 +27,6 @@ import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.LaxRedirectStrategy;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 import org.jivesoftware.openfire.SessionManager;
@@ -47,7 +47,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -93,7 +92,7 @@ public class FaviconServlet extends HttpServlet {
         // Create a pool of HTTP connections to use to get the favicons
         client = HttpClientBuilder.create()
             .setConnectionManager(new PoolingHttpClientConnectionManager())
-            .setRedirectStrategy(new LaxRedirectStrategy())
+            .disableRedirectHandling()
             .build();
         // Load the default favicon to use when no favicon was found of a remote host
         try {
@@ -138,12 +137,7 @@ public class FaviconServlet extends HttpServlet {
         }
 
         // Validate that we're connected to the host
-        final SessionManager sessionManager = SessionManager.getInstance();
-        final Optional<String> optionalHost = Stream
-            .concat(sessionManager.getIncomingServers().stream(), sessionManager.getOutgoingServers().stream())
-            .filter(remoteServerHost -> remoteServerHost.equalsIgnoreCase(host))
-            .findAny();
-        if (optionalHost.isEmpty()) {
+        if (!isConnectedHost(host)) {
             LOGGER.info("Request to unconnected host {} ignored - using default response", host);
             if (defaultBytes != null) {
                 writeBytesToStream(defaultBytes, response);
@@ -161,6 +155,17 @@ public class FaviconServlet extends HttpServlet {
         } else {
             response.setStatus(HttpServletResponse.SC_NOT_FOUND);
         }
+    }
+
+    /**
+     * Returns true if the supplied host is a server to which Openfire currently has an (incoming or outgoing)
+     * server-to-server connection.
+     */
+    private boolean isConnectedHost(@Nonnull final String host) {
+        final SessionManager sessionManager = SessionManager.getInstance();
+        return Stream
+            .concat(sessionManager.getIncomingServers().stream(), sessionManager.getOutgoingServers().stream())
+            .anyMatch(remoteServerHost -> remoteServerHost.equalsIgnoreCase(host));
     }
 
     /**
@@ -238,24 +243,53 @@ public class FaviconServlet extends HttpServlet {
             .setSocketTimeout(5000)
             .build();
 
-        for (final URI url : urls) {
-            final HttpUriRequest getRequest = RequestBuilder.get(url)
-                .setConfig(requestConfig)
-                .build();
+        for (final URI startUrl : urls) {
+            URI url = startUrl;
+            int redirectsRemaining = 5; // Prevent infinite loops.
 
-            try (final CloseableHttpResponse response = client.execute(getRequest)) {
-                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                    final byte[] result = EntityUtils.toByteArray(response.getEntity());
+            while (url != null && redirectsRemaining-- > 0) {
+                final HttpUriRequest getRequest = RequestBuilder.get(url)
+                    .setConfig(requestConfig)
+                    .build();
 
-                    // Prevent SSRF by checking result (OF-1885)
-                    if (!GraphicsUtils.isImage(result)) {
-                        LOGGER.info("Ignoring response to an HTTP request that should have returned an image (but returned something else): {}", url);
+                try (final CloseableHttpResponse response = client.execute(getRequest)) {
+                    final int status = response.getStatusLine().getStatusCode();
+
+                    if (status == HttpStatus.SC_OK) {
+                        final byte[] result = EntityUtils.toByteArray(response.getEntity());
+                        if (!GraphicsUtils.isImage(result)) {
+                            LOGGER.info("Ignoring response to an HTTP request that should have returned an image (but returned something else): {}", url);
+                            break;
+                        }
+                        return result;
+                    }
+
+                    if (status >= 300 && status < 400) {
+                        final Header location = response.getFirstHeader("Location");
+                        if (location == null) {
+                            break;
+                        }
+                        // Resolve relative redirects against the current URL.
+                        // Rather than using LaxRedirectStrategy, re-validate redirect targets to prevent SSRF (OF-3315)
+                        final URI target = url.resolve(location.getValue());
+                        if (!"http".equalsIgnoreCase(target.getScheme()) && !"https".equalsIgnoreCase(target.getScheme())) {
+                            break;
+                        }
+                        final String targetHost = target.getHost();
+                        if (targetHost == null || !isConnectedHost(targetHost)) {
+                            LOGGER.info("Ignoring redirect to non-connected or unparseable host: {}", location.getValue());
+                            break;
+                        }
+                        url = target;
                         continue;
                     }
-                    return result;
+
+                    // Any other status: give up on this URL.
+                    break;
+                } catch (final IOException ex) {
+                    LOGGER.debug("An exception occurred while trying to obtain an image from: {}", url, ex);
+                    break;
                 }
-            } catch (final IOException ex) {
-                LOGGER.debug("An exception occurred while trying to obtain an image from: {}", url, ex);
             }
         }
         return null;

@@ -13,7 +13,26 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   --%>
-
+<%--@elvariable id="totalRows" type="java.lang.Long"--%>
+<%--@elvariable id="distinctSubscriptions" type="java.lang.Long"--%>
+<%--@elvariable id="removableRows" type="java.lang.Long"--%>
+<%--@elvariable id="cleanupRecommended" type="java.lang.Boolean"--%>
+<%--@elvariable id="redundancyPercent" type="java.lang.Long"--%>
+<%--@elvariable id="analysisAvailable" type="java.lang.Boolean"--%>
+<%--@elvariable id="analysisError" type="java.lang.String"--%>
+<%--@elvariable id="progressPhase" type="java.lang.String"--%>
+<%--@elvariable id="progressPercent" type="java.lang.Integer"--%>
+<%--@elvariable id="progressRemoved" type="java.lang.Long"--%>
+<%--@elvariable id="excludedServiceCount" type="java.lang.Integer"--%>
+<%--@elvariable id="justStarted" type="java.lang.Boolean"--%>
+<%--@elvariable id="clusteringAvailable" type="java.lang.Boolean"--%>
+<%--@elvariable id="clusteringEnabled" type="java.lang.Boolean"--%>
+<%--@elvariable id="clusteringStarted" type="java.lang.Boolean"--%>
+<%--@elvariable id="clusterNodeCount" type="java.lang.Integer"--%>
+<%--@elvariable id="csrf" type="java.lang.String"--%>
+<%--@elvariable id="errorMessage" type="java.lang.String"--%>
+<%--@elvariable id="errorParam" type="java.lang.String"--%>
+<%--@elvariable id="successMessage" type="java.lang.String"--%>
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page errorPage="error.jsp" %>
 <%@ taglib uri="admin" prefix="admin" %>
@@ -131,7 +150,7 @@
 <div id="completedSection" style="display: ${progressPhase == 'COMPLETED' ? 'block' : 'none'};">
     <admin:infobox type="success">
         <fmt:message key="pubsub.subscription.maintenance.progress.completed">
-            <fmt:param value="${progressRemoved}"/>
+            <fmt:param><fmt:formatNumber value="${progressRemoved}"/></fmt:param>
         </fmt:message>
     </admin:infobox>
 </div>
@@ -164,22 +183,22 @@
             <tbody>
             <tr>
                 <td class="c1"><fmt:message key="pubsub.subscription.maintenance.status.total-rows"/></td>
-                <td class="c2"><strong><c:out value="${totalRows}"/></strong></td>
+                <td class="c2"><strong><fmt:formatNumber value="${totalRows}"/></strong></td>
             </tr>
             <tr>
                 <td class="c1"><fmt:message key="pubsub.subscription.maintenance.status.distinct"/></td>
-                <td class="c2"><strong><c:out value="${distinctSubscriptions}"/></strong></td>
+                <td class="c2"><strong><fmt:formatNumber value="${distinctSubscriptions}"/></strong></td>
             </tr>
             <tr>
                 <td class="c1"><fmt:message key="pubsub.subscription.maintenance.status.removable"/></td>
                 <td class="c2">
-                    <strong><c:out value="${removableRows}"/></strong>
-                    (<c:out value="${redundancyPercent}"/>%)
+                    <strong><fmt:formatNumber value="${removableRows}"/></strong>
+                    (<fmt:formatNumber value="${redundancyPercent}"/>%)
                 </td>
             </tr>
             <tr>
                 <td class="c1"><fmt:message key="pubsub.subscription.maintenance.status.protected-services"/></td>
-                <td class="c2"><strong><c:out value="${excludedServiceCount}"/></strong></td>
+                <td class="c2"><strong><fmt:formatNumber value="${excludedServiceCount}"/></strong></td>
             </tr>
             </tbody>
         </table>
@@ -190,7 +209,7 @@
         <h3><fmt:message key="pubsub.subscription.maintenance.progress.title"/></h3>
         <div class="progress-outer">
             <div id="progressBar" class="progress-inner" style="width: ${progressPercent}%;">
-                <c:out value="${progressPercent}"/>%
+                <fmt:formatNumber value="${progressPercent}"/>%
             </div>
         </div>
         <p id="progressDetail"></p>
@@ -207,7 +226,7 @@
             <c:when test="${clusterNodeCount > 1}">
                 <admin:infobox type="error">
                     <fmt:message key="pubsub.subscription.maintenance.error.multi-node-active">
-                        <fmt:param value="${clusterNodeCount}"/>
+                        <fmt:param><fmt:formatNumber value="${clusterNodeCount}"/></fmt:param>
                     </fmt:message>
                 </admin:infobox>
             </c:when>
@@ -227,7 +246,7 @@
 
                     <form id="cleanupForm" action="pubsub-subscription-maintenance.jsp" method="post"
                           onsubmit="return confirm('<fmt:message key="pubsub.subscription.maintenance.confirm"/>');">
-                        <input type="hidden" name="csrf" value="${csrf}">
+                        <input type="hidden" name="csrf" value="${admin:escapeHTMLTags(csrf)}">
                         <input type="hidden" name="action" value="cleanup">
 
                         <div class="maintenance-checklist">
@@ -252,7 +271,7 @@
         // Localized labels passed from the page so the script needs no hardcoded strings.
         var LBL_DETAIL = "<fmt:message key="pubsub.subscription.maintenance.progress.detail"/>";
 
-        var phase = "${progressPhase}";
+        var phase = "${admin:escapeHTMLTags(progressPhase)}";
 
         function show(id, visible) {
             var el = document.getElementById(id);

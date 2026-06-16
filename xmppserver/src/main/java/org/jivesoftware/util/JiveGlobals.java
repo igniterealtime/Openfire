@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1120,7 +1120,7 @@ public class JiveGlobals {
         }
         // Set the new key (obfuscated, not encrypted - the key just needs to be hidden from casual viewing)
         securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, new Obfuscator().obfuscate(key));
-        currentKey = key == "" ? null : key;
+        currentKey = "".equals(key) ? null : key;
         propertyEncryptorNew = getEncryptor(oldAlg, key);
         propertyEncryptor = propertyEncryptorNew;
     }

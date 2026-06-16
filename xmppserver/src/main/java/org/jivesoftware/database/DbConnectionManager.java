@@ -206,8 +206,11 @@ public class DbConnectionManager {
     }
 
     /**
-     * Returns a Connection from the currently active connection provider that
-     * is ready to participate in transactions (auto commit is set to false).
+     * Returns a Connection from the currently active connection provider that is ready to participate in transactions
+     * (auto commit is set to false).
+     *
+     * Use this when you need setFetchSize to actually stream large result sets (auto-commit connections silently buffer
+     * on PostgreSQL/MySQL)
      *
      * @return a connection with transactions enabled.
      * @throws SQLException if a SQL exception occurs.

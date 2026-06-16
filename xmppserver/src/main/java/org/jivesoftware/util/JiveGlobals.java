@@ -1120,7 +1120,7 @@ public class JiveGlobals {
         }
         // Set the new key (obfuscated, not encrypted - the key just needs to be hidden from casual viewing)
         securityProperties.setProperty(ENCRYPTION_KEY_CURRENT, new Obfuscator().obfuscate(key));
-        currentKey = key == "" ? null : key;
+        currentKey = "".equals(key) ? null : key;
         propertyEncryptorNew = getEncryptor(oldAlg, key);
         propertyEncryptor = propertyEncryptorNew;
     }

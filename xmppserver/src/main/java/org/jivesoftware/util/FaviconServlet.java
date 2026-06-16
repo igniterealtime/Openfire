@@ -100,7 +100,7 @@ public class FaviconServlet extends HttpServlet {
             LOGGER.warn("Unable to retrieve default favicon", e);
         }
         // Initialize cache.
-        faviconCache = CacheFactory.createCache("Favicon Cache");
+        faviconCache = CacheFactory.createCache("Favicon");
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,8 +105,7 @@ public class CacheFactory {
                 "org.jivesoftware.openfire.plugin.util.cache.ClusteredCacheFactory");
 
         cacheNames.put("DNS Records", "dnsRecords");
-        cacheNames.put("Favicon Hits", "faviconHits");
-        cacheNames.put("Favicon Misses", "faviconMisses");
+        cacheNames.put("Favicon", "favicon");
         cacheNames.put("Group", "group");
         cacheNames.put("Group Metadata Cache", "groupMeta");
         cacheNames.put("Group (Shared) Metadata Cache", "groupSharingMeta");
@@ -188,8 +187,7 @@ public class CacheFactory {
         cacheProps.put(PROPERTY_PREFIX_CACHE + "remoteUsersCache" + PROPERTY_SUFFIX_SIZE, 5_242_880L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "remoteUsersCache" + PROPERTY_SUFFIX_MAX_LIFE_TIME, Duration.ofMinutes(30).toMillis());
         cacheProps.put(PROPERTY_PREFIX_CACHE + "vcardCache" + PROPERTY_SUFFIX_SIZE, 10_485_760L);
-        cacheProps.put(PROPERTY_PREFIX_CACHE + "faviconHits" + PROPERTY_SUFFIX_SIZE, 1_048_576L);
-        cacheProps.put(PROPERTY_PREFIX_CACHE + "faviconMisses" + PROPERTY_SUFFIX_SIZE, 1_048_576L);
+        cacheProps.put(PROPERTY_PREFIX_CACHE + "favicon" + PROPERTY_SUFFIX_SIZE, 1_048_576L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "routeServer" + PROPERTY_SUFFIX_SIZE, -1L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "routeServer" + PROPERTY_SUFFIX_MAX_LIFE_TIME, -1L);
         cacheProps.put(PROPERTY_PREFIX_CACHE + "routeComponent" + PROPERTY_SUFFIX_SIZE, -1L);

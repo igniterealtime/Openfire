@@ -189,8 +189,8 @@ public class PubSubSubscriptionMaintenanceServlet extends HttpServlet {
             // Launch the background cleanup. startCleanup() returns immediately; the page polls for progress.
             final PubSubSubscriptionMaintenance m = PubSubSubscriptionMaintenance.getInstance();
             if (m == null) {
-                request.setAttribute("analysisAvailable", false);
-                request.setAttribute("analysisError", "The pubsub service is not running.");
+                request.getSession().setAttribute("analysisAvailable", false);
+                request.getSession().setAttribute("analysisError", "The pubsub service is not running.");
             } else {
                 final boolean started = m.startCleanup();
                 if (started) {

@@ -23,6 +23,7 @@ import org.jivesoftware.openfire.pubsub.PubSubSubscriptionMaintenance;
 import org.jivesoftware.util.CookieUtils;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.WebManager;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -353,44 +354,13 @@ public class PubSubSubscriptionMaintenanceServlet extends HttpServlet {
         response.setContentType("application/json; charset=UTF-8");
         response.setHeader("Cache-Control", "no-store");
 
-        final String error = progress.getError();
-        final StringBuilder json = new StringBuilder();
-        json.append('{')
-            .append("\"phase\":\"").append(progress.getPhase().name()).append("\",")
-            .append("\"percent\":").append(progress.getPercentComplete()).append(',')
-            .append("\"removed\":").append(progress.getRemoved()).append(',')
-            .append("\"total\":").append(progress.getTotalToRemove()).append(',')
-            .append("\"error\":").append(error == null ? "null" : ('"' + jsonEscape(error) + '"'))
-            .append('}');
-        response.getWriter().write(json.toString());
-    }
+        final JSONObject json = new JSONObject();
+        json.put("phase", progress.getPhase().name());
+        json.put("percent", progress.getPercentComplete());
+        json.put("removed", progress.getRemoved());
+        json.put("total", progress.getTotalToRemove());
+        json.put("error", progress.getError());
 
-    /**
-     * Minimal JSON string escaping for the error message: escapes backslash, double-quote and control characters so the
-     * progress JSON remains well-formed regardless of the message content.
-     *
-     * @param value the raw string.
-     * @return the escaped string (without surrounding quotes).
-     */
-    private static String jsonEscape(String value) {
-        final StringBuilder sb = new StringBuilder(value.length() + 16);
-        for (int i = 0; i < value.length(); i++) {
-            final char c = value.charAt(i);
-            switch (c) {
-                case '"'  -> sb.append("\\\"");
-                case '\\' -> sb.append("\\\\");
-                case '\n' -> sb.append("\\n");
-                case '\r' -> sb.append("\\r");
-                case '\t' -> sb.append("\\t");
-                default -> {
-                    if (c < 0x20) {
-                        sb.append(String.format("\\u%04x", (int) c));
-                    } else {
-                        sb.append(c);
-                    }
-                }
-            }
-        }
-        return sb.toString();
+        response.getWriter().write(json.toString());
     }
 }

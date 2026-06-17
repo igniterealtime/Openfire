@@ -613,7 +613,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             rs = pstmt.executeQuery();
             // Add to each node the correspondiding subscriptions
             while(rs.next()) {
-                loadSubscriptions(serviceID, nodes, rs);
+                loadSubscriptions(service, nodes, rs);
             }
             DbConnectionManager.fastcloseStmt(rs, pstmt);
         }
@@ -728,7 +728,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 			// Add to each node the corresponding subscriptions
 			while (rs.next())
 			{
-				loadSubscriptions(nodeIdentifier.getServiceIdentifier(), nodes, rs);
+				loadSubscriptions(service, nodes, rs);
 			}
 			DbConnectionManager.fastcloseStmt(rs, pstmt);
 		}
@@ -888,6 +888,11 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 		Map<Node.UniqueIdentifier, Node> nodes = new HashMap<>();
 		nodes.put(node.getUniqueIdentifier(), node);
 
+		// The node passed here has already been loaded and added to its service, so resolving the service is a cheap
+		// cache hit and does not re-enter loading. Resolve it once and pass it down, both to avoid a per-row lookup
+		// and to keep loadSubscriptions free of any call back into the node-to-service resolution path (OF-3306).
+		final PubSubService service = node.getService();
+
 		try
 		{
 			con = DbConnectionManager.getConnection();
@@ -902,7 +907,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
 			// Add to each node the corresponding subscription
 			if (rs.next())
 			{
-				loadSubscriptions(node.getUniqueIdentifier().getServiceIdentifier(), nodes, rs);
+				loadSubscriptions(service, nodes, rs);
 			}
 		}
 		catch (SQLException sqle)
@@ -967,10 +972,19 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
         return result;
     }
 
-    private void loadSubscriptions(PubSubService.UniqueIdentifier serviceId, Map<Node.UniqueIdentifier, Node> nodes, ResultSet rs) {
+    /**
+     * Loads a single subscription row from the result set and attaches it to the relevant node.
+     *
+     * @param service the service whose nodes are being loaded. Used to look up the node in {@code nodes} and to
+     *                determine properties of the service without resolving the service from the (possibly
+     *                not-yet-initialized) node, which would re-enter service loading.
+     * @param nodes   the nodes loaded so far, keyed by their unique identifier.
+     * @param rs      the result set, positioned on the subscription row to load.
+     */
+    private void loadSubscriptions(PubSubService service, Map<Node.UniqueIdentifier, Node> nodes, ResultSet rs) {
         try {
             String nodeID = decodeNodeID(rs.getString(1));
-            Node node = lookupNode(nodes, serviceId, nodeID);
+            Node node = lookupNode(nodes, service.getUniqueIdentifier(), nodeID);
             if (node == null) {
                 log.warn("Subscription found for a non-existent node: {}", nodeID);
                 return;
@@ -1012,7 +1026,7 @@ public class DefaultPubSubPersistenceProvider implements PubSubPersistenceProvid
             // differentiated by subscription ID, and all are loaded. The type comparison preserves the XEP-0248 §6.1.
             // 3 case where one "nodes" and one "items" subscription may coexist for the same JID on a collection node
             // (such as the PEP root collection).
-            if (!node.isMultipleSubscriptionsEnabled()) {
+            if (!service.isMultipleSubscriptionsEnabled()) {
                 boolean duplicate = false;
                 for (final NodeSubscription existing : node.getSubscriptionsByJID(subscriber)) {
                     if (existing.getType() == subscription.getType()) {

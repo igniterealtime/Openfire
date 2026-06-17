@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,11 +108,11 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
      * Manager that keeps the list of ad-hoc commands and processing command requests.
      */
     private final AdHocCommandManager manager;
-    
+
     /**
-     * Flag that indicates if a user may have more than one subscription with the node. When multiple
-     * subscriptions is enabled each subscription request, event notification and unsubscription request
-     * should include a subid attribute.
+     * Flag that indicates if a literal subscription JID value may have more than one subscription
+     * with a node. When multiple subscriptions is enabled each subscription request, event
+     * notification and unsubscription request should include a subid attribute.
      */
     private boolean multipleSubscriptionsEnabled = true;
 
@@ -474,6 +474,12 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         routingTable.addComponentRoute(getAddress(), this);
         // Start the pubsub engine
         engine.start(this);
+
+        // Initialize the maintenance instance with the correct multiple-subscription exclusion set, then warm
+        // the advisability cache so the index-page advisory has a chance to be ready on first view (OF-3306).
+        PubSubSubscriptionMaintenance.initialize(isMultipleSubscriptionsEnabled() ? Set.of(getServiceID()) : Set.of());
+        PubSubSubscriptionMaintenance.isCleanupAdvisable();
+
         ArrayList<String> params = new ArrayList<>();
         params.add(getServiceDomain());
         Log.info(LocaleUtils.getLocalizedString("startup.starting.pubsub", params));
@@ -635,7 +641,7 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
             // Node owners may manage subscriptions.
             features.add("http://jabber.org/protocol/pubsub#manage-subscriptions");
             if (isMultipleSubscriptionsEnabled()) {
-                // A single entity may subscribe to a node multiple times
+                // A single literal subscription JID value may subscribe to a node multiple times
                 features.add( "http://jabber.org/protocol/pubsub#multi-subscribe" );
             }
             // The outcast affiliation is supported
@@ -900,11 +906,17 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
                 .filter( Node::isSendItemSubscribe )
                 .filter( node -> nodeIDs.contains( node.getUniqueIdentifier().getNodeId()) )
                 .forEach( node -> {
-                    final NodeSubscription subscription = node.getSubscription(entity);
-                    if (subscription != null && subscription.isActive()) {
-                        PublishedItem lastItem = node.getLastPublishedItem();
-                        if (lastItem != null) {
-                            subscription.sendLastPublishedItem(lastItem);
+                    final Collection<NodeSubscription> subscriptions = node.getSubscriptionsByJID(entity);
+                    final HashSet<JID> notifiedJids = new HashSet<>();
+                    final PublishedItem lastItem = node.getLastPublishedItem();
+                    if (lastItem == null) {
+                        return;
+                    }
+                    for (final NodeSubscription subscription : subscriptions) {
+                        if (subscription.canSendPublicationEvent(lastItem.getNode(), lastItem)) {
+                            if (notifiedJids.add(subscription.getJID())) { // XEP-0060 section 6.1.6: When the pubsub service generates event notifications, it SHOULD send only one event notification to an entity that has multiple subscriptions
+                                subscription.sendLastPublishedItem(lastItem);
+                            }
                         }
                     }
                 });

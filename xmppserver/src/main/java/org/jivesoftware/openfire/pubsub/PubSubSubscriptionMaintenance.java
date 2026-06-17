@@ -16,7 +16,6 @@
 
 package org.jivesoftware.openfire.pubsub;
 
-import org.jivesoftware.admin.servlet.PubSubSubscriptionMaintenanceServlet;
 import org.jivesoftware.database.DbConnectionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,6 +26,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -34,6 +34,8 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -91,6 +93,84 @@ public class PubSubSubscriptionMaintenance
      * installations with millions of redundant rows.
      */
     private static final int DELETE_BATCH_SIZE = 1000;
+
+    /**
+     * Cached answer to "is a cleanup worth recommending?", read by the admin index page. Updated only by a background
+     * refresh or by the cleanup worker on completion, never on a page-rendering thread, so reading it is O(1) and
+     * never touches the database.
+     *
+     * This lives here, in the pubsub package alongside the maintenance logic, rather than in the admin servlet, so
+     * that the dependency points from the web layer to the core (the servlet calls this class), never the reverse.
+     */
+    private static final AtomicBoolean cleanupAdvisableCache = new AtomicBoolean(false);
+
+    /**
+     * Epoch-millis timestamp of the last completed advisability refresh, or 0 if it has never run. Used to decide when
+     * {@link #cleanupAdvisableCache} is stale.
+     */
+    private static final AtomicLong cleanupAdvisableCheckedAt = new AtomicLong(0L);
+
+    /**
+     * Guards against launching more than one background advisability refresh at a time.
+     */
+    private static final AtomicBoolean cleanupAdvisableRefreshing = new AtomicBoolean(false);
+
+    /**
+     * How long a cached advisability result is considered fresh before a read triggers a background refresh.
+     */
+    private static final long CLEANUP_ADVISABLE_TTL_MILLIS = Duration.ofHours(1).toMillis();
+
+    /**
+     * Returns whether a cleanup is worth recommending, for an advisory on the admin index page.
+     *
+     * Non-blocking: returns the cached value immediately and, if that value is missing or stale (and no run is in
+     * progress), schedules a one-off background refresh. A full {@link #analyze()} can take many seconds on a very
+     * large table, so it must never run on the page-rendering thread; consequently the first index view after startup
+     * returns {@code false} and the advisory may only appear on a later view, once the background check has completed.
+     *
+     * @return the cached advisability flag; {@code false} until the first background check has completed.
+     */
+    public static boolean isCleanupAdvisable()
+    {
+        final PubSubSubscriptionMaintenance m = instance;
+        if (m == null) {
+            return cleanupAdvisableCache.get(); // Not initialized yet; nothing to analyze against.
+        }
+
+        if (m.getProgress().getPhase() == Phase.RUNNING) {
+            return cleanupAdvisableCache.get();
+        }
+
+        final long checkedAt = cleanupAdvisableCheckedAt.get();
+        final boolean stale = checkedAt == 0L || (System.currentTimeMillis() - checkedAt) > CLEANUP_ADVISABLE_TTL_MILLIS;
+        if (stale && cleanupAdvisableRefreshing.compareAndSet(false, true)) {
+            final Thread refresh = new Thread(() -> {
+                try {
+                    cleanupAdvisableCache.set(m.analyze().isCleanupRecommended());
+                } catch (Exception e) {
+                    Log.debug("Background check for redundant pubsub subscription rows failed; will retry later.", e);
+                } finally {
+                    cleanupAdvisableCheckedAt.set(System.currentTimeMillis());
+                    cleanupAdvisableRefreshing.set(false);
+                }
+            }, "pubsub-subscription-cleanup-advisability-check");
+            refresh.setDaemon(true);
+            refresh.start();
+        }
+        return cleanupAdvisableCache.get();
+    }
+
+    /**
+     * Directly sets the cached advisability value and marks it freshly checked. Used by the cleanup worker on
+     * completion, when the outcome is already known, to avoid a redundant re-analysis.
+     *
+     * @param advisable whether a cleanup is now worth recommending.
+     */
+    public static void setCleanupAdvisable(final boolean advisable)
+    {
+        cleanupAdvisableCache.set(advisable);
+        cleanupAdvisableCheckedAt.set(System.currentTimeMillis());
+    }
 
     /**
      * Counts the total rows and the number of distinct logical subscriptions.
@@ -183,6 +263,50 @@ public class PubSubSubscriptionMaintenance
      * Holds the live progress of a cleanup. Replaced atomically so that readers always see a consistent snapshot.
      */
     private final AtomicReference<Progress> progress = new AtomicReference<>(Progress.idle());
+
+    /**
+     * The shared maintenance instance, created once the pubsub service can answer which services permit multiple
+     * subscriptions. Both the admin servlet (for analysis and cleanup) and the background advisability refresh use
+     * this same instance, so progress state and the multiple-subscription exclusion set are consistent everywhere.
+     */
+    private static volatile PubSubSubscriptionMaintenance instance;
+
+    /**
+     * Lock guarding lazy creation of {@link #instance}.
+     */
+    private static final Object instanceLock = new Object();
+
+    /**
+     * Initializes the shared maintenance instance with the set of services that permit multiple subscriptions, if it
+     * has not already been created. Called by the pubsub module at startup, when the live services can be inspected.
+     *
+     * @param multipleSubscriptionServiceIds service IDs to exclude from analysis and cleanup; see the constructor.
+     * @return the shared instance.
+     */
+    public static PubSubSubscriptionMaintenance initialize(@Nonnull final Collection<String> multipleSubscriptionServiceIds)
+    {
+        PubSubSubscriptionMaintenance result = instance;
+        if (result == null) {
+            synchronized (instanceLock) {
+                result = instance;
+                if (result == null) {
+                    result = new PubSubSubscriptionMaintenance(multipleSubscriptionServiceIds);
+                    instance = result;
+                }
+            }
+        }
+        return result;
+    }
+
+    /**
+     * @return the shared maintenance instance, or null if it has not been initialized yet (the pubsub service has not
+     *         started). Callers that need an instance before startup should treat null as "not yet available".
+     */
+    @Nullable
+    public static PubSubSubscriptionMaintenance getInstance()
+    {
+        return instance;
+    }
 
     /**
      * Creates a maintenance utility that excludes the supplied multiple-subscription services from analysis and
@@ -343,6 +467,7 @@ public class PubSubSubscriptionMaintenance
             if (toRemove == 0) {
                 Log.info("No redundant pubsub subscription rows found; nothing to clean up.");
                 progress.set(Progress.completed(0, 0));
+                setCleanupAdvisable(false);
                 return;
             }
 
@@ -351,15 +476,15 @@ public class PubSubSubscriptionMaintenance
 
             Log.info("Cleanup of redundant pubsub subscription rows finished. Removed {} row(s).", removed);
             progress.set(Progress.completed(toRemove, removed));
+
+            // The cleanup just reduced the table to one row per logical subscription, so no cleanup is advisable now.
+            // Update the cached advisory directly rather than forcing another full re-analysis.
+            setCleanupAdvisable(false);
         }
         catch (Exception e) {
             Log.error("Cleanup of redundant pubsub subscription rows failed.", e);
             final Progress last = progress.get();
             progress.set(Progress.failed(last.totalToRemove, last.removed, e.getMessage()));
-        }
-        finally {
-            // Reset the flag that indicates that a cleanup is advisable. Without this, the warning that cleanup is needed would continue to show.
-            PubSubSubscriptionMaintenanceServlet.isCleanupAdvisable();
         }
     }
 

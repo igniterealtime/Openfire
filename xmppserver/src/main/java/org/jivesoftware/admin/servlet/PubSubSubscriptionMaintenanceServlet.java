@@ -16,9 +16,7 @@
 
 package org.jivesoftware.admin.servlet;
 
-import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.cluster.ClusterManager;
-import org.jivesoftware.openfire.pubsub.PubSubModule;
 import org.jivesoftware.openfire.pubsub.PubSubSubscriptionMaintenance;
 import org.jivesoftware.util.CookieUtils;
 import org.jivesoftware.util.StringUtils;
@@ -34,11 +32,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.time.Duration;
-import java.util.LinkedHashSet;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Servlet for cleaning up redundant rows in the {@code ofPubsubSubscription} table.
@@ -87,139 +80,6 @@ public class PubSubSubscriptionMaintenanceServlet extends HttpServlet {
      */
     private static final String ACTION_PROGRESS = "progress";
 
-    /**
-     * The maintenance instance, held statically so that a running cleanup and its progress survive page reloads for the
-     * lifetime of the JVM. A one-shot maintenance job needs no longer lifetime than this.
-     *
-     * Guarded by {@link #maintenanceLock} for creation; the instance's own progress state is thread-safe.
-     */
-    private static volatile PubSubSubscriptionMaintenance maintenance;
-
-    /**
-     * Lock guarding lazy creation of {@link #maintenance}.
-     */
-    private static final Object maintenanceLock = new Object();
-
-    /**
-     * Cached answer to "is a cleanup worth recommending?", read by the index page. Updated only by a background
-     * refresh (never on the calling thread), so reading it is always O(1) and never touches the database.
-     */
-    private static final AtomicBoolean cleanupAdvisableCache = new AtomicBoolean(false);
-
-    /**
-     * Epoch-millis timestamp of the last completed background refresh of {@link #cleanupAdvisableCache}, or 0 if it has
-     * never run. Used to decide when the cache is stale.
-     */
-    private static final AtomicLong cleanupAdvisableCheckedAt = new AtomicLong(0L);
-
-    /**
-     * Guards against launching more than one background refresh at a time.
-     */
-    private static final AtomicBoolean cleanupAdvisableRefreshing = new AtomicBoolean(false);
-
-    /**
-     * How long a cached advisability result is considered fresh. After this, the next read triggers a background
-     * refresh (but still returns the cached value immediately).
-     */
-    private static final long CLEANUP_ADVISABLE_TTL_MILLIS = Duration.ofHours(1).toMillis();
-
-    /**
-     * Returns whether a cleanup is worth recommending, for display as an advisory on the admin index page.
-     *
-     * This is deliberately non-blocking and never queries the database on the calling thread: it returns the most
-     * recently cached result immediately. If that result is missing or stale, it schedules a one-off background refresh
-     * (a full {@link PubSubSubscriptionMaintenance#analyze()} can take many seconds on a very large table, which must
-     * never delay rendering of the index page). Consequently the first index view after startup returns {@code false}
-     * (no alert) and the alert may only appear on a later view, once the background check has completed - the same
-     * best-effort, page-load-friendly approach the index page uses for its DNS warning.
-     *
-     * @return the cached advisability flag; {@code false} until the first background check has completed.
-     */
-    public static boolean isCleanupAdvisable() {
-        final PubSubSubscriptionMaintenance m = maintenance;
-        // While a cleanup is actively running, the row count is changing under us. Do not analyze (it would compete
-        // with the delete and could report a misleading interim value); just return the current cached value. Once the
-        // run finishes, the cache is marked stale below so the next read re-evaluates promptly.
-        if (m != null && m.getProgress().getPhase() == PubSubSubscriptionMaintenance.Phase.RUNNING) {
-            cleanupAdvisableCheckedAt.set(0L); // ensure a refresh happens right after the run completes
-            return cleanupAdvisableCache.get();
-        }
-
-        final long checkedAt = cleanupAdvisableCheckedAt.get();
-        final boolean stale = checkedAt == 0L || (System.currentTimeMillis() - checkedAt) > CLEANUP_ADVISABLE_TTL_MILLIS;
-        if (stale && cleanupAdvisableRefreshing.compareAndSet(false, true)) {
-            final Thread refresh = new Thread(() -> {
-                try {
-                    final PubSubSubscriptionMaintenance.Analysis analysis = getMaintenance().analyze();
-                    cleanupAdvisableCache.set(analysis.isCleanupRecommended());
-                } catch (Exception e) {
-                    // On failure, leave the previous cached value in place and log; the next read will retry.
-                    Log.debug("Background check for redundant pubsub subscription rows failed; will retry later.", e);
-                } finally {
-                    cleanupAdvisableCheckedAt.set(System.currentTimeMillis());
-                    cleanupAdvisableRefreshing.set(false);
-                }
-            }, "pubsub-subscription-cleanup-advisability-check");
-            refresh.setDaemon(true);
-            refresh.start();
-        }
-        return cleanupAdvisableCache.get();
-    }
-
-    /**
-     * Returns the shared maintenance instance, creating it on first use with the current set of multiple-subscription
-     * services excluded.
-     *
-     * The exclusion set is computed here, in trusted server-side code that can inspect the live services, rather than
-     * in the maintenance class (which only sees the database). See {@link #collectMultipleSubscriptionServiceIds()}.
-     *
-     * @return the shared maintenance instance.
-     */
-    private static PubSubSubscriptionMaintenance getMaintenance() {
-        PubSubSubscriptionMaintenance result = maintenance;
-        if (result == null) {
-            synchronized (maintenanceLock) {
-                result = maintenance;
-                if (result == null) {
-                    result = new PubSubSubscriptionMaintenance(collectMultipleSubscriptionServiceIds());
-                    maintenance = result;
-                }
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Determines the IDs of pubsub services that permit multiple subscriptions for the same subscription JID, and whose
-     * rows must therefore never be treated as redundant by the cleanup.
-     *
-     * Whether multiple subscriptions are permitted is a service-wide setting. PEP services always return false, so they
-     * are never excluded (and are the dominant source of the redundancy this cleanup targets). The main pubsub service
-     * is governed by the {@code xmpp.pubsub.multiple-subscriptions} property; when it permits multiple subscriptions,
-     * its service ID is excluded.
-     *
-     * Note: this intentionally errs toward excluding (protecting) a service when in doubt. If additional pubsub
-     * services that permit multiple subscriptions are introduced, add their IDs here so their data is protected.
-     *
-     * @return the set of service IDs to exclude from cleanup; never null, possibly empty.
-     */
-    private static Set<String> collectMultipleSubscriptionServiceIds() {
-        final Set<String> excluded = new LinkedHashSet<>();
-        try {
-            final PubSubModule pubSubModule = XMPPServer.getInstance().getPubSubModule();
-            if (pubSubModule != null && pubSubModule.isMultipleSubscriptionsEnabled()) {
-                excluded.add(pubSubModule.getServiceID());
-            }
-        } catch (Exception e) {
-            // The main pubsub service is a singleton that is normally available whenever the admin console is running,
-            // so this is not expected. If it cannot be inspected, its ID is not added, which means its rows would be
-            // treated as eligible for cleanup; log loudly so an operator can verify before proceeding.
-            Log.warn("Unable to determine whether the main pubsub service permits multiple subscriptions; its rows " +
-                "will be treated as eligible for cleanup. Verify this is correct for this deployment before proceeding.", e);
-        }
-        return excluded;
-    }
-
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -230,38 +90,42 @@ public class PubSubSubscriptionMaintenanceServlet extends HttpServlet {
             return;
         }
 
-        final PubSubSubscriptionMaintenance m = getMaintenance();
-
-        // Read-only analysis for the status table. This can take a few seconds on a very large table, but does not
-        // modify data. Failures are surfaced to the page rather than thrown.
-        try {
-            final PubSubSubscriptionMaintenance.Analysis analysis = m.analyze();
-            request.setAttribute("totalRows", analysis.getTotalRows());
-            request.setAttribute("distinctSubscriptions", analysis.getDistinctSubscriptions());
-            request.setAttribute("removableRows", analysis.getRemovableRows());
-            request.setAttribute("cleanupRecommended", analysis.isCleanupRecommended());
-            request.setAttribute("redundancyPercent", Math.round(analysis.getRedundancyRatio() * 100));
-            request.setAttribute("analysisAvailable", true);
-        } catch (Exception e) {
-            Log.error("Unable to analyze redundant pubsub subscription rows.", e);
+        final PubSubSubscriptionMaintenance m = PubSubSubscriptionMaintenance.getInstance();
+        if (m == null) {
             request.setAttribute("analysisAvailable", false);
-            request.setAttribute("analysisError", e.getMessage());
-        }
+            request.setAttribute("analysisError", "The pubsub service is not running.");
+        } else {
+            // Read-only analysis for the status table. This can take a few seconds on a very large table, but does not
+            // modify data. Failures are surfaced to the page rather than thrown.
+            try {
+                final PubSubSubscriptionMaintenance.Analysis analysis = m.analyze();
+                request.setAttribute("totalRows", analysis.getTotalRows());
+                request.setAttribute("distinctSubscriptions", analysis.getDistinctSubscriptions());
+                request.setAttribute("removableRows", analysis.getRemovableRows());
+                request.setAttribute("cleanupRecommended", analysis.isCleanupRecommended());
+                request.setAttribute("redundancyPercent", Math.round(analysis.getRedundancyRatio() * 100));
+                request.setAttribute("analysisAvailable", true);
+            } catch (Exception e) {
+                Log.error("Unable to analyze redundant pubsub subscription rows.", e);
+                request.setAttribute("analysisAvailable", false);
+                request.setAttribute("analysisError", e.getMessage());
+            }
 
-        // Current run state, so the page can show a progress bar if a cleanup is already running (e.g. after a reload).
-        final PubSubSubscriptionMaintenance.Progress progress = m.getProgress();
-        request.setAttribute("progressPhase", progress.getPhase().name());
-        request.setAttribute("progressPercent", progress.getPercentComplete());
-        request.setAttribute("progressRemoved", progress.getRemoved());
-        request.setAttribute("excludedServiceCount", m.getExcludedServiceIds().size());
+            // Current run state, so the page can show a progress bar if a cleanup is already running (e.g. after a reload).
+            final PubSubSubscriptionMaintenance.Progress progress = m.getProgress();
+            request.setAttribute("progressPhase", progress.getPhase().name());
+            request.setAttribute("progressPercent", progress.getPercentComplete());
+            request.setAttribute("progressRemoved", progress.getRemoved());
+            request.setAttribute("excludedServiceCount", m.getExcludedServiceIds().size());
 
-        // A just-started flag survives the POST-Redirect-GET via the session; consume it here so the page begins
-        // polling even during the brief window before the background job reports RUNNING.
-        final Object justStarted = request.getSession().getAttribute("justStarted");
-        if (justStarted != null) {
-            request.getSession().removeAttribute("justStarted");
+            // A just-started flag survives the POST-Redirect-GET via the session; consume it here so the page begins
+            // polling even during the brief window before the background job reports RUNNING.
+            final Object justStarted = request.getSession().getAttribute("justStarted");
+            if (justStarted != null) {
+                request.getSession().removeAttribute("justStarted");
+            }
+            request.setAttribute("justStarted", Boolean.TRUE.equals(justStarted));
         }
-        request.setAttribute("justStarted", Boolean.TRUE.equals(justStarted));
 
         // Clustering status (mirrors the Blowfish servlet's approach).
         final boolean clusteringAvailable = ClusterManager.isClusteringAvailable();
@@ -323,17 +187,23 @@ public class PubSubSubscriptionMaintenanceServlet extends HttpServlet {
             }
 
             // Launch the background cleanup. startCleanup() returns immediately; the page polls for progress.
-            final boolean started = getMaintenance().startCleanup();
-            if (started) {
-                request.getSession().setAttribute("successMessage", "pubsub.subscription.maintenance.started");
-                request.getSession().setAttribute("justStarted", Boolean.TRUE);
-                final WebManager webManager = new WebManager();
-                webManager.init(request, response, request.getSession(), request.getServletContext());
-                webManager.logEvent("Started pub/sub subscription cleanup", null);
+            final PubSubSubscriptionMaintenance m = PubSubSubscriptionMaintenance.getInstance();
+            if (m == null) {
+                request.setAttribute("analysisAvailable", false);
+                request.setAttribute("analysisError", "The pubsub service is not running.");
             } else {
-                // A cleanup was already running; not an error, just informational.
-                request.getSession().setAttribute("successMessage", "pubsub.subscription.maintenance.already-running");
-                request.getSession().setAttribute("justStarted", Boolean.TRUE);
+                final boolean started = m.startCleanup();
+                if (started) {
+                    request.getSession().setAttribute("successMessage", "pubsub.subscription.maintenance.started");
+                    request.getSession().setAttribute("justStarted", Boolean.TRUE);
+                    final WebManager webManager = new WebManager();
+                    webManager.init(request, response, request.getSession(), request.getServletContext());
+                    webManager.logEvent("Started pub/sub subscription cleanup", null);
+                } else {
+                    // A cleanup was already running; not an error, just informational.
+                    request.getSession().setAttribute("successMessage", "pubsub.subscription.maintenance.already-running");
+                    request.getSession().setAttribute("justStarted", Boolean.TRUE);
+                }
             }
         }
 
@@ -350,16 +220,22 @@ public class PubSubSubscriptionMaintenanceServlet extends HttpServlet {
      * @throws IOException if writing fails.
      */
     private void writeProgressJson(HttpServletResponse response) throws IOException {
-        final PubSubSubscriptionMaintenance.Progress progress = getMaintenance().getProgress();
         response.setContentType("application/json; charset=UTF-8");
         response.setHeader("Cache-Control", "no-store");
-
         final JSONObject json = new JSONObject();
-        json.put("phase", progress.getPhase().name());
-        json.put("percent", progress.getPercentComplete());
-        json.put("removed", progress.getRemoved());
-        json.put("total", progress.getTotalToRemove());
-        json.put("error", progress.getError());
+
+        final PubSubSubscriptionMaintenance m = PubSubSubscriptionMaintenance.getInstance();
+        if (m == null) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            json.put("error", "The pubsub service is not running.");
+        } else {
+            final PubSubSubscriptionMaintenance.Progress progress = m.getProgress();
+            json.put("phase", progress.getPhase().name());
+            json.put("percent", progress.getPercentComplete());
+            json.put("removed", progress.getRemoved());
+            json.put("total", progress.getTotalToRemove());
+            json.put("error", progress.getError());
+        }
 
         response.getWriter().write(json.toString());
     }

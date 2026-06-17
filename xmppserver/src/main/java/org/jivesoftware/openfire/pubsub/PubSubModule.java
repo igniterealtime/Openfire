@@ -18,7 +18,6 @@ package org.jivesoftware.openfire.pubsub;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.jivesoftware.admin.servlet.PubSubSubscriptionMaintenanceServlet;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.commands.AdHocCommandManager;
 import org.jivesoftware.openfire.component.InternalComponentManager;
@@ -476,8 +475,10 @@ public class PubSubModule extends BasicModule implements ServerItemsProvider, Di
         // Start the pubsub engine
         engine.start(this);
 
-        // Schedule a background refresh of the advisability flag, so that there's a chance of it being ready when the index page loads (OF-3306).
-        PubSubSubscriptionMaintenanceServlet.isCleanupAdvisable();
+        // Initialize the maintenance instance with the correct multiple-subscription exclusion set, then warm
+        // the advisability cache so the index-page advisory has a chance to be ready on first view (OF-3306).
+        PubSubSubscriptionMaintenance.initialize(isMultipleSubscriptionsEnabled() ? Set.of(getServiceID()) : Set.of());
+        PubSubSubscriptionMaintenance.isCleanupAdvisable();
 
         ArrayList<String> params = new ArrayList<>();
         params.add(getServiceDomain());

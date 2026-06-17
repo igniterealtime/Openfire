@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -267,7 +267,7 @@ public class NodeAffiliate implements Cacheable
      *        included in the notification message. The list should not be empty.
      */
     private void sendEventNotification(Message notification, List<NodeSubscription> notifySubscriptions) {
-        if (node.isMultipleSubscriptionsEnabled()) {
+        if (node.isMultipleSubscriptionsEnabled() || node.isCollectionNode()) {
             // Group subscriptions with the same subscriber JID
             Map<JID, Collection<String>> groupedSubs = new HashMap<>();
             for (NodeSubscription subscription : notifySubscriptions) {

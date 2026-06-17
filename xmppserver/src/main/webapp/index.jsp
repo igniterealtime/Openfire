@@ -39,7 +39,7 @@
 <%@ page import="org.jivesoftware.util.*" %>
 <%@ page import="java.util.concurrent.Future" %>
 <%@ page import="java.util.concurrent.TimeUnit" %>
-<%@ page import="org.jivesoftware.admin.servlet.PubSubSubscriptionMaintenanceServlet" %>
+<%@ page import="org.jivesoftware.openfire.pubsub.PubSubSubscriptionMaintenance" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -126,7 +126,7 @@
     pageContext.setAttribute( "needsBlowfishMigration", JiveGlobals.isBlowfishMigrationNeeded() );
 
     // Cheap, cached check (never blocks; refreshes in the background) for redundant pubsub subscription rows (OF-3306).
-    pageContext.setAttribute( "pubsubCleanupAdvisable", PubSubSubscriptionMaintenanceServlet.isCleanupAdvisable() );
+    pageContext.setAttribute( "pubsubCleanupAdvisable", PubSubSubscriptionMaintenance.isCleanupAdvisable() );
 %>
 
     <c:if test="${not empty serverUpdate}">

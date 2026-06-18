@@ -22,6 +22,7 @@ import org.jivesoftware.util.Blowfish;
 import org.jivesoftware.util.CookieUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.WebManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -183,6 +184,10 @@ public class BlowfishMigrationServlet extends HttpServlet {
             try {
                 // Perform migration
                 MigrationResult result = migrateBlowfishToPBKDF2();
+
+                final WebManager webManager = new WebManager();
+                webManager.init(request, response, request.getSession(), request.getServletContext());
+                webManager.logEvent("Migrated encrypted properties to more secure encryption standard", "Successfully migrated " + result.databaseCount() + " database properties and " + result.xmlCount() + " XML properties from SHA1 to PBKDF2.");
 
                 request.getSession().setAttribute("successMessage",
                         "security.blowfish.migration.success");

@@ -13,6 +13,18 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   --%>
+<%--@elvariable id="isBlowfish" type="java.lang.Boolean"--%>
+<%--@elvariable id="needsMigration" type="java.lang.Boolean"--%>
+<%--@elvariable id="alreadyMigrated" type="java.lang.Boolean"--%>
+<%--@elvariable id="currentKdf" type="java.lang.String"--%>
+<%--@elvariable id="encryptionAlgorithm" type="java.lang.String"--%>
+<%--@elvariable id="encryptedPropertyCountDb" type="java.lang.Integer"--%>
+<%--@elvariable id="encryptedPropertyCountXml" type="java.lang.Integer"--%>
+<%--@elvariable id="clusteringAvailable" type="java.lang.Boolean"--%>
+<%--@elvariable id="clusteringEnabled" type="java.lang.Boolean"--%>
+<%--@elvariable id="clusteringStarted" type="java.lang.Boolean"--%>
+<%--@elvariable id="clusterNodeCount" type="java.lang.Integer"--%>
+<%--@elvariable id="csrf" type="java.lang.String"--%>
 
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page errorPage="error.jsp"%>
@@ -135,11 +147,11 @@
         <c:choose>
             <c:when test="${not empty errorParam}">
                 <fmt:message key="${errorMessage}">
-                    <fmt:param value="${errorParam}"/>
+                    <fmt:param><c:out value="${errorParam}"/></fmt:param>
                 </fmt:message>
             </c:when>
             <c:otherwise>
-                <fmt:message key="${errorMessage}"/>
+                <fmt:message><c:out value="${errorMessage}"/></fmt:message>
             </c:otherwise>
         </c:choose>
     </admin:infobox>
@@ -150,12 +162,12 @@
         <c:choose>
             <c:when test="${not empty successParamDb}">
                 <fmt:message key="${successMessage}">
-                    <fmt:param value="${successParamDb}"/>
-                    <fmt:param value="${successParamXml}"/>
+                    <fmt:param><fmt:formatNumber>${successParamDb}</fmt:formatNumber></fmt:param>
+                    <fmt:param><fmt:formatNumber>${successParamXml}</fmt:formatNumber></fmt:param>
                 </fmt:message>
             </c:when>
             <c:otherwise>
-                <fmt:message key="${successMessage}"/>
+                <fmt:message><c:out value="${successMessage}"/></fmt:message>
             </c:otherwise>
         </c:choose>
     </admin:infobox>
@@ -165,7 +177,7 @@
     <c:when test="${not isBlowfish}">
         <admin:infobox type="info">
             <fmt:message key="security.blowfish.migration.not-blowfish">
-                <fmt:param value="${encryptionAlgorithm}"/>
+                <fmt:param><c:out value="${encryptionAlgorithm}"/></fmt:param>
             </fmt:message>
         </admin:infobox>
     </c:when>
@@ -219,7 +231,7 @@
                 <%-- Block migration if multiple cluster nodes are running --%>
                 <admin:infobox type="error">
                     <fmt:message key="security.blowfish.migration.error.multi-node-active">
-                        <fmt:param value="${clusterNodeCount}"/>
+                        <fmt:param><fmt:formatNumber>${clusterNodeCount}</fmt:formatNumber></fmt:param>
                     </fmt:message>
                 </admin:infobox>
 
@@ -303,18 +315,18 @@
                     </tr>
                     <tr>
                         <td class="c1"><fmt:message key="security.blowfish.migration.status.encrypted-count-db"/></td>
-                        <td class="c2"><strong><c:out value="${encryptedPropertyCountDb}"/></strong></td>
+                        <td class="c2"><strong><fmt:formatNumber value="${encryptedPropertyCountDb}"/></strong></td>
                     </tr>
                     <tr>
                         <td class="c1"><fmt:message key="security.blowfish.migration.status.encrypted-count-xml"/></td>
-                        <td class="c2"><strong><c:out value="${encryptedPropertyCountXml}"/></strong></td>
+                        <td class="c2"><strong><fmt:formatNumber value="${encryptedPropertyCountXml}"/></strong></td>
                     </tr>
                 </tbody>
             </table>
         </div>
 
         <form action="security-blowfish-migration.jsp" method="post" onsubmit="return confirm('<fmt:message key="security.blowfish.migration.confirm"/>');">
-            <input type="hidden" name="csrf" value="${csrf}">
+            <input type="hidden" name="csrf" value="${admin:escapeHTMLTags(csrf)}">
             <input type="hidden" name="action" value="migrate">
 
             <div class="migration-checklist">

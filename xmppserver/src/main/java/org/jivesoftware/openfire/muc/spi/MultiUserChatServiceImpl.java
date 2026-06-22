@@ -3144,6 +3144,12 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 fieldSubj.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.subject", preferredLocale));
                 fieldSubj.addValue(room.getSubject());
 
+                final FormField fieldChangeSubject = dataForm.addField();
+                fieldChangeSubject.setVariable("muc#roomconfig_changesubject");
+                fieldChangeSubject.setType(FormField.Type.boolean_type);
+                fieldChangeSubject.setLabel(LocaleUtils.getLocalizedString("muc.extended.info.changesubject", preferredLocale));
+                fieldChangeSubject.addValue(room.canOccupantsChangeSubject() ? "1" : "0");
+
                 final FormField fieldOcc = dataForm.addField();
                 fieldOcc.setVariable("muc#roominfo_occupants");
                 fieldOcc.setType(FormField.Type.text_single);

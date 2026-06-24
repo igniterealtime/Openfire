@@ -302,6 +302,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         } else {
             // This could be the start of data state inconsistency. See OF-3044.
             Log.warn("Not removing detached session '{}' ({}) that appears to have been replaced by another session.", session.getAddress(), session.getStreamID());
+            // TODO investigate if the session should be removed (see OF-3320).
         }
     }
 

@@ -106,21 +106,6 @@ public class IQBindHandler extends IQHandler {
         final String username = authToken.getUsername().toLowerCase();
         final JID desiredJid = new JID(username, serverName, resource, true);
 
-        // OF-3044: If an existing route is present but its session is already closed, it is a stale / detached session
-        // that must be cleaned up cluster-wide before the new session can take over. This is done here (NOT inside
-        // SessionManager.bindResource) on purpose: the removeDetached task re-enters the bare-JID client route lock on
-        // another thread, and bindResource holds that lock - doing this there would deadlock. This (closed) case is
-        // mutually exclusive with the live-conflict case bindResource handles.
-        final ClientSession oldSession = routingTable.getClientRoute(desiredJid);
-        if (oldSession != null && oldSession.isClosed()) {
-            Log.debug("Instructing all cluster nodes to remove any detached session for '{}' as a new session is binding to that resource.", desiredJid);
-            CacheFactory.doSynchronousClusterTask(new ClientSessionTask(desiredJid, RemoteSessionTask.Operation.removeDetached), true);
-            // The conflicting route was closed/detached; no live conflict remains. Bind directly.
-            session.setAuthToken(authToken, resource);
-            sendBindSuccess(session, packet);
-            return null;
-        }
-
         // Resolve any live conflict and install the route atomically, off this worker thread to prevent thread starvation (OF-3319).
         sessionManager.bindResource(session, authToken, resource)
             .whenComplete((result, throwable) -> {

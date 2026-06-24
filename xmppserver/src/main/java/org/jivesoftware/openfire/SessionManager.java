@@ -78,6 +78,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     private static final SystemProperty<Duration> BIND_CONFLICT_SERVICE_LOCK_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
         .setKey("xmpp.session.bind.conflict.lock-timeout")
         .setDefaultValue(Duration.ofSeconds(1))
+        .setMinValue(Duration.ZERO)
         .setChronoUnit(ChronoUnit.MILLIS)
         .setDynamic(true)
         .build();
@@ -1791,9 +1792,16 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             streamIDFactory = new BasicStreamIDFactory();
         }
 
+        final int core = BIND_CONFLICT_SERVICE_CORE_POOL_SIZE.getValue();
+        int max = BIND_CONFLICT_SERVICE_MAX_POOL_SIZE.getValue();
+        if (max < core) {
+            Log.warn("xmpp.session.bind.conflict.maximum-pool-size ({}) is below core-pool-size ({}); raising maximum to match core to avoid an invalid thread pool configuration.", max, core);
+            max = core;
+        }
+
         bindConflictExecutor = new ThreadPoolExecutor(
-            BIND_CONFLICT_SERVICE_CORE_POOL_SIZE.getValue(),
-            BIND_CONFLICT_SERVICE_MAX_POOL_SIZE.getValue(),
+            core,
+            max,
             BIND_CONFLICT_SERVICE_KEEP_ALIVE_TIME.getValue().toMillis(), TimeUnit.MILLISECONDS,
             new SynchronousQueue<>(),
             new NamedThreadFactory("session-bind-conflict-", Executors.defaultThreadFactory(), true, Thread.NORM_PRIORITY));

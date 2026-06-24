@@ -28,6 +28,8 @@ import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.http.HttpConnection;
 import org.jivesoftware.openfire.http.HttpSession;
+import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegate;
+import org.jivesoftware.openfire.mbean.ThreadPoolExecutorDelegateMBean;
 import org.jivesoftware.openfire.multiplex.ConnectionMultiplexerManager;
 import org.jivesoftware.openfire.nio.NettyClientConnectionHandler;
 import org.jivesoftware.openfire.nio.OfflinePacketDeliverer;
@@ -36,26 +38,21 @@ import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.openfire.streammanagement.TerminationDelegate;
-import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.SystemProperty;
-import org.jivesoftware.util.TaskEngine;
+import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.Presence;
+import org.xmpp.packet.*;
 
 import javax.annotation.Nonnull;
+import javax.management.ObjectName;
 import java.net.UnknownHostException;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.LinkedList;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Function;
@@ -76,6 +73,44 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         .setDynamic(true)
         .setDefaultValue(0)
         .setMinValue(-1)
+        .build();
+
+    private static final SystemProperty<Duration> BIND_CONFLICT_SERVICE_LOCK_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.session.bind.conflict.lock-timeout")
+        .setDefaultValue(Duration.ofSeconds(1))
+        .setChronoUnit(ChronoUnit.MILLIS)
+        .setDynamic(true)
+        .build();
+
+    /**
+     * The number of threads to keep in the thread pool used for resource-binding conflict resolution, even if they are idle.
+     */
+    public static final SystemProperty<Integer> BIND_CONFLICT_SERVICE_CORE_POOL_SIZE = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.session.bind.conflict.core-pool-size")
+        .setMinValue(0)
+        .setDefaultValue(0)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * The maximum number of threads to allow in the thread pool used for resource-binding conflict resolution.
+     */
+    public static final SystemProperty<Integer> BIND_CONFLICT_SERVICE_MAX_POOL_SIZE = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.session.bind.conflict.maximum-pool-size")
+        .setMinValue(1)
+        .setDefaultValue(25)
+        .setDynamic(false)
+        .build();
+
+    /**
+     * When the number of threads in the thread pool used for resource-binding conflict resolution is greater than the core, this is the maximum time that excess idle threads will wait for new tasks before terminating.
+     */
+    public static final SystemProperty<Duration> BIND_CONFLICT_SERVICE_KEEP_ALIVE_TIME = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.session.bind.conflict.keep_alive_time")
+        .setChronoUnit(ChronoUnit.SECONDS)
+        .setMinValue(Duration.ofMillis(0))
+        .setDefaultValue(Duration.ofMinutes(1))
+        .setDynamic(false)
         .build();
 
     public static final String COMPONENT_SESSION_CACHE_NAME = "Components Sessions";
@@ -189,6 +224,21 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * @see LocalSessionManager#getIncomingServerSessions() which holds content added by the local cluster node.
      */
     private Cache<String, ArrayList<StreamID>> domainSessionsCache;
+
+    /**
+     * Executor for resource-binding conflict resolution. Bind conflict resolution can block (it may make synchronous
+     * cluster calls to close a session hosted on another node), so it must NOT run on a packet-processing worker thread
+     * as doing so starves that pool during mass reconnects. This dedicated, bounded pool isolates that
+     * blocking work; saturating it delays binds but never stalls general packet processing.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3319">OF-3319</a>
+     */
+    private ThreadPoolExecutor bindConflictExecutor;
+
+    /**
+     * Object name used to register delegate MBean (JMX) for the 'session-bind-conflict' thread pool executor.
+     */
+    private ObjectName bindConflictExecutorObjectName;
 
     private ClientSessionListener clientSessionListener = new ClientSessionListener();
     private IncomingServerSessionListener incomingServerListener = new IncomingServerSessionListener();
@@ -1365,6 +1415,117 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     /**
+     * Resolves any resource-binding conflict for the requested full JID and, if the conflict policy permits, binds the
+     * resource to the (already authenticated) session - enforcing the single-session-per-full-JID invariant cluster-wide.
+     *
+     * Runs off the calling (packet-worker) thread on a dedicated bounded executor, because conflict resolution may
+     * block on a synchronous cluster call when the conflicting session is remote (OF-3155/OF-3319). The caller is freed
+     * immediately and completes the bind from the returned future.
+     *
+     * @param session   the authenticated session being bound (not null).
+     * @param authToken the session's auth token (not null, not anonymous - anonymous sessions need no
+     *                  conflict resolution; see {@link LocalClientSession#setAnonymousAuth()}).
+     * @param resource  the already-resourceprep'd resource (not null).
+     * @return a future completing with {@link BindResult#BOUND} or {@link BindResult#CONFLICT}; only
+     *         unexpected errors complete it exceptionally.
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3319">OF-3319</a>
+     */
+    public CompletableFuture<BindResult> bindResource(@Nonnull final LocalClientSession session,
+                                                      @Nonnull final AuthToken authToken,
+                                                      @Nonnull final String resource)
+    {
+        final String username = authToken.getUsername().toLowerCase();
+        final JID desiredJid = new JID(username, serverName, resource, true);
+
+        try {
+            return CompletableFuture.supplyAsync(() -> resolveConflictAndBind(session, authToken, resource, desiredJid), bindConflictExecutor);
+        } catch (final RejectedExecutionException e) {
+            // OF-3319: the dedicated bind-conflict pool is saturated. Fail CLOSED: refuse this bind rather than admit a
+            // potentially-duplicate session or block a packet worker.
+            Log.warn("Unable to schedule resource-binding conflict resolution for '{}' (bind-conflict executor saturated). Rejecting bind to preserve single-session-per-JID and protect packet processing.", desiredJid);
+            return CompletableFuture.completedFuture(BindResult.CONFLICT);
+        }
+    }
+
+    /**
+     * Performs the locked conflict-resolution-and-install for {@link #bindResource}. Runs on
+     * {@code bindConflictExecutor}. See {@link #bindResource} for the full contract.
+     */
+    private BindResult resolveConflictAndBind(@Nonnull final LocalClientSession session,
+                                              @Nonnull final AuthToken authToken,
+                                              @Nonnull final String resource,
+                                              @Nonnull final JID desiredJid)
+    {
+        final Lock lock = routingTable.getClientRouteLock(desiredJid);
+        final Duration timeout = BIND_CONFLICT_SERVICE_LOCK_TIMEOUT.getValue();
+
+        final boolean acquired;
+        try {
+            acquired = lock.tryLock(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (final InterruptedException e) {
+            // The clustered lock implementation reports an interrupt as 'not acquired' and swallows the InterruptedException;
+            // restore the flag so shutdown/cancellation remains observable, and fail closed.
+            Thread.currentThread().interrupt();
+            Log.warn("Interrupted while acquiring bind-conflict lock for '{}'. Rejecting bind.", desiredJid);
+            return BindResult.CONFLICT;
+        }
+
+        if (!acquired) {
+            Log.warn("Could not acquire bind-conflict lock for '{}' within {}. Rejecting bind to preserve single-session-per-JID.", desiredJid, timeout);
+            return BindResult.CONFLICT;
+        }
+
+        try
+        {
+            final ClientSession oldSession = routingTable.getClientRoute(desiredJid);
+            if (oldSession != null) {
+                // NOTE: the closed/detached-prior-session branch (oldSession.isClosed()) and its removeDetached cluster
+                // task are deliberately NOT handled here - that task re-enters terminateDetached() -> this same
+                // bare-JID lock on another thread and would deadlock. The caller handles that (mutually exclusive) case
+                // before delegating here.
+                final int conflictLimit = getConflictKickLimit();
+
+                if (conflictLimit == NEVER_KICK) {
+                    Log.debug("Conflict resolution for '{}' is 'NEVER KICK'. Rejecting bind with 'conflict'.", desiredJid);
+                    return BindResult.CONFLICT;
+                }
+
+                final int conflictCount = oldSession.incrementConflictCount();
+                if (conflictCount <= conflictLimit) {
+                    Log.debug("Conflict resolution for '{}' does not (yet) permit kicking the existing session. Conflict count: {}, limit: {}. Rejecting bind with 'conflict'.", desiredJid, conflictCount, conflictLimit);
+                    return BindResult.CONFLICT;
+                }
+
+                // Kick the prior owner. close() may be a bounded synchronous cluster RPC when the old session is remote;
+                // it runs here (off-worker) and inside the lock. The old session's route removal happens asynchronously
+                // on its hosting node, but that is fine: we install the new route below under the same lock, and route
+                // installation is last-write-wins, so our install is authoritative. OF-3318 ensures the (later) teardown
+                // of the displaced session will not remove our freshly installed route.
+                Log.debug("Kicking existing session for '{}' (conflict count {} exceeds limit {}).", desiredJid, conflictCount, conflictLimit);
+                oldSession.close(new StreamError(StreamError.Condition.conflict));
+
+                // OF-1923: a kicked session must never be resumed.
+                if (oldSession instanceof LocalClientSession) {
+                    removeDetached((LocalClientSession) oldSession);
+                }
+            }
+
+            // Install the new session's route.
+            session.setAuthToken(authToken, resource);
+            return BindResult.BOUND;
+        }
+        catch (final RuntimeException e)
+        {
+            Log.error("Unexpected error while resolving bind conflict for '{}'. Rejecting bind.", desiredJid, e);
+            return BindResult.CONFLICT;
+        }
+        finally
+        {
+            lock.unlock();
+        }
+    }
+
+    /**
      * Returns true if the specified address belongs to a preauthenticated session. Preauthenticated
      * sessions are only available to the local cluster node when running inside a cluster.
      *
@@ -1392,6 +1553,26 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         }
 
         return session.getLanguage();
+    }
+
+    /**
+     * Outcome of an attempt to bind a resource to a session.
+     *
+     * @see #bindResource(LocalClientSession, AuthToken, String)
+     */
+    public enum BindResult
+    {
+        /**
+         * The resource was bound; the session now owns the route for its full JID.
+         */
+        BOUND,
+
+        /**
+         * The bind was rejected because a conflicting session for the same full JID could not be displaced under the
+         * configured policy, or could not be displaced in time / the server was too busy to do so safely. The caller
+         * must return a {@code conflict} stream/stanza error and MUST NOT treat the session as bound.
+         */
+        CONFLICT
     }
 
     private class ClientSessionListener implements ConnectionCloseListener
@@ -1562,6 +1743,18 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             streamIDFactory = new BasicStreamIDFactory();
         }
 
+        bindConflictExecutor = new ThreadPoolExecutor(
+            BIND_CONFLICT_SERVICE_CORE_POOL_SIZE.getValue(),
+            BIND_CONFLICT_SERVICE_MAX_POOL_SIZE.getValue(),
+            BIND_CONFLICT_SERVICE_KEEP_ALIVE_TIME.getValue().toMillis(), TimeUnit.MILLISECONDS,
+            new SynchronousQueue<>(),
+            new NamedThreadFactory("session-bind-conflict-", Executors.defaultThreadFactory(), true, Thread.NORM_PRIORITY));
+
+        if (JMXManager.isEnabled()) {
+            final ThreadPoolExecutorDelegateMBean mBean = new ThreadPoolExecutorDelegate(bindConflictExecutor);
+            bindConflictExecutorObjectName = JMXManager.tryRegister(mBean, ThreadPoolExecutorDelegateMBean.BASE_OBJECT_NAME + "session-bind-conflict");
+        }
+
         // Initialize caches.
         componentSessionsCache = CacheFactory.createCache(COMPONENT_SESSION_CACHE_NAME);
         multiplexerSessionsCache = CacheFactory.createCache(CM_CACHE_NAME);
@@ -1665,6 +1858,12 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         {
             Log.warn( "An exception occurred while trying to remove locally connected external components from the clustered cache. Other cluster nodes might continue to see our external components, even though we this instance is stopping.", e );
         }
+
+        if (bindConflictExecutorObjectName != null) {
+            JMXManager.tryUnregister(bindConflictExecutorObjectName);
+            bindConflictExecutorObjectName = null;
+        }
+        bindConflictExecutor.shutdown();
     }
 
     /**

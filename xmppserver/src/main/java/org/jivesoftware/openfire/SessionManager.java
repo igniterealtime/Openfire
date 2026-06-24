@@ -1456,6 +1456,13 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                                               @Nonnull final String resource,
                                               @Nonnull final JID desiredJid)
     {
+        // Lock-free, off-worker: clear a closed/detached prior session cluster-wide BEFORE taking the lock.
+        // removeDetached re-enters terminateDetached -> the bare-JID lock on another thread, so it must not run while we hold that lock.
+        final ClientSession pre = routingTable.getClientRoute(desiredJid);
+        if (pre != null && pre.isClosed()) {
+            CacheFactory.doSynchronousClusterTask(new ClientSessionTask(desiredJid, RemoteSessionTask.Operation.removeDetached), true);
+        }
+
         final Lock lock = routingTable.getClientRouteLock(desiredJid);
         final Duration timeout = BIND_CONFLICT_SERVICE_LOCK_TIMEOUT.getValue();
 
@@ -1477,12 +1484,13 @@ public class SessionManager extends BasicModule implements ClusterEventListener
 
         try
         {
+            // Re-obtain ClientRoute, now under the lock: The closed session may have just been cleared; a live session
+            // may have raced in. Decide based on what the route is NOW, not what it was before the lock.
             final ClientSession oldSession = routingTable.getClientRoute(desiredJid);
-            if (oldSession != null) {
-                // NOTE: the closed/detached-prior-session branch (oldSession.isClosed()) and its removeDetached cluster
-                // task are deliberately NOT handled here - that task re-enters terminateDetached() -> this same
-                // bare-JID lock on another thread and would deadlock. The caller handles that (mutually exclusive) case
-                // before delegating here.
+            if (oldSession != null && !oldSession.isClosed()) {
+                // removeDetached for a closed prior session is handled lock-free above, before this lock was acquired:
+                // that task re-enters this same bare-JID lock on another thread and would deadlock if run here. So only
+                // a live conflict remains to resolve.
                 final int conflictLimit = getConflictKickLimit();
 
                 if (conflictLimit == NEVER_KICK) {
@@ -1509,6 +1517,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                     removeDetached((LocalClientSession) oldSession);
                 }
             }
+            // else: oldSession == null (cleared, or never existed) or isClosed (will be gone): safe to install the new session's route..
 
             // Install the new session's route.
             session.setAuthToken(authToken, resource);

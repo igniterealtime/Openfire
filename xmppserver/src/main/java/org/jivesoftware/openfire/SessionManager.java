@@ -1344,7 +1344,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // route or mark it offline.
         // Ownership is captured before removal (the route still exists at this point). Bookkeeping (session_destroyed
         // dispatch) is still performed for stale sessions below, so they are not leaked.
-        final boolean ownsRoute = isRouteOwner(session);
+        final ClientSession current = (session == null) ? null : routingTable.getClientRoute(fullJID);
+        final boolean ownsRoute = current != null && session.getStreamID().equals(current.getStreamID());
+        final boolean replacedByOther = current != null && !ownsRoute; // a route exists, owned by a different session
 
         // Remove route to the removed session (anonymous or not), but only when this session owns it.
         boolean removed = ownsRoute && routingTable.removeClientRoute(fullJID);
@@ -1354,10 +1356,10 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             SessionEventDispatcher.dispatchEvent(session,
                 anonymous ? SessionEventDispatcher.EventType.anonymous_session_destroyed : SessionEventDispatcher.EventType.session_destroyed
             );
-        } else if (!ownsRoute) {
-            // OF-3318: A stale/replaced session that does not own the route is being torn down. It will not remove a
-            // route, but listeners must still be notified, so the session instance is not leaked. (The route owner,
-            // the live session, will fire its own session_destroyed when it is eventually removed.)
+        } else if (replacedByOther) {
+            // OF-3318: a route for this address exists but is owned by a different session (StreamID mismatch):
+            // this instance was replaced. Notify listeners so it is not leaked, without firing for null or
+            // pre-auth sessions (which never had a route / never fired session_created).
             SessionEventDispatcher.dispatchEvent(session,
                 anonymous ? SessionEventDispatcher.EventType.anonymous_session_destroyed : SessionEventDispatcher.EventType.session_destroyed
             );

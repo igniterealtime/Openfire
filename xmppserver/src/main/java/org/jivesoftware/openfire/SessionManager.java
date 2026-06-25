@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Multimap;
 import org.jivesoftware.openfire.audit.AuditStreamIDFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
@@ -56,6 +57,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -1439,7 +1441,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         final JID desiredJid = new JID(username, serverName, resource, true);
 
         try {
-            return CompletableFuture.supplyAsync(() -> resolveConflictAndBind(session, authToken, resource, desiredJid), bindConflictExecutor);
+            return submitBindTask(() -> resolveConflictAndBind(session, authToken, resource, desiredJid));
         } catch (final RejectedExecutionException e) {
             // OF-3319: the dedicated bind-conflict pool is saturated. Fail CLOSED: refuse this bind rather than admit a
             // potentially-duplicate session or block a packet worker.
@@ -1449,10 +1451,25 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     /**
+     * Submits the bind-conflict resolution task to the dedicated executor. Extracted as a seam so tests can simulate
+     * executor saturation by overriding this to throw {@link RejectedExecutionException}; production code must not
+     * override it.
+     *
+     * @param task the conflict-resolution-and-install work to run off the calling thread.
+     * @return a future completing with the task's result.
+     * @throws RejectedExecutionException if the executor cannot accept the task (caller translates this to a fail-closed reject).
+     */
+    protected CompletableFuture<BindResult> submitBindTask(@Nonnull final Supplier<BindResult> task)
+    {
+        return CompletableFuture.supplyAsync(task, bindConflictExecutor);
+    }
+
+    /**
      * Performs the locked conflict-resolution-and-install for {@link #bindResource}. Runs on
      * {@code bindConflictExecutor}. See {@link #bindResource} for the full contract.
      */
-    private BindResult resolveConflictAndBind(@Nonnull final LocalClientSession session,
+    @VisibleForTesting
+    BindResult resolveConflictAndBind(@Nonnull final LocalClientSession session,
                                               @Nonnull final AuthToken authToken,
                                               @Nonnull final String resource,
                                               @Nonnull final JID desiredJid)

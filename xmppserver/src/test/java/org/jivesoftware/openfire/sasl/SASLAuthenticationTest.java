@@ -59,6 +59,7 @@ public class SASLAuthenticationTest {
     private static List<String> originalEnabledMechanisms;
     private static boolean originalSasl2Enabled;
     private static boolean originalSasl2TLSRequired;
+    private static LockOutManager lockOutManager;
 
     @BeforeAll
     public static void setUpClass() throws Exception {
@@ -118,6 +119,7 @@ public class SASLAuthenticationTest {
         try {
             Field providerField = LockOutManager.class.getDeclaredField("provider");
             providerField.setAccessible(true);
+            lockOutManager = (LockOutManager) providerField.get(null);
 
             // Create anonymous implementation
             LockOutProvider mockProvider = new LockOutProvider() {
@@ -154,6 +156,13 @@ public class SASLAuthenticationTest {
         testSaslServer = null;
         TestSaslMechanism.unregisterTestMechanism();
         XMPPServer.setInstance(null);
+        try {
+            Field providerField = LockOutManager.class.getDeclaredField("provider");
+            providerField.setAccessible(true);
+            providerField.set(null, lockOutManager);
+        } catch (Exception ex) {
+            // Just ignore an error here.
+        }
     }
 
     @Test
@@ -599,7 +608,7 @@ public class SASLAuthenticationTest {
         SASLAuthentication.handle(clientSession, auth, false);
         
         // Reset mock to verify second attempt
-        reset(clientSession);
+        clearInvocations(clientSession);
 
         // Try to authenticate again with same session
         SASLAuthentication.handle(clientSession, auth, false);

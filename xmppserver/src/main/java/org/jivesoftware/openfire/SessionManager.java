@@ -77,6 +77,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         .setMinValue(-1)
         .build();
 
+    /**
+     * The maximum amount of time to wait for a cluster-wide lock on a resource-binding conflict resolution service.
+     */
     private static final SystemProperty<Duration> BIND_CONFLICT_SERVICE_LOCK_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
         .setKey("xmpp.session.bind.conflict.lock-timeout")
         .setDefaultValue(Duration.ofSeconds(1))
@@ -232,7 +235,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * Executor for resource-binding conflict resolution. Bind conflict resolution can block (it may make synchronous
      * cluster calls to close a session hosted on another node), so it must NOT run on a packet-processing worker thread
      * as doing so starves that pool during mass reconnects. This dedicated, bounded pool isolates that
-     * blocking work; saturating it delays binds but never stalls general packet processing.
+     * blocking work; when saturated, binds are rejected (fail closed) but general packet processing is unaffected.
      *
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3319">OF-3319</a>
      */

@@ -57,7 +57,7 @@ import java.util.stream.Collectors;
  * or unavailable the routing table will be updated too.<p>
  *
  * When running inside of a cluster the routing table will also keep references to routes
- * hosted in other cluster nodes. A {@link RemotePacketRouter} will be use to route packets
+ * hosted in other cluster nodes. A {@link RemotePacketRouter} will be used to route packets
  * to routes hosted in other cluster nodes.<p>
  *
  * Failure to route a packet will end up sending {@link IQRouter#routingFailed(JID, Packet)},
@@ -816,6 +816,31 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
             }
         }
         return session;
+    }
+
+    @Override
+    public Set<ClientSession> getClientRoutes(JID jid) {
+        final Set<ClientSession> clientSessions = new HashSet<>();
+        final Lock lock = usersSessionsCache.getLock(jid.toBareJID());
+        lock.lock(); // temporarily block new sessions for this JID
+        try {
+            Set<String> sessionFullJids = usersSessionsCache.get(jid.toBareJID());
+            if (sessionFullJids != null) {
+                for (String sessionFullJid : sessionFullJids) {
+                    ClientRoute clientRoute = usersCache.get(sessionFullJid);
+                    if (clientRoute != null) {
+                        final ClientSession clientSession = getClientRoute(new JID(sessionFullJid));
+                        if (clientSession != null) {
+                            clientSessions.add(clientSession);
+                        }
+                    }
+                }
+            }
+        }
+        finally {
+            lock.unlock();
+        }
+        return clientSessions;
     }
 
     @Override

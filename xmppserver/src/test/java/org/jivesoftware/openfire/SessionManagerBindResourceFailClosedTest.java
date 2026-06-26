@@ -225,16 +225,21 @@ public class SessionManagerBindResourceFailClosedTest
                 throw new RejectedExecutionException("simulated saturation");
             }
         };
-        saturated.initialize(server);
+        try {
+            saturated.initialize(server);
 
-        // Execute system under test.
-        final CompletableFuture<SessionManager.BindResult> future = saturated.bindResource(bindingSession, authToken, RESOURCE);
-        final SessionManager.BindResult result = future.get(5, TimeUnit.SECONDS);
+            // Execute system under test.
+            final CompletableFuture<SessionManager.BindResult> future = saturated.bindResource(bindingSession, authToken, RESOURCE);
+            final SessionManager.BindResult result = future.get(5, TimeUnit.SECONDS);
 
-        // Verify result: load-shed to CONFLICT, completed normally (not exceptionally); the route is never installed.
-        assertEquals(SessionManager.BindResult.CONFLICT, result, "A saturated executor must refuse the bind, not throw.");
-        assertFalse(future.isCompletedExceptionally(), "Saturation must complete the future normally with CONFLICT.");
-        verify(bindingSession, never()).setAuthToken(any(AuthToken.class), anyString());
+            // Verify result: load-shed to CONFLICT, completed normally (not exceptionally); the route is never installed.
+            assertEquals(SessionManager.BindResult.CONFLICT, result, "A saturated executor must refuse the bind, not throw.");
+            assertFalse(future.isCompletedExceptionally(), "Saturation must complete the future normally with CONFLICT.");
+            verify(bindingSession, never()).setAuthToken(any(AuthToken.class), anyString());
+        } finally {
+            // Teardown fixture.
+            saturated.stop();
+        }
     }
 
     /**

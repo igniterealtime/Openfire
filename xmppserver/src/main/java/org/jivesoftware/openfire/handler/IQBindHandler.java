@@ -18,17 +18,12 @@ package org.jivesoftware.openfire.handler;
 
 import org.dom4j.Element;
 import org.jivesoftware.openfire.IQHandlerInfo;
-import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.event.SessionEventDispatcher;
-import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.openfire.session.ClientSessionTask;
 import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.openfire.session.RemoteSessionTask;
-import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
@@ -53,7 +48,6 @@ public class IQBindHandler extends IQHandler {
 
     private IQHandlerInfo info;
     private String serverName;
-    private RoutingTable routingTable;
 
     public IQBindHandler() {
         super("Resource Binding handler");
@@ -166,7 +160,6 @@ public class IQBindHandler extends IQHandler {
     @Override
     public void initialize(XMPPServer server) {
         super.initialize(server);
-        routingTable = server.getRoutingTable();
         serverName = server.getServerInfo().getXMPPDomain();
      }
 

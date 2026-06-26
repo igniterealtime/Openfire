@@ -1897,7 +1897,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             JMXManager.tryUnregister(bindConflictExecutorObjectName);
             bindConflictExecutorObjectName = null;
         }
-        bindConflictExecutor.shutdown();
+        if (bindConflictExecutor != null) {
+            bindConflictExecutor.shutdown();
+        }
     }
 
     /**

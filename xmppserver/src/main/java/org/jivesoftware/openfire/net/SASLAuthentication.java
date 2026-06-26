@@ -149,7 +149,7 @@ public class SASLAuthentication {
     public static final SystemProperty<Boolean> SASL2_REQUIRE_TLS = SystemProperty.Builder.ofType(Boolean.class)
         .setKey("xmpp.auth.sasl2.require-tls")
         .setDynamic(true)
-        .setDefaultValue(false)
+        .setDefaultValue(true)
         .build();
 
     // http://stackoverflow.com/questions/8571501/how-to-check-whether-the-string-is-base64-encoded-or-not
@@ -287,10 +287,16 @@ public class SASLAuthentication {
 
         if ( session instanceof ClientSession )
         {
-            features.add(getSASLMechanismsElement( (ClientSession) session, false ));
+            final Element sasl1Mechs = getSASLMechanismsElement( (ClientSession) session, false );
+            if (sasl1Mechs != null) {
+                features.add(sasl1Mechs);
+            }
             if (ENABLE_SASL2.getValue() && (!SASL2_REQUIRE_TLS.getValue() || session.isEncrypted()))
             {
-                features.add(getSASLMechanismsElement((ClientSession) session, true));
+                final Element sasl2Mechs = getSASLMechanismsElement((ClientSession) session, true);
+                if (sasl2Mechs != null) {
+                    features.add(sasl2Mechs);
+                }
             }
         }
         else if ( session instanceof LocalIncomingServerSession )
@@ -330,9 +336,6 @@ public class SASLAuthentication {
         final QName qName = new QName(usingSASL2 ? "authentication" : "mechanisms", namespace);
         final Element result = DocumentHelper.createElement( qName );
         for (final String mech : availableMechanisms) {
-            final Element mechanism = result.addElement("mechanism");
-            mechanism.setText(mech);
-
             if (mech.endsWith("-PLUS")) {
                 // Prevent offering channel binding if the Connection implementation does not support it.
                 final Connection connection = ( (LocalClientSession) session ).getConnection();
@@ -345,6 +348,10 @@ public class SASLAuthentication {
                 if (!session.isEncrypted()) { // This ought to be redundant, as getSupportedChannelBindingTypes() will return an empty set if not encrypted.
                     continue;
                 }
+
+                // After all checks, add element.
+                final Element mechanism = result.addElement("mechanism");
+                mechanism.setText(mech);
             }
         }
         if ( usingSASL2 )

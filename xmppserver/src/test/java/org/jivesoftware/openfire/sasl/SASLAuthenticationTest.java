@@ -153,6 +153,7 @@ public class SASLAuthenticationTest {
         CacheFactory.clearCaches();
         testSaslServer = null;
         TestSaslMechanism.unregisterTestMechanism();
+        XMPPServer.setInstance(null);
     }
 
     @Test

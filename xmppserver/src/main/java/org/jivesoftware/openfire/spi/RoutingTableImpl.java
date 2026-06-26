@@ -41,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.*;
 
+import javax.annotation.Nonnull;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -282,7 +283,7 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     }
 
     @Override
-    public Lock getClientRouteLock(JID jid) {
+    public Lock getClientRouteLock(@Nonnull final JID jid) {
         return usersSessionsCache.getLock(jid.toBareJID());
     }
 

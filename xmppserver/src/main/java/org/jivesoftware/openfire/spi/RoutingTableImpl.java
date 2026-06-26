@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.*;
 
+import javax.annotation.Nonnull;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -279,6 +280,11 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
         if (!onlyLocal && remotePacketRouter != null) {
             remotePacketRouter.broadcastPacket(packet);
         }
+    }
+
+    @Override
+    public Lock getClientRouteLock(@Nonnull final JID jid) {
+        return usersSessionsCache.getLock(jid.toBareJID());
     }
 
     /*

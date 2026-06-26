@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,10 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 
+import javax.annotation.Nonnull;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.locks.Lock;
 
 /**
  * <p>Maintains server-wide knowledge of routes to any node.</p>
@@ -347,4 +349,23 @@ public interface RoutingTable {
      * @param onlyLocal true if only client sessions connect to the local JVM will get the message.
      */
     void broadcastPacket(Message packet, boolean onlyLocal);
+
+    /**
+     * Returns the cluster-wide, reentrant lock that guards mutations of the client route(s) for the user identified by
+     * the bare JID of the provided address.
+     *
+     * This is the same lock that this routing table acquires internally when adding or removing a client route. Callers
+     * that need a sequence of route operations (for the same user) to be atomic against concurrent route mutations (on
+     * this or any other cluster node) must hold this lock for the duration of that sequence.
+     *
+     * The lock is keyed on the <em>bare</em> JID.
+     *
+     * <strong>Scope:</strong> this lock guards client (c2s) routes only. Server routes and component routes are guarded
+     * by separate, independent locks; holding this lock provides no mutual exclusion against mutations of those.
+     *
+     * @param jid the address whose bare-JID representation defines the scope of the lock (must not be null).
+     * @return the lock guarding route mutations for the bare JID of the provided address.
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3319">OF-3319</a>
+     */
+    Lock getClientRouteLock(@Nonnull final JID jid);
 }

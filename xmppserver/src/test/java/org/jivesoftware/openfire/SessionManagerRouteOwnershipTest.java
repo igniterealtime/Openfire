@@ -27,7 +27,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.quality.Strictness;
 import org.xmpp.packet.JID;
-import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -137,11 +136,10 @@ public class SessionManagerRouteOwnershipTest
         sessionManager.removeSession(stale, FULL_JID, false, false);
 
         // Verify result: no unavailable presence for the shared full JID was routed.
-        final ArgumentCaptor<Packet> routed = ArgumentCaptor.forClass(Packet.class);
+        final ArgumentCaptor<Presence> routed = ArgumentCaptor.forClass(Presence.class);
         verify(packetRouter, atLeast(0)).route(routed.capture());
 
         final boolean routedUnavailableForJid = routed.getAllValues().stream()
-            .filter(p -> p instanceof Presence)
             .map(p -> (Presence) p)
             .anyMatch(p -> Presence.Type.unavailable.equals(p.getType()) && FULL_JID.equals(p.getFrom()));
         assertFalse(routedUnavailableForJid, "Teardown of the stale session must not route an unavailable presence for the live session's full JID.");

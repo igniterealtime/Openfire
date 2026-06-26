@@ -1297,7 +1297,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // Ownership is verified by comparing StreamID, replacing an earlier implementation that depended on object
         // identity. Object identity would in fact be correct (as paths that use it are local-first even in a cluster,
         // so it returns the very same local instance). The StreamID comparison is defensive hardening.
-        return current != null && session.getStreamID().equals(current.getStreamID());
+        return current != null && Objects.equals(session.getStreamID(), current.getStreamID());
     }
 
     /**
@@ -1346,7 +1346,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         // Ownership is captured before removal (the route still exists at this point). Bookkeeping (session_destroyed
         // dispatch) is still performed for stale sessions below, so they are not leaked.
         final ClientSession current = (session == null) ? null : routingTable.getClientRoute(fullJID);
-        final boolean ownsRoute = current != null && session.getStreamID().equals(current.getStreamID());
+        final boolean ownsRoute = current != null && Objects.equals(session.getStreamID(), current.getStreamID());
         final boolean replacedByOther = current != null && !ownsRoute; // a route exists, owned by a different session
 
         // Remove route to the removed session (anonymous or not), but only when this session owns it.

@@ -352,6 +352,10 @@ public class SASLAuthentication {
                 // After all checks, add element.
                 final Element mechanism = result.addElement("mechanism");
                 mechanism.setText(mech);
+            } else {
+                // Not a -PLUS, so not dependend on channel bindings.
+                final Element mechanism = result.addElement("mechanism");
+                mechanism.setText(mech);
             }
         }
         if ( usingSASL2 )

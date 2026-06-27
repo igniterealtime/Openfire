@@ -29,7 +29,6 @@ import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.*;
-import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -510,16 +509,6 @@ public abstract class StanzaHandler {
         final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
         document.getRootElement().add(features);
 
-        // Include available SASL Mechanisms
-        final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(session);
-        for (Element mechanism : mechanisms) {
-            features.add(mechanism);
-        }
-        final Element mechanismsElement = features.element("mechanisms");
-        if (mechanismsElement!=null) {
-            ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(mechanismsElement).ifPresent(features::add);
-        }
-
         // Include specific features such as auth and register for client sessions
         final List<Element> specificFeatures = session.getAvailableStreamFeatures();
         if (specificFeatures != null) {
@@ -620,18 +609,6 @@ public abstract class StanzaHandler {
         final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
         document.getRootElement().add(features);
 
-        // Include SASL mechanisms only if client has not been authenticated
-        if (!session.isAuthenticated()) {
-            final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(session);
-            for (Element mechanism : mechanisms) {
-                features.add(mechanism);
-            }
-
-            final Element saslMechanisms = features.element("mechanisms");
-            if (saslMechanisms != null) {
-                ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(saslMechanisms).ifPresent(features::add);
-            }
-        }
         // Include specific features such as resource binding and session establishment for client sessions
         final List<Element> specificFeatures = session.getAvailableStreamFeatures();
         if (specificFeatures != null) {

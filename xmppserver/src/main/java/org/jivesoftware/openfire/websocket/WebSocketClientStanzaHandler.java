@@ -29,7 +29,6 @@ import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.util.StreamErrorException;
-import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -163,18 +162,7 @@ public class WebSocketClientStanzaHandler extends ClientStanzaHandler
 
     private void sendStreamFeatures() {
         final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
-        if (saslStatus != SASLAuthentication.Status.authenticated) {
-            // Include available SASL Mechanisms
-            final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(session);
-            for (Element mechanism : mechanisms) {
-                features.add(mechanism);
-            }
-            final Element saslMechanisms = features.element("mechanisms");
-            if (saslMechanisms != null) {
-                ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(saslMechanisms).ifPresent(features::add);
-            }
-        }
-        // Include Stream features
+        // Include Stream features (including SASL mechanisms when not yet authenticated)
         final List<Element> specificFeatures = session.getAvailableStreamFeatures();
         if (specificFeatures != null) {
             for (final Element feature : specificFeatures) {

@@ -38,9 +38,9 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.IpUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
+import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -291,15 +291,6 @@ public class LocalClientSession extends LocalSession implements ClientSession {
                 }
             } catch (KeyStoreException e) {
                 Log.warn("Unable to access the identity store for client connections. StartTLS is not being offered as a feature for this session.", e);
-            }
-            // Include available SASL Mechanisms
-            final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(session);
-            for (Element mechanism : mechanisms) {
-                features.add(mechanism);
-            }
-            Element saslMechanisms = features.element("mechanisms");
-            if (saslMechanisms != null) {
-                ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(saslMechanisms).ifPresent(features::add);
             }
             // Include Stream features
             final List<Element> specificFeatures = session.getAvailableStreamFeatures();
@@ -816,6 +807,12 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
 
         if (getAuthToken() == null) {
+            // Include available SASL Mechanisms
+            result.addAll(SASLAuthentication.getSASLMechanisms(this));
+            final Element saslMechanisms = result.stream().filter(e -> "mechanisms".equals(e.getName())).findFirst().orElse(null);
+            if (saslMechanisms != null) {
+                ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(saslMechanisms).ifPresent(result::add);
+            }
             // Advertise that the server supports Non-SASL Authentication
             if ( XMPPServer.getInstance().getIQRouter().supports( "jabber:iq:auth" ) ) {
                 result.add(DocumentHelper.createElement(QName.get("auth", "http://jabber.org/features/iq-auth")));

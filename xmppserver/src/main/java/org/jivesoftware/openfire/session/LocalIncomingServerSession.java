@@ -27,9 +27,9 @@ import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.server.ServerDialbackErrorException;
 import org.jivesoftware.openfire.server.ServerDialbackKeyInvalidException;
 import org.jivesoftware.util.CertificateManager;
+import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.jivesoftware.util.StreamErrorException;
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -185,16 +185,6 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
                         starttls.addElement("required");
                     }
                     features.add(starttls);
-                }
-
-                // Include available SASL Mechanisms
-                final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(session);
-                for (Element mechanism : mechanisms) {
-                    features.add(mechanism);
-                }
-                final Element saslMechanisms = features.element("mechanisms");
-                if (saslMechanisms != null) {
-                    ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(saslMechanisms).ifPresent(features::add);
                 }
 
                 if (ServerDialback.isEnabled()) {
@@ -428,6 +418,15 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
     public List<Element> getAvailableStreamFeatures()
     {
         final List<Element> result = new LinkedList<>();
+
+        // Include available SASL Mechanisms
+        if (!isAuthenticated()) {
+            result.addAll(SASLAuthentication.getSASLMechanisms(this));
+            final Element saslMechanisms = result.stream().filter(e -> "mechanisms".equals(e.getName())).findFirst().orElse(null);
+            if (saslMechanisms != null) {
+                ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(saslMechanisms).ifPresent(result::add);
+            }
+        }
 
         // Include Stream Compression Mechanism
         if (conn.getConfiguration().getCompressionPolicy() != Connection.CompressionPolicy.disabled && !conn.isCompressed()) {

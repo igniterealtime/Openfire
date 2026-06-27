@@ -50,10 +50,13 @@ import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.security.sasl.SaslServerFactory;
+import java.nio.charset.StandardCharsets;
 import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.*;
+import java.util.Base64;
+import java.util.LinkedList;
 import java.util.regex.Pattern;
 
 /**
@@ -127,11 +130,34 @@ public class SASLAuthentication {
         .setDefaultValue(false)
         .build();
 
+    /**
+     * Enable (or disable) SASL2. This is currently off by default, and means that SASL2 is not advertised in features, primarily.
+     *
+     * @see <a href="https://xmpp.org/extensions/xep-0388.html">XEP-0388: Extensible SASL Profile</a>
+     */
+    public static final SystemProperty<Boolean> ENABLE_SASL2 = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.auth.sasl2")
+        .setDynamic(true)
+        .setDefaultValue(false)
+        .build();
+
+    /**
+     * Require TLS for SASL2. This is currently on by default, and means that SASL2 is not advertised in features without TLS.
+     *
+     * @see <a href="https://xmpp.org/extensions/xep-0388.html">XEP-0388: Extensible SASL Profile</a>
+     */
+    public static final SystemProperty<Boolean> SASL2_REQUIRE_TLS = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.auth.sasl2.require-tls")
+        .setDynamic(true)
+        .setDefaultValue(true)
+        .build();
+
     // http://stackoverflow.com/questions/8571501/how-to-check-whether-the-string-is-base64-encoded-or-not
     // plus an extra regex alternative to catch a single equals sign ('=', see RFC 6120 6.4.2)
     private static final Pattern BASE64_ENCODED = Pattern.compile("^(=|([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==))$");
 
-    private static final String SASL_NAMESPACE = "urn:ietf:params:xml:ns:xmpp-sasl";
+    public static final String SASL_NAMESPACE = "urn:ietf:params:xml:ns:xmpp-sasl";
+    public static final String SASL2_NAMESPACE = "urn:xmpp:sasl:2";
 
     /**
      * Java's SaslServer does not allow for null values. This makes it hard to distinguish between an empty (initial)
@@ -151,7 +177,9 @@ public class SASLAuthentication {
     static
     {
         // Add (proprietary) Providers of SASL implementation to the Java security context.
-        Security.addProvider( new org.jivesoftware.openfire.sasl.SaslProvider() );
+        if (Security.getProvider( "JiveSoftware" ) == null) {
+            Security.addProvider(new org.jivesoftware.openfire.sasl.SaslProvider());
+        }
 
         // Convert XML based provider setup to Database based
         JiveGlobals.migrateProperty("sasl.mechs");
@@ -195,11 +223,19 @@ public class SASLAuthentication {
     {
         ABORT,
         AUTH,
+        AUTHENTICATE,
         RESPONSE,
         CHALLENGE,
         FAILURE,
         UNDEF;
 
+        /**
+         * Returns the ElementType corresponding to the given name, performing a case-insensitive lookup.
+         * Returns {@link #UNDEF} if the name is null, empty, or does not match any known element type.
+         *
+         * @param name the element name to look up (may be null or empty)
+         * @return the matching ElementType, or {@link #UNDEF} if no match is found
+         */
         public static ElementType valueOfCaseInsensitive( String name )
         {
             if ( name == null || name.isEmpty() ) {
@@ -235,55 +271,71 @@ public class SASLAuthentication {
     }
 
     /**
-     * Returns an XML element with the valid SASL mechanisms available for the specified session. If
-     * the session's connection is not secured then only include the SASL mechanisms that don't
-     * require TLS.
+     * Returns a list of XML elements representing the SASL mechanism features that are applicable to the given session.
+     * The returned elements are suitable for inclusion in the stream features element sent to the peer.
+     * Both SASL (RFC 6120) and SASL2 (XEP-0388) feature elements may be included, depending on configuration.
+     * An empty list is returned if the session is already authenticated or if the session type is not recognized.
      *
-     * @param session The current session
-     *
-     * @return The valid SASL mechanisms available for the specified session.
+     * @param session the local session for which to determine applicable SASL mechanism feature elements (cannot be null)
+     * @return a list of XML elements representing SASL mechanism features; never null, possibly empty
      */
-    public static Element getSASLMechanisms( LocalSession session )
+    public static List<Element> getSASLMechanisms( @Nonnull LocalSession session )
     {
+        final List<Element> features = new LinkedList<>();
+        // Never list these if the session is already authenticated.
+        if (session.isAuthenticated()) return features;
+
         if ( session instanceof ClientSession )
         {
-            return getSASLMechanismsElement( (ClientSession) session );
+            final Element sasl1Mechs = getSASLMechanismsElement( (ClientSession) session, false );
+            if (sasl1Mechs != null) {
+                features.add(sasl1Mechs);
+            }
+            if (ENABLE_SASL2.getValue() && (!SASL2_REQUIRE_TLS.getValue() || session.isEncrypted()))
+            {
+                final Element sasl2Mechs = getSASLMechanismsElement((ClientSession) session, true);
+                if (sasl2Mechs != null) {
+                    features.add(sasl2Mechs);
+                }
+            }
         }
         else if ( session instanceof LocalIncomingServerSession )
         {
-            return getSASLMechanismsElement( (LocalIncomingServerSession) session );
+            features.add(getSASLMechanismsElement( (LocalIncomingServerSession) session, false ));
+            if (ENABLE_SASL2.getValue() && (!SASL2_REQUIRE_TLS.getValue() || session.isEncrypted()))
+            {
+                features.add(getSASLMechanismsElement((LocalIncomingServerSession) session, true));
+            }
         }
         else
         {
             Log.debug( "Unable to determine SASL mechanisms that are applicable to session '{}'. Unrecognized session type.", session );
-            return null;
         }
+
+        return features;
     }
 
     /**
-     * Generates an XML element that represents the available SASL mechanisms for a given client session.
+     * Returns an XML element advertising the SASL mechanisms available to the given client session.
+     * The element will be in either the SASL (RFC 6120) or SASL2 (XEP-0388) namespace depending on
+     * the {@code usingSASL2} parameter. The EXTERNAL mechanism is only included if the session is
+     * encrypted and the peer has a trusted certificate. May return {@code null} if the resulting
+     * element would be empty and the {@code sasl.client.suppressEmpty} property is set to {@code true}.
      *
-     * Based on the session and server configuration, it optionally returns null if no mechanisms are available and the
-     * configuration suppresses empty mechanism lists.
-     *
-     * @param session the client session for which the available SASL mechanisms are to be retrieved.
-     * @return an XML element listing the available SASL mechanisms, or null if no mechanisms are available
-     *         and the configuration suppresses empty lists.
+     * @param session    the client session for which to generate the mechanisms element (cannot be null)
+     * @param usingSASL2 {@code true} to generate a SASL2 {@code <authentication>} element;
+     *                   {@code false} to generate a SASL1 {@code <mechanisms>} element
+     * @return an XML element listing the available SASL mechanisms, or {@code null} if the element
+     *         would be empty and suppression of empty elements is configured
      */
-    public static Element getSASLMechanismsElement(@Nonnull final ClientSession session)
+    public static Element getSASLMechanismsElement( ClientSession session, boolean usingSASL2 )
     {
         final Set<String> availableMechanisms = getAvailableMechanismsForClientSession(session);
 
-        // OF-2072: Return null instead of an empty element, if so configured.
-        if (JiveGlobals.getBooleanProperty("sasl.client.suppressEmpty", false) && availableMechanisms.isEmpty()) {
-            return null;
-        }
-
-        final Element result = DocumentHelper.createElement( new QName("mechanisms", new Namespace("", SASL_NAMESPACE)) );
+        final Namespace namespace = new Namespace("", usingSASL2 ? SASL2_NAMESPACE : SASL_NAMESPACE );
+        final QName qName = new QName(usingSASL2 ? "authentication" : "mechanisms", namespace);
+        final Element result = DocumentHelper.createElement( qName );
         for (final String mech : availableMechanisms) {
-            final Element mechanism = result.addElement("mechanism");
-            mechanism.setText(mech);
-
             if (mech.endsWith("-PLUS")) {
                 // Prevent offering channel binding if the Connection implementation does not support it.
                 final Connection connection = ( (LocalClientSession) session ).getConnection();
@@ -296,23 +348,44 @@ public class SASLAuthentication {
                 if (!session.isEncrypted()) { // This ought to be redundant, as getSupportedChannelBindingTypes() will return an empty set if not encrypted.
                     continue;
                 }
+
+                // After all checks, add element.
+                final Element mechanism = result.addElement("mechanism");
+                mechanism.setText(mech);
+            } else {
+                // Not a -PLUS, so not dependend on channel bindings.
+                final Element mechanism = result.addElement("mechanism");
+                mechanism.setText(mech);
             }
+        }
+        if ( usingSASL2 )
+        {
+            // TODO :  Add Bind2 features here when implemented
+        }
+
+        // OF-2072: Return null instead of an empty element, if so configured.
+        if ( JiveGlobals.getBooleanProperty("sasl.client.suppressEmpty", false) && result.elements().isEmpty() ) {
+            return null;
         }
 
         return result;
     }
 
     /**
-     * Generates an XML element that contains the SASL mechanisms available for a given server session.
+     * Returns an XML element advertising the SASL mechanisms available to the given incoming server session.
+     * The element will be in either the SASL (RFC 6120) or SASL2 (XEP-0388) namespace depending on
+     * the {@code usingSASL2} parameter. The EXTERNAL mechanism is only offered if the session is
+     * encrypted and the peer has a trusted certificate that matches the session's default identity.
+     * May return {@code null} if the resulting element would be empty and the
+     * {@code sasl.server.suppressEmpty} property is set to {@code true}.
      *
-     * Depending on the configuration (property "sasl.server.suppressEmpty"), this method can return {@code null}
-     * instead of an empty mechanisms element if no SASL mechanisms are available.
-     *
-     * @param session the local incoming server session for which the available SASL mechanisms are determined.
-     * @return an XML {@code <mechanisms>} element that lists all available SASL mechanisms for the given session,
-     *         or {@code null} if no mechanisms are available and the configuration suppresses empty elements.
+     * @param session    the incoming server session for which to generate the mechanisms element (cannot be null)
+     * @param usingSASL2 {@code true} to generate a SASL2 {@code <mechanisms>} element in the SASL2 namespace;
+     *                   {@code false} to generate a SASL1 {@code <mechanisms>} element
+     * @return an XML element listing the available SASL mechanisms, or {@code null} if the element
+     *         would be empty and suppression of empty elements is configured
      */
-    public static Element getSASLMechanismsElement(@Nonnull final LocalIncomingServerSession session)
+    public static Element getSASLMechanismsElement( LocalIncomingServerSession session, boolean usingSASL2 )
     {
         final Set<String> availableMechanisms = getAvailableMechanismsForServerSession(session);
 
@@ -321,7 +394,7 @@ public class SASLAuthentication {
             return null;
         }
 
-        final Element result = DocumentHelper.createElement( new QName("mechanisms", new Namespace("", SASL_NAMESPACE)) );
+        final Element result = DocumentHelper.createElement( new QName("mechanisms", new Namespace("", usingSASL2 ? SASL2_NAMESPACE : SASL_NAMESPACE)) );
         for (final String mech : availableMechanisms) {
             final Element mechanism = result.addElement("mechanism");
             mechanism.setText(mech);
@@ -330,31 +403,100 @@ public class SASLAuthentication {
         return result;
     }
 
+    // emptyNull indicates whether a zero-length string is just a zero-length string, or if it's null.
+    // If emptyNull is false, the presence or absence of the element indicates null, whereas
+    // if it's true (for auth in SASL1) there's a "=" to indicate genuine empty strings.
+    private static byte[] decodeData(Element doc, boolean emptyNull) throws SaslFailureException {
+        // Decode any data that is provided in the client response.
+        if (doc == null) {
+            if (emptyNull) {
+                // I think this is only for SASL1 where there is a DIGEST-MD5 SASL-IR.
+                return new byte[0];
+            }
+            return null;
+        }
+        final String encoded = doc.getTextTrim();
+        final byte[] decoded;
+        if ( encoded == null )
+        {
+            decoded = null;
+        }
+        else if ( encoded.isEmpty() )
+        {
+            if (emptyNull)
+            {
+                decoded = null;
+            }
+            else
+            {
+                decoded = new byte[0];
+            }
+        }
+        else if ( encoded.equals("=") )
+        {
+            if (!emptyNull)
+            {
+                throw new SaslFailureException(Failure.INCORRECT_ENCODING);
+            }
+            decoded = new byte[0];
+        }
+        else
+        {
+            // TODO: We shouldn't depend on regex-based validation. Instead, use a proper decoder implementation and handle any exceptions that it throws.
+            if ( !BASE64_ENCODED.matcher( encoded ).matches() )
+            {
+                throw new SaslFailureException( Failure.INCORRECT_ENCODING );
+            }
+            decoded = Base64.getDecoder().decode(encoded.getBytes(StandardCharsets.UTF_8));
+        }
+        return decoded;
+    }
+
     /**
      * Handles the SASL authentication packet. The entity may be sending an initial
      * authentication request or a response to a challenge made by the server. The returned
      * value indicates whether the authentication has finished either successfully or not or
      * if the entity is expected to send a response to a challenge.
      *
-     * @param session the session that is authenticating with the server.
-     * @param doc the stanza sent by the authenticating entity.
+     * @param session     the session that is authenticating with the server.
+     * @param doc         the stanza sent by the authenticating entity.
+     * @param usingSASL2  {@code true} if the authentication is being performed using SASL2 (XEP-0388);
+     *                    {@code false} if using standard SASL (RFC 6120)
      * @return value that indicates whether the authentication has finished either successfully
      *         or not or if the entity is expected to send a response to a challenge.
      */
-    public static Status handle(LocalSession session, Element doc)
+    public static Status handle(LocalSession session, Element doc, boolean usingSASL2)
     {
         try
         {
-            if ( !doc.getNamespaceURI().equals( SASL_NAMESPACE ) )
+            if ( usingSASL2 && !doc.getNamespaceURI().equals( SASL2_NAMESPACE ) )
+            {
+                throw new IllegalStateException( "Unexpected data received while negotiating SASL2 authentication. Name of the offending root element: " + doc.getName() + " Namespace: " + doc.getNamespaceURI() );
+            }
+            else if ( !usingSASL2 && !doc.getNamespaceURI().equals( SASL_NAMESPACE ) )
             {
                 throw new IllegalStateException( "Unexpected data received while negotiating SASL authentication. Name of the offending root element: " + doc.getName() + " Namespace: " + doc.getNamespaceURI() );
             }
 
-            switch ( ElementType.valueOfCaseInsensitive( doc.getName() ) )
+            ElementType elementType = ElementType.valueOfCaseInsensitive(doc.getName());
+
+            if (elementType == ElementType.AUTHENTICATE) {
+                if (!usingSASL2) {
+                    throw new IllegalStateException("Unexpected data received while negotiating SASL2 authentication. Name of the offending root element: " + doc.getName() + " Namespace: " + doc.getNamespaceURI());
+                }
+            } else if (elementType == ElementType.AUTH && usingSASL2) {
+                throw new IllegalStateException( "Unexpected data received while negotiating SASL2 authentication. Name of the offending root element: " + doc.getName() + " Namespace: " + doc.getNamespaceURI() );
+            }
+
+            Element data = doc;
+            boolean emptyNull = false; // This is only true for SASL1 "auth" and "success".
+            SaslServer saslServer = (SaslServer) session.getSessionData( "SaslServer" ); // This may be null at this point.
+            switch (elementType)
             {
                 case ABORT:
                     throw new SaslFailureException( Failure.ABORTED );
 
+                case AUTHENTICATE:
                 case AUTH:
                     if ( doc.attributeValue( "mechanism" ) == null )
                     {
@@ -387,7 +529,7 @@ public class SASLAuthentication {
                     props.put(Sasl.POLICY_NOANONYMOUS, Boolean.toString(!AnonymousSaslServer.ENABLED.getValue()));
                     props.put( "com.sun.security.sasl.digest.realm", serverInfo.getXMPPDomain() );
 
-                    SaslServer saslServer = Sasl.createSaslServer( mechanismName, "xmpp", serverName, props, new XMPPCallbackHandler() );
+                    saslServer = Sasl.createSaslServer( mechanismName, "xmpp", serverName, props, new XMPPCallbackHandler() );
                     if ( saslServer == null )
                     {
                         throw new SaslFailureException( Failure.INVALID_MECHANISM, "There is no provider that can provide a SASL server for the desired mechanism and properties." );
@@ -395,19 +537,35 @@ public class SASLAuthentication {
 
                     session.setSessionData( "SaslServer", saslServer );
 
+                    if (elementType == ElementType.AUTHENTICATE)
+                    {
+                        data = doc.element("initial-response");
+                    }
+                    else
+                    {
+                        emptyNull = true;
+                    }
+
                     if ( mechanismName.equals( "DIGEST-MD5" ) )
                     {
                         // RFC2831 (DIGEST-MD5) says the client MAY provide data in the initial response. Java SASL does
                         // not (currently) support this and throws an exception. For XMPP, such data violates
                         // the RFC, so we just strip any initial token.
-                        doc.setText( "" );
+                        if (data != null) data = null;
+                    }
+                    if (usingSASL2 && session instanceof LocalClientSession) {
+                        Element userAgentElement = doc.element("user-agent");
+                        if (userAgentElement != null) {
+                            UserAgentInfo userAgentInfo = UserAgentInfo.extract(userAgentElement);
+                            if (userAgentInfo != null) {
+                                // Store the user agent info in the session
+                                session.setSessionData("user-agent-info", userAgentInfo);
+                            }
+                        }
                     }
 
                     // intended fall-through
                 case RESPONSE:
-
-                    saslServer = (SaslServer) session.getSessionData( "SaslServer" );
-
                     if ( saslServer == null )
                     {
                         // Client sends response without a preceding auth?
@@ -415,40 +573,25 @@ public class SASLAuthentication {
                     }
 
                     // Decode any data that is provided in the client response.
-                    final String encoded = doc.getTextTrim();
-                    final byte[] decoded;
+                    byte[] decoded = decodeData( data, emptyNull );
 
-                    // OF-2514: Java SaslServer cannot handle a null, but some SASL mechanisms need to differentiate
-                    //          between having received no initial response, and an empty response.
-                    if ( encoded == null || encoded.isEmpty() )
+                    session.removeSessionData( SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY );
+                    if ( decoded == null )
                     {
-                        session.removeSessionData(SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY);
-                        decoded = new byte[ 0 ];
+                        decoded = new byte[0];
                     }
-                    else if (encoded.equals("="))
+                    else if ( decoded.length == 0 )
                     {
-                        session.setSessionData(SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY, true);
-                        decoded = new byte[ 0 ];
-                    }
-                    else
-                    {
-                        session.removeSessionData(SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY);
-                        // TODO: OF-2515 We shouldn't depend on regex-based validation. Instead, use a proper decoder implementation and handle any exceptions that it throws.
-                        if ( !BASE64_ENCODED.matcher( encoded ).matches() )
-                        {
-                            throw new SaslFailureException( Failure.INCORRECT_ENCODING );
-                        }
-
-                        decoded = Base64.getDecoder().decode(encoded);
+                        session.setSessionData(SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY, Boolean.TRUE);
                     }
 
                     // Process client response.
-                    final byte[] challenge = saslServer.evaluateResponse( decoded ); // Either a challenge or success data.
+                    final byte[] challenge = saslServer.evaluateResponse( decoded ); // Either a challenge or success data. Note that Java SASL cannot handle a null here.
 
                     if ( !saslServer.isComplete() )
                     {
                         // Not complete: client is challenged for additional steps.
-                        sendChallenge( session, challenge );
+                        sendChallenge( session, challenge, usingSASL2 );
                         return Status.needResponse;
                     }
 
@@ -460,8 +603,9 @@ public class SASLAuthentication {
 
                     // Success! Any mechanism-specific verification (such as certificate checks for EXTERNAL) is
                     // performed by the SaslServer implementation.
-                    authenticationSuccessful( session, saslServer.getAuthorizationID(), saslServer.getMechanismName(), challenge );
+                    authenticationSuccessful( session, saslServer.getAuthorizationID(), saslServer.getMechanismName(), challenge, usingSASL2 );
                     session.removeSessionData( "SaslServer" );
+                    session.removeSessionData( SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY );
                     session.setSessionData("SaslMechanism", saslServer.getMechanismName());
                     if (saslServer.getMechanismName().endsWith("-PLUS")) {
                         session.setSessionData("ChannelBindingType", saslServer.getNegotiatedProperty(ScramSha1SaslServer.PROPNAME_CHANNELBINDINGTYPE));
@@ -484,19 +628,28 @@ public class SASLAuthentication {
             {
                 failure = Failure.NOT_AUTHORIZED;
             }
-            authenticationFailed( session, failure );
+            authenticationFailed( session, failure, usingSASL2 );
             session.removeSessionData( "SaslServer" );
             return Status.failed;
         }
         catch( Exception ex )
         {
             Log.warn( "An unexpected exception occurred during SASL negotiation. Affected session: {}", session, ex );
-            authenticationFailed( session, Failure.NOT_AUTHORIZED );
+            authenticationFailed( session, Failure.NOT_AUTHORIZED, usingSASL2 );
             session.removeSessionData( "SaslServer" );
             return Status.failed;
         }
     }
 
+    /**
+     * Verifies that the given X.509 certificate is valid for the specified hostname. The certificate's
+     * server identities are checked against the hostname, with support for wildcard certificates.
+     * A wildcard identity (e.g. {@code *.example.com}) matches any direct subdomain of the base domain.
+     *
+     * @param trustedCert the X.509 certificate to verify (cannot be null)
+     * @param hostname    the hostname to verify the certificate against (cannot be null)
+     * @return {@code true} if the certificate is valid for the given hostname; {@code false} otherwise
+     */
     public static boolean verifyCertificate(X509Certificate trustedCert, String hostname) {
         for (String identity : CertificateManager.getServerIdentities(trustedCert)) {
             // Verify that either the identity is the same as the hostname, or for wildcarded
@@ -511,6 +664,20 @@ public class SASLAuthentication {
         return false;
     }
 
+    /**
+     * Verifies that the end-entity certificate in the given certificate chain is trusted and valid
+     * for the specified hostname. The appropriate trust store is selected based on whether this is
+     * a server-to-server (S2S) or client-to-server (C2S) connection.
+     *
+     * @param chain    the certificate chain to verify; the end-entity certificate will be extracted
+     *                 and checked against the trust store (may be null or empty, in which case
+     *                 verification will fail)
+     * @param hostname the hostname that the certificate must be valid for (cannot be null)
+     * @param isS2S    {@code true} if this is a server-to-server connection (uses the S2S trust store);
+     *                 {@code false} if this is a client-to-server connection (uses the C2S trust store)
+     * @return {@code true} if a trusted end-entity certificate is found in the chain and it is valid
+     *         for the given hostname; {@code false} otherwise
+     */
     public static boolean verifyCertificates(Certificate[] chain, String hostname, boolean isS2S) {
         final CertificateStoreManager certificateStoreManager = XMPPServer.getInstance().getCertificateStoreManager();
         final ConnectionType connectionType = isS2S ? ConnectionType.SOCKET_S2S : ConnectionType.SOCKET_C2S;
@@ -522,8 +689,8 @@ public class SASLAuthentication {
         return false;
     }
 
-    private static void sendElement(Session session, String element, byte[] data) {
-        final Element reply = DocumentHelper.createElement(QName.get(element, "urn:ietf:params:xml:ns:xmpp-sasl"));
+    private static void sendElement(Session session, String element, byte[] data, boolean usingSASL2) {
+        final Element reply = DocumentHelper.createElement(QName.get(element, usingSASL2 ? SASL2_NAMESPACE : SASL_NAMESPACE));
         if (data != null) {
             String data_b64 = Base64.getEncoder().encodeToString(data).trim();
             if (data_b64.isEmpty()) {
@@ -534,8 +701,8 @@ public class SASLAuthentication {
         session.deliverRawText(reply.asXML());
     }
 
-    private static void sendChallenge(Session session, byte[] challenge) {
-        sendElement(session, "challenge", challenge);
+    private static void sendChallenge(Session session, byte[] challenge, boolean usingSASL2) {
+        sendElement(session, "challenge", challenge, usingSASL2);
     }
 
     /**
@@ -548,11 +715,34 @@ public class SASLAuthentication {
      * @param username the authorized identity from SASL (can be null for anonymous).
      * @param mechanismName the name of the SASL mechanism that was used (cannot be null).
      * @param successData mechanism-specific success data (can be null).
+     * @param usingSASL2 are we using SASL2?
      */
     @VisibleForTesting
-    static void authenticationSuccessful(LocalSession session, String username, String mechanismName, byte[] successData)
+    static void authenticationSuccessful(LocalSession session, String username, String mechanismName, byte[] successData, boolean usingSASL2)
     {
-        sendElement(session, "success", successData);
+        if (username != null && LockOutManager.getInstance() != null && LockOutManager.getInstance().isAccountDisabled(username)) {
+            // Interception!  This person is locked out, fail instead!
+            LockOutManager.getInstance().recordFailedLogin(username);
+            authenticationFailed(session, Failure.ACCOUNT_DISABLED, usingSASL2);
+            return;
+        }
+        if (usingSASL2) {
+            final Element success = DocumentHelper.createElement( new QName( "success", new Namespace( "", SASL2_NAMESPACE ) ) );
+            if (successData != null && successData.length > 0) {
+                String data_b64 = Base64.getEncoder().encodeToString(successData).trim();
+                Element additionalData = success.addElement("additional-data");
+                additionalData.setText(data_b64);
+            }
+            Element authId = success.addElement("authorization-identifier");
+            if (session instanceof ClientSession) {
+                authId.setText(username + '@' + XMPPServer.getInstance().getServerInfo().getXMPPDomain());
+            } else {
+                authId.setText(username);
+            }
+            session.deliverRawText(success.asXML());
+        } else {
+            sendElement(session, "success", successData, usingSASL2);
+        }
         if (session instanceof ClientSession) {
             final AuthToken authToken;
             if (username == null) {
@@ -571,8 +761,8 @@ public class SASLAuthentication {
         }
     }
 
-    private static void authenticationFailed(LocalSession session, Failure failure) {
-        final Element reply = DocumentHelper.createElement(QName.get("failure", "urn:ietf:params:xml:ns:xmpp-sasl"));
+    private static void authenticationFailed(LocalSession session, Failure failure, boolean usingSASL2) {
+        final Element reply = DocumentHelper.createElement(QName.get("failure", usingSASL2 ? SASL2_NAMESPACE : SASL_NAMESPACE));
         reply.addElement(failure.toString());
         session.deliverRawText(reply.asXML());
         // Give a number of retries before closing the connection
@@ -632,7 +822,7 @@ public class SASLAuthentication {
      * is required that might be missing. Use {@link #addSupportedMechanism(String)} to add
      * new SASL mechanisms.
      *
-     * @return the list of supported SASL mechanisms by the server.
+     * @return the set of supported SASL mechanisms by the server.
      */
     public static Set<String> getSupportedMechanisms()
     {

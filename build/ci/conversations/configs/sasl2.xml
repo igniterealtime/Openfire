@@ -75,8 +75,10 @@
           </user3>
       </users>
   </autosetup>
-  <properties>
-    <!-- TODO: Add SASL2-enabling system properties here. -->
-    <!-- These are likely defined in the SASL2 plugin or as xmpp.auth.* core properties. -->
-  </properties>
+  <!-- Enable SASL2 (xmpp.auth.sasl2). TLS is required too, but is satisfied by the CI server's self-signed certificate. -->
+  <xmpp>
+    <auth>
+      <sasl2>true</sasl2>
+    </auth>
+  </xmpp>
 </jive>

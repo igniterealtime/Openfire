@@ -32,7 +32,7 @@ runs:
         sudo udevadm trigger --name-match=kvm
 
     - name: Cache Conversations APK
-      uses: actions/cache@v5
+      uses: actions/cache@v6
       with:
         path: conversations.apk
         key: conversations-apk-4217303 # Update this number at the same time as the version in run-tests.sh

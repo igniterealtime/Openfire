@@ -367,12 +367,19 @@ jobs:
         with:
           logLevel: debug
       - name: Run Conversations tests (${{ matrix.name }})
+        id: runConversationsTests
         uses: ./.github/actions/conversationstest-action
         with:
           includeTags: ${{ matrix.maestro-tags }}
       - name: Stop CI server
         if: ${{ always() && steps.startCIServer.conclusion == 'success' }}
         uses: ./.github/actions/stopserver-action
+      - name: Upload Openfire logs on test failure
+        if: ${{ failure() && steps.runConversationsTests.conclusion == 'failure' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: Conversations Test (${{ matrix.name }}) Openfire logs
+          path: distribution/target/distribution-base/logs/openfire.log
 
 
   should-do-database-tests:

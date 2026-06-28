@@ -344,9 +344,9 @@ jobs:
           - name: demoboot
             maestro-tags: demoboot
             config-file: '' # Use default demoboot config
-          #- name: sasl2
-          #  maestro-tags: sasl2
-          #  config-file: build/ci/conversations/configs/sasl2.xml
+          - name: sasl2
+            maestro-tags: sasl2
+            config-file: build/ci/conversations/configs/sasl2.xml
 
     steps:
       - name: Checkout local actions and test flows # Do this _before_ untarring the distribution, as the checkout will empty the directory prior to the checkout!

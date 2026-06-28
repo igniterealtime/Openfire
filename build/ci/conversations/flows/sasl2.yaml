@@ -47,7 +47,20 @@ onFlowStart:
       - assertVisible: "Let app always run in background?"
       - tapOn: "Allow"
 
+# Using SASL2
 - runScript: 
     file: scripts/checkForLogs.js
     env:
         PATTERN: .*SASL 2.0 authorization identifier was jane@example.org
+
+# Using Channel Binding
+- runScript:
+      file: scripts/checkForLogs.js
+      env:
+          PATTERN: 'jane@example\.org.*Authenticating with SASL_2\/[A-Z0-9-]+-PLUS'
+
+# Authentication successful
+- runScript:
+      file: scripts/checkForLogs.js
+      env:
+          PATTERN: 'jane@example\.org.*logged in \(using SASL_2\)'

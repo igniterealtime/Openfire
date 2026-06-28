@@ -165,10 +165,13 @@ public class WebSocketClientStanzaHandler extends ClientStanzaHandler
         final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
         if (saslStatus != SASLAuthentication.Status.authenticated) {
             // Include available SASL Mechanisms
-            final Element saslMechanisms = SASLAuthentication.getSASLMechanisms(session);
+            final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(session);
+            for (Element mechanism : mechanisms) {
+                features.add(mechanism);
+            }
+            final Element saslMechanisms = features.element("mechanisms");
             if (saslMechanisms != null) {
                 ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(saslMechanisms).ifPresent(features::add);
-                features.add(saslMechanisms);
             }
         }
         // Include Stream features

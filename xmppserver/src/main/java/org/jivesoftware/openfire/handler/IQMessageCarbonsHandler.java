@@ -20,6 +20,7 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
+import org.jivesoftware.openfire.net.Bind2Request;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.PacketError;
@@ -77,5 +78,17 @@ public final class IQMessageCarbonsHandler extends IQHandler implements ServerFe
     @Override
     public Iterator<String> getFeatures() {
         return Collections.singleton(NAMESPACE).iterator();
+    }
+
+    @Override
+    public void start() throws IllegalStateException {
+        super.start();
+        Bind2Request.registerElementHandler(new Bind2CarbonsHandler());
+    }
+
+    @Override
+    public void stop() {
+        super.stop();
+        Bind2Request.unregisterElementHandler("urn:xmpp:carbons:2");
     }
 }

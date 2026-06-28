@@ -40,10 +40,10 @@ jobs:
             ${{ runner.os }}-mvn-wrapper-
       - name: Build with Maven while generating code coverage report # We install instead of package, because we want the result in the local mvn repo
         if: ${{ github.ref_name == 'main' }}
-        run: ./mvnw -B install -Pcoverage --file pom.xml
+        run: ./mvnw -B install -T 1C -Pcoverage --file pom.xml
       - name: Build with Maven # We install instead of package, because we want the result in the local mvn repo
         if: ${{ github.ref_name != 'main' }}
-        run: ./mvnw -B install --file pom.xml
+        run: ./mvnw -B install -T 1C --file pom.xml
       - name: Upload failed test reports
         uses: actions/upload-artifact@v7
         if: always()

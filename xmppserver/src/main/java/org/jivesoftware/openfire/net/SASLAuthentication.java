@@ -588,7 +588,7 @@ public class SASLAuthentication {
                     session.removeSessionData( "SaslServer" );
                     session.removeSessionData( SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY );
                     session.setSessionData("SaslMechanism", saslServer.getMechanismName());
-                    if (saslServer.getMechanismName().endsWith("-PLUS")) {
+                    if (requiresChannelBinding(saslServer.getMechanismName())) {
                         session.setSessionData("ChannelBindingType", saslServer.getNegotiatedProperty(ScramSha1SaslServer.PROPNAME_CHANNELBINDINGTYPE));
                     }
                     return Status.authenticated;
@@ -825,7 +825,7 @@ public class SASLAuthentication {
                 continue;
             }
 
-            if (mechanism.endsWith("-PLUS") && ChannelBindingProviderManager.getInstance().getSupportedChannelBindingTypes().isEmpty()) {
+            if (requiresChannelBinding(mechanism) && ChannelBindingProviderManager.getInstance().getSupportedChannelBindingTypes().isEmpty()) {
                 Log.trace( "Cannot support '{}' as there's no implementation available for channel binding.", mechanism );
                 it.remove();
                 continue;
@@ -959,6 +959,19 @@ public class SASLAuthentication {
         initMechanisms();
     }
 
+    /**
+     * Returns {@code true} if the given SASL mechanism name requires channel binding.
+     * Channel-binding mechanisms follow the naming convention of appending {@code -PLUS} to the
+     * base mechanism name (e.g. {@code SCRAM-SHA-1-PLUS}).
+     *
+     * @param mechanismName the SASL mechanism name to check (cannot be null)
+     * @return {@code true} if the mechanism requires channel binding; {@code false} otherwise
+     */
+    @VisibleForTesting
+    static boolean requiresChannelBinding(@Nonnull final String mechanismName) {
+        return mechanismName.endsWith("-PLUS");
+    }
+
     private static void initMechanisms()
     {
         final List<String> propertyValues = getEnabledMechanisms();
@@ -1008,7 +1021,7 @@ public class SASLAuthentication {
                     continue; // Do not offer EXTERNAL.
                 }
             }
-            if (mech.endsWith("-PLUS")) {
+            if (requiresChannelBinding(mech)) {
                 // Prevent offering channel binding if the Connection implementation does not support it.
                 if (connection.getSupportedChannelBindingTypes().isEmpty()) {
                     continue; // Do not offer channel-binding variants.

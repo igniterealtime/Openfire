@@ -120,7 +120,7 @@ public class SocketUtil
         Log.debug( "Creating a socket connection to XMPP domain '{}' ...", xmppDomain );
 
         final Instant deadline = Instant.now().plus(RESOLUTION_TIMEOUT.getValue());
-        final List<Future<Map.Entry<SocketChannel, Boolean>>> futures = new ArrayList<>();
+        final List<Future<Map.Entry<SocketChannel, Boolean>>> futures = new CopyOnWriteArrayList<>();
         final BlockingQueue<Future<Map.Entry<SocketChannel, Boolean>>> resolvedHostsQueue = new LinkedBlockingQueue<>();
         final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(MAX_CONNECTION_CONCURRENCY.getValue());
         executor.setRemoveOnCancelPolicy(true);

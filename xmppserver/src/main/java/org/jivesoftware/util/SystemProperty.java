@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2026 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2019-2022 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -364,22 +364,12 @@ public final class SystemProperty<T> {
 
     /**
      * Sets the value of the SystemProperty. Note that the new value can be outside any minimum/maximum for the property,
-     * and will be saved to the database as such, however subsequent attempts to retrieve its value will return the default.
-     *
-     * This method returns the previous value of the property, or {@code null} if it didn't exist. The returned value
-     * may also be outside any minimum/maximum for the property.
+     * and will be saved to the database as such, however subsequent attempts to retrieve it's value will return the default.
      *
      * @param value the new value for the SystemProperty
-     * @return the previous value of the property, or {@code null} if it didn't exist.
      */
-    public T setValue(final T value)
-    {
-        final String previousValue = JiveGlobals.setProperty(key, TO_STRING.get(getConverterClass()).apply(value, this), isEncrypted());
-        if (previousValue != null) {
-            //noinspection unchecked
-            return (T) FROM_STRING.get(getConverterClass()).apply(previousValue, this);
-        }
-        return null;
+    public void setValue(final T value) {
+        JiveGlobals.setProperty(key, TO_STRING.get(getConverterClass()).apply(value, this), isEncrypted());
     }
 
     /**

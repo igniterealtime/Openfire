@@ -44,6 +44,7 @@ import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
 
+import static org.jivesoftware.openfire.net.SASLAuthentication.SASL_NAMESPACE;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -57,8 +58,6 @@ import static org.mockito.Mockito.when;
  */
 public class SASLAuthenticationTest
 {
-    private static final String SASL_NAMESPACE = "urn:ietf:params:xml:ns:xmpp-sasl";
-
     @BeforeAll
     public static void setupClass() throws Exception
     {
@@ -98,7 +97,7 @@ public class SASLAuthenticationTest
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
 
         // Execute system under test.
-        final SASLAuthentication.Status status = SASLAuthentication.handle(session, authElement("EXTERNAL"));
+        final SASLAuthentication.Status status = SASLAuthentication.handle(session, authElement("EXTERNAL"), false);
 
         // Verify result.
         assertEquals(SASLAuthentication.Status.failed, status, "Expected SASL negotiation to fail when EXTERNAL is requested on an unencrypted client session.");
@@ -123,7 +122,7 @@ public class SASLAuthenticationTest
         final LocalIncomingServerSession session = new LocalIncomingServerSession(Fixtures.XMPP_DOMAIN, connection, streamID, "remote.example.org");
 
         // Execute system under test.
-        final SASLAuthentication.Status status = SASLAuthentication.handle(session, authElement("PLAIN"));
+        final SASLAuthentication.Status status = SASLAuthentication.handle(session, authElement("PLAIN"), false);
 
         // Verify result.
         assertEquals(SASLAuthentication.Status.failed, status, "Expected SASL negotiation to fail when PLAIN is requested for an inbound server session that does not advertise it.");
@@ -148,7 +147,7 @@ public class SASLAuthenticationTest
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
 
         // Execute system under test.
-        final SASLAuthentication.Status status = SASLAuthentication.handle(session, authElement("PLAIN"));
+        final SASLAuthentication.Status status = SASLAuthentication.handle(session, authElement("PLAIN"), false);
 
         // Verify result.
         assertEquals(SASLAuthentication.Status.needResponse, status, "Expected PLAIN to be accepted and continue negotiation by issuing a challenge.");
@@ -177,7 +176,7 @@ public class SASLAuthenticationTest
         session.setSessionData("SaslServer", saslServer);
 
         // Execute system under test.
-        final SASLAuthentication.Status status = SASLAuthentication.handle(session, responseElement(""));
+        final SASLAuthentication.Status status = SASLAuthentication.handle(session, responseElement(""), false);
 
         // Verify result.
         assertEquals(SASLAuthentication.Status.authenticated, status, "Expected authentication to complete for a completed EXTERNAL SASL server.");
@@ -203,7 +202,7 @@ public class SASLAuthenticationTest
         session.setSessionData("SaslServer", saslServer);
 
         // Execute system under test.
-        final SASLAuthentication.Status status = SASLAuthentication.handle(session, responseElement(""));
+        final SASLAuthentication.Status status = SASLAuthentication.handle(session, responseElement(""), false);
 
         // Verify result.
         assertEquals(SASLAuthentication.Status.authenticated, status, "Expected authentication to complete for a completed non-EXTERNAL SASL server.");
@@ -312,7 +311,7 @@ public class SASLAuthenticationTest
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
 
         // Execute system under test.
-        SASLAuthentication.authenticationSuccessful(session, null, "ANONYMOUS", new byte[0]);
+        SASLAuthentication.authenticationSuccessful(session, null, "ANONYMOUS", new byte[0], false);
 
         // Verify result.
         final AuthToken authToken = session.getAuthToken();
@@ -336,7 +335,7 @@ public class SASLAuthenticationTest
         final String username = "testuser";
 
         // Execute system under test.
-        SASLAuthentication.authenticationSuccessful(session, username, "PLAIN", new byte[0]);
+        SASLAuthentication.authenticationSuccessful(session, username, "PLAIN", new byte[0], false);
 
         // Verify result.
         final AuthToken authToken = session.getAuthToken();
@@ -360,7 +359,7 @@ public class SASLAuthenticationTest
         final String remoteDomain = "remote.example.org";
 
         // Execute system under test.
-        SASLAuthentication.authenticationSuccessful(session, remoteDomain, "EXTERNAL", new byte[0]);
+        SASLAuthentication.authenticationSuccessful(session, remoteDomain, "EXTERNAL", new byte[0], false);
 
         // Verify result.
         assertTrue(session.isValidDomain(remoteDomain), "Expected remote domain to be marked as validated.");

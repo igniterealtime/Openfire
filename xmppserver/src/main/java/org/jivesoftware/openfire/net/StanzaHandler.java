@@ -29,7 +29,6 @@ import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.*;
-import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -75,6 +74,7 @@ public abstract class StanzaHandler {
     // Flag that indicates that the client requested to be authenticated. Once the
     // authentication process is over the value will return to false.
     protected boolean startedSASL = false;
+    protected boolean usingSASL2 = false;
     /**
      * SASL status based on the last SASL interaction
      */
@@ -203,10 +203,27 @@ public abstract class StanzaHandler {
             // User is trying to authenticate using SASL
             startedSASL = true;
             // Process authentication stanza
-            saslStatus = SASLAuthentication.handle(session, doc);
+            saslStatus = SASLAuthentication.handle(session, doc, usingSASL2);
+        } else if ("authenticate".equals(tag)) {
+            // User is trying to authenticate using SASL2.
+            startedSASL = true;
+            usingSASL2 = true;
+            saslStatus = SASLAuthentication.handle(session, doc, usingSASL2);
+            if (saslStatus == SASLAuthentication.Status.authenticated && usingSASL2) {
+                Element features = generateFeatures();
+                session.deliverRawText(features.asXML());
+            }
         } else if (startedSASL && "response".equals(tag) || "abort".equals(tag)) {
             // User is responding to SASL challenge. Process response
-            saslStatus = SASLAuthentication.handle(session, doc);
+            saslStatus = SASLAuthentication.handle(session, doc, usingSASL2);
+            if (saslStatus == SASLAuthentication.Status.failed) {
+                startedSASL = false;
+                usingSASL2 = false;
+            }
+            if (saslStatus == SASLAuthentication.Status.authenticated && usingSASL2) {
+                Element features = generateFeatures();
+                session.deliverRawText(features.asXML());
+            }
         }
         else if ("compress".equals(tag)) {
             // Client is trying to initiate compression
@@ -314,7 +331,7 @@ public abstract class StanzaHandler {
                 // The original packet contains a malformed JID so answer an error
                 IQ reply = new IQ();
                 if (!doc.elements().isEmpty()) {
-                    reply.setChildElement(((Element)doc.elements().get(0)).createCopy());
+                    reply.setChildElement((doc.elements().get(0)).createCopy());
                 }
                 reply.setID(doc.attributeValue("id"));
                 reply.setTo(session.getAddress());
@@ -354,7 +371,7 @@ public abstract class StanzaHandler {
                     for (Element element : elements){
                         session.setSoftwareVersionData(element.getName(), element.getStringValue());
                     }
-                }    
+                }
             } catch (Exception e) {
                 Log.error("Unexpected exception while processing IQ Version stanza from '{}'", session.getAddress(), e);
             }
@@ -492,13 +509,6 @@ public abstract class StanzaHandler {
         final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
         document.getRootElement().add(features);
 
-        // Include available SASL Mechanisms
-        final Element mechanismsElement=SASLAuthentication.getSASLMechanisms(session);
-        if (mechanismsElement!=null) {
-            ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(mechanismsElement).ifPresent(features::add);
-            features.add(mechanismsElement);
-        }
-
         // Include specific features such as auth and register for client sessions
         final List<Element> specificFeatures = session.getAvailableStreamFeatures();
         if (specificFeatures != null) {
@@ -518,8 +528,12 @@ public abstract class StanzaHandler {
      */
     protected void saslSuccessful() {
         final Document document = getStreamHeader();
-        final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
+        final Element features = generateFeatures();
         document.getRootElement().add(features);
+        connection.deliverRawText(StringUtils.asUnclosedStream(document));
+    }
+    protected Element generateFeatures() {
+        final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
 
         // Include specific features such as resource binding and session establishment for client sessions
         final List<Element> specificFeatures = session.getAvailableStreamFeatures();
@@ -529,7 +543,7 @@ public abstract class StanzaHandler {
             }
         }
 
-        connection.deliverRawText(StringUtils.asUnclosedStream(document));
+        return features;
     }
 
     /**
@@ -595,14 +609,6 @@ public abstract class StanzaHandler {
         final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
         document.getRootElement().add(features);
 
-        // Include SASL mechanisms only if client has not been authenticated
-        if (!session.isAuthenticated()) {
-            final Element saslMechanisms = SASLAuthentication.getSASLMechanisms(session);
-            if (saslMechanisms != null) {
-                ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(saslMechanisms).ifPresent(features::add);
-                features.add(saslMechanisms);
-            }
-        }
         // Include specific features such as resource binding and session establishment for client sessions
         final List<Element> specificFeatures = session.getAvailableStreamFeatures();
         if (specificFeatures != null) {

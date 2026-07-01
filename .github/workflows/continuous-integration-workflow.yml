@@ -340,9 +340,9 @@ jobs:
           - name: demoboot
             maestro-tags: demoboot
             config-file: '' # Use default demoboot config
-          #- name: sasl2
-          #  maestro-tags: sasl2
-          #  config-file: build/ci/conversations/configs/sasl2.xml
+          - name: sasl2
+            maestro-tags: sasl2
+            config-file: build/ci/conversations/configs/sasl2.xml
 
     steps:
       - name: Checkout local actions and test flows # Do this _before_ untarring the distribution, as the checkout will empty the directory prior to the checkout!
@@ -367,12 +367,19 @@ jobs:
         with:
           logLevel: debug
       - name: Run Conversations tests (${{ matrix.name }})
+        id: runConversationsTests
         uses: ./.github/actions/conversationstest-action
         with:
           includeTags: ${{ matrix.maestro-tags }}
       - name: Stop CI server
         if: ${{ always() && steps.startCIServer.conclusion == 'success' }}
         uses: ./.github/actions/stopserver-action
+      - name: Upload Openfire logs on test failure
+        if: ${{ failure() && steps.runConversationsTests.conclusion == 'failure' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: Conversations Test (${{ matrix.name }}) Openfire logs
+          path: distribution/target/distribution-base/logs/openfire.log
 
 
   should-do-database-tests:

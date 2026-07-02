@@ -99,8 +99,8 @@ public abstract class AbstractScramCredentialObfuscationTest
     void setUp()
     {
         authFactoryMock = Mockito.mockStatic(AuthFactory.class);
-        authFactoryMock.when(() -> AuthFactory.getSalt(EXISTENT_USER)).thenReturn(configuredUserSalt());
-        authFactoryMock.when(() -> AuthFactory.getSalt(NON_EXISTENT_USER)).thenThrow(new UserNotFoundException(NON_EXISTENT_USER));
+        authFactoryMock.when(() -> AuthFactory.getSalt(EXISTENT_USER, ScramSha1SaslServer.MECHANISM_NAME)).thenReturn(configuredUserSalt());
+        authFactoryMock.when(() -> AuthFactory.getSalt(NON_EXISTENT_USER, ScramSha1SaslServer.MECHANISM_NAME)).thenThrow(new UserNotFoundException(NON_EXISTENT_USER));
     }
 
     /**

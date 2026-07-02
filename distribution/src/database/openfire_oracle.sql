@@ -1,10 +1,6 @@
 
 CREATE TABLE ofUser (
   username              VARCHAR2(64)     NOT NULL,
-  storedKey             VARCHAR(32),
-  serverKey             VARCHAR(32),
-  salt                  VARCHAR(32),
-  iterations            INTEGER,
   plainPassword         VARCHAR2(32),
   encryptedPassword     VARCHAR2(255),
   name                  VARCHAR2(100),
@@ -15,6 +11,15 @@ CREATE TABLE ofUser (
 );
 CREATE INDEX ofUser_cDate_idx ON ofUser (creationDate ASC);
 
+CREATE TABLE ofUserScram (
+  username              VARCHAR2(64)    NOT NULL,
+  mechanism             VARCHAR2(32)    NOT NULL,
+  storedKey             VARCHAR2(255),
+  serverKey             VARCHAR2(255),
+  salt                  VARCHAR2(255),
+  iterations            INTEGER         NOT NULL,
+  CONSTRAINT ofUserScram_pk PRIMARY KEY (username, mechanism)
+);
 
 CREATE TABLE ofUserProp (
   username              VARCHAR2(64)    NOT NULL,
@@ -389,6 +394,6 @@ INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modifica
 INSERT INTO ofMucService (serviceID, subdomain, isHidden) VALUES (1, 'conference', 0);
 
 -- Do this last, as it is used by a continuous integration check to verify that the entire script was executed successfully.
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 38);
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 40);
 
 commit;

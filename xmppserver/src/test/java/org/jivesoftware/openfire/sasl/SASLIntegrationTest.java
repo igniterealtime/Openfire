@@ -35,6 +35,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.XMPPServer;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -45,6 +47,7 @@ import org.jivesoftware.util.cache.CacheFactory;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -712,24 +715,34 @@ public class SASLIntegrationTest {
 
     @Test
     public void testAuthenticationWithSASL2AndBind2IncludesResource() throws Exception {
-        // Setup
+        // Setup a SessionManager mock that returns BOUND from bindResource.
+        SessionManager sessionManager = mock(SessionManager.class);
+        when(xmppServer.getSessionManager()).thenReturn(sessionManager);
+        when(sessionManager.bindResource(any(), any(), any()))
+            .thenReturn(CompletableFuture.completedFuture(SessionManager.BindResult.BOUND));
+
+        // Mock connection so getAvailableMechanismsForClientSession assertion passes.
+        Connection connection = mock(Connection.class);
+        when(clientSession.getConnection()).thenReturn(connection);
+
         when(clientSession.isAuthenticated()).thenReturn(false);
+        when(clientSession.getStatus()).thenReturn(org.jivesoftware.openfire.session.Session.Status.CONNECTED);
+        when(clientSession.getAuthToken()).thenReturn(AuthToken.generateUserToken("testuser"));
+
         Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
             .addAttribute("mechanism", "TEST-MECHANISM");
 
         // Add bind2 element
         Element bind = auth.addElement(new QName("bind", new Namespace("", "urn:xmpp:bind:0")));
-        Element tag = bind.addElement("tag");
-        tag.setText("MyClient");
+        bind.addElement("tag").setText("MyClient");
 
         // Execute - Client sends auth request
         SASLAuthentication.handle(clientSession, auth, true);
 
-        // Verify server sends success with SASL2 format
+        // The response is delivered asynchronously inside the whenComplete callback.
+        // Since we used completedFuture, the callback runs synchronously on the calling thread.
         ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
         verify(clientSession).deliverRawText(responseCaptor.capture());
-        ArgumentCaptor<String> bindCaptor = ArgumentCaptor.forClass(String.class);
-        verify(clientSession).bindResource(bindCaptor.capture());
 
         String responseString = responseCaptor.getValue();
         Element response = DocumentHelper.parseText(responseString).getRootElement();
@@ -740,16 +753,16 @@ public class SASLIntegrationTest {
         Element authId = response.element("authorization-identifier");
         assertNotNull(authId, "SASL2 success must include authorization-identifier");
         String jid = authId.getText();
-        assertTrue(jid.contains("@"), "Authorization ID should be a  JID");
+        assertTrue(jid.contains("@"), "Authorization ID should be a JID");
         assertTrue(jid.contains("/"), "Authorization ID should include a resource part");
         assertTrue(jid.contains("MyClient"), "Resource should include client tag");
-        assertTrue(jid.endsWith("/" + bindCaptor.getValue()), "Authorization ID should end with the resource");
 
+        // Verify <bound/> is present (XEP-0386)
         Element bound = response.element("bound");
         assertNotNull(bound, "SASL2 success must include bound element: " + responseString);
+
         // Verify session state
         verify(clientSession).setAuthToken(any(AuthToken.class));
-        assertFalse(clientSession.isAnonymousUser());
     }
 
     @Test

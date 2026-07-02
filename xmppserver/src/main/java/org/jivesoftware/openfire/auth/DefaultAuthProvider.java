@@ -23,6 +23,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Types;
 import java.util.HashMap;
 import java.util.Map;
@@ -70,8 +71,6 @@ public class DefaultAuthProvider implements AuthProvider {
         "UPDATE ofUserScram SET iterations=?, salt=?, storedKey=?, serverKey=? WHERE username=? AND mechanism=?";
     private static final String INSERT_SCRAM_CREDENTIAL =
         "INSERT INTO ofUserScram (username, mechanism, iterations, salt, storedKey, serverKey) VALUES (?, ?, ?, ?, ?, ?)";
-    private static final String TEST_SCRAM_CREDENTIAL =
-        "SELECT username FROM ofUserScram WHERE username=? AND mechanism=?";
 
     private static final SecureRandom random = new SecureRandom();
 
@@ -480,41 +479,113 @@ public class DefaultAuthProvider implements AuthProvider {
 
     /**
      * Inserts or updates the SCRAM credential for a user and mechanism, using the provided (transaction) connection.
+     *
+     * @param con        an open (transaction) connection to use
+     * @param username   the user whose credential is being stored
+     * @param credential the SCRAM credential to persist
+     * @throws SQLException if the credential could not be persisted
      */
     private void upsertScramCredential(final Connection con, final String username, final ScramCredentialData credential) throws SQLException
     {
-        PreparedStatement existsStmt = null;
-        ResultSet existsRs = null;
-        PreparedStatement upsertStmt = null;
-
-        try {
-            existsStmt = con.prepareStatement(TEST_SCRAM_CREDENTIAL);
-            existsStmt.setString(1, username);
-            existsStmt.setString(2, credential.mechanism);
-            existsRs = existsStmt.executeQuery();
-
-            if (existsRs.next()) {
-                upsertStmt = con.prepareStatement(UPDATE_SCRAM_CREDENTIAL);
-                upsertStmt.setInt(1, credential.iterations);
-                upsertStmt.setString(2, credential.salt);
-                upsertStmt.setString(3, credential.storedKey);
-                upsertStmt.setString(4, credential.serverKey);
-                upsertStmt.setString(5, username);
-                upsertStmt.setString(6, credential.mechanism);
-            } else {
-                upsertStmt = con.prepareStatement(INSERT_SCRAM_CREDENTIAL);
-                upsertStmt.setString(1, username);
-                upsertStmt.setString(2, credential.mechanism);
-                upsertStmt.setInt(3, credential.iterations);
-                upsertStmt.setString(4, credential.salt);
-                upsertStmt.setString(5, credential.storedKey);
-                upsertStmt.setString(6, credential.serverKey);
-            }
-            upsertStmt.executeUpdate();
-        } finally {
-            DbConnectionManager.closeConnection(existsRs, existsStmt, null);
-            DbConnectionManager.closeStatement(upsertStmt);
+        // UPDATE first: for a password change the row already exists, which is the common case.
+        if (executeScramUpdate(con, username, credential) > 0) {
+            return;
         }
+        // No existing row (e.g. first-time SCRAM generation after migration). Try to INSERT it.
+        try {
+            executeScramInsert(con, username, credential);
+        } catch (final SQLException sqle) {
+            // A concurrent setPassword() may have inserted the row between our UPDATE and INSERT, yielding a
+            // unique/primary-key violation. The row now exists, so a single UPDATE retry resolves it.
+            if (!isIntegrityConstraintViolation(sqle) || executeScramUpdate(con, username, credential) == 0) {
+                throw sqle;
+            }
+        }
+    }
+
+    /**
+     * Updates the stored SCRAM credential for a user and mechanism on the given connection.
+     *
+     * @param con        an open connection to use
+     * @param username   the user whose credential is being updated
+     * @param credential the SCRAM credential to store
+     * @return the number of rows affected: zero when no matching row exists
+     * @throws SQLException if the update failed
+     */
+    private int executeScramUpdate(final Connection con, final String username, final ScramCredentialData credential) throws SQLException
+    {
+        try (final PreparedStatement stmt = con.prepareStatement(UPDATE_SCRAM_CREDENTIAL)){
+            stmt.setInt(1, credential.iterations);
+            stmt.setString(2, credential.salt);
+            stmt.setString(3, credential.storedKey);
+            stmt.setString(4, credential.serverKey);
+            stmt.setString(5, username);
+            stmt.setString(6, credential.mechanism);
+            return stmt.executeUpdate();
+        }
+    }
+
+    /**
+     * Inserts a new SCRAM credential for a user and mechanism on the given connection.
+     *
+     * @param con        an open connection to use
+     * @param username   the user whose credential is being inserted
+     * @param credential the SCRAM credential to store
+     * @throws SQLException if the insert failed, including when a row for this user and mechanism already exists
+     *                      (a unique/primary-key violation)
+     */
+    private void executeScramInsert(final Connection con, final String username, final ScramCredentialData credential) throws SQLException
+    {
+        try (final PreparedStatement stmt = con.prepareStatement(INSERT_SCRAM_CREDENTIAL)){
+            stmt.setString(1, username);
+            stmt.setString(2, credential.mechanism);
+            stmt.setInt(3, credential.iterations);
+            stmt.setString(4, credential.salt);
+            stmt.setString(5, credential.storedKey);
+            stmt.setString(6, credential.serverKey);
+            stmt.executeUpdate();
+        }
+    }
+
+    /**
+     * Determines whether the given exception signals a unique or primary-key constraint violation, in a manner intended
+     * to work across the different databases that Openfire supports.
+     *
+     * @param sqle the exception to inspect
+     * @return {@code true} if the exception represents a unique or primary-key constraint violation
+     */
+    private static boolean isIntegrityConstraintViolation(final SQLException sqle)
+    {
+        // Walk the standard cause chain.
+        for (Throwable t = sqle; t != null; t = t.getCause()) {
+            if (isConstraintViolationNode(t)) {
+                return true;
+            }
+        }
+        // Walk the JDBC-specific chain (independent of getCause()).
+        for (SQLException e = sqle; e != null; e = e.getNextException()) {
+            if (isConstraintViolationNode(e)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Tests a single exception (one node in an exception chain) for an integrity-constraint violation.
+     */
+    private static boolean isConstraintViolationNode(final Throwable t)
+    {
+        // Two signals are combined: the JDBC 4 SQLIntegrityConstraintViolationException subclass (which drivers should throw but not all do)...
+        if (t instanceof SQLIntegrityConstraintViolationException) {
+            return true;
+        }
+        // ... and an SQLState in class 23, which the SQL standard assigns to integrity-constraint violations and into which most databases map PK/unique violations.
+        if (t instanceof SQLException) {
+            final String sqlState = ((SQLException) t).getSQLState();
+            return sqlState != null && sqlState.startsWith("23");
+        }
+        return false;
     }
 
     /**

@@ -24,6 +24,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.security.sasl.SaslException;
 import javax.xml.bind.DatatypeConverter;
@@ -56,6 +58,10 @@ public class DefaultAuthProvider implements AuthProvider {
 
     private static final String LOAD_PASSWORD =
         "SELECT plainPassword,encryptedPassword FROM ofUser WHERE username=?";
+    private static final String LOAD_PASSWORD_AND_SCRAM =
+        "SELECT u.plainPassword, u.encryptedPassword, s.mechanism, s.iterations, s.salt, s.storedKey, s.serverKey " +
+        "FROM ofUser u LEFT JOIN ofUserScram s ON u.username = s.username " +
+        "WHERE u.username = ?";
     private static final String UPDATE_PASSWORD =
         "UPDATE ofUser SET plainPassword=?, encryptedPassword=? WHERE username=?";
     private static final String LOAD_SCRAM_CREDENTIAL =
@@ -271,6 +277,7 @@ public class DefaultAuthProvider implements AuthProvider {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
+        Log.debug("Checking password for user '{}'", username);
         if (username.contains("@")) {
             // Check that the specified domain matches the server's domain
             int index = username.indexOf("@");
@@ -284,12 +291,13 @@ public class DefaultAuthProvider implements AuthProvider {
         }
         try {
             con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(LOAD_PASSWORD);
+            pstmt = con.prepareStatement(LOAD_PASSWORD_AND_SCRAM);
             pstmt.setString(1, username);
             rs = pstmt.executeQuery();
             if (!rs.next()) {
                 throw new UserNotFoundException(username);
             }
+
             String plainText = rs.getString(1);
             String encrypted = rs.getString(2);
             if (encrypted != null) {
@@ -308,26 +316,52 @@ public class DefaultAuthProvider implements AuthProvider {
                 }
                 return testPassword.equals(plainText);
             }
+
             // Don't have either plain or encrypted, so test SCRAM hash.
-            final ScramCredentialData credential = getScramCredential(username, ScramSha1SaslServer.MECHANISM_NAME);
-            if (credential.salt == null || credential.iterations == 0 || credential.storedKey == null) {
-                Log.warn("No available credentials for checkPassword.");
+            // LEFT JOIN result set may have multiple rows (one per SCRAM mechanism).
+            final Map<String, ScramCredentialData> credentialsByMechanismName = new HashMap<>();
+            do {
+                final String mechanism = rs.getString(3);
+                if (mechanism == null) {
+                    // No SCRAM credentials for this user
+                    Log.debug("No SCRAM credentials available for checkPassword for user {}", username);
+                    return false;
+                }
+                Integer iterations = rs.getInt(4);
+                if (rs.wasNull()) { // correct for 'getInt' returning '0' on null values.
+                    iterations = null;
+                }
+                final String salt = rs.getString(5);
+                final String storedKey = rs.getString(6);
+                final String serverKey = rs.getString(7);
+                if (salt == null || iterations == null || iterations == 0 || storedKey == null || serverKey == null) {
+                    Log.debug("No available SCRAM credentials for checkPassword for user {}", username);
+                    return false;
+                }
+
+                credentialsByMechanismName.put(mechanism, new ScramCredentialData(mechanism, salt, iterations, storedKey, serverKey));
+            } while (rs.next());
+
+            // TODO: When supporting more than just SCRAM-SHA-1, drop this. This got introduced in a commit that refactored the existing storage solution, prior to implementing support for additional mechanisms (OF-3322).
+            final ScramCredentialData credential = credentialsByMechanismName.get(ScramSha1SaslServer.MECHANISM_NAME);
+            if (credential == null) {
+                Log.debug("No available SCRAM-SHA-1 credentials for checkPassword for user {}", username);
                 return false;
             }
-            byte[] saltShaker = DatatypeConverter.parseBase64Binary(credential.salt);
-            byte[] saltedPassword = null, clientKey = null, testStoredKey = null;
+            final byte[] testStoredKey;
             try {
-                saltedPassword = ScramUtils.createSaltedPassword(saltShaker, testPassword, credential.iterations);
-                clientKey = ScramUtils.computeHmac(saltedPassword, "Client Key");
+                final byte[] saltShaker = DatatypeConverter.parseBase64Binary(credential.salt);
+                final byte[] saltedPassword = ScramUtils.createSaltedPassword(saltShaker, testPassword, credential.iterations);
+                final byte[] clientKey = ScramUtils.computeHmac(saltedPassword, "Client Key");
                 testStoredKey = MessageDigest.getInstance("SHA-1").digest(clientKey);
-            } catch(SaslException | NoSuchAlgorithmException e) {
-                Log.warn("Unable to check SCRAM values for PLAIN authentication.");
+            } catch(SaslException | NoSuchAlgorithmException | IllegalArgumentException e) {
+                Log.warn("Unable to check SCRAM values for PLAIN authentication for user '{}'", username, e);
                 return false;
             }
             return DatatypeConverter.printBase64Binary(testStoredKey).equals(credential.storedKey);
         }
         catch (SQLException sqle) {
-            Log.error("User SQL failure:", sqle);
+            Log.warn("A database error occurred while authenticating user {}:", username, sqle);
             throw new UserNotFoundException(sqle);
         }
         finally {

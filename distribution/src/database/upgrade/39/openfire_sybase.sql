@@ -13,7 +13,6 @@ CREATE TABLE ofUserScram (
   iterations            INTEGER         NOT NULL,
   CONSTRAINT ofUserScram_pk PRIMARY KEY (username, mechanism)
 );
-go
 
 INSERT INTO ofUserScram (username, mechanism, iterations, salt, storedKey, serverKey)
 SELECT username, 'SCRAM-SHA-1', iterations, salt, storedKey, serverKey
@@ -22,5 +21,5 @@ SELECT username, 'SCRAM-SHA-1', iterations, salt, storedKey, serverKey
    AND serverKey IS NOT NULL
    AND salt IS NOT NULL
    AND iterations IS NOT NULL;
-go
+
 UPDATE ofVersion SET version = 39 WHERE name = 'openfire';

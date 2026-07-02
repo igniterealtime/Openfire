@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Ignite Realtime Foundation. All rights reserved
+ * Copyright (C) 2024-2026 Ignite Realtime Foundation. All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,6 +169,7 @@ public abstract class AuthMultiProvider implements AuthProvider
     }
 
     @Override
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.3.0
     public String getSalt(String username) throws UserNotFoundException
     {
         final AuthProvider provider = getAuthProvider(username);
@@ -180,6 +181,7 @@ public abstract class AuthMultiProvider implements AuthProvider
     }
 
     @Override
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.3.0
     public int getIterations(String username) throws UserNotFoundException
     {
         final AuthProvider provider = getAuthProvider(username);
@@ -191,6 +193,7 @@ public abstract class AuthMultiProvider implements AuthProvider
     }
 
     @Override
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.3.0
     public String getServerKey(String username) throws UserNotFoundException
     {
         final AuthProvider provider = getAuthProvider(username);
@@ -201,6 +204,7 @@ public abstract class AuthMultiProvider implements AuthProvider
     }
 
     @Override
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.3.0
     public String getStoredKey(String username) throws UserNotFoundException
     {
         final AuthProvider provider = getAuthProvider(username);
@@ -208,5 +212,54 @@ public abstract class AuthMultiProvider implements AuthProvider
             throw new UserNotFoundException();
         }
         return provider.getStoredKey(username);
+    }
+
+    /**
+     * Returns SCRAM credentials for a user and mechanism from the mapped provider.
+     */
+    @Override
+    public ScramCredentialData getScramCredential(final String username, final String mechanism) throws UnsupportedOperationException, UserNotFoundException
+    {
+        final AuthProvider provider = getAuthProvider(username);
+        if (provider == null) {
+            throw new UserNotFoundException();
+        }
+        return provider.getScramCredential(username, mechanism);
+    }
+
+    /**
+     * Returns a SCRAM salt for a user and mechanism.
+     */
+    @Override
+    public String getSalt(final String username, final String mechanism) throws UnsupportedOperationException, UserNotFoundException
+    {
+        return getScramCredential(username, mechanism).salt;
+    }
+
+    /**
+     * Returns a SCRAM iteration count for a user and mechanism.
+     */
+    @Override
+    public int getIterations(final String username, final String mechanism) throws UnsupportedOperationException, UserNotFoundException
+    {
+        return getScramCredential(username, mechanism).iterations;
+    }
+
+    /**
+     * Returns a SCRAM server key for a user and mechanism.
+     */
+    @Override
+    public String getServerKey(final String username, final String mechanism) throws UnsupportedOperationException, UserNotFoundException
+    {
+        return getScramCredential(username, mechanism).serverKey;
+    }
+
+    /**
+     * Returns a SCRAM stored key for a user and mechanism.
+     */
+    @Override
+    public String getStoredKey(final String username, final String mechanism) throws UnsupportedOperationException, UserNotFoundException
+    {
+        return getScramCredential(username, mechanism).storedKey;
     }
 }

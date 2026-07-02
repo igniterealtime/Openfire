@@ -157,34 +157,99 @@ public class User implements Cacheable, Externalizable, Result {
         }
     }
 
+    /**
+     * Returns the SCRAM-SHA-1 stored key for this user, or {@code null} if the user has no SCRAM-SHA-1 credential.
+     *
+     * @return the SCRAM-SHA-1 stored key, or {@code null}.
+     * @deprecated This accessor exposes only the SCRAM-SHA-1 credential. SCRAM credentials are stored per mechanism
+     *             (see the {@code ofUserScram} table) and should be obtained through the authentication provider rather
+     *             than from the {@link User} object. Retained for backwards compatibility with third-party integrations.
+     */
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.3.0
     public String getStoredKey() {
         return storedKey;
     }
 
+    /**
+     * Sets the SCRAM-SHA-1 stored key for this user.
+     *
+     * @param storedKey the SCRAM-SHA-1 stored key.
+     * @deprecated This accessor exposes only the SCRAM-SHA-1 credential. See {@link #getStoredKey()}.
+     */
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.3.0
     public void setStoredKey(String storedKey) {
         this.storedKey = storedKey;
     }
 
+    /**
+     * Returns the SCRAM-SHA-1 server key for this user, or {@code null} if the user has no SCRAM-SHA-1 credential.
+     *
+     * @return the SCRAM-SHA-1 server key, or {@code null}.
+     * @deprecated This accessor exposes only the SCRAM-SHA-1 credential. SCRAM credentials are stored per mechanism
+     *             (see the {@code ofUserScram} table) and should be obtained through the authentication provider rather
+     *             than from the {@link User} object. Retained for backwards compatibility with third-party integrations.
+     */
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.3.0
     public String getServerKey() {
         return serverKey;
     }
 
+    /**
+     * Sets the SCRAM-SHA-1 server key for this user.
+     *
+     * @param serverKey the SCRAM-SHA-1 server key.
+     * @deprecated This accessor exposes only the SCRAM-SHA-1 credential. See {@link #getServerKey()}.
+     */
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.3.0
     public void setServerKey(String serverKey) {
         this.serverKey = serverKey;
     }
 
+    /**
+     * Returns the SCRAM-SHA-1 salt for this user, or {@code null} if the user has no
+     * SCRAM-SHA-1 credential.
+     *
+     * @return the SCRAM-SHA-1 salt, or {@code null}.
+     * @deprecated This accessor exposes only the SCRAM-SHA-1 credential. SCRAM credentials are stored per mechanism
+     *             (see the {@code ofUserScram} table) and should be obtained through the authentication provider rather
+     *             than from the {@link User} object. Retained for backwards compatibility with third-party integrations.
+     */
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.3.0
     public String getSalt() {
         return salt;
     }
 
+    /**
+     * Sets the SCRAM-SHA-1 salt for this user.
+     *
+     * @param salt the SCRAM-SHA-1 salt.
+     * @deprecated This accessor exposes only the SCRAM-SHA-1 credential. See {@link #getSalt()}.
+     */
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.3.0
     public void setSalt(String salt) {
         this.salt = salt;
     }
 
+    /**
+     * Returns the SCRAM-SHA-1 iteration count for this user, or {@code 0} if the user has no SCRAM-SHA-1 credential.
+     *
+     * @return the SCRAM-SHA-1 iteration count, or {@code 0}.
+     * @deprecated This accessor exposes only the SCRAM-SHA-1 credential. SCRAM credentials are stored per mechanism
+     *             (see the {@code ofUserScram} table) and should be obtained through the authentication provider rather
+     *             than from the {@link User} object. Retained for backwards compatibility with third-party integrations.
+     */
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.3.0
     public int getIterations() {
         return iterations;
     }
 
+    /**
+     * Sets the SCRAM-SHA-1 iteration count for this user.
+     *
+     * @param iterations the SCRAM-SHA-1 iteration count.
+     * @deprecated This accessor exposes only the SCRAM-SHA-1 credential. See {@link #getIterations()}.
+     */
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.3.0
     public void setIterations(int iterations) {
         this.iterations = iterations;
     }

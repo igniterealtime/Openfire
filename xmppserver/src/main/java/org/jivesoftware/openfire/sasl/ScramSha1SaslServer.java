@@ -56,6 +56,8 @@ import org.slf4j.LoggerFactory;
  */
 public class ScramSha1SaslServer extends ScramSaslServer {
 
+    public static final String MECHANISM_NAME = "SCRAM-SHA-1";
+
     /**
      * Stores a server-side secret used when handling authentication attempts for non-existing users in SCRAM-SHA-1 (-PLUS).
      *

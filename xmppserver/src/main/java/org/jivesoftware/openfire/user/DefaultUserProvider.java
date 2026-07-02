@@ -33,6 +33,7 @@ import java.util.Set;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
+import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +57,9 @@ public class DefaultUserProvider implements UserProvider {
     private static final Logger Log = LoggerFactory.getLogger(DefaultUserProvider.class);
 
     private static final String LOAD_USER =
-            "SELECT salt, serverKey, storedKey, iterations, name, email, creationDate, modificationDate FROM ofUser WHERE username=?";
+        "SELECT name, email, creationDate, modificationDate FROM ofUser WHERE username=?";
+    private static final String LOAD_SCRAM_CREDENTIAL =
+        "SELECT salt, serverKey, storedKey, iterations FROM ofUserScram WHERE username=? AND mechanism=?";
     private static final String USER_COUNT =
             "SELECT count(*) FROM ofUser";
     private static final String ALL_USERS =
@@ -81,6 +84,7 @@ public class DefaultUserProvider implements UserProvider {
     private static final boolean IS_READ_ONLY = false;
     
     @Override
+    @SuppressWarnings("removal") // populates User's deprecated (forRemoval) SCRAM-SHA-1 accessors from ofUserScram
     public User loadUser(String username) throws UserNotFoundException {
         if(username.contains("@")) {
             if (!XMPPServer.getInstance().isLocal(new JID(username))) {
@@ -99,20 +103,24 @@ public class DefaultUserProvider implements UserProvider {
             if (!rs.next()) {
                 throw new UserNotFoundException();
             }
-            String salt = rs.getString(1);
-            String serverKey = rs.getString(2);
-            String storedKey = rs.getString(3);
-            int iterations = rs.getInt(4);
-            String name = rs.getString(5);
-            String email = rs.getString(6);
-            Date creationDate = new Date(Long.parseLong(rs.getString(7).trim()));
-            Date modificationDate = new Date(Long.parseLong(rs.getString(8).trim()));
+            String name = rs.getString(1);
+            String email = rs.getString(2);
+            Date creationDate = new Date(Long.parseLong(rs.getString(3).trim()));
+            Date modificationDate = new Date(Long.parseLong(rs.getString(4).trim()));
+            DbConnectionManager.fastcloseStmt(rs, pstmt);
 
             User user = new User(username, name, email, creationDate, modificationDate);
-            user.setSalt(salt);
-            user.setServerKey(serverKey);
-            user.setStoredKey(storedKey);
-            user.setIterations(iterations);
+
+            pstmt = con.prepareStatement(LOAD_SCRAM_CREDENTIAL);
+            pstmt.setString(1, username);
+            pstmt.setString(2, ScramSha1SaslServer.MECHANISM_NAME); // "SCRAM-SHA-1"
+            rs = pstmt.executeQuery();
+            if (rs.next()) {
+                user.setSalt(rs.getString(1));
+                user.setServerKey(rs.getString(2));
+                user.setStoredKey(rs.getString(3));
+                user.setIterations(rs.getInt(4));
+            }
             return user;
         }
         catch (Exception e) {

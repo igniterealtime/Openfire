@@ -73,6 +73,7 @@
                 <li><a href="#ofPresence">ofPresence</a></li>
                 <li><a href="#ofPrivate">ofPrivate</a></li>
                 <li><a href="#ofUser">ofUser</a></li>
+                <li><a href="#ofUserScram">ofUserScram</a></li>
                 <li><a href="#ofUserProp">ofUserProp</a></li>
                 <li><a href="#ofUserFlag">ofUserFlag</a></li>
 
@@ -401,6 +402,57 @@
                 <td>VARCHAR</td>
                 <td>15</td>
                 <td>Last Modified Date</td>
+            </tr>
+            </tbody>
+        </table>
+        &nbsp;<a href="#top" class="top">top of page</a>
+
+        <table id="ofUserScram" class="dbtable">
+            <tbody>
+            <tr>
+                <th colspan="4">ofUserScram (SCRAM authentication credentials, per user and mechanism)</th>
+            </tr>
+            <tr>
+                <th>Column Name</th>
+                <th>Type</th>
+                <th>Length</th>
+                <th>Description</th>
+            </tr>
+            <tr class="primary-key">
+                <td>username</td>
+                <td>VARCHAR</td>
+                <td>64</td>
+                <td>User Name (Primary Key)</td>
+            </tr>
+            <tr class="primary-key">
+                <td>mechanism</td>
+                <td>VARCHAR</td>
+                <td>32</td>
+                <td>SCRAM mechanism name, e.g. SCRAM-SHA-1 (Primary Key)</td>
+            </tr>
+            <tr>
+                <td>storedKey</td>
+                <td>VARCHAR</td>
+                <td>255</td>
+                <td>Base64-encoded StoredKey for this mechanism</td>
+            </tr>
+            <tr>
+                <td>serverKey</td>
+                <td>VARCHAR</td>
+                <td>255</td>
+                <td>Base64-encoded ServerKey for this mechanism</td>
+            </tr>
+            <tr>
+                <td>salt</td>
+                <td>VARCHAR</td>
+                <td>255</td>
+                <td>Base64-encoded salt used to derive the credential</td>
+            </tr>
+            <tr>
+                <td>iterations</td>
+                <td>NUMBER</td>
+                <td>n/a</td>
+                <td>Iteration count used to derive the credential</td>
             </tr>
             </tbody>
         </table>

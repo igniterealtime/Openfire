@@ -54,13 +54,19 @@ public class DefaultAuthProvider implements AuthProvider {
 
     private static final Logger Log = LoggerFactory.getLogger(DefaultAuthProvider.class);
 
-        private static final String LOAD_PASSWORD =
-                "SELECT plainPassword,encryptedPassword FROM ofUser WHERE username=?";
-        private static final String TEST_PASSWORD =
-                "SELECT plainPassword,encryptedPassword,iterations,salt,storedKey,serverKey FROM ofUser WHERE username=?";
+    private static final String LOAD_PASSWORD =
+        "SELECT plainPassword,encryptedPassword FROM ofUser WHERE username=?";
     private static final String UPDATE_PASSWORD =
-            "UPDATE ofUser SET plainPassword=?, encryptedPassword=?, storedKey=?, serverKey=?, salt=?, iterations=? WHERE username=?";
-    
+        "UPDATE ofUser SET plainPassword=?, encryptedPassword=? WHERE username=?";
+    private static final String LOAD_SCRAM_CREDENTIAL =
+        "SELECT iterations,salt,storedKey,serverKey FROM ofUserScram WHERE username=? AND mechanism=?";
+    private static final String UPDATE_SCRAM_CREDENTIAL =
+        "UPDATE ofUserScram SET iterations=?, salt=?, storedKey=?, serverKey=? WHERE username=? AND mechanism=?";
+    private static final String INSERT_SCRAM_CREDENTIAL =
+        "INSERT INTO ofUserScram (username, mechanism, iterations, salt, storedKey, serverKey) VALUES (?, ?, ?, ?, ?, ?)";
+    private static final String TEST_SCRAM_CREDENTIAL =
+        "SELECT username FROM ofUserScram WHERE username=? AND mechanism=?";
+
     private static final SecureRandom random = new SecureRandom();
 
     /**
@@ -73,18 +79,15 @@ public class DefaultAuthProvider implements AuthProvider {
     private class UserInfo {
         String plainText;
         String encrypted;
-        int iterations;
-        String salt;
-        String storedKey;
-        String serverKey;
     }
 
     private UserInfo getUserInfo(String username) throws UnsupportedOperationException, UserNotFoundException {
         return getUserInfo(username, false);
     }
+
     private UserInfo getUserInfo(String username, boolean recurse) throws UnsupportedOperationException, UserNotFoundException {
         if (!isScramSupported()) {
-            // Reject the operation since the provider  does not support SCRAM
+            // Reject the operation since the provider does not support SCRAM
             throw new UnsupportedOperationException();
         }
         Connection con = null;
@@ -92,7 +95,7 @@ public class DefaultAuthProvider implements AuthProvider {
         ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(TEST_PASSWORD);
+            pstmt = con.prepareStatement(LOAD_PASSWORD);
             pstmt.setString(1, username);
             rs = pstmt.executeQuery();
             if (!rs.next()) {
@@ -101,10 +104,6 @@ public class DefaultAuthProvider implements AuthProvider {
             UserInfo userInfo = new UserInfo();
             userInfo.plainText = rs.getString(1);
             userInfo.encrypted = rs.getString(2);
-            userInfo.iterations = rs.getInt(3);
-            userInfo.salt = rs.getString(4);
-            userInfo.storedKey = rs.getString(5);
-            userInfo.serverKey = rs.getString(6);
             if (userInfo.encrypted != null) {
                 try {
                     userInfo.plainText = AuthFactory.decryptPassword(userInfo.encrypted);
@@ -116,7 +115,7 @@ public class DefaultAuthProvider implements AuthProvider {
             if (!recurse) {
                 if (userInfo.plainText != null) {
                     boolean scramOnly = JiveGlobals.getBooleanProperty("user.scramHashedPasswordOnly");
-                    if (scramOnly || userInfo.salt == null) {
+                    if (scramOnly || !hasScramCredential(username, ScramSha1SaslServer.MECHANISM_NAME)) {
                         // If we have a password here, but we're meant to be scramOnly, we should reset it.
                         setPassword(username, userInfo.plainText);
                         // RECURSE
@@ -137,23 +136,56 @@ public class DefaultAuthProvider implements AuthProvider {
     }
 
     @Override
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.3.0
     public String getSalt(String username) throws UserNotFoundException {
-        return getUserInfo(username).salt;
+        return getScramCredential(username, ScramSha1SaslServer.MECHANISM_NAME).salt;
     }
 
     @Override
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.3.0
     public int getIterations(String username) throws UserNotFoundException {
-        return getUserInfo(username).iterations;
+        return getScramCredential(username, ScramSha1SaslServer.MECHANISM_NAME).iterations;
     }
 
     @Override
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.3.0
     public String getStoredKey(String username) throws UserNotFoundException {
-        return getUserInfo(username).storedKey;
+        return getScramCredential(username, ScramSha1SaslServer.MECHANISM_NAME).storedKey;
     }
 
     @Override
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.3.0
     public String getServerKey(String username) throws UserNotFoundException {
-        return getUserInfo(username).serverKey;
+        return getScramCredential(username, ScramSha1SaslServer.MECHANISM_NAME).serverKey;
+    }
+
+    /**
+     * Returns SCRAM credentials for a user and mechanism.
+     *
+     * Only {@code SCRAM-SHA-1} is supported. When SHA-1 credentials are missing but a plaintext (or decryptable)
+     * password is available, the credentials are regenerated (preserving the historical behavior of this provider).
+     */
+    @Override
+    public ScramCredentialData getScramCredential(final String username, final String mechanism) throws UnsupportedOperationException, UserNotFoundException
+    {
+        final String normalizedMechanism = ScramCredentialData.normalizeMechanismName(mechanism);
+        if (!ScramSha1SaslServer.MECHANISM_NAME.equals(normalizedMechanism)) {
+            throw new UnsupportedOperationException("SCRAM mechanism is not supported: " + mechanism);
+        }
+
+        // Preserve previous behavior: if SHA-1 credentials are missing while plaintext exists, regenerate.
+        getUserInfo(username);
+
+        final ScramCredentialData credential;
+        try {
+            credential = loadScramCredential(username, normalizedMechanism);
+        } catch (SQLException sqle) {
+            throw new UserNotFoundException(sqle);
+        }
+        if (credential == null) {
+            throw new UserNotFoundException(username);
+        }
+        return credential;
     }
 
     @Override
@@ -252,7 +284,7 @@ public class DefaultAuthProvider implements AuthProvider {
         }
         try {
             con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(TEST_PASSWORD);
+            pstmt = con.prepareStatement(LOAD_PASSWORD);
             pstmt.setString(1, username);
             rs = pstmt.executeQuery();
             if (!rs.next()) {
@@ -260,9 +292,6 @@ public class DefaultAuthProvider implements AuthProvider {
             }
             String plainText = rs.getString(1);
             String encrypted = rs.getString(2);
-            int iterations = rs.getInt(3);
-            String salt = rs.getString(4);
-            String storedKey = rs.getString(5);
             if (encrypted != null) {
                 try {
                     plainText = AuthFactory.decryptPassword(encrypted);
@@ -280,21 +309,22 @@ public class DefaultAuthProvider implements AuthProvider {
                 return testPassword.equals(plainText);
             }
             // Don't have either plain or encrypted, so test SCRAM hash.
-            if (salt == null || iterations == 0 || storedKey == null) {
+            final ScramCredentialData credential = getScramCredential(username, ScramSha1SaslServer.MECHANISM_NAME);
+            if (credential.salt == null || credential.iterations == 0 || credential.storedKey == null) {
                 Log.warn("No available credentials for checkPassword.");
                 return false;
             }
-            byte[] saltShaker = DatatypeConverter.parseBase64Binary(salt);
+            byte[] saltShaker = DatatypeConverter.parseBase64Binary(credential.salt);
             byte[] saltedPassword = null, clientKey = null, testStoredKey = null;
             try {
-                   saltedPassword = ScramUtils.createSaltedPassword(saltShaker, testPassword, iterations);
-                   clientKey = ScramUtils.computeHmac(saltedPassword, "Client Key");
-                   testStoredKey = MessageDigest.getInstance("SHA-1").digest(clientKey);
+                saltedPassword = ScramUtils.createSaltedPassword(saltShaker, testPassword, credential.iterations);
+                clientKey = ScramUtils.computeHmac(saltedPassword, "Client Key");
+                testStoredKey = MessageDigest.getInstance("SHA-1").digest(clientKey);
             } catch(SaslException | NoSuchAlgorithmException e) {
                 Log.warn("Unable to check SCRAM values for PLAIN authentication.");
                 return false;
             }
-            return DatatypeConverter.printBase64Binary(testStoredKey).equals(storedKey);
+            return DatatypeConverter.printBase64Binary(testStoredKey).equals(credential.storedKey);
         }
         catch (SQLException sqle) {
             Log.error("User SQL failure:", sqle);
@@ -322,29 +352,28 @@ public class DefaultAuthProvider implements AuthProvider {
                 throw new UserNotFoundException();
             }
         }
-        
-        // Store the salt and salted password so SCRAM-SHA-1 SASL auth can be used later.
+
+        // Compute the SCRAM (SHA-1) credential from the plaintext password *before* the plaintext is nulled out below.
         byte[] saltShaker = new byte[SALT_LENGTH];
         random.nextBytes(saltShaker);
-        String salt = DatatypeConverter.printBase64Binary(saltShaker);
-
-        
+        final String salt = DatatypeConverter.printBase64Binary(saltShaker);
         final int iterations = ScramSha1SaslServer.ITERATION_COUNT.getValue();
         byte[] saltedPassword = null, clientKey = null, storedKey = null, serverKey = null;
-    try {
-           saltedPassword = ScramUtils.createSaltedPassword(saltShaker, password, iterations);
-               clientKey = ScramUtils.computeHmac(saltedPassword, "Client Key");
-               storedKey = MessageDigest.getInstance("SHA-1").digest(clientKey);
-               serverKey = ScramUtils.computeHmac(saltedPassword, "Server Key");
-       } catch (SaslException | NoSuchAlgorithmException e) {
-           Log.warn("Unable to persist values for SCRAM authentication.");
-       }
-   
+        try {
+            saltedPassword = ScramUtils.createSaltedPassword(saltShaker, password, iterations);
+            clientKey = ScramUtils.computeHmac(saltedPassword, "Client Key");
+            storedKey = MessageDigest.getInstance("SHA-1").digest(clientKey);
+            serverKey = ScramUtils.computeHmac(saltedPassword, "Server Key");
+        } catch (SaslException | NoSuchAlgorithmException e) {
+            Log.warn("Unable to persist values for SCRAM authentication.");
+        }
+
+        String plaintextToStore = password;
         if (!scramOnly && !usePlainPassword) {
             try {
                 encryptedPassword = AuthFactory.encryptPassword(password);
-                // Set password to null so that it's inserted that way.
-                password = null;
+                // Set plaintext to null so that it's inserted that way.
+                plaintextToStore = null;
             }
             catch (UnsupportedOperationException uoe) {
                 // Encryption may fail. In that case, ignore the error and
@@ -353,19 +382,23 @@ public class DefaultAuthProvider implements AuthProvider {
         }
         if (scramOnly) {
             encryptedPassword = null;
-            password = null;
+            plaintextToStore = null;
         }
 
+        // Persist the ofUser password row and the ofUserScram credential row atomically: because these now live in
+        // two tables, a single UPDATE is no longer sufficient to keep them consistent.
         Connection con = null;
         PreparedStatement pstmt = null;
+        boolean abortTransaction = false;
         try {
-            con = DbConnectionManager.getConnection();
+            con = DbConnectionManager.getTransactionConnection();
+
             pstmt = con.prepareStatement(UPDATE_PASSWORD);
-            if (password == null) {
+            if (plaintextToStore == null) {
                 pstmt.setNull(1, Types.VARCHAR);
             }
             else {
-                pstmt.setString(1, password);
+                pstmt.setString(1, plaintextToStore);
             }
             if (encryptedPassword == null) {
                 pstmt.setNull(2, Types.VARCHAR);
@@ -373,28 +406,30 @@ public class DefaultAuthProvider implements AuthProvider {
             else {
                 pstmt.setString(2, encryptedPassword);
             }
-            if (storedKey == null) {
-                pstmt.setNull(3, Types.VARCHAR);
-            }
-            else {
-                pstmt.setString(3, DatatypeConverter.printBase64Binary(storedKey));
-            }
-            if (serverKey == null) {
-                pstmt.setNull(4, Types.VARCHAR);
-            }
-            else {
-                pstmt.setString(4, DatatypeConverter.printBase64Binary(serverKey));
-            }
-            pstmt.setString(5, salt);
-            pstmt.setInt(6, iterations);
-            pstmt.setString(7, username);
+            pstmt.setString(3, username);
             pstmt.executeUpdate();
+            DbConnectionManager.fastcloseStmt(pstmt);
+            pstmt = null;
+
+            upsertScramCredential(
+                con,
+                username,
+                new ScramCredentialData(
+                    ScramSha1SaslServer.MECHANISM_NAME,
+                    salt,
+                    iterations,
+                    storedKey == null ? null : DatatypeConverter.printBase64Binary(storedKey),
+                    serverKey == null ? null : DatatypeConverter.printBase64Binary(serverKey)
+                )
+            );
         }
         catch (SQLException sqle) {
+            abortTransaction = true;
             throw new UserNotFoundException(sqle);
         }
         finally {
-            DbConnectionManager.closeConnection(pstmt, con);
+            DbConnectionManager.closeStatement(pstmt);
+            DbConnectionManager.closeTransactionConnection(con, abortTransaction);
         }
     }
 
@@ -407,5 +442,81 @@ public class DefaultAuthProvider implements AuthProvider {
     @Override
     public boolean isScramSupported() {
         return true;
+    }
+
+    /**
+     * Inserts or updates the SCRAM credential for a user and mechanism, using the provided (transaction) connection.
+     */
+    private void upsertScramCredential(final Connection con, final String username, final ScramCredentialData credential) throws SQLException
+    {
+        PreparedStatement existsStmt = null;
+        ResultSet existsRs = null;
+        PreparedStatement upsertStmt = null;
+
+        try {
+            existsStmt = con.prepareStatement(TEST_SCRAM_CREDENTIAL);
+            existsStmt.setString(1, username);
+            existsStmt.setString(2, credential.mechanism);
+            existsRs = existsStmt.executeQuery();
+
+            if (existsRs.next()) {
+                upsertStmt = con.prepareStatement(UPDATE_SCRAM_CREDENTIAL);
+                upsertStmt.setInt(1, credential.iterations);
+                upsertStmt.setString(2, credential.salt);
+                upsertStmt.setString(3, credential.storedKey);
+                upsertStmt.setString(4, credential.serverKey);
+                upsertStmt.setString(5, username);
+                upsertStmt.setString(6, credential.mechanism);
+            } else {
+                upsertStmt = con.prepareStatement(INSERT_SCRAM_CREDENTIAL);
+                upsertStmt.setString(1, username);
+                upsertStmt.setString(2, credential.mechanism);
+                upsertStmt.setInt(3, credential.iterations);
+                upsertStmt.setString(4, credential.salt);
+                upsertStmt.setString(5, credential.storedKey);
+                upsertStmt.setString(6, credential.serverKey);
+            }
+            upsertStmt.executeUpdate();
+        } finally {
+            DbConnectionManager.closeConnection(existsRs, existsStmt, null);
+            DbConnectionManager.closeStatement(upsertStmt);
+        }
+    }
+
+    /**
+     * Loads the SCRAM credential for a user and mechanism, or {@code null} when none is stored.
+     */
+    private ScramCredentialData loadScramCredential(final String username, final String mechanism) throws SQLException
+    {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(LOAD_SCRAM_CREDENTIAL);
+            pstmt.setString(1, username);
+            pstmt.setString(2, mechanism);
+            rs = pstmt.executeQuery();
+            if (!rs.next()) {
+                return null;
+            }
+            return new ScramCredentialData(
+                mechanism,
+                rs.getString(2),
+                rs.getInt(1),
+                rs.getString(3),
+                rs.getString(4)
+            );
+        } finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
+    }
+
+    /**
+     * Returns {@code true} when a SCRAM credential exists for a user and mechanism.
+     */
+    private boolean hasScramCredential(final String username, final String mechanism) throws SQLException
+    {
+        return loadScramCredential(username, mechanism) != null;
     }
 }

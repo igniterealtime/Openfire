@@ -492,7 +492,7 @@ public class ScramSha1SaslServer extends ScramSaslServer {
     {
         try
         {
-            final String saltBase64 = AuthFactory.getSalt(username);
+            final String saltBase64 = AuthFactory.getSalt(username, MECHANISM_NAME);
             if (saltBase64 == null) {
                 return handleMissingSalt(username);
             }
@@ -534,7 +534,7 @@ public class ScramSha1SaslServer extends ScramSaslServer {
         }
         AuthFactory.setPassword(username, password);
 
-        final String newSalt = AuthFactory.getSalt(username);
+        final String newSalt = AuthFactory.getSalt(username, MECHANISM_NAME);
         if (newSalt == null) {
             Log.debug("Salt regeneration failed for '{}'", username);
             return generateFakeSalt(username);
@@ -602,7 +602,7 @@ public class ScramSha1SaslServer extends ScramSaslServer {
      */
     private int getIterations(final String username) {
         try {
-            return AuthFactory.getIterations(username);
+            return AuthFactory.getIterations(username, MECHANISM_NAME);
         } catch (UserNotFoundException e) {
             return ITERATION_COUNT.getValue();
         }
@@ -633,7 +633,7 @@ public class ScramSha1SaslServer extends ScramSaslServer {
      * Retrieve the server key from the database for a given username.
      */
     private byte[] getServerKey(final String username) throws UserNotFoundException {
-        final String serverKey = AuthFactory.getServerKey(username);
+        final String serverKey = AuthFactory.getServerKey(username, MECHANISM_NAME);
         if (serverKey == null) {
             return null;
         } else {
@@ -666,7 +666,7 @@ public class ScramSha1SaslServer extends ScramSaslServer {
      * Retrieve the stored key from the database for a given username.
      */
     private byte[] getStoredKey(final String username) throws UserNotFoundException {
-        final String storedKey = AuthFactory.getStoredKey(username);
+        final String storedKey = AuthFactory.getStoredKey(username, MECHANISM_NAME);
         if (storedKey == null) {
             return null;
         } else {

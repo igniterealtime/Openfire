@@ -45,6 +45,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anyString;
 import static org.mockito.Mockito.mock;
@@ -84,11 +85,11 @@ public class ScramSha1SaslServerTest extends AbstractScramSaslServerTest
     @Override
     protected void setupCanonicalAuthData()
     {
-        authFactory.when(() -> AuthFactory.getSalt(anyString(), anyString())).thenReturn(ScramSha1TestFixtures.SALT);
-        authFactory.when(() -> AuthFactory.getIterations(anyString(), anyString())).thenReturn(ScramSha1TestFixtures.ITERATIONS);
+        authFactory.when(() -> AuthFactory.getSalt(anyString(), eq(ScramSha1TestFixtures.MECHANISM))).thenReturn(ScramSha1TestFixtures.SALT);
+        authFactory.when(() -> AuthFactory.getIterations(anyString(), eq(ScramSha1TestFixtures.MECHANISM))).thenReturn(ScramSha1TestFixtures.ITERATIONS);
         authFactory.when(() -> AuthFactory.getPassword(any())).thenReturn(ScramSha1TestFixtures.PASSWORD);
-        authFactory.when(() -> AuthFactory.getStoredKey(anyString(), anyString())).thenReturn(DatatypeConverter.printBase64Binary(StringUtils.decodeHex(ScramSha1TestFixtures.STORED_KEY_HEX)));
-        authFactory.when(() -> AuthFactory.getServerKey(anyString(), anyString())).thenReturn(DatatypeConverter.printBase64Binary(StringUtils.decodeHex(ScramSha1TestFixtures.SERVER_KEY_HEX)));
+        authFactory.when(() -> AuthFactory.getStoredKey(anyString(), eq(ScramSha1TestFixtures.MECHANISM))).thenReturn(DatatypeConverter.printBase64Binary(StringUtils.decodeHex(ScramSha1TestFixtures.STORED_KEY_HEX)));
+        authFactory.when(() -> AuthFactory.getServerKey(anyString(), eq(ScramSha1TestFixtures.MECHANISM))).thenReturn(DatatypeConverter.printBase64Binary(StringUtils.decodeHex(ScramSha1TestFixtures.SERVER_KEY_HEX)));
     }
 
     /**

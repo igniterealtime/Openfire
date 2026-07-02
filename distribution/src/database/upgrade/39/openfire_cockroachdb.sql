@@ -19,6 +19,7 @@ SELECT username, 'SCRAM-SHA-1', iterations, salt, storedKey, serverKey
   FROM ofUser
  WHERE storedKey IS NOT NULL
    AND serverKey IS NOT NULL
-   AND salt IS NOT NULL;
+   AND salt IS NOT NULL
+   AND iterations IS NOT NULL;
 
 UPDATE ofVersion SET version = 39 WHERE name = 'openfire';

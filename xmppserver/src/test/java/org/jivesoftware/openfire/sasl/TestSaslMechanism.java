@@ -136,9 +136,10 @@ public class TestSaslMechanism {
         // Set the server instance before registering the provider
         TestSaslServerFactory.setSaslServer(testSaslServer);
 
-        if (Security.getProvider("Test Provider") == null) {
+        final String providerName = "Openfire-TestSaslMechanism";
+        if (Security.getProvider(providerName) == null) {
             // Register the provider if not already registered
-            Security.addProvider(new Provider("Test Provider", "1.0", "Test Provider") {{
+            Security.addProvider(new Provider(providerName, "1.0", providerName) {{
                 put("SaslServerFactory.TEST-MECHANISM", TestSaslServerFactory.class.getName());
             }});
         }
@@ -148,6 +149,6 @@ public class TestSaslMechanism {
 
     public static void unregisterTestMechanism() {
         TestSaslServerFactory.clearSaslServer();
-        Security.removeProvider("Test Provider");
+        Security.removeProvider("Openfire-TestSaslMechanism");
     }
 }

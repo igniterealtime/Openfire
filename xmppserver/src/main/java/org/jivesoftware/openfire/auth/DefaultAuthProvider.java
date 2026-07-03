@@ -335,7 +335,8 @@ public class DefaultAuthProvider implements AuthProvider {
                     continue;
                 }
 
-                credentialsByMechanismName.put(mechanism, new ScramCredentialData(mechanism, salt, iterations, storedKey, serverKey));
+                final ScramCredentialData scram = new ScramCredentialData(mechanism, salt, iterations, storedKey, serverKey);
+                credentialsByMechanismName.put(scram.mechanism, scram);
             } while (rs.next());
 
             // TODO: When supporting more than just SCRAM-SHA-1, drop this. This got introduced in a commit that refactored the existing storage solution, prior to implementing support for additional mechanisms (OF-3322).

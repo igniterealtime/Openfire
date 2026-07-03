@@ -321,11 +321,6 @@ public class DefaultAuthProvider implements AuthProvider {
             final Map<String, ScramCredentialData> credentialsByMechanismName = new HashMap<>();
             do {
                 final String mechanism = rs.getString(3);
-                if (mechanism == null) {
-                    // No SCRAM credentials for this user
-                    Log.debug("No SCRAM credentials available for checkPassword for user {}", username);
-                    return false;
-                }
                 Integer iterations = rs.getInt(4);
                 if (rs.wasNull()) { // correct for 'getInt' returning '0' on null values.
                     iterations = null;
@@ -333,9 +328,11 @@ public class DefaultAuthProvider implements AuthProvider {
                 final String salt = rs.getString(5);
                 final String storedKey = rs.getString(6);
                 final String serverKey = rs.getString(7);
-                if (salt == null || iterations == null || iterations == 0 || storedKey == null || serverKey == null) {
-                    Log.debug("No available SCRAM credentials for checkPassword for user {}", username);
-                    return false;
+                if (mechanism == null || salt == null || iterations == null || iterations == 0 || storedKey == null || serverKey == null) {
+                    // Either the LEFT JOIN produced no ofUserScram row (all columns null), or a stored row is incomplete.
+                    // Skip it rather than failing authentication outright: another row may hold a usable credential.
+                    Log.debug("Skipping unavailable or incomplete SCRAM credential (mechanism '{}') for user {}", mechanism, username);
+                    continue;
                 }
 
                 credentialsByMechanismName.put(mechanism, new ScramCredentialData(mechanism, salt, iterations, storedKey, serverKey));

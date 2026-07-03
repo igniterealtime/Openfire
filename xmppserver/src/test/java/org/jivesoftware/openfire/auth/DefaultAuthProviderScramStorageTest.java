@@ -84,8 +84,8 @@ public class DefaultAuthProviderScramStorageTest
      *   <li>{@code plainPassword} - the {@code ofUser.plainPassword} value, or {@code null} when not stored.</li>
      *   <li>{@code encryptedPassword} - the {@code ofUser.encryptedPassword} value, or {@code null} when not stored.</li>
      *   <li>{@code mechanism} - the {@code ofUserScram.mechanism} value. Pass {@code null} to model a {@code LEFT JOIN}
-     *       with no matching {@code ofUserScram} row (i.e. the user has no SCRAM credentials); in that case the
-     *       remaining SCRAM columns are left unstubbed because production code never reads them.</li>
+     *       with no matching {@code ofUserScram} row (i.e. the user has no SCRAM credentials); in that case the remaining
+     *       SCRAM columns can be left unstubbed (Mockito defaults them to {@code null}/{@code 0}, which production logic skips).</li>
      *   <li>{@code iterations} - the {@code ofUserScram.iterations} value. Only stubbed when {@code mechanism} is
      *       non-null. A {@code null} value models a SQL {@code NULL} (mirrored via {@link ResultSet#wasNull()}).</li>
      *   <li>{@code salt} - the {@code ofUserScram.salt} value. Only stubbed when {@code mechanism} is non-null.</li>

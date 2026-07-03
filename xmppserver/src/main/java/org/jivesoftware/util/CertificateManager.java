@@ -172,7 +172,7 @@ public class CertificateManager {
     /**
      * Returns the identities of the remote server as defined in the specified certificate. The
      * identities are mapped by the classes in the "provider.serverCertIdentityMap.classList" property.
-     * By default, identities are derived from SubjectAlternativeName entries (xmppAddr, dnsSRV, DNSName, URI)
+     * By default, identities are derived from SubjectAlternativeName entries (xmppAddr, dnsSRV, DNSName, iPAddress, URI)
      *
      * @param x509Certificate the certificate that holds the identities of the remote server.
      * @return the identities of the remote server as defined in the specified certificate.
@@ -303,6 +303,10 @@ public class CertificateManager {
                     case 6:
                         // URI
                         subjectAlternativeNames.add( new GeneralName( GeneralName.uniformResourceIdentifier, (String) value ) );
+                        break;
+                    case 7:
+                        // IP address
+                        subjectAlternativeNames.add( new GeneralName( GeneralName.iPAddress, (String) value ) );
                         break;
                     default:
                         // Not applicable to XMPP, so silently ignore them
@@ -613,8 +617,9 @@ public class CertificateManager {
         {
             for ( final String dnsNameValue : sanDnsNames )
             {
+                final int tag = IpUtils.isValidIpAddress(dnsNameValue) ? GeneralName.iPAddress : GeneralName.dNSName;
                 subjectAlternativeNames.add(
-                    new GeneralName( GeneralName.dNSName, dnsNameValue )
+                    new GeneralName( tag, dnsNameValue )
                 );
             }
         }
@@ -625,8 +630,8 @@ public class CertificateManager {
     }
 
     /**
-     * Finds all values that ought to be added as a Subject Alternate Name of the dnsName type to a certificate that
-     * identifies this XMPP server.
+     * Finds all values that ought to be added as a Subject Alternate Name of the dnsName (or ipAddress) type to a
+     * certificate that identifies this XMPP server.
      *
      * @return A set of names, possibly empty, never null.
      */

@@ -15,7 +15,16 @@
  */
 package org.jivesoftware.util;
 
-import org.bouncycastle.asn1.*;
+import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.DERIA5String;
+import org.bouncycastle.asn1.DEROctetString;
+import org.bouncycastle.asn1.DERUTF8String;
+import org.bouncycastle.asn1.pkcs.Attribute;
+import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
+import org.bouncycastle.asn1.x509.Extensions;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.pkcs.PKCS10CertificationRequest;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x509.Extension;
@@ -35,7 +44,9 @@ import org.junit.jupiter.api.Test;
 import javax.naming.ldap.LdapName;
 import javax.naming.ldap.Rdn;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.math.BigInteger;
+import java.net.InetAddress;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
@@ -320,6 +331,226 @@ public class CertificateManagerTest
         assertEquals( 2, serverIdentities.size() );
         assertTrue( serverIdentities.contains( subjectAltNameXmppAddr ));
         assertFalse( serverIdentities.contains( subjectCommonName ) );
+    }
+
+    /**
+     * Asserts that when an IP literal is supplied as a subject alternative name to
+     * {@link CertificateManager#createX509V3Certificate(KeyPair, int, String, String, String, String, Set)},
+     * it is encoded as an {@code iPAddress} (GeneralName type 7) SAN entry rather than a
+     * {@code dNSName} (type 2) entry, while non-IP values remain {@code dNSName}.
+     *
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc5280">RFC 5280</a>
+     */
+    @Test
+    public void testGenerateCertificateWithIpAddressSAN() throws Exception
+    {
+        // Setup fixture.
+        final KeyPair keyPair = subjectKeyPair;
+        final int days = 2;
+        final String issuerCommonName = "issuer common name";
+        final String subjectCommonName = "subject common name";
+        final String domain = "domain.example.org";
+        final String ipLiteral = "198.51.100.3";
+        final String dnsName = "alternative-a.example.org";
+        final Set<String> sanNames = Stream.of( ipLiteral, dnsName ).collect( Collectors.toSet() );
+
+        // Execute system under test.
+        final X509Certificate result = CertificateManager.createX509V3Certificate( keyPair, days, issuerCommonName, subjectCommonName, domain, SIGNATURE_ALGORITHM, sanNames );
+
+        // Verify results.
+        assertNotNull( result );
+
+        final Collection<List<?>> sans = result.getSubjectAlternativeNames();
+        assertNotNull( sans, "Expected the generated certificate to contain subject alternative names (but it does not)." );
+
+        // The IP literal must appear as a type-7 (iPAddress) entry, not type-2 (dNSName).
+        assertThat( "Expected the IP literal to be encoded as an iPAddress (type 7) SAN entry (but it was not).",
+            sans, hasItem( Arrays.asList( 7, ipLiteral ) ) );
+        assertThat( "Did not expect the IP literal to be encoded as a dNSName (type 2) SAN entry (but it was).",
+            sans, not( hasItem( Arrays.asList( 2, ipLiteral ) ) ) );
+
+        // The DNS name must still appear as a type-2 (dNSName) entry.
+        assertThat( "Expected the DNS name to be encoded as a dNSName (type 2) SAN entry (but it was not).",
+            sans, hasItem( Arrays.asList( 2, dnsName ) ) );
+    }
+
+    /**
+     * Asserts that an IPv6 literal supplied as a subject alternative name is encoded as an
+     * {@code iPAddress} (GeneralName type 7) SAN entry. Note that the JDK normalises the textual
+     * representation of the address that it returns from
+     * {@link X509Certificate#getSubjectAlternativeNames()}, so this test asserts on the SAN type
+     * rather than on an exact textual match of the input.
+     *
+     * @see <a href="https://datatracker.ietf.org/doc/html/rfc5280">RFC 5280</a>
+     */
+    @Test
+    public void testGenerateCertificateWithIpv6AddressSAN() throws Exception
+    {
+        // Setup fixture.
+        final KeyPair keyPair = subjectKeyPair;
+        final int days = 2;
+        final String issuerCommonName = "issuer common name";
+        final String subjectCommonName = "subject common name";
+        final String domain = "domain.example.org";
+        final String ipv6Literal = "2001:db8::1";
+        final Set<String> sanNames = Stream.of( ipv6Literal ).collect( Collectors.toSet() );
+
+        // Execute system under test.
+        final X509Certificate result = CertificateManager.createX509V3Certificate( keyPair, days, issuerCommonName, subjectCommonName, domain, SIGNATURE_ALGORITHM, sanNames );
+
+        // Verify results.
+        assertNotNull( result );
+
+        final Collection<List<?>> sans = result.getSubjectAlternativeNames();
+        assertNotNull( sans, "Expected the generated certificate to contain subject alternative names (but it does not)." );
+
+        final Set<Integer> types = new HashSet<>();
+        for ( final List<?> san : sans ) {
+            types.add( (Integer) san.get( 0 ) );
+        }
+
+        assertTrue( types.contains( 7 ), "Expected the IPv6 literal to be encoded as an iPAddress (type 7) SAN entry (but no type-7 entry was found)." );
+        assertFalse( types.contains( 2 ), "Did not expect any dNSName (type 2) SAN entry for an IPv6-only input (but one was found)." );
+    }
+
+    /**
+     * Asserts that an {@code iPAddress} (type 7) subject alternative name survives a CSR round-trip through
+     * {@link CertificateManager#createSigningRequest(X509Certificate, PrivateKey)}: the IP SAN present on the source
+     * certificate must be reproduced in the generated signing request rather than silently discarded.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3324">OF-3324: IP addresses are encoded as dNSName instead of iPAddress in certificate SANs</a>
+     */
+    @Test
+    public void testCreateSigningRequestPreservesIpAddressSAN() throws Exception
+    {
+        // Setup fixture: a self-signed certificate carrying an iPAddress SAN.
+        final String ipLiteral = "198.51.100.3";
+        final String dnsName = "yourdomain.example.org";
+
+        final X509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(
+            new X500Name( "CN=MyIssuer" ),
+            BigInteger.valueOf( Math.abs( new SecureRandom().nextInt() ) ),
+            Date.from( Instant.now().minus( Duration.ofDays( 1 ) ) ),
+            Date.from( Instant.now().plus( Duration.ofDays( 99 ) ) ),
+            new X500Name( "CN=MySubject" ),
+            subjectKeyPair.getPublic()
+        );
+
+        final GeneralNames sans = new GeneralNames( new GeneralName[] {
+            new GeneralName( GeneralName.iPAddress, ipLiteral ),
+            new GeneralName( GeneralName.dNSName, dnsName )
+        } );
+        builder.addExtension( Extension.subjectAlternativeName, false, sans );
+
+        // The CSR is signed with the subject's key, so build the cert with a matching signer.
+        final ContentSigner subjectSigner = new JcaContentSignerBuilder( SIGNATURE_ALGORITHM ).build( subjectKeyPair.getPrivate() );
+        final X509CertificateHolder holder = builder.build( subjectSigner );
+        X509Certificate cert = new JcaX509CertificateConverter().getCertificate( holder );
+
+        // FIXME: as elsewhere in this class, round-trip through PEM to avoid Java 17 parsing quirks.
+        final String pem = CertificateManager.toPemRepresentation( cert );
+        cert = CertificateManager.parseCertificates( pem ).iterator().next();
+
+        // Execute system under test.
+        final String csrPem = CertificateManager.createSigningRequest( cert, subjectKeyPair.getPrivate() );
+
+        // Verify results: parse the CSR back and extract its SAN extension.
+        assertNotNull( csrPem );
+        final Set<String> csrSanTypesAndValues = extractCsrSubjectAltNames( csrPem );
+
+        assertTrue( csrSanTypesAndValues.contains( "7:" + ipLiteral ), "Expected the IP address SAN to survive the CSR round-trip as an iPAddress (type 7) entry (but it did not). Found: " + csrSanTypesAndValues );
+        assertTrue( csrSanTypesAndValues.contains( "2:" + dnsName ), "Expected the DNS SAN to survive the CSR round-trip as a dNSName (type 2) entry (but it did not). Found: " + csrSanTypesAndValues );
+    }
+
+    /**
+     * Asserts that {@link SANCertificateIdentityMapping#mapIdentity(X509Certificate)} does NOT surface an
+     * {@code iPAddress} (type 7) subject alternative name. An IP literal is not a valid XMPP domain, so it must not be
+     * returned as an XMPP identity (used for S2S / SASL EXTERNAL comparison). DNS names on the same certificate must
+     * still be surfaced.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3324">OF-3324: IP addresses are encoded as dNSName instead of iPAddress in certificate SANs</a>
+     */
+    @Test
+    public void testMapIdentityIgnoresIpAddressSAN() throws Exception
+    {
+        // Setup fixture.
+        final String ipLiteral = "198.51.100.3";
+        final String dnsName = "yourdomain.example.org";
+
+        final X509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(
+            new X500Name( "CN=MyIssuer" ),
+            BigInteger.valueOf( Math.abs( new SecureRandom().nextInt() ) ),
+            Date.from( Instant.now().minus( Duration.ofDays( 1 ) ) ),
+            Date.from( Instant.now().plus( Duration.ofDays( 99 ) ) ),
+            new X500Name( "CN=MySubject" ),
+            subjectKeyPair.getPublic()
+        );
+
+        final GeneralNames sans = new GeneralNames( new GeneralName[] {
+            new GeneralName( GeneralName.iPAddress, ipLiteral ),
+            new GeneralName( GeneralName.dNSName, dnsName )
+        } );
+        builder.addExtension( Extension.subjectAlternativeName, false, sans );
+
+        final X509CertificateHolder holder = builder.build( contentSigner );
+        X509Certificate cert = new JcaX509CertificateConverter().getCertificate( holder );
+
+        // FIXME: as elsewhere in this class, round-trip through PEM to avoid Java 17 parsing quirks.
+        final String pem = CertificateManager.toPemRepresentation( cert );
+        cert = CertificateManager.parseCertificates( pem ).iterator().next();
+
+        // Execute system under test.
+        final List<String> identities = new SANCertificateIdentityMapping().mapIdentity( cert );
+
+        // Verify results.
+        assertFalse( identities.contains( ipLiteral ), "Did not expect mapIdentity to surface the iPAddress SAN '" + ipLiteral + "' as an XMPP identity (but it did). Found: " + identities );
+        assertTrue( identities.contains( dnsName ), "Expected mapIdentity to still surface the dNSName SAN '" + dnsName + "' (but it did not). Found: " + identities );
+    }
+
+    /**
+     * Helper that parses a PEM-encoded PKCS#10 CSR and returns the subject alternative names it
+     * carries, each formatted as "{tag}:{value}" (e.g. "7:198.51.100.3", "2:example.org").
+     */
+    private static Set<String> extractCsrSubjectAltNames( String csrPem ) throws Exception
+    {
+        final Set<String> result = new HashSet<>();
+
+        final PKCS10CertificationRequest csr;
+        try ( final PEMParser parser = new PEMParser( new StringReader( csrPem ) ) )
+        {
+            csr = (PKCS10CertificationRequest) parser.readObject();
+        }
+        assertNotNull( csr, "Unable to parse the generated CSR." );
+
+        for ( final Attribute attribute : csr.getAttributes( PKCSObjectIdentifiers.pkcs_9_at_extensionRequest ) )
+        {
+            for ( final ASN1Encodable value : attribute.getAttributeValues() )
+            {
+                final Extensions extensions = Extensions.getInstance( value );
+                final GeneralNames names = GeneralNames.fromExtensions( extensions, Extension.subjectAlternativeName );
+                if ( names == null )
+                {
+                    continue;
+                }
+                for ( final GeneralName name : names.getNames() )
+                {
+                    final int tag = name.getTagNo();
+                    final String textValue;
+                    if ( tag == GeneralName.iPAddress )
+                    {
+                        // iPAddress is carried as an OCTET STRING of raw address octets.
+                        final byte[] octets = DEROctetString.getInstance( name.getName() ).getOctets();
+                        textValue = InetAddress.getByAddress( octets ).getHostAddress();
+                    }
+                    else
+                    {
+                        textValue = name.getName().toString();
+                    }
+                    result.add( tag + ":" + textValue );
+                }
+            }
+        }
+        return result;
     }
 
     /**

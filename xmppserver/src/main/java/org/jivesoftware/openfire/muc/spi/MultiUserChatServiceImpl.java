@@ -3129,6 +3129,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 }
                 features.add( "urn:xmpp:sid:0" );
                 features.add( "urn:xmpp:occupant-id:0" );
+                MUCRoomConfigExtensionManager.getInstance().contributeRoomDiscoFeatures(features, room);
             }
         }
         return features.iterator();
@@ -3197,6 +3198,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
 
                 final Set<DataForm> dataForms = new HashSet<>();
                 dataForms.add(dataForm);
+                MUCRoomConfigExtensionManager.getInstance().contributeRoomDiscoForms(dataForms, room);
                 return dataForms;
             }
         }

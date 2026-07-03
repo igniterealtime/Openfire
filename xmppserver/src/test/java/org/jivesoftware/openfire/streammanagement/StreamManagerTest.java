@@ -15,10 +15,12 @@
  */
 package org.jivesoftware.openfire.streammanagement;
 
+import org.dom4j.Element;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigInteger;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -325,5 +327,35 @@ public class StreamManagerTest
 
         // Verify results.
         assertFalse(result);
+    }
+
+    @Test
+    public void testFeatureElementHasCorrectName() {
+        // Execute system under test.
+        final Element feature = StreamManager.featureElement();
+
+        // Verify results.
+        assertNotNull(feature);
+        assertEquals("sm", feature.getName());
+    }
+
+    @Test
+    public void testFeatureElementHasCorrectNamespace() {
+        // Execute system under test.
+        final Element feature = StreamManager.featureElement();
+
+        // Verify results.
+        assertNotNull(feature);
+        assertEquals(StreamManager.NAMESPACE_V3, feature.getNamespaceURI());
+    }
+
+    @Test
+    public void testFeatureElementIsDistinctOnEachCall() {
+        // Execute system under test.
+        final Element feature1 = StreamManager.featureElement();
+        final Element feature2 = StreamManager.featureElement();
+
+        // Verify results: each call returns a new element instance.
+        assertNotSame(feature1, feature2);
     }
 }

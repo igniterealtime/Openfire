@@ -438,7 +438,11 @@ public class DefaultAuthProvider implements AuthProvider {
                 pstmt.setString(2, encryptedPassword);
             }
             pstmt.setString(3, username);
-            pstmt.executeUpdate();
+            final int updated = pstmt.executeUpdate();
+            if (updated == 0) {
+                abortTransaction = true;
+                throw new UserNotFoundException(username);
+            }
             DbConnectionManager.fastcloseStmt(pstmt);
             pstmt = null;
 
@@ -459,8 +463,7 @@ public class DefaultAuthProvider implements AuthProvider {
             throw new UserNotFoundException(sqle);
         }
         finally {
-            DbConnectionManager.closeStatement(pstmt);
-            DbConnectionManager.closeTransactionConnection(con, abortTransaction);
+            DbConnectionManager.closeTransactionConnection(pstmt, con, abortTransaction);
         }
     }
 

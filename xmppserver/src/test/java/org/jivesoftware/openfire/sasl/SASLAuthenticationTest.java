@@ -3,6 +3,7 @@ package org.jivesoftware.openfire.sasl;
 import org.dom4j.Element;
 import org.dom4j.DocumentHelper;
 import org.dom4j.QName;
+import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.openfire.lockout.LockOutFlag;
 import org.jivesoftware.openfire.lockout.LockOutManager;
@@ -38,7 +39,10 @@ public class SASLAuthenticationTest {
 
     @Mock(lenient = true)
     private LocalClientSession clientSession;
-    
+
+    @Mock(lenient = true)
+    private Connection connection;
+
     @Mock
     private LocalIncomingServerSession serverSession;
 
@@ -94,6 +98,10 @@ public class SASLAuthenticationTest {
         // Setup ServerInfo mock
         when(serverInfo.getXMPPDomain()).thenReturn("example.com");
         when(serverInfo.getHostname()).thenReturn("openfire.example.com");
+
+        // Setup Connection mock
+        when(clientSession.getConnection()).thenReturn(connection);
+        when(connection.getSupportedChannelBindingTypes()).thenReturn(Collections.emptySet());
 
         features = DocumentHelper.createElement("features");
         

@@ -144,6 +144,14 @@ public class StreamManager {
      */
     private final Set<TerminationDelegate> terminationDelegates = new HashSet<>();
 
+    /**
+     * Set to {@code true} when a SASL2-inline stream resumption has been processed but unacknowledged
+     * stanzas have not yet been redelivered. The redelivery must happen after stream features are sent
+     * following the SASL2 {@code <success/>}, so {@link StanzaHandler} calls
+     * {@link #redeliverIfPendingSasl2(JID)} at that point.
+     */
+    private volatile boolean pendingSasl2Redelivery = false;
+
     public StreamManager(LocalSession session) {
         String address;
         try {
@@ -840,6 +848,32 @@ public class StreamManager {
      */
     public void processClientAcknowledgementPublic(long h) {
         processClientAcknowledgement(h);
+    }
+
+    /**
+     * Sets the pending SASL2 redelivery flag. When {@code true}, {@link #redeliverIfPendingSasl2(JID)}
+     * will redeliver unacknowledged stanzas. Called by
+     * {@link org.jivesoftware.openfire.session.LocalSession#reattachForSasl2} to defer redelivery
+     * until after stream features have been sent.
+     *
+     * @param pending whether redelivery is pending
+     */
+    public void setPendingSasl2Redelivery(boolean pending) {
+        this.pendingSasl2Redelivery = pending;
+    }
+
+    /**
+     * If a SASL2-inline stream resumption is pending redelivery, redelivers unacknowledged stanzas
+     * now. This must be called by {@link org.jivesoftware.openfire.net.StanzaHandler} after stream
+     * features have been sent following the SASL2 {@code <success/>}.
+     *
+     * @param serverAddress the server's JID, used to stamp delayed stanzas
+     */
+    public void redeliverIfPendingSasl2(JID serverAddress) {
+        if (pendingSasl2Redelivery) {
+            pendingSasl2Redelivery = false;
+            redeliverUnackedStanzas(serverAddress);
+        }
     }
 
     /**

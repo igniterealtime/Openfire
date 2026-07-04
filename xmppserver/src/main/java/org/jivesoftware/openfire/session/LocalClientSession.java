@@ -601,6 +601,19 @@ public class LocalClientSession extends LocalSession implements ClientSession {
     }
 
     /**
+     * Get the username used if this were anonymous
+     * Use with care, this is only valid prior to binding.
+     *
+     * @return String
+     */
+    public String getAnonymousUsername() {
+        if (getStatus() == Session.Status.AUTHENTICATED) {
+            throw new IllegalStateException("Anonymous username is only valid prior to binding.");
+        }
+        return getAddress().getResource();
+    }
+
+    /**
      * Returns the authentication token associated with this session.
      *
      * @return the authentication token associated with this session (can be null).

@@ -711,6 +711,23 @@ public class SASLAuthentication {
             authenticationFailed(session, Failure.ACCOUNT_DISABLED, usingSASL2);
             return;
         }
+        if (session instanceof LocalClientSession clientSession) {
+            final AuthToken authToken;
+            if (username == null) {
+                // AuthzId is null, which indicates that authentication was anonymous.
+                authToken = AuthToken.generateAnonymousToken();
+                username = clientSession.getAnonymousUsername();
+            } else {
+                authToken = AuthToken.generateUserToken(username);
+            }
+            clientSession.setAuthToken(authToken);
+        }
+        else if (session instanceof LocalIncomingServerSession serverSession) {
+            // Add the validated domain as a valid domain. The remote server can now send packets from this address.
+            serverSession.addValidatedDomain(username);
+            serverSession.setAuthenticationMethod(ServerSession.AuthenticationMethod.fromSaslMechanismName(mechanismName));
+            Log.info("Inbound Server {} authenticated using SASL mechanism {}", username, mechanismName);
+        }
         if (usingSASL2) {
             final Element success = DocumentHelper.createElement( new QName( "success", new Namespace( "", SASL2_NAMESPACE ) ) );
             if (successData != null && successData.length > 0) {
@@ -727,22 +744,6 @@ public class SASLAuthentication {
             session.deliverRawText(success.asXML());
         } else {
             sendElement(session, "success", successData, false);
-        }
-        if (session instanceof ClientSession) {
-            final AuthToken authToken;
-            if (username == null) {
-                // AuthzId is null, which indicates that authentication was anonymous.
-                authToken = AuthToken.generateAnonymousToken();
-            } else {
-                authToken = AuthToken.generateUserToken(username);
-            }
-            ((LocalClientSession) session).setAuthToken(authToken);
-        }
-        else if (session instanceof LocalIncomingServerSession serverSession) {
-            // Add the validated domain as a valid domain. The remote server can now send packets from this address.
-            serverSession.addValidatedDomain(username);
-            serverSession.setAuthenticationMethod(ServerSession.AuthenticationMethod.fromSaslMechanismName(mechanismName));
-            Log.info("Inbound Server {} authenticated using SASL mechanism {}", username, mechanismName);
         }
     }
 

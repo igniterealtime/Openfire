@@ -260,6 +260,10 @@ jobs:
             echo "is_publishable_branch=true" >> "${GITHUB_OUTPUT}"
             echo -n "branch_tag=" >> "${GITHUB_OUTPUT}"
             echo "${{ github.ref }}" | sed -e 's!refs/heads/!!' >> "${GITHUB_OUTPUT}"
+          elif [[ ${{ github.ref }} =~ refs\/tags\/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "is_publishable_branch=true" >> "${GITHUB_OUTPUT}"
+            echo -n "branch_tag=" >> "${GITHUB_OUTPUT}"
+            echo "${{ github.ref }}" | sed -e 's!refs/tags/!!' >> "${GITHUB_OUTPUT}"
           else
             echo "is_publishable_branch=false" >> "${GITHUB_OUTPUT}"
             echo "branch_tag=rando" >> "${GITHUB_OUTPUT}"
@@ -1243,9 +1247,7 @@ jobs:
     name: Publish to GitHub's Docker registry
     runs-on: ubuntu-latest
     needs: [build-docker, aioxmpp, connectivity, integration, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, cockroachdb-install, cockroachdb-upgrade, firebird-install, firebird-upgrade, mysql-install, mysql-upgrade, mariadb-install, mariadb-upgrade, oracle-install, oracle-upgrade]
-    if: |
-      github.event_name == 'push' && 
-      (contains(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
+    if: ${{ github.event_name == 'push' && needs.check_branch.outputs.is_publishable_branch == 'true' }}
 
     permissions:
       contents: read

@@ -532,6 +532,12 @@ public abstract class StanzaHandler {
         document.getRootElement().add(features);
         connection.deliverRawText(StringUtils.asUnclosedStream(document));
     }
+
+    /**
+     * Helper to generate stream:features, populated simply from the session.,
+     *
+     * @return Element <stream:features/>
+     */
     protected Element generateFeatures() {
         final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
 

@@ -51,7 +51,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-public class SASLAuthenticationTest {
+public class SASLIntegrationTest {
 
     @Mock(lenient = true)
     private LocalClientSession clientSession;

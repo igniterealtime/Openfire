@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2025-2026 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.jivesoftware.openfire.sasl;
 
 import org.dom4j.Element;
@@ -175,11 +191,17 @@ public class SASLAuthenticationTest {
 
     @Test
     public void testRegisteredSaslProvider() {
+        // Setup test fixture.
+        // (no additional setup required)
+
+        // Execute system under test.
         Set<String> implemented = SASLAuthentication.getImplementedMechanisms();
+        Set<String> enabled = SASLAuthentication.getSupportedMechanisms();
+
+        // Verify result.
         assertNotNull(implemented);
         assertFalse(implemented.isEmpty());
         assertTrue(implemented.contains("TEST-MECHANISM"));
-        Set<String> enabled = SASLAuthentication.getSupportedMechanisms();
         assertNotNull(enabled);
         assertFalse(enabled.isEmpty());
         assertTrue(enabled.contains("TEST-MECHANISM"));
@@ -188,20 +210,19 @@ public class SASLAuthenticationTest {
     // Existing tests
     @Test
     public void testAddSupportedMechanism() {
-        // Test adding valid mechanism
+        // Setup test fixture.
+        // (no additional setup required)
+
+        // Execute system under test.
         SASLAuthentication.addSupportedMechanism("PLAIN");
-        assertTrue(SASLAuthentication.getSupportedMechanisms().contains("PLAIN"));
-
-        // Test adding lowercase mechanism (should be converted to uppercase)
         SASLAuthentication.addSupportedMechanism("digest-md5");
-        assertTrue(SASLAuthentication.getSupportedMechanisms().contains("DIGEST-MD5"));
 
-        // Test null mechanism
+        // Verify result.
+        assertTrue(SASLAuthentication.getSupportedMechanisms().contains("PLAIN"));
+        assertTrue(SASLAuthentication.getSupportedMechanisms().contains("DIGEST-MD5"));
         assertThrows(IllegalArgumentException.class, () -> {
             SASLAuthentication.addSupportedMechanism(null);
         });
-
-        // Test empty mechanism
         assertThrows(IllegalArgumentException.class, () -> {
             SASLAuthentication.addSupportedMechanism("");
         });
@@ -209,21 +230,18 @@ public class SASLAuthenticationTest {
 
     @Test
     public void testRemoveSupportedMechanism() {
-        // Add and then remove a mechanism
+        // Setup test fixture.
         SASLAuthentication.addSupportedMechanism("PLAIN");
-        SASLAuthentication.removeSupportedMechanism("PLAIN");
-        assertFalse(SASLAuthentication.getSupportedMechanisms().contains("PLAIN"));
-
-        // Test case insensitive removal
         SASLAuthentication.addSupportedMechanism("DIGEST-MD5");
+
+        // Execute system under test.
+        SASLAuthentication.removeSupportedMechanism("PLAIN");
         SASLAuthentication.removeSupportedMechanism("digest-md5");
+
+        // Verify result.
+        assertFalse(SASLAuthentication.getSupportedMechanisms().contains("PLAIN"));
         assertFalse(SASLAuthentication.getSupportedMechanisms().contains("DIGEST-MD5"));
-
-        // Test removing non-existent mechanism
-        SASLAuthentication.removeSupportedMechanism("NONEXISTENT");
-        // Should not throw exception
-
-        // Test null mechanism
+        SASLAuthentication.removeSupportedMechanism("NONEXISTENT"); // Should not throw exception
         assertThrows(IllegalArgumentException.class, () -> {
             SASLAuthentication.removeSupportedMechanism(null);
         });
@@ -231,40 +249,45 @@ public class SASLAuthenticationTest {
 
     @Test
     public void testGetSupportedMechanisms() {
-        Set<String> implemented = SASLAuthentication.getImplementedMechanisms();
-        Set<String> mechanisms = SASLAuthentication.getSupportedMechanisms();
-        assertNotNull(mechanisms);
-
-        // Add multiple mechanisms and verify they're all present
+        // Setup test fixture.
         SASLAuthentication.addSupportedMechanism("PLAIN");
         SASLAuthentication.addSupportedMechanism("DIGEST-MD5");
 
-        mechanisms = SASLAuthentication.getSupportedMechanisms();
+        // Execute system under test.
+        Set<String> mechanisms = SASLAuthentication.getSupportedMechanisms();
 
+        // Verify result.
+        assertNotNull(mechanisms);
         assertTrue(mechanisms.contains("PLAIN"));
         assertTrue(mechanisms.contains("DIGEST-MD5"));
     }
 
     @Test
     public void testGetEnabledMechanisms() {
-        // Test default enabled mechanisms
+        // Setup test fixture.
+        // (no additional setup required)
+
+        // Execute system under test.
         List<String> enabled = SASLAuthentication.getEnabledMechanisms();
+
+        // Verify result.
         assertNotNull(enabled);
         assertFalse(enabled.isEmpty());
-        
-        // Verify expected default mechanisms are present
         assertTrue(enabled.contains("BLURDYBLOOP"));
         assertTrue(enabled.contains("TEST-MECHANISM"));
     }
 
     @Test
     public void testGetImplementedMechanisms() {
-        // Verify we get some implemented mechanisms
+        // Setup test fixture.
+        // (no additional setup required)
+
+        // Execute system under test.
         Set<String> implemented = SASLAuthentication.getImplementedMechanisms();
+
+        // Verify result.
         assertNotNull(implemented);
         assertFalse(implemented.isEmpty());
-        
-        // Verify common mechanisms are present
         assertTrue(implemented.contains("PLAIN"));
         assertTrue(implemented.contains("DIGEST-MD5"));
         assertFalse(implemented.contains("BLURDYBLOOP"));
@@ -274,20 +297,20 @@ public class SASLAuthenticationTest {
     // New tests for addSASLMechanisms functionality
     @Test
     public void testAddSASLMechanismsToAuthenticatedSession() {
-        // Setup
+        // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(true);
         
-        // Execute
+        // Execute system under test.
         final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(clientSession);
 
-        // Verify
+        // Verify result.
         assertTrue(mechanisms.isEmpty(),
             "No SASL mechanisms should be added for authenticated sessions");
     }
 
     @Test
     public void testAddSASLMechanismsToClientSession() {
-        // Setup
+        // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(false);
 
         // Disable SASL2
@@ -295,10 +318,10 @@ public class SASLAuthenticationTest {
 
         try {
 
-            // Execute
+            // Execute system under test.
             final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(clientSession);
 
-            // Verify
+            // Verify result.
             assertFalse(mechanisms.isEmpty(), "SASL mechanisms should be added");
 
             // Should have no SASL2 mechanisms elements
@@ -320,13 +343,13 @@ public class SASLAuthenticationTest {
 
     @Test
     public void testAddSASLMechanismsToClientSessionWithSASL2() {
-        // Setup
+        // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(false);
 
-        // Execute
+        // Execute system under test.
         final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(clientSession);
 
-        // Verify
+        // Verify result.
         assertFalse(mechanisms.isEmpty(), "SASL mechanisms should be added");
 
         // Should have both SASL and SASL2 mechanisms elements
@@ -344,13 +367,13 @@ public class SASLAuthenticationTest {
 
     @Test
     public void testAddSASLMechanismsToServerSession() {
-        // Setup
+        // Setup test fixture.
         when(serverSession.isAuthenticated()).thenReturn(false);
         
-        // Execute
+        // Execute system under test.
         final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(serverSession);
 
-        // Verify
+        // Verify result.
         assertFalse(mechanisms.isEmpty(), "SASL mechanisms should be added");
 
         // Should have both SASL and SASL2 mechanisms elements
@@ -368,14 +391,14 @@ public class SASLAuthenticationTest {
 
     @Test
     public void testAddSASLMechanismsToList() {
-        // Setup
+        // Setup test fixture.
         List<Element> featuresList = new ArrayList<>();
         when(clientSession.isAuthenticated()).thenReturn(false);
         
-        // Execute
+        // Execute system under test.
         final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(clientSession);
         
-        // Verify
+        // Verify result.
         assertEquals(2, mechanisms.size(),
             "Should add both SASL and SASL2 mechanisms to list");
         
@@ -391,29 +414,29 @@ public class SASLAuthenticationTest {
 
     @Test 
     public void testAddSASLMechanismsToUnknownSessionType() {
-        // Setup
+        // Setup test fixture.
         LocalSession unknownSession = mock(LocalSession.class);
         when(unknownSession.isAuthenticated()).thenReturn(false);
         
-        // Execute
+        // Execute system under test.
         final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(unknownSession);
         
-        // Verify
+        // Verify result.
         assertTrue(mechanisms.isEmpty(),
             "Unknown session types should not get any mechanisms");
     }
 
     @Test
     public void testAuthenticationWithoutInitialResponse() throws Exception {
-        // Setup
+        // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(false);
         Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
             .addAttribute("mechanism", "TEST-MECHANISM");
         
-        // Execute - First step: Client sends auth without initial response
+        // Execute system under test.
         SASLAuthentication.handle(clientSession, auth, false);
         
-        // Verify server sends success
+        // Verify result.
         ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
         verify(clientSession).deliverRawText(responseCaptor.capture());
 
@@ -431,17 +454,17 @@ public class SASLAuthenticationTest {
 
     @Test
     public void testAuthenticationWithInitialResponse() throws Exception {
-        // Setup
+        // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(false);
         Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
             .addAttribute("mechanism", "TEST-MECHANISM");
 
         auth.setText(Base64.getEncoder().encodeToString("initial-response".getBytes())); // Empty initial response
         
-        // Execute - Client sends auth with initial response
+        // Execute system under test.
         SASLAuthentication.handle(clientSession, auth, false);
         
-        // Verify server sends success
+        // Verify result.
         ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
         verify(clientSession).deliverRawText(responseCaptor.capture());
 
@@ -458,15 +481,15 @@ public class SASLAuthenticationTest {
 
     @Test
     public void testAuthenticationWithSASL2() throws Exception {
-        // Setup
+        // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(false);
         Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
             .addAttribute("mechanism", "TEST-MECHANISM");
         
-        // Execute - Client sends auth request
+        // Execute system under test.
         SASLAuthentication.handle(clientSession, auth, true);
         
-        // Verify server sends success with SASL2 format
+        // Verify result.
         ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
         verify(clientSession).deliverRawText(responseCaptor.capture());
 
@@ -489,7 +512,7 @@ public class SASLAuthenticationTest {
 
     @Test
     public void testAuthenticationWithSASL2andIR() throws Exception {
-        // Setup
+        // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(false);
         Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
             .addAttribute("mechanism", "TEST-MECHANISM")
@@ -497,10 +520,10 @@ public class SASLAuthenticationTest {
             .addCDATA(Base64.getEncoder().encodeToString("initial-response".getBytes()))
             .getParent();
 
-        // Execute - Client sends auth request
+        // Execute system under test.
         SASLAuthentication.handle(clientSession, auth, true);
 
-        // Verify server sends success with SASL2 format
+        // Verify result.
         ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
         verify(clientSession).deliverRawText(responseCaptor.capture());
 
@@ -527,7 +550,7 @@ public class SASLAuthenticationTest {
 
     @Test
     public void testAuthenticationWithSASL2andIRMultistep() throws Exception {
-        // Setup
+        // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(false);
         testSaslServer.setSteps(2);
         Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
@@ -536,14 +559,14 @@ public class SASLAuthenticationTest {
             .addCDATA(Base64.getEncoder().encodeToString("initial-response".getBytes()))
             .getParent();
 
-        // Execute - Client sends auth request
+        // Execute system under test.
         SASLAuthentication.handle(clientSession, auth, true);
 
         Element response = DocumentHelper.createElement(QName.get("response", "urn:xmpp:sasl:2"))
             .addCDATA(Base64.getEncoder().encodeToString("subsequent-response".getBytes()));
         SASLAuthentication.handle(clientSession, response, true);
 
-        // Verify server sends challenge with SASL2 format
+        // Verify result.
         ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
         verify(clientSession, times(2)).deliverRawText(responseCaptor.capture());
 
@@ -583,14 +606,14 @@ public class SASLAuthenticationTest {
 
     @Test
     public void testAuthenticationFailureInvalidMechanism() throws Exception {
-        // Setup
+        // Setup test fixture.
         Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
             .addAttribute("mechanism", "INVALID-MECHANISM");
         
-        // Execute
+        // Execute system under test.
         SASLAuthentication.handle(clientSession, auth, false);
         
-        // Verify server sends failure
+        // Verify result.
         ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
         verify(clientSession).deliverRawText(responseCaptor.capture());
 
@@ -607,21 +630,17 @@ public class SASLAuthenticationTest {
 
     @Test
     public void testAuthenticationReplayAttack() throws Exception {
-        // Setup
+        // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(false);
         Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
             .addAttribute("mechanism", "TEST-MECHANISM");
-        
-        // First authentication
         SASLAuthentication.handle(clientSession, auth, false);
-        
-        // Reset mock to verify second attempt
         clearInvocations(clientSession);
 
-        // Try to authenticate again with same session
+        // Execute system under test.
         SASLAuthentication.handle(clientSession, auth, false);
         
-        // Verify server sends failure
+        // Verify result.
         ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
         verify(clientSession).deliverRawText(responseCaptor.capture());
 
@@ -635,15 +654,15 @@ public class SASLAuthenticationTest {
 
     @Test
     public void testSuccessfulAuthentication() throws Exception {
-        // Setup
+        // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(false);
         Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
             .addAttribute("mechanism", "TEST-MECHANISM");
         
-        // Execute - First step: Client sends auth without initial response
+        // Execute system under test.
         SASLAuthentication.handle(clientSession, auth, false);
         
-        // Verify server sends success
+        // Verify result.
         ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
         verify(clientSession).deliverRawText(responseCaptor.capture());
         
@@ -657,16 +676,15 @@ public class SASLAuthenticationTest {
 
     @Test
     public void testFailedAuthentication() throws Exception {
-        // Setup
+        // Setup test fixture.
         Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
             .addAttribute("mechanism", "TEST-MECHANISM");
-        
         testSaslServer.setThrowError(true);
 
-        // Execute
+        // Execute system under test.
         SASLAuthentication.handle(clientSession, auth, false);
         
-        // Verify server sends failure
+        // Verify result.
         ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
         verify(clientSession).deliverRawText(responseCaptor.capture());
         
@@ -680,50 +698,46 @@ public class SASLAuthenticationTest {
 
     @Test
     public void testUserAgentCapturedForClientSession() throws Exception {
-        // Setup
+        // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(false);
         Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
             .addAttribute("mechanism", "TEST-MECHANISM");
-        
-        // Add simple user-agent element
         Element userAgent = auth.addElement("user-agent");
         userAgent.addElement("software").setText("Test Client");
 
-        // Execute authentication
+        // Execute system under test.
         SASLAuthentication.handle(clientSession, auth, true);  // true for SASL2
         
-        // Verify user agent info was stored in session
+        // Verify result.
         assertNotNull(clientSession.getSessionData("user-agent-info"));
 }
 
     @Test
     public void testNoUserAgentWhenElementMissing() throws Exception {
-        // Setup
+        // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(false);
         Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
             .addAttribute("mechanism", "TEST-MECHANISM");
 
-        // Execute authentication
+        // Execute system under test.
         SASLAuthentication.handle(clientSession, auth, true);  // true for SASL2
         
-        // Verify no user agent info was stored
+        // Verify result.
         assertNull(clientSession.getSessionData("user-agent-info"));
     }
 
     @Test
     public void testNoUserAgentForServerSession() throws Exception {
-        // Setup
+        // Setup test fixture.
         Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
             .addAttribute("mechanism", "TEST-MECHANISM");
-        
-        // Add user-agent element
         Element userAgent = auth.addElement("user-agent");
         userAgent.addElement("software").setText("Test Server");
 
-        // Execute authentication
+        // Execute system under test.
         SASLAuthentication.handle(serverSession, auth, true);  // true for SASL2
         
-        // Verify no user agent info was stored
-        assertNull(serverSession.getSessionData("user-agent-info"));  // Fixed to check serverSession instead of clientSession
+        // Verify result.
+        assertNull(serverSession.getSessionData("user-agent-info"));
     }
 }

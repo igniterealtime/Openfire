@@ -375,7 +375,9 @@ public class SASLAuthentication {
             return null;
         }
 
-        final Element result = DocumentHelper.createElement( new QName("mechanisms", new Namespace("", usingSASL2 ? SASL2_NAMESPACE : SASL_NAMESPACE)) );
+        final Namespace namespace = new Namespace("", usingSASL2 ? SASL2_NAMESPACE : SASL_NAMESPACE );
+        final QName qName = new QName(usingSASL2 ? "authentication" : "mechanisms", namespace);
+        final Element result = DocumentHelper.createElement( qName );
         for (final String mech : availableMechanisms) {
             final Element mechanism = result.addElement("mechanism");
             mechanism.setText(mech);

@@ -478,7 +478,7 @@ public class SASLAuthentication {
                 case ABORT:
                     throw new SaslFailureException( Failure.ABORTED );
 
-                case AUTHENTICATE:
+                case AUTHENTICATE: // intended fall-through
                 case AUTH:
                     if ( doc.attributeValue( "mechanism" ) == null )
                     {

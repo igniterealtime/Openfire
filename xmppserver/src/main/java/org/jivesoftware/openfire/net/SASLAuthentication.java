@@ -726,7 +726,7 @@ public class SASLAuthentication {
             }
             session.deliverRawText(success.asXML());
         } else {
-            sendElement(session, "success", successData, usingSASL2);
+            sendElement(session, "success", successData, false);
         }
         if (session instanceof ClientSession) {
             final AuthToken authToken;

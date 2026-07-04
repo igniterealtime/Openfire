@@ -239,12 +239,12 @@ public class SASLIntegrationTest {
         SASLAuthentication.removeSupportedMechanism("digest-md5");
 
         // Verify result.
-        assertFalse(SASLAuthentication.getSupportedMechanisms().contains("PLAIN"));
-        assertFalse(SASLAuthentication.getSupportedMechanisms().contains("DIGEST-MD5"));
+        assertFalse(SASLAuthentication.getSupportedMechanisms().contains("PLAIN"), "Unsupported PLAIN mechanism should be removed");
+        assertFalse(SASLAuthentication.getSupportedMechanisms().contains("DIGEST-MD5"), "Unsupported DIGEST-MD5 mechanism should be removed");
         SASLAuthentication.removeSupportedMechanism("NONEXISTENT"); // Should not throw exception
         assertThrows(IllegalArgumentException.class, () -> {
             SASLAuthentication.removeSupportedMechanism(null);
-        });
+        }, "Null mechanism should not be allowed");
     }
 
     @Test
@@ -257,9 +257,9 @@ public class SASLIntegrationTest {
         Set<String> mechanisms = SASLAuthentication.getSupportedMechanisms();
 
         // Verify result.
-        assertNotNull(mechanisms);
-        assertTrue(mechanisms.contains("PLAIN"));
-        assertTrue(mechanisms.contains("DIGEST-MD5"));
+        assertNotNull(mechanisms, "Supported mechanisms should not be null");
+        assertTrue(mechanisms.contains("PLAIN"), "PLAIN mechanism should be supported");
+        assertTrue(mechanisms.contains("DIGEST-MD5"), "DIGEST-MD5 mechanism should be supported");
     }
 
     @Test
@@ -271,10 +271,10 @@ public class SASLIntegrationTest {
         List<String> enabled = SASLAuthentication.getEnabledMechanisms();
 
         // Verify result.
-        assertNotNull(enabled);
-        assertFalse(enabled.isEmpty());
-        assertTrue(enabled.contains("BLURDYBLOOP"));
-        assertTrue(enabled.contains("TEST-MECHANISM"));
+        assertNotNull(enabled, "Enabled mechanisms should not be null");
+        assertFalse(enabled.isEmpty(), "Enabled mechanisms should not be empty");
+        assertTrue(enabled.contains("BLURDYBLOOP"), "BLURDYBLOOP mechanism should be enabled");
+        assertTrue(enabled.contains("TEST-MECHANISM"), "TEST-MECHANISM mechanism should be enabled");
     }
 
     @Test
@@ -286,12 +286,12 @@ public class SASLIntegrationTest {
         Set<String> implemented = SASLAuthentication.getImplementedMechanisms();
 
         // Verify result.
-        assertNotNull(implemented);
-        assertFalse(implemented.isEmpty());
-        assertTrue(implemented.contains("PLAIN"));
-        assertTrue(implemented.contains("DIGEST-MD5"));
-        assertFalse(implemented.contains("BLURDYBLOOP"));
-        assertTrue(implemented.contains("TEST-MECHANISM"));
+        assertNotNull(implemented, "Implemented mechanisms should not be null");
+        assertFalse(implemented.isEmpty(), "Implemented mechanisms should not be empty");
+        assertTrue(implemented.contains("PLAIN"), "PLAIN mechanism should be implemented");
+        assertTrue(implemented.contains("DIGEST-MD5"), "DIGEST-MD5 mechanism should be implemented");
+        assertFalse(implemented.contains("BLURDYBLOOP"), "BLURDYBLOOP mechanism should not be implemented");
+        assertTrue(implemented.contains("TEST-MECHANISM"), "TEST-MECHANISM mechanism should be implemented");
     }
 
     // New tests for addSASLMechanisms functionality
@@ -476,7 +476,7 @@ public class SASLIntegrationTest {
         
         // Verify session state
         verify(clientSession).setAuthToken(any(AuthToken.class));
-        assertFalse(clientSession.isAnonymousUser());
+        assertFalse(clientSession.isAnonymousUser(), "Session should not be anonymous");
     }
 
     @Test
@@ -507,7 +507,7 @@ public class SASLIntegrationTest {
         
         // Verify session state
         verify(clientSession).setAuthToken(any(AuthToken.class));
-        assertFalse(clientSession.isAnonymousUser());
+        assertFalse(clientSession.isAnonymousUser(), "Session should not be anonymous");
     }
 
     @Test
@@ -545,7 +545,7 @@ public class SASLIntegrationTest {
 
         // Verify session state
         verify(clientSession).setAuthToken(any(AuthToken.class));
-        assertFalse(clientSession.isAnonymousUser());
+        assertFalse(clientSession.isAnonymousUser(), "Session should not be anonymous");
     }
 
     @Test

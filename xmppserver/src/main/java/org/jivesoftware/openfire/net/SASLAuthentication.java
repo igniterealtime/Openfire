@@ -371,7 +371,8 @@ public class SASLAuthentication {
         final Set<String> availableMechanisms = getAvailableMechanismsForServerSession(session);
 
         // OF-2072: Return null instead of an empty element, if so configured.
-        if (JiveGlobals.getBooleanProperty("sasl.server.suppressEmpty", false) && availableMechanisms.isEmpty()) {
+        // For SASL2, always null.
+        if ((usingSASL2 || JiveGlobals.getBooleanProperty("sasl.server.suppressEmpty", false)) && availableMechanisms.isEmpty()) {
             return null;
         }
 

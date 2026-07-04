@@ -29,6 +29,7 @@ import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.ServerSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.openfire.sasl.SaslFailureException;
 import org.jivesoftware.util.JiveGlobals;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -45,8 +46,11 @@ import java.util.Locale;
 import java.util.Set;
 
 import static org.jivesoftware.openfire.net.SASLAuthentication.SASL_NAMESPACE;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -366,6 +370,134 @@ public class SASLAuthenticationTest
         final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
         verify(connection).deliverRawText(response.capture());
         assertTrue(response.getValue().contains("<success"), "Expected success element to be sent.");
+    }
+
+    /**
+     * Verifies that decodeData returns an empty byte array when doc is null and emptyNull is true.
+     */
+    @Test
+    public void decodeData_nullDoc_emptyNullTrue_returnsEmptyArray() throws SaslFailureException
+    {
+        // Execute system under test.
+        final byte[] result = SASLAuthentication.decodeData(null, true);
+
+        // Verify result.
+        assertArrayEquals(new byte[0], result, "Expected empty byte array when doc is null and emptyNull is true.");
+    }
+
+    /**
+     * Verifies that decodeData returns null when doc is null and emptyNull is false.
+     */
+    @Test
+    public void decodeData_nullDoc_emptyNullFalse_returnsNull() throws SaslFailureException
+    {
+        // Execute system under test.
+        final byte[] result = SASLAuthentication.decodeData(null, false);
+
+        // Verify result.
+        assertNull(result, "Expected null when doc is null and emptyNull is false.");
+    }
+
+    /**
+     * Verifies that decodeData returns null when the element text is empty and emptyNull is true.
+     */
+    @Test
+    public void decodeData_emptyText_emptyNullTrue_returnsNull() throws SaslFailureException
+    {
+        // Setup test fixture.
+        final Element doc = DocumentHelper.createElement("response");
+        doc.setText("");
+
+        // Execute system under test.
+        final byte[] result = SASLAuthentication.decodeData(doc, true);
+
+        // Verify result.
+        assertNull(result, "Expected null when element text is empty and emptyNull is true.");
+    }
+
+    /**
+     * Verifies that decodeData returns an empty byte array when the element text is empty and emptyNull is false.
+     */
+    @Test
+    public void decodeData_emptyText_emptyNullFalse_returnsEmptyArray() throws SaslFailureException
+    {
+        // Setup test fixture.
+        final Element doc = DocumentHelper.createElement("response");
+        doc.setText("");
+
+        // Execute system under test.
+        final byte[] result = SASLAuthentication.decodeData(doc, false);
+
+        // Verify result.
+        assertArrayEquals(new byte[0], result, "Expected empty byte array when element text is empty and emptyNull is false.");
+    }
+
+    /**
+     * Verifies that decodeData returns an empty byte array when the element text is '=' and emptyNull is true.
+     * Per RFC 6120 section 6.4.2, '=' represents an empty initial response.
+     */
+    @Test
+    public void decodeData_equalsSign_emptyNullTrue_returnsEmptyArray() throws SaslFailureException
+    {
+        // Setup test fixture.
+        final Element doc = DocumentHelper.createElement("auth");
+        doc.setText("=");
+
+        // Execute system under test.
+        final byte[] result = SASLAuthentication.decodeData(doc, true);
+
+        // Verify result.
+        assertArrayEquals(new byte[0], result, "Expected empty byte array when element text is '=' and emptyNull is true.");
+    }
+
+    /**
+     * Verifies that decodeData throws SaslFailureException when the element text is '=' and emptyNull is false.
+     * The '=' encoding is only valid in SASL1 auth elements.
+     */
+    @Test
+    public void decodeData_equalsSign_emptyNullFalse_throwsException()
+    {
+        // Setup test fixture.
+        final Element doc = DocumentHelper.createElement("response");
+        doc.setText("=");
+
+        // Execute system under test & verify result.
+        assertThrows(SaslFailureException.class, () -> SASLAuthentication.decodeData(doc, false),
+            "Expected SaslFailureException when element text is '=' and emptyNull is false.");
+    }
+
+    /**
+     * Verifies that decodeData correctly decodes a valid base64-encoded string.
+     */
+    @Test
+    public void decodeData_validBase64_returnsDecodedBytes() throws SaslFailureException
+    {
+        // Setup test fixture.
+        final byte[] expected = "hello".getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        final String encoded = java.util.Base64.getEncoder().encodeToString(expected);
+        final Element doc = DocumentHelper.createElement("response");
+        doc.setText(encoded);
+
+        // Execute system under test.
+        final byte[] result = SASLAuthentication.decodeData(doc, false);
+
+        // Verify result.
+        assertArrayEquals(expected, result, "Expected decoded bytes to match original input.");
+    }
+
+    /**
+     * Verifies that decodeData throws SaslFailureException when the element text is not valid base64.
+     */
+    @Test
+    public void decodeData_invalidBase64_throwsException()
+    {
+        // Setup test fixture.
+        final Element doc = DocumentHelper.createElement("response");
+        doc.setText("not-valid-base64!!!");
+
+        // Execute system under test & verify result.
+        assertThrows(SaslFailureException.class, () -> SASLAuthentication.decodeData(doc, false),
+            "Expected SaslFailureException when element text is not valid base64.");
     }
 
     private static Element authElement(final String mechanism)

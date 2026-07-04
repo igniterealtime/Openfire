@@ -387,7 +387,8 @@ public class SASLAuthentication {
     // emptyNull indicates whether a zero-length string is just a zero-length string, or if it's null.
     // If emptyNull is false, the presence or absence of the element indicates null, whereas
     // if it's true (for auth in SASL1) there's a "=" to indicate genuine empty strings.
-    private static byte[] decodeData(Element doc, boolean emptyNull) throws SaslFailureException {
+    @VisibleForTesting
+    static byte[] decodeData(Element doc, boolean emptyNull) throws SaslFailureException {
         // Decode any data that is provided in the client response.
         if (doc == null) {
             if (emptyNull) {

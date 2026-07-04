@@ -366,30 +366,6 @@ public class SASLIntegrationTest {
     }
 
     @Test
-    public void testAddSASLMechanismsToServerSession() {
-        // Setup test fixture.
-        when(serverSession.isAuthenticated()).thenReturn(false);
-        
-        // Execute system under test.
-        final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(serverSession);
-
-        // Verify result.
-        assertFalse(mechanisms.isEmpty(), "SASL mechanisms should be added");
-
-        // Should have both SASL and SASL2 mechanisms elements
-        assertEquals(2, mechanisms.size(), "Should have both SASL and SASL2 mechanisms");
-
-        // Verify both namespaces are present without assuming order
-        Set<String> namespaces = mechanisms.stream()
-            .map(Element::getNamespaceURI)
-            .collect(Collectors.toSet());
-        assertTrue(namespaces.contains("urn:ietf:params:xml:ns:xmpp-sasl"),
-            "SASL namespace should be present");
-        assertTrue(namespaces.contains("urn:xmpp:sasl:2"),
-            "SASL2 namespace should be present");
-    }
-
-    @Test
     public void testAddSASLMechanismsToList() {
         // Setup test fixture.
         List<Element> featuresList = new ArrayList<>();

@@ -14,12 +14,68 @@ concurrency:
 jobs:
   build:
 
+    name: Build Openfire from source (ubuntu-latest, 17, zulu)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+      - name: Set up JDK 17 zulu on ubuntu-latest
+        uses: actions/setup-java@v5
+        with:
+          java-version: 17
+          distribution: zulu
+          cache: maven
+      - name: Cache Maven wrapper distribution
+        uses: actions/cache@v5
+        with:
+          path: ~/.m2/wrapper
+          key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-mvn-wrapper-
+      - name: Build with Maven while generating code coverage report # We install instead of package, because we want the result in the local mvn repo
+        if: ${{ github.ref_name == 'main' }}
+        run: ./mvnw -B install -T 1C -Pcoverage --file pom.xml
+      - name: Build with Maven # We install instead of package, because we want the result in the local mvn repo
+        if: ${{ github.ref_name != 'main' }}
+        run: ./mvnw -B install -T 1C --file pom.xml
+      - name: Upload failed test reports
+        uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: Openfire Build Java 17 zulu on Linux JUnit Test reports
+          path: xmppserver/target/surefire-reports
+      - name: tar distribution # sharing artifacts that consist of many files can be slow. Share one file instead.
+        run: tar -cf distribution-artifact.tar distribution/target/distribution-base
+      - name: Upload distribution
+        uses: actions/upload-artifact@v7
+        with:
+          name: Openfire Distribution Java 17 zulu on Linux
+          path: distribution-artifact.tar
+      - name: Upload coverage report for 'xmppserver' module
+        if: ${{ github.ref_name == 'main' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: Openfire Build Java 17 Unit Test Coverage Report (for 'xmppserver' module)
+          path: xmppserver/target/site/jacoco/
+      - name: Temporarily stash openfire artifacts from the mvn repo for later jobs
+        uses: actions/upload-artifact@v7
+        with:
+          name: Maven Repository
+          path: ~/.m2/repository/org/igniterealtime/openfire/
+          retention-days: 1
+
+
+  build-matrix:
+
     name: Build Openfire from source
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
         java: [ 17, 21, 25 ]
         distribution: [ zulu ] # We could add more here: temurin, adopt, liberica, microsoft, corretto
+        exclude:
+          - os: ubuntu-latest
+            java: 17
 
     runs-on: ${{ matrix.os }}
 
@@ -40,10 +96,10 @@ jobs:
             ${{ runner.os }}-mvn-wrapper-
       - name: Build with Maven while generating code coverage report # We install instead of package, because we want the result in the local mvn repo
         if: ${{ github.ref_name == 'main' }}
-        run: ./mvnw -B install -Pcoverage --file pom.xml
+        run: ./mvnw -B install -T 1C -Pcoverage --file pom.xml
       - name: Build with Maven # We install instead of package, because we want the result in the local mvn repo
         if: ${{ github.ref_name != 'main' }}
-        run: ./mvnw -B install --file pom.xml
+        run: ./mvnw -B install -T 1C --file pom.xml
       - name: Upload failed test reports
         uses: actions/upload-artifact@v7
         if: always()
@@ -59,19 +115,6 @@ jobs:
         with:
           name: Openfire Distribution Java ${{ matrix.java }} ${{ matrix.distribution }} on ${{ runner.os }}
           path: distribution-artifact.tar
-      - name: Upload coverage report for 'xmppserver' module
-        if: ${{ matrix.distribution == 'zulu' && matrix.java == 17 && matrix.os == 'ubuntu-latest' && github.ref_name == 'main'}}
-        uses: actions/upload-artifact@v7
-        with:
-          name: Openfire Build Java ${{ matrix.java }} Unit Test Coverage Report (for 'xmppserver' module)
-          path: xmppserver/target/site/jacoco/
-      - name: Temporarily stash openfire artifacts from the mvn repo for later jobs
-        if: ${{ matrix.distribution == 'zulu' && matrix.java == 17 && matrix.os == 'ubuntu-latest'}}
-        uses: actions/upload-artifact@v7
-        with:
-          name: Maven Repository
-          path: ~/.m2/repository/org/igniterealtime/openfire/
-          retention-days: 1
 
 
   build-docker:
@@ -1208,7 +1251,7 @@ jobs:
   publish-maven:
     name: Publish to Maven
     runs-on: ubuntu-latest
-    needs: [aioxmpp, connectivity, integration, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, cockroachdb-install, cockroachdb-upgrade, firebird-install, firebird-upgrade, mysql-install, mysql-upgrade, mariadb-install, mariadb-upgrade, oracle-install, oracle-upgrade]
+    needs: [build-matrix, aioxmpp, connectivity, integration, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, cockroachdb-install, cockroachdb-upgrade, firebird-install, firebird-upgrade, mysql-install, mysql-upgrade, mariadb-install, mariadb-upgrade, oracle-install, oracle-upgrade]
     if: ${{github.repository == 'igniterealtime/Openfire' && github.event_name == 'push' && needs.check_branch.outputs.is_publishable_branch == 'true'}}
 
     steps:
@@ -1242,7 +1285,7 @@ jobs:
   publish-docker:
     name: Publish to GitHub's Docker registry
     runs-on: ubuntu-latest
-    needs: [build-docker, aioxmpp, connectivity, integration, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, cockroachdb-install, cockroachdb-upgrade, firebird-install, firebird-upgrade, mysql-install, mysql-upgrade, mariadb-install, mariadb-upgrade, oracle-install, oracle-upgrade]
+    needs: [build-matrix, build-docker, aioxmpp, connectivity, integration, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, cockroachdb-install, cockroachdb-upgrade, firebird-install, firebird-upgrade, mysql-install, mysql-upgrade, mariadb-install, mariadb-upgrade, oracle-install, oracle-upgrade]
     if: |
       github.event_name == 'push' && 
       (contains(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main')
@@ -1301,7 +1344,7 @@ jobs:
   build-deb-artifact:
     name: Generate DEB artifact
     runs-on: ubuntu-latest
-    needs: [aioxmpp, connectivity, integration, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, cockroachdb-install, cockroachdb-upgrade, mysql-install, mysql-upgrade, firebird-install, firebird-upgrade, mariadb-install, mariadb-upgrade, oracle-install, oracle-upgrade]
+    needs: [build-matrix, aioxmpp, connectivity, integration, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, cockroachdb-install, cockroachdb-upgrade, mysql-install, mysql-upgrade, firebird-install, firebird-upgrade, mariadb-install, mariadb-upgrade, oracle-install, oracle-upgrade]
     steps:
       - uses: actions/checkout@v7
         with:

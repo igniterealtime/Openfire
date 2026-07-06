@@ -71,9 +71,9 @@ public class DefaultAuthProviderScramStorageTest
     private static String storedKeyFor(final String password) throws Exception
     {
         final byte[] salt = DatatypeConverter.parseBase64Binary(SALT_BASE64);
-        final byte[] saltedPassword = ScramUtils.createSaltedPassword(salt, password, ITERATIONS);
-        final byte[] clientKey = ScramUtils.computeHmac(saltedPassword, "Client Key");
-        return DatatypeConverter.printBase64Binary(MessageDigest.getInstance("SHA-1").digest(clientKey));
+        final byte[] saltedPassword = ScramUtils.createSaltedPassword(salt, password, ITERATIONS, ScramSha1SaslServer.HMAC_ALGORITHM_NAME);
+        final byte[] clientKey = ScramUtils.computeHmac(saltedPassword, "Client Key", ScramSha1SaslServer.HMAC_ALGORITHM_NAME);
+        return DatatypeConverter.printBase64Binary(MessageDigest.getInstance(ScramSha1SaslServer.DIGEST_ALGORITHM_NAME).digest(clientKey));
     }
 
     /**

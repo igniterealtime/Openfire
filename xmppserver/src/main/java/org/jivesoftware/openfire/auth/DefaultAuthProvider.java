@@ -16,7 +16,6 @@
 
 package org.jivesoftware.openfire.auth;
 
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.sql.Connection;
@@ -345,17 +344,16 @@ public class DefaultAuthProvider implements AuthProvider {
                 Log.debug("No available SCRAM-SHA-1 credentials for checkPassword for user {}", username);
                 return false;
             }
-            final byte[] testStoredKey;
             try {
                 final byte[] saltShaker = DatatypeConverter.parseBase64Binary(credential.salt);
-                final byte[] saltedPassword = ScramUtils.createSaltedPassword(saltShaker, testPassword, credential.iterations, ScramSha1SaslServer.HMAC_ALGORITHM_NAME);
-                final byte[] clientKey = ScramUtils.computeHmac(saltedPassword, "Client Key", ScramSha1SaslServer.HMAC_ALGORITHM_NAME);
-                testStoredKey = MessageDigest.getInstance(ScramSha1SaslServer.DIGEST_ALGORITHM_NAME).digest(clientKey);
+                final ScramUtils.ScramKeys keys = ScramUtils.deriveScramKeys(
+                    saltShaker, testPassword, credential.iterations,
+                    ScramSha1SaslServer.HMAC_ALGORITHM_NAME, ScramSha1SaslServer.DIGEST_ALGORITHM_NAME);
+                return DatatypeConverter.printBase64Binary(keys.storedKey).equals(credential.storedKey);
             } catch(SaslException | NoSuchAlgorithmException | IllegalArgumentException e) {
                 Log.warn("Unable to check SCRAM values for PLAIN authentication for user '{}'", username, e);
                 return false;
             }
-            return DatatypeConverter.printBase64Binary(testStoredKey).equals(credential.storedKey);
         }
         catch (SQLException sqle) {
             Log.warn("A database error occurred while authenticating user {}:", username, sqle);
@@ -388,15 +386,15 @@ public class DefaultAuthProvider implements AuthProvider {
         byte[] saltShaker = new byte[SALT_LENGTH];
         random.nextBytes(saltShaker);
         final String salt = DatatypeConverter.printBase64Binary(saltShaker);
+        ScramUtils.ScramKeys keys = null;
         final int iterations = ScramSha1SaslServer.ITERATION_COUNT.getValue();
-        byte[] saltedPassword = null, clientKey = null, storedKey = null, serverKey = null;
         try {
-            saltedPassword = ScramUtils.createSaltedPassword(saltShaker, password, iterations, ScramSha1SaslServer.HMAC_ALGORITHM_NAME);
-            clientKey = ScramUtils.computeHmac(saltedPassword, "Client Key", ScramSha1SaslServer.HMAC_ALGORITHM_NAME);
-            storedKey = MessageDigest.getInstance(ScramSha1SaslServer.DIGEST_ALGORITHM_NAME).digest(clientKey);
-            serverKey = ScramUtils.computeHmac(saltedPassword, "Server Key", ScramSha1SaslServer.HMAC_ALGORITHM_NAME);
+            keys = ScramUtils.deriveScramKeys(
+                saltShaker, password, iterations,
+                ScramSha1SaslServer.HMAC_ALGORITHM_NAME,
+                ScramSha1SaslServer.DIGEST_ALGORITHM_NAME);
         } catch (SaslException | NoSuchAlgorithmException e) {
-            Log.warn("Unable to persist values for SCRAM authentication.");
+            Log.warn("Unable to derive SCRAM credential while trying to persist values for SCRAM authentication", e);
         }
 
         String plaintextToStore = password;
@@ -453,8 +451,8 @@ public class DefaultAuthProvider implements AuthProvider {
                     ScramSha1SaslServer.MECHANISM_NAME,
                     salt,
                     iterations,
-                    storedKey == null ? null : DatatypeConverter.printBase64Binary(storedKey),
-                    serverKey == null ? null : DatatypeConverter.printBase64Binary(serverKey)
+                    keys == null ? null : DatatypeConverter.printBase64Binary(keys.storedKey),
+                    keys == null ? null : DatatypeConverter.printBase64Binary(keys.serverKey)
                 )
             );
         }

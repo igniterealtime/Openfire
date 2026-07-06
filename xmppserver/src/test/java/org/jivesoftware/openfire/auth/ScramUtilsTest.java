@@ -165,4 +165,28 @@ public class ScramUtilsTest
         // Verify results.
         assertArrayEquals(StringUtils.decodeHex("0fe09258b3ac852ba502cc62ba903eaacdbf7d31"), result); // test against 'server key' from the test vectors.
     }
+
+    /**
+     * Verifies the implementation of {@link ScramUtils#deriveScramKeys(byte[], String, int, String, String)}
+     * by using SCRAM-SHA-1(-PLUS) test vectors that are provided by the XSF.
+     *
+     * @see <a href="https://wiki.xmpp.org/web/SASL_Authentication_and_SCRAM">XSF SCRAM test vectors.</a>
+     */
+    @Test
+    public void testScramSha1DeriveScramKeys() throws Exception
+    {
+        // Setup test fixture.
+        final byte[] salt = StringUtils.decodeHex("4125c247e43ab1e93c6dff76");
+        final String password = "pencil";
+        final int iterations = 4096;
+        final String hmacAlgorithm = "HmacSHA1";
+        final String digestAlgorithm = "SHA-1";
+
+        // Execute system under test.
+        final ScramUtils.ScramKeys result = ScramUtils.deriveScramKeys(salt, password, iterations, hmacAlgorithm, digestAlgorithm);
+
+        // Verify results.
+        assertArrayEquals(StringUtils.decodeHex("e9d94660c39d65c38fbad91c358f14da0eef2bd6"), result.storedKey);
+        assertArrayEquals(StringUtils.decodeHex("0fe09258b3ac852ba502cc62ba903eaacdbf7d31"), result.serverKey);
+    }
 }

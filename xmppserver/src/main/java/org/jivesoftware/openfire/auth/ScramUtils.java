@@ -20,6 +20,7 @@ import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
 
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import javax.crypto.Mac;
@@ -40,6 +41,32 @@ public class ScramUtils {
     public static final int DEFAULT_ITERATION_COUNT = 4096;
 
     private ScramUtils() {}
+
+    /**
+     * Derives the stored key and server key for a SCRAM credential.
+     *
+     * The keys are derived from the supplied password using the specified salt, iteration count, HMAC algorithm and
+     * digest algorithm, as defined by the SCRAM specification.
+     *
+     * @param salt the salt.
+     * @param password the plaintext password.
+     * @param iterations the SCRAM iteration count.
+     * @param hmacAlgorithm the HMAC algorithm (for example {@code HmacSHA1} or {@code HmacSHA256}).
+     * @param digestAlgorithm the digest algorithm corresponding to the HMAC algorithm (for example {@code SHA-1} or {@code SHA-256}).
+     * @return the derived stored key and server key.
+     * @throws SaslException if the salted password or HMAC values cannot be derived.
+     * @throws NoSuchAlgorithmException if the requested digest algorithm is unavailable.
+     */
+    public static ScramKeys deriveScramKeys(final byte[] salt, final String password, final int iterations, final String hmacAlgorithm, final String digestAlgorithm) throws SaslException, NoSuchAlgorithmException
+    {
+        final byte[] saltedPassword = createSaltedPassword(salt, password, iterations, hmacAlgorithm);
+        final byte[] clientKey = computeHmac(saltedPassword, "Client Key", hmacAlgorithm);
+        final byte[] storedKey = MessageDigest.getInstance(digestAlgorithm).digest(clientKey);
+
+        final byte[] serverKey = computeHmac(saltedPassword, "Server Key", hmacAlgorithm);
+
+        return new ScramKeys(storedKey, serverKey);
+    }
 
     /**
      * Computes a salted password ({@code Hi(password, salt, iterations)} as defined in RFC 5802), using the provided
@@ -150,5 +177,24 @@ public class ScramUtils {
     public static Mac createSha1Hmac(final byte[] keyBytes) throws SaslException
     {
         return createHmac(keyBytes, ScramSha1SaslServer.HMAC_ALGORITHM_NAME);
+    }
+
+    /**
+     * The derived SCRAM keys for a password.
+     *
+     * These keys are derived from a password, salt and iteration count as defined by the SCRAM specification. The
+     * stored key is persisted and used to verify client authentication, while the server key is used by the server when
+     * constructing SCRAM protocol messages.
+     */
+    public static final class ScramKeys
+    {
+        public final byte[] storedKey;
+        public final byte[] serverKey;
+
+        private ScramKeys(byte[] storedKey, byte[] serverKey)
+        {
+            this.storedKey = storedKey;
+            this.serverKey = serverKey;
+        }
     }
 }

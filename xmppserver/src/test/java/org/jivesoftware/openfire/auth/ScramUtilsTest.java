@@ -32,7 +32,9 @@ public class ScramUtilsTest
      * that are provided by the XSF.
      *
      * @see <a href="https://wiki.xmpp.org/web/SASL_Authentication_and_SCRAM">XSF SCRAM test vectors.</a>
+     * @deprecated This tests an implementation that shall be removed. When it is, this test can be deleted.
      */
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.3.0
     @Test
     public void testCreateSaltedPassword() throws Exception
     {
@@ -55,7 +57,9 @@ public class ScramUtilsTest
      * This test uses the test vectors identified as the 'client key'.
      *
      * @see <a href="https://wiki.xmpp.org/web/SASL_Authentication_and_SCRAM">XSF SCRAM test vectors.</a>
+     * @deprecated This tests an implementation that shall be removed. When it is, this test can be deleted.
      */
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.3.0
     @Test
     public void testComputeHmac() throws Exception
     {
@@ -77,7 +81,9 @@ public class ScramUtilsTest
      * This test uses the test vectors identified as the 'server key'.
      *
      * @see <a href="https://wiki.xmpp.org/web/SASL_Authentication_and_SCRAM">XSF SCRAM test vectors.</a>
+     * @deprecated This tests an implementation that shall be removed. When it is, this test can be deleted.
      */
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.3.0
     @Test
     public void testComputeHmac2() throws Exception
     {
@@ -87,6 +93,74 @@ public class ScramUtilsTest
 
         // Execute system under test.
         final byte[] result = ScramUtils.computeHmac(key, value);
+
+        // Verify results.
+        assertArrayEquals(StringUtils.decodeHex("0fe09258b3ac852ba502cc62ba903eaacdbf7d31"), result); // test against 'server key' from the test vectors.
+    }
+
+    /**
+     * Verifies the implementation of {@link ScramUtils#createSaltedPassword(byte[], String, int, String)} by using
+     * SCRAM-SHA-1(-PLUS) test vectors that are provided by the XSF.
+     *
+     * @see <a href="https://wiki.xmpp.org/web/SASL_Authentication_and_SCRAM">XSF SCRAM test vectors.</a>
+     */
+    @Test
+    public void testScramSha1CreateSaltedPassword() throws Exception
+    {
+        // Setup test fixture.
+        final byte[] salt = StringUtils.decodeHex("4125c247e43ab1e93c6dff76");
+        final String password = "pencil";
+        final int iterations = 4096;
+        final String hmacAlgorithm = "HmacSHA1";
+
+        // Execute system under test.
+        final byte[] result = ScramUtils.createSaltedPassword(salt, password, iterations, hmacAlgorithm);
+
+        // Verify results.
+        assertArrayEquals(StringUtils.decodeHex("1d96ee3a529b5a5f9e47c01f229a2cb8a6e15f7d"), result);
+    }
+
+    /**
+     * Verifies the implementation of {@link ScramUtils#computeHmac(byte[], String, String)} by using SCRAM-SHA-1(-PLUS)
+     * test vectors that are provided by the XSF.
+     *
+     * This test uses the test vectors identified as the 'client key'.
+     *
+     * @see <a href="https://wiki.xmpp.org/web/SASL_Authentication_and_SCRAM">XSF SCRAM test vectors.</a>
+     */
+    @Test
+    public void testScramSha1ComputeHmac() throws Exception
+    {
+        // Setup test fixture.
+        final byte[] key = StringUtils.decodeHex("1d96ee3a529b5a5f9e47c01f229a2cb8a6e15f7d"); // 'salted password' from the test vectors.
+        final String value = "Client Key";
+        final String hmacAlgorithm = "HmacSHA1";
+
+        // Execute system under test.
+        final byte[] result = ScramUtils.computeHmac(key, value, hmacAlgorithm);
+
+        // Verify results.
+        assertArrayEquals(StringUtils.decodeHex("e234c47bf6c36696dd6d852b99aaa2ba26555728"), result); // test against 'client key' from the test vectors.
+    }
+
+    /**
+     * Verifies the implementation of {@link ScramUtils#computeHmac(byte[], String, String)} by using
+     * SCRAM-SHA-1(-PLUS) test vectors that are provided by the XSF.
+     *
+     * This test uses the test vectors identified as the 'server key'.
+     *
+     * @see <a href="https://wiki.xmpp.org/web/SASL_Authentication_and_SCRAM">XSF SCRAM test vectors.</a>
+     */
+    @Test
+    public void testScramSha1ComputeHmac2() throws Exception
+    {
+        // Setup test fixture.
+        final byte[] key = StringUtils.decodeHex("1d96ee3a529b5a5f9e47c01f229a2cb8a6e15f7d"); // 'salted password' from the test vectors.
+        final String value = "Server Key";
+        final String hmacAlgorithm = "HmacSHA1";
+
+        // Execute system under test.
+        final byte[] result = ScramUtils.computeHmac(key, value, hmacAlgorithm);
 
         // Verify results.
         assertArrayEquals(StringUtils.decodeHex("0fe09258b3ac852ba502cc62ba903eaacdbf7d31"), result); // test against 'server key' from the test vectors.

@@ -29,6 +29,7 @@ import org.jivesoftware.openfire.event.GroupEventListener;
 import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.openfire.group.*;
 import org.jivesoftware.openfire.muc.spi.*;
+import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -4203,9 +4204,9 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
 
         try {
             // Keep the room's identifier with they key, rather than with the data, which should have slightly improved security properties.
-            final byte[] roomKey = ScramUtils.computeHmac(siteKey.getBytes(StandardCharsets.UTF_8), this.getJID().toBareJID());
+            final byte[] roomKey = ScramUtils.computeHmac(siteKey.getBytes(StandardCharsets.UTF_8), this.getJID().toBareJID(), "HmacSHA1");
 
-            return StringUtils.encodeHex(ScramUtils.computeHmac(roomKey, userJid.toBareJID()));
+            return StringUtils.encodeHex(ScramUtils.computeHmac(roomKey, userJid.toBareJID(), "HmacSHA1"));
         } catch (SaslException e) {
             throw new RuntimeException("Unable to compute HMAC for user '" + userJid + "' in room '" + this.getJID() + "' while generating an Occupant ID.");
         }

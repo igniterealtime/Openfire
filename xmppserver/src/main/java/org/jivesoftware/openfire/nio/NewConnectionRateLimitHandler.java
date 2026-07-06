@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.nio;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.util.AttributeKey;
 import org.jivesoftware.openfire.ratelimit.NewConnectionLimiterRegistry;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.TokenBucketRateLimiter;
@@ -48,6 +49,13 @@ import javax.annotation.Nonnull;
 @ChannelHandler.Sharable
 public class NewConnectionRateLimitHandler extends ChannelInboundHandlerAdapter
 {
+    /**
+     * Attribute used on a channel to guard against duplicate execution of this handler on the same channel.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3331">OF-3331: Guard head-side pipeline handlers against duplicate channelActive execution after TLS handshake</a>
+     */
+    private static final AttributeKey<Boolean> HAS_BEEN_EVALUATED = AttributeKey.valueOf(NewConnectionRateLimitHandler.class, "evaluated");
+
     private final ConnectionType connectionType;
 
     public NewConnectionRateLimitHandler(@Nonnull final ConnectionType connectionType)
@@ -58,6 +66,13 @@ public class NewConnectionRateLimitHandler extends ChannelInboundHandlerAdapter
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception
     {
+        if (ctx.channel().attr(HAS_BEEN_EVALUATED).getAndSet(Boolean.TRUE) != null)
+        {
+            // Guard against duplicate execution (OF-3331).
+            super.channelActive(ctx);
+            return;
+        }
+
         // Note that the NewConnectionLimiterRegistry lookup is intentionally repeated on every call to ensure that
         // dynamic configuration changes (permits per second, burst size, enabled flag) take effect without requiring
         // a server restart or a new handler instance.

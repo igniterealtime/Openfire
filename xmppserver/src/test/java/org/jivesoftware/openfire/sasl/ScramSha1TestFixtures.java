@@ -40,9 +40,7 @@ public final class ScramSha1TestFixtures
     public static final String CLIENT_NONCE = "fyko+d2lbbFgONRv9qkxdawL";
     public static final String STORED_KEY_HEX = "e9d94660c39d65c38fbad91c358f14da0eef2bd6";
     public static final String SERVER_KEY_HEX = "0fe09258b3ac852ba502cc62ba903eaacdbf7d31";
-    public static final String MECHANISM = "SCRAM-SHA-1";
-    public static final String PLUS_MECHANISM = "SCRAM-SHA-1-PLUS";
-    public static final Set<String> SUPPORTED_MECHANISMS = Set.of(MECHANISM, PLUS_MECHANISM);
+    public static final Set<String> SUPPORTED_MECHANISMS = Set.of(ScramSha1SaslServer.MECHANISM_NAME, ScramSha1SaslServer.MECHANISM_NAME+"-PLUS");
 
     private ScramSha1TestFixtures() {}
 }

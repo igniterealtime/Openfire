@@ -348,9 +348,9 @@ public class DefaultAuthProvider implements AuthProvider {
             final byte[] testStoredKey;
             try {
                 final byte[] saltShaker = DatatypeConverter.parseBase64Binary(credential.salt);
-                final byte[] saltedPassword = ScramUtils.createSaltedPassword(saltShaker, testPassword, credential.iterations);
-                final byte[] clientKey = ScramUtils.computeHmac(saltedPassword, "Client Key");
-                testStoredKey = MessageDigest.getInstance("SHA-1").digest(clientKey);
+                final byte[] saltedPassword = ScramUtils.createSaltedPassword(saltShaker, testPassword, credential.iterations, ScramSha1SaslServer.HMAC_ALGORITHM_NAME);
+                final byte[] clientKey = ScramUtils.computeHmac(saltedPassword, "Client Key", ScramSha1SaslServer.HMAC_ALGORITHM_NAME);
+                testStoredKey = MessageDigest.getInstance(ScramSha1SaslServer.DIGEST_ALGORITHM_NAME).digest(clientKey);
             } catch(SaslException | NoSuchAlgorithmException | IllegalArgumentException e) {
                 Log.warn("Unable to check SCRAM values for PLAIN authentication for user '{}'", username, e);
                 return false;
@@ -391,10 +391,10 @@ public class DefaultAuthProvider implements AuthProvider {
         final int iterations = ScramSha1SaslServer.ITERATION_COUNT.getValue();
         byte[] saltedPassword = null, clientKey = null, storedKey = null, serverKey = null;
         try {
-            saltedPassword = ScramUtils.createSaltedPassword(saltShaker, password, iterations);
-            clientKey = ScramUtils.computeHmac(saltedPassword, "Client Key");
-            storedKey = MessageDigest.getInstance("SHA-1").digest(clientKey);
-            serverKey = ScramUtils.computeHmac(saltedPassword, "Server Key");
+            saltedPassword = ScramUtils.createSaltedPassword(saltShaker, password, iterations, ScramSha1SaslServer.HMAC_ALGORITHM_NAME);
+            clientKey = ScramUtils.computeHmac(saltedPassword, "Client Key", ScramSha1SaslServer.HMAC_ALGORITHM_NAME);
+            storedKey = MessageDigest.getInstance(ScramSha1SaslServer.DIGEST_ALGORITHM_NAME).digest(clientKey);
+            serverKey = ScramUtils.computeHmac(saltedPassword, "Server Key", ScramSha1SaslServer.HMAC_ALGORITHM_NAME);
         } catch (SaslException | NoSuchAlgorithmException e) {
             Log.warn("Unable to persist values for SCRAM authentication.");
         }

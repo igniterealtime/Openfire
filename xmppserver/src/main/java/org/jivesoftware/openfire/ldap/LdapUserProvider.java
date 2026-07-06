@@ -20,6 +20,7 @@ import org.jivesoftware.admin.LdapUserTester;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.group.Group;
 import org.jivesoftware.openfire.group.GroupManager;
+import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
 import org.jivesoftware.openfire.user.*;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
@@ -155,7 +156,7 @@ public class LdapUserProvider implements UserProvider {
                     String scheme = parts[0].trim();
     
                     // We only support SCRAM-SHA-1 at the moment.
-                    if ("SCRAM-SHA-1".equals(scheme)) {
+                    if (ScramSha1SaslServer.MECHANISM_NAME.equals(scheme)) {
                         int iterations = Integer.parseInt(authInfo[0].trim());
                         String salt = authInfo[1].trim();
                         String storedKey = authValue[0].trim();

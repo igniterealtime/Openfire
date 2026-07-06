@@ -86,7 +86,7 @@ public class Bind2RequestTest {
     @Test
     public void testGenerateResourceStringWithNoTagNoId() {
         Bind2Request request = new Bind2Request(null, List.of());
-        UserAgentInfo userAgentInfo = new UserAgentInfo();
+        UserAgentInfo userAgentInfo = new UserAgentInfo(null, null, null);
 
         String result = request.generateResourceString(userAgentInfo);
 
@@ -96,7 +96,7 @@ public class Bind2RequestTest {
     @Test
     public void testGenerateResourceStringWithTagNoId() {
         Bind2Request request = new Bind2Request("MyClient", List.of());
-        UserAgentInfo userAgentInfo = new UserAgentInfo();
+        UserAgentInfo userAgentInfo = new UserAgentInfo(null, null, null);
 
         String result = request.generateResourceString(userAgentInfo);
 
@@ -107,9 +107,7 @@ public class Bind2RequestTest {
     @Test
     public void testGenerateResourceStringWithTagAndId() {
         Bind2Request request = new Bind2Request("MyClient", List.of());
-        UserAgentInfo userAgentInfo = new UserAgentInfo();
-        String uuid = "550e8400-e29b-41d4-a716-446655440000";
-        userAgentInfo.setId(uuid);
+        UserAgentInfo userAgentInfo = new UserAgentInfo("550e8400-e29b-41d4-a716-446655440000", null, null);
 
         String result = request.generateResourceString(userAgentInfo);
 
@@ -120,9 +118,7 @@ public class Bind2RequestTest {
 
     @Test
     public void testGenerateResourceStringDifferentTagsSameIdProduceDifferentResults() {
-        UserAgentInfo userAgentInfo = new UserAgentInfo();
-        String uuid = UUID.randomUUID().toString();
-        userAgentInfo.setId(uuid);
+        UserAgentInfo userAgentInfo = new UserAgentInfo(UUID.randomUUID().toString(), null, null);
 
         Bind2Request request1 = new Bind2Request("Client1", List.of());
         Bind2Request request2 = new Bind2Request("Client2", List.of());

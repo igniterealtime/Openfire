@@ -805,10 +805,11 @@ public class SASLAuthentication {
                     final String resource = bind2Request.generateResourceString(userAgentInfo);
                     final AuthToken authToken = clientSession.getAuthToken();
                     final byte[] finalSuccessData = successData;
+                    final String finalUsername = username;
                     SessionManager.getInstance().bindResource(clientSession, authToken, resource)
                         .whenComplete((result, throwable) -> {
                             final boolean bound = throwable == null && result == SessionManager.BindResult.BOUND;
-                            final Element success = buildSasl2SuccessElement(finalSuccessData, username, bound ? resource : null);
+                            final Element success = buildSasl2SuccessElement(finalSuccessData, finalUsername, bound ? resource : null);
                             if (bound) {
                                 bind2Request.processFeatureRequests(session, success);
                             }

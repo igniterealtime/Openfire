@@ -250,7 +250,7 @@ jobs:
       is_publishable_branch: ${{ steps.check-branch.outputs.is_publishable_branch }}
       branch_tag: ${{ steps.check-branch.outputs.branch_tag }}
     steps:
-      - name: check branch ${{ github.ref }} is either main or a version number
+      - name: check if ${{ github.ref }} is main, a version branch, or a version tag
         id: check-branch
         run: |
           if [[ ${{ github.ref }} == 'refs/heads/main' ]]; then

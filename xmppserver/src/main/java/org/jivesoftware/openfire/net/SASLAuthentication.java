@@ -819,13 +819,18 @@ public class SASLAuthentication {
                             }
                         });
                     return; // Response is sent asynchronously from the completion stage.
+                } else {
+                    // No Bind2 request, or session already authenticated: send <success/> synchronously without <bound/>.
+                    final Element success = buildSasl2SuccessElement(successData, username, null);
+                    session.deliverRawText(success.asXML());
                 }
+            } else {
+                // Non-client session (e.g. server): send <success/> synchronously.
+                final Element success = buildSasl2SuccessElement(successData, username, null);
+                session.deliverRawText(success.asXML());
             }
-            // No Bind2 request, or session already authenticated: send <success/> synchronously without <bound/>.
-            final Element success = buildSasl2SuccessElement(successData, username, null);
-            session.deliverRawText(success.asXML());
         } else {
-            sendElement(session, "success", successData, usingSASL2);
+            sendElement(session, "success", successData, false);
         }
     }
 

@@ -6,10 +6,6 @@ WORKDIR /usr/src
 COPY . .
 # Wipe any files not called pom.xml or *.jar
 RUN find . -type f -and \! -name pom.xml -and \! -name '*.jar' -delete
-# Drop the Maven wrapper jar from the `poms` stage output: the build stage copies `.mvn/wrapper` separately.
-# Keeping it here is redundant, and would make the `poms` stage output change when the wrapper jar changes.
-# (That output is later copied into the dependency-download layer.)
-RUN rm -f .mvn/wrapper/maven-wrapper.jar
 # Clear up any (now) empty diretories
 RUN find . -type d -empty -delete
 
@@ -23,8 +19,8 @@ RUN mkdir -p .mvn
 COPY .mvn/wrapper .mvn/wrapper
 
 # First, copy in the pom.xml files (and any checked-in jars) and fetch the dependencies into a real image layer.
-# Because this layer depends on the POMs (and the Maven wrapper scripts/config), it stays stable until one of those
-# inputs changes, so dependency downloads are reused whenever the source changes but the dependencies don't.
+# This layer depends on the POMs, the checked-in jars, and the Maven wrapper (copied above), so it stays cached
+# until one of those changes; dependency downloads are reused whenever the source changes but those inputs don't.
 COPY --from=poms /usr/src/ .
 # I don't know why we need all three either.
 RUN ./mvnw -e -B dependency:resolve-plugins -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo
@@ -36,7 +32,7 @@ RUN ./mvnw -e -B dependency:get -DgroupId=org.codehaus.plexus -DartifactId=plexu
     ./mvnw -e -B dependency:get -DgroupId=org.junit -DartifactId=junit-bom -Dpackaging=pom -Dversion=5.13.4 -Dmaven.repo.local=/tmp/m2_repo && \
     ./mvnw -e -B dependency:get -DgroupId=org.mockito -DartifactId=mockito-bom -Dpackaging=pom -Dversion=5.22.0 -Dmaven.repo.local=/tmp/m2_repo
 
-# Above here is only affected by the pom.xml files, so the layer is stable.
+# Above here is affected only by the POMs, checked-in jars, and the Maven wrapper, so the layer is usually stable.
 
 # Now, copy in all the source, and actually build it, skipping the tests.
 # The offline build reads the /tmp/m2_repo that the layers above populated.

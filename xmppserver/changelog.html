@@ -160,6 +160,38 @@ hr {
     
     <div id="pageBody">
 
+<h2>5.1.1 -- <span style="font-weight: normal;">July 7, 2026</span></h2>
+<h2>Improvement</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3300">OF-3300</a>] - Improve handling of unexpected errors in MultiUserChatServiceImpl</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3304">OF-3304</a>] - MUCPersistenceManager MUC history reload limit set to X log message is unhelpful</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3310">OF-3310</a>] - Inconsistent duplicate-subscription policy for 'nodes' vs 'items' subscription types on collection nodes when multi-subscribe is enabled</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3312">OF-3312</a>] - Replace string identity comparison when setting currentKey</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3317">OF-3317</a>] - Log encryption property migration in audit log</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3333">OF-3333</a>] - Upgrade Netty from 4.2.13.Final to 4.2.16.Final</li>
+</ul>
+
+<h2>Bug</h2>
+<ul>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3301">OF-3301</a>] - NullPointerException in OfflineMessageStore.getSize() due to unsafe cache access</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3305">OF-3305</a>] - Unable to save XML properties during PBKDF2 migration</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3306">OF-3306</a>] - Excessive memory consumption caused by bloated ofPubsubSubscription table</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3307">OF-3307</a>] - PubSub subscriptions are incorrectly treated as unique per owner instead of per subscription JID</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3309">OF-3309</a>] - Duplicate 'nodes'-type subscription to a collection node returns <conflict/> instead of current subscription state when multi-subscribe is disabled</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3311">OF-3311</a>] - nodeMeetsPreconditions() ignores extra precondition values when the node configuration has only one value</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3314">OF-3314</a>] - Harden null-handling and cache access in FaviconServlet</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3315">OF-3315</a>] - Re-validate redirect targets to close residual SSRF in FaviconServlet</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3316">OF-3316</a>] - Improve favicon caching behavior and response semantics</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3318">OF-3318</a>] - SessionManager teardown ownership</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3319">OF-3319</a>] - IQBindHandler busy-waits up to 20s on resource conflict, causing thread starvation and not working in a cluster</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3321">OF-3321</a>] - ConcurrentModificationException while initializing outbound S2S</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3324">OF-3324</a>] - IP addresses are encoded as dNSName instead of iPAddress in certificate SANs</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3325">OF-3325</a>] - CI doesn't publish Docker images for tags</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3331">OF-3331</a>] - Guard head-side pipeline handlers against duplicate channelActive execution after TLS handshake</li>
+    <li>[<a href="https://igniterealtime.atlassian.net/browse/OF-3332">OF-3332</a>] - Outbound S2S DirectTLS connection fails with NullPointerException in NettyConnection.startTLS</li>
+</ul>
+
+
 <h2>5.1.0 -- <span style="font-weight: normal;">June 3, 2026</span></h2>
 <h2>Improvement</h2>
 <ul>

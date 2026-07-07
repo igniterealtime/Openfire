@@ -100,4 +100,18 @@
         <packageUrl regex="true">^pkg:maven/org\.mortbay\.jasper/apache\-jsp@.*$</packageUrl>
         <cve>CVE-2023-41080</cve>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+        False positive: this CVE is against org.apache.httpcomponents.core5:httpcore5 (HttpCore 5.x), which was a ground-up rewrite. The CPE range is "up to 5.4.2", and so dependency-check matches. CVE-2026-54428 is in the HTTP/2 HPACK decoder, which does not exist in HttpCore 4.x at all.
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.httpcomponents/httpcore@4\..*$</packageUrl>
+        <cve>CVE-2026-54399</cve>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+        False positive: HTTP/2 HPACK decoder CVE for org.apache.httpcomponents.core5:httpcore5 (5.x). HttpCore 4.x has no HTTP/2 support, so the vulnerable code does not exist in httpcore 4.4.x. See the CVE-2026-54399 suppression above.
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.apache\.httpcomponents/httpcore@4\..*$</packageUrl>
+        <cve>CVE-2026-54428</cve>
+    </suppress>
 </suppressions>

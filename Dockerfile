@@ -1,14 +1,3 @@
-# This stage extracts all the pom.xml files.
-# It'll get rebuilt with any source change, but that's OK.
-# It doesn't matter what image we're using, really, so we may as well use one of the same images as elsewhere.
-FROM eclipse-temurin:17-jre AS poms
-WORKDIR /usr/src
-COPY . .
-# Wipe any files not called pom.xml or *.jar
-RUN find . -type f -and \! -name pom.xml -and \! -name '*.jar' -delete
-# Clear up any (now) empty diretories
-RUN find . -type d -empty -delete
-
 # Now we build:
 FROM eclipse-temurin:17 AS build
 WORKDIR /tmp/
@@ -18,24 +7,26 @@ RUN chmod +x mvnw
 RUN mkdir -p .mvn
 COPY .mvn/wrapper .mvn/wrapper
 
-# First, copy in just the pom.xml files and fetch the dependencies:
+# First, copy in just the pom.xml files and fetch the dependencies into a real image layer. Because this
+# layer depends only on the pom.xml files, it stays stable until a POM changes, so dependency downloads
+# are reused whenever the source changes but the dependencies don't.
 COPY --from=poms /usr/src/ .
 # I don't know why we need all three either.
-RUN --mount=type=cache,target=/tmp/m2_repo,id=openfire_build ./mvnw -e -B dependency:resolve-plugins -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo
-RUN --mount=type=cache,target=/tmp/m2_repo,id=openfire_build ./mvnw -e -B de.qaware.maven:go-offline-maven-plugin:resolve-dependencies -Dmaven.repo.local=/tmp/m2_repo
+RUN ./mvnw -e -B dependency:resolve-plugins -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo
+RUN ./mvnw -e -B de.qaware.maven:go-offline-maven-plugin:resolve-dependencies -Dmaven.repo.local=/tmp/m2_repo
 # The go-offline plugin and dependency:resolve-plugins do not reliably resolve BOM POMs referenced
 # via <scope>import</scope> in <dependencyManagement>. Fetch them explicitly so they are present
-# in the cache before the offline build runs. Add any newly introduced BOMs here in the same way.
-RUN --mount=type=cache,target=/tmp/m2_repo,id=openfire_build \
-    ./mvnw -e -B dependency:get -DgroupId=org.codehaus.plexus -DartifactId=plexus-utils -Dpackaging=jar -Dversion=1.1 -Dmaven.repo.local=/tmp/m2_repo && \
+# in the repository before the offline build runs. Add any newly introduced BOMs here in the same way.
+RUN ./mvnw -e -B dependency:get -DgroupId=org.codehaus.plexus -DartifactId=plexus-utils -Dpackaging=jar -Dversion=1.1 -Dmaven.repo.local=/tmp/m2_repo && \
     ./mvnw -e -B dependency:get -DgroupId=org.junit -DartifactId=junit-bom -Dpackaging=pom -Dversion=5.13.4 -Dmaven.repo.local=/tmp/m2_repo && \
     ./mvnw -e -B dependency:get -DgroupId=org.mockito -DartifactId=mockito-bom -Dpackaging=pom -Dversion=5.22.0 -Dmaven.repo.local=/tmp/m2_repo
 
-# Above here is only affected by the pom.xml files, so the cache is stable.
+# Above here is only affected by the pom.xml files, so the layer is stable.
 
 # Now, copy in all the source, and actually build it, skipping the tests.
+# The offline build reads the /tmp/m2_repo that the layers above populated.
 COPY . .
-RUN --mount=type=cache,target=/tmp/m2_repo,id=openfire_build ./mvnw -o -e -B install -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo
+RUN ./mvnw -o -e -B install -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo
 # In case of Windows, break glass.
 RUN sed -i 's/\r//g' /usr/src/distribution/target/distribution-base/bin/openfire.sh
 

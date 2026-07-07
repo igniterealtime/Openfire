@@ -24,12 +24,14 @@ import io.netty.handler.codec.compression.JZlibEncoder;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.traffic.ChannelTrafficShapingHandler;
+import io.netty.util.AttributeKey;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.AbstractConnection;
 import org.jivesoftware.openfire.net.ServerTrafficCounter;
 import org.jivesoftware.openfire.net.StanzaHandler;
+import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
@@ -68,6 +70,7 @@ public class NettyConnection extends AbstractConnection
 {
     private static final Logger Log = LoggerFactory.getLogger(NettyConnection.class);
     public static final String SSL_HANDLER_NAME = "ssl";
+    public static final AttributeKey<DomainPair> DOMAIN_PAIR = AttributeKey.valueOf("OF_OUTBOUND_DOMAIN_PAIR");
     private final ConnectionConfiguration configuration;
     private final ChannelHandlerContext channelHandlerContext;
 
@@ -382,10 +385,13 @@ public class NettyConnection extends AbstractConnection
         if (clientMode) {
             final SslContext sslContext = factory.createClientModeSslContext();
 
-            // OF-2738: Send along the XMPP domain that's needed for SNI
-            final NettyOutboundConnectionHandler handler = channelHandlerContext.channel().pipeline().get(NettyOutboundConnectionHandler.class);
-
-            sslHandler = sslContext.newHandler(channelHandlerContext.alloc(), handler.getDomainPair().getRemote(), handler.getPort());
+            // OF-2738: the remote XMPP domain is needed for SNI. It is read from a channel attribute (set when the
+            // outbound connection is initialised) rather than from the pipeline to prevent an NPE (see OF-3332).
+            final DomainPair domainPair = channelHandlerContext.channel().attr(DOMAIN_PAIR).get();
+            if (domainPair == null) {
+                throw new IllegalStateException("Unable to start TLS in client mode: no remote domain is associated with connection " + this);
+            }
+            sslHandler = sslContext.newHandler(channelHandlerContext.alloc(), domainPair.getRemote(), getRemotePort());
         } else {
             final SslContext sslContext = factory.createServerModeSslContext(directTLS);
             sslHandler = sslContext.newHandler(channelHandlerContext.alloc());

@@ -29,8 +29,8 @@ RUN ./mvnw -e -B de.qaware.maven:go-offline-maven-plugin:resolve-dependencies -D
 # via <scope>import</scope> in <dependencyManagement>. Fetch them explicitly so they are present
 # in the repository before the offline build runs. Add any newly introduced BOMs here in the same way.
 RUN ./mvnw -e -B dependency:get -DgroupId=org.codehaus.plexus -DartifactId=plexus-utils -Dpackaging=jar -Dversion=1.1 -Dmaven.repo.local=/tmp/m2_repo && \
-    ./mvnw -e -B dependency:get -DgroupId=org.junit -DartifactId=junit-bom -Dpackaging=pom -Dversion=5.13.4 -Dmaven.repo.local=/tmp/m2_repo && \
-    ./mvnw -e -B dependency:get -DgroupId=org.mockito -DartifactId=mockito-bom -Dpackaging=pom -Dversion=5.22.0 -Dmaven.repo.local=/tmp/m2_repo
+    ./mvnw -e -B dependency:get -DgroupId=org.junit -DartifactId=junit-bom -Dpackaging=pom -Dversion=6.1.0 -Dmaven.repo.local=/tmp/m2_repo && \
+    ./mvnw -e -B dependency:get -DgroupId=org.mockito -DartifactId=mockito-bom -Dpackaging=pom -Dversion=5.23.0 -Dmaven.repo.local=/tmp/m2_repo
 
 # Above here is affected only by the POMs, checked-in jars, and the Maven wrapper, so the layer is usually stable.
 

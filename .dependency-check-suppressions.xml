@@ -114,4 +114,32 @@
         <packageUrl regex="true">^pkg:maven/org\.apache\.httpcomponents/httpcore@4\..*$</packageUrl>
         <cve>CVE-2026-54428</cve>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+        Suppress eclipse:jetty issues for apache-jsp - this is Apache Tomcat's Jasper JSP engine (org.mortbay.jasper), rebundled for use by Jetty, NOT the Jetty HTTP server.
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.mortbay\.jasper/apache\-jsp@.*$</packageUrl>
+        <cpe>cpe:/a:eclipse:jetty</cpe>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+        Suppress jetty:jetty issues for apache-jsp - this is Apache Tomcat's Jasper JSP engine (org.mortbay.jasper), rebundled for use by Jetty, NOT the Jetty HTTP server.
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.mortbay\.jasper/apache\-jsp@.*$</packageUrl>
+        <cpe>cpe:/a:jetty:jetty</cpe>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+        Suppress mortbay:jetty issues for apache-jsp - this is Apache Tomcat's Jasper JSP engine (org.mortbay.jasper), rebundled for use by Jetty, NOT the Jetty HTTP server.
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.mortbay\.jasper/apache\-jsp@.*$</packageUrl>
+        <cpe>cpe:/a:mortbay:jetty</cpe>
+    </suppress>
+    <suppress>
+        <notes><![CDATA[
+        Suppress mortbay_jetty:jetty issues for apache-jsp - this is Apache Tomcat's Jasper JSP engine (org.mortbay.jasper), rebundled for use by Jetty, NOT the Jetty HTTP server.
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.mortbay\.jasper/apache\-jsp@.*$</packageUrl>
+        <cpe>cpe:/a:mortbay_jetty:jetty</cpe>
+    </suppress>
 </suppressions>

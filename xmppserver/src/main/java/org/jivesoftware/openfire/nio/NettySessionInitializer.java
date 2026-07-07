@@ -230,6 +230,11 @@ public class NettySessionInitializer {
                     ch.config().setAutoRead(false);
 
                     NettyOutboundConnectionHandler businessLogicHandler = new NettyOutboundConnectionHandler(listener.generateConnectionConfiguration(), domainPair, port);
+
+                    // Make the remote domain available for the channel's whole lifetime, independent of pipeline membership, so that
+                    // startTLS can obtain it for SNI without racing the removal of the outbound connection handler (OF-3332).
+                    ch.attr(NettyConnection.DOMAIN_PAIR).set(domainPair);
+
                     Duration maxIdleTimeBeforeClosing = businessLogicHandler.getMaxIdleTime().isNegative() ? Duration.ZERO : businessLogicHandler.getMaxIdleTime();
 
                     ch.pipeline().addLast("idleStateHandler", new IdleStateHandler(maxIdleTimeBeforeClosing.dividedBy(2).toMillis(), 0, 0, TimeUnit.MILLISECONDS));

@@ -1,3 +1,18 @@
+# This stage extracts all the pom.xml files.
+# It'll get rebuilt with any source change, but that's OK.
+# It doesn't matter what image we're using, really, so we may as well use one of the same images as elsewhere.
+FROM eclipse-temurin:17-jre AS poms
+WORKDIR /usr/src
+COPY . .
+# Wipe any files not called pom.xml or *.jar
+RUN find . -type f -and \! -name pom.xml -and \! -name '*.jar' -delete
+# Drop the Maven wrapper jar: the build stage copies .mvn/wrapper in
+# separately, and keeping it here would let a wrapper-jar change
+# invalidate the pom-only dependency layer.
+RUN rm -f .mvn/wrapper/maven-wrapper.jar
+# Clear up any (now) empty diretories
+RUN find . -type d -empty -delete
+
 # Now we build:
 FROM eclipse-temurin:17 AS build
 WORKDIR /tmp/
@@ -7,9 +22,9 @@ RUN chmod +x mvnw
 RUN mkdir -p .mvn
 COPY .mvn/wrapper .mvn/wrapper
 
-# First, copy in just the pom.xml files and fetch the dependencies into a real image layer. Because this
-# layer depends only on the pom.xml files, it stays stable until a POM changes, so dependency downloads
-# are reused whenever the source changes but the dependencies don't.
+# First, copy in the pom.xml files (and any checked-in jars) and fetch the dependencies into a real image layer.
+# Because this layer depends only on the pom.xml files, it stays stable until a POM changes, so dependency
+# downloads are reused whenever the source changes but the dependencies don't.
 COPY --from=poms /usr/src/ .
 # I don't know why we need all three either.
 RUN ./mvnw -e -B dependency:resolve-plugins -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo

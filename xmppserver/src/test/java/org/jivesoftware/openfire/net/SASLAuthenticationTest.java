@@ -326,6 +326,30 @@ public class SASLAuthenticationTest
     }
 
     /**
+     * Verifies that authenticationSuccessful generates an anonymous auth token for a client with no username, using SASL2+Bind2.
+     */
+    @Test
+    public void shouldGenerateAnonymousAuthTokenForClientWhenUsernameIsNullWithSasl2()
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        // No bind2-request set in session data, so the non-bind2 SASL2 path is taken.
+
+        // Execute system under test.
+        SASLAuthentication.authenticationSuccessful(session, null, "ANONYMOUS", new byte[0], true);
+
+        // Verify result.
+        final AuthToken authToken = session.getAuthToken();
+        assertTrue(authToken.isAnonymous(), "Expected an anonymous auth token when username is null.");
+        final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(response.capture());
+        assertTrue(response.getValue().contains("<success"), "Expected SASL2 success element to be sent.");
+        assertTrue(response.getValue().contains("authorization-identifier"), "Expected authorization-identifier in SASL2 success element.");
+    }
+
+    /**
      * Verifies that authenticationSuccessful generates a user auth token for a client with a username.
      */
     @Test

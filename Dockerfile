@@ -6,9 +6,9 @@ WORKDIR /usr/src
 COPY . .
 # Wipe any files not called pom.xml or *.jar
 RUN find . -type f -and \! -name pom.xml -and \! -name '*.jar' -delete
-# Drop the Maven wrapper jar: the build stage copies .mvn/wrapper in
-# separately, and keeping it here would let a wrapper-jar change
-# invalidate the pom-only dependency layer.
+# Drop the Maven wrapper jar from the `poms` stage output: the build stage copies `.mvn/wrapper` separately.
+# Keeping it here is redundant, and would make the `poms` stage output change when the wrapper jar changes.
+# (That output is later copied into the dependency-download layer.)
 RUN rm -f .mvn/wrapper/maven-wrapper.jar
 # Clear up any (now) empty diretories
 RUN find . -type d -empty -delete
@@ -23,8 +23,8 @@ RUN mkdir -p .mvn
 COPY .mvn/wrapper .mvn/wrapper
 
 # First, copy in the pom.xml files (and any checked-in jars) and fetch the dependencies into a real image layer.
-# Because this layer depends only on the pom.xml files, it stays stable until a POM changes, so dependency
-# downloads are reused whenever the source changes but the dependencies don't.
+# Because this layer depends on the POMs (and the Maven wrapper scripts/config), it stays stable until one of those
+# inputs changes, so dependency downloads are reused whenever the source changes but the dependencies don't.
 COPY --from=poms /usr/src/ .
 # I don't know why we need all three either.
 RUN ./mvnw -e -B dependency:resolve-plugins -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo

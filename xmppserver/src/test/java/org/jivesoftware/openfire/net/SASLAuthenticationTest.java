@@ -21,6 +21,7 @@ import org.dom4j.Namespace;
 import org.dom4j.QName;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthToken;
@@ -347,6 +348,42 @@ public class SASLAuthenticationTest
         verify(connection).deliverRawText(response.capture());
         assertTrue(response.getValue().contains("<success"), "Expected SASL2 success element to be sent.");
         assertTrue(response.getValue().contains("authorization-identifier"), "Expected authorization-identifier in SASL2 success element.");
+    }
+
+    /**
+     * Verifies that authenticationSuccessful generates an anonymous auth token for a client with no username, using SASL2+Bind2,
+     * and that the SASL2 success element contains a bound resource and authorization-identifier.
+     */
+    @Test
+    public void shouldGenerateAnonymousAuthTokenForClientWhenUsernameIsNullWithSasl2AndBind2()
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Set a Bind2Request in session data so the bind2 path is taken.
+        final Bind2Request bind2Request = mock(Bind2Request.class);
+        when(bind2Request.generateResourceString(any())).thenReturn("testresource");
+        when(bind2Request.processFeatureRequests(any(), any())).thenReturn(null);
+        session.setSessionData("bind2-request", bind2Request);
+
+        // Stub SessionManager.bindResource to complete successfully (synchronously).
+        final SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
+        when(sessionManager.bindResource(any(), any(), any()))
+            .thenReturn(CompletableFuture.completedFuture(SessionManager.BindResult.BOUND));
+
+        // Execute system under test.
+        SASLAuthentication.authenticationSuccessful(session, null, "ANONYMOUS", new byte[0], true);
+
+        // Verify result.
+        final AuthToken authToken = session.getAuthToken();
+        assertTrue(authToken.isAnonymous(), "Expected an anonymous auth token when username is null.");
+        final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(response.capture());
+        assertTrue(response.getValue().contains("<success"), "Expected SASL2 success element to be sent.");
+        assertTrue(response.getValue().contains("authorization-identifier"), "Expected authorization-identifier in SASL2 success element.");
+        assertTrue(response.getValue().contains("bound"), "Expected bound element in SASL2 success element when Bind2 was requested.");
     }
 
     /**

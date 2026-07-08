@@ -591,11 +591,10 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * authenticated (obtaining managers for example).
      */
     public void setAnonymousAuth() {
-        // Anonymous users have a full JID. Use the random resource as the JID's node
-        String resource = getAddress().getResource();
-        setAddress(new JID(resource, getServerName(), resource, true));
+        final String anonymousUsername = getAnonymousUsernameUnguarded();
+        setAddress(new JID(anonymousUsername, getServerName(), getAddress().getResource(), true));
         setStatus(Session.Status.AUTHENTICATED);
-        authToken = AuthToken.generateAnonymousToken();
+        authToken = AuthToken.generateAnonymousToken(); // AuthToken _should_ already be set, but defensively overwrite it.
         // Add session to the session manager. The session will be added to the routing table as well
         sessionManager.addSession(this);
     }
@@ -604,12 +603,22 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * Get the username used if this were anonymous
      * Use with care, this is only valid prior to binding.
      *
-     * @return String
+     * @return a username when this session is to be used after anonymous authentication
+     * @throws IllegalStateException when invoked after the session is bound.
      */
     public String getAnonymousUsername() {
-        if (getStatus() == Session.Status.AUTHENTICATED) {
+        if (getStatus() == Session.Status.AUTHENTICATED) { // This is set at bind, not at SASL success, which is why this confusingly works correctly as a gate.
             throw new IllegalStateException("Anonymous username is only valid prior to binding.");
         }
+        return getAnonymousUsernameUnguarded();
+    }
+
+    /**
+     * Unguarded accessor, safe to use during the transition to an authenticated state.
+     */
+    @Nonnull
+    private String getAnonymousUsernameUnguarded() {
+        // Anonymous users have a full JID. Use the random resource as the JID's node.
         return getAddress().getResource();
     }
 

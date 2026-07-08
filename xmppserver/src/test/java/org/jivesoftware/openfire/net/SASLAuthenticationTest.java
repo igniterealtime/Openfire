@@ -500,6 +500,200 @@ public class SASLAuthenticationTest
             "Expected SaslFailureException when element text is not valid base64.");
     }
 
+    /**
+     * Verifies that getSASLMechanismsElement for a ClientSession returns a non-null (but empty) element
+     * when there are no available mechanisms, SASL1 is used, and sasl.client.suppressEmpty is false.
+     */
+    @Test
+    public void getSASLMechanismsElement_client_sasl1_suppressEmptyFalse_noMechanisms_returnsEmptyElement()
+    {
+        // Setup test fixture: no mechanisms available (EXTERNAL requires encryption, PLAIN is removed).
+        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
+        JiveGlobals.setProperty("sasl.client.suppressEmpty", "false");
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final Element result = SASLAuthentication.getSASLMechanismsElement(session, false);
+
+        // Verify result.
+        assertTrue(result != null && result.elements().isEmpty(),
+            "Expected a non-null empty <mechanisms> element when suppressEmpty is false and no mechanisms are available for SASL1.");
+    }
+
+    /**
+     * Verifies that getSASLMechanismsElement for a ClientSession returns null
+     * when there are no available mechanisms, SASL1 is used, and sasl.client.suppressEmpty is true.
+     */
+    @Test
+    public void getSASLMechanismsElement_client_sasl1_suppressEmptyTrue_noMechanisms_returnsNull()
+    {
+        // Setup test fixture: no mechanisms available (EXTERNAL requires encryption, PLAIN is removed).
+        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
+        JiveGlobals.setProperty("sasl.client.suppressEmpty", "true");
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final Element result = SASLAuthentication.getSASLMechanismsElement(session, false);
+
+        // Verify result.
+        assertNull(result, "Expected null when suppressEmpty is true and no mechanisms are available for SASL1.");
+    }
+
+    /**
+     * Verifies that getSASLMechanismsElement for a ClientSession always returns null
+     * when there are no available mechanisms and SASL2 is used, regardless of sasl.client.suppressEmpty.
+     */
+    @Test
+    public void getSASLMechanismsElement_client_sasl2_suppressEmptyFalse_noMechanisms_returnsNull()
+    {
+        // Setup test fixture: no mechanisms available (EXTERNAL requires encryption, PLAIN is removed).
+        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
+        JiveGlobals.setProperty("sasl.client.suppressEmpty", "false");
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final Element result = SASLAuthentication.getSASLMechanismsElement(session, true);
+
+        // Verify result.
+        assertNull(result, "Expected null for SASL2 when no mechanisms are available, even when suppressEmpty is false.");
+    }
+
+    /**
+     * Verifies that getSASLMechanismsElement for a ClientSession always returns null
+     * when there are no available mechanisms and SASL2 is used, regardless of sasl.client.suppressEmpty.
+     */
+    @Test
+    public void getSASLMechanismsElement_client_sasl2_suppressEmptyTrue_noMechanisms_returnsNull()
+    {
+        // Setup test fixture: no mechanisms available (EXTERNAL requires encryption, PLAIN is removed).
+        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
+        JiveGlobals.setProperty("sasl.client.suppressEmpty", "true");
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final Element result = SASLAuthentication.getSASLMechanismsElement(session, true);
+
+        // Verify result.
+        assertNull(result, "Expected null for SASL2 when no mechanisms are available, even when suppressEmpty is true.");
+    }
+
+    /**
+     * Verifies that getSASLMechanismsElement for a LocalIncomingServerSession returns a non-null (but empty) element
+     * when there are no available mechanisms, SASL1 is used, and sasl.server.suppressEmpty is false.
+     */
+    @Test
+    public void getSASLMechanismsElement_server_sasl1_suppressEmptyFalse_noMechanisms_returnsEmptyElement()
+    {
+        // Setup test fixture: no mechanisms available (EXTERNAL requires encryption and a trusted cert).
+        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
+        JiveGlobals.setProperty("sasl.server.suppressEmpty", "false");
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalIncomingServerSession session = new LocalIncomingServerSession(Fixtures.XMPP_DOMAIN, connection, streamID, "remote.example.org");
+
+        // Execute system under test.
+        final Element result = SASLAuthentication.getSASLMechanismsElement(session, false);
+
+        // Verify result.
+        assertTrue(result != null && result.elements().isEmpty(),
+            "Expected a non-null empty <mechanisms> element when suppressEmpty is false and no mechanisms are available for SASL1.");
+    }
+
+    /**
+     * Verifies that getSASLMechanismsElement for a LocalIncomingServerSession returns null
+     * when there are no available mechanisms, SASL1 is used, and sasl.server.suppressEmpty is true.
+     */
+    @Test
+    public void getSASLMechanismsElement_server_sasl1_suppressEmptyTrue_noMechanisms_returnsNull()
+    {
+        // Setup test fixture: no mechanisms available (EXTERNAL requires encryption and a trusted cert).
+        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
+        JiveGlobals.setProperty("sasl.server.suppressEmpty", "true");
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalIncomingServerSession session = new LocalIncomingServerSession(Fixtures.XMPP_DOMAIN, connection, streamID, "remote.example.org");
+
+        // Execute system under test.
+        final Element result = SASLAuthentication.getSASLMechanismsElement(session, false);
+
+        // Verify result.
+        assertNull(result, "Expected null when suppressEmpty is true and no mechanisms are available for SASL1.");
+    }
+
+    /**
+     * Verifies that getSASLMechanismsElement for a LocalIncomingServerSession always returns null
+     * when there are no available mechanisms and SASL2 is used, regardless of sasl.server.suppressEmpty.
+     */
+    @Test
+    public void getSASLMechanismsElement_server_sasl2_suppressEmptyFalse_noMechanisms_returnsNull()
+    {
+        // Setup test fixture: no mechanisms available (EXTERNAL requires encryption and a trusted cert).
+        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
+        JiveGlobals.setProperty("sasl.server.suppressEmpty", "false");
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalIncomingServerSession session = new LocalIncomingServerSession(Fixtures.XMPP_DOMAIN, connection, streamID, "remote.example.org");
+
+        // Execute system under test.
+        final Element result = SASLAuthentication.getSASLMechanismsElement(session, true);
+
+        // Verify result.
+        assertNull(result, "Expected null for SASL2 when no mechanisms are available, even when suppressEmpty is false.");
+    }
+
+    /**
+     * Verifies that getSASLMechanismsElement for a LocalIncomingServerSession always returns null
+     * when there are no available mechanisms and SASL2 is used, regardless of sasl.server.suppressEmpty.
+     */
+    @Test
+    public void getSASLMechanismsElement_server_sasl2_suppressEmptyTrue_noMechanisms_returnsNull()
+    {
+        // Setup test fixture: no mechanisms available (EXTERNAL requires encryption and a trusted cert).
+        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
+        JiveGlobals.setProperty("sasl.server.suppressEmpty", "true");
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalIncomingServerSession session = new LocalIncomingServerSession(Fixtures.XMPP_DOMAIN, connection, streamID, "remote.example.org");
+
+        // Execute system under test.
+        final Element result = SASLAuthentication.getSASLMechanismsElement(session, true);
+
+        // Verify result.
+        assertNull(result, "Expected null for SASL2 when no mechanisms are available, even when suppressEmpty is true.");
+    }
+
     private static Element authElement(final String mechanism)
     {
         final Element auth = DocumentHelper.createElement(new QName("auth", Namespace.get("", SASL_NAMESPACE)));

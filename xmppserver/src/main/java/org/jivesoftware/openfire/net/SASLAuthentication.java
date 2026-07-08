@@ -345,7 +345,7 @@ public class SASLAuthentication {
         }
 
         // OF-2072: Return null instead of an empty element, if so configured.
-        if ( JiveGlobals.getBooleanProperty("sasl.client.suppressEmpty", false) && result.elements().isEmpty() ) {
+        if ( (usingSASL2 || JiveGlobals.getBooleanProperty("sasl.client.suppressEmpty", false)) && result.elements().isEmpty() ) {
             return null;
         }
 

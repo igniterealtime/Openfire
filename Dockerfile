@@ -18,24 +18,25 @@ RUN chmod +x mvnw
 RUN mkdir -p .mvn
 COPY .mvn/wrapper .mvn/wrapper
 
-# First, copy in just the pom.xml files and fetch the dependencies:
+# First, copy in the pom.xml files (and any checked-in jars) and fetch the dependencies into a real image layer.
+# This layer depends on the POMs, the checked-in jars, and the Maven wrapper (copied above), so it stays cached
+# until one of those changes; dependency downloads are reused whenever the source changes but those inputs don't.
 COPY --from=poms /usr/src/ .
 # I don't know why we need all three either.
-RUN --mount=type=cache,target=/tmp/m2_repo,id=openfire_build ./mvnw -e -B dependency:resolve-plugins -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo
-RUN --mount=type=cache,target=/tmp/m2_repo,id=openfire_build ./mvnw -e -B de.qaware.maven:go-offline-maven-plugin:resolve-dependencies -Dmaven.repo.local=/tmp/m2_repo
+RUN ./mvnw -e -B dependency:resolve-plugins -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo
+RUN ./mvnw -e -B de.qaware.maven:go-offline-maven-plugin:resolve-dependencies -Dmaven.repo.local=/tmp/m2_repo
 # The go-offline plugin and dependency:resolve-plugins do not reliably resolve BOM POMs referenced
 # via <scope>import</scope> in <dependencyManagement>. Fetch them explicitly so they are present
-# in the cache before the offline build runs. Add any newly introduced BOMs here in the same way.
-RUN --mount=type=cache,target=/tmp/m2_repo,id=openfire_build \
-    ./mvnw -e -B dependency:get -DgroupId=org.codehaus.plexus -DartifactId=plexus-utils -Dpackaging=jar -Dversion=1.1 -Dmaven.repo.local=/tmp/m2_repo && \
-    ./mvnw -e -B dependency:get -DgroupId=org.junit -DartifactId=junit-bom -Dpackaging=pom -Dversion=5.13.4 -Dmaven.repo.local=/tmp/m2_repo && \
-    ./mvnw -e -B dependency:get -DgroupId=org.mockito -DartifactId=mockito-bom -Dpackaging=pom -Dversion=5.22.0 -Dmaven.repo.local=/tmp/m2_repo
+# in the repository before the offline build runs. Add any newly introduced BOMs here in the same way.
+RUN ./mvnw -e -B dependency:get -DgroupId=org.codehaus.plexus -DartifactId=plexus-utils -Dpackaging=jar -Dversion=1.1 -Dmaven.repo.local=/tmp/m2_repo && \
+    ./mvnw -e -B dependency:get -DgroupId=org.junit -DartifactId=junit-bom -Dpackaging=pom -Dversion=6.1.0 -Dmaven.repo.local=/tmp/m2_repo && \
+    ./mvnw -e -B dependency:get -DgroupId=org.mockito -DartifactId=mockito-bom -Dpackaging=pom -Dversion=5.23.0 -Dmaven.repo.local=/tmp/m2_repo
 
-# Above here is only affected by the pom.xml files, so the cache is stable.
+# Above here is affected only by the POMs, checked-in jars, and the Maven wrapper, so the layer is usually stable.
 
 # Now, copy in all the source, and actually build it, skipping the tests.
 COPY . .
-RUN --mount=type=cache,target=/tmp/m2_repo,id=openfire_build ./mvnw -o -e -B install -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo
+RUN ./mvnw -e -B install -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo
 # In case of Windows, break glass.
 RUN sed -i 's/\r//g' /usr/src/distribution/target/distribution-base/bin/openfire.sh
 

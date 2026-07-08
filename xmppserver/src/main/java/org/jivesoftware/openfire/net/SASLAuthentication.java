@@ -44,6 +44,7 @@ import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
 import javax.security.sasl.Sasl;
@@ -717,23 +718,35 @@ public class SASLAuthentication {
             authenticationFailed(session, Failure.ACCOUNT_DISABLED, usingSASL2);
             return;
         }
+
+        // The identity to report back to the peer. For clients this is a bare JID; for anonymous clients, the node-part is
+        // the session's generated resource (see LocalClientSession#getAnonymousUsername). Must be resolved before the
+        // session transitions to an authenticated state.
+        final String authorizationIdentity;
+
         if (session instanceof LocalClientSession clientSession) {
             final AuthToken authToken;
+            final String node;
             if (username == null) {
-                // AuthzId is null, which indicates that authentication was anonymous.
+                node = clientSession.getAnonymousUsername();
                 authToken = AuthToken.generateAnonymousToken();
-                username = clientSession.getAnonymousUsername();
             } else {
                 authToken = AuthToken.generateUserToken(username);
+                node = authToken.getUsername(); // Normalized: strips any domain-part from the authzid.
             }
+            authorizationIdentity = new JID(node, XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null, true).toString();
             clientSession.setAuthToken(authToken);
         }
         else if (session instanceof LocalIncomingServerSession serverSession) {
-            // Add the validated domain as a valid domain. The remote server can now send packets from this address.
+            authorizationIdentity = username;
             serverSession.addValidatedDomain(username);
             serverSession.setAuthenticationMethod(ServerSession.AuthenticationMethod.fromSaslMechanismName(mechanismName));
             Log.info("Inbound Server {} authenticated using SASL mechanism {}", username, mechanismName);
         }
+        else {
+            authorizationIdentity = username;
+        }
+
         if (usingSASL2) {
             final Element success = DocumentHelper.createElement( new QName( "success", new Namespace( "", SASL2_NAMESPACE ) ) );
             if (successData != null && successData.length > 0) {
@@ -741,12 +754,7 @@ public class SASLAuthentication {
                 Element additionalData = success.addElement("additional-data");
                 additionalData.setText(data_b64);
             }
-            Element authId = success.addElement("authorization-identifier");
-            if (session instanceof ClientSession) {
-                authId.setText(username + '@' + XMPPServer.getInstance().getServerInfo().getXMPPDomain());
-            } else {
-                authId.setText(username);
-            }
+            success.addElement("authorization-identifier").setText(authorizationIdentity);
             session.deliverRawText(success.asXML());
         } else {
             sendElement(session, "success", successData, false);

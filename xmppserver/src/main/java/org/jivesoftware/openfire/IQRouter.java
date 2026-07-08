@@ -248,7 +248,7 @@ public class IQRouter extends BasicModule {
     public void addIQResultListener(String id, IQResultListener listener, long timeoutmillis) {
         resultListeners.put(id, listener);
         resultPending.put(id, XMPPServer.getInstance().getNodeID());
-        resultTimeout.put(id, System.currentTimeMillis() + timeoutmillis);
+        resultTimeout.put(id, System.nanoTime() + Duration.ofMillis(timeoutmillis).toNanos());
     }
 
     @Override
@@ -551,7 +551,7 @@ public class IQRouter extends BasicModule {
             while (it.hasNext()) {
                 final Map.Entry<String, Long> pointer = it.next();
 
-                if (System.currentTimeMillis() < pointer.getValue()) {
+                if (System.nanoTime() - pointer.getValue() < 0) {
                     // This entry has not expired yet. Ignore it.
                     continue;
                 }

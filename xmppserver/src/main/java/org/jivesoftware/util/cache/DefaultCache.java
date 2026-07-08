@@ -534,14 +534,14 @@ public class DefaultCache<K extends Serializable, V extends Serializable> implem
             deleteExpiredEntries();
             desiredSize = (long) (maxCacheSize * .90);
             if (cacheSize > desiredSize) {
-                long t = System.currentTimeMillis();
-                cullTimes.add(t);
+                cullTimes.add(System.currentTimeMillis());
+                final long start = System.nanoTime(); // Use monotonic time to avoid any system clock changes
                 do {
                     // Get the key and invoke the remove method on it.
                     remove(lastAccessedList.getLast().object);
                 } while (cacheSize > desiredSize);
-                t = System.currentTimeMillis() - t;
-                Log.warn("Cache " + name + " was full, shrunk to 90% in " + t + "ms.");
+                final long elapsedMillis = Duration.ofNanos(System.nanoTime() - start).toMillis();
+                Log.warn("Cache " + name + " was full, shrunk to 90% in " + elapsedMillis + "ms.");
             }
         }
 

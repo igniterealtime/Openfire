@@ -306,6 +306,7 @@ public class SASLAuthenticationTest
 
     /**
      * Verifies that authenticationSuccessful generates an anonymous auth token for a client with no username.
+     * For SASL1, the success element has no authorization-identifier.
      */
     @Test
     public void shouldGenerateAnonymousAuthTokenForClientWhenUsernameIsNull()
@@ -324,10 +325,13 @@ public class SASLAuthenticationTest
         final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
         verify(connection).deliverRawText(response.capture());
         assertTrue(response.getValue().contains("<success"), "Expected success element to be sent.");
+        // SASL1 <success/> carries no authorization-identifier.
+        assertFalse(response.getValue().contains("authorization-identifier"), "Expected no authorization-identifier in SASL1 success element.");
     }
 
     /**
-     * Verifies that authenticationSuccessful generates an anonymous auth token for a client with no username, using SASL2+Bind2.
+     * Verifies that authenticationSuccessful generates an anonymous auth token for a client with no username, using SASL2 (no Bind2).
+     * The authorization-identifier must be a bare JID (node@domain) where the node is the anonymous UUID.
      */
     @Test
     public void shouldGenerateAnonymousAuthTokenForClientWhenUsernameIsNullWithSasl2()
@@ -337,6 +341,8 @@ public class SASLAuthenticationTest
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
         // No bind2-request set in session data, so the non-bind2 SASL2 path is taken.
+        // Capture the anonymous username (stream-ID resource) before authentication changes session state.
+        final String anonymousUsername = session.getAnonymousUsername();
 
         // Execute system under test.
         SASLAuthentication.authenticationSuccessful(session, null, "ANONYMOUS", new byte[0], true);
@@ -347,12 +353,17 @@ public class SASLAuthenticationTest
         final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
         verify(connection).deliverRawText(response.capture());
         assertTrue(response.getValue().contains("<success"), "Expected SASL2 success element to be sent.");
-        assertTrue(response.getValue().contains("authorization-identifier"), "Expected authorization-identifier in SASL2 success element.");
+        // For SASL2 without Bind2, authorization-identifier must be a bare JID: uuid@domain (no resource).
+        final String expectedBareJid = anonymousUsername + "@" + Fixtures.XMPP_DOMAIN;
+        assertTrue(response.getValue().contains(expectedBareJid),
+            "Expected authorization-identifier to be bare JID '" + expectedBareJid + "' but got: " + response.getValue());
+        assertFalse(response.getValue().contains(expectedBareJid + "/"),
+            "Expected no resource in authorization-identifier for non-Bind2 SASL2 case.");
     }
 
     /**
      * Verifies that authenticationSuccessful generates an anonymous auth token for a client with no username, using SASL2+Bind2,
-     * and that the SASL2 success element contains a bound resource and authorization-identifier.
+     * and that the SASL2 success element contains a full JID authorization-identifier where node and resource are the same UUID.
      */
     @Test
     public void shouldGenerateAnonymousAuthTokenForClientWhenUsernameIsNullWithSasl2AndBind2()
@@ -361,10 +372,13 @@ public class SASLAuthenticationTest
         final Connection connection = mock(Connection.class);
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        // Capture the anonymous username (stream-ID resource) before authentication changes session state.
+        final String anonymousUsername = session.getAnonymousUsername();
 
         // Set a Bind2Request in session data so the bind2 path is taken.
+        // For anonymous sessions, the resource must equal the anonymous username (same UUID for node and resource).
         final Bind2Request bind2Request = mock(Bind2Request.class);
-        when(bind2Request.generateResourceString(any())).thenReturn("testresource");
+        when(bind2Request.generateResourceString(any())).thenReturn(anonymousUsername);
         when(bind2Request.processFeatureRequests(any(), any())).thenReturn(null);
         session.setSessionData("bind2-request", bind2Request);
 
@@ -382,7 +396,11 @@ public class SASLAuthenticationTest
         final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
         verify(connection).deliverRawText(response.capture());
         assertTrue(response.getValue().contains("<success"), "Expected SASL2 success element to be sent.");
-        assertTrue(response.getValue().contains("authorization-identifier"), "Expected authorization-identifier in SASL2 success element.");
+        // For SASL2+Bind2 anonymous, authorization-identifier must be a full JID: uuid@domain/uuid
+        // where the node (local part) and resource are the same UUID.
+        final String expectedFullJid = anonymousUsername + "@" + Fixtures.XMPP_DOMAIN + "/" + anonymousUsername;
+        assertTrue(response.getValue().contains(expectedFullJid),
+            "Expected authorization-identifier to be full JID '" + expectedFullJid + "' (node==resource for anonymous) but got: " + response.getValue());
         assertTrue(response.getValue().contains("bound"), "Expected bound element in SASL2 success element when Bind2 was requested.");
     }
 

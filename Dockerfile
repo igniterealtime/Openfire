@@ -35,9 +35,8 @@ RUN ./mvnw -e -B dependency:get -DgroupId=org.codehaus.plexus -DartifactId=plexu
 # Above here is affected only by the POMs, checked-in jars, and the Maven wrapper, so the layer is usually stable.
 
 # Now, copy in all the source, and actually build it, skipping the tests.
-# The offline build reads the /tmp/m2_repo that the layers above populated.
 COPY . .
-RUN ./mvnw -o -e -B install -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo
+RUN ./mvnw -e -B install -Dmaven.test.skip -Dmaven.repo.local=/tmp/m2_repo
 # In case of Windows, break glass.
 RUN sed -i 's/\r//g' /usr/src/distribution/target/distribution-base/bin/openfire.sh
 

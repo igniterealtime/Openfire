@@ -406,6 +406,7 @@ public class SASLAuthenticationTest
 
     /**
      * Verifies that authenticationSuccessful generates a user auth token for a client with a username.
+     * For SASL1, the success element has no authorization-identifier.
      */
     @Test
     public void shouldGenerateUserAuthTokenForClientWhenUsernameIsProvided()
@@ -427,6 +428,84 @@ public class SASLAuthenticationTest
         final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
         verify(connection).deliverRawText(response.capture());
         assertTrue(response.getValue().contains("<success"), "Expected success element to be sent.");
+        // SASL1 <success/> carries no authorization-identifier.
+        assertFalse(response.getValue().contains("authorization-identifier"), "Expected no authorization-identifier in SASL1 success element.");
+    }
+
+    /**
+     * Verifies that authenticationSuccessful generates a user auth token for a client with a username, using SASL2 (no Bind2).
+     * The authorization-identifier must be a bare JID (username@domain) with no resource.
+     */
+    @Test
+    public void shouldGenerateUserAuthTokenForClientWhenUsernameIsProvidedWithSasl2()
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        // No bind2-request set in session data, so the non-bind2 SASL2 path is taken.
+
+        final String username = "testuser";
+
+        // Execute system under test.
+        SASLAuthentication.authenticationSuccessful(session, username, "PLAIN", new byte[0], true);
+
+        // Verify result.
+        final AuthToken authToken = session.getAuthToken();
+        assertFalse(authToken.isAnonymous(), "Expected a user auth token when username is provided.");
+        assertEquals(username, authToken.getUsername(), "Expected auth token to contain the provided username.");
+        final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(response.capture());
+        assertTrue(response.getValue().contains("<success"), "Expected SASL2 success element to be sent.");
+        // For SASL2 without Bind2, authorization-identifier must be a bare JID: username@domain (no resource).
+        final String expectedBareJid = username + "@" + Fixtures.XMPP_DOMAIN;
+        assertTrue(response.getValue().contains(expectedBareJid),
+            "Expected authorization-identifier to be bare JID '" + expectedBareJid + "' but got: " + response.getValue());
+        assertFalse(response.getValue().contains(expectedBareJid + "/"),
+            "Expected no resource in authorization-identifier for non-Bind2 SASL2 case.");
+    }
+
+    /**
+     * Verifies that authenticationSuccessful generates a user auth token for a client with a username, using SASL2+Bind2,
+     * and that the SASL2 success element contains a full JID authorization-identifier (username@domain/resource).
+     */
+    @Test
+    public void shouldGenerateUserAuthTokenForClientWhenUsernameIsProvidedWithSasl2AndBind2()
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        final String username = "testuser";
+        final String resource = "testresource";
+
+        // Set a Bind2Request in session data so the bind2 path is taken.
+        final Bind2Request bind2Request = mock(Bind2Request.class);
+        when(bind2Request.generateResourceString(any())).thenReturn(resource);
+        when(bind2Request.processFeatureRequests(any(), any())).thenReturn(null);
+        session.setSessionData("bind2-request", bind2Request);
+
+        // Stub SessionManager.bindResource to complete successfully (synchronously).
+        final SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
+        when(sessionManager.bindResource(any(), any(), any()))
+            .thenReturn(CompletableFuture.completedFuture(SessionManager.BindResult.BOUND));
+
+        // Execute system under test.
+        SASLAuthentication.authenticationSuccessful(session, username, "PLAIN", new byte[0], true);
+
+        // Verify result.
+        final AuthToken authToken = session.getAuthToken();
+        assertFalse(authToken.isAnonymous(), "Expected a user auth token when username is provided.");
+        assertEquals(username, authToken.getUsername(), "Expected auth token to contain the provided username.");
+        final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(response.capture());
+        assertTrue(response.getValue().contains("<success"), "Expected SASL2 success element to be sent.");
+        // For SASL2+Bind2, authorization-identifier must be a full JID: username@domain/resource.
+        final String expectedFullJid = username + "@" + Fixtures.XMPP_DOMAIN + "/" + resource;
+        assertTrue(response.getValue().contains(expectedFullJid),
+            "Expected authorization-identifier to be full JID '" + expectedFullJid + "' but got: " + response.getValue());
+        assertTrue(response.getValue().contains("bound"), "Expected bound element in SASL2 success element when Bind2 was requested.");
     }
 
     /**

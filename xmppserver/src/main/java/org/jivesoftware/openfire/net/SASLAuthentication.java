@@ -301,10 +301,16 @@ public class SASLAuthentication {
         }
         else if ( session instanceof LocalIncomingServerSession )
         {
-            features.add(getSASLMechanismsElement( (LocalIncomingServerSession) session, false ));
+            final Element sasl1Mechs = getSASLMechanismsElement( (LocalIncomingServerSession) session, false );
+            if (sasl1Mechs != null) {
+                features.add(sasl1Mechs);
+            }
             if (ENABLE_SASL2.getValue() && (!SASL2_REQUIRE_TLS.getValue() || session.isEncrypted()))
             {
-                features.add(getSASLMechanismsElement((LocalIncomingServerSession) session, true));
+                final Element sasl2Mechs = getSASLMechanismsElement((LocalIncomingServerSession) session, true);
+                if (sasl2Mechs != null) {
+                    features.add(sasl2Mechs);
+                }
             }
         }
         else

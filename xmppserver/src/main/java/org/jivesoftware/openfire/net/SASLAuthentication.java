@@ -292,7 +292,7 @@ public class SASLAuthentication {
             if (sasl1Mechs != null) {
                 features.add(sasl1Mechs);
             }
-            if (ENABLE_SASL2.getValue() && (!SASL2_REQUIRE_TLS.getValue() || session.isEncrypted()))
+            if (checkSASL2Permitted(session).isEmpty())
             {
                 final Element sasl2Mechs = getSASLMechanismsElement((ClientSession) session, true);
                 if (sasl2Mechs != null) {
@@ -306,7 +306,7 @@ public class SASLAuthentication {
             if (sasl1Mechs != null) {
                 features.add(sasl1Mechs);
             }
-            if (ENABLE_SASL2.getValue() && (!SASL2_REQUIRE_TLS.getValue() || session.isEncrypted()))
+            if (checkSASL2Permitted(session).isEmpty())
             {
                 final Element sasl2Mechs = getSASLMechanismsElement((LocalIncomingServerSession) session, true);
                 if (sasl2Mechs != null) {
@@ -461,13 +461,24 @@ public class SASLAuthentication {
     {
         try
         {
-            if ( usingSASL2 && !doc.getNamespaceURI().equals( SASL2_NAMESPACE ) )
+            if (usingSASL2)
             {
-                throw new IllegalStateException( "Unexpected data received while negotiating SASL2 authentication. Name of the offending root element: " + doc.getName() + " Namespace: " + doc.getNamespaceURI() );
+                // SASL2
+                final Optional<Failure> ineligible = checkSASL2Permitted(session);
+                if (ineligible.isPresent()) {
+                    throw new SaslFailureException(ineligible.get(), "SASL2 is not permitted for this session.");
+                }
+                if (!SASL2_NAMESPACE.equals(doc.getNamespaceURI())) {
+                    throw new IllegalStateException("Unexpected data received while negotiating SASL2 authentication. Offending root element: " + doc.getName() + " Namespace: " + doc.getNamespaceURI());
+                }
             }
-            else if ( !usingSASL2 && !doc.getNamespaceURI().equals( SASL_NAMESPACE ) )
+            else
             {
-                throw new IllegalStateException( "Unexpected data received while negotiating SASL authentication. Name of the offending root element: " + doc.getName() + " Namespace: " + doc.getNamespaceURI() );
+                // SASL1
+                if (!SASL_NAMESPACE.equals(doc.getNamespaceURI()))
+                {
+                    throw new IllegalStateException("Unexpected data received while negotiating SASL authentication. Offending root element: " + doc.getName() + " Namespace: " + doc.getNamespaceURI());
+                }
             }
 
             ElementType elementType = ElementType.valueOfCaseInsensitive(doc.getName());
@@ -631,6 +642,29 @@ public class SASLAuthentication {
             session.removeSessionData( "SaslServer" );
             return Status.failed;
         }
+    }
+
+    /**
+     * Determines whether SASL2 may be used for the given session at this moment, returning the reason it cannot if
+     * applicable.
+     *
+     * This is the single source of truth for SASL2 eligibility: it governs both whether SASL2 is advertised in stream
+     * features and whether an inbound SASL2 authentication request is processed, so a peer cannot drive a negotiation
+     * that was never offered.
+     *
+     * @param session the session for which SASL2 eligibility is evaluated (cannot be null).
+     * @return an empty Optional if SASL2 is permitted; otherwise the {@link Failure} describing why it is not.
+     */
+    @VisibleForTesting
+    static Optional<Failure> checkSASL2Permitted(@Nonnull final LocalSession session)
+    {
+        if (!ENABLE_SASL2.getValue()) {
+            return Optional.of(Failure.NOT_AUTHORIZED);
+        }
+        if (SASL2_REQUIRE_TLS.getValue() && !session.isEncrypted()) {
+            return Optional.of(Failure.ENCRYPTION_REQUIRED);
+        }
+        return Optional.empty();
     }
 
     /**

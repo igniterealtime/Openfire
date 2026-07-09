@@ -24,6 +24,7 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthToken;
+import org.jivesoftware.openfire.sasl.Failure;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
@@ -43,9 +44,11 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.jivesoftware.openfire.net.SASLAuthentication.SASL_NAMESPACE;
+import static org.jivesoftware.openfire.net.SASLAuthentication.SASL2_NAMESPACE;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -694,6 +697,361 @@ public class SASLAuthenticationTest
         assertNull(result, "Expected null for SASL2 when no mechanisms are available, even when suppressEmpty is true.");
     }
 
+    /**
+     * Verifies that a SASL2 authentication request is rejected when SASL2 is disabled on the server, and that the
+     * rejection happens before any mechanism-specific processing.
+     */
+    @Test
+    public void shouldRejectSasl2WhenNotEnabled()
+    {
+        // Setup test fixture.
+        SASLAuthentication.ENABLE_SASL2.setValue(false);
+        // PLAIN-only: with EXTERNAL enabled, a regression that bypassed the gate would reach mechanism eligibility and
+        // NPE on the bare mock's null config — surfacing as a not-authorized <failure> that mimics the gate rejection.
+        // Restricting to PLAIN ensures the only thing that can fail this test is the gate itself.
+        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("PLAIN"));
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(true);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final SASLAuthentication.Status status = SASLAuthentication.handle(session, sasl2AuthenticateElement("PLAIN"), true);
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.failed, status, "Expected SASL2 negotiation to fail when SASL2 is disabled.");
+        final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(response.capture());
+        // Condition-specific: distinguishes the gate rejection from any other failure reason.
+        assertTrue(response.getValue().contains("<not-authorized"), "Expected a not-authorized condition specifically from the SASL2-disabled gate.");
+        assertFalse(response.getValue().contains("<challenge"), "Did not expect negotiation to proceed past the gate.");
+    }
+
+    /**
+     * Verifies that a SASL2 authentication request is rejected when TLS is required for SASL2 but the session is not
+     * encrypted. The gate must fire before mechanism eligibility is evaluated (hence no invalid-mechanism failure for
+     * an otherwise-eligible mechanism).
+     */
+    @Test
+    public void shouldRejectSasl2WhenTlsRequiredButSessionIsNotEncrypted()
+    {
+        // Setup test fixture: SASL2 enabled, TLS required (the default), session not encrypted.
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        SASLAuthentication.SASL2_REQUIRE_TLS.setValue(true);
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final SASLAuthentication.Status status = SASLAuthentication.handle(session, sasl2AuthenticateElement("PLAIN"), true);
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.failed, status, "Expected SASL2 negotiation to fail when TLS is required but the session is unencrypted.");
+        final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(response.capture());
+        assertTrue(response.getValue().contains("<failure"), "Expected a SASL failure when TLS is required but the session is unencrypted.");
+        assertFalse(response.getValue().contains("<challenge"), "Did not expect negotiation to proceed to a challenge.");
+        // PLAIN would be an eligible mechanism here, so an invalid-mechanism failure would prove the gate ran too late.
+        assertFalse(response.getValue().contains("<invalid-mechanism"), "Expected the TLS gate to reject before mechanism eligibility is evaluated.");
+        // Condition assumption: adjust if handle() uses a Failure other than ENCRYPTION_REQUIRED for this rejection.
+        assertTrue(response.getValue().contains("<encryption-required"), "Expected an encryption-required condition when TLS is required but absent.");
+    }
+
+    /**
+     * Verifies that a SASL2 authentication request is accepted (negotiation proceeds) when SASL2 is enabled and the
+     * session is encrypted.
+     */
+    @Test
+    public void shouldAcceptSasl2WhenEnabledAndSessionIsEncrypted()
+    {
+        // Setup test fixture: SASL2 enabled, session encrypted (TLS requirement satisfied).
+        // Enable only PLAIN: computing the available-mechanism set evaluates every supported mechanism, and the
+        // EXTERNAL branch would dereference connection.getConfiguration() (null on this bare mock) for an encrypted
+        // session. This test is about the SASL2 gate, not EXTERNAL, so PLAIN alone keeps it focused.
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("PLAIN"));
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(true);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final SASLAuthentication.Status status = SASLAuthentication.handle(session, sasl2AuthenticateElement("PLAIN"), true);
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.needResponse, status, "Expected SASL2 PLAIN to pass the gate and continue negotiation by issuing a challenge.");
+        final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(response.capture());
+        assertFalse(response.getValue().contains("<failure"), "Did not expect a failure when SASL2 is enabled on an encrypted session.");
+        assertTrue(response.getValue().contains("<challenge"), "Expected a challenge stanza as proof that SASL2 negotiation continued past the gate.");
+    }
+
+    /**
+     * Verifies that a SASL2 authentication request is accepted on an unencrypted session when TLS is not required for
+     * SASL2. This proves the TLS requirement is genuinely governed by the property.
+     */
+    @Test
+    public void shouldAcceptSasl2WhenTlsNotRequiredAndSessionIsNotEncrypted()
+    {
+        // Setup test fixture: SASL2 enabled, TLS requirement explicitly disabled, session not encrypted.
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        SASLAuthentication.SASL2_REQUIRE_TLS.setValue(false);
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final SASLAuthentication.Status status = SASLAuthentication.handle(session, sasl2AuthenticateElement("PLAIN"), true);
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.needResponse, status, "Expected SASL2 to be permitted on an unencrypted session when TLS is not required.");
+        final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(response.capture());
+        assertFalse(response.getValue().contains("<failure"), "Did not expect a failure when the TLS requirement for SASL2 is disabled.");
+        assertTrue(response.getValue().contains("<challenge"), "Expected a challenge stanza as proof that SASL2 negotiation continued past the gate.");
+    }
+
+    /**
+     * Verifies that the SASL2 gate does not affect SASL1 negotiation: a SASL1 request must still be processed even
+     * when SASL2 is disabled.
+     */
+    @Test
+    public void shouldNotApplySasl2GateToSasl1Requests()
+    {
+        // Setup test fixture: SASL2 disabled; a SASL1 request should be unaffected by the SASL2 gate.
+        SASLAuthentication.ENABLE_SASL2.setValue(false);
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final SASLAuthentication.Status status = SASLAuthentication.handle(session, authElement("PLAIN"), false);
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.needResponse, status, "Expected SASL1 PLAIN to proceed regardless of the SASL2 gate.");
+        final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(response.capture());
+        assertFalse(response.getValue().contains("<failure"), "Did not expect the SASL2 gate to fail a SASL1 request.");
+        assertTrue(response.getValue().contains("<challenge"), "Expected a challenge stanza for the SASL1 request.");
+    }
+
+    /**
+     * Verifies that the SASL2 TLS requirement does not leak into SASL1 negotiation: with SASL2 enabled and TLS required
+     * for SASL2, an unencrypted SASL1 request must still be processed. This guards against a regression that hoisted the
+     * TLS check above the SASL2-only guard, which would break SASL1-over-plaintext while leaving the SASL2 tests green.
+     */
+    @Test
+    public void shouldNotApplySasl2TlsRequirementToSasl1Requests()
+    {
+        // Setup test fixture: SASL2 enabled and TLS-required for SASL2, session unencrypted, SASL1 request.
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        SASLAuthentication.SASL2_REQUIRE_TLS.setValue(true);
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final SASLAuthentication.Status status = SASLAuthentication.handle(session, authElement("PLAIN"), false);
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.needResponse, status, "Expected SASL1 PLAIN to proceed even though the SASL2 TLS requirement is active.");
+        final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(response.capture());
+        assertFalse(response.getValue().contains("<failure"), "Did not expect the SASL2 TLS gate to fail a SASL1 request.");
+        assertTrue(response.getValue().contains("<challenge"), "Expected a challenge stanza for the SASL1 request.");
+    }
+
+    /**
+     * Verifies that the SASL2 gate applies to inbound server sessions as well, rejecting before mechanism eligibility
+     * when TLS is required but the session is unencrypted.
+     */
+    @Test
+    public void shouldRejectSasl2ForIncomingServerSessionWhenTlsRequiredButNotEncrypted()
+    {
+        // Setup test fixture: SASL2 enabled, TLS required, unencrypted inbound server session.
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        SASLAuthentication.SASL2_REQUIRE_TLS.setValue(true);
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalIncomingServerSession session = new LocalIncomingServerSession(Fixtures.XMPP_DOMAIN, connection, streamID, "remote.example.org");
+
+        // Execute system under test.
+        final SASLAuthentication.Status status = SASLAuthentication.handle(session, sasl2AuthenticateElement("EXTERNAL"), true);
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.failed, status, "Expected the SASL2 gate to reject an unencrypted inbound server session when TLS is required.");
+        final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(response.capture());
+        // EXTERNAL is ineligible here; an invalid-mechanism failure would prove the gate ran too late.
+        assertFalse(response.getValue().contains("<invalid-mechanism"), "Expected the TLS gate to reject before mechanism eligibility is evaluated.");
+        // Condition-specific: ties the pass to the TLS gate rather than to any incidental failure.
+        assertTrue(response.getValue().contains("<encryption-required"), "Expected an encryption-required condition specifically from the SASL2 TLS gate.");
+    }
+
+    /**
+     * Verifies that checkSASL2Permitted reports SASL2 as not permitted (NOT_AUTHORIZED) when SASL2 is disabled,
+     * regardless of encryption state. The disabled check must take precedence over the TLS check.
+     */
+    @Test
+    public void checkSASL2Permitted_disabled_encrypted_returnsNotAuthorized()
+    {
+        // Setup test fixture.
+        SASLAuthentication.ENABLE_SASL2.setValue(false);
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(true);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final Optional<Failure> result = SASLAuthentication.checkSASL2Permitted(session);
+
+        // Verify result.
+        assertTrue(result.isPresent(), "Expected SASL2 to be reported as not permitted when disabled.");
+        assertEquals(Failure.NOT_AUTHORIZED, result.get(), "Expected NOT_AUTHORIZED when SASL2 is disabled.");
+    }
+
+    /**
+     * Verifies that checkSASL2Permitted reports NOT_AUTHORIZED when SASL2 is disabled and the session is unencrypted.
+     * Even though TLS is also absent, the disabled condition is evaluated first and determines the reason.
+     */
+    @Test
+    public void checkSASL2Permitted_disabled_unencrypted_returnsNotAuthorized()
+    {
+        // Setup test fixture.
+        SASLAuthentication.ENABLE_SASL2.setValue(false);
+        SASLAuthentication.SASL2_REQUIRE_TLS.setValue(true);
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final Optional<Failure> result = SASLAuthentication.checkSASL2Permitted(session);
+
+        // Verify result.
+        assertTrue(result.isPresent(), "Expected SASL2 to be reported as not permitted when disabled.");
+        assertEquals(Failure.NOT_AUTHORIZED, result.get(), "Expected the disabled check to take precedence over the TLS check, yielding NOT_AUTHORIZED.");
+    }
+
+    /**
+     * Verifies that checkSASL2Permitted reports ENCRYPTION_REQUIRED when SASL2 is enabled and requires TLS, but the
+     * session is not encrypted.
+     */
+    @Test
+    public void checkSASL2Permitted_enabled_tlsRequired_unencrypted_returnsEncryptionRequired()
+    {
+        // Setup test fixture.
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        SASLAuthentication.SASL2_REQUIRE_TLS.setValue(true);
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final Optional<Failure> result = SASLAuthentication.checkSASL2Permitted(session);
+
+        // Verify result.
+        assertTrue(result.isPresent(), "Expected SASL2 to be reported as not permitted when TLS is required but absent.");
+        assertEquals(Failure.ENCRYPTION_REQUIRED, result.get(), "Expected ENCRYPTION_REQUIRED when TLS is required but the session is unencrypted.");
+    }
+
+    /**
+     * Verifies that checkSASL2Permitted permits SASL2 when it is enabled, requires TLS, and the session is encrypted.
+     */
+    @Test
+    public void checkSASL2Permitted_enabled_tlsRequired_encrypted_returnsEmpty()
+    {
+        // Setup test fixture.
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        SASLAuthentication.SASL2_REQUIRE_TLS.setValue(true);
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(true);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final Optional<Failure> result = SASLAuthentication.checkSASL2Permitted(session);
+
+        // Verify result.
+        assertTrue(result.isEmpty(), "Expected SASL2 to be permitted when enabled, TLS is required, and the session is encrypted.");
+    }
+
+    /**
+     * Verifies that checkSASL2Permitted permits SASL2 on an unencrypted session when TLS is not required, proving the
+     * TLS condition is genuinely governed by the property rather than always enforced.
+     */
+    @Test
+    public void checkSASL2Permitted_enabled_tlsNotRequired_unencrypted_returnsEmpty()
+    {
+        // Setup test fixture.
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        SASLAuthentication.SASL2_REQUIRE_TLS.setValue(false);
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final Optional<Failure> result = SASLAuthentication.checkSASL2Permitted(session);
+
+        // Verify result.
+        assertTrue(result.isEmpty(), "Expected SASL2 to be permitted on an unencrypted session when TLS is not required.");
+    }
+
+    /**
+     * Verifies that checkSASL2Permitted permits SASL2 when enabled and TLS is not required, and the session happens to
+     * be encrypted. Encryption should not be penalised when it is not required.
+     */
+    @Test
+    public void checkSASL2Permitted_enabled_tlsNotRequired_encrypted_returnsEmpty()
+    {
+        // Setup test fixture.
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        SASLAuthentication.SASL2_REQUIRE_TLS.setValue(false);
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(true);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final Optional<Failure> result = SASLAuthentication.checkSASL2Permitted(session);
+
+        // Verify result.
+        assertTrue(result.isEmpty(), "Expected SASL2 to be permitted when enabled and TLS is not required, regardless of encryption.");
+    }
+
     private static Element authElement(final String mechanism)
     {
         final Element auth = DocumentHelper.createElement(new QName("auth", Namespace.get("", SASL_NAMESPACE)));
@@ -706,5 +1064,12 @@ public class SASLAuthenticationTest
         final Element response = DocumentHelper.createElement(new QName("response", Namespace.get("", SASL_NAMESPACE)));
         response.setText(value);
         return response;
+    }
+
+    private static Element sasl2AuthenticateElement(final String mechanism)
+    {
+        final Element authenticate = DocumentHelper.createElement(new QName("authenticate", Namespace.get("", SASL2_NAMESPACE)));
+        authenticate.addAttribute("mechanism", mechanism);
+        return authenticate;
     }
 }

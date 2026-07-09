@@ -64,10 +64,10 @@ public class UserAgentInfo implements Cacheable {
                 if (uuid.version() == 4) {
                     id = rawId;
                 } else {
-                    Log.warn("Invalid UUID version in user-agent id (must be v4): " + rawId);
+                    Log.debug("Invalid UUID version in user-agent id (must be v4): {}", rawId);
                 }
             } catch (IllegalArgumentException e) {
-                Log.warn("Invalid UUID format in user-agent id: " + rawId);
+                Log.debug("Invalid UUID format in user-agent id: {}", rawId, e);
             }
         }
 

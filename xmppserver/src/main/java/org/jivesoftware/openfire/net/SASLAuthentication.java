@@ -720,6 +720,7 @@ public class SASLAuthentication {
         if (data != null) {
             String data_b64 = Base64.getEncoder().encodeToString(data).trim();
             if (data_b64.isEmpty()) {
+                // Empty-payload sentinel. Only meaningful for SASL1; unreachable on the SASL2 path, whose sole caller here is <challenge>, which is never sent with empty/missing data.
                 data_b64 = "=";
             }
             reply.addText(data_b64);

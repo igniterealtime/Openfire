@@ -27,7 +27,6 @@ import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.server.ServerDialbackErrorException;
 import org.jivesoftware.openfire.server.ServerDialbackKeyInvalidException;
 import org.jivesoftware.util.CertificateManager;
-import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.jivesoftware.util.StreamErrorException;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
@@ -420,12 +419,10 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         final List<Element> result = new LinkedList<>();
 
         // Include available SASL Mechanisms
+        // Include available SASL Mechanisms
         if (!isAuthenticated()) {
             result.addAll(SASLAuthentication.getSASLMechanisms(this));
-            final Element saslMechanisms = result.stream().filter(e -> "mechanisms".equals(e.getName())).findFirst().orElse(null);
-            if (saslMechanisms != null) {
-                ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(saslMechanisms).ifPresent(result::add);
-            }
+            SASLAuthentication.appendChannelBindingCapabilityIfNeeded(result);
         }
 
         // Include Stream Compression Mechanism

@@ -198,6 +198,15 @@ public class WebSocketClientStanzaHandler extends ClientStanzaHandler
         sendStreamFeatures();
     }
 
+    /**
+     * SASL2 (XEP-0388) does not restart the stream, so unlike saslSuccessful() we send NO <open/> frame here; only the
+     * updated features, as their own RFC 7395 frame.
+     */
+    @Override
+    protected void sasl2Successful() {
+        sendStreamFeatures();
+    }
+
     protected boolean isStartOfStream(final String xml) {
         return xml.startsWith("<" + STREAM_HEADER);
     }

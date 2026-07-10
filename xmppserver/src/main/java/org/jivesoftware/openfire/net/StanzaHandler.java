@@ -228,8 +228,7 @@ public abstract class StanzaHandler {
             saslStatus = SASLAuthentication.handle(session, doc, usingSASL2);
             if (saslStatus == SASLAuthentication.Status.authenticated && usingSASL2) {
                 startedSASL = false; // Without a multi-step SASL mechanism, this can be reset here immediately, rather than in initiateSession (as SASL1 does).
-                Element features = generateFeatures();
-                session.deliverRawText(features.asXML());
+                sasl2Successful();
             }
         } else if (startedSASL && ("response".equals(tag) || "abort".equals(tag))) {
             // User is responding to SASL challenge. Process response
@@ -240,8 +239,7 @@ public abstract class StanzaHandler {
             }
             if (saslStatus == SASLAuthentication.Status.authenticated && usingSASL2) {
                 startedSASL = false; // Symmetric with the single-step reset in the 'authenticate' branch.
-                Element features = generateFeatures();
-                session.deliverRawText(features.asXML());
+                sasl2Successful();
             }
         }
         else if ("compress".equals(tag)) {
@@ -550,6 +548,16 @@ public abstract class StanzaHandler {
         final Element features = generateFeatures();
         document.getRootElement().add(features);
         connection.deliverRawText(StringUtils.asUnclosedStream(document));
+    }
+
+    /**
+     * Emits post-authentication stream features for SASL2 (XEP-0388), which does NOT restart the stream.
+     * On TCP the features element is sent inline in the existing stream. Transports with different framing
+     * (e.g. RFC 7395 WebSocket) override this.
+     */
+    protected void sasl2Successful() {
+        final Element features = generateFeatures();
+        connection.deliverRawText(features.asXML());
     }
 
     /**

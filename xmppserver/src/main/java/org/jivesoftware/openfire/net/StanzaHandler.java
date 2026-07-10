@@ -68,13 +68,30 @@ public abstract class StanzaHandler {
     // DANIELE: Indicate if a session is already created
     protected boolean sessionCreated = false;
 
-    // Flag that indicates that the client requested to use TLS and TLS has been negotiated. Once the
-    // client sent a new initial stream header the value will return to false.
+    /**
+     * Flag that indicates that the client requested to use TLS and TLS has been negotiated. Once the
+     * client sent a new initial stream header the value will return to false.
+     *
+     * Note that this is capturing the status of TLS 'in flight', not a durable fact that TLS was established.
+     */
     protected boolean startedTLS = false;
-    // Flag that indicates that the client requested to be authenticated. Once the
-    // authentication process is over the value will return to false.
+
+    /**
+     * Flag that indicates that the client requested to be authenticated. Once the
+     * authentication process is over the value will return to false.
+     *
+     * Note that this is capturing the status of SASL 'in flight', not a durable fact that SASL was used.
+     */
     protected boolean startedSASL = false;
+
+    /**
+     * Flag that indicates that the client used SASL2 (rather than the older, multi-roundtrip SASL(1)) to
+     * authenticate.
+     *
+     * Unlike {@link #startedTLS} and {@link #startedSASL} this captures a durable fact that SASL2 was used.
+     */
     protected boolean usingSASL2 = false;
+
     /**
      * SASL status based on the last SASL interaction
      */
@@ -210,10 +227,11 @@ public abstract class StanzaHandler {
             usingSASL2 = true;
             saslStatus = SASLAuthentication.handle(session, doc, usingSASL2);
             if (saslStatus == SASLAuthentication.Status.authenticated && usingSASL2) {
+                startedSASL = false; // Without a multi-step SASL mechanism, this can be reset here immediately, rather than in initiateSession (as SASL1 does).
                 Element features = generateFeatures();
                 session.deliverRawText(features.asXML());
             }
-        } else if (startedSASL && "response".equals(tag) || "abort".equals(tag)) {
+        } else if (startedSASL && ("response".equals(tag) || "abort".equals(tag))) {
             // User is responding to SASL challenge. Process response
             saslStatus = SASLAuthentication.handle(session, doc, usingSASL2);
             if (saslStatus == SASLAuthentication.Status.failed) {
@@ -221,6 +239,7 @@ public abstract class StanzaHandler {
                 usingSASL2 = false;
             }
             if (saslStatus == SASLAuthentication.Status.authenticated && usingSASL2) {
+                startedSASL = false; // Symmetric with the single-step reset in the 'authenticate' branch.
                 Element features = generateFeatures();
                 session.deliverRawText(features.asXML());
             }

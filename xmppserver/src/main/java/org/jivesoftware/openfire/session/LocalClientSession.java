@@ -16,7 +16,6 @@
 
 package org.jivesoftware.openfire.session;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.dom4j.*;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
@@ -39,7 +38,6 @@ import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.IpUtils;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
-import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.Cache;
 import org.slf4j.Logger;
@@ -832,7 +830,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         if (getAuthToken() == null) {
             // Include available SASL Mechanisms
             result.addAll(SASLAuthentication.getSASLMechanisms(this));
-            appendChannelBindingCapabilityIfNeeded(result);
+            SASLAuthentication.appendChannelBindingCapabilityIfNeeded(result);
             // Advertise that the server supports Non-SASL Authentication
             if ( XMPPServer.getInstance().getIQRouter().supports( "jabber:iq:auth" ) ) {
                 result.add(DocumentHelper.createElement(QName.get("auth", "http://jabber.org/features/iq-auth")));
@@ -883,49 +881,6 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
 
         return result;
-    }
-
-    /**
-     * Appends to a list of stream features channel binding type capability announcements, if needed.
-     *
-     * The necessity is based on the other features already in the list, notably the advertised SASL mechanisms. Channel
-     * binding types that are available are added when-and-only-when these mechanisms include a channel-binding-capable
-     * mechanism.
-     *
-     * @param features The advertised features, that at the very least should include advertised SASL mechanisms.
-     * @see <a href="https://xmpp.org/extensions/xep-0440.html">XEP-0440: SASL Channel-Binding Type Capability</a>
-     */
-    @VisibleForTesting
-    static void appendChannelBindingCapabilityIfNeeded(final List<Element> features)
-    {
-        // Iterate a snapshot: we add to 'features' inside the loop.
-        final List<Element> saslFeatures = features.stream()
-            .filter(LocalClientSession::isSaslAuthenticationFeature)
-            .toList();
-
-        for (final Element saslFeature : saslFeatures) {
-            ChannelBindingProviderManager.getInstance()
-                .getSASLChannelBindingTypeCapabilityElement(saslFeature)
-                .ifPresent(features::add);
-        }
-    }
-
-    /**
-     * Verifies if the provided XML element is a SASL authentication feature.
-     *
-     * Specifically, this method checks if the element equals a {@code <feature>} child element that is either
-     * <ul>
-     *     <li>a SASL(1) feature: {@code <mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>}; or:</li>
-     *     <li>A SASL2 feature: {@code <authentication xmlns='urn:xmpp:sasl:2'>}</li>
-     * </ul>
-     *
-     * @param element The element (presumably a child element of {@code <feature>}) to check
-     * @return true if the element is a SASL authentication feature
-     */
-    private static boolean isSaslAuthenticationFeature(final Element element)
-    {
-        return ("mechanisms".equals(element.getName()) && SASLAuthentication.SASL_NAMESPACE.equals(element.getNamespaceURI()))
-            || ("authentication".equals(element.getName()) && SASLAuthentication.SASL2_NAMESPACE.equals(element.getNamespaceURI()));
     }
 
     /**

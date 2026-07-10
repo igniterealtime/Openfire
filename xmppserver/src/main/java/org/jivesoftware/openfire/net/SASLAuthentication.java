@@ -1130,4 +1130,46 @@ public class SASLAuthentication {
         }
         return result;
     }
+
+    /**
+     * Appends to a list of stream features channel binding type capability announcements, if needed.
+     *
+     * The necessity is based on the other features already in the list, notably the advertised SASL mechanisms. Channel
+     * binding types that are available are added when-and-only-when these mechanisms include a channel-binding-capable
+     * mechanism.
+     *
+     * @param features The advertised features, that at the very least should include advertised SASL mechanisms.
+     * @see <a href="https://xmpp.org/extensions/xep-0440.html">XEP-0440: SASL Channel-Binding Type Capability</a>
+     */
+    public static void appendChannelBindingCapabilityIfNeeded(final List<Element> features)
+    {
+        // Iterate a snapshot: we add to 'features' inside the loop.
+        final List<Element> saslFeatures = features.stream()
+            .filter(SASLAuthentication::isSaslAuthenticationFeature)
+            .toList();
+
+        for (final Element saslFeature : saslFeatures) {
+            ChannelBindingProviderManager.getInstance()
+                .getSASLChannelBindingTypeCapabilityElement(saslFeature)
+                .ifPresent(features::add);
+        }
+    }
+
+    /**
+     * Verifies if the provided XML element is a SASL authentication feature.
+     *
+     * Specifically, this method checks if the element equals a {@code <feature>} child element that is either
+     * <ul>
+     *     <li>a SASL(1) feature: {@code <mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>}; or:</li>
+     *     <li>A SASL2 feature: {@code <authentication xmlns='urn:xmpp:sasl:2'>}</li>
+     * </ul>
+     *
+     * @param element The element (presumably a child element of {@code <feature>}) to check
+     * @return true if the element is a SASL authentication feature
+     */
+    private static boolean isSaslAuthenticationFeature(final Element element)
+    {
+        return ("mechanisms".equals(element.getName()) && SASL_NAMESPACE.equals(element.getNamespaceURI()))
+            || ("authentication".equals(element.getName()) && SASL2_NAMESPACE.equals(element.getNamespaceURI()));
+    }
 }

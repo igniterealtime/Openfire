@@ -747,13 +747,6 @@ public class SASLAuthentication {
     @VisibleForTesting
     static void authenticationSuccessful(LocalSession session, String username, String mechanismName, byte[] successData, boolean usingSASL2)
     {
-        if (username != null && LockOutManager.getInstance() != null && LockOutManager.getInstance().isAccountDisabled(username)) {
-            // Interception!  This person is locked out, fail instead!
-            LockOutManager.getInstance().recordFailedLogin(username);
-            authenticationFailed(session, Failure.ACCOUNT_DISABLED, usingSASL2);
-            return;
-        }
-
         // The identity to report back to the peer. For clients this is a bare JID; for anonymous clients, the node-part is
         // the session's generated resource (see LocalClientSession#getAnonymousUsername). Must be resolved before the
         // session transitions to an authenticated state.

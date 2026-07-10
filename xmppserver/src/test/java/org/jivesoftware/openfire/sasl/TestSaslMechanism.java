@@ -262,9 +262,8 @@ public class TestSaslMechanism {
     }
 
     /**
-     * Removes the thread-local server instance and unregisters the {@code "Test Provider"}
-     * JCA provider. Should be called from an {@code @AfterEach} method to ensure a clean
-     * state for subsequent tests.
+     * Removes the thread-local server instance and unregisters the {@code "Openfire-TestSaslMechanism"} JCA provider.
+     * Should be called from an {@code @AfterEach} method to ensure a clean state for subsequent tests.
      */
     public static void unregisterTestMechanism() {
         TestSaslServerFactory.clearSaslServer();

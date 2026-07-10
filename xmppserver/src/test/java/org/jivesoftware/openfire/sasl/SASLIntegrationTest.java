@@ -79,7 +79,7 @@ public class SASLIntegrationTest {
     private static List<String> originalEnabledMechanisms;
     private static boolean originalSasl2Enabled;
     private static boolean originalSasl2TLSRequired;
-    private static LockOutManager lockOutManager;
+    private static LockOutProvider originalLockOutProvider;
 
     @BeforeAll
     public static void setUpClass() throws Exception {
@@ -143,7 +143,7 @@ public class SASLIntegrationTest {
         try {
             Field providerField = LockOutManager.class.getDeclaredField("provider");
             providerField.setAccessible(true);
-            lockOutManager = (LockOutManager) providerField.get(null);
+            originalLockOutProvider = (LockOutProvider) providerField.get(null);
 
             // Create anonymous implementation
             LockOutProvider mockProvider = new LockOutProvider() {
@@ -180,13 +180,9 @@ public class SASLIntegrationTest {
         testSaslServer = null;
         TestSaslMechanism.unregisterTestMechanism();
         XMPPServer.setInstance(null);
-        try {
-            Field providerField = LockOutManager.class.getDeclaredField("provider");
-            providerField.setAccessible(true);
-            providerField.set(null, lockOutManager);
-        } catch (Exception ex) {
-            // Just ignore an error here.
-        }
+        Field providerField = LockOutManager.class.getDeclaredField("provider");
+        providerField.setAccessible(true);
+        providerField.set(null, originalLockOutProvider);
     }
 
     @Test
@@ -324,16 +320,16 @@ public class SASLIntegrationTest {
             // Verify result.
             assertFalse(mechanisms.isEmpty(), "SASL mechanisms should be added");
 
-            // Should have no SASL2 mechanisms elements
-            assertEquals(1, mechanisms.size(), "Should have no SASL2 mechanisms");
+            // Should have exactly one mechanism element (SASL1 only, no SASL2)
+            assertEquals(1, mechanisms.size(), "Should have exactly one SASL1 mechanism element when SASL2 is disabled");
 
-            // Verify both namespaces are present without assuming order
+            // Verify SASL namespace is present and SASL2 is absent
             Set<String> namespaces = mechanisms.stream()
                 .map(Element::getNamespaceURI)
                 .collect(Collectors.toSet());
             assertTrue(namespaces.contains("urn:ietf:params:xml:ns:xmpp-sasl"),
                 "SASL namespace should be present");
-            assertFalse(namespaces.contains("urn:xmpp:sasl:2"), "SASL2 namespace should be present");
+            assertFalse(namespaces.contains("urn:xmpp:sasl:2"), "SASL2 namespace should not be present when SASL2 is disabled");
         } finally {
             // Enable SASL2
             SASLAuthentication.ENABLE_SASL2.setValue(true);
@@ -435,7 +431,7 @@ public class SASLIntegrationTest {
         Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
             .addAttribute("mechanism", "TEST-MECHANISM");
 
-        auth.setText(Base64.getEncoder().encodeToString("initial-response".getBytes())); // Empty initial response
+        auth.setText(Base64.getEncoder().encodeToString("initial-response".getBytes())); // Non-empty initial response
         
         // Execute system under test.
         SASLAuthentication.handle(clientSession, auth, false);

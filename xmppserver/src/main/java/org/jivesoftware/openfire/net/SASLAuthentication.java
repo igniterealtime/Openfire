@@ -368,7 +368,7 @@ public class SASLAuthentication {
      * {@code sasl.server.suppressEmpty} property is set to {@code true}.
      *
      * @param session    the incoming server session for which to generate the mechanisms element (cannot be null)
-     * @param usingSASL2 {@code true} to generate a SASL2 {@code <mechanisms>} element in the SASL2 namespace;
+     * @param usingSASL2 {@code true} to generate a SASL2 {@code <authentication>} element in the SASL2 namespace;
      *                   {@code false} to generate a SASL1 {@code <mechanisms>} element
      * @return an XML element listing the available SASL mechanisms, or {@code null} if the element
      *         would be empty and suppression of empty elements is configured

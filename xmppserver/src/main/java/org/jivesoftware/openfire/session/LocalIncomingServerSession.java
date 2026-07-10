@@ -419,7 +419,6 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         final List<Element> result = new LinkedList<>();
 
         // Include available SASL Mechanisms
-        // Include available SASL Mechanisms
         if (!isAuthenticated()) {
             result.addAll(SASLAuthentication.getSASLMechanisms(this));
             SASLAuthentication.appendChannelBindingCapabilityIfNeeded(result);

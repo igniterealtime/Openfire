@@ -757,4 +757,73 @@ public class SASLIntegrationTest {
         assertFalse(value.startsWith("null@"), "Anonymous authorization-identifier must not be derived from the (null) SASL authzid.");
         assertEquals("randomresource@example.com", value, "Anonymous authorization-identifier must be a bare JID built from the session's anonymous username.");
     }
+
+    /**
+     * Verifies the SASL2 failure format: the {@code <failure/>} wrapper element is in the SASL2 namespace, while the
+     * condition child element remains in the (RFC 6120) SASL namespace.
+     *
+     * @see <a href="https://xmpp.org/extensions/xep-0388.html">XEP-0388: Extensible SASL Profile</a>
+     */
+    @Test
+    public void testSasl2FailureUsesSasl2WrapperWithSasl1Condition() throws Exception {
+        // Setup test fixture: an authentication attempt that is guaranteed to fail.
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        testSaslServer.setThrowError(true);
+
+        Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
+            .addAttribute("mechanism", "TEST-MECHANISM");
+
+        // Execute system under test.
+        SASLAuthentication.handle(clientSession, auth, true);
+
+        // Verify result.
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).deliverRawText(responseCaptor.capture());
+
+        Element failure = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        if (!"failure".equals(failure.getName())) { throw new IllegalStateException("Test setup issue: if authentication does not fail, this test assertion does not prove anything."); }
+
+        // The wrapper element must be in the SASL2 namespace.
+        assertEquals("urn:xmpp:sasl:2", failure.getNamespaceURI(),
+            "The SASL2 failure wrapper element must be in the SASL2 namespace.");
+
+        // The condition child must be in the original (RFC 6120) SASL namespace, not the SASL2 namespace.
+        assertEquals(1, failure.elements().size(), "Expected exactly one condition child element in the failure.");
+        Element condition = failure.elements().get(0);
+        assertEquals("urn:ietf:params:xml:ns:xmpp-sasl", condition.getNamespaceURI(),
+            "The failure condition element must remain in the RFC 6120 SASL namespace, not the SASL2 namespace.");
+    }
+
+    /**
+     * Verifies that a SASL1 failure is entirely in the (RFC 6120) SASL namespace: both the wrapper and the condition.
+     * This is the counterpart to {@link #testSasl2FailureUsesSasl2WrapperWithSasl1Condition}, guarding against a
+     * regression that would apply the SASL2 namespace split to SASL1 as well.
+     */
+    @Test
+    public void testSasl1FailureUsesSasl1NamespaceThroughout() throws Exception {
+        // Setup test fixture: an authentication attempt that is guaranteed to fail.
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        testSaslServer.setThrowError(true);
+
+        Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
+            .addAttribute("mechanism", "TEST-MECHANISM");
+
+        // Execute system under test.
+        SASLAuthentication.handle(clientSession, auth, false);
+
+        // Verify result.
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).deliverRawText(responseCaptor.capture());
+
+        Element failure = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        if (!"failure".equals(failure.getName())) { throw new IllegalStateException("Test setup issue: if authentication does not fail, this test assertion does not prove anything."); }
+
+        assertEquals("urn:ietf:params:xml:ns:xmpp-sasl", failure.getNamespaceURI(),
+            "The SASL1 failure wrapper element must be in the SASL namespace.");
+
+        assertEquals(1, failure.elements().size(), "Expected exactly one condition child element in the failure.");
+        Element condition = failure.elements().get(0);
+        assertEquals("urn:ietf:params:xml:ns:xmpp-sasl", condition.getNamespaceURI(),
+            "The SASL1 failure condition element must be in the SASL namespace.");
+    }
 }

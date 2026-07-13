@@ -933,4 +933,104 @@ public class SASLIntegrationTest {
         // Verify result.
         assertNull(clientSession.getSessionData("SaslServer"), "An aborted negotiation must not leave a SaslServer on the session.");
     }
+
+    /**
+     * Verifies that an element in the wrong namespace for the SASL profile in use is rejected: a SASL2-namespaced
+     * element must not be processed as SASL1.
+     */
+    @Test
+    public void testSasl1RejectsElementInSasl2Namespace() throws Exception {
+        // Setup test fixture: a SASL2-namespaced element, processed on the SASL1 path.
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        Element auth = DocumentHelper.createElement(QName.get("auth", "urn:xmpp:sasl:2"))
+            .addAttribute("mechanism", "TEST-MECHANISM");
+
+        // Execute system under test.
+        final SASLAuthentication.Status status = SASLAuthentication.handle(clientSession, auth, false);
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.failed, status, "An element in the wrong namespace must not be processed.");
+
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).deliverRawText(responseCaptor.capture());
+        Element failure = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        assertEquals("failure", failure.getName());
+
+        verify(clientSession, never()).setAuthToken(any(AuthToken.class));
+    }
+
+    /**
+     * Verifies that an element in the wrong namespace for the SASL profile in use is rejected: a SASL1-namespaced
+     * element must not be processed as SASL2.
+     */
+    @Test
+    public void testSasl2RejectsElementInSasl1Namespace() throws Exception {
+        // Setup test fixture: a SASL1-namespaced element, processed on the SASL2 path.
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:ietf:params:xml:ns:xmpp-sasl"))
+            .addAttribute("mechanism", "TEST-MECHANISM");
+
+        // Execute system under test.
+        final SASLAuthentication.Status status = SASLAuthentication.handle(clientSession, auth, true);
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.failed, status, "An element in the wrong namespace must not be processed.");
+
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).deliverRawText(responseCaptor.capture());
+        Element failure = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        assertEquals("failure", failure.getName());
+
+        verify(clientSession, never()).setAuthToken(any(AuthToken.class));
+    }
+
+    /**
+     * Verifies that the SASL2-only <authenticate/> element is rejected when processed on the SASL1 path, even when it
+     * carries the SASL1 namespace (which would otherwise pass the namespace check).
+     */
+    @Test
+    public void testSasl1RejectsAuthenticateElement() throws Exception {
+        // Setup test fixture: <authenticate/> (a SASL2 element) in the SASL1 namespace, processed as SASL1.
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        Element authenticate = DocumentHelper.createElement(QName.get("authenticate", "urn:ietf:params:xml:ns:xmpp-sasl"))
+            .addAttribute("mechanism", "TEST-MECHANISM");
+
+        // Execute system under test.
+        final SASLAuthentication.Status status = SASLAuthentication.handle(clientSession, authenticate, false);
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.failed, status, "The SASL2 'authenticate' element must not be processed as SASL1.");
+
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).deliverRawText(responseCaptor.capture());
+        Element failure = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        assertEquals("failure", failure.getName());
+
+        verify(clientSession, never()).setAuthToken(any(AuthToken.class));
+    }
+
+    /**
+     * Verifies that the SASL1-only <auth/> element is rejected when processed on the SASL2 path, even when it carries
+     * the SASL2 namespace (which would otherwise pass the namespace check).
+     */
+    @Test
+    public void testSasl2RejectsAuthElement() throws Exception {
+        // Setup test fixture: <auth/> (a SASL1 element) in the SASL2 namespace, processed as SASL2.
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        Element auth = DocumentHelper.createElement(QName.get("auth", "urn:xmpp:sasl:2"))
+            .addAttribute("mechanism", "TEST-MECHANISM");
+
+        // Execute system under test.
+        final SASLAuthentication.Status status = SASLAuthentication.handle(clientSession, auth, true);
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.failed, status, "The SASL1 'auth' element must not be processed as SASL2.");
+
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).deliverRawText(responseCaptor.capture());
+        Element failure = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        assertEquals("failure", failure.getName());
+
+        verify(clientSession, never()).setAuthToken(any(AuthToken.class));
+    }
 }

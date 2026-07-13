@@ -58,6 +58,9 @@ public class TestSaslMechanism {
         private String authorizationID = null;
         private boolean throwError = false;
         private long steps = 1;
+        private boolean anonymous = false;
+        private String configuredAuthorizationID = "test-user";
+
         private LocalSession clientSession;
 
         /**
@@ -71,6 +74,29 @@ public class TestSaslMechanism {
         }
 
         /**
+         * Sets the authorization identity that this mechanism yields on successful authentication.
+         * Pass a domain-qualified value (e.g. {@code "user@example.com"}) to exercise authzid normalization.
+         * Note that {@link #setAnonymous(boolean)} takes precedence: an anonymous mechanism yields no
+         * authorization identity at all.
+         *
+         * @param authorizationID the authorization identity to report; defaults to {@code "test-user"}.
+         */
+        public void setAuthorizationID(String authorizationID) {
+            this.configuredAuthorizationID = authorizationID;
+        }
+
+        /**
+         * Controls whether this server authenticates anonymously. When true, {@link #getAuthorizationID()}
+         * returns null after a successful negotiation, mirroring mechanisms such as ANONYMOUS, for which SASL
+         * yields no authorization identity.
+         *
+         * @param anonymous true to have the mechanism authenticate without an authorization identity.
+         */
+        public void setAnonymous(boolean anonymous) {
+            this.anonymous = anonymous;
+        }
+
+        /**
          * Resets this server to its initial state: clears the authorization ID, disables
          * error injection, and restores the step counter to {@code 1}.
          */
@@ -78,6 +104,8 @@ public class TestSaslMechanism {
             authorizationID = null;
             throwError = false;
             steps = 1;
+            anonymous = false;
+            configuredAuthorizationID = "test-user";
         }
 
         @Override
@@ -116,7 +144,7 @@ public class TestSaslMechanism {
                 throw new SaslException("Authentication steps exceeded: " + this.steps);
             }
             this.steps--;
-            authorizationID = "test-user";
+            authorizationID = anonymous ? null : configuredAuthorizationID;
             return response;
         }
 

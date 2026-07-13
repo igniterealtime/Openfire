@@ -704,4 +704,57 @@ public class SASLIntegrationTest {
         if (!"success".equals(response.getName())) { throw new IllegalStateException("Test setup issue: if authentication does not succeed, this test assertion does not prove anything."); };
         assertNull(serverSession.getSessionData("user-agent-info"));
     }
+
+    @Test
+    public void testSasl2DomainQualifiedAuthzidIsNormalized() throws Exception {
+        // Setup test fixture: SASL yields an authzid that already carries a domain-part.
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        testSaslServer.setAuthorizationID("test-user@example.com");
+
+        Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
+            .addAttribute("mechanism", "TEST-MECHANISM");
+
+        // Execute system under test.
+        SASLAuthentication.handle(clientSession, auth, true);
+
+        // Verify result.
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).deliverRawText(responseCaptor.capture());
+
+        Element response = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        if (!"success".equals(response.getName())) { throw new IllegalStateException("Test setup issue: if authentication does not succeed, this test assertion does not prove anything."); }
+
+        final String value = response.element("authorization-identifier").getText();
+        assertEquals(1, value.chars().filter(c -> c == '@').count(),
+            "A domain-qualified authzid must not yield a double-'@' authorization-identifier.");
+        assertEquals("test-user@example.com", value);
+    }
+
+    @Test
+    public void testSasl2AnonymousAuthorizationIdentifierIsBareJid() throws Exception {
+        // Setup test fixture.
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        when(clientSession.getAnonymousUsername()).thenReturn("randomresource");
+        testSaslServer.setAnonymous(true);
+
+        Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
+            .addAttribute("mechanism", "TEST-MECHANISM");
+
+        // Execute system under test.
+        SASLAuthentication.handle(clientSession, auth, true);
+
+        // Verify result.
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).deliverRawText(responseCaptor.capture());
+
+        Element response = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        if (!"success".equals(response.getName())) { throw new IllegalStateException("Test setup issue: if authentication does not succeed, this test assertion does not prove anything."); }
+
+        Element authId = response.element("authorization-identifier");
+        assertNotNull(authId, "SASL2 success must include an authorization-identifier.");
+
+        final String value = authId.getText();
+        assertFalse(value.startsWith("null@"), "Anonymous authorization-identifier must not be derived from the (null) SASL authzid.");
+        assertEquals("randomresource@example.com", value, "Anonymous authorization-identifier must be a bare JID built from the session's anonymous username.");
+    }
 }

@@ -601,7 +601,7 @@ public class SASLIntegrationTest {
     }
 
     @Test
-    public void testAuthenticationReplayAttack() throws Exception {
+    public void testSecondAuthAttemptFails() throws Exception {
         // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(false);
         Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))

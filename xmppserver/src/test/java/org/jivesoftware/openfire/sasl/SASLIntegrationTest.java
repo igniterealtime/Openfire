@@ -292,7 +292,7 @@ public class SASLIntegrationTest {
 
     // New tests for addSASLMechanisms functionality
     @Test
-    public void testAddSASLMechanismsToAuthenticatedSession() {
+    public void testGetSASLMechanismsToAuthenticatedSession() {
         // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(true);
         
@@ -305,7 +305,7 @@ public class SASLIntegrationTest {
     }
 
     @Test
-    public void testAddSASLMechanismsToClientSession() {
+    public void testGetSASLMechanismsToClientSession() {
         // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(false);
 
@@ -338,7 +338,7 @@ public class SASLIntegrationTest {
     }
 
     @Test
-    public void testAddSASLMechanismsToClientSessionWithSASL2() {
+    public void testGetSASLMechanismsToClientSessionWithSASL2() {
         // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(false);
 
@@ -361,31 +361,8 @@ public class SASLIntegrationTest {
             "SASL2 namespace should be present");
     }
 
-    @Test
-    public void testAddSASLMechanismsToList() {
-        // Setup test fixture.
-        List<Element> featuresList = new ArrayList<>();
-        when(clientSession.isAuthenticated()).thenReturn(false);
-        
-        // Execute system under test.
-        final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(clientSession);
-        
-        // Verify result.
-        assertEquals(2, mechanisms.size(),
-            "Should add both SASL and SASL2 mechanisms to list");
-        
-        // Verify both namespaces are present without assuming order
-        Set<String> namespaces = mechanisms.stream()
-            .map(Element::getNamespaceURI)
-            .collect(Collectors.toSet());
-        assertTrue(namespaces.contains("urn:ietf:params:xml:ns:xmpp-sasl"),
-            "SASL namespace should be present");
-        assertTrue(namespaces.contains("urn:xmpp:sasl:2"),
-            "SASL2 namespace should be present");
-    }
-
     @Test 
-    public void testAddSASLMechanismsToUnknownSessionType() {
+    public void testGetSASLMechanismsToUnknownSessionType() {
         // Setup test fixture.
         LocalSession unknownSession = mock(LocalSession.class);
         when(unknownSession.isAuthenticated()).thenReturn(false);

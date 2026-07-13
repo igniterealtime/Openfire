@@ -1033,4 +1033,89 @@ public class SASLIntegrationTest {
 
         verify(clientSession, never()).setAuthToken(any(AuthToken.class));
     }
+
+    /**
+     * Verifies that a <response/> received without a preceding <authenticate/> is rejected: there is no SaslServer on
+     * the session to process it against.
+     */
+    @Test
+    public void testSasl2ResponseWithoutPrecedingAuthenticateIsRejected() throws Exception {
+        // Setup test fixture: a bare <response/>, with no negotiation in progress.
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        assertNull(clientSession.getSessionData("SaslServer"), "Test setup issue: expected no negotiation to be in progress.");
+
+        Element response = DocumentHelper.createElement(QName.get("response", "urn:xmpp:sasl:2"))
+            .addCDATA(Base64.getEncoder().encodeToString("unsolicited".getBytes()));
+
+        // Execute system under test.
+        final SASLAuthentication.Status status = SASLAuthentication.handle(clientSession, response, true);
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.failed, status, "A response without a preceding authenticate must fail the negotiation.");
+
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).deliverRawText(responseCaptor.capture());
+
+        Element failure = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        assertEquals("failure", failure.getName(), "An unsolicited response must yield a failure, not an escaping exception.");
+        assertEquals("urn:xmpp:sasl:2", failure.getNamespaceURI());
+
+        verify(clientSession, never()).setAuthToken(any(AuthToken.class));
+    }
+
+    /**
+     * Verifies that a <response/> received without a preceding <auth/> is rejected on the SASL1 path as well.
+     */
+    @Test
+    public void testSasl1ResponseWithoutPrecedingAuthIsRejected() throws Exception {
+        // Setup test fixture: a bare <response/>, with no negotiation in progress.
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        assertNull(clientSession.getSessionData("SaslServer"), "Test setup issue: expected no negotiation to be in progress.");
+
+        Element response = DocumentHelper.createElement(QName.get("response", "urn:ietf:params:xml:ns:xmpp-sasl"));
+        response.setText(Base64.getEncoder().encodeToString("unsolicited".getBytes()));
+
+        // Execute system under test.
+        final SASLAuthentication.Status status = SASLAuthentication.handle(clientSession, response, false);
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.failed, status, "A response without a preceding auth must fail the negotiation.");
+
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).deliverRawText(responseCaptor.capture());
+
+        Element failure = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        assertEquals("failure", failure.getName(), "An unsolicited response must yield a failure, not an escaping exception.");
+        assertEquals("urn:ietf:params:xml:ns:xmpp-sasl", failure.getNamespaceURI());
+
+        verify(clientSession, never()).setAuthToken(any(AuthToken.class));
+    }
+
+    /**
+     * Verifies that a <response/> received after a negotiation has already completed successfully is rejected: the
+     * SaslServer is removed from the session on success, so there is nothing left to continue.
+     */
+    @Test
+    public void testSasl2ResponseAfterCompletedNegotiationIsRejected() throws Exception {
+        // Setup test fixture: complete a single-step negotiation.
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
+            .addAttribute("mechanism", "TEST-MECHANISM");
+        SASLAuthentication.handle(clientSession, auth, true);
+        assertNull(clientSession.getSessionData("SaslServer"), "Test setup issue: a completed negotiation should not leave a SaslServer behind.");
+        clearInvocations(clientSession);
+
+        // Execute system under test.
+        Element response = DocumentHelper.createElement(QName.get("response", "urn:xmpp:sasl:2"))
+            .addCDATA(Base64.getEncoder().encodeToString("late".getBytes()));
+        final SASLAuthentication.Status status = SASLAuthentication.handle(clientSession, response, true);
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.failed, status, "A response after a completed negotiation must fail.");
+
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).deliverRawText(responseCaptor.capture());
+        Element failure = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        assertEquals("failure", failure.getName());
+    }
 }

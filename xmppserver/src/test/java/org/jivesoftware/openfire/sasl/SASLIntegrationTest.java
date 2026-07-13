@@ -681,6 +681,11 @@ public class SASLIntegrationTest {
         SASLAuthentication.handle(clientSession, auth, true);  // true for SASL2
         
         // Verify result.
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).deliverRawText(responseCaptor.capture());
+
+        Element response = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        if (!"success".equals(response.getName())) { throw new IllegalStateException("Test setup issue: if authentication does not succeed, this test assertion does not prove anything."); };
         assertNotNull(clientSession.getSessionData("user-agent-info"));
 }
 
@@ -695,10 +700,15 @@ public class SASLIntegrationTest {
         SASLAuthentication.handle(clientSession, auth, true);  // true for SASL2
         
         // Verify result.
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).deliverRawText(responseCaptor.capture());
+
+        Element response = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        if (!"success".equals(response.getName())) { throw new IllegalStateException("Test setup issue: if authentication does not succeed, this test assertion does not prove anything."); };
         assertNull(clientSession.getSessionData("user-agent-info"));
     }
 
-    @Test
+    //@Test // Disabled test, as, without a successful authentication, doesn't assert anything meaningful.
     public void testNoUserAgentForServerSession() throws Exception {
         // Setup test fixture.
         Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
@@ -710,6 +720,11 @@ public class SASLIntegrationTest {
         SASLAuthentication.handle(serverSession, auth, true);  // true for SASL2
         
         // Verify result.
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(serverSession).deliverRawText(responseCaptor.capture());
+
+        Element response = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        if (!"success".equals(response.getName())) { throw new IllegalStateException("Test setup issue: if authentication does not succeed, this test assertion does not prove anything."); };
         assertNull(serverSession.getSessionData("user-agent-info"));
     }
 }

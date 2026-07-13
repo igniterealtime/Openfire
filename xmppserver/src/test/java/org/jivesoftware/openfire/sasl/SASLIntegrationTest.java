@@ -138,6 +138,10 @@ public class SASLIntegrationTest {
             return null;
         }).when(clientSession).setSessionData(anyString(), any());
 
+        doAnswer(inv -> {
+            sessionDataMap.remove(inv.getArgument(0));
+            return null;
+        }).when(clientSession).removeSessionData(anyString());
 
         // Instead of setting property, directly set the provider through reflection
         try {
@@ -825,5 +829,108 @@ public class SASLIntegrationTest {
         Element condition = failure.elements().get(0);
         assertEquals("urn:ietf:params:xml:ns:xmpp-sasl", condition.getNamespaceURI(),
             "The SASL1 failure condition element must be in the SASL namespace.");
+    }
+
+    /**
+     * Verifies that a SASL2 <abort/> mid-negotiation yields an 'aborted' failure in the correct namespaces.
+     */
+    @Test
+    public void testSasl2AbortYieldsAbortedFailure() throws Exception {
+        // Setup test fixture: start a multi-step negotiation, so that an abort interrupts something.
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        testSaslServer.setSteps(2);
+
+        Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
+            .addAttribute("mechanism", "TEST-MECHANISM")
+            .addElement("initial-response")
+            .addCDATA(Base64.getEncoder().encodeToString("initial-response".getBytes()))
+            .getParent();
+        SASLAuthentication.handle(clientSession, auth, true); // Yields a challenge; negotiation is now in progress.
+        clearInvocations(clientSession);
+
+        // Execute system under test.
+        Element abort = DocumentHelper.createElement(QName.get("abort", "urn:xmpp:sasl:2"));
+        final SASLAuthentication.Status status = SASLAuthentication.handle(clientSession, abort, true);
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.failed, status, "An abort must fail the SASL negotiation.");
+
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).deliverRawText(responseCaptor.capture());
+
+        Element failure = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        assertEquals("failure", failure.getName());
+        assertEquals("urn:xmpp:sasl:2", failure.getNamespaceURI(), "The SASL2 failure wrapper must be in the SASL2 namespace.");
+
+        assertEquals(1, failure.elements().size(), "Expected exactly one condition child element.");
+        Element condition = failure.elements().get(0);
+        assertEquals("aborted", condition.getName(), "An abort must yield the 'aborted' failure condition.");
+        assertEquals("urn:ietf:params:xml:ns:xmpp-sasl", condition.getNamespaceURI(), "The condition must remain in the RFC 6120 SASL namespace.");
+
+        // The aborted negotiation must not have authenticated the session.
+        verify(clientSession, never()).setAuthToken(any(AuthToken.class));
+    }
+
+    /**
+     * Verifies that a SASL1 <abort/> mid-negotiation yields an 'aborted' failure, entirely in the SASL namespace.
+     */
+    @Test
+    public void testSasl1AbortYieldsAbortedFailure() throws Exception {
+        // Setup test fixture: start a multi-step negotiation, so that an abort interrupts something.
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        testSaslServer.setSteps(2);
+
+        Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
+            .addAttribute("mechanism", "TEST-MECHANISM");
+        auth.setText(Base64.getEncoder().encodeToString("initial-response".getBytes()));
+        SASLAuthentication.handle(clientSession, auth, false); // Yields a challenge; negotiation is now in progress.
+        clearInvocations(clientSession);
+
+        // Execute system under test.
+        Element abort = DocumentHelper.createElement(QName.get("abort", "urn:ietf:params:xml:ns:xmpp-sasl"));
+        final SASLAuthentication.Status status = SASLAuthentication.handle(clientSession, abort, false);
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.failed, status, "An abort must fail the SASL negotiation.");
+
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession).deliverRawText(responseCaptor.capture());
+
+        Element failure = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
+        assertEquals("failure", failure.getName());
+        assertEquals("urn:ietf:params:xml:ns:xmpp-sasl", failure.getNamespaceURI());
+
+        assertEquals(1, failure.elements().size(), "Expected exactly one condition child element.");
+        Element condition = failure.elements().get(0);
+        assertEquals("aborted", condition.getName(), "An abort must yield the 'aborted' failure condition.");
+        assertEquals("urn:ietf:params:xml:ns:xmpp-sasl", condition.getNamespaceURI());
+
+        verify(clientSession, never()).setAuthToken(any(AuthToken.class));
+    }
+
+    /**
+     * Verifies that the SaslServer instance is removed from the session when a negotiation is aborted, so that a
+     * subsequent <response/> cannot continue the aborted negotiation.
+     */
+    @Test
+    public void testAbortRemovesSaslServerFromSession() throws Exception {
+        // Setup test fixture: start a multi-step negotiation, then abort it.
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        testSaslServer.setSteps(2);
+
+        Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
+            .addAttribute("mechanism", "TEST-MECHANISM")
+            .addElement("initial-response")
+            .addCDATA(Base64.getEncoder().encodeToString("initial-response".getBytes()))
+            .getParent();
+        SASLAuthentication.handle(clientSession, auth, true);
+        assertNotNull(clientSession.getSessionData("SaslServer"), "Test setup issue: expected an in-progress negotiation.");
+
+        // Execute system under test.
+        Element abort = DocumentHelper.createElement(QName.get("abort", "urn:xmpp:sasl:2"));
+        SASLAuthentication.handle(clientSession, abort, true);
+
+        // Verify result.
+        assertNull(clientSession.getSessionData("SaslServer"), "An aborted negotiation must not leave a SaslServer on the session.");
     }
 }

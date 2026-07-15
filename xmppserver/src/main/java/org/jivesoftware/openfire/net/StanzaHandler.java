@@ -29,7 +29,6 @@ import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.*;
-import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -69,12 +68,30 @@ public abstract class StanzaHandler {
     // DANIELE: Indicate if a session is already created
     protected boolean sessionCreated = false;
 
-    // Flag that indicates that the client requested to use TLS and TLS has been negotiated. Once the
-    // client sent a new initial stream header the value will return to false.
+    /**
+     * Flag that indicates that the client requested to use TLS and TLS has been negotiated. Once the
+     * client sent a new initial stream header the value will return to false.
+     *
+     * Note that this is capturing the status of TLS 'in flight', not a durable fact that TLS was established.
+     */
     protected boolean startedTLS = false;
-    // Flag that indicates that the client requested to be authenticated. Once the
-    // authentication process is over the value will return to false.
+
+    /**
+     * Flag that indicates that the client requested to be authenticated. Once the
+     * authentication process is over the value will return to false.
+     *
+     * Note that this is capturing the status of SASL 'in flight', not a durable fact that SASL was used.
+     */
     protected boolean startedSASL = false;
+
+    /**
+     * Flag that indicates that the client used SASL2 (rather than the older, multi-roundtrip SASL(1)) to
+     * authenticate.
+     *
+     * Unlike {@link #startedTLS} and {@link #startedSASL} this captures a durable fact that SASL2 was used.
+     */
+    protected boolean usingSASL2 = false;
+
     /**
      * SASL status based on the last SASL interaction
      */
@@ -203,10 +220,27 @@ public abstract class StanzaHandler {
             // User is trying to authenticate using SASL
             startedSASL = true;
             // Process authentication stanza
-            saslStatus = SASLAuthentication.handle(session, doc);
-        } else if (startedSASL && "response".equals(tag) || "abort".equals(tag)) {
+            saslStatus = SASLAuthentication.handle(session, doc, usingSASL2);
+        } else if ("authenticate".equals(tag)) {
+            // User is trying to authenticate using SASL2.
+            startedSASL = true;
+            usingSASL2 = true;
+            saslStatus = SASLAuthentication.handle(session, doc, usingSASL2);
+            if (saslStatus == SASLAuthentication.Status.authenticated && usingSASL2) {
+                startedSASL = false; // Without a multi-step SASL mechanism, this can be reset here immediately, rather than in initiateSession (as SASL1 does).
+                sasl2Successful();
+            }
+        } else if (startedSASL && ("response".equals(tag) || "abort".equals(tag))) {
             // User is responding to SASL challenge. Process response
-            saslStatus = SASLAuthentication.handle(session, doc);
+            saslStatus = SASLAuthentication.handle(session, doc, usingSASL2);
+            if (saslStatus == SASLAuthentication.Status.failed) {
+                startedSASL = false;
+                usingSASL2 = false;
+            }
+            if (saslStatus == SASLAuthentication.Status.authenticated && usingSASL2) {
+                startedSASL = false; // Symmetric with the single-step reset in the 'authenticate' branch.
+                sasl2Successful();
+            }
         }
         else if ("compress".equals(tag)) {
             // Client is trying to initiate compression
@@ -314,7 +348,7 @@ public abstract class StanzaHandler {
                 // The original packet contains a malformed JID so answer an error
                 IQ reply = new IQ();
                 if (!doc.elements().isEmpty()) {
-                    reply.setChildElement(((Element)doc.elements().get(0)).createCopy());
+                    reply.setChildElement((doc.elements().get(0)).createCopy());
                 }
                 reply.setID(doc.attributeValue("id"));
                 reply.setTo(session.getAddress());
@@ -354,7 +388,7 @@ public abstract class StanzaHandler {
                     for (Element element : elements){
                         session.setSoftwareVersionData(element.getName(), element.getStringValue());
                     }
-                }    
+                }
             } catch (Exception e) {
                 Log.error("Unexpected exception while processing IQ Version stanza from '{}'", session.getAddress(), e);
             }
@@ -492,13 +526,6 @@ public abstract class StanzaHandler {
         final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
         document.getRootElement().add(features);
 
-        // Include available SASL Mechanisms
-        final Element mechanismsElement=SASLAuthentication.getSASLMechanisms(session);
-        if (mechanismsElement!=null) {
-            ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(mechanismsElement).ifPresent(features::add);
-            features.add(mechanismsElement);
-        }
-
         // Include specific features such as auth and register for client sessions
         final List<Element> specificFeatures = session.getAvailableStreamFeatures();
         if (specificFeatures != null) {
@@ -518,8 +545,28 @@ public abstract class StanzaHandler {
      */
     protected void saslSuccessful() {
         final Document document = getStreamHeader();
-        final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
+        final Element features = generateFeatures();
         document.getRootElement().add(features);
+        connection.deliverRawText(StringUtils.asUnclosedStream(document));
+    }
+
+    /**
+     * Emits post-authentication stream features for SASL2 (XEP-0388), which does NOT restart the stream.
+     * On TCP the features element is sent inline in the existing stream. Transports with different framing
+     * (e.g. RFC 7395 WebSocket) override this.
+     */
+    protected void sasl2Successful() {
+        final Element features = generateFeatures();
+        connection.deliverRawText(features.asXML());
+    }
+
+    /**
+     * Helper to generate stream:features, populated simply from the session.,
+     *
+     * @return Element <stream:features/>
+     */
+    protected Element generateFeatures() {
+        final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
 
         // Include specific features such as resource binding and session establishment for client sessions
         final List<Element> specificFeatures = session.getAvailableStreamFeatures();
@@ -529,7 +576,7 @@ public abstract class StanzaHandler {
             }
         }
 
-        connection.deliverRawText(StringUtils.asUnclosedStream(document));
+        return features;
     }
 
     /**
@@ -595,14 +642,6 @@ public abstract class StanzaHandler {
         final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
         document.getRootElement().add(features);
 
-        // Include SASL mechanisms only if client has not been authenticated
-        if (!session.isAuthenticated()) {
-            final Element saslMechanisms = SASLAuthentication.getSASLMechanisms(session);
-            if (saslMechanisms != null) {
-                ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(saslMechanisms).ifPresent(features::add);
-                features.add(saslMechanisms);
-            }
-        }
         // Include specific features such as resource binding and session establishment for client sessions
         final List<Element> specificFeatures = session.getAvailableStreamFeatures();
         if (specificFeatures != null) {

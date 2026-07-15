@@ -40,7 +40,6 @@ import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.LocaleUtils;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.cache.Cache;
-import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -291,12 +290,6 @@ public class LocalClientSession extends LocalSession implements ClientSession {
                 }
             } catch (KeyStoreException e) {
                 Log.warn("Unable to access the identity store for client connections. StartTLS is not being offered as a feature for this session.", e);
-            }
-            // Include available SASL Mechanisms
-            final Element saslMechanisms = SASLAuthentication.getSASLMechanisms(session);
-            if (saslMechanisms != null) {
-                ChannelBindingProviderManager.getInstance().getSASLChannelBindingTypeCapabilityElement(saslMechanisms).ifPresent(features::add);
-                features.add(saslMechanisms);
             }
             // Include Stream features
             final List<Element> specificFeatures = session.getAvailableStreamFeatures();
@@ -597,13 +590,35 @@ public class LocalClientSession extends LocalSession implements ClientSession {
      * authenticated (obtaining managers for example).
      */
     public void setAnonymousAuth() {
-        // Anonymous users have a full JID. Use the random resource as the JID's node
-        String resource = getAddress().getResource();
-        setAddress(new JID(resource, getServerName(), resource, true));
+        final String anonymousUsername = getAnonymousUsernameUnguarded();
+        setAddress(new JID(anonymousUsername, getServerName(), getAddress().getResource(), true));
         setStatus(Session.Status.AUTHENTICATED);
-        authToken = AuthToken.generateAnonymousToken();
+        authToken = AuthToken.generateAnonymousToken(); // AuthToken _should_ already be set, but defensively overwrite it.
         // Add session to the session manager. The session will be added to the routing table as well
         sessionManager.addSession(this);
+    }
+
+    /**
+     * Get the username used if this were anonymous
+     * Use with care, this is only valid prior to binding.
+     *
+     * @return a username when this session is to be used after anonymous authentication
+     * @throws IllegalStateException when invoked after the session is bound.
+     */
+    public String getAnonymousUsername() {
+        if (getStatus() == Session.Status.AUTHENTICATED) { // This is set at bind, not at SASL success, which is why this confusingly works correctly as a gate.
+            throw new IllegalStateException("Anonymous username is only valid prior to binding.");
+        }
+        return getAnonymousUsernameUnguarded();
+    }
+
+    /**
+     * Unguarded accessor, safe to use during the transition to an authenticated state.
+     */
+    @Nonnull
+    private String getAnonymousUsernameUnguarded() {
+        // Anonymous users have a full JID. Use the random resource as the JID's node.
+        return getAddress().getResource();
     }
 
     /**
@@ -813,6 +828,9 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
 
         if (getAuthToken() == null) {
+            // Include available SASL Mechanisms
+            result.addAll(SASLAuthentication.getSASLMechanisms(this));
+            SASLAuthentication.appendChannelBindingCapabilityIfNeeded(result);
             // Advertise that the server supports Non-SASL Authentication
             if ( XMPPServer.getInstance().getIQRouter().supports( "jabber:iq:auth" ) ) {
                 result.add(DocumentHelper.createElement(QName.get("auth", "http://jabber.org/features/iq-auth")));

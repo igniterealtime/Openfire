@@ -74,6 +74,8 @@ public class DbConnectionManager {
     private static boolean pstmt_fetchSizeSupported = true;
     /** The char used to quote identifiers */
     private static String identifierQuoteString;
+    /** True if the database supports SQL row-value (tuple) comparison, e.g. {@code (a, b, c) > (?, ?, ?)}, in a WHERE clause. */
+    private static boolean rowValueComparisonSupported;
 
     private static final String SETTING_DATABASE_MAX_RETRIES = "database.maxRetries";
     private static final String SETTING_DATABASE_RETRY_DELAY = "database.retryDelay";
@@ -865,6 +867,7 @@ public class DbConnectionManager {
         streamTextRequired = false;
         maxRowsSupported   = true;
         fetchSizeSupported = true;
+        rowValueComparisonSupported = false; // this cannot be dynamically detected. Opt-in per-database below for those known to support it.
 
         String dbName      = metaData.getDatabaseProductName().toLowerCase(Locale.ROOT);
         String dbVersion   = metaData.getDatabaseProductVersion().toLowerCase(Locale.ROOT);
@@ -903,11 +906,13 @@ public class DbConnectionManager {
             databaseType = DatabaseType.cockroachdb;
             scrollResultsSupported = false;
             fetchSizeSupported = false;
+            rowValueComparisonSupported = true;
         }
 
         // Postgres properties
         else if (dbName.contains("postgres")) {
             databaseType = DatabaseType.postgresql;
+            rowValueComparisonSupported = true;
 
             // PostgreSQL JDBC 42.x reports TYPE_SCROLL_INSENSITIVE as supported, which is accurate - but server-side
             // cursors (required for scrolling) only work when auto-commit is off. Since many connections in this
@@ -939,16 +944,19 @@ public class DbConnectionManager {
         // MariaDB properties (must be checked before MySQL, as MariaDB reports its product name as "MariaDB")
         else if (dbName.contains("maria")) {
             databaseType = DatabaseType.mariadb;
+            rowValueComparisonSupported = true;
         }
 
         // MySQLproperties
         else if (dbName.contains("mysql")) {
             databaseType = DatabaseType.mysql;
+            rowValueComparisonSupported = true;
         }
 
         // HSQLDB
         else if (dbName.contains("hsql")) {
             databaseType = DatabaseType.hsqldb;
+            rowValueComparisonSupported = true;
         }
 
         // DB2
@@ -961,8 +969,8 @@ public class DbConnectionManager {
             databaseType = DatabaseType.firebird;
         }
 
-        Log.debug("Database capabilities: transactions={}, scrollResults={}, batchUpdates={}, subqueries={}, streamText={}, maxRows={}, fetchSize={}, identifierQuoteString={}",
-            transactionsSupported, scrollResultsSupported, batchUpdatesSupported, subqueriesSupported, streamTextRequired, maxRowsSupported, fetchSizeSupported, identifierQuoteString);
+        Log.debug("Database capabilities: transactions={}, scrollResults={}, batchUpdates={}, subqueries={}, streamText={}, maxRows={}, fetchSize={}, rowValueComparison={}, identifierQuoteString={}",
+            transactionsSupported, scrollResultsSupported, batchUpdatesSupported, subqueriesSupported, streamTextRequired, maxRowsSupported, fetchSizeSupported, rowValueComparisonSupported, identifierQuoteString);
     }
 
     /**
@@ -1221,6 +1229,10 @@ public class DbConnectionManager {
     public static boolean isResultSetLimitKeywordPrefix()
     {
         return databaseType.isResultSetLimitKeywordPrefix();
+    }
+
+    public static boolean isRowValueComparisonSupported() {
+        return rowValueComparisonSupported;
     }
 
     public static String getTestSQL(String driver) {

@@ -583,17 +583,18 @@ public class PubSubSubscriptionMaintenance
     @Nonnull
     private Page readPage(@Nullable final String afterService, @Nullable final String afterNode, @Nullable final String afterId) throws SQLException
     {
-        // OF-3338: HSQLDB 2.7.4 seems to suffer from an optimizer/index traversal bug that is circumvented by using tuple-comparison.
-        final boolean useRowValue = DbConnectionManager.isRowValueComparisonSupported();
-
         final boolean first = afterService == null;
-        final String sql = buildPageSql(first, useRowValue);
 
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
+
+            // OF-3338: HSQLDB 2.7.4 seems to suffer from an optimizer/index traversal bug that is circumvented by using tuple-comparison.
+            final boolean useRowValue = DbConnectionManager.isRowValueComparisonSupported();
+            final String sql = buildPageSql(first, useRowValue);
+
             pstmt = con.prepareStatement(sql);
             DbConnectionManager.setFetchSize(pstmt, DELETE_BATCH_SIZE);
             DbConnectionManager.setMaxRows(pstmt, DELETE_BATCH_SIZE);

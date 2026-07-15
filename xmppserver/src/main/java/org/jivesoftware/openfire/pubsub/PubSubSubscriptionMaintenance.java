@@ -223,9 +223,7 @@ public class PubSubSubscriptionMaintenance
      * auto-commit connections), keeping every query bounded and memory use flat regardless of table size.
      *
      * The row-limit keyword is dialect-specific ({@code LIMIT} / {@code TOP} / {@code FETCH FIRST}), so the limited
-     * SELECT is assembled at runtime via {@link DbConnectionManager#getResultSetLimitKeyword()}. The key predicate is
-     * written in expanded boolean form rather than as a row-value comparison {@code (a,b,c) > (?,?,?)}, because the
-     * latter is not supported by all databases Openfire targets (for example SQL Server and older Oracle).
+     * SELECT is assembled at runtime via {@link DbConnectionManager#getResultSetLimitKeyword()}.
      */
     private static final String PAGE_COLUMNS = "serviceID, nodeID, id";
 
@@ -240,8 +238,27 @@ public class PubSubSubscriptionMaintenance
     private static final String PAGE_ORDER = " ORDER BY serviceID, nodeID, id";
 
     /**
+     * Row-value "primary key strictly greater than (?, ?, ?)" predicate, semantically equivalent to the
+     * expanded-boolean {@link #PAGE_KEY_AFTER} form.
+     *
+     * The two forms are equivalent only when all three columns are non-null (as is the case for these
+     * primary-key columns); row-value and expanded-boolean comparison diverge in their treatment of NULL.
+     *
+     * This relies on SQL row-value (tuple) comparison, which compares the columns lexicographically in the given order.
+     * It is more concise and generally optimizes better, but is NOT supported on every database Openfire targets.
+     * Parameters, in order: serviceID, nodeID, id.
+     */
+    private static final String PAGE_KEY_AFTER_ROWVALUE =
+        "((serviceID, nodeID, id) > (?, ?, ?))";
+
+    /**
      * Expanded-boolean "primary key strictly greater than (?, ?, ?)" predicate, portable across all supported
-     * databases. Parameters, in order: serviceID, serviceID, nodeID, serviceID, nodeID, id.
+     * databases. Semantically equivalent to the row-value {@link #PAGE_KEY_AFTER_ROWVALUE} form.
+     *
+     * The two forms are equivalent only when all three columns are non-null (as is the case for these
+     * primary-key columns); row-value and expanded-boolean comparison diverge in their treatment of NULL.
+     *
+     * Parameters, in order: serviceID, serviceID, nodeID, serviceID, nodeID, id.
      */
     private static final String PAGE_KEY_AFTER =
         "(serviceID > ? OR (serviceID = ? AND nodeID > ?) OR (serviceID = ? AND nodeID = ? AND id > ?))";
@@ -566,8 +583,11 @@ public class PubSubSubscriptionMaintenance
     @Nonnull
     private Page readPage(@Nullable final String afterService, @Nullable final String afterNode, @Nullable final String afterId) throws SQLException
     {
+        // OF-3338: HSQLDB 2.7.4 seems to suffer from an optimizer/index traversal bug that is circumvented by using tuple-comparison.
+        final boolean useRowValue = DbConnectionManager.isRowValueComparisonSupported();
+
         final boolean first = afterService == null;
-        final String sql = buildPageSql(first);
+        final String sql = buildPageSql(first, useRowValue);
 
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -582,13 +602,20 @@ public class PubSubSubscriptionMaintenance
             // bind parameters are the excluded service IDs and, for non-first pages, the key-after predicate.
             int index = bindExcludedServiceIds(pstmt, 1);
             if (!first) {
-                // Expanded-boolean key predicate parameters: service, service, node, service, node, id.
-                pstmt.setString(index++, afterService);
-                pstmt.setString(index++, afterService);
-                pstmt.setString(index++, afterNode);
-                pstmt.setString(index++, afterService);
-                pstmt.setString(index++, afterNode);
-                pstmt.setString(index, afterId);
+                if (useRowValue) {
+                    // row-value parameters: serviceID, nodeID, id.
+                    pstmt.setString(index++, afterService);
+                    pstmt.setString(index++, afterNode);
+                    pstmt.setString(index, afterId);
+                } else {
+                    // Expanded-boolean key predicate parameters: service, service, node, service, node, id.
+                    pstmt.setString(index++, afterService);
+                    pstmt.setString(index++, afterService);
+                    pstmt.setString(index++, afterNode);
+                    pstmt.setString(index++, afterService);
+                    pstmt.setString(index++, afterNode);
+                    pstmt.setString(index, afterId);
+                }
             }
 
             rs = pstmt.executeQuery();
@@ -608,21 +635,23 @@ public class PubSubSubscriptionMaintenance
      * pages) the key-after predicate.
      *
      * The row-limit keyword position and spelling vary by database, so this uses
-     * {@link DbConnectionManager#getResultSetLimitKeyword()} and {@link DbConnectionManager#isResultSetLimitKeywordPrefix()}.
+     * {@link DbConnectionManager#getResultSetLimitKeyword()}.
      * The limit count is rendered as a literal integer (it is a fixed, trusted constant, never user input), which keeps
      * the parameter list identical across dialects.
      *
      * @param first true for the first page (no key-after predicate), false otherwise.
+     * @param useRowValue true when the database supports tuple comparison, false otherwise.
      * @return the SQL for one page.
      */
     @Nonnull
-    private String buildPageSql(final boolean first)
+    private String buildPageSql(final boolean first, final boolean useRowValue)
     {
         final StringBuilder where = new StringBuilder();
         final String exclusion = serviceExclusionClause("WHERE", "serviceID");
         where.append(exclusion);
         if (!first) {
-            where.append(exclusion.isEmpty() ? " WHERE " : " AND ").append(PAGE_KEY_AFTER);
+            where.append(exclusion.isEmpty() ? " WHERE " : " AND ")
+                .append(useRowValue ? PAGE_KEY_AFTER_ROWVALUE : PAGE_KEY_AFTER);
         }
 
         final DbConnectionManager.ResultSetLimitKeyword limit = DbConnectionManager.getResultSetLimitKeyword();

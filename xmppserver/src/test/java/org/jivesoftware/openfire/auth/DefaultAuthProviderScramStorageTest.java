@@ -18,6 +18,7 @@ package org.jivesoftware.openfire.auth;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
+import org.jivesoftware.openfire.sasl.ScramSha256SaslServer;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.junit.jupiter.api.AfterEach;
@@ -432,6 +433,38 @@ public class DefaultAuthProviderScramStorageTest
 
         // Verify result.
         assertFalse(result, "An empty password should not verify against a non-empty SCRAM credential.");
+    }
+
+    /**
+     *  All supported mechanisms have a stored credential → the set is complete → returns false.
+     */
+    @Test
+    void hasIncompleteSet_returnsFalse_whenAllMechanismsPresent() throws Exception
+    {
+        // Setup test fixture.
+        final Set<String> presentMechanisms = Set.of(ScramSha1SaslServer.MECHANISM_NAME, ScramSha256SaslServer.MECHANISM_NAME);
+
+        // Execute system under test.
+        final boolean result = runHasIncompleteSet("user", presentMechanisms);
+
+        // Verify result.
+        assertFalse(result, "When every supported mechanism has a stored credential, the set is complete.");
+    }
+
+    /**
+     * A legacy user with only SHA-1 (SHA-256 missing) → incomplete → returns true (triggers regeneration).
+     */
+    @Test
+    void hasIncompleteSet_returnsTrue_whenOneMechanismMissing() throws Exception
+    {
+        // Setup test fixture.
+        final Set<String> presentMechanisms = Set.of(ScramSha1SaslServer.MECHANISM_NAME); // SHA-256 absent
+
+        // Execute system under test.
+        final boolean result = runHasIncompleteSet("user", presentMechanisms);
+
+        // Verify result.
+        assertTrue(result, "A user missing any supported mechanism's credential has an incomplete set.");
     }
 
     /**

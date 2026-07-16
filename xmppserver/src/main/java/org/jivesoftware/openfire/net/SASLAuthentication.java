@@ -29,12 +29,7 @@ import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.keystore.TrustStore;
 import org.jivesoftware.openfire.lockout.LockOutManager;
-import org.jivesoftware.openfire.sasl.AnonymousSaslServer;
-import org.jivesoftware.openfire.sasl.Failure;
-import org.jivesoftware.openfire.sasl.JiveSharedSecretSaslServer;
-import org.jivesoftware.openfire.sasl.SaslFailureException;
-import org.jivesoftware.openfire.sasl.ScramSaslServer;
-import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
+import org.jivesoftware.openfire.sasl.*;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CertificateManager;
@@ -898,6 +893,8 @@ public class SASLAuthentication {
 
                 case ScramSha1SaslServer.MECHANISM_NAME: // intended fall-through
                 case ScramSha1SaslServer.MECHANISM_NAME+"-PLUS":
+                case ScramSha256SaslServer.MECHANISM_NAME: // intended fall-through
+                case ScramSha256SaslServer.MECHANISM_NAME+"-PLUS":
                     if ( !AuthFactory.supportsScram() )
                     {
                         Log.trace( "Cannot support '{}' as the AuthProvider that's in use does not support SCRAM.", mechanism );
@@ -997,7 +994,7 @@ public class SASLAuthentication {
      */
     public static List<String> getEnabledMechanisms()
     {
-        return JiveGlobals.getListProperty("sasl.mechs", Arrays.asList( "ANONYMOUS","PLAIN","DIGEST-MD5","CRAM-MD5",ScramSha1SaslServer.MECHANISM_NAME,ScramSha1SaslServer.MECHANISM_NAME+"-PLUS","JIVE-SHAREDSECRET","GSSAPI","EXTERNAL" ) );
+        return JiveGlobals.getListProperty("sasl.mechs", Arrays.asList( "ANONYMOUS","PLAIN","DIGEST-MD5","CRAM-MD5",ScramSha1SaslServer.MECHANISM_NAME,ScramSha1SaslServer.MECHANISM_NAME+"-PLUS",ScramSha256SaslServer.MECHANISM_NAME,ScramSha256SaslServer.MECHANISM_NAME+"-PLUS","JIVE-SHAREDSECRET","GSSAPI","EXTERNAL" ) );
     }
 
     /**

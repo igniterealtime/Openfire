@@ -37,6 +37,7 @@ import com.google.common.annotations.VisibleForTesting;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
+import org.jivesoftware.openfire.sasl.ScramSha256SaslServer;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
@@ -62,7 +63,8 @@ public class DefaultAuthProvider implements AuthProvider {
      * Mechanisms supported by this AuthProvider implementation (not necessarily supported at runtime, or by other parts of Openfire).
      */
     private static final List<ScramMechanism> SCRAM_MECHANISMS = List.of(
-        new ScramMechanism(ScramSha1SaslServer.MECHANISM_NAME,   ScramSha1SaslServer.HMAC_ALGORITHM_NAME,   ScramSha1SaslServer.DIGEST_ALGORITHM_NAME,   ScramSha1SaslServer.ITERATION_COUNT::getValue)
+        new ScramMechanism(ScramSha1SaslServer.MECHANISM_NAME,   ScramSha1SaslServer.HMAC_ALGORITHM_NAME,   ScramSha1SaslServer.DIGEST_ALGORITHM_NAME,   ScramSha1SaslServer.ITERATION_COUNT::getValue),
+        new ScramMechanism(ScramSha256SaslServer.MECHANISM_NAME, ScramSha256SaslServer.HMAC_ALGORITHM_NAME, ScramSha256SaslServer.DIGEST_ALGORITHM_NAME, ScramSha256SaslServer.ITERATION_COUNT::getValue)
     );
 
     /**

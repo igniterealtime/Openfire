@@ -19,6 +19,7 @@ import org.jivesoftware.Fixtures;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
 import org.jivesoftware.openfire.sasl.ScramSha256SaslServer;
+import org.jivesoftware.openfire.sasl.ScramSha512SaslServer;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
 import org.junit.jupiter.api.AfterEach;
@@ -442,7 +443,7 @@ public class DefaultAuthProviderScramStorageTest
     void hasIncompleteSet_returnsFalse_whenAllMechanismsPresent() throws Exception
     {
         // Setup test fixture.
-        final Set<String> presentMechanisms = Set.of(ScramSha1SaslServer.MECHANISM_NAME, ScramSha256SaslServer.MECHANISM_NAME);
+        final Set<String> presentMechanisms = Set.of(ScramSha1SaslServer.MECHANISM_NAME, ScramSha256SaslServer.MECHANISM_NAME, ScramSha512SaslServer.MECHANISM_NAME);
 
         // Execute system under test.
         final boolean result = runHasIncompleteSet("user", presentMechanisms);
@@ -452,13 +453,13 @@ public class DefaultAuthProviderScramStorageTest
     }
 
     /**
-     * A legacy user with only SHA-1 (SHA-256 missing) → incomplete → returns true (triggers regeneration).
+     * A legacy user with only SHA-1 and SHA-512 (SHA-256 missing) → incomplete → returns true (triggers regeneration).
      */
     @Test
-    void hasIncompleteSet_returnsTrue_whenOneMechanismMissing() throws Exception
+    void hasIncompleteSet_returnsTrue_whenMechanismsMissing() throws Exception
     {
         // Setup test fixture.
-        final Set<String> presentMechanisms = Set.of(ScramSha1SaslServer.MECHANISM_NAME); // SHA-256 absent
+        final Set<String> presentMechanisms = Set.of(ScramSha1SaslServer.MECHANISM_NAME, ScramSha512SaslServer.MECHANISM_NAME); // SHA-256 absent
 
         // Execute system under test.
         final boolean result = runHasIncompleteSet("user", presentMechanisms);

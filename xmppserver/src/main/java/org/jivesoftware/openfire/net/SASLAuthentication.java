@@ -36,6 +36,7 @@ import org.jivesoftware.openfire.sasl.SaslFailureException;
 import org.jivesoftware.openfire.sasl.ScramSaslServer;
 import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
 import org.jivesoftware.openfire.sasl.ScramSha256SaslServer;
+import org.jivesoftware.openfire.sasl.ScramSha512SaslServer;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.session.*;
@@ -983,9 +984,11 @@ public class SASLAuthentication {
                     break;
 
                 case ScramSha1SaslServer.MECHANISM_NAME: // intended fall-through
-                case ScramSha1SaslServer.MECHANISM_NAME+"-PLUS":
+                case ScramSha1SaslServer.MECHANISM_NAME+"-PLUS": // intended fall-through
                 case ScramSha256SaslServer.MECHANISM_NAME: // intended fall-through
-                case ScramSha256SaslServer.MECHANISM_NAME+"-PLUS":
+                case ScramSha256SaslServer.MECHANISM_NAME+"-PLUS": // intended fall-through
+                case ScramSha512SaslServer.MECHANISM_NAME: // intended fall-through
+                case ScramSha512SaslServer.MECHANISM_NAME+"-PLUS":
                     if ( !AuthFactory.supportsScram() )
                     {
                         Log.trace( "Cannot support '{}' as the AuthProvider that's in use does not support SCRAM.", mechanism );
@@ -1085,7 +1088,23 @@ public class SASLAuthentication {
      */
     public static List<String> getEnabledMechanisms()
     {
-        return JiveGlobals.getListProperty("sasl.mechs", Arrays.asList( "ANONYMOUS","PLAIN","DIGEST-MD5","CRAM-MD5",ScramSha1SaslServer.MECHANISM_NAME,ScramSha1SaslServer.MECHANISM_NAME+"-PLUS",ScramSha256SaslServer.MECHANISM_NAME,ScramSha256SaslServer.MECHANISM_NAME+"-PLUS","JIVE-SHAREDSECRET","GSSAPI","EXTERNAL" ) );
+        return JiveGlobals.getListProperty("sasl.mechs",
+            Arrays.asList(
+                "ANONYMOUS",
+                "PLAIN",
+                "DIGEST-MD5",
+                "CRAM-MD5",
+                ScramSha1SaslServer.MECHANISM_NAME,
+                ScramSha1SaslServer.MECHANISM_NAME+"-PLUS",
+                ScramSha256SaslServer.MECHANISM_NAME,
+                ScramSha256SaslServer.MECHANISM_NAME+"-PLUS",
+                ScramSha512SaslServer.MECHANISM_NAME,
+                ScramSha512SaslServer.MECHANISM_NAME+"-PLUS",
+                "JIVE-SHAREDSECRET",
+                "GSSAPI",
+                "EXTERNAL"
+            )
+        );
     }
 
     /**

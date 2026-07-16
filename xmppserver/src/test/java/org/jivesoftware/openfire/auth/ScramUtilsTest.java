@@ -281,4 +281,96 @@ public class ScramUtilsTest
         assertArrayEquals(StringUtils.decodeHex("586e5df283e6dceb5c3e791d8b8528ec191e664045ce971792e2e6b5bb13e2a6"), result.storedKey);
         assertArrayEquals(StringUtils.decodeHex("c1f3cbc1c13a9d35a14c0990eed97629ea225863e566a4314ab99f3f00e5d9d5"), result.serverKey);
     }
+
+    /**
+     * Verifies the implementation of {@link ScramUtils#createSaltedPassword(byte[], String, int, String)} by using
+     * SCRAM-SHA-512(-PLUS) test vectors that are provided by the XSF.
+     *
+     * @see <a href="https://wiki.xmpp.org/web/SASL_Authentication_and_SCRAM">XSF SCRAM test vectors.</a>
+     */
+    @Test
+    public void testScramSha512CreateSaltedPassword() throws Exception
+    {
+        // Setup test fixture.
+        final byte[] salt = StringUtils.decodeHex("5b6d99689d12358eeca04b141236fa81");
+        final String password = "pencil";
+        final int iterations = 4096;
+        final String hmacAlgorithm = "HmacSHA512";
+
+        // Execute system under test.
+        final byte[] result = ScramUtils.createSaltedPassword(salt, password, iterations, hmacAlgorithm);
+
+        // Verify results.
+        assertArrayEquals(StringUtils.decodeHex("f16efe1be67f1d09502ebd5ed9262fddffba5a377ab4f0b687e5ed5ba0f50686b8a4ae166476da8ab3b951d2fa9238b63998f45461bc33a464814949cec9631d"), result);
+    }
+
+    /**
+     * Verifies the implementation of {@link ScramUtils#computeHmac(byte[], String, String)} by using
+     * SCRAM-SHA-512(-PLUS) test vectors.
+     *
+     * This test uses the test vectors identified as the 'client key'.
+     *
+     * @see <a href="https://wiki.xmpp.org/web/SASL_Authentication_and_SCRAM">XSF SCRAM test vectors.</a>
+     */
+    @Test
+    public void testScramSha512ComputeHmac() throws Exception
+    {
+        // Setup test fixture.
+        final byte[] key = StringUtils.decodeHex("f16efe1be67f1d09502ebd5ed9262fddffba5a377ab4f0b687e5ed5ba0f50686b8a4ae166476da8ab3b951d2fa9238b63998f45461bc33a464814949cec9631d"); // 'salted password' from the test vectors.
+        final String value = "Client Key";
+        final String hmacAlgorithm = "HmacSHA512";
+
+        // Execute system under test.
+        final byte[] result = ScramUtils.computeHmac(key, value, hmacAlgorithm);
+
+        // Verify results.
+        assertArrayEquals(StringUtils.decodeHex("f81d81a6c0467dbd957885e9f3a0387a99e989171077fc3b8d134b710907c424917b624f885a3667838762858a893a4fce39043aa57fa07388a5aaa6fdbac920"), result); // test against 'client key' from the test vectors.
+    }
+
+    /**
+     * Verifies the implementation of {@link ScramUtils#computeHmac(byte[], String, String)} by using
+     * SCRAM-SHA-512(-PLUS) test vectors.
+     *
+     * This test uses the test vectors identified as the 'server key'.
+     *
+     * @see <a href="https://wiki.xmpp.org/web/SASL_Authentication_and_SCRAM">XSF SCRAM test vectors.</a>
+     */
+    @Test
+    public void testScramSha512ComputeHmac2() throws Exception
+    {
+        // Setup test fixture.
+        final byte[] key = StringUtils.decodeHex("f16efe1be67f1d09502ebd5ed9262fddffba5a377ab4f0b687e5ed5ba0f50686b8a4ae166476da8ab3b951d2fa9238b63998f45461bc33a464814949cec9631d"); // 'salted password' from the test vectors.
+        final String value = "Server Key";
+        final String hmacAlgorithm = "HmacSHA512";
+
+        // Execute system under test.
+        final byte[] result = ScramUtils.computeHmac(key, value, hmacAlgorithm);
+
+        // Verify results.
+        assertArrayEquals(StringUtils.decodeHex("8d91db6230b5687874fe129bc7206e1858c3ae08e02934f57ac03b6b05a229c459d28ff46f5c9611e6c179256490215ec1ff759cb0df285db89af0f99e613aac"), result); // test against 'server key' from the test vectors.
+    }
+
+    /**
+     * Verifies the implementation of {@link ScramUtils#deriveScramKeys(byte[], String, int, String, String)}
+     * by using SCRAM-SHA-512(-PLUS) test vectors that are provided by the XSF.
+     *
+     * @see <a href="https://wiki.xmpp.org/web/SASL_Authentication_and_SCRAM">XSF SCRAM test vectors.</a>
+     */
+    @Test
+    public void testScramSha512DeriveScramKeys() throws Exception
+    {
+        // Setup test fixture.
+        final byte[] salt = StringUtils.decodeHex("5b6d99689d12358eeca04b141236fa81");
+        final String password = "pencil";
+        final int iterations = 4096;
+        final String hmacAlgorithm = "HmacSHA512";
+        final String digestAlgorithm = "SHA-512";
+
+        // Execute system under test.
+        final ScramUtils.ScramKeys result = ScramUtils.deriveScramKeys(salt, password, iterations, hmacAlgorithm, digestAlgorithm);
+
+        // Verify results.
+        assertArrayEquals(StringUtils.decodeHex("e8002e6f7d3ae446119b216933644dc2a2be7869eb918b8459b5e7d7d2ec12606aceef106825cd735170a675fd3611f684affad1dce3f43a0ee43bd590e1dbbe"), result.storedKey);
+        assertArrayEquals(StringUtils.decodeHex("8d91db6230b5687874fe129bc7206e1858c3ae08e02934f57ac03b6b05a229c459d28ff46f5c9611e6c179256490215ec1ff759cb0df285db89af0f99e613aac"), result.serverKey);
+    }
 }

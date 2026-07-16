@@ -105,7 +105,7 @@ public class ScramSha1SaslServerTest extends AbstractScramSaslServerTest
     protected String createValidProof(final byte[] initialMessage, final String firstServerResponse, final FirstExchangeResult firstExchangeResult) throws Exception
     {
         final SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-        final KeySpec spec = new PBEKeySpec(ScramSha1TestFixtures.PASSWORD.toCharArray(), firstExchangeResult.salt, firstExchangeResult.iterations, 160);
+        final KeySpec spec = new PBEKeySpec(ScramSha1TestFixtures.PASSWORD.toCharArray(), firstExchangeResult.salt, firstExchangeResult.iterations, expectedProofLengthBytes()*8); // SCRAM derives the salted password at the hash's native output length, which equals the proof length
         final byte[] saltedPassword = factory.generateSecret(spec).getEncoded();
 
         final byte[] clientKey       = new HmacUtils(HmacAlgorithms.HMAC_SHA_1, saltedPassword).hmac(ScramSha1TestFixtures.CLIENT_KEY);
@@ -196,7 +196,7 @@ public class ScramSha1SaslServerTest extends AbstractScramSaslServerTest
         // Setup test fixture: prepare second client message.
         final String clientFinalMessageBare = "c=biws,r=" + firstExchangeResult.serverNonce;
 
-        final KeySpec saltedPasswordSpec = new PBEKeySpec(ScramSha1TestFixtures.PASSWORD.toCharArray(), firstExchangeResult.salt, firstExchangeResult.iterations, 20*8);
+        final KeySpec saltedPasswordSpec = new PBEKeySpec(ScramSha1TestFixtures.PASSWORD.toCharArray(), firstExchangeResult.salt, firstExchangeResult.iterations, expectedProofLengthBytes()*8); // SCRAM derives the salted password at the hash's native output length, which equals the proof length
         final byte[] saltedPassword = pbkdf2Factory.generateSecret(saltedPasswordSpec).getEncoded();
 
         final byte[] clientKey = new HmacUtils(HmacAlgorithms.HMAC_SHA_1, saltedPassword).hmac(ScramSha1TestFixtures.CLIENT_KEY);
@@ -273,7 +273,7 @@ public class ScramSha1SaslServerTest extends AbstractScramSaslServerTest
         System.arraycopy(channelBindingData, 0, cbindInput, gs2HeaderBytes.length, channelBindingData.length);
         final String clientFinalMessageBare = "c=" + Base64.getEncoder().encodeToString(cbindInput) + ",r=" + firstExchangeResult.serverNonce;
 
-        final KeySpec saltedPasswordSpec = new PBEKeySpec(ScramSha1TestFixtures.PASSWORD.toCharArray(), firstExchangeResult.salt, firstExchangeResult.iterations, 20*8);
+        final KeySpec saltedPasswordSpec = new PBEKeySpec(ScramSha1TestFixtures.PASSWORD.toCharArray(), firstExchangeResult.salt, firstExchangeResult.iterations, expectedProofLengthBytes()*8); // SCRAM derives the salted password at the hash's native output length, which equals the proof length
         final byte[] saltedPassword = pbkdf2Factory.generateSecret(saltedPasswordSpec).getEncoded();
 
         final byte[] clientKey = new HmacUtils(HmacAlgorithms.HMAC_SHA_1, saltedPassword).hmac(ScramSha1TestFixtures.CLIENT_KEY);

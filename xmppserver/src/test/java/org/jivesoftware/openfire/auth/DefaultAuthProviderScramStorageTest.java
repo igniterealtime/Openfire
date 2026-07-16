@@ -33,6 +33,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Locale;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -177,6 +178,61 @@ public class DefaultAuthProviderScramStorageTest
     private static boolean runCheckPassword(final String username, final String testPassword, final ResultSet storedCredentials) throws Exception
     {
         return runCheckPassword(username, testPassword, storedCredentials, false);
+    }
+
+    /**
+     * Runs {@link DefaultAuthProvider#hasIncompleteSetOfScramCredentials(String)} against a mocked database.
+     *
+     * Each supported mechanism is probed independently via {@code LOAD_SCRAM_CREDENTIAL} (keyed on username + mechanism),
+     * so the fixture is expressed as "which mechanisms have a stored row." A mechanism whose name is in
+     * {@code presentMechanisms} yields a one-row ResultSet (credential exists); any other yields an empty ResultSet.
+     *
+     * @param username           the user identifier
+     * @param presentMechanisms  the mechanism names for which a credential row exists
+     * @return the result of {@code hasIncompleteSetOfScramCredentials}
+     */
+    @SuppressWarnings("SqlSourceToSinkFlow")
+    private static boolean runHasIncompleteSet(final String username, final Set<String> presentMechanisms) throws Exception
+    {
+        final PreparedStatement scramStmt = Mockito.mock(PreparedStatement.class);
+
+        // Capture the mechanism bound as parameter 2, then answer executeQuery() based on it.
+        final String[] boundMechanism = new String[1];
+        Mockito
+            .doAnswer(inv -> { boundMechanism[0] = inv.getArgument(1); return null; })
+            .when(scramStmt)
+            .setString(Mockito.eq(2), Mockito.anyString());
+
+        when(
+            scramStmt.executeQuery()
+        ).thenAnswer(inv -> {
+            final ResultSet rs = Mockito.mock(ResultSet.class);
+            final boolean present = presentMechanisms.contains(boundMechanism[0]);
+
+            when(
+                rs.next()
+            ).thenReturn(present, false);
+
+            if (present) {
+                when(rs.getInt(1)).thenReturn(ITERATIONS);
+                when(rs.getString(2)).thenReturn(SALT_BASE64);
+                when(rs.getString(3)).thenReturn("stored");
+                when(rs.getString(4)).thenReturn("server");
+            }
+            return rs;
+        });
+
+        final Connection connection = Mockito.mock(Connection.class);
+        when(
+            connection.prepareStatement(
+                argThat(sql -> sql.toLowerCase(Locale.ROOT).contains("from ofuserscram") && !sql.toLowerCase(Locale.ROOT).contains("left join"))
+            )
+        ).thenReturn(scramStmt);
+
+        try (final MockedStatic<DbConnectionManager> db = Mockito.mockStatic(DbConnectionManager.class)) {
+            db.when(DbConnectionManager::getConnection).thenReturn(connection);
+            return new DefaultAuthProvider().hasIncompleteSetOfScramCredentials(username);
+        }
     }
 
     /**
@@ -376,6 +432,22 @@ public class DefaultAuthProviderScramStorageTest
 
         // Verify result.
         assertFalse(result, "An empty password should not verify against a non-empty SCRAM credential.");
+    }
+
+    /**
+     * No SCRAM credentials at all → incomplete → returns true.
+     */
+    @Test
+    void hasIncompleteSet_returnsTrue_whenNoMechanismsPresent() throws Exception
+    {
+        // Setup test fixture.
+        final Set<String> presentMechanisms = Set.of();
+
+        // Execute system under test.
+        final boolean result = runHasIncompleteSet("user", presentMechanisms);
+
+        // Verify result.
+        assertTrue(result, "A user with no SCRAM credentials has an incomplete set.");
     }
 
     /**

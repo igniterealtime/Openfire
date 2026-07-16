@@ -57,6 +57,8 @@ public class SaslServerFactoryImpl implements SaslServerFactory
         allMechanisms.add( new Mechanism( ScramSha1SaslServer.MECHANISM_NAME + "-PLUS", false, false ) );
         allMechanisms.add( new Mechanism( ScramSha256SaslServer.MECHANISM_NAME, false, false ) );
         allMechanisms.add( new Mechanism( ScramSha256SaslServer.MECHANISM_NAME + "-PLUS", false, false ) );
+        allMechanisms.add( new Mechanism( ScramSha512SaslServer.MECHANISM_NAME, false, false ) );
+        allMechanisms.add( new Mechanism( ScramSha512SaslServer.MECHANISM_NAME + "-PLUS", false, false ) );
         allMechanisms.add( new Mechanism( "JIVE-SHAREDSECRET", true, false ) );
         allMechanisms.add( new Mechanism( "EXTERNAL", false, false ) );
     }
@@ -91,6 +93,12 @@ public class SaslServerFactoryImpl implements SaslServerFactory
 
             case ScramSha256SaslServer.MECHANISM_NAME + "-PLUS":
                 return new ScramSha256SaslServer(true, props);
+
+            case ScramSha512SaslServer.MECHANISM_NAME:
+                return new ScramSha512SaslServer(false, props);
+
+            case ScramSha512SaslServer.MECHANISM_NAME + "-PLUS":
+                return new ScramSha512SaslServer(true, props);
 
             case "ANONYMOUS":
                 if ( !props.containsKey( LocalSession.class.getCanonicalName() ) )

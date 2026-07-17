@@ -125,6 +125,17 @@ public abstract class StanzaHandler {
         this.session = session;
     }
 
+    /**
+     * Returns whether SASL negotiation is currently in progress (i.e. the {@code startedSASL} flag is set).
+     * Package-private to allow unit tests in the same package to verify the flag is correctly reset after
+     * asynchronous SASL2+Bind2 completion.
+     *
+     * @return {@code true} if SASL negotiation is in progress, {@code false} otherwise.
+     */
+    boolean isStartedSASL() {
+        return startedSASL;
+    }
+
     public void process(String stanza, XMPPPacketReader reader) throws Exception {
         if (isStartOfStream(stanza) || !sessionCreated) {
             initiateSession(stanza, reader);

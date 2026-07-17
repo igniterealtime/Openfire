@@ -81,6 +81,9 @@ public class ScramUtils {
      */
     public static byte[] createSaltedPassword(byte[] salt, String password, int iters, String hmacAlgorithm) throws SaslException
     {
+        if (iters < 1) {
+            throw new SaslException("SCRAM iteration count must be positive.");
+        }
         final Mac mac = createHmac(password.getBytes(StandardCharsets.UTF_8), hmacAlgorithm);
         mac.update(salt);
         mac.update(new byte[]{0, 0, 0, 1});

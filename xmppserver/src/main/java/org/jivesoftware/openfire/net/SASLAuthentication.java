@@ -794,19 +794,6 @@ public class SASLAuthentication {
         }
 
         if (usingSASL2) {
-            final Element success = DocumentHelper.createElement( new QName( "success", new Namespace( "", SASL2_NAMESPACE ) ) );
-            if (successData != null && successData.length > 0) {
-                String data_b64 = Base64.getEncoder().encodeToString(successData).trim();
-                Element additionalData = success.addElement("additional-data");
-                additionalData.setText(data_b64);
-            }
-            success.addElement("authorization-identifier").setText(authorizationIdentity);
-            session.deliverRawText(success.asXML());
-        } else {
-            sendElement(session, "success", successData, false);
-        }
-
-        if (usingSASL2) {
             if (session instanceof LocalClientSession clientSession) {
                 final Bind2Request bind2Request = (Bind2Request) session.getSessionData("bind2-request");
                 if (bind2Request != null && clientSession.getStatus() != Session.Status.AUTHENTICATED) {
@@ -816,10 +803,11 @@ public class SASLAuthentication {
                     final AuthToken authToken = clientSession.getAuthToken();
                     final byte[] finalSuccessData = successData;
                     final String finalUsername = username;
+                    final String finalAuthorizationIdentity = authorizationIdentity;
                     SessionManager.getInstance().bindResource(clientSession, authToken, resource)
                         .whenComplete((result, throwable) -> {
                             final boolean bound = throwable == null && result == SessionManager.BindResult.BOUND;
-                            final Element success = buildSasl2SuccessElement(finalSuccessData, finalUsername, bound ? resource : null);
+                            final Element success = buildSasl2SuccessElement(finalSuccessData, finalAuthorizationIdentity, bound ? resource : null);
                             if (bound) {
                                 bind2Request.processFeatureRequests(session, success);
                             }
@@ -840,12 +828,12 @@ public class SASLAuthentication {
                     return; // Response and features are sent asynchronously from the completion stage.
                 } else {
                     // No Bind2 request, or session already authenticated: send <success/> synchronously without <bound/>.
-                    final Element success = buildSasl2SuccessElement(successData, username, null);
+                    final Element success = buildSasl2SuccessElement(successData, authorizationIdentity, null);
                     session.deliverRawText(success.asXML());
                 }
             } else {
                 // Non-client session (e.g. server): send <success/> synchronously.
-                final Element success = buildSasl2SuccessElement(successData, username, null);
+                final Element success = buildSasl2SuccessElement(successData, authorizationIdentity, null);
                 session.deliverRawText(success.asXML());
             }
         } else {
@@ -857,18 +845,17 @@ public class SASLAuthentication {
      * Builds a SASL2 &lt;success/&gt; element.
      *
      * @param successData optional mechanism-specific success data (can be null).
-     * @param username the authorized identity.
+     * @param authorizationIdentity the bare JID authorization identity (e.g. user@domain or uuid@domain for anonymous).
      * @param resource the bound resource, or null if no resource was bound.
      * @return the &lt;success/&gt; element.
      */
-    private static Element buildSasl2SuccessElement(byte[] successData, String username, String resource) {
+    private static Element buildSasl2SuccessElement(byte[] successData, String authorizationIdentity, String resource) {
         final Element success = DocumentHelper.createElement(new QName("success", new Namespace("", SASL2_NAMESPACE)));
         if (successData != null && successData.length > 0) {
             final String data_b64 = Base64.getEncoder().encodeToString(successData).trim();
             success.addElement("additional-data").setText(data_b64);
         }
-        final StringBuilder authId = new StringBuilder(username != null ? username : "");
-        authId.append('@').append(XMPPServer.getInstance().getServerInfo().getXMPPDomain());
+        final StringBuilder authId = new StringBuilder(authorizationIdentity != null ? authorizationIdentity : "");
         if (resource != null) {
             authId.append('/').append(resource);
         }

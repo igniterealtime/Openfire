@@ -18,11 +18,15 @@ package org.jivesoftware.openfire.auth;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import javax.security.sasl.SaslException;
 import javax.xml.bind.DatatypeConverter;
 import java.security.MessageDigest;
 import java.sql.Connection;
@@ -30,9 +34,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.Locale;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
 /**
@@ -62,6 +67,11 @@ public class DefaultAuthProviderScramStorageTest
     {
         Fixtures.reconfigureOpenfireHome();
         Fixtures.disableDatabasePersistence();
+    }
+
+    @AfterEach
+    void clearProperties() {
+        Fixtures.clearExistingProperties();
     }
 
     /**
@@ -366,5 +376,38 @@ public class DefaultAuthProviderScramStorageTest
 
         // Verify result.
         assertFalse(result, "An empty password should not verify against a non-empty SCRAM credential.");
+    }
+
+    /**
+     * When {@code user.scramHashedPasswordOnly} is set and *no* SCRAM mechanism can derive a credential, setPassword
+     * must refuse rather than persist a user with no plaintext, no encrypted password, and no SCRAM rows, a state that
+     * would silently lock the user out of every authentication path.
+     *
+     * The guard must fire <em>before</em> the database transaction is opened: this test asserts both that
+     * {@link UserNotFoundException} is thrown and that {@link DbConnectionManager#getTransactionConnection()} is never
+     * called, so a broken guard that threw only after committing would fail here.
+     */
+    @Test
+    void setPassword_scramOnly_refusesWhenNoScramCredentialCanBeDerived()
+    {
+        // Setup test fixture: SCRAM-only mode, and force every mechanism's key derivation to fail.
+        JiveGlobals.setProperty("user.scramHashedPasswordOnly", "true");
+
+        try (final MockedStatic<ScramUtils> scramUtils = Mockito.mockStatic(ScramUtils.class);
+             final MockedStatic<DbConnectionManager> db = Mockito.mockStatic(DbConnectionManager.class))
+        {
+            scramUtils.when(() -> ScramUtils.deriveScramKeys(
+                    Mockito.any(byte[].class), Mockito.anyString(), Mockito.anyInt(),
+                    Mockito.anyString(), Mockito.anyString()))
+                .thenThrow(new SaslException("forced derivation failure for test"));
+
+            // Execute system under test & verify result: setPassword must refuse.
+            assertThrows(UserNotFoundException.class,
+                () -> new DefaultAuthProvider().setPassword("user", "pencil"),
+                "In scramOnly mode with no derivable SCRAM credential, setPassword must throw rather than persist a credential-less user.");
+
+            // Verify the refusal happened before any transaction was opened (nothing was written).
+            db.verify(DbConnectionManager::getTransactionConnection, never());
+        }
     }
 }

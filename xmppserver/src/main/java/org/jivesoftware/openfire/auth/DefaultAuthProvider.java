@@ -405,13 +405,19 @@ public class DefaultAuthProvider implements AuthProvider {
                 plaintextToStore = null;
             }
             catch (UnsupportedOperationException uoe) {
-                // Encryption may fail. In that case, ignore the error and
-                // the plain password will be stored.
+                Log.warn("Unable to encrypt password for user '{}' while updating password. Plain-text authentication will remain available.", username, uoe);
             }
         }
         if (scramOnly) {
             encryptedPassword = null;
             plaintextToStore = null;
+        }
+
+        if (scramOnly && keys == null) {
+            // In scramOnly mode SCRAM is the only stored credential. If none could be derived, committing would
+            // leave the user with no usable credential of any kind (locked out), so refuse rather than persist that.
+            Log.error("Unable to derive any SCRAM credential for user '{}' while user.scramHashedPasswordOnly is set; refusing to store a credential-less password.", username);
+            throw new UserNotFoundException("No SCRAM credentials could be derived (while configured in SCRAM-only mode) for user " + username);
         }
 
         // Persist the ofUser password row and the ofUserScram credential row atomically: because these now live in

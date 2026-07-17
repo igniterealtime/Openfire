@@ -241,6 +241,9 @@ public abstract class StanzaHandler {
                 // No Bind2: send features synchronously now.
                 startedSASL = false; // Without a multi-step SASL mechanism, this can be reset here immediately, rather than in initiateSession (as SASL1 does).
                 sasl2Successful();
+            } else if (saslStatus == SASLAuthentication.Status.authenticatedAwaitingFeatures) {
+                // Bind2: <success/> and features are delivered asynchronously by SASLAuthentication.
+                startedSASL = false;
             }
             // If authenticatedAwaitingFeatures, <success/> and features are delivered asynchronously
             // by SASLAuthentication once Bind2 resource binding completes.
@@ -254,6 +257,9 @@ public abstract class StanzaHandler {
             if (saslStatus == SASLAuthentication.Status.authenticated && usingSASL2) {
                 startedSASL = false; // Symmetric with the single-step reset in the 'authenticate' branch.
                 sasl2Successful();
+            } else if (saslStatus == SASLAuthentication.Status.authenticatedAwaitingFeatures) {
+                // Bind2: <success/> and features are delivered asynchronously by SASLAuthentication.
+                startedSASL = false;
             }
             // If authenticatedAwaitingFeatures, <success/> and features are delivered asynchronously
             // by SASLAuthentication once Bind2 resource binding completes.

@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.auth;
 
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.sql.Connection;
@@ -397,7 +398,8 @@ public class DefaultAuthProvider implements AuthProvider {
                     final ScramUtils.ScramKeys keys = ScramUtils.deriveScramKeys(
                         saltShaker, testPassword, credential.iterations,
                         mech.hmacAlgorithm(), mech.digestAlgorithm());
-                    if (DatatypeConverter.printBase64Binary(keys.storedKey).equals(credential.storedKey)) {
+                    final byte[] expectedStoredKey = DatatypeConverter.parseBase64Binary(credential.storedKey);
+                    if (MessageDigest.isEqual(keys.storedKey, expectedStoredKey)) {
                         return true;
                     }
                 } catch (SaslException | NoSuchAlgorithmException | IllegalArgumentException e) {

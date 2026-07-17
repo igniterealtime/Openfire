@@ -43,6 +43,7 @@ import org.mockito.MockedStatic;
 
 import javax.security.sasl.SaslServer;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 import static org.jivesoftware.openfire.net.SASLAuthentication.SASL_NAMESPACE;
 import static org.jivesoftware.openfire.net.SASLAuthentication.SASL2_NAMESPACE;

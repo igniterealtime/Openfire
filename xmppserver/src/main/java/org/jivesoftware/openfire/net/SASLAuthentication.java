@@ -270,7 +270,14 @@ public class SASLAuthentication {
         /**
          * SASL negotiation has been successful.
          */
-        authenticated
+        authenticated,
+
+        /**
+         * SASL negotiation has been successful, but the response (including stream features) will be
+         * delivered asynchronously (e.g. when Bind2 resource binding completes). The caller must not
+         * send stream features itself.
+         */
+        authenticatedAwaitingFeatures
     }
 
     /**
@@ -614,6 +621,9 @@ public class SASLAuthentication {
 
                     // Success! Any mechanism-specific verification (such as certificate checks for EXTERNAL) is
                     // performed by the SaslServer implementation.
+                    // Check before calling authenticationSuccessful whether a Bind2 request is pending;
+                    // if so, the response and stream features will be delivered asynchronously.
+                    final boolean hasBind2Request = usingSASL2 && session.getSessionData("bind2-request") != null;
                     authenticationSuccessful( session, saslServer.getAuthorizationID(), saslServer.getMechanismName(), challenge, usingSASL2 );
                     session.removeSessionData( "SaslServer" );
                     session.removeSessionData( SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY );
@@ -621,7 +631,7 @@ public class SASLAuthentication {
                     if (requiresChannelBinding(saslServer.getMechanismName())) {
                         session.setSessionData("ChannelBindingType", saslServer.getNegotiatedProperty(ScramSha1SaslServer.PROPNAME_CHANNELBINDINGTYPE));
                     }
-                    return Status.authenticated;
+                    return hasBind2Request ? Status.authenticatedAwaitingFeatures : Status.authenticated;
 
                 default:
                     throw new IllegalStateException( "Unexpected data received while negotiating SASL authentication. Name of the offending root element: " + doc.getName() + " Namespace: " + doc.getNamespaceURI() );
@@ -817,8 +827,17 @@ public class SASLAuthentication {
                             if (bound) {
                                 SessionEventDispatcher.dispatchEvent(session, SessionEventDispatcher.EventType.resource_bound);
                             }
+                            // Deliver stream features now that <success/> has been sent.
+                            final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
+                            final List<org.dom4j.Element> specificFeatures = session.getAvailableStreamFeatures();
+                            if (specificFeatures != null) {
+                                for (final org.dom4j.Element feature : specificFeatures) {
+                                    features.add(feature);
+                                }
+                            }
+                            session.deliverRawText(features.asXML());
                         });
-                    return; // Response is sent asynchronously from the completion stage.
+                    return; // Response and features are sent asynchronously from the completion stage.
                 } else {
                     // No Bind2 request, or session already authenticated: send <success/> synchronously without <bound/>.
                     final Element success = buildSasl2SuccessElement(successData, username, null);

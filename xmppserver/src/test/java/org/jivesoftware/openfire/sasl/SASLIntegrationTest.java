@@ -736,15 +736,22 @@ public class SASLIntegrationTest {
         Element bind = auth.addElement(new QName("bind", new Namespace("", "urn:xmpp:bind:0")));
         bind.addElement("tag").setText("MyClient");
 
+        // Mock getAvailableStreamFeatures so the async features delivery doesn't NPE.
+        when(clientSession.getAvailableStreamFeatures()).thenReturn(Collections.emptyList());
+
         // Execute - Client sends auth request
         SASLAuthentication.handle(clientSession, auth, true);
 
         // The response is delivered asynchronously inside the whenComplete callback.
         // Since we used completedFuture, the callback runs synchronously on the calling thread.
+        // Expect 2 deliverRawText calls: first <success/>, then <stream:features/>.
         ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
-        verify(clientSession).deliverRawText(responseCaptor.capture());
+        verify(clientSession, times(2)).deliverRawText(responseCaptor.capture());
 
-        String responseString = responseCaptor.getValue();
+        List<String> deliveredStrings = responseCaptor.getAllValues();
+
+        // First call must be <success/>
+        String responseString = deliveredStrings.get(0);
         Element response = DocumentHelper.parseText(responseString).getRootElement();
         assertEquals("success", response.getName());
         assertEquals("urn:xmpp:sasl:2", response.getNamespaceURI());
@@ -760,6 +767,12 @@ public class SASLIntegrationTest {
         // Verify <bound/> is present (XEP-0386)
         Element bound = response.element("bound");
         assertNotNull(bound, "SASL2 success must include bound element: " + responseString);
+
+        // Second call must be <stream:features/>
+        String featuresString = deliveredStrings.get(1);
+        Element features = DocumentHelper.parseText(featuresString).getRootElement();
+        assertEquals("features", features.getName());
+        assertEquals("http://etherx.jabber.org/streams", features.getNamespaceURI());
 
         // Verify session state
         verify(clientSession).setAuthToken(any(AuthToken.class));

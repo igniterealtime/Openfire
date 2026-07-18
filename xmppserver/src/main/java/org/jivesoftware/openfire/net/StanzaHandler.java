@@ -227,9 +227,12 @@ public abstract class StanzaHandler {
             usingSASL2 = true;
             saslStatus = SASLAuthentication.handle(session, doc, usingSASL2);
             if (saslStatus == SASLAuthentication.Status.authenticated && usingSASL2) {
+                // No Bind2: send features synchronously now.
                 startedSASL = false; // Without a multi-step SASL mechanism, this can be reset here immediately, rather than in initiateSession (as SASL1 does).
                 sasl2Successful();
             }
+            // If authenticatedAwaitingFeatures, <success/> and features are delivered asynchronously
+            // by SASLAuthentication once Bind2 resource binding completes.
         } else if (startedSASL && ("response".equals(tag) || "abort".equals(tag))) {
             // User is responding to SASL challenge. Process response
             saslStatus = SASLAuthentication.handle(session, doc, usingSASL2);
@@ -241,6 +244,8 @@ public abstract class StanzaHandler {
                 startedSASL = false; // Symmetric with the single-step reset in the 'authenticate' branch.
                 sasl2Successful();
             }
+            // If authenticatedAwaitingFeatures, <success/> and features are delivered asynchronously
+            // by SASLAuthentication once Bind2 resource binding completes.
         }
         else if ("compress".equals(tag)) {
             // Client is trying to initiate compression

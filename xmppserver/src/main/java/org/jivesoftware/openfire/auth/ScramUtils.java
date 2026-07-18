@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.auth;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
 
 import java.nio.charset.StandardCharsets;
@@ -194,7 +195,8 @@ public class ScramUtils {
         public final byte[] storedKey;
         public final byte[] serverKey;
 
-        private ScramKeys(byte[] storedKey, byte[] serverKey)
+        @VisibleForTesting
+        ScramKeys(byte[] storedKey, byte[] serverKey)
         {
             this.storedKey = storedKey;
             this.serverKey = serverKey;

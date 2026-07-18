@@ -27,8 +27,10 @@ import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.IntSupplier;
 
 import javax.security.sasl.SaslException;
@@ -85,12 +87,16 @@ public class DefaultAuthProvider implements AuthProvider {
         "WHERE u.username = ?";
     private static final String UPDATE_PASSWORD =
         "UPDATE ofUser SET plainPassword=?, encryptedPassword=? WHERE username=?";
+    private static final String LOAD_SCRAM_MECHANISMS =
+        "SELECT mechanism FROM ofUserScram WHERE username=?";
     private static final String LOAD_SCRAM_CREDENTIAL =
         "SELECT iterations,salt,storedKey,serverKey FROM ofUserScram WHERE username=? AND mechanism=?";
     private static final String UPDATE_SCRAM_CREDENTIAL =
         "UPDATE ofUserScram SET iterations=?, salt=?, storedKey=?, serverKey=? WHERE username=? AND mechanism=?";
     private static final String INSERT_SCRAM_CREDENTIAL =
         "INSERT INTO ofUserScram (username, mechanism, iterations, salt, storedKey, serverKey) VALUES (?, ?, ?, ?, ?, ?)";
+    private static final String DELETE_SCRAM_CREDENTIAL =
+        "DELETE FROM ofUserScram WHERE username=? AND mechanism=?";
 
     private static final SecureRandom random = new SecureRandom();
 
@@ -140,9 +146,10 @@ public class DefaultAuthProvider implements AuthProvider {
             if (!recurse) {
                 if (userInfo.plainText != null) {
                     // Regenerate SCRAM credentials from the plaintext when a supported mechanism's row is missing
-                    // (e.g. a legacy user predating SCRAM-SHA-256). Note (OF-3322): setPassword() skips any mechanism
-                    // whose derivation fails, so a mechanism that can never be derived here would trigger this on every
-                    // login. Bounded by 'recurse' (no infinite loop); accepted as a per-login cost since derivation
+                    // (e.g. a legacy user predating SCRAM-SHA-256). Note (OF-3322): setPassword() deletes but does not
+                    // update credentials for any mechanism it recognizes, but whose derivation fails. A mechanism that
+                    // can never be derived here (but _is_ supported by this class) would trigger this on every login.
+                    // This is bounded by 'recurse' (no infinite loop) and accepted as a per-login cost since derivation
                     // failure for a JVM-standard mechanism isn't expected.
                     boolean scramOnly = JiveGlobals.getBooleanProperty("user.scramHashedPasswordOnly");
                     if (scramOnly || hasIncompleteSetOfScramCredentials(username)) {
@@ -509,8 +516,34 @@ public class DefaultAuthProvider implements AuthProvider {
             DbConnectionManager.fastcloseStmt(pstmt);
             pstmt = null;
 
-            for (final ScramCredentialData credential : scramCredentials) {
-                upsertScramCredential(con, username, credential);
+            // Write a credential for every supported mechanism. A mechanism whose derivation failed must have any
+            // existing row removed: that row holds keys derived from the previous password and would otherwise keep
+            // authenticating it after this password change.
+            for (final ScramMechanism mech : SCRAM_MECHANISMS) {
+                final ScramCredentialData credential = scramCredentials.stream()
+                    .filter(c -> mech.mechanismName().equals(c.mechanism))
+                    .findFirst()
+                    .orElse(null);
+                if (credential != null) {
+                    upsertScramCredential(con, username, credential);
+                } else {
+                    deleteScramCredential(con, username, mech.mechanismName());
+                }
+            }
+
+            // Rows for mechanisms that this implementation does not recognize are deliberately left untouched. They may
+            // be maintained by another component, which is expected to update them in response to a password change of
+            // its own accord: removing them here risks discarding a credential that was already updated externally.
+            // When no such component exists (for example when these rows are remnants of a downgrade), they still hold
+            // keys derived from the *previous* password, and that password can continue to authenticate through them.
+            // This implementation cannot distinguish between those two cases, so it reports the situation instead of
+            // acting on data that it does not own.
+            final Set<String> unrecognizedMechanisms = loadStoredScramMechanisms(con, username);
+            SCRAM_MECHANISMS.forEach(mech -> unrecognizedMechanisms.remove(mech.mechanismName()));
+            if (!unrecognizedMechanisms.isEmpty()) {
+                Log.warn("Updated the password of user '{}', but left the stored SCRAM credentials of these unrecognized mechanisms untouched: {}. " +
+                    "Unless another component updates them, they still hold keys that are derived from the previous password, which can therefore " +
+                    "continue to be used to authenticate through those mechanisms.", username, unrecognizedMechanisms);
             }
         }
         catch (SQLException sqle) {
@@ -604,6 +637,24 @@ public class DefaultAuthProvider implements AuthProvider {
     }
 
     /**
+     * Removes the SCRAM credential (if it exists) for a user and mechanism, using the provided (transaction) connection.
+     *
+     * @param con           an open (transaction) connection to use
+     * @param username      the user whose credential is being deleted
+     * @param mechanismName the (normalized) mechanism name for the SCRAM credential to delete
+     * @return the number of rows affected: zero when no matching row exists
+     * @throws SQLException if the credential could not be persisted
+     */
+    private int deleteScramCredential(final Connection con, final String username, final String mechanismName) throws SQLException
+    {
+        try (final PreparedStatement stmt = con.prepareStatement(DELETE_SCRAM_CREDENTIAL)){
+            stmt.setString(1, username);
+            stmt.setString(2, mechanismName);
+            return stmt.executeUpdate();
+        }
+    }
+
+    /**
      * Determines whether the given exception signals a unique or primary-key constraint violation, in a manner intended
      * to work across the different databases that Openfire supports.
      *
@@ -679,5 +730,30 @@ public class DefaultAuthProvider implements AuthProvider {
     private boolean hasScramCredential(final String username, final String mechanism) throws SQLException
     {
         return loadScramCredential(username, mechanism) != null;
+    }
+
+    /**
+     * Returns the names of all SCRAM mechanisms for which a credential is stored for a user, using the provided
+     * (transaction) connection.
+     *
+     * This includes mechanisms that this implementation does not recognize.
+     *
+     * @param con      an open (transaction) connection to use
+     * @param username the user whose stored mechanism names are returned
+     * @return every mechanism name stored for this user
+     * @throws SQLException if the mechanism names could not be read
+     */
+    private Set<String> loadStoredScramMechanisms(final Connection con, final String username) throws SQLException
+    {
+        final Set<String> result = new HashSet<>();
+        try (final PreparedStatement stmt = con.prepareStatement(LOAD_SCRAM_MECHANISMS)) {
+            stmt.setString(1, username);
+            try (final ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    result.add(rs.getString(1));
+                }
+            }
+        }
+        return result;
     }
 }

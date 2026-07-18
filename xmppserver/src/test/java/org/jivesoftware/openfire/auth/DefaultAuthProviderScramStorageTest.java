@@ -34,11 +34,16 @@ import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
@@ -203,7 +208,7 @@ public class DefaultAuthProviderScramStorageTest
         Mockito
             .doAnswer(inv -> { boundMechanism[0] = inv.getArgument(1); return null; })
             .when(scramStmt)
-            .setString(Mockito.eq(2), Mockito.anyString());
+            .setString(Mockito.eq(2), anyString());
 
         when(
             scramStmt.executeQuery()
@@ -503,8 +508,8 @@ public class DefaultAuthProviderScramStorageTest
              final MockedStatic<DbConnectionManager> db = Mockito.mockStatic(DbConnectionManager.class))
         {
             scramUtils.when(() -> ScramUtils.deriveScramKeys(
-                    Mockito.any(byte[].class), Mockito.anyString(), Mockito.anyInt(),
-                    Mockito.anyString(), Mockito.anyString()))
+                    Mockito.any(byte[].class), anyString(), Mockito.anyInt(),
+                    anyString(), anyString()))
                 .thenThrow(new SaslException("forced derivation failure for test"));
 
             // Execute system under test & verify result: setPassword must refuse.
@@ -515,5 +520,103 @@ public class DefaultAuthProviderScramStorageTest
             // Verify the refusal happened before any transaction was opened (nothing was written).
             db.verify(DbConnectionManager::getTransactionConnection, never());
         }
+    }
+
+    /**
+     * A mechanism whose key derivation fails during a password change must have its stored credential removed: the
+     * stored row holds keys derived from the *previous* password, so leaving it in place would let the old password
+     * continue to authenticate through that mechanism after the password was changed.
+     *
+     * This test lets SHA-1 and SHA-512 derive normally but forces SHA-256 derivation to fail, then asserts that every
+     * supported mechanism is acted upon: written when derivation succeeded, deleted when it failed.
+     */
+    @Test
+    void setPassword_removesStoredCredentialForMechanismThatFailedToDerive() throws Exception
+    {
+        // Setup test fixture: record each prepared statement's SQL together with the parameters bound to it.
+        final Map<PreparedStatement, String> sqlByStatement = new HashMap<>();
+        final Map<PreparedStatement, Map<Integer, String>> bindingsByStatement = new HashMap<>();
+        final Connection con = Mockito.mock(Connection.class);
+        when(con.prepareStatement(anyString())).thenAnswer(inv -> {
+            final String sql = inv.getArgument(0, String.class);
+            final PreparedStatement ps = Mockito.mock(PreparedStatement.class);
+            sqlByStatement.put(ps, sql);
+            bindingsByStatement.put(ps, new HashMap<>());
+            when(ps.executeUpdate()).thenReturn(1);
+
+            // setPassword also SELECTs the stored mechanisms; return an empty result set for it.
+            final ResultSet emptyRs = Mockito.mock(ResultSet.class);
+            when(emptyRs.next()).thenReturn(false);
+            when(ps.executeQuery()).thenReturn(emptyRs);
+
+            Mockito.doAnswer(bind -> {
+                bindingsByStatement.get(ps).put(bind.getArgument(0), bind.getArgument(1));
+                return null;
+            }).when(ps).setString(Mockito.anyInt(), anyString());
+            return ps;
+        });
+
+        try (final MockedStatic<ScramUtils> scramUtils = Mockito.mockStatic(ScramUtils.class);
+             final MockedStatic<DbConnectionManager> db = Mockito.mockStatic(DbConnectionManager.class);
+             final MockedStatic<AuthFactory> auth = Mockito.mockStatic(AuthFactory.class))
+        {
+            db.when(DbConnectionManager::getTransactionConnection).thenReturn(con);
+            auth.when(() -> AuthFactory.encryptPassword(anyString())).thenReturn("encrypted");
+
+            // Let every mechanism derive, except SCRAM-SHA-256.
+            scramUtils.when(() -> ScramUtils.deriveScramKeys(
+                    Mockito.any(byte[].class), anyString(), Mockito.anyInt(),
+                    Mockito.eq(ScramSha256SaslServer.HMAC_ALGORITHM_NAME), anyString()))
+                .thenThrow(new SaslException("forced derivation failure for test"));
+            scramUtils.when(() -> ScramUtils.deriveScramKeys(
+                    Mockito.any(byte[].class), anyString(), Mockito.anyInt(),
+                    Mockito.eq(ScramSha1SaslServer.HMAC_ALGORITHM_NAME), anyString()))
+                .thenReturn(new ScramUtils.ScramKeys(new byte[20], new byte[20]));
+            scramUtils.when(() -> ScramUtils.deriveScramKeys(
+                    Mockito.any(byte[].class), anyString(), Mockito.anyInt(),
+                    Mockito.eq(ScramSha512SaslServer.HMAC_ALGORITHM_NAME), anyString()))
+                .thenReturn(new ScramUtils.ScramKeys(new byte[64], new byte[64]));
+
+            // Execute system under test.
+            new DefaultAuthProvider().setPassword("user", "pencil");
+
+            // Verify result: the mechanism that failed to derive had its stored credential deleted.
+            assertEquals(Set.of(ScramSha256SaslServer.MECHANISM_NAME),
+                mechanismsTouchedBy(sqlByStatement, bindingsByStatement, sql -> sql.contains("delete")),
+                "Exactly the mechanism whose derivation failed must be deleted, so the previous password can no longer authenticate through it.");
+
+            // Verify result: the mechanisms that derived successfully were written.
+            assertEquals(Set.of(ScramSha1SaslServer.MECHANISM_NAME, ScramSha512SaslServer.MECHANISM_NAME),
+                mechanismsTouchedBy(sqlByStatement, bindingsByStatement, sql -> sql.contains("update") || sql.contains("insert")),
+                "Mechanisms that derived successfully must have their credential written.");
+        }
+    }
+
+    /**
+     * Mechanism names bound by statements against ofUserScram whose SQL matches the given predicate.
+     */
+    private static Set<String> mechanismsTouchedBy(
+        final Map<PreparedStatement, String> sqlByStatement,
+        final Map<PreparedStatement, Map<Integer, String>> bindingsByStatement,
+        final Predicate<String> sqlMatcher)
+    {
+        final Set<String> allMechanisms = Set.of(
+            ScramSha1SaslServer.MECHANISM_NAME,
+            ScramSha256SaslServer.MECHANISM_NAME,
+            ScramSha512SaslServer.MECHANISM_NAME);
+
+        return sqlByStatement.entrySet().stream()
+            // Check if the prepared statement touches the expected database table.
+            .filter(e -> {
+                final String n = e.getValue().toLowerCase(Locale.ROOT);
+                return n.contains("ofuserscram") && sqlMatcher.test(n);
+            })
+            // Check if the prepared statement actually got executed.
+            .filter(e -> Mockito.mockingDetails(e.getKey()).getInvocations().stream()
+                .map(invocation -> invocation.getMethod().getName())
+                .anyMatch(name -> Set.of("execute", "executeUpdate", "executeLargeUpdate", "executeQuery").contains(name)))
+            .flatMap(e -> bindingsByStatement.get(e.getKey()).values().stream())
+            .filter(allMechanisms::contains)
+            .collect(Collectors.toSet());
     }
 }

@@ -25,11 +25,9 @@ public class CsiModule extends BasicModule {
     private static final Bind2CSIHandler handler = new Bind2CSIHandler();
     /**
      * <p>Create a basic module with the given name.</p>
-     *
-     * @param moduleName The name for the module or null to use the default
      */
-    public CsiModule(String moduleName) {
-        super(moduleName);
+    public CsiModule() {
+        super("Client State Indication");
     }
 
     @Override

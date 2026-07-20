@@ -3,6 +3,9 @@ tags:
     - sasl2
 onFlowStart:
     - runScript: scripts/checkHealth.js
+    - startRecording: bind2
+onFlowComplete:
+    - stopRecording
 ---
 
 - runScript: scripts/startSession.js
@@ -63,3 +66,4 @@ onFlowStart:
     id: "server_info_bind2"
     text: "available"
 - takeScreenshot: server_info
+

@@ -797,12 +797,11 @@ public class SASLAuthentication {
             if (session instanceof LocalClientSession clientSession) {
                 final Bind2Request bind2Request = (Bind2Request) session.getSessionData("bind2-request");
                 if (bind2Request != null && clientSession.getStatus() != Session.Status.AUTHENTICATED) {
-                    session.setSessionData("bind2-request", null);
+                    session.removeSessionData("bind2-request");
                     final UserAgentInfo userAgentInfo = (UserAgentInfo) session.getSessionData("user-agent-info");
                     final String resource = bind2Request.generateResourceString(userAgentInfo);
                     final AuthToken authToken = clientSession.getAuthToken();
                     final byte[] finalSuccessData = successData;
-                    final String finalUsername = username;
                     final String finalAuthorizationIdentity = authorizationIdentity;
                     SessionManager.getInstance().bindResource(clientSession, authToken, resource)
                         .whenComplete((result, throwable) -> {
@@ -825,7 +824,7 @@ public class SASLAuthentication {
                             }
                             session.deliverRawText(features.asXML());
                         });
-                    return; // Response and features are sent asynchronously from the completion stage.
+                    // Response and features are sent asynchronously from the completion stage.
                 } else {
                     // No Bind2 request, or session already authenticated: send <success/> synchronously without <bound/>.
                     final Element success = buildSasl2SuccessElement(successData, authorizationIdentity, null);

@@ -807,24 +807,34 @@ public class SASLAuthentication {
                     final String finalAuthorizationIdentity = authorizationIdentity;
                     SessionManager.getInstance().bindResource(clientSession, authToken, resource)
                         .whenComplete((result, throwable) -> {
-                            final boolean bound = throwable == null && result == SessionManager.BindResult.BOUND;
-                            final Element success = buildSasl2SuccessElement(finalSuccessData, finalAuthorizationIdentity, bound ? resource : null);
-                            if (bound) {
-                                bind2Request.processFeatureRequests(clientSession, success);
-                            }
-                            clientSession.deliverRawText(success.asXML());
-                            if (bound) {
-                                SessionEventDispatcher.dispatchEvent(clientSession, SessionEventDispatcher.EventType.resource_bound);
-                            }
-                            // Deliver stream features now that <success/> has been sent.
-                            final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
-                            final List<org.dom4j.Element> specificFeatures = clientSession.getAvailableStreamFeatures();
-                            if (specificFeatures != null) {
-                                for (final org.dom4j.Element feature : specificFeatures) {
-                                    features.add(feature);
+                            try {
+                                if (throwable != null) {
+                                    Log.warn("An exception occurred while binding resource '{}' for session '{}' during SASL2+Bind2 authentication.", resource, clientSession, throwable);
                                 }
+                                final boolean bound = throwable == null && result == SessionManager.BindResult.BOUND;
+                                final Element success = buildSasl2SuccessElement(finalSuccessData, finalAuthorizationIdentity, bound ? resource : null);
+                                if (bound) {
+                                    bind2Request.processFeatureRequests(clientSession, success);
+                                }
+                                if (bound) {
+                                    clientSession.setStatus(Session.Status.AUTHENTICATED);
+                                    SessionEventDispatcher.dispatchEvent(clientSession, SessionEventDispatcher.EventType.resource_bound);
+                                }
+                                // Deliver stream features now that <success/> has been sent.
+                                final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
+                                final List<org.dom4j.Element> specificFeatures = clientSession.getAvailableStreamFeatures();
+                                if (specificFeatures != null) {
+                                    for (final org.dom4j.Element feature : specificFeatures) {
+                                        features.add(feature);
+                                    }
+                                }
+                                // Deliver these here.
+                                clientSession.deliverRawText(success.asXML());
+                                clientSession.deliverRawText(features.asXML());
+                            } catch(Exception e) {
+                                Log.warn("An exception occurred while processing SASL2+Bind2 for '{}' during SASL2+Bind2 authentication.", clientSession, e);
+                                authenticationFailed(clientSession, Failure.TEMPORARY_AUTH_FAILURE, true);
                             }
-                            clientSession.deliverRawText(features.asXML());
                         });
                     // Response and features are sent asynchronously from the completion stage.
                 } else {

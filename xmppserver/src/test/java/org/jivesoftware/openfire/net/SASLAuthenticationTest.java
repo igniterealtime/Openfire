@@ -22,6 +22,8 @@ import org.dom4j.QName;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
+import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthToken;
@@ -54,10 +56,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link SASLAuthentication}.
@@ -369,40 +368,52 @@ public class SASLAuthenticationTest
     @Test
     public void shouldGenerateAnonymousAuthTokenForClientWhenUsernameIsNullWithSasl2AndBind2()
     {
-        // Setup test fixture.
-        final Connection connection = mock(Connection.class);
-        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
-        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
-        // Capture the anonymous username (stream-ID resource) before authentication changes session state.
-        final String anonymousUsername = session.getAnonymousUsername();
+        try (final MockedStatic<EntityCapabilitiesManager> mockedEntityCaps = mockStatic(EntityCapabilitiesManager.class)) {
+            mockedEntityCaps.when(() -> EntityCapabilitiesManager.getLocalDomainVerHash(any())).thenReturn(null);
 
-        // Set a Bind2Request in session data so the bind2 path is taken.
-        // For anonymous sessions, the resource must equal the anonymous username (same UUID for node and resource).
-        final Bind2Request bind2Request = mock(Bind2Request.class);
-        when(bind2Request.generateResourceString(any())).thenReturn(anonymousUsername);
-        session.setSessionData("bind2-request", bind2Request);
+            // Setup test fixture.
+            final Connection connection = mock(Connection.class);
+            final ConnectionConfiguration connectionConfiguration = mock(ConnectionConfiguration.class);
+            when(connectionConfiguration.getTlsPolicy()).thenReturn(Connection.TLSPolicy.disabled);
+            when(connectionConfiguration.getCompressionPolicy()).thenReturn(Connection.CompressionPolicy.disabled);
+            when(connection.getConfiguration()).thenReturn(connectionConfiguration);
+            final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+            final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+            // Capture the anonymous username (stream-ID resource) before authentication changes session state.
+            final String anonymousUsername = session.getAnonymousUsername();
 
-        // Stub SessionManager.bindResource to complete successfully (synchronously).
-        final SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
-        when(sessionManager.bindResource(any(), any(), any()))
-            .thenReturn(CompletableFuture.completedFuture(SessionManager.BindResult.BOUND));
+            // Set a Bind2Request in session data so the bind2 path is taken.
+            // For anonymous sessions, the resource must equal the anonymous username (same UUID for node and resource).
+            final Bind2Request bind2Request = mock(Bind2Request.class);
+            when(bind2Request.generateResourceString(any())).thenReturn(anonymousUsername);
+            session.setSessionData("bind2-request", bind2Request);
 
-        // Execute system under test.
-        SASLAuthentication.authenticationSuccessful(session, null, "ANONYMOUS", new byte[0], true);
+            // Stub SessionManager.bindResource to complete successfully (synchronously).
+            final SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
+            when(sessionManager.bindResource(any(), any(), any()))
+                .thenReturn(CompletableFuture.completedFuture(SessionManager.BindResult.BOUND));
 
-        // Verify result.
-        final AuthToken authToken = session.getAuthToken();
-        assertTrue(authToken.isAnonymous(), "Expected an anonymous auth token when username is null.");
-        final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
-        verify(connection).deliverRawText(response.capture());
-        final String responseValue = response.getValue();
-        assertTrue(responseValue.contains("<success"), "Expected SASL2 success element to be sent.");
-        // For SASL2+Bind2 anonymous, authorization-identifier must be a full JID: uuid@domain/uuid
-        // where the node (local part) and resource are the same UUID.
-        final String expectedFullJid = anonymousUsername + "@" + Fixtures.XMPP_DOMAIN + "/" + anonymousUsername;
-        assertTrue(responseValue.contains(expectedFullJid),
-            "Expected authorization-identifier to be full JID '" + expectedFullJid + "' (node==resource for anonymous) but got: " + response.getValue());
-        verify(bind2Request).processFeatureRequests(any(), any());
+            // Execute system under test.
+            SASLAuthentication.authenticationSuccessful(session, null, "ANONYMOUS", new byte[0], true);
+
+            // Verify result.
+            final AuthToken authToken = session.getAuthToken();
+            assertTrue(authToken.isAnonymous(), "Expected an anonymous auth token when username is null.");
+            final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+            verify(connection, times(2)).deliverRawText(response.capture());
+            final String responseValue = response.getAllValues().get(0);
+            assertTrue(responseValue.contains("<success"), "Expected SASL2 success element to be sent.");
+            // For SASL2+Bind2 anonymous, authorization-identifier must be a full JID: uuid@domain/uuid
+            // where the node (local part) and resource are the same UUID.
+            final String expectedFullJid = anonymousUsername + "@" + Fixtures.XMPP_DOMAIN + "/" + anonymousUsername;
+            assertTrue(responseValue.contains(expectedFullJid),
+                "Expected authorization-identifier to be full JID '" + expectedFullJid + "' (node==resource for anonymous) but got: " + response.getValue());
+            verify(bind2Request).processFeatureRequests(any(), any());
+
+            final String responseValue2 = response.getAllValues().get(1);
+            assertTrue(responseValue2.contains("<stream:feature"), "Expected stream features Element to be sent.");
+            assertFalse(responseValue2.contains("<bind"), "Expected resource binding not to be offered.");
+        }
     }
 
     /**
@@ -473,39 +484,52 @@ public class SASLAuthenticationTest
     @Test
     public void shouldGenerateUserAuthTokenForClientWhenUsernameIsProvidedWithSasl2AndBind2()
     {
-        // Setup test fixture.
-        final Connection connection = mock(Connection.class);
-        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
-        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        try (final MockedStatic<EntityCapabilitiesManager> mockedEntityCaps = mockStatic(EntityCapabilitiesManager.class)) {
+            mockedEntityCaps.when(() -> EntityCapabilitiesManager.getLocalDomainVerHash(any())).thenReturn(null);
 
-        final String username = "testuser";
-        final String resource = "testresource";
+            // Setup test fixture.
+            final Connection connection = mock(Connection.class);
+            final ConnectionConfiguration connectionConfiguration = mock(ConnectionConfiguration.class);
+            when(connectionConfiguration.getTlsPolicy()).thenReturn(Connection.TLSPolicy.disabled);
+            when(connectionConfiguration.getCompressionPolicy()).thenReturn(Connection.CompressionPolicy.disabled);
+            when(connection.getConfiguration()).thenReturn(connectionConfiguration);
+            final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+            final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
 
-        // Set a Bind2Request in session data so the bind2 path is taken.
-        final Bind2Request bind2Request = mock(Bind2Request.class);
-        when(bind2Request.generateResourceString(any())).thenReturn(resource);
-        session.setSessionData("bind2-request", bind2Request);
+            final String username = "testuser";
+            final String resource = "testresource";
 
-        // Stub SessionManager.bindResource to complete successfully (synchronously).
-        final SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
-        when(sessionManager.bindResource(any(), any(), any()))
-            .thenReturn(CompletableFuture.completedFuture(SessionManager.BindResult.BOUND));
+            // Set a Bind2Request in session data so the bind2 path is taken.
+            final Bind2Request bind2Request = mock(Bind2Request.class);
+            when(bind2Request.generateResourceString(any())).thenReturn(resource);
+            session.setSessionData("bind2-request", bind2Request);
 
-        // Execute system under test.
-        SASLAuthentication.authenticationSuccessful(session, username, "PLAIN", new byte[0], true);
+            // Stub SessionManager.bindResource to complete successfully (synchronously).
+            final SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
+            when(sessionManager.bindResource(any(), any(), any()))
+                .thenReturn(CompletableFuture.completedFuture(SessionManager.BindResult.BOUND));
 
-        // Verify result.
-        final AuthToken authToken = session.getAuthToken();
-        assertFalse(authToken.isAnonymous(), "Expected a user auth token when username is provided.");
-        assertEquals(username, authToken.getUsername(), "Expected auth token to contain the provided username.");
-        final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
-        verify(connection).deliverRawText(response.capture());
-        assertTrue(response.getValue().contains("<success"), "Expected SASL2 success element to be sent.");
-        // For SASL2+Bind2, authorization-identifier must be a full JID: username@domain/resource.
-        final String expectedFullJid = username + "@" + Fixtures.XMPP_DOMAIN + "/" + resource;
-        assertTrue(response.getValue().contains(expectedFullJid),
-            "Expected authorization-identifier to be full JID '" + expectedFullJid + "' but got: " + response.getValue());
-        verify(bind2Request).processFeatureRequests(any(), any());
+            // Execute system under test.
+            SASLAuthentication.authenticationSuccessful(session, username, "PLAIN", new byte[0], true);
+
+            // Verify result.
+            final AuthToken authToken = session.getAuthToken();
+            assertFalse(authToken.isAnonymous(), "Expected a user auth token when username is provided.");
+            assertEquals(username, authToken.getUsername(), "Expected auth token to contain the provided username.");
+            final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+            verify(connection, times(2)).deliverRawText(response.capture());
+            final String responseValue = response.getAllValues().get(0);
+            assertTrue(responseValue.contains("<success"), "Expected SASL2 success element to be sent.");
+            // For SASL2+Bind2, authorization-identifier must be a full JID: username@domain/resource.
+            final String expectedFullJid = username + "@" + Fixtures.XMPP_DOMAIN + "/" + resource;
+            assertTrue(responseValue.contains(expectedFullJid),
+                "Expected authorization-identifier to be full JID '" + expectedFullJid + "' but got: " + responseValue);
+            verify(bind2Request).processFeatureRequests(any(), any());
+
+            final String responseValue2 = response.getAllValues().get(1);
+            assertTrue(responseValue2.contains("<stream:feature"), "Expected stream features Element to be sent.");
+            assertFalse(responseValue2.contains("<bind"), "Expected resource binding not to be offered.");
+        }
     }
 
     /**

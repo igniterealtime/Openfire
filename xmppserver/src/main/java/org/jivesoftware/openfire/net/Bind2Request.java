@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2025-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class Bind2Request {
             throw new NullPointerException("Handler cannot be null");
         }
         String namespace = handler.getNamespace();
-        if (namespace == null || namespace.trim().isEmpty()) {
+        if (namespace == null || namespace.isEmpty()) {
             throw new IllegalArgumentException("Handler namespace cannot be null or empty");
         }
         
@@ -71,7 +71,7 @@ public class Bind2Request {
      * @return The removed handler, or null if none was registered for this namespace
      */
     public static Bind2InlineHandler unregisterElementHandler(String namespace) {
-        if (namespace == null || namespace.trim().isEmpty()) {
+        if (namespace == null || namespace.isEmpty()) {
             throw new IllegalArgumentException("Namespace cannot be null or empty");
         }
         
@@ -88,7 +88,6 @@ public class Bind2Request {
      * @return Element for <bound/>
      */
     public Element processFeatureRequests(LocalClientSession clientSession, Element successElement) {
-        Log.debug("here");
         Element bound = successElement.addElement(new QName("bound", new Namespace("", NAMESPACE)));
 
         for (Element element : featureRequests) {

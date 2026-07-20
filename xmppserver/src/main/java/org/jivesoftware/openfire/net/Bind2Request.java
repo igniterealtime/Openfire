@@ -85,36 +85,31 @@ public class Bind2Request {
     /**
      * Process feature request elements using registered handlers.
      *
-     * @return Element for <bound/> or null if it's not a LocalClientSession
+     * @return Element for <bound/>
      */
-    public Element processFeatureRequests(LocalSession session, Element successElement) {
-        if (session instanceof LocalClientSession) {
-            LocalClientSession clientSession = (LocalClientSession) session;
-            Element bound = successElement.addElement(new QName("bound", new Namespace("", NAMESPACE)));
+    public Element processFeatureRequests(LocalClientSession clientSession, Element successElement) {
+        Log.debug("here");
+        Element bound = successElement.addElement(new QName("bound", new Namespace("", NAMESPACE)));
 
-            for (Element element : featureRequests) {
-                String namespace = element.getNamespaceURI();
-                Bind2InlineHandler handler = elementHandlers.get(namespace);
+        for (Element element : featureRequests) {
+            String namespace = element.getNamespaceURI();
+            Bind2InlineHandler handler = elementHandlers.get(namespace);
 
-                if (handler != null) {
-                    try {
-                        if (!handler.handleElement(clientSession, bound, element)) {
-                            Log.warn("Handler for namespace {} failed to process element", namespace);
-                        }
-                    } catch (Exception e) {
-                        Log.error("Error processing element with namespace: " + namespace, e);
+            if (handler != null) {
+                try {
+                    if (!handler.handleElement(clientSession, bound, element)) {
+                        Log.warn("Handler for namespace {} failed to process element", namespace);
                     }
-                } else {
-                    Log.debug("No handler registered for namespace: {}", namespace);
-                    // We don't fail here because there's no obvious way we could fail.
+                } catch (Exception e) {
+                    Log.error("Error processing element with namespace: " + namespace, e);
                 }
+            } else {
+                Log.debug("No handler registered for namespace: {}", namespace);
+                // We don't fail here because there's no obvious way we could fail.
             }
-
-            return bound;
-        } else {
-            Log.debug("Session is not a LocalClientSession, cannot process feature requests");
-            return null;
         }
+
+        return bound;
     }
 
     public static Element featureElement() {

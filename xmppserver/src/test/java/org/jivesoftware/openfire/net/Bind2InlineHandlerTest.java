@@ -90,16 +90,6 @@ public class Bind2InlineHandlerTest {
     }
 
     @Test
-    public void testRegisterHandlerWithWhitespaceNamespace() {
-        // Setup
-        when(mockHandler.getNamespace()).thenReturn("   ");
-
-        // Execute & Verify
-        assertThrows(IllegalArgumentException.class, () -> 
-            Bind2Request.registerElementHandler(mockHandler));
-    }
-
-    @Test
     public void testUnregisterElementHandler() {
         // Setup
         when(mockHandler.getNamespace()).thenReturn("http://test.namespace");

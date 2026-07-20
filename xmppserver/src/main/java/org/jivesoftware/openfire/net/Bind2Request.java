@@ -225,7 +225,7 @@ public class Bind2Request {
             byte[] keyBytes = hmacKey.getBytes(StandardCharsets.UTF_8);
 
             // Using a fixed constant here - building a rainbow table here for the case
-            // where the client supplies no tag is going tobe very expensive, so this
+            // where the client supplies no tag is going to be very expensive, so this
             // prevents an id recovery attack.
             String valueToHmac = resource.toString() + "OpenfireResourceConstant";
 

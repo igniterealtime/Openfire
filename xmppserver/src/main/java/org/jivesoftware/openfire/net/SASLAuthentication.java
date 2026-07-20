@@ -567,6 +567,8 @@ public class SASLAuthentication {
                         // the RFC, so we just strip any initial token.
                         if (data != null) data = null;
                     }
+                    // Clear any unexecuted bind2-request
+                    session.removeSessionData("bind2-request");
                     if (usingSASL2 && session instanceof LocalClientSession) {
                         Element userAgentElement = doc.element("user-agent");
                         if (userAgentElement != null) {

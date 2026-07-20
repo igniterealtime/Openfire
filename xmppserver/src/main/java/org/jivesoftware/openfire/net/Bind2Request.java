@@ -85,7 +85,7 @@ public class Bind2Request {
     /**
      * Process feature request elements using registered handlers.
      *
-     * @return Element for <bound/>
+     * @return Element for <bound/> or null if it's not a LocalClientSession
      */
     public Element processFeatureRequests(LocalSession session, Element successElement) {
         if (session instanceof LocalClientSession) {

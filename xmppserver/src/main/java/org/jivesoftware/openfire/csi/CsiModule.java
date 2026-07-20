@@ -18,6 +18,8 @@ public class CsiModule extends BasicModule {
         public boolean handleElement(LocalClientSession session, Element bound, Element element) {
             if (element.getName().equals("active")) {
                 session.getCsiManager().activate();
+            } else if (element.getName().equals("inactive")) {
+                session.getCsiManager().deactivate();
             }
             return true;
         }

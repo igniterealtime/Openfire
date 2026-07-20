@@ -799,7 +799,7 @@ public class SASLAuthentication {
             if (session instanceof LocalClientSession clientSession) {
                 final Bind2Request bind2Request = (Bind2Request) session.getSessionData("bind2-request");
                 if (bind2Request != null && clientSession.getStatus() != Session.Status.AUTHENTICATED) {
-                    session.removeSessionData("bind2-request");
+                    clientSession.removeSessionData("bind2-request");
                     final UserAgentInfo userAgentInfo = (UserAgentInfo) session.getSessionData("user-agent-info");
                     final String resource = bind2Request.generateResourceString(userAgentInfo);
                     final AuthToken authToken = clientSession.getAuthToken();
@@ -810,21 +810,21 @@ public class SASLAuthentication {
                             final boolean bound = throwable == null && result == SessionManager.BindResult.BOUND;
                             final Element success = buildSasl2SuccessElement(finalSuccessData, finalAuthorizationIdentity, bound ? resource : null);
                             if (bound) {
-                                bind2Request.processFeatureRequests(session, success);
+                                bind2Request.processFeatureRequests(clientSession, success);
                             }
-                            session.deliverRawText(success.asXML());
+                            clientSession.deliverRawText(success.asXML());
                             if (bound) {
-                                SessionEventDispatcher.dispatchEvent(session, SessionEventDispatcher.EventType.resource_bound);
+                                SessionEventDispatcher.dispatchEvent(clientSession, SessionEventDispatcher.EventType.resource_bound);
                             }
                             // Deliver stream features now that <success/> has been sent.
                             final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
-                            final List<org.dom4j.Element> specificFeatures = session.getAvailableStreamFeatures();
+                            final List<org.dom4j.Element> specificFeatures = clientSession.getAvailableStreamFeatures();
                             if (specificFeatures != null) {
                                 for (final org.dom4j.Element feature : specificFeatures) {
                                     features.add(feature);
                                 }
                             }
-                            session.deliverRawText(features.asXML());
+                            clientSession.deliverRawText(features.asXML());
                         });
                     // Response and features are sent asynchronously from the completion stage.
                 } else {

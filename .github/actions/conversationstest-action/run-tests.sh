@@ -35,5 +35,5 @@ trap '"$SCRIPT_DIR/stop-sidecar-api.sh"' EXIT
 "$SCRIPT_DIR/start-sidecar-api.sh"
 
 echo "Running Maestro tests (tags: $INCLUDE_TAGS)..."
-maestro test --include-tags "$INCLUDE_TAGS" "$REPO_ROOT/build/ci/conversations/flows/" \
+maestro --verbose test --include-tags "$INCLUDE_TAGS" "$REPO_ROOT/build/ci/conversations/flows/" \
   || { RC=$?; adb logcat -d conversations:V '*:S' > adb_logcat.log 2>&1 || true; exit $RC; }

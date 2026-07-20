@@ -194,7 +194,7 @@ public class Bind2Request {
      * Generates a resource string using the user agent information or defaults.
      *
      * @param userAgentInfo The user agent information, can be null
-     * @return A resource string containing the user agent tag (or "Openfire") followed by a UUID
+     * @return A resource string containing the client tag (if provided) followed by random string (hex or UUID).
      */
     public String generateResourceString(UserAgentInfo userAgentInfo) {
         StringBuilder resource = new StringBuilder();

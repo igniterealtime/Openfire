@@ -85,7 +85,7 @@ public class Bind2Request {
     /**
      * Process feature request elements using registered handlers.
      *
-     * @return True if all elements were processed successfully, false if any failed
+     * @return Element for <bound/>
      */
     public Element processFeatureRequests(LocalSession session, Element successElement) {
         if (session instanceof LocalClientSession) {

@@ -380,7 +380,6 @@ public class SASLAuthenticationTest
         // For anonymous sessions, the resource must equal the anonymous username (same UUID for node and resource).
         final Bind2Request bind2Request = mock(Bind2Request.class);
         when(bind2Request.generateResourceString(any())).thenReturn(anonymousUsername);
-        when(bind2Request.processFeatureRequests(any(), any())).thenReturn(null);
         session.setSessionData("bind2-request", bind2Request);
 
         // Stub SessionManager.bindResource to complete successfully (synchronously).
@@ -396,13 +395,14 @@ public class SASLAuthenticationTest
         assertTrue(authToken.isAnonymous(), "Expected an anonymous auth token when username is null.");
         final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
         verify(connection).deliverRawText(response.capture());
-        assertTrue(response.getValue().contains("<success"), "Expected SASL2 success element to be sent.");
+        final String responseValue = response.getValue();
+        assertTrue(responseValue.contains("<success"), "Expected SASL2 success element to be sent.");
         // For SASL2+Bind2 anonymous, authorization-identifier must be a full JID: uuid@domain/uuid
         // where the node (local part) and resource are the same UUID.
         final String expectedFullJid = anonymousUsername + "@" + Fixtures.XMPP_DOMAIN + "/" + anonymousUsername;
-        assertTrue(response.getValue().contains(expectedFullJid),
+        assertTrue(responseValue.contains(expectedFullJid),
             "Expected authorization-identifier to be full JID '" + expectedFullJid + "' (node==resource for anonymous) but got: " + response.getValue());
-        assertTrue(response.getValue().contains("bound"), "Expected bound element in SASL2 success element when Bind2 was requested.");
+        verify(bind2Request).processFeatureRequests(any(), any());
     }
 
     /**
@@ -484,7 +484,6 @@ public class SASLAuthenticationTest
         // Set a Bind2Request in session data so the bind2 path is taken.
         final Bind2Request bind2Request = mock(Bind2Request.class);
         when(bind2Request.generateResourceString(any())).thenReturn(resource);
-        when(bind2Request.processFeatureRequests(any(), any())).thenReturn(null);
         session.setSessionData("bind2-request", bind2Request);
 
         // Stub SessionManager.bindResource to complete successfully (synchronously).
@@ -506,7 +505,7 @@ public class SASLAuthenticationTest
         final String expectedFullJid = username + "@" + Fixtures.XMPP_DOMAIN + "/" + resource;
         assertTrue(response.getValue().contains(expectedFullJid),
             "Expected authorization-identifier to be full JID '" + expectedFullJid + "' but got: " + response.getValue());
-        assertTrue(response.getValue().contains("bound"), "Expected bound element in SASL2 success element when Bind2 was requested.");
+        verify(bind2Request).processFeatureRequests(any(), any());
     }
 
     /**

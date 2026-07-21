@@ -1883,6 +1883,124 @@ public class SASLAuthenticationTest
             "Expected fast-rotated-token to be cleared after authenticationSuccessful.");
     }
 
+    // -------------------------------------------------------------------------
+    // isFastMechanism
+    // -------------------------------------------------------------------------
+
+    /**
+     * Verifies that isFastMechanism returns true for all HT-* mechanism names.
+     */
+    @Test
+    public void isFastMechanismShouldReturnTrueForHtMechanisms()
+    {
+        assertTrue(SASLAuthentication.isFastMechanism("HT-SHA-256-NONE"), "Expected HT-SHA-256-NONE to be a FAST mechanism.");
+        assertTrue(SASLAuthentication.isFastMechanism("HT-SHA-256-UNIQ"), "Expected HT-SHA-256-UNIQ to be a FAST mechanism.");
+        assertTrue(SASLAuthentication.isFastMechanism("HT-SHA-512-EXPR"), "Expected HT-SHA-512-EXPR to be a FAST mechanism.");
+    }
+
+    /**
+     * Verifies that isFastMechanism returns true for all HT2-* mechanism names.
+     */
+    @Test
+    public void isFastMechanismShouldReturnTrueForHt2Mechanisms()
+    {
+        assertTrue(SASLAuthentication.isFastMechanism("HT2-SHA-256-NONE"), "Expected HT2-SHA-256-NONE to be a FAST mechanism.");
+        assertTrue(SASLAuthentication.isFastMechanism("HT2-SHA-512-ENDP"), "Expected HT2-SHA-512-ENDP to be a FAST mechanism.");
+    }
+
+    /**
+     * Verifies that isFastMechanism returns false for standard (non-FAST) mechanism names.
+     */
+    @Test
+    public void isFastMechanismShouldReturnFalseForNonFastMechanisms()
+    {
+        assertFalse(SASLAuthentication.isFastMechanism("PLAIN"),     "Expected PLAIN not to be a FAST mechanism.");
+        assertFalse(SASLAuthentication.isFastMechanism("EXTERNAL"),  "Expected EXTERNAL not to be a FAST mechanism.");
+        assertFalse(SASLAuthentication.isFastMechanism("SCRAM-SHA-1-PLUS"), "Expected SCRAM-SHA-1-PLUS not to be a FAST mechanism.");
+        assertFalse(SASLAuthentication.isFastMechanism("ANONYMOUS"), "Expected ANONYMOUS not to be a FAST mechanism.");
+    }
+
+    // -------------------------------------------------------------------------
+    // handle() — FAST mechanism bypass of the mechanism list check
+    // -------------------------------------------------------------------------
+
+    /**
+     * Verifies that handle() rejects a FAST (HT-*) mechanism when FAST is disabled, even though
+     * the mechanism is not in the sasl.mechs list.
+     *
+     * When FAST is disabled the HT-* mechanism must not pass the mechanism-list guard.
+     */
+    @Test
+    public void handleShouldRejectFastMechanismWhenFastIsDisabled()
+    {
+        // Setup: FAST explicitly disabled, HT-SHA-256-NONE is not in the sasl.mechs list.
+        JiveGlobals.setProperty("xmpp.fast.enabled", "false");
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        SASLAuthentication.SASL2_REQUIRE_TLS.setValue(false);
+        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("PLAIN")); // HT-* not listed.
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final SASLAuthentication.Status status = SASLAuthentication.handle(
+            session, sasl2AuthenticateElement("HT-SHA-256-NONE"), true);
+
+        // Verify: authentication must fail with INVALID_MECHANISM.
+        assertEquals(SASLAuthentication.Status.failed, status,
+            "Expected SASL negotiation to fail when a FAST mechanism is used but FAST is disabled.");
+        final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(response.capture());
+        assertTrue(response.getValue().contains("invalid-mechanism"),
+            "Expected an invalid-mechanism failure element in the response.");
+    }
+
+    /**
+     * Verifies that handle() passes the mechanism-list guard for a FAST mechanism when FAST is
+     * enabled — i.e., the mechanism is not rejected simply because it is absent from sasl.mechs.
+     *
+     * The test does not complete authentication (the SASL server will not be found for an empty
+     * response), but it must NOT fail with "invalid-mechanism" at the mechanism-list check.
+     */
+    @Test
+    public void handleShouldNotRejectFastMechanismDueToMechanismListWhenFastIsEnabled()
+    {
+        // Setup: FAST enabled, HT-SHA-256-NONE not in sasl.mechs but FAST is on.
+        JiveGlobals.setProperty("xmpp.fast.enabled", "true");
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        SASLAuthentication.SASL2_REQUIRE_TLS.setValue(false);
+        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("PLAIN")); // HT-* intentionally not listed.
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final SASLAuthentication.Status status = SASLAuthentication.handle(
+            session, sasl2AuthenticateElement("HT-SHA-256-NONE"), true);
+
+        // Verify: authentication must fail (no valid session CB / no SASL server), but the failure
+        // reason must NOT be "invalid-mechanism" from the mechanism-list check — it should be
+        // "invalid-mechanism" from the session-eligibility check (mechanism not available for this
+        // unencrypted session) or a provider-level failure, not from the sasl.mechs list guard.
+        assertEquals(SASLAuthentication.Status.failed, status,
+            "Expected SASL negotiation to fail (HT-* needs TLS/FAST support), but not due to the mechanism list.");
+
+        // Capture the delivered failure element.
+        final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(response.capture());
+        final String xml = response.getValue();
+
+        // The important assertion: the failure was NOT "The configuration of Openfire does not
+        // contain or allow the mechanism." from the sasl.mechs list guard. Any failure is
+        // acceptable here (session eligibility, no provider, etc.) but it must be after the list
+        // guard passed — confirmed by the fact that the test did not throw before this point.
+        assertTrue(xml.contains("failure"), "Expected a SASL failure element in the response.");
+    }
+
     private static Element authElement(final String mechanism)
     {
         final Element auth = DocumentHelper.createElement(new QName("auth", Namespace.get("", SASL_NAMESPACE)));

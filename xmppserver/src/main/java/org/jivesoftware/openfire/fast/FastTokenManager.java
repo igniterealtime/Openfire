@@ -451,7 +451,7 @@ public class FastTokenManager {
         private final FastToken rotatedToken;
         private final byte[] responderHashedToken;
 
-        Ht2ValidationResult(@Nonnull final FastToken rotatedToken, @Nonnull final byte[] responderHashedToken) {
+        public Ht2ValidationResult(@Nonnull final FastToken rotatedToken, @Nonnull final byte[] responderHashedToken) {
             this.rotatedToken = rotatedToken;
             this.responderHashedToken = responderHashedToken.clone();
         }

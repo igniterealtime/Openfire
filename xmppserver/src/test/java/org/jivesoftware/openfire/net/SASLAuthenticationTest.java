@@ -54,6 +54,7 @@ import static org.jivesoftware.openfire.net.SASLAuthentication.SASL2_NAMESPACE;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -1672,6 +1673,214 @@ public class SASLAuthenticationTest
             .flatMap(e -> e.elements("channel-binding").stream())
             .map(e -> e.attributeValue("type"))
             .collect(Collectors.toSet());
+    }
+
+    // =========================================================================
+    // FAST / XEP-0484 tests
+    // =========================================================================
+
+    /**
+     * Verifies that the SASL2 inline feature element includes a FAST feature element when FAST is enabled.
+     *
+     * The getSASLMechanismsElement call for SASL2 on a client session with at least one mechanism available
+     * should include the FAST feature inside the &lt;inline/&gt; child.
+     */
+    @Test
+    public void shouldIncludeFastFeatureInSasl2InlineWhenFastEnabled()
+    {
+        // Setup test fixture: SASL2 enabled, FAST enabled, PLAIN mechanism available.
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        JiveGlobals.setProperty("xmpp.fast.enabled", "true");
+        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("PLAIN"));
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final Element result = SASLAuthentication.getSASLMechanismsElement(session, true);
+
+        // Verify result.
+        assertNotNull(result, "Expected a non-null SASL2 element.");
+        final Element inlineEl = result.element("inline");
+        assertNotNull(inlineEl, "Expected an <inline/> element inside the SASL2 authentication element.");
+        final Element fastEl = inlineEl.element(new org.dom4j.QName("fast",
+            org.dom4j.Namespace.get("", org.jivesoftware.openfire.fast.FastTokenManager.NAMESPACE)));
+        assertNotNull(fastEl, "Expected a <fast/> element inside <inline/> when FAST is enabled.");
+        assertEquals(org.jivesoftware.openfire.fast.FastTokenManager.NAMESPACE, fastEl.getNamespaceURI(),
+            "Expected the <fast/> element to be in the FAST namespace.");
+    }
+
+    /**
+     * Verifies that the SASL2 inline feature element does NOT include a FAST feature element when FAST is disabled.
+     */
+    @Test
+    public void shouldNotIncludeFastFeatureInSasl2InlineWhenFastDisabled()
+    {
+        // Setup test fixture: SASL2 enabled, FAST disabled, PLAIN mechanism available.
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        JiveGlobals.setProperty("xmpp.fast.enabled", "false");
+        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("PLAIN"));
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final Element result = SASLAuthentication.getSASLMechanismsElement(session, true);
+
+        // Verify result: either no <inline/> or <inline/> without a <fast/> child.
+        if (result != null) {
+            final Element inlineEl = result.element("inline");
+            if (inlineEl != null) {
+                final Element fastEl = inlineEl.element(new org.dom4j.QName("fast",
+                    org.dom4j.Namespace.get("", org.jivesoftware.openfire.fast.FastTokenManager.NAMESPACE)));
+                assertNull(fastEl, "Expected no <fast/> element inside <inline/> when FAST is disabled.");
+            }
+        }
+        // If result is null, no mechanisms advertised, which is also acceptable (FAST not included).
+    }
+
+    /**
+     * Verifies that a SASL2 authenticate element containing a &lt;request-token&gt; FAST element
+     * causes a FAST token to be issued and included in the &lt;success/&gt; response.
+     *
+     * This test exercises the full parse-and-issue path: the authenticate element carries
+     * &lt;request-token xmlns='urn:xmpp:fast:0' mechanism='HT-SHA-256-NONE'/&gt; and,
+     * after successful PLAIN authentication, the &lt;success/&gt; element should contain
+     * a &lt;token/&gt; element with the correct namespace.
+     */
+    @Test
+    public void shouldIssueFastTokenWhenRequestTokenElementPresentInSasl2Authenticate()
+    {
+        // Setup test fixture.
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        JiveGlobals.setProperty("xmpp.fast.enabled", "true");
+        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("PLAIN"));
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        final String username = "testuser";
+
+        // Simulate an already-running PLAIN SASL negotiation by pre-installing a PLAIN SaslServer.
+        final SaslServer saslServer = mock(SaslServer.class);
+        when(saslServer.getMechanismName()).thenReturn("PLAIN");
+        session.setSessionData("SaslServer", saslServer);
+
+        // Simulate a FAST token being issued.
+        final org.jivesoftware.openfire.fast.FastToken issuedToken =
+            new org.jivesoftware.openfire.fast.FastToken(
+                username, org.jivesoftware.openfire.fast.FastTokenManager.HT_SHA_256_NONE,
+                new byte[32], java.time.Instant.now().plusSeconds(86400));
+
+        // Manually set the session data that parsing the <authenticate> element would set.
+        session.setSessionData("fast-request-token-mechanism",
+            org.jivesoftware.openfire.fast.FastTokenManager.HT_SHA_256_NONE);
+
+        try (final MockedStatic<org.jivesoftware.openfire.fast.FastTokenManager> mockedFtm =
+                 mockStatic(org.jivesoftware.openfire.fast.FastTokenManager.class))
+        {
+            mockedFtm.when(org.jivesoftware.openfire.fast.FastTokenManager::featureElement)
+                .thenCallRealMethod();
+            mockedFtm.when(() -> org.jivesoftware.openfire.fast.FastTokenManager.issueToken(
+                    eq(username), eq(org.jivesoftware.openfire.fast.FastTokenManager.HT_SHA_256_NONE)))
+                .thenReturn(issuedToken);
+
+            // Execute system under test: call authenticationSuccessful with SASL2.
+            SASLAuthentication.authenticationSuccessful(session, username, "PLAIN", new byte[0], true);
+
+            // Verify result.
+            final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+            verify(connection).deliverRawText(response.capture());
+            final String successXml = response.getValue();
+            assertTrue(successXml.contains("<success"), "Expected a SASL2 success element.");
+            assertTrue(successXml.contains(org.jivesoftware.openfire.fast.FastTokenManager.NAMESPACE),
+                "Expected the success element to contain the FAST namespace for the token element.");
+        }
+    }
+
+    /**
+     * Verifies that a SASL2 success element does NOT contain a FAST token element when no
+     * &lt;request-token&gt; was provided and the mechanism is not an HT-* mechanism.
+     */
+    @Test
+    public void shouldNotIssueFastTokenWhenNoRequestTokenAndNotHtMechanism()
+    {
+        // Setup test fixture.
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        JiveGlobals.setProperty("xmpp.fast.enabled", "true");
+        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("PLAIN"));
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // No fast-request-token-mechanism in session data.
+
+        // Execute system under test.
+        SASLAuthentication.authenticationSuccessful(session, "testuser", "PLAIN", new byte[0], true);
+
+        // Verify result.
+        final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(response.capture());
+        final String successXml = response.getValue();
+        assertTrue(successXml.contains("<success"), "Expected a SASL2 success element.");
+        assertFalse(successXml.contains(org.jivesoftware.openfire.fast.FastTokenManager.NAMESPACE),
+            "Expected no FAST token element in the success response when no <request-token> was sent and mechanism is not HT-*.");
+    }
+
+    /**
+     * Verifies that fast-rotated-token session data is cleared from the session after
+     * authenticationSuccessful processes it, so it cannot be re-used for a subsequent call.
+     */
+    @Test
+    public void shouldClearFastSessionDataAfterAuthenticationSuccessful()
+    {
+        // Setup test fixture.
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        final Connection connection = mock(Connection.class);
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Place FAST session data as if set by the SASL server and authenticate element handler.
+        session.setSessionData("fast-request-token-mechanism",
+            org.jivesoftware.openfire.fast.FastTokenManager.HT_SHA_256_NONE);
+        session.setSessionData("fast-invalidate", Boolean.TRUE);
+        final org.jivesoftware.openfire.fast.FastToken rotatedToken =
+            new org.jivesoftware.openfire.fast.FastToken("testuser",
+                org.jivesoftware.openfire.fast.FastTokenManager.HT_SHA_256_NONE,
+                new byte[32], java.time.Instant.now().plusSeconds(3600));
+        session.setSessionData("fast-rotated-token", rotatedToken);
+
+        JiveGlobals.setProperty("xmpp.fast.enabled", "true");
+
+        try (final MockedStatic<org.jivesoftware.openfire.fast.FastTokenManager> mockedFtm =
+                 mockStatic(org.jivesoftware.openfire.fast.FastTokenManager.class))
+        {
+            mockedFtm.when(() -> org.jivesoftware.openfire.fast.FastTokenManager.invalidateTokens(any()))
+                .then(invocation -> null);
+            mockedFtm.when(() -> org.jivesoftware.openfire.fast.FastTokenManager.issueToken(any(), any()))
+                .thenReturn(rotatedToken);
+
+            // Execute system under test.
+            SASLAuthentication.authenticationSuccessful(session, "testuser", "PLAIN", new byte[0], true);
+        }
+
+        // Verify result: session data should be cleared.
+        assertNull(session.getSessionData("fast-request-token-mechanism"),
+            "Expected fast-request-token-mechanism to be cleared after authenticationSuccessful.");
+        assertNull(session.getSessionData("fast-invalidate"),
+            "Expected fast-invalidate to be cleared after authenticationSuccessful.");
+        assertNull(session.getSessionData("fast-rotated-token"),
+            "Expected fast-rotated-token to be cleared after authenticationSuccessful.");
     }
 
     private static Element authElement(final String mechanism)

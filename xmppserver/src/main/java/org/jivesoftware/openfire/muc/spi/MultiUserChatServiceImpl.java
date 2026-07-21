@@ -1156,9 +1156,17 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                         }
                         else
                         {
-                            // Not an occupant at all.
-                            Log.debug("An IQ request was addressed to occupant '{}' of room '{}' by a non-occupant", room.getName(), packet.toXML());
-                            sendErrorPacket(packet, PacketError.Condition.not_acceptable, "You are not an occupant of this room.");
+                            // Not an occupant at all. XEP-0410 §3.2 prescribes a 'cancel'-type 'not-acceptable' error, stamped with the room JID in the 'by' attribute.
+                            Log.debug("An IQ request was addressed to occupant '{}' of room '{}' by a non-occupant: {}", toNickname, room.getName(), packet.toXML());
+                            if (packet.getError() == null) {
+                                final IQ reply = IQ.createResultIQ(packet);
+                                reply.setChildElement(packet.getChildElement().createCopy());
+                                reply.setError(PacketError.Condition.not_acceptable);
+                                reply.getError().setType(PacketError.Type.cancel);
+                                reply.getError().setText("You are not an occupant of this room.");
+                                reply.getError().getElement().addAttribute("by", room.getJID().toBareJID());
+                                XMPPServer.getInstance().getPacketRouter().route(reply);
+                            }
                         }
                     }
                     else

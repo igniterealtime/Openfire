@@ -58,6 +58,7 @@ public class SaslServerFactoryImpl implements SaslServerFactory
         allMechanisms.add( new Mechanism( "JIVE-SHAREDSECRET", true, false ) );
         allMechanisms.add( new Mechanism( "EXTERNAL", false, false ) );
         allMechanisms.add( new Mechanism( HtSha256NoneSaslServer.MECHANISM_NAME, false, false ) );
+        allMechanisms.add( new Mechanism( Ht2Sha256NoneSaslServer.MECHANISM_NAME, false, false ) );
     }
 
     @Override
@@ -121,6 +122,9 @@ public class SaslServerFactoryImpl implements SaslServerFactory
 
             case "HT-SHA-256-NONE":
                 return new HtSha256NoneSaslServer();
+
+            case "HT2-SHA-256-NONE":
+                return new Ht2Sha256NoneSaslServer();
 
             case JiveSharedSecretSaslServer.NAME:
                 return new JiveSharedSecretSaslServer();

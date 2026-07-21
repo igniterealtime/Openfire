@@ -700,9 +700,7 @@ public class SASLAuthentication {
 
                     final String mechanismName = doc.attributeValue( "mechanism" ).toUpperCase();
 
-                    // See if the mechanism is supported by configuration as well as by implementation. This is likely a
-                    // superset of the advertised set, which is checked below. It catches a policy change that may have
-                    // occurred since the advertised set was determined.
+                    // See if the mechanism is supported by configuration as well as by implementation.
                     if ( !mechanisms.contains( mechanismName ) )
                     {
                         throw new SaslFailureException( Failure.INVALID_MECHANISM, "The configuration of Openfire does not contain or allow the mechanism." );
@@ -1413,6 +1411,20 @@ public class SASLAuthentication {
         if (mechanismName.endsWith("-ENDP")) return "tls-server-end-point";
         if (mechanismName.endsWith("-EXPR")) return "tls-exporter";
         return null; // NONE, PLUS (negotiated at runtime), or any non-CB mechanism
+    }
+
+    /**
+     * Returns {@code true} if the given SASL mechanism name is a FAST mechanism (HT-* or HT2-*).
+     *
+     * <p>FAST mechanisms are not registered in the {@code sasl.mechs} configuration property, so
+     * they must be recognised independently of the standard mechanism list when FAST is enabled.</p>
+     *
+     * @param mechanismName the SASL mechanism name to check (cannot be null)
+     * @return {@code true} if the mechanism is a FAST HT-family mechanism; {@code false} otherwise
+     */
+    @VisibleForTesting
+    static boolean isFastMechanism(@Nonnull final String mechanismName) {
+        return mechanismName.startsWith("HT-") || mechanismName.startsWith("HT2-");
     }
 
     /**

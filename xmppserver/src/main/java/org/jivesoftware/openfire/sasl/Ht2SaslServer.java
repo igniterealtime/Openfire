@@ -17,8 +17,6 @@ package org.jivesoftware.openfire.sasl;
 
 import org.jivesoftware.openfire.fast.FastTokenManager;
 import org.jivesoftware.openfire.fast.FastTokenManager.Ht2ValidationResult;
-import org.jivesoftware.openfire.session.LocalSession;
-import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,12 +24,11 @@ import javax.annotation.Nonnull;
 import javax.security.sasl.SaslException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import java.util.Optional;
 
 /**
- * Generic implementation of the HT2-* family of SASL mechanisms for FAST (XEP-0484),
- * as defined in draft-ietf-kitten-sasl-ht, supporting all hash (SHA-256, SHA-512) and
- * channel-binding (NONE, PLUS, EXPR) variants.
+ * Implementation of the HT2-* family of SASL mechanisms for FAST (XEP-0484),
+ * as defined in draft-ietf-kitten-sasl-ht-02, supporting all hash (SHA-256, SHA-512) and
+ * channel-binding (NONE, UNIQ, ENDP, EXPR) variants.
  *
  * <p>The initiator message format (NUL-byte separated) is:
  * <pre>authcid NUL extra-initiator-values NUL initiator-hashed-token</pre>
@@ -47,19 +44,17 @@ import java.util.Optional;
  * <p>This is a two-message mechanism: the client sends one message; the server evaluates it
  * and returns the responder proof via {@link #evaluateResponse(byte[])}.</p>
  *
- * <p>For PLUS and EXPR channel-binding variants, channel-binding data is fetched lazily
- * from the {@link LocalSession} stored in {@code props} during {@link #evaluateResponse(byte[])}.
- * Authentication is rejected if channel-binding data cannot be retrieved — matching the
- * SCRAM-SHA-1-PLUS behaviour.</p>
+ * <p>Channel-binding data is resolved by the base class {@link AbstractHtSaslServer} before
+ * {@link #doEvaluateResponse} is called. Unlike HT-*, the channel-binding bytes are incorporated
+ * into the HMAC computation. Authentication is rejected if channel-binding data cannot be
+ * retrieved — matching the SCRAM-SHA-1-PLUS behaviour.</p>
  *
  * @see AbstractHtSaslServer
+ * @see HtSaslServer
  */
 public class Ht2SaslServer extends AbstractHtSaslServer {
 
     private static final Logger Log = LoggerFactory.getLogger(Ht2SaslServer.class);
-
-    private final String mechanismName;
-    private final Map<String, ?> props;
 
     private byte[] responderHashedToken = null;
 
@@ -67,48 +62,33 @@ public class Ht2SaslServer extends AbstractHtSaslServer {
      * Constructs an {@code Ht2SaslServer} for the given mechanism name.
      *
      * <p>The mechanism name must follow the pattern {@code HT2-{HASH}-{CBTYPE}}, e.g.
-     * {@code HT2-SHA-256-NONE}, {@code HT2-SHA-512-PLUS}.</p>
+     * {@code HT2-SHA-256-NONE} or {@code HT2-SHA-512-UNIQ}.</p>
      *
      * @param mechanismName the SASL mechanism name (cannot be null)
      * @param props         the SASL properties map, which must contain the {@link LocalSession}
      *                      instance under {@code LocalSession.class.getCanonicalName()} for
-     *                      PLUS/EXPR channel-binding variants (cannot be null)
+     *                      UNIQ/ENDP/EXPR channel-binding variants (cannot be null)
      */
     public Ht2SaslServer(@Nonnull final String mechanismName, @Nonnull final Map<String, ?> props) {
-        this.mechanismName = mechanismName;
-        this.props = props;
-    }
-
-    @Override
-    public String getMechanismName() {
-        return mechanismName;
+        super(mechanismName, props);
     }
 
     /**
-     * Evaluates the client's initiator message.
+     * Evaluates the client's initiator message (mechanism-specific part).
+     *
+     * <p>Called by {@link AbstractHtSaslServer#evaluateResponse} after guard checks and
+     * channel-binding resolution. The {@code channelBindingData} bytes are incorporated into
+     * the HMAC computation performed by {@link FastTokenManager#validateTokenHt2}.</p>
      *
      * <p>Expected format: {@code authcid NUL extra-initiator-values NUL initiator-hashed-token}</p>
      *
-     * <p>For PLUS/EXPR channel-binding variants, the channel-binding type name is encoded in the
-     * mechanism name suffix. The actual channel-binding bytes are fetched lazily from the
-     * {@link LocalSession} in {@code props} and authentication is rejected if they cannot be
-     * retrieved — matching the SCRAM-SHA-1-PLUS behaviour. The fetched bytes are also passed to
-     * {@link FastTokenManager#validateTokenHt2} so the HMAC covers real channel-binding data.</p>
-     *
-     * @param response the client's initiator message bytes
+     * @param response           the client's initiator message bytes (never null or empty)
+     * @param channelBindingData the resolved channel-binding bytes (empty for NONE variants)
      * @return the responder success message: {@code NUL extra-responder-values NUL responder-hashed-token}
      * @throws SaslException if authentication fails
      */
     @Override
-    public byte[] evaluateResponse(final byte[] response) throws SaslException {
-        if (complete) {
-            throw new SaslException("Authentication already complete");
-        }
-
-        if (response == null || response.length == 0) {
-            throw new SaslException(mechanismName + ": empty initiator message");
-        }
-
+    protected byte[] doEvaluateResponse(final byte[] response, final byte[] channelBindingData) throws SaslException {
         // Parse: authcid NUL extra-initiator-values NUL initiator-hashed-token
         final int firstNul = indexOf(response, (byte) 0, 0);
         if (firstNul < 0) {
@@ -135,37 +115,8 @@ public class Ht2SaslServer extends AbstractHtSaslServer {
             throw new SaslException(mechanismName + ": empty authcid");
         }
 
-        // Resolve channel-binding data lazily from the live TLS session, matching SCRAM-SHA-1-PLUS.
-        // cb-type to TLS channel-binding type name mapping (per HT2 draft Table 1):
-        //   UNIQ -> tls-unique, ENDP -> tls-server-end-point, EXPR -> tls-exporter
-        final byte[] channelBindingData;
-        final String cbSuffix = mechanismName.substring(mechanismName.lastIndexOf('-') + 1); // NONE, UNIQ, ENDP, or EXPR
-        final String cbTypeName;
-        switch (cbSuffix) {
-            case "UNIQ": cbTypeName = "tls-unique"; break;
-            case "ENDP": cbTypeName = "tls-server-end-point"; break;
-            case "EXPR": cbTypeName = "tls-exporter"; break;
-            default:     cbTypeName = null; break; // NONE — no channel binding
-        }
-        if (cbTypeName != null) {
-            final ChannelBindingProviderManager cbManager = ChannelBindingProviderManager.getInstance();
-            if (!cbManager.supportsChannelBinding(cbTypeName)) {
-                throw new SaslException(mechanismName + ": server does not support channel binding type '" + cbTypeName + "'");
-            }
-            final LocalSession session = (LocalSession) props.get(LocalSession.class.getCanonicalName());
-            if (session == null || session.getConnection() == null) {
-                throw new SaslException(mechanismName + ": local session not found in properties");
-            }
-            final Optional<byte[]> cbDataOpt = session.getConnection().getChannelBindingData(cbTypeName);
-            if (cbDataOpt.isEmpty()) {
-                Log.debug("{}: unable to retrieve channel binding data for '{}'. Rejecting authentication.", mechanismName, cbTypeName);
-                throw new SaslException(mechanismName + ": unable to retrieve channel binding data for '" + cbTypeName + "'");
-            }
-            channelBindingData = cbDataOpt.get();
-            Log.debug("{}: channel binding data retrieved successfully for type '{}'", mechanismName, cbTypeName);
-        } else {
-            channelBindingData = new byte[0];
-        }
+        // channelBindingData resolved by the base class; passed directly to validateTokenHt2
+        // so the HMAC covers real channel-binding bytes (unlike HT-*).
 
         // Validate via FastTokenManager (also rotates on success, computes responder HMAC).
         final Ht2ValidationResult result = FastTokenManager.validateTokenHt2(

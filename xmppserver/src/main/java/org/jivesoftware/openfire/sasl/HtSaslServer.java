@@ -127,28 +127,37 @@ public class HtSaslServer extends AbstractHtSaslServer {
             throw new SaslException(mechanismName + ": empty username");
         }
 
-        // For PLUS/EXPR variants, fetch and validate real channel-binding data from the live TLS session.
-        final String cbSuffix = mechanismName.substring(mechanismName.lastIndexOf('-') + 1); // NONE, PLUS, or EXPR
-        if ("PLUS".equals(cbSuffix) || "EXPR".equals(cbSuffix)) {
+        // For UNIQ/ENDP/EXPR variants, fetch and validate real channel-binding data from the live TLS session.
+        // cb-type to TLS channel-binding type name mapping (per HT draft Table 1):
+        //   UNIQ -> tls-unique, ENDP -> tls-server-end-point, EXPR -> tls-exporter
+        final String cbSuffix = mechanismName.substring(mechanismName.lastIndexOf('-') + 1); // NONE, UNIQ, ENDP, or EXPR
+        final String cbTypeName;
+        switch (cbSuffix) {
+            case "UNIQ": cbTypeName = "tls-unique"; break;
+            case "ENDP": cbTypeName = "tls-server-end-point"; break;
+            case "EXPR": cbTypeName = "tls-exporter"; break;
+            default:     cbTypeName = null; break; // NONE — no channel binding
+        }
+        if (cbTypeName != null) {
             if (cbName == null || cbName.isEmpty()) {
                 throw new SaslException(mechanismName + ": channel binding required but client sent empty cb-name");
             }
             final ChannelBindingProviderManager cbManager = ChannelBindingProviderManager.getInstance();
-            if (!cbManager.supportsChannelBinding(cbName)) {
-                throw new SaslException(mechanismName + ": server does not support channel binding type '" + cbName + "'");
+            if (!cbManager.supportsChannelBinding(cbTypeName)) {
+                throw new SaslException(mechanismName + ": server does not support channel binding type '" + cbTypeName + "'");
             }
             final LocalSession session = (LocalSession) props.get(LocalSession.class.getCanonicalName());
             if (session == null || session.getConnection() == null) {
                 throw new SaslException(mechanismName + ": local session not found in properties");
             }
-            final Optional<byte[]> channelBindingData = session.getConnection().getChannelBindingData(cbName);
+            final Optional<byte[]> channelBindingData = session.getConnection().getChannelBindingData(cbTypeName);
             if (channelBindingData.isEmpty()) {
-                Log.debug("{}: unable to retrieve channel binding data for '{}'. Rejecting authentication.", mechanismName, cbName);
-                throw new SaslException(mechanismName + ": unable to retrieve channel binding data for '" + cbName + "'");
+                Log.debug("{}: unable to retrieve channel binding data for '{}'. Rejecting authentication.", mechanismName, cbTypeName);
+                throw new SaslException(mechanismName + ": unable to retrieve channel binding data for '" + cbTypeName + "'");
             }
             // Channel-binding data verified; for HT-* the token hash does not incorporate CB bytes
             // (unlike HT2-*), so we only verify that real CB data exists and is retrievable.
-            Log.debug("{}: channel binding data retrieved successfully for type '{}'", mechanismName, cbName);
+            Log.debug("{}: channel binding data retrieved successfully for type '{}'", mechanismName, cbTypeName);
         }
 
         // Validate the token via FastTokenManager (also rotates on success).

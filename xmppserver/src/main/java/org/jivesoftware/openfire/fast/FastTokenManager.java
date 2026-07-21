@@ -66,8 +66,11 @@ public class FastTokenManager {
     /** HT-SHA-256-NONE: original HT draft, SHA-256, no channel binding. */
     public static final String HT_SHA_256_NONE = "HT-SHA-256-NONE";
 
-    /** HT-SHA-256-PLUS: original HT draft, SHA-256, tls-unique channel binding. */
-    public static final String HT_SHA_256_PLUS = "HT-SHA-256-PLUS";
+    /** HT-SHA-256-UNIQ: original HT draft, SHA-256, tls-unique channel binding. */
+    public static final String HT_SHA_256_UNIQ = "HT-SHA-256-UNIQ";
+
+    /** HT-SHA-256-ENDP: original HT draft, SHA-256, tls-server-end-point channel binding. */
+    public static final String HT_SHA_256_ENDP = "HT-SHA-256-ENDP";
 
     /** HT-SHA-256-EXPR: original HT draft, SHA-256, tls-exporter channel binding. */
     public static final String HT_SHA_256_EXPR = "HT-SHA-256-EXPR";
@@ -75,8 +78,11 @@ public class FastTokenManager {
     /** HT-SHA-512-NONE: original HT draft, SHA-512, no channel binding. */
     public static final String HT_SHA_512_NONE = "HT-SHA-512-NONE";
 
-    /** HT-SHA-512-PLUS: original HT draft, SHA-512, tls-unique channel binding. */
-    public static final String HT_SHA_512_PLUS = "HT-SHA-512-PLUS";
+    /** HT-SHA-512-UNIQ: original HT draft, SHA-512, tls-unique channel binding. */
+    public static final String HT_SHA_512_UNIQ = "HT-SHA-512-UNIQ";
+
+    /** HT-SHA-512-ENDP: original HT draft, SHA-512, tls-server-end-point channel binding. */
+    public static final String HT_SHA_512_ENDP = "HT-SHA-512-ENDP";
 
     /** HT-SHA-512-EXPR: original HT draft, SHA-512, tls-exporter channel binding. */
     public static final String HT_SHA_512_EXPR = "HT-SHA-512-EXPR";
@@ -88,8 +94,11 @@ public class FastTokenManager {
     /** HT2-SHA-256-NONE: HT2 draft, SHA-256, no channel binding. */
     public static final String HT2_SHA_256_NONE = "HT2-SHA-256-NONE";
 
-    /** HT2-SHA-256-PLUS: HT2 draft, SHA-256, tls-unique channel binding. */
-    public static final String HT2_SHA_256_PLUS = "HT2-SHA-256-PLUS";
+    /** HT2-SHA-256-UNIQ: HT2 draft, SHA-256, tls-unique channel binding. */
+    public static final String HT2_SHA_256_UNIQ = "HT2-SHA-256-UNIQ";
+
+    /** HT2-SHA-256-ENDP: HT2 draft, SHA-256, tls-server-end-point channel binding. */
+    public static final String HT2_SHA_256_ENDP = "HT2-SHA-256-ENDP";
 
     /** HT2-SHA-256-EXPR: HT2 draft, SHA-256, tls-exporter channel binding. */
     public static final String HT2_SHA_256_EXPR = "HT2-SHA-256-EXPR";
@@ -97,8 +106,11 @@ public class FastTokenManager {
     /** HT2-SHA-512-NONE: HT2 draft, SHA-512, no channel binding. */
     public static final String HT2_SHA_512_NONE = "HT2-SHA-512-NONE";
 
-    /** HT2-SHA-512-PLUS: HT2 draft, SHA-512, tls-unique channel binding. */
-    public static final String HT2_SHA_512_PLUS = "HT2-SHA-512-PLUS";
+    /** HT2-SHA-512-UNIQ: HT2 draft, SHA-512, tls-unique channel binding. */
+    public static final String HT2_SHA_512_UNIQ = "HT2-SHA-512-UNIQ";
+
+    /** HT2-SHA-512-ENDP: HT2 draft, SHA-512, tls-server-end-point channel binding. */
+    public static final String HT2_SHA_512_ENDP = "HT2-SHA-512-ENDP";
 
     /** HT2-SHA-512-EXPR: HT2 draft, SHA-512, tls-exporter channel binding. */
     public static final String HT2_SHA_512_EXPR = "HT2-SHA-512-EXPR";
@@ -143,17 +155,21 @@ public class FastTokenManager {
         final Element fast = DocumentHelper.createElement(QName.get("fast", NAMESPACE));
         // HT-* mechanisms (original HT draft)
         fast.addElement("mechanism").setText(HT_SHA_256_NONE);
-        fast.addElement("mechanism").setText(HT_SHA_256_PLUS);
+        fast.addElement("mechanism").setText(HT_SHA_256_UNIQ);
+        fast.addElement("mechanism").setText(HT_SHA_256_ENDP);
         fast.addElement("mechanism").setText(HT_SHA_256_EXPR);
         fast.addElement("mechanism").setText(HT_SHA_512_NONE);
-        fast.addElement("mechanism").setText(HT_SHA_512_PLUS);
+        fast.addElement("mechanism").setText(HT_SHA_512_UNIQ);
+        fast.addElement("mechanism").setText(HT_SHA_512_ENDP);
         fast.addElement("mechanism").setText(HT_SHA_512_EXPR);
         // HT2-* mechanisms (draft-ietf-kitten-sasl-ht)
         fast.addElement("mechanism").setText(HT2_SHA_256_NONE);
-        fast.addElement("mechanism").setText(HT2_SHA_256_PLUS);
+        fast.addElement("mechanism").setText(HT2_SHA_256_UNIQ);
+        fast.addElement("mechanism").setText(HT2_SHA_256_ENDP);
         fast.addElement("mechanism").setText(HT2_SHA_256_EXPR);
         fast.addElement("mechanism").setText(HT2_SHA_512_NONE);
-        fast.addElement("mechanism").setText(HT2_SHA_512_PLUS);
+        fast.addElement("mechanism").setText(HT2_SHA_512_UNIQ);
+        fast.addElement("mechanism").setText(HT2_SHA_512_ENDP);
         fast.addElement("mechanism").setText(HT2_SHA_512_EXPR);
         return fast;
     }
@@ -168,7 +184,7 @@ public class FastTokenManager {
 
     /**
      * Extracts the JCA hash algorithm name from a mechanism name of the form
-     * {@code HT-SHA-256-NONE}, {@code HT2-SHA-512-PLUS}, etc.
+     * {@code HT-SHA-256-NONE}, {@code HT2-SHA-512-UNIQ}, etc.
      *
      * <p>The second segment (between the first and second {@code -}) is the hash family
      * (e.g. {@code SHA}) and the third segment is the bit length (e.g. {@code 256}), giving
@@ -179,11 +195,11 @@ public class FastTokenManager {
      * @throws IllegalArgumentException if the mechanism name does not follow the expected pattern
      */
     public static String hashAlgorithmForMechanism(@Nonnull final String mechanism) {
-        // Format: (HT|HT2)-HASH-BITS-CBTYPE, e.g. HT-SHA-256-NONE or HT2-SHA-512-PLUS
+        // Format: (HT|HT2)-HASH-BITS-CBTYPE, e.g. HT-SHA-256-NONE or HT2-SHA-512-UNIQ
         final String[] parts = mechanism.split("-");
         // parts[0] = "HT" or "HT2", parts[-1] = cb type, middle parts = hash name
         // For HT-SHA-256-NONE  → parts = ["HT",  "SHA", "256", "NONE"]
-        // For HT2-SHA-512-PLUS → parts = ["HT2", "SHA", "512", "PLUS"]
+        // For HT2-SHA-512-UNIQ → parts = ["HT2", "SHA", "512", "UNIQ"]
         if (parts.length < 4) {
             throw new IllegalArgumentException("Unrecognised HT mechanism name: " + mechanism);
         }

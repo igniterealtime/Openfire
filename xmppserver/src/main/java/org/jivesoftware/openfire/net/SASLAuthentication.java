@@ -49,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
@@ -962,10 +963,26 @@ public class SASLAuthentication {
                 continue;
             }
 
-            if (requiresChannelBinding(mechanism) && ChannelBindingProviderManager.getInstance().getSupportedChannelBindingTypes().isEmpty()) {
-                Log.trace( "Cannot support '{}' as there's no implementation available for channel binding.", mechanism );
-                it.remove();
-                continue;
+            if (requiresChannelBinding(mechanism)) {
+                final String requiredCbType = requiredChannelBindingType(mechanism);
+                final ChannelBindingProviderManager cbManager = ChannelBindingProviderManager.getInstance();
+                if (requiredCbType != null) {
+                    // Mechanism encodes a specific CB type (e.g. HT-*-UNIQ): only offer it when
+                    // that exact type is supported.
+                    if (!cbManager.supportsChannelBinding(requiredCbType)) {
+                        Log.trace( "Cannot support '{}' as channel binding type '{}' is not available.", mechanism, requiredCbType );
+                        it.remove();
+                        continue;
+                    }
+                } else {
+                    // Mechanism uses runtime-negotiated CB (e.g. SCRAM-SHA-1-PLUS): require at
+                    // least one CB type to be available.
+                    if (cbManager.getSupportedChannelBindingTypes().isEmpty()) {
+                        Log.trace( "Cannot support '{}' as there's no implementation available for channel binding.", mechanism );
+                        it.remove();
+                        continue;
+                    }
+                }
             }
 
             switch ( mechanism )
@@ -1097,16 +1114,53 @@ public class SASLAuthentication {
     }
 
     /**
+     * Returns the specific TLS channel-binding type name required by the given SASL mechanism, or
+     * {@code null} if the mechanism does not require channel binding.
+     *
+     * <p>Two naming conventions are recognised:</p>
+     * <ul>
+     *   <li>The {@code -PLUS} suffix used by SCRAM mechanisms (e.g. {@code SCRAM-SHA-1-PLUS}) —
+     *       these mechanisms negotiate the exact CB type at runtime, so {@code null} is returned
+     *       and availability is checked elsewhere (any CB type is sufficient).</li>
+     *   <li>The {@code -UNIQ}, {@code -ENDP}, and {@code -EXPR} suffixes used by HT-* and HT2-*
+     *       mechanisms — these encode a specific CB type in the mechanism name, so the exact type
+     *       is returned ({@code "tls-unique"}, {@code "tls-server-end-point"}, or
+     *       {@code "tls-exporter"} per the HT draft, Table 1).</li>
+     * </ul>
+     *
+     * @param mechanismName the SASL mechanism name to check (cannot be null)
+     * @return the required TLS channel-binding type name (e.g. {@code "tls-unique"}), or
+     *         {@code null} if no specific type is required (includes NONE and PLUS mechanisms)
+     */
+    @VisibleForTesting
+    @Nullable
+    static String requiredChannelBindingType(@Nonnull final String mechanismName) {
+        if (mechanismName.endsWith("-UNIQ")) return "tls-unique";
+        if (mechanismName.endsWith("-ENDP")) return "tls-server-end-point";
+        if (mechanismName.endsWith("-EXPR")) return "tls-exporter";
+        return null; // NONE, PLUS (negotiated at runtime), or any non-CB mechanism
+    }
+
+    /**
      * Returns {@code true} if the given SASL mechanism name requires channel binding.
-     * Channel-binding mechanisms follow the naming convention of appending {@code -PLUS} to the
-     * base mechanism name (e.g. {@code SCRAM-SHA-1-PLUS}).
+     *
+     * <p>Two naming conventions are recognised:</p>
+     * <ul>
+     *   <li>The {@code -PLUS} suffix used by SCRAM mechanisms (e.g. {@code SCRAM-SHA-1-PLUS}).</li>
+     *   <li>The {@code -UNIQ}, {@code -ENDP}, and {@code -EXPR} suffixes used by HT-* and HT2-*
+     *       mechanisms, mapping to {@code tls-unique}, {@code tls-server-end-point}, and
+     *       {@code tls-exporter} channel-binding types respectively (per the HT draft, Table 1).</li>
+     * </ul>
      *
      * @param mechanismName the SASL mechanism name to check (cannot be null)
      * @return {@code true} if the mechanism requires channel binding; {@code false} otherwise
      */
     @VisibleForTesting
     static boolean requiresChannelBinding(@Nonnull final String mechanismName) {
-        return mechanismName.endsWith("-PLUS");
+        return mechanismName.endsWith("-PLUS")
+            || mechanismName.endsWith("-UNIQ")
+            || mechanismName.endsWith("-ENDP")
+            || mechanismName.endsWith("-EXPR");
     }
 
     private static void initMechanisms()
@@ -1159,13 +1213,23 @@ public class SASLAuthentication {
                 }
             }
             if (requiresChannelBinding(mech)) {
-                // Prevent offering channel binding if the Connection implementation does not support it.
-                if (connection.getSupportedChannelBindingTypes().isEmpty()) {
-                    continue; // Do not offer channel-binding variants.
-                }
                 // Channel binding would be a binding to TLS, thus encryption is required for channel binding.
                 if (!session.isEncrypted()) { // This ought to be redundant, as getSupportedChannelBindingTypes() will return an empty set if not encrypted.
                     continue;
+                }
+                final String requiredCbType = requiredChannelBindingType(mech);
+                if (requiredCbType != null) {
+                    // Mechanism encodes a specific CB type (e.g. HT-*-UNIQ): only offer it when
+                    // that exact type is available on this connection.
+                    if (!connection.getSupportedChannelBindingTypes().contains(requiredCbType)) {
+                        continue; // Do not offer this channel-binding variant.
+                    }
+                } else {
+                    // Mechanism uses runtime-negotiated CB (e.g. SCRAM-SHA-1-PLUS): require at
+                    // least one CB type to be available on this connection.
+                    if (connection.getSupportedChannelBindingTypes().isEmpty()) {
+                        continue; // Do not offer channel-binding variants.
+                    }
                 }
             }
             result.add(mech);

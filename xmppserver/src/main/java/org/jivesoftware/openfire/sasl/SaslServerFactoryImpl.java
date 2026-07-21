@@ -60,17 +60,21 @@ public class SaslServerFactoryImpl implements SaslServerFactory
         allMechanisms.add( new Mechanism( "EXTERNAL", false, false ) );
         // HT-* mechanisms (original HT draft): all hash × channel-binding combinations
         allMechanisms.add( new Mechanism( FastTokenManager.HT_SHA_256_NONE, false, false ) );
-        allMechanisms.add( new Mechanism( FastTokenManager.HT_SHA_256_PLUS, false, false ) );
+        allMechanisms.add( new Mechanism( FastTokenManager.HT_SHA_256_UNIQ, false, false ) );
+        allMechanisms.add( new Mechanism( FastTokenManager.HT_SHA_256_ENDP, false, false ) );
         allMechanisms.add( new Mechanism( FastTokenManager.HT_SHA_256_EXPR, false, false ) );
         allMechanisms.add( new Mechanism( FastTokenManager.HT_SHA_512_NONE, false, false ) );
-        allMechanisms.add( new Mechanism( FastTokenManager.HT_SHA_512_PLUS, false, false ) );
+        allMechanisms.add( new Mechanism( FastTokenManager.HT_SHA_512_UNIQ, false, false ) );
+        allMechanisms.add( new Mechanism( FastTokenManager.HT_SHA_512_ENDP, false, false ) );
         allMechanisms.add( new Mechanism( FastTokenManager.HT_SHA_512_EXPR, false, false ) );
         // HT2-* mechanisms (draft-ietf-kitten-sasl-ht): all hash × channel-binding combinations
         allMechanisms.add( new Mechanism( FastTokenManager.HT2_SHA_256_NONE, false, false ) );
-        allMechanisms.add( new Mechanism( FastTokenManager.HT2_SHA_256_PLUS, false, false ) );
+        allMechanisms.add( new Mechanism( FastTokenManager.HT2_SHA_256_UNIQ, false, false ) );
+        allMechanisms.add( new Mechanism( FastTokenManager.HT2_SHA_256_ENDP, false, false ) );
         allMechanisms.add( new Mechanism( FastTokenManager.HT2_SHA_256_EXPR, false, false ) );
         allMechanisms.add( new Mechanism( FastTokenManager.HT2_SHA_512_NONE, false, false ) );
-        allMechanisms.add( new Mechanism( FastTokenManager.HT2_SHA_512_PLUS, false, false ) );
+        allMechanisms.add( new Mechanism( FastTokenManager.HT2_SHA_512_UNIQ, false, false ) );
+        allMechanisms.add( new Mechanism( FastTokenManager.HT2_SHA_512_ENDP, false, false ) );
         allMechanisms.add( new Mechanism( FastTokenManager.HT2_SHA_512_EXPR, false, false ) );
     }
 
@@ -134,18 +138,22 @@ public class SaslServerFactoryImpl implements SaslServerFactory
                 }
 
             case FastTokenManager.HT_SHA_256_NONE:
-            case FastTokenManager.HT_SHA_256_PLUS:
+            case FastTokenManager.HT_SHA_256_UNIQ:
+            case FastTokenManager.HT_SHA_256_ENDP:
             case FastTokenManager.HT_SHA_256_EXPR:
             case FastTokenManager.HT_SHA_512_NONE:
-            case FastTokenManager.HT_SHA_512_PLUS:
+            case FastTokenManager.HT_SHA_512_UNIQ:
+            case FastTokenManager.HT_SHA_512_ENDP:
             case FastTokenManager.HT_SHA_512_EXPR:
                 return new HtSaslServer( mechanism, props );
 
             case FastTokenManager.HT2_SHA_256_NONE:
-            case FastTokenManager.HT2_SHA_256_PLUS:
+            case FastTokenManager.HT2_SHA_256_UNIQ:
+            case FastTokenManager.HT2_SHA_256_ENDP:
             case FastTokenManager.HT2_SHA_256_EXPR:
             case FastTokenManager.HT2_SHA_512_NONE:
-            case FastTokenManager.HT2_SHA_512_PLUS:
+            case FastTokenManager.HT2_SHA_512_UNIQ:
+            case FastTokenManager.HT2_SHA_512_ENDP:
             case FastTokenManager.HT2_SHA_512_EXPR:
                 return new Ht2SaslServer( mechanism, props );
 

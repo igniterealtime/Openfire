@@ -136,13 +136,18 @@ public class Ht2SaslServer extends AbstractHtSaslServer {
         }
 
         // Resolve channel-binding data lazily from the live TLS session, matching SCRAM-SHA-1-PLUS.
+        // cb-type to TLS channel-binding type name mapping (per HT2 draft Table 1):
+        //   UNIQ -> tls-unique, ENDP -> tls-server-end-point, EXPR -> tls-exporter
         final byte[] channelBindingData;
-        final String cbSuffix = mechanismName.substring(mechanismName.lastIndexOf('-') + 1); // NONE, PLUS, or EXPR
-        if ("PLUS".equals(cbSuffix) || "EXPR".equals(cbSuffix)) {
-            // The HT2 spec requires the cb-type name to appear in extra-initiator-values or be
-            // implicit in the mechanism name; here we derive it from the suffix for PLUS/EXPR.
-            // Use tls-unique for PLUS, tls-exporter for EXPR (per standard naming).
-            final String cbTypeName = "PLUS".equals(cbSuffix) ? "tls-unique" : "tls-exporter";
+        final String cbSuffix = mechanismName.substring(mechanismName.lastIndexOf('-') + 1); // NONE, UNIQ, ENDP, or EXPR
+        final String cbTypeName;
+        switch (cbSuffix) {
+            case "UNIQ": cbTypeName = "tls-unique"; break;
+            case "ENDP": cbTypeName = "tls-server-end-point"; break;
+            case "EXPR": cbTypeName = "tls-exporter"; break;
+            default:     cbTypeName = null; break; // NONE — no channel binding
+        }
+        if (cbTypeName != null) {
             final ChannelBindingProviderManager cbManager = ChannelBindingProviderManager.getInstance();
             if (!cbManager.supportsChannelBinding(cbTypeName)) {
                 throw new SaslException(mechanismName + ": server does not support channel binding type '" + cbTypeName + "'");

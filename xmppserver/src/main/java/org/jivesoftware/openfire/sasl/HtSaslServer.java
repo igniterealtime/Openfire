@@ -17,8 +17,6 @@ package org.jivesoftware.openfire.sasl;
 
 import org.jivesoftware.openfire.fast.FastToken;
 import org.jivesoftware.openfire.fast.FastTokenManager;
-import org.jivesoftware.openfire.session.LocalSession;
-import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,80 +24,64 @@ import javax.annotation.Nonnull;
 import javax.security.sasl.SaslException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
-import java.util.Optional;
 
 /**
- * Generic implementation of the HT-* family of SASL mechanisms for FAST (XEP-0484),
- * supporting all hash (SHA-256, SHA-512) and channel-binding (NONE, PLUS, EXPR) variants.
+ * Implementation of the HT-* family of SASL mechanisms for FAST (XEP-0484),
+ * supporting all hash (SHA-256, SHA-512) and channel-binding (NONE, UNIQ, ENDP, EXPR) variants.
  *
- * <p>The initial-response format per XEP-0484 is:
+ * <p>The initial-response format is:
  * <pre>cb-name ',' authzid ',' token</pre>
  * where {@code cb-name} identifies the channel-binding type used by the client,
  * {@code authzid} is the authorization identity (username), and {@code token} is the
  * raw FAST token bytes.</p>
  *
  * <p>This is a single-round-trip mechanism: the client sends the initial response and
- * the server either accepts or rejects it.</p>
+ * the server either accepts or rejects it, returning an empty byte array on success.</p>
  *
- * <p>For PLUS and EXPR channel-binding variants, channel-binding data is fetched lazily
- * from the {@link LocalSession} stored in {@code props} during {@link #evaluateResponse(byte[])}.
- * Authentication is rejected if channel-binding data cannot be retrieved.</p>
+ * <p>Channel-binding data is resolved by the base class {@link AbstractHtSaslServer} before
+ * this class's {@link #doEvaluateResponse} is called. For channel-binding variants the data
+ * is verified to exist, but the token hash itself does not incorporate it (unlike HT2-*).</p>
  *
  * @see AbstractHtSaslServer
+ * @see Ht2SaslServer
  */
 public class HtSaslServer extends AbstractHtSaslServer {
 
     private static final Logger Log = LoggerFactory.getLogger(HtSaslServer.class);
 
-    private final String mechanismName;
-    private final Map<String, ?> props;
-
     /**
      * Constructs an {@code HtSaslServer} for the given mechanism name.
      *
      * <p>The mechanism name must follow the pattern {@code HT-{HASH}-{CBTYPE}}, e.g.
-     * {@code HT-SHA-256-NONE} or {@code HT-SHA-512-PLUS}.</p>
+     * {@code HT-SHA-256-NONE} or {@code HT-SHA-512-UNIQ}.</p>
      *
      * @param mechanismName the SASL mechanism name (cannot be null)
      * @param props         the SASL properties map, which must contain the {@link LocalSession}
      *                      instance under {@code LocalSession.class.getCanonicalName()} for
-     *                      PLUS/EXPR channel-binding variants (cannot be null)
+     *                      UNIQ/ENDP/EXPR channel-binding variants (cannot be null)
      */
     public HtSaslServer(@Nonnull final String mechanismName, @Nonnull final Map<String, ?> props) {
-        this.mechanismName = mechanismName;
-        this.props = props;
-    }
-
-    @Override
-    public String getMechanismName() {
-        return mechanismName;
+        super(mechanismName, props);
     }
 
     /**
-     * Evaluates the client's initial response.
+     * Evaluates the client's initial response (mechanism-specific part).
      *
-     * <p>Expected format: {@code <cb-name>,<username>,<raw-token-bytes>}
-     * where the token field is the raw bytes (not Base64-encoded at this level).</p>
+     * <p>Called by {@link AbstractHtSaslServer#evaluateResponse} after guard checks and
+     * channel-binding resolution. The {@code channelBindingData} bytes have already been
+     * fetched from the live TLS session (or are empty for NONE variants); they are not
+     * incorporated into the HT-* token hash but are verified to exist for CB variants.</p>
      *
-     * <p>For PLUS/EXPR channel-binding variants, the channel-binding type name is encoded
-     * in the mechanism name suffix. The actual channel-binding bytes are fetched lazily
-     * from the {@link LocalSession} in {@code props} and authentication is rejected if
-     * they cannot be retrieved — matching the SCRAM-SHA-1-PLUS behaviour.</p>
+     * <p>Expected format: {@code cb-name,authzid,token-bytes}
+     * where the token is the raw FAST token bytes.</p>
      *
-     * @param response the client's initial response bytes
-     * @return an empty byte array on success (no server challenge needed)
+     * @param response           the client's initial response bytes (never null or empty)
+     * @param channelBindingData the resolved channel-binding bytes (empty for NONE variants)
+     * @return an empty byte array on success (HT-* has no server challenge)
      * @throws SaslException if authentication fails
      */
     @Override
-    public byte[] evaluateResponse(final byte[] response) throws SaslException {
-        if (complete) {
-            throw new SaslException("Authentication already complete");
-        }
-
-        if (response == null || response.length == 0) {
-            throw new SaslException(mechanismName + ": empty initial response");
-        }
-
+    protected byte[] doEvaluateResponse(final byte[] response, final byte[] channelBindingData) throws SaslException {
         // Parse: cb-name ',' authzid ',' token-bytes
         // The first two fields are UTF-8 text; the token is raw bytes after the second comma.
         final int firstComma = indexOf(response, (byte) ',', 0);
@@ -127,37 +109,11 @@ public class HtSaslServer extends AbstractHtSaslServer {
             throw new SaslException(mechanismName + ": empty username");
         }
 
-        // For UNIQ/ENDP/EXPR variants, fetch and validate real channel-binding data from the live TLS session.
-        // cb-type to TLS channel-binding type name mapping (per HT draft Table 1):
-        //   UNIQ -> tls-unique, ENDP -> tls-server-end-point, EXPR -> tls-exporter
-        final String cbSuffix = mechanismName.substring(mechanismName.lastIndexOf('-') + 1); // NONE, UNIQ, ENDP, or EXPR
-        final String cbTypeName;
-        switch (cbSuffix) {
-            case "UNIQ": cbTypeName = "tls-unique"; break;
-            case "ENDP": cbTypeName = "tls-server-end-point"; break;
-            case "EXPR": cbTypeName = "tls-exporter"; break;
-            default:     cbTypeName = null; break; // NONE — no channel binding
-        }
-        if (cbTypeName != null) {
-            if (cbName == null || cbName.isEmpty()) {
-                throw new SaslException(mechanismName + ": channel binding required but client sent empty cb-name");
-            }
-            final ChannelBindingProviderManager cbManager = ChannelBindingProviderManager.getInstance();
-            if (!cbManager.supportsChannelBinding(cbTypeName)) {
-                throw new SaslException(mechanismName + ": server does not support channel binding type '" + cbTypeName + "'");
-            }
-            final LocalSession session = (LocalSession) props.get(LocalSession.class.getCanonicalName());
-            if (session == null || session.getConnection() == null) {
-                throw new SaslException(mechanismName + ": local session not found in properties");
-            }
-            final Optional<byte[]> channelBindingData = session.getConnection().getChannelBindingData(cbTypeName);
-            if (channelBindingData.isEmpty()) {
-                Log.debug("{}: unable to retrieve channel binding data for '{}'. Rejecting authentication.", mechanismName, cbTypeName);
-                throw new SaslException(mechanismName + ": unable to retrieve channel binding data for '" + cbTypeName + "'");
-            }
-            // Channel-binding data verified; for HT-* the token hash does not incorporate CB bytes
-            // (unlike HT2-*), so we only verify that real CB data exists and is retrievable.
-            Log.debug("{}: channel binding data retrieved successfully for type '{}'", mechanismName, cbTypeName);
+        // For channel-binding variants the base class has already verified CB data is available
+        // and returned it as channelBindingData. For HT-* the hash does not incorporate those bytes
+        // (unlike HT2-*), but we still require a non-empty cb-name from the client.
+        if (channelBindingData.length > 0 && (cbName == null || cbName.isEmpty())) {
+            throw new SaslException(mechanismName + ": channel binding required but client sent empty cb-name");
         }
 
         // Validate the token via FastTokenManager (also rotates on success).

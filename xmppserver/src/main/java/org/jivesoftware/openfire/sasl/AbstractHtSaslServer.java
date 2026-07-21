@@ -108,7 +108,16 @@ abstract class AbstractHtSaslServer implements SaslServer {
             throw new SaslException(mechanismName + ": empty initiator message");
         }
         final byte[] channelBindingData = resolveChannelBindingData();
-        return doEvaluateResponse(response, channelBindingData);
+        final byte[] result = doEvaluateResponse(response, channelBindingData);
+        // After successful evaluation, store the rotated token in the session so that
+        // SASLAuthentication can include it in the SASL2 <success/> element (XEP-0484).
+        if (complete && rotatedToken != null) {
+            final LocalSession session = (LocalSession) props.get(LocalSession.class.getCanonicalName());
+            if (session != null) {
+                session.setSessionData("fast-rotated-token", rotatedToken);
+            }
+        }
+        return result;
     }
 
     /**

@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.sasl;
 
+import org.jivesoftware.openfire.fast.FastTokenManager;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
@@ -57,8 +58,20 @@ public class SaslServerFactoryImpl implements SaslServerFactory
         allMechanisms.add( new Mechanism( "SCRAM-SHA-1-PLUS", false, false ) );
         allMechanisms.add( new Mechanism( "JIVE-SHAREDSECRET", true, false ) );
         allMechanisms.add( new Mechanism( "EXTERNAL", false, false ) );
-        allMechanisms.add( new Mechanism( HtSha256NoneSaslServer.MECHANISM_NAME, false, false ) );
-        allMechanisms.add( new Mechanism( Ht2Sha256NoneSaslServer.MECHANISM_NAME, false, false ) );
+        // HT-* mechanisms (original HT draft): all hash × channel-binding combinations
+        allMechanisms.add( new Mechanism( FastTokenManager.HT_SHA_256_NONE, false, false ) );
+        allMechanisms.add( new Mechanism( FastTokenManager.HT_SHA_256_PLUS, false, false ) );
+        allMechanisms.add( new Mechanism( FastTokenManager.HT_SHA_256_EXPR, false, false ) );
+        allMechanisms.add( new Mechanism( FastTokenManager.HT_SHA_512_NONE, false, false ) );
+        allMechanisms.add( new Mechanism( FastTokenManager.HT_SHA_512_PLUS, false, false ) );
+        allMechanisms.add( new Mechanism( FastTokenManager.HT_SHA_512_EXPR, false, false ) );
+        // HT2-* mechanisms (draft-ietf-kitten-sasl-ht): all hash × channel-binding combinations
+        allMechanisms.add( new Mechanism( FastTokenManager.HT2_SHA_256_NONE, false, false ) );
+        allMechanisms.add( new Mechanism( FastTokenManager.HT2_SHA_256_PLUS, false, false ) );
+        allMechanisms.add( new Mechanism( FastTokenManager.HT2_SHA_256_EXPR, false, false ) );
+        allMechanisms.add( new Mechanism( FastTokenManager.HT2_SHA_512_NONE, false, false ) );
+        allMechanisms.add( new Mechanism( FastTokenManager.HT2_SHA_512_PLUS, false, false ) );
+        allMechanisms.add( new Mechanism( FastTokenManager.HT2_SHA_512_EXPR, false, false ) );
     }
 
     @Override
@@ -120,11 +133,21 @@ public class SaslServerFactoryImpl implements SaslServerFactory
                     return null;
                 }
 
-            case "HT-SHA-256-NONE":
-                return new HtSha256NoneSaslServer();
+            case FastTokenManager.HT_SHA_256_NONE:
+            case FastTokenManager.HT_SHA_256_PLUS:
+            case FastTokenManager.HT_SHA_256_EXPR:
+            case FastTokenManager.HT_SHA_512_NONE:
+            case FastTokenManager.HT_SHA_512_PLUS:
+            case FastTokenManager.HT_SHA_512_EXPR:
+                return new HtSaslServer( mechanism, props );
 
-            case "HT2-SHA-256-NONE":
-                return new Ht2Sha256NoneSaslServer();
+            case FastTokenManager.HT2_SHA_256_NONE:
+            case FastTokenManager.HT2_SHA_256_PLUS:
+            case FastTokenManager.HT2_SHA_256_EXPR:
+            case FastTokenManager.HT2_SHA_512_NONE:
+            case FastTokenManager.HT2_SHA_512_PLUS:
+            case FastTokenManager.HT2_SHA_512_EXPR:
+                return new Ht2SaslServer( mechanism, props );
 
             case JiveSharedSecretSaslServer.NAME:
                 return new JiveSharedSecretSaslServer();

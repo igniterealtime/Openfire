@@ -396,7 +396,7 @@ CREATE TABLE ofPubsubDefaultConf (
 CREATE TABLE ofFastToken (
   username              VARCHAR(64)     NOT NULL,
   mechanism             VARCHAR(32)     NOT NULL,
-  tokenHash             VARCHAR(64)     NOT NULL,
+  tokenHash             VARCHAR(128)     NOT NULL,
   expiry                VARCHAR(35)     NOT NULL,
   CONSTRAINT ofFastToken_pk PRIMARY KEY (username, mechanism)
 );

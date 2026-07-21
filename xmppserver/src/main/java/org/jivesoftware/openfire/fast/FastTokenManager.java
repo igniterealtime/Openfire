@@ -59,11 +59,49 @@ public class FastTokenManager {
     /** XEP-0484 namespace */
     public static final String NAMESPACE = "urn:xmpp:fast:0";
 
-    /** The HT-SHA-256-NONE mechanism name (original HT draft) */
+    // -------------------------------------------------------------------------
+    // HT-* mechanism names (original HT draft: hash + channel-binding variants)
+    // -------------------------------------------------------------------------
+
+    /** HT-SHA-256-NONE: original HT draft, SHA-256, no channel binding. */
     public static final String HT_SHA_256_NONE = "HT-SHA-256-NONE";
 
-    /** The HT2-SHA-256-NONE mechanism name (draft-ietf-kitten-sasl-ht) */
+    /** HT-SHA-256-PLUS: original HT draft, SHA-256, tls-unique channel binding. */
+    public static final String HT_SHA_256_PLUS = "HT-SHA-256-PLUS";
+
+    /** HT-SHA-256-EXPR: original HT draft, SHA-256, tls-exporter channel binding. */
+    public static final String HT_SHA_256_EXPR = "HT-SHA-256-EXPR";
+
+    /** HT-SHA-512-NONE: original HT draft, SHA-512, no channel binding. */
+    public static final String HT_SHA_512_NONE = "HT-SHA-512-NONE";
+
+    /** HT-SHA-512-PLUS: original HT draft, SHA-512, tls-unique channel binding. */
+    public static final String HT_SHA_512_PLUS = "HT-SHA-512-PLUS";
+
+    /** HT-SHA-512-EXPR: original HT draft, SHA-512, tls-exporter channel binding. */
+    public static final String HT_SHA_512_EXPR = "HT-SHA-512-EXPR";
+
+    // -------------------------------------------------------------------------
+    // HT2-* mechanism names (draft-ietf-kitten-sasl-ht: HMAC-based variants)
+    // -------------------------------------------------------------------------
+
+    /** HT2-SHA-256-NONE: HT2 draft, SHA-256, no channel binding. */
     public static final String HT2_SHA_256_NONE = "HT2-SHA-256-NONE";
+
+    /** HT2-SHA-256-PLUS: HT2 draft, SHA-256, tls-unique channel binding. */
+    public static final String HT2_SHA_256_PLUS = "HT2-SHA-256-PLUS";
+
+    /** HT2-SHA-256-EXPR: HT2 draft, SHA-256, tls-exporter channel binding. */
+    public static final String HT2_SHA_256_EXPR = "HT2-SHA-256-EXPR";
+
+    /** HT2-SHA-512-NONE: HT2 draft, SHA-512, no channel binding. */
+    public static final String HT2_SHA_512_NONE = "HT2-SHA-512-NONE";
+
+    /** HT2-SHA-512-PLUS: HT2 draft, SHA-512, tls-unique channel binding. */
+    public static final String HT2_SHA_512_PLUS = "HT2-SHA-512-PLUS";
+
+    /** HT2-SHA-512-EXPR: HT2 draft, SHA-512, tls-exporter channel binding. */
+    public static final String HT2_SHA_512_EXPR = "HT2-SHA-512-EXPR";
 
     /** System property to enable or disable FAST support. */
     public static final SystemProperty<Boolean> ENABLE_FAST = SystemProperty.Builder.ofType(Boolean.class)
@@ -103,8 +141,20 @@ public class FastTokenManager {
      */
     public static Element featureElement() {
         final Element fast = DocumentHelper.createElement(QName.get("fast", NAMESPACE));
+        // HT-* mechanisms (original HT draft)
         fast.addElement("mechanism").setText(HT_SHA_256_NONE);
+        fast.addElement("mechanism").setText(HT_SHA_256_PLUS);
+        fast.addElement("mechanism").setText(HT_SHA_256_EXPR);
+        fast.addElement("mechanism").setText(HT_SHA_512_NONE);
+        fast.addElement("mechanism").setText(HT_SHA_512_PLUS);
+        fast.addElement("mechanism").setText(HT_SHA_512_EXPR);
+        // HT2-* mechanisms (draft-ietf-kitten-sasl-ht)
         fast.addElement("mechanism").setText(HT2_SHA_256_NONE);
+        fast.addElement("mechanism").setText(HT2_SHA_256_PLUS);
+        fast.addElement("mechanism").setText(HT2_SHA_256_EXPR);
+        fast.addElement("mechanism").setText(HT2_SHA_512_NONE);
+        fast.addElement("mechanism").setText(HT2_SHA_512_PLUS);
+        fast.addElement("mechanism").setText(HT2_SHA_512_EXPR);
         return fast;
     }
 
@@ -114,6 +164,50 @@ public class FastTokenManager {
      */
     static boolean isHt2Mechanism(@Nonnull final String mechanism) {
         return mechanism.startsWith("HT2-");
+    }
+
+    /**
+     * Extracts the JCA hash algorithm name from a mechanism name of the form
+     * {@code HT-SHA-256-NONE}, {@code HT2-SHA-512-PLUS}, etc.
+     *
+     * <p>The second segment (between the first and second {@code -}) is the hash family
+     * (e.g. {@code SHA}) and the third segment is the bit length (e.g. {@code 256}), giving
+     * a JCA name of {@code SHA-256} or {@code SHA-512}.</p>
+     *
+     * @param mechanism the FAST SASL mechanism name (cannot be null)
+     * @return the JCA algorithm name, e.g. {@code "SHA-256"} or {@code "SHA-512"}
+     * @throws IllegalArgumentException if the mechanism name does not follow the expected pattern
+     */
+    public static String hashAlgorithmForMechanism(@Nonnull final String mechanism) {
+        // Format: (HT|HT2)-HASH-BITS-CBTYPE, e.g. HT-SHA-256-NONE or HT2-SHA-512-PLUS
+        final String[] parts = mechanism.split("-");
+        // parts[0] = "HT" or "HT2", parts[-1] = cb type, middle parts = hash name
+        // For HT-SHA-256-NONE  → parts = ["HT",  "SHA", "256", "NONE"]
+        // For HT2-SHA-512-PLUS → parts = ["HT2", "SHA", "512", "PLUS"]
+        if (parts.length < 4) {
+            throw new IllegalArgumentException("Unrecognised HT mechanism name: " + mechanism);
+        }
+        // Hash spans parts[1] through parts[parts.length - 2]
+        final StringBuilder hash = new StringBuilder();
+        for (int i = 1; i < parts.length - 1; i++) {
+            if (i > 1) hash.append('-');
+            hash.append(parts[i]);
+        }
+        return hash.toString(); // e.g. "SHA-256" or "SHA-512"
+    }
+
+    /**
+     * Returns the JCA HMAC algorithm name corresponding to the hash used by the given mechanism.
+     * For example, {@code "SHA-256"} maps to {@code "HmacSHA256"}, {@code "SHA-512"} to
+     * {@code "HmacSHA512"}.
+     *
+     * @param mechanism the FAST SASL mechanism name (cannot be null)
+     * @return the JCA HMAC algorithm name
+     */
+    public static String hmacAlgorithmForMechanism(@Nonnull final String mechanism) {
+        final String hash = hashAlgorithmForMechanism(mechanism);
+        // Map "SHA-256" → "HmacSHA256", "SHA-512" → "HmacSHA512"
+        return "Hmac" + hash.replace("-", "");
     }
 
     /**
@@ -133,10 +227,11 @@ public class FastTokenManager {
         final byte[] rawToken = new byte[32];
         SECURE_RANDOM.nextBytes(rawToken);
         final Instant expiry = Instant.now().plus(TOKEN_EXPIRY.getValue());
-        // HT2 mechanisms require the raw token for HMAC; store as Base64. HT mechanisms store a SHA-256 hash.
+        // HT2 mechanisms require the raw token for HMAC; store as Base64.
+        // HT mechanisms store a hash of the raw token using the mechanism's hash algorithm.
         final String storedValue = isHt2Mechanism(mechanism)
             ? Base64.getEncoder().encodeToString(rawToken)
-            : sha256Hex(rawToken);
+            : hashHex(rawToken, hashAlgorithmForMechanism(mechanism));
         final String expiryString = XMPPDateTimeFormat.format(java.util.Date.from(expiry));
 
         Connection con = null;
@@ -211,7 +306,7 @@ public class FastTokenManager {
             }
 
             // Constant-time comparison of hashes.
-            final String presentedHash = sha256Hex(token);
+            final String presentedHash = hashHex(token, hashAlgorithmForMechanism(mechanism));
             if (!MessageDigest.isEqual(storedHash.getBytes(), presentedHash.getBytes())) {
                 Log.debug("FAST token mismatch for user '{}' mechanism '{}'", username, mechanism);
                 return null;
@@ -299,8 +394,9 @@ public class FastTokenManager {
         }
 
         // Compute the expected initiator-hashed-token = HMAC(token, "Initiator" || cbData || extraInitiatorValues)
+        final String hmacAlg = hmacAlgorithmForMechanism(mechanism);
         final byte[] initiatorMsg = buildHmacMessage("Initiator", cbData, extraInitiatorValues);
-        final byte[] expectedInitiatorToken = hmacSha256(storedRawToken, initiatorMsg);
+        final byte[] expectedInitiatorToken = hmac(storedRawToken, initiatorMsg, hmacAlg);
         if (!MessageDigest.isEqual(expectedInitiatorToken, initiatorHashedToken)) {
             Log.debug("HT2 FAST token HMAC mismatch for user '{}' mechanism '{}'", username, mechanism);
             return null;
@@ -308,7 +404,7 @@ public class FastTokenManager {
 
         // Compute responder-hashed-token = HMAC(token, "Responder" || cbData || extraResponderValues)
         final byte[] responderMsg = buildHmacMessage("Responder", cbData, extraResponderValues);
-        final byte[] responderHashedToken = hmacSha256(storedRawToken, responderMsg);
+        final byte[] responderHashedToken = hmac(storedRawToken, responderMsg, hmacAlg);
 
         // Token is valid — rotate it.
         final FastToken newToken = issueToken(username, mechanism);
@@ -400,21 +496,45 @@ public class FastTokenManager {
     }
 
     /**
-     * Computes HMAC-SHA-256 of the given message using the provided key.
+     * Computes HMAC of the given message using the provided key and JCA algorithm name.
      *
-     * @param key     the HMAC key bytes (cannot be null)
-     * @param message the message bytes (cannot be null)
-     * @return the raw HMAC-SHA-256 bytes
+     * @param key       the HMAC key bytes (cannot be null)
+     * @param message   the message bytes (cannot be null)
+     * @param algorithm the JCA HMAC algorithm name, e.g. {@code "HmacSHA256"} (cannot be null)
+     * @return the raw HMAC bytes
      */
-    static byte[] hmacSha256(@Nonnull final byte[] key, @Nonnull final byte[] message) {
+    static byte[] hmac(@Nonnull final byte[] key, @Nonnull final byte[] message,
+                       @Nonnull final String algorithm) {
         try {
-            final Mac mac = Mac.getInstance("HmacSHA256");
-            mac.init(new SecretKeySpec(key, "HmacSHA256"));
+            final Mac mac = Mac.getInstance(algorithm);
+            mac.init(new SecretKeySpec(key, algorithm));
             return mac.doFinal(message);
         } catch (final NoSuchAlgorithmException e) {
-            throw new IllegalStateException("HmacSHA256 not available", e);
+            throw new IllegalStateException(algorithm + " not available", e);
         } catch (final InvalidKeyException e) {
-            throw new IllegalStateException("Invalid HMAC key", e);
+            throw new IllegalStateException("Invalid HMAC key for " + algorithm, e);
+        }
+    }
+
+    /**
+     * Computes a hash of the given bytes using the specified JCA algorithm and returns the
+     * result as a lowercase hex string.
+     *
+     * @param data      the data to hash (cannot be null)
+     * @param algorithm the JCA digest algorithm name, e.g. {@code "SHA-256"} or {@code "SHA-512"}
+     * @return the hex-encoded hash
+     */
+    static String hashHex(@Nonnull final byte[] data, @Nonnull final String algorithm) {
+        try {
+            final MessageDigest digest = MessageDigest.getInstance(algorithm);
+            final byte[] hash = digest.digest(data);
+            final StringBuilder sb = new StringBuilder(hash.length * 2);
+            for (final byte b : hash) {
+                sb.append(String.format("%02x", b));
+            }
+            return sb.toString();
+        } catch (final NoSuchAlgorithmException e) {
+            throw new IllegalStateException(algorithm + " not available", e);
         }
     }
 
@@ -423,18 +543,23 @@ public class FastTokenManager {
      *
      * @param data the data to hash (cannot be null)
      * @return the hex-encoded SHA-256 hash
+     * @deprecated Use {@link #hashHex(byte[], String)} with algorithm {@code "SHA-256"} instead.
      */
+    @Deprecated
     static String sha256Hex(@Nonnull final byte[] data) {
-        try {
-            final MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            final byte[] hash = digest.digest(data);
-            final StringBuilder sb = new StringBuilder(hash.length * 2);
-            for (final byte b : hash) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString();
-        } catch (final NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 not available", e);
-        }
+        return hashHex(data, "SHA-256");
+    }
+
+    /**
+     * Computes HMAC-SHA-256 of the given message using the provided key.
+     *
+     * @param key     the HMAC key bytes (cannot be null)
+     * @param message the message bytes (cannot be null)
+     * @return the raw HMAC-SHA-256 bytes
+     * @deprecated Use {@link #hmac(byte[], byte[], String)} with algorithm {@code "HmacSHA256"} instead.
+     */
+    @Deprecated
+    static byte[] hmacSha256(@Nonnull final byte[] key, @Nonnull final byte[] message) {
+        return hmac(key, message, "HmacSHA256");
     }
 }

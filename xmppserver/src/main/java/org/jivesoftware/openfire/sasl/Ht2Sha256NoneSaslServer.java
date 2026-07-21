@@ -15,14 +15,12 @@
  */
 package org.jivesoftware.openfire.sasl;
 
-import org.jivesoftware.openfire.fast.FastToken;
 import org.jivesoftware.openfire.fast.FastTokenManager;
 import org.jivesoftware.openfire.fast.FastTokenManager.Ht2ValidationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.security.sasl.SaslException;
-import javax.security.sasl.SaslServer;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -41,8 +39,10 @@ import java.nio.charset.StandardCharsets;
  *
  * <p>This is a two-message mechanism: the client sends one message; the server evaluates it
  * and returns the responder proof via {@link #evaluateResponse(byte[])}.</p>
+ *
+ * @see AbstractHtSaslServer
  */
-public class Ht2Sha256NoneSaslServer implements SaslServer {
+public class Ht2Sha256NoneSaslServer extends AbstractHtSaslServer {
 
     private static final Logger Log = LoggerFactory.getLogger(Ht2Sha256NoneSaslServer.class);
 
@@ -52,16 +52,7 @@ public class Ht2Sha256NoneSaslServer implements SaslServer {
     /** Empty channel-binding data for the NONE variant. */
     private static final byte[] EMPTY_CB_DATA = new byte[0];
 
-    private boolean complete = false;
-    private String authorizationId = null;
-    private FastToken rotatedToken = null;
     private byte[] responderHashedToken = null;
-
-    /**
-     * Constructs a new {@code Ht2Sha256NoneSaslServer}.
-     */
-    public Ht2Sha256NoneSaslServer() {
-    }
 
     @Override
     public String getMechanismName() {
@@ -137,61 +128,8 @@ public class Ht2Sha256NoneSaslServer implements SaslServer {
     }
 
     @Override
-    public boolean isComplete() {
-        return complete;
-    }
-
-    @Override
-    public String getAuthorizationID() {
-        if (!complete) {
-            throw new IllegalStateException("Authentication not yet complete");
-        }
-        return authorizationId;
-    }
-
-    /**
-     * Returns the rotated FAST token produced after successful authentication, or {@code null}
-     * if authentication has not completed successfully.
-     *
-     * @return the rotated {@link FastToken}, or {@code null}
-     */
-    public FastToken getRotatedToken() {
-        return rotatedToken;
-    }
-
-    @Override
-    public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
-        throw new SaslException(MECHANISM_NAME + " does not support integrity/confidentiality");
-    }
-
-    @Override
-    public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
-        throw new SaslException(MECHANISM_NAME + " does not support integrity/confidentiality");
-    }
-
-    @Override
-    public Object getNegotiatedProperty(final String propName) {
-        return null;
-    }
-
-    @Override
     public void dispose() throws SaslException {
-        complete = false;
-        authorizationId = null;
-        rotatedToken = null;
+        super.dispose();
         responderHashedToken = null;
-    }
-
-    /**
-     * Returns the index of the first occurrence of {@code target} in {@code array} starting at
-     * {@code fromIndex}, or {@code -1} if not found.
-     */
-    private static int indexOf(final byte[] array, final byte target, final int fromIndex) {
-        for (int i = fromIndex; i < array.length; i++) {
-            if (array[i] == target) {
-                return i;
-            }
-        }
-        return -1;
     }
 }

@@ -21,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.security.sasl.SaslException;
-import javax.security.sasl.SaslServer;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -35,23 +34,15 @@ import java.nio.charset.StandardCharsets;
  *
  * This is a single-round-trip mechanism: the client sends the initial response and
  * the server either accepts or rejects it.
+ *
+ * @see AbstractHtSaslServer
  */
-public class HtSha256NoneSaslServer implements SaslServer {
+public class HtSha256NoneSaslServer extends AbstractHtSaslServer {
 
     private static final Logger Log = LoggerFactory.getLogger(HtSha256NoneSaslServer.class);
 
     /** The SASL mechanism name. */
     public static final String MECHANISM_NAME = FastTokenManager.HT_SHA_256_NONE;
-
-    private boolean complete = false;
-    private String authorizationId = null;
-    private FastToken rotatedToken = null;
-
-    /**
-     * Constructs a new {@code HtSha256NoneSaslServer}.
-     */
-    public HtSha256NoneSaslServer() {
-    }
 
     @Override
     public String getMechanismName() {
@@ -76,18 +67,18 @@ public class HtSha256NoneSaslServer implements SaslServer {
         }
 
         if (response == null || response.length == 0) {
-            throw new SaslException("HT-SHA-256-NONE: empty initial response");
+            throw new SaslException(MECHANISM_NAME + ": empty initial response");
         }
 
         // Parse: cb-name ',' authzid ',' token-bytes
         // The first two fields are UTF-8 text; the token is raw bytes after the second comma.
         final int firstComma = indexOf(response, (byte) ',', 0);
         if (firstComma < 0) {
-            throw new SaslException("HT-SHA-256-NONE: malformed initial response (missing first comma)");
+            throw new SaslException(MECHANISM_NAME + ": malformed initial response (missing first comma)");
         }
         final int secondComma = indexOf(response, (byte) ',', firstComma + 1);
         if (secondComma < 0) {
-            throw new SaslException("HT-SHA-256-NONE: malformed initial response (missing second comma)");
+            throw new SaslException(MECHANISM_NAME + ": malformed initial response (missing second comma)");
         }
 
         final String cbName = new String(response, 0, firstComma, StandardCharsets.UTF_8);
@@ -95,86 +86,28 @@ public class HtSha256NoneSaslServer implements SaslServer {
         final int tokenStart = secondComma + 1;
         final int tokenLength = response.length - tokenStart;
         if (tokenLength <= 0) {
-            throw new SaslException("HT-SHA-256-NONE: malformed initial response (missing token)");
+            throw new SaslException(MECHANISM_NAME + ": malformed initial response (missing token)");
         }
         final byte[] tokenBytes = new byte[tokenLength];
         System.arraycopy(response, tokenStart, tokenBytes, 0, tokenLength);
 
-        Log.debug("HT-SHA-256-NONE: evaluating response for user '{}', cb-name='{}'", username, cbName);
+        Log.debug("{}: evaluating response for user '{}', cb-name='{}'", MECHANISM_NAME, username, cbName);
 
         if (username.isEmpty()) {
-            throw new SaslException("HT-SHA-256-NONE: empty username");
+            throw new SaslException(MECHANISM_NAME + ": empty username");
         }
 
         // Validate the token via FastTokenManager (also rotates on success).
         final FastToken newToken = FastTokenManager.validateToken(username, MECHANISM_NAME, tokenBytes);
         if (newToken == null) {
             complete = true;
-            throw new SaslException("HT-SHA-256-NONE: invalid or expired token for user '" + username + "'");
+            throw new SaslException(MECHANISM_NAME + ": invalid or expired token for user '" + username + "'");
         }
 
         authorizationId = username;
         rotatedToken = newToken;
         complete = true;
-        Log.debug("HT-SHA-256-NONE: authentication successful for user '{}'", username);
+        Log.debug("{}: authentication successful for user '{}'", MECHANISM_NAME, username);
         return new byte[0];
-    }
-
-    @Override
-    public boolean isComplete() {
-        return complete;
-    }
-
-    @Override
-    public String getAuthorizationID() {
-        if (!complete) {
-            throw new IllegalStateException("Authentication not yet complete");
-        }
-        return authorizationId;
-    }
-
-    /**
-     * Returns the rotated FAST token produced after successful authentication, or {@code null}
-     * if authentication has not completed successfully.
-     *
-     * @return the rotated {@link FastToken}, or {@code null}
-     */
-    public FastToken getRotatedToken() {
-        return rotatedToken;
-    }
-
-    @Override
-    public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
-        throw new SaslException("HT-SHA-256-NONE does not support integrity/confidentiality");
-    }
-
-    @Override
-    public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
-        throw new SaslException("HT-SHA-256-NONE does not support integrity/confidentiality");
-    }
-
-    @Override
-    public Object getNegotiatedProperty(final String propName) {
-        return null;
-    }
-
-    @Override
-    public void dispose() throws SaslException {
-        complete = false;
-        authorizationId = null;
-        rotatedToken = null;
-    }
-
-    /**
-     * Returns the index of the first occurrence of {@code target} in {@code array} starting at
-     * {@code fromIndex}, or {@code -1} if not found.
-     */
-    private static int indexOf(final byte[] array, final byte target, final int fromIndex) {
-        for (int i = fromIndex; i < array.length; i++) {
-            if (array[i] == target) {
-                return i;
-            }
-        }
-        return -1;
     }
 }

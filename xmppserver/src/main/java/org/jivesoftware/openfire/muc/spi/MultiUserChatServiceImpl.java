@@ -1132,17 +1132,33 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                     if ( toNickname != null )
                     {
                         // User is sending to a room occupant.
-                        final boolean selfPingEnabled = JiveGlobals.getBooleanProperty("xmpp.muc.self-ping.enabled", true);
-                        if ( selfPingEnabled && occupantData != null && toNickname.equals(occupantData.getNickname()) && packet.isRequest()
-                            && packet.getElement().element(QName.get(IQPingHandler.ELEMENT_NAME, IQPingHandler.NAMESPACE)) != null )
+                        if ( occupantData != null && toNickname.equals(occupantData.getNickname()) )
                         {
-                            Log.trace("User '{}' is sending an IQ 'ping' to itself. See XEP-0410: MUC Self-Ping (Schrödinger's Chat).", packet.getFrom());
-                            XMPPServer.getInstance().getPacketRouter().route(IQ.createResultIQ(packet));
+                            final boolean selfPingEnabled = JiveGlobals.getBooleanProperty("xmpp.muc.self-ping.enabled", true);
+
+                            // Addressed to self. Either handle as self-ping, or as a PM to own other resources.
+                            if (selfPingEnabled && packet.isRequest() && packet.getElement().element(QName.get(IQPingHandler.ELEMENT_NAME, IQPingHandler.NAMESPACE)) != null)
+                            {
+                                Log.trace("User '{}' is sending an IQ 'ping' to itself. See XEP-0410: MUC Self-Ping (Schrödinger's Chat).", packet.getFrom());
+                                XMPPServer.getInstance().getPacketRouter().route(IQ.createResultIQ(packet));
+                            }
+                            else
+                            {
+                                Log.trace("User '{}' is sending an IQ stanza to itself (as a PM) with nickname: '{}'.", packet.getFrom(), toNickname);
+                                room.sendPrivatePacket(packet, occupantData);
+                            }
+                        }
+                        else if ( occupantData != null )
+                        {
+                            // Occupant, addressing someone else in the room: a PM.
+                            Log.trace("User '{}' is sending an IQ stanza to another room occupant (as a PM) with nickname: '{}'.", packet.getFrom(), toNickname);
+                            room.sendPrivatePacket(packet, occupantData);
                         }
                         else
                         {
-                            Log.trace("User '{}' is sending an IQ stanza to another room occupant (as a PM) with nickname: '{}'.", packet.getFrom(), toNickname);
-                            room.sendPrivatePacket(packet, occupantData);
+                            // Not an occupant at all.
+                            Log.debug("An IQ request was addressed to occupant '{}' of room '{}' by a non-occupant", room.getName(), packet.toXML());
+                            sendErrorPacket(packet, PacketError.Condition.not_acceptable, "You are not an occupant of this room.");
                         }
                     }
                     else

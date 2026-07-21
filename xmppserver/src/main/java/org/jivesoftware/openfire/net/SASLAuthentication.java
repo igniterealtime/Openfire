@@ -26,6 +26,8 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
+import org.jivesoftware.openfire.fast.FastToken;
+import org.jivesoftware.openfire.fast.FastTokenManager;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.keystore.TrustStore;
 import org.jivesoftware.openfire.lockout.LockOutManager;
@@ -536,6 +538,9 @@ public class SASLAuthentication {
             Element inlineElement = result.addElement("inline");
             inlineElement.add(Bind2Request.featureElement());
             // Element sm = inlineElement.addElement(...);
+            if (FastTokenManager.ENABLE_FAST.getValue()) {
+                inlineElement.add(FastTokenManager.featureElement());
+            }
         }
 
         // OF-2072: Return null instead of an empty element, if so configured.
@@ -753,6 +758,8 @@ public class SASLAuthentication {
                     }
                     // Clear any unexecuted bind2-request
                     session.removeSessionData("bind2-request");
+                    session.removeSessionData("fast-request-token-mechanism");
+                    session.removeSessionData("fast-invalidate");
                     if (usingSASL2 && session instanceof LocalClientSession) {
                         Element userAgentElement = doc.element("user-agent");
                         if (userAgentElement != null) {
@@ -765,6 +772,24 @@ public class SASLAuthentication {
                         Bind2Request bind2Request = Bind2Request.from(doc);
                         if (bind2Request != null) {
                             session.setSessionData("bind2-request", bind2Request);
+                        }
+                        // XEP-0484: parse <request-token xmlns='urn:xmpp:fast:0' mechanism='...'/>
+                        final Element requestTokenEl = doc.element(new QName("request-token", new Namespace("", FastTokenManager.NAMESPACE)));
+                        if (requestTokenEl != null && FastTokenManager.ENABLE_FAST.getValue()) {
+                            final String requestedMechanism = requestTokenEl.attributeValue("mechanism");
+                            if (requestedMechanism != null && !requestedMechanism.isEmpty()) {
+                                session.setSessionData("fast-request-token-mechanism", requestedMechanism);
+                                Log.debug("FAST token requested for mechanism '{}' by {}", requestedMechanism, session);
+                            }
+                        }
+                        // XEP-0484: parse <fast xmlns='urn:xmpp:fast:0' [count='..'] [invalidate='true']/>
+                        final Element fastEl = doc.element(new QName("fast", new Namespace("", FastTokenManager.NAMESPACE)));
+                        if (fastEl != null) {
+                            final String invalidateAttr = fastEl.attributeValue("invalidate");
+                            if ("true".equalsIgnoreCase(invalidateAttr) || "1".equals(invalidateAttr)) {
+                                session.setSessionData("fast-invalidate", Boolean.TRUE);
+                                Log.debug("FAST token invalidation requested by {}", session);
+                            }
                         }
                     }
 
@@ -981,6 +1006,44 @@ public class SASLAuthentication {
 
         if (usingSASL2) {
             if (session instanceof LocalClientSession clientSession) {
+                // XEP-0484: determine if a FAST token should be issued.
+                // A token is issued when:
+                //   (a) the client included <request-token> with a valid mechanism, OR
+                //   (b) this was a FAST authentication and invalidate was NOT requested (token rotation).
+                // If invalidate=true was requested, delete the existing token and do not rotate.
+                final boolean fastInvalidate = Boolean.TRUE.equals(session.getSessionData("fast-invalidate"));
+                final String fastRequestedMechanism = (String) session.getSessionData("fast-request-token-mechanism");
+                final boolean isFastAuth = mechanismName.startsWith("HT-") || mechanismName.startsWith("HT2-");
+
+                FastToken fastToken = null;
+                if (fastInvalidate) {
+                    // Client requested token invalidation: delete the token used for this auth, do not rotate.
+                    if (username != null) {
+                        FastTokenManager.invalidateTokens(username);
+                        Log.debug("FAST token invalidated for user '{}' per client request.", username);
+                    }
+                    // Still issue a new token if the client also sent <request-token>.
+                    if (fastRequestedMechanism != null && username != null) {
+                        fastToken = FastTokenManager.issueToken(username, fastRequestedMechanism);
+                        Log.debug("FAST token (re-)issued for user '{}' mechanism '{}' after invalidation+request.", username, fastRequestedMechanism);
+                    }
+                } else if (fastRequestedMechanism != null && username != null) {
+                    // Client requested a new FAST token (e.g. during initial password auth).
+                    fastToken = FastTokenManager.issueToken(username, fastRequestedMechanism);
+                    Log.debug("FAST token issued for user '{}' mechanism '{}'.", username, fastRequestedMechanism);
+                } else if (isFastAuth && username != null) {
+                    // FAST authentication: the SaslServer already rotated the token internally;
+                    // retrieve the new token from the SaslServer's rotatedToken field if accessible,
+                    // or issue a fresh token here for inclusion in the <success/>.
+                    // The rotated token is stored by HtSaslServer/Ht2SaslServer via AbstractHtSaslServer.
+                    // We expose it via the "RotatedToken" session data key set by AbstractHtSaslServer.
+                    fastToken = (FastToken) session.getSessionData("fast-rotated-token");
+                }
+                session.removeSessionData("fast-request-token-mechanism");
+                session.removeSessionData("fast-invalidate");
+                session.removeSessionData("fast-rotated-token");
+
+                final FastToken finalFastToken = fastToken;
                 final Bind2Request bind2Request = (Bind2Request) session.getSessionData("bind2-request");
                 if (bind2Request != null && clientSession.getStatus() != Session.Status.AUTHENTICATED) {
                     clientSession.removeSessionData("bind2-request");
@@ -996,7 +1059,7 @@ public class SASLAuthentication {
                                     Log.warn("An exception occurred while binding resource '{}' for session '{}' during SASL2+Bind2 authentication.", resource, clientSession, throwable);
                                 }
                                 final boolean bound = throwable == null && result == SessionManager.BindResult.BOUND;
-                                final Element success = buildSasl2SuccessElement(finalSuccessData, finalAuthorizationIdentity, bound ? resource : null);
+                                final Element success = buildSasl2SuccessElement(finalSuccessData, finalAuthorizationIdentity, bound ? resource : null, finalFastToken);
                                 if (bound) {
                                     bind2Request.processFeatureRequests(clientSession, success);
                                 }
@@ -1023,12 +1086,12 @@ public class SASLAuthentication {
                     // Response and features are sent asynchronously from the completion stage.
                 } else {
                     // No Bind2 request, or session already authenticated: send <success/> synchronously without <bound/>.
-                    final Element success = buildSasl2SuccessElement(successData, authorizationIdentity, null);
+                    final Element success = buildSasl2SuccessElement(successData, authorizationIdentity, null, finalFastToken);
                     session.deliverRawText(success.asXML());
                 }
             } else {
                 // Non-client session (e.g. server): send <success/> synchronously.
-                final Element success = buildSasl2SuccessElement(successData, authorizationIdentity, null);
+                final Element success = buildSasl2SuccessElement(successData, authorizationIdentity, null, null);
                 session.deliverRawText(success.asXML());
             }
         } else {
@@ -1042,9 +1105,10 @@ public class SASLAuthentication {
      * @param successData optional mechanism-specific success data (can be null).
      * @param authorizationIdentity the bare JID authorization identity (e.g. user@domain or uuid@domain for anonymous).
      * @param resource the bound resource, or null if no resource was bound.
+     * @param fastToken optional FAST token to include in the response as per XEP-0484 (can be null).
      * @return the &lt;success/&gt; element.
      */
-    private static Element buildSasl2SuccessElement(byte[] successData, String authorizationIdentity, String resource) {
+    private static Element buildSasl2SuccessElement(byte[] successData, String authorizationIdentity, String resource, FastToken fastToken) {
         final Element success = DocumentHelper.createElement(new QName("success", new Namespace("", SASL2_NAMESPACE)));
         if (successData != null && successData.length > 0) {
             final String data_b64 = Base64.getEncoder().encodeToString(successData).trim();
@@ -1055,6 +1119,13 @@ public class SASLAuthentication {
             authId.append('/').append(resource);
         }
         success.addElement("authorization-identifier").setText(authId.toString());
+        // XEP-0484: include <token> if a FAST token was issued.
+        if (fastToken != null) {
+            final Element tokenEl = success.addElement(new QName("token", new Namespace("", FastTokenManager.NAMESPACE)));
+            tokenEl.addAttribute("expiry", org.jivesoftware.util.XMPPDateTimeFormat.format(
+                java.util.Date.from(fastToken.getExpiry())));
+            tokenEl.addAttribute("token", Base64.getEncoder().encodeToString(fastToken.getToken()));
+        }
         return success;
     }
 

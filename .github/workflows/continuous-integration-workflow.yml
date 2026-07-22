@@ -32,7 +32,7 @@ jobs:
           distribution: ${{ matrix.distribution }}
           cache: maven
       - name: Cache Maven wrapper distribution
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.m2/wrapper
           key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties') }}
@@ -148,7 +148,7 @@ jobs:
           cache: 'maven'
 
       - name: Cache Maven wrapper distribution
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.m2/wrapper
           key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('openfire-integration-tests/.mvn/wrapper/maven-wrapper.properties') }}
@@ -451,7 +451,7 @@ jobs:
           distribution: zulu
           cache: maven
       - name: Cache Maven wrapper distribution
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.m2/wrapper
           key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties', 'build/ci/updater/.mvn/wrapper/maven-wrapper.properties') }}
@@ -496,7 +496,7 @@ jobs:
           distribution: zulu
           cache: maven
       - name: Cache Maven wrapper distribution
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.m2/wrapper
           key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties', 'build/ci/updater/.mvn/wrapper/maven-wrapper.properties') }}
@@ -548,7 +548,7 @@ jobs:
           distribution: zulu
           cache: maven
       - name: Cache Maven wrapper distribution
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.m2/wrapper
           key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties', 'build/ci/updater/.mvn/wrapper/maven-wrapper.properties') }}
@@ -594,7 +594,7 @@ jobs:
           distribution: zulu
           cache: maven
       - name: Cache Maven wrapper distribution
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.m2/wrapper
           key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties', 'build/ci/updater/.mvn/wrapper/maven-wrapper.properties') }}
@@ -641,7 +641,7 @@ jobs:
           distribution: zulu
           cache: maven
       - name: Cache Maven wrapper distribution
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.m2/wrapper
           key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties', 'build/ci/updater/.mvn/wrapper/maven-wrapper.properties') }}
@@ -685,7 +685,7 @@ jobs:
           distribution: zulu
           cache: maven
       - name: Cache Maven wrapper distribution
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.m2/wrapper
           key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties', 'build/ci/updater/.mvn/wrapper/maven-wrapper.properties') }}
@@ -960,7 +960,7 @@ jobs:
           distribution: zulu
           cache: maven
       - name: Cache Maven wrapper distribution
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.m2/wrapper
           key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties', 'build/ci/updater/.mvn/wrapper/maven-wrapper.properties') }}
@@ -1006,7 +1006,7 @@ jobs:
           distribution: zulu
           cache: maven
       - name: Cache Maven wrapper distribution
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.m2/wrapper
           key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties', 'build/ci/updater/.mvn/wrapper/maven-wrapper.properties') }}
@@ -1136,7 +1136,7 @@ jobs:
           distribution: zulu
           cache: maven
       - name: Cache Maven wrapper distribution
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.m2/wrapper
           key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties', 'build/ci/updater/.mvn/wrapper/maven-wrapper.properties') }}
@@ -1182,7 +1182,7 @@ jobs:
           distribution: zulu
           cache: maven
       - name: Cache Maven wrapper distribution
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.m2/wrapper
           key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties', 'build/ci/updater/.mvn/wrapper/maven-wrapper.properties') }}
@@ -1238,7 +1238,7 @@ jobs:
           server-username: IGNITE_REALTIME_MAVEN_USERNAME
           server-password: IGNITE_REALTIME_MAVEN_PASSWORD
       - name: Cache Maven wrapper distribution
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ~/.m2/wrapper
           key: ${{ runner.os }}-mvn-wrapper-${{ hashFiles('.mvn/wrapper/maven-wrapper.properties') }}

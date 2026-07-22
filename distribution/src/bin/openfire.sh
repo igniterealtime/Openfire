@@ -126,7 +126,7 @@ do
   case $arguments in
     -debug)
       echo "Starting debug mode"
-      JAVACMD="$JAVACMD -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005"
+      JAVACMD="$JAVACMD -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=localhost:5005"
       ;;
     -remotedebug)
       echo "Starting remote debug mode"

@@ -64,19 +64,7 @@ public class PresenceEnhancer implements PacketInterceptor
             return;
         }
 
-        Element x = presence.getChildElement("x", "vcard-temp:x:update");
-        if (x == null) {
-            x = presence.addChildElement("x", "vcard-temp:x:update");
-        }
-        Element photo = x.element("photo");
-        if (photo != null && photo.getTextTrim().isEmpty()) {
-            Log.trace("Not enhancing presence available stanza from '{}'. The original stanza contains an empty 'photo' element.", session.getAddress());
-            return;
-        }
-        if (photo == null) {
-            photo = x.addElement("photo");
-        }
-
+        // Get correct hash first; don't touch the presence unless we have a hash.
         final IQPEPHandler pepHandler = XMPPServer.getInstance().getIQPEPHandler();
         final PEPServiceManager serviceManager = pepHandler.getServiceManager();
         final PEPService pepService = serviceManager.getPEPService(session.getAddress(), false);
@@ -102,7 +90,23 @@ public class PresenceEnhancer implements PacketInterceptor
             return;
         }
 
+        // Now examine the presence.
+        Element x = presence.getChildElement("x", "vcard-temp:x:update");
+        if (x == null) {
+            x = presence.addChildElement("x", "vcard-temp:x:update");
+        }
+        Element photo = x.element("photo");
+        // Present but explicitly empty; Section 4 MUST NOT
+        if (photo != null && photo.getTextTrim().isEmpty()) {
+            Log.trace("Not enhancing presence available stanza from '{}'. The original stanza contains an empty 'photo' element.", session.getAddress());
+            return;
+        }
+        if (photo == null) {
+            photo = x.addElement("photo");
+        }
+
         Log.trace("Enhancing presence available stanza from '{}' with value '{}'", session.getAddress(), hash);
-        photo.addText(hash);
+        // Always override (Section 4; MAY)
+        photo.setText(hash);
     }
 }

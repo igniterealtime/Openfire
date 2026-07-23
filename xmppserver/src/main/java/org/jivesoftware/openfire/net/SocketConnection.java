@@ -46,8 +46,8 @@ import java.net.UnknownHostException;
 import java.nio.channels.Channels;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
+import java.time.Duration;
 import java.util.Collection;
-import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -97,7 +97,8 @@ public class SocketConnection extends AbstractConnection {
     private org.jivesoftware.util.XMLWriter xmlSerializer;
     private TLSStreamHandler tlsStreamHandler;
 
-    private long writeStarted = -1;
+    private volatile boolean writeInProgress = false;
+    private volatile long writeStartedNanos;
 
     private boolean usingSelfSignedCertificate;
 
@@ -448,11 +449,12 @@ public class SocketConnection extends AbstractConnection {
     }
 
     void writeStarted() {
-        writeStarted = System.currentTimeMillis();
+        writeStartedNanos = System.nanoTime();
+        writeInProgress = true;
     }
 
     void writeFinished() {
-        writeStarted = -1;
+        writeInProgress = false;
     }
 
     /**
@@ -465,16 +467,16 @@ public class SocketConnection extends AbstractConnection {
      */
     boolean checkHealth() {
         // Check that the sending operation is still active
-        long writeTimestamp = writeStarted;
-        if (writeTimestamp > -1 && System.currentTimeMillis() - writeTimestamp >
-                JiveGlobals.getIntProperty("xmpp.session.sending-limit", 60000)) {
-            // Close the socket
-            if (Log.isDebugEnabled()) {
-                Log.debug("Closing connection: " + this + " that started sending data at: " +
-                        new Date(writeTimestamp));
+        if (writeInProgress) {
+            final Duration sending = Duration.ofNanos(System.nanoTime() - writeStartedNanos);
+            if (sending.toMillis() > JiveGlobals.getIntProperty("xmpp.session.sending-limit", 60000)) {
+                // Close the socket
+                if (Log.isDebugEnabled()) {
+                    Log.debug("Closing connection: " + this + " that has been sending data for: " + sending);
+                }
+                close(new StreamError(StreamError.Condition.connection_timeout, "Unable to validate the connection. Connection has been idle long enough for it to be considered 'unhealthy'."), true);
+                return true;
             }
-            close(new StreamError(StreamError.Condition.connection_timeout, "Unable to validate the connection. Connection has been idle long enough for it to be considered 'unhealthy'."), true);
-            return true;
         }
         else {
             // Check if the connection has been idle. A connection is considered idle if the client
@@ -494,7 +496,7 @@ public class SocketConnection extends AbstractConnection {
     }
 
     private void release() {
-        writeStarted = -1;
+        writeInProgress = false;
         instances.remove(this);
     }
 

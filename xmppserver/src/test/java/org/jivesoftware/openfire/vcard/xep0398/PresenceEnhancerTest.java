@@ -309,7 +309,7 @@ class PresenceEnhancerTest {
         // x element will have been added before the PEP lookup, but photo must remain empty
         if (x != null) {
             final Element photo = x.element("photo");
-            assertTrue(photo == null || photo.getTextTrim().isEmpty(),
+            assertTrue(photo != null && photo.getTextTrim().isEmpty(),
                 "No hash should be written when there is no PEP service");
         }
     }
@@ -328,7 +328,7 @@ class PresenceEnhancerTest {
         final Element x = presence.getChildElement("x", "vcard-temp:x:update");
         if (x != null) {
             final Element photo = x.element("photo");
-            assertTrue(photo == null || photo.getTextTrim().isEmpty(),
+            assertTrue(photo != null && photo.getTextTrim().isEmpty(),
                 "No hash should be written when there is no avatar metadata node");
         }
     }
@@ -347,7 +347,7 @@ class PresenceEnhancerTest {
         final Element x = presence.getChildElement("x", "vcard-temp:x:update");
         if (x != null) {
             final Element photo = x.element("photo");
-            assertTrue(photo == null || photo.getTextTrim().isEmpty(),
+            assertTrue(photo != null && photo.getTextTrim().isEmpty(),
                 "No hash should be written when there is no published avatar metadata item");
         }
     }
@@ -366,7 +366,7 @@ class PresenceEnhancerTest {
         final Element x = presence.getChildElement("x", "vcard-temp:x:update");
         if (x != null) {
             final Element photo = x.element("photo");
-            assertTrue(photo == null || photo.getTextTrim().isEmpty(),
+            assertTrue(photo != null && photo.getTextTrim().isEmpty(),
                 "No hash should be written when the published item ID is null");
         }
     }
@@ -385,7 +385,7 @@ class PresenceEnhancerTest {
         final Element x = presence.getChildElement("x", "vcard-temp:x:update");
         if (x != null) {
             final Element photo = x.element("photo");
-            assertTrue(photo == null || photo.getTextTrim().isEmpty(),
+            assertTrue(photo != null && photo.getTextTrim().isEmpty(),
                 "No hash should be written when the published item ID is empty");
         }
     }

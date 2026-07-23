@@ -38,6 +38,9 @@ import org.jivesoftware.openfire.server.OutgoingSessionPromise;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.spi.ConnectionType;
+import org.jivesoftware.openfire.handler.Bind2StreamManagementHandler;
+import org.jivesoftware.openfire.net.Bind2Request;
+import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.openfire.streammanagement.TerminationDelegate;
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.*;
@@ -1901,6 +1904,11 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         super.start();
         localSessionManager.start();
 
+        // Register the XEP-0198 Stream Management handler for SASL2 Bind2 inline feature processing.
+        if (StreamManager.isStreamManagementActive()) {
+            Bind2Request.registerElementHandler(new Bind2StreamManagementHandler());
+        }
+
         // Run through the server sessions every 10% of the time of the maximum time that a session is allowed to be
         // detached, or every 3 minutes if the max time is outside the default boundaries.
         // TODO Reschedule task if getSessionDetachTime value changes.
@@ -1917,6 +1925,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     @Override
     public void stop() {
         Log.debug("SessionManager: Stopping server");
+        Bind2Request.unregisterElementHandler(StreamManager.NAMESPACE_V3);
         // Stop threads that are sending packets to remote servers
         OutgoingSessionPromise.getInstance().shutdown();
         if (JiveGlobals.getBooleanProperty("shutdownMessage.enabled")) {

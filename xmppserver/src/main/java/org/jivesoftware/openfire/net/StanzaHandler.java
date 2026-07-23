@@ -125,6 +125,17 @@ public abstract class StanzaHandler {
         this.session = session;
     }
 
+    /**
+     * Returns whether SASL negotiation is currently in progress (i.e. the {@code startedSASL} flag is set).
+     * Package-private to allow unit tests in the same package to verify the flag is correctly reset after
+     * asynchronous SASL2+Bind2 completion.
+     *
+     * @return {@code true} if SASL negotiation is in progress, {@code false} otherwise.
+     */
+    boolean isStartedSASL() {
+        return startedSASL;
+    }
+
     public void process(String stanza, XMPPPacketReader reader) throws Exception {
         if (isStartOfStream(stanza) || !sessionCreated) {
             initiateSession(stanza, reader);
@@ -227,9 +238,15 @@ public abstract class StanzaHandler {
             usingSASL2 = true;
             saslStatus = SASLAuthentication.handle(session, doc, usingSASL2);
             if (saslStatus == SASLAuthentication.Status.authenticated && usingSASL2) {
+                // No Bind2: send features synchronously now.
                 startedSASL = false; // Without a multi-step SASL mechanism, this can be reset here immediately, rather than in initiateSession (as SASL1 does).
                 sasl2Successful();
+            } else if (saslStatus == SASLAuthentication.Status.authenticatedAwaitingFeatures) {
+                // Bind2: <success/> and features are delivered asynchronously by SASLAuthentication.
+                startedSASL = false;
             }
+            // If authenticatedAwaitingFeatures, <success/> and features are delivered asynchronously
+            // by SASLAuthentication once Bind2 resource binding completes.
         } else if (startedSASL && ("response".equals(tag) || "abort".equals(tag))) {
             // User is responding to SASL challenge. Process response
             saslStatus = SASLAuthentication.handle(session, doc, usingSASL2);
@@ -240,7 +257,12 @@ public abstract class StanzaHandler {
             if (saslStatus == SASLAuthentication.Status.authenticated && usingSASL2) {
                 startedSASL = false; // Symmetric with the single-step reset in the 'authenticate' branch.
                 sasl2Successful();
+            } else if (saslStatus == SASLAuthentication.Status.authenticatedAwaitingFeatures) {
+                // Bind2: <success/> and features are delivered asynchronously by SASLAuthentication.
+                startedSASL = false;
             }
+            // If authenticatedAwaitingFeatures, <success/> and features are delivered asynchronously
+            // by SASLAuthentication once Bind2 resource binding completes.
         }
         else if ("compress".equals(tag)) {
             // Client is trying to initiate compression

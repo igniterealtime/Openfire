@@ -34,6 +34,8 @@ import org.jivesoftware.openfire.sasl.Failure;
 import org.jivesoftware.openfire.sasl.JiveSharedSecretSaslServer;
 import org.jivesoftware.openfire.sasl.SaslFailureException;
 import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CertificateManager;
@@ -268,7 +270,14 @@ public class SASLAuthentication {
         /**
          * SASL negotiation has been successful.
          */
-        authenticated
+        authenticated,
+
+        /**
+         * SASL negotiation has been successful, but the response (including stream features) will be
+         * delivered asynchronously (e.g. when Bind2 resource binding completes). The caller must not
+         * send stream features itself.
+         */
+        authenticatedAwaitingFeatures
     }
 
     /**
@@ -348,7 +357,9 @@ public class SASLAuthentication {
         }
         if ( usingSASL2 )
         {
-            // TODO :  Add Bind2 features here when implemented
+            Element inlineElement = result.addElement("inline");
+            inlineElement.add(Bind2Request.featureElement());
+            // Element sm = inlineElement.addElement(...);
         }
 
         // OF-2072: Return null instead of an empty element, if so configured.
@@ -556,6 +567,8 @@ public class SASLAuthentication {
                         // the RFC, so we just strip any initial token.
                         if (data != null) data = null;
                     }
+                    // Clear any unexecuted bind2-request
+                    session.removeSessionData("bind2-request");
                     if (usingSASL2 && session instanceof LocalClientSession) {
                         Element userAgentElement = doc.element("user-agent");
                         if (userAgentElement != null) {
@@ -564,6 +577,10 @@ public class SASLAuthentication {
                                 // Store the user agent info in the session
                                 session.setSessionData("user-agent-info", userAgentInfo);
                             }
+                        }
+                        Bind2Request bind2Request = Bind2Request.from(doc);
+                        if (bind2Request != null) {
+                            session.setSessionData("bind2-request", bind2Request);
                         }
                     }
 
@@ -606,6 +623,9 @@ public class SASLAuthentication {
 
                     // Success! Any mechanism-specific verification (such as certificate checks for EXTERNAL) is
                     // performed by the SaslServer implementation.
+                    // Check before calling authenticationSuccessful whether a Bind2 request is pending;
+                    // if so, the response and stream features will be delivered asynchronously.
+                    final boolean hasBind2Request = usingSASL2 && session.getSessionData("bind2-request") != null;
                     authenticationSuccessful( session, saslServer.getAuthorizationID(), saslServer.getMechanismName(), challenge, usingSASL2 );
                     session.removeSessionData( "SaslServer" );
                     session.removeSessionData( SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY );
@@ -613,7 +633,7 @@ public class SASLAuthentication {
                     if (requiresChannelBinding(saslServer.getMechanismName())) {
                         session.setSessionData("ChannelBindingType", saslServer.getNegotiatedProperty(ScramSha1SaslServer.PROPNAME_CHANNELBINDINGTYPE));
                     }
-                    return Status.authenticated;
+                    return hasBind2Request ? Status.authenticatedAwaitingFeatures : Status.authenticated;
 
                 default:
                     throw new IllegalStateException( "Unexpected data received while negotiating SASL authentication. Name of the offending root element: " + doc.getName() + " Namespace: " + doc.getNamespaceURI() );
@@ -776,17 +796,82 @@ public class SASLAuthentication {
         }
 
         if (usingSASL2) {
-            final Element success = DocumentHelper.createElement( new QName( "success", new Namespace( "", SASL2_NAMESPACE ) ) );
-            if (successData != null && successData.length > 0) {
-                String data_b64 = Base64.getEncoder().encodeToString(successData).trim();
-                Element additionalData = success.addElement("additional-data");
-                additionalData.setText(data_b64);
+            if (session instanceof LocalClientSession clientSession) {
+                final Bind2Request bind2Request = (Bind2Request) session.getSessionData("bind2-request");
+                if (bind2Request != null && clientSession.getStatus() != Session.Status.AUTHENTICATED) {
+                    clientSession.removeSessionData("bind2-request");
+                    final UserAgentInfo userAgentInfo = (UserAgentInfo) session.getSessionData("user-agent-info");
+                    final String resource = bind2Request.generateResourceString(userAgentInfo);
+                    final AuthToken authToken = clientSession.getAuthToken();
+                    final byte[] finalSuccessData = successData;
+                    final String finalAuthorizationIdentity = authorizationIdentity;
+                    SessionManager.getInstance().bindResource(clientSession, authToken, resource)
+                        .whenComplete((result, throwable) -> {
+                            try {
+                                if (throwable != null) {
+                                    Log.warn("An exception occurred while binding resource '{}' for session '{}' during SASL2+Bind2 authentication.", resource, clientSession, throwable);
+                                }
+                                final boolean bound = throwable == null && result == SessionManager.BindResult.BOUND;
+                                final Element success = buildSasl2SuccessElement(finalSuccessData, finalAuthorizationIdentity, bound ? resource : null);
+                                if (bound) {
+                                    bind2Request.processFeatureRequests(clientSession, success);
+                                }
+                                if (bound) {
+                                    clientSession.setStatus(Session.Status.AUTHENTICATED);
+                                    SessionEventDispatcher.dispatchEvent(clientSession, SessionEventDispatcher.EventType.resource_bound);
+                                }
+                                // Deliver stream features now that <success/> has been sent.
+                                final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
+                                final List<org.dom4j.Element> specificFeatures = clientSession.getAvailableStreamFeatures();
+                                if (specificFeatures != null) {
+                                    for (final org.dom4j.Element feature : specificFeatures) {
+                                        features.add(feature);
+                                    }
+                                }
+                                // Deliver these here.
+                                clientSession.deliverRawText(success.asXML());
+                                clientSession.deliverRawText(features.asXML());
+                            } catch(Exception e) {
+                                Log.warn("An exception occurred while processing SASL2+Bind2 for '{}' during SASL2+Bind2 authentication.", clientSession, e);
+                                authenticationFailed(clientSession, Failure.TEMPORARY_AUTH_FAILURE, true);
+                            }
+                        });
+                    // Response and features are sent asynchronously from the completion stage.
+                } else {
+                    // No Bind2 request, or session already authenticated: send <success/> synchronously without <bound/>.
+                    final Element success = buildSasl2SuccessElement(successData, authorizationIdentity, null);
+                    session.deliverRawText(success.asXML());
+                }
+            } else {
+                // Non-client session (e.g. server): send <success/> synchronously.
+                final Element success = buildSasl2SuccessElement(successData, authorizationIdentity, null);
+                session.deliverRawText(success.asXML());
             }
-            success.addElement("authorization-identifier").setText(authorizationIdentity);
-            session.deliverRawText(success.asXML());
         } else {
             sendElement(session, "success", successData, false);
         }
+    }
+
+    /**
+     * Builds a SASL2 &lt;success/&gt; element.
+     *
+     * @param successData optional mechanism-specific success data (can be null).
+     * @param authorizationIdentity the bare JID authorization identity (e.g. user@domain or uuid@domain for anonymous).
+     * @param resource the bound resource, or null if no resource was bound.
+     * @return the &lt;success/&gt; element.
+     */
+    private static Element buildSasl2SuccessElement(byte[] successData, String authorizationIdentity, String resource) {
+        final Element success = DocumentHelper.createElement(new QName("success", new Namespace("", SASL2_NAMESPACE)));
+        if (successData != null && successData.length > 0) {
+            final String data_b64 = Base64.getEncoder().encodeToString(successData).trim();
+            success.addElement("additional-data").setText(data_b64);
+        }
+        final StringBuilder authId = new StringBuilder(authorizationIdentity != null ? authorizationIdentity : "");
+        if (resource != null) {
+            authId.append('/').append(resource);
+        }
+        success.addElement("authorization-identifier").setText(authId.toString());
+        return success;
     }
 
     private static void authenticationFailed(LocalSession session, Failure failure, boolean usingSASL2) {

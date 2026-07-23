@@ -843,7 +843,10 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         else {
             // If the session has been authenticated then offer resource binding,
             // and session establishment
-            result.add(DocumentHelper.createElement(QName.get("bind", "urn:ietf:params:xml:ns:xmpp-bind")));
+            if (getStatus() != Status.AUTHENTICATED) {
+                // We might be bound already via bind2
+                result.add(DocumentHelper.createElement(QName.get("bind", "urn:ietf:params:xml:ns:xmpp-bind")));
+            }
             final Element session = DocumentHelper.createElement(QName.get("session", "urn:ietf:params:xml:ns:xmpp-session"));
             session.addElement("optional");
             result.add(session);

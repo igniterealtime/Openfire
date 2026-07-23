@@ -383,6 +383,14 @@ CREATE TABLE ofPubsubDefaultConf (
   CONSTRAINT ofPubsubDefaultConf_pk PRIMARY KEY (serviceID, leaf)
 )
 
+CREATE TABLE ofFastToken (
+  username              NVARCHAR(64)    NOT NULL,
+  mechanism             VARCHAR(32)     NOT NULL,
+  tokenHash             VARCHAR(128)     NOT NULL,
+  expiry                VARCHAR(35)     NOT NULL,
+  CONSTRAINT ofFastToken_pk PRIMARY KEY (username, mechanism)
+)
+
 /* Finally, insert default table values. */
 
 INSERT INTO ofID (idType, id) VALUES (18, 1)
@@ -399,4 +407,4 @@ INSERT INTO ofUser (username, plainPassword, name, email, creationDate, modifica
 INSERT INTO ofMucService (serviceID, subdomain, isHidden) VALUES (1, 'conference', 0)
 
 /* Do this last, as it is used by a continuous integration check to verify that the entire script was executed successfully. */
-INSERT INTO ofVersion (name, version) VALUES ('openfire', 40)
+INSERT INTO ofVersion (name, version) VALUES ('openfire', 41)

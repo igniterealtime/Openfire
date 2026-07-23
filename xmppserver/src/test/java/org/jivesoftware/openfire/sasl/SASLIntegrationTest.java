@@ -18,6 +18,7 @@ package org.jivesoftware.openfire.sasl;
 
 import org.dom4j.Element;
 import org.dom4j.DocumentHelper;
+import org.dom4j.Namespace;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.XMPPServerInfo;
@@ -34,6 +35,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.XMPPServer;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -44,6 +46,7 @@ import org.jivesoftware.util.cache.CacheFactory;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -707,6 +710,71 @@ public class SASLIntegrationTest {
         Element response = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
         if (!"success".equals(response.getName())) { throw new IllegalStateException("Test setup issue: if authentication does not succeed, this test assertion does not prove anything."); };
         assertNull(serverSession.getSessionData("user-agent-info"));
+    }
+
+    @Test
+    public void testAuthenticationWithSASL2AndBind2IncludesResource() throws Exception {
+        // Setup a SessionManager mock that returns BOUND from bindResource.
+        SessionManager sessionManager = mock(SessionManager.class);
+        when(xmppServer.getSessionManager()).thenReturn(sessionManager);
+        when(sessionManager.bindResource(any(), any(), any()))
+            .thenReturn(CompletableFuture.completedFuture(SessionManager.BindResult.BOUND));
+
+        // Mock connection so getAvailableMechanismsForClientSession assertion passes.
+        Connection connection = mock(Connection.class);
+        when(clientSession.getConnection()).thenReturn(connection);
+
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        when(clientSession.getStatus()).thenReturn(org.jivesoftware.openfire.session.Session.Status.CONNECTED);
+        when(clientSession.getAuthToken()).thenReturn(AuthToken.generateUserToken("testuser"));
+
+        Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
+            .addAttribute("mechanism", "TEST-MECHANISM");
+
+        // Add bind2 element
+        Element bind = auth.addElement(new QName("bind", new Namespace("", "urn:xmpp:bind:0")));
+        bind.addElement("tag").setText("MyClient");
+
+        // Mock getAvailableStreamFeatures so the async features delivery doesn't NPE.
+        when(clientSession.getAvailableStreamFeatures()).thenReturn(Collections.emptyList());
+
+        // Execute - Client sends auth request
+        SASLAuthentication.handle(clientSession, auth, true);
+
+        // The response is delivered asynchronously inside the whenComplete callback.
+        // Since we used completedFuture, the callback runs synchronously on the calling thread.
+        // Expect 2 deliverRawText calls: first <success/>, then <stream:features/>.
+        ArgumentCaptor<String> responseCaptor = ArgumentCaptor.forClass(String.class);
+        verify(clientSession, times(2)).deliverRawText(responseCaptor.capture());
+
+        List<String> deliveredStrings = responseCaptor.getAllValues();
+
+        // First call must be <success/>
+        String responseString = deliveredStrings.get(0);
+        Element response = DocumentHelper.parseText(responseString).getRootElement();
+        assertEquals("success", response.getName());
+        assertEquals("urn:xmpp:sasl:2", response.getNamespaceURI());
+
+        // Verify authorization-identifier is present and includes a resource
+        Element authId = response.element("authorization-identifier");
+        assertNotNull(authId, "SASL2 success must include authorization-identifier");
+        String jid = authId.getText();
+        assertTrue(jid.contains("@"), "Authorization ID should be a JID");
+        assertTrue(jid.contains("/"), "Authorization ID should include a resource part");
+        assertTrue(jid.contains("MyClient"), "Resource should include client tag");
+
+        // Verify <bound/> is present (XEP-0386)
+        Element bound = response.element("bound");
+        assertNotNull(bound, "SASL2 success must include bound element: " + responseString);
+
+        // Second call must be <stream:features/>
+        String featuresString = deliveredStrings.get(1);
+        Element features = DocumentHelper.parseText(featuresString).getRootElement();
+        assertEquals("features", features.getName());
+        assertEquals("http://etherx.jabber.org/streams", features.getNamespaceURI());
+
+        // Verify session state
+        verify(clientSession).setAuthToken(any(AuthToken.class));
     }
 
     @Test

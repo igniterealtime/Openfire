@@ -1,0 +1,65 @@
+appId: eu.siacs.conversations
+tags:
+    - sasl2
+onFlowStart:
+    - runScript: scripts/checkHealth.js
+---
+
+- runScript: scripts/startSession.js
+
+- launchApp:
+    clearState: true
+
+- assertVisible: "I already have an account"
+
+- runScript: 
+    file: scripts/checkForLogs.js
+    env:
+        PATTERN: initializing database.*
+
+- tapOn: "I already have an account"
+- tapOn: "More options"
+- tapOn: "Settings"
+- tapOn: "Connection"
+- tapOn: "Show extended connection settings when setting up an account"
+- tapOn: "Navigate up"
+- tapOn: "Navigate up"
+
+- tapOn: "XMPP address"
+- inputText: "jane@example.org"
+- tapOn: "Password"
+- inputText: "secret"
+- tapOn: "Hostname"
+- inputText: "10.0.2.2"
+- tapOn: "Next"
+
+- assertVisible: "Accept Unknown Certificate?"
+- tapOn: "Always"
+
+- assertVisible: "Publish avatar"
+- tapOn: "Skip"
+
+- runFlow:
+      when:
+          visible: "Battery optimizations enabled"
+      commands:
+          - tapOn: "Next"
+          - assertVisible: "Let app always run in background?"
+          - tapOn: "Allow"
+
+# Received Bind2 features
+- runScript:
+      file: scripts/checkForLogs.js
+      env:
+          PATTERN: '.* inline bind features: .*'
+
+# Reports Bind2 support
+- tapOn: "More options"
+- tapOn: "Manage accounts"
+- tapOn: "jane@example.org"
+- tapOn: "More options"
+- tapOn: "Server info"
+- assertVisible:
+    id: "server_info_bind2"
+    text: "available"
+- takeScreenshot: server_info

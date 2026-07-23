@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2016-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2016-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire.auth;
 
 import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
@@ -290,91 +291,38 @@ public class HybridAuthProvider extends AuthMultiProvider {
     }
 
     @Override
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.3.0
     public String getSalt(String username) throws UnsupportedOperationException, UserNotFoundException
     {
-        if (!isScramSupported()) {
-            throw new UnsupportedOperationException();
-        }
-
-        // Check overrides first.
-        try {
-            return super.getSalt(username);
-        } catch (UserNotFoundException e) {
-            if (hasOverride(username)) {
-                // An override was used. Must not try other providers.
-                throw e;
-            }
-        }
-
-        // When there's no override, try all providers in order.
-        for (final AuthProvider provider: getAuthProviders()) {
-            try {
-                provider.getSalt(username);
-            } catch (UserNotFoundException | UnsupportedOperationException e) {
-                Log.trace("Could get salt for user {} with auth provider {}. Will try remaining providers (if any)", username, provider.getClass().getName(), e);
-            }
-        }
-        throw new UserNotFoundException();
+        return getScramCredential(username, ScramSha1SaslServer.MECHANISM_NAME).salt;
     }
 
     @Override
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.3.0
     public int getIterations(String username) throws UnsupportedOperationException, UserNotFoundException
     {
-        if (!isScramSupported()) {
-            throw new UnsupportedOperationException();
-        }
-
-        // Check overrides first.
-        try {
-            return super.getIterations(username);
-        } catch (UserNotFoundException e) {
-            if (hasOverride(username)) {
-                // An override was used. Must not try other providers.
-                throw e;
-            }
-        }
-
-        // When there's no override, try all providers in order.
-        for (final AuthProvider provider: getAuthProviders()) {
-            try {
-                provider.getIterations(username);
-            } catch (UserNotFoundException | UnsupportedOperationException e) {
-                Log.trace("Could get iterations for user {} with auth provider {}. Will try remaining providers (if any)", username, provider.getClass().getName(), e);
-            }
-        }
-        throw new UserNotFoundException();
+        return getScramCredential(username, ScramSha1SaslServer.MECHANISM_NAME).iterations;
     }
 
     @Override
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.3.0
     public String getServerKey(String username) throws UnsupportedOperationException, UserNotFoundException
     {
-        if (!isScramSupported()) {
-            throw new UnsupportedOperationException();
-        }
-
-        // Check overrides first.
-        try {
-            return super.getServerKey(username);
-        } catch (UserNotFoundException e) {
-            if (hasOverride(username)) {
-                // An override was used. Must not try other providers.
-                throw e;
-            }
-        }
-
-        // When there's no override, try all providers in order.
-        for (final AuthProvider provider: getAuthProviders()) {
-            try {
-                provider.getServerKey(username);
-            } catch (UserNotFoundException | UnsupportedOperationException e) {
-                Log.trace("Could get serverkey for user {} with auth provider {}. Will try remaining providers (if any)", username, provider.getClass().getName(), e);
-            }
-        }
-        throw new UserNotFoundException();
+        return getScramCredential(username, ScramSha1SaslServer.MECHANISM_NAME).serverKey;
     }
 
     @Override
+    @Deprecated(forRemoval = true) // Remove in or after Openfire 5.3.0
     public String getStoredKey(String username) throws UnsupportedOperationException, UserNotFoundException
+    {
+        return getScramCredential(username, ScramSha1SaslServer.MECHANISM_NAME).storedKey;
+    }
+
+    /**
+     * Returns SCRAM credentials for a user and mechanism.
+     */
+    @Override
+    public ScramCredentialData getScramCredential(final String username, final String mechanism) throws UnsupportedOperationException, UserNotFoundException
     {
         if (!isScramSupported()) {
             throw new UnsupportedOperationException();
@@ -382,7 +330,7 @@ public class HybridAuthProvider extends AuthMultiProvider {
 
         // Check overrides first.
         try {
-            return super.getStoredKey(username);
+            return super.getScramCredential(username, mechanism);
         } catch (UserNotFoundException e) {
             if (hasOverride(username)) {
                 // An override was used. Must not try other providers.
@@ -393,9 +341,9 @@ public class HybridAuthProvider extends AuthMultiProvider {
         // When there's no override, try all providers in order.
         for (final AuthProvider provider: getAuthProviders()) {
             try {
-                provider.getStoredKey(username);
+                return provider.getScramCredential(username, mechanism);
             } catch (UserNotFoundException | UnsupportedOperationException e) {
-                Log.trace("Could get storedkey for user {} with auth provider {}. Will try remaining providers (if any)", username, provider.getClass().getName(), e);
+                Log.trace("Could get SCRAM credential for user {} with auth provider {} and mechanism {}. Will try remaining providers (if any)", username, provider.getClass().getName(), mechanism, e);
             }
         }
         throw new UserNotFoundException();

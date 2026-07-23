@@ -18,7 +18,7 @@ package org.jivesoftware.openfire.sasl;
 import java.util.Set;
 
 /**
- * A single source of truth for unit tests that assert the implementation for SCRAM-SHA-1. This fixture contains:
+ * A single source of truth for unit tests that assert the implementation for SCRAM-SHA-256. This fixture contains:
  *
  * <ul>
  *     <li>stable shared test data</li>
@@ -29,18 +29,18 @@ import java.util.Set;
  * Usage of constants from this class is encouraged to avoid hard-coding values. This makes intent clearer by
  * referencing to data by their name/meaning rather than by using raw value (that could be construed as a magic value).
  */
-public final class ScramSha1TestFixtures
+public final class ScramSha256TestFixtures
 {
     public static final String USER = "user";
     public static final String PASSWORD = "pencil";
-    public static final String SALT = "QSXCR+Q6sek8bf92";
+    public static final String SALT = "W22ZaJ0SNY7soEsUEjb6gQ==";
     public static final int ITERATIONS = 4096;
     public static final String CLIENT_KEY = "Client Key";
     public static final String SERVER_KEY = "Server Key";
-    public static final String CLIENT_NONCE = "fyko+d2lbbFgONRv9qkxdawL";
-    public static final String STORED_KEY_HEX = "e9d94660c39d65c38fbad91c358f14da0eef2bd6";
-    public static final String SERVER_KEY_HEX = "0fe09258b3ac852ba502cc62ba903eaacdbf7d31";
-    public static final Set<String> SUPPORTED_MECHANISMS = Set.of(ScramSha1SaslServer.MECHANISM_NAME, ScramSha1SaslServer.MECHANISM_NAME+"-PLUS");
+    public static final String CLIENT_NONCE = "rOprNGfwEbeRWgbNEkqO";
+    public static final String STORED_KEY_HEX = "586e5df283e6dceb5c3e791d8b8528ec191e664045ce971792e2e6b5bb13e2a6";
+    public static final String SERVER_KEY_HEX = "c1f3cbc1c13a9d35a14c0990eed97629ea225863e566a4314ab99f3f00e5d9d5";
+    public static final Set<String> SUPPORTED_MECHANISMS = Set.of(ScramSha256SaslServer.MECHANISM_NAME, ScramSha256SaslServer.MECHANISM_NAME+"-PLUS");
 
-    private ScramSha1TestFixtures() {}
+    private ScramSha256TestFixtures() {}
 }

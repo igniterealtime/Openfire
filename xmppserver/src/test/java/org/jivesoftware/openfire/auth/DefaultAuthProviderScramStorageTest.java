@@ -18,21 +18,34 @@ package org.jivesoftware.openfire.auth;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
+import org.jivesoftware.openfire.sasl.ScramSha256SaslServer;
+import org.jivesoftware.openfire.sasl.ScramSha512SaslServer;
+import org.jivesoftware.openfire.user.UserNotFoundException;
+import org.jivesoftware.util.JiveGlobals;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
+import javax.security.sasl.SaslException;
 import javax.xml.bind.DatatypeConverter;
 import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.when;
 
 /**
@@ -64,6 +77,11 @@ public class DefaultAuthProviderScramStorageTest
         Fixtures.disableDatabasePersistence();
     }
 
+    @AfterEach
+    void clearProperties() {
+        Fixtures.clearExistingProperties();
+    }
+
     /**
      * Computes the base64 stored key for a password using the same SCRAM-SHA-1 derivation as production code, so the
      * test verifies real cryptographic agreement rather than an echoed constant.
@@ -71,9 +89,9 @@ public class DefaultAuthProviderScramStorageTest
     private static String storedKeyFor(final String password) throws Exception
     {
         final byte[] salt = DatatypeConverter.parseBase64Binary(SALT_BASE64);
-        final byte[] saltedPassword = ScramUtils.createSaltedPassword(salt, password, ITERATIONS);
-        final byte[] clientKey = ScramUtils.computeHmac(saltedPassword, "Client Key");
-        return DatatypeConverter.printBase64Binary(MessageDigest.getInstance("SHA-1").digest(clientKey));
+        final byte[] saltedPassword = ScramUtils.createSaltedPassword(salt, password, ITERATIONS, ScramSha1SaslServer.HMAC_ALGORITHM_NAME);
+        final byte[] clientKey = ScramUtils.computeHmac(saltedPassword, "Client Key", ScramSha1SaslServer.HMAC_ALGORITHM_NAME);
+        return DatatypeConverter.printBase64Binary(MessageDigest.getInstance(ScramSha1SaslServer.DIGEST_ALGORITHM_NAME).digest(clientKey));
     }
 
     /**
@@ -167,6 +185,61 @@ public class DefaultAuthProviderScramStorageTest
     private static boolean runCheckPassword(final String username, final String testPassword, final ResultSet storedCredentials) throws Exception
     {
         return runCheckPassword(username, testPassword, storedCredentials, false);
+    }
+
+    /**
+     * Runs {@link DefaultAuthProvider#hasIncompleteSetOfScramCredentials(String)} against a mocked database.
+     *
+     * Each supported mechanism is probed independently via {@code LOAD_SCRAM_CREDENTIAL} (keyed on username + mechanism),
+     * so the fixture is expressed as "which mechanisms have a stored row." A mechanism whose name is in
+     * {@code presentMechanisms} yields a one-row ResultSet (credential exists); any other yields an empty ResultSet.
+     *
+     * @param username           the user identifier
+     * @param presentMechanisms  the mechanism names for which a credential row exists
+     * @return the result of {@code hasIncompleteSetOfScramCredentials}
+     */
+    @SuppressWarnings("SqlSourceToSinkFlow")
+    private static boolean runHasIncompleteSet(final String username, final Set<String> presentMechanisms) throws Exception
+    {
+        final PreparedStatement scramStmt = Mockito.mock(PreparedStatement.class);
+
+        // Capture the mechanism bound as parameter 2, then answer executeQuery() based on it.
+        final String[] boundMechanism = new String[1];
+        Mockito
+            .doAnswer(inv -> { boundMechanism[0] = inv.getArgument(1); return null; })
+            .when(scramStmt)
+            .setString(Mockito.eq(2), anyString());
+
+        when(
+            scramStmt.executeQuery()
+        ).thenAnswer(inv -> {
+            final ResultSet rs = Mockito.mock(ResultSet.class);
+            final boolean present = presentMechanisms.contains(boundMechanism[0]);
+
+            when(
+                rs.next()
+            ).thenReturn(present, false);
+
+            if (present) {
+                when(rs.getInt(1)).thenReturn(ITERATIONS);
+                when(rs.getString(2)).thenReturn(SALT_BASE64);
+                when(rs.getString(3)).thenReturn("stored");
+                when(rs.getString(4)).thenReturn("server");
+            }
+            return rs;
+        });
+
+        final Connection connection = Mockito.mock(Connection.class);
+        when(
+            connection.prepareStatement(
+                argThat(sql -> sql.toLowerCase(Locale.ROOT).contains("from ofuserscram") && !sql.toLowerCase(Locale.ROOT).contains("left join"))
+            )
+        ).thenReturn(scramStmt);
+
+        try (final MockedStatic<DbConnectionManager> db = Mockito.mockStatic(DbConnectionManager.class)) {
+            db.when(DbConnectionManager::getConnection).thenReturn(connection);
+            return new DefaultAuthProvider().hasIncompleteSetOfScramCredentials(username);
+        }
     }
 
     /**
@@ -366,5 +439,184 @@ public class DefaultAuthProviderScramStorageTest
 
         // Verify result.
         assertFalse(result, "An empty password should not verify against a non-empty SCRAM credential.");
+    }
+
+    /**
+     *  All supported mechanisms have a stored credential → the set is complete → returns false.
+     */
+    @Test
+    void hasIncompleteSet_returnsFalse_whenAllMechanismsPresent() throws Exception
+    {
+        // Setup test fixture.
+        final Set<String> presentMechanisms = Set.of(ScramSha1SaslServer.MECHANISM_NAME, ScramSha256SaslServer.MECHANISM_NAME, ScramSha512SaslServer.MECHANISM_NAME);
+
+        // Execute system under test.
+        final boolean result = runHasIncompleteSet("user", presentMechanisms);
+
+        // Verify result.
+        assertFalse(result, "When every supported mechanism has a stored credential, the set is complete.");
+    }
+
+    /**
+     * A legacy user with only SHA-1 and SHA-512 (SHA-256 missing) → incomplete → returns true (triggers regeneration).
+     */
+    @Test
+    void hasIncompleteSet_returnsTrue_whenMechanismsMissing() throws Exception
+    {
+        // Setup test fixture.
+        final Set<String> presentMechanisms = Set.of(ScramSha1SaslServer.MECHANISM_NAME, ScramSha512SaslServer.MECHANISM_NAME); // SHA-256 absent
+
+        // Execute system under test.
+        final boolean result = runHasIncompleteSet("user", presentMechanisms);
+
+        // Verify result.
+        assertTrue(result, "A user missing any supported mechanism's credential has an incomplete set.");
+    }
+
+    /**
+     * No SCRAM credentials at all → incomplete → returns true.
+     */
+    @Test
+    void hasIncompleteSet_returnsTrue_whenNoMechanismsPresent() throws Exception
+    {
+        // Setup test fixture.
+        final Set<String> presentMechanisms = Set.of();
+
+        // Execute system under test.
+        final boolean result = runHasIncompleteSet("user", presentMechanisms);
+
+        // Verify result.
+        assertTrue(result, "A user with no SCRAM credentials has an incomplete set.");
+    }
+
+    /**
+     * When {@code user.scramHashedPasswordOnly} is set and *no* SCRAM mechanism can derive a credential, setPassword
+     * must refuse rather than persist a user with no plaintext, no encrypted password, and no SCRAM rows, a state that
+     * would silently lock the user out of every authentication path.
+     *
+     * The guard must fire <em>before</em> the database transaction is opened: this test asserts both that
+     * {@link UserNotFoundException} is thrown and that {@link DbConnectionManager#getTransactionConnection()} is never
+     * called, so a broken guard that threw only after committing would fail here.
+     */
+    @Test
+    void setPassword_scramOnly_refusesWhenNoScramCredentialCanBeDerived()
+    {
+        // Setup test fixture: SCRAM-only mode, and force every mechanism's key derivation to fail.
+        JiveGlobals.setProperty("user.scramHashedPasswordOnly", "true");
+
+        try (final MockedStatic<ScramUtils> scramUtils = Mockito.mockStatic(ScramUtils.class);
+             final MockedStatic<DbConnectionManager> db = Mockito.mockStatic(DbConnectionManager.class))
+        {
+            scramUtils.when(() -> ScramUtils.deriveScramKeys(
+                    Mockito.any(byte[].class), anyString(), Mockito.anyInt(),
+                    anyString(), anyString()))
+                .thenThrow(new SaslException("forced derivation failure for test"));
+
+            // Execute system under test & verify result: setPassword must refuse.
+            assertThrows(UserNotFoundException.class,
+                () -> new DefaultAuthProvider().setPassword("user", "pencil"),
+                "In scramOnly mode with no derivable SCRAM credential, setPassword must throw rather than persist a credential-less user.");
+
+            // Verify the refusal happened before any transaction was opened (nothing was written).
+            db.verify(DbConnectionManager::getTransactionConnection, never());
+        }
+    }
+
+    /**
+     * A mechanism whose key derivation fails during a password change must have its stored credential removed: the
+     * stored row holds keys derived from the *previous* password, so leaving it in place would let the old password
+     * continue to authenticate through that mechanism after the password was changed.
+     *
+     * This test lets SHA-1 and SHA-512 derive normally but forces SHA-256 derivation to fail, then asserts that every
+     * supported mechanism is acted upon: written when derivation succeeded, deleted when it failed.
+     */
+    @Test
+    void setPassword_removesStoredCredentialForMechanismThatFailedToDerive() throws Exception
+    {
+        // Setup test fixture: record each prepared statement's SQL together with the parameters bound to it.
+        final Map<PreparedStatement, String> sqlByStatement = new HashMap<>();
+        final Map<PreparedStatement, Map<Integer, String>> bindingsByStatement = new HashMap<>();
+        final Connection con = Mockito.mock(Connection.class);
+        when(con.prepareStatement(anyString())).thenAnswer(inv -> {
+            final String sql = inv.getArgument(0, String.class);
+            final PreparedStatement ps = Mockito.mock(PreparedStatement.class);
+            sqlByStatement.put(ps, sql);
+            bindingsByStatement.put(ps, new HashMap<>());
+            when(ps.executeUpdate()).thenReturn(1);
+
+            // setPassword also SELECTs the stored mechanisms; return an empty result set for it.
+            final ResultSet emptyRs = Mockito.mock(ResultSet.class);
+            when(emptyRs.next()).thenReturn(false);
+            when(ps.executeQuery()).thenReturn(emptyRs);
+
+            Mockito.doAnswer(bind -> {
+                bindingsByStatement.get(ps).put(bind.getArgument(0), bind.getArgument(1));
+                return null;
+            }).when(ps).setString(Mockito.anyInt(), anyString());
+            return ps;
+        });
+
+        try (final MockedStatic<ScramUtils> scramUtils = Mockito.mockStatic(ScramUtils.class);
+             final MockedStatic<DbConnectionManager> db = Mockito.mockStatic(DbConnectionManager.class);
+             final MockedStatic<AuthFactory> auth = Mockito.mockStatic(AuthFactory.class))
+        {
+            db.when(DbConnectionManager::getTransactionConnection).thenReturn(con);
+            auth.when(() -> AuthFactory.encryptPassword(anyString())).thenReturn("encrypted");
+
+            // Let every mechanism derive, except SCRAM-SHA-256.
+            scramUtils.when(() -> ScramUtils.deriveScramKeys(
+                    Mockito.any(byte[].class), anyString(), Mockito.anyInt(),
+                    Mockito.eq(ScramSha256SaslServer.HMAC_ALGORITHM_NAME), anyString()))
+                .thenThrow(new SaslException("forced derivation failure for test"));
+            scramUtils.when(() -> ScramUtils.deriveScramKeys(
+                    Mockito.any(byte[].class), anyString(), Mockito.anyInt(),
+                    Mockito.eq(ScramSha1SaslServer.HMAC_ALGORITHM_NAME), anyString()))
+                .thenReturn(new ScramUtils.ScramKeys(new byte[20], new byte[20]));
+            scramUtils.when(() -> ScramUtils.deriveScramKeys(
+                    Mockito.any(byte[].class), anyString(), Mockito.anyInt(),
+                    Mockito.eq(ScramSha512SaslServer.HMAC_ALGORITHM_NAME), anyString()))
+                .thenReturn(new ScramUtils.ScramKeys(new byte[64], new byte[64]));
+
+            // Execute system under test.
+            new DefaultAuthProvider().setPassword("user", "pencil");
+
+            // Verify result: the mechanism that failed to derive had its stored credential deleted.
+            assertEquals(Set.of(ScramSha256SaslServer.MECHANISM_NAME),
+                mechanismsTouchedBy(sqlByStatement, bindingsByStatement, sql -> sql.contains("delete")),
+                "Exactly the mechanism whose derivation failed must be deleted, so the previous password can no longer authenticate through it.");
+
+            // Verify result: the mechanisms that derived successfully were written.
+            assertEquals(Set.of(ScramSha1SaslServer.MECHANISM_NAME, ScramSha512SaslServer.MECHANISM_NAME),
+                mechanismsTouchedBy(sqlByStatement, bindingsByStatement, sql -> sql.contains("update") || sql.contains("insert")),
+                "Mechanisms that derived successfully must have their credential written.");
+        }
+    }
+
+    /**
+     * Mechanism names bound by statements against ofUserScram whose SQL matches the given predicate.
+     */
+    private static Set<String> mechanismsTouchedBy(
+        final Map<PreparedStatement, String> sqlByStatement,
+        final Map<PreparedStatement, Map<Integer, String>> bindingsByStatement,
+        final Predicate<String> sqlMatcher)
+    {
+        final Set<String> allMechanisms = Set.of(
+            ScramSha1SaslServer.MECHANISM_NAME,
+            ScramSha256SaslServer.MECHANISM_NAME,
+            ScramSha512SaslServer.MECHANISM_NAME);
+
+        return sqlByStatement.entrySet().stream()
+            // Check if the prepared statement touches the expected database table.
+            .filter(e -> {
+                final String n = e.getValue().toLowerCase(Locale.ROOT);
+                return n.contains("ofuserscram") && sqlMatcher.test(n);
+            })
+            // Check if the prepared statement actually got executed.
+            .filter(e -> Mockito.mockingDetails(e.getKey()).getInvocations().stream()
+                .map(invocation -> invocation.getMethod().getName())
+                .anyMatch(name -> Set.of("execute", "executeUpdate", "executeLargeUpdate", "executeQuery").contains(name)))
+            .flatMap(e -> bindingsByStatement.get(e.getKey()).values().stream())
+            .filter(allMechanisms::contains)
+            .collect(Collectors.toSet());
     }
 }

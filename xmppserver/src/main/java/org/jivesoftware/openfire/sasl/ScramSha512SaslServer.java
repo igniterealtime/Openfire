@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Surevine Ltd, 2016-2026 Ignite Realtime Foundation. All rights reserved
+ * Copyright (C) 2026 Ignite Realtime Foundation. All rights reserved
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,6 @@
 
 package org.jivesoftware.openfire.sasl;
 
-import java.util.Map;
-import java.util.Set;
-
 import com.google.common.annotations.VisibleForTesting;
 import org.jivesoftware.openfire.auth.ScramUtils;
 import org.jivesoftware.openfire.net.SASLAuthentication;
@@ -26,33 +23,39 @@ import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 
+import java.util.Map;
+import java.util.Set;
+
 /**
- * Implements the SCRAM-SHA-1 (and its channel binding -PLUS variant) server-side mechanism.
+ * Implements the SCRAM-SHA-512 (and its channel binding -PLUS variant) server-side mechanism.
  *
  * The SCRAM exchange itself is implemented by the hash-agnostic {@link ScramSaslServer} superclass. This class binds
- * that exchange to the SHA-1 hash function.
+ * that exchange to the SHA-512 hash function.
  *
- * @author Richard Midwinter, Guus der Kinderen
+ * @author Guus der Kinderen
+ * @see <a href="https://datatracker.ietf.org/doc/html/draft-melnikov-scram-sha-512">draft-melnikov-scram-sha-512</a>
  */
-public class ScramSha1SaslServer extends ScramSaslServer {
+public class ScramSha512SaslServer extends ScramSaslServer {
 
     /**
-     * The IANA-registered name of the base (non-PLUS) mechanism implemented by this server.
+     * The name of the base (non-PLUS) mechanism implemented by this server. Note that at the time of writing, this
+     * name isn't IANA-registered, but follows the convention for SCRAM mechanism names and the definition in
+     * draft-melnikov-scram-sha-512
      */
-    public static final String MECHANISM_NAME = "SCRAM-SHA-1";
+    public static final String MECHANISM_NAME = "SCRAM-SHA-512";
 
     /**
      * The JCA name of the HMAC algorithm that corresponds to this mechanism's hash function
      */
-    public static final String HMAC_ALGORITHM_NAME = "HmacSHA1";
+    public static final String HMAC_ALGORITHM_NAME = "HmacSHA512";
 
     /**
      * The JCA name of the message digest that corresponds to this mechanism's hash function.
      */
-    public static final String DIGEST_ALGORITHM_NAME = "SHA-1";
+    public static final String DIGEST_ALGORITHM_NAME = "SHA-512";
 
     /**
-     * Stores a server-side secret used when handling authentication attempts for non-existing users in SCRAM-SHA-1 (-PLUS).
+     * Stores a server-side secret used when handling authentication attempts for non-existing users in SCRAM-SHA-512 (-PLUS).
      *
      * Prefer to use #getServerSecretForNonExistentUsers() instead of accessing this property directly, as
      * the method will make sure that the one-time initialization that's required for usage will occur.
@@ -61,14 +64,14 @@ public class ScramSha1SaslServer extends ScramSaslServer {
      */
     @VisibleForTesting
     static final SystemProperty<String> SERVER_SECRET_NONEXISTENT_USERS = SystemProperty.Builder.ofType(String.class)
-        .setKey("sasl.scram-sha-1.server-secret.nonexistent-users")
+        .setKey("sasl.scram-sha-512.server-secret.nonexistent-users")
         .setEncrypted(true)
         .setDynamic(Boolean.TRUE)
         .build();
 
     /**
      * Retrieves a server-side secret used when handling authentication attempts for non-existing users in
-     * SCRAM-SHA-1 (-PLUS).
+     * SCRAM-SHA-512 (-PLUS).
      *
      * This method ensures that the one-time initialization that is required for usage will occur.
      *
@@ -96,12 +99,12 @@ public class ScramSha1SaslServer extends ScramSaslServer {
     }
 
     public static final SystemProperty<Integer> ITERATION_COUNT = SystemProperty.Builder.ofType(Integer.class)
-        .setKey("sasl.scram-sha-1.iteration-count")
+        .setKey("sasl.scram-sha-512.iteration-count")
         .setDefaultValue(ScramUtils.DEFAULT_ITERATION_COUNT)
         .setDynamic(Boolean.TRUE)
         .build();
 
-    public ScramSha1SaslServer(final boolean isPlusMechanism, final Map<String, ?> props)
+    public ScramSha512SaslServer(final boolean isPlusMechanism, final Map<String, ?> props)
     {
         super(isPlusMechanism, props, ChannelBindingProviderManager.getInstance(), SASLAuthentication.getSupportedMechanisms());
     }
@@ -110,7 +113,7 @@ public class ScramSha1SaslServer extends ScramSaslServer {
      * Constructor for testing purposes.
      */
     @VisibleForTesting
-    ScramSha1SaslServer(final boolean isPlusMechanism, final Map<String, ?> props, final ChannelBindingProviderManager channelBindingProviderManager, final Set<String> serverSupportedSaslMechanismNames)
+    ScramSha512SaslServer(final boolean isPlusMechanism, final Map<String, ?> props, final ChannelBindingProviderManager channelBindingProviderManager, final Set<String> serverSupportedSaslMechanismNames)
     {
         super(isPlusMechanism, props, channelBindingProviderManager, serverSupportedSaslMechanismNames);
     }

@@ -33,6 +33,7 @@ import org.jivesoftware.openfire.sasl.AnonymousSaslServer;
 import org.jivesoftware.openfire.sasl.Failure;
 import org.jivesoftware.openfire.sasl.JiveSharedSecretSaslServer;
 import org.jivesoftware.openfire.sasl.SaslFailureException;
+import org.jivesoftware.openfire.sasl.ScramSaslServer;
 import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.ConnectionType;
@@ -611,7 +612,7 @@ public class SASLAuthentication {
                     session.removeSessionData( SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY );
                     session.setSessionData("SaslMechanism", saslServer.getMechanismName());
                     if (requiresChannelBinding(saslServer.getMechanismName())) {
-                        session.setSessionData("ChannelBindingType", saslServer.getNegotiatedProperty(ScramSha1SaslServer.PROPNAME_CHANNELBINDINGTYPE));
+                        session.setSessionData("ChannelBindingType", saslServer.getNegotiatedProperty(ScramSaslServer.PROPNAME_CHANNELBINDINGTYPE));
                     }
                     return Status.authenticated;
 
@@ -895,8 +896,8 @@ public class SASLAuthentication {
                     }
                     break;
 
-                case "SCRAM-SHA-1": // intended fall-through
-                case "SCRAM-SHA-1-PLUS":
+                case ScramSha1SaslServer.MECHANISM_NAME: // intended fall-through
+                case ScramSha1SaslServer.MECHANISM_NAME+"-PLUS":
                     if ( !AuthFactory.supportsScram() )
                     {
                         Log.trace( "Cannot support '{}' as the AuthProvider that's in use does not support SCRAM.", mechanism );
@@ -996,7 +997,7 @@ public class SASLAuthentication {
      */
     public static List<String> getEnabledMechanisms()
     {
-        return JiveGlobals.getListProperty("sasl.mechs", Arrays.asList( "ANONYMOUS","PLAIN","DIGEST-MD5","CRAM-MD5","SCRAM-SHA-1","SCRAM-SHA-1-PLUS","JIVE-SHAREDSECRET","GSSAPI","EXTERNAL" ) );
+        return JiveGlobals.getListProperty("sasl.mechs", Arrays.asList( "ANONYMOUS","PLAIN","DIGEST-MD5","CRAM-MD5",ScramSha1SaslServer.MECHANISM_NAME,ScramSha1SaslServer.MECHANISM_NAME+"-PLUS","JIVE-SHAREDSECRET","GSSAPI","EXTERNAL" ) );
     }
 
     /**

@@ -16,7 +16,6 @@
 
 package org.jivesoftware.openfire.auth;
 
-import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.sql.Connection;
@@ -25,12 +24,16 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.IntSupplier;
 
 import javax.security.sasl.SaslException;
 import javax.xml.bind.DatatypeConverter;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
@@ -49,6 +52,18 @@ import org.slf4j.LoggerFactory;
  * @author Matt Tucker
  */
 public class DefaultAuthProvider implements AuthProvider {
+
+    /**
+     * Describes a SCRAM mechanism for credential derivation: its storage name, JCA algorithm names, and iteration-count source.
+     */
+    private record ScramMechanism(String mechanismName, String hmacAlgorithm, String digestAlgorithm, IntSupplier iterationCount) {}
+
+    /**
+     * Mechanisms supported by this AuthProvider implementation (not necessarily supported at runtime, or by other parts of Openfire).
+     */
+    private static final List<ScramMechanism> SCRAM_MECHANISMS = List.of(
+        new ScramMechanism(ScramSha1SaslServer.MECHANISM_NAME,   ScramSha1SaslServer.HMAC_ALGORITHM_NAME,   ScramSha1SaslServer.DIGEST_ALGORITHM_NAME,   ScramSha1SaslServer.ITERATION_COUNT::getValue)
+    );
 
     /**
      * The length of the salt used to generate salted passwords.
@@ -119,8 +134,13 @@ public class DefaultAuthProvider implements AuthProvider {
             }
             if (!recurse) {
                 if (userInfo.plainText != null) {
+                    // Regenerate SCRAM credentials from the plaintext when a supported mechanism's row is missing
+                    // (e.g. a legacy user predating SCRAM-SHA-256). Note (OF-3322): setPassword() skips any mechanism
+                    // whose derivation fails, so a mechanism that can never be derived here would trigger this on every
+                    // login. Bounded by 'recurse' (no infinite loop); accepted as a per-login cost since derivation
+                    // failure for a JVM-standard mechanism isn't expected.
                     boolean scramOnly = JiveGlobals.getBooleanProperty("user.scramHashedPasswordOnly");
-                    if (scramOnly || !hasScramCredential(username, ScramSha1SaslServer.MECHANISM_NAME)) {
+                    if (scramOnly || hasIncompleteSetOfScramCredentials(username)) {
                         // If we have a password here, but we're meant to be scramOnly, we should reset it.
                         setPassword(username, userInfo.plainText);
                         // RECURSE
@@ -138,6 +158,25 @@ public class DefaultAuthProvider implements AuthProvider {
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
+    }
+
+    /**
+     * Determines whether this user is missing a credential for any SCRAM mechanism supported by this implementation.
+     *
+     * @param username the user identifier
+     * @return true if at least one supported mechanism has no stored credential for this user; false if all are present
+     */
+    @VisibleForTesting
+    boolean hasIncompleteSetOfScramCredentials(String username)
+    {
+        return SCRAM_MECHANISMS.stream().anyMatch(m -> {
+            try {
+                return !hasScramCredential(username, m.mechanismName());
+            } catch (SQLException e) {
+                Log.warn("Unable to determine if credentials for SCRAM mechanism '{}' are available for user '{}' due to a database error.", m.mechanismName(), username, e);
+                return false; // treat as "not known to be missing" so a DB hiccup doesn't force a regeneration storm
+            }
+        });
     }
 
     @Override
@@ -167,14 +206,14 @@ public class DefaultAuthProvider implements AuthProvider {
     /**
      * Returns SCRAM credentials for a user and mechanism.
      *
-     * Only {@code SCRAM-SHA-1} is supported. When SHA-1 credentials are missing but a plaintext (or decryptable)
-     * password is available, the credentials are regenerated (preserving the historical behavior of this provider).
+     * When SCRAM credentials are missing but a plaintext (or decryptable) password is available, the credentials are
+     * regenerated (preserving the historical behavior of this provider).
      */
     @Override
     public ScramCredentialData getScramCredential(final String username, final String mechanism) throws UnsupportedOperationException, UserNotFoundException
     {
         final String normalizedMechanism = ScramCredentialData.normalizeMechanismName(mechanism);
-        if (!ScramSha1SaslServer.MECHANISM_NAME.equals(normalizedMechanism)) {
+        if (SCRAM_MECHANISMS.stream().noneMatch(m -> m.mechanismName().equals(normalizedMechanism))) {
             throw new UnsupportedOperationException("SCRAM mechanism is not supported: " + mechanism);
         }
 
@@ -339,23 +378,30 @@ public class DefaultAuthProvider implements AuthProvider {
                 credentialsByMechanismName.put(scram.mechanism, scram);
             } while (rs.next());
 
-            // TODO: When supporting more than just SCRAM-SHA-1, drop this. This got introduced in a commit that refactored the existing storage solution, prior to implementing support for additional mechanisms (OF-3322).
-            final ScramCredentialData credential = credentialsByMechanismName.get(ScramSha1SaslServer.MECHANISM_NAME);
-            if (credential == null) {
-                Log.debug("No available SCRAM-SHA-1 credentials for checkPassword for user {}", username);
-                return false;
+
+            // We don't know what algorithm was used for the provided credentials. We'll have to try all supported ones.
+            for (final ScramCredentialData credential : credentialsByMechanismName.values())
+            {
+                final ScramMechanism mech = SCRAM_MECHANISMS.stream()
+                    .filter(m -> m.mechanismName().equals(credential.mechanism))
+                    .findFirst().orElse(null);
+                if (mech == null) {
+                    Log.debug("Skipping unsupported SCRAM mechanism '{}' for user {}", credential.mechanism, username); continue;
+                }
+                try {
+                    final byte[] saltShaker = DatatypeConverter.parseBase64Binary(credential.salt);
+                    final ScramUtils.ScramKeys keys = ScramUtils.deriveScramKeys(
+                        saltShaker, testPassword, credential.iterations,
+                        mech.hmacAlgorithm(), mech.digestAlgorithm());
+                    if (DatatypeConverter.printBase64Binary(keys.storedKey).equals(credential.storedKey)) {
+                        return true;
+                    }
+                } catch (SaslException | NoSuchAlgorithmException | IllegalArgumentException e) {
+                    Log.warn("Unable to check SCRAM values for PLAIN authentication for user '{}'", username, e);
+                }
             }
-            final byte[] testStoredKey;
-            try {
-                final byte[] saltShaker = DatatypeConverter.parseBase64Binary(credential.salt);
-                final byte[] saltedPassword = ScramUtils.createSaltedPassword(saltShaker, testPassword, credential.iterations);
-                final byte[] clientKey = ScramUtils.computeHmac(saltedPassword, "Client Key");
-                testStoredKey = MessageDigest.getInstance("SHA-1").digest(clientKey);
-            } catch(SaslException | NoSuchAlgorithmException | IllegalArgumentException e) {
-                Log.warn("Unable to check SCRAM values for PLAIN authentication for user '{}'", username, e);
-                return false;
-            }
-            return DatatypeConverter.printBase64Binary(testStoredKey).equals(credential.storedKey);
+            Log.debug("No usable SCRAM credential found for user {}", username);
+            return false;
         }
         catch (SQLException sqle) {
             Log.warn("A database error occurred while authenticating user {}:", username, sqle);
@@ -384,19 +430,24 @@ public class DefaultAuthProvider implements AuthProvider {
             }
         }
 
-        // Compute the SCRAM (SHA-1) credential from the plaintext password *before* the plaintext is nulled out below.
-        byte[] saltShaker = new byte[SALT_LENGTH];
-        random.nextBytes(saltShaker);
-        final String salt = DatatypeConverter.printBase64Binary(saltShaker);
-        final int iterations = ScramSha1SaslServer.ITERATION_COUNT.getValue();
-        byte[] saltedPassword = null, clientKey = null, storedKey = null, serverKey = null;
-        try {
-            saltedPassword = ScramUtils.createSaltedPassword(saltShaker, password, iterations);
-            clientKey = ScramUtils.computeHmac(saltedPassword, "Client Key");
-            storedKey = MessageDigest.getInstance("SHA-1").digest(clientKey);
-            serverKey = ScramUtils.computeHmac(saltedPassword, "Server Key");
-        } catch (SaslException | NoSuchAlgorithmException e) {
-            Log.warn("Unable to persist values for SCRAM authentication.");
+        // Derive SCRAM credentials from the plaintext *before* it's nulled out below.
+        final List<ScramCredentialData> scramCredentials = new ArrayList<>();
+        for (final ScramMechanism mech : SCRAM_MECHANISMS) {
+            final byte[] saltShaker = new byte[SALT_LENGTH];
+            random.nextBytes(saltShaker);
+            final int iterations = mech.iterationCount().getAsInt();
+            try {
+                final ScramUtils.ScramKeys keys = ScramUtils.deriveScramKeys(
+                    saltShaker, password, iterations, mech.hmacAlgorithm(), mech.digestAlgorithm());
+                scramCredentials.add(new ScramCredentialData(
+                    mech.mechanismName(),
+                    DatatypeConverter.printBase64Binary(saltShaker),
+                    iterations,
+                    DatatypeConverter.printBase64Binary(keys.storedKey),
+                    DatatypeConverter.printBase64Binary(keys.serverKey)));
+            } catch (SaslException | NoSuchAlgorithmException e) {
+                Log.warn("Unable to derive SCRAM credential for {} while persisting password for user '{}'", mech.mechanismName(), username, e);
+            }
         }
 
         String plaintextToStore = password;
@@ -407,13 +458,19 @@ public class DefaultAuthProvider implements AuthProvider {
                 plaintextToStore = null;
             }
             catch (UnsupportedOperationException uoe) {
-                // Encryption may fail. In that case, ignore the error and
-                // the plain password will be stored.
+                Log.warn("Unable to encrypt password for user '{}' while updating password. Plain-text authentication will remain available.", username, uoe);
             }
         }
         if (scramOnly) {
             encryptedPassword = null;
             plaintextToStore = null;
+        }
+
+        if (scramOnly && scramCredentials.isEmpty()) {
+            // In scramOnly mode SCRAM is the only stored credential. If none could be derived, committing would
+            // leave the user with no usable credential of any kind (locked out), so refuse rather than persist that.
+            Log.error("Unable to derive any SCRAM credential for user '{}' while user.scramHashedPasswordOnly is set; refusing to store a credential-less password.", username);
+            throw new UserNotFoundException("No SCRAM credentials could be derived (while configured in SCRAM-only mode) for user " + username);
         }
 
         // Persist the ofUser password row and the ofUserScram credential row atomically: because these now live in
@@ -446,17 +503,9 @@ public class DefaultAuthProvider implements AuthProvider {
             DbConnectionManager.fastcloseStmt(pstmt);
             pstmt = null;
 
-            upsertScramCredential(
-                con,
-                username,
-                new ScramCredentialData(
-                    ScramSha1SaslServer.MECHANISM_NAME,
-                    salt,
-                    iterations,
-                    storedKey == null ? null : DatatypeConverter.printBase64Binary(storedKey),
-                    serverKey == null ? null : DatatypeConverter.printBase64Binary(serverKey)
-                )
-            );
+            for (final ScramCredentialData credential : scramCredentials) {
+                upsertScramCredential(con, username, credential);
+            }
         }
         catch (SQLException sqle) {
             abortTransaction = true;

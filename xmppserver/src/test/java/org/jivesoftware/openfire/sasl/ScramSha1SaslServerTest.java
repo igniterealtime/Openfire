@@ -85,11 +85,11 @@ public class ScramSha1SaslServerTest extends AbstractScramSaslServerTest
     @Override
     protected void setupCanonicalAuthData()
     {
-        authFactory.when(() -> AuthFactory.getSalt(anyString(), eq(ScramSha1TestFixtures.MECHANISM))).thenReturn(ScramSha1TestFixtures.SALT);
-        authFactory.when(() -> AuthFactory.getIterations(anyString(), eq(ScramSha1TestFixtures.MECHANISM))).thenReturn(ScramSha1TestFixtures.ITERATIONS);
+        authFactory.when(() -> AuthFactory.getSalt(anyString(), eq(ScramSha1SaslServer.MECHANISM_NAME))).thenReturn(ScramSha1TestFixtures.SALT);
+        authFactory.when(() -> AuthFactory.getIterations(anyString(), eq(ScramSha1SaslServer.MECHANISM_NAME))).thenReturn(ScramSha1TestFixtures.ITERATIONS);
         authFactory.when(() -> AuthFactory.getPassword(any())).thenReturn(ScramSha1TestFixtures.PASSWORD);
-        authFactory.when(() -> AuthFactory.getStoredKey(anyString(), eq(ScramSha1TestFixtures.MECHANISM))).thenReturn(DatatypeConverter.printBase64Binary(StringUtils.decodeHex(ScramSha1TestFixtures.STORED_KEY_HEX)));
-        authFactory.when(() -> AuthFactory.getServerKey(anyString(), eq(ScramSha1TestFixtures.MECHANISM))).thenReturn(DatatypeConverter.printBase64Binary(StringUtils.decodeHex(ScramSha1TestFixtures.SERVER_KEY_HEX)));
+        authFactory.when(() -> AuthFactory.getStoredKey(anyString(), eq(ScramSha1SaslServer.MECHANISM_NAME))).thenReturn(DatatypeConverter.printBase64Binary(StringUtils.decodeHex(ScramSha1TestFixtures.STORED_KEY_HEX)));
+        authFactory.when(() -> AuthFactory.getServerKey(anyString(), eq(ScramSha1SaslServer.MECHANISM_NAME))).thenReturn(DatatypeConverter.printBase64Binary(StringUtils.decodeHex(ScramSha1TestFixtures.SERVER_KEY_HEX)));
     }
 
     /**
@@ -105,11 +105,11 @@ public class ScramSha1SaslServerTest extends AbstractScramSaslServerTest
     protected String createValidProof(final byte[] initialMessage, final String firstServerResponse, final FirstExchangeResult firstExchangeResult) throws Exception
     {
         final SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA1");
-        final KeySpec spec = new PBEKeySpec(ScramSha1TestFixtures.PASSWORD.toCharArray(), firstExchangeResult.salt, firstExchangeResult.iterations, 160);
+        final KeySpec spec = new PBEKeySpec(ScramSha1TestFixtures.PASSWORD.toCharArray(), firstExchangeResult.salt, firstExchangeResult.iterations, expectedProofLengthBytes()*8); // SCRAM derives the salted password at the hash's native output length, which equals the proof length
         final byte[] saltedPassword = factory.generateSecret(spec).getEncoded();
 
         final byte[] clientKey       = new HmacUtils(HmacAlgorithms.HMAC_SHA_1, saltedPassword).hmac(ScramSha1TestFixtures.CLIENT_KEY);
-        final byte[] storedKey       = StringUtils.decodeHex(StringUtils.hash(clientKey, "SHA-1"));
+        final byte[] storedKey       = StringUtils.decodeHex(StringUtils.hash(clientKey, ScramSha1SaslServer.DIGEST_ALGORITHM_NAME));
         final String clientFinalBare = "c=biws,r=" + firstExchangeResult.serverNonce;
         final String authMessage     = "n=" + ScramSha1TestFixtures.USER + ",r=" + ScramSha1TestFixtures.CLIENT_NONCE + "," + firstServerResponse + "," + clientFinalBare;
         final byte[] clientSignature = new HmacUtils(HmacAlgorithms.HMAC_SHA_1, storedKey).hmac(authMessage);
@@ -196,11 +196,11 @@ public class ScramSha1SaslServerTest extends AbstractScramSaslServerTest
         // Setup test fixture: prepare second client message.
         final String clientFinalMessageBare = "c=biws,r=" + firstExchangeResult.serverNonce;
 
-        final KeySpec saltedPasswordSpec = new PBEKeySpec(ScramSha1TestFixtures.PASSWORD.toCharArray(), firstExchangeResult.salt, firstExchangeResult.iterations, 20*8);
+        final KeySpec saltedPasswordSpec = new PBEKeySpec(ScramSha1TestFixtures.PASSWORD.toCharArray(), firstExchangeResult.salt, firstExchangeResult.iterations, expectedProofLengthBytes()*8); // SCRAM derives the salted password at the hash's native output length, which equals the proof length
         final byte[] saltedPassword = pbkdf2Factory.generateSecret(saltedPasswordSpec).getEncoded();
 
         final byte[] clientKey = new HmacUtils(HmacAlgorithms.HMAC_SHA_1, saltedPassword).hmac(ScramSha1TestFixtures.CLIENT_KEY);
-        final byte[] storedKey = StringUtils.decodeHex(StringUtils.hash(clientKey, "SHA-1"));
+        final byte[] storedKey = StringUtils.decodeHex(StringUtils.hash(clientKey, ScramSha1SaslServer.DIGEST_ALGORITHM_NAME));
         final String authMessage = new String(initialMessage, StandardCharsets.UTF_8).substring(gs2Header.length()) + "," + firstServerResponse + "," + clientFinalMessageBare;
 
         final byte[] clientSignature = new HmacUtils(HmacAlgorithms.HMAC_SHA_1, storedKey).hmac(authMessage);
@@ -273,11 +273,11 @@ public class ScramSha1SaslServerTest extends AbstractScramSaslServerTest
         System.arraycopy(channelBindingData, 0, cbindInput, gs2HeaderBytes.length, channelBindingData.length);
         final String clientFinalMessageBare = "c=" + Base64.getEncoder().encodeToString(cbindInput) + ",r=" + firstExchangeResult.serverNonce;
 
-        final KeySpec saltedPasswordSpec = new PBEKeySpec(ScramSha1TestFixtures.PASSWORD.toCharArray(), firstExchangeResult.salt, firstExchangeResult.iterations, 20*8);
+        final KeySpec saltedPasswordSpec = new PBEKeySpec(ScramSha1TestFixtures.PASSWORD.toCharArray(), firstExchangeResult.salt, firstExchangeResult.iterations, expectedProofLengthBytes()*8); // SCRAM derives the salted password at the hash's native output length, which equals the proof length
         final byte[] saltedPassword = pbkdf2Factory.generateSecret(saltedPasswordSpec).getEncoded();
 
         final byte[] clientKey = new HmacUtils(HmacAlgorithms.HMAC_SHA_1, saltedPassword).hmac(ScramSha1TestFixtures.CLIENT_KEY);
-        final byte[] storedKey = StringUtils.decodeHex(StringUtils.hash(clientKey, "SHA-1"));
+        final byte[] storedKey = StringUtils.decodeHex(StringUtils.hash(clientKey, ScramSha1SaslServer.DIGEST_ALGORITHM_NAME));
         final String authMessage = new String(initialMessage, StandardCharsets.UTF_8).substring(gs2Header.length()) + "," + firstServerResponse + "," + clientFinalMessageBare;
 
         final byte[] clientSignature = new HmacUtils(HmacAlgorithms.HMAC_SHA_1, storedKey).hmac(authMessage);
@@ -314,7 +314,7 @@ public class ScramSha1SaslServerTest extends AbstractScramSaslServerTest
         final String mechanismName = server.getMechanismName();
 
         // Verify result
-        assertEquals(ScramSha1TestFixtures.MECHANISM, mechanismName, "Non-PLUS mechanism should return 'SCRAM-SHA-1' as its name");
+        assertEquals(ScramSha1SaslServer.MECHANISM_NAME, mechanismName, "Non-PLUS mechanism should return 'SCRAM-SHA-1' as its name");
     }
 
     /**
@@ -330,6 +330,6 @@ public class ScramSha1SaslServerTest extends AbstractScramSaslServerTest
         final String mechanismName = server.getMechanismName();
 
         // Verify result
-        assertEquals(ScramSha1TestFixtures.PLUS_MECHANISM, mechanismName, "PLUS mechanism should return 'SCRAM-SHA-1-PLUS' as its name");
+        assertEquals(ScramSha1SaslServer.MECHANISM_NAME+"-PLUS", mechanismName, "PLUS mechanism should return 'SCRAM-SHA-1-PLUS' as its name");
     }
 }

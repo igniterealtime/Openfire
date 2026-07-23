@@ -100,6 +100,7 @@ class PresenceEnhancerTest {
 
     @AfterEach
     void tearDown() {
+        XMPPServer.setInstance(null);
         Fixtures.clearExistingProperties();
     }
 
@@ -296,7 +297,7 @@ class PresenceEnhancerTest {
 
     /**
      * If the user has no PEP service, the server cannot look up an avatar
-     * hash and must leave the presence unmodified.
+     * hash and must not inject a hash.
      */
     @Test
     void testDoesNotAugment_whenNoPepService() throws PacketRejectedException {
@@ -306,12 +307,11 @@ class PresenceEnhancerTest {
         enhancer.interceptPacket(presence, localClientSession, true, false);
 
         final Element x = presence.getChildElement("x", "vcard-temp:x:update");
-        // x element will have been added before the PEP lookup, but photo must remain empty
-        if (x != null) {
-            final Element photo = x.element("photo");
-            assertTrue(photo != null && photo.getTextTrim().isEmpty(),
-                "No hash should be written when there is no PEP service");
-        }
+        assertNotNull(x, "Expected <x xmlns='vcard-temp:x:update'> to be added");
+        final Element photo = x.element("photo");
+        assertNotNull(photo, "Expected <photo/> element to be present");
+        assertTrue(photo.getTextTrim().isEmpty(),
+            "No hash should be written when there is no PEP service");
     }
 
     /**

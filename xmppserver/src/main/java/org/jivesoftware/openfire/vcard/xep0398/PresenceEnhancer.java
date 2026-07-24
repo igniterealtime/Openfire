@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2025-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,10 +99,11 @@ public class PresenceEnhancer implements PacketInterceptor
 
         final String hash = lastPublishedItem.getID();
         if (hash == null || hash.isEmpty()) {
+            // Return here leaves the explicit "We have no avatar" in place.
             return;
         }
 
         Log.trace("Enhancing presence available stanza from '{}' with value '{}'", session.getAddress(), hash);
-        photo.addText(hash);
+        photo.setText(hash);
     }
 }

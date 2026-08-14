@@ -142,4 +142,13 @@
         <packageUrl regex="true">^pkg:maven/org\.mortbay\.jasper/(mortbay\-)?apache\-(el|jsp)@.*$</packageUrl>
         <cpe>cpe:/a:mortbay_jetty:jetty</cpe>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+        mortbay-apache-jsp is Apache Tomcat's Jasper JSP engine rebundled for Jetty, with the servlet container stripped out. These CVEs affect Catalina (RewriteValve), Tomcat clustering (EncryptInterceptor) and the examples webapp - none of which are present in this artifact. Verified against jar contents. Openfire uses Jetty, not Tomcat, as its HTTP server. See https://igniterealtime.atlassian.net/browse/OF-3349
+   ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.mortbay\.jasper/mortbay-apache-jsp@.*$</packageUrl>
+        <cve>CVE-2026-59083</cve>
+        <cve>CVE-2026-59084</cve>
+        <cve>CVE-2026-66299</cve>
+    </suppress>
 </suppressions>

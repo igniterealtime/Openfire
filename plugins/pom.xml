@@ -123,7 +123,7 @@
 
         <!-- Versions -->
         <openfire.version>5.2.0-SNAPSHOT</openfire.version>
-        <!-- Note; the following jetty.version should be identical to the jetty.version in xmppserver/pom.xml -->
+        <!-- Note; the following jetty.version should be identical to the jetty.version in the pom.xml that is in the root of the project. -->
         <jetty.version>12.0.38</jetty.version>
     </properties>
 

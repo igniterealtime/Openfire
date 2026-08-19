@@ -23,6 +23,7 @@ import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 
+import javax.annotation.Nonnull;
 import java.util.Map;
 import java.util.Set;
 
@@ -31,6 +32,10 @@ import java.util.Set;
  *
  * The SCRAM exchange itself is implemented by the hash-agnostic {@link ScramSaslServer} superclass. This class binds
  * that exchange to the SHA-512 hash function.
+ *
+ * As described in {@link ScramSaslServer}, instances are session-specific and must not be reused across sessions or
+ * users. In particular, the instance must retain the mechanism availability for its session when processing GS2
+ * channel-binding negotiation.
  *
  * @author Guus der Kinderen
  * @see <a href="https://datatracker.ietf.org/doc/html/draft-melnikov-scram-sha-512">draft-melnikov-scram-sha-512</a>
@@ -104,18 +109,25 @@ public class ScramSha512SaslServer extends ScramSaslServer {
         .setDynamic(Boolean.TRUE)
         .build();
 
-    public ScramSha512SaslServer(final boolean isPlusMechanism, final Map<String, ?> props)
+    /**
+     * Creates a new, client-specific, instance.
+     *
+     * @param isPlusMechanism Denotes if this instance supports channel-binding ({@code true}) or not ({@code false}).
+     * @param props The possibly null set of properties used to select the SASL mechanism and to configure the authentication exchange of the selected mechanism.
+     * @param availableMechanismsForSession The names of SASL mechanisms that are available to this particular session (as opposed to the set of globally available mechanism names).
+     */
+    public ScramSha512SaslServer(final boolean isPlusMechanism, final Map<String, ?> props, @Nonnull final Set<String> availableMechanismsForSession)
     {
-        super(isPlusMechanism, props, ChannelBindingProviderManager.getInstance(), SASLAuthentication.getSupportedMechanisms());
+        super(isPlusMechanism, props, ChannelBindingProviderManager.getInstance(), availableMechanismsForSession);
     }
 
     /**
      * Constructor for testing purposes.
      */
     @VisibleForTesting
-    ScramSha512SaslServer(final boolean isPlusMechanism, final Map<String, ?> props, final ChannelBindingProviderManager channelBindingProviderManager, final Set<String> serverSupportedSaslMechanismNames)
+    ScramSha512SaslServer(final boolean isPlusMechanism, final Map<String, ?> props, final ChannelBindingProviderManager channelBindingProviderManager, @Nonnull final Set<String> availableMechanismsForSession)
     {
-        super(isPlusMechanism, props, channelBindingProviderManager, serverSupportedSaslMechanismNames);
+        super(isPlusMechanism, props, channelBindingProviderManager, availableMechanismsForSession);
     }
 
     @Override

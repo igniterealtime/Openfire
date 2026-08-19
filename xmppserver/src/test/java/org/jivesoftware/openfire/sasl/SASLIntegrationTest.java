@@ -304,7 +304,8 @@ public class SASLIntegrationTest {
         when(clientSession.isAuthenticated()).thenReturn(true);
         
         // Execute system under test.
-        final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(clientSession);
+        final Set<String> advertisableSASLMechanisms = SASLAuthentication.getAdvertisableSASLMechanisms(clientSession);
+        final List<Element> mechanisms = SASLAuthentication.asSASLMechanisms(clientSession, advertisableSASLMechanisms);
 
         // Verify result.
         assertTrue(mechanisms.isEmpty(),
@@ -322,7 +323,8 @@ public class SASLIntegrationTest {
         try {
 
             // Execute system under test.
-            final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(clientSession);
+            final Set<String> advertisableSASLMechanisms = SASLAuthentication.getAdvertisableSASLMechanisms(clientSession);
+            final List<Element> mechanisms = SASLAuthentication.asSASLMechanisms(clientSession, advertisableSASLMechanisms);
 
             // Verify result.
             assertFalse(mechanisms.isEmpty(), "SASL mechanisms should be added");
@@ -350,7 +352,8 @@ public class SASLIntegrationTest {
         when(clientSession.isAuthenticated()).thenReturn(false);
 
         // Execute system under test.
-        final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(clientSession);
+        final Set<String> advertisableSASLMechanisms = SASLAuthentication.getAdvertisableSASLMechanisms(clientSession);
+        final List<Element> mechanisms = SASLAuthentication.asSASLMechanisms(clientSession, advertisableSASLMechanisms);
 
         // Verify result.
         assertFalse(mechanisms.isEmpty(), "SASL mechanisms should be added");
@@ -375,7 +378,8 @@ public class SASLIntegrationTest {
         when(unknownSession.isAuthenticated()).thenReturn(false);
         
         // Execute system under test.
-        final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(unknownSession);
+        final Set<String> advertisableSASLMechanisms = SASLAuthentication.getAdvertisableSASLMechanisms(unknownSession);
+        final List<Element> mechanisms = SASLAuthentication.asSASLMechanisms(unknownSession, advertisableSASLMechanisms);
         
         // Verify result.
         assertTrue(mechanisms.isEmpty(),

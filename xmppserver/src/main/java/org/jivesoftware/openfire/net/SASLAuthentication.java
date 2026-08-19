@@ -178,6 +178,13 @@ public class SASLAuthentication {
      */
     public static final String SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY = "Sasl.last-response-was-provided-but-empty";
 
+    /**
+     * Session Data property name used to store which SASL mechanisms were advertised by the server to the peer as being
+     * available for the session that is performing SASL authentication. The value is expected to be a Set of Strings,
+     * if any mechanisms were advertised from Openfire to the peer.
+     */
+    public static final String AVAILABLE_MECHANISMS_FOR_SESSION = "SaslMechanismsOfferedByServer";
+
     private static Set<String> mechanisms = new HashSet<>();
 
     static
@@ -284,6 +291,21 @@ public class SASLAuthentication {
     }
 
     /**
+     * Returns a Set of SASL mechanism names are applicable to advertise to the given session.
+     *
+     * When the session is already authenticated, SASL mechanisms are no longer to be advertised. An empty collection is
+     * returned for these sessions.
+     *
+     * @param session the local session for which to determine applicable SASL mechanisms (cannot be null)
+     * @return a set of SASL mechanism names; never null, possibly empty
+     */
+    public static Set<String> getAdvertisableSASLMechanisms(@Nonnull final LocalSession session)
+    {
+        // If the session is already authenticated, do not list anything.
+        return session.isAuthenticated() ? Collections.emptySet() : getAvailableMechanismsForSession(session);
+    }
+
+    /**
      * Returns a list of XML elements representing the SASL mechanism features that are applicable to the given session.
      * The returned elements are suitable for inclusion in the stream features element sent to the peer.
      * Both SASL (RFC 6120) and SASL2 (XEP-0388) feature elements may be included, depending on configuration.
@@ -292,7 +314,7 @@ public class SASLAuthentication {
      * @param session the local session for which to determine applicable SASL mechanism feature elements (cannot be null)
      * @return a list of XML elements representing SASL mechanism features; never null, possibly empty
      */
-    public static List<Element> getSASLMechanisms( @Nonnull LocalSession session )
+    public static List<Element> asSASLMechanisms(@Nonnull final LocalSession session, @Nonnull final Set<String> advertisableMechanismNames)
     {
         final List<Element> features = new LinkedList<>();
         // Never list these if the session is already authenticated.
@@ -300,13 +322,13 @@ public class SASLAuthentication {
 
         if ( session instanceof ClientSession )
         {
-            final Element sasl1Mechs = getSASLMechanismsElement( (ClientSession) session, false );
+            final Element sasl1Mechs = asSASLMechanismsElementForClientSessions(advertisableMechanismNames, false);
             if (sasl1Mechs != null) {
                 features.add(sasl1Mechs);
             }
             if (checkSASL2Permitted(session).isEmpty())
             {
-                final Element sasl2Mechs = getSASLMechanismsElement((ClientSession) session, true);
+                final Element sasl2Mechs = asSASLMechanismsElementForClientSessions(advertisableMechanismNames, true);
                 if (sasl2Mechs != null) {
                     features.add(sasl2Mechs);
                 }
@@ -314,13 +336,13 @@ public class SASLAuthentication {
         }
         else if ( session instanceof LocalIncomingServerSession )
         {
-            final Element sasl1Mechs = getSASLMechanismsElement( (LocalIncomingServerSession) session, false );
+            final Element sasl1Mechs = asSASLMechanismsElementForServerSessions(advertisableMechanismNames, false);
             if (sasl1Mechs != null) {
                 features.add(sasl1Mechs);
             }
             if (checkSASL2Permitted(session).isEmpty())
             {
-                final Element sasl2Mechs = getSASLMechanismsElement((LocalIncomingServerSession) session, true);
+                final Element sasl2Mechs = asSASLMechanismsElementForServerSessions(advertisableMechanismNames, true);
                 if (sasl2Mechs != null) {
                     features.add(sasl2Mechs);
                 }
@@ -335,26 +357,27 @@ public class SASLAuthentication {
     }
 
     /**
-     * Returns an XML element advertising the SASL mechanisms available to the given client session.
-     * The element will be in either the SASL (RFC 6120) or SASL2 (XEP-0388) namespace depending on
-     * the {@code usingSASL2} parameter. The EXTERNAL mechanism is only included if the session is
-     * encrypted and the peer has a trusted certificate. May return {@code null} if the resulting
-     * element would be empty and the {@code sasl.client.suppressEmpty} property is set to {@code true}.
+     * Returns an XML element advertising the SASL mechanisms available to a client session.
      *
-     * @param session    the client session for which to generate the mechanisms element (cannot be null)
+     * The element will be in either the SASL (RFC 6120) or SASL2 (XEP-0388) namespace depending on
+     * the {@code usingSASL2} parameter.
+     *
+     * May return {@code null} if the resulting element would be empty and the {@code sasl.client.suppressEmpty}
+     * property is set to {@code true}.
+     *
+     * @param advertisableMechanismNames The set of SASL mechanism names that are to be advertised.
      * @param usingSASL2 {@code true} to generate a SASL2 {@code <authentication>} element;
      *                   {@code false} to generate a SASL1 {@code <mechanisms>} element
      * @return an XML element listing the available SASL mechanisms, or {@code null} if the element
      *         would be empty and suppression of empty elements is configured
      */
-    public static Element getSASLMechanismsElement( ClientSession session, boolean usingSASL2 )
+    @VisibleForTesting
+    static Element asSASLMechanismsElementForClientSessions(@Nonnull final Set<String> advertisableMechanismNames, final boolean usingSASL2)
     {
-        final Set<String> availableMechanisms = getAvailableMechanismsForClientSession(session);
-
         final Namespace namespace = new Namespace("", usingSASL2 ? SASL2_NAMESPACE : SASL_NAMESPACE );
         final QName qName = new QName(usingSASL2 ? "authentication" : "mechanisms", namespace);
         final Element result = DocumentHelper.createElement( qName );
-        for (final String mech : availableMechanisms) {
+        for (final String mech : advertisableMechanismNames) {
             final Element mechanism = result.addElement("mechanism");
             mechanism.setText(mech);
         }
@@ -366,7 +389,7 @@ public class SASLAuthentication {
         }
 
         // OF-2072: Return null instead of an empty element, if so configured.
-        if ( (usingSASL2 || JiveGlobals.getBooleanProperty("sasl.client.suppressEmpty", false)) && availableMechanisms.isEmpty() ) {
+        if ( (usingSASL2 || JiveGlobals.getBooleanProperty("sasl.client.suppressEmpty", false)) && advertisableMechanismNames.isEmpty() ) {
             return null;
         }
 
@@ -374,33 +397,33 @@ public class SASLAuthentication {
     }
 
     /**
-     * Returns an XML element advertising the SASL mechanisms available to the given incoming server session.
-     * The element will be in either the SASL (RFC 6120) or SASL2 (XEP-0388) namespace depending on
-     * the {@code usingSASL2} parameter. The EXTERNAL mechanism is only offered if the session is
-     * encrypted and the peer has a trusted certificate that matches the session's default identity.
-     * May return {@code null} if the resulting element would be empty and the
-     * {@code sasl.server.suppressEmpty} property is set to {@code true}.
+     * Returns an XML element advertising the SASL mechanisms available to an incoming server session.
      *
-     * @param session    the incoming server session for which to generate the mechanisms element (cannot be null)
+     * The element will be in either the SASL (RFC 6120) or SASL2 (XEP-0388) namespace depending on the
+     * {@code usingSASL2} parameter.
+     *
+     * May return {@code null} if the resulting element would be empty and th {@code sasl.server.suppressEmpty} property
+     * is set to {@code true}.
+     *
+     * @param advertisableMechanismNames The set of SASL mechanism names that are to be advertised.
      * @param usingSASL2 {@code true} to generate a SASL2 {@code <authentication>} element in the SASL2 namespace;
      *                   {@code false} to generate a SASL1 {@code <mechanisms>} element
      * @return an XML element listing the available SASL mechanisms, or {@code null} if the element
      *         would be empty and suppression of empty elements is configured
      */
-    public static Element getSASLMechanismsElement( LocalIncomingServerSession session, boolean usingSASL2 )
+    @VisibleForTesting
+    static Element asSASLMechanismsElementForServerSessions(Set<String> advertisableMechanismNames, boolean usingSASL2)
     {
-        final Set<String> availableMechanisms = getAvailableMechanismsForServerSession(session);
-
         // OF-2072: Return null instead of an empty element, if so configured.
         // For SASL2, always null.
-        if ((usingSASL2 || JiveGlobals.getBooleanProperty("sasl.server.suppressEmpty", false)) && availableMechanisms.isEmpty()) {
+        if ((usingSASL2 || JiveGlobals.getBooleanProperty("sasl.server.suppressEmpty", false)) && advertisableMechanismNames.isEmpty()) {
             return null;
         }
 
         final Namespace namespace = new Namespace("", usingSASL2 ? SASL2_NAMESPACE : SASL_NAMESPACE );
         final QName qName = new QName(usingSASL2 ? "authentication" : "mechanisms", namespace);
         final Element result = DocumentHelper.createElement( qName );
-        for (final String mech : availableMechanisms) {
+        for (final String mech : advertisableMechanismNames) {
             final Element mechanism = result.addElement("mechanism");
             mechanism.setText(mech);
         }

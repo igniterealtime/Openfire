@@ -40,6 +40,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -166,6 +167,17 @@ public class ScramSha1SaslServerTest extends AbstractScramSaslServerTest
     protected ScramSha1SaslServer newServer(final boolean isPlusMechanism)
     {
         return new ScramSha1SaslServer(isPlusMechanism, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha1TestFixtures.SUPPORTED_MECHANISMS);
+    }
+
+    /**
+     * Creates a new ScramSha1SaslServer instance configured for either the plain or PLUS variant.
+     *
+     * @param isPlusMechanism true to create a SCRAM-SHA-1-PLUS server, false for SCRAM-SHA-1
+     * @param advertisedMechanismNames The names of SASL mechanisms that are advertised to the peer.
+     */
+    protected ScramSha1SaslServer newServer(boolean isPlusMechanism, Set<String> advertisedMechanismNames)
+    {
+        return new ScramSha1SaslServer(isPlusMechanism, new HashMap<>(), new ChannelBindingProviderManager(), advertisedMechanismNames);
     }
 
     /**

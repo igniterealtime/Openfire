@@ -202,7 +202,7 @@ public class SaslServerFactoryImpl implements SaslServerFactory
 
     /**
      * Extracts a set of SASL mechanism names from the session data of the LocalSession instance that is expected to be
-     * stored in the provided properties. Returns an empty optinal if no such session is found in the properties, or if
+     * stored in the provided properties. Returns an empty Optional if no such session is found in the properties, or if
      * its data does not contain the expected set of names.
      *
      * @param props the property map

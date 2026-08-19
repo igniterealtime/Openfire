@@ -19,6 +19,7 @@ import org.jivesoftware.util.StringUtils;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * Verifies the implementation of {@link ScramUtils}
@@ -121,6 +122,46 @@ public class ScramUtilsTest
     }
 
     /**
+     * Verifies that {@link ScramUtils#createSaltedPassword(byte[], String, int, String)} rejects an iteration count
+     * of zero.
+     */
+    @Test
+    public void testScramSha1CreateSaltedPasswordRejectsZeroIterations()
+    {
+        // Setup test fixture.
+        final byte[] salt = StringUtils.decodeHex("4125c247e43ab1e93c6dff76");
+        final String password = "pencil";
+        final int iterations = 0;
+        final String hmacAlgorithm = "HmacSHA1";
+
+        // Execute system under test and verify results.
+        assertThrows(Exception.class, () ->
+            ScramUtils.createSaltedPassword(salt, password, iterations, hmacAlgorithm),
+            "An iteration count of zero should have been rejected (but was not)."
+        );
+    }
+
+    /**
+     * Verifies that {@link ScramUtils#createSaltedPassword(byte[], String, int, String)} rejects a negative iteration
+     * count.
+     */
+    @Test
+    public void testScramSha1CreateSaltedPasswordRejectsNegativeIterations()
+    {
+        // Setup test fixture.
+        final byte[] salt = StringUtils.decodeHex("4125c247e43ab1e93c6dff76");
+        final String password = "pencil";
+        final int iterations = -1;
+        final String hmacAlgorithm = "HmacSHA1";
+
+        // Execute system under test and verify results.
+        assertThrows(Exception.class, () ->
+            ScramUtils.createSaltedPassword(salt, password, iterations, hmacAlgorithm),
+            "A negative iteration count should have been rejected (but was not)."
+        );
+    }
+
+    /**
      * Verifies the implementation of {@link ScramUtils#computeHmac(byte[], String, String)} by using SCRAM-SHA-1(-PLUS)
      * test vectors that are provided by the XSF.
      *
@@ -213,6 +254,46 @@ public class ScramUtilsTest
     }
 
     /**
+     * Verifies that {@link ScramUtils#createSaltedPassword(byte[], String, int, String)} rejects an iteration count
+     * of zero.
+     */
+    @Test
+    public void testScramSha256CreateSaltedPasswordRejectsZeroIterations()
+    {
+        // Setup test fixture.
+        final byte[] salt = StringUtils.decodeHex("5b6d99689d12358eeca04b141236fa81");
+        final String password = "pencil";
+        final int iterations = 0;
+        final String hmacAlgorithm = "HmacSHA256";
+
+        // Execute system under test and verify results.
+        assertThrows(Exception.class, () ->
+            ScramUtils.createSaltedPassword(salt, password, iterations, hmacAlgorithm),
+            "An iteration count of zero should have been rejected (but was not)."
+        );
+    }
+
+    /**
+     * Verifies that {@link ScramUtils#createSaltedPassword(byte[], String, int, String)} rejects a negative iteration
+     * count.
+     */
+    @Test
+    public void testScramSha256CreateSaltedPasswordRejectsNegativeIterations()
+    {
+        // Setup test fixture.
+        final byte[] salt = StringUtils.decodeHex("5b6d99689d12358eeca04b141236fa81");
+        final String password = "pencil";
+        final int iterations = -1;
+        final String hmacAlgorithm = "HmacSHA256";
+
+        // Execute system under test and verify results.
+        assertThrows(Exception.class, () ->
+            ScramUtils.createSaltedPassword(salt, password, iterations, hmacAlgorithm),
+            "A negative iteration count should have been rejected (but was not)."
+        );
+    }
+
+    /**
      * Verifies the implementation of {@link ScramUtils#computeHmac(byte[], String, String)} by using
      * SCRAM-SHA-256(-PLUS) test vectors that are provided by the XSF.
      *
@@ -302,6 +383,46 @@ public class ScramUtilsTest
 
         // Verify results.
         assertArrayEquals(StringUtils.decodeHex("f16efe1be67f1d09502ebd5ed9262fddffba5a377ab4f0b687e5ed5ba0f50686b8a4ae166476da8ab3b951d2fa9238b63998f45461bc33a464814949cec9631d"), result);
+    }
+
+    /**
+     * Verifies that {@link ScramUtils#createSaltedPassword(byte[], String, int, String)} rejects an iteration count
+     * of zero.
+     */
+    @Test
+    public void testScramSha512CreateSaltedPasswordRejectsZeroIterations()
+    {
+        // Setup test fixture.
+        final byte[] salt = StringUtils.decodeHex("5b6d99689d12358eeca04b141236fa81");
+        final String password = "pencil";
+        final int iterations = 0;
+        final String hmacAlgorithm = "HmacSHA512";
+
+        // Execute system under test and verify results.
+        assertThrows(Exception.class, () ->
+            ScramUtils.createSaltedPassword(salt, password, iterations, hmacAlgorithm),
+            "An iteration count of zero should have been rejected (but was not)."
+        );
+    }
+
+    /**
+     * Verifies that {@link ScramUtils#createSaltedPassword(byte[], String, int, String)} rejects a negative iteration
+     * count.
+     */
+    @Test
+    public void testScramSha512CreateSaltedPasswordRejectsNegativeIterations()
+    {
+        // Setup test fixture.
+        final byte[] salt = StringUtils.decodeHex("5b6d99689d12358eeca04b141236fa81");
+        final String password = "pencil";
+        final int iterations = -1;
+        final String hmacAlgorithm = "HmacSHA512";
+
+        // Execute system under test and verify results.
+        assertThrows(Exception.class, () ->
+            ScramUtils.createSaltedPassword(salt, password, iterations, hmacAlgorithm),
+            "A negative iteration count should have been rejected (but was not)."
+        );
     }
 
     /**

@@ -182,9 +182,16 @@ public class SASLAuthentication {
      * Session Data property name used to store which SASL mechanisms were advertised by the server to the peer as being
      * available for the session that is performing SASL authentication. The value is expected to be a Set of Strings,
      * if any mechanisms were advertised from Openfire to the peer.
+     *
+     * Instead of using this value directly, consider using {@link #getAdvertisableSASLMechanisms(LocalSession)},
+     * {@link #setAdvertisedSASLMechanisms(LocalSession, Set)}, or {@link #getAdvertisedSASLMechanisms(LocalSession)}
+     * which encapsulate the business-logic related to this constant.
      */
     public static final String AVAILABLE_MECHANISMS_FOR_SESSION = "SaslMechanismsOfferedByServer";
 
+    /**
+     * List of mechanisms supported by the server. These are not necessarily available to all sessions.
+     */
     private static Set<String> mechanisms = new HashSet<>();
 
     static
@@ -303,6 +310,43 @@ public class SASLAuthentication {
     {
         // If the session is already authenticated, do not list anything.
         return session.isAuthenticated() ? Collections.emptySet() : getAvailableMechanismsForSession(session);
+    }
+
+    /**
+     * Records a set of SASL mechanism names as having been advertised for/to the given session.
+     *
+     * Some SASL mechanism implementations depend on this information. Notably, the SASL-SCRAM-SHA* mechanisms depend
+     * on it to detect channel binding downgrades.
+     *
+     * Implementations of {@link LocalSession} should call this method when SASL mechanisms are advertised to a session.
+     *
+     * @param session the session for which to record advertised SASL mechanisms (cannot be null).
+     * @param advertisedMechanisms the advertised SASL mechanism names
+     */
+    public static void setAdvertisedSASLMechanisms(@Nonnull final LocalSession session, final Set<String> advertisedMechanisms)
+    {
+        session.setSessionData(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.copyOf(advertisedMechanisms));
+    }
+
+    /**
+     * Returns the set of SASL mechanism names that has previously been advertised for/to the given session as being
+     * available for use for that session.
+     *
+     * When advertisement has not (yet) happened when this method is invoked, an empty Optional is returned.
+     *
+     * @param session the session for which to obtain SASL mechanism names (cannot be null).
+     * @return a set of mechanism names that have been advertised for/to the session.
+     */
+    public static Optional<Set<String>> getAdvertisedSASLMechanisms(@Nonnull final LocalSession session )
+    {
+        final Object sessionData = session.getSessionData(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION);
+
+        if (sessionData != null && !(sessionData instanceof Set)) {
+            Log.warn("Unexpected object (not a Set) found in session data under key '{}' of session '{}': {}", SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, session, sessionData);
+            return Optional.empty();
+        }
+        //noinspection unchecked
+        return Optional.ofNullable((Set<String>) sessionData);
     }
 
     /**
@@ -545,14 +589,22 @@ public class SASLAuthentication {
 
                     final String mechanismName = doc.attributeValue( "mechanism" ).toUpperCase();
 
-                    // See if the mechanism is supported by configuration as well as by implementation.
+                    // See if the mechanism is supported by configuration as well as by implementation. This is likely a
+                    // superset of the advertised set, which is checked below. It catches a policy change that may have
+                    // occurred since the advertised set was determined.
                     if ( !mechanisms.contains( mechanismName ) )
                     {
                         throw new SaslFailureException( Failure.INVALID_MECHANISM, "The configuration of Openfire does not contain or allow the mechanism." );
                     }
 
                     // Enforce session-specific eligibility (as advertised in stream features) See OF-3273.
-                    if ( !getAvailableMechanismsForSession( session ).contains( mechanismName ) )
+                    final Set<String> advertisedMechanisms = getAdvertisedSASLMechanisms(session)
+                        .orElseThrow(() -> {
+                            Log.warn("No advertised SASL mechanisms detected for session. This can happen if SASL authentication is attempted before the applicable mechanism names are advertised, or if the session has not properly recorded the SASL mechanism names that are advertised to it. Both suggest a bug in Openfire (or possible the client). Affected session: {}", session);
+                            return new SaslFailureException(Failure.INVALID_MECHANISM, "The mechanism is not available for this session.");
+                        });
+
+                    if ( !advertisedMechanisms.contains( mechanismName ) )
                     {
                         throw new SaslFailureException( Failure.INVALID_MECHANISM, "The mechanism is not available for this session." );
                     }

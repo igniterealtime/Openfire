@@ -390,6 +390,7 @@ public class SASLIntegrationTest {
     public void testAuthenticationWithoutInitialResponse() throws Exception {
         // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(false);
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
         Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
             .addAttribute("mechanism", "TEST-MECHANISM");
         
@@ -416,6 +417,7 @@ public class SASLIntegrationTest {
     public void testAuthenticationWithInitialResponse() throws Exception {
         // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(false);
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
         Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
             .addAttribute("mechanism", "TEST-MECHANISM");
 
@@ -443,6 +445,7 @@ public class SASLIntegrationTest {
     public void testAuthenticationWithSASL2() throws Exception {
         // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(false);
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
         Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
             .addAttribute("mechanism", "TEST-MECHANISM");
         
@@ -474,6 +477,7 @@ public class SASLIntegrationTest {
     public void testAuthenticationWithSASL2andIR() throws Exception {
         // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(false);
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
         Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
             .addAttribute("mechanism", "TEST-MECHANISM")
             .addElement("initial-response")
@@ -512,6 +516,7 @@ public class SASLIntegrationTest {
     public void testAuthenticationWithSASL2andIRMultistep() throws Exception {
         // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(false);
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
         testSaslServer.setSteps(2);
         Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
             .addAttribute("mechanism", "TEST-MECHANISM")
@@ -567,6 +572,7 @@ public class SASLIntegrationTest {
     @Test
     public void testAuthenticationFailureInvalidMechanism() throws Exception {
         // Setup test fixture.
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("INVALID-MECHANISM")); // Slightly hacky, as this mechanism would not have been advertised. Simulating that it has to exercise the check under test.
         Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
             .addAttribute("mechanism", "INVALID-MECHANISM");
         
@@ -592,6 +598,7 @@ public class SASLIntegrationTest {
     public void testSecondAuthAttemptFails() throws Exception {
         // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(false);
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
         Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
             .addAttribute("mechanism", "TEST-MECHANISM");
         SASLAuthentication.handle(clientSession, auth, false);
@@ -616,6 +623,7 @@ public class SASLIntegrationTest {
     public void testSuccessfulAuthentication() throws Exception {
         // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(false);
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
         Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
             .addAttribute("mechanism", "TEST-MECHANISM");
         
@@ -637,6 +645,7 @@ public class SASLIntegrationTest {
     @Test
     public void testFailedAuthentication() throws Exception {
         // Setup test fixture.
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
         Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
             .addAttribute("mechanism", "TEST-MECHANISM");
         testSaslServer.setThrowError(true);
@@ -660,6 +669,7 @@ public class SASLIntegrationTest {
     public void testUserAgentCapturedForClientSession() throws Exception {
         // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(false);
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
         Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
             .addAttribute("mechanism", "TEST-MECHANISM");
         Element userAgent = auth.addElement("user-agent");
@@ -681,6 +691,7 @@ public class SASLIntegrationTest {
     public void testNoUserAgentWhenElementMissing() throws Exception {
         // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(false);
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
         Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
             .addAttribute("mechanism", "TEST-MECHANISM");
 
@@ -699,6 +710,7 @@ public class SASLIntegrationTest {
     //@Test // Disabled test, as, without a successful authentication, doesn't assert anything meaningful.
     public void testNoUserAgentForServerSession() throws Exception {
         // Setup test fixture.
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
         Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
             .addAttribute("mechanism", "TEST-MECHANISM");
         Element userAgent = auth.addElement("user-agent");
@@ -785,6 +797,7 @@ public class SASLIntegrationTest {
     public void testSasl2DomainQualifiedAuthzidIsNormalized() throws Exception {
         // Setup test fixture: SASL yields an authzid that already carries a domain-part.
         when(clientSession.isAuthenticated()).thenReturn(false);
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
         testSaslServer.setAuthorizationID("test-user@example.com");
 
         Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
@@ -810,6 +823,7 @@ public class SASLIntegrationTest {
     public void testSasl2AnonymousAuthorizationIdentifierIsBareJid() throws Exception {
         // Setup test fixture.
         when(clientSession.isAuthenticated()).thenReturn(false);
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
         when(clientSession.getAnonymousUsername()).thenReturn("randomresource");
         testSaslServer.setAnonymous(true);
 
@@ -844,6 +858,7 @@ public class SASLIntegrationTest {
     public void testSasl2FailureUsesSasl2WrapperWithSasl1Condition() throws Exception {
         // Setup test fixture: an authentication attempt that is guaranteed to fail.
         when(clientSession.isAuthenticated()).thenReturn(false);
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
         testSaslServer.setThrowError(true);
 
         Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
@@ -879,6 +894,7 @@ public class SASLIntegrationTest {
     public void testSasl1FailureUsesSasl1NamespaceThroughout() throws Exception {
         // Setup test fixture: an authentication attempt that is guaranteed to fail.
         when(clientSession.isAuthenticated()).thenReturn(false);
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
         testSaslServer.setThrowError(true);
 
         Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
@@ -910,6 +926,7 @@ public class SASLIntegrationTest {
     public void testSasl2AbortYieldsAbortedFailure() throws Exception {
         // Setup test fixture: start a multi-step negotiation, so that an abort interrupts something.
         when(clientSession.isAuthenticated()).thenReturn(false);
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
         testSaslServer.setSteps(2);
 
         Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
@@ -950,6 +967,7 @@ public class SASLIntegrationTest {
     public void testSasl1AbortYieldsAbortedFailure() throws Exception {
         // Setup test fixture: start a multi-step negotiation, so that an abort interrupts something.
         when(clientSession.isAuthenticated()).thenReturn(false);
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
         testSaslServer.setSteps(2);
 
         Element auth = DocumentHelper.createElement(QName.get("auth", "urn:ietf:params:xml:ns:xmpp-sasl"))
@@ -988,6 +1006,7 @@ public class SASLIntegrationTest {
     public void testAbortRemovesSaslServerFromSession() throws Exception {
         // Setup test fixture: start a multi-step negotiation, then abort it.
         when(clientSession.isAuthenticated()).thenReturn(false);
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
         testSaslServer.setSteps(2);
 
         Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
@@ -1014,6 +1033,7 @@ public class SASLIntegrationTest {
     public void testSasl1RejectsElementInSasl2Namespace() throws Exception {
         // Setup test fixture: a SASL2-namespaced element, processed on the SASL1 path.
         when(clientSession.isAuthenticated()).thenReturn(false);
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
         Element auth = DocumentHelper.createElement(QName.get("auth", "urn:xmpp:sasl:2"))
             .addAttribute("mechanism", "TEST-MECHANISM");
 
@@ -1039,6 +1059,7 @@ public class SASLIntegrationTest {
     public void testSasl2RejectsElementInSasl1Namespace() throws Exception {
         // Setup test fixture: a SASL1-namespaced element, processed on the SASL2 path.
         when(clientSession.isAuthenticated()).thenReturn(false);
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
         Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:ietf:params:xml:ns:xmpp-sasl"))
             .addAttribute("mechanism", "TEST-MECHANISM");
 
@@ -1064,6 +1085,7 @@ public class SASLIntegrationTest {
     public void testSasl1RejectsAuthenticateElement() throws Exception {
         // Setup test fixture: <authenticate/> (a SASL2 element) in the SASL1 namespace, processed as SASL1.
         when(clientSession.isAuthenticated()).thenReturn(false);
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
         Element authenticate = DocumentHelper.createElement(QName.get("authenticate", "urn:ietf:params:xml:ns:xmpp-sasl"))
             .addAttribute("mechanism", "TEST-MECHANISM");
 
@@ -1089,6 +1111,7 @@ public class SASLIntegrationTest {
     public void testSasl2RejectsAuthElement() throws Exception {
         // Setup test fixture: <auth/> (a SASL1 element) in the SASL2 namespace, processed as SASL2.
         when(clientSession.isAuthenticated()).thenReturn(false);
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
         Element auth = DocumentHelper.createElement(QName.get("auth", "urn:xmpp:sasl:2"))
             .addAttribute("mechanism", "TEST-MECHANISM");
 
@@ -1114,6 +1137,7 @@ public class SASLIntegrationTest {
     public void testSasl2ResponseWithoutPrecedingAuthenticateIsRejected() throws Exception {
         // Setup test fixture: a bare <response/>, with no negotiation in progress.
         when(clientSession.isAuthenticated()).thenReturn(false);
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM")); // Possibly not needed, but providing this gives a better chance of exercising the check that's being tested.
         assertNull(clientSession.getSessionData("SaslServer"), "Test setup issue: expected no negotiation to be in progress.");
 
         Element response = DocumentHelper.createElement(QName.get("response", "urn:xmpp:sasl:2"))
@@ -1142,6 +1166,7 @@ public class SASLIntegrationTest {
     public void testSasl1ResponseWithoutPrecedingAuthIsRejected() throws Exception {
         // Setup test fixture: a bare <response/>, with no negotiation in progress.
         when(clientSession.isAuthenticated()).thenReturn(false);
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM")); // Possibly not needed, but providing this gives a better chance of exercising the check that's being tested.
         assertNull(clientSession.getSessionData("SaslServer"), "Test setup issue: expected no negotiation to be in progress.");
 
         Element response = DocumentHelper.createElement(QName.get("response", "urn:ietf:params:xml:ns:xmpp-sasl"));
@@ -1171,6 +1196,7 @@ public class SASLIntegrationTest {
     public void testSasl2ResponseAfterCompletedNegotiationIsRejected() throws Exception {
         // Setup test fixture: complete a single-step negotiation.
         when(clientSession.isAuthenticated()).thenReturn(false);
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
         Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
             .addAttribute("mechanism", "TEST-MECHANISM");
         SASLAuthentication.handle(clientSession, auth, true);

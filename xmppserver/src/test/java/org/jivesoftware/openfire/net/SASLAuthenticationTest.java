@@ -87,7 +87,7 @@ public class SASLAuthenticationTest
     }
 
     /**
-     * Verifies that an unencrypted client session cannot use EXTERNAL when that mechanism is not available for the session.
+     * Verifies that a client session cannot use EXTERNAL when that mechanism is not advertised for the session.
      *
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3273">OF-3273: SASLAuthentication accepts mechanisms not advertised for the current connection/session</a>
      */
@@ -100,19 +100,20 @@ public class SASLAuthenticationTest
 
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("PLAIN"));
 
         // Execute system under test.
         final SASLAuthentication.Status status = SASLAuthentication.handle(session, authElement("EXTERNAL"), false);
 
         // Verify result.
-        assertEquals(SASLAuthentication.Status.failed, status, "Expected SASL negotiation to fail when EXTERNAL is requested on an unencrypted client session.");
+        assertEquals(SASLAuthentication.Status.failed, status, "Expected SASL negotiation to fail when EXTERNAL is requested on a client session that did not advertise it.");
         final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
         verify(connection).deliverRawText(response.capture());
         assertTrue(response.getValue().contains("<invalid-mechanism"), "Expected server to return an invalid-mechanism failure for a non-advertised mechanism.");
     }
 
     /**
-     * Verifies that an inbound server session rejects PLAIN when only session-eligible mechanisms are allowed.
+     * Verifies that an inbound server session rejects PLAIN when only session-eligible mechanisms are advertised.
      *
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3273">OF-3273: SASLAuthentication accepts mechanisms not advertised for the current connection/session</a>
      */
@@ -125,6 +126,7 @@ public class SASLAuthenticationTest
 
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalIncomingServerSession session = new LocalIncomingServerSession(Fixtures.XMPP_DOMAIN, connection, streamID, "remote.example.org");
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("EXTERNAL"));
 
         // Execute system under test.
         final SASLAuthentication.Status status = SASLAuthentication.handle(session, authElement("PLAIN"), false);
@@ -150,6 +152,7 @@ public class SASLAuthenticationTest
 
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("PLAIN"));
 
         // Execute system under test.
         final SASLAuthentication.Status status = SASLAuthentication.handle(session, authElement("PLAIN"), false);
@@ -172,6 +175,7 @@ public class SASLAuthenticationTest
         final Connection connection = mock(Connection.class);
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalIncomingServerSession session = new LocalIncomingServerSession(Fixtures.XMPP_DOMAIN, connection, streamID, "remote.example.org");
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("EXTERNAL"));
 
         final SaslServer saslServer = mock(SaslServer.class);
         when(saslServer.evaluateResponse(any())).thenReturn(new byte[0]);
@@ -198,6 +202,7 @@ public class SASLAuthenticationTest
         final Connection connection = mock(Connection.class);
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalIncomingServerSession session = new LocalIncomingServerSession(Fixtures.XMPP_DOMAIN, connection, streamID, "remote.example.org");
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("PLAIN"));
 
         final SaslServer saslServer = mock(SaslServer.class);
         when(saslServer.evaluateResponse(any())).thenReturn(new byte[0]);
@@ -315,6 +320,7 @@ public class SASLAuthenticationTest
         final Connection connection = mock(Connection.class);
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("ANONYMOUS"));
 
         // Execute system under test.
         SASLAuthentication.authenticationSuccessful(session, null, "ANONYMOUS", new byte[0], false);
@@ -427,6 +433,7 @@ public class SASLAuthenticationTest
         final Connection connection = mock(Connection.class);
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("PLAIN"));
 
         final String username = "testuser";
 
@@ -542,6 +549,7 @@ public class SASLAuthenticationTest
         final Connection connection = mock(Connection.class);
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalIncomingServerSession session = new LocalIncomingServerSession(Fixtures.XMPP_DOMAIN, connection, streamID, "remote.example.org");
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("EXTERNAL"));
         final String remoteDomain = "remote.example.org";
 
         // Execute system under test.
@@ -903,6 +911,7 @@ public class SASLAuthenticationTest
 
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("PLAIN")); // Slightly hacky, as this mechanism would not have been advertised. Simulating that it has to exercise the check under test.
 
         // Execute system under test.
         final SASLAuthentication.Status status = SASLAuthentication.handle(session, sasl2AuthenticateElement("PLAIN"), true);
@@ -933,6 +942,7 @@ public class SASLAuthenticationTest
 
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("PLAIN")); // Slightly hacky, as this mechanism would not have been advertised. Simulating that it has to exercise the check under test.
 
         // Execute system under test.
         final SASLAuthentication.Status status = SASLAuthentication.handle(session, sasl2AuthenticateElement("PLAIN"), true);
@@ -968,6 +978,7 @@ public class SASLAuthenticationTest
 
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("PLAIN"));
 
         // Execute system under test.
         final SASLAuthentication.Status status = SASLAuthentication.handle(session, sasl2AuthenticateElement("PLAIN"), true);
@@ -996,6 +1007,7 @@ public class SASLAuthenticationTest
 
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("PLAIN"));
 
         // Execute system under test.
         final SASLAuthentication.Status status = SASLAuthentication.handle(session, sasl2AuthenticateElement("PLAIN"), true);
@@ -1023,6 +1035,7 @@ public class SASLAuthenticationTest
 
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("PLAIN"));
 
         // Execute system under test.
         final SASLAuthentication.Status status = SASLAuthentication.handle(session, authElement("PLAIN"), false);
@@ -1052,6 +1065,7 @@ public class SASLAuthenticationTest
 
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("PLAIN"));
 
         // Execute system under test.
         final SASLAuthentication.Status status = SASLAuthentication.handle(session, authElement("PLAIN"), false);
@@ -1080,6 +1094,7 @@ public class SASLAuthenticationTest
 
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalIncomingServerSession session = new LocalIncomingServerSession(Fixtures.XMPP_DOMAIN, connection, streamID, "remote.example.org");
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("EXTERNAL")); // Slightly hacky, as this mechanism would not have been advertised. Simulating that it has to exercise the check under test.
 
         // Execute system under test.
         final SASLAuthentication.Status status = SASLAuthentication.handle(session, sasl2AuthenticateElement("EXTERNAL"), true);
@@ -1109,6 +1124,7 @@ public class SASLAuthenticationTest
 
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("PLAIN")); // Slightly hacky, as this mechanism would not have been advertised. Simulating that it has to exercise the check under test.
 
         // Execute system under test.
         final Optional<Failure> result = SASLAuthentication.checkSASL2Permitted(session);
@@ -1134,6 +1150,7 @@ public class SASLAuthenticationTest
 
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("PLAIN")); // Slightly hacky, as this mechanism would not have been advertised. Simulating that it has to exercise the check under test.
 
         // Execute system under test.
         final Optional<Failure> result = SASLAuthentication.checkSASL2Permitted(session);
@@ -1159,6 +1176,7 @@ public class SASLAuthenticationTest
 
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("PLAIN"));
 
         // Execute system under test.
         final Optional<Failure> result = SASLAuthentication.checkSASL2Permitted(session);
@@ -1183,6 +1201,7 @@ public class SASLAuthenticationTest
 
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("PLAIN"));
 
         // Execute system under test.
         final Optional<Failure> result = SASLAuthentication.checkSASL2Permitted(session);
@@ -1207,6 +1226,7 @@ public class SASLAuthenticationTest
 
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("PLAIN"));
 
         // Execute system under test.
         final Optional<Failure> result = SASLAuthentication.checkSASL2Permitted(session);
@@ -1231,6 +1251,7 @@ public class SASLAuthenticationTest
 
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("PLAIN"));
 
         // Execute system under test.
         final Optional<Failure> result = SASLAuthentication.checkSASL2Permitted(session);
@@ -1371,6 +1392,147 @@ public class SASLAuthenticationTest
             assertTrue(features.contains(cbForSasl2), "SASL2 must receive channel-binding caps even when SASL1 is also advertised.");
             assertTrue(features.contains(cbForSasl1), "SASL1 caps should also be present in the dual-stack case.");
         }
+    }
+
+    /**
+     * Verifies that a SASL mechanism is rejected when no SASL mechanisms were advertised for the session.
+     */
+    @Test
+    public void testMechanismIsRejectedWhenNoMechanismsWereAdvertised() throws Exception
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final SASLAuthentication.Status status = SASLAuthentication.handle(session, authElement("PLAIN"), false);
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.failed, status, "Expected SASL negotiation to fail when no mechanisms were advertised for the session.");
+        final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(response.capture());
+        assertTrue(response.getValue().contains("<invalid-mechanism"), "Expected server to return an invalid-mechanism failure when no mechanisms were advertised.");
+    }
+
+    /**
+     * Verifies that a SASL mechanism that was advertised to a session is rejected when it is no longer supported by
+     * the current configuration.
+     */
+    @Test
+    public void testAdvertisedMechanismRejectedAfterConfigurationChange() throws Exception
+    {
+        // Setup test fixture.
+        final List<String> enabledMechanisms = SASLAuthentication.getEnabledMechanisms();
+        final Connection connection = mock(Connection.class);
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("PLAIN"));
+
+        // Simulate a configuration change after the mechanism was advertised.
+        // PLAIN is no longer supported by the current configuration.
+        try {
+            SASLAuthentication.setEnabledMechanisms(List.of("EXTERNAL"));
+
+            // Execute system under test.
+            final SASLAuthentication.Status status = SASLAuthentication.handle(session, authElement("PLAIN"), false);
+
+            // Verify result.
+            assertEquals(SASLAuthentication.Status.failed, status, "Expected SASL negotiation to fail when the advertised mechanism is no longer supported by the current configuration.");
+            final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+            verify(connection).deliverRawText(response.capture());
+            assertTrue(response.getValue().contains("<invalid-mechanism"), "Expected server to return an invalid-mechanism failure when the advertised mechanism is no longer supported.");
+        } finally {
+            // Restore fixture.
+            SASLAuthentication.setEnabledMechanisms(enabledMechanisms);
+        }
+    }
+
+    /**
+     * Verifies that a SASL mechanism that is currently supported by the server cannot be used when it was not advertised
+     * for the session.
+     */
+    @Test
+    public void testSupportedButNotAdvertisedMechanismIsRejected() throws Exception
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // PLAIN is deliberately not advertised for this session.
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("EXTERNAL"));
+
+        // Execute system under test.
+        final SASLAuthentication.Status status = SASLAuthentication.handle(session, authElement("PLAIN"), false);
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.failed, status, "Expected SASL negotiation to fail when a currently supported mechanism was not advertised for the session.");
+        final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(response.capture());
+        assertTrue(response.getValue().contains("<invalid-mechanism"), "Expected server to return an invalid-mechanism failure for a non-advertised mechanism.");
+    }
+
+    /**
+     * Verifies that advertised SASL mechanisms can be stored and subsequently retrieved for a session.
+     */
+    @Test
+    public void testAdvertisedSASLMechanismsCanBeStoredAndRetrieved()
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        final Set<String> advertisedMechanisms = Set.of("PLAIN", "EXTERNAL");
+
+        // Execute system under test.
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, advertisedMechanisms);
+
+        // Verify result.
+        final Optional<Set<String>> result = SASLAuthentication.getAdvertisedSASLMechanisms(session);
+        assertTrue(result.isPresent(), "Expected advertised SASL mechanisms to be available for the session.");
+        assertEquals(advertisedMechanisms, result.get(), "Expected the advertised SASL mechanisms to be retained.");
+    }
+
+    /**
+     * Verifies that no advertised SASL mechanisms are returned when none have been recorded for a session.
+     */
+    @Test
+    public void testAdvertisedSASLMechanismsAreEmptyWhenNotRecorded()
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final Optional<Set<String>> result = SASLAuthentication.getAdvertisedSASLMechanisms(session);
+
+        // Verify result.
+        assertTrue(result.isEmpty(), "Expected no advertised SASL mechanisms to be returned when none were recorded.");
+    }
+
+    /**
+     * Verifies that advertised SASL mechanisms are captured as an immutable snapshot.
+     */
+    @Test
+    public void testAdvertisedSASLMechanismsAreCapturedAsImmutableSnapshot()
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        final Set<String> advertisedMechanisms = new HashSet<>(Set.of("PLAIN"));
+
+        // Execute system under test.
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, advertisedMechanisms);
+        advertisedMechanisms.add("EXTERNAL");
+
+        // Verify result.
+        final Optional<Set<String>> result = SASLAuthentication.getAdvertisedSASLMechanisms(session);
+        assertTrue(result.isPresent(), "Expected advertised SASL mechanisms to be available for the session.");
+        assertEquals(Set.of("PLAIN"), result.get(), "Expected advertised mechanisms to be an immutable snapshot of the original set.");
     }
 
     private static Element authElement(final String mechanism)

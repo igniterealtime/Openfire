@@ -227,8 +227,8 @@ public class HttpSession extends LocalClientSession {
 
         // If authentication has not happened yet, include available authentication mechanisms.
         if (getAuthToken() == null) {
-            final Set<String> advertisableSASLMechanisms = Set.copyOf(SASLAuthentication.getAdvertisableSASLMechanisms(this)); // Immutable. The SASL server should see exactly the mechanism set that was captured for the session, and that set cannot subsequently change underneath it.
-            this.setSessionData(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, advertisableSASLMechanisms);
+            final Set<String> advertisableSASLMechanisms = SASLAuthentication.getAdvertisableSASLMechanisms(this);
+            SASLAuthentication.setAdvertisedSASLMechanisms(this, advertisableSASLMechanisms);
             final List<Element> mechanisms = SASLAuthentication.asSASLMechanisms(this, advertisableSASLMechanisms);
             elements.addAll(mechanisms);
         }

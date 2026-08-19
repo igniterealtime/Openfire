@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.security.auth.callback.CallbackHandler;
@@ -73,9 +74,9 @@ public class SaslServerFactoryImpl implements SaslServerFactory
             return null;
         }
 
-        final Set<String> availableMechanisms = extractAvailableMechanisms(props);
+        final Optional<Set<String>> advertisedSASLMechanisms = extractAdvertisedSASLMechanisms(props);
         if (mechanism.toUpperCase().startsWith("SCRAM-SHA-")) {
-            if (availableMechanisms == null) {
+            if (advertisedSASLMechanisms.isEmpty()) { // This is the basis for the 'orElseThrow' statements in the switch/case below.
                 Log.debug("Unable to instantiate {} SaslServer: Provided properties do not contain a set of SASL mechanism names that was advertised to the client.", mechanism);
                 return null;
             }
@@ -92,22 +93,22 @@ public class SaslServerFactoryImpl implements SaslServerFactory
                 return new SaslServerPlainImpl( protocol, serverName, props, cbh );
 
             case ScramSha1SaslServer.MECHANISM_NAME:
-                return new ScramSha1SaslServer(false, props, availableMechanisms);
+                return new ScramSha1SaslServer(false, props, advertisedSASLMechanisms.orElseThrow());
 
             case ScramSha1SaslServer.MECHANISM_NAME + "-PLUS":
-                return new ScramSha1SaslServer(true, props, availableMechanisms);
+                return new ScramSha1SaslServer(true, props, advertisedSASLMechanisms.orElseThrow());
 
             case ScramSha256SaslServer.MECHANISM_NAME:
-                return new ScramSha256SaslServer(false, props, availableMechanisms);
+                return new ScramSha256SaslServer(false, props, advertisedSASLMechanisms.orElseThrow());
 
             case ScramSha256SaslServer.MECHANISM_NAME + "-PLUS":
-                return new ScramSha256SaslServer(true, props, availableMechanisms);
+                return new ScramSha256SaslServer(true, props, advertisedSASLMechanisms.orElseThrow());
 
             case ScramSha512SaslServer.MECHANISM_NAME:
-                return new ScramSha512SaslServer(false, props, availableMechanisms);
+                return new ScramSha512SaslServer(false, props, advertisedSASLMechanisms.orElseThrow());
 
             case ScramSha512SaslServer.MECHANISM_NAME + "-PLUS":
-                return new ScramSha512SaslServer(true, props, availableMechanisms);
+                return new ScramSha512SaslServer(true, props, advertisedSASLMechanisms.orElseThrow());
 
             case "ANONYMOUS":
                 if ( props == null || !props.containsKey( LocalSession.class.getCanonicalName() ) )
@@ -196,31 +197,22 @@ public class SaslServerFactoryImpl implements SaslServerFactory
 
     /**
      * Extracts a set of SASL mechanism names from the session data of the LocalSession instance that is expected to be
-     * stored in the provided properties. Returns null if no such session is found in the properties, or if its data
-     * does not contain the expected set of names.
+     * stored in the provided properties. Returns an empty optinal if no such session is found in the properties, or if
+     * its data does not contain the expected set of names.
      *
      * @param props the property map
      * @return A set of SASL mechanism names
-     * @see SASLAuthentication#AVAILABLE_MECHANISMS_FOR_SESSION
+     * @see SASLAuthentication#getAdvertisableSASLMechanisms(LocalSession)
+     * @see SASLAuthentication#getAdvertisedSASLMechanisms(LocalSession)
      */
-    private static Set<String> extractAvailableMechanisms(Map<String, ?> props)
+    private static Optional<Set<String>> extractAdvertisedSASLMechanisms(Map<String, ?> props)
     {
-        if ( props == null || !props.containsKey( LocalSession.class.getCanonicalName() ) )
-        {
+        final LocalSession session;
+        if (props == null || (session = (LocalSession) props.get(LocalSession.class.getCanonicalName())) == null) {
             Log.trace("Provided properties do not contain a LocalSession instance.");
-            return null;
-        }
-        else
-        {
-            final LocalSession session = (LocalSession) props.get( LocalSession.class.getCanonicalName() );
-            final Object sessionData = session.getSessionData(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION);
-
-            if (sessionData != null && !(sessionData instanceof Set)) {
-                Log.warn("Unexpected object (not a Set) found in session data under key '{}' of session '{}': {}", SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, session, sessionData);
-                return null;
-            }
-            //noinspection unchecked
-            return sessionData == null ? null : (Set<String>) sessionData;
+            return Optional.empty();
+        } else {
+            return SASLAuthentication.getAdvertisedSASLMechanisms(session);
         }
     }
 }

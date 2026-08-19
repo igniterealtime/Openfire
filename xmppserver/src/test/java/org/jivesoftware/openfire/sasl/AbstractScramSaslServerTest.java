@@ -23,11 +23,14 @@ import javax.security.sasl.SaslException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -47,6 +50,14 @@ public abstract class AbstractScramSaslServerTest
      * @param isPlusMechanism true to create the channel-binding (-PLUS) variant, false otherwise
      */
     protected abstract ScramSaslServer newServer(boolean isPlusMechanism);
+
+    /**
+     * Creates a new SCRAM SASL server instance for the algorithm under test.
+     *
+     * @param isPlusMechanism true to create the channel-binding (-PLUS) variant, false otherwise
+     * @param advertisedMechanismNames The names of SASL mechanisms that are advertised to the peer.
+     */
+    protected abstract ScramSaslServer newServer(boolean isPlusMechanism, Set<String> advertisedMechanismNames);
 
     /**
      * Configures all authentication-data mocks or stubs with the canonical test fixture values
@@ -664,6 +675,91 @@ public abstract class AbstractScramSaslServerTest
     }
 
     /**
+     * A client that supports channel binding but was not offered a -PLUS mechanism sends the 'y' GS2 flag. When the
+     * server did not in fact advertise the -PLUS variant to this session, that claim is truthful and authentication
+     * must proceed.
+     *
+     * This guards against evaluating downgrade protection against the server's *global* mechanism set: a session on
+     * which -PLUS was filtered out (for example, one that is not encrypted, or whose connection cannot supply channel
+     * binding data) would otherwise be rejected even though the client behaved correctly.
+     *
+     * @see <a href="https://www.rfc-editor.org/rfc/rfc5802.html#section-6">RFC 5802, section 6</a>
+     */
+    @Test
+    public void testGs2FlagYAcceptedWhenPlusMechanismWasNotOfferedToSession() throws Exception
+    {
+        // Setup test fixture.
+        setupCanonicalAuthData();
+
+        final Set<String> advertisedMechanisms = new HashSet<>(); // only the non-PLUS mechanism was advertised to this session.
+        advertisedMechanisms.add(scramMechanismName(false));
+        final ScramSaslServer server = newServer(false, advertisedMechanisms);
+
+        final byte[] initialMessage = createClientInitialMessage("y,,", username(), clientNonce());
+
+        // Execute system under test.
+        final byte[] firstServerResponse = server.evaluateResponse(initialMessage);
+
+        // Verify result: the exchange proceeds (a first server message is produced).
+        assertNotNull(firstServerResponse, "A client that was not offered a -PLUS mechanism may send the 'y' flag; the exchange should proceed.");
+        assertTrue(new String(firstServerResponse, StandardCharsets.UTF_8).startsWith("r="), "The server should respond with a first server message when the 'y' flag is used and no -PLUS mechanism was offered.");
+    }
+
+    /**
+     * A client that sends the 'y' GS2 flag asserts that the server did not offer a -PLUS mechanism. When the server
+     * *did* advertise the -PLUS variant to this session, that assertion is false, which indicates that the advertised
+     * mechanism list was tampered with. Authentication must be aborted.
+     *
+     * @see <a href="https://www.rfc-editor.org/rfc/rfc5802.html#section-6">RFC 5802, section 6</a>
+     */
+    @Test
+    public void testGs2FlagYRejectedWhenPlusMechanismWasOfferedToSession()
+    {
+        // Setup test fixture.
+        setupCanonicalAuthData();
+
+        final Set<String> advertisedMechanisms = new HashSet<>(); // both the -PLUS and the non-PLUS mechanism were advertised to this session.
+        advertisedMechanisms.add(scramMechanismName(false));
+        advertisedMechanisms.add(scramMechanismName(true));
+        final ScramSaslServer server = newServer(false, advertisedMechanisms);
+
+        final byte[] initialMessage = createClientInitialMessage("y,,", username(), clientNonce());
+
+        // Execute system under test & verify result.
+        assertThrows(SaslException.class,
+            () -> server.evaluateResponse(initialMessage),
+            "A client claiming that no -PLUS mechanism was offered, while it was, indicates a downgrade attack and must be rejected.");
+    }
+
+    /**
+     * A client that supports channel binding but was not offered the -PLUS variant of the SCRAM mechanism that it is
+     * using sends the 'y' GS2 flag. The fact that the server advertised a -PLUS variant for a different SCRAM hash
+     * algorithm must not trigger downgrade protection.
+     *
+     * @see <a href="https://www.rfc-editor.org/rfc/rfc5802.html#section-6">RFC 5802, section 6</a>
+     */
+    @Test
+    public void testGs2FlagYAcceptedWhenOnlyDifferentScramPlusMechanismWasOfferedToSession() throws Exception
+    {
+        // Setup test fixture.
+        setupCanonicalAuthData();
+
+        final Set<String> advertisedMechanisms = new HashSet<>();
+        advertisedMechanisms.add(scramMechanismName(false));
+        advertisedMechanisms.add(differentScramMechanismName(true)); // Advertise a -PLUS mechanism for a different SCRAM hash algorithm. This must not be considered relevant to the SCRAM mechanism that is being negotiated by the server under test.
+        final ScramSaslServer server = newServer(false, advertisedMechanisms);
+
+        final byte[] initialMessage = createClientInitialMessage("y,,", username(), clientNonce());
+
+        // Execute system under test.
+        final byte[] firstServerResponse = server.evaluateResponse(initialMessage);
+
+        // Verify result.
+        assertNotNull(firstServerResponse, "A -PLUS mechanism for a different SCRAM hash algorithm must not trigger downgrade protection.");
+        assertTrue(new String(firstServerResponse, StandardCharsets.UTF_8).startsWith("r="), "The server should respond with a first server message when the 'y' flag is used and the relevant -PLUS mechanism was not offered.");
+    }
+
+    /**
      * Drives a complete successful SCRAM exchange and returns the completed server instance.
      */
     protected ScramSaslServer completeSuccessfulExchange() throws Exception
@@ -720,5 +816,35 @@ public abstract class AbstractScramSaslServerTest
     protected final byte[] createClientFinalMessage(@Nonnull final String channelBinding, @Nonnull final String serverNonce, @Nonnull final String proof)
     {
         return ("c=" + channelBinding + ",r=" + serverNonce + ",p=" + proof).getBytes(StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Returns the name of a SCRAM mechanism of the mechanism under test.
+     *
+     * @param isPlusMechanism true if the returned mechanism is to be a -PLUS mechanism, false otherwise
+     * @return a SCRAM mechanism name
+     */
+    private String scramMechanismName(boolean isPlusMechanism)
+    {
+        return newServer(isPlusMechanism).getMechanismName();
+    }
+
+    /**
+     * Returns the name of a SCRAM mechanism using a different hash algorithm than the mechanism under test.
+     *
+     * @param isPlusMechanism true if the returned mechanism is to be a -PLUS mechanism, false otherwise
+     * @return a SCRAM -PLUS mechanism name for a different hash algorithm
+     */
+    private String differentScramMechanismName(boolean isPlusMechanism)
+    {
+        final String mechanismName = newServer(false).getMechanismName();
+
+        final String differentMechanismName;
+        if (mechanismName.equals(ScramSha1SaslServer.MECHANISM_NAME)) {
+            differentMechanismName = ScramSha256SaslServer.MECHANISM_NAME;
+        } else {
+            differentMechanismName = ScramSha1SaslServer.MECHANISM_NAME;
+        }
+        return isPlusMechanism ? differentMechanismName + "-PLUS" : differentMechanismName;
     }
 }

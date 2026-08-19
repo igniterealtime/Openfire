@@ -54,6 +54,10 @@ import org.slf4j.LoggerFactory;
  * key), the HMAC and message digest algorithm names, the default iteration count, and the server-side secret used to
  * derive indistinguishable fake credentials for non-existent users.
  *
+ * Instances are session-specific and must not be reused across sessions or users. The available SASL mechanisms are
+ * established when the instance is created and are used, in particular, to correctly process the GS2 header and enforce
+ * channel-binding downgrade protection.
+ *
  * @author Richard Midwinter, Guus der Kinderen
  */
 public abstract class ScramSaslServer implements SaslServer
@@ -70,11 +74,31 @@ public abstract class ScramSaslServer implements SaslServer
         CLIENT_FIRST_MESSAGE = Pattern.compile("^(([pny])=?([^,]*),([^,]*),)(m?=?[^,]*,?n=([^,]*),r=([^,]*),?.*)$"),
         CLIENT_FINAL_MESSAGE = Pattern.compile("(c=([^,]*),r=([^,]*)),p=(.*)$");
 
+    /**
+     * Manages a set of providers that can extract channel binding data of various types from SSL engines.
+     */
     private final ChannelBindingProviderManager channelBindingProviderManager;
-    private final Set<String> serverSupportedSaslMechanismNames;
 
+    /**
+     * The names of SASL mechanisms that are available to this particular session (as opposed to the set of globally
+     * available mechanism names). The session-specificality is important to be able to correctly process the GS2 header
+     * sent by a client, particularly around channel-binding downgrade protection. It is important to know if the server
+     * offered channel-binding, when the client indicates that it supports channel-binding but did not receive the -PLUS
+     * mechanism (by sending the 'y' flag).
+     */
+    private final Set<String> availableMechanismsForSession;
+
+    /**
+     * Denotes if this instance supports channel-binding ({@code true}) or not ({@code false}).
+     */
     private final boolean isPlusMechanism;
+
+    /**
+     * The possibly null set of properties used to select the SASL mechanism and to configure the authentication
+     * exchange of the selected mechanism.
+     */
     private final Map<String, ?> props;
+
     private String username;
     private State state = State.INITIAL;
     private String nonce;
@@ -90,12 +114,20 @@ public abstract class ScramSaslServer implements SaslServer
         COMPLETE;
     }
 
-    protected ScramSaslServer(final boolean isPlusMechanism, final Map<String, ?> props, final ChannelBindingProviderManager channelBindingProviderManager, final Set<String> serverSupportedSaslMechanismNames)
+    /**
+     * Creates a new, client-specific, instance.
+     *
+     * @param isPlusMechanism               Denotes if this instance supports channel-binding ({@code true}) or not ({@code false}).
+     * @param props                         The possibly null set of properties used to select the SASL mechanism and to configure the authentication exchange of the selected mechanism.
+     * @param channelBindingProviderManager Manages a set of providers that can extract channel binding data of various types from SSL engines. Must be set for plus-mechanisms.
+     * @param availableMechanismsForSession The names of SASL mechanisms that are available to this particular session (as opposed to the set of globally available mechanism names).
+     */
+    protected ScramSaslServer(final boolean isPlusMechanism, final Map<String, ?> props, final ChannelBindingProviderManager channelBindingProviderManager, @Nonnull final Set<String> availableMechanismsForSession)
     {
         this.isPlusMechanism = isPlusMechanism;
         this.props = props;
         this.channelBindingProviderManager = channelBindingProviderManager;
-        this.serverSupportedSaslMechanismNames = serverSupportedSaslMechanismNames;
+        this.availableMechanismsForSession = availableMechanismsForSession;
     }
 
     /**
@@ -238,8 +270,15 @@ public abstract class ScramSaslServer implements SaslServer
         // server did in fact support channel binding, then this is an indication that there has been a downgrade attack
         // (e.g., an attacker changed the server's mechanism list to exclude the -PLUS suffixed SCRAM mechanism name(s)).
         final boolean clientSupportsChannelBindingButThinksServerDoesNot = "y".equals(gs2CbindFlag);
-        final boolean serverSupportsChannelBinding = serverSupportedSaslMechanismNames.stream().anyMatch(mechanism -> mechanism.endsWith("-PLUS"));
-        if (clientSupportsChannelBindingButThinksServerDoesNot && serverSupportsChannelBinding) {
+
+        // Note that this needs to evaluate support _as offered to this particular client_, not global support (even if
+        // those will often be the same set). There may be client-specific reasons to not offer a mechanism. If this
+        // code would assume that server-supported mechanisms would always be offered, a client that did not get offered
+        // a channel-binding mechanism (and sent 'y' to indicate that it could use it) would cause the authentication to
+        // incorrectly be aborted.
+        final String plusMechanismName = getMechanismBaseName() + "-PLUS";
+        final boolean serverOfferedChannelBinding = availableMechanismsForSession.contains(plusMechanismName);
+        if (clientSupportsChannelBindingButThinksServerDoesNot && serverOfferedChannelBinding) {
             throw new SaslException("Client supports channel binding, but thinks the server does not (while it does). Rejecting authentication to prevent downgrade attack.");
         }
 
@@ -254,8 +293,9 @@ public abstract class ScramSaslServer implements SaslServer
                 throw new SaslException("Channel binding required for -PLUS. Rejecting authentication.");
             }
 
-            if (!serverSupportsChannelBinding) {
-                throw new SaslException("Client requires channel binding, but server does not support channel binding. Rejecting authentication.");
+            if (!serverOfferedChannelBinding) {
+                // Should be unreachable, but this is cheap defense in depth.
+                throw new SaslException("Client requires channel binding, but server could not offer channel binding to client. Rejecting authentication.");
             }
 
             // https://www.rfc-editor.org/rfc/rfc5802.html#section-6: If the channel binding flag was "p" and the server

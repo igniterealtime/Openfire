@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -227,10 +227,10 @@ public class HttpSession extends LocalClientSession {
 
         // If authentication has not happened yet, include available authentication mechanisms.
         if (getAuthToken() == null) {
-            final List<Element> mechanisms = SASLAuthentication.getSASLMechanisms(this);
-            for (Element mechanism : mechanisms) {
-                elements.add(mechanism);
-            }
+            final Set<String> advertisableSASLMechanisms = Set.copyOf(SASLAuthentication.getAdvertisableSASLMechanisms(this)); // Immutable. The SASL server should see exactly the mechanism set that was captured for the session, and that set cannot subsequently change underneath it.
+            this.setSessionData(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, advertisableSASLMechanisms);
+            final List<Element> mechanisms = SASLAuthentication.asSASLMechanisms(this, advertisableSASLMechanisms);
+            elements.addAll(mechanisms);
         }
 
         if (XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled()) {

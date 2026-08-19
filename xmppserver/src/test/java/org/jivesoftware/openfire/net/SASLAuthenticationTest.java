@@ -700,7 +700,8 @@ public class SASLAuthenticationTest
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
 
         // Execute system under test.
-        final Element result = SASLAuthentication.getSASLMechanismsElement(session, false);
+        final Set<String> advertisableSASLMechanisms = SASLAuthentication.getAdvertisableSASLMechanisms(session);
+        final Element result = SASLAuthentication.asSASLMechanismsElementForClientSessions(advertisableSASLMechanisms, false);
 
         // Verify result.
         assertTrue(result != null && result.elements().isEmpty(),
@@ -725,7 +726,8 @@ public class SASLAuthenticationTest
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
 
         // Execute system under test.
-        final Element result = SASLAuthentication.getSASLMechanismsElement(session, false);
+        final Set<String> advertisableSASLMechanisms = SASLAuthentication.getAdvertisableSASLMechanisms(session);
+        final Element result = SASLAuthentication.asSASLMechanismsElementForClientSessions(advertisableSASLMechanisms, false);
 
         // Verify result.
         assertNull(result, "Expected null when suppressEmpty is true and no mechanisms are available for SASL1.");
@@ -749,7 +751,8 @@ public class SASLAuthenticationTest
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
 
         // Execute system under test.
-        final Element result = SASLAuthentication.getSASLMechanismsElement(session, true);
+        final Set<String> advertisableSASLMechanisms = SASLAuthentication.getAdvertisableSASLMechanisms(session);
+        final Element result = SASLAuthentication.asSASLMechanismsElementForClientSessions(advertisableSASLMechanisms, true);
 
         // Verify result.
         assertNull(result, "Expected null for SASL2 when no mechanisms are available, even when suppressEmpty is false.");
@@ -773,7 +776,8 @@ public class SASLAuthenticationTest
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
 
         // Execute system under test.
-        final Element result = SASLAuthentication.getSASLMechanismsElement(session, true);
+        final Set<String> advertisableSASLMechanisms = SASLAuthentication.getAdvertisableSASLMechanisms(session);
+        final Element result = SASLAuthentication.asSASLMechanismsElementForClientSessions(advertisableSASLMechanisms, true);
 
         // Verify result.
         assertNull(result, "Expected null for SASL2 when no mechanisms are available, even when suppressEmpty is true.");
@@ -797,7 +801,8 @@ public class SASLAuthenticationTest
         final LocalIncomingServerSession session = new LocalIncomingServerSession(Fixtures.XMPP_DOMAIN, connection, streamID, "remote.example.org");
 
         // Execute system under test.
-        final Element result = SASLAuthentication.getSASLMechanismsElement(session, false);
+        final Set<String> advertisableSASLMechanisms = SASLAuthentication.getAdvertisableSASLMechanisms(session);
+        final Element result = SASLAuthentication.asSASLMechanismsElementForServerSessions(advertisableSASLMechanisms, false);
 
         // Verify result.
         assertTrue(result != null && result.elements().isEmpty(),
@@ -822,7 +827,8 @@ public class SASLAuthenticationTest
         final LocalIncomingServerSession session = new LocalIncomingServerSession(Fixtures.XMPP_DOMAIN, connection, streamID, "remote.example.org");
 
         // Execute system under test.
-        final Element result = SASLAuthentication.getSASLMechanismsElement(session, false);
+        final Set<String> advertisableSASLMechanisms = SASLAuthentication.getAdvertisableSASLMechanisms(session);
+        final Element result = SASLAuthentication.asSASLMechanismsElementForServerSessions(advertisableSASLMechanisms, false);
 
         // Verify result.
         assertNull(result, "Expected null when suppressEmpty is true and no mechanisms are available for SASL1.");
@@ -846,7 +852,8 @@ public class SASLAuthenticationTest
         final LocalIncomingServerSession session = new LocalIncomingServerSession(Fixtures.XMPP_DOMAIN, connection, streamID, "remote.example.org");
 
         // Execute system under test.
-        final Element result = SASLAuthentication.getSASLMechanismsElement(session, true);
+        final Set<String> advertisableSASLMechanisms = SASLAuthentication.getAdvertisableSASLMechanisms(session);
+        final Element result = SASLAuthentication.asSASLMechanismsElementForServerSessions(advertisableSASLMechanisms, true);
 
         // Verify result.
         assertNull(result, "Expected null for SASL2 when no mechanisms are available, even when suppressEmpty is false.");
@@ -870,7 +877,8 @@ public class SASLAuthenticationTest
         final LocalIncomingServerSession session = new LocalIncomingServerSession(Fixtures.XMPP_DOMAIN, connection, streamID, "remote.example.org");
 
         // Execute system under test.
-        final Element result = SASLAuthentication.getSASLMechanismsElement(session, true);
+        final Set<String> advertisableSASLMechanisms = SASLAuthentication.getAdvertisableSASLMechanisms(session);
+        final Element result = SASLAuthentication.asSASLMechanismsElementForServerSessions(advertisableSASLMechanisms, true);
 
         // Verify result.
         assertNull(result, "Expected null for SASL2 when no mechanisms are available, even when suppressEmpty is true.");

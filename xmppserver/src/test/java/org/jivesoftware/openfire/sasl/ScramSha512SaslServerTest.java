@@ -40,6 +40,7 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.eq;
@@ -160,6 +161,17 @@ public class ScramSha512SaslServerTest extends AbstractScramSaslServerTest
     protected ScramSha512SaslServer newServer(final boolean isPlusMechanism)
     {
         return new ScramSha512SaslServer(isPlusMechanism, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha512TestFixtures.SUPPORTED_MECHANISMS);
+    }
+
+    /**
+     * Creates a new ScramSha512SaslServer instance configured for either the plain or PLUS variant.
+     *
+     * @param isPlusMechanism true to create a SCRAM-SHA-512-PLUS server, false for SCRAM-SHA-512
+     * @param advertisedMechanismNames The names of SASL mechanisms that are advertised to the peer.
+     */
+    protected ScramSha512SaslServer newServer(boolean isPlusMechanism, Set<String> advertisedMechanismNames)
+    {
+        return new ScramSha512SaslServer(isPlusMechanism, new HashMap<>(), new ChannelBindingProviderManager(), advertisedMechanismNames);
     }
 
     /**

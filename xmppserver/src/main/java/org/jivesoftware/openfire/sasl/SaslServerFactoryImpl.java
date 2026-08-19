@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.sasl;
 
+import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
@@ -72,6 +73,14 @@ public class SaslServerFactoryImpl implements SaslServerFactory
             return null;
         }
 
+        final Set<String> availableMechanisms = extractAvailableMechanisms(props);
+        if (mechanism.toUpperCase().startsWith("SCRAM-SHA-")) {
+            if (availableMechanisms == null) {
+                Log.debug("Unable to instantiate {} SaslServer: Provided properties do not contain a set of SASL mechanism names that was advertised to the client.", mechanism);
+                return null;
+            }
+        }
+
         switch ( mechanism.toUpperCase() )
         {
             case "PLAIN":
@@ -83,22 +92,22 @@ public class SaslServerFactoryImpl implements SaslServerFactory
                 return new SaslServerPlainImpl( protocol, serverName, props, cbh );
 
             case ScramSha1SaslServer.MECHANISM_NAME:
-                return new ScramSha1SaslServer(false, props);
+                return new ScramSha1SaslServer(false, props, availableMechanisms);
 
             case ScramSha1SaslServer.MECHANISM_NAME + "-PLUS":
-                return new ScramSha1SaslServer(true, props);
+                return new ScramSha1SaslServer(true, props, availableMechanisms);
 
             case ScramSha256SaslServer.MECHANISM_NAME:
-                return new ScramSha256SaslServer(false, props);
+                return new ScramSha256SaslServer(false, props, availableMechanisms);
 
             case ScramSha256SaslServer.MECHANISM_NAME + "-PLUS":
-                return new ScramSha256SaslServer(true, props);
+                return new ScramSha256SaslServer(true, props, availableMechanisms);
 
             case ScramSha512SaslServer.MECHANISM_NAME:
-                return new ScramSha512SaslServer(false, props);
+                return new ScramSha512SaslServer(false, props, availableMechanisms);
 
             case ScramSha512SaslServer.MECHANISM_NAME + "-PLUS":
-                return new ScramSha512SaslServer(true, props);
+                return new ScramSha512SaslServer(true, props, availableMechanisms);
 
             case "ANONYMOUS":
                 if ( !props.containsKey( LocalSession.class.getCanonicalName() ) )
@@ -182,6 +191,36 @@ public class SaslServerFactoryImpl implements SaslServerFactory
             this.name = name;
             this.allowsAnonymous = allowsAnonymous;
             this.isPlaintext = isPlaintext;
+        }
+    }
+
+    /**
+     * Extracts a set of SASL mechanism names from the session data of the LocalSession instance that is expected to be
+     * stored in the provided properties. Returns null if no such session is found in the properties, or if its data
+     * does not contain the expected set of names.
+     *
+     * @param props the property map
+     * @return A set of SASL mechanism names
+     * @see SASLAuthentication#AVAILABLE_MECHANISMS_FOR_SESSION
+     */
+    private static Set<String> extractAvailableMechanisms(Map<String, ?> props)
+    {
+        if ( !props.containsKey( LocalSession.class.getCanonicalName() ) )
+        {
+            Log.trace("Provided properties do not contain a LocalSession instance.");
+            return null;
+        }
+        else
+        {
+            final LocalSession session = (LocalSession) props.get( LocalSession.class.getCanonicalName() );
+            final Object sessionData = session.getSessionData(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION);
+
+            if (sessionData != null && !(sessionData instanceof Set)) {
+                Log.warn("Unexpected object (not a Set) found in session data under key '{}' of session '{}': {}", SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, session, sessionData);
+                return null;
+            }
+            //noinspection unchecked
+            return sessionData == null ? null : (Set<String>) sessionData;
         }
     }
 }

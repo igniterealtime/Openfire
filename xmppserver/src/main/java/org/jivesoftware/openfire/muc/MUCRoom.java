@@ -29,7 +29,6 @@ import org.jivesoftware.openfire.event.GroupEventListener;
 import org.jivesoftware.openfire.event.UserEventListener;
 import org.jivesoftware.openfire.group.*;
 import org.jivesoftware.openfire.muc.spi.*;
-import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserNotFoundException;

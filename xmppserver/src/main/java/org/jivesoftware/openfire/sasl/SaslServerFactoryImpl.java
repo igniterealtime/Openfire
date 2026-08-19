@@ -111,26 +111,31 @@ public class SaslServerFactoryImpl implements SaslServerFactory
                 return new ScramSha512SaslServer(true, props, advertisedSASLMechanisms.orElseThrow());
 
             case "ANONYMOUS":
-                if ( props == null || !props.containsKey( LocalSession.class.getCanonicalName() ) )
+                final Object sessionValue = props == null ? null : props.get( LocalSession.class.getCanonicalName() );
+                if ( !(sessionValue instanceof LocalSession session) )
                 {
                     Log.debug( "Unable to instantiate {} SaslServer: Provided properties do not contain a LocalSession instance.", mechanism );
                     return null;
                 }
                 else
                 {
-                    final LocalSession session = (LocalSession) props.get( LocalSession.class.getCanonicalName() );
-                    return new AnonymousSaslServer( session );
+                    return new AnonymousSaslServer(session);
                 }
 
             case "EXTERNAL":
-                if ( props == null || !props.containsKey( LocalSession.class.getCanonicalName() ) )
+                if ( props == null  )
                 {
                     Log.debug( "Unable to instantiate {} SaslServer: Provided properties do not contain a LocalSession instance.", mechanism );
                     return null;
                 }
                 else
                 {
-                    final Object session = props.get( LocalSession.class.getCanonicalName() );
+                    final Object sessionVal = props.get( LocalSession.class.getCanonicalName() );
+                    if ( !(sessionVal instanceof LocalSession session) )
+                    {
+                        Log.debug( "Unable to instantiate {} SaslServer: Provided properties do not contain a LocalSession instance.", mechanism );
+                        return null;
+                    }
                     if ( session instanceof LocalClientSession )
                     {
                         return new ExternalClientSaslServer( (LocalClientSession) session );
@@ -207,8 +212,8 @@ public class SaslServerFactoryImpl implements SaslServerFactory
      */
     private static Optional<Set<String>> extractAdvertisedSASLMechanisms(Map<String, ?> props)
     {
-        final LocalSession session;
-        if (props == null || (session = (LocalSession) props.get(LocalSession.class.getCanonicalName())) == null) {
+        final Object sessionValue = props == null ? null : props.get( LocalSession.class.getCanonicalName() );
+        if (!(sessionValue instanceof LocalSession session)) {
             Log.trace("Provided properties do not contain a LocalSession instance.");
             return Optional.empty();
         } else {

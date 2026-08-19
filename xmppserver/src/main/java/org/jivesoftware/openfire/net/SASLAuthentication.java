@@ -446,7 +446,7 @@ public class SASLAuthentication {
      * The element will be in either the SASL (RFC 6120) or SASL2 (XEP-0388) namespace depending on the
      * {@code usingSASL2} parameter.
      *
-     * May return {@code null} if the resulting element would be empty and th {@code sasl.server.suppressEmpty} property
+     * May return {@code null} if the resulting element would be empty and the {@code sasl.server.suppressEmpty} property
      * is set to {@code true}.
      *
      * @param advertisableMechanismNames The set of SASL mechanism names that are to be advertised.

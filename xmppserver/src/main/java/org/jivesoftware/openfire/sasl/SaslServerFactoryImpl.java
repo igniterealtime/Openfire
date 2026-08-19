@@ -110,7 +110,7 @@ public class SaslServerFactoryImpl implements SaslServerFactory
                 return new ScramSha512SaslServer(true, props, availableMechanisms);
 
             case "ANONYMOUS":
-                if ( !props.containsKey( LocalSession.class.getCanonicalName() ) )
+                if ( props == null || !props.containsKey( LocalSession.class.getCanonicalName() ) )
                 {
                     Log.debug( "Unable to instantiate {} SaslServer: Provided properties do not contain a LocalSession instance.", mechanism );
                     return null;
@@ -122,7 +122,7 @@ public class SaslServerFactoryImpl implements SaslServerFactory
                 }
 
             case "EXTERNAL":
-                if ( !props.containsKey( LocalSession.class.getCanonicalName() ) )
+                if ( props == null || !props.containsKey( LocalSession.class.getCanonicalName() ) )
                 {
                     Log.debug( "Unable to instantiate {} SaslServer: Provided properties do not contain a LocalSession instance.", mechanism );
                     return null;
@@ -205,7 +205,7 @@ public class SaslServerFactoryImpl implements SaslServerFactory
      */
     private static Set<String> extractAvailableMechanisms(Map<String, ?> props)
     {
-        if ( !props.containsKey( LocalSession.class.getCanonicalName() ) )
+        if ( props == null || !props.containsKey( LocalSession.class.getCanonicalName() ) )
         {
             Log.trace("Provided properties do not contain a LocalSession instance.");
             return null;

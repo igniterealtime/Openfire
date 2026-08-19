@@ -18,6 +18,8 @@ package org.jivesoftware.openfire.auth;
 import org.jivesoftware.util.StringUtils;
 import org.junit.jupiter.api.Test;
 
+import javax.security.sasl.SaslException;
+
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -135,7 +137,7 @@ public class ScramUtilsTest
         final String hmacAlgorithm = "HmacSHA1";
 
         // Execute system under test and verify results.
-        assertThrows(Exception.class, () ->
+        assertThrows(SaslException.class, () ->
             ScramUtils.createSaltedPassword(salt, password, iterations, hmacAlgorithm),
             "An iteration count of zero should have been rejected (but was not)."
         );
@@ -155,7 +157,7 @@ public class ScramUtilsTest
         final String hmacAlgorithm = "HmacSHA1";
 
         // Execute system under test and verify results.
-        assertThrows(Exception.class, () ->
+        assertThrows(SaslException.class, () ->
             ScramUtils.createSaltedPassword(salt, password, iterations, hmacAlgorithm),
             "A negative iteration count should have been rejected (but was not)."
         );
@@ -267,7 +269,7 @@ public class ScramUtilsTest
         final String hmacAlgorithm = "HmacSHA256";
 
         // Execute system under test and verify results.
-        assertThrows(Exception.class, () ->
+        assertThrows(SaslException.class, () ->
             ScramUtils.createSaltedPassword(salt, password, iterations, hmacAlgorithm),
             "An iteration count of zero should have been rejected (but was not)."
         );
@@ -287,7 +289,7 @@ public class ScramUtilsTest
         final String hmacAlgorithm = "HmacSHA256";
 
         // Execute system under test and verify results.
-        assertThrows(Exception.class, () ->
+        assertThrows(SaslException.class, () ->
             ScramUtils.createSaltedPassword(salt, password, iterations, hmacAlgorithm),
             "A negative iteration count should have been rejected (but was not)."
         );
@@ -399,7 +401,7 @@ public class ScramUtilsTest
         final String hmacAlgorithm = "HmacSHA512";
 
         // Execute system under test and verify results.
-        assertThrows(Exception.class, () ->
+        assertThrows(SaslException.class, () ->
             ScramUtils.createSaltedPassword(salt, password, iterations, hmacAlgorithm),
             "An iteration count of zero should have been rejected (but was not)."
         );
@@ -419,7 +421,7 @@ public class ScramUtilsTest
         final String hmacAlgorithm = "HmacSHA512";
 
         // Execute system under test and verify results.
-        assertThrows(Exception.class, () ->
+        assertThrows(SaslException.class, () ->
             ScramUtils.createSaltedPassword(salt, password, iterations, hmacAlgorithm),
             "A negative iteration count should have been rejected (but was not)."
         );

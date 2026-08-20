@@ -251,6 +251,9 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         // Create a ClientSession for this user.
         LocalClientSession session = SessionManager.getInstance().createClientSession(connection, language);
 
+        // The peer can hint at the identity it intends to authenticate as (XEP-0388). This is an unverified claim.
+        session.setClaimedIdentity(Session.detectClaimedIdentity(xpp).orElse(null));
+
         // Build the start packet response
         final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
         final Document document = DocumentHelper.createDocument(stream);
@@ -534,6 +537,28 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             throw new UserNotFoundException();
         }
         return getAddress().getNode();
+    }
+
+    /**
+     * Returns the username that the client is expected to authenticate as, if this can be determined.
+     *
+     * Prior to authentication, this is derived from the (unverified) identity claimed by the client in the 'from'
+     * attribute of its stream header. Claims for a domain other than that of this session are ignored, as are
+     * claims that do not include a node part.
+     *
+     * @return The expected username, if it can be determined.
+     */
+    @Nonnull
+    public Optional<String> getExpectedUsername()
+    {
+        if (authToken != null) {
+            return authToken.isAnonymous() ? Optional.empty() : Optional.of(authToken.getUsername());
+        }
+
+        return getClaimedIdentity()
+            .filter(jid -> jid.getNode() != null)
+            .filter(jid -> getServerName().equals(jid.getDomain()))
+            .map(JID::getNode);
     }
 
     /**

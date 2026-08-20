@@ -151,6 +151,10 @@ public class WebSocketClientStanzaHandler extends ClientStanzaHandler
         session = SessionManager.getInstance().createClientSession(connection, language);
         session.setSessionData("ws", Boolean.TRUE);
 
+        // RFC 7395 gives <open/> the same attributes as a stream header, including the (unverified) identity that the
+        // peer claims. Record it before generating features: the advertised SASL mechanisms are derived from it.
+        session.setClaimedIdentity(Session.detectClaimedIdentity(xpp).orElse(null));
+
         openStream();
         sendStreamFeatures();
     }

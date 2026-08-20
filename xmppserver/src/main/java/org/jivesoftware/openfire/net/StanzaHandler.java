@@ -158,19 +158,26 @@ public abstract class StanzaHandler {
             parser.setInput(new StringReader(stanza));
             createSession(parser);
         }
-        else if (startedTLS) {
-            MXParser parser = reader.getXPPParser();
+        else {
+            // Every stream header that (re)opens a stream on an existing session restates (or omits) the identity
+            // claimed by the peer. Record it here, before any of the branches below regenerate stream features, as
+            // the set of advertised SASL mechanisms is derived from it.
+            final MXParser parser = reader.getXPPParser();
             parser.setInput(new StringReader(stanza));
-            tlsNegotiated(parser);
-            startedTLS = false;
-        }
-        else if (startedSASL && saslStatus == SASLAuthentication.Status.authenticated) {
-            startedSASL = false;
-            saslSuccessful();
-        }
-        else if (waitingCompressionACK) {
-            waitingCompressionACK = false;
-            compressionSuccessful();
+            recordClaimedIdentity(parser);
+
+            if (startedTLS) {
+                tlsNegotiated(parser);
+                startedTLS = false;
+            }
+            else if (startedSASL && saslStatus == SASLAuthentication.Status.authenticated) {
+                startedSASL = false;
+                saslSuccessful();
+            }
+            else if (waitingCompressionACK) {
+                waitingCompressionACK = false;
+                compressionSuccessful();
+            }
         }
     }
 
@@ -776,6 +783,28 @@ public abstract class StanzaHandler {
             // Close the underlying connection
             connection.close();
         }
+    }
+
+    /**
+     * Records the identity that the peer claims in the 'from' attribute of the stream header that is currently being
+     * processed, as an unverified hint (RFC 6120 § 4.7.1, XEP-0388).
+     *
+     * When the header carries no 'from' attribute, any claim made on a previous stream is cleared: a claim is scoped
+     * to the stream on which it was made. This is significant for the restart that follows TLS negotiation, where a
+     * claim made on the preceding unprotected stream (which an active attacker can modify) must not be allowed to
+     * influence what is advertised on the protected stream.
+     *
+     * @param xpp a parser for the stream header, which need not have been advanced to the element yet.
+     */
+    protected void recordClaimedIdentity(XmlPullParser xpp) throws XmlPullParserException, IOException {
+        if (session == null) {
+            // Session creation failed earlier; the connection is being torn down.
+            return;
+        }
+        for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
+            eventType = xpp.next();
+        }
+        session.setClaimedIdentity(Session.detectClaimedIdentity(xpp).orElse(null));
     }
 
     protected boolean isHostUnknown(String host) {

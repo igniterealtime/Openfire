@@ -141,6 +141,9 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             LocalIncomingServerSession session = SessionManager.getInstance().createIncomingServerSession(connection, streamID, fromDomain);
             Log.debug("Creating new session with stream ID '{}' for local '{}' to peer '{}'.", streamID, toDomain, fromDomain);
 
+            // The peer can hint at the identity it intends to authenticate as (XEP-0388). This is an unverified claim.
+            session.setClaimedIdentity(Session.detectClaimedIdentity(xpp).orElse(null)); // This duplicates the 'fromDomain' parsing above. Added for consistency with LocalClientSession.
+
             if (doNotSendXMPPStream) {
                 session.setLocalDomain(serverName);
                 return session;

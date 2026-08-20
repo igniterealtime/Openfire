@@ -729,6 +729,7 @@ public class HttpSession extends LocalClientSession {
                         mustClose = true;
                     } else if (queuedConnection.isRestart()) {
                         Log.debug("Connection (for session {}) with request ID ({}) is a request to restart.", getStreamID(), queuedRequestID);
+                        setClaimedIdentity(queuedConnection.getClaimedIdentity());
                         iter.remove(); // This connection has now been fully consumed.
                         queuedConnection.deliverBody(createSessionRestartResponse(), true);
                     } else if (queuedConnection.getPause() != null) {

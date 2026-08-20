@@ -19,6 +19,7 @@ package org.jivesoftware.openfire.http;
 import org.dom4j.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -53,6 +54,9 @@ public class HttpConnection {
     private final boolean isPoll;
 
     @Nullable
+    private final JID claimedIdentity;
+
+    @Nullable
     private HttpSession session;
 
     @GuardedBy("this")
@@ -79,6 +83,7 @@ public class HttpConnection {
         this.isTerminate = "terminate".equals(body.getType());
         this.context = context;
         this.isPoll = body.isPoll();
+        this.claimedIdentity = body.getFrom();
     }
 
     /**
@@ -237,6 +242,19 @@ public class HttpConnection {
      */
     public boolean isPoll() {
         return isPoll;
+    }
+
+    /**
+     * Returns the identity that the client claimed in the 'from' attribute of the body of this request (XEP-0124 § 7.1).
+     *
+     * This is an unverified claim. It must never be used for authentication or authorization; its intended use is
+     * limited to optimizations, such as determining which SASL mechanisms are worth advertising.
+     *
+     * @return the claimed identity, or null when none was provided.
+     */
+    @Nullable
+    public JID getClaimedIdentity() {
+        return claimedIdentity;
     }
 
     /**

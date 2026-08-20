@@ -60,6 +60,12 @@ public abstract class LocalSession implements Session {
     protected JID address;
 
     /**
+     * The identity claimed by the peer in the 'from' attribute of the last stream header that it sent, if any.
+     */
+    @Nullable
+    private volatile JID claimedIdentity;
+
+    /**
      * The stream id for this session (random and unique).
      */
     protected final StreamID streamID;
@@ -223,6 +229,39 @@ public abstract class LocalSession implements Session {
      */
     public void setAddress(@Nonnull JID address){
         this.address = address;
+    }
+
+    /**
+     * Returns the identity claimed by the peer in the 'from' attribute of a stream header, if it provided one.
+     *
+     * The returned value is an unverified claim. It is not authenticated, and a peer is free to omit it, or to lie.
+     * Use it for optimizations only (eg: tailoring the advertised set of SASL mechanisms), never for access control.
+     *
+     * @return The identity claimed by the peer, if any was provided.
+     */
+    @Nonnull
+    public Optional<JID> getClaimedIdentity()
+    {
+        return Optional.ofNullable(claimedIdentity);
+    }
+
+    /**
+     * Records the identity claimed by the peer, as found in the 'from' attribute of a stream header.
+     *
+     * This value is scoped to a single stream. It must be invoked for <em>every</em> stream header received from
+     * the peer (including the headers that open a new stream after TLS, SASL or compression negotiation) passing
+     * null when the header carries no 'from' attribute. A claim made on an earlier stream is deliberately not
+     * carried over: on a stream that follows TLS negotiation, only the claim made on the protected stream should
+     * influence the mechanisms that are advertised.
+     *
+     * @param claimedIdentity the identity claimed by the peer on the current stream (can be null).
+     */
+    public void setClaimedIdentity(@Nullable final JID claimedIdentity)
+    {
+        if (!Objects.equals(this.claimedIdentity, claimedIdentity)) {
+            Log.trace("Session with address {} and streamID {}: peer's claimed identity changes from '{}' to '{}'.", this.address, this.streamID, this.claimedIdentity, claimedIdentity);
+        }
+        this.claimedIdentity = claimedIdentity;
     }
 
     /**

@@ -211,6 +211,10 @@ public class HttpSessionManager {
 
         session.resetInactivityTimeout();
 
+        // The client can hint at the identity it intends to authenticate as (XEP-0124 § 7.1). This is an unverified
+        // claim. Record it before the creation response is generated: it advertises the available SASL mechanisms.
+        session.setClaimedIdentity(body.getFrom());
+
         connection.setSession(session);
         try {
             connection.deliverBody(createSessionCreationResponse(session), true);

@@ -25,7 +25,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
+import org.xmpp.packet.JID;
 
+import javax.annotation.Nullable;
 import javax.xml.XMLConstants;
 import java.io.IOException;
 import java.io.StringReader;
@@ -191,6 +193,35 @@ public class HttpBindBody
         }
         final long parsed = getLongAttribute( value, -1 );
         return parsed >= 0 ? parsed : null;
+    }
+
+    /**
+     * Returns the value of the 'from' attribute of the body element, which a client can use to identify the entity
+     * that it intends to authenticate as (XEP-0124 § 7.1).
+     *
+     * This is an unverified claim made by the client. It must never be used for authentication or authorization. Its
+     * intended use is limited to optimizations, such as determining which SASL mechanisms are worth advertising.
+     *
+     * @return the claimed identity, or null when the attribute is absent or does not contain a valid JID.
+     */
+    @Nullable
+    public JID getFrom()
+    {
+        final String value = document.getRootElement().attributeValue( "from" );
+        if ( value == null || value.isEmpty() )
+        {
+            return null;
+        }
+        try
+        {
+            return new JID( value );
+        }
+        catch ( IllegalArgumentException e )
+        {
+            // A client that sends garbage here should not have its request rejected: the attribute is optional anyway.
+            Log.debug( "Client provided a 'from' attribute value that is not a valid JID: {}", value, e );
+            return null;
+        }
     }
 
     public String getType()

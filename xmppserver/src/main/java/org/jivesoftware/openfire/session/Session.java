@@ -33,6 +33,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * The session represents a link (often a socket connection) between the server and a remote XMPP entity. Examples of
@@ -392,5 +393,33 @@ public interface Session extends RoutableChannelHandler {
         answer[0] = Integer.parseInt(versionString[0]);
         answer[1] = Integer.parseInt(versionString[1]);
         return answer;
+    }
+
+    /**
+     * Returns the identity that the peer used in the 'from' attribute of the element that the provided parser is
+     * currently on (typically a stream header).
+     *
+     * This value is a claim made by the peer that has <em>not</em> been verified in any way. It must never be used
+     * for authentication or authorization. Its intended use is limited to optimizations, such as determining which
+     * SASL mechanisms are worth advertising, as described in XEP-0388.
+     *
+     * An empty value is returned when no 'from' attribute is present or when its value is not a valid JID.
+     *
+     * @param xpp An XML parser
+     * @return The identity claimed by the peer if any was provided.
+     */
+    @Nonnull
+    static Optional<JID> detectClaimedIdentity(@Nonnull final XmlPullParser xpp) {
+        final String from = xpp.getAttributeValue("", "from");
+        if (from == null || from.isBlank()) {
+            return Optional.empty();
+        }
+        try {
+            return Optional.of(new JID(from));
+        } catch (IllegalArgumentException e) {
+            // A peer that sends garbage here should not break stream negotiation: the attribute is optional anyway.
+            Log.debug("Peer provided a 'from' attribute value that is not a valid JID: {}", from, e);
+            return Optional.empty();
+        }
     }
 }

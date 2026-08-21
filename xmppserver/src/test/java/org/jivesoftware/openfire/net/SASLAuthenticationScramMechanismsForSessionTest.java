@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
 import org.jivesoftware.openfire.sasl.ScramSha256SaslServer;
 import org.jivesoftware.openfire.sasl.ScramSha512SaslServer;
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.util.JiveGlobals;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,6 +43,7 @@ import static org.mockito.Mockito.CALLS_REAL_METHODS;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
 import static org.mockito.Mockito.withSettings;
@@ -54,11 +56,12 @@ import static org.mockito.Mockito.withSettings;
  * supplies. A stream is typically opened more than once before authentication completes, and each of those regenerates
  * the stream features, so the outcome is cached for the duration of the session.
  *
- * The cache is keyed by the expected username rather than cleared explicitly: a change of that username makes the
- * cached value a miss. That covers a peer restating, changing or omitting its claimed identity on a new stream, as
- * well as the transition to an authenticated identity.
+ * The result is keyed by the expected username rather than cleared explicitly: a change of that username makes the
+ * cached value a miss. That covers a peer restating, changing or omitting its claimed identity on a new stream, as well
+ * as the transition to an authenticated identity. When {@link SASLAuthentication#SCRAM_MECHANISMS_PER_USER} is
+ * disabled, no username is used at all and every session is answered with the same mechanisms.
  */
-public class SASLAuthenticationScramMechanismCachingTest
+public class SASLAuthenticationScramMechanismsForSessionTest
 {
     private static final String SERVER_NAME = "example.org";
 
@@ -238,6 +241,27 @@ public class SASLAuthenticationScramMechanismCachingTest
         // Verify result.
         assertEquals(withChannelBindingVariants(ALL_MECHANISMS), result, "Once authenticated, the mechanisms must be those of the authenticated user, not those derived from the identity that was merely claimed.");
         authFactory.verify(() -> AuthFactory.getScramMechanisms("romeo"), times(1));
+    }
+
+    /**
+     * Verifies that no per-user lookup is performed when tailoring is disabled by configuration. A session that claims
+     * an identity must then be answered with the same mechanisms as any other.
+     */
+    @Test
+    void getScramMechanismsForSession_usesFallbackWhenTailoringIsDisabled()
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty(SASLAuthentication.SCRAM_MECHANISMS_PER_USER.getKey(), "false");
+        final LocalClientSession session = sessionStub();
+        session.setClaimedIdentity(new JID("juliet@" + SERVER_NAME));
+        authFactory.when(() -> AuthFactory.getScramMechanisms("juliet")).thenReturn(ALL_MECHANISMS);
+
+        // Execute system under test.
+        final Set<String> result = SASLAuthentication.getScramMechanismsForSession(session);
+
+        // Verify result.
+        assertEquals(withChannelBindingVariants(SHA1_ONLY), result, "With tailoring disabled, a session that claims an identity must be answered with the fallback mechanisms.");
+        authFactory.verify(() -> AuthFactory.getScramMechanisms(anyString()), never());
     }
 
     /**

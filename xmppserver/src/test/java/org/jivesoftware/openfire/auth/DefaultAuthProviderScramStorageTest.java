@@ -27,6 +27,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.mockito.stubbing.OngoingStubbing;
 
 import javax.security.sasl.SaslException;
 import javax.xml.bind.DatatypeConverter;
@@ -34,6 +35,7 @@ import java.security.MessageDigest;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -190,10 +192,6 @@ public class DefaultAuthProviderScramStorageTest
     /**
      * Runs {@link DefaultAuthProvider#hasIncompleteSetOfScramCredentials(String)} against a mocked database.
      *
-     * Each supported mechanism is probed independently via {@code LOAD_SCRAM_CREDENTIAL} (keyed on username + mechanism),
-     * so the fixture is expressed as "which mechanisms have a stored row." A mechanism whose name is in
-     * {@code presentMechanisms} yields a one-row ResultSet (credential exists); any other yields an empty ResultSet.
-     *
      * @param username           the user identifier
      * @param presentMechanisms  the mechanism names for which a credential row exists
      * @return the result of {@code hasIncompleteSetOfScramCredentials}
@@ -201,40 +199,48 @@ public class DefaultAuthProviderScramStorageTest
     @SuppressWarnings("SqlSourceToSinkFlow")
     private static boolean runHasIncompleteSet(final String username, final Set<String> presentMechanisms) throws Exception
     {
-        final PreparedStatement scramStmt = Mockito.mock(PreparedStatement.class);
+        final ResultSet rs = Mockito.mock(ResultSet.class);
 
-        // Capture the mechanism bound as parameter 2, then answer executeQuery() based on it.
-        final String[] boundMechanism = new String[1];
-        Mockito
-            .doAnswer(inv -> { boundMechanism[0] = inv.getArgument(1); return null; })
-            .when(scramStmt)
-            .setString(Mockito.eq(2), anyString());
+        OngoingStubbing<Boolean> hasNext = when(rs.next());
+        for (final String ignored : presentMechanisms) {
+            hasNext = hasNext.thenReturn(true);
+        }
+        hasNext.thenReturn(false);
 
-        when(
-            scramStmt.executeQuery()
-        ).thenAnswer(inv -> {
-            final ResultSet rs = Mockito.mock(ResultSet.class);
-            final boolean present = presentMechanisms.contains(boundMechanism[0]);
-
-            when(
-                rs.next()
-            ).thenReturn(present, false);
-
-            if (present) {
-                when(rs.getInt(1)).thenReturn(ITERATIONS);
-                when(rs.getString(2)).thenReturn(SALT_BASE64);
-                when(rs.getString(3)).thenReturn("stored");
-                when(rs.getString(4)).thenReturn("server");
+        if (!presentMechanisms.isEmpty()) {
+            OngoingStubbing<String> value = when(rs.getString(1));
+            for (final String mechanism : presentMechanisms) {
+                value = value.thenReturn(mechanism);
             }
-            return rs;
-        });
+        }
+
+        final PreparedStatement scramStmt = Mockito.mock(PreparedStatement.class);
+        when(scramStmt.executeQuery()).thenReturn(rs);
 
         final Connection connection = Mockito.mock(Connection.class);
         when(
             connection.prepareStatement(
-                argThat(sql -> sql.toLowerCase(Locale.ROOT).contains("from ofuserscram") && !sql.toLowerCase(Locale.ROOT).contains("left join"))
+                argThat(sql -> sql.toLowerCase(Locale.ROOT).contains("select mechanism from ofuserscram"))
             )
         ).thenReturn(scramStmt);
+
+        try (final MockedStatic<DbConnectionManager> db = Mockito.mockStatic(DbConnectionManager.class)) {
+            db.when(DbConnectionManager::getConnection).thenReturn(connection);
+            return new DefaultAuthProvider().hasIncompleteSetOfScramCredentials(username);
+        }
+    }
+
+    /**
+     * Runs {@link DefaultAuthProvider#hasIncompleteSetOfScramCredentials(String)} against a database that fails.
+     *
+     * @param username the user identifier
+     * @return the result of {@code hasIncompleteSetOfScramCredentials}
+     */
+    @SuppressWarnings("SqlSourceToSinkFlow")
+    private static boolean runHasIncompleteSetWithFailingLookup(final String username) throws Exception
+    {
+        final Connection connection = Mockito.mock(Connection.class);
+        when(connection.prepareStatement(anyString())).thenThrow(new SQLException("Simulated database failure."));
 
         try (final MockedStatic<DbConnectionManager> db = Mockito.mockStatic(DbConnectionManager.class)) {
             db.when(DbConnectionManager::getConnection).thenReturn(connection);
@@ -487,6 +493,40 @@ public class DefaultAuthProviderScramStorageTest
 
         // Verify result.
         assertTrue(result, "A user with no SCRAM credentials has an incomplete set.");
+    }
+
+    /**
+     * A stored mechanism that this implementation does not recognize does not make the set complete: the mechanisms
+     * that this implementation does support must each be present in their own right.
+     */
+    @Test
+    void hasIncompleteSet_returnsTrue_whenOnlyUnrecognizedMechanismPresent() throws Exception
+    {
+        // Setup test fixture.
+        final Set<String> presentMechanisms = Set.of("SCRAM-SHA3-512");
+
+        // Execute system under test.
+        final boolean result = runHasIncompleteSet("user", presentMechanisms);
+
+        // Verify result.
+        assertTrue(result, "A credential for a mechanism that this implementation does not support does not complete the set.");
+    }
+
+    /**
+     * A failed lookup reports the set as complete, so that a database problem does not cause every login to trigger a
+     * regeneration of credentials on data that could not be read.
+     */
+    @Test
+    void hasIncompleteSet_returnsFalse_whenLookupFails() throws Exception
+    {
+        // Setup test fixture.
+        // (see helper: the database fails)
+
+        // Execute system under test.
+        final boolean result = runHasIncompleteSetWithFailingLookup("user");
+
+        // Verify result.
+        assertFalse(result, "A failed lookup must not be reported as an incomplete set, as that would force a regeneration on data that could not be read.");
     }
 
     /**

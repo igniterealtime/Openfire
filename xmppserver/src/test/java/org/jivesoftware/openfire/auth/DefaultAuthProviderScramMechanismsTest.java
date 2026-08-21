@@ -46,7 +46,7 @@ import static org.mockito.Mockito.when;
  * Three properties matter beyond the plain lookup:
  *
  * <ul>
- *     <li>When a password is stored for the user and the deployment permits retrieving it, credentials for every mechanism can be derived on demand, so the stored set does not constrain what can be offered.</li>
+ *     <li>When a password can be recovered for the user and the deployment permits retrieving it, credentials for every mechanism can be derived on demand, so the stored set does not constrain what can be offered.</li>
  *     <li>A user for whom nothing usable can be determined falls back to SCRAM-SHA-1. That keeps the result from revealing whether the claimed user exists, and keeps a database failure from denying authentication outright.</li>
  *     <li>Mechanisms that are stored but that this implementation cannot service are removed <em>before</em> that fallback is considered, so that a user holding only such credentials is not left with nothing.</li>
  * </ul>
@@ -79,8 +79,8 @@ public class DefaultAuthProviderScramMechanismsTest
     }
 
     /**
-     * Verifies that all implemented mechanisms are reported when a password can be retrieved, as credentials for each
-     * of them can then be derived on demand.
+     * Verifies that all implemented mechanisms are reported when a plaintext password is stored for the user, as
+     * credentials for each of them can then be derived on demand.
      */
     @Test
     void getScramMechanisms_returnsAllMechanismsWhenPasswordIsRetrievable() throws Exception
@@ -147,39 +147,6 @@ public class DefaultAuthProviderScramMechanismsTest
     }
 
     /**
-     * Verifies that all implemented mechanisms are assumed usable by any user when a password can be retrieved.
-     */
-    @Test
-    void getFallbackScramMechanisms_returnsAllMechanismsWhenPasswordIsRetrievable()
-    {
-        // Setup test fixture.
-        // (see helper: password retrieval is enabled)
-
-        // Execute system under test.
-        final Set<String> result = runGetFallbackScramMechanisms(false);
-
-        // Verify result.
-        assertEquals(allImplementedMechanisms(), result, "When a password can be retrieved, credentials for every implemented mechanism can be derived for any user.");
-    }
-
-    /**
-     * Verifies that only SCRAM-SHA-1 is assumed usable by any user when no password can be retrieved. It was the sole
-     * mechanism when SCRAM support was first added, so it is the only one that every user can be assumed to hold.
-     */
-    @Test
-    void getFallbackScramMechanisms_returnsLowestCommonDenominator()
-    {
-        // Setup test fixture.
-        // (see helper: password retrieval is disabled)
-
-        // Execute system under test.
-        final Set<String> result = runGetFallbackScramMechanisms(true);
-
-        // Verify result.
-        assertEquals(Set.of(ScramSha1SaslServer.MECHANISM_NAME), result, "Without password retrieval, only the mechanism that every user can be assumed to hold may be reported.");
-    }
-
-    /**
      * Verifies that a user for which only unrecognized mechanisms are stored falls back to SCRAM-SHA-1, rather than
      * being left with no mechanism at all. The removal of unrecognized mechanisms must therefore be applied before the
      * fallback is considered.
@@ -216,6 +183,23 @@ public class DefaultAuthProviderScramMechanismsTest
     }
 
     /**
+     * Verifies that a user that does not exist is answered the same way as one that has no credentials stored, so that
+     * the response does not reveal which of the two applies.
+     */
+    @Test
+    void getScramMechanisms_fallsBackForUnknownUser() throws Exception
+    {
+        // Setup test fixture.
+        final ResultSet rs = noSuchUserResultSet();
+
+        // Execute system under test.
+        final Set<String> result = runGetScramMechanisms(USERNAME, true, rs);
+
+        // Verify result.
+        assertEquals(Set.of(ScramSha1SaslServer.MECHANISM_NAME), result, "A user that does not exist must be answered with the same mechanisms as one that has no credentials stored.");
+    }
+
+    /**
      * Verifies that a user without a stored password of its own is reported as holding only the mechanisms that are
      * stored for it, even where the deployment is configured to allow password retrieval. Such a user arises when
      * 'user.scramHashedPasswordOnly' was set at the time the user's password was last stored, and was disabled
@@ -235,37 +219,71 @@ public class DefaultAuthProviderScramMechanismsTest
     }
 
     /**
-     * Verifies that an encrypted password counts as a stored password, as it too can be resolved to a plaintext from
-     * which every mechanism's credentials can be derived.
+     * Verifies that an encrypted password that can be decrypted counts as a stored password, as it can be resolved to
+     * a plaintext from which every mechanism's credentials can be derived.
      */
     @Test
-    void getScramMechanisms_returnsAllMechanismsForUserWithEncryptedPassword() throws Exception
+    void getScramMechanisms_returnsAllMechanismsForUserWithDecryptableEncryptedPassword() throws Exception
     {
         // Setup test fixture.
         final ResultSet rs = storedCredentialsResultSet(null, ENCRYPTED_PASSWORD, ScramSha1SaslServer.MECHANISM_NAME);
 
         // Execute system under test.
-        final Set<String> result = runGetScramMechanisms(USERNAME, false, rs);
+        final Set<String> result = runGetScramMechanismsWithEncryptedPassword(USERNAME, rs, true);
 
         // Verify result.
-        assertEquals(allImplementedMechanisms(), result, "An encrypted password can be resolved to a plaintext, so every implemented mechanism's credentials can be derived from it.");
+        assertEquals(allImplementedMechanisms(), result, "An encrypted password that can be decrypted can be resolved to a plaintext, so every implemented mechanism's credentials can be derived from it.");
     }
 
     /**
-     * Verifies that a user that does not exist is answered the same way as one that has no credentials stored, so that
-     * the response does not reveal which of the two applies.
+     * Verifies that an encrypted password from which no plaintext can be recovered does not count as a stored
+     * password. Decryption depends on a cipher that is not always available, and where the plaintext cannot be
+     * recovered, missing credentials cannot be regenerated from it either.
      */
     @Test
-    void getScramMechanisms_fallsBackForUnknownUser() throws Exception
+    void getScramMechanisms_ignoresEncryptedPasswordThatCannotBeDecrypted() throws Exception
     {
         // Setup test fixture.
-        final ResultSet rs = noSuchUserResultSet();
+        final ResultSet rs = storedCredentialsResultSet(null, ENCRYPTED_PASSWORD, ScramSha1SaslServer.MECHANISM_NAME);
 
         // Execute system under test.
-        final Set<String> result = runGetScramMechanisms(USERNAME, true, rs);
+        final Set<String> result = runGetScramMechanismsWithEncryptedPassword(USERNAME, rs, false);
 
         // Verify result.
-        assertEquals(Set.of(ScramSha1SaslServer.MECHANISM_NAME), result, "A user that does not exist must be answered with the same mechanisms as one that has no credentials stored.");
+        assertEquals(Set.of(ScramSha1SaslServer.MECHANISM_NAME), result, "An encrypted password that cannot be decrypted must not be treated as a password from which credentials can be derived.");
+    }
+
+    /**
+     * Verifies that all implemented mechanisms are assumed usable by any user when a password can be retrieved.
+     */
+    @Test
+    void getFallbackScramMechanisms_returnsAllMechanismsWhenPasswordIsRetrievable()
+    {
+        // Setup test fixture.
+        // (see helper: password retrieval is enabled)
+
+        // Execute system under test.
+        final Set<String> result = runGetFallbackScramMechanisms(false);
+
+        // Verify result.
+        assertEquals(allImplementedMechanisms(), result, "When a password can be retrieved, credentials for every implemented mechanism can be derived for any user.");
+    }
+
+    /**
+     * Verifies that only SCRAM-SHA-1 is assumed usable by any user when no password can be retrieved. It was the sole
+     * mechanism when SCRAM support was first added, so it is the only one that every user can be assumed to hold.
+     */
+    @Test
+    void getFallbackScramMechanisms_returnsLowestCommonDenominator()
+    {
+        // Setup test fixture.
+        // (see helper: password retrieval is disabled)
+
+        // Execute system under test.
+        final Set<String> result = runGetFallbackScramMechanisms(true);
+
+        // Verify result.
+        assertEquals(Set.of(ScramSha1SaslServer.MECHANISM_NAME), result, "Without password retrieval, only the mechanism that every user can be assumed to hold may be reported.");
     }
 
     /**
@@ -274,19 +292,12 @@ public class DefaultAuthProviderScramMechanismsTest
      *
      * @param username the username to look up.
      * @param scramOnly the value of the 'user.scramHashedPasswordOnly' property, which governs password retrieval.
-     * @param resultSet the result set that the mechanism query is to yield.
+     * @param resultSet the result set that the query is to yield.
      * @return the reported mechanism names.
      */
-    @SuppressWarnings("SqlSourceToSinkFlow")
     private static Set<String> runGetScramMechanisms(final String username, final boolean scramOnly, final ResultSet resultSet) throws Exception
     {
-        final PreparedStatement stmt = Mockito.mock(PreparedStatement.class);
-        when(stmt.executeQuery()).thenReturn(resultSet);
-
-        final Connection connection = Mockito.mock(Connection.class);
-        when(connection.prepareStatement(anyString())).thenReturn(stmt);
-
-        return runGetScramMechanisms(username, scramOnly, connection);
+        return runGetScramMechanisms(username, scramOnly, connectionYielding(resultSet));
     }
 
     /**
@@ -309,6 +320,32 @@ public class DefaultAuthProviderScramMechanismsTest
     }
 
     /**
+     * Invokes {@link DefaultAuthProvider#getScramMechanisms(String)} as
+     * {@link #runGetScramMechanisms(String, boolean, ResultSet)} does, with {@link AuthFactory} additionally mocked to
+     * report whether a stored encrypted password can be resolved to a plaintext.
+     *
+     * Password retrieval is enabled for these invocations, as an encrypted password is only consulted when it is.
+     *
+     * @param username the username to look up.
+     * @param resultSet the result set that the query is to yield.
+     * @param canDecrypt whether an encrypted password can be resolved to a plaintext.
+     * @return the reported mechanism names.
+     */
+    private static Set<String> runGetScramMechanismsWithEncryptedPassword(final String username, final ResultSet resultSet, final boolean canDecrypt) throws Exception
+    {
+        final Connection connection = connectionYielding(resultSet);
+
+        try (final MockedStatic<DbConnectionManager> db = Mockito.mockStatic(DbConnectionManager.class);
+             final MockedStatic<JiveGlobals> globals = Mockito.mockStatic(JiveGlobals.class);
+             final MockedStatic<AuthFactory> authFactory = Mockito.mockStatic(AuthFactory.class)) {
+            db.when(DbConnectionManager::getConnection).thenReturn(connection);
+            globals.when(() -> JiveGlobals.getBooleanProperty("user.scramHashedPasswordOnly")).thenReturn(false);
+            authFactory.when(() -> AuthFactory.canDecryptPassword(anyString())).thenReturn(canDecrypt);
+            return new DefaultAuthProvider().getScramMechanisms(username);
+        }
+    }
+
+    /**
      * Invokes {@link DefaultAuthProvider#getFallbackScramMechanisms()} with the {@link JiveGlobals} static mocked.
      *
      * @param scramOnly the value of the 'user.scramHashedPasswordOnly' property, which governs password retrieval.
@@ -320,6 +357,24 @@ public class DefaultAuthProviderScramMechanismsTest
             globals.when(() -> JiveGlobals.getBooleanProperty("user.scramHashedPasswordOnly")).thenReturn(scramOnly);
             return new DefaultAuthProvider().getFallbackScramMechanisms();
         }
+    }
+
+    /**
+     * Returns a connection whose statements yield the provided result set.
+     *
+     * @param resultSet the result set to yield.
+     * @return a connection.
+     */
+    @SuppressWarnings("SqlSourceToSinkFlow")
+    private static Connection connectionYielding(final ResultSet resultSet) throws SQLException
+    {
+        final PreparedStatement stmt = Mockito.mock(PreparedStatement.class);
+        when(stmt.executeQuery()).thenReturn(resultSet);
+
+        final Connection connection = Mockito.mock(Connection.class);
+        when(connection.prepareStatement(anyString())).thenReturn(stmt);
+
+        return connection;
     }
 
     /**

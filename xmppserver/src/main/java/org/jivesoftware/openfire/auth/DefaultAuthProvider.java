@@ -608,9 +608,10 @@ public class DefaultAuthProvider implements AuthProvider {
             boolean hasStoredPassword = false;
             while (rs.next()) {
                 // The password columns repeat on every row of the join, so reading them once is enough.
-                if (!hasStoredPassword) {
-                    hasStoredPassword = (rs.getString(1) != null && !rs.getString(1).isEmpty())
-                                     || (rs.getString(2) != null && !rs.getString(2).isEmpty());
+                if (!hasStoredPassword)
+                {
+                    final String plainPassword = rs.getString(1);
+                    hasStoredPassword = (plainPassword != null && !plainPassword.isEmpty()) || AuthFactory.canDecryptPassword(rs.getString(2));
                 }
                 final String mechanism = rs.getString(3);
                 if (mechanism != null) { // Null when the LEFT JOIN produced no ofUserScram row for this user.

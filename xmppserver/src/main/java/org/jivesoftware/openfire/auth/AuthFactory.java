@@ -32,6 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 /**
  * Pluggable authentication service. Users of Openfire that wish to change the AuthProvider
@@ -243,6 +244,29 @@ public class AuthFactory {
             throw new UnsupportedOperationException();
         }
         return cipher.decryptString(encryptedPassword);
+    }
+
+    /**
+     * Determines whether an encrypted password can be resolved to a plaintext password.
+     *
+     * Stored ciphertext is not on its own evidence that the original password can be recovered: decryption depends on
+     * a cipher that is unavailable when no password key has been configured, or while the server is in setup mode.
+     *
+     * @param encryptedPassword the encrypted password to test (can be null).
+     * @return true when the provided value could be resolved to a plaintext password.
+     */
+    public static boolean canDecryptPassword(@Nullable final String encryptedPassword) {
+        if (encryptedPassword == null || encryptedPassword.isEmpty()) {
+            return false;
+        }
+        try {
+            final String plaintext = decryptPassword(encryptedPassword);
+            return plaintext != null && !plaintext.isEmpty();
+        }
+        catch (UnsupportedOperationException e) {
+            Log.trace("Unable to decrypt a stored password: no plaintext can be recovered from it.", e);
+            return false;
+        }
     }
 
     /**

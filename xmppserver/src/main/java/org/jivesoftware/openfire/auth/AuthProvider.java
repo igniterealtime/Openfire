@@ -19,6 +19,9 @@ package org.jivesoftware.openfire.auth;
 import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 
+import javax.annotation.Nonnull;
+import java.util.Set;
+
 /**
  * Provider interface for authentication. Users that wish to integrate with
  * their own authentication system must implement this class and then register
@@ -87,6 +90,36 @@ public interface AuthProvider {
     boolean supportsPasswordRetrieval();
 
     boolean isScramSupported();
+
+    /**
+     * Returns the names of the SCRAM mechanisms for which credentials are available for a user.
+     *
+     * Implementations must not create or modify credentials as a side effect: this method is invoked before
+     * authentication, with a username that is supplied by an unauthenticated peer.
+     *
+     * Implementations should not distinguish between a user that does not exist and one that has no credentials.
+     *
+     * @param username the username to check
+     * @return the names of the SCRAM mechanisms for which credentials are available for the user.
+     */
+    default Set<String> getScramMechanisms(@Nonnull final String username)
+    {
+        // The default returns SHA-1 only, matching the default getScramCredential, so third-party providers behave correctly without changes.
+        return isScramSupported() ? Set.of(ScramSha1SaslServer.MECHANISM_NAME) : Set.of();
+    }
+
+    /**
+     * Returns the names of the SCRAM mechanisms that can be assumed to be usable by any user, for use when the user
+     * that is going to authenticate cannot be identified.
+     * <p>
+     * Implementations must not create or modify credentials as a side effect.
+     *
+     * @return the names of the SCRAM mechanisms that every user is assumed to have credentials for.
+     */
+    default Set<String> getFallbackScramMechanisms()
+    {
+        return isScramSupported() ? Set.of(ScramSha1SaslServer.MECHANISM_NAME) : Set.of();
+    }
 
     /**
      * Returns SCRAM credentials for a user and mechanism.

@@ -24,6 +24,9 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.lang.reflect.Constructor;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * An {@link AuthProvider} that delegates to one or more 'backing' AuthProviders.
@@ -129,6 +132,47 @@ public abstract class AuthMultiProvider implements AuthProvider
         // If at least one provider supports SCRAM, so does this proxy.
         return getAuthProviders().parallelStream()
             .anyMatch(AuthProvider::isScramSupported);
+    }
+
+    /**
+     * Returns the names of the SCRAM mechanisms for which credentials are available for a user, as reported by the
+     * mapped provider.
+     */
+    @Override
+    public Set<String> getScramMechanisms(@Nonnull final String username)
+    {
+        final AuthProvider provider = getAuthProvider(username);
+        if (provider == null) {
+            // Deliberately not distinguishable from a user for whom no credentials exist.
+            return getFallbackScramMechanisms();
+        }
+        return provider.getScramMechanisms(username);
+    }
+
+    /**
+     * Returns the names of the SCRAM mechanisms that can be assumed to be usable by any user.
+     *
+     * Only providers that support SCRAM are considered: one that does not is never going to serve a user through a
+     * SCRAM mechanism, so it must not veto what the others can guarantee.
+     */
+    @Override
+    public Set<String> getFallbackScramMechanisms()
+    {
+        final List<Set<String>> candidates = getAuthProviders().stream()
+            .filter(AuthProvider::isScramSupported)
+            .map(AuthProvider::getFallbackScramMechanisms)
+            .toList();
+
+        if (candidates.isEmpty()) {
+            return Set.of();
+        }
+
+        // The intersection, not the union: a user that cannot be identified may be served by any of these providers,
+        // so a mechanism can only be assumed to be usable if every one of them can service it. Reporting the union
+        // would advertise mechanisms that fail for every user that is not served by the provider that contributed them.
+        final Set<String> result = new HashSet<>(candidates.get(0));
+        candidates.forEach(result::retainAll);
+        return result;
     }
 
     @Override

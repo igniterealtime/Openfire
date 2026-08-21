@@ -64,6 +64,8 @@ import java.util.*;
 import java.util.Base64;
 import java.util.LinkedList;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * SASLAuthentication is responsible for returning the available SASL mechanisms to use and for
@@ -1195,6 +1197,20 @@ public class SASLAuthentication {
     }
 
     /**
+     * Returns {@code true} if the given SASL mechanism name is a member of the SCRAM family.
+     *
+     * SCRAM mechanism names are, per RFC 5802 § 4, the string {@code SCRAM-} followed by the name of the underlying
+     * hash function (optionally suffixed with {@code -PLUS} for the channel binding variant).
+     *
+     * @param mechanismName the SASL mechanism name to check (cannot be null)
+     * @return {@code true} if the mechanism is a SCRAM mechanism; {@code false} otherwise
+     */
+    @VisibleForTesting
+    static boolean isScramMechanism(@Nonnull final String mechanismName) {
+        return mechanismName.startsWith("SCRAM-");
+    }
+
+    /**
      * Returns {@code true} if the given SASL mechanism name requires channel binding.
      * Channel-binding mechanisms follow the naming convention of appending {@code -PLUS} to the
      * base mechanism name (e.g. {@code SCRAM-SHA-1-PLUS}).
@@ -1236,10 +1252,20 @@ public class SASLAuthentication {
      */
     private static Set<String> getAvailableMechanismsForClientSession(@Nonnull final ClientSession session )
     {
-        final Connection connection = ( (LocalClientSession) session ).getConnection();
+        final LocalClientSession localClientSession = (LocalClientSession) session;
+        final Connection connection = localClientSession.getConnection();
         assert connection != null; // While the client is performing a SASL negotiation, the connection can't be null.
         final Set<String> result = new HashSet<>();
-        for (String mech : getSupportedMechanisms()) {
+
+        final Set<String> mechanismsForWhichCredentialsAreAvailable = localClientSession.getExpectedUsername()
+            .map(AuthFactory::getScramMechanisms)
+            .orElseGet(AuthFactory::getFallbackScramMechanisms)
+            .stream().flatMap(m -> Stream.of(m, m + "-PLUS")) // Expand to include all channel binding equivalents for the supported SCRAM mechanisms.
+            .collect(Collectors.toSet());
+
+        for (String mech : getSupportedMechanisms())
+        {
+            // Prevent offering EXTERNAL mechanism when no usable peer certificate is available.
             if (mech.equals("EXTERNAL")) {
                 boolean trustedCert = false;
                 if (session.isEncrypted()) {
@@ -1256,6 +1282,12 @@ public class SASLAuthentication {
                     continue; // Do not offer EXTERNAL.
                 }
             }
+
+            // Prevent offering SCRAM mechanism when no mechanism-specific credentials (salt, iterations, keys) are available.
+            if (isScramMechanism(mech) && !mechanismsForWhichCredentialsAreAvailable.contains(mech)) {
+                continue;
+            }
+
             if (requiresChannelBinding(mech)) {
                 // Prevent offering channel binding if the Connection implementation does not support it.
                 if (connection.getSupportedChannelBindingTypes().isEmpty()) {
@@ -1266,6 +1298,8 @@ public class SASLAuthentication {
                     continue;
                 }
             }
+
+            // All fine: this mechanism can be offered.
             result.add(mech);
         }
         return result;

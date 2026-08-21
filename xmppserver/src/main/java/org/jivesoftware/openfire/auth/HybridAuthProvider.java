@@ -23,7 +23,9 @@ import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * The hybrid auth provider allows up to three AuthProvider implementations to
@@ -206,6 +208,33 @@ public class HybridAuthProvider extends AuthMultiProvider {
 
     boolean hasOverride(String username) {
         return getAuthProvider(username) != null;
+    }
+
+    /**
+     * Returns the names of the SCRAM mechanisms for which credentials are available for a user.
+     *
+     * Unlike the mapped variant, this provider attempts authentication with each backing provider in turn, so a
+     * mechanism that any of them can service is usable: the reported set is their union. When no provider reports
+     * anything, the inherited fallback applies, which is deliberately the intersection of what the providers
+     * guarantee, as it must hold for a user that cannot be identified at all.
+     */
+    @Override
+    public Set<String> getScramMechanisms(@Nonnull final String username)
+    {
+        // Check overrides first.
+        final AuthProvider override = getAuthProvider(username);
+        if (override != null) {
+            return override.getScramMechanisms(username);
+        }
+
+        // When there's no override, aggregate over all providers: authentication is attempted with each of them in
+        // turn, so a mechanism that any of them can service is usable for this user.
+        final Set<String> result = getAuthProviders().stream()
+            .map(provider -> provider.getScramMechanisms(username))
+            .flatMap(Set::stream)
+            .collect(Collectors.toSet());
+
+        return result.isEmpty() ? getFallbackScramMechanisms() : result;
     }
 
     @Override

@@ -639,10 +639,13 @@ public class DefaultAuthProvider implements AuthProvider {
             rs = pstmt.executeQuery();
 
             boolean hasStoredPassword = false;
+            boolean passwordChecked = false;
             while (rs.next()) {
-                // The password columns repeat on every row of the join, so reading them once is enough.
-                if (!hasStoredPassword)
-                {
+                // The password columns repeat on every row of the join. A separate flag records that they have been
+                // inspected: the outcome cannot serve as the sentinel, as a user without a usable password would then
+                // have its columns re-inspected on every row.
+                if (!passwordChecked) {
+                    passwordChecked = true;
                     final String plainPassword = rs.getString(1);
                     hasStoredPassword = (plainPassword != null && !plainPassword.isEmpty()) || AuthFactory.canDecryptPassword(rs.getString(2));
                 }

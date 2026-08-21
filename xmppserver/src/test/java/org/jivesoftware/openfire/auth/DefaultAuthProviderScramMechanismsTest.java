@@ -23,6 +23,7 @@ import org.jivesoftware.openfire.sasl.ScramSha512SaslServer;
 import org.jivesoftware.util.JiveGlobals;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -32,23 +33,29 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.LinkedHashMap;
+import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
  * Verifies which SCRAM mechanism names {@link DefaultAuthProvider} reports as usable, both for an identified user
  * ({@link DefaultAuthProvider#getScramMechanisms(String)}) and for an unidentified one
- * ({@link AuthProvider#getFallbackScramMechanisms()}).
+ * ({@link DefaultAuthProvider#getFallbackScramMechanisms()}).
  *
- * Three properties matter beyond the plain lookup:
+ * Four properties matter beyond the plain lookup:
  *
  * <ul>
  *     <li>When a password can be recovered for the user and the deployment permits retrieving it, credentials for every mechanism can be derived on demand, so the stored set does not constrain what can be offered for that user. This does not extend to a user that cannot be identified: the deployment-wide setting says nothing about any particular user.</li>
  *     <li>A user for whom nothing usable can be determined falls back to SCRAM-SHA-1. That keeps the result from revealing whether the claimed user exists, and keeps a database failure from denying authentication outright.</li>
  *     <li>Mechanisms that are stored but that this implementation cannot service are removed <em>before</em> that fallback is considered, so that a user holding only such credentials is not left with nothing.</li>
+ *     <li>For a user that cannot be identified, a mechanism beyond SCRAM-SHA-1 is reported only where a credential for it is stored for <em>every</em> user. Anything less than that unanimity, and any failure to establish it, leaves SCRAM-SHA-1 as the answer.</li>
  * </ul>
  */
 public class DefaultAuthProviderScramMechanismsTest
@@ -71,6 +78,14 @@ public class DefaultAuthProviderScramMechanismsTest
         Class.forName(ScramSha1SaslServer.class.getName());
         Class.forName(ScramSha256SaslServer.class.getName());
         Class.forName(ScramSha512SaslServer.class.getName());
+    }
+
+    @BeforeEach
+    public void setUp()
+    {
+        // The determination of which mechanisms every user holds is cached statically, so it outlives an instance and
+        // would otherwise carry over from one test to the next.
+        DefaultAuthProvider.invalidateUniversalScramMechanisms();
     }
 
     @AfterEach
@@ -254,24 +269,116 @@ public class DefaultAuthProviderScramMechanismsTest
     }
 
     /**
+     * Verifies that every implemented mechanism is assumed usable by any user where a credential for each of them is
+     * stored for every user. A client that does not identify itself can then safely be offered the stronger
+     * mechanisms.
+     */
+    @Test
+    void getFallbackScramMechanisms_returnsAllMechanismsHeldByEveryUser() throws Exception
+    {
+        // Setup test fixture.
+        final Connection connection = connectionYieldingCounts(10, usersPerMechanism(10, 10, 10));
+
+        // Execute system under test.
+        final Set<String> result = runGetFallbackScramMechanisms(true, connection);
+
+        // Verify result.
+        assertEquals(allImplementedMechanisms(), result, "A mechanism for which every user holds a credential can be assumed usable by a user that cannot be identified.");
+    }
+
+    /**
+     * Verifies that a mechanism that not every user holds a credential for is not assumed usable. A single user
+     * lacking it is enough: a client that does not identify itself could be that user.
+     */
+    @Test
+    void getFallbackScramMechanisms_omitsMechanismNotHeldByEveryUser() throws Exception
+    {
+        // Setup test fixture.
+        final Connection connection = connectionYieldingCounts(10, usersPerMechanism(10, 10, 9));
+
+        // Execute system under test.
+        final Set<String> result = runGetFallbackScramMechanisms(true, connection);
+
+        // Verify result.
+        assertEquals(Set.of(ScramSha1SaslServer.MECHANISM_NAME, ScramSha256SaslServer.MECHANISM_NAME), result, "A mechanism that even one user lacks a credential for must not be assumed usable by a user that cannot be identified.");
+    }
+
+    /**
+     * Verifies that no mechanism beyond SCRAM-SHA-1 is assumed usable where there are no users at all, as nothing can
+     * be established from an empty user table.
+     */
+    @Test
+    void getFallbackScramMechanisms_returnsLowestCommonDenominatorWithoutUsers() throws Exception
+    {
+        // Setup test fixture.
+        final Connection connection = connectionYieldingCounts(0, usersPerMechanism(0, 0, 0));
+
+        // Execute system under test.
+        final Set<String> result = runGetFallbackScramMechanisms(true, connection);
+
+        // Verify result.
+        assertEquals(Set.of(ScramSha1SaslServer.MECHANISM_NAME), result, "Without any users, no mechanism can be established as being held by every user.");
+    }
+
+    /**
+     * Verifies that a database failure leaves SCRAM-SHA-1 as the answer, rather than reporting nothing. A mechanism is
+     * only ever added on positive evidence, so a failure to gather it degrades to the inherited answer.
+     */
+    @Test
+    void getFallbackScramMechanisms_returnsLowestCommonDenominatorWhenLookupFails() throws Exception
+    {
+        // Setup test fixture.
+        final Connection connection = Mockito.mock(Connection.class);
+        when(connection.prepareStatement(anyString())).thenThrow(new SQLException("Simulated database failure."));
+
+        // Execute system under test.
+        final Set<String> result = runGetFallbackScramMechanisms(true, connection);
+
+        // Verify result.
+        assertEquals(Set.of(ScramSha1SaslServer.MECHANISM_NAME), result, "A failed determination must leave the inherited answer in place, rather than report no mechanism at all.");
+    }
+
+    /**
      * Verifies that the mechanisms assumed usable by any user do not depend on the deployment-wide password retrieval
      * setting. That setting says nothing about a particular user: one whose password was last stored while
      * 'user.scramHashedPasswordOnly' was set retains no password when it is later disabled, so a mechanism can only be
      * assumed usable if it holds for such a user too.
      */
     @Test
-    void getFallbackScramMechanisms_returnsLowestCommonDenominatorRegardlessOfPasswordRetrieval()
+    void getFallbackScramMechanisms_ignoresPasswordRetrievalSetting() throws Exception
     {
-        // Setup test fixture.
-        // (see helper: password retrieval is varied)
+        // Setup test fixture. A separate connection per invocation: the result sets are stubbed with single-use
+        // sequences, so one cannot answer two determinations.
+        final Connection withRetrievalConnection = connectionYieldingCounts(10, usersPerMechanism(10, 10, 9));
+        final Connection withoutRetrievalConnection = connectionYieldingCounts(10, usersPerMechanism(10, 10, 9));
 
         // Execute system under test.
-        final Set<String> withRetrieval = runGetFallbackScramMechanisms(false);
-        final Set<String> withoutRetrieval = runGetFallbackScramMechanisms(true);
+        final Set<String> withRetrieval = runGetFallbackScramMechanisms(false, withRetrievalConnection);
+        DefaultAuthProvider.invalidateUniversalScramMechanisms();
+        final Set<String> withoutRetrieval = runGetFallbackScramMechanisms(true, withoutRetrievalConnection);
 
         // Verify result.
-        assertEquals(Set.of(ScramSha1SaslServer.MECHANISM_NAME), withRetrieval, "Only the mechanism that every user can be assumed to hold may be reported, whatever the deployment-wide password retrieval setting says.");
-        assertEquals(withoutRetrieval, withRetrieval, "The deployment-wide password retrieval setting must not affect which mechanisms are assumed usable by any user.");
+        assertEquals(Set.of(ScramSha1SaslServer.MECHANISM_NAME, ScramSha256SaslServer.MECHANISM_NAME), withRetrieval, "Only the mechanisms that every user holds may be reported, whatever the deployment-wide password retrieval setting says.");
+        assertEquals(withRetrieval, withoutRetrieval, "The deployment-wide password retrieval setting must not affect which mechanisms are assumed usable by any user.");
+    }
+
+    /**
+     * Verifies that the determination is not repeated on every invocation. It scans the user table, which is not
+     * something to do for each session that is being negotiated.
+     */
+    @Test
+    void getFallbackScramMechanisms_cachesDetermination() throws Exception
+    {
+        // Setup test fixture.
+        final Connection connection = connectionYieldingCounts(10, usersPerMechanism(10, 10, 10));
+        final Set<String> first = runGetFallbackScramMechanisms(true, connection);
+
+        // Execute system under test.
+        final Set<String> second = runGetFallbackScramMechanisms(true, connection);
+
+        // Verify result.
+        assertEquals(first, second, "A repeated invocation must yield the same mechanisms.");
+        verify(connection, times(2)).prepareStatement(anyString()); // Two statements are used per determination.
     }
 
     /**
@@ -334,14 +441,18 @@ public class DefaultAuthProviderScramMechanismsTest
     }
 
     /**
-     * Invokes {@link DefaultAuthProvider#getFallbackScramMechanisms()} with the {@link JiveGlobals} static mocked.
+     * Invokes {@link DefaultAuthProvider#getFallbackScramMechanisms()} with the {@link DbConnectionManager} and
+     * {@link JiveGlobals} statics mocked, using the provided connection.
      *
      * @param scramOnly the value of the 'user.scramHashedPasswordOnly' property, which governs password retrieval.
+     * @param connection the connection that the provider is to obtain.
      * @return the reported mechanism names.
      */
-    private static Set<String> runGetFallbackScramMechanisms(final boolean scramOnly)
+    private static Set<String> runGetFallbackScramMechanisms(final boolean scramOnly, final Connection connection)
     {
-        try (final MockedStatic<JiveGlobals> globals = Mockito.mockStatic(JiveGlobals.class)) {
+        try (final MockedStatic<DbConnectionManager> db = Mockito.mockStatic(DbConnectionManager.class);
+             final MockedStatic<JiveGlobals> globals = Mockito.mockStatic(JiveGlobals.class)) {
+            db.when(DbConnectionManager::getConnection).thenReturn(connection);
             globals.when(() -> JiveGlobals.getBooleanProperty("user.scramHashedPasswordOnly")).thenReturn(scramOnly);
             return new DefaultAuthProvider().getFallbackScramMechanisms();
         }
@@ -363,6 +474,77 @@ public class DefaultAuthProviderScramMechanismsTest
         when(connection.prepareStatement(anyString())).thenReturn(stmt);
 
         return connection;
+    }
+
+    /**
+     * Returns a connection that answers the two queries used to determine which mechanisms every user holds: one that
+     * counts the users holding a credential for each mechanism, and one that counts the users.
+     *
+     * @param userCount the number of users to report.
+     * @param usersPerMechanism the number of users holding a credential, per mechanism name.
+     * @return a connection.
+     */
+    @SuppressWarnings("SqlSourceToSinkFlow")
+    private static Connection connectionYieldingCounts(final long userCount, final Map<String, Long> usersPerMechanism) throws SQLException
+    {
+        final ResultSet mechanismRs = Mockito.mock(ResultSet.class);
+        OngoingStubbing<Boolean> hasNext = when(mechanismRs.next());
+        for (int i = 0; i < usersPerMechanism.size(); i++) {
+            hasNext = hasNext.thenReturn(true);
+        }
+        hasNext.thenReturn(false);
+
+        if (!usersPerMechanism.isEmpty()) {
+            // Each stubbing must be completed before the next is started: invoking the mock again while a stubbing is
+            // still open is what Mockito reports as unfinished stubbing. The map preserves insertion order, so the
+            // names and the counts stay aligned across the two loops.
+            OngoingStubbing<String> names = when(mechanismRs.getString(1));
+            for (final String mechanismName : usersPerMechanism.keySet()) {
+                names = names.thenReturn(mechanismName);
+            }
+
+            OngoingStubbing<Long> counts = when(mechanismRs.getLong(2));
+            for (final Long count : usersPerMechanism.values()) {
+                counts = counts.thenReturn(count);
+            }
+        }
+
+        final PreparedStatement mechanismStmt = Mockito.mock(PreparedStatement.class);
+        when(mechanismStmt.executeQuery()).thenReturn(mechanismRs);
+
+        final ResultSet userCountRs = Mockito.mock(ResultSet.class);
+        when(userCountRs.next()).thenReturn(true, false);
+        when(userCountRs.getLong(1)).thenReturn(userCount);
+
+        final PreparedStatement userCountStmt = Mockito.mock(PreparedStatement.class);
+        when(userCountStmt.executeQuery()).thenReturn(userCountRs);
+
+        // Routing is done in a single answer rather than by two competing argument matchers: registering a second
+        // matcher-based stubbing invokes the mock again, and Mockito then offers that invocation's (null) argument to
+        // the matcher registered before it.
+        final Connection connection = Mockito.mock(Connection.class);
+        when(connection.prepareStatement(anyString())).thenAnswer(invocation ->
+            invocation.getArgument(0, String.class).toLowerCase(Locale.ROOT).contains("group by") ? mechanismStmt : userCountStmt);
+
+        return connection;
+    }
+
+    /**
+     * Returns the number of users holding a credential for each implemented mechanism, in the order in which the
+     * mechanisms were introduced.
+     *
+     * @param sha1 the number of users holding a SCRAM-SHA-1 credential.
+     * @param sha256 the number of users holding a SCRAM-SHA-256 credential.
+     * @param sha512 the number of users holding a SCRAM-SHA-512 credential.
+     * @return a mapping of mechanism name to user count, in a map that preserves insertion order.
+     */
+    private static Map<String, Long> usersPerMechanism(final long sha1, final long sha256, final long sha512)
+    {
+        final Map<String, Long> result = new LinkedHashMap<>();
+        result.put(ScramSha1SaslServer.MECHANISM_NAME, sha1);
+        result.put(ScramSha256SaslServer.MECHANISM_NAME, sha256);
+        result.put(ScramSha512SaslServer.MECHANISM_NAME, sha512);
+        return result;
     }
 
     /**

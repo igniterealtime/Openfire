@@ -75,6 +75,11 @@ public class DefaultAuthProvider implements AuthProvider {
     );
 
     /**
+     * Convenience set of all names from SCRAM_MECHANISMS.
+     */
+    private static final Set<String> SCRAM_MECHANISM_NAMES = SCRAM_MECHANISMS.stream().map(ScramMechanism::mechanismName).collect(Collectors.toUnmodifiableSet());
+
+    /**
      * The length of the salt used to generate salted passwords.
      */
     public static final int SALT_LENGTH = 24;
@@ -99,6 +104,8 @@ public class DefaultAuthProvider implements AuthProvider {
         "INSERT INTO ofUserScram (username, mechanism, iterations, salt, storedKey, serverKey) VALUES (?, ?, ?, ?, ?, ?)";
     private static final String DELETE_SCRAM_CREDENTIAL =
         "DELETE FROM ofUserScram WHERE username=? AND mechanism=?";
+    private static final String LOAD_PASSWORD_AND_SCRAM_MECHANISMS =
+        "SELECT u.plainPassword, u.encryptedPassword, s.mechanism FROM ofUser u LEFT JOIN ofUserScram s ON u.username = s.username WHERE u.username = ?";
 
     private static final SecureRandom random = new SecureRandom();
 
@@ -191,7 +198,7 @@ public class DefaultAuthProvider implements AuthProvider {
             return false; // treat as "not known to be missing" so a DB hiccup doesn't force a regeneration storm
         }
 
-        return !storedScramMechanisms.containsAll(SCRAM_MECHANISMS.stream().map(ScramMechanism::mechanismName).collect(Collectors.toSet()));
+        return !storedScramMechanisms.containsAll(SCRAM_MECHANISM_NAMES);
     }
 
     @Override
@@ -228,7 +235,7 @@ public class DefaultAuthProvider implements AuthProvider {
     public ScramCredentialData getScramCredential(final String username, final String mechanism) throws UnsupportedOperationException, UserNotFoundException
     {
         final String normalizedMechanism = ScramCredentialData.normalizeMechanismName(mechanism);
-        if (SCRAM_MECHANISMS.stream().noneMatch(m -> m.mechanismName().equals(normalizedMechanism))) {
+        if (!SCRAM_MECHANISM_NAMES.contains(normalizedMechanism)) {
             throw new UnsupportedOperationException("SCRAM mechanism is not supported: " + mechanism);
         }
 
@@ -588,23 +595,47 @@ public class DefaultAuthProvider implements AuthProvider {
         }
 
         final Set<String> result = new HashSet<>();
-        if (supportsPasswordRetrieval())
-        {
-            // With a password, credentials for all SCRAM mechanisms can be derived.
-            result.addAll(SCRAM_MECHANISMS.stream().map(ScramMechanism::mechanismName).collect(Collectors.toSet()));
-        }
 
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
         try {
-            result.addAll(loadStoredScramMechanisms(username));
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(LOAD_PASSWORD_AND_SCRAM_MECHANISMS);
+            pstmt.setString(1, username);
+            rs = pstmt.executeQuery();
+
+            boolean hasStoredPassword = false;
+            while (rs.next()) {
+                // The password columns repeat on every row of the join, so reading them once is enough.
+                if (!hasStoredPassword) {
+                    hasStoredPassword = (rs.getString(1) != null && !rs.getString(1).isEmpty())
+                                     || (rs.getString(2) != null && !rs.getString(2).isEmpty());
+                }
+                final String mechanism = rs.getString(3);
+                if (mechanism != null) { // Null when the LEFT JOIN produced no ofUserScram row for this user.
+                    result.add(mechanism);
+                }
+            }
+
+            // A password that is stored for _this_ user makes every mechanism derivable on demand (see #getUserInfo,
+            // which regenerates a missing credential from it). The global supportsPasswordRetrieval() setting is not
+            // evidence of that on its own: a user created while 'user.scramHashedPasswordOnly' was set retains no
+            // password of any kind when that property is later disabled.
+            if (hasStoredPassword && supportsPasswordRetrieval()) {
+                result.addAll(SCRAM_MECHANISM_NAMES);
+            }
         } catch (SQLException e) {
             Log.warn("Failed to load stored SCRAM mechanisms for user '{}'", username, e);
+        } finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
         }
 
         // Remove any mechanism that has a credential stored, but that this implementation cannot service. A mechanism
         // that this provider does not recognize cannot have its credentials retrieved through #getScramCredential, so
         // advertising it would offer the peer a mechanism that cannot complete. A component that adds a SCRAM mechanism
         // is expected to provide its own AuthProvider, which returns that mechanism here.
-        result.removeIf(storedMechanism -> SCRAM_MECHANISMS.stream().noneMatch(supportedMech -> supportedMech.mechanismName.equals(storedMechanism)));
+        result.retainAll(SCRAM_MECHANISM_NAMES);
 
         if (result.isEmpty()) {
             // No mechanisms could be determined: none are stored for this user (which includes a user that does not
@@ -626,7 +657,7 @@ public class DefaultAuthProvider implements AuthProvider {
         }
         if (supportsPasswordRetrieval()) {
             // With a password, credentials for all SCRAM mechanisms can be derived for any user.
-            return SCRAM_MECHANISMS.stream().map(ScramMechanism::mechanismName).collect(Collectors.toSet());
+            return SCRAM_MECHANISM_NAMES;
         }
         // Lowest common denominator: when SCRAM support was first added to Openfire, SHA-1 was the only mechanism, so
         // every user that stems from those times has credentials for at least SHA-1. This assumes that SHA-1

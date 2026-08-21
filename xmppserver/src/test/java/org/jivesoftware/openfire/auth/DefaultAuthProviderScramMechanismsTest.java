@@ -41,12 +41,12 @@ import static org.mockito.Mockito.when;
 /**
  * Verifies which SCRAM mechanism names {@link DefaultAuthProvider} reports as usable, both for an identified user
  * ({@link DefaultAuthProvider#getScramMechanisms(String)}) and for an unidentified one
- * ({@link DefaultAuthProvider#getFallbackScramMechanisms()}).
+ * ({@link AuthProvider#getFallbackScramMechanisms()}).
  *
  * Three properties matter beyond the plain lookup:
  *
  * <ul>
- *     <li>When a password can be recovered for the user and the deployment permits retrieving it, credentials for every mechanism can be derived on demand, so the stored set does not constrain what can be offered.</li>
+ *     <li>When a password can be recovered for the user and the deployment permits retrieving it, credentials for every mechanism can be derived on demand, so the stored set does not constrain what can be offered for that user. This does not extend to a user that cannot be identified: the deployment-wide setting says nothing about any particular user.</li>
  *     <li>A user for whom nothing usable can be determined falls back to SCRAM-SHA-1. That keeps the result from revealing whether the claimed user exists, and keeps a database failure from denying authentication outright.</li>
  *     <li>Mechanisms that are stored but that this implementation cannot service are removed <em>before</em> that fallback is considered, so that a user holding only such credentials is not left with nothing.</li>
  * </ul>
@@ -254,36 +254,24 @@ public class DefaultAuthProviderScramMechanismsTest
     }
 
     /**
-     * Verifies that all implemented mechanisms are assumed usable by any user when a password can be retrieved.
+     * Verifies that the mechanisms assumed usable by any user do not depend on the deployment-wide password retrieval
+     * setting. That setting says nothing about a particular user: one whose password was last stored while
+     * 'user.scramHashedPasswordOnly' was set retains no password when it is later disabled, so a mechanism can only be
+     * assumed usable if it holds for such a user too.
      */
     @Test
-    void getFallbackScramMechanisms_returnsAllMechanismsWhenPasswordIsRetrievable()
+    void getFallbackScramMechanisms_returnsLowestCommonDenominatorRegardlessOfPasswordRetrieval()
     {
         // Setup test fixture.
-        // (see helper: password retrieval is enabled)
+        // (see helper: password retrieval is varied)
 
         // Execute system under test.
-        final Set<String> result = runGetFallbackScramMechanisms(false);
+        final Set<String> withRetrieval = runGetFallbackScramMechanisms(false);
+        final Set<String> withoutRetrieval = runGetFallbackScramMechanisms(true);
 
         // Verify result.
-        assertEquals(allImplementedMechanisms(), result, "When a password can be retrieved, credentials for every implemented mechanism can be derived for any user.");
-    }
-
-    /**
-     * Verifies that only SCRAM-SHA-1 is assumed usable by any user when no password can be retrieved. It was the sole
-     * mechanism when SCRAM support was first added, so it is the only one that every user can be assumed to hold.
-     */
-    @Test
-    void getFallbackScramMechanisms_returnsLowestCommonDenominator()
-    {
-        // Setup test fixture.
-        // (see helper: password retrieval is disabled)
-
-        // Execute system under test.
-        final Set<String> result = runGetFallbackScramMechanisms(true);
-
-        // Verify result.
-        assertEquals(Set.of(ScramSha1SaslServer.MECHANISM_NAME), result, "Without password retrieval, only the mechanism that every user can be assumed to hold may be reported.");
+        assertEquals(Set.of(ScramSha1SaslServer.MECHANISM_NAME), withRetrieval, "Only the mechanism that every user can be assumed to hold may be reported, whatever the deployment-wide password retrieval setting says.");
+        assertEquals(withoutRetrieval, withRetrieval, "The deployment-wide password retrieval setting must not affect which mechanisms are assumed usable by any user.");
     }
 
     /**

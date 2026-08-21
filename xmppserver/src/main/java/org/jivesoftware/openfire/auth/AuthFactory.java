@@ -18,6 +18,7 @@ package org.jivesoftware.openfire.auth;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Set;
 
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
@@ -29,6 +30,8 @@ import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.annotation.Nonnull;
 
 /**
  * Pluggable authentication service. Users of Openfire that wish to change the AuthProvider
@@ -355,6 +358,32 @@ public class AuthFactory {
      */
     public static ScramCredentialData getScramCredential(final String username, final String mechanism) throws UnsupportedOperationException, UserNotFoundException {
         return authProvider.getScramCredential(username, mechanism);
+    }
+
+    /**
+     * Returns the names of the SCRAM mechanisms for which credentials are available for a user.
+     *
+     * @param username the username to check.
+     * @return the names of the SCRAM mechanisms for which credentials are available for the user.
+     */
+    public static Set<String> getScramMechanisms(@Nonnull final String username) {
+        return authProvider.getScramMechanisms(username);
+    }
+
+    /**
+     * Returns the names of the SCRAM mechanisms that can be assumed to be usable by any user, for use when the user
+     * that is going to authenticate cannot be identified (as is the case when a client does not identify itself in the
+     * 'from' attribute of its stream header).
+     *
+     * This is the lowest common denominator: when SCRAM support was first added to Openfire, SHA-1 was the only
+     * mechanism, so every user that stems from those times has credentials for at least SHA-1. Note that this holds
+     * only for as long as SHA-1 credentials continue to be stored for every user. A deployment that stops doing that
+     * needs to revisit this value, as it would otherwise cause a mechanism to be advertised that no user can use.
+     *
+     * @return the names of the SCRAM mechanisms that every user is assumed to have credentials for.
+     */
+    public static Set<String> getFallbackScramMechanisms() {
+        return authProvider.getFallbackScramMechanisms();
     }
 
     public static final String ONE_TIME_PROPERTY = "oneTimeAccessToken";

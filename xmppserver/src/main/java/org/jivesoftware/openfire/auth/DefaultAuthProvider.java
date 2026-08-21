@@ -32,7 +32,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.IntSupplier;
+import java.util.stream.Collectors;
 
+import javax.annotation.Nonnull;
 import javax.security.sasl.SaslException;
 import javax.xml.bind.DatatypeConverter;
 
@@ -564,6 +566,75 @@ public class DefaultAuthProvider implements AuthProvider {
     @Override
     public boolean isScramSupported() {
         return true;
+    }
+
+    /**
+     * Returns the names of the SCRAM mechanisms for which credentials are available for a user.
+     *
+     * Implementations must not create or modify credentials as a side effect: this method is invoked before
+     * authentication, with a username that is supplied by an unauthenticated peer.
+     *
+     * Implementations should not distinguish between a user that does not exist and one that has no credentials.
+     *
+     * @param username the username to check
+     * @return the names of the SCRAM mechanisms for which credentials are available for the user.
+     */
+    @Override
+    public Set<String> getScramMechanisms(@Nonnull final String username)
+    {
+        if (!isScramSupported()) {
+            return Set.of();
+        }
+
+        final Set<String> result = new HashSet<>();
+        if (supportsPasswordRetrieval())
+        {
+            // With a password, credentials for all SCRAM mechanisms can be derived.
+            result.addAll(SCRAM_MECHANISMS.stream().map(ScramMechanism::mechanismName).collect(Collectors.toSet()));
+        }
+
+        Connection con = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            result.addAll(loadStoredScramMechanisms(con, username));
+        } catch (SQLException e) {
+            Log.warn("Failed to load stored SCRAM mechanisms for user '{}'", username, e);
+        } finally {
+            DbConnectionManager.closeConnection(con);
+        }
+
+        // Remove any mechanism that has a credential stored, but that this implementation cannot service. A mechanism
+        // that this provider does not recognize cannot have its credentials retrieved through #getScramCredential, so
+        // advertising it would offer the peer a mechanism that cannot complete. A component that adds a SCRAM mechanism
+        // is expected to provide its own AuthProvider, which returns that mechanism here.
+        result.removeIf(storedMechanism -> SCRAM_MECHANISMS.stream().noneMatch(supportedMech -> supportedMech.mechanismName.equals(storedMechanism)));
+
+        if (result.isEmpty()) {
+            // No mechanisms could be determined: none are stored for this user (which includes a user that does not
+            // exist), or the lookup failed. Fall back to the lowest common denominator: when SCRAM support was first
+            // added to Openfire, SHA-1 was the only mechanism, so every user that stems from those times has
+            // credentials for at least SHA-1. This assumes that SHA-1 credentials continue to be stored for every user,
+            // which #setPassword does. It also keeps the result from revealing whether the claimed user exists.
+            result.add(ScramSha1SaslServer.MECHANISM_NAME);
+        }
+
+        return result;
+    }
+
+    @Override
+    public Set<String> getFallbackScramMechanisms()
+    {
+        if (!isScramSupported()) {
+            return Set.of();
+        }
+        if (supportsPasswordRetrieval()) {
+            // With a password, credentials for all SCRAM mechanisms can be derived for any user.
+            return SCRAM_MECHANISMS.stream().map(ScramMechanism::mechanismName).collect(Collectors.toSet());
+        }
+        // Lowest common denominator: when SCRAM support was first added to Openfire, SHA-1 was the only mechanism, so
+        // every user that stems from those times has credentials for at least SHA-1. This assumes that SHA-1
+        // credentials continue to be stored for every user, which #setPassword does.
+        return Set.of(ScramSha1SaslServer.MECHANISM_NAME);
     }
 
     /**

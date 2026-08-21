@@ -549,7 +549,7 @@ public class DefaultAuthProvider implements AuthProvider {
             // This implementation cannot distinguish between those two cases, so it reports the situation instead of
             // acting on data that it does not own.
             final Set<String> unrecognizedMechanisms = loadStoredScramMechanisms(con, username);
-            SCRAM_MECHANISMS.forEach(mech -> unrecognizedMechanisms.remove(mech.mechanismName()));
+            unrecognizedMechanisms.removeAll(SCRAM_MECHANISM_NAMES);
             if (!unrecognizedMechanisms.isEmpty()) {
                 Log.warn("Updated the password of user '{}', but left the stored SCRAM credentials of these unrecognized mechanisms untouched: {}. " +
                     "Unless another component updates them, they still hold keys that are derived from the previous password, which can therefore " +
@@ -583,6 +583,10 @@ public class DefaultAuthProvider implements AuthProvider {
      * authentication, with a username that is supplied by an unauthenticated peer.
      *
      * Implementations should not distinguish between a user that does not exist and one that has no credentials.
+     *
+     * Note that {@link #getFallbackScramMechanisms()} is deliberately not overridden by this implementation: without a
+     * username, nothing can be established about the user that is going to authenticate, and the lowest common
+     * denominator that the interface provides is the only sound answer.
      *
      * @param username the username to check
      * @return the names of the SCRAM mechanisms for which credentials are available for the user.
@@ -648,22 +652,6 @@ public class DefaultAuthProvider implements AuthProvider {
         }
 
         return result;
-    }
-
-    @Override
-    public Set<String> getFallbackScramMechanisms()
-    {
-        if (!isScramSupported()) {
-            return Set.of();
-        }
-        if (supportsPasswordRetrieval()) {
-            // With a password, credentials for all SCRAM mechanisms can be derived for any user.
-            return SCRAM_MECHANISM_NAMES;
-        }
-        // Lowest common denominator: when SCRAM support was first added to Openfire, SHA-1 was the only mechanism, so
-        // every user that stems from those times has credentials for at least SHA-1. This assumes that SHA-1
-        // credentials continue to be stored for every user, which #setPassword does.
-        return Set.of(ScramSha1SaslServer.MECHANISM_NAME);
     }
 
     /**

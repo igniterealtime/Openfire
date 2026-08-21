@@ -46,7 +46,7 @@ import static org.mockito.Mockito.when;
  * Three properties matter beyond the plain lookup:
  *
  * <ul>
- *     <li>When a password can be retrieved, credentials for every mechanism can be derived on demand, so the stored set does not constrain what can be offered.</li>
+ *     <li>When a password is stored for the user and the deployment permits retrieving it, credentials for every mechanism can be derived on demand, so the stored set does not constrain what can be offered.</li>
  *     <li>A user for whom nothing usable can be determined falls back to SCRAM-SHA-1. That keeps the result from revealing whether the claimed user exists, and keeps a database failure from denying authentication outright.</li>
  *     <li>Mechanisms that are stored but that this implementation cannot service are removed <em>before</em> that fallback is considered, so that a user holding only such credentials is not left with nothing.</li>
  * </ul>
@@ -54,6 +54,10 @@ import static org.mockito.Mockito.when;
 public class DefaultAuthProviderScramMechanismsTest
 {
     private static final String USERNAME = "juliet";
+
+    private static final String PASSWORD = "pencil";
+
+    private static final String ENCRYPTED_PASSWORD = "encrypted-value";
 
     @BeforeAll
     public static void beforeAll() throws Exception
@@ -82,7 +86,7 @@ public class DefaultAuthProviderScramMechanismsTest
     void getScramMechanisms_returnsAllMechanismsWhenPasswordIsRetrievable() throws Exception
     {
         // Setup test fixture.
-        final ResultSet rs = mechanismResultSet(ScramSha1SaslServer.MECHANISM_NAME);
+        final ResultSet rs = storedCredentialsResultSet(PASSWORD, null, ScramSha1SaslServer.MECHANISM_NAME);
 
         // Execute system under test.
         final Set<String> result = runGetScramMechanisms(USERNAME, false, rs);
@@ -98,7 +102,7 @@ public class DefaultAuthProviderScramMechanismsTest
     void getScramMechanisms_returnsStoredMechanisms() throws Exception
     {
         // Setup test fixture.
-        final ResultSet rs = mechanismResultSet(ScramSha1SaslServer.MECHANISM_NAME, ScramSha256SaslServer.MECHANISM_NAME);
+        final ResultSet rs = storedCredentialsResultSet(null, null, ScramSha1SaslServer.MECHANISM_NAME, ScramSha256SaslServer.MECHANISM_NAME);
 
         // Execute system under test.
         final Set<String> result = runGetScramMechanisms(USERNAME, true, rs);
@@ -116,7 +120,7 @@ public class DefaultAuthProviderScramMechanismsTest
     void getScramMechanisms_omitsUnrecognizedStoredMechanism() throws Exception
     {
         // Setup test fixture.
-        final ResultSet rs = mechanismResultSet(ScramSha256SaslServer.MECHANISM_NAME, "SCRAM-SHA3-512");
+        final ResultSet rs = storedCredentialsResultSet(null, null, ScramSha256SaslServer.MECHANISM_NAME, "SCRAM-SHA3-512");
 
         // Execute system under test.
         final Set<String> result = runGetScramMechanisms(USERNAME, true, rs);
@@ -133,7 +137,7 @@ public class DefaultAuthProviderScramMechanismsTest
     void getScramMechanisms_fallsBackWhenNothingIsStored() throws Exception
     {
         // Setup test fixture.
-        final ResultSet rs = mechanismResultSet();
+        final ResultSet rs = storedCredentialsResultSet(null, null);
 
         // Execute system under test.
         final Set<String> result = runGetScramMechanisms(USERNAME, true, rs);
@@ -173,6 +177,95 @@ public class DefaultAuthProviderScramMechanismsTest
 
         // Verify result.
         assertEquals(Set.of(ScramSha1SaslServer.MECHANISM_NAME), result, "Without password retrieval, only the mechanism that every user can be assumed to hold may be reported.");
+    }
+
+    /**
+     * Verifies that a user for which only unrecognized mechanisms are stored falls back to SCRAM-SHA-1, rather than
+     * being left with no mechanism at all. The removal of unrecognized mechanisms must therefore be applied before the
+     * fallback is considered.
+     */
+    @Test
+    void getScramMechanisms_fallsBackWhenOnlyUnrecognizedMechanismsAreStored() throws Exception
+    {
+        // Setup test fixture.
+        final ResultSet rs = storedCredentialsResultSet(null, null, "SCRAM-SHA3-512");
+
+        // Execute system under test.
+        final Set<String> result = runGetScramMechanisms(USERNAME, true, rs);
+
+        // Verify result.
+        assertEquals(Set.of(ScramSha1SaslServer.MECHANISM_NAME), result, "A user for which only unrecognized mechanisms are stored must fall back to SCRAM-SHA-1, not be left without any mechanism.");
+    }
+
+    /**
+     * Verifies that a database failure falls back to SCRAM-SHA-1 rather than reporting no mechanisms. Reporting none
+     * would leave every authenticating client without a usable mechanism for the duration of the failure.
+     */
+    @Test
+    void getScramMechanisms_fallsBackWhenLookupFails() throws Exception
+    {
+        // Setup test fixture.
+        final Connection connection = Mockito.mock(Connection.class);
+        when(connection.prepareStatement(anyString())).thenThrow(new SQLException("Simulated database failure."));
+
+        // Execute system under test.
+        final Set<String> result = runGetScramMechanisms(USERNAME, true, connection);
+
+        // Verify result.
+        assertEquals(Set.of(ScramSha1SaslServer.MECHANISM_NAME), result, "A failed lookup must fall back to SCRAM-SHA-1, rather than deny every mechanism.");
+    }
+
+    /**
+     * Verifies that a user without a stored password of its own is reported as holding only the mechanisms that are
+     * stored for it, even where the deployment is configured to allow password retrieval. Such a user arises when
+     * 'user.scramHashedPasswordOnly' was set at the time the user's password was last stored, and was disabled
+     * afterwards: the deployment-wide setting then says nothing about what this user holds.
+     */
+    @Test
+    void getScramMechanisms_ignoresPasswordRetrievalForUserWithoutStoredPassword() throws Exception
+    {
+        // Setup test fixture.
+        final ResultSet rs = storedCredentialsResultSet(null, null, ScramSha1SaslServer.MECHANISM_NAME);
+
+        // Execute system under test.
+        final Set<String> result = runGetScramMechanisms(USERNAME, false, rs);
+
+        // Verify result.
+        assertEquals(Set.of(ScramSha1SaslServer.MECHANISM_NAME), result, "A user that has no stored password of its own must be reported as holding only its stored mechanisms, whatever the deployment-wide password retrieval setting says.");
+    }
+
+    /**
+     * Verifies that an encrypted password counts as a stored password, as it too can be resolved to a plaintext from
+     * which every mechanism's credentials can be derived.
+     */
+    @Test
+    void getScramMechanisms_returnsAllMechanismsForUserWithEncryptedPassword() throws Exception
+    {
+        // Setup test fixture.
+        final ResultSet rs = storedCredentialsResultSet(null, ENCRYPTED_PASSWORD, ScramSha1SaslServer.MECHANISM_NAME);
+
+        // Execute system under test.
+        final Set<String> result = runGetScramMechanisms(USERNAME, false, rs);
+
+        // Verify result.
+        assertEquals(allImplementedMechanisms(), result, "An encrypted password can be resolved to a plaintext, so every implemented mechanism's credentials can be derived from it.");
+    }
+
+    /**
+     * Verifies that a user that does not exist is answered the same way as one that has no credentials stored, so that
+     * the response does not reveal which of the two applies.
+     */
+    @Test
+    void getScramMechanisms_fallsBackForUnknownUser() throws Exception
+    {
+        // Setup test fixture.
+        final ResultSet rs = noSuchUserResultSet();
+
+        // Execute system under test.
+        final Set<String> result = runGetScramMechanisms(USERNAME, true, rs);
+
+        // Verify result.
+        assertEquals(Set.of(ScramSha1SaslServer.MECHANISM_NAME), result, "A user that does not exist must be answered with the same mechanisms as one that has no credentials stored.");
     }
 
     /**
@@ -230,28 +323,52 @@ public class DefaultAuthProviderScramMechanismsTest
     }
 
     /**
-     * Returns a result set that yields one row per provided mechanism name, as the mechanism query does.
+     * Returns a result set for a user that exists, as the combined password-and-mechanisms query yields it.
      *
-     * @param mechanismNames the mechanism names to yield, in order.
+     * A user that has no SCRAM credential still yields one row, in which the mechanism column is null: that is what the
+     * LEFT JOIN produces when there is no matching row in ofUserScram.
+     *
+     * @param plainPassword the stored plaintext password, or null when none is stored.
+     * @param encryptedPassword the stored encrypted password, or null when none is stored.
+     * @param mechanismNames the mechanism names for which a credential is stored, in order.
      * @return a result set.
      */
-    private static ResultSet mechanismResultSet(final String... mechanismNames) throws SQLException
+    private static ResultSet storedCredentialsResultSet(final String plainPassword, final String encryptedPassword, final String... mechanismNames) throws SQLException
     {
         final ResultSet rs = Mockito.mock(ResultSet.class);
 
+        final int rowCount = Math.max(1, mechanismNames.length);
         OngoingStubbing<Boolean> hasNext = when(rs.next());
-        for (final String ignored : mechanismNames) {
+        for (int i = 0; i < rowCount; i++) {
             hasNext = hasNext.thenReturn(true);
         }
         hasNext.thenReturn(false);
 
-        if (mechanismNames.length > 0) {
-            OngoingStubbing<String> value = when(rs.getString(1));
+        // The password columns repeat on every row of the join.
+        when(rs.getString(1)).thenReturn(plainPassword);
+        when(rs.getString(2)).thenReturn(encryptedPassword);
+
+        if (mechanismNames.length == 0) {
+            when(rs.getString(3)).thenReturn(null);
+        } else {
+            OngoingStubbing<String> value = when(rs.getString(3));
             for (final String mechanismName : mechanismNames) {
                 value = value.thenReturn(mechanismName);
             }
         }
 
+        return rs;
+    }
+
+    /**
+     * Returns a result set for a user that does not exist, which yields no rows at all.
+     *
+     * @return a result set.
+     */
+    private static ResultSet noSuchUserResultSet() throws SQLException
+    {
+        final ResultSet rs = Mockito.mock(ResultSet.class);
+        when(rs.next()).thenReturn(false);
         return rs;
     }
 

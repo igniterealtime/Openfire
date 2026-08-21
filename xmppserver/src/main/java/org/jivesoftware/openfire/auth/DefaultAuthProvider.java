@@ -183,14 +183,15 @@ public class DefaultAuthProvider implements AuthProvider {
     @VisibleForTesting
     boolean hasIncompleteSetOfScramCredentials(String username)
     {
-        return SCRAM_MECHANISMS.stream().anyMatch(m -> {
-            try {
-                return !hasScramCredential(username, m.mechanismName());
-            } catch (SQLException e) {
-                Log.warn("Unable to determine if credentials for SCRAM mechanism '{}' are available for user '{}' due to a database error.", m.mechanismName(), username, e);
-                return false; // treat as "not known to be missing" so a DB hiccup doesn't force a regeneration storm
-            }
-        });
+        final Set<String> storedScramMechanisms;
+        try {
+            storedScramMechanisms = loadStoredScramMechanisms(username);
+        } catch (SQLException e) {
+            Log.warn("Unable to determine which SCRAM credentials are available for user '{}' due to a database error.", username, e);
+            return false; // treat as "not known to be missing" so a DB hiccup doesn't force a regeneration storm
+        }
+
+        return !storedScramMechanisms.containsAll(SCRAM_MECHANISMS.stream().map(ScramMechanism::mechanismName).collect(Collectors.toSet()));
     }
 
     @Override
@@ -593,14 +594,10 @@ public class DefaultAuthProvider implements AuthProvider {
             result.addAll(SCRAM_MECHANISMS.stream().map(ScramMechanism::mechanismName).collect(Collectors.toSet()));
         }
 
-        Connection con = null;
         try {
-            con = DbConnectionManager.getConnection();
-            result.addAll(loadStoredScramMechanisms(con, username));
+            result.addAll(loadStoredScramMechanisms(username));
         } catch (SQLException e) {
             Log.warn("Failed to load stored SCRAM mechanisms for user '{}'", username, e);
-        } finally {
-            DbConnectionManager.closeConnection(con);
         }
 
         // Remove any mechanism that has a credential stored, but that this implementation cannot service. A mechanism
@@ -796,11 +793,23 @@ public class DefaultAuthProvider implements AuthProvider {
     }
 
     /**
-     * Returns {@code true} when a SCRAM credential exists for a user and mechanism.
+     * Returns the names of all SCRAM mechanisms for which a credential is stored for a user.
+     *
+     * This includes mechanisms that this implementation does not recognize.
+     *
+     * @param username the user whose stored mechanism names are returned
+     * @return every mechanism name stored for this user
+     * @throws SQLException if the mechanism names could not be read
      */
-    private boolean hasScramCredential(final String username, final String mechanism) throws SQLException
+    private Set<String> loadStoredScramMechanisms(final String username) throws SQLException
     {
-        return loadScramCredential(username, mechanism) != null;
+        Connection con = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            return loadStoredScramMechanisms(con, username);
+        } finally {
+            DbConnectionManager.closeConnection(con);
+        }
     }
 
     /**

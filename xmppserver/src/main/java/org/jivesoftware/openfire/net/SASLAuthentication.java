@@ -52,6 +52,7 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
@@ -190,6 +191,27 @@ public class SASLAuthentication {
      * which encapsulate the business-logic related to this constant.
      */
     public static final String AVAILABLE_MECHANISMS_FOR_SESSION = "SaslMechanismsOfferedByServer";
+
+    /**
+     * Session Data property name used to cache the SCRAM mechanism names that are usable for the user that is expected
+     * to authenticate on a session.
+     *
+     * Determining these requires a credential lookup, which is driven by a username that an unauthenticated peer
+     * supplies. A stream is typically opened more than once before authentication completes (notably after TLS
+     * negotiation), and each of those regenerates the stream features. Caching the outcome for the duration of the
+     * session avoids repeating that lookup on every one of them.
+     *
+     * Instead of using this value directly, use {@link #getScramMechanismsForSession(LocalClientSession)}, which
+     * encapsulates the business logic related to this constant.
+     */
+    private static final String SCRAM_MECHANISMS_FOR_SESSION = "SaslScramMechanismsForExpectedUser";
+
+    /**
+     * The SCRAM mechanism names that were determined to be usable, together with the expected username that they were
+     * derived from. Both are held in one value so that a reader cannot observe a set that belongs to a different user
+     * than the one it is paired with.
+     */
+    private record CachedScramMechanisms(@Nullable String expectedUsername, @Nonnull Set<String> mechanisms) {}
 
     /**
      * List of mechanisms supported by the server. These are not necessarily available to all sessions.
@@ -1257,11 +1279,7 @@ public class SASLAuthentication {
         assert connection != null; // While the client is performing a SASL negotiation, the connection can't be null.
         final Set<String> result = new HashSet<>();
 
-        final Set<String> mechanismsForWhichCredentialsAreAvailable = localClientSession.getExpectedUsername()
-            .map(AuthFactory::getScramMechanisms)
-            .orElseGet(AuthFactory::getFallbackScramMechanisms)
-            .stream().flatMap(m -> Stream.of(m, m + "-PLUS")) // Expand to include all channel binding equivalents for the supported SCRAM mechanisms.
-            .collect(Collectors.toSet());
+        final Set<String> mechanismsForWhichCredentialsAreAvailable = getScramMechanismsForSession(localClientSession);
 
         for (String mech : getSupportedMechanisms())
         {
@@ -1302,6 +1320,45 @@ public class SASLAuthentication {
             // All fine: this mechanism can be offered.
             result.add(mech);
         }
+        return result;
+    }
+
+    /**
+     * Returns the SCRAM mechanism names that are usable for the user that is expected to authenticate on the provided
+     * session, including the channel binding variant of each.
+     *
+     * The result is cached on the session, keyed by the expected username. When that username changes (as it does when
+     * a peer restates, omits or changes its claimed identity on a new stream, or once it has authenticated), the cached
+     * value is not used and the mechanisms are determined again.
+     *
+     * Note that a credential that is added or removed while a session is negotiating is not reflected until the next
+     * time the expected username changes. That window is brief, and the alternative is to repeat the lookup on data
+     * that an unauthenticated peer controls.
+     *
+     * @param session the session for which to determine usable SCRAM mechanisms (cannot be null).
+     * @return SCRAM mechanism names (never null, possibly empty).
+     */
+    @VisibleForTesting
+    @Nonnull
+    static Set<String> getScramMechanismsForSession(@Nonnull final LocalClientSession session)
+    {
+        final String expectedUsername = session.getExpectedUsername().orElse(null);
+
+        final Object cached = session.getSessionData(SCRAM_MECHANISMS_FOR_SESSION);
+        if (cached instanceof CachedScramMechanisms entry && Objects.equals(entry.expectedUsername(), expectedUsername)) {
+            return entry.mechanisms();
+        }
+
+        final Set<String> available = expectedUsername == null
+            ? AuthFactory.getFallbackScramMechanisms()
+            : AuthFactory.getScramMechanisms(expectedUsername);
+
+        // Expand to include the channel binding equivalent of each mechanism, which shares its credentials.
+        final Set<String> result = available.stream()
+            .flatMap(mechanism -> Stream.of(mechanism, mechanism + "-PLUS"))
+            .collect(Collectors.toUnmodifiableSet());
+
+        session.setSessionData(SCRAM_MECHANISMS_FOR_SESSION, new CachedScramMechanisms(expectedUsername, result));
         return result;
     }
 

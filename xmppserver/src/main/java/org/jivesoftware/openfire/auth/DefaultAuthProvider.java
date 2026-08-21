@@ -25,6 +25,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.SQLIntegrityConstraintViolationException;
 import java.sql.Types;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -46,6 +49,7 @@ import org.jivesoftware.openfire.sasl.ScramSha256SaslServer;
 import org.jivesoftware.openfire.sasl.ScramSha512SaslServer;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,9 +65,31 @@ import org.slf4j.LoggerFactory;
 public class DefaultAuthProvider implements AuthProvider {
 
     /**
+     * How long the set of universally-held SCRAM mechanisms is cached before it is determined again.
+     *
+     * The determination scans the user table, so it is not something to do per session. It is invalidated when a
+     * password is stored, which is the operation that can complete a user's set of credentials. This duration bounds
+     * how long a change made by any other means (notably the creation or removal of a user) goes unnoticed.
+     */
+    public static final SystemProperty<Duration> UNIVERSAL_SCRAM_MECHANISMS_CACHE_DURATION = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("provider.auth.scram.universal-mechanisms.cache-duration")
+        .setChronoUnit(ChronoUnit.MINUTES)
+        .setDefaultValue(Duration.ofMinutes(30))
+        .setDynamic(true)
+        .build();
+
+    /**
      * Describes a SCRAM mechanism for credential derivation: its storage name, JCA algorithm names, and iteration-count source.
      */
     private record ScramMechanism(String mechanismName, String hmacAlgorithm, String digestAlgorithm, IntSupplier iterationCount) {}
+
+    /**
+     * The mechanisms that were determined to be held by every user, and the moment at which that determination goes
+     * stale. Both are held in one value so that a reader cannot observe a set together with an unrelated expiry.
+     */
+    private record UniversalScramMechanisms(@Nonnull Instant expiry, @Nonnull Set<String> mechanisms) {}
+
+    private static volatile UniversalScramMechanisms universalScramMechanisms;
 
     /**
      * Mechanisms supported by this AuthProvider implementation (not necessarily supported at runtime, or by other parts of Openfire).
@@ -106,6 +132,10 @@ public class DefaultAuthProvider implements AuthProvider {
         "DELETE FROM ofUserScram WHERE username=? AND mechanism=?";
     private static final String LOAD_PASSWORD_AND_SCRAM_MECHANISMS =
         "SELECT u.plainPassword, u.encryptedPassword, s.mechanism FROM ofUser u LEFT JOIN ofUserScram s ON u.username = s.username WHERE u.username = ?";
+    private static final String COUNT_USERS =
+        "SELECT COUNT(*) FROM ofUser";
+    private static final String COUNT_USERS_PER_SCRAM_MECHANISM =
+        "SELECT s.mechanism, COUNT(DISTINCT s.username) FROM ofUserScram s JOIN ofUser u ON s.username = u.username GROUP BY s.mechanism";
 
     private static final SecureRandom random = new SecureRandom();
 
@@ -563,6 +593,9 @@ public class DefaultAuthProvider implements AuthProvider {
         finally {
             DbConnectionManager.closeTransactionConnection(pstmt, con, abortTransaction);
         }
+
+        // A stored password can complete a user's set of credentials, which may make a mechanism universally held.
+        invalidateUniversalScramMechanisms();
     }
 
     @Override
@@ -583,10 +616,6 @@ public class DefaultAuthProvider implements AuthProvider {
      * authentication, with a username that is supplied by an unauthenticated peer.
      *
      * Implementations should not distinguish between a user that does not exist and one that has no credentials.
-     *
-     * Note that {@link #getFallbackScramMechanisms()} is deliberately not overridden by this implementation: without a
-     * username, nothing can be established about the user that is going to authenticate, and the lowest common
-     * denominator that the interface provides is the only sound answer.
      *
      * @param username the username to check
      * @return the names of the SCRAM mechanisms for which credentials are available for the user.
@@ -652,6 +681,107 @@ public class DefaultAuthProvider implements AuthProvider {
         }
 
         return result;
+    }
+
+    /**
+     * Returns the names of the SCRAM mechanisms that can be assumed to be usable by any user.
+     *
+     * The inherited implementation reports SCRAM-SHA-1 only, being the sole mechanism that existed when SCRAM support
+     * was first added. This implementation adds any other mechanism for which a credential is stored for <em>every</em>
+     * user: where that holds, a client that does not identify itself can safely be offered the stronger mechanism.
+     *
+     * The result is only ever a superset of what the inherited implementation reports, and a mechanism is only added on
+     * positive evidence. A failure to determine that evidence, or a determination that is not unanimous, leaves the
+     * inherited answer in place.
+     */
+    @Override
+    public Set<String> getFallbackScramMechanisms()
+    {
+        if (!isScramSupported()) {
+            return Set.of();
+        }
+
+        final Set<String> result = new HashSet<>(AuthProvider.super.getFallbackScramMechanisms());
+        result.addAll(getUniversalScramMechanisms());
+        return result;
+    }
+
+    /**
+     * Returns the names of the SCRAM mechanisms for which a credential is stored for every user, as most recently
+     * determined.
+     *
+     * @return mechanism names (never null, possibly empty).
+     */
+    private static Set<String> getUniversalScramMechanisms()
+    {
+        final UniversalScramMechanisms cached = universalScramMechanisms;
+        if (cached != null && Instant.now().isBefore(cached.expiry())) {
+            return cached.mechanisms();
+        }
+
+        final Set<String> determined = determineUniversalScramMechanisms();
+        universalScramMechanisms = new UniversalScramMechanisms(Instant.now().plus(UNIVERSAL_SCRAM_MECHANISMS_CACHE_DURATION.getValue()), determined);
+        return determined;
+    }
+
+    /**
+     * Determines which SCRAM mechanisms have a stored credential for every user, by comparing the number of users that
+     * hold a credential for each mechanism against the total number of users.
+     *
+     * The mechanism counts are read before the user count deliberately: a user that is created between the two reads
+     * inflates the latter, which makes a mechanism appear not to be universal. That is the safe direction to be wrong
+     * in, as it withholds a mechanism rather than advertising one that a user might not hold.
+     *
+     * @return mechanism names (never null, possibly empty).
+     */
+    private static Set<String> determineUniversalScramMechanisms()
+    {
+        final Map<String, Long> usersPerMechanism = new HashMap<>();
+        final long userCount;
+
+        Connection con = null;
+        try {
+            con = DbConnectionManager.getConnection();
+
+            try (final PreparedStatement stmt = con.prepareStatement(COUNT_USERS_PER_SCRAM_MECHANISM);
+                 final ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    usersPerMechanism.put(rs.getString(1), rs.getLong(2));
+                }
+            }
+
+            try (final PreparedStatement stmt = con.prepareStatement(COUNT_USERS);
+                 final ResultSet rs = stmt.executeQuery()) {
+                userCount = rs.next() ? rs.getLong(1) : -1;
+            }
+        } catch (SQLException e) {
+            Log.warn("Unable to determine which SCRAM mechanisms are held by every user. No mechanism will be assumed to be usable by a user that cannot be identified.", e);
+            return Set.of();
+        } finally {
+            DbConnectionManager.closeConnection(con);
+        }
+
+        if (userCount <= 0) {
+            // No users, or the count could not be read. Nothing can be established from that.
+            return Set.of();
+        }
+
+        final Set<String> result = SCRAM_MECHANISM_NAMES.stream()
+            .filter(mechanism -> usersPerMechanism.getOrDefault(mechanism, 0L) >= userCount)
+            .collect(Collectors.toSet());
+
+        Log.debug("Determined that a credential is stored for every one of the {} users for these SCRAM mechanisms: {}", userCount, result);
+        return result;
+    }
+
+    /**
+     * Discards the cached determination of which SCRAM mechanisms are held by every user, so that it is made again on
+     * next use.
+     */
+    @VisibleForTesting
+    static void invalidateUniversalScramMechanisms()
+    {
+        universalScramMechanisms = null;
     }
 
     /**

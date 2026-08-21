@@ -193,6 +193,24 @@ public class SASLAuthentication {
     public static final String AVAILABLE_MECHANISMS_FOR_SESSION = "SaslMechanismsOfferedByServer";
 
     /**
+     * Controls whether the SCRAM mechanisms that are advertised to a client are tailored to the user that is expected
+     * to authenticate.
+     *
+     * When enabled, the identity that a client claims in the 'from' attribute of its stream header is used to look up
+     * which SCRAM mechanisms that user has credentials for, so that no mechanism is offered that cannot succeed.
+     *
+     * When disabled, every session is offered the mechanisms that any user can be assumed to hold, and no per-user
+     * lookup is performed. This removes both the (small) signal that the tailored response gives an unauthenticated
+     * peer about which users exist, and the credential lookup that such a peer can otherwise trigger. The cost is that
+     * a user holding credentials for a stronger mechanism is not offered it unless every user holds it.
+     */
+    public static final SystemProperty<Boolean> SCRAM_MECHANISMS_PER_USER = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.auth.scram.mechanisms-per-user")
+        .setDynamic(true)
+        .setDefaultValue(true)
+        .build();
+
+    /**
      * Session Data property name used to cache the SCRAM mechanism names that are usable for the user that is expected
      * to authenticate on a session.
      *
@@ -1342,7 +1360,10 @@ public class SASLAuthentication {
     @Nonnull
     static Set<String> getScramMechanismsForSession(@Nonnull final LocalClientSession session)
     {
-        final String expectedUsername = session.getExpectedUsername().orElse(null);
+        // When tailoring is disabled, the session is treated as if no user could be identified.
+        final String expectedUsername = SCRAM_MECHANISMS_PER_USER.getValue()
+            ? session.getExpectedUsername().orElse(null)
+            : null;
 
         final Object cached = session.getSessionData(SCRAM_MECHANISMS_FOR_SESSION);
         if (cached instanceof CachedScramMechanisms entry && Objects.equals(entry.expectedUsername(), expectedUsername)) {

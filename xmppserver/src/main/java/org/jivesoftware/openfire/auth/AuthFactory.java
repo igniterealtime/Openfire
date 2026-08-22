@@ -252,6 +252,12 @@ public class AuthFactory {
      * Stored ciphertext is not on its own evidence that the original password can be recovered: decryption depends on
      * a cipher that is unavailable when no password key has been configured, or while the server is in setup mode.
      *
+     * Note that this is a weak test. {@link Blowfish#decryptString(String)} does not validate its own padding, so a
+     * wrong key usually yields a plausible-looking string rather than a failure. An empty result is treated as a
+     * failure here because it is what that method returns for a ciphertext that holds no data beyond its IV, and for
+     * one whose decrypted padding overruns the buffer; an empty password produces the same value and is therefore
+     * indistinguishable from those.
+     *
      * @param encryptedPassword the encrypted password to test (can be null).
      * @return true when the provided value could be resolved to a plaintext password.
      */

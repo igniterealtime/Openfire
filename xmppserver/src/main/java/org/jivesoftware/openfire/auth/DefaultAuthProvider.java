@@ -34,6 +34,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.IntSupplier;
 import java.util.stream.Collectors;
 
@@ -89,7 +90,16 @@ public class DefaultAuthProvider implements AuthProvider {
      */
     private record UniversalScramMechanisms(@Nonnull Instant expiry, @Nonnull Set<String> mechanisms) {}
 
+    /**
+     * The most recent determination of which mechanisms every user holds, or null when none is current.
+     */
     private static volatile UniversalScramMechanisms universalScramMechanisms;
+
+    /**
+     * Incremented on every invalidation, so that a determination that was already in progress can detect that its
+     * result is stale and refrain from publishing it.
+     */
+    private static final AtomicLong universalScramMechanismsGeneration = new AtomicLong();
 
     /**
      * Mechanisms supported by this AuthProvider implementation (not necessarily supported at runtime, or by other parts of Openfire).
@@ -724,8 +734,13 @@ public class DefaultAuthProvider implements AuthProvider {
             return cached.mechanisms();
         }
 
+        // Record the generation before reading: an invalidation that happens while the determination is in progress
+        // bumps it, and the result is then discarded rather than published over the newer state.
+        final long generation = universalScramMechanismsGeneration.get();
         final Set<String> determined = determineUniversalScramMechanisms();
-        universalScramMechanisms = new UniversalScramMechanisms(Instant.now().plus(UNIVERSAL_SCRAM_MECHANISMS_CACHE_DURATION.getValue()), determined);
+        if (universalScramMechanismsGeneration.get() == generation) {
+            universalScramMechanisms = new UniversalScramMechanisms(Instant.now().plus(UNIVERSAL_SCRAM_MECHANISMS_CACHE_DURATION.getValue()), determined);
+        }
         return determined;
     }
 
@@ -786,6 +801,7 @@ public class DefaultAuthProvider implements AuthProvider {
     @VisibleForTesting
     static void invalidateUniversalScramMechanisms()
     {
+        universalScramMechanismsGeneration.incrementAndGet();
         universalScramMechanisms = null;
     }
 

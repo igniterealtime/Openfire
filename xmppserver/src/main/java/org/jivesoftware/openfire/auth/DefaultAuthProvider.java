@@ -141,11 +141,11 @@ public class DefaultAuthProvider implements AuthProvider {
     private static final String DELETE_SCRAM_CREDENTIAL =
         "DELETE FROM ofUserScram WHERE username=? AND mechanism=?";
     private static final String LOAD_PASSWORD_AND_SCRAM_MECHANISMS =
-        "SELECT u.plainPassword, u.encryptedPassword, s.mechanism FROM ofUser u LEFT JOIN ofUserScram s ON u.username = s.username WHERE u.username = ?";
+        "SELECT u.plainPassword, u.encryptedPassword, s.mechanism FROM ofUser u LEFT JOIN ofUserScram s ON u.username = s.username AND s.salt IS NOT NULL AND s.iterations > 0 AND s.storedKey IS NOT NULL AND s.serverKey IS NOT NULL WHERE u.username = ?";
     private static final String COUNT_USERS =
         "SELECT COUNT(*) FROM ofUser";
     private static final String COUNT_USERS_PER_SCRAM_MECHANISM =
-        "SELECT s.mechanism, COUNT(DISTINCT s.username) FROM ofUserScram s JOIN ofUser u ON s.username = u.username GROUP BY s.mechanism";
+        "SELECT s.mechanism, COUNT(DISTINCT s.username) FROM ofUserScram s JOIN ofUser u ON s.username = u.username WHERE s.salt IS NOT NULL AND s.iterations > 0 AND s.storedKey IS NOT NULL AND s.serverKey IS NOT NULL GROUP BY s.mechanism";
 
     private static final SecureRandom random = new SecureRandom();
 

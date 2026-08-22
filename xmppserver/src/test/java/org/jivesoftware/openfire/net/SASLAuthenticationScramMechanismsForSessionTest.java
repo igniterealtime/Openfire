@@ -81,9 +81,10 @@ public class SASLAuthenticationScramMechanismsForSessionTest
         Fixtures.disableDatabasePersistence();
 
         // Force class initialization here, while no statics are mocked. The static initializer of this class registers
-        // a security provider and reads configuration; left to happen on first use, that would occur inside the
-        // mocked-static scope of a test.
+        // a security provider and reads configuration and AuthFactory additionally instantiates the configured auth
+        // provider. Left to happen on first use, that would occur inside the mocked-static scope of a test.
         Class.forName(SASLAuthentication.class.getName());
+        Class.forName(AuthFactory.class.getName());
     }
 
     @BeforeEach

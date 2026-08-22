@@ -72,12 +72,13 @@ public class DefaultAuthProviderScramMechanismsTest
         Fixtures.reconfigureOpenfireHome();
         Fixtures.disableDatabasePersistence();
 
-        // Force class initialization here, while JiveGlobals is not mocked. These classes define SystemProperty
-        // instances in their static initializer, which resolve localized strings and property values. Left to happen
+        // Force class initialization here, while no statics are mocked. These classes read configuration in their
+        // static initializer, and AuthFactory additionally instantiates the configured auth provider. Left to happen
         // on first use, that would occur inside the mocked-static scope of a test, where those lookups do not behave.
         Class.forName(ScramSha1SaslServer.class.getName());
         Class.forName(ScramSha256SaslServer.class.getName());
         Class.forName(ScramSha512SaslServer.class.getName());
+        Class.forName(AuthFactory.class.getName());
     }
 
     @BeforeEach

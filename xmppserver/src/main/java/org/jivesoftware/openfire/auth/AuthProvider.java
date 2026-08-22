@@ -97,7 +97,13 @@ public interface AuthProvider {
      * Implementations must not create or modify credentials as a side effect: this method is invoked before
      * authentication, with a username that is supplied by an unauthenticated peer.
      *
-     * Implementations should not distinguish between a user that does not exist and one that has no credentials.
+     * Implementations should not distinguish between a user that does not exist and one that has no credentials. That
+     * indistinguishability is deliberate and is what keeps this method from becoming a way for an unauthenticated peer
+     * to enumerate usernames: were a user that is not served answered differently from one that is, a peer could learn
+     * which usernames exist by watching the advertised set change. The cost is that a mechanism may be reported for a
+     * user that cannot in fact use it. That is the safe direction: such an attempt fails in the same way a wrong
+     * password does, whereas withholding a mechanism that a user does hold locks that user out entirely, as an
+     * inbound mechanism that was never advertised is rejected outright.
      *
      * @param username the username to check
      * @return the names of the SCRAM mechanisms for which credentials are available for the user.

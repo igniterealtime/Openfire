@@ -227,8 +227,12 @@ public class HybridAuthProvider extends AuthMultiProvider {
             return override.getScramMechanisms(username);
         }
 
-        // When there's no override, aggregate over all providers: authentication is attempted with each of them in
-        // turn, so a mechanism that any of them can service is usable for this user.
+        // The union deliberately includes what a provider reports for a user it does not serve, which by contract is
+        // indistinguishable from what it reports for a user with no credentials. Filtering those out would require the
+        // providers to reveal which of them serves the user, which is the enumeration signal that the contract of
+        // #getScramMechanisms forbids. The effect is that a mechanism can be advertised that no provider can service
+        // for this user; an attempt to use it fails as a wrong password does, and the mechanisms that do work remain
+        // on offer alongside it.
         final Set<String> result = getAuthProviders().stream()
             .map(provider -> provider.getScramMechanisms(username))
             .flatMap(Set::stream)

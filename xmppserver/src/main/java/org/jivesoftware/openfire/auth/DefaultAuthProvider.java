@@ -615,7 +615,9 @@ public class DefaultAuthProvider implements AuthProvider {
      * Implementations must not create or modify credentials as a side effect: this method is invoked before
      * authentication, with a username that is supplied by an unauthenticated peer.
      *
-     * Implementations should not distinguish between a user that does not exist and one that has no credentials.
+     * Implementations should not distinguish between a user that does not exist and one that has no credentials. Note
+     * that this is why a mechanism can be reported that this user cannot actually use. That holds for a single provider
+     * as much as for a chained one.
      *
      * @param username the username to check
      * @return the names of the SCRAM mechanisms for which credentials are available for the user.

@@ -189,22 +189,11 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
                     features.add(starttls);
                 }
 
-                if (ServerDialback.isEnabled()) {
-                    // Also offer server dialback (when TLS is not required). Server dialback may be offered
-                    // after TLS has been negotiated and a self-signed certificate is being used
-                    final Element dialback = DocumentHelper.createElement(QName.get("dialback", "urn:xmpp:features:dialback"));
-                    dialback.addElement("errors");
-                    features.add(dialback);
-                }
-
-                if (!ConnectionSettings.Server.STREAM_LIMITS_ADVERTISEMENT_DISABLED.getValue()) {
-                    final Element limits = DocumentHelper.createElement(QName.get("limits", "urn:xmpp:stream-limits:0"));
-                    limits.addElement("max-bytes").addText(String.valueOf(XMLLightweightParser.XMPP_PARSER_BUFFER_SIZE.getValue()));
-                    final Duration timeout = ConnectionSettings.Server.IDLE_TIMEOUT_PROPERTY.getValue();
-                    if (!timeout.isNegative() && !timeout.isZero()) {
-                        limits.addElement("idle-seconds").addText(String.valueOf(timeout.toSeconds()));
-                    }
-                    features.add(limits);
+                // Always delegate the rest (SASL, dialback, limits) to the single feature builder. It self-guards on
+                // session.isEncrypted(), so this is correct whether we're still plaintext (STARTTLS not yet negotiated)
+                // or already encrypted (directTLS, or STARTTLS post-negotiation calling this same method separately).
+                for (Element feature : session.getAvailableStreamFeatures()) {
+                    features.add(feature);
                 }
             } else {
                 Log.debug("Don't offer stream-features to pre-1.0 servers, as it confuses them. Sending features to Openfire < 3.7.1 confuses it too - OF-443)");
@@ -436,17 +425,9 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             compression.addElement("method").addText("zlib");
             result.add(compression);
         }
-        
-        // Offer server dialback if using self-signed certificates and no authentication has been done yet
-        boolean usingSelfSigned;
-        final Certificate[] chain = conn.getLocalCertificates();
-        if (chain == null || chain.length == 0) {
-            usingSelfSigned = true;
-        } else {
-            usingSelfSigned = CertificateManager.isSelfSignedCertificate((X509Certificate) chain[0]);
-        }
-        
-        if (usingSelfSigned && ServerDialback.isEnabledForSelfSigned() && validatedDomains.isEmpty()) {
+
+        // Offer server dialback whenever it's enabled and no domain has validated yet.
+        if (ServerDialback.isEnabled() && validatedDomains.isEmpty()) {
             final Element dialback = DocumentHelper.createElement(QName.get("dialback", "urn:xmpp:features:dialback"));
             dialback.addElement("errors");
             result.add(dialback);

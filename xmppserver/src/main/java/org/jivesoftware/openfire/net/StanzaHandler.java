@@ -163,7 +163,7 @@ public abstract class StanzaHandler {
 
         Element doc;
         final Set<Namespace> namespaces = connection.getAdditionalNamespaces();
-        if (namespaces.isEmpty()) {
+        if (namespaces.isEmpty() && !stanza.startsWith("<stream:")) {
             doc = reader.read(new StringReader(stanza)).getRootElement();
         } else {
             // When the peer defined namespace prefixes on the 'stream' element, other than the default namespaces, then

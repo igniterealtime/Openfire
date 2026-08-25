@@ -56,19 +56,19 @@ import static org.mockito.Mockito.*;
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class SASLIntegrationTest {
 
-    @Mock(lenient = true)
+    @Mock
     private LocalClientSession clientSession;
 
-    @Mock(lenient = true)
+    @Mock
     private Connection connection;
 
     @Mock
     private LocalIncomingServerSession serverSession;
 
-    @Mock(lenient = true)
+    @Mock
     private XMPPServer xmppServer;
 
-    @Mock(lenient = true) 
+    @Mock
     private XMPPServerInfo serverInfo;
 
     private Element features;
@@ -409,8 +409,9 @@ public class SASLIntegrationTest {
         assertEquals("", response.getText()); // We gave no IR, so no success-data reflected.
 
         // Verify session state
-        verify(clientSession).setAuthToken(any(AuthToken.class));
-        assertFalse(clientSession.isAnonymousUser());
+        ArgumentCaptor<AuthToken> tokenCaptor = ArgumentCaptor.forClass(AuthToken.class);
+        verify(clientSession).setAuthToken(tokenCaptor.capture());
+        assertFalse(tokenCaptor.getValue().isAnonymous(), "Auth token should not be anonymous");
     }
 
     @Test
@@ -437,8 +438,9 @@ public class SASLIntegrationTest {
         assertEquals("initial-response", additionalData);
         
         // Verify session state
-        verify(clientSession).setAuthToken(any(AuthToken.class));
-        assertFalse(clientSession.isAnonymousUser(), "Session should not be anonymous");
+        ArgumentCaptor<AuthToken> tokenCaptor = ArgumentCaptor.forClass(AuthToken.class);
+        verify(clientSession).setAuthToken(tokenCaptor.capture());
+        assertFalse(tokenCaptor.getValue().isAnonymous(), "Auth token should not be anonymous");
     }
 
     @Test
@@ -469,8 +471,9 @@ public class SASLIntegrationTest {
         assertTrue(authId.getText().contains("@"), "Authorization ID should be a full JID");
         
         // Verify session state
-        verify(clientSession).setAuthToken(any(AuthToken.class));
-        assertFalse(clientSession.isAnonymousUser(), "Session should not be anonymous");
+        ArgumentCaptor<AuthToken> tokenCaptor = ArgumentCaptor.forClass(AuthToken.class);
+        verify(clientSession).setAuthToken(tokenCaptor.capture());
+        assertFalse(tokenCaptor.getValue().isAnonymous(), "Auth token should not be anonymous");
     }
 
     @Test
@@ -508,8 +511,9 @@ public class SASLIntegrationTest {
         assertTrue(authId.getText().contains("@"), "Authorization ID should be a full JID");
 
         // Verify session state
-        verify(clientSession).setAuthToken(any(AuthToken.class));
-        assertFalse(clientSession.isAnonymousUser(), "Session should not be anonymous");
+        ArgumentCaptor<AuthToken> tokenCaptor = ArgumentCaptor.forClass(AuthToken.class);
+        verify(clientSession).setAuthToken(tokenCaptor.capture());
+        assertFalse(tokenCaptor.getValue().isAnonymous(), "Auth token should not be anonymous");
     }
 
     @Test
@@ -564,9 +568,11 @@ public class SASLIntegrationTest {
             assertNotNull(authId, "SASL2 success must include authorization-identifier");
             assertTrue(authId.getText().contains("@"), "Authorization ID should be a full JID");
         }
+
         // Verify session state
-        verify(clientSession).setAuthToken(any(AuthToken.class));
-        assertFalse(clientSession.isAnonymousUser());
+        ArgumentCaptor<AuthToken> tokenCaptor = ArgumentCaptor.forClass(AuthToken.class);
+        verify(clientSession).setAuthToken(tokenCaptor.capture());
+        assertFalse(tokenCaptor.getValue().isAnonymous(), "Auth token should not be anonymous");
     }
 
     @Test
@@ -735,10 +741,6 @@ public class SASLIntegrationTest {
         when(xmppServer.getSessionManager()).thenReturn(sessionManager);
         when(sessionManager.bindResource(any(), any(), any()))
             .thenReturn(CompletableFuture.completedFuture(SessionManager.BindResult.BOUND));
-
-        // Mock connection so getAvailableMechanismsForClientSession assertion passes.
-        Connection connection = mock(Connection.class);
-        when(clientSession.getConnection()).thenReturn(connection);
 
         when(clientSession.isAuthenticated()).thenReturn(false);
         when(clientSession.getStatus()).thenReturn(org.jivesoftware.openfire.session.Session.Status.CONNECTED);

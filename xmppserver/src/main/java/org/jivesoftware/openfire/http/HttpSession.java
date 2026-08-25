@@ -231,6 +231,7 @@ public class HttpSession extends LocalClientSession {
             SASLAuthentication.setAdvertisedSASLMechanisms(this, advertisableSASLMechanisms);
             final List<Element> mechanisms = SASLAuthentication.asSASLMechanisms(this, advertisableSASLMechanisms);
             elements.addAll(mechanisms);
+            SASLAuthentication.appendChannelBindingCapabilityIfNeeded(elements);
         }
 
         if (XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled()) {

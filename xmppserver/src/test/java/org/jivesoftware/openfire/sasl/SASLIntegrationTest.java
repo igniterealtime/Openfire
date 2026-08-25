@@ -744,6 +744,8 @@ public class SASLIntegrationTest {
         when(clientSession.getStatus()).thenReturn(org.jivesoftware.openfire.session.Session.Status.CONNECTED);
         when(clientSession.getAuthToken()).thenReturn(AuthToken.generateUserToken("testuser"));
 
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
+
         Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
             .addAttribute("mechanism", "TEST-MECHANISM");
 

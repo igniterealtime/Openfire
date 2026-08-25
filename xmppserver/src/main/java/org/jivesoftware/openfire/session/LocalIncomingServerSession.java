@@ -426,8 +426,8 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             result.add(compression);
         }
 
-        // Offer server dialback whenever it's enabled and no domain has validated yet.
-        if (ServerDialback.isEnabled() && validatedDomains.isEmpty()) {
+        // Offer server dialback whenever it's enabled outright, or enabled as a fallback for self-signed certificates, as long as no domain has validated yet.
+        if ((ServerDialback.isEnabled() || ServerDialback.isEnabledForSelfSigned()) && validatedDomains.isEmpty()) {
             final Element dialback = DocumentHelper.createElement(QName.get("dialback", "urn:xmpp:features:dialback"));
             dialback.addElement("errors");
             result.add(dialback);

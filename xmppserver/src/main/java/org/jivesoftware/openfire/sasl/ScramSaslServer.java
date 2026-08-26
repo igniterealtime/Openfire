@@ -331,6 +331,15 @@ public abstract class ScramSaslServer implements SaslServer
             throw new SaslException("Proxy authorization is not supported by this server. Rejecting authentication for non-empty authzid that differs from the authentication identity.");
         }
 
+        // https://www.rfc-editor.org/rfc/rfc5802.html#section-5: the "m=" attribute is reserved for future
+        // extensibility. Its presence indicates a mandatory extension; if the server does not support/understand
+        // the extension (which, since none are currently defined, is always the case here), it MUST fail the
+        // authentication rather than silently ignore the attribute. See OF-3350
+        final String mandatoryExtension = bareMatcher.group(1);
+        if (mandatoryExtension != null) {
+            throw new SaslException("Client requested an unsupported mandatory extension ('" + mandatoryExtension + "'). Rejecting authentication.");
+        }
+
         // https://www.rfc-editor.org/rfc/rfc5802.html#section-6: If the flag is set to "y" and the server supports
         // channel binding, the server MUST fail authentication. This is because if the client sets the channel binding
         // flag to "y", then the client must have believed that the server did not support channel binding -- if the

@@ -101,14 +101,20 @@ public abstract class ScramSaslServer implements SaslServer
      * reserved-mext              = "m=" 1*(value-char)
      * username                   = "n=" saslname
      * nonce                      = "r=" c-nonce [s-nonce]
+     * extensions                 = attr-val *("," attr-val)
+     * attr-val                   = ALPHA "=" value
      * </pre>
      *
-     * Group 1: the reserved "m=" extension, if the client sent one (used purely to detect and reject it).
+     * Group 1: the reserved "m=" extension in the leading position, if the client sent one (used purely to detect and reject it).
      * Group 2: the (still saslname-escaped) username value.
      * Group 3: the nonce value.
-     * Group 4: any optional extensions following the nonce (accepted, but otherwise unused).
+     * Group 4: the raw, comma-prefixed extensions following the nonce (e.g. ",a=1,b=2"), or an empty string if none are present.
+     *
+     * Each segment from group 4 is already constrained to a well-formed, non-empty attr-val pair by this
+     * pattern; {@link #rejectReservedMandatoryExtension(String)} must still be called on this value, since the
+     * reserved "m" attribute can also appear here rather than only in the leading reserved-mext position.
      */
-    private static final Pattern CLIENT_FIRST_MESSAGE_BARE = Pattern.compile("^(?:(m=[^,]*),)?n=([^,]*),r=([^,]*)(?:,(.*))?$");
+    private static final Pattern CLIENT_FIRST_MESSAGE_BARE = Pattern.compile("^(?:(m=[^,]*),)?n=([^,]*),r=([^,]*)((?:,[A-Za-z]=[^,]+)*)$");
 
     /**
      * Matches a SCRAM client-final-message:
@@ -116,6 +122,7 @@ public abstract class ScramSaslServer implements SaslServer
      * <pre>
      * client-final-message-without-proof = channel-binding "," nonce ["," extensions]
      * client-final-message               = client-final-message-without-proof "," proof
+     * extensions                         = attr-val *("," attr-val); attr-val = ALPHA "=" value
      * </pre>
      *
      * Group 1: the client-final-message-without-proof, verbatim (needed, byte-for-byte, to compute AuthMessage).
@@ -123,11 +130,11 @@ public abstract class ScramSaslServer implements SaslServer
      * Group 3: the nonce value.
      * Group 4: the proof value.
      *
-     * Any optional extensions between the nonce and the proof are matched by the repeated, comma-led group; the
-     * negative lookahead {@code (?!p=)} stops that repetition from ever swallowing the mandatory, always-last "p="
-     * (proof) attribute, without needing to know in advance how many extensions (if any) are present.
+     * Each optional extension between the nonce and the proof must be a well-formed, non-empty attr-val pair;
+     * malformed segments (empty, multi-letter attribute names, or missing "=") cause the whole message to be
+     * rejected as invalid rather than silently tolerated.
      */
-    private static final Pattern CLIENT_FINAL_MESSAGE = Pattern.compile("^(c=([^,]*),r=([^,]*)(?:,(?!p=)[^,]*)*),p=(.*)$");
+    private static final Pattern CLIENT_FINAL_MESSAGE = Pattern.compile("^(c=([^,]*),r=([^,]*)(?:,(?!p=)[A-Za-z]=[^,]+)*),p=(.*)$");
 
     /**
      * Manages a set of providers that can extract channel binding data of various types from SSL engines.
@@ -353,6 +360,10 @@ public abstract class ScramSaslServer implements SaslServer
         if (mandatoryExtension != null) {
             throw new SaslException("Client requested an unsupported mandatory extension ('" + mandatoryExtension + "'). Rejecting authentication.");
         }
+
+        // The check above only catches "m=" in the leading reserved-mext position. A client could otherwise bypass
+        // it simply by moving the attribute into the (structurally identical) extensions list that follows the nonce.
+        rejectReservedMandatoryExtension(bareMatcher.group(4));
 
         // https://www.rfc-editor.org/rfc/rfc5802.html#section-6: If the flag is set to "y" and the server supports
         // channel binding, the server MUST fail authentication. This is because if the client sets the channel binding
@@ -892,5 +903,44 @@ public abstract class ScramSaslServer implements SaslServer
             i += 2; // Skip the two characters just consumed (loop increment consumes the third).
         }
         return result.toString();
+    }
+
+    /**
+     * Scans a raw, comma-prefixed extensions string (e.g. ",a=1,b=2") for the reserved "m" attribute and rejects
+     * the exchange if found. RFC 5802 reserves "m" for a future mandatory extension mechanism: since none is
+     * currently defined, its presence must cause authentication to fail -- unlike a genuinely unrecognized
+     * extension, which the specification requires servers to ignore. This applies regardless of whether "m="
+     * appears in the leading reserved-mext position of client-first-message-bare or among the extensions that may
+     * follow the nonce; a client cannot bypass the check by relocating the attribute.
+     *
+     * The caller ({@link #generateServerFirstMessage(byte[])}) always supplies a value already constrained to
+     * well-formed "letter=value" segments by {@link #CLIENT_FIRST_MESSAGE_BARE}, so the shape check below is
+     * defense-in-depth for direct callers -- this method is {@code @VisibleForTesting} and therefore reachable
+     * without going through that regex.
+     *
+     * @param rawExtensions the raw, comma-prefixed extensions string, or an empty string if none are present
+     * @throws SaslException if a reserved "m" attribute is present anywhere in {@code rawExtensions}, or if any
+     * segment is not a well-formed, single-letter attr-val pair
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3350">OF-3350: SCRAM server accepts unsupported mandatory extensions</a>
+     */
+    @VisibleForTesting
+    static void rejectReservedMandatoryExtension(@Nonnull final String rawExtensions) throws SaslException
+    {
+        if (rawExtensions.isEmpty()) {
+            return;
+        }
+
+        for (final String ext : rawExtensions.substring(1).split(","))
+        {
+            if (ext.length() < 3 || ext.charAt(1) != '=')
+            {
+                throw new SaslException("Invalid extension: '" + ext + "' is not a well-formed attr-val pair");
+            }
+
+            if (ext.charAt(0) == 'm')
+            {
+                throw new SaslException("Client requested an unsupported mandatory extension ('" + ext + "'). Rejecting authentication.");
+            }
+        }
     }
 }

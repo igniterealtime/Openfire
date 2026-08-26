@@ -260,7 +260,7 @@ public abstract class AbstractScramSaslServerTest
      *
      * GS2 parsing test: completely algorithm-independent.
      *
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3355">OF-3355: Tighten GS2_HEADER to reject malformed cbind-flag and authzid values</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3355">OF-3355: Restrict SCRAM protocol fields to their RFC 5802-defined character sets</a>
      */
     @Test
     void rejectsFirstMessage_valueOnNonPlusFlag_n()
@@ -279,7 +279,7 @@ public abstract class AbstractScramSaslServerTest
      *
      * GS2 parsing test: completely algorithm-independent.
      *
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3355">OF-3355: Tighten GS2_HEADER to reject malformed cbind-flag and authzid values</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3355">OF-3355: Restrict SCRAM protocol fields to their RFC 5802-defined character sets</a>
      */
     @Test
     void rejectsFirstMessage_valueOnNonPlusFlag_y()
@@ -298,7 +298,7 @@ public abstract class AbstractScramSaslServerTest
      *
      * GS2 parsing test: completely algorithm-independent.
      *
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3355">OF-3355: Tighten GS2_HEADER to reject malformed cbind-flag and authzid values</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3355">OF-3355: Restrict SCRAM protocol fields to their RFC 5802-defined character sets</a>
      */
     @Test
     void rejectsFirstMessage_emptyAuthzidAttribute()
@@ -317,7 +317,7 @@ public abstract class AbstractScramSaslServerTest
      *
      * GS2 parsing test: completely algorithm-independent.
      *
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3355">OF-3355: Tighten GS2_HEADER to reject malformed cbind-flag and authzid values</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3355">OF-3355: Restrict SCRAM protocol fields to their RFC 5802-defined character sets</a>
      */
     @Test
     void rejectsFirstMessage_emptyChannelBindingName()
@@ -337,7 +337,7 @@ public abstract class AbstractScramSaslServerTest
      *
      * GS2 parsing test: completely algorithm-independent.
      *
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3355">OF-3355: Tighten GS2_HEADER to reject malformed cbind-flag and authzid values</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3355">OF-3355: Restrict SCRAM protocol fields to their RFC 5802-defined character sets</a>
      */
     @Test
     void rejectsFirstMessage_channelBindingNameWithInvalidCharacter()
@@ -357,7 +357,7 @@ public abstract class AbstractScramSaslServerTest
      *
      * Generic protocol validation test (also algorithm-independent).
      *
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3355">OF-3355: Tighten GS2_HEADER to reject malformed cbind-flag and authzid values</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3355">OF-3355: Restrict SCRAM protocol fields to their RFC 5802-defined character sets</a>
      */
     @Test
     void rejectsFirstMessage_nonceContainsControlCharacter()
@@ -377,7 +377,7 @@ public abstract class AbstractScramSaslServerTest
      *
      * Generic protocol validation test (also algorithm-independent).
      *
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3355">OF-3355: Tighten GS2_HEADER to reject malformed cbind-flag and authzid values</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3355">OF-3355: Restrict SCRAM protocol fields to their RFC 5802-defined character sets</a>
      */
     @Test
     void rejectsFinalMessage_channelBindingNotValidBase64() throws Exception
@@ -399,7 +399,7 @@ public abstract class AbstractScramSaslServerTest
      *
      * Generic protocol validation test (also algorithm-independent).
      *
-     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3355">OF-3355: Tighten GS2_HEADER to reject malformed cbind-flag and authzid values</a>
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3355">OF-3355: Restrict SCRAM protocol fields to their RFC 5802-defined character sets</a>
      */
     @Test
     void rejectsFinalMessage_proofNotValidBase64() throws Exception
@@ -458,6 +458,31 @@ public abstract class AbstractScramSaslServerTest
         // Execute system under test & Verify result
         assertThrows(SaslException.class, () -> server.evaluateResponse(clientFinalMessage),
             "A client-final-message with a malformed (non-attr-val) extension must be rejected");
+    }
+
+    /**
+     * Verifies RFC 5802 §5.1: the reserved "m" attribute must cause authentication failure wherever it appears,
+     * not only in client-first-message. A client-final-message containing "m=unsupported" among its optional
+     * extensions must be rejected for the mandatory-extension reason, even if it carries an otherwise-valid proof.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3350">OF-3350: SCRAM server accepts unsupported mandatory extensions</a>
+     */
+    @Test
+    void rejectsFinalMessage_mandatoryExtensionRequested() throws Exception
+    {
+        // Setup test fixture
+        setupCanonicalAuthData();
+        final ScramSaslServer server = newServer(false);
+        final FirstExchangeResult firstExchangeResult = doFirstExchange(server);
+        final String proof = Base64.getEncoder().encodeToString(new byte[expectedProofLengthBytes()]);
+        final byte[] clientFinalMessage = ("c=biws,r=" + firstExchangeResult.serverNonce + ",m=unsupported,p=" + proof).getBytes(StandardCharsets.UTF_8);
+
+        // Execute system under test & Verify result
+        final SaslException ex = assertThrows(SaslException.class, () -> server.evaluateResponse(clientFinalMessage),
+            "A client-final-message requesting an unsupported mandatory extension must be rejected, regardless of the proof");
+        assertTrue(ex.getMessage().contains("mandatory extension"), "Exception should mention the mandatory extension, not merely 'proof failed'. Got: " + ex.getMessage());
     }
 
     /**

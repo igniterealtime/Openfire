@@ -533,6 +533,86 @@ public abstract class AbstractScramSaslServerTest
     }
 
     /**
+     * Verifies that an empty authzid (i.e. no authzid at all) is accepted, and that the exchange proceeds normally.
+     * This is the common case: most clients do not supply an authzid, relying on the server to authorize the SASL
+     * authentication identity itself.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3352">OF-3352: Reject or authorize a supplied GS2 authorization identity.</a>
+     */
+    @Test
+    void acceptsFirstMessage_emptyAuthzid() throws Exception
+    {
+        // Setup test fixture
+        setupCanonicalAuthData();
+        final ScramSaslServer server = newServer(false);
+        final byte[] clientInitialMessage = createClientInitialMessage("n,,", username(), clientNonce());
+
+        // Execute system under test
+        final byte[] firstServerResponse = server.evaluateResponse(clientInitialMessage);
+
+        // Verify result
+        assertNotNull(firstServerResponse, "An empty authzid should be accepted and the exchange should proceed");
+        assertTrue(new String(firstServerResponse, StandardCharsets.UTF_8).startsWith("r="), "The server should respond with a first server message when no authzid is supplied");
+    }
+
+    /**
+     * Verifies that an authzid identical to the SASL authentication identity ('username') is accepted.
+     *
+     * This is not proxy authorization in any meaningful sense: the client is (redundantly) asking to be authorized
+     * as itself, which {@link ScramSaslServer#getAuthorizationID()} already guarantees regardless of whether an
+     * authzid was supplied. Rejecting this case would needlessly break clients that echo their own identity into
+     * the GS2 header without gaining any security benefit.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3352">OF-3352: Reject or authorize a supplied GS2 authorization identity.</a>
+     */
+    @Test
+    void acceptsFirstMessage_authzidEqualToUsername() throws Exception
+    {
+        // Setup test fixture
+        setupCanonicalAuthData();
+        final ScramSaslServer server = newServer(false);
+        final byte[] clientInitialMessage = createClientInitialMessage("n,a=" + username() + ",", username(), clientNonce());
+
+        // Execute system under test
+        final byte[] firstServerResponse = server.evaluateResponse(clientInitialMessage);
+
+        // Verify result
+        assertNotNull(firstServerResponse, "An authzid equal to the authentication identity is not proxy authorization and should be accepted");
+        assertTrue(new String(firstServerResponse, StandardCharsets.UTF_8).startsWith("r="), "The server should respond with a first server message when the authzid matches the authentication identity");
+    }
+
+    /**
+     * Verifies that a non-empty authzid that differs from the SASL authentication identity ('username') is
+     * rejected.
+     *
+     * RFC 5802 requires the server to either authorize a supplied authzid or fail authentication if it cannot do
+     * so. Openfire does not support SASL proxy authorization, so silently ignoring the requested identity (and
+     * authenticating as 'username' regardless) would be a security-relevant deviation from the spec: it could let a
+     * client believe it authenticated as one identity when the server granted a different one.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3352">OF-3352: Reject or authorize a supplied GS2 authorization identity.</a>
+     */
+    @Test
+    void rejectsFirstMessage_authzidDifferentFromUsername()
+    {
+        // Setup test fixture
+        final ScramSaslServer server = newServer(false);
+        final byte[] clientInitialMessage = createClientInitialMessage("n,a=someotheruser,", username(), clientNonce());
+
+        // Execute system under test & Verify result
+        final SaslException ex = assertThrows(SaslException.class,
+            () -> server.evaluateResponse(clientInitialMessage),
+            "A non-empty authzid that differs from the authentication identity must be rejected, since proxy authorization is not supported");
+        assertTrue(ex.getMessage().toLowerCase().contains("proxy"), "Exception should mention proxy authorization. Got: " + ex.getMessage());
+    }
+
+    /**
      * Verifies that a completely malformed final client message is rejected.
      *
      * Generic protocol validation test (also algorithm-independent).

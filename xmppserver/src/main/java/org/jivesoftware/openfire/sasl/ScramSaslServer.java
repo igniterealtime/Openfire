@@ -321,6 +321,16 @@ public abstract class ScramSaslServer implements SaslServer
             throw new SaslException("Invalid first client message: Client nonce cannot be empty");
         }
 
+        // RFC 5802 requires the server to authorize a supplied authzid, or fail authentication if it does not support
+        // doing so. Openfire does not support proxy authorization, but an authzid that is identical to the SASL
+        // authentication identity is not a request for proxying (the client is simply, redundantly, asking to be
+        // authorized as itself, which getAuthorizationID() already guarantees). Comparing the raw, still-escaped values
+        // is safe here: since SASL-name escaping is deterministic and injective, equal escaped strings can only result
+        // from equal decoded strings. See OF-3352.
+        if (authzid != null && !authzid.isEmpty() && !authzid.equals(username)) {
+            throw new SaslException("Proxy authorization is not supported by this server. Rejecting authentication for non-empty authzid that differs from the authentication identity.");
+        }
+
         // https://www.rfc-editor.org/rfc/rfc5802.html#section-6: If the flag is set to "y" and the server supports
         // channel binding, the server MUST fail authentication. This is because if the client sets the channel binding
         // flag to "y", then the client must have believed that the server did not support channel binding -- if the

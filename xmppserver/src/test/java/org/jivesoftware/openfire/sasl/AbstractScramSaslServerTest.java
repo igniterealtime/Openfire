@@ -394,8 +394,78 @@ public abstract class AbstractScramSaslServerTest
         final byte[] clientFinalMessage = createClientFinalMessage("not valid base64!!", firstExchangeResult.serverNonce, "dGVzdA==");
 
         // Execute system under test & Verify result
-        assertThrows(SaslException.class, () -> server.evaluateResponse(clientFinalMessage),
+        final SaslException ex = assertThrows(SaslException.class, () -> server.evaluateResponse(clientFinalMessage),
             "A channel-binding value that is not valid base64 must be rejected");
+        assertTrue(ex.getMessage().contains("Invalid client final message"),
+            "Rejection must occur at message parsing (space and '!' are outside the base64 alphabet entirely), not via an incidental downstream decode failure. Got: " + ex.getMessage());
+    }
+
+    /**
+     * Verifies that a channel-binding value with an invalid length (not a multiple of 4, and not a valid
+     * 2-or-3-char terminal padding block) is rejected, rather than being accepted as a bare base64 charset match.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     */
+    @Test
+    void rejectsFinalMessage_channelBindingWithInvalidLength() throws Exception
+    {
+        // Setup test fixture
+        setupCanonicalAuthData();
+        final ScramSaslServer server = newServer(false);
+        final FirstExchangeResult firstExchangeResult = doFirstExchange(server);
+        final byte[] clientFinalMessage = createClientFinalMessage("a", firstExchangeResult.serverNonce, "dGVzdA==");
+
+        // Execute system under test & Verify result
+        final SaslException ex = assertThrows(SaslException.class, () -> server.evaluateResponse(clientFinalMessage),
+            "A channel-binding value with an invalid base64 length must be rejected");
+        assertTrue(ex.getMessage().contains("not valid base64"),
+            "Rejection must come from explicit base64-grammar validation, not an incidental downstream failure. Got: " + ex.getMessage());
+    }
+
+    /**
+     * Verifies that a proof value containing an interior "=" (padding not confined to the terminal block) is
+     * rejected. This fails at message parsing, not at the explicit base64-length check: once "=" appears, the
+     * base64 grammar has no way to accept further non-"=" characters afterward, so the message never matches the
+     * overall client-final-message pattern in the first place.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     */
+    @Test
+    void rejectsFinalMessage_proofWithInteriorPadding() throws Exception
+    {
+        // Setup test fixture
+        setupCanonicalAuthData();
+        final ScramSaslServer server = newServer(false);
+        final FirstExchangeResult firstExchangeResult = doFirstExchange(server);
+        final byte[] clientFinalMessage = createClientFinalMessage("biws", firstExchangeResult.serverNonce, "ab=cdefg");
+
+        // Execute system under test & Verify result
+        final SaslException ex = assertThrows(SaslException.class, () -> server.evaluateResponse(clientFinalMessage),
+            "A proof value with interior padding must be rejected");
+        assertTrue(ex.getMessage().contains("Invalid client final message"),
+            "Rejection must occur at message parsing (interior '=' cannot match the base64 grammar at all), not via the separate length check. Got: " + ex.getMessage());
+    }
+
+    /**
+     * Verifies that a channel-binding value with excess padding (a complete 4-char block followed by a further
+     * "=") is rejected.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     */
+    @Test
+    void rejectsFinalMessage_channelBindingWithExcessPadding() throws Exception
+    {
+        // Setup test fixture
+        setupCanonicalAuthData();
+        final ScramSaslServer server = newServer(false);
+        final FirstExchangeResult firstExchangeResult = doFirstExchange(server);
+        final byte[] clientFinalMessage = createClientFinalMessage("abcd=", firstExchangeResult.serverNonce, "dGVzdA==");
+
+        // Execute system under test & Verify result
+        final SaslException ex = assertThrows(SaslException.class, () -> server.evaluateResponse(clientFinalMessage),
+            "A channel-binding value with excess padding must be rejected");
+        assertTrue(ex.getMessage().contains("not valid base64"),
+            "Rejection must come from explicit base64-grammar validation, not an incidental downstream failure. Got: " + ex.getMessage());
     }
 
     /**
@@ -416,8 +486,10 @@ public abstract class AbstractScramSaslServerTest
         final byte[] clientFinalMessage = createClientFinalMessage("biws", firstExchangeResult.serverNonce, "not valid base64!!");
 
         // Execute system under test & Verify result
-        assertThrows(SaslException.class, () -> server.evaluateResponse(clientFinalMessage),
+        final SaslException ex = assertThrows(SaslException.class, () -> server.evaluateResponse(clientFinalMessage),
             "A proof value that is not valid base64 must be rejected");
+        assertTrue(ex.getMessage().contains("Invalid client final message"),
+            "Rejection must occur at message parsing (space and '!' are outside the base64 alphabet entirely), not via an incidental downstream decode failure. Got: " + ex.getMessage());
     }
 
     /**
@@ -488,6 +560,96 @@ public abstract class AbstractScramSaslServerTest
         final SaslException ex = assertThrows(SaslException.class, () -> server.evaluateResponse(clientFinalMessage),
             "A client-final-message requesting an unsupported mandatory extension must be rejected, regardless of the proof");
         assertTrue(ex.getMessage().contains("mandatory extension"), "Exception should mention the mandatory extension, not merely 'proof failed'. Got: " + ex.getMessage());
+    }
+
+    /**
+     * Verifies that a zero-padding value with a length that is a multiple of 4 is valid.
+     *
+     * Base64 length validation test: completely algorithm-independent.
+     */
+    @Test
+    void hasValidBase64Length_true_forNoPaddingCompleteBlocks()
+    {
+        // Execute system under test & Verify result
+        assertTrue(ScramSaslServer.hasValidBase64Length("biws"));
+    }
+
+    /**
+     * Verifies that an empty string is valid (zero data, zero padding), matching the same "structurally valid but
+     * empty" treatment already applied to the other permissive fields (nonce, extensions).
+     *
+     * Base64 length validation test: completely algorithm-independent.
+     */
+    @Test
+    void hasValidBase64Length_true_forEmptyString()
+    {
+        // Execute system under test & Verify result
+        assertTrue(ScramSaslServer.hasValidBase64Length(""));
+    }
+
+    /**
+     * Verifies that a single "=" padding character is valid when the preceding data length is congruent to 3 mod 4.
+     *
+     * Base64 length validation test: completely algorithm-independent.
+     */
+    @Test
+    void hasValidBase64Length_true_forSinglePaddingWithCorrectDataLength()
+    {
+        // Execute system under test & Verify result
+        assertTrue(ScramSaslServer.hasValidBase64Length("abc="));
+    }
+
+    /**
+     * Verifies that "==" double padding is valid when the preceding data length is congruent to 2 mod 4, using a
+     * real encoder-produced value.
+     *
+     * Base64 length validation test: completely algorithm-independent.
+     */
+    @Test
+    void hasValidBase64Length_true_forDoublePaddingWithCorrectDataLength()
+    {
+        // Execute system under test & Verify result
+        assertTrue(ScramSaslServer.hasValidBase64Length("dGVzdA==")); // base64("test"): 6 data chars + "==", 6%4==2, correct
+    }
+
+    /**
+     * Verifies that a length that is not a multiple of 4, with no padding at all, is rejected.
+     *
+     * Base64 length validation test: completely algorithm-independent.
+     */
+    @Test
+    void hasValidBase64Length_false_forNoPaddingWrongLength()
+    {
+        // Execute system under test & Verify result
+        assertFalse(ScramSaslServer.hasValidBase64Length("a"));
+        assertFalse(ScramSaslServer.hasValidBase64Length("ab"));
+        assertFalse(ScramSaslServer.hasValidBase64Length("abc"));
+        assertFalse(ScramSaslServer.hasValidBase64Length("abcde"));
+    }
+
+    /**
+     * Verifies that a single "=" is rejected when the preceding data length is not congruent to 3 mod 4 -- the
+     * exact excess-padding case a complete 4-char block followed by "=" represents.
+     *
+     * Base64 length validation test: completely algorithm-independent.
+     */
+    @Test
+    void hasValidBase64Length_false_forSinglePaddingWithWrongDataLength()
+    {
+        // Execute system under test & Verify result
+        assertFalse(ScramSaslServer.hasValidBase64Length("abcd="));
+    }
+
+    /**
+     * Verifies that "==" double padding is rejected when the preceding data length is not congruent to 2 mod 4.
+     *
+     * Base64 length validation test: completely algorithm-independent.
+     */
+    @Test
+    void hasValidBase64Length_false_forDoublePaddingWithWrongDataLength()
+    {
+        // Execute system under test & Verify result
+        assertFalse(ScramSaslServer.hasValidBase64Length("abc=="));
     }
 
     /**

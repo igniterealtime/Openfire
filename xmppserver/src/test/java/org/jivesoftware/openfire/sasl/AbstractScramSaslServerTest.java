@@ -255,6 +255,83 @@ public abstract class AbstractScramSaslServerTest
     }
 
     /**
+     * Verifies that a GS2 header carrying a value on the "n" flag ("n=...") is rejected. Per RFC 5802, only the
+     * "p" flag may carry a channel-binding name; "n" and "y" are bare tokens.
+     *
+     * GS2 parsing test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3355">OF-3355: Tighten GS2_HEADER to reject malformed cbind-flag and authzid values</a>
+     */
+    @Test
+    void rejectsFirstMessage_valueOnNonPlusFlag_n()
+    {
+        // Setup test fixture
+        final ScramSaslServer server = newServer(false);
+        final byte[] clientInitialMessage = createClientInitialMessage("n=unexpected-value,,", username(), clientNonce());
+
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> server.evaluateResponse(clientInitialMessage), "A GS2 header with a value on the 'n' flag must be rejected");
+    }
+
+    /**
+     * Verifies that a GS2 header carrying a value on the "y" flag ("y=...") is rejected, for the same reason as
+     * the "n" flag above.
+     *
+     * GS2 parsing test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3355">OF-3355: Tighten GS2_HEADER to reject malformed cbind-flag and authzid values</a>
+     */
+    @Test
+    void rejectsFirstMessage_valueOnNonPlusFlag_y()
+    {
+        // Setup test fixture
+        final ScramSaslServer server = newServer(false);
+        final byte[] clientInitialMessage = createClientInitialMessage("y=unexpected-value,,", username(), clientNonce());
+
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> server.evaluateResponse(clientInitialMessage), "A GS2 header with a value on the 'y' flag must be rejected");
+    }
+
+    /**
+     * Verifies that a GS2 header with an empty authzid ("a=" followed immediately by a comma) is rejected. Per
+     * RFC 5802, authzid is either entirely absent or a non-empty saslname; "a=" with nothing following is neither.
+     *
+     * GS2 parsing test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3355">OF-3355: Tighten GS2_HEADER to reject malformed cbind-flag and authzid values</a>
+     */
+    @Test
+    void rejectsFirstMessage_emptyAuthzidAttribute()
+    {
+        // Setup test fixture
+        final ScramSaslServer server = newServer(false);
+        final byte[] clientInitialMessage = createClientInitialMessage("n,a=,", username(), clientNonce());
+
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> server.evaluateResponse(clientInitialMessage), "A GS2 header with an empty authzid attribute must be rejected");
+    }
+
+    /**
+     * Verifies that a "p" flag with an empty channel-binding name ("p=" followed immediately by a comma) is
+     * rejected, for the same reason as the empty-authzid case above: per RFC 5802, cb-name is a non-empty value.
+     *
+     * GS2 parsing test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3355">OF-3355: Tighten GS2_HEADER to reject malformed cbind-flag and authzid values</a>
+     */
+    @Test
+    void rejectsFirstMessage_emptyChannelBindingName()
+    {
+        // Setup test fixture
+        final ScramSaslServer server = newServer(false);
+        final byte[] clientInitialMessage = createClientInitialMessage("p=,,", username(), clientNonce());
+
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> server.evaluateResponse(clientInitialMessage),
+            "A GS2 header with an empty channel-binding name must be rejected");
+    }
+
+    /**
      * Verifies that a saslname containing an escaped comma ("=2C") is decoded correctly.
      *
      * Saslname decoding test: completely algorithm-independent.

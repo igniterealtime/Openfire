@@ -70,9 +70,58 @@ public abstract class ScramSaslServer implements SaslServer
      */
     public static final String PROPNAME_CHANNELBINDINGTYPE = "channelbindingtype";
 
-    private static final Pattern
-        CLIENT_FIRST_MESSAGE = Pattern.compile("^(([pny])=?([^,]*),([^,]*),)(m?=?[^,]*,?n=([^,]*),r=([^,]*),?.*)$"),
-        CLIENT_FINAL_MESSAGE = Pattern.compile("(c=([^,]*),r=([^,]*)),p=(.*)$");
+    /**
+     * Matches the GS2 header that prefixes a SCRAM client-first-message:
+     *
+     * <pre>
+     * gs2-cbind-flag  = ("p=" cb-name) / "n" / "y"
+     * gs2-header      = gs2-cbind-flag "," [ authzid ] ","
+     * authzid         = "a=" saslname
+     * </pre>
+     *
+     * Group 1: the full GS2 header, including its trailing comma.
+     * Group 2: the cbind-flag character ("p", "n", or "y").
+     * Group 3: the channel-binding name (only present when the flag is "p").
+     * Group 4: the raw (still saslname-escaped) authzid value, without the "a=" prefix (only present when supplied).
+     * Group 5: everything after the GS2 header, i.e. the client-first-message-bare.
+     */
+    private static final Pattern GS2_HEADER = Pattern.compile("^(([pny])(?:=([^,]*))?,(?:a=([^,]*))?,)(.*)$");
+
+    /**
+     * Matches a SCRAM client-first-message-bare:
+     *
+     * <pre>
+     * client-first-message-bare = [reserved-mext ","] username "," nonce ["," extensions]
+     * reserved-mext              = "m=" 1*(value-char)
+     * username                   = "n=" saslname
+     * nonce                      = "r=" c-nonce [s-nonce]
+     * </pre>
+     *
+     * Group 1: the reserved "m=" extension, if the client sent one (used purely to detect and reject it).
+     * Group 2: the (still saslname-escaped) username value.
+     * Group 3: the nonce value.
+     * Group 4: any optional extensions following the nonce (accepted, but otherwise unused).
+     */
+    private static final Pattern CLIENT_FIRST_MESSAGE_BARE = Pattern.compile("^(?:(m=[^,]*),)?n=([^,]*),r=([^,]*)(?:,(.*))?$");
+
+    /**
+     * Matches a SCRAM client-final-message:
+     *
+     * <pre>
+     * client-final-message-without-proof = channel-binding "," nonce ["," extensions]
+     * client-final-message               = client-final-message-without-proof "," proof
+     * </pre>
+     *
+     * Group 1: the client-final-message-without-proof, verbatim (needed, byte-for-byte, to compute AuthMessage).
+     * Group 2: the channel-binding value.
+     * Group 3: the nonce value.
+     * Group 4: the proof value.
+     *
+     * Any optional extensions between the nonce and the proof are matched by the repeated, comma-led group; the
+     * negative lookahead {@code (?!p=)} stops that repetition from ever swallowing the mandatory, always-last "p="
+     * (proof) attribute, without needing to know in advance how many extensions (if any) are present.
+     */
+    private static final Pattern CLIENT_FINAL_MESSAGE = Pattern.compile("^(c=([^,]*),r=([^,]*)(?:,(?!p=)[^,]*)*),p=(.*)$");
 
     /**
      * Manages a set of providers that can extract channel binding data of various types from SSL engines.
@@ -244,18 +293,26 @@ public abstract class ScramSaslServer implements SaslServer
      */
     private byte[] generateServerFirstMessage(final byte[] response) throws SaslException {
         String clientFirstMessage = new String(response, StandardCharsets.UTF_8);
-        Matcher m = CLIENT_FIRST_MESSAGE.matcher(clientFirstMessage);
-        if (!m.matches()) {
-            throw new SaslException("Invalid first client message");
+
+        final Matcher gs2Matcher = GS2_HEADER.matcher(clientFirstMessage);
+        if (!gs2Matcher.matches()) {
+            throw new SaslException("Invalid first client message: unable to parse GS2 header");
         }
+
         final byte[] gs2_header = extractRawGS2Header(response); // Using raw header to prevent any normalization issues that might pop up when using something like: gs2Header.getBytes(StandardCharsets.UTF_8);
-//        String gs2Header = m.group(1);
-        String gs2CbindFlag = m.group(2);
-        gs2CbindName = m.group(3);
-//        String authzId = m.group(4);
-        clientFirstMessageBare = m.group(5);
-        username = m.group(6);
-        String clientNonce = m.group(7);
+
+        String gs2CbindFlag = gs2Matcher.group(2);
+        gs2CbindName = gs2Matcher.group(3);
+        final String authzid = gs2Matcher.group(4);
+        clientFirstMessageBare = gs2Matcher.group(5);
+
+        final Matcher bareMatcher = CLIENT_FIRST_MESSAGE_BARE.matcher(clientFirstMessageBare);
+        if (!bareMatcher.matches()) {
+            throw new SaslException("Invalid first client message: unable to parse client-first-message-bare");
+        }
+
+        username = bareMatcher.group(2);
+        String clientNonce = bareMatcher.group(3);
 
         if (username == null || username.isEmpty()) {
             throw new SaslException("Invalid first client message: Username cannot be empty");
@@ -342,8 +399,7 @@ public abstract class ScramSaslServer implements SaslServer
             throw new SaslException("Invalid client final message");
         }
 
-        // client-final-message regex: (c=([^,]*),r=([^,]*)),p=(.*)$")
-        final String clientFinalMessageWithoutProof = m.group(1); // (c=([^,]*),r=([^,]*))
+        final String clientFinalMessageWithoutProof = m.group(1); // (c=([^,]*),r=([^,]*)[,extensions]) - verbatim, needed for AuthMessage
         final String channelBinding = m.group(2);                 // c=([^,]*)
         final String clientNonce = m.group(3);                    // r=([^,]*)
         final String proof = m.group(4);                          // p=(.*)

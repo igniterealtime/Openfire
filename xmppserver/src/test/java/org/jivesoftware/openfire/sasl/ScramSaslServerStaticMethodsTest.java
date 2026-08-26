@@ -54,13 +54,13 @@ class ScramSaslServerStaticMethodsTest
     void extractsGs2Header_withAuthzId() throws Exception
     {
         // Setup test fixture
-        final byte[] input = "p=tls,,n=someuser,r=abc123,rest".getBytes(StandardCharsets.UTF_8);
+        final byte[] input = "p=tls,a=someuser,n=authcid,r=abc123,rest".getBytes(StandardCharsets.UTF_8);
 
         // Execute system under test
         final byte[] result = ScramSaslServer.extractRawGS2Header(input);
 
         // Verify result
-        assertEquals("p=tls,,", new String(result, StandardCharsets.UTF_8));
+        assertEquals("p=tls,a=someuser,", new String(result, StandardCharsets.UTF_8));
     }
 
     /**

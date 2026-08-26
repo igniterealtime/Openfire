@@ -661,6 +661,35 @@ public abstract class AbstractScramSaslServerTest
     }
 
     /**
+     * Verifies that decodeSaslname() rejects a NUL character directly, independent of the parsing regex. Since
+     * this method is reachable without going through CLIENT_FIRST_MESSAGE_BARE or GS2_HEADER (it is
+     * {@code @VisibleForTesting}), it must enforce the NUL exclusion itself rather than relying solely on the
+     * caller to have pre-filtered the input.
+     *
+     * Saslname decoding test: completely algorithm-independent.
+     */
+    @Test
+    void throwsException_whenSaslnameContainsNulCharacter()
+    {
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> ScramSaslServer.decodeSaslname("user\u0000name"));
+    }
+
+    /**
+     * Verifies that a saslname consisting only of a NUL character (no other content at all) is still rejected,
+     * exercising the boundary case where the NUL check must fire before the "no escape sequences present" fast
+     * path would otherwise return the string unchanged.
+     *
+     * Saslname decoding test: completely algorithm-independent.
+     */
+    @Test
+    void throwsException_whenSaslnameIsOnlyNulCharacter()
+    {
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> ScramSaslServer.decodeSaslname("\u0000"));
+    }
+
+    /**
      * Verifies that an empty extensions string (no extensions present) does not throw.
      *
      * Extension parsing test: completely algorithm-independent.
@@ -805,6 +834,20 @@ public abstract class AbstractScramSaslServerTest
     {
         // Execute system under test & Verify result
         assertThrows(SaslException.class, () -> ScramSaslServer.rejectReservedMandatoryExtension(",ab=1"));
+    }
+
+    /**
+     * Verifies that rejectReservedMandatoryExtension() rejects a NUL character in an extension's value portion
+     * directly, independent of the parsing regex, for the same direct-callable reachability reason as
+     * decodeSaslname() above.
+     *
+     * Extension parsing test: completely algorithm-independent.
+     */
+    @Test
+    void rejectReservedMandatoryExtension_throwsSaslException_forNulInValue()
+    {
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> ScramSaslServer.rejectReservedMandatoryExtension(",a=\u0000"));
     }
 
     /**
@@ -1216,6 +1259,62 @@ public abstract class AbstractScramSaslServerTest
     }
 
     /**
+     * Verifies that a username containing a NUL character is rejected. RFC 5802's "value-safe-char" production
+     * (which underlies "saslname") explicitly excludes NUL; a username value with an embedded NUL byte must not
+     * reach credential lookup.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     */
+    @Test
+    void rejectsFirstMessage_usernameContainsNulCharacter()
+    {
+        // Setup test fixture
+        final ScramSaslServer server = newServer(false);
+        final byte[] clientInitialMessage = createClientInitialMessage("n,,", "user\u0000name", clientNonce());
+
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> server.evaluateResponse(clientInitialMessage),
+            "A username containing a NUL character must be rejected");
+    }
+
+    /**
+     * Verifies that an authzid containing a NUL character is rejected, for the same reason as the username case
+     * above: authzid shares the "saslname" production and its "value-safe-char" character set.
+     *
+     * GS2 parsing test: completely algorithm-independent.
+     */
+    @Test
+    void rejectsFirstMessage_authzidContainsNulCharacter()
+    {
+        // Setup test fixture
+        final ScramSaslServer server = newServer(false);
+        final byte[] clientInitialMessage = createClientInitialMessage("n,a=user\u0000name,", username(), clientNonce());
+
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> server.evaluateResponse(clientInitialMessage),
+            "An authzid containing a NUL character must be rejected");
+    }
+
+    /**
+     * Verifies that an extension value containing a NUL character is rejected in a client-first-message. Extension
+     * values share the "value-char" / "value-safe-char" productions with saslname, which exclude NUL.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     */
+    @Test
+    void rejectsFirstMessage_extensionValueContainsNulCharacter()
+    {
+        // Setup test fixture
+        final ScramSaslServer server = newServer(false);
+        final byte[] clientInitialMessage = ("n,,n=" + username() + ",r=" + clientNonce() + ",x=\u0000")
+            .getBytes(StandardCharsets.UTF_8);
+
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> server.evaluateResponse(clientInitialMessage),
+            "An extension value containing a NUL character must be rejected");
+    }
+
+    /**
      * Verifies that a completely malformed final client message is rejected.
      *
      * Generic protocol validation test (also algorithm-independent).
@@ -1386,6 +1485,29 @@ public abstract class AbstractScramSaslServerTest
         assertTrue(ex.getMessage().contains("Authentication failed"),
             "A client-final-message with an optional extension must be structurally accepted; rejection should occur "
                 + "at proof verification, not parsing. Got: " + ex.getMessage());
+    }
+
+    /**
+     * Verifies that an extension value containing a NUL character is rejected in a client-final-message too, since
+     * CLIENT_FINAL_MESSAGE's extensions share the same ATTR_VAL character-class definition as the client-first
+     * case above.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     */
+    @Test
+    void rejectsFinalMessage_extensionValueContainsNulCharacter() throws Exception
+    {
+        // Setup test fixture
+        setupCanonicalAuthData();
+        final ScramSaslServer server = newServer(false);
+        final FirstExchangeResult firstExchangeResult = doFirstExchange(server);
+        final String proof = Base64.getEncoder().encodeToString(new byte[expectedProofLengthBytes()]);
+        final byte[] clientFinalMessage = ("c=biws,r=" + firstExchangeResult.serverNonce + ",x=\u0000,p=" + proof)
+            .getBytes(StandardCharsets.UTF_8);
+
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> server.evaluateResponse(clientFinalMessage),
+            "An extension value containing a NUL character must be rejected in a client-final-message");
     }
 
     /**

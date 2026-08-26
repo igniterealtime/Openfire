@@ -80,6 +80,14 @@ public abstract class ScramSaslServer implements SaslServer
     private static final String BASE64        = "[A-Za-z0-9+/=]*";           // base64 charset only (not strict block/padding structure); '*' permits empty for the same reason as NONCE
 
     /**
+     * Matches a single, complete attr-val pair (e.g. "a=1"), anchored at both ends. Used by
+     * {@link #rejectReservedMandatoryExtension(String)} to validate each segment in full -- attribute-name
+     * character, "=", and a value free of comma/NUL -- rather than re-implementing a subset of the same grammar
+     * with manual length and character checks that can drift out of sync with the shared ATTR_VAL fragment.
+     */
+    private static final Pattern ATTR_VAL_PATTERN = Pattern.compile("^" + ATTR_VAL + "$");
+
+    /**
      * Matches the GS2 header that prefixes a SCRAM client-first-message:
      *
      * <pre>
@@ -938,8 +946,9 @@ public abstract class ScramSaslServer implements SaslServer
      * without going through that regex.
      *
      * @param rawExtensions the raw, comma-prefixed extensions string, or an empty string if none are present
-     * @throws SaslException if a reserved "m" attribute is present anywhere in {@code rawExtensions}, or if any segment
-     *                       is not a well-formed, single-letter attr-val pair, or if any segment's value contains a NUL character
+     * @throws SaslException if a reserved "m" attribute is present anywhere in {@code rawExtensions}, or if any
+     * segment is not a well-formed attr-val pair (malformed shape, non-ALPHA attribute name, a NUL character in
+     * the value, or an empty segment, including a trailing one)
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3350">OF-3350: SCRAM server accepts unsupported mandatory extensions</a>
      */
     @VisibleForTesting
@@ -949,15 +958,11 @@ public abstract class ScramSaslServer implements SaslServer
             return;
         }
 
-        for (final String ext : rawExtensions.substring(1).split(","))
+        for (final String ext : rawExtensions.substring(1).split(",", -1))
         {
-            if (ext.length() < 3 || ext.charAt(1) != '=')
+            if (!ATTR_VAL_PATTERN.matcher(ext).matches())
             {
                 throw new SaslException("Invalid extension: '" + ext + "' is not a well-formed attr-val pair");
-            }
-            if (ext.indexOf('\u0000') >= 0)
-            {
-                throw new SaslException("Invalid extension: '" + ext + "' contains a NUL character");
             }
             if (ext.charAt(0) == 'm')
             {

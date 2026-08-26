@@ -851,6 +851,32 @@ public abstract class AbstractScramSaslServerTest
     }
 
     /**
+     * Verifies that an extension whose attribute name is not an ALPHA character (e.g. a digit) is rejected. The
+     * attr-val grammar requires a single letter name; a purely length/position-based shape check could miss this.
+     *
+     * Extension parsing test: completely algorithm-independent.
+     */
+    @Test
+    void rejectReservedMandatoryExtension_throwsSaslException_forNonAlphaAttributeName()
+    {
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> ScramSaslServer.rejectReservedMandatoryExtension(",1=value"));
+    }
+
+    /**
+     * Verifies that a trailing empty segment (a raw extensions string ending in a comma) is rejected, rather than
+     * being silently dropped by String.split(",")'s default trailing-empty-string behavior.
+     *
+     * Extension parsing test: completely algorithm-independent.
+     */
+    @Test
+    void rejectReservedMandatoryExtension_throwsSaslException_forTrailingEmptySegment()
+    {
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> ScramSaslServer.rejectReservedMandatoryExtension(",a=value,"));
+    }
+
+    /**
      * Verifies that isComplete() returns false before any exchange has taken place.
      *
      * Mechanism state test.

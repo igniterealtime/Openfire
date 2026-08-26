@@ -15,7 +15,13 @@
  */
 package org.jivesoftware.openfire.sasl;
 
+import org.jivesoftware.openfire.auth.AuthFactory;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 import javax.annotation.Nonnull;
 import javax.security.sasl.Sasl;
@@ -34,6 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 
 /**
  * Abstract base class providing a reusable suite of SCRAM SASL server tests.
@@ -44,6 +51,26 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public abstract class AbstractScramSaslServerTest
 {
+    /**
+     * Static mock for {@link AuthFactory}, shared by all SCRAM algorithm variants. Individual test methods configure
+     * it via {@link #setupCanonicalAuthData()}, which subclasses implement with their own algorithm-specific fixtures.
+     */
+    protected MockedStatic<AuthFactory> authFactory;
+
+    @BeforeEach
+    void setupStaticMock()
+    {
+        authFactory = Mockito.mockStatic(AuthFactory.class);
+    }
+
+    @AfterEach
+    void teardownStaticMock()
+    {
+        if (authFactory != null) {
+            authFactory.close();
+        }
+    }
+
     /**
      * Creates a new SCRAM SASL server instance for the algorithm under test.
      *
@@ -225,6 +252,181 @@ public abstract class AbstractScramSaslServerTest
 
         // Verify result
         assertEquals("p=tls,,", new String(result, StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Verifies that a saslname containing an escaped comma ("=2C") is decoded correctly.
+     *
+     * Saslname decoding test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3353">OF-3353: SCRAM username and authzid are not un-escaped per RFC 5802 saslname rules</a>
+     */
+    @Test
+    void decodesEscapedComma() throws SaslException
+    {
+        // Execute system under test & Verify result
+        assertEquals("smith,doe", ScramSaslServer.decodeSaslname("smith=2Cdoe"));
+    }
+
+    /**
+     * Verifies that a saslname containing an escaped equals sign ("=3D") is decoded correctly.
+     *
+     * Saslname decoding test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3353">OF-3353: SCRAM username and authzid are not un-escaped per RFC 5802 saslname rules</a>
+     */
+    @Test
+    void decodesEscapedEqualsSign() throws SaslException
+    {
+        // Execute system under test & Verify result
+        assertEquals("user=admin", ScramSaslServer.decodeSaslname("user=3Dadmin"));
+    }
+
+    /**
+     * Verifies that a saslname containing multiple, different escape sequences decodes each one correctly.
+     *
+     * Saslname decoding test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3353">OF-3353: SCRAM username and authzid are not un-escaped per RFC 5802 saslname rules</a>
+     */
+    @Test
+    void decodesMultipleEscapesInSingleValue() throws SaslException
+    {
+        // Execute system under test & Verify result
+        assertEquals("a,b=c", ScramSaslServer.decodeSaslname("a=2Cb=3Dc"));
+    }
+
+    /**
+     * Verifies that a saslname with no escape sequences at all is returned unchanged.
+     *
+     * Saslname decoding test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3353">OF-3353: SCRAM username and authzid are not un-escaped per RFC 5802 saslname rules</a>
+     */
+    @Test
+    void returnsUnchanged_whenNoEscapeSequencesPresent() throws SaslException
+    {
+        // Execute system under test & Verify result
+        assertEquals("plainuser", ScramSaslServer.decodeSaslname("plainuser"));
+    }
+
+    /**
+     * Verifies that an empty saslname decodes to an empty string.
+     *
+     * Saslname decoding test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3353">OF-3353: SCRAM username and authzid are not un-escaped per RFC 5802 saslname rules</a>
+     */
+    @Test
+    void returnsEmptyString_whenInputIsEmpty() throws SaslException
+    {
+        // Execute system under test & Verify result
+        assertEquals("", ScramSaslServer.decodeSaslname(""));
+    }
+
+    /**
+     * Verifies that an escape sequence at the very start of a saslname is decoded correctly.
+     *
+     * Saslname decoding test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3353">OF-3353: SCRAM username and authzid are not un-escaped per RFC 5802 saslname rules</a>
+     */
+    @Test
+    void decodesEscapeAtStartOfValue() throws SaslException
+    {
+        // Execute system under test & Verify result
+        assertEquals(",leading", ScramSaslServer.decodeSaslname("=2Cleading"));
+    }
+
+    /**
+     * Verifies that an escape sequence at the very end of a saslname is decoded correctly, exercising the
+     * boundary condition of the loop's end-of-string check.
+     *
+     * Saslname decoding test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3353">OF-3353: SCRAM username and authzid are not un-escaped per RFC 5802 saslname rules</a>
+     */
+    @Test
+    void decodesEscapeAtEndOfValue() throws SaslException
+    {
+        // Execute system under test & Verify result
+        assertEquals("trailing,", ScramSaslServer.decodeSaslname("trailing=2C"));
+    }
+
+    /**
+     * Verifies that two escape sequences immediately adjacent to each other (no literal characters between them)
+     * are both decoded correctly, confirming the scan resumes at the right index after each escape.
+     *
+     * Saslname decoding test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3353">OF-3353: SCRAM username and authzid are not un-escaped per RFC 5802 saslname rules</a>
+     */
+    @Test
+    void decodesConsecutiveEscapes() throws SaslException
+    {
+        // Execute system under test & Verify result
+        assertEquals(",=", ScramSaslServer.decodeSaslname("=2C=3D"));
+    }
+
+    /**
+     * Verifies that a trailing "=" with no following characters at all is rejected as a malformed escape.
+     *
+     * Saslname decoding test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3353">OF-3353: SCRAM username and authzid are not un-escaped per RFC 5802 saslname rules</a>
+     */
+    @Test
+    void throwsException_whenEscapeIsIncomplete_atEndOfString()
+    {
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> ScramSaslServer.decodeSaslname("abc="));
+    }
+
+    /**
+     * Verifies that an "=" followed by only one further character (not the required two) is rejected as a
+     * malformed escape.
+     *
+     * Saslname decoding test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3353">OF-3353: SCRAM username and authzid are not un-escaped per RFC 5802 saslname rules</a>
+     */
+    @Test
+    void throwsException_whenEscapeIsIncomplete_withOneTrailingCharacter()
+    {
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> ScramSaslServer.decodeSaslname("abc=2"));
+    }
+
+    /**
+     * Verifies that an "=" followed by two characters that are neither "2C" nor "3D" is rejected, and that the
+     * exception identifies the offending sequence to aid diagnosis.
+     *
+     * Saslname decoding test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3353">OF-3353: SCRAM username and authzid are not un-escaped per RFC 5802 saslname rules</a>
+     */
+    @Test
+    void throwsException_whenEscapeSequenceIsUnrecognized()
+    {
+        // Execute system under test & Verify result
+        final SaslException ex = assertThrows(SaslException.class, () -> ScramSaslServer.decodeSaslname("abc=XYdef"));
+        assertTrue(ex.getMessage().contains("=XY"), "Exception should identify the offending escape sequence. Got: " + ex.getMessage());
+    }
+
+    /**
+     * Verifies that lowercase hex digits in an escape sequence ("=2c" instead of "=2C") are rejected. RFC 5802
+     * defines the escapes as the literal uppercase strings "=2C" and "=3D"; lowercase is not a valid alternative
+     * spelling.
+     *
+     * Saslname decoding test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3353">OF-3353: SCRAM username and authzid are not un-escaped per RFC 5802 saslname rules</a>
+     */
+    @Test
+    void throwsException_whenEscapeSequenceUsesLowercaseHexDigits()
+    {
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> ScramSaslServer.decodeSaslname("abc=2cdef"));
     }
 
     /**
@@ -891,6 +1093,61 @@ public abstract class AbstractScramSaslServerTest
         // Verify result.
         assertNotNull(firstServerResponse, "A -PLUS mechanism for a different SCRAM hash algorithm must not trigger downgrade protection.");
         assertTrue(new String(firstServerResponse, StandardCharsets.UTF_8).startsWith("r="), "The server should respond with a first server message when the 'y' flag is used and the relevant -PLUS mechanism was not offered.");
+    }
+
+    /**
+     * Verifies RFC 5802 §5.1: a literal comma in a username must be escaped on the wire as "=2C". The server must
+     * decode this escaping before using the value to look up the user's credentials; failing to do so means a user
+     * whose real username contains a comma can never be found.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3353">OF-3353: SCRAM username and authzid are not un-escaped per RFC 5802 saslname rules</a>
+     */
+    @Test
+    void decodesEscapedComma_inUsername_beforeCredentialLookup()
+    {
+        // Setup test fixture
+        setupCanonicalAuthData();
+        final String literalUsername = "smith,doe";
+        final String escapedUsername = "smith=2Cdoe"; // "," must be sent as "=2C" per RFC 5802 §5.1
+        final ScramSaslServer server = newServer(false);
+        final byte[] clientInitialMessage = createClientInitialMessage("n,,", escapedUsername, clientNonce());
+
+        // Execute system under test
+        assertDoesNotThrow(() -> server.evaluateResponse(clientInitialMessage), "A syntactically valid first message should be processed, even before credential lookup is verified");
+
+        // Verify result: credential lookup must use the decoded username, not the raw escaped wire value.
+        final ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
+        authFactory.verify(() -> AuthFactory.getSalt(usernameCaptor.capture(), any()));
+        assertEquals(literalUsername, usernameCaptor.getValue(), "Credential lookup must use the decoded username ('" + literalUsername + "'), not the raw escaped wire value ('" + escapedUsername + "')");
+    }
+
+    /**
+     * Verifies RFC 5802 §5.1: a literal equals sign in a username must be escaped on the wire as "=3D". The server
+     * must decode this escaping before using the value to look up the user's credentials.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3353">OF-3353: SCRAM username and authzid are not un-escaped per RFC 5802 saslname rules</a>
+     */
+    @Test
+    void decodesEscapedEqualsSign_inUsername_beforeCredentialLookup()
+    {
+        // Setup test fixture
+        setupCanonicalAuthData();
+        final String literalUsername = "user=admin";
+        final String escapedUsername = "user=3Dadmin"; // "=" must be sent as "=3D" per RFC 5802 §5.1
+        final ScramSaslServer server = newServer(false);
+        final byte[] clientInitialMessage = createClientInitialMessage("n,,", escapedUsername, clientNonce());
+
+        // Execute system under test
+        assertDoesNotThrow(() -> server.evaluateResponse(clientInitialMessage), "A syntactically valid first message should be processed, even before credential lookup is verified");
+
+        // Verify result: credential lookup must use the decoded username, not the raw escaped wire value.
+        final ArgumentCaptor<String> usernameCaptor = ArgumentCaptor.forClass(String.class);
+        authFactory.verify(() -> AuthFactory.getSalt(usernameCaptor.capture(), any()));
+        assertEquals(literalUsername, usernameCaptor.getValue(), "Credential lookup must use the decoded username ('" + literalUsername + "'), not the raw escaped wire value ('" + escapedUsername + "')");
     }
 
     /**

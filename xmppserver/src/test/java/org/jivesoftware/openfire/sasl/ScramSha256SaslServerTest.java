@@ -23,11 +23,7 @@ import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.channelbinding.ChannelBindingProvider;
 import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 
 import javax.annotation.Nonnull;
 import javax.crypto.SecretKeyFactory;
@@ -53,26 +49,6 @@ import static org.mockito.Mockito.*;
  */
 public class ScramSha256SaslServerTest extends AbstractScramSaslServerTest
 {
-    private MockedStatic<AuthFactory> authFactory;
-
-    /**
-     * Initializes the static mock for AuthFactory before each test.
-     */
-    @BeforeEach
-    public void setupStaticMock() {
-        authFactory = Mockito.mockStatic(AuthFactory.class);
-    }
-
-    /**
-     * Releases the static mock for AuthFactory after each test.
-     */
-    @AfterEach
-    public void teardownStaticMock() {
-        if (authFactory != null) {
-            authFactory.close();
-        }
-    }
-
     /**
      * Configures the AuthFactory mock to return the canonical test fixtures for salt, iterations,
      * password, stored key, and server key used by SCRAM-SHA-256 unit tests.

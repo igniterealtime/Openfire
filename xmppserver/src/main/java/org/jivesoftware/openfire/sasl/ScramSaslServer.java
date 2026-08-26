@@ -34,6 +34,7 @@ import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
 import javax.xml.bind.DatatypeConverter;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.ConnectionException;
 import org.jivesoftware.openfire.auth.DefaultAuthProvider;
@@ -303,7 +304,8 @@ public abstract class ScramSaslServer implements SaslServer
 
         String gs2CbindFlag = gs2Matcher.group(2);
         gs2CbindName = gs2Matcher.group(3);
-        final String authzid = gs2Matcher.group(4);
+        final String rawAuthzid = gs2Matcher.group(4);
+        final String authzid = rawAuthzid != null ? decodeSaslname(rawAuthzid) : null;
         clientFirstMessageBare = gs2Matcher.group(5);
 
         final Matcher bareMatcher = CLIENT_FIRST_MESSAGE_BARE.matcher(clientFirstMessageBare);
@@ -311,10 +313,10 @@ public abstract class ScramSaslServer implements SaslServer
             throw new SaslException("Invalid first client message: unable to parse client-first-message-bare");
         }
 
-        username = bareMatcher.group(2);
+        username = decodeSaslname(bareMatcher.group(2)); // Group 2 comes from n=([^,]*), a mandatory (non-optional) capturing group, so once bareMatcher.matches() has succeeded, group 2 is always a non-null string.
         String clientNonce = bareMatcher.group(3);
 
-        if (username == null || username.isEmpty()) {
+        if (username.isEmpty()) {
             throw new SaslException("Invalid first client message: Username cannot be empty");
         }
         if (clientNonce == null || clientNonce.isEmpty()) {
@@ -324,9 +326,7 @@ public abstract class ScramSaslServer implements SaslServer
         // RFC 5802 requires the server to authorize a supplied authzid, or fail authentication if it does not support
         // doing so. Openfire does not support proxy authorization, but an authzid that is identical to the SASL
         // authentication identity is not a request for proxying (the client is simply, redundantly, asking to be
-        // authorized as itself, which getAuthorizationID() already guarantees). Comparing the raw, still-escaped values
-        // is safe here: since SASL-name escaping is deterministic and injective, equal escaped strings can only result
-        // from equal decoded strings. See OF-3352.
+        // authorized as itself, which getAuthorizationID() already guarantees). See OF-3352
         if (authzid != null && !authzid.isEmpty() && !authzid.equals(username)) {
             throw new SaslException("Proxy authorization is not supported by this server. Rejecting authentication for non-empty authzid that differs from the authentication identity.");
         }
@@ -834,5 +834,49 @@ public abstract class ScramSaslServer implements SaslServer
             }
         }
         throw new SaslException("Invalid GS2 header format");
+    }
+
+    /**
+     * Decodes a SCRAM {@code saslname} per RFC 5802 §5.1: a literal comma is sent on the wire as {@code =2C}, and a
+     * literal equals sign as {@code =3D}. Any other character following an {@code =} indicates a malformed value.
+     *
+     * @param saslname the raw, wire-escaped saslname value (username or authzid)
+     * @return the decoded value
+     * @throws SaslException if the value contains a malformed escape sequence
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3353">OF-3353: SCRAM username and authzid are not un-escaped per RFC 5802 saslname rules</a>
+     */
+    @VisibleForTesting
+    static String decodeSaslname(@Nonnull final String saslname) throws SaslException
+    {
+        if (saslname.indexOf('=') < 0) {
+            return saslname; // Fast path: no escape sequences present.
+        }
+
+        final StringBuilder result = new StringBuilder(saslname.length());
+        for (int i = 0; i < saslname.length(); i++) {
+            final char c = saslname.charAt(i);
+            if (c != '=') {
+                result.append(c);
+                continue;
+            }
+
+            if (i + 2 >= saslname.length()) {
+                throw new SaslException("Invalid saslname: incomplete escape sequence at position " + i);
+            }
+
+            final String escape = saslname.substring(i + 1, i + 3);
+            switch (escape) {
+                case "2C":
+                    result.append(',');
+                    break;
+                case "3D":
+                    result.append('=');
+                    break;
+                default:
+                    throw new SaslException("Invalid saslname: unrecognized escape sequence '=" + escape + "'");
+            }
+            i += 2; // Skip the two characters just consumed (loop increment consumes the third).
+        }
+        return result.toString();
     }
 }

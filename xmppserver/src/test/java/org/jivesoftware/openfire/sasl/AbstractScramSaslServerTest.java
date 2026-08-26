@@ -332,6 +332,90 @@ public abstract class AbstractScramSaslServerTest
     }
 
     /**
+     * Verifies that a channel-binding name containing a character outside the cb-name grammar ("@" is not
+     * ALPHA / DIGIT / "." / "-") is rejected before it can reach channel-binding provider lookup.
+     *
+     * GS2 parsing test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3355">OF-3355: Tighten GS2_HEADER to reject malformed cbind-flag and authzid values</a>
+     */
+    @Test
+    void rejectsFirstMessage_channelBindingNameWithInvalidCharacter()
+    {
+        // Setup test fixture
+        final ScramSaslServer server = newServer(false);
+        final byte[] clientInitialMessage = createClientInitialMessage("p=tls@unique,,", username(), clientNonce());
+
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> server.evaluateResponse(clientInitialMessage),
+            "A channel-binding name containing characters outside the cb-name grammar must be rejected");
+    }
+
+    /**
+     * Verifies that a client nonce containing a control character is rejected. RFC 5802's "printable" grammar
+     * (%x21-2B / %x2D-7E) excludes control characters, space, and DEL from the nonce.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3355">OF-3355: Tighten GS2_HEADER to reject malformed cbind-flag and authzid values</a>
+     */
+    @Test
+    void rejectsFirstMessage_nonceContainsControlCharacter()
+    {
+        // Setup test fixture
+        final ScramSaslServer server = newServer(false);
+        final byte[] clientInitialMessage = createClientInitialMessage("n,,", username(), "abc\u0000def");
+
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> server.evaluateResponse(clientInitialMessage),
+            "A client nonce containing a control character must be rejected");
+    }
+
+    /**
+     * Verifies that a channel-binding value that is not valid base64 is rejected, rather than reaching the base64
+     * decoder as unvalidated input.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3355">OF-3355: Tighten GS2_HEADER to reject malformed cbind-flag and authzid values</a>
+     */
+    @Test
+    void rejectsFinalMessage_channelBindingNotValidBase64() throws Exception
+    {
+        // Setup test fixture
+        setupCanonicalAuthData();
+        final ScramSaslServer server = newServer(false);
+        final FirstExchangeResult firstExchangeResult = doFirstExchange(server);
+        final byte[] clientFinalMessage = createClientFinalMessage("not valid base64!!", firstExchangeResult.serverNonce, "dGVzdA==");
+
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> server.evaluateResponse(clientFinalMessage),
+            "A channel-binding value that is not valid base64 must be rejected");
+    }
+
+    /**
+     * Verifies that a proof value that is not valid base64 is rejected, for the same reason as the channel-binding
+     * case above.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3355">OF-3355: Tighten GS2_HEADER to reject malformed cbind-flag and authzid values</a>
+     */
+    @Test
+    void rejectsFinalMessage_proofNotValidBase64() throws Exception
+    {
+        // Setup test fixture
+        setupCanonicalAuthData();
+        final ScramSaslServer server = newServer(false);
+        final FirstExchangeResult firstExchangeResult = doFirstExchange(server);
+        final byte[] clientFinalMessage = createClientFinalMessage("biws", firstExchangeResult.serverNonce, "not valid base64!!");
+
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> server.evaluateResponse(clientFinalMessage),
+            "A proof value that is not valid base64 must be rejected");
+    }
+
+    /**
      * Verifies RFC 5802 §5: the reserved "m" attribute must be rejected even when it appears among the extensions
      * following the nonce, not only in the leading reserved-mext position. A client cannot bypass mandatory-
      * extension rejection simply by relocating the attribute.

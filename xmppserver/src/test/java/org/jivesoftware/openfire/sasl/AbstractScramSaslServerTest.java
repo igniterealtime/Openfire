@@ -95,16 +95,21 @@ public abstract class AbstractScramSaslServerTest
     /**
      * Computes a valid client proof for the given SCRAM exchange state using the algorithm under test.
      *
-     * @param initialMessage      the raw bytes of the initial client message
-     * @param firstServerResponse the server's first response string
-     * @param firstExchangeResult the parsed result of the first server response
+     * @param initialMessage                  the raw bytes of the initial client message
+     * @param firstServerResponse             the server's first response string
+     * @param firstExchangeResult             the parsed result of the first server response
+     * @param clientFinalMessageWithoutProof  the exact client-final-message-without-proof string (e.g.
+     *                                         "c=biws,r=<nonce>" or "c=biws,r=<nonce>,x=ignored") that the proof
+     *                                         must be computed over; callers use this to verify that extensions
+     *                                         are correctly folded into AuthMessage, not merely tolerated at parsing
      * @return the Base64-encoded client proof
      * @throws Exception if key derivation or HMAC computation fails
      */
     protected abstract String createValidProof(
         byte[] initialMessage,
         String firstServerResponse,
-        FirstExchangeResult firstExchangeResult
+        FirstExchangeResult firstExchangeResult,
+        String clientFinalMessageWithoutProof
     ) throws Exception;
 
     /**
@@ -1514,6 +1519,32 @@ public abstract class AbstractScramSaslServerTest
     }
 
     /**
+     * Verifies that a client-final-message extension is actually folded into AuthMessage, byte-for-byte, and not
+     * merely tolerated at the parsing stage. Drives a full, successful exchange whose proof is computed over
+     * client-final-message-without-proof including ",x=ignored".
+     *
+     * acceptsFinalMessage_withOptionalExtension() alone cannot catch a regression that drops or alters the
+     * extension before proof verification: that test's deliberately wrong (all-zero) proof fails identically
+     * whether or not the extension was correctly included, since "Authentication failed" is the same outcome
+     * either way. This test is what actually distinguishes "extension correctly included" from "extension
+     * silently mishandled" - a server that got this wrong would reject every real client using final-message
+     * extensions, and only a genuine success-path exchange like this one would notice.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3351">OF-3351: SCRAM server rejects optional extensions in client-final-message</a>
+     */
+    @Test
+    void completesSuccessfulExchange_withOptionalExtensionIncludedInAuthMessage() throws Exception
+    {
+        // Execute system under test
+        final ScramSaslServer server = completeSuccessfulExchange(",x=ignored");
+
+        // Verify result
+        assertTrue(server.isComplete(), "A client-final-message extension correctly included in AuthMessage should result in successful authentication");
+    }
+
+    /**
      * Verifies that an extension value containing a NUL character is rejected in a client-final-message too, since
      * CLIENT_FINAL_MESSAGE's extensions share the same ATTR_VAL character-class definition as the client-first
      * case above.
@@ -1677,9 +1708,23 @@ public abstract class AbstractScramSaslServerTest
     }
 
     /**
-     * Drives a complete successful SCRAM exchange and returns the completed server instance.
+     * Drives a complete successful SCRAM exchange with no client-final-message extensions, and returns the
+     * completed server instance.
      */
     protected ScramSaslServer completeSuccessfulExchange() throws Exception
+    {
+        return completeSuccessfulExchange("");
+    }
+
+    /**
+     * Drives a complete successful SCRAM exchange whose client-final-message includes the given raw,
+     * comma-prefixed extensions string (e.g. ",x=ignored"), and returns the completed server instance. The
+     * supplied {@code extensions} is folded into both the message sent to the server and the AuthMessage the
+     * proof is computed over, so a correct exchange only succeeds if the server does the same.
+     *
+     * @param extensions raw, comma-prefixed extensions to append after the nonce (e.g. ",x=ignored"), or "" for none
+     */
+    protected ScramSaslServer completeSuccessfulExchange(final String extensions) throws Exception
     {
         setupCanonicalAuthData();
 
@@ -1689,10 +1734,10 @@ public abstract class AbstractScramSaslServerTest
 
         final FirstExchangeResult firstExchangeResult = FirstExchangeResult.fromFirstServerResponse(firstServerResponse);
 
-        final String proof = createValidProof(initialMessage, firstServerResponse, firstExchangeResult);
+        final String clientFinalMessageWithoutProof = "c=biws,r=" + firstExchangeResult.serverNonce + extensions;
+        final String proof = createValidProof(initialMessage, firstServerResponse, firstExchangeResult, clientFinalMessageWithoutProof);
 
-        final String clientFinalBare = "c=biws,r=" + firstExchangeResult.serverNonce;
-        final String clientFinalMessage = clientFinalBare + ",p=" + proof;
+        final String clientFinalMessage = clientFinalMessageWithoutProof + ",p=" + proof;
         server.evaluateResponse(clientFinalMessage.getBytes(StandardCharsets.UTF_8));
         return server;
     }

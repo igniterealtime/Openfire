@@ -73,11 +73,11 @@ public abstract class ScramSaslServer implements SaslServer
 
     // RFC 5802 §7 formal syntax, factored into named fragments so a single character-class definition can't silently
     // drift between the patterns that share it.
-    private static final String CB_NAME  = "[A-Za-z0-9.-]+";            // cb-name  = 1*(ALPHA / DIGIT / "." / "-")
-    private static final String SASLNAME = "[^,]+";                     // saslname (escaping validated separately by decodeSaslname)
-    private static final String NONCE    = "[\\x21-\\x2B\\x2D-\\x7E]*"; // printable* -- %x21-2B / %x2D-7E; '*' permits empty so the existing explicit isEmpty() checks keep their specific messages
-    private static final String ATTR_VAL = "[A-Za-z]=[^,]+";            // attr-val = ALPHA "=" value
-    private static final String BASE64   = "[A-Za-z0-9+/=]*";           // base64 charset only (not strict block/padding structure); '*' permits empty for the same reason as NONCE
+    private static final String CB_NAME       = "[A-Za-z0-9.-]+";            // cb-name  = 1*(ALPHA / DIGIT / "." / "-")
+    private static final String SASLNAME_CHAR = "[^,\\x00]";                 // saslname char: excludes NUL, comma (escaping validated separately by decodeSaslname)
+    private static final String NONCE         = "[\\x21-\\x2B\\x2D-\\x7E]*"; // printable* -- %x21-2B / %x2D-7E; '*' permits empty so the existing explicit isEmpty() checks keep their specific messages
+    private static final String ATTR_VAL      = "[A-Za-z]=[^,\\x00]+";       // attr-val = ALPHA "=" value; value excludes NUL per value-safe-char
+    private static final String BASE64        = "[A-Za-z0-9+/=]*";           // base64 charset only (not strict block/padding structure); '*' permits empty for the same reason as NONCE
 
     /**
      * Matches the GS2 header that prefixes a SCRAM client-first-message:
@@ -98,7 +98,7 @@ public abstract class ScramSaslServer implements SaslServer
      * Group 4: the raw (still saslname-escaped), non-empty authzid value, without the "a=" prefix, only present when supplied.
      * Group 5: everything after the GS2 header, i.e. the client-first-message-bare.
      */
-    private static final Pattern GS2_HEADER = Pattern.compile("^(?:(p)=(" + CB_NAME + ")|([ny])),(?:a=(" + SASLNAME + "))?,(.*)$");
+    private static final Pattern GS2_HEADER = Pattern.compile("^(?:(p)=(" + CB_NAME + ")|([ny])),(?:a=(" + SASLNAME_CHAR + "+))?,(.*)$");
 
     /**
      * Matches a SCRAM client-first-message-bare:
@@ -121,7 +121,7 @@ public abstract class ScramSaslServer implements SaslServer
      * pattern; {@link #rejectReservedMandatoryExtension(String)} must still be called on this value, since the
      * reserved "m" attribute can also appear here rather than only in the leading reserved-mext position.
      */
-    private static final Pattern CLIENT_FIRST_MESSAGE_BARE = Pattern.compile("^(?:(m=[^,]*),)?n=([^,]*),r=(" + NONCE + ")((?:," + ATTR_VAL + ")*)$");
+    private static final Pattern CLIENT_FIRST_MESSAGE_BARE = Pattern.compile("^(?:(m=[^,]*),)?n=(" + SASLNAME_CHAR + "*),r=(" + NONCE + ")((?:," + ATTR_VAL + ")*)$");
 
     /**
      * Matches a SCRAM client-final-message:
@@ -343,7 +343,7 @@ public abstract class ScramSaslServer implements SaslServer
             throw new SaslException("Invalid first client message: unable to parse client-first-message-bare");
         }
 
-        username = decodeSaslname(bareMatcher.group(2)); // Group 2 comes from n=([^,]*), a mandatory (non-optional) capturing group, so once bareMatcher.matches() has succeeded, group 2 is always a non-null string.
+        username = decodeSaslname(bareMatcher.group(2)); // Group 2 comes from a mandatory (non-optional) capturing group, so once bareMatcher.matches() has succeeded, group 2 is always a non-null string.
         String clientNonce = bareMatcher.group(3);
 
         if (username.isEmpty()) {
@@ -883,12 +883,15 @@ public abstract class ScramSaslServer implements SaslServer
      *
      * @param saslname the raw, wire-escaped saslname value (username or authzid)
      * @return the decoded value
-     * @throws SaslException if the value contains a malformed escape sequence
+     * @throws SaslException if the value contains a NUL character or a malformed escape sequence
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3353">OF-3353: SCRAM username and authzid are not un-escaped per RFC 5802 saslname rules</a>
      */
     @VisibleForTesting
     static String decodeSaslname(@Nonnull final String saslname) throws SaslException
     {
+        if (saslname.indexOf('\u0000') >= 0) {
+            throw new SaslException("Invalid saslname: NUL character is not permitted");
+        }
         if (saslname.indexOf('=') < 0) {
             return saslname; // Fast path: no escape sequences present.
         }
@@ -935,8 +938,8 @@ public abstract class ScramSaslServer implements SaslServer
      * without going through that regex.
      *
      * @param rawExtensions the raw, comma-prefixed extensions string, or an empty string if none are present
-     * @throws SaslException if a reserved "m" attribute is present anywhere in {@code rawExtensions}, or if any
-     * segment is not a well-formed, single-letter attr-val pair
+     * @throws SaslException if a reserved "m" attribute is present anywhere in {@code rawExtensions}, or if any segment
+     *                       is not a well-formed, single-letter attr-val pair, or if any segment's value contains a NUL character
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3350">OF-3350: SCRAM server accepts unsupported mandatory extensions</a>
      */
     @VisibleForTesting
@@ -952,7 +955,10 @@ public abstract class ScramSaslServer implements SaslServer
             {
                 throw new SaslException("Invalid extension: '" + ext + "' is not a well-formed attr-val pair");
             }
-
+            if (ext.indexOf('\u0000') >= 0)
+            {
+                throw new SaslException("Invalid extension: '" + ext + "' contains a NUL character");
+            }
             if (ext.charAt(0) == 'm')
             {
                 throw new SaslException("Client requested an unsupported mandatory extension ('" + ext + "'). Rejecting authentication.");

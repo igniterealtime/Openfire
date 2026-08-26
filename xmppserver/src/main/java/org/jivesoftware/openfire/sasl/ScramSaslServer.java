@@ -71,6 +71,14 @@ public abstract class ScramSaslServer implements SaslServer
      */
     public static final String PROPNAME_CHANNELBINDINGTYPE = "channelbindingtype";
 
+    // RFC 5802 §7 formal syntax, factored into named fragments so a single character-class definition can't silently
+    // drift between the patterns that share it.
+    private static final String CB_NAME  = "[A-Za-z0-9.-]+";            // cb-name  = 1*(ALPHA / DIGIT / "." / "-")
+    private static final String SASLNAME = "[^,]+";                     // saslname (escaping validated separately by decodeSaslname)
+    private static final String NONCE    = "[\\x21-\\x2B\\x2D-\\x7E]*"; // printable* -- %x21-2B / %x2D-7E; '*' permits empty so the existing explicit isEmpty() checks keep their specific messages
+    private static final String ATTR_VAL = "[A-Za-z]=[^,]+";            // attr-val = ALPHA "=" value
+    private static final String BASE64   = "[A-Za-z0-9+/=]*";           // base64 charset only (not strict block/padding structure); '*' permits empty for the same reason as NONCE
+
     /**
      * Matches the GS2 header that prefixes a SCRAM client-first-message:
      *
@@ -86,12 +94,11 @@ public abstract class ScramSaslServer implements SaslServer
      *
      * Group 1: "p" if the p-flag was used, else null.
      * Group 2: the (non-empty) channel-binding name, only present when group 1 is "p".
-     * Group 3: "n" if the n-flag was used, else null.
-     * Group 4: "y" if the y-flag was used, else null.
-     * Group 5: the raw (still saslname-escaped), non-empty authzid value, without the "a=" prefix, only present when supplied.
-     * Group 6: everything after the GS2 header, i.e. the client-first-message-bare.
+     * Group 3: Group 3: the flag character, "n" or "y", whichever was used; else null (when group 1 is "p" instead).
+     * Group 4: the raw (still saslname-escaped), non-empty authzid value, without the "a=" prefix, only present when supplied.
+     * Group 5: everything after the GS2 header, i.e. the client-first-message-bare.
      */
-    private static final Pattern GS2_HEADER = Pattern.compile("^(?:(p)=([^,]+)|(n)|(y)),(?:a=([^,]+))?,(.*)$");
+    private static final Pattern GS2_HEADER = Pattern.compile("^(?:(p)=(" + CB_NAME + ")|([ny])),(?:a=(" + SASLNAME + "))?,(.*)$");
 
     /**
      * Matches a SCRAM client-first-message-bare:
@@ -114,7 +121,7 @@ public abstract class ScramSaslServer implements SaslServer
      * pattern; {@link #rejectReservedMandatoryExtension(String)} must still be called on this value, since the
      * reserved "m" attribute can also appear here rather than only in the leading reserved-mext position.
      */
-    private static final Pattern CLIENT_FIRST_MESSAGE_BARE = Pattern.compile("^(?:(m=[^,]*),)?n=([^,]*),r=([^,]*)((?:,[A-Za-z]=[^,]+)*)$");
+    private static final Pattern CLIENT_FIRST_MESSAGE_BARE = Pattern.compile("^(?:(m=[^,]*),)?n=([^,]*),r=(" + NONCE + ")((?:," + ATTR_VAL + ")*)$");
 
     /**
      * Matches a SCRAM client-final-message:
@@ -134,7 +141,7 @@ public abstract class ScramSaslServer implements SaslServer
      * malformed segments (empty, multi-letter attribute names, or missing "=") cause the whole message to be
      * rejected as invalid rather than silently tolerated.
      */
-    private static final Pattern CLIENT_FINAL_MESSAGE = Pattern.compile("^(c=([^,]*),r=([^,]*)(?:,(?!p=)[A-Za-z]=[^,]+)*),p=(.*)$");
+    private static final Pattern CLIENT_FINAL_MESSAGE = Pattern.compile("^(c=(" + BASE64 + "),r=(" + NONCE + ")(?:,(?!p=)" + ATTR_VAL + ")*),p=(" + BASE64 + ")$");
 
     /**
      * Manages a set of providers that can extract channel binding data of various types from SSL engines.
@@ -318,16 +325,13 @@ public abstract class ScramSaslServer implements SaslServer
         if (gs2Matcher.group(1) != null) {
             gs2CbindFlag = "p";
             gs2CbindName = gs2Matcher.group(2);
-        } else if (gs2Matcher.group(3) != null) {
-            gs2CbindFlag = "n";
-            gs2CbindName = null;
         } else {
-            gs2CbindFlag = "y";
+            gs2CbindFlag = gs2Matcher.group(3); // "n" or "y", whichever matched
             gs2CbindName = null;
         }
-        final String rawAuthzid = gs2Matcher.group(5);
+        final String rawAuthzid = gs2Matcher.group(4);
         final String authzid = rawAuthzid != null ? decodeSaslname(rawAuthzid) : null;
-        clientFirstMessageBare = gs2Matcher.group(6);
+        clientFirstMessageBare = gs2Matcher.group(5);
 
         final Matcher bareMatcher = CLIENT_FIRST_MESSAGE_BARE.matcher(clientFirstMessageBare);
         if (!bareMatcher.matches()) {

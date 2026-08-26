@@ -675,6 +675,37 @@ public abstract class AbstractScramSaslServerTest
     }
 
     /**
+     * Verifies RFC 5802 §7: a client-final-message MAY include optional extensions between the nonce and the
+     * proof. The parser must not reject such a message merely for containing one; the exchange should proceed to
+     * proof verification (and fail there, with an "authentication failed" style error, rather than being rejected
+     * at the parsing stage).
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3351">OF-3351: SCRAM server rejects optional extensions in client-final-message</a>
+     */
+    @Test
+    void acceptsFinalMessage_withOptionalExtension() throws Exception
+    {
+        // Setup test fixture
+        setupCanonicalAuthData();
+        final ScramSaslServer server = newServer(false);
+        final FirstExchangeResult firstExchangeResult = doFirstExchange(server);
+        final String wrongProof = Base64.getEncoder().encodeToString(new byte[expectedProofLengthBytes()]);
+        final byte[] clientFinalMessage = ("c=biws,r=" + firstExchangeResult.serverNonce + ",ext=ignored,p=" + wrongProof)
+            .getBytes(StandardCharsets.UTF_8);
+
+        // Execute system under test
+        final SaslException ex = assertThrows(SaslException.class, () -> server.evaluateResponse(clientFinalMessage),
+            "An all-zero proof does not match the expected proof, so authentication must still fail");
+
+        // Verify result: failure happened at proof verification, not at message parsing.
+        assertTrue(ex.getMessage().contains("Authentication failed"),
+            "A client-final-message with an optional extension must be structurally accepted; rejection should occur "
+                + "at proof verification, not parsing. Got: " + ex.getMessage());
+    }
+
+    /**
      * A client that supports channel binding but was not offered a -PLUS mechanism sends the 'y' GS2 flag. When the
      * server did not in fact advertise the -PLUS variant to this session, that claim is truthful and authentication
      * must proceed.

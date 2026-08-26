@@ -94,7 +94,7 @@ public abstract class ScramSaslServer implements SaslServer
      *
      * Group 1: "p" if the p-flag was used, else null.
      * Group 2: the (non-empty) channel-binding name, only present when group 1 is "p".
-     * Group 3: Group 3: the flag character, "n" or "y", whichever was used; else null (when group 1 is "p" instead).
+     * Group 3: the flag character, "n" or "y", whichever was used; else null (when group 1 is "p" instead).
      * Group 4: the raw (still saslname-escaped), non-empty authzid value, without the "a=" prefix, only present when supplied.
      * Group 5: everything after the GS2 header, i.e. the client-first-message-bare.
      */
@@ -135,13 +135,18 @@ public abstract class ScramSaslServer implements SaslServer
      * Group 1: the client-final-message-without-proof, verbatim (needed, byte-for-byte, to compute AuthMessage).
      * Group 2: the channel-binding value.
      * Group 3: the nonce value.
-     * Group 4: the proof value.
+     * Group 4: the raw, comma-prefixed extensions between the nonce and the proof (e.g. ",a=1,b=2"), or an empty string if none are present.
+     * Group 5: the proof value.
      *
      * Each optional extension between the nonce and the proof must be a well-formed, non-empty attr-val pair;
      * malformed segments (empty, multi-letter attribute names, or missing "=") cause the whole message to be
      * rejected as invalid rather than silently tolerated.
+     *
+     * As with the equivalent group in {@link #CLIENT_FIRST_MESSAGE_BARE}, each segment from group 4 is already
+     * constrained to a well-formed attr-val pair, but {@link #rejectReservedMandatoryExtension(String)}
+     * must still be called on this value to catch a reserved "m" attribute.
      */
-    private static final Pattern CLIENT_FINAL_MESSAGE = Pattern.compile("^(c=(" + BASE64 + "),r=(" + NONCE + ")(?:,(?!p=)" + ATTR_VAL + ")*),p=(" + BASE64 + ")$");
+    private static final Pattern CLIENT_FINAL_MESSAGE = Pattern.compile("^(c=(" + BASE64 + "),r=(" + NONCE + ")((?:,(?!p=)" + ATTR_VAL + ")*)),p=(" + BASE64 + ")$");
 
     /**
      * Manages a set of providers that can extract channel binding data of various types from SSL engines.
@@ -450,7 +455,14 @@ public abstract class ScramSaslServer implements SaslServer
         final String clientFinalMessageWithoutProof = m.group(1); // (c=([^,]*),r=([^,]*)[,extensions]) - verbatim, needed for AuthMessage
         final String channelBinding = m.group(2);                 // c=([^,]*)
         final String clientNonce = m.group(3);                    // r=([^,]*)
-        final String proof = m.group(4);                          // p=(.*)
+        final String extensions = m.group(4);
+        final String proof = m.group(5);
+
+        // RFC 5802 §5.1: the reserved "m" attribute must cause authentication failure wherever it appears, not only
+        // in client-first-message. client-final-message-without-proof has its own optional "extensions" production,
+        // so a client could otherwise request an unsupported mandatory extension there and still authenticate
+        // successfully with a validly-computed proof.
+        rejectReservedMandatoryExtension(extensions);
 
         if (proof == null || proof.isEmpty()) {
             throw new SaslException("Invalid client final message: missing proof attribute");

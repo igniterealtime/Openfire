@@ -332,6 +332,51 @@ public abstract class AbstractScramSaslServerTest
     }
 
     /**
+     * Verifies RFC 5802 §5: the reserved "m" attribute must be rejected even when it appears among the extensions
+     * following the nonce, not only in the leading reserved-mext position. A client cannot bypass mandatory-
+     * extension rejection simply by relocating the attribute.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3350">OF-3350: SCRAM server accepts unsupported mandatory extensions</a>
+     */
+    @Test
+    void rejectsFirstMessage_mandatoryExtensionRequested_postNoncePosition()
+    {
+        // Setup test fixture
+        final ScramSaslServer server = newServer(false);
+        final byte[] clientInitialMessage = ("n,,n=" + username() + ",r=" + clientNonce() + ",m=unsupported").getBytes(StandardCharsets.UTF_8);
+
+        // Execute system under test & Verify result
+        final SaslException ex = assertThrows(SaslException.class,
+            () -> server.evaluateResponse(clientInitialMessage),
+            "A client-first-message with the reserved 'm' attribute after the nonce must be rejected, the same as in the leading position");
+        assertTrue(ex.getMessage().contains("mandatory extension"), "Exception should mention the mandatory extension. Got: " + ex.getMessage());
+    }
+
+    /**
+     * Verifies that a malformed extension in a client-final-message (one that is not a well-formed, non-empty
+     * attr-val pair) is rejected, rather than being silently tolerated by an over-permissive extension match.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     */
+    @Test
+    void rejectsFinalMessage_malformedExtension() throws Exception
+    {
+        // Setup test fixture
+        setupCanonicalAuthData();
+        final ScramSaslServer server = newServer(false);
+        final FirstExchangeResult firstExchangeResult = doFirstExchange(server);
+        final String proof = Base64.getEncoder().encodeToString(new byte[expectedProofLengthBytes()]);
+        final byte[] clientFinalMessage = ("c=biws,r=" + firstExchangeResult.serverNonce + ",notavalidextension,p=" + proof)
+            .getBytes(StandardCharsets.UTF_8);
+
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> server.evaluateResponse(clientFinalMessage),
+            "A client-final-message with a malformed (non-attr-val) extension must be rejected");
+    }
+
+    /**
      * Verifies that a saslname containing an escaped comma ("=2C") is decoded correctly.
      *
      * Saslname decoding test: completely algorithm-independent.
@@ -504,6 +549,153 @@ public abstract class AbstractScramSaslServerTest
     {
         // Execute system under test & Verify result
         assertThrows(SaslException.class, () -> ScramSaslServer.decodeSaslname("abc=2cdef"));
+    }
+
+    /**
+     * Verifies that an empty extensions string (no extensions present) does not throw.
+     *
+     * Extension parsing test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3350">OF-3350: SCRAM server accepts unsupported mandatory extensions</a>
+     */
+    @Test
+    void rejectReservedMandatoryExtension_doesNotThrow_whenNoExtensionsPresent()
+    {
+        // Execute system under test & Verify result
+        assertDoesNotThrow(() -> ScramSaslServer.rejectReservedMandatoryExtension(""));
+    }
+
+    /**
+     * Verifies that a single, non-reserved extension does not throw.
+     *
+     * Extension parsing test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3350">OF-3350: SCRAM server accepts unsupported mandatory extensions</a>
+     */
+    @Test
+    void rejectReservedMandatoryExtension_doesNotThrow_forSingleNonReservedExtension()
+    {
+        // Execute system under test & Verify result
+        assertDoesNotThrow(() -> ScramSaslServer.rejectReservedMandatoryExtension(",a=1"));
+    }
+
+    /**
+     * Verifies that multiple non-reserved extensions, none of which is "m", do not throw.
+     *
+     * Extension parsing test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3350">OF-3350: SCRAM server accepts unsupported mandatory extensions</a>
+     */
+    @Test
+    void rejectReservedMandatoryExtension_doesNotThrow_forMultipleNonReservedExtensions()
+    {
+        // Execute system under test & Verify result
+        assertDoesNotThrow(() -> ScramSaslServer.rejectReservedMandatoryExtension(",a=1,b=2"));
+    }
+
+    /**
+     * Verifies that a single reserved "m" extension is rejected.
+     *
+     * Extension parsing test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3350">OF-3350: SCRAM server accepts unsupported mandatory extensions</a>
+     */
+    @Test
+    void rejectReservedMandatoryExtension_throws_forSingleReservedExtension()
+    {
+        // Execute system under test & Verify result
+        final SaslException ex = assertThrows(SaslException.class,
+            () -> ScramSaslServer.rejectReservedMandatoryExtension(",m=unsupported"));
+        assertTrue(ex.getMessage().contains("m=unsupported"), "Exception should identify the offending extension. Got: " + ex.getMessage());
+    }
+
+    /**
+     * Verifies that a reserved "m" extension appearing first among several extensions is still rejected.
+     *
+     * Extension parsing test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3350">OF-3350: SCRAM server accepts unsupported mandatory extensions</a>
+     */
+    @Test
+    void rejectReservedMandatoryExtension_throws_whenReservedExtensionIsFirst()
+    {
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> ScramSaslServer.rejectReservedMandatoryExtension(",m=unsupported,a=1"));
+    }
+
+    /**
+     * Verifies that a reserved "m" extension appearing after other, non-reserved extensions is still rejected --
+     * confirming the scan doesn't stop after the first segment.
+     *
+     * Extension parsing test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3350">OF-3350: SCRAM server accepts unsupported mandatory extensions</a>
+     */
+    @Test
+    void rejectReservedMandatoryExtension_throws_whenReservedExtensionIsNotFirst()
+    {
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> ScramSaslServer.rejectReservedMandatoryExtension(",a=1,m=unsupported"));
+    }
+
+    /**
+     * Verifies that a reserved "m" extension sandwiched between two other extensions is still rejected.
+     *
+     * Extension parsing test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3350">OF-3350: SCRAM server accepts unsupported mandatory extensions</a>
+     */
+    @Test
+    void rejectReservedMandatoryExtension_throws_whenReservedExtensionIsInTheMiddle()
+    {
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> ScramSaslServer.rejectReservedMandatoryExtension(",a=1,m=unsupported,b=2"));
+    }
+
+    /**
+     * Verifies that an uppercase "M" attribute is NOT treated as the reserved extension. RFC 5802 defines
+     * reserved-mext using the literal lowercase string "m="; this test documents that an uppercase "M=" is
+     * currently treated as an ordinary, ignorable extension rather than the reserved one.
+     *
+     * Extension parsing test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3350">OF-3350: SCRAM server accepts unsupported mandatory extensions</a>
+     */
+    @Test
+    void rejectReservedMandatoryExtension_doesNotThrow_forUppercaseM()
+    {
+        // Execute system under test & Verify result
+        assertDoesNotThrow(() -> ScramSaslServer.rejectReservedMandatoryExtension(",M=uppercase"));
+    }
+
+    /**
+     * Verifies that an empty extension segment (e.g. two consecutive commas) is rejected as malformed, rather than
+     * throwing an unchecked exception when the implementation inspects its first character.
+     *
+     * Extension parsing test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3350">OF-3350: SCRAM server accepts unsupported mandatory extensions</a>
+     */
+    @Test
+    void rejectReservedMandatoryExtension_throwsSaslException_forEmptySegment()
+    {
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> ScramSaslServer.rejectReservedMandatoryExtension(",a=1,,b=2"));
+    }
+
+    /**
+     * Verifies that a segment which is not a well-formed, single-letter attr-val pair (e.g. a multi-letter
+     * attribute name) is rejected as malformed.
+     *
+     * Extension parsing test: completely algorithm-independent.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3350">OF-3350: SCRAM server accepts unsupported mandatory extensions</a>
+     */
+    @Test
+    void rejectReservedMandatoryExtension_throwsSaslException_forMultiLetterAttributeName()
+    {
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> ScramSaslServer.rejectReservedMandatoryExtension(",ab=1"));
     }
 
     /**
@@ -1074,7 +1266,7 @@ public abstract class AbstractScramSaslServerTest
         final ScramSaslServer server = newServer(false);
         final FirstExchangeResult firstExchangeResult = doFirstExchange(server);
         final String wrongProof = Base64.getEncoder().encodeToString(new byte[expectedProofLengthBytes()]);
-        final byte[] clientFinalMessage = ("c=biws,r=" + firstExchangeResult.serverNonce + ",ext=ignored,p=" + wrongProof)
+        final byte[] clientFinalMessage = ("c=biws,r=" + firstExchangeResult.serverNonce + ",x=ignored,p=" + wrongProof)
             .getBytes(StandardCharsets.UTF_8);
 
         // Execute system under test

@@ -613,6 +613,29 @@ public abstract class AbstractScramSaslServerTest
     }
 
     /**
+     * Verifies RFC 5802 §5: the reserved "m=" attribute signals a mandatory extension. Since none are currently
+     * defined/supported, its presence must cause the exchange to fail rather than be silently ignored.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3350">OF-3350: SCRAM server accepts unsupported mandatory extensions</a>
+     */
+    @Test
+    void rejectsFirstMessage_mandatoryExtensionRequested()
+    {
+        // Setup test fixture
+        final ScramSaslServer server = newServer(false);
+        final byte[] clientInitialMessage = ("n,,m=unsupported-ext,n=" + username() + ",r=" + clientNonce())
+            .getBytes(StandardCharsets.UTF_8);
+
+        // Execute system under test & Verify result
+        final SaslException ex = assertThrows(SaslException.class,
+            () -> server.evaluateResponse(clientInitialMessage),
+            "A client-first-message containing the reserved 'm=' mandatory extension must be rejected");
+        assertTrue(ex.getMessage().contains("mandatory extension"), "Exception should mention the mandatory extension. Got: " + ex.getMessage());
+    }
+
+    /**
      * Verifies that a completely malformed final client message is rejected.
      *
      * Generic protocol validation test (also algorithm-independent).

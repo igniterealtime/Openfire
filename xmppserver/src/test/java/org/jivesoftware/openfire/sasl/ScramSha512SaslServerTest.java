@@ -69,11 +69,15 @@ public class ScramSha512SaslServerTest extends AbstractScramSaslServerTest
      * @param initialMessage      the raw bytes of the initial client message sent during the first exchange step
      * @param firstServerResponse the server's first response containing nonce, salt, and iterations
      * @param firstExchangeResult the parsed result of the first server response
+     * @param clientFinalMessageWithoutProof  the exact client-final-message-without-proof string (e.g.
+     *                                         "c=biws,r=<nonce>" or "c=biws,r=<nonce>,x=ignored") that the proof
+     *                                         must be computed over; callers use this to verify that extensions
+     *                                         are correctly folded into AuthMessage, not merely tolerated at parsing
      * @return the Base64-encoded client proof
      * @throws Exception if key derivation or HMAC computation fails
      */
     @Override
-    protected String createValidProof(final byte[] initialMessage, final String firstServerResponse, final FirstExchangeResult firstExchangeResult) throws Exception
+    protected String createValidProof(final byte[] initialMessage, final String firstServerResponse, final FirstExchangeResult firstExchangeResult, final String clientFinalMessageWithoutProof) throws Exception
     {
         final SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA512");
         final KeySpec spec = new PBEKeySpec(ScramSha512TestFixtures.PASSWORD.toCharArray(), firstExchangeResult.salt, firstExchangeResult.iterations, expectedProofLengthBytes()*8); // SCRAM derives the salted password at the hash's native output length, which equals the proof length
@@ -81,8 +85,7 @@ public class ScramSha512SaslServerTest extends AbstractScramSaslServerTest
 
         final byte[] clientKey       = new HmacUtils(HmacAlgorithms.HMAC_SHA_512, saltedPassword).hmac(ScramSha512TestFixtures.CLIENT_KEY);
         final byte[] storedKey       = StringUtils.decodeHex(StringUtils.hash(clientKey, ScramSha512SaslServer.DIGEST_ALGORITHM_NAME));
-        final String clientFinalBare = "c=biws,r=" + firstExchangeResult.serverNonce;
-        final String authMessage     = "n=" + ScramSha512TestFixtures.USER + ",r=" + ScramSha512TestFixtures.CLIENT_NONCE + "," + firstServerResponse + "," + clientFinalBare;
+        final String authMessage     = "n=" + ScramSha512TestFixtures.USER + ",r=" + ScramSha512TestFixtures.CLIENT_NONCE + "," + firstServerResponse + "," + clientFinalMessageWithoutProof;
         final byte[] clientSignature = new HmacUtils(HmacAlgorithms.HMAC_SHA_512, storedKey).hmac(authMessage);
 
         final byte[] clientProof = new byte[clientKey.length];

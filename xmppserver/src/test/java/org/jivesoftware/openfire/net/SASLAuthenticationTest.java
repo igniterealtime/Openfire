@@ -22,6 +22,7 @@ import org.dom4j.QName;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.StreamID;
@@ -46,6 +47,7 @@ import org.mockito.MockedStatic;
 import javax.security.sasl.SaslServer;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import static org.jivesoftware.openfire.net.SASLAuthentication.SASL_NAMESPACE;
 import static org.jivesoftware.openfire.net.SASLAuthentication.SASL2_NAMESPACE;
@@ -1261,137 +1263,135 @@ public class SASLAuthenticationTest
     }
 
     /**
-     * Verifies SASL1 channel-binding advertisement.
+     * Verifies that channel-binding types are not advertised when no channel-binding-capable mechanism is offered,
+     * since a peer that cannot use channel binding has no use for the type list.
+     *
+     * @see <a href="https://xmpp.org/extensions/xep-0440.html">XEP-0440: SASL Channel-Binding Type Capability</a>
      */
     @Test
-    public void shouldAppendChannelBindingCapabilityForSasl1()
+    public void getAdvertisableChannelBindingTypes_noPlusMechanism_returnsEmpty()
     {
-        // Setup test fixture.
-        final Element mechanisms = DocumentHelper.createElement(QName.get("mechanisms", "urn:ietf:params:xml:ns:xmpp-sasl"));
-        final List<Element> features = new ArrayList<>(List.of(mechanisms));
-        final Element capability = DocumentHelper.createElement(QName.get("sasl-channel-binding", "urn:xmpp:sasl-cb:0"));
+        // Setup test fixture, execute system under test.
+        final Set<String> result = SASLAuthentication.getAdvertisableChannelBindingTypes(Set.of("PLAIN", "EXTERNAL"));
 
+        // Verify result.
+        assertTrue(result.isEmpty(), "Expected no channel-binding types when no -PLUS mechanism is offered.");
+    }
+
+    /**
+     * Verifies that no channel-binding types are advertised when a -PLUS mechanism is offered but the server has no
+     * providers registered for any type.
+     */
+    @Test
+    public void getAdvertisableChannelBindingTypes_plusMechanismButNoProviders_returnsEmpty()
+    {
         try (final MockedStatic<ChannelBindingProviderManager> mocked = mockStatic(ChannelBindingProviderManager.class))
         {
+            // Setup test fixture.
             final ChannelBindingProviderManager manager = mock(ChannelBindingProviderManager.class);
-
             mocked.when(ChannelBindingProviderManager::getInstance).thenReturn(manager);
-            when(manager.getSASLChannelBindingTypeCapabilityElement(mechanisms)).thenReturn(Optional.of(capability));
+            when(manager.getSupportedChannelBindingTypes()).thenReturn(Set.of());
 
             // Execute system under test.
-            SASLAuthentication.appendChannelBindingCapabilityIfNeeded(features);
+            final Set<String> result = SASLAuthentication.getAdvertisableChannelBindingTypes(Set.of("SCRAM-SHA-1", "SCRAM-SHA-1-PLUS"));
 
             // Verify result.
-            assertTrue(features.contains(capability), "A SASL1 mechanisms feature with channel-binding support should result in a sasl-channel-binding feature being added.");
+            assertTrue(result.isEmpty(), "Expected no channel-binding types when no providers are registered.");
         }
     }
 
     /**
-     * Verifies SASL2 channel-binding advertisement.
+     * Verifies that the supported channel-binding types are advertised when a -PLUS mechanism is offered.
      */
     @Test
-    public void shouldAppendChannelBindingCapabilityForSasl2()
+    public void getAdvertisableChannelBindingTypes_plusMechanismWithProviders_returnsSupportedTypes()
     {
-        // Setup test fixture.
-        final Element authentication = DocumentHelper.createElement(QName.get("authentication", "urn:xmpp:sasl:2"));
-        final List<Element> features = new ArrayList<>(List.of(authentication));
-        final Element capability = DocumentHelper.createElement(QName.get("sasl-channel-binding", "urn:xmpp:sasl-cb:0"));
-
         try (final MockedStatic<ChannelBindingProviderManager> mocked = mockStatic(ChannelBindingProviderManager.class))
         {
+            // Setup test fixture.
             final ChannelBindingProviderManager manager = mock(ChannelBindingProviderManager.class);
-
             mocked.when(ChannelBindingProviderManager::getInstance).thenReturn(manager);
-            when(manager.getSASLChannelBindingTypeCapabilityElement(authentication)).thenReturn(Optional.of(capability));
+            when(manager.getSupportedChannelBindingTypes()).thenReturn(Set.of("tls-server-end-point", "tls-exporter"));
 
             // Execute system under test.
-            SASLAuthentication.appendChannelBindingCapabilityIfNeeded(features);
+            final Set<String> result = SASLAuthentication.getAdvertisableChannelBindingTypes(Set.of("SCRAM-SHA-1", "SCRAM-SHA-1-PLUS"));
 
             // Verify result.
-            assertTrue(features.contains(capability), "A SASL2 authentication feature with channel-binding support should result in a sasl-channel-binding feature being added.");
+            assertEquals(Set.of("tls-server-end-point", "tls-exporter"), result, "Expected the supported channel-binding types to be advertised alongside a -PLUS mechanism.");
         }
     }
 
     /**
-     * Verifies no advertisement without a SASL feature.
+     * Verifies that exactly one XEP-0440 capability element is advertised, even when both the SASL1 and SASL2
+     * feature elements are offered.
+     *
+     * The previous implementation derived the capability element per SASL feature element, producing a duplicate
+     * announcement whenever both profiles were advertised. XEP-0440 defines a single stream feature.
      */
     @Test
-    public void shouldNotAppendChannelBindingCapabilityWhenNoSaslFeatureExists()
+    public void asSASLMechanisms_advertisesChannelBindingTypesOnce_whenBothSasl1AndSasl2AreOffered()
     {
         // Setup test fixture.
-        final Element compression = DocumentHelper.createElement(QName.get("compression", "http://jabber.org/features/compress"));
-        final List<Element> features = new ArrayList<>(List.of(compression));
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        SASLAuthentication.SASL2_REQUIRE_TLS.setValue(false);
 
-        try (final MockedStatic<ChannelBindingProviderManager> mocked = mockStatic(ChannelBindingProviderManager.class))
-        {
-            // Execute system under test.
-            SASLAuthentication.appendChannelBindingCapabilityIfNeeded(features);
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
 
-            // Verify result.
-            mocked.verifyNoInteractions();
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
 
-            assertFalse(features.stream().anyMatch(e -> "sasl-channel-binding".equals(e.getName())),"No sasl-channel-binding feature should be added when no SASL feature is present.");
-        }
+        // Execute system under test.
+        final List<Element> features = SASLAuthentication.asSASLMechanisms(session, Set.of("PLAIN"), Set.of("tls-server-end-point", "tls-exporter"));
+        assertEquals(1, features.stream().filter(e -> "mechanisms".equals(e.getName())).count(), "Test setup issue: expected a SASL1 mechanisms feature to be advertised.");
+        assertEquals(1, features.stream().filter(e -> "authentication".equals(e.getName())).count(), "Test setup issue: expected a SASL2 authentication feature to be advertised.");
+
+        // Verify result.
+        final List<Element> capabilities = features.stream()
+            .filter(e -> "sasl-channel-binding".equals(e.getName()))
+            .toList();
+        assertEquals(1, capabilities.size(), "Expected exactly one sasl-channel-binding feature, regardless of how many SASL profiles are advertised.");
+        assertEquals(SASLAuthentication.SASL_CHANNEL_BINDING_NAMESPACE, capabilities.get(0).getNamespaceURI(), "Expected the capability element to be in the XEP-0440 namespace.");
+        assertEquals(2, capabilities.get(0).elements("channel-binding").size(), "Expected one channel-binding child per advertised type.");
     }
 
     /**
-     * Verifies no advertisement when unavailable.
+     * Verifies that no channel-binding capability element is emitted when no types are advertised, rather than an
+     * empty one. A peer following XEP-0474 treats the presence of the element as significant when computing the
+     * downgrade protection hash, so an empty element is not equivalent to an absent one.
      */
     @Test
-    public void shouldNotAppendChannelBindingCapabilityWhenProviderReturnsEmpty()
+    public void asSASLMechanisms_omitsChannelBindingElement_whenNoTypesAdvertised()
     {
         // Setup test fixture.
-        final Element mechanisms = DocumentHelper.createElement(QName.get("mechanisms", "urn:ietf:params:xml:ns:xmpp-sasl"));
-        final List<Element> features = new ArrayList<>(List.of(mechanisms));
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
 
-        try (final MockedStatic<ChannelBindingProviderManager> mocked = mockStatic(ChannelBindingProviderManager.class))
-        {
-            final ChannelBindingProviderManager manager = mock(ChannelBindingProviderManager.class);
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
 
-            mocked.when(ChannelBindingProviderManager::getInstance).thenReturn(manager);
-            when(manager.getSASLChannelBindingTypeCapabilityElement(mechanisms)).thenReturn(Optional.empty());
+        // Execute system under test.
+        final List<Element> features = SASLAuthentication.asSASLMechanisms(session, Set.of("PLAIN"), Set.of());
 
-            // Execute system under test.
-            SASLAuthentication.appendChannelBindingCapabilityIfNeeded(features);
-
-            // Verify result.
-            assertFalse(features.stream().anyMatch(e -> "sasl-channel-binding".equals(e.getName())), "No sasl-channel-binding feature should be added when no channel-binding types are available.");
-        }
+        // Verify result.
+        assertFalse(features.stream().anyMatch(e -> "sasl-channel-binding".equals(e.getName())), "Expected no sasl-channel-binding feature when no channel-binding types are advertised.");
     }
 
     /**
-     * Verifies SASL1 and SASL2 channel-binding advertisement (simultaneously).
+     * Verifies that an unrecognised session type receives no SASL features at all, including no XEP-0440 capability
+     * element, even when channel-binding types would otherwise be advertised.
      */
     @Test
-    public void shouldAppendChannelBindingCapabilityForBothSasl1AndSasl2()
+    public void asSASLMechanisms_unknownSessionType_returnsNoFeatures()
     {
         // Setup test fixture.
-        final Element mechanisms = DocumentHelper.createElement(QName.get("mechanisms", "urn:ietf:params:xml:ns:xmpp-sasl"));
-        final Element authentication = DocumentHelper.createElement(QName.get("authentication", "urn:xmpp:sasl:2"));
-        final List<Element> features = new ArrayList<>(List.of(mechanisms, authentication));
+        final LocalSession session = mock(LocalSession.class);
 
-        // Distinct, identifiable return values so the assertions can attribute each to its source feature.
-        final Element cbForSasl1 = DocumentHelper.createElement(QName.get("sasl-channel-binding", "urn:xmpp:sasl-cb:0"));
-        cbForSasl1.addAttribute("test-source", "sasl1");
-        final Element cbForSasl2 = DocumentHelper.createElement(QName.get("sasl-channel-binding", "urn:xmpp:sasl-cb:0"));
-        cbForSasl2.addAttribute("test-source", "sasl2");
+        // Execute system under test.
+        final List<Element> features = SASLAuthentication.asSASLMechanisms(session, Set.of("SCRAM-SHA-1-PLUS"), Set.of("tls-exporter"));
 
-        try (final MockedStatic<ChannelBindingProviderManager> mocked = mockStatic(ChannelBindingProviderManager.class))
-        {
-            final ChannelBindingProviderManager manager = mock(ChannelBindingProviderManager.class);
-            mocked.when(ChannelBindingProviderManager::getInstance).thenReturn(manager);
-            when(manager.getSASLChannelBindingTypeCapabilityElement(mechanisms)).thenReturn(Optional.of(cbForSasl1));
-            when(manager.getSASLChannelBindingTypeCapabilityElement(authentication)).thenReturn(Optional.of(cbForSasl2));
-
-            // Execute system under test
-            SASLAuthentication.appendChannelBindingCapabilityIfNeeded(features);
-
-            // Verify result.
-            verify(manager).getSASLChannelBindingTypeCapabilityElement(authentication);
-            verify(manager).getSASLChannelBindingTypeCapabilityElement(mechanisms);
-            assertTrue(features.contains(cbForSasl2), "SASL2 must receive channel-binding caps even when SASL1 is also advertised.");
-            assertTrue(features.contains(cbForSasl1), "SASL1 caps should also be present in the dual-stack case.");
-        }
+        // Verify result.
+        assertTrue(features.isEmpty(), "Expected no features for an unrecognised session type, including no channel-binding capability element.");
     }
 
     /**
@@ -1533,6 +1533,114 @@ public class SASLAuthenticationTest
         final Optional<Set<String>> result = SASLAuthentication.getAdvertisedSASLMechanisms(session);
         assertTrue(result.isPresent(), "Expected advertised SASL mechanisms to be available for the session.");
         assertEquals(Set.of("PLAIN"), result.get(), "Expected advertised mechanisms to be an immutable snapshot of the original set.");
+    }
+
+    /**
+     * Verifies that the SASL mechanisms and channel-binding types recorded on the session are exactly those
+     * rendered into the stream features.
+     *
+     * This is the property the whole arrangement depends on: the XEP-0474 downgrade protection hash is computed
+     * from the recorded sets, while a peer computes its own from what it received. If the two ever diverge, every
+     * XEP-0474-aware authentication fails, for every user, with no indication of why. Testing
+     * getAdvertisableChannelBindingTypes and asSASLMechanisms separately cannot catch that divergence; only
+     * driving appendSASLFeatures can.
+     */
+    @Test
+    public void appendSASLFeatures_recordsExactlyWhatIsAdvertised_withChannelBinding()
+    {
+        try (final MockedStatic<AuthFactory> authFactory = mockStatic(AuthFactory.class);
+             final MockedStatic<ChannelBindingProviderManager> managers = mockStatic(ChannelBindingProviderManager.class))
+        {
+            // Setup test fixture: an encrypted session that is offered SCRAM-SHA-1 and its -PLUS variant.
+            SASLAuthentication.setEnabledMechanisms(List.of("SCRAM-SHA-1", "SCRAM-SHA-1-PLUS"));
+            authFactory.when(AuthFactory::supportsScram).thenReturn(true);
+            authFactory.when(() -> AuthFactory.getScramMechanisms(any())).thenReturn(Set.of("SCRAM-SHA-1"));
+            authFactory.when(AuthFactory::getFallbackScramMechanisms).thenReturn(Set.of("SCRAM-SHA-1"));
+
+            final ChannelBindingProviderManager manager = mock(ChannelBindingProviderManager.class);
+            managers.when(ChannelBindingProviderManager::getInstance).thenReturn(manager);
+            when(manager.getSupportedChannelBindingTypes()).thenReturn(Set.of("tls-server-end-point", "tls-exporter"));
+
+            final Connection connection = mock(Connection.class);
+            when(connection.isEncrypted()).thenReturn(true);
+            when(connection.getSupportedChannelBindingTypes()).thenReturn(Set.of("tls-server-end-point", "tls-exporter"));
+
+            final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+            final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+            // Execute system under test.
+            final List<Element> features = new ArrayList<>();
+            SASLAuthentication.appendSASLFeatures(session, features);
+
+            // Verify result.
+            assertEquals(Set.of("SCRAM-SHA-1", "SCRAM-SHA-1-PLUS"), advertisedMechanismsIn(features),
+                "Test setup issue: expected both SCRAM mechanisms to be offered to this session.");
+            assertEquals(Set.of("tls-server-end-point", "tls-exporter"), advertisedChannelBindingTypesIn(features),
+                "Test setup issue: expected both channel-binding types to be advertised to this session.");
+            assertEquals(advertisedMechanismsIn(features), SASLAuthentication.getAdvertisedSASLMechanisms(session).orElseThrow(),
+                "The recorded SASL mechanisms must be exactly those rendered into the stream features.");
+            assertEquals(advertisedChannelBindingTypesIn(features), SASLAuthentication.getAdvertisedChannelBindingTypes(session).orElseThrow(),
+                "The recorded channel-binding types must be exactly those rendered into the stream features.");
+        }
+    }
+
+    /**
+     * Verifies the same correspondence for a session that is offered no channel-binding-capable mechanism: no
+     * capability element is rendered, and an empty set is recorded.
+     *
+     * Recording the empty set matters as much as recording a populated one. A peer that received no XEP-0440
+     * announcement omits the channel-binding section from its hash input entirely, so the server must do the
+     * same; an absent record would instead mean 'we do not know what was advertised'.
+     */
+    @Test
+    public void appendSASLFeatures_recordsExactlyWhatIsAdvertised_withoutChannelBinding()
+    {
+        // Setup test fixture: an unencrypted session, offered only PLAIN.
+        SASLAuthentication.setEnabledMechanisms(List.of("PLAIN"));
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final List<Element> features = new ArrayList<>();
+        SASLAuthentication.appendSASLFeatures(session, features);
+
+        // Verify result.
+        assertEquals(Set.of("PLAIN"), advertisedMechanismsIn(features),
+            "Test setup issue: expected PLAIN to be the only mechanism offered to this session.");
+        assertEquals(advertisedMechanismsIn(features), SASLAuthentication.getAdvertisedSASLMechanisms(session).orElseThrow(),
+            "The recorded SASL mechanisms must be exactly those rendered into the stream features.");
+        assertFalse(features.stream().anyMatch(e -> "sasl-channel-binding".equals(e.getName())),
+            "Test setup issue: expected no channel-binding capability element to be rendered.");
+        assertEquals(Set.of(), SASLAuthentication.getAdvertisedChannelBindingTypes(session).orElseThrow(),
+            "An empty set must be recorded when no channel-binding types were advertised, distinct from nothing being recorded at all.");
+    }
+
+    /**
+     * Returns the SASL mechanism names rendered into the given stream features, across every SASL profile present.
+     */
+    private static Set<String> advertisedMechanismsIn(final List<Element> features)
+    {
+        return features.stream()
+            .filter(e -> "mechanisms".equals(e.getName()) || "authentication".equals(e.getName()))
+            .flatMap(e -> e.elements("mechanism").stream())
+            .map(Element::getTextTrim)
+            .collect(Collectors.toSet());
+    }
+
+    /**
+     * Returns the channel-binding type names rendered into the given stream features.
+     */
+    private static Set<String> advertisedChannelBindingTypesIn(final List<Element> features)
+    {
+        return features.stream()
+            .filter(e -> "sasl-channel-binding".equals(e.getName()))
+            .flatMap(e -> e.elements("channel-binding").stream())
+            .map(e -> e.attributeValue("type"))
+            .collect(Collectors.toSet());
     }
 
     private static Element authElement(final String mechanism)

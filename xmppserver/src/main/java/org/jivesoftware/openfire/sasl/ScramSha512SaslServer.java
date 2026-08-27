@@ -18,10 +18,8 @@ package org.jivesoftware.openfire.sasl;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.jivesoftware.openfire.auth.ScramUtils;
-import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.util.StringUtils;
 import org.jivesoftware.util.SystemProperty;
-import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 
 import javax.annotation.Nonnull;
 import java.util.Map;
@@ -115,19 +113,11 @@ public class ScramSha512SaslServer extends ScramSaslServer {
      * @param isPlusMechanism Denotes if this instance supports channel-binding ({@code true}) or not ({@code false}).
      * @param props The possibly null set of properties used to select the SASL mechanism and to configure the authentication exchange of the selected mechanism.
      * @param availableMechanismsForSession The names of SASL mechanisms that are available to this particular session (as opposed to the set of globally available mechanism names).
+     * @param availableChannelBindingTypesForSession The names of channel binding types that are available to this particular session (as opposed to the set of globally available channel binding types).
      */
-    public ScramSha512SaslServer(final boolean isPlusMechanism, final Map<String, ?> props, @Nonnull final Set<String> availableMechanismsForSession)
+    public ScramSha512SaslServer(final boolean isPlusMechanism, final Map<String, ?> props, @Nonnull final Set<String> availableMechanismsForSession, @Nonnull final Set<String> availableChannelBindingTypesForSession)
     {
-        super(isPlusMechanism, props, ChannelBindingProviderManager.getInstance(), availableMechanismsForSession);
-    }
-
-    /**
-     * Constructor for testing purposes.
-     */
-    @VisibleForTesting
-    ScramSha512SaslServer(final boolean isPlusMechanism, final Map<String, ?> props, final ChannelBindingProviderManager channelBindingProviderManager, @Nonnull final Set<String> availableMechanismsForSession)
-    {
-        super(isPlusMechanism, props, channelBindingProviderManager, availableMechanismsForSession);
+        super(isPlusMechanism, props, availableMechanismsForSession, availableChannelBindingTypesForSession);
     }
 
     @Override

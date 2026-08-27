@@ -21,8 +21,6 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.util.StringUtils;
-import org.jivesoftware.util.channelbinding.ChannelBindingProvider;
-import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.junit.jupiter.api.Test;
 
 import javax.annotation.Nonnull;
@@ -139,7 +137,7 @@ public class ScramSha256SaslServerTest extends AbstractScramSaslServerTest
     @Override
     protected ScramSha256SaslServer newServer(final boolean isPlusMechanism)
     {
-        return new ScramSha256SaslServer(isPlusMechanism, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha256TestFixtures.SUPPORTED_MECHANISMS);
+        return new ScramSha256SaslServer(isPlusMechanism, new HashMap<>(), ScramSha256TestFixtures.SUPPORTED_MECHANISMS, ScramSha256TestFixtures.SUPPORTED_CHANNEL_BINDING_TYPES);
     }
 
     /**
@@ -150,7 +148,7 @@ public class ScramSha256SaslServerTest extends AbstractScramSaslServerTest
      */
     protected ScramSha256SaslServer newServer(boolean isPlusMechanism, Set<String> advertisedMechanismNames)
     {
-        return new ScramSha256SaslServer(isPlusMechanism, new HashMap<>(), new ChannelBindingProviderManager(), advertisedMechanismNames);
+        return new ScramSha256SaslServer(isPlusMechanism, new HashMap<>(), advertisedMechanismNames, ScramSha256TestFixtures.SUPPORTED_CHANNEL_BINDING_TYPES);
     }
 
     /**
@@ -220,24 +218,17 @@ public class ScramSha256SaslServerTest extends AbstractScramSaslServerTest
         final String channelBindingType = "tls-server-end-point";
         final byte[] channelBindingData = "mocked-channel-binding-data".getBytes(StandardCharsets.UTF_8);
 
-        final ChannelBindingProviderManager channelBindingProviderManager = new ChannelBindingProviderManager();
-        final ChannelBindingProvider serverEndPointProvider = mock(ChannelBindingProvider.class);
-        when(serverEndPointProvider.getType()).thenReturn("tls-server-end-point");
-        when(serverEndPointProvider.getChannelBinding(any())).thenReturn(Optional.of(channelBindingData));
-
         final LocalSession mockSession = mock(LocalSession.class);
         final Connection mockConnection = mock(Connection.class);
         when(mockConnection.getChannelBindingData(channelBindingType)).thenReturn(Optional.of(channelBindingData));
         when(mockSession.getConnection()).thenReturn(mockConnection);
-
-        channelBindingProviderManager.addProvider(serverEndPointProvider);
 
         setupCanonicalAuthData();
 
         // Setup test fixture: prepare initial client message with channel binding.
         final Map<String, Object> props = new HashMap<>();
         props.put(LocalSession.class.getCanonicalName(), mockSession);
-        final ScramSha256SaslServer server = new ScramSha256SaslServer(true, props, channelBindingProviderManager, ScramSha256TestFixtures.SUPPORTED_MECHANISMS);
+        final ScramSha256SaslServer server = new ScramSha256SaslServer(true, props, ScramSha256TestFixtures.SUPPORTED_MECHANISMS, ScramSha256TestFixtures.SUPPORTED_CHANNEL_BINDING_TYPES);
         final String gs2Header = "p=" + channelBindingType + ",,";
         final byte[] initialMessage = createClientInitialMessage(gs2Header, ScramSha256TestFixtures.USER, ScramSha256TestFixtures.CLIENT_NONCE);
 

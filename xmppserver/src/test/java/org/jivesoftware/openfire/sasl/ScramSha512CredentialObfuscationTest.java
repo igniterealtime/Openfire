@@ -16,7 +16,6 @@
 package org.jivesoftware.openfire.sasl;
 
 import org.jivesoftware.util.SystemProperty;
-import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
@@ -68,6 +67,6 @@ public class ScramSha512CredentialObfuscationTest extends AbstractScramCredentia
     @Override
     protected ScramSha512SaslServer newServer()
     {
-        return new ScramSha512SaslServer(false, new HashMap<>(), new ChannelBindingProviderManager(), ScramSha512TestFixtures.SUPPORTED_MECHANISMS);
+        return new ScramSha512SaslServer(false, new HashMap<>(), ScramSha512TestFixtures.SUPPORTED_MECHANISMS, ScramSha512TestFixtures.SUPPORTED_CHANNEL_BINDING_TYPES);
     }
 }

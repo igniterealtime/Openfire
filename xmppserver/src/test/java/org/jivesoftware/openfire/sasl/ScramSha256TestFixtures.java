@@ -41,6 +41,7 @@ public final class ScramSha256TestFixtures
     public static final String STORED_KEY_HEX = "586e5df283e6dceb5c3e791d8b8528ec191e664045ce971792e2e6b5bb13e2a6";
     public static final String SERVER_KEY_HEX = "c1f3cbc1c13a9d35a14c0990eed97629ea225863e566a4314ab99f3f00e5d9d5";
     public static final Set<String> SUPPORTED_MECHANISMS = Set.of(ScramSha256SaslServer.MECHANISM_NAME, ScramSha256SaslServer.MECHANISM_NAME+"-PLUS");
+    public static final Set<String> SUPPORTED_CHANNEL_BINDING_TYPES = Set.of("tls-server-end-point", "tls-exporter");
 
     private ScramSha256TestFixtures() {}
 }

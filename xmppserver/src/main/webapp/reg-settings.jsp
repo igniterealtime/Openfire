@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -79,6 +79,7 @@
             mechsEnabled.add( parameterName.substring( mechEnabledPrefix.length() ) );
         }
     }
+    boolean ssdpEnabled = ParamUtils.getBooleanParameter(request, "ssdpEnabled");
 
     if (save || blockValue != null || deleteBlockedIP != null || allowValue != null || deleteAllowedIP != null || allowAnonymValue != null || deleteAllowedAnonymIP != null) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
@@ -163,16 +164,17 @@
         AnonymousSaslServer.ENABLED.setValue(anonLogin);
         UserManager.ALLOW_FUTURE_USERS.setValue( futureUsersEnabled );
         SASLAuthentication.setEnabledMechanisms( mechsEnabled );
+        SASLAuthentication.SSDP_ENABLED.setValue(ssdpEnabled);
 
         // Log the event
-        webManager.logEvent("edited registration settings", "inband enabled = "+inbandEnabled+"\ncan change password = "+canChangePassword+"\nanon login = "+anonLogin+"\nFuture users enabled = "+futureUsersEnabled+"\nSASL mechanisms enabled = "+ mechsEnabled);
-    }
+        webManager.logEvent("edited registration settings", "inband enabled = "+inbandEnabled+"\ncan change password = "+canChangePassword+"\nanon login = "+anonLogin+"\nFuture users enabled = "+futureUsersEnabled+"\nSASL mechanisms enabled = "+ mechsEnabled+"\nSASL SCRAM Downgrade Protection enabled = "+ ssdpEnabled);    }
 
     // Reset the value of page vars:
     inbandEnabled = regHandler.isInbandRegEnabled();
     canChangePassword = regHandler.canChangePassword();
     anonLogin = AnonymousSaslServer.ENABLED.getValue();
     futureUsersEnabled = UserManager.ALLOW_FUTURE_USERS.getValue();
+    ssdpEnabled = SASLAuthentication.SSDP_ENABLED.getValue();
 
     pageContext.setAttribute( "errors",             errors );
     pageContext.setAttribute( "readOnly",           UserManager.getUserProvider().isReadOnly() );
@@ -186,6 +188,7 @@
     pageContext.setAttribute( "saslEnabledMechanisms",     SASLAuthentication.getEnabledMechanisms() );
     pageContext.setAttribute( "saslImplementedMechanisms", SASLAuthentication.getImplementedMechanisms() );
     pageContext.setAttribute( "saslSupportedMechanisms",   SASLAuthentication.getSupportedMechanisms() );
+    pageContext.setAttribute( "ssdpEnabled",               ssdpEnabled );
     pageContext.setAttribute( "blockValue", blockValue );
     pageContext.setAttribute( "allowValue", allowValue );
     pageContext.setAttribute( "allowAnonymValue", allowAnonymValue );
@@ -474,6 +477,19 @@
                 </tr>
             </c:forEach>
         </table>
+
+        <p><fmt:message key="reg.settings.ssdp.info" /></p>
+        <table>
+            <tr>
+                <td style="width: 1%"><input type="radio" name="ssdpEnabled" value="true" id="rb09" ${ssdpEnabled ? 'checked' : ''}></td>
+                <td><label for="rb09"><b><fmt:message key="reg.settings.ssdp.enable" /></b> - <fmt:message key="reg.settings.ssdp.enable_label" /></label></td>
+            </tr>
+            <tr>
+                <td style="width: 1%"><input type="radio" name="ssdpEnabled" value="false" id="rb10" ${ssdpEnabled ?  '' : 'checked'}></td>
+                <td><label for="rb10"><b><fmt:message key="reg.settings.ssdp.disable" /></b> - <fmt:message key="reg.settings.ssdp.disable_label" /></label></td>
+            </tr>
+        </table>
+
     </admin:contentBox>
 
     <input type="submit" name="save" value="<fmt:message key="global.save_settings" />">

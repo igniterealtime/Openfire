@@ -114,6 +114,17 @@ public class SASLAuthentication {
         .build();
 
     /**
+     * Controls if the SASL SCRAM Downgrade Protection feature, as specified in XEP-0474, is enabled. When enabled,
+     * Openfire will add a hash value to the optional {@code h} attribute of {@code server-first-message} that is sent
+     * to peers when they perform SCRAM-based authentication. This can help them prevent downgrade attacks.
+     */
+    public static final SystemProperty<Boolean> SSDP_ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("sasl.scram.downgrade-protection.enabled")
+        .setDefaultValue(Boolean.TRUE)
+        .setDynamic(Boolean.TRUE)
+        .build();
+
+    /**
      * Require the peer to provide an authorization identity through SASL (typically in the Initial Response) when authenticating
      * an inbound S2S connection that uses the EXTERNAL SASL mechanism.
      *

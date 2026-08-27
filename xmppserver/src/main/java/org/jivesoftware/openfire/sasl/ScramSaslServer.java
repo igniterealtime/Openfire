@@ -22,14 +22,10 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 import javax.crypto.Mac;
@@ -44,6 +40,7 @@ import org.jivesoftware.openfire.auth.ConnectionException;
 import org.jivesoftware.openfire.auth.DefaultAuthProvider;
 import org.jivesoftware.openfire.auth.InternalUnauthenticatedException;
 import org.jivesoftware.openfire.auth.ScramUtils;
+import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
@@ -167,6 +164,11 @@ public abstract class ScramSaslServer implements SaslServer
      * must still be called on this value to catch a reserved "m" attribute.
      */
     private static final Pattern CLIENT_FINAL_MESSAGE = Pattern.compile("^(c=(" + BASE64 + "),r=(" + NONCE + ")((?:,(?!p=)" + ATTR_VAL + ")*)),p=(" + BASE64 + ")\\z");
+
+    /**
+     * Octet collation as defined in RFC 4790 section 9.3 ("i;octet").
+     */
+    private static final Comparator<String> OCTET_ORDER = Comparator.comparing((String s) -> s.getBytes(StandardCharsets.UTF_8), Arrays::compareUnsigned);
 
     /**
      * Manages a set of providers that can extract channel binding data of various types from SSL engines.
@@ -462,6 +464,12 @@ public abstract class ScramSaslServer implements SaslServer
         nonce = clientNonce + UUID.randomUUID().toString();
 
         serverFirstMessage = String.format("r=%s,s=%s,i=%d", nonce, DatatypeConverter.printBase64Binary(getOrCreateSalt(username)), getIterations(username));
+
+        // XEP-0474: SASL SCRAM Downgrade Protection
+        if (SASLAuthentication.SSDP_ENABLED.getValue()) {
+            serverFirstMessage += ",h=" + calculateDowngradeProtectionHash();
+        }
+
         return serverFirstMessage.getBytes(StandardCharsets.UTF_8);
     }
 
@@ -1061,6 +1069,43 @@ public abstract class ScramSaslServer implements SaslServer
             {
                 throw new SaslException("Invalid extension: attribute name '" + name + "' appears more than once ('" + ext + "').");
             }
+        }
+    }
+
+    /**
+     * Calculates the downgrade protection hash over the SASL mechanisms and channel-binding types that were advertised
+     * to this session.
+     *
+     * @return the downgrade protection hash
+     * @see <a href="https://xmpp.org/extensions/xep-0474.html">XEP-0474: SASL SCRAM Downgrade Protection</a>
+     */
+    @Nonnull
+    @VisibleForTesting
+    String calculateDowngradeProtectionHash() throws SaslException
+    {
+        final StringBuilder s = new StringBuilder(availableMechanismsForSession.stream()
+            .sorted(OCTET_ORDER)
+            .collect(Collectors.joining("\u001E")));
+
+        // Mirrors the conditions under which ChannelBindingProviderManager advertises XEP-0440 capabilities.
+        if (availableMechanismsForSession.stream().anyMatch(mech -> mech.endsWith("-PLUS")))
+        {
+            final Set<String> cbTypes = channelBindingProviderManager.getSupportedChannelBindingTypes();
+            if (!cbTypes.isEmpty())
+            {
+                s.append('\u001F');
+                s.append(cbTypes.stream().sorted(OCTET_ORDER).collect(Collectors.joining("\u001E")));
+            }
+        }
+
+        try
+        {
+            final MessageDigest digest = MessageDigest.getInstance(getDigestAlgorithmName());
+            return Base64.getEncoder().encodeToString(digest.digest(s.toString().getBytes(StandardCharsets.UTF_8)));
+        }
+        catch (NoSuchAlgorithmException e)
+        {
+            throw new SaslException("Unable to calculate downgrade protection hash.", e);
         }
     }
 }

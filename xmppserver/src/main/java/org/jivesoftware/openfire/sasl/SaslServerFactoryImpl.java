@@ -75,9 +75,18 @@ public class SaslServerFactoryImpl implements SaslServerFactory
         }
 
         final Optional<Set<String>> advertisedSASLMechanisms = extractAdvertisedSASLMechanisms(props);
-        if (mechanism.toUpperCase().startsWith("SCRAM-SHA-")) {
-            if (advertisedSASLMechanisms.isEmpty()) { // This is the basis for the 'orElseThrow' statements in the switch/case below.
+        final Optional<Set<String>> advertisedChannelBindingTypes = extractAdvertisedChannelBindingTypes(props);
+        if (mechanism.toUpperCase().startsWith("SCRAM-SHA-"))
+        {
+            // These checks are the basis for the 'orElseThrow' statements in the switch/case below. Note that they
+            // test whether anything was recorded at all, not whether any types were advertised: a session that was
+            // legitimately offered no channel-binding types has an empty set recorded, which is a present Optional.
+            if (advertisedSASLMechanisms.isEmpty()) {
                 Log.debug("Unable to instantiate {} SaslServer: Provided properties do not contain a set of SASL mechanism names that was advertised to the client.", mechanism);
+                return null;
+            }
+            if (advertisedChannelBindingTypes.isEmpty()) {
+                Log.debug("Unable to instantiate {} SaslServer: Provided properties do not contain a set of channel-binding types that was advertised to the client.", mechanism);
                 return null;
             }
         }
@@ -93,22 +102,22 @@ public class SaslServerFactoryImpl implements SaslServerFactory
                 return new SaslServerPlainImpl( protocol, serverName, props, cbh );
 
             case ScramSha1SaslServer.MECHANISM_NAME:
-                return new ScramSha1SaslServer(false, props, advertisedSASLMechanisms.orElseThrow());
+                return new ScramSha1SaslServer(false, props, advertisedSASLMechanisms.orElseThrow(), advertisedChannelBindingTypes.orElseThrow());
 
             case ScramSha1SaslServer.MECHANISM_NAME + "-PLUS":
-                return new ScramSha1SaslServer(true, props, advertisedSASLMechanisms.orElseThrow());
+                return new ScramSha1SaslServer(true, props, advertisedSASLMechanisms.orElseThrow(), advertisedChannelBindingTypes.orElseThrow());
 
             case ScramSha256SaslServer.MECHANISM_NAME:
-                return new ScramSha256SaslServer(false, props, advertisedSASLMechanisms.orElseThrow());
+                return new ScramSha256SaslServer(false, props, advertisedSASLMechanisms.orElseThrow(), advertisedChannelBindingTypes.orElseThrow());
 
             case ScramSha256SaslServer.MECHANISM_NAME + "-PLUS":
-                return new ScramSha256SaslServer(true, props, advertisedSASLMechanisms.orElseThrow());
+                return new ScramSha256SaslServer(true, props, advertisedSASLMechanisms.orElseThrow(), advertisedChannelBindingTypes.orElseThrow());
 
             case ScramSha512SaslServer.MECHANISM_NAME:
-                return new ScramSha512SaslServer(false, props, advertisedSASLMechanisms.orElseThrow());
+                return new ScramSha512SaslServer(false, props, advertisedSASLMechanisms.orElseThrow(), advertisedChannelBindingTypes.orElseThrow());
 
             case ScramSha512SaslServer.MECHANISM_NAME + "-PLUS":
-                return new ScramSha512SaslServer(true, props, advertisedSASLMechanisms.orElseThrow());
+                return new ScramSha512SaslServer(true, props, advertisedSASLMechanisms.orElseThrow(), advertisedChannelBindingTypes.orElseThrow());
 
             case "ANONYMOUS":
                 final Object sessionValue = props == null ? null : props.get( LocalSession.class.getCanonicalName() );
@@ -201,13 +210,15 @@ public class SaslServerFactoryImpl implements SaslServerFactory
     }
 
     /**
-     * Extracts a set of SASL mechanism names from the session data of the LocalSession instance that is expected to be
-     * stored in the provided properties. Returns an empty Optional if no such session is found in the properties, or if
-     * its data does not contain the expected set of names.
+     * Extracts the set of SASL mechanism names that was advertised to the peer, from the session data of the
+     * LocalSession instance that is expected to be stored in the provided properties.
+     *
+     * Returns an empty Optional when the properties contain no LocalSession, or when no mechanisms have been
+     * recorded as advertised for that session. Note that this is distinct from a session that was advertised an
+     * empty set of mechanisms, which yields a present Optional holding an empty set.
      *
      * @param props the property map
-     * @return A set of SASL mechanism names
-     * @see SASLAuthentication#getAdvertisableSASLMechanisms(LocalSession)
+     * @return the SASL mechanism names advertised to the peer, if known
      * @see SASLAuthentication#getAdvertisedSASLMechanisms(LocalSession)
      */
     private static Optional<Set<String>> extractAdvertisedSASLMechanisms(Map<String, ?> props)
@@ -218,6 +229,30 @@ public class SaslServerFactoryImpl implements SaslServerFactory
             return Optional.empty();
         } else {
             return SASLAuthentication.getAdvertisedSASLMechanisms(session);
+        }
+    }
+
+    /**
+     * Extracts the set of channel-binding types that was advertised to the peer, from the session data of the
+     * LocalSession instance that is expected to be stored in the provided properties.
+     *
+     * Returns an empty Optional when the properties contain no LocalSession, or when no channel-binding types have
+     * been recorded as advertised for that session. Note that this is distinct from a session that was advertised
+     * no channel-binding types at all, which yields a present Optional holding an empty set; that is the normal
+     * case for a session that was offered no channel-binding-capable mechanism.
+     *
+     * @param props the property map
+     * @return the channel-binding types advertised to the peer, if known
+     * @see SASLAuthentication#getAdvertisedChannelBindingTypes(LocalSession)
+     */
+    private static Optional<Set<String>> extractAdvertisedChannelBindingTypes(Map<String, ?> props)
+    {
+        final Object sessionValue = props == null ? null : props.get( LocalSession.class.getCanonicalName() );
+        if (!(sessionValue instanceof LocalSession session)) {
+            Log.trace("Provided properties do not contain a LocalSession instance.");
+            return Optional.empty();
+        } else {
+            return SASLAuthentication.getAdvertisedChannelBindingTypes(session);
         }
     }
 }

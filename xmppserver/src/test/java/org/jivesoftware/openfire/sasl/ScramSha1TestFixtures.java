@@ -41,6 +41,7 @@ public final class ScramSha1TestFixtures
     public static final String STORED_KEY_HEX = "e9d94660c39d65c38fbad91c358f14da0eef2bd6";
     public static final String SERVER_KEY_HEX = "0fe09258b3ac852ba502cc62ba903eaacdbf7d31";
     public static final Set<String> SUPPORTED_MECHANISMS = Set.of(ScramSha1SaslServer.MECHANISM_NAME, ScramSha1SaslServer.MECHANISM_NAME+"-PLUS");
+    public static final Set<String> SUPPORTED_CHANNEL_BINDING_TYPES = Set.of("tls-server-end-point", "tls-exporter");
 
     private ScramSha1TestFixtures() {}
 }

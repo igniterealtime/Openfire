@@ -71,8 +71,6 @@ public class SASLIntegrationTest {
     @Mock
     private XMPPServerInfo serverInfo;
 
-    private Element features;
-
     private TestSaslMechanism.TestSaslServer testSaslServer;
 
     // Create a real map to store session data
@@ -122,8 +120,6 @@ public class SASLIntegrationTest {
         when(clientSession.getConnection()).thenReturn(connection);
         when(connection.getSupportedChannelBindingTypes()).thenReturn(Collections.emptySet());
 
-        features = DocumentHelper.createElement("features");
-        
         // Create our test SASL server
         testSaslServer = TestSaslMechanism.registerTestMechanism(clientSession);
 
@@ -305,7 +301,7 @@ public class SASLIntegrationTest {
         
         // Execute system under test.
         final Set<String> advertisableSASLMechanisms = SASLAuthentication.getAdvertisableSASLMechanisms(clientSession);
-        final List<Element> mechanisms = SASLAuthentication.asSASLMechanisms(clientSession, advertisableSASLMechanisms);
+        final List<Element> mechanisms = SASLAuthentication.asSASLMechanisms(clientSession, advertisableSASLMechanisms, Set.of());
 
         // Verify result.
         assertTrue(mechanisms.isEmpty(),
@@ -324,7 +320,7 @@ public class SASLIntegrationTest {
 
             // Execute system under test.
             final Set<String> advertisableSASLMechanisms = SASLAuthentication.getAdvertisableSASLMechanisms(clientSession);
-            final List<Element> mechanisms = SASLAuthentication.asSASLMechanisms(clientSession, advertisableSASLMechanisms);
+            final List<Element> mechanisms = SASLAuthentication.asSASLMechanisms(clientSession, advertisableSASLMechanisms, Set.of());
 
             // Verify result.
             assertFalse(mechanisms.isEmpty(), "SASL mechanisms should be added");
@@ -353,7 +349,7 @@ public class SASLIntegrationTest {
 
         // Execute system under test.
         final Set<String> advertisableSASLMechanisms = SASLAuthentication.getAdvertisableSASLMechanisms(clientSession);
-        final List<Element> mechanisms = SASLAuthentication.asSASLMechanisms(clientSession, advertisableSASLMechanisms);
+        final List<Element> mechanisms = SASLAuthentication.asSASLMechanisms(clientSession, advertisableSASLMechanisms, Set.of());
 
         // Verify result.
         assertFalse(mechanisms.isEmpty(), "SASL mechanisms should be added");
@@ -379,7 +375,7 @@ public class SASLIntegrationTest {
         
         // Execute system under test.
         final Set<String> advertisableSASLMechanisms = SASLAuthentication.getAdvertisableSASLMechanisms(unknownSession);
-        final List<Element> mechanisms = SASLAuthentication.asSASLMechanisms(unknownSession, advertisableSASLMechanisms);
+        final List<Element> mechanisms = SASLAuthentication.asSASLMechanisms(unknownSession, advertisableSASLMechanisms, Set.of());
         
         // Verify result.
         assertTrue(mechanisms.isEmpty(),

@@ -853,12 +853,9 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
 
         if (getAuthToken() == null) {
-            // Include available SASL Mechanisms
-            final Set<String> advertisableSASLMechanisms = SASLAuthentication.getAdvertisableSASLMechanisms(this);
-            SASLAuthentication.setAdvertisedSASLMechanisms(this, advertisableSASLMechanisms);
-            final List<Element> mechanisms = SASLAuthentication.asSASLMechanisms(this, advertisableSASLMechanisms);
-            result.addAll(mechanisms);
-            SASLAuthentication.appendChannelBindingCapabilityIfNeeded(result);
+            // If authentication has not happened yet, include available authentication mechanisms.
+            SASLAuthentication.appendSASLFeatures(this, result);
+
             // Advertise that the server supports Non-SASL Authentication
             if ( XMPPServer.getInstance().getIQRouter().supports( "jabber:iq:auth" ) ) {
                 result.add(DocumentHelper.createElement(QName.get("auth", "http://jabber.org/features/iq-auth")));

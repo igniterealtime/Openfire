@@ -43,7 +43,6 @@ import org.jivesoftware.openfire.auth.ScramUtils;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.user.UserNotFoundException;
-import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -171,11 +170,6 @@ public abstract class ScramSaslServer implements SaslServer
     private static final Comparator<String> OCTET_ORDER = Comparator.comparing((String s) -> s.getBytes(StandardCharsets.UTF_8), Arrays::compareUnsigned);
 
     /**
-     * Manages a set of providers that can extract channel binding data of various types from SSL engines.
-     */
-    private final ChannelBindingProviderManager channelBindingProviderManager;
-
-    /**
      * The names of SASL mechanisms that are available to this particular session (as opposed to the set of globally
      * available mechanism names). The session-specificality is important to be able to correctly process the GS2 header
      * sent by a client, particularly around channel-binding downgrade protection. It is important to know if the server
@@ -183,6 +177,13 @@ public abstract class ScramSaslServer implements SaslServer
      * mechanism (by sending the 'y' flag).
      */
     private final Set<String> availableMechanismsForSession;
+
+    /**
+     * The names of channel binding types that are available to this particular session (as opposed to the set of
+     * globally available channel binding types). The session specificality is important to be able to correctly
+     * implement XEP-0474 SASL SCRAM Downgrade Protection.
+     */
+    private final Set<String> availableChannelBindingTypesForSession;
 
     /**
      * Denotes if this instance supports channel-binding ({@code true}) or not ({@code false}).
@@ -213,17 +214,17 @@ public abstract class ScramSaslServer implements SaslServer
     /**
      * Creates a new, client-specific, instance.
      *
-     * @param isPlusMechanism               Denotes if this instance supports channel-binding ({@code true}) or not ({@code false}).
-     * @param props                         The possibly null set of properties used to select the SASL mechanism and to configure the authentication exchange of the selected mechanism.
-     * @param channelBindingProviderManager Manages a set of providers that can extract channel binding data of various types from SSL engines. Must be set for plus-mechanisms.
-     * @param availableMechanismsForSession The names of SASL mechanisms that are available to this particular session (as opposed to the set of globally available mechanism names).
+     * @param isPlusMechanism                        Denotes if this instance supports channel-binding ({@code true}) or not ({@code false}).
+     * @param props                                  The possibly null set of properties used to select the SASL mechanism and to configure the authentication exchange of the selected mechanism.
+     * @param availableMechanismsForSession          The names of SASL mechanisms that are available to this particular session (as opposed to the set of globally available mechanism names).
+     * @param availableChannelBindingTypesForSession The names of channel binding types that are available to this particular session (as opposed to the set of globally available channel binding types).
      */
-    protected ScramSaslServer(final boolean isPlusMechanism, final Map<String, ?> props, final ChannelBindingProviderManager channelBindingProviderManager, @Nonnull final Set<String> availableMechanismsForSession)
+    protected ScramSaslServer(final boolean isPlusMechanism, final Map<String, ?> props, @Nonnull final Set<String> availableMechanismsForSession, @Nonnull final Set<String> availableChannelBindingTypesForSession)
     {
         this.isPlusMechanism = isPlusMechanism;
         this.props = props;
-        this.channelBindingProviderManager = channelBindingProviderManager;
         this.availableMechanismsForSession = availableMechanismsForSession;
+        this.availableChannelBindingTypesForSession = availableChannelBindingTypesForSession;
     }
 
     /**
@@ -435,7 +436,7 @@ public abstract class ScramSaslServer implements SaslServer
 
             // https://www.rfc-editor.org/rfc/rfc5802.html#section-6: If the channel binding flag was "p" and the server
             // does not support the indicated channel binding type, then the server MUST fail authentication.
-            if (gs2CbindName == null || gs2CbindName.isEmpty() || !channelBindingProviderManager.supportsChannelBinding(gs2CbindName)) {
+            if (gs2CbindName == null || gs2CbindName.isEmpty() || !availableChannelBindingTypesForSession.contains(gs2CbindName)) {
                 throw new SaslException("Client requires channel binding, but server does not support the indicated channel binding type '" + gs2CbindName + "'. Rejecting authentication.");
             }
 
@@ -1087,15 +1088,10 @@ public abstract class ScramSaslServer implements SaslServer
             .sorted(OCTET_ORDER)
             .collect(Collectors.joining("\u001E")));
 
-        // Mirrors the conditions under which ChannelBindingProviderManager advertises XEP-0440 capabilities.
-        if (availableMechanismsForSession.stream().anyMatch(mech -> mech.endsWith("-PLUS")))
+        if (!availableChannelBindingTypesForSession.isEmpty())
         {
-            final Set<String> cbTypes = channelBindingProviderManager.getSupportedChannelBindingTypes();
-            if (!cbTypes.isEmpty())
-            {
-                s.append('\u001F');
-                s.append(cbTypes.stream().sorted(OCTET_ORDER).collect(Collectors.joining("\u001E")));
-            }
+            s.append('\u001F');
+            s.append(availableChannelBindingTypesForSession.stream().sorted(OCTET_ORDER).collect(Collectors.joining("\u001E")));
         }
 
         try

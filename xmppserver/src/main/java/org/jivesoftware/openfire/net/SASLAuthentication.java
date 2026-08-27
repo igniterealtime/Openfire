@@ -178,6 +178,7 @@ public class SASLAuthentication {
 
     public static final String SASL_NAMESPACE = "urn:ietf:params:xml:ns:xmpp-sasl";
     public static final String SASL2_NAMESPACE = "urn:xmpp:sasl:2";
+    public static final String SASL_CHANNEL_BINDING_NAMESPACE = "urn:xmpp:sasl-cb:0";
 
     /**
      * Java's SaslServer does not allow for null values. This makes it hard to distinguish between an empty (initial)
@@ -202,6 +203,17 @@ public class SASLAuthentication {
      * which encapsulate the business-logic related to this constant.
      */
     public static final String AVAILABLE_MECHANISMS_FOR_SESSION = "SaslMechanismsOfferedByServer";
+
+    /**
+     * Session Data property name used to store which channel bindings were advertised by the server to the peer as being
+     * available for the session that is performing SASL authentication. The value is expected to be a Set of Strings,
+     * if any bindings were advertised from Openfire to the peer.
+     *
+     * Instead of using this value directly, consider using {@link #getAdvertisedChannelBindingTypes(LocalSession)} or
+     * {@link #setAdvertisedChannelBindingTypes(LocalSession, Set)} which encapsulate the business-logic related to this
+     * constant.
+     */
+    public static final String AVAILABLE_CHANNEL_BINDING_TYPES_FOR_SESSION = "ChannelBindingTypesOfferedByServer";
 
     /**
      * Controls whether the SCRAM mechanisms that are advertised to a client are tailored to the user that is expected
@@ -403,51 +415,92 @@ public class SASLAuthentication {
     }
 
     /**
+     * Records a set of channel binding types as having been advertised for/to the given session.
+     *
+     * Some SASL mechanism implementations depend on this information. Notably, the SASL-SCRAM-SHA* mechanisms depend
+     * on it to detect channel binding downgrades.
+     *
+     * Implementations of {@link LocalSession} should call this method when channel bindings are advertised to a session.
+     *
+     * @param session the session for which to record advertised channel bindings (cannot be null).
+     * @param advertisedChannelBindingTypes the advertised channel binding types
+     */
+    public static void setAdvertisedChannelBindingTypes(@Nonnull final LocalSession session, final Set<String> advertisedChannelBindingTypes)
+    {
+        session.setSessionData(SASLAuthentication.AVAILABLE_CHANNEL_BINDING_TYPES_FOR_SESSION, Set.copyOf(advertisedChannelBindingTypes));
+    }
+
+    /**
+     * Returns the set of channel binding types that has previously been advertised for/to the given session as being
+     * available for use for that session.
+     *
+     * When advertisement has not (yet) happened when this method is invoked, an empty Optional is returned.
+     *
+     * @param session the session for which to obtain channel binding types (cannot be null).
+     * @return a set of channel binding types that have been advertised for/to the session.
+     */
+    public static Optional<Set<String>> getAdvertisedChannelBindingTypes(@Nonnull final LocalSession session )
+    {
+        final Object sessionData = session.getSessionData(SASLAuthentication.AVAILABLE_CHANNEL_BINDING_TYPES_FOR_SESSION);
+
+        if (sessionData != null && !(sessionData instanceof Set)) {
+            Log.warn("Unexpected object (not a Set) found in session data under key '{}' of session '{}': {}", SASLAuthentication.AVAILABLE_CHANNEL_BINDING_TYPES_FOR_SESSION, session, sessionData);
+            return Optional.empty();
+        }
+        //noinspection unchecked
+        return Optional.ofNullable((Set<String>) sessionData);
+    }
+
+    /**
      * Returns a list of XML elements representing the SASL mechanism features that are applicable to the given session.
      * The returned elements are suitable for inclusion in the stream features element sent to the peer.
      * Both SASL (RFC 6120) and SASL2 (XEP-0388) feature elements may be included, depending on configuration.
      * An empty list is returned if the session is already authenticated or if the session type is not recognized.
      *
-     * @param session the local session for which to determine applicable SASL mechanism feature elements (cannot be null)
+     * @param session                         the local session for which to determine applicable SASL mechanism feature elements (cannot be null)
+     * @param advertisableMechanismNames      The set of SASL mechanism names that are to be advertised.
+     * @param advertisableChannelBindingTypes The set of channel binding types that are to be advertised.
      * @return a list of XML elements representing SASL mechanism features; never null, possibly empty
      */
-    public static List<Element> asSASLMechanisms(@Nonnull final LocalSession session, @Nonnull final Set<String> advertisableMechanismNames)
+    public static List<Element> asSASLMechanisms(@Nonnull final LocalSession session, @Nonnull final Set<String> advertisableMechanismNames, @Nonnull final Set<String> advertisableChannelBindingTypes)
     {
         final List<Element> features = new LinkedList<>();
         // Never list these if the session is already authenticated.
         if (session.isAuthenticated()) return features;
 
-        if ( session instanceof ClientSession )
-        {
+        if (session instanceof ClientSession) {
             final Element sasl1Mechs = asSASLMechanismsElementForClientSessions(advertisableMechanismNames, false);
             if (sasl1Mechs != null) {
                 features.add(sasl1Mechs);
             }
-            if (checkSASL2Permitted(session).isEmpty())
-            {
+            if (checkSASL2Permitted(session).isEmpty()) {
                 final Element sasl2Mechs = asSASLMechanismsElementForClientSessions(advertisableMechanismNames, true);
                 if (sasl2Mechs != null) {
                     features.add(sasl2Mechs);
                 }
             }
-        }
-        else if ( session instanceof LocalIncomingServerSession )
-        {
+        } else if (session instanceof LocalIncomingServerSession) {
             final Element sasl1Mechs = asSASLMechanismsElementForServerSessions(advertisableMechanismNames, false);
             if (sasl1Mechs != null) {
                 features.add(sasl1Mechs);
             }
-            if (checkSASL2Permitted(session).isEmpty())
-            {
+            if (checkSASL2Permitted(session).isEmpty()) {
                 final Element sasl2Mechs = asSASLMechanismsElementForServerSessions(advertisableMechanismNames, true);
                 if (sasl2Mechs != null) {
                     features.add(sasl2Mechs);
                 }
             }
+        } else {
+            Log.debug("Unable to determine SASL mechanisms that are applicable to session '{}'. Unrecognized session type.", session);
+            return features;
         }
-        else
-        {
-            Log.debug( "Unable to determine SASL mechanisms that are applicable to session '{}'. Unrecognized session type.", session );
+
+        if (!advertisableChannelBindingTypes.isEmpty()) {
+            final Element channelBindingTypesEl = DocumentHelper.createElement(new QName("sasl-channel-binding", new Namespace("", SASL_CHANNEL_BINDING_NAMESPACE)));
+            for (final String channelBindingType : advertisableChannelBindingTypes) {
+                channelBindingTypesEl.addElement("channel-binding").addAttribute("type", channelBindingType);
+            }
+            features.add(channelBindingTypesEl);
         }
 
         return features;
@@ -1431,44 +1484,46 @@ public class SASLAuthentication {
     }
 
     /**
-     * Appends to a list of stream features channel binding type capability announcements, if needed.
+     * Adds the SASL-related stream features for the given session, and records what was advertised.
      *
-     * The necessity is based on the other features already in the list, notably the advertised SASL mechanisms. Channel
-     * binding types that are available are added when-and-only-when these mechanisms include a channel-binding-capable
-     * mechanism.
+     * This method is the single place where the SASL mechanisms and the XEP-0440 channel-binding types that a
+     * session is offered are determined. Both are recorded on the session as they are rendered, because SASL
+     * mechanism implementations need to know exactly what the peer was shown: the SCRAM implementations use the
+     * mechanism names to detect channel-binding downgrades, and use both sets to compute the XEP-0474 downgrade
+     * protection hash. A hash taken over anything other than what the peer actually received will not match the
+     * one the peer computes, and authentication will fail for every user.
      *
-     * @param features The advertised features, that at the very least should include advertised SASL mechanisms.
-     * @see <a href="https://xmpp.org/extensions/xep-0440.html">XEP-0440: SASL Channel-Binding Type Capability</a>
+     * @param session  the session for which to advertise SASL features (cannot be null).
+     * @param features the collection of stream features to add to (cannot be null).
      */
-    public static void appendChannelBindingCapabilityIfNeeded(final List<Element> features)
+    public static void appendSASLFeatures(@Nonnull final LocalSession session, @Nonnull final List<Element> features)
     {
-        // Iterate a snapshot: we add to 'features' inside the loop.
-        final List<Element> saslFeatures = features.stream()
-            .filter(SASLAuthentication::isSaslAuthenticationFeature)
-            .toList();
+        final Set<String> advertisableSASLMechanisms = getAdvertisableSASLMechanisms(session);
+        setAdvertisedSASLMechanisms(session, advertisableSASLMechanisms);
 
-        for (final Element saslFeature : saslFeatures) {
-            ChannelBindingProviderManager.getInstance()
-                .getSASLChannelBindingTypeCapabilityElement(saslFeature)
-                .ifPresent(features::add);
-        }
+        final Set<String> advertisableChannelBindingTypes = getAdvertisableChannelBindingTypes(advertisableSASLMechanisms);
+        setAdvertisedChannelBindingTypes(session, advertisableChannelBindingTypes);
+
+        features.addAll(asSASLMechanisms(session, advertisableSASLMechanisms, advertisableChannelBindingTypes));
     }
 
     /**
-     * Verifies if the provided XML element is a SASL authentication feature.
+     * Returns the channel-binding types to advertise alongside the given set of SASL mechanisms.
      *
-     * Specifically, this method checks if the element equals a {@code <feature>} child element that is either
-     * <ul>
-     *     <li>a SASL(1) feature: {@code <mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>}; or:</li>
-     *     <li>A SASL2 feature: {@code <authentication xmlns='urn:xmpp:sasl:2'>}</li>
-     * </ul>
+     * Channel-binding types are announced only when at least one channel-binding-capable mechanism is being
+     * offered; otherwise an empty set is returned.
      *
-     * @param element The element (presumably a child element of {@code <feature>}) to check
-     * @return true if the element is a SASL authentication feature
+     * @param advertisableSASLMechanisms the SASL mechanism names being offered (cannot be null).
+     * @return the channel-binding type names to advertise; never null, possibly empty.
+     * @see <a href="https://xmpp.org/extensions/xep-0440.html">XEP-0440: SASL Channel-Binding Type Capability</a>
      */
-    private static boolean isSaslAuthenticationFeature(final Element element)
+    @VisibleForTesting
+    @Nonnull
+    static Set<String> getAdvertisableChannelBindingTypes(@Nonnull final Set<String> advertisableSASLMechanisms)
     {
-        return ("mechanisms".equals(element.getName()) && SASL_NAMESPACE.equals(element.getNamespaceURI()))
-            || ("authentication".equals(element.getName()) && SASL2_NAMESPACE.equals(element.getNamespaceURI()));
+        if (advertisableSASLMechanisms.stream().noneMatch(SASLAuthentication::requiresChannelBinding)) {
+            return Set.of();
+        }
+        return Set.copyOf(ChannelBindingProviderManager.getInstance().getSupportedChannelBindingTypes());
     }
 }

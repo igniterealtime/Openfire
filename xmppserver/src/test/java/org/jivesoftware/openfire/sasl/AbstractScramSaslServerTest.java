@@ -906,6 +906,32 @@ public abstract class AbstractScramSaslServerTest
     }
 
     /**
+     * Verifies that a -PLUS client-first-message requesting an unsupported mandatory extension is rejected, the
+     * same as a non-PLUS one. The extension check runs before this method reaches the channel-binding-data
+     * retrieval that -PLUS mode otherwise needs, so this demonstrates -- rather than just asserts -- that the
+     * validations added in this PR are applied identically regardless of isPlusMechanism, without requiring the
+     * channel-binding provider/session mocking that a full -PLUS exchange (see testSuccessPlus in each concrete
+     * subclass) needs.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3350">OF-3350: SCRAM server accepts unsupported mandatory extensions</a>
+     */
+    @Test
+    void rejectsFirstMessage_mandatoryExtensionRequested_plusMechanism()
+    {
+        // Setup test fixture
+        final ScramSaslServer server = newServer(true);
+        final byte[] clientInitialMessage = ("p=tls-unique,,n=" + username() + ",r=" + clientNonce() + ",m=unsupported")
+            .getBytes(StandardCharsets.UTF_8);
+
+        // Execute system under test & Verify result
+        final SaslException ex = assertThrows(SaslException.class, () -> server.evaluateResponse(clientInitialMessage),
+            "A -PLUS client-first-message requesting an unsupported mandatory extension must be rejected, the same as a non-PLUS one");
+        assertTrue(ex.getMessage().contains("mandatory extension"), "Exception should mention the mandatory extension. Got: " + ex.getMessage());
+    }
+
+    /**
      * Verifies that a username containing a NUL character is rejected. RFC 5802's "value-safe-char" production
      * (which underlies "saslname") explicitly excludes NUL; a username value with an embedded NUL byte must not
      * reach credential lookup.

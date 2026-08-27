@@ -171,6 +171,61 @@ class ScramSaslServerStaticMethodsTest
     }
 
     // ---------------------------------------------------------------------------------------------------------
+    // decodeStrictUtf8
+    // ---------------------------------------------------------------------------------------------------------
+
+    /**
+     * Verifies that well-formed multi-byte UTF-8 (a non-ASCII codepoint) decodes correctly. RFC 5802 explicitly
+     * supports internationalized usernames, so strict decoding must not reject valid UTF-8, only malformed input.
+     *
+     * UTF-8 decoding test: completely algorithm-independent.
+     */
+    @Test
+    void decodeStrictUtf8_decodesValidMultiByteSequence() throws SaslException
+    {
+        // Execute system under test & Verify result
+        assertEquals("café", ScramSaslServer.decodeStrictUtf8("café".getBytes(StandardCharsets.UTF_8)));
+    }
+
+    /**
+     * Verifies that a lone byte which is never valid in any position of a UTF-8 sequence (0xFF) is rejected.
+     *
+     * UTF-8 decoding test: completely algorithm-independent.
+     */
+    @Test
+    void decodeStrictUtf8_throwsSaslException_forInvalidLeadByte()
+    {
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> ScramSaslServer.decodeStrictUtf8(new byte[]{(byte) 0xFF}));
+    }
+
+    /**
+     * Verifies that a truncated multi-byte sequence (a lead byte announcing a continuation that never arrives) is
+     * rejected, rather than silently substituting the replacement character for the incomplete sequence.
+     *
+     * UTF-8 decoding test: completely algorithm-independent.
+     */
+    @Test
+    void decodeStrictUtf8_throwsSaslException_forTruncatedMultiByteSequence()
+    {
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> ScramSaslServer.decodeStrictUtf8(new byte[]{(byte) 0xC3}));
+    }
+
+    /**
+     * Verifies that an overlong encoding (a non-canonical, invalid representation of a codepoint that has a
+     * shorter valid encoding) is rejected.
+     *
+     * UTF-8 decoding test: completely algorithm-independent.
+     */
+    @Test
+    void decodeStrictUtf8_throwsSaslException_forOverlongEncoding()
+    {
+        // Execute system under test & Verify result: 0xC0 0x80 is an overlong (invalid) encoding of NUL
+        assertThrows(SaslException.class, () -> ScramSaslServer.decodeStrictUtf8(new byte[]{(byte) 0xC0, (byte) 0x80}));
+    }
+
+    // ---------------------------------------------------------------------------------------------------------
     // decodeSaslname
     // ---------------------------------------------------------------------------------------------------------
 

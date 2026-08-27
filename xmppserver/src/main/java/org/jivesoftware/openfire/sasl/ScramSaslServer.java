@@ -15,6 +15,9 @@
  */
 package org.jivesoftware.openfire.sasl;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -333,8 +336,9 @@ public abstract class ScramSaslServer implements SaslServer
      *   - the salt
      *   - the number of iterations
      */
-    private byte[] generateServerFirstMessage(final byte[] response) throws SaslException {
-        String clientFirstMessage = new String(response, StandardCharsets.UTF_8);
+    private byte[] generateServerFirstMessage(final byte[] response) throws SaslException
+    {
+        final String clientFirstMessage = decodeStrictUtf8(response);
 
         final Matcher gs2Matcher = GS2_HEADER.matcher(clientFirstMessage);
         if (!gs2Matcher.matches()) {
@@ -462,9 +466,11 @@ public abstract class ScramSaslServer implements SaslServer
     /**
      * Final response returns the server signature.
      */
-    private byte[] generateServerFinalMessage(final byte[] response) throws SaslException {
-        String clientFinalMessage = new String(response, StandardCharsets.UTF_8);
-        Matcher m = CLIENT_FINAL_MESSAGE.matcher(clientFinalMessage);
+    private byte[] generateServerFinalMessage(final byte[] response) throws SaslException
+    {
+        final String clientFinalMessage = decodeStrictUtf8(response);
+
+        final Matcher m = CLIENT_FINAL_MESSAGE.matcher(clientFinalMessage);
         if (!m.matches()) {
             throw new SaslException("Invalid client final message");
         }
@@ -924,6 +930,32 @@ public abstract class ScramSaslServer implements SaslServer
             case 2 -> dataLength % 4 == 2;
             default -> false; // more than 2 '=' characters -- unreachable given BASE64's {0,2}, kept for clarity
         };
+    }
+
+    /**
+     * Decodes the given bytes as strict UTF-8, rejecting malformed input rather than silently substituting the
+     * Unicode replacement character (U+FFFD), which is what {@code new String(bytes, StandardCharsets.UTF_8)} does
+     * by default. RFC 5802 explicitly anticipates invalid UTF-8 as a distinct, detectable failure (see the
+     * "invalid-encoding" and "invalid-username-encoding" server-error-value tokens in §7); silently normalizing
+     * malformed bytes would let two different, invalid byte sequences collapse into the same decoded string, and
+     * would let content the client never actually sent reach credential lookup and AuthMessage.
+     *
+     * @param bytes the raw message bytes received from the client
+     * @return the strictly-decoded UTF-8 string
+     * @throws SaslException if the bytes are not valid UTF-8
+     */
+    @VisibleForTesting
+    static String decodeStrictUtf8(@Nonnull final byte[] bytes) throws SaslException
+    {
+        try {
+            return StandardCharsets.UTF_8.newDecoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT)
+                .decode(ByteBuffer.wrap(bytes))
+                .toString();
+        } catch (CharacterCodingException e) {
+            throw new SaslException("Invalid message: not valid UTF-8", e);
+        }
     }
 
     /**

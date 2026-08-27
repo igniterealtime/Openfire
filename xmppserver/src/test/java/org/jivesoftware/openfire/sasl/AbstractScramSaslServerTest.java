@@ -674,6 +674,29 @@ public abstract class AbstractScramSaslServerTest
     }
 
     /**
+     * Verifies that a client-first-message containing malformed UTF-8 is rejected, rather than silently normalized
+     * to U+FFFD and processed as if the client had sent that character.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     */
+    @Test
+    void rejectsFirstMessage_containingMalformedUtf8()
+    {
+        // Setup test fixture
+        final ScramSaslServer server = newServer(false);
+        final byte[] prefix = "n,,n=user".getBytes(StandardCharsets.UTF_8);
+        final byte[] suffix = (",r=" + clientNonce()).getBytes(StandardCharsets.UTF_8);
+        final byte[] clientInitialMessage = new byte[prefix.length + 1 + suffix.length];
+        System.arraycopy(prefix, 0, clientInitialMessage, 0, prefix.length);
+        clientInitialMessage[prefix.length] = (byte) 0xFF; // never valid in any position of a UTF-8 sequence
+        System.arraycopy(suffix, 0, clientInitialMessage, prefix.length + 1, suffix.length);
+
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> server.evaluateResponse(clientInitialMessage),
+            "A client-first-message containing malformed UTF-8 must be rejected");
+    }
+
+    /**
      * Verifies that a first client message containing an empty username is rejected.
      *
      * Generic protocol validation test (also algorithm-independent).
@@ -920,6 +943,29 @@ public abstract class AbstractScramSaslServerTest
         // Execute system under test & Verify result
         assertThrows(SaslException.class, () -> server.evaluateResponse("not-a-valid-final-message".getBytes(StandardCharsets.UTF_8)),
             "Malformed final client message should be rejected with SaslException");
+    }
+
+    /**
+     * Verifies that a client-final-message containing malformed UTF-8 is rejected, for the same reason as the
+     * client-first-message case above.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     */
+    @Test
+    void rejectsFinalMessage_containingMalformedUtf8() throws Exception
+    {
+        // Setup test fixture
+        setupCanonicalAuthData();
+        final ScramSaslServer server = newServer(false);
+        final FirstExchangeResult firstExchangeResult = doFirstExchange(server);
+        final byte[] prefix = ("c=biws,r=" + firstExchangeResult.serverNonce + ",p=").getBytes(StandardCharsets.UTF_8);
+        final byte[] clientFinalMessage = new byte[prefix.length + 1];
+        System.arraycopy(prefix, 0, clientFinalMessage, 0, prefix.length);
+        clientFinalMessage[prefix.length] = (byte) 0xFF;
+
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> server.evaluateResponse(clientFinalMessage),
+            "A client-final-message containing malformed UTF-8 must be rejected");
     }
 
     /**

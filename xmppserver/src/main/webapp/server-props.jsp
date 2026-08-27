@@ -59,6 +59,7 @@
     boolean save = request.getParameter("save") != null;
     boolean defaults = request.getParameter("defaults") != null;
     boolean cancel = request.getParameter("cancel") != null;
+    final boolean connectedUsingSecureAdminPort = request.isSecure();
 
     if (cancel) {
         response.sendRedirect("index.jsp");
@@ -99,6 +100,14 @@
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
     pageContext.setAttribute("csrf", csrfParam);
     if (save) {
+        // Do not allow an administrator to disable the listener that is serving this request.
+        // Apart from preventing an accidental lockout, this also protects against crafted requests
+        // that bypass the disabled checkbox in the form.
+        if (connectedUsingSecureAdminPort) {
+            embeddedSecurePortEnabled = true;
+        } else {
+            embeddedPortEnabled = true;
+        }
         if (!embeddedPortEnabled) {
             embeddedPort = -1;
         }
@@ -404,6 +413,7 @@
         <td>
             <input type="checkbox" id="embeddedPortEnabled" name="embeddedPortEnabled"
                    <%= (embeddedPortEnabled ? "checked" : "") %>
+                   <%= (!connectedUsingSecureAdminPort ? "disabled" : "") %>
                    onchange="togglePort(this, document.getElementById('embeddedPort'), 9090)">
             <label for="embeddedPortEnabled"><fmt:message key="server.props.enable" /></label>
             <input type="text" id="embeddedPort" name="embeddedPort" value="<%= (embeddedPort > 0 ? String.valueOf(embeddedPort) : "9090") %>"
@@ -430,6 +440,7 @@
         <td>
             <input type="checkbox" id="embeddedSecurePortEnabled" name="embeddedSecurePortEnabled"
                    <%= (embeddedSecurePortEnabled ? "checked" : "") %>
+                   <%= (connectedUsingSecureAdminPort ? "disabled" : "") %>
                    onchange="togglePort(this, document.getElementById('embeddedSecurePort'), 9091)">
             <label for="embeddedSecurePortEnabled"><fmt:message key="server.props.enable" /></label>
             <input type="text" id="embeddedSecurePort" name="embeddedSecurePort" value="<%= (embeddedSecurePort > 0 ? String.valueOf(embeddedSecurePort) : "9091") %>"

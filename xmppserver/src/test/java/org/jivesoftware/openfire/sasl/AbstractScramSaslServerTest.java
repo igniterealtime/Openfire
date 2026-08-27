@@ -822,6 +822,40 @@ public abstract class AbstractScramSaslServerTest
     }
 
     /**
+     * Verifies that an authzid and username which are wire-escaped identically (both containing the same "=2C"
+     * sequence) are still recognized as the same identity after decoding, and the exchange is accepted as a
+     * self-authzid rather than rejected as proxy authorization.
+     *
+     * This specifically exercises decodeSaslname() being applied to the authzid path, not just the username path:
+     * acceptsFirstMessage_authzidEqualToUsername() alone cannot catch a regression that skips
+     * decodeSaslname(rawAuthzid), since it uses an identical unescaped literal for both fields -- decoding or not
+     * decoding produces the same result either way. Here, if decoding were skipped for authzid, the raw
+     * ("smith=2Cdoe") and decoded ("smith,doe") values would compare unequal and the exchange would be incorrectly
+     * rejected.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3352">OF-3352: Reject or authorize a supplied GS2 authorization identity.</a>
+     */
+    @Test
+    void acceptsFirstMessage_authzidEqualToUsername_bothEscaped() throws Exception
+    {
+        // Setup test fixture
+        setupCanonicalAuthData();
+        final String escapedIdentity = "smith=2Cdoe"; // "," encoded as "=2C" per RFC 5802 §5.1; identical on both n= and a=
+        final ScramSaslServer server = newServer(false);
+        final byte[] clientInitialMessage = createClientInitialMessage("n,a=" + escapedIdentity + ",", escapedIdentity, clientNonce());
+
+        // Execute system under test
+        final byte[] firstServerResponse = server.evaluateResponse(clientInitialMessage);
+
+        // Verify result
+        assertNotNull(firstServerResponse, "An authzid and username that decode to the same identity must be accepted");
+        assertTrue(new String(firstServerResponse, StandardCharsets.UTF_8).startsWith("r="),
+            "The server should respond with a first server message when both wire values decode to the same identity");
+    }
+
+    /**
      * Verifies that a non-empty authzid that differs from the SASL authentication identity ('username') is
      * rejected.
      *

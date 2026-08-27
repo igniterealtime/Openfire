@@ -272,35 +272,29 @@ public abstract class ScramSaslServer implements SaslServer
      * @return A non-null string representing the IANA-registered mechanism name.
      */
     @Override
-    public String getMechanismName() {
+    public String getMechanismName()
+    {
         return isPlusMechanism ? getMechanismBaseName() + "-PLUS" : getMechanismBaseName();
     }
 
     /**
-     * Evaluates the response data and generates a challenge.
+     * Evaluates a single client response and advances the SCRAM exchange one step.
      *
-     * If a response is received from the client during the authentication
-     * process, this method is called to prepare an appropriate next
-     * challenge to submit to the client. The challenge is null if the
-     * authentication has succeeded and no more challenge data is to be sent
-     * to the client. It is non-null if the authentication must be continued
-     * by sending a challenge to the client, or if the authentication has
-     * succeeded but challenge data needs to be processed by the client.
-     * {@code isComplete()} should be called
-     * after each call to {@code evaluateResponse()},to determine if any further
-     * response is needed from the client.
+     * Dispatch is driven by {@link #state}: {@link State#INITIAL} treats the response as
+     * {@code client-first-message} (see {@link #generateServerFirstMessage(byte[])}); {@link State#IN_PROGRESS}
+     * treats it as {@code client-final-message} (see {@link #generateServerFinalMessage(byte[])}); once
+     * {@link State#COMPLETE}, an empty response is tolerated but a non-empty one is rejected.
      *
-     * @param response The non-null (but possibly empty) response sent
-     * by the client.
+     * Any {@link RuntimeException} thrown while processing is re-wrapped as a {@link SaslException}, so an
+     * implementation defect surfaces as a failed authentication attempt rather than an unchecked exception.
      *
-     * @return The possibly null challenge to send to the client.
-     * It is null if the authentication has succeeded and there is
-     * no more challenge data to be sent to the client.
-     * @exception SaslException If an error occurred while processing
-     * the response or generating a challenge.
+     * @param response The non-null (but possibly empty) response sent by the client.
+     * @return The possibly null challenge to send to the client; null only once the exchange has concluded.
+     * @throws SaslException if the response is invalid for the current state, or arrives after completion.
      */
     @Override
-    public byte[] evaluateResponse(final byte[] response) throws SaslException {
+    public byte[] evaluateResponse(final byte[] response) throws SaslException
+    {
         try {
             byte[] challenge;
             switch (state)
@@ -331,10 +325,18 @@ public abstract class ScramSaslServer implements SaslServer
     }
 
     /**
-     * First response returns:
-     *   - the nonce (client nonce appended with our own random UUID)
-     *   - the salt
-     *   - the number of iterations
+     * Parses the SCRAM {@code client-first-message} and produces the {@code server-first-message}.
+     *
+     * Validates the GS2 header and authzid (rejecting proxy authorization unless the authzid matches the
+     * authentication identity), the reserved "m" mandatory-extension attribute wherever it appears, and channel
+     * binding (downgrade detection, and -PLUS channel-binding-data retrieval). On success, populates
+     * {@link #username}, {@link #clientFirstMessageBare}, {@link #gs2CbindName},
+     * {@link #expectedChannelBindingPayloadInFinalClientMessage}, and {@link #nonce} for use by
+     * {@link #generateServerFinalMessage(byte[])}.
+     *
+     * @param response the raw bytes of the client-first-message
+     * @return the server-first-message (combined nonce, salt, iteration count)
+     * @throws SaslException if the message is malformed or fails any RFC 5802 validation
      */
     private byte[] generateServerFirstMessage(final byte[] response) throws SaslException
     {
@@ -464,7 +466,16 @@ public abstract class ScramSaslServer implements SaslServer
     }
 
     /**
-     * Final response returns the server signature.
+     * Parses the SCRAM {@code client-final-message}, verifies the client's proof, and produces the
+     * {@code server-final-message}.
+     *
+     * Verifies the nonce and channel-binding value against what {@link #generateServerFirstMessage(byte[])}
+     * recorded, rejects the reserved "m" attribute among any extensions, then reconstructs AuthMessage and checks
+     * the client's proof against it.
+     *
+     * @param response the raw bytes of the client-final-message
+     * @return the server-final-message (base64-encoded server signature, "v=")
+     * @throws SaslException if the message is malformed, the nonce/channel-binding/proof don't verify, or authentication otherwise fails
      */
     private byte[] generateServerFinalMessage(final byte[] response) throws SaslException
     {
@@ -475,11 +486,11 @@ public abstract class ScramSaslServer implements SaslServer
             throw new SaslException("Invalid client final message");
         }
 
-        final String clientFinalMessageWithoutProof = m.group(1); // (c=([^,]*),r=([^,]*)[,extensions]) - verbatim, needed for AuthMessage
-        final String channelBinding = m.group(2);                 // c=([^,]*)
-        final String clientNonce = m.group(3);                    // r=([^,]*)
-        final String extensions = m.group(4);
-        final String proof = m.group(5);
+        final String clientFinalMessageWithoutProof = m.group(1); // c=BASE64,r=NONCE[,extensions] - verbatim, needed for AuthMessage
+        final String channelBinding = m.group(2);                 // c=BASE64
+        final String clientNonce = m.group(3);                    // r=NONCE
+        final String extensions = m.group(4);                     // raw, comma-prefixed extensions (or ""); still needs rejectReservedMandatoryExtension()
+        final String proof = m.group(5);                          // p=BASE64
 
         // RFC 5802 §5.1: the reserved "m" attribute must cause authentication failure wherever it appears, not only
         // in client-first-message. client-final-message-without-proof has its own optional "extensions" production,
@@ -548,25 +559,29 @@ public abstract class ScramSaslServer implements SaslServer
 
     /**
      * Determines whether the authentication exchange has completed.
-     * This method is typically called after each invocation of
-     * {@code evaluateResponse()} to determine whether the
+     *
+     * This method is typically called after each invocation of {@code evaluateResponse()} to determine whether the
      * authentication has completed successfully or should be continued.
+     *
      * @return true if the authentication exchange has completed; false otherwise.
      */
     @Override
-    public boolean isComplete() {
+    public boolean isComplete()
+    {
         return state == State.COMPLETE;
     }
 
     /**
-     * Reports the authorization ID in effect for the client of this
-     * session.
+     * Reports the authorization ID in effect for the client of this session.
+     *
      * This method can only be called if isComplete() returns true.
+     *
      * @return The authorization ID of the client.
-     * @exception IllegalStateException if this authentication session has not completed
+     * @throws IllegalStateException if this authentication session has not completed
      */
     @Override
-    public String getAuthorizationID() {
+    public String getAuthorizationID()
+    {
         if (isComplete()) {
             return username;
         } else {
@@ -577,11 +592,12 @@ public abstract class ScramSaslServer implements SaslServer
     /**
      * Unwraps a byte array received from the client. SCRAM supports no security layer.
      *
+     * @return the unwrapped byte array.
      * @throws SaslException if attempted to use this method.
      */
     @Override
-    public byte[] unwrap(byte[] incoming, int offset, int len)
-        throws SaslException {
+    public byte[] unwrap(byte[] incoming, int offset, int len) throws SaslException
+    {
         if (isComplete()) {
             throw new IllegalStateException(getMechanismName() + " does not support integrity or privacy");
         } else {
@@ -606,14 +622,13 @@ public abstract class ScramSaslServer implements SaslServer
 
     /**
      * Retrieves the negotiated property.
-     * This method can be called only after the authentication exchange has
-     * completed (i.e., when {@code isComplete()} returns true); otherwise, an
-     * {@code IllegalStateException} is thrown.
+     *
+     * This method can be called only after the authentication exchange has completed (i.e., when {@code isComplete()}
+     * returns true); otherwise, an {@code IllegalStateException} is thrown.
      *
      * @param propName the property
-     * @return The value of the negotiated property. If null, the property was
-     * not negotiated or is not applicable to this mechanism.
-     * @exception IllegalStateException if this authentication exchange has not completed
+     * @return The value of the negotiated property. If null, the property was not negotiated or is not applicable to this mechanism.
+     * @throws IllegalStateException if this authentication exchange has not completed
      */
     @Override
     public Object getNegotiatedProperty(String propName) {
@@ -631,11 +646,10 @@ public abstract class ScramSaslServer implements SaslServer
     }
 
     /**
-     * Disposes of any system resources or security-sensitive information
-     * the SaslServer might be using. Invoking this method invalidates
-     * the SaslServer instance. This method is idempotent.
-     * @throws SaslException If a problem was encountered while disposing
-     * the resources.
+     * Disposes of any system resources or security-sensitive information the SaslServer might be using. Invoking this
+     * method invalidates the SaslServer instance. This method is idempotent.
+     *
+     * @throws SaslException If a problem was encountered while disposing the resources.
      */
     @Override
     public void dispose() throws SaslException {
@@ -770,8 +784,11 @@ public abstract class ScramSaslServer implements SaslServer
 
     /**
      * Retrieve the iteration count from the database for a given username.
+     *
+     * @return The iteration count for the given username.
      */
-    private int getIterations(final String username) {
+    private int getIterations(final String username)
+    {
         try {
             return AuthFactory.getIterations(username, getMechanismBaseName());
         } catch (UserNotFoundException e) {
@@ -781,13 +798,15 @@ public abstract class ScramSaslServer implements SaslServer
 
     /**
      * Retrieve the server key from the database for a given username, but returns a fake key if none is found.
-     *
+     * <p>
      * Returning a fake key helps guard against timing attacks: instead of short-circuiting the operation,
      * a fake key is generated to ensure consistent response times and prevent potential timing attacks.
      *
+     * @return The server key for the given username.
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3257">OF-3257: Guard against timing attacks in ScramSha1SaslServer</a>
      */
-    protected byte[] getOrFakeServerKey(String username) {
+    protected byte[] getOrFakeServerKey(String username)
+    {
         try {
             byte[] key = getServerKey(username);
             if (key != null) {
@@ -801,25 +820,30 @@ public abstract class ScramSaslServer implements SaslServer
 
     /**
      * Retrieve the server key from the database for a given username.
+     *
+     * @return The server key for the given username.
      */
-    private byte[] getServerKey(final String username) throws UserNotFoundException {
+    private byte[] getServerKey(final String username) throws UserNotFoundException
+    {
         final String serverKey = AuthFactory.getServerKey(username, getMechanismBaseName());
         if (serverKey == null) {
             return null;
         } else {
-            return DatatypeConverter.parseBase64Binary( serverKey );
+            return DatatypeConverter.parseBase64Binary(serverKey);
         }
     }
 
     /**
      * Retrieve the stored key from the database for a given username, but returns a fake key if none is found.
-     *
+     * <p>
      * Returning a fake key helps guard against timing attacks: instead of short-circuiting the operation,
      * a fake key is generated to ensure consistent response times and prevent potential timing attacks.
      *
+     * @return The stored key for the given username.
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3257">OF-3257: Guard against timing attacks in ScramSha1SaslServer</a>
      */
-    protected byte[] getOrFakeStoredKey(final String username) {
+    protected byte[] getOrFakeStoredKey(final String username)
+    {
         try {
             byte[] key = getStoredKey(username);
             if (key != null) {
@@ -833,13 +857,16 @@ public abstract class ScramSaslServer implements SaslServer
 
     /**
      * Retrieve the stored key from the database for a given username.
+     *
+     * @return The stored key for the given username.
      */
-    private byte[] getStoredKey(final String username) throws UserNotFoundException {
+    private byte[] getStoredKey(final String username) throws UserNotFoundException
+    {
         final String storedKey = AuthFactory.getStoredKey(username, getMechanismBaseName());
         if (storedKey == null) {
             return null;
         } else {
-            return DatatypeConverter.parseBase64Binary( storedKey );
+            return DatatypeConverter.parseBase64Binary(storedKey);
         }
     }
 
@@ -1022,7 +1049,7 @@ public abstract class ScramSaslServer implements SaslServer
      *
      * @param rawExtensions the raw, comma-prefixed extensions string, or an empty string if none are present
      * @throws SaslException if a reserved "m" attribute is present, a segment is not a well-formed attr-val pair,
-     * an extension reuses an assigned attribute letter, or an attribute name is repeated
+     *                       an extension reuses an assigned attribute letter, or an attribute name is repeated
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3350">OF-3350: SCRAM server accepts unsupported mandatory extensions</a>
      */
     @VisibleForTesting

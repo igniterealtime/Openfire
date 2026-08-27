@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * Unit tests for {@link ScramSaslServer}'s package-private static helper methods
  * ({@link ScramSaslServer#extractRawGS2Header}, {@link ScramSaslServer#decodeSaslname},
- * {@link ScramSaslServer#rejectReservedMandatoryExtension}, {@link ScramSaslServer#hasValidBase64Length}).
+ * {@link ScramSaslServer#rejectReservedMandatoryExtension}.
  *
  * These methods take no dependency on the hash algorithm in use -- none of them reference
  * {@code getHmacAlgorithmName()}, {@code getDigestAlgorithmName()}, or any other abstract method -- so, unlike
@@ -650,99 +650,5 @@ class ScramSaslServerStaticMethodsTest
     {
         // Execute system under test & Verify result
         assertThrows(SaslException.class, () -> ScramSaslServer.rejectReservedMandatoryExtension(",x=1,x=2"));
-    }
-
-    // ---------------------------------------------------------------------------------------------------------
-    // hasValidBase64Length
-    // ---------------------------------------------------------------------------------------------------------
-
-    /**
-     * Verifies that a zero-padding value with a length that is a multiple of 4 is valid.
-     *
-     * Base64 length validation test: completely algorithm-independent.
-     */
-    @Test
-    void hasValidBase64Length_true_forNoPaddingCompleteBlocks()
-    {
-        // Execute system under test & Verify result
-        assertTrue(ScramSaslServer.hasValidBase64Length("biws"));
-    }
-
-    /**
-     * Verifies that an empty string is valid (zero data, zero padding), matching the same "structurally valid but
-     * empty" treatment already applied to the other permissive fields (nonce, extensions).
-     *
-     * Base64 length validation test: completely algorithm-independent.
-     */
-    @Test
-    void hasValidBase64Length_true_forEmptyString()
-    {
-        // Execute system under test & Verify result
-        assertTrue(ScramSaslServer.hasValidBase64Length(""));
-    }
-
-    /**
-     * Verifies that a single "=" padding character is valid when the preceding data length is congruent to 3 mod 4.
-     *
-     * Base64 length validation test: completely algorithm-independent.
-     */
-    @Test
-    void hasValidBase64Length_true_forSinglePaddingWithCorrectDataLength()
-    {
-        // Execute system under test & Verify result
-        assertTrue(ScramSaslServer.hasValidBase64Length("abc="));
-    }
-
-    /**
-     * Verifies that "==" double padding is valid when the preceding data length is congruent to 2 mod 4, using a
-     * real encoder-produced value.
-     *
-     * Base64 length validation test: completely algorithm-independent.
-     */
-    @Test
-    void hasValidBase64Length_true_forDoublePaddingWithCorrectDataLength()
-    {
-        // Execute system under test & Verify result
-        assertTrue(ScramSaslServer.hasValidBase64Length("dGVzdA==")); // base64("test"): 6 data chars + "==", 6%4==2, correct
-    }
-
-    /**
-     * Verifies that a length that is not a multiple of 4, with no padding at all, is rejected.
-     *
-     * Base64 length validation test: completely algorithm-independent.
-     */
-    @Test
-    void hasValidBase64Length_false_forNoPaddingWrongLength()
-    {
-        // Execute system under test & Verify result
-        assertFalse(ScramSaslServer.hasValidBase64Length("a"));
-        assertFalse(ScramSaslServer.hasValidBase64Length("ab"));
-        assertFalse(ScramSaslServer.hasValidBase64Length("abc"));
-        assertFalse(ScramSaslServer.hasValidBase64Length("abcde"));
-    }
-
-    /**
-     * Verifies that a single "=" is rejected when the preceding data length is not congruent to 3 mod 4 -- the
-     * exact excess-padding case a complete 4-char block followed by "=" represents.
-     *
-     * Base64 length validation test: completely algorithm-independent.
-     */
-    @Test
-    void hasValidBase64Length_false_forSinglePaddingWithWrongDataLength()
-    {
-        // Execute system under test & Verify result
-        assertFalse(ScramSaslServer.hasValidBase64Length("abcd="));
-    }
-
-    /**
-     * Verifies that "==" double padding is rejected when the preceding data length is not congruent to 2 mod 4.
-     *
-     * Base64 length validation test: completely algorithm-independent.
-     */
-    @Test
-    void hasValidBase64Length_false_forDoublePaddingWithWrongDataLength()
-    {
-        // Execute system under test & Verify result
-        assertFalse(ScramSaslServer.hasValidBase64Length("abc=="));
     }
 }

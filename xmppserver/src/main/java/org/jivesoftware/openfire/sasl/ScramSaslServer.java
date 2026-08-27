@@ -502,7 +502,8 @@ public abstract class ScramSaslServer implements SaslServer
             throw new SaslException("Invalid client final message: missing proof attribute");
         }
 
-        if (!hasValidBase64Length(proof)) {
+        // BASE64 already confines '=' to the string's end, so a valid base64 length is a multiple of 4.
+        if (proof.length() % 4 != 0) {
             throw new SaslException("Invalid client final message: proof is not valid base64");
         }
 
@@ -510,7 +511,8 @@ public abstract class ScramSaslServer implements SaslServer
             throw new SaslException("Invalid client final message: missing channel binding attribute");
         }
 
-        if (!hasValidBase64Length(channelBinding)) {
+        // BASE64 already confines '=' to the string's end, so a valid base64 length is just a multiple of 4.
+        if (channelBinding.length() % 4 != 0) {
             throw new SaslException("Invalid client final message: channel binding is not valid base64");
         }
 
@@ -933,30 +935,6 @@ public abstract class ScramSaslServer implements SaslServer
             }
         }
         throw new SaslException("Invalid GS2 header format");
-    }
-
-    /**
-     * Verifies that a base64 string observes RFC 5802's block structure ("base64 = *base64-4 [base64-3 /
-     * base64-2]"): complete 4-character blocks, optionally followed by exactly one short, padded terminal block
-     * (3 characters + "=", or 2 characters + "=="). {@link #BASE64} only constrains the character set and confines
-     * "=" to the end of the string; this method checks the arithmetic invariant that determines whether that
-     * trailing padding is actually valid for the amount of data preceding it.
-     *
-     * @param base64 a string already matched against {@link #BASE64}
-     * @return true if the block/padding structure is valid
-     */
-    @VisibleForTesting
-    static boolean hasValidBase64Length(@Nonnull final String base64)
-    {
-        final int paddingStart = base64.indexOf('=');
-        final int dataLength = paddingStart < 0 ? base64.length() : paddingStart;
-        final int paddingLength = base64.length() - dataLength;
-        return switch (paddingLength) {
-            case 0 -> dataLength % 4 == 0;
-            case 1 -> dataLength % 4 == 3;
-            case 2 -> dataLength % 4 == 2;
-            default -> false; // more than 2 '=' characters -- unreachable given BASE64's {0,2}, kept for clarity
-        };
     }
 
     /**

@@ -407,7 +407,7 @@ class ScramSaslServerStaticMethodsTest
     void rejectReservedMandatoryExtension_doesNotThrow_forSingleNonReservedExtension()
     {
         // Execute system under test & Verify result
-        assertDoesNotThrow(() -> ScramSaslServer.rejectReservedMandatoryExtension(",a=1"));
+        assertDoesNotThrow(() -> ScramSaslServer.rejectReservedMandatoryExtension(",x=1"));
     }
 
     /**
@@ -421,7 +421,7 @@ class ScramSaslServerStaticMethodsTest
     void rejectReservedMandatoryExtension_doesNotThrow_forMultipleNonReservedExtensions()
     {
         // Execute system under test & Verify result
-        assertDoesNotThrow(() -> ScramSaslServer.rejectReservedMandatoryExtension(",a=1,b=2"));
+        assertDoesNotThrow(() -> ScramSaslServer.rejectReservedMandatoryExtension(",x=1,y=2"));
     }
 
     /**
@@ -466,7 +466,7 @@ class ScramSaslServerStaticMethodsTest
     void rejectReservedMandatoryExtension_throws_whenReservedExtensionIsNotFirst()
     {
         // Execute system under test & Verify result
-        assertThrows(SaslException.class, () -> ScramSaslServer.rejectReservedMandatoryExtension(",a=1,m=unsupported"));
+        assertThrows(SaslException.class, () -> ScramSaslServer.rejectReservedMandatoryExtension(",x=1,m=unsupported"));
     }
 
     /**
@@ -480,7 +480,7 @@ class ScramSaslServerStaticMethodsTest
     void rejectReservedMandatoryExtension_throws_whenReservedExtensionIsInTheMiddle()
     {
         // Execute system under test & Verify result
-        assertThrows(SaslException.class, () -> ScramSaslServer.rejectReservedMandatoryExtension(",a=1,m=unsupported,b=2"));
+        assertThrows(SaslException.class, () -> ScramSaslServer.rejectReservedMandatoryExtension(",x=1,m=unsupported,y=2"));
     }
 
     /**
@@ -511,7 +511,7 @@ class ScramSaslServerStaticMethodsTest
     void rejectReservedMandatoryExtension_throwsSaslException_forEmptySegment()
     {
         // Execute system under test & Verify result
-        assertThrows(SaslException.class, () -> ScramSaslServer.rejectReservedMandatoryExtension(",a=1,,b=2"));
+        assertThrows(SaslException.class, () -> ScramSaslServer.rejectReservedMandatoryExtension(",x=1,,y=2"));
     }
 
     /**
@@ -566,7 +566,35 @@ class ScramSaslServerStaticMethodsTest
     void rejectReservedMandatoryExtension_throwsSaslException_forTrailingEmptySegment()
     {
         // Execute system under test & Verify result
-        assertThrows(SaslException.class, () -> ScramSaslServer.rejectReservedMandatoryExtension(",a=value,"));
+        assertThrows(SaslException.class, () -> ScramSaslServer.rejectReservedMandatoryExtension(",x=value,"));
+    }
+
+    /**
+     * Verifies that an extension reusing an already-assigned RFC 5802 attribute letter (here, "c") is rejected.
+     * Per §5.1, "[o]ptional extensions use as-yet unassigned attribute names" -- reusing an assigned letter is
+     * never a legitimate extension, even where the specific attribute it collides with (channel-binding) doesn't
+     * itself appear in the extensions list.
+     *
+     * Extension parsing test: completely algorithm-independent.
+     */
+    @Test
+    void rejectReservedMandatoryExtension_throwsSaslException_forAssignedAttributeLetterReused()
+    {
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> ScramSaslServer.rejectReservedMandatoryExtension(",c=other"));
+    }
+
+    /**
+     * Verifies that an extension attribute name repeated more than once is rejected, even when neither occurrence
+     * reuses an already-assigned letter.
+     *
+     * Extension parsing test: completely algorithm-independent.
+     */
+    @Test
+    void rejectReservedMandatoryExtension_throwsSaslException_forDuplicateExtensionName()
+    {
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> ScramSaslServer.rejectReservedMandatoryExtension(",x=1,x=2"));
     }
 
     // ---------------------------------------------------------------------------------------------------------

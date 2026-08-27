@@ -1127,6 +1127,45 @@ public abstract class AbstractScramSaslServerTest
     }
 
     /**
+     * Verifies that a client-final-message extension reusing the already-assigned "c" (channel-binding) letter is
+     * rejected, even though the leading, fixed "c=" attribute is well-formed and the extension is structurally a
+     * valid attr-val pair. Per RFC 5802 §5.1, extensions must use as-yet unassigned attribute names.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     */
+    @Test
+    void rejectsFinalMessage_extensionReusesAssignedAttributeName() throws Exception
+    {
+        // Setup test fixture
+        setupCanonicalAuthData();
+        final ScramSaslServer server = newServer(false);
+        final FirstExchangeResult firstExchangeResult = doFirstExchange(server);
+        final String proof = Base64.getEncoder().encodeToString(new byte[expectedProofLengthBytes()]);
+        final byte[] clientFinalMessage = ("c=biws,r=" + firstExchangeResult.serverNonce + ",c=other,p=" + proof).getBytes(StandardCharsets.UTF_8);
+
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> server.evaluateResponse(clientFinalMessage),
+            "A client-final-message extension reusing the assigned 'c' attribute letter must be rejected");
+    }
+
+    /**
+     * Verifies that a client-first-message extension reusing the already-assigned "n" (username) letter is rejected.
+     *
+     * Generic protocol validation test (also algorithm-independent).
+     */
+    @Test
+    void rejectsFirstMessage_extensionReusesAssignedAttributeName()
+    {
+        // Setup test fixture
+        final ScramSaslServer server = newServer(false);
+        final byte[] clientInitialMessage = ("n,,n=" + username() + ",r=" + clientNonce() + ",n=other").getBytes(StandardCharsets.UTF_8);
+
+        // Execute system under test & Verify result
+        assertThrows(SaslException.class, () -> server.evaluateResponse(clientInitialMessage),
+            "A client-first-message extension reusing the assigned 'n' attribute letter must be rejected");
+    }
+
+    /**
      * A client that supports channel binding but was not offered a -PLUS mechanism sends the 'y' GS2 flag. When the
      * server did not in fact advertise the -PLUS variant to this session, that claim is truthful and authentication
      * must proceed.

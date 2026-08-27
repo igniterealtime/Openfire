@@ -158,6 +158,38 @@ public class ScramSha1SaslServerTest extends AbstractScramSaslServerTest
     }
 
     /**
+     * Creates a new ScramSha1SaslServer instance with specific advertised mechanisms and channel-binding types.
+     *
+     * @param isPlusMechanism true to create a SCRAM-SHA-1-PLUS server, false for SCRAM-SHA-1
+     * @param advertisedMechanismNames The names of SASL mechanisms that are advertised to the peer.
+     * @param advertisedChannelBindingTypes The names of channel binding types that are advertised to the peer.
+     */
+    @Nonnull
+    @Override
+    protected ScramSha1SaslServer newServer(final boolean isPlusMechanism, final Set<String> advertisedMechanismNames, final Set<String> advertisedChannelBindingTypes)
+    {
+        return new ScramSha1SaslServer(isPlusMechanism, new HashMap<>(), advertisedMechanismNames, advertisedChannelBindingTypes);
+    }
+
+    /**
+     * Returns the SHA-1 downgrade protection hash published in the worked example of XEP-0474 §6.3.
+     */
+    @Override
+    protected String expectedDowngradeProtectionHash()
+    {
+        return ScramSha1TestFixtures.SSDP_HASH;
+    }
+
+    /**
+     * Returns the SHA-1 downgrade protection hash over the example mechanism list alone.
+     */
+    @Override
+    protected String expectedDowngradeProtectionHashWithoutChannelBindingTypes()
+    {
+        return ScramSha1TestFixtures.SSDP_HASH_WITHOUT_CHANNEL_BINDING_TYPES;
+    }
+
+    /**
      * Implements the example on <a href="https://wiki.xmpp.org/web/SASL_Authentication_and_SCRAM">https://wiki.xmpp.org/web/SASL_Authentication_and_SCRAM</a>
      */
     @Test

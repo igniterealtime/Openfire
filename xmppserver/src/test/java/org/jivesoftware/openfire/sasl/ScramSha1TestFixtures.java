@@ -43,5 +43,19 @@ public final class ScramSha1TestFixtures
     public static final Set<String> SUPPORTED_MECHANISMS = Set.of(ScramSha1SaslServer.MECHANISM_NAME, ScramSha1SaslServer.MECHANISM_NAME+"-PLUS");
     public static final Set<String> SUPPORTED_CHANNEL_BINDING_TYPES = Set.of("tls-server-end-point", "tls-exporter");
 
+
+    /**
+     * The XEP-0474 downgrade protection hash over {@link AbstractScramSaslServerTest#SSDP_ADVERTISED_MECHANISMS} and
+     * {@link AbstractScramSaslServerTest#SSDP_CHANNEL_BINDING_TYPES}, using this mechanism's hash function.
+     *
+     * The SCRAM-SHA-1 value is the one published in the worked example of XEP-0474 §6.3.
+     */
+    public static final String SSDP_HASH = "G6k/rBLDqgOhRRaCuuatSDFkJ08=";
+
+    /**
+     * As {@link #SSDP_HASH}, but over the mechanism list alone, as produced when no channel-binding types were advertised.
+     */
+    public static final String SSDP_HASH_WITHOUT_CHANNEL_BINDING_TYPES = "g00gt4Qd0gJ3EvnclTnY0KEYfRg=";
+
     private ScramSha1TestFixtures() {}
 }

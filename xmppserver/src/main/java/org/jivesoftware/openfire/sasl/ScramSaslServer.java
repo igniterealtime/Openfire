@@ -20,6 +20,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -78,6 +79,14 @@ public abstract class ScramSaslServer implements SaslServer
     private static final String NONCE         = "[\\x21-\\x2B\\x2D-\\x7E]*"; // printable* -- %x21-2B / %x2D-7E; '*' permits empty so the existing explicit isEmpty() checks keep their specific messages
     private static final String ATTR_VAL      = "[A-Za-z]=[^,\\x00]+";       // attr-val = ALPHA "=" value; value excludes NUL per value-safe-char
     private static final String BASE64        = "[A-Za-z0-9+/]*={0,2}";      // base64 charset, with '=' padding confined to the string's end (0-2 of them);
+
+    /**
+     * SCRAM attribute letters explicitly assigned meaning by RFC 5802 §5.1 (a, c, e, i, m, n, p, r, s, v). Per that
+     * section, "[o]ptional extensions use as-yet unassigned attribute names". An extension using one of these
+     * letters is never a legitimate extension, regardless of whether that specific attribute happens to appear (in
+     * its own, fixed position) in the message being parsed.
+     */
+    private static final Set<Character> ASSIGNED_ATTRIBUTE_LETTERS = Set.of('a', 'c', 'e', 'i', 'm', 'n', 'p', 'r', 's', 'v');
 
     /**
      * Matches a single, complete attr-val pair (e.g. "a=1"), anchored at both ends. Used by
@@ -965,22 +974,23 @@ public abstract class ScramSaslServer implements SaslServer
     }
 
     /**
-     * Scans a raw, comma-prefixed extensions string (e.g. ",a=1,b=2") for the reserved "m" attribute and rejects
-     * the exchange if found. RFC 5802 reserves "m" for a future mandatory extension mechanism: since none is
-     * currently defined, its presence must cause authentication to fail -- unlike a genuinely unrecognized
-     * extension, which the specification requires servers to ignore. This applies regardless of whether "m="
-     * appears in the leading reserved-mext position of client-first-message-bare or among the extensions that may
-     * follow the nonce; a client cannot bypass the check by relocating the attribute.
+     * Scans a raw, comma-prefixed extensions string (e.g. ",a=1,b=2") for invalid extensions: the reserved "m"
+     * attribute, an extension reusing an already-assigned SCRAM attribute letter (a, c, e, i, n, p, r, s, v), or an
+     * attribute name repeated more than once.
      *
-     * The caller ({@link #generateServerFirstMessage(byte[])}) always supplies a value already constrained to
-     * well-formed "letter=value" segments by {@link #CLIENT_FIRST_MESSAGE_BARE}, so the shape check below is
-     * defense-in-depth for direct callers -- this method is {@code @VisibleForTesting} and therefore reachable
-     * without going through that regex.
+     * "m" is reserved for a future mandatory extension mechanism (RFC 5802 §5.1); since none is currently defined,
+     * its presence -- wherever it appears, not just in the leading reserved-mext position -- must fail
+     * authentication rather than be silently ignored like a genuinely unrecognized extension. The other two checks
+     * follow from the same section describing extensions as using "as-yet unassigned attribute names," and from the
+     * protocol's one-value-per-attribute model, even though neither is spelled out as an explicit uniqueness rule.
+     *
+     * This method assumes its input is already shape-constrained by {@link #CLIENT_FIRST_MESSAGE_BARE}/
+     * {@link #CLIENT_FINAL_MESSAGE}; the per-segment shape check here is defense-in-depth for direct callers, since
+     * this method is {@code @VisibleForTesting}.
      *
      * @param rawExtensions the raw, comma-prefixed extensions string, or an empty string if none are present
-     * @throws SaslException if a reserved "m" attribute is present anywhere in {@code rawExtensions}, or if any
-     * segment is not a well-formed attr-val pair (malformed shape, non-ALPHA attribute name, a NUL character in
-     * the value, or an empty segment, including a trailing one)
+     * @throws SaslException if a reserved "m" attribute is present, a segment is not a well-formed attr-val pair,
+     * an extension reuses an assigned attribute letter, or an attribute name is repeated
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3350">OF-3350: SCRAM server accepts unsupported mandatory extensions</a>
      */
     @VisibleForTesting
@@ -990,15 +1000,29 @@ public abstract class ScramSaslServer implements SaslServer
             return;
         }
 
+        final Set<Character> seen = new HashSet<>();
         for (final String ext : rawExtensions.substring(1).split(",", -1))
         {
             if (!ATTR_VAL_PATTERN.matcher(ext).matches())
             {
                 throw new SaslException("Invalid extension: '" + ext + "' is not a well-formed attr-val pair");
             }
-            if (ext.charAt(0) == 'm')
+
+            final char name = ext.charAt(0);
+
+            if (name == 'm')
             {
                 throw new SaslException("Client requested an unsupported mandatory extension ('" + ext + "'). Rejecting authentication.");
+            }
+
+            if (ASSIGNED_ATTRIBUTE_LETTERS.contains(name))
+            {
+                throw new SaslException("Invalid extension: '" + ext + "' reuses the already-assigned SCRAM attribute name '" + name + "'; extensions must use an as-yet unassigned attribute name.");
+            }
+
+            if (!seen.add(name))
+            {
+                throw new SaslException("Invalid extension: attribute name '" + name + "' appears more than once ('" + ext + "').");
             }
         }
     }

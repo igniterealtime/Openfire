@@ -118,7 +118,7 @@ public abstract class ScramSaslServer implements SaslServer
      * Group 4: the raw (still saslname-escaped), non-empty authzid value, without the "a=" prefix, only present when supplied.
      * Group 5: everything after the GS2 header, i.e. the client-first-message-bare.
      */
-    private static final Pattern GS2_HEADER = Pattern.compile("^(?:(p)=(" + CB_NAME + ")|([ny])),(?:a=(" + SASLNAME_CHAR + "+))?,(.*)$");
+    private static final Pattern GS2_HEADER = Pattern.compile("^(?:(p)=(" + CB_NAME + ")|([ny])),(?:a=(" + SASLNAME_CHAR + "+))?,(.*)\\z");
 
     /**
      * Matches a SCRAM client-first-message-bare:
@@ -141,7 +141,7 @@ public abstract class ScramSaslServer implements SaslServer
      * pattern; {@link #rejectReservedMandatoryExtension(String)} must still be called on this value, since the
      * reserved "m" attribute can also appear here rather than only in the leading reserved-mext position.
      */
-    private static final Pattern CLIENT_FIRST_MESSAGE_BARE = Pattern.compile("^(?:(m=[^,]*),)?n=(" + SASLNAME_CHAR + "*),r=(" + NONCE + ")((?:," + ATTR_VAL + ")*)$");
+    private static final Pattern CLIENT_FIRST_MESSAGE_BARE = Pattern.compile("^(?:(m=[^,]*),)?n=(" + SASLNAME_CHAR + "*),r=(" + NONCE + ")((?:," + ATTR_VAL + ")*)\\z");
 
     /**
      * Matches a SCRAM client-final-message:
@@ -166,7 +166,7 @@ public abstract class ScramSaslServer implements SaslServer
      * constrained to a well-formed attr-val pair, but {@link #rejectReservedMandatoryExtension(String)}
      * must still be called on this value to catch a reserved "m" attribute.
      */
-    private static final Pattern CLIENT_FINAL_MESSAGE = Pattern.compile("^(c=(" + BASE64 + "),r=(" + NONCE + ")((?:,(?!p=)" + ATTR_VAL + ")*)),p=(" + BASE64 + ")$");
+    private static final Pattern CLIENT_FINAL_MESSAGE = Pattern.compile("^(c=(" + BASE64 + "),r=(" + NONCE + ")((?:,(?!p=)" + ATTR_VAL + ")*)),p=(" + BASE64 + ")\\z");
 
     /**
      * Manages a set of providers that can extract channel binding data of various types from SSL engines.

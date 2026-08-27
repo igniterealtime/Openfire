@@ -66,7 +66,7 @@ public class FirstExchangeResult
     @Nonnull
     public static FirstExchangeResult fromFirstServerResponse(final String firstServerResponse)
     {
-        final Matcher m = Pattern.compile("r=([^,]*),s=([^,]*),i=(.*)$").matcher(firstServerResponse);
+        final Matcher m = Pattern.compile("r=([^,]*),s=([^,]*),i=(\\d+)(?:,.*)?$").matcher(firstServerResponse);
         assertTrue(m.matches(), "First server response did not match expected pattern");
         final String serverNonce = m.group(1);
         final byte[] salt;

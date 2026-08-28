@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.openfire.sasl;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -43,19 +44,20 @@ public final class ScramSha1TestFixtures
     public static final Set<String> SUPPORTED_MECHANISMS = Set.of(ScramSha1SaslServer.MECHANISM_NAME, ScramSha1SaslServer.MECHANISM_NAME+"-PLUS");
     public static final Set<String> SUPPORTED_CHANNEL_BINDING_TYPES = Set.of("tls-server-end-point", "tls-exporter");
 
-
     /**
-     * The XEP-0474 downgrade protection hash over {@link AbstractScramSaslServerTest#SSDP_ADVERTISED_MECHANISMS} and
-     * {@link AbstractScramSaslServerTest#SSDP_CHANNEL_BINDING_TYPES}, using this mechanism's hash function.
+     * The expected XEP-0474 downgrade protection hashes for this mechanism's hash function, keyed by the test
+     * vector they belong to.
      *
-     * The SCRAM-SHA-1 value is the one published in the worked example of XEP-0474 §6.3.
+     * Only the value for {@link SsdpTestVector#SPECIFICATION_EXAMPLE} is published in XEP-0474 §6.3. The
+     * remaining values were derived from the same construction and are not published anywhere.
      */
-    public static final String SSDP_HASH = "G6k/rBLDqgOhRRaCuuatSDFkJ08=";
-
-    /**
-     * As {@link #SSDP_HASH}, but over the mechanism list alone, as produced when no channel-binding types were advertised.
-     */
-    public static final String SSDP_HASH_WITHOUT_CHANNEL_BINDING_TYPES = "g00gt4Qd0gJ3EvnclTnY0KEYfRg=";
+    public static final Map<SsdpTestVector, String> SSDP_HASHES = Map.of(
+        SsdpTestVector.SPECIFICATION_EXAMPLE,         "G6k/rBLDqgOhRRaCuuatSDFkJ08=",
+        SsdpTestVector.WITHOUT_CHANNEL_BINDING_TYPES, "g00gt4Qd0gJ3EvnclTnY0KEYfRg=",
+        SsdpTestVector.FULL_ADVERTISEMENT,            "SQjUrwq125kFEHbaywmNGkNY8NI=",
+        SsdpTestVector.SINGLE_MECHANISM_AND_TYPE,     "50fovNdJS+nqcJ0IYUsXqRTUrtU=",
+        SsdpTestVector.SINGLE_MECHANISM,              "LrtFoCs8XsoI+diY4u3rG69UGN8="
+    );
 
     private ScramSha1TestFixtures() {}
 }

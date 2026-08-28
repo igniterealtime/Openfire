@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.openfire.sasl;
 
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -42,8 +43,18 @@ public final class ScramSha256TestFixtures
     public static final String SERVER_KEY_HEX = "c1f3cbc1c13a9d35a14c0990eed97629ea225863e566a4314ab99f3f00e5d9d5";
     public static final Set<String> SUPPORTED_MECHANISMS = Set.of(ScramSha256SaslServer.MECHANISM_NAME, ScramSha256SaslServer.MECHANISM_NAME+"-PLUS");
     public static final Set<String> SUPPORTED_CHANNEL_BINDING_TYPES = Set.of("tls-server-end-point", "tls-exporter");
-    public static final String SSDP_HASH = "H6VEQ+6wl/eYKuTjJn4D9/e9GTn1AcYGw/oiSJ3Yhy0=";
-    public static final String SSDP_HASH_WITHOUT_CHANNEL_BINDING_TYPES = "Uuua9QJnTss43LMyJpE0esh43d9r8DB6N89DXs91aFo=";
+
+    /**
+     * The expected XEP-0474 downgrade protection hashes for this mechanism's hash function, keyed by the test
+     * vector they belong to.
+     */
+    public static final Map<SsdpTestVector, String> SSDP_HASHES = Map.of(
+        SsdpTestVector.SPECIFICATION_EXAMPLE,         "H6VEQ+6wl/eYKuTjJn4D9/e9GTn1AcYGw/oiSJ3Yhy0=",
+        SsdpTestVector.WITHOUT_CHANNEL_BINDING_TYPES, "Uuua9QJnTss43LMyJpE0esh43d9r8DB6N89DXs91aFo=",
+        SsdpTestVector.FULL_ADVERTISEMENT,            "jl3RxAJC6h0xX0nWBprC7vAD09HBsUNvCx5Ei/97Lt4=",
+        SsdpTestVector.SINGLE_MECHANISM_AND_TYPE,     "vxAYBdhmEYs9EAv8GQJQqk2YPUoLPUaj9em9zXzXzA0=",
+        SsdpTestVector.SINGLE_MECHANISM,              "hzhrgAj6xgd4yQIejnb2tHGgllHiKhjRwvofy7ETi64="
+    );
 
     private ScramSha256TestFixtures() {}
 }

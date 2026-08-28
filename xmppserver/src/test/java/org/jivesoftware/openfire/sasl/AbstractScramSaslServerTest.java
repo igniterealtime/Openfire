@@ -19,6 +19,9 @@ import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -29,6 +32,8 @@ import javax.security.sasl.SaslException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import static org.jivesoftware.openfire.sasl.SsdpTestVector.SPECIFICATION_EXAMPLE;
+import static org.jivesoftware.openfire.sasl.SsdpTestVector.WITHOUT_CHANNEL_BINDING_TYPES;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 
@@ -46,23 +51,6 @@ import static org.mockito.ArgumentMatchers.any;
  */
 public abstract class AbstractScramSaslServerTest
 {
-    /**
-     * The SASL mechanism names that make up the canonical downgrade-protection fixture, taken verbatim from the
-     * worked example in XEP-0474 §6.3.
-     *
-     * These are deliberately literal rather than derived from the mechanism under test: keeping the hash input
-     * identical across every subclass leaves the hash function as the only variable, which is what allows the
-     * SCRAM-SHA-1 expectation to be the value published in the specification itself rather than one this project
-     * computed for itself.
-     */
-    protected static final Set<String> SSDP_ADVERTISED_MECHANISMS = Set.of("SCRAM-SHA-1", "SCRAM-SHA-1-PLUS");
-
-    /**
-     * The channel-binding type names that make up the canonical downgrade-protection fixture, taken verbatim from
-     * the worked example in XEP-0474 §6.3.
-     */
-    protected static final Set<String> SSDP_CHANNEL_BINDING_TYPES = Set.of("tls-server-end-point", "tls-exporter");
-
     /**
      * The value of the downgrade-protection setting before the current test ran, restored afterwards.
      */
@@ -140,26 +128,29 @@ public abstract class AbstractScramSaslServerTest
     protected abstract ScramSaslServer newServer(boolean isPlusMechanism, Set<String> advertisedMechanismNames, Set<String> advertisedChannelBindingTypes);
 
     /**
-     * Returns the expected XEP-0474 downgrade protection hash, for the algorithm under test, over
-     * {@link #SSDP_ADVERTISED_MECHANISMS} and {@link #SSDP_CHANNEL_BINDING_TYPES}.
+     * Returns the expected XEP-0474 downgrade protection hashes for the algorithm under test, keyed by the test
+     * vector each belongs to.
      *
-     * @return the Base64-encoded expected hash
+     * @return the Base64-encoded expected hashes
      */
-    protected abstract String expectedDowngradeProtectionHash();
-
-    /**
-     * Returns the expected XEP-0474 downgrade protection hash, for the algorithm under test, over
-     * {@link #SSDP_ADVERTISED_MECHANISMS} alone.
-     *
-     * @return the Base64-encoded expected hash
-     */
-    protected abstract String expectedDowngradeProtectionHashWithoutChannelBindingTypes();
+    protected abstract Map<SsdpTestVector, String> expectedDowngradeProtectionHashes();
 
     /**
      * Configures all authentication-data mocks or stubs with the canonical test fixture values
      * (salt, iterations, password, stored key, server key) required by the algorithm under test.
      */
     protected abstract void setupCanonicalAuthData();
+
+    /**
+     * Returns the expected XEP-0474 downgrade protection hash for the given test vector, for the algorithm under
+     * test.
+     */
+    protected final String expectedDowngradeProtectionHash(final SsdpTestVector vector)
+    {
+        final String expected = expectedDowngradeProtectionHashes().get(vector);
+        assertNotNull(expected, "Test setup issue: no expected downgrade protection hash is defined for " + vector);
+        return expected;
+    }
 
     /**
      * Computes a valid client proof for the given SCRAM exchange state using the algorithm under test.
@@ -1478,55 +1469,6 @@ public abstract class AbstractScramSaslServerTest
     }
 
     /**
-     * Verifies that the downgrade protection hash matches the worked example in XEP-0474 §6.3: the sorted SASL
-     * mechanism names joined by %x1E, then %x1F, then the sorted channel-binding types joined by %x1E, hashed with
-     * the SCRAM mechanism's own hash function and Base64-encoded.
-     *
-     * This is the only test here that pins the exact hash input, so it is what actually verifies the delimiters,
-     * the octet ("i;octet") collation and the choice of hash function; the remaining tests verify behaviour
-     * relative to this one. Note that {@link #SSDP_CHANNEL_BINDING_TYPES} is declared in reverse sorted order, so
-     * an implementation that emitted the types in declaration order rather than sorting them would not produce
-     * this value.
-     *
-     * @see <a href="https://xmpp.org/extensions/xep-0474.html">XEP-0474: SASL SCRAM Downgrade Protection</a>
-     */
-    @Test
-    void calculateDowngradeProtectionHash_matchesSpecificationExample() throws Exception
-    {
-        // Setup test fixture
-        final ScramSaslServer server = newServer(false, SSDP_ADVERTISED_MECHANISMS, SSDP_CHANNEL_BINDING_TYPES);
-
-        // Execute system under test
-        final String hash = server.calculateDowngradeProtectionHash();
-
-        // Verify result
-        assertEquals(expectedDowngradeProtectionHash(), hash,
-            "The downgrade protection hash should match the value published in XEP-0474 §6.3 for this hash function");
-    }
-
-    /**
-     * Verifies that when no channel-binding types were advertised, the channel-binding section (the %x1F separator
-     * and the type list) is omitted from the hash input entirely, rather than emitted as a bare separator.
-     *
-     * Per XEP-0474 §6.1, a peer appends the separator only when the server used XEP-0440 to advertise
-     * channel-bindings. An implementation that appended it unconditionally would produce a value no conforming
-     * client could reproduce.
-     */
-    @Test
-    void calculateDowngradeProtectionHash_omitsChannelBindingSection_whenNoTypesAdvertised() throws Exception
-    {
-        // Setup test fixture
-        final ScramSaslServer server = newServer(false, SSDP_ADVERTISED_MECHANISMS, Set.of());
-
-        // Execute system under test
-        final String hash = server.calculateDowngradeProtectionHash();
-
-        // Verify result
-        assertEquals(expectedDowngradeProtectionHashWithoutChannelBindingTypes(), hash,
-            "With no channel-binding types advertised, the hash should be taken over the mechanism list alone");
-    }
-
-    /**
      * Verifies that the hash depends only on the content of the advertised sets, not on the order in which those
      * sets happen to iterate. The sets that reach the SASL server are unordered collections, so an implementation
      * that skipped sorting could still match the specification example by accident.
@@ -1545,8 +1487,8 @@ public abstract class AbstractScramSaslServerTest
         final String descending = newServer(false, mechanismsDescending, typesDescending).calculateDowngradeProtectionHash();
 
         // Verify result
-        assertEquals(expectedDowngradeProtectionHash(), ascending, "Iteration order must not affect the hash");
-        assertEquals(expectedDowngradeProtectionHash(), descending, "Iteration order must not affect the hash");
+        assertEquals(expectedDowngradeProtectionHash(SPECIFICATION_EXAMPLE), ascending, "Iteration order must not affect the hash");
+        assertEquals(expectedDowngradeProtectionHash(SPECIFICATION_EXAMPLE), descending, "Iteration order must not affect the hash");
     }
 
     /**
@@ -1558,13 +1500,13 @@ public abstract class AbstractScramSaslServerTest
     void calculateDowngradeProtectionHash_changesWhenAdvertisedMechanismIsRemoved() throws Exception
     {
         // Setup test fixture: the -PLUS mechanism has been stripped, as an attacker would.
-        final ScramSaslServer server = newServer(false, Set.of("SCRAM-SHA-1"), SSDP_CHANNEL_BINDING_TYPES);
+        final ScramSaslServer server = newServer(false, Set.of("SCRAM-SHA-1"), SPECIFICATION_EXAMPLE.channelBindingTypes());
 
         // Execute system under test
         final String hash = server.calculateDowngradeProtectionHash();
 
         // Verify result
-        assertNotEquals(expectedDowngradeProtectionHash(), hash, "Removing an advertised mechanism must change the hash");
+        assertNotEquals(expectedDowngradeProtectionHash(SPECIFICATION_EXAMPLE), hash, "Removing an advertised mechanism must change the hash");
     }
 
     /**
@@ -1575,13 +1517,13 @@ public abstract class AbstractScramSaslServerTest
     void calculateDowngradeProtectionHash_changesWhenChannelBindingTypeIsRemoved() throws Exception
     {
         // Setup test fixture: one of the two advertised types has been stripped.
-        final ScramSaslServer server = newServer(false, SSDP_ADVERTISED_MECHANISMS, Set.of("tls-server-end-point"));
+        final ScramSaslServer server = newServer(false, SPECIFICATION_EXAMPLE.mechanisms(), Set.of("tls-server-end-point"));
 
         // Execute system under test
         final String hash = server.calculateDowngradeProtectionHash();
 
         // Verify result
-        assertNotEquals(expectedDowngradeProtectionHash(), hash, "Removing an advertised channel-binding type must change the hash");
+        assertNotEquals(expectedDowngradeProtectionHash(SPECIFICATION_EXAMPLE), hash, "Removing an advertised channel-binding type must change the hash");
     }
 
     /**
@@ -1595,14 +1537,14 @@ public abstract class AbstractScramSaslServerTest
         // Setup test fixture
         setupCanonicalAuthData();
         SASLAuthentication.SSDP_ENABLED.setValue(true);
-        final ScramSaslServer server = newServer(false, SSDP_ADVERTISED_MECHANISMS, SSDP_CHANNEL_BINDING_TYPES);
+        final ScramSaslServer server = newServer(false, SPECIFICATION_EXAMPLE.mechanisms(), SPECIFICATION_EXAMPLE.channelBindingTypes());
         final byte[] clientInitialMessage = createClientInitialMessage("n,,", username(), clientNonce());
 
         // Execute system under test
         final String firstServerResponse = new String(server.evaluateResponse(clientInitialMessage), StandardCharsets.UTF_8);
 
         // Verify result
-        assertTrue(firstServerResponse.endsWith(",h=" + expectedDowngradeProtectionHash()),
+        assertTrue(firstServerResponse.endsWith(",h=" + expectedDowngradeProtectionHash(SPECIFICATION_EXAMPLE)),
             "server-first-message should end with the downgrade protection hash. Got: " + firstServerResponse);
         assertTrue(firstServerResponse.indexOf(",h=") > firstServerResponse.indexOf(",i="),
             "The 'h' attribute must follow the iteration count, as RFC 5802 places extensions last. Got: " + firstServerResponse);
@@ -1621,7 +1563,7 @@ public abstract class AbstractScramSaslServerTest
         // Setup test fixture
         setupCanonicalAuthData();
         SASLAuthentication.SSDP_ENABLED.setValue(false);
-        final ScramSaslServer server = newServer(false, SSDP_ADVERTISED_MECHANISMS, SSDP_CHANNEL_BINDING_TYPES);
+        final ScramSaslServer server = newServer(false, SPECIFICATION_EXAMPLE.mechanisms(), SPECIFICATION_EXAMPLE.channelBindingTypes());
         final byte[] clientInitialMessage = createClientInitialMessage("n,,", username(), clientNonce());
 
         // Execute system under test
@@ -1670,12 +1612,14 @@ public abstract class AbstractScramSaslServerTest
         // Setup test fixture
         setupCanonicalAuthData();
         SASLAuthentication.SSDP_ENABLED.setValue(true);
-        final ScramSaslServer server = newServer(false, SSDP_ADVERTISED_MECHANISMS, SSDP_CHANNEL_BINDING_TYPES);
+        final ScramSaslServer server = newServer(false, SPECIFICATION_EXAMPLE.mechanisms(), SPECIFICATION_EXAMPLE.channelBindingTypes());
         final byte[] clientInitialMessage = createClientInitialMessage("n,,", username(), clientNonce());
         final String firstServerResponse = new String(server.evaluateResponse(clientInitialMessage), StandardCharsets.UTF_8);
         final FirstExchangeResult firstExchangeResult = FirstExchangeResult.fromFirstServerResponse(firstServerResponse);
 
-        final String tamperedFirstServerResponse = firstServerResponse.replace(expectedDowngradeProtectionHash(), expectedDowngradeProtectionHashWithoutChannelBindingTypes());
+        final String tamperedFirstServerResponse = firstServerResponse.replace(
+            expectedDowngradeProtectionHash(SPECIFICATION_EXAMPLE),
+            expectedDowngradeProtectionHash(WITHOUT_CHANNEL_BINDING_TYPES));
         assertNotEquals(firstServerResponse, tamperedFirstServerResponse, "Test setup issue: the fixture should have altered the hash, but did not");
 
         final String clientFinalMessageWithoutProof = "c=biws,r=" + firstExchangeResult.serverNonce;
@@ -1689,6 +1633,39 @@ public abstract class AbstractScramSaslServerTest
         // Verify result
         assertTrue(ex.getMessage().contains("Authentication failed"),
             "Rejection should occur at proof verification, showing the hash is part of AuthMessage. Got: " + ex.getMessage());
+    }
+
+    /**
+     * Verifies that the downgrade protection hash matches the expected value for each test vector: the sorted SASL
+     * mechanism names joined by %x1E, then (only when channel-binding types were advertised) %x1F followed by the
+     * sorted channel-binding types joined by %x1E, hashed with the SCRAM mechanism's own hash function and
+     * Base64-encoded.
+     *
+     * These are the only tests that pin exact hash values, so they are what verify the delimiters, the octet
+     * ("i;octet") collation and the choice of hash function; the other downgrade-protection tests verify behaviour
+     * relative to these. Only the SCRAM-SHA-1 value of {@link SsdpTestVector#SPECIFICATION_EXAMPLE} is published in
+     * XEP-0474 §6.3; the rest were derived from the same construction, so a defect in the construction itself
+     * would go unnoticed by all but that one value.
+     *
+     * The vectors use unordered sets, whose iteration order is not guaranteed stable, so these tests do not
+     * reliably exercise the sorting; {@link #calculateDowngradeProtectionHash_independentOfIterationOrder()} does
+     * that deliberately.
+     *
+     * @see <a href="https://xmpp.org/extensions/xep-0474.html">XEP-0474: SASL SCRAM Downgrade Protection</a>
+     */
+    @ParameterizedTest
+    @EnumSource(SsdpTestVector.class)
+    void calculateDowngradeProtectionHash_matchesTestVector(final SsdpTestVector vector) throws Exception
+    {
+        // Setup test fixture
+        final ScramSaslServer server = newServer(false, vector.mechanisms(), vector.channelBindingTypes());
+
+        // Execute system under test
+        final String hash = server.calculateDowngradeProtectionHash();
+
+        // Verify result
+        assertEquals(expectedDowngradeProtectionHash(vector), hash,
+            "The downgrade protection hash for " + vector + " should match the expected value for this hash function");
     }
 
     /**

@@ -166,21 +166,12 @@ public class ScramSha256SaslServerTest extends AbstractScramSaslServerTest
     }
 
     /**
-     * Returns the SHA-256 downgrade protection hash published in the worked example of XEP-0474 §6.3.
+     * Returns the SHA-256 downgrade protection hashes for the XEP-0474 test vectors.
      */
     @Override
-    protected String expectedDowngradeProtectionHash()
+    protected Map<SsdpTestVector, String> expectedDowngradeProtectionHashes()
     {
-        return ScramSha256TestFixtures.SSDP_HASH;
-    }
-
-    /**
-     * Returns the SHA-256 downgrade protection hash over the example mechanism list alone.
-     */
-    @Override
-    protected String expectedDowngradeProtectionHashWithoutChannelBindingTypes()
-    {
-        return ScramSha256TestFixtures.SSDP_HASH_WITHOUT_CHANNEL_BINDING_TYPES;
+        return ScramSha256TestFixtures.SSDP_HASHES;
     }
 
     /**

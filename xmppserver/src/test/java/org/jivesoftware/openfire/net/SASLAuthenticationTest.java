@@ -1266,59 +1266,90 @@ public class SASLAuthenticationTest
      * Verifies that channel-binding types are not advertised when no channel-binding-capable mechanism is offered,
      * since a peer that cannot use channel binding has no use for the type list.
      *
+     * The connection is deliberately stubbed to support types: this asserts that the mechanism list alone is
+     * enough to suppress the announcement, rather than the outcome coinciding with a connection that happens to
+     * support nothing.
+     *
      * @see <a href="https://xmpp.org/extensions/xep-0440.html">XEP-0440: SASL Channel-Binding Type Capability</a>
      */
     @Test
     public void getAdvertisableChannelBindingTypes_noPlusMechanism_returnsEmpty()
     {
-        // Setup test fixture, execute system under test.
-        final Set<String> result = SASLAuthentication.getAdvertisableChannelBindingTypes(Set.of("PLAIN", "EXTERNAL"));
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        when(connection.getSupportedChannelBindingTypes()).thenReturn(Set.of("tls-exporter"));
+        final LocalSession session = mock(LocalSession.class);
+        when(session.getConnection()).thenReturn(connection);
+
+        // Execute system under test.
+        final Set<String> result = SASLAuthentication.getAdvertisableChannelBindingTypes(session, Set.of("PLAIN", "EXTERNAL"));
 
         // Verify result.
         assertTrue(result.isEmpty(), "Expected no channel-binding types when no -PLUS mechanism is offered.");
     }
 
     /**
-     * Verifies that no channel-binding types are advertised when a -PLUS mechanism is offered but the server has no
-     * providers registered for any type.
+     * Verifies that no channel-binding types are advertised when a -PLUS mechanism is offered but the session's
+     * connection cannot supply any type in its current state (for example, because it is not encrypted).
      */
     @Test
-    public void getAdvertisableChannelBindingTypes_plusMechanismButNoProviders_returnsEmpty()
+    public void getAdvertisableChannelBindingTypes_plusMechanismButConnectionSupportsNone_returnsEmpty()
     {
-        try (final MockedStatic<ChannelBindingProviderManager> mocked = mockStatic(ChannelBindingProviderManager.class))
-        {
-            // Setup test fixture.
-            final ChannelBindingProviderManager manager = mock(ChannelBindingProviderManager.class);
-            mocked.when(ChannelBindingProviderManager::getInstance).thenReturn(manager);
-            when(manager.getSupportedChannelBindingTypes()).thenReturn(Set.of());
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        when(connection.getSupportedChannelBindingTypes()).thenReturn(Set.of());
+        final LocalSession session = mock(LocalSession.class);
+        when(session.getConnection()).thenReturn(connection);
 
-            // Execute system under test.
-            final Set<String> result = SASLAuthentication.getAdvertisableChannelBindingTypes(Set.of("SCRAM-SHA-1", "SCRAM-SHA-1-PLUS"));
+        // Execute system under test.
+        final Set<String> result = SASLAuthentication.getAdvertisableChannelBindingTypes(session, Set.of("SCRAM-SHA-1", "SCRAM-SHA-1-PLUS"));
 
-            // Verify result.
-            assertTrue(result.isEmpty(), "Expected no channel-binding types when no providers are registered.");
-        }
+        // Verify result.
+        assertTrue(result.isEmpty(), "Expected no channel-binding types when the connection supports none.");
     }
 
     /**
-     * Verifies that the supported channel-binding types are advertised when a -PLUS mechanism is offered.
+     * Verifies that the channel-binding types that the session's connection supports are advertised when a -PLUS
+     * mechanism is offered.
+     *
+     * The types come from the connection rather than from the globally registered providers, because
+     * Connection#getSupportedChannelBindingTypes is defined to reflect the connection's current state. Advertising
+     * a type the connection cannot supply would leave a peer that selects it to be rejected later, when the
+     * channel-binding data cannot be produced.
      */
     @Test
-    public void getAdvertisableChannelBindingTypes_plusMechanismWithProviders_returnsSupportedTypes()
+    public void getAdvertisableChannelBindingTypes_plusMechanismWithConnectionSupport_returnsConnectionTypes()
     {
-        try (final MockedStatic<ChannelBindingProviderManager> mocked = mockStatic(ChannelBindingProviderManager.class))
-        {
-            // Setup test fixture.
-            final ChannelBindingProviderManager manager = mock(ChannelBindingProviderManager.class);
-            mocked.when(ChannelBindingProviderManager::getInstance).thenReturn(manager);
-            when(manager.getSupportedChannelBindingTypes()).thenReturn(Set.of("tls-server-end-point", "tls-exporter"));
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        when(connection.getSupportedChannelBindingTypes()).thenReturn(Set.of("tls-server-end-point", "tls-exporter"));
+        final LocalSession session = mock(LocalSession.class);
+        when(session.getConnection()).thenReturn(connection);
 
-            // Execute system under test.
-            final Set<String> result = SASLAuthentication.getAdvertisableChannelBindingTypes(Set.of("SCRAM-SHA-1", "SCRAM-SHA-1-PLUS"));
+        // Execute system under test.
+        final Set<String> result = SASLAuthentication.getAdvertisableChannelBindingTypes(session, Set.of("SCRAM-SHA-1", "SCRAM-SHA-1-PLUS"));
 
-            // Verify result.
-            assertEquals(Set.of("tls-server-end-point", "tls-exporter"), result, "Expected the supported channel-binding types to be advertised alongside a -PLUS mechanism.");
-        }
+        // Verify result.
+        assertEquals(Set.of("tls-server-end-point", "tls-exporter"), result, "Expected the connection's supported channel-binding types to be advertised alongside a -PLUS mechanism.");
+    }
+
+    /**
+     * Verifies that no channel-binding types are advertised for a session that has no connection, rather than the
+     * lookup failing. A stream-management session that is detached has no connection, and stream features can be
+     * regenerated after it resumes.
+     */
+    @Test
+    public void getAdvertisableChannelBindingTypes_noConnection_returnsEmpty()
+    {
+        // Setup test fixture.
+        final LocalSession session = mock(LocalSession.class);
+        when(session.getConnection()).thenReturn(null);
+
+        // Execute system under test.
+        final Set<String> result = SASLAuthentication.getAdvertisableChannelBindingTypes(session, Set.of("SCRAM-SHA-1", "SCRAM-SHA-1-PLUS"));
+
+        // Verify result.
+        assertTrue(result.isEmpty(), "Expected no channel-binding types for a session that has no connection.");
     }
 
     /**

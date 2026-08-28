@@ -251,7 +251,6 @@ public abstract class StanzaHandler {
             } else if (saslStatus == SASLAuthentication.Status.authenticatedAwaitingFeatures) {
                 // Bind2: <success/> and features are delivered asynchronously by SASLAuthentication.
                 startedSASL = false;
-                session.getStreamManager().redeliverIfPendingSasl2(new JID(null, session.getServerName(), null, true));
             }
             // If authenticatedAwaitingFeatures, <success/> and features are delivered asynchronously
             // by SASLAuthentication once Bind2 resource binding completes.
@@ -268,7 +267,6 @@ public abstract class StanzaHandler {
             } else if (saslStatus == SASLAuthentication.Status.authenticatedAwaitingFeatures) {
                 // Bind2: <success/> and features are delivered asynchronously by SASLAuthentication.
                 startedSASL = false;
-                session.getStreamManager().redeliverIfPendingSasl2(new JID(null, session.getServerName(), null, true));
             }
             // If authenticatedAwaitingFeatures, <success/> and features are delivered asynchronously
             // by SASLAuthentication once Bind2 resource binding completes.

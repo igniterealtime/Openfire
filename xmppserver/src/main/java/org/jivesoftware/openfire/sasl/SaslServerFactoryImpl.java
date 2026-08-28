@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.sasl;
 
+import org.jivesoftware.openfire.fast.FastTokenManager;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;

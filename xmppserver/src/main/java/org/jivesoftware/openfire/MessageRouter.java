@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.stanzaid.StanzaIDUtil;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
@@ -129,6 +130,20 @@ public class MessageRouter extends BasicModule {
                     } catch (Exception e) {
                         log.error("Failed to route packet: " + packet.toXML(), e);
                         routingFailed(recipientJID, packet);
+                    }
+
+                    // For locally-originated messages to remote recipients, add sender-owned stanza-id to the packet
+                    // AFTER routing has completed (so it was never present on the wire, satisfying XEP-0359 MUST-NOT),
+                    // but BEFORE post-processing interceptors run (so archivers store XML that includes the stanza-id).
+                    // For local-to-local, RoutingTableImpl already added a recipient-owned stanza-id during routePacket();
+                    // no sender-owned ID is added to avoid dual ownership. For component-bound messages (e.g. MUC at
+                    // conference.example.com), the component itself manages stanza-ids (e.g. MultiUserChatServiceImpl);
+                    // exclude those too by checking that the recipient domain is not a subdomain of this server. OF-3222
+                    if (packet.getFrom() != null
+                            && serverName.equals(packet.getFrom().getDomain())
+                            && !serverName.equals(recipientJID.getDomain())
+                            && !recipientJID.getDomain().endsWith("." + serverName)) {
+                        StanzaIDUtil.ensureUniqueAndStableStanzaID(packet, packet.getFrom().asBareJID());
                     }
 
                     // Sent carbon copies to other resources of the sender:

@@ -1682,7 +1682,7 @@ public class SASLAuthenticationTest
     /**
      * Verifies that the SASL2 inline feature element includes a FAST feature element when FAST is enabled.
      *
-     * The getSASLMechanismsElement call for SASL2 on a client session with at least one mechanism available
+     * The SASL2 feature generated for a client session with at least one mechanism available
      * should include the FAST feature inside the &lt;inline/&gt; child.
      */
     @Test
@@ -1700,7 +1700,8 @@ public class SASLAuthenticationTest
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
 
         // Execute system under test.
-        final Element result = SASLAuthentication.getSASLMechanismsElement(session, true);
+        final Set<String> advertisableSASLMechanisms = SASLAuthentication.getAdvertisableSASLMechanisms(session);
+        final Element result = SASLAuthentication.asSASLMechanismsElementForClientSessions(advertisableSASLMechanisms, true);
 
         // Verify result.
         assertNotNull(result, "Expected a non-null SASL2 element.");
@@ -1731,7 +1732,8 @@ public class SASLAuthenticationTest
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
 
         // Execute system under test.
-        final Element result = SASLAuthentication.getSASLMechanismsElement(session, true);
+        final Set<String> advertisableSASLMechanisms = SASLAuthentication.getAdvertisableSASLMechanisms(session);
+        final Element result = SASLAuthentication.asSASLMechanismsElementForClientSessions(advertisableSASLMechanisms, true);
 
         // Verify result: either no <inline/> or <inline/> without a <fast/> child.
         if (result != null) {

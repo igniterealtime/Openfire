@@ -26,7 +26,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - name: Set up JDK ${{ matrix.java }} ${{ matrix.distribution }} on ${{ matrix.os }}
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: ${{ matrix.java }}
           distribution: ${{ matrix.distribution }}
@@ -141,7 +141,7 @@ jobs:
           git submodule update --init
 
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: 'zulu'
           java-version: '17'
@@ -452,7 +452,7 @@ jobs:
       - name: Checkout Openfire
         uses: actions/checkout@v7
       - name: Set up JDK 17 Zulu
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: 17
           distribution: zulu
@@ -497,7 +497,7 @@ jobs:
       - name: Checkout Openfire
         uses: actions/checkout@v7
       - name: Set up JDK 17 Zulu
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: 17
           distribution: zulu
@@ -549,7 +549,7 @@ jobs:
       - name: Checkout Openfire
         uses: actions/checkout@v7
       - name: Set up JDK 17 Zulu
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: 17
           distribution: zulu
@@ -595,7 +595,7 @@ jobs:
       - name: Checkout Openfire
         uses: actions/checkout@v7
       - name: Set up JDK 17 Zulu
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: 17
           distribution: zulu
@@ -642,7 +642,7 @@ jobs:
       - name: Checkout Openfire
         uses: actions/checkout@v7
       - name: Set up JDK 17 Zulu
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: 17
           distribution: zulu
@@ -686,7 +686,7 @@ jobs:
       - name: Checkout Openfire
         uses: actions/checkout@v7
       - name: Set up JDK 17 Zulu
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: 17
           distribution: zulu
@@ -733,7 +733,7 @@ jobs:
       - name: Checkout Openfire
         uses: actions/checkout@v7
       - name: Set up JDK 17 Zulu
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: 17
           distribution: zulu
@@ -799,7 +799,7 @@ jobs:
         uses: actions/checkout@v7
       - name: Set up JDK 17 Zulu
         if: ${{ needs.firebird-upgrade-precheck.outputs.upgrade-dir-exists == 'true' }}
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: 17
           distribution: zulu
@@ -844,7 +844,7 @@ jobs:
       - name: Checkout Openfire
         uses: actions/checkout@v7
       - name: Set up JDK 17 Zulu
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: 17
           distribution: zulu
@@ -913,7 +913,7 @@ jobs:
         uses: actions/checkout@v7
       - name: Set up JDK 17 Zulu
         if: ${{ needs.cockroachdb-upgrade-precheck.outputs.upgrade-dir-exists == 'true' }}
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: 17
           distribution: zulu
@@ -961,7 +961,7 @@ jobs:
       - name: Checkout Openfire
         uses: actions/checkout@v7
       - name: Set up JDK 17 Zulu
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: 17
           distribution: zulu
@@ -1007,7 +1007,7 @@ jobs:
       - name: Checkout Openfire
         uses: actions/checkout@v7
       - name: Set up JDK 17 Zulu
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: 17
           distribution: zulu
@@ -1056,7 +1056,7 @@ jobs:
       - name: Checkout Openfire
         uses: actions/checkout@v7
       - name: Set up JDK 17 Zulu
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: 17
           distribution: zulu
@@ -1095,7 +1095,7 @@ jobs:
       - name: Checkout Openfire
         uses: actions/checkout@v7
       - name: Set up JDK 17 Zulu
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: 17
           distribution: zulu
@@ -1137,7 +1137,7 @@ jobs:
       - name: Checkout Openfire
         uses: actions/checkout@v7
       - name: Set up JDK 17 Zulu
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: 17
           distribution: zulu
@@ -1183,7 +1183,7 @@ jobs:
       - name: Checkout Openfire
         uses: actions/checkout@v7
       - name: Set up JDK 17 Zulu
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: 17
           distribution: zulu
@@ -1236,7 +1236,7 @@ jobs:
           # We want the one that's been tested, rather than the head of main
           ref: ${{ github.event.push.after }}
       - name: Set up Java for publishing
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           java-version: 17
           distribution: zulu

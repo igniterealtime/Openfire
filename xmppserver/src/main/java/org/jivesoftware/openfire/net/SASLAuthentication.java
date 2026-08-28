@@ -1501,29 +1501,36 @@ public class SASLAuthentication {
         final Set<String> advertisableSASLMechanisms = getAdvertisableSASLMechanisms(session);
         setAdvertisedSASLMechanisms(session, advertisableSASLMechanisms);
 
-        final Set<String> advertisableChannelBindingTypes = getAdvertisableChannelBindingTypes(advertisableSASLMechanisms);
+        final Set<String> advertisableChannelBindingTypes = getAdvertisableChannelBindingTypes(session, advertisableSASLMechanisms);
         setAdvertisedChannelBindingTypes(session, advertisableChannelBindingTypes);
 
         features.addAll(asSASLMechanisms(session, advertisableSASLMechanisms, advertisableChannelBindingTypes));
     }
 
     /**
-     * Returns the channel-binding types to advertise alongside the given set of SASL mechanisms.
+     * Returns the channel-binding types to advertise to the given session.
      *
      * Channel-binding types are announced only when at least one channel-binding-capable mechanism is being
-     * offered; otherwise an empty set is returned.
+     * offered. The types themselves are those the session's connection can supply in its current state, which is
+     * not necessarily every type for which a provider is registered: a connection that is not encrypted, or whose
+     * transport cannot supply channel-binding data, supports none.
      *
+     * @param session the session the types would be advertised to (cannot be null).
      * @param advertisableSASLMechanisms the SASL mechanism names being offered (cannot be null).
      * @return the channel-binding type names to advertise; never null, possibly empty.
      * @see <a href="https://xmpp.org/extensions/xep-0440.html">XEP-0440: SASL Channel-Binding Type Capability</a>
      */
     @VisibleForTesting
     @Nonnull
-    static Set<String> getAdvertisableChannelBindingTypes(@Nonnull final Set<String> advertisableSASLMechanisms)
+    static Set<String> getAdvertisableChannelBindingTypes(@Nonnull final LocalSession session, @Nonnull final Set<String> advertisableSASLMechanisms)
     {
         if (advertisableSASLMechanisms.stream().noneMatch(SASLAuthentication::requiresChannelBinding)) {
             return Set.of();
         }
-        return Set.copyOf(ChannelBindingProviderManager.getInstance().getSupportedChannelBindingTypes());
+        final Connection connection = session.getConnection();
+        if (connection == null) {
+            return Set.of();
+        }
+        return Set.copyOf(connection.getSupportedChannelBindingTypes());
     }
 }

@@ -45,7 +45,7 @@
     boolean addsuccess = request.getParameter("addsuccess") != null;
     boolean deletesuccess = request.getParameter("deletesuccess") != null;
     boolean delete = ParamUtils.getBooleanParameter(request,"delete");
-    boolean openPerms = ParamUtils.getBooleanParameter(request,"openPerms");
+    String openPerms = ParamUtils.getParameter(request,"openPerms");
     String mucname = ParamUtils.getParameter(request,"mucname");
 
     if (!webManager.getMultiUserChatManager().isServiceRegistered(mucname)) {
@@ -73,24 +73,38 @@
     // Handle a save
     Map<String,String> errors = new HashMap<>();
     if (save) {
-        if (openPerms) {
+        if ("anyone".equals(openPerms)) {
             // Remove all users who have the ability to create rooms
             for (JID user : mucService.getUsersAllowedToCreate()) {
                 mucService.removeUserAllowedToCreate(user);
             }
             mucService.setRoomCreationRestricted(false);
             // Log the event
-            webManager.logEvent("set MUC room creation to restricted for service "+mucname, null);
-            response.sendRedirect("muc-create-permission.jsp?success=true&mucname="+URLEncoder.encode(mucname, StandardCharsets.UTF_8));
-            return;
-        }
-        else {
-            mucService.setRoomCreationRestricted(true);
-            mucService.setAllRegisteredUsersAllowedToCreate(allowAllRegisteredUsers);
-            // Log the event
             webManager.logEvent("set MUC room creation to not restricted for service "+mucname, null);
             response.sendRedirect("muc-create-permission.jsp?success=true&mucname="+URLEncoder.encode(mucname, StandardCharsets.UTF_8));
             return;
+        }
+        else if ("none".equals(openPerms)) {
+            // Remove all users who have the ability to create rooms
+            for (JID user : mucService.getUsersAllowedToCreate()) {
+                mucService.removeUserAllowedToCreate(user);
+            }
+            mucService.setRoomCreationRestricted(true);
+            mucService.setAllRegisteredUsersAllowedToCreate(false);
+            // Log the event
+            webManager.logEvent("set MUC room creation to restricted (none) for service "+mucname, null);
+            response.sendRedirect("muc-create-permission.jsp?success=true&mucname="+URLEncoder.encode(mucname, StandardCharsets.UTF_8));
+            return;
+        }
+        else if ("specific".equals(openPerms)) {
+            mucService.setRoomCreationRestricted(true);
+            mucService.setAllRegisteredUsersAllowedToCreate(allowAllRegisteredUsers);
+            // Log the event
+            webManager.logEvent("set MUC room creation to restricted for service "+mucname, null);
+            response.sendRedirect("muc-create-permission.jsp?success=true&mucname="+URLEncoder.encode(mucname, StandardCharsets.UTF_8));
+            return;
+        }else{
+            errors.put("openPerms", "openPerms");
         }
     }
 
@@ -227,7 +241,7 @@
         <tbody>
             <tr>
                 <td style="width: 1%">
-                    <input type="radio" name="openPerms" value="true" id="rb01"
+                    <input type="radio" name="openPerms" value="anyone" id="rb01"
                      onchange="toggleAllowedUsers()"
                      <%= ((!mucService.isRoomCreationRestricted()) ? "checked" : "") %>>
                 </td>
@@ -237,12 +251,22 @@
             </tr>
             <tr>
                 <td style="width: 1%">
-                    <input type="radio" name="openPerms" value="false" id="restrictedPermissionsRadio"
+                    <input type="radio" name="openPerms" value="specific" id="restrictedPermissionsRadio"
                      onchange="toggleAllowedUsers()"
-                     <%= ((mucService.isRoomCreationRestricted()) ? "checked" : "") %>>
+                     <%= ((mucService.isRoomCreationRestricted() && (!mucService.getUsersAllowedToCreate().isEmpty() || mucService.isAllRegisteredUsersAllowedToCreate())) ? "checked" : "") %>>
                 </td>
                 <td>
                     <label for="restrictedPermissionsRadio"><fmt:message key="muc.create.permission.specific_created" /></label>
+                </td>
+            </tr>
+            <tr>
+                <td style="width: 1%">
+                    <input type="radio" name="openPerms" value="none" id="nonePermissionsRadio"
+                     onchange="toggleAllowedUsers()"
+                     <%= ((mucService.isRoomCreationRestricted() && mucService.getUsersAllowedToCreate().isEmpty() && !mucService.isAllRegisteredUsersAllowedToCreate()) ? "checked" : "") %>>
+                </td>
+                <td>
+                    <label for="nonePermissionsRadio"><fmt:message key="muc.create.permission.no_one_created" /></label>
                 </td>
             </tr>
         </tbody>
@@ -254,7 +278,7 @@
 
 <br>
 
-<div id="allowedUsersContainer" style="display: <%= (mucService.isRoomCreationRestricted() ? "block" : "none") %>">
+<div id="allowedUsersContainer" style="display: <%= (mucService.isRoomCreationRestricted() && (!mucService.getUsersAllowedToCreate().isEmpty() || mucService.isAllRegisteredUsersAllowedToCreate()) ? "block" : "none") %>">
 <!-- BEGIN 'Allowed Users' -->
 <form action="muc-create-permission.jsp?add" method="post">
     <input type="hidden" name="csrf" value="${csrf}">

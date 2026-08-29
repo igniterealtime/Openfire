@@ -98,6 +98,16 @@ public class StreamManager {
     public static final String NAMESPACE_V3 = "urn:xmpp:sm:3";
 
     /**
+     * Returns an XML element advertising XEP-0198 stream management as an inline feature for use
+     * in SASL2 (XEP-0388) inline feature advertisement.
+     *
+     * @return an {@code <sm/>} element in the {@link #NAMESPACE_V3} namespace
+     */
+    public static Element featureElement() {
+        return DocumentHelper.createElement(QName.get("sm", NAMESPACE_V3));
+    }
+
+    /**
      * Session (stream) to client.
      */
     private final LocalSession session;
@@ -244,12 +254,31 @@ public class StreamManager {
      */
     private void enable( String namespace, boolean resume )
     {
+        session.deliverRawText(enableInternal(namespace, resume).asXML());
+    }
+
+    /**
+     * Enables stream management and returns the {@code <enabled/>} element without sending it.
+     * This allows callers (e.g. the SASL2 Bind2 handler) to embed the element in another stanza.
+     *
+     * <p>The returned element is either {@code <enabled/>} or {@code <failed/>}. It is never sent by this method,
+     * allowing an inline caller to embed either outcome in its enclosing response.</p>
+     *
+     * @param namespace the SM namespace to use
+     * @param resume    whether the client requests a resumable session
+     * @return the {@code <enabled/>} or {@code <failed/>} outcome element
+     */
+    public Element enableAndBuildElement( String namespace, boolean resume )
+    {
+        return enableInternal(namespace, resume);
+    }
+
+    private Element enableInternal( String namespace, boolean resume )
+    {
         boolean offerResume = allowResume();
         // Ensure that resource binding has occurred.
         if (!session.isAuthenticated()) {
-            this.namespace = namespace;
-            sendUnexpectedError();
-            return;
+            return buildFailedElement(namespace, PacketError.Condition.unexpected_request);
         }
 
         String smId = null;
@@ -259,8 +288,7 @@ public class StreamManager {
             // Do nothing if already enabled
             if ( isEnabled() )
             {
-                sendUnexpectedError();
-                return;
+                return buildFailedElement(namespace, PacketError.Condition.unexpected_request);
             }
             this.namespace = namespace;
 
@@ -271,7 +299,7 @@ public class StreamManager {
             }
         }
 
-        // Send confirmation to the requestee.
+        // Build confirmation element.
         Element enabled = new DOMElement(QName.get("enabled", namespace));
         if (this.resume) {
             enabled.addAttribute("resume", "true");
@@ -289,110 +317,20 @@ public class StreamManager {
                 }
             }
         }
-        session.deliverRawText(enabled.asXML());
+        return enabled;
     }
 
     private void startResume(String namespace, String previd, long h) {
         Log.debug("Attempting resumption for {}, h={}", previd, h);
         this.namespace = namespace;
-        // Ensure that resource binding has NOT occurred.
-        if (!allowResume() ) {
-            Log.debug("Unable to process session resumption attempt, as session {} is in a state where session resumption is not allowed.", session);
-            sendUnexpectedError();
-            return;
-        }
-        if (session.isAuthenticated()) {
-            Log.debug("Unable to process session resumption attempt, as session {} is not authenticated.", session);
-            sendUnexpectedError();
-            return;
-        }
-        AuthToken authToken = null;
-        // Ensure that resource binding has occurred.
-        if (session instanceof ClientSession) {
-            authToken = ((LocalClientSession) session).getAuthToken();
-        }
-        if (authToken == null) {
-            Log.debug("Unable to process session resumption attempt, as session {} does not provide any auth context.", session);
-            sendUnexpectedError();
-            return;
-        }
-        // Decode previd.
-        String resource;
-        String streamId;
-        try {
-            StringTokenizer toks = new StringTokenizer(new String(Base64.getDecoder().decode(previd), StandardCharsets.UTF_8), "\0");
-            resource = toks.nextToken();
-            streamId = toks.nextToken();
-        } catch (Exception e) {
-            Log.debug("Exception from previd decode:", e);
-            sendUnexpectedError();
-            return;
-        }
-        final JID fullJid;
-        if ( authToken.isAnonymous() ){
-            fullJid = new JID(resource, session.getServerName(), resource, true);
-        } else {
-            fullJid = new JID(authToken.getUsername(), session.getServerName(), resource, true);
-        }
-        Log.debug("Resuming session for '{}'. Current session: {}", fullJid, session.getStreamID());
-
-        // Locate existing session.
-        final ClientSession route = XMPPServer.getInstance().getRoutingTable().getClientRoute(fullJid);
-        if (route == null) {
-            Log.debug("Not able for client of '{}' to resume a session on this cluster node. No session was found for this client.", fullJid);
-            if (LOCATION_TERMINATE_OTHERS_ENABLED.getValue()) {
-                // When the client tries to resume a connection on this host, it is unlikely to try other hosts. Remove any detached sessions living elsewhere in the cluster. (OF-2753)
-                CacheFactory.doClusterTask(new ClientSessionTask(fullJid, RemoteSessionTask.Operation.removeDetached));
-            }
-            sendError(new PacketError(PacketError.Condition.item_not_found));
+        final ResumeValidationResult validation = validateResumeRequest(namespace, previd, h);
+        if (!validation.isValid()) {
+            sendError(new PacketError(validation.getFailureCondition()));
             return;
         }
 
-        if (!(route instanceof LocalClientSession)) {
-            Log.debug("Not allowing a client of '{}' to resume a session on this cluster node. The session can only be resumed on the Openfire cluster node where the original session was connected.", fullJid);
-            if (LOCATION_TERMINATE_OTHERS_ENABLED.getValue()) {
-                // When the client tries to resume a connection on this host, it is unlikely to try other hosts. Remove any detached sessions living elsewhere in the cluster. (OF-2753)
-                CacheFactory.doClusterTask(new ClientSessionTask(fullJid, RemoteSessionTask.Operation.removeDetached));
-            }
-            sendError(new PacketError(PacketError.Condition.unexpected_request));
-            return;
-        }
-
-        final LocalClientSession otherSession = (LocalClientSession) route;
-        if (!otherSession.getStreamID().getID().equals(streamId)) {
-            sendError(new PacketError(PacketError.Condition.item_not_found));
-            return;
-        }
-        Log.debug("Found existing session for '{}', checking status", fullJid);
-
-        // OF-2811: Cannot resume a session that's already closed. That session is likely busy firing its 'closeListeners'.
-        if (route.isClosed()) {
-            Log.debug("Not allowing a client of '{}' to resume a session, as the preexisting session is already in process of being closed.", fullJid);
-            sendError(new PacketError(PacketError.Condition.unexpected_request));
-            return;
-        }
-
-        // Previd identifies proper session. Now check SM status
-        if (!otherSession.getStreamManager().resume) {
-            Log.debug("Not allowing a client of '{}' to resume a session, the session to be resumed does not have the stream management resumption feature enabled.", fullJid);
-            sendError(new PacketError(PacketError.Condition.unexpected_request));
-            return;
-        }
-        if (otherSession.getStreamManager().namespace == null) {
-            Log.debug("Not allowing a client of '{}' to resume a session, the session to be resumed disabled SM functionality as a response to an earlier error.", fullJid);
-            sendError(new PacketError(PacketError.Condition.unexpected_request));
-            return;
-        }
-        if (!otherSession.getStreamManager().namespace.equals(namespace)) {
-            Log.debug("Not allowing a client of '{}' to resume a session, the session to be resumed used a different version ({}) of the session management resumption feature as compared to the version that's requested now: {}.", fullJid, otherSession.getStreamManager().namespace, namespace);
-            sendError(new PacketError(PacketError.Condition.unexpected_request));
-            return;
-        }
-        if (!otherSession.getStreamManager().validateClientAcknowledgement(h)) {
-            Log.debug("Not allowing a client of '{}' to resume a session, as it reports it received more stanzas from us than that we've send it.", fullJid);
-            sendError(new PacketError(PacketError.Condition.unexpected_request));
-            return;
-        }
+        final LocalClientSession otherSession = validation.getSession();
+        final JID fullJid = validation.getFullJid();
         if (!otherSession.isDetached()) {
             Log.debug("Existing session {} of '{}' is not detached; detaching.", otherSession.getStreamID(), fullJid);
             Connection oldConnection = otherSession.getConnection();
@@ -404,6 +342,198 @@ public class StreamManager {
         // If we're all happy, re-attach the connection from the pre-existing session to the new session, discarding the old session.
         otherSession.reattach(session, h);
         Log.debug("Perform resumption of session {} for '{}', using connection from session {}", otherSession.getStreamID(), fullJid, session.getStreamID());
+    }
+
+    /**
+     * Processes a SASL2-inline XEP-0198 {@code <resume/>} element. Unlike the standard
+     * {@link #process(Element)} path, this method does <em>not</em> send the {@code <resumed/>}
+     * element directly; instead it returns it so the caller can embed it in the SASL2
+     * {@code <success/>} element.
+     *
+     * @param resumeElement the {@code <resume/>} element from the SASL2 {@code <authenticate/>}
+     * @return the SM result to embed in {@code <success/>}, including the session that owns the
+     *         connection when resumption succeeds
+     */
+    public Sasl2ResumeResult processSasl2Resume(Element resumeElement) {
+        final String namespace = resumeElement.getNamespaceURI();
+
+        final String hValue = resumeElement.attributeValue("h");
+        final long h;
+        try {
+            h = Long.parseLong(hValue);
+        } catch (NumberFormatException e) {
+            Log.warn("Client sends non-numeric value for SM 'h' in SASL2 resume: {}, session: {}", hValue, session);
+            return Sasl2ResumeResult.failed(namespace, PacketError.Condition.bad_request);
+        }
+        if (h < 0 || h > MASK) {
+            Log.warn("Client sends out-of-range value for SM 'h' in SASL2 resume: {}, session: {}", h, session);
+            return Sasl2ResumeResult.failed(namespace, PacketError.Condition.bad_request);
+        }
+
+        final String previd = resumeElement.attributeValue("previd");
+        if (previd == null || previd.isEmpty()) {
+            return Sasl2ResumeResult.failed(namespace, PacketError.Condition.bad_request);
+        }
+
+        final ResumeValidationResult validation = validateResumeRequest(namespace, previd, h);
+        if (!validation.isValid()) {
+            return Sasl2ResumeResult.failed(namespace, validation.getFailureCondition());
+        }
+
+        final LocalClientSession otherSession = validation.getSession();
+        final JID fullJid = validation.getFullJid();
+        if (!otherSession.isDetached()) {
+            Log.debug("Existing session {} of '{}' is not detached (SASL2 resume); detaching.", otherSession.getStreamID(), fullJid);
+            Connection oldConnection = otherSession.getConnection();
+            otherSession.setDetached();
+            assert oldConnection != null;
+            oldConnection.close(new StreamError(StreamError.Condition.conflict, "The stream previously served over this connection is resumed on a new connection."));
+        }
+        Log.debug("Attaching (SASL2) to other session '{}' of '{}'.", otherSession.getStreamID(), fullJid);
+        otherSession.reattachForSasl2(session);
+        final StreamManager resumedStreamManager = otherSession.getStreamManager();
+        final Element resumed = resumedStreamManager.buildResumedElement();
+        resumedStreamManager.processClientAcknowledgement(h);
+        Log.debug("Perform SASL2 resumption of session {} for '{}', using connection from session {}", otherSession.getStreamID(), fullJid, session.getStreamID());
+        return Sasl2ResumeResult.resumed(resumed, otherSession);
+    }
+
+    private ResumeValidationResult validateResumeRequest(String namespace, String previd, long h) {
+        if (!allowResume() || session.isAuthenticated()) {
+            Log.debug("Unable to process session resumption attempt, as session {} is in a state where resumption is not allowed.", session);
+            return ResumeValidationResult.failed(PacketError.Condition.unexpected_request);
+        }
+
+        final AuthToken authToken = session instanceof LocalClientSession ? ((LocalClientSession) session).getAuthToken() : null;
+        if (authToken == null) {
+            Log.debug("Unable to process session resumption attempt, as session {} does not provide any auth context.", session);
+            return ResumeValidationResult.failed(PacketError.Condition.unexpected_request);
+        }
+
+        final String resource;
+        final String streamId;
+        try {
+            final StringTokenizer tokens = new StringTokenizer(new String(Base64.getDecoder().decode(previd), StandardCharsets.UTF_8), "\0");
+            resource = tokens.nextToken();
+            streamId = tokens.nextToken();
+        } catch (Exception e) {
+            Log.debug("Unable to decode SM previd for session {}.", session, e);
+            return ResumeValidationResult.failed(PacketError.Condition.bad_request);
+        }
+
+        final JID fullJid = authToken.isAnonymous()
+            ? new JID(resource, session.getServerName(), resource, true)
+            : new JID(authToken.getUsername(), session.getServerName(), resource, true);
+        final ClientSession route = XMPPServer.getInstance().getRoutingTable().getClientRoute(fullJid);
+        if (!(route instanceof LocalClientSession)) {
+            Log.debug("Unable to resume '{}' on this cluster node because no local session was found.", fullJid);
+            if (LOCATION_TERMINATE_OTHERS_ENABLED.getValue()) {
+                CacheFactory.doClusterTask(new ClientSessionTask(fullJid, RemoteSessionTask.Operation.removeDetached));
+            }
+            return ResumeValidationResult.failed(PacketError.Condition.item_not_found);
+        }
+
+        final LocalClientSession resumableSession = (LocalClientSession) route;
+        if (!resumableSession.getStreamID().getID().equals(streamId)) {
+            return ResumeValidationResult.failed(PacketError.Condition.item_not_found);
+        }
+        if (resumableSession.isClosed()
+            || !resumableSession.getStreamManager().resume
+            || resumableSession.getStreamManager().namespace == null
+            || !resumableSession.getStreamManager().namespace.equals(namespace)) {
+            return ResumeValidationResult.failed(PacketError.Condition.unexpected_request);
+        }
+        if (!resumableSession.getStreamManager().validateClientAcknowledgement(h)) {
+            return ResumeValidationResult.failed(PacketError.Condition.undefined_condition);
+        }
+        return ResumeValidationResult.valid(resumableSession, fullJid);
+    }
+
+    private static final class ResumeValidationResult {
+        private final LocalClientSession session;
+        private final JID fullJid;
+        private final PacketError.Condition failureCondition;
+
+        private ResumeValidationResult(LocalClientSession session, JID fullJid, PacketError.Condition failureCondition) {
+            this.session = session;
+            this.fullJid = fullJid;
+            this.failureCondition = failureCondition;
+        }
+
+        static ResumeValidationResult valid(LocalClientSession session, JID fullJid) {
+            return new ResumeValidationResult(session, fullJid, null);
+        }
+
+        static ResumeValidationResult failed(PacketError.Condition condition) {
+            return new ResumeValidationResult(null, null, condition);
+        }
+
+        boolean isValid() {
+            return session != null;
+        }
+
+        LocalClientSession getSession() {
+            return session;
+        }
+
+        JID getFullJid() {
+            return fullJid;
+        }
+
+        PacketError.Condition getFailureCondition() {
+            return failureCondition;
+        }
+    }
+
+    public static final class Sasl2ResumeResult {
+        private final Element response;
+        private final LocalClientSession resumedSession;
+        private boolean completed;
+
+        private Sasl2ResumeResult(Element response, LocalClientSession resumedSession) {
+            this.response = response;
+            this.resumedSession = resumedSession;
+        }
+
+        public static Sasl2ResumeResult resumed(Element response, LocalClientSession resumedSession) {
+            return new Sasl2ResumeResult(response, resumedSession);
+        }
+
+        public static Sasl2ResumeResult failed(String namespace, PacketError.Condition condition) {
+            final Element failed = DocumentHelper.createElement(QName.get("failed", namespace));
+            failed.addElement(QName.get(condition.toXMPP(), "urn:ietf:params:xml:ns:xmpp-stanzas"));
+            return new Sasl2ResumeResult(failed, null);
+        }
+
+        public Element getResponse() {
+            return response;
+        }
+
+        public LocalClientSession getResumedSession() {
+            return resumedSession;
+        }
+
+        public boolean isResumed() {
+            return resumedSession != null;
+        }
+
+        /**
+         * Completes a successful inline resumption after the enclosing SASL2 success has been sent.
+         * This method is idempotent.
+         *
+         * @return {@code true} when this result represents a resumed stream
+         */
+        public synchronized boolean completeAfterSuccess() {
+            if (resumedSession == null) {
+                return false;
+            }
+            if (!completed) {
+                completed = true;
+                resumedSession.getStreamManager().redeliverUnackedStanzas(
+                    new JID(null, resumedSession.getServerName(), null, true));
+            }
+            return true;
+        }
     }
 
     /**
@@ -456,10 +586,15 @@ public class StreamManager {
      * @param error PacketError describing the failure.
      */
     private void sendError(PacketError error) {
-        final Element failed = DocumentHelper.createElement(QName.get("failed", namespace));
-        failed.addElement(QName.get(error.getCondition().toXMPP(), "urn:ietf:params:xml:ns:xmpp-stanzas"));
+        final Element failed = buildFailedElement(namespace, error.getCondition());
         session.deliverRawText(failed.asXML());
         this.namespace = null; // isEnabled() is testing this.
+    }
+
+    private static Element buildFailedElement(String namespace, PacketError.Condition condition) {
+        final Element failed = DocumentHelper.createElement(QName.get("failed", namespace));
+        failed.addElement(QName.get(condition.toXMPP(), "urn:ietf:params:xml:ns:xmpp-stanzas"));
+        return failed;
     }
 
     /**
@@ -634,17 +769,41 @@ public class StreamManager {
 
     }
 
-    public void onResume(JID serverAddress, long h) {
-        Log.debug("Agreeing to resume");
+    /**
+     * Builds the XEP-0198 {@code <resumed/>} element for this session without sending it.
+     * This is used when the element needs to be embedded in another stanza (e.g. a SASL2
+     * {@code <success/>} element) rather than sent standalone.
+     *
+     * @return the {@code <resumed/>} element
+     */
+    public Element buildResumedElement() {
         Element resumed = new DOMElement(QName.get("resumed", namespace));
         resumed.addAttribute("previd", Base64.getEncoder().encodeToString((session.getAddress().getResource() + "\0" + session.getStreamID().getID()).getBytes(StandardCharsets.UTF_8)));
         resumed.addAttribute("h", Long.toString(serverProcessedStanzas.get()));
+        return resumed;
+    }
+
+    public void onResume(JID serverAddress, long h) {
+        Log.debug("Agreeing to resume");
+        final Element resumed = buildResumedElement();
         final Connection connection = session.getConnection();
         assert connection != null; // While the client is resuming a session, the connection on which the session is resumed can't be null.
         connection.deliverRawText(resumed.asXML());
         Log.debug("Resuming session: Ack for {}", h);
         processClientAcknowledgement(h);
+        redeliverUnackedStanzas(serverAddress);
+    }
+
+    /**
+     * Re-delivers unacknowledged stanzas after a stream resumption and sends a server request for
+     * acknowledgement. Called by both the standard and SASL2 resume paths.
+     *
+     * @param serverAddress the server's JID, used to stamp delayed stanzas
+     */
+    public void redeliverUnackedStanzas(JID serverAddress) {
         Log.debug("Processing remaining unacked stanzas");
+        final Connection connection = session.getConnection();
+        assert connection != null;
         // Re-deliver unacknowledged stanzas from broken stream (XEP-0198)
         synchronized (this) {
             if(isEnabled()) {

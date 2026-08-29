@@ -94,13 +94,15 @@ public class Bind2Request {
             String namespace = element.getNamespaceURI();
             Bind2InlineHandler handler = elementHandlers.get(namespace);
 
-            if (handler != null) {
+            if (handler != null && handler.isEnabled()) {
                 try {
                     if (!handler.handleElement(clientSession, bound, element)) {
                         Log.warn("Handler for namespace {} failed to process element", namespace);
+                        handler.handleFailure(clientSession, bound, element, null);
                     }
                 } catch (Exception e) {
                     Log.error("Error processing element with namespace: " + namespace, e);
+                    handler.handleFailure(clientSession, bound, element, e);
                 }
             } else {
                 Log.debug("No handler registered for namespace: {}", namespace);
@@ -115,6 +117,9 @@ public class Bind2Request {
         Element bind2 = DocumentHelper.createElement(new QName("bind", new Namespace("", "urn:xmpp:bind:0")));
         Element bind2inline = bind2.addElement("inline");
         for (Bind2InlineHandler handler : elementHandlers.values()) {
+            if (!handler.isEnabled()) {
+                continue;
+            }
             Element var = bind2inline.addElement("feature");
             var.addAttribute("var", handler.getNamespace());
         }

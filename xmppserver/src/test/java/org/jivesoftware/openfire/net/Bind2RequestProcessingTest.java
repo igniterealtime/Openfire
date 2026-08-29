@@ -88,6 +88,8 @@ public class Bind2RequestProcessingTest {
 
         when(mockHandler1.getNamespace()).thenReturn("http://test1.namespace");
         when(mockHandler2.getNamespace()).thenReturn("http://test2.namespace");
+        when(mockHandler1.isEnabled()).thenReturn(true);
+        when(mockHandler2.isEnabled()).thenReturn(true);
         when(mockHandler1.handleElement(any(), any(), any())).thenReturn(true);
         when(mockHandler2.handleElement(any(), any(), any())).thenReturn(true);
     }
@@ -192,6 +194,7 @@ public class Bind2RequestProcessingTest {
 
         assertNotNull(result);
         verify(mockHandler1).handleElement(any(), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement1));
+        verify(mockHandler1).handleFailure(eq(mockSession), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement1), any(RuntimeException.class));
         verify(mockHandler2).handleElement(any(), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement2));
     }
 
@@ -206,6 +209,7 @@ public class Bind2RequestProcessingTest {
 
         assertNotNull(result);
         verify(mockHandler1).handleElement(any(), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement1));
+        verify(mockHandler1).handleFailure(eq(mockSession), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement1), isNull());
     }
 
     @Test

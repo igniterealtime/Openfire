@@ -206,6 +206,32 @@ public abstract class LocalSession implements Session {
     }
 
     /**
+     * Reattaches the connection from {@code connectionProvider} to this session for a SASL2-based
+     * stream resumption (XEP-0198 + XEP-0388). Unlike {@link #reattach(LocalSession, long)}, this
+     * method does <em>not</em> send the {@code <resumed/>} element; the caller is responsible for
+     * embedding it in the SASL2 {@code <success/>} element before delivering it.
+     *
+     * @param connectionProvider the new (unauthenticated) session whose connection will be taken over
+     */
+    public void reattachForSasl2(LocalSession connectionProvider) {
+        lock.lock();
+        try {
+            Log.debug("Reattaching (SASL2) session with address {} and streamID {} using connection from session with address {} and streamID {}.", this.address, this.streamID, connectionProvider.getAddress(), connectionProvider.getStreamID());
+            if (this.conn != null && !this.conn.isClosed())
+            {
+                this.conn.close(new StreamError(StreamError.Condition.conflict, "The stream previously served over this connection is resumed on a new connection."));
+            }
+            this.conn = connectionProvider.releaseConnection();
+            this.conn.reinit(this);
+        } finally {
+            lock.unlock();
+        }
+        this.status = Session.Status.AUTHENTICATED;
+        this.sessionManager.removeDetached(this);
+        this.sessionManager.removeSession((LocalClientSession) connectionProvider);
+    }
+
+    /**
       * Obtain the address of the session. The address is used by services like the core
       * server packet router to determine if a packet should be sent to the handler.
       * Handlers that are working on behalf of the server should use the generic server

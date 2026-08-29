@@ -105,6 +105,8 @@ public abstract class StanzaHandler {
      */
     protected LocalSession session;
 
+    private StreamManager.Sasl2ResumeResult sasl2Resumption;
+
     /**
      * Router used to route incoming packets to the correct channels.
      */
@@ -245,6 +247,7 @@ public abstract class StanzaHandler {
             usingSASL2 = true;
             saslStatus = SASLAuthentication.handle(session, doc, usingSASL2);
             if (saslStatus == SASLAuthentication.Status.authenticated && usingSASL2) {
+                adoptSasl2ResumedSession();
                 // No Bind2: send features synchronously now.
                 startedSASL = false; // Without a multi-step SASL mechanism, this can be reset here immediately, rather than in initiateSession (as SASL1 does).
                 sasl2Successful();
@@ -262,6 +265,7 @@ public abstract class StanzaHandler {
                 usingSASL2 = false;
             }
             if (saslStatus == SASLAuthentication.Status.authenticated && usingSASL2) {
+                adoptSasl2ResumedSession();
                 startedSASL = false; // Symmetric with the single-step reset in the 'authenticate' branch.
                 sasl2Successful();
             } else if (saslStatus == SASLAuthentication.Status.authenticatedAwaitingFeatures) {
@@ -585,8 +589,24 @@ public abstract class StanzaHandler {
      * (e.g. RFC 7395 WebSocket) override this.
      */
     protected void sasl2Successful() {
+        if (sasl2Resumption != null && sasl2Resumption.completeAfterSuccess()) {
+            sasl2Resumption = null;
+            return;
+        }
+        deliverSasl2Features();
+    }
+
+    protected void deliverSasl2Features() {
         final Element features = generateFeatures();
         connection.deliverRawText(features.asXML());
+    }
+
+    protected void adoptSasl2ResumedSession() {
+        final StreamManager.Sasl2ResumeResult result = SASLAuthentication.consumeSasl2ResumptionResult(session);
+        if (result != null && result.isResumed()) {
+            sasl2Resumption = result;
+            setSession(result.getResumedSession());
+        }
     }
 
     /**

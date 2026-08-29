@@ -798,6 +798,10 @@ public class SASLAuthentication {
                         }
                         // XEP-0484: parse <fast xmlns='urn:xmpp:fast:0' [count='..'] [invalidate='true']/>
                         final Element fastEl = doc.element(new QName("fast", new Namespace("", FastTokenManager.NAMESPACE)));
+                        if (isFastMechanism(mechanismName) && fastEl == null) {
+                            throw new SaslFailureException(Failure.MALFORMED_REQUEST,
+                                "FAST token authentication requires a <fast/> element");
+                        }
                         if (fastEl != null) {
                             final String countAttr = fastEl.attributeValue("count");
                             if (countAttr != null) {

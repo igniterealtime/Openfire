@@ -16,10 +16,12 @@
 package org.jivesoftware.openfire.streammanagement;
 
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.junit.jupiter.api.Test;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.PacketError;
 
 import java.math.BigInteger;
 
@@ -35,6 +37,18 @@ import static org.mockito.Mockito.*;
  */
 public class StreamManagerTest
 {
+    @Test
+    public void sasl2FailureBuildsEmbeddableFailedElement() {
+        final StreamManager.Sasl2ResumeResult result = StreamManager.Sasl2ResumeResult.failed(
+            StreamManager.NAMESPACE_V3, PacketError.Condition.bad_request);
+
+        assertFalse(result.isResumed());
+        assertNull(result.getResumedSession());
+        assertEquals("failed", result.getResponse().getName());
+        assertEquals(StreamManager.NAMESPACE_V3, result.getResponse().getNamespaceURI());
+        assertNotNull(result.getResponse().element(QName.get("bad-request", "urn:ietf:params:xml:ns:xmpp-stanzas")));
+    }
+
     @Test
     public void testValidateClientAcknowledgement() throws Exception
     {

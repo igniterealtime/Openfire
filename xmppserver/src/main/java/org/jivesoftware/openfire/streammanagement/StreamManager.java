@@ -453,16 +453,12 @@ public class StreamManager {
      * element directly; instead it returns it so the caller can embed it in the SASL2
      * {@code <success/>} element.
      *
-     * <p>On any error the method sends the appropriate SM {@code <failed/>} stanza itself and
-     * returns {@code null}.</p>
-     *
      * @param resumeElement the {@code <resume/>} element from the SASL2 {@code <authenticate/>}
-     * @return the {@code <resumed/>} element to embed in {@code <success/>}, or {@code null} if
-     *         resumption failed
+     * @return the SM result to embed in {@code <success/>}, including the session that owns the
+     *         connection when resumption succeeds
      */
-    public Element processSasl2Resume(Element resumeElement) {
+    public Sasl2ResumeResult processSasl2Resume(Element resumeElement) {
         final String namespace = resumeElement.getNamespaceURI();
-        this.namespace = namespace;
 
         final String hValue = resumeElement.attributeValue("h");
         final long h;
@@ -470,27 +466,26 @@ public class StreamManager {
             h = Long.parseLong(hValue);
         } catch (NumberFormatException e) {
             Log.warn("Client sends non-numeric value for SM 'h' in SASL2 resume: {}, session: {}", hValue, session);
-            sendUnexpectedError();
-            return null;
+            return Sasl2ResumeResult.failed(namespace, PacketError.Condition.bad_request);
         }
-        if (h < 0) {
-            Log.warn("Client sends negative value for SM 'h' in SASL2 resume: {}, session: {}", h, session);
-            sendUnexpectedError();
-            return null;
+        if (h < 0 || h > MASK) {
+            Log.warn("Client sends out-of-range value for SM 'h' in SASL2 resume: {}, session: {}", h, session);
+            return Sasl2ResumeResult.failed(namespace, PacketError.Condition.bad_request);
         }
 
         final String previd = resumeElement.attributeValue("previd");
+        if (previd == null || previd.isEmpty()) {
+            return Sasl2ResumeResult.failed(namespace, PacketError.Condition.bad_request);
+        }
 
         // Ensure that resource binding has NOT occurred.
         if (!allowResume()) {
             Log.debug("Unable to process SASL2 session resumption attempt, as session {} is in a state where session resumption is not allowed.", session);
-            sendUnexpectedError();
-            return null;
+            return Sasl2ResumeResult.failed(namespace, PacketError.Condition.unexpected_request);
         }
         if (session.isAuthenticated()) {
             Log.debug("Unable to process SASL2 session resumption attempt, as session {} is already authenticated.", session);
-            sendUnexpectedError();
-            return null;
+            return Sasl2ResumeResult.failed(namespace, PacketError.Condition.unexpected_request);
         }
         AuthToken authToken = null;
         if (session instanceof ClientSession) {
@@ -498,8 +493,7 @@ public class StreamManager {
         }
         if (authToken == null) {
             Log.debug("Unable to process SASL2 session resumption attempt, as session {} does not provide any auth context.", session);
-            sendUnexpectedError();
-            return null;
+            return Sasl2ResumeResult.failed(namespace, PacketError.Condition.unexpected_request);
         }
 
         // Decode previd.
@@ -511,8 +505,7 @@ public class StreamManager {
             streamId = toks.nextToken();
         } catch (Exception e) {
             Log.debug("Exception from previd decode in SASL2 resume:", e);
-            sendUnexpectedError();
-            return null;
+            return Sasl2ResumeResult.failed(namespace, PacketError.Condition.bad_request);
         }
 
         final JID fullJid;
@@ -529,49 +522,41 @@ public class StreamManager {
             if (LOCATION_TERMINATE_OTHERS_ENABLED.getValue()) {
                 CacheFactory.doClusterTask(new ClientSessionTask(fullJid, RemoteSessionTask.Operation.removeDetached));
             }
-            sendError(new PacketError(PacketError.Condition.item_not_found));
-            return null;
+            return Sasl2ResumeResult.failed(namespace, PacketError.Condition.item_not_found);
         }
         if (!(route instanceof LocalClientSession)) {
             Log.debug("Not allowing a client of '{}' to resume a session (SASL2) on this cluster node. The session can only be resumed on the original cluster node.", fullJid);
             if (LOCATION_TERMINATE_OTHERS_ENABLED.getValue()) {
                 CacheFactory.doClusterTask(new ClientSessionTask(fullJid, RemoteSessionTask.Operation.removeDetached));
             }
-            sendError(new PacketError(PacketError.Condition.unexpected_request));
-            return null;
+            return Sasl2ResumeResult.failed(namespace, PacketError.Condition.item_not_found);
         }
 
         final LocalClientSession otherSession = (LocalClientSession) route;
         if (!otherSession.getStreamID().getID().equals(streamId)) {
-            sendError(new PacketError(PacketError.Condition.item_not_found));
-            return null;
+            return Sasl2ResumeResult.failed(namespace, PacketError.Condition.item_not_found);
         }
         Log.debug("Found existing session for '{}' (SASL2 resume), checking status", fullJid);
 
         if (route.isClosed()) {
             Log.debug("Not allowing a client of '{}' to resume a session (SASL2), as the preexisting session is already in process of being closed.", fullJid);
-            sendError(new PacketError(PacketError.Condition.unexpected_request));
-            return null;
+            return Sasl2ResumeResult.failed(namespace, PacketError.Condition.unexpected_request);
         }
         if (!otherSession.getStreamManager().resume) {
             Log.debug("Not allowing a client of '{}' to resume a session (SASL2), the session to be resumed does not have the stream management resumption feature enabled.", fullJid);
-            sendError(new PacketError(PacketError.Condition.unexpected_request));
-            return null;
+            return Sasl2ResumeResult.failed(namespace, PacketError.Condition.unexpected_request);
         }
         if (otherSession.getStreamManager().namespace == null) {
             Log.debug("Not allowing a client of '{}' to resume a session (SASL2), the session to be resumed disabled SM functionality as a response to an earlier error.", fullJid);
-            sendError(new PacketError(PacketError.Condition.unexpected_request));
-            return null;
+            return Sasl2ResumeResult.failed(namespace, PacketError.Condition.unexpected_request);
         }
         if (!otherSession.getStreamManager().namespace.equals(namespace)) {
             Log.debug("Not allowing a client of '{}' to resume a session (SASL2), namespace mismatch: {} vs {}.", fullJid, otherSession.getStreamManager().namespace, namespace);
-            sendError(new PacketError(PacketError.Condition.unexpected_request));
-            return null;
+            return Sasl2ResumeResult.failed(namespace, PacketError.Condition.unexpected_request);
         }
         if (!otherSession.getStreamManager().validateClientAcknowledgement(h)) {
             Log.debug("Not allowing a client of '{}' to resume a session (SASL2), as it reports it received more stanzas from us than that we've sent it.", fullJid);
-            sendError(new PacketError(PacketError.Condition.unexpected_request));
-            return null;
+            return Sasl2ResumeResult.failed(namespace, PacketError.Condition.undefined_condition);
         }
         if (!otherSession.isDetached()) {
             Log.debug("Existing session {} of '{}' is not detached (SASL2 resume); detaching.", otherSession.getStreamID(), fullJid);
@@ -583,7 +568,39 @@ public class StreamManager {
         Log.debug("Attaching (SASL2) to other session '{}' of '{}'.", otherSession.getStreamID(), fullJid);
         final Element resumed = otherSession.reattachForSasl2(session, h);
         Log.debug("Perform SASL2 resumption of session {} for '{}', using connection from session {}", otherSession.getStreamID(), fullJid, session.getStreamID());
-        return resumed;
+        return Sasl2ResumeResult.resumed(resumed, otherSession);
+    }
+
+    public static final class Sasl2ResumeResult {
+        private final Element response;
+        private final LocalClientSession resumedSession;
+
+        private Sasl2ResumeResult(Element response, LocalClientSession resumedSession) {
+            this.response = response;
+            this.resumedSession = resumedSession;
+        }
+
+        public static Sasl2ResumeResult resumed(Element response, LocalClientSession resumedSession) {
+            return new Sasl2ResumeResult(response, resumedSession);
+        }
+
+        public static Sasl2ResumeResult failed(String namespace, PacketError.Condition condition) {
+            final Element failed = DocumentHelper.createElement(QName.get("failed", namespace));
+            failed.addElement(QName.get(condition.toXMPP(), "urn:ietf:params:xml:ns:xmpp-stanzas"));
+            return new Sasl2ResumeResult(failed, null);
+        }
+
+        public Element getResponse() {
+            return response;
+        }
+
+        public LocalClientSession getResumedSession() {
+            return resumedSession;
+        }
+
+        public boolean isResumed() {
+            return resumedSession != null;
+        }
     }
 
     /**

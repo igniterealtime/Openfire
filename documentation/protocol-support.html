@@ -405,6 +405,7 @@
             <tr><td><a href="https://www.xmpp.org/extensions/xep-0474.html">XEP-0474</a>: SASL SCRAM Downgrade Protection</td></tr>
             <tr><td><a href="https://www.xmpp.org/extensions/xep-0478.html">XEP-0478</a>: Stream Limits Advertisement</td></tr>
             <tr><td><a href="https://www.xmpp.org/extensions/xep-0483.html">XEP-0483</a>: HTTP Online Meetings [<a href="#fn19">19</a>]</td></tr>
+            <tr><td><a href="https://www.xmpp.org/extensions/xep-0484.html">XEP-0484</a>: Fast Authentication Streamlining Tokens [<a href="#fn20">20</a>]</td></tr>
             <tr><td><a href="https://www.xmpp.org/extensions/xep-0485.html">XEP-0485</a>: PubSub Server Information [<a href="#fn18">18</a>]</td></tr>
             <tr><td><a href="https://www.xmpp.org/extensions/xep-0486.html">XEP-0486</a>: MUC Avatars</td></tr>
         </table>
@@ -435,6 +436,7 @@
             <li id="fn17">Support for <u>XEP-0094: Agent Information</u> is provided by the <a href="https://www.igniterealtime.org/projects/openfire/plugins.jsp">Agent Information plugin</a>.</li>
             <li id="fn18">Support for <u>XEP-0485: PubSub Server Information</u> is provided by the <a href="https://www.igniterealtime.org/projects/openfire/plugins.jsp">PubSub Server Info plugin</a>.</li>
             <li id="fn19">Support for <u>XEP-0483: HTTP Online Meetings</u> is provided by the <a href="https://www.igniterealtime.org/projects/openfire/plugins.jsp">Openfire Meetings, Galene and OrinAyo plugins</a>.</li>
+            <li id="fn20">FAST uses SASL2 and is therefore protected by TLS by default. If the <code>xmpp.auth.sasl2.require-tls</code> system property is explicitly disabled, Openfire also advertises and accepts the no-channel-binding <code>HT-*-NONE</code> and <code>HT2-*-NONE</code> mechanisms on connections that Openfire does not identify as TLS-encrypted. This deliberate policy exception supports deployments on trusted networks protected by another encryption or security layer. It does not apply to channel-binding variants, which continue to require TLS and the corresponding channel-binding data. Disabling the safeguard makes the administrator responsible for preventing observation and replay of FAST authentication traffic.</li>
         </ol>
     </section>
 

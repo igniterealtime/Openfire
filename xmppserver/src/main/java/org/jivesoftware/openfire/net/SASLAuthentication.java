@@ -165,8 +165,16 @@ public class SASLAuthentication {
 
     /**
      * Require TLS for SASL2. This is currently on by default, and means that SASL2 is not advertised in features without TLS.
+     * This setting also governs the no-channel-binding FAST mechanisms ({@code HT-*-NONE} and
+     * {@code HT2-*-NONE}). Disabling it allows those mechanisms on a connection that Openfire does not identify as
+     * TLS-encrypted. This is intended only for deployments in which another layer provides equivalent transport
+     * security, such as a trusted encrypted network where TLS termination or use by Openfire is undesirable.
+     * Channel-binding FAST variants continue to require TLS and their corresponding channel-binding data.
+     * Administrators that disable this safeguard are responsible for preventing observation and replay of FAST
+     * authentication traffic.
      *
      * @see <a href="https://xmpp.org/extensions/xep-0388.html">XEP-0388: Extensible SASL Profile</a>
+     * @see <a href="https://xmpp.org/extensions/xep-0484.html">XEP-0484: Fast Authentication Streamlining Tokens</a>
      */
     public static final SystemProperty<Boolean> SASL2_REQUIRE_TLS = SystemProperty.Builder.ofType(Boolean.class)
         .setKey("xmpp.auth.sasl2.require-tls")

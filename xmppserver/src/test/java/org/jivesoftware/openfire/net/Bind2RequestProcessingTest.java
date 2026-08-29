@@ -88,6 +88,8 @@ public class Bind2RequestProcessingTest {
 
         when(mockHandler1.getNamespace()).thenReturn("http://test1.namespace");
         when(mockHandler2.getNamespace()).thenReturn("http://test2.namespace");
+        when(mockHandler1.isEnabled()).thenReturn(true);
+        when(mockHandler2.isEnabled()).thenReturn(true);
         when(mockHandler1.handleElement(any(), any(), any())).thenReturn(true);
         when(mockHandler2.handleElement(any(), any(), any())).thenReturn(true);
     }

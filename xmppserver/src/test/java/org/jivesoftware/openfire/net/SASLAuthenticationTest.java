@@ -15,6 +15,9 @@
  */
 package org.jivesoftware.openfire.net;
 
+import org.jivesoftware.openfire.fast.FastTokenManager;
+import org.jivesoftware.openfire.fast.FastToken;
+
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
@@ -35,6 +38,7 @@ import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.ServerSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.sasl.SaslFailureException;
+import org.jivesoftware.openfire.sasl.TestSaslMechanism;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.junit.jupiter.api.AfterAll;
@@ -58,6 +62,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -726,6 +731,7 @@ public class SASLAuthenticationTest
     @Test
     public void getSASLMechanismsElement_client_sasl1_suppressEmptyTrue_noMechanisms_returnsNull()
     {
+        FastTokenManager.ENABLE_FAST.setValue(false);
         // Setup test fixture: no mechanisms available (EXTERNAL requires encryption, PLAIN is removed).
         SASLAuthentication.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
         JiveGlobals.setProperty("sasl.client.suppressEmpty", "true");
@@ -751,6 +757,7 @@ public class SASLAuthenticationTest
     @Test
     public void getSASLMechanismsElement_client_sasl2_suppressEmptyFalse_noMechanisms_returnsNull()
     {
+        FastTokenManager.ENABLE_FAST.setValue(false);
         // Setup test fixture: no mechanisms available (EXTERNAL requires encryption, PLAIN is removed).
         SASLAuthentication.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
         JiveGlobals.setProperty("sasl.client.suppressEmpty", "false");
@@ -776,6 +783,7 @@ public class SASLAuthenticationTest
     @Test
     public void getSASLMechanismsElement_client_sasl2_suppressEmptyTrue_noMechanisms_returnsNull()
     {
+        FastTokenManager.ENABLE_FAST.setValue(false);
         // Setup test fixture: no mechanisms available (EXTERNAL requires encryption, PLAIN is removed).
         SASLAuthentication.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
         JiveGlobals.setProperty("sasl.client.suppressEmpty", "true");
@@ -1792,7 +1800,8 @@ public class SASLAuthenticationTest
             mockedFtm.when(org.jivesoftware.openfire.fast.FastTokenManager::featureElement)
                 .thenCallRealMethod();
             mockedFtm.when(() -> org.jivesoftware.openfire.fast.FastTokenManager.issueToken(
-                    eq(username), eq(org.jivesoftware.openfire.fast.FastTokenManager.HT_SHA_256_NONE)))
+                    eq(username), any(String.class),
+                    eq(org.jivesoftware.openfire.fast.FastTokenManager.HT_SHA_256_NONE)))
                 .thenReturn(issuedToken);
 
             // Execute system under test: call authenticationSuccessful with SASL2.
@@ -2022,5 +2031,78 @@ public class SASLAuthenticationTest
         final Element authenticate = DocumentHelper.createElement(new QName("authenticate", Namespace.get("", SASL2_NAMESPACE)));
         authenticate.addAttribute("mechanism", mechanism);
         return authenticate;
+    }
+    @Test
+    public void sasl2EndToEndParsesAndIssuesOnlyAdvertisedFastMechanism()
+    {
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        FastTokenManager.ENABLE_FAST.setValue(true);
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(true);
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
+            new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        TestSaslMechanism.registerTestMechanism(session);
+        try {
+            SASLAuthentication.setEnabledMechanisms(List.of("TEST-MECHANISM"));
+            SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("TEST-MECHANISM"));
+            session.setSessionData(SASLAuthentication.AVAILABLE_FAST_MECHANISMS_FOR_SESSION,
+                Set.of(FastTokenManager.HT_SHA_256_NONE));
+            final FastToken issued = new FastToken("test-user", FastTokenManager.HT_SHA_256_NONE,
+                "issued-token".getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                java.time.Instant.now().plusSeconds(60));
+            try (MockedStatic<FastTokenManager> manager = mockStatic(FastTokenManager.class, CALLS_REAL_METHODS)) {
+                manager.when(() -> FastTokenManager.issueToken(eq("test-user"), any(String.class),
+                    eq(FastTokenManager.HT_SHA_256_NONE))).thenReturn(issued);
+                final Element authenticate = DocumentHelper.parseText(
+                    "<authenticate xmlns='urn:xmpp:sasl:2' mechanism='TEST-MECHANISM'>"
+                        + "<initial-response/><request-token xmlns='urn:xmpp:fast:0' mechanism='HT-SHA-256-NONE'/>"
+                        + "</authenticate>").getRootElement();
+                assertEquals(SASLAuthentication.Status.authenticated,
+                    SASLAuthentication.handle(session, authenticate, true));
+                final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+                verify(connection).deliverRawText(response.capture());
+                assertTrue(response.getValue().contains("token=\"issued-token\""));
+            }
+        } catch (Exception e) {
+            fail(e);
+        } finally {
+            TestSaslMechanism.unregisterTestMechanism();
+        }
+    }
+
+    @Test
+    public void sasl2EndToEndIgnoresInvalidAndUnadvertisedFastTokenRequests()
+    {
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        FastTokenManager.ENABLE_FAST.setValue(true);
+        for (final String requested : List.of(FastTokenManager.HT_SHA_512_NONE, "NOT-A-FAST-MECHANISM")) {
+            final Connection connection = mock(Connection.class);
+            when(connection.isEncrypted()).thenReturn(true);
+            final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
+                new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+            TestSaslMechanism.registerTestMechanism(session);
+            try {
+                SASLAuthentication.setEnabledMechanisms(List.of("TEST-MECHANISM"));
+                SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("TEST-MECHANISM"));
+                session.setSessionData(SASLAuthentication.AVAILABLE_FAST_MECHANISMS_FOR_SESSION,
+                    Set.of(FastTokenManager.HT_SHA_256_NONE));
+                try (MockedStatic<FastTokenManager> manager = mockStatic(FastTokenManager.class, CALLS_REAL_METHODS)) {
+                    final Element authenticate = DocumentHelper.parseText(
+                        "<authenticate xmlns='urn:xmpp:sasl:2' mechanism='TEST-MECHANISM'>"
+                            + "<initial-response/><request-token xmlns='urn:xmpp:fast:0' mechanism='" + requested + "'/>"
+                            + "</authenticate>").getRootElement();
+                    assertEquals(SASLAuthentication.Status.authenticated,
+                        SASLAuthentication.handle(session, authenticate, true));
+                    manager.verify(() -> FastTokenManager.issueToken(any(String.class), any(String.class), any(String.class)), never());
+                    final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+                    verify(connection).deliverRawText(response.capture());
+                    assertFalse(response.getValue().contains("<token"));
+                }
+            } catch (Exception e) {
+                fail(e);
+            } finally {
+                TestSaslMechanism.unregisterTestMechanism();
+            }
+        }
     }
 }

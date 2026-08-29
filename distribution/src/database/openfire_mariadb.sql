@@ -14,11 +14,14 @@ CREATE TABLE ofUser (
 CREATE TABLE ofUserScram (
   username              VARCHAR(64)     NOT NULL,
   mechanism             VARCHAR(32)     NOT NULL,
+  clientID             VARCHAR(64)     NOT NULL,
+  tokenSlot             VARCHAR(1)      NOT NULL,
+  replayCounter         BIGINT       NOT NULL,
   storedKey             VARCHAR(255),
   serverKey             VARCHAR(255),
   salt                  VARCHAR(255),
   iterations            INTEGER         NOT NULL,
-  PRIMARY KEY (username, mechanism)
+  PRIMARY KEY (username, mechanism, clientID, tokenSlot)
 );
 
 CREATE TABLE ofUserProp (
@@ -374,9 +377,12 @@ CREATE TABLE ofPubsubDefaultConf (
 CREATE TABLE ofFastToken (
   username              VARCHAR(64)     NOT NULL,
   mechanism             VARCHAR(32)     NOT NULL,
+  clientID             VARCHAR(64)     NOT NULL,
+  tokenSlot             VARCHAR(1)      NOT NULL,
+  replayCounter         BIGINT       NOT NULL,
   tokenHash             VARCHAR(128)     NOT NULL,
   expiry                VARCHAR(35)     NOT NULL,
-  PRIMARY KEY (username, mechanism)
+  PRIMARY KEY (username, mechanism, clientID, tokenSlot)
 );
 
 # Finally, insert default table values.

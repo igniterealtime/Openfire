@@ -147,6 +147,21 @@ public class Bind2StreamManagementHandlerTest {
     }
 
     @Test
+    public void testEnableFailureIsEmbeddedInBoundWithoutStandaloneDelivery() {
+        final StreamManager streamManager = new StreamManager(mockSession);
+        when(mockSession.getStreamManager()).thenReturn(streamManager);
+        final Element enable = DocumentHelper.createElement(QName.get("enable", StreamManager.NAMESPACE_V3));
+
+        final boolean result = handler.handleElement(mockSession, boundElement, enable);
+
+        assertTrue(result);
+        final Element failed = boundElement.element(QName.get("failed", StreamManager.NAMESPACE_V3));
+        assertNotNull(failed);
+        assertNotNull(failed.element(QName.get("unexpected-request", "urn:ietf:params:xml:ns:xmpp-stanzas")));
+        verify(mockSession, never()).deliverRawText(anyString());
+    }
+
+    @Test
     public void testHandleNonEnableElementIsIgnored() {
         // Setup: send an unexpected element name
         final Element wrongElement = DocumentHelper.createElement(

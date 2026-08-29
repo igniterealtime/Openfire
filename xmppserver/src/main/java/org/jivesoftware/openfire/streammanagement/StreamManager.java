@@ -262,21 +262,19 @@ public class StreamManager {
      */
     private void enable( String namespace, boolean resume )
     {
-        final Element enabled = enableInternal(namespace, resume);
-        if (enabled != null) {
-            session.deliverRawText(enabled.asXML());
-        }
+        session.deliverRawText(enableInternal(namespace, resume).asXML());
     }
 
     /**
      * Enables stream management and returns the {@code <enabled/>} element without sending it.
      * This allows callers (e.g. the SASL2 Bind2 handler) to embed the element in another stanza.
      *
-     * <p>Returns {@code null} if enabling failed (an error stanza will have been sent already).</p>
+     * <p>The returned element is either {@code <enabled/>} or {@code <failed/>}. It is never sent by this method,
+     * allowing an inline caller to embed either outcome in its enclosing response.</p>
      *
      * @param namespace the SM namespace to use
      * @param resume    whether the client requests a resumable session
-     * @return the {@code <enabled/>} element, or {@code null} on failure
+     * @return the {@code <enabled/>} or {@code <failed/>} outcome element
      */
     public Element enableAndBuildElement( String namespace, boolean resume )
     {
@@ -288,9 +286,7 @@ public class StreamManager {
         boolean offerResume = allowResume();
         // Ensure that resource binding has occurred.
         if (!session.isAuthenticated()) {
-            this.namespace = namespace;
-            sendUnexpectedError();
-            return null;
+            return buildFailedElement(namespace, PacketError.Condition.unexpected_request);
         }
 
         String smId = null;
@@ -300,8 +296,7 @@ public class StreamManager {
             // Do nothing if already enabled
             if ( isEnabled() )
             {
-                sendUnexpectedError();
-                return null;
+                return buildFailedElement(namespace, PacketError.Condition.unexpected_request);
             }
             this.namespace = namespace;
 
@@ -577,10 +572,15 @@ public class StreamManager {
      * @param error PacketError describing the failure.
      */
     private void sendError(PacketError error) {
-        final Element failed = DocumentHelper.createElement(QName.get("failed", namespace));
-        failed.addElement(QName.get(error.getCondition().toXMPP(), "urn:ietf:params:xml:ns:xmpp-stanzas"));
+        final Element failed = buildFailedElement(namespace, error.getCondition());
         session.deliverRawText(failed.asXML());
         this.namespace = null; // isEnabled() is testing this.
+    }
+
+    private static Element buildFailedElement(String namespace, PacketError.Condition condition) {
+        final Element failed = DocumentHelper.createElement(QName.get("failed", namespace));
+        failed.addElement(QName.get(condition.toXMPP(), "urn:ietf:params:xml:ns:xmpp-stanzas"));
+        return failed;
     }
 
     /**

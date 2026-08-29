@@ -74,9 +74,9 @@ public class Bind2StreamManagementHandler implements Bind2InlineHandler {
         final String namespace = element.getNamespaceURI();
         final String resumeAttr = element.attributeValue("resume");
         final boolean resume = "true".equalsIgnoreCase(resumeAttr) || "1".equals(resumeAttr) || "yes".equalsIgnoreCase(resumeAttr);
-        final Element enabled = session.getStreamManager().enableAndBuildElement(namespace, resume);
-        if (enabled != null) {
-            bound.add(enabled);
+        final Element outcome = session.getStreamManager().enableAndBuildElement(namespace, resume);
+        if (outcome != null) {
+            bound.add(outcome);
             return true;
         }
         return false;

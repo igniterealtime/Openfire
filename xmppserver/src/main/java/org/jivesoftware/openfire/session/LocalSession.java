@@ -233,9 +233,8 @@ public abstract class LocalSession implements Session {
         // Build the <resumed/> element but do NOT send it — the caller will embed it in <success/>.
         final Element resumed = this.streamManager.buildResumedElement();
         this.streamManager.processClientAcknowledgementPublic(h);
-        // Redelivery of unacked stanzas must happen AFTER stream features are sent following <success/>.
-        // We only set the pending flag here; the code path that sends those features must call
-        // StreamManager#redeliverIfPendingSasl2() immediately afterwards.
+        // Redelivery happens immediately after <success/>. Stream features must not be sent for a successfully
+        // resumed stream, so the stanza handler consumes this flag before considering feature delivery.
         this.streamManager.setPendingSasl2Redelivery(true);
         this.sessionManager.removeSession((LocalClientSession) connectionProvider);
         return resumed;

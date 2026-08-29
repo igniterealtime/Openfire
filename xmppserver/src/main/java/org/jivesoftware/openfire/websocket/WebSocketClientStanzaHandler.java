@@ -209,8 +209,10 @@ public class WebSocketClientStanzaHandler extends ClientStanzaHandler
      */
     @Override
     protected void sasl2Successful() {
+        if (session.getStreamManager().redeliverIfPendingSasl2(new JID(null, session.getServerName(), null, true))) {
+            return;
+        }
         sendStreamFeatures();
-        session.getStreamManager().redeliverIfPendingSasl2(new JID(null, session.getServerName(), null, true));
     }
 
     protected boolean isStartOfStream(final String xml) {

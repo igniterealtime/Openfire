@@ -587,9 +587,11 @@ public abstract class StanzaHandler {
      * (e.g. RFC 7395 WebSocket) override this.
      */
     protected void sasl2Successful() {
+        if (session.getStreamManager().redeliverIfPendingSasl2(new JID(null, session.getServerName(), null, true))) {
+            return;
+        }
         final Element features = generateFeatures();
         connection.deliverRawText(features.asXML());
-        session.getStreamManager().redeliverIfPendingSasl2(new JID(null, session.getServerName(), null, true));
     }
 
     void adoptSasl2ResumedSession() {

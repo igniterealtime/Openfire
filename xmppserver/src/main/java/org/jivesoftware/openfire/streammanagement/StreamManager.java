@@ -146,9 +146,9 @@ public class StreamManager {
 
     /**
      * Set to {@code true} when a SASL2-inline stream resumption has been processed but unacknowledged
-     * stanzas have not yet been redelivered. The redelivery must happen after stream features are sent
-     * following the SASL2 {@code <success/>}, so {@link StanzaHandler} calls
-     * {@link #redeliverIfPendingSasl2(JID)} at that point.
+     * stanzas have not yet been redelivered. A successfully resumed stream is re-established immediately
+     * after SASL2 {@code <success/>}; {@link StanzaHandler} calls {@link #redeliverIfPendingSasl2(JID)}
+     * instead of sending post-authentication stream features.
      */
     private volatile boolean pendingSasl2Redelivery = false;
 
@@ -795,7 +795,7 @@ public class StreamManager {
      * Sets the pending SASL2 redelivery flag. When {@code true}, {@link #redeliverIfPendingSasl2(JID)}
      * will redeliver unacknowledged stanzas. Called by
      * {@link org.jivesoftware.openfire.session.LocalSession#reattachForSasl2} to defer redelivery
-     * until after stream features have been sent.
+     * until after the enclosing SASL2 {@code <success/>} has been sent.
      *
      * @param pending whether redelivery is pending
      */
@@ -805,16 +805,19 @@ public class StreamManager {
 
     /**
      * If a SASL2-inline stream resumption is pending redelivery, redelivers unacknowledged stanzas
-     * now. This must be called by {@link org.jivesoftware.openfire.net.StanzaHandler} after stream
-     * features have been sent following the SASL2 {@code <success/>}.
+     * now. This is called after SASL2 {@code <success/>}; a {@code true} result tells the stanza handler
+     * that stream features must not be sent for the resumed stream.
      *
      * @param serverAddress the server's JID, used to stamp delayed stanzas
+     * @return {@code true} when this call completed an inline resumption and redelivered its queued stanzas
      */
-    public void redeliverIfPendingSasl2(JID serverAddress) {
+    public boolean redeliverIfPendingSasl2(JID serverAddress) {
         if (pendingSasl2Redelivery) {
             pendingSasl2Redelivery = false;
             redeliverUnackedStanzas(serverAddress);
+            return true;
         }
+        return false;
     }
 
     /**

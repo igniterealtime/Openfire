@@ -15,6 +15,8 @@
  */
 package org.jivesoftware.openfire.net;
 
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
 import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.Connection;
@@ -39,6 +41,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -59,6 +63,31 @@ public class StanzaHandlerTest
         handler.adoptSasl2ResumedSession();
 
         assertSame(resumedSession, handler.session);
+    }
+
+    @Test
+    public void successfulInlineResumptionDoesNotSendStreamFeatures()
+    {
+        final Connection connection = mock(Connection.class);
+        final LocalClientSession session = mock(LocalClientSession.class);
+        when(session.getConnection()).thenReturn(connection);
+        when(session.getServerName()).thenReturn(Fixtures.XMPP_DOMAIN);
+        final org.jivesoftware.openfire.streammanagement.StreamManager streamManager =
+            new org.jivesoftware.openfire.streammanagement.StreamManager(session);
+        when(session.getStreamManager()).thenReturn(streamManager);
+        streamManager.setPendingSasl2Redelivery(true);
+        final Element features = DocumentHelper.createElement("features");
+        final ClientStanzaHandler handler = new ClientStanzaHandler(mock(PacketRouter.class), connection) {
+            @Override
+            protected Element generateFeatures() {
+                return features;
+            }
+        };
+        handler.setSession(session);
+
+        handler.sasl2Successful();
+
+        verify(connection, never()).deliverRawText(features.asXML());
     }
 
     @BeforeAll

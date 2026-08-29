@@ -28,6 +28,7 @@ import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.fast.FastToken;
 import org.jivesoftware.openfire.fast.FastTokenManager;
+import org.jivesoftware.openfire.fast.FastSessionState;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.keystore.TrustStore;
 import org.jivesoftware.openfire.lockout.LockOutManager;
@@ -770,9 +771,7 @@ public class SASLAuthentication {
                     }
                     // Clear any unexecuted bind2-request
                     session.removeSessionData("bind2-request");
-                    session.removeSessionData("fast-request-token-mechanism");
-                    session.removeSessionData("fast-invalidate");
-                    session.removeSessionData("fast-count");
+                    FastSessionState.clearRequest(session);
                     if (usingSASL2 && session instanceof LocalClientSession) {
                         Element userAgentElement = doc.element("user-agent");
                         if (userAgentElement != null) {
@@ -793,7 +792,7 @@ public class SASLAuthentication {
                             final Set<String> offered = getAdvertisedFastMechanisms(session).orElse(Collections.emptySet());
                             if (requestedMechanism != null && FastTokenManager.isMechanism(requestedMechanism)
                                 && offered.contains(requestedMechanism.toUpperCase())) {
-                                session.setSessionData("fast-request-token-mechanism", requestedMechanism.toUpperCase(Locale.ROOT));
+                                FastSessionState.setRequestedMechanism(session, requestedMechanism.toUpperCase(Locale.ROOT));
                                 Log.debug("FAST token requested for mechanism '{}' by {}", requestedMechanism, session);
                             }
                         }
@@ -805,14 +804,14 @@ public class SASLAuthentication {
                                 try {
                                     final long count = Long.parseLong(countAttr);
                                     if (count <= 0) throw new NumberFormatException();
-                                    session.setSessionData("fast-count", count);
+                                    FastSessionState.setReplayCount(session, count);
                                 } catch (final NumberFormatException e) {
                                     throw new SaslFailureException(Failure.MALFORMED_REQUEST, "FAST count must be a positive integer");
                                 }
                             }
                             final String invalidateAttr = fastEl.attributeValue("invalidate");
                             if ("true".equalsIgnoreCase(invalidateAttr) || "1".equals(invalidateAttr)) {
-                                session.setSessionData("fast-invalidate", Boolean.TRUE);
+                                FastSessionState.setInvalidate(session);
                                 Log.debug("FAST token invalidation requested by {}", session);
                             }
                         }
@@ -849,8 +848,8 @@ public class SASLAuthentication {
                         return Status.needResponse;
                     }
 
-                    final Long fastCount = (Long) session.getSessionData("fast-count");
-                    final String fastClientId = (String) session.getSessionData("fast-authenticated-client-id");
+                    final Long fastCount = FastSessionState.getReplayCount(session);
+                    final String fastClientId = FastSessionState.getAuthenticatedClientId(session);
                     if (fastCount != null && isFastMechanism(saslServer.getMechanismName())
                         && (fastClientId == null || !FastTokenManager.advanceReplayCounter(
                             saslServer.getAuthorizationID(), saslServer.getMechanismName(), fastClientId, fastCount))) {
@@ -1044,10 +1043,10 @@ public class SASLAuthentication {
                 //   (a) the client included <request-token> with a valid mechanism, OR
                 //   (b) this was a FAST authentication and invalidate was NOT requested (token rotation).
                 // If invalidate=true was requested, delete the existing token and do not rotate.
-                final boolean fastInvalidate = Boolean.TRUE.equals(session.getSessionData("fast-invalidate"));
-                final String fastRequestedMechanism = (String) session.getSessionData("fast-request-token-mechanism");
+                final boolean fastInvalidate = FastSessionState.isInvalidateRequested(session);
+                final String fastRequestedMechanism = FastSessionState.getRequestedMechanism(session);
                 final boolean isFastAuth = mechanismName.startsWith("HT-") || mechanismName.startsWith("HT2-");
-                final String authenticatedClientId = (String) session.getSessionData("fast-authenticated-client-id");
+                final String authenticatedClientId = FastSessionState.getAuthenticatedClientId(session);
                 final UserAgentInfo userAgent = (UserAgentInfo) session.getSessionData("user-agent-info");
                 final String requestingClientId = userAgent != null && userAgent.getId() != null
                     ? userAgent.getId() : UUID.randomUUID().toString();
@@ -1076,13 +1075,9 @@ public class SASLAuthentication {
                     // or issue a fresh token here for inclusion in the <success/>.
                     // The rotated token is stored by HtSaslServer/Ht2SaslServer via AbstractHtSaslServer.
                     // We expose it via the "RotatedToken" session data key set by AbstractHtSaslServer.
-                    fastToken = (FastToken) session.getSessionData("fast-rotated-token");
+                    fastToken = FastSessionState.getRotatedToken(session);
                 }
-                session.removeSessionData("fast-request-token-mechanism");
-                session.removeSessionData("fast-invalidate");
-                session.removeSessionData("fast-rotated-token");
-                session.removeSessionData("fast-authenticated-client-id");
-                session.removeSessionData("fast-count");
+                FastSessionState.clearAuthenticationAttempt(session);
 
                 final FastToken finalFastToken = fastToken;
                 final Bind2Request bind2Request = (Bind2Request) session.getSessionData("bind2-request");

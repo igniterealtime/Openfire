@@ -771,8 +771,9 @@ public class SASLAuthentication {
                     }
                     // Clear any unexecuted bind2-request
                     session.removeSessionData("bind2-request");
+                    session.removeSessionData("user-agent-info");
                     FastSessionState.clearRequest(session);
-                    if (usingSASL2 && session instanceof LocalClientSession) {
+                    if (usingSASL2 && session instanceof LocalClientSession clientSession) {
                         Element userAgentElement = doc.element("user-agent");
                         if (userAgentElement != null) {
                             UserAgentInfo userAgentInfo = UserAgentInfo.extract(userAgentElement);
@@ -787,6 +788,13 @@ public class SASLAuthentication {
                         }
                         // XEP-0484: parse <request-token xmlns='urn:xmpp:fast:0' mechanism='...'/>
                         final Element requestTokenEl = doc.element(new QName("request-token", new Namespace("", FastTokenManager.NAMESPACE)));
+                        if (isFastMechanism(mechanismName) || requestTokenEl != null) {
+                            final UserAgentInfo userAgent = (UserAgentInfo) session.getSessionData("user-agent-info");
+                            if (userAgent == null || userAgent.getId() == null || clientSession.getExpectedUsername().isEmpty()) {
+                                throw new SaslFailureException(Failure.MALFORMED_REQUEST,
+                                    "FAST requires a local authenticating JID in the stream 'from' attribute and a valid user-agent id");
+                            }
+                        }
                         if (requestTokenEl != null && FastTokenManager.ENABLE_FAST.getValue()) {
                             final String requestedMechanism = requestTokenEl.attributeValue("mechanism");
                             final Set<String> offered = getAdvertisedFastMechanisms(session).orElse(Collections.emptySet());
@@ -1044,8 +1052,7 @@ public class SASLAuthentication {
                 final boolean isFastAuth = mechanismName.startsWith("HT-") || mechanismName.startsWith("HT2-");
                 final String authenticatedClientId = FastSessionState.getAuthenticatedClientId(session);
                 final UserAgentInfo userAgent = (UserAgentInfo) session.getSessionData("user-agent-info");
-                final String requestingClientId = userAgent != null && userAgent.getId() != null
-                    ? userAgent.getId() : UUID.randomUUID().toString();
+                final String requestingClientId = userAgent == null ? null : userAgent.getId();
 
                 FastToken fastToken = null;
                 if (fastInvalidate) {

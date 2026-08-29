@@ -1793,6 +1793,8 @@ public class SASLAuthenticationTest
         // Manually set the session data that parsing the <authenticate> element would set.
         session.setSessionData("fast-request-token-mechanism",
             org.jivesoftware.openfire.fast.FastTokenManager.HT_SHA_256_NONE);
+        session.setSessionData("user-agent-info",
+            new UserAgentInfo("123e4567-e89b-42d3-a456-426614174000", null, null));
 
         try (final MockedStatic<org.jivesoftware.openfire.fast.FastTokenManager> mockedFtm =
                  mockStatic(org.jivesoftware.openfire.fast.FastTokenManager.class))
@@ -2022,11 +2024,13 @@ public class SASLAuthenticationTest
         when(connection.isEncrypted()).thenReturn(true);
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
             new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        session.setClaimedIdentity(new org.xmpp.packet.JID("test-user@" + Fixtures.XMPP_DOMAIN));
         session.setSessionData(SASLAuthentication.AVAILABLE_FAST_MECHANISMS_FOR_SESSION,
             Set.of(FastTokenManager.HT_SHA_256_NONE));
 
-        assertEquals(SASLAuthentication.Status.failed, SASLAuthentication.handle(
-            session, sasl2AuthenticateElement(FastTokenManager.HT_SHA_256_NONE), true));
+        final Element authenticate = sasl2AuthenticateElement(FastTokenManager.HT_SHA_256_NONE);
+        authenticate.addElement("user-agent").addAttribute("id", "123e4567-e89b-42d3-a456-426614174000");
+        assertEquals(SASLAuthentication.Status.failed, SASLAuthentication.handle(session, authenticate, true));
         final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
         verify(connection).deliverRawText(response.capture());
         assertTrue(response.getValue().contains("malformed-request"));
@@ -2061,6 +2065,7 @@ public class SASLAuthenticationTest
         when(connection.isEncrypted()).thenReturn(true);
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
             new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        session.setClaimedIdentity(new org.xmpp.packet.JID("test-user@" + Fixtures.XMPP_DOMAIN));
         TestSaslMechanism.registerTestMechanism(session);
         try {
             SASLAuthentication.setEnabledMechanisms(List.of("TEST-MECHANISM"));
@@ -2075,7 +2080,8 @@ public class SASLAuthenticationTest
                     eq(FastTokenManager.HT_SHA_256_NONE))).thenReturn(issued);
                 final Element authenticate = DocumentHelper.parseText(
                     "<authenticate xmlns='urn:xmpp:sasl:2' mechanism='TEST-MECHANISM'>"
-                        + "<initial-response/><request-token xmlns='urn:xmpp:fast:0' mechanism='HT-SHA-256-NONE'/>"
+                        + "<initial-response/><user-agent id='123e4567-e89b-42d3-a456-426614174000'/>"
+                        + "<request-token xmlns='urn:xmpp:fast:0' mechanism='HT-SHA-256-NONE'/>"
                         + "</authenticate>").getRootElement();
                 assertEquals(SASLAuthentication.Status.authenticated,
                     SASLAuthentication.handle(session, authenticate, true));
@@ -2091,6 +2097,45 @@ public class SASLAuthenticationTest
     }
 
     @Test
+    public void sasl2RejectsFastTokenRequestWithoutClientIdentityPrerequisites()
+    {
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        FastTokenManager.ENABLE_FAST.setValue(true);
+        for (final String inline : List.of(
+            "<request-token xmlns='urn:xmpp:fast:0' mechanism='HT-SHA-256-NONE'/>",
+            "<user-agent id='123e4567-e89b-42d3-a456-426614174000'/>"
+                + "<request-token xmlns='urn:xmpp:fast:0' mechanism='HT-SHA-256-NONE'/>")) {
+            final Connection connection = mock(Connection.class);
+            when(connection.isEncrypted()).thenReturn(true);
+            final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
+                new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+            if (inline.startsWith("<request-token")) {
+                session.setClaimedIdentity(new org.xmpp.packet.JID("test-user@" + Fixtures.XMPP_DOMAIN));
+            }
+            TestSaslMechanism.registerTestMechanism(session);
+            try {
+                SASLAuthentication.setEnabledMechanisms(List.of("TEST-MECHANISM"));
+                SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("TEST-MECHANISM"));
+                session.setSessionData(SASLAuthentication.AVAILABLE_FAST_MECHANISMS_FOR_SESSION,
+                    Set.of(FastTokenManager.HT_SHA_256_NONE));
+                final Element authenticate = DocumentHelper.parseText(
+                    "<authenticate xmlns='urn:xmpp:sasl:2' mechanism='TEST-MECHANISM'>"
+                        + "<initial-response/>" + inline + "</authenticate>").getRootElement();
+
+                assertEquals(SASLAuthentication.Status.failed,
+                    SASLAuthentication.handle(session, authenticate, true));
+                final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+                verify(connection).deliverRawText(response.capture());
+                assertTrue(response.getValue().contains("malformed-request"));
+            } catch (Exception e) {
+                fail(e);
+            } finally {
+                TestSaslMechanism.unregisterTestMechanism();
+            }
+        }
+    }
+
+    @Test
     public void sasl2EndToEndIgnoresInvalidAndUnadvertisedFastTokenRequests()
     {
         SASLAuthentication.ENABLE_SASL2.setValue(true);
@@ -2100,6 +2145,7 @@ public class SASLAuthenticationTest
             when(connection.isEncrypted()).thenReturn(true);
             final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
                 new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+            session.setClaimedIdentity(new org.xmpp.packet.JID("test-user@" + Fixtures.XMPP_DOMAIN));
             TestSaslMechanism.registerTestMechanism(session);
             try {
                 SASLAuthentication.setEnabledMechanisms(List.of("TEST-MECHANISM"));
@@ -2109,7 +2155,8 @@ public class SASLAuthenticationTest
                 try (MockedStatic<FastTokenManager> manager = mockStatic(FastTokenManager.class, CALLS_REAL_METHODS)) {
                     final Element authenticate = DocumentHelper.parseText(
                         "<authenticate xmlns='urn:xmpp:sasl:2' mechanism='TEST-MECHANISM'>"
-                            + "<initial-response/><request-token xmlns='urn:xmpp:fast:0' mechanism='" + requested + "'/>"
+                            + "<initial-response/><user-agent id='123e4567-e89b-42d3-a456-426614174000'/>"
+                            + "<request-token xmlns='urn:xmpp:fast:0' mechanism='" + requested + "'/>"
                             + "</authenticate>").getRootElement();
                     assertEquals(SASLAuthentication.Status.authenticated,
                         SASLAuthentication.handle(session, authenticate, true));
@@ -2135,6 +2182,7 @@ public class SASLAuthenticationTest
         when(connection.isEncrypted()).thenReturn(true);
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
             new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        session.setClaimedIdentity(new org.xmpp.packet.JID("test-user@" + Fixtures.XMPP_DOMAIN));
         TestSaslMechanism.registerTestMechanism(session);
         try {
             SASLAuthentication.setEnabledMechanisms(List.of("TEST-MECHANISM"));
@@ -2146,7 +2194,8 @@ public class SASLAuthenticationTest
                     eq(FastTokenManager.HT_SHA_256_NONE))).thenThrow(new IllegalStateException("database unavailable"));
                 final Element authenticate = DocumentHelper.parseText(
                     "<authenticate xmlns='urn:xmpp:sasl:2' mechanism='TEST-MECHANISM'>"
-                        + "<initial-response/><request-token xmlns='urn:xmpp:fast:0' mechanism='HT-SHA-256-NONE'/>"
+                        + "<initial-response/><user-agent id='123e4567-e89b-42d3-a456-426614174000'/>"
+                        + "<request-token xmlns='urn:xmpp:fast:0' mechanism='HT-SHA-256-NONE'/>"
                         + "</authenticate>").getRootElement();
 
                 assertEquals(SASLAuthentication.Status.failed,

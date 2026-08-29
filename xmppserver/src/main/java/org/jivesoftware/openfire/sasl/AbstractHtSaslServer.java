@@ -18,6 +18,7 @@ package org.jivesoftware.openfire.sasl;
 import org.jivesoftware.openfire.fast.FastToken;
 import org.jivesoftware.openfire.fast.FastTokenManager;
 import org.jivesoftware.openfire.fast.FastSessionState;
+import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
@@ -84,6 +85,10 @@ abstract class AbstractHtSaslServer implements SaslServer {
      */
     protected AbstractHtSaslServer(@Nonnull final String mechanismName, @Nonnull final Map<String, ?> props) {
         this(mechanismName, props, (username, mechanism, proof, cb, initiator, responder) -> {
+            if (LockOutManager.getInstance().isAccountDisabled(username)) {
+                LockOutManager.getInstance().recordFailedLogin(username);
+                throw new SaslFailureException(Failure.ACCOUNT_DISABLED);
+            }
             final Object value = props.get(LocalSession.class.getCanonicalName());
             final Long replayCount = value instanceof LocalSession session ? FastSessionState.getReplayCount(session) : null;
             return FastTokenManager.validateTokenHt2(username, mechanism, proof, cb, initiator, responder, replayCount);
@@ -100,7 +105,7 @@ abstract class AbstractHtSaslServer implements SaslServer {
     @FunctionalInterface
     interface HashedTokenValidator {
         FastTokenManager.Ht2ValidationResult validate(String username, String mechanism, byte[] proof,
-            byte[] channelBindingData, String initiatorValues, String responderValues);
+            byte[] channelBindingData, String initiatorValues, String responderValues) throws SaslException;
     }
 
     @Override

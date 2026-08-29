@@ -36,6 +36,7 @@ import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -45,6 +46,21 @@ import static org.mockito.Mockito.when;
  */
 public class StanzaHandlerTest
 {
+    @Test
+    public void adoptsSessionThatOwnsResumedSasl2Connection()
+    {
+        final Connection connection = mock(Connection.class);
+        final ClientStanzaHandler handler = new ClientStanzaHandler(mock(PacketRouter.class), connection);
+        final LocalClientSession connectionProvider = mock(LocalClientSession.class);
+        final LocalClientSession resumedSession = mock(LocalClientSession.class);
+        when(connectionProvider.removeSessionData(SASLAuthentication.SASL2_RESUMED_SESSION)).thenReturn(resumedSession);
+        handler.setSession(connectionProvider);
+
+        handler.adoptSasl2ResumedSession();
+
+        assertSame(resumedSession, handler.session);
+    }
+
     @BeforeAll
     public static void setupClass() throws Exception
     {

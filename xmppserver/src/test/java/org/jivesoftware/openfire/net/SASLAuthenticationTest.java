@@ -34,6 +34,7 @@ import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.ServerSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.openfire.sasl.SaslFailureException;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
@@ -55,6 +56,7 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -367,6 +369,27 @@ public class SASLAuthenticationTest
             "Expected authorization-identifier to be bare JID '" + expectedBareJid + "' but got: " + response.getValue());
         assertFalse(response.getValue().contains(expectedBareJid + "/"),
             "Expected no resource in authorization-identifier for non-Bind2 SASL2 case.");
+    }
+
+    @Test
+    public void shouldEmbedFailedStreamResumeInSasl2Success() throws Exception
+    {
+        final Connection connection = mock(Connection.class);
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
+            new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        final Element resume = DocumentHelper.createElement(QName.get("resume", StreamManager.NAMESPACE_V3));
+        resume.addAttribute("previd", "invalid");
+        resume.addAttribute("h", "not-a-number");
+        session.setSessionData(SASLAuthentication.SASL2_RESUME_REQUEST, resume);
+
+        SASLAuthentication.authenticationSuccessful(session, "romeo", "PLAIN", new byte[0], true);
+
+        final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+        verify(connection, times(1)).deliverRawText(response.capture());
+        final Element success = DocumentHelper.parseText(response.getValue()).getRootElement();
+        final Element failed = success.element(QName.get("failed", StreamManager.NAMESPACE_V3));
+        assertNotNull(failed);
+        assertNotNull(failed.element(QName.get("bad-request", "urn:ietf:params:xml:ns:xmpp-stanzas")));
     }
 
     /**

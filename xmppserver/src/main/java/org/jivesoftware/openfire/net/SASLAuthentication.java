@@ -538,7 +538,9 @@ public class SASLAuthentication {
         {
             Element inlineElement = result.addElement("inline");
             inlineElement.add(Bind2Request.featureElement());
-            // Element sm = inlineElement.addElement(...);
+            if (StreamManager.isStreamManagementActive()) {
+                inlineElement.add(StreamManager.featureElement());
+            }
         }
 
         // OF-2072: Return null instead of an empty element, if so configured.

@@ -1166,12 +1166,9 @@ public class SASLAuthentication {
     }
 
     private static FastToken issueFastToken(final String username, final String clientId, final String mechanism) {
-        try {
-            return FastTokenManager.issueToken(username, clientId, mechanism);
-        } catch (final RuntimeException e) {
-            Log.error("Unable to issue requested FAST token for user '{}'", username, e);
-            return null;
-        }
+        // A request that was accepted is part of the SASL2 operation. Do not report authentication
+        // success when the requested credential could not be created and persisted.
+        return FastTokenManager.issueToken(username, clientId, mechanism);
     }
 
     private static void authenticationFailed(LocalSession session, Failure failure, boolean usingSASL2) {

@@ -2105,4 +2105,41 @@ public class SASLAuthenticationTest
             }
         }
     }
+
+    @Test
+    public void sasl2FailsWhenAcceptedFastTokenRequestCannotBePersisted()
+    {
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        FastTokenManager.ENABLE_FAST.setValue(true);
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(true);
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
+            new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        TestSaslMechanism.registerTestMechanism(session);
+        try {
+            SASLAuthentication.setEnabledMechanisms(List.of("TEST-MECHANISM"));
+            SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("TEST-MECHANISM"));
+            session.setSessionData(SASLAuthentication.AVAILABLE_FAST_MECHANISMS_FOR_SESSION,
+                Set.of(FastTokenManager.HT_SHA_256_NONE));
+            try (MockedStatic<FastTokenManager> manager = mockStatic(FastTokenManager.class, CALLS_REAL_METHODS)) {
+                manager.when(() -> FastTokenManager.issueToken(eq("test-user"), any(String.class),
+                    eq(FastTokenManager.HT_SHA_256_NONE))).thenThrow(new IllegalStateException("database unavailable"));
+                final Element authenticate = DocumentHelper.parseText(
+                    "<authenticate xmlns='urn:xmpp:sasl:2' mechanism='TEST-MECHANISM'>"
+                        + "<initial-response/><request-token xmlns='urn:xmpp:fast:0' mechanism='HT-SHA-256-NONE'/>"
+                        + "</authenticate>").getRootElement();
+
+                assertEquals(SASLAuthentication.Status.failed,
+                    SASLAuthentication.handle(session, authenticate, true));
+                final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+                verify(connection).deliverRawText(response.capture());
+                assertTrue(response.getValue().contains("<failure"));
+                assertFalse(response.getValue().contains("<success"));
+            }
+        } catch (Exception e) {
+            fail(e);
+        } finally {
+            TestSaslMechanism.unregisterTestMechanism();
+        }
+    }
 }

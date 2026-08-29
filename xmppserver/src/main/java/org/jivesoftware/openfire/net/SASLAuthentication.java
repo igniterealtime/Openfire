@@ -166,6 +166,8 @@ public class SASLAuthentication {
 
     /**
      * Require TLS for SASL2. This is currently on by default, and means that SASL2 is not advertised in features without TLS.
+     * Disabling this option is intentionally supported for specialized deployments, but violates the XEP-0388 requirement
+     * that SASL2 is offered and used only after TLS negotiation.
      *
      * @see <a href="https://xmpp.org/extensions/xep-0388.html">XEP-0388: Extensible SASL Profile</a>
      */

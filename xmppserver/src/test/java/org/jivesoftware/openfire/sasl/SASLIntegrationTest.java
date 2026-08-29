@@ -26,6 +26,8 @@ import org.jivesoftware.openfire.lockout.LockOutFlag;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.lockout.LockOutProvider;
 import org.jivesoftware.openfire.net.SASLAuthentication;
+import org.jivesoftware.openfire.net.Bind2Request;
+import org.jivesoftware.openfire.handler.Bind2StreamManagementHandler;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
@@ -42,11 +44,13 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.xmpp.packet.JID;
 import org.jivesoftware.util.cache.CacheFactory;
+import org.jivesoftware.openfire.streammanagement.StreamManager;
 
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -791,6 +795,47 @@ public class SASLIntegrationTest {
 
         // Verify session state
         verify(clientSession).setAuthToken(any(AuthToken.class));
+    }
+
+    @Test
+    public void testSasl2MechanismBind2AndStreamManagementEnableAreProcessedTogether() throws Exception {
+        final SessionManager sessionManager = mock(SessionManager.class);
+        when(xmppServer.getSessionManager()).thenReturn(sessionManager);
+        when(sessionManager.bindResource(any(), any(), any()))
+            .thenReturn(CompletableFuture.completedFuture(SessionManager.BindResult.BOUND));
+        when(clientSession.getStatus()).thenReturn(org.jivesoftware.openfire.session.Session.Status.CONNECTED);
+        when(clientSession.getAuthToken()).thenReturn(AuthToken.generateUserToken("test-user"));
+        when(clientSession.getAvailableStreamFeatures()).thenReturn(Collections.emptyList());
+        final StreamManager streamManager = new StreamManager(clientSession);
+        when(clientSession.getStreamManager()).thenReturn(streamManager);
+        final AtomicBoolean authenticated = new AtomicBoolean();
+        when(clientSession.isAuthenticated()).thenAnswer(invocation -> authenticated.get());
+        doAnswer(invocation -> {
+            if (invocation.getArgument(0) == org.jivesoftware.openfire.session.Session.Status.AUTHENTICATED) {
+                authenticated.set(true);
+            }
+            return null;
+        }).when(clientSession).setStatus(any());
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
+        Bind2Request.registerElementHandler(new Bind2StreamManagementHandler());
+        try {
+            final Element authenticate = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
+                .addAttribute("mechanism", "TEST-MECHANISM");
+            authenticate.addElement(QName.get("bind", "urn:xmpp:bind:0"))
+                .addElement(QName.get("enable", StreamManager.NAMESPACE_V3));
+
+            final SASLAuthentication.Status status = SASLAuthentication.handle(clientSession, authenticate, true);
+
+            assertEquals(SASLAuthentication.Status.authenticatedAwaitingFeatures, status);
+            final ArgumentCaptor<String> delivered = ArgumentCaptor.forClass(String.class);
+            verify(clientSession, times(2)).deliverRawText(delivered.capture());
+            final Element success = DocumentHelper.parseText(delivered.getAllValues().get(0)).getRootElement();
+            final Element bound = success.element(QName.get("bound", "urn:xmpp:bind:0"));
+            assertNotNull(bound);
+            assertNotNull(bound.element(QName.get("enabled", StreamManager.NAMESPACE_V3)));
+        } finally {
+            Bind2Request.unregisterElementHandler(StreamManager.NAMESPACE_V3);
+        }
     }
 
     @Test

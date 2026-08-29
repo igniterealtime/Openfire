@@ -396,15 +396,15 @@ public class StreamManagerTest
         when(session.getStreamManager()).thenReturn(streamManager);
         when(session.isAuthenticated()).thenReturn(true);
         streamManager.enableAndBuildElement(StreamManager.NAMESPACE_V3, true);
-        clearInvocations(connection);
+        clearInvocations(session, connection);
         final StreamManager.Sasl2ResumeResult result = StreamManager.Sasl2ResumeResult.resumed(
             DocumentHelper.createElement(QName.get("resumed", StreamManager.NAMESPACE_V3)), session);
 
         assertTrue(result.completeAfterSuccess());
-        verify(connection).deliverRawText("<r xmlns='urn:xmpp:sm:3' />");
-        clearInvocations(connection);
+        verify(session).deliverRawText("<r xmlns='urn:xmpp:sm:3' />");
+        clearInvocations(session, connection);
 
         assertTrue(result.completeAfterSuccess());
-        verifyNoInteractions(connection);
+        verifyNoInteractions(session, connection);
     }
 }

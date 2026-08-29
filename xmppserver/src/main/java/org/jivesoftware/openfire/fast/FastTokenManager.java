@@ -86,6 +86,10 @@ public class FastTokenManager {
 
     /** HT-SHA-512-EXPR: original HT draft, SHA-512, tls-exporter channel binding. */
     public static final String HT_SHA_512_EXPR = "HT-SHA-512-EXPR";
+    public static final String HT_SHA3_512_NONE = "HT-SHA3-512-NONE";
+    public static final String HT_SHA3_512_UNIQ = "HT-SHA3-512-UNIQ";
+    public static final String HT_SHA3_512_ENDP = "HT-SHA3-512-ENDP";
+    public static final String HT_SHA3_512_EXPR = "HT-SHA3-512-EXPR";
 
     // -------------------------------------------------------------------------
     // HT2-* mechanism names (draft-ietf-kitten-sasl-ht: HMAC-based variants)
@@ -114,6 +118,10 @@ public class FastTokenManager {
 
     /** HT2-SHA-512-EXPR: HT2 draft, SHA-512, tls-exporter channel binding. */
     public static final String HT2_SHA_512_EXPR = "HT2-SHA-512-EXPR";
+    public static final String HT2_SHA3_512_NONE = "HT2-SHA3-512-NONE";
+    public static final String HT2_SHA3_512_UNIQ = "HT2-SHA3-512-UNIQ";
+    public static final String HT2_SHA3_512_ENDP = "HT2-SHA3-512-ENDP";
+    public static final String HT2_SHA3_512_EXPR = "HT2-SHA3-512-EXPR";
 
     /** System property to enable or disable FAST support. */
     public static final SystemProperty<Boolean> ENABLE_FAST = SystemProperty.Builder.ofType(Boolean.class)
@@ -160,8 +168,10 @@ public class FastTokenManager {
     public static final List<String> MECHANISMS = List.of(
         HT_SHA_256_NONE, HT_SHA_256_UNIQ, HT_SHA_256_ENDP, HT_SHA_256_EXPR,
         HT_SHA_512_NONE, HT_SHA_512_UNIQ, HT_SHA_512_ENDP, HT_SHA_512_EXPR,
+        HT_SHA3_512_NONE, HT_SHA3_512_UNIQ, HT_SHA3_512_ENDP, HT_SHA3_512_EXPR,
         HT2_SHA_256_NONE, HT2_SHA_256_UNIQ, HT2_SHA_256_ENDP, HT2_SHA_256_EXPR,
-        HT2_SHA_512_NONE, HT2_SHA_512_UNIQ, HT2_SHA_512_ENDP, HT2_SHA_512_EXPR);
+        HT2_SHA_512_NONE, HT2_SHA_512_UNIQ, HT2_SHA_512_ENDP, HT2_SHA_512_EXPR,
+        HT2_SHA3_512_NONE, HT2_SHA3_512_UNIQ, HT2_SHA3_512_ENDP, HT2_SHA3_512_EXPR);
 
     private FastTokenManager() {}
 
@@ -234,7 +244,7 @@ public class FastTokenManager {
     public static String hmacAlgorithmForMechanism(@Nonnull final String mechanism) {
         final String hash = hashAlgorithmForMechanism(mechanism);
         // Map "SHA-256" → "HmacSHA256", "SHA-512" → "HmacSHA512"
-        return "Hmac" + hash.replace("-", "");
+        return hash.startsWith("SHA3-") ? "Hmac" + hash : "Hmac" + hash.replace("-", "");
     }
 
     /**

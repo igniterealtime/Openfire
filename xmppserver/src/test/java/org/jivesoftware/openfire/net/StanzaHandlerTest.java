@@ -27,11 +27,14 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.sasl.AnonymousSaslServer;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -39,7 +42,10 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentCaptor.forClass;
+import org.mockito.ArgumentCaptor;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -87,6 +93,42 @@ public class StanzaHandlerTest
 
         handler.sasl2Successful();
 
+        verify(connection, never()).deliverRawText(features.asXML());
+    }
+
+    @Test
+    public void successfulInlineResumptionPrunesAcknowledgedStanzasAndReplaysTheRemainder() throws Exception
+    {
+        final Connection connection = mock(Connection.class);
+        final LocalClientSession session = mock(LocalClientSession.class);
+        when(session.getConnection()).thenReturn(connection);
+        when(session.getServerName()).thenReturn(Fixtures.XMPP_DOMAIN);
+        when(session.isAuthenticated()).thenReturn(true);
+        final StreamManager streamManager = new StreamManager(session);
+        when(session.getStreamManager()).thenReturn(streamManager);
+        streamManager.enableAndBuildElement(StreamManager.NAMESPACE_V3, true);
+        final Message acknowledged = new Message();
+        acknowledged.setID("acknowledged");
+        final Message unacknowledged = new Message();
+        unacknowledged.setID("unacknowledged");
+        streamManager.sentStanza(acknowledged);
+        streamManager.sentStanza(unacknowledged);
+        streamManager.process(DocumentHelper.parseText("<a xmlns='urn:xmpp:sm:3' h='1'/>").getRootElement());
+        streamManager.setPendingSasl2Redelivery(true);
+        final Element features = DocumentHelper.createElement("features");
+        final ClientStanzaHandler handler = new ClientStanzaHandler(mock(PacketRouter.class), connection) {
+            @Override
+            protected Element generateFeatures() {
+                return features;
+            }
+        };
+        handler.setSession(session);
+
+        handler.sasl2Successful();
+
+        final ArgumentCaptor<Packet> replayed = forClass(Packet.class);
+        verify(connection).deliver(replayed.capture());
+        assertEquals("unacknowledged", replayed.getValue().getID());
         verify(connection, never()).deliverRawText(features.asXML());
     }
 

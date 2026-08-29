@@ -16,11 +16,16 @@
 package org.jivesoftware.openfire.websocket;
 
 import org.dom4j.*;
+import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 /**
  * Verifies the implementation of {@link WebSocketClientStanzaHandler}
@@ -29,6 +34,25 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
  */
 public class WebSocketClientStanzaHandlerTest
 {
+    @Test
+    public void successfulInlineResumptionDoesNotSendWebSocketStreamFeatures()
+    {
+        final WebSocketConnection connection = mock(WebSocketConnection.class);
+        final LocalClientSession session = mock(LocalClientSession.class);
+        when(session.getConnection()).thenReturn(connection);
+        when(session.getServerName()).thenReturn("example.org");
+        final StreamManager streamManager = new StreamManager(session);
+        when(session.getStreamManager()).thenReturn(streamManager);
+        streamManager.setPendingSasl2Redelivery(true);
+        final WebSocketClientStanzaHandler handler =
+            new WebSocketClientStanzaHandler(mock(PacketRouter.class), connection);
+        handler.setSession(session);
+
+        handler.sasl2Successful();
+
+        verify(connection, never()).deliverRawText(anyString());
+    }
+
     /**
      * It is desired to collapse the 'open' element that's send as part of the websocket data exchange. This test
      * verifies that the {@link WebSocketClientStanzaHandler#withoutDeclaration(Document)} does not return an expanded

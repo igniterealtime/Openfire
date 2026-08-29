@@ -2012,6 +2012,26 @@ public class SASLAuthenticationTest
         assertTrue(xml.contains("failure"), "Expected a SASL failure element in the response.");
     }
 
+    @Test
+    public void handleRejectsFastMechanismWithoutFastMarker()
+    {
+        FastTokenManager.ENABLE_FAST.setValue(true);
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        SASLAuthentication.SASL2_REQUIRE_TLS.setValue(true);
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(true);
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
+            new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        session.setSessionData(SASLAuthentication.AVAILABLE_FAST_MECHANISMS_FOR_SESSION,
+            Set.of(FastTokenManager.HT_SHA_256_NONE));
+
+        assertEquals(SASLAuthentication.Status.failed, SASLAuthentication.handle(
+            session, sasl2AuthenticateElement(FastTokenManager.HT_SHA_256_NONE), true));
+        final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(response.capture());
+        assertTrue(response.getValue().contains("malformed-request"));
+    }
+
     private static Element authElement(final String mechanism)
     {
         final Element auth = DocumentHelper.createElement(new QName("auth", Namespace.get("", SASL_NAMESPACE)));

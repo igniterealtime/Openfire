@@ -21,8 +21,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import java.time.Instant;
+import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.jivesoftware.util.Encryptor;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -30,6 +32,28 @@ import static org.junit.jupiter.api.Assertions.*;
  * Unit tests for {@link FastTokenManager}.
  */
 public class FastTokenManagerTest {
+
+    @Test
+    public void storedTokenEnvelopeDoesNotContainPlaintextAndCanBeDecrypted() {
+        final Encryptor encryptor = new Encryptor() {
+            @Override public String encrypt(final String value) { return encrypt(value, new byte[0]); }
+            @Override public String encrypt(final String value, final byte[] iv) {
+                return Base64.getEncoder().encodeToString((value + ":cipher").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            }
+            @Override public String decrypt(final String value) { return decrypt(value, new byte[0]); }
+            @Override public String decrypt(final String value, final byte[] iv) {
+                final String decoded = new String(Base64.getDecoder().decode(value), java.nio.charset.StandardCharsets.UTF_8);
+                return decoded.substring(0, decoded.length() - ":cipher".length());
+            }
+            @Override public void setKey(final String key) { }
+        };
+        final String protectedValue = FastTokenManager.protectToken("secret-token", encryptor, new byte[16]);
+
+        assertTrue(protectedValue.startsWith("v1:"));
+        assertFalse(protectedValue.contains("secret-token"));
+        assertEquals("secret-token", FastTokenManager.unprotectToken(protectedValue, encryptor));
+        assertEquals("legacy-plaintext", FastTokenManager.unprotectToken("legacy-plaintext", encryptor));
+    }
 
     // -------------------------------------------------------------------------
     // sha256Hex (deprecated delegate to hashHex)

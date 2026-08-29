@@ -6,7 +6,7 @@ CREATE TABLE ofFastToken (
   clientID             VARCHAR(64)     NOT NULL,
   tokenSlot             VARCHAR(1)      NOT NULL,
   replayCounter         BIGINT       NOT NULL,
-  tokenHash             VARCHAR(128)     NOT NULL,
+  tokenHash             VARCHAR(255)     NOT NULL,
   expiry                VARCHAR(35)     NOT NULL,
   CONSTRAINT ofFastToken_pk PRIMARY KEY (username, mechanism, clientID, tokenSlot)
 )

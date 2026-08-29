@@ -852,14 +852,6 @@ public class SASLAuthentication {
                         return Status.needResponse;
                     }
 
-                    final Long fastCount = FastSessionState.getReplayCount(session);
-                    final String fastClientId = FastSessionState.getAuthenticatedClientId(session);
-                    if (fastCount != null && isFastMechanism(saslServer.getMechanismName())
-                        && (fastClientId == null || !FastTokenManager.advanceReplayCounter(
-                            saslServer.getAuthorizationID(), saslServer.getMechanismName(), fastClientId, fastCount))) {
-                        throw new SaslFailureException(Failure.NOT_AUTHORIZED, "FAST replay counter was not greater than the stored value");
-                    }
-
                     if (saslServer.getAuthorizationID() != null && LockOutManager.getInstance().isAccountDisabled(saslServer.getAuthorizationID())) {
                         // Interception!  This person is locked out, fail instead!
                         LockOutManager.getInstance().recordFailedLogin(saslServer.getAuthorizationID());

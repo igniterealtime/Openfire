@@ -150,7 +150,7 @@ public class FastTokenManager {
     private static final String INSERT_TOKEN =
         "INSERT INTO ofFastToken (username, mechanism, clientID, tokenSlot, replayCounter, tokenHash, expiry) VALUES (?,?,?,'N',0,?,?)";
     private static final String SELECT_TOKEN =
-        "SELECT clientID, tokenSlot, tokenHash, expiry FROM ofFastToken WHERE username=? AND mechanism=?";
+        "SELECT clientID, tokenSlot, replayCounter, tokenHash, expiry FROM ofFastToken WHERE username=? AND mechanism=?";
     private static final String DELETE_TOKENS_FOR_USER =
         "DELETE FROM ofFastToken WHERE username=?";
     private static final String DELETE_TOKENS_FOR_CLIENT =
@@ -340,10 +340,22 @@ public class FastTokenManager {
                                                         @Nonnull final byte[] cbData,
                                                         @Nonnull final String extraInitiatorValues,
                                                         @Nonnull final String extraResponderValues) {
+        return validateTokenHt2(username, mechanism, initiatorHashedToken, cbData,
+            extraInitiatorValues, extraResponderValues, null);
+    }
+
+    public static Ht2ValidationResult validateTokenHt2(@Nonnull final String username,
+                                                        @Nonnull final String mechanism,
+                                                        @Nonnull final byte[] initiatorHashedToken,
+                                                        @Nonnull final byte[] cbData,
+                                                        @Nonnull final String extraInitiatorValues,
+                                                        @Nonnull final String extraResponderValues,
+                                                        final Long replayCount) {
         byte[] matchedToken = null;
         String matchedClientId = null;
         String matchedSlot = null;
         Instant matchedExpiry = null;
+        long matchedReplayCounter = 0;
         boolean matchingExpiredToken = false;
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -382,6 +394,7 @@ public class FastTokenManager {
                     matchedClientId = rs.getString("clientID");
                     matchedSlot = rs.getString("tokenSlot");
                     matchedExpiry = expiry;
+                    matchedReplayCounter = rs.getLong("replayCounter");
                 }
             }
             DbConnectionManager.closeResultSet(rs);
@@ -391,6 +404,10 @@ public class FastTokenManager {
             if (matchedToken == null) {
                 con.rollback();
                 return matchingExpiredToken ? Ht2ValidationResult.expired() : null;
+            }
+            if (replayCount != null && (replayCount <= 0 || replayCount <= matchedReplayCounter)) {
+                con.rollback();
+                return null;
             }
             if ("N".equals(matchedSlot)) {
                 pstmt = con.prepareStatement(DELETE_CURRENT_TOKEN);
@@ -404,6 +421,20 @@ public class FastTokenManager {
                 pstmt.setString(2, mechanism);
                 pstmt.setString(3, matchedClientId);
                 pstmt.executeUpdate();
+                DbConnectionManager.fastcloseStmt(pstmt);
+                pstmt = null;
+            }
+            if (replayCount != null) {
+                pstmt = con.prepareStatement(UPDATE_REPLAY_COUNTER);
+                pstmt.setLong(1, replayCount);
+                pstmt.setString(2, username);
+                pstmt.setString(3, mechanism);
+                pstmt.setString(4, matchedClientId);
+                pstmt.setLong(5, replayCount);
+                if (pstmt.executeUpdate() != 1) {
+                    con.rollback();
+                    return null;
+                }
             }
             con.commit();
         } catch (final SQLException e) {

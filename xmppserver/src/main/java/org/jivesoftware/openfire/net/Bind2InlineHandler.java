@@ -32,6 +32,15 @@ public interface Bind2InlineHandler {
     String getNamespace();
 
     /**
+     * Indicates whether this handler is currently available for advertisement and request processing.
+     *
+     * @return {@code true} when the inline feature is available
+     */
+    default boolean isEnabled() {
+        return true;
+    }
+
+    /**
      * Process an inline element from a bind2 request.
      *
      * @param bound The "bound" element to add any output to

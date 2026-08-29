@@ -46,6 +46,11 @@ public class Bind2StreamManagementHandler implements Bind2InlineHandler {
         return StreamManager.NAMESPACE_V3;
     }
 
+    @Override
+    public boolean isEnabled() {
+        return StreamManager.isStreamManagementActive();
+    }
+
     /**
      * Handles an {@code <enable/>} element from a Bind2 inline feature request by enabling
      * XEP-0198 stream management on the session. The {@code <enabled/>} response element

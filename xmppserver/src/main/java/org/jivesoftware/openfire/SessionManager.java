@@ -1905,9 +1905,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         localSessionManager.start();
 
         // Register the XEP-0198 Stream Management handler for SASL2 Bind2 inline feature processing.
-        if (StreamManager.isStreamManagementActive()) {
-            Bind2Request.registerElementHandler(new Bind2StreamManagementHandler());
-        }
+        Bind2Request.registerElementHandler(new Bind2StreamManagementHandler());
 
         // Run through the server sessions every 10% of the time of the maximum time that a session is allowed to be
         // detached, or every 3 minutes if the max time is outside the default boundaries.

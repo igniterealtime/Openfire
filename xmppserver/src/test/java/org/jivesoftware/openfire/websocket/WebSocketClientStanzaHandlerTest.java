@@ -39,16 +39,32 @@ public class WebSocketClientStanzaHandlerTest
     {
         final WebSocketConnection connection = mock(WebSocketConnection.class);
         final LocalClientSession session = mock(LocalClientSession.class);
+        final LocalClientSession connectionProvider = mock(LocalClientSession.class);
         when(session.getConnection()).thenReturn(connection);
         when(session.getServerName()).thenReturn("example.org");
         final StreamManager streamManager = new StreamManager(session);
         when(session.getStreamManager()).thenReturn(streamManager);
-        streamManager.setPendingSasl2Redelivery(true);
-        final WebSocketClientStanzaHandler handler =
-            new WebSocketClientStanzaHandler(mock(PacketRouter.class), connection);
-        handler.setSession(session);
+        final StreamManager.Sasl2ResumeResult result = StreamManager.Sasl2ResumeResult.resumed(
+            DocumentHelper.createElement("resumed"), session);
+        when(connectionProvider.removeSessionData("sasl2-resumption-result")).thenReturn(result);
+        class TestHandler extends WebSocketClientStanzaHandler {
+            TestHandler(WebSocketConnection testConnection) {
+                super(mock(PacketRouter.class), testConnection);
+            }
 
-        handler.sasl2Successful();
+            void adoptResumption() {
+                adoptSasl2ResumedSession();
+            }
+
+            void completeSasl2() {
+                sasl2Successful();
+            }
+        }
+        final TestHandler handler = new TestHandler(connection);
+        handler.setSession(connectionProvider);
+        handler.adoptResumption();
+
+        handler.completeSasl2();
 
         verify(connection, never()).deliverRawText(anyString());
     }

@@ -144,14 +144,6 @@ public class StreamManager {
      */
     private final Set<TerminationDelegate> terminationDelegates = new HashSet<>();
 
-    /**
-     * Set to {@code true} when a SASL2-inline stream resumption has been processed but unacknowledged
-     * stanzas have not yet been redelivered. A successfully resumed stream is re-established immediately
-     * after SASL2 {@code <success/>}; {@link StanzaHandler} calls {@link #redeliverIfPendingSasl2(JID)}
-     * instead of sending post-authentication stream features.
-     */
-    private volatile boolean pendingSasl2Redelivery = false;
-
     public StreamManager(LocalSession session) {
         String address;
         try {
@@ -398,7 +390,10 @@ public class StreamManager {
             oldConnection.close(new StreamError(StreamError.Condition.conflict, "The stream previously served over this connection is resumed on a new connection."));
         }
         Log.debug("Attaching (SASL2) to other session '{}' of '{}'.", otherSession.getStreamID(), fullJid);
-        final Element resumed = otherSession.reattachForSasl2(session, h);
+        otherSession.reattachForSasl2(session);
+        final StreamManager resumedStreamManager = otherSession.getStreamManager();
+        final Element resumed = resumedStreamManager.buildResumedElement();
+        resumedStreamManager.processClientAcknowledgement(h);
         Log.debug("Perform SASL2 resumption of session {} for '{}', using connection from session {}", otherSession.getStreamID(), fullJid, session.getStreamID());
         return Sasl2ResumeResult.resumed(resumed, otherSession);
     }
@@ -493,6 +488,7 @@ public class StreamManager {
     public static final class Sasl2ResumeResult {
         private final Element response;
         private final LocalClientSession resumedSession;
+        private boolean completed;
 
         private Sasl2ResumeResult(Element response, LocalClientSession resumedSession) {
             this.response = response;
@@ -519,6 +515,24 @@ public class StreamManager {
 
         public boolean isResumed() {
             return resumedSession != null;
+        }
+
+        /**
+         * Completes a successful inline resumption after the enclosing SASL2 success has been sent.
+         * This method is idempotent.
+         *
+         * @return {@code true} when this result represents a resumed stream
+         */
+        public synchronized boolean completeAfterSuccess() {
+            if (resumedSession == null) {
+                return false;
+            }
+            if (!completed) {
+                completed = true;
+                resumedSession.getStreamManager().redeliverUnackedStanzas(
+                    new JID(null, resumedSession.getServerName(), null, true));
+            }
+            return true;
         }
     }
 
@@ -778,46 +792,6 @@ public class StreamManager {
         Log.debug("Resuming session: Ack for {}", h);
         processClientAcknowledgement(h);
         redeliverUnackedStanzas(serverAddress);
-    }
-
-    /**
-     * Processes the client's acknowledgement counter as part of a SASL2-based stream resumption.
-     * This is a package-accessible wrapper around the private {@link #processClientAcknowledgement(long)}
-     * for use by {@link org.jivesoftware.openfire.session.LocalSession#reattachForSasl2}.
-     *
-     * @param h the client's acknowledgement counter
-     */
-    public void processClientAcknowledgementPublic(long h) {
-        processClientAcknowledgement(h);
-    }
-
-    /**
-     * Sets the pending SASL2 redelivery flag. When {@code true}, {@link #redeliverIfPendingSasl2(JID)}
-     * will redeliver unacknowledged stanzas. Called by
-     * {@link org.jivesoftware.openfire.session.LocalSession#reattachForSasl2} to defer redelivery
-     * until after the enclosing SASL2 {@code <success/>} has been sent.
-     *
-     * @param pending whether redelivery is pending
-     */
-    public void setPendingSasl2Redelivery(boolean pending) {
-        this.pendingSasl2Redelivery = pending;
-    }
-
-    /**
-     * If a SASL2-inline stream resumption is pending redelivery, redelivers unacknowledged stanzas
-     * now. This is called after SASL2 {@code <success/>}; a {@code true} result tells the stanza handler
-     * that stream features must not be sent for the resumed stream.
-     *
-     * @param serverAddress the server's JID, used to stamp delayed stanzas
-     * @return {@code true} when this call completed an inline resumption and redelivered its queued stanzas
-     */
-    public boolean redeliverIfPendingSasl2(JID serverAddress) {
-        if (pendingSasl2Redelivery) {
-            pendingSasl2Redelivery = false;
-            redeliverUnackedStanzas(serverAddress);
-            return true;
-        }
-        return false;
     }
 
     /**

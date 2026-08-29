@@ -105,6 +105,8 @@ public abstract class StanzaHandler {
      */
     protected LocalSession session;
 
+    private StreamManager.Sasl2ResumeResult sasl2Resumption;
+
     /**
      * Router used to route incoming packets to the correct channels.
      */
@@ -587,17 +589,23 @@ public abstract class StanzaHandler {
      * (e.g. RFC 7395 WebSocket) override this.
      */
     protected void sasl2Successful() {
-        if (session.getStreamManager().redeliverIfPendingSasl2(new JID(null, session.getServerName(), null, true))) {
+        if (sasl2Resumption != null && sasl2Resumption.completeAfterSuccess()) {
+            sasl2Resumption = null;
             return;
         }
+        deliverSasl2Features();
+    }
+
+    protected void deliverSasl2Features() {
         final Element features = generateFeatures();
         connection.deliverRawText(features.asXML());
     }
 
-    void adoptSasl2ResumedSession() {
-        final LocalSession resumedSession = SASLAuthentication.consumeSasl2ResumedSession(session);
-        if (resumedSession != null) {
-            setSession(resumedSession);
+    protected void adoptSasl2ResumedSession() {
+        final StreamManager.Sasl2ResumeResult result = SASLAuthentication.consumeSasl2ResumptionResult(session);
+        if (result != null && result.isResumed()) {
+            sasl2Resumption = result;
+            setSession(result.getResumedSession());
         }
     }
 

@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.openfire.streammanagement;
 
+import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.Connection;
@@ -377,74 +378,33 @@ public class StreamManagerTest
         assertNotSame(feature1, feature2);
     }
 
-    /**
-     * Verifies that a freshly constructed StreamManager does not have a pending SASL2 redelivery.
-     */
     @Test
-    public void testPendingSasl2RedeliveryIsFalseByDefault() {
-        // Setup test fixture.
-        final LocalClientSession mockSession = mock(LocalClientSession.class);
-        final Connection mockConnection = mock(Connection.class);
-        when(mockSession.getConnection()).thenReturn(mockConnection);
-        final StreamManager streamManager = new StreamManager(mockSession);
-        // Clear interactions caused by the constructor (e.g. getHostAddress()).
-        clearInvocations(mockConnection);
+    public void failedSasl2ResumeResultDoesNotCompleteResumption() {
+        final StreamManager.Sasl2ResumeResult result = StreamManager.Sasl2ResumeResult.failed(
+            StreamManager.NAMESPACE_V3, PacketError.Condition.item_not_found);
 
-        // Execute system under test: redeliverIfPendingSasl2 with no flag set should be a no-op.
-        final JID serverAddress = new JID(null, "example.org", null, true);
-        streamManager.redeliverIfPendingSasl2(serverAddress);
-
-        // Verify result: no interaction with the connection (no stanzas delivered).
-        verifyNoInteractions(mockConnection);
+        assertFalse(result.completeAfterSuccess());
     }
 
-    /**
-     * Verifies that setting the pending SASL2 redelivery flag and then calling
-     * redeliverIfPendingSasl2 clears the flag (i.e. a second call is a no-op).
-     */
     @Test
-    public void testRedeliverIfPendingSasl2ClearsFlagAfterFirstCall() {
-        // Setup test fixture.
-        final LocalClientSession mockSession = mock(LocalClientSession.class);
-        final Connection mockConnection = mock(Connection.class);
-        when(mockSession.getConnection()).thenReturn(mockConnection);
-        final StreamManager streamManager = new StreamManager(mockSession);
-        streamManager.setPendingSasl2Redelivery(true);
+    public void successfulSasl2ResumeResultCompletesOnlyOnce() {
+        final LocalClientSession session = mock(LocalClientSession.class);
+        final Connection connection = mock(Connection.class);
+        when(session.getConnection()).thenReturn(connection);
+        when(session.getServerName()).thenReturn("example.org");
+        final StreamManager streamManager = new StreamManager(session);
+        when(session.getStreamManager()).thenReturn(streamManager);
+        when(session.isAuthenticated()).thenReturn(true);
+        streamManager.enableAndBuildElement(StreamManager.NAMESPACE_V3, true);
+        clearInvocations(connection);
+        final StreamManager.Sasl2ResumeResult result = StreamManager.Sasl2ResumeResult.resumed(
+            DocumentHelper.createElement(QName.get("resumed", StreamManager.NAMESPACE_V3)), session);
 
-        final JID serverAddress = new JID(null, "example.org", null, true);
+        assertTrue(result.completeAfterSuccess());
+        verify(connection).deliverRawText("<r xmlns='urn:xmpp:sm:3' />");
+        clearInvocations(connection);
 
-        // First call: flag is set, so redelivery runs (no unacked stanzas, but the flag is consumed).
-        streamManager.redeliverIfPendingSasl2(serverAddress);
-
-        // Second call: flag has been cleared, so this must be a no-op.
-        // We verify by resetting the mock and confirming no further deliveries occur.
-        clearInvocations(mockConnection);
-        streamManager.redeliverIfPendingSasl2(serverAddress);
-        verifyNoInteractions(mockConnection);
-    }
-
-    /**
-     * Verifies that setPendingSasl2Redelivery(false) prevents redeliverIfPendingSasl2 from acting.
-     */
-    @Test
-    public void testSetPendingSasl2RedeliveryFalsePreventsTrigger() {
-        // Setup test fixture.
-        final LocalClientSession mockSession = mock(LocalClientSession.class);
-        final Connection mockConnection = mock(Connection.class);
-        when(mockSession.getConnection()).thenReturn(mockConnection);
-        final StreamManager streamManager = new StreamManager(mockSession);
-        // Clear interactions caused by the constructor (e.g. getHostAddress()).
-        clearInvocations(mockConnection);
-
-        // Set then immediately clear the flag.
-        streamManager.setPendingSasl2Redelivery(true);
-        streamManager.setPendingSasl2Redelivery(false);
-
-        // Execute system under test.
-        final JID serverAddress = new JID(null, "example.org", null, true);
-        streamManager.redeliverIfPendingSasl2(serverAddress);
-
-        // Verify result: no interaction with the connection.
-        verifyNoInteractions(mockConnection);
+        assertTrue(result.completeAfterSuccess());
+        verifyNoInteractions(connection);
     }
 }

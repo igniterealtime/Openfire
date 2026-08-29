@@ -33,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
-import org.xmpp.packet.JID;
 import org.xmpp.packet.StreamError;
 
 import java.io.IOException;
@@ -208,10 +207,7 @@ public class WebSocketClientStanzaHandler extends ClientStanzaHandler
      * updated features, as their own RFC 7395 frame.
      */
     @Override
-    protected void sasl2Successful() {
-        if (session.getStreamManager().redeliverIfPendingSasl2(new JID(null, session.getServerName(), null, true))) {
-            return;
-        }
+    protected void deliverSasl2Features() {
         sendStreamFeatures();
     }
 

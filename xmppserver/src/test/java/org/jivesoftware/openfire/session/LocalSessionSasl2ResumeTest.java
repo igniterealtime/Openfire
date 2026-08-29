@@ -94,7 +94,7 @@ class LocalSessionSasl2ResumeTest
         final LocalClientSession connectionProvider = new LocalClientSession(Fixtures.XMPP_DOMAIN, newConnection,
             new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
 
-        resumed.reattachForSasl2(connectionProvider, 0);
+        resumed.reattachForSasl2(connectionProvider);
 
         assertEquals(newConnection, resumed.getConnection());
         assertNull(connectionProvider.getConnection());

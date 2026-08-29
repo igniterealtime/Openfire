@@ -89,7 +89,7 @@ public class SASLAuthentication {
 
     private static final Logger Log = LoggerFactory.getLogger(SASLAuthentication.class);
     static final String SASL2_RESUME_REQUEST = "sasl2-resume-request";
-    static final String SASL2_RESUMED_SESSION = "sasl2-resumed-session";
+    static final String SASL2_RESUMPTION_RESULT = "sasl2-resumption-result";
 
     // TODO how is this different from a singular entry in APPROVED_REALMS? Should these two properties be folded into eachother?
     public static final SystemProperty<String> REALM = SystemProperty.Builder.ofType(String.class)
@@ -1001,7 +1001,7 @@ public class SASLAuthentication {
                     final LocalClientSession resumedSession = resumeResult.getResumedSession();
                     final String resumedAuthorizationIdentity = authorizationIdentityForSasl2Success(authorizationIdentity, resumedSession.getAddress());
                     final Element success = buildSasl2SuccessElement(successData, resumedAuthorizationIdentity, null, resumeResult.getResponse());
-                    clientSession.setSessionData(SASL2_RESUMED_SESSION, resumedSession);
+                    clientSession.setSessionData(SASL2_RESUMPTION_RESULT, resumeResult);
                     resumedSession.deliverRawText(success.asXML());
                     return false;
                 }
@@ -1098,8 +1098,8 @@ public class SASLAuthentication {
         return resumedAddress == null ? authenticatedIdentity : resumedAddress.toString();
     }
 
-    static LocalSession consumeSasl2ResumedSession(LocalSession connectionProvider) {
-        return (LocalSession) connectionProvider.removeSessionData(SASL2_RESUMED_SESSION);
+    static StreamManager.Sasl2ResumeResult consumeSasl2ResumptionResult(LocalSession connectionProvider) {
+        return (StreamManager.Sasl2ResumeResult) connectionProvider.removeSessionData(SASL2_RESUMPTION_RESULT);
     }
 
     private static void authenticationFailed(LocalSession session, Failure failure, boolean usingSASL2) {

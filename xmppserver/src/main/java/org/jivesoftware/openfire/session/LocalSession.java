@@ -212,10 +212,8 @@ public abstract class LocalSession implements Session {
      * embedding it in the SASL2 {@code <success/>} element before delivering it.
      *
      * @param connectionProvider the new (unauthenticated) session whose connection will be taken over
-     * @param h                  the client's acknowledgement counter
-     * @return the {@code <resumed/>} element to be embedded in the SASL2 {@code <success/>}
      */
-    public Element reattachForSasl2(LocalSession connectionProvider, long h) {
+    public void reattachForSasl2(LocalSession connectionProvider) {
         lock.lock();
         try {
             Log.debug("Reattaching (SASL2) session with address {} and streamID {} using connection from session with address {} and streamID {}.", this.address, this.streamID, connectionProvider.getAddress(), connectionProvider.getStreamID());
@@ -230,14 +228,7 @@ public abstract class LocalSession implements Session {
         }
         this.status = Session.Status.AUTHENTICATED;
         this.sessionManager.removeDetached(this);
-        // Build the <resumed/> element but do NOT send it — the caller will embed it in <success/>.
-        final Element resumed = this.streamManager.buildResumedElement();
-        this.streamManager.processClientAcknowledgementPublic(h);
-        // Redelivery happens immediately after <success/>. Stream features must not be sent for a successfully
-        // resumed stream, so the stanza handler consumes this flag before considering feature delivery.
-        this.streamManager.setPendingSasl2Redelivery(true);
         this.sessionManager.removeSession((LocalClientSession) connectionProvider);
-        return resumed;
     }
 
     /**

@@ -63,7 +63,9 @@ public class StanzaHandlerTest
         final ClientStanzaHandler handler = new ClientStanzaHandler(mock(PacketRouter.class), connection);
         final LocalClientSession connectionProvider = mock(LocalClientSession.class);
         final LocalClientSession resumedSession = mock(LocalClientSession.class);
-        when(connectionProvider.removeSessionData(SASLAuthentication.SASL2_RESUMED_SESSION)).thenReturn(resumedSession);
+        final StreamManager.Sasl2ResumeResult result = StreamManager.Sasl2ResumeResult.resumed(
+            DocumentHelper.createElement("resumed"), resumedSession);
+        when(connectionProvider.removeSessionData(SASLAuthentication.SASL2_RESUMPTION_RESULT)).thenReturn(result);
         handler.setSession(connectionProvider);
 
         handler.adoptSasl2ResumedSession();
@@ -75,13 +77,16 @@ public class StanzaHandlerTest
     public void successfulInlineResumptionDoesNotSendStreamFeatures()
     {
         final Connection connection = mock(Connection.class);
+        final LocalClientSession connectionProvider = mock(LocalClientSession.class);
         final LocalClientSession session = mock(LocalClientSession.class);
         when(session.getConnection()).thenReturn(connection);
         when(session.getServerName()).thenReturn(Fixtures.XMPP_DOMAIN);
         final org.jivesoftware.openfire.streammanagement.StreamManager streamManager =
             new org.jivesoftware.openfire.streammanagement.StreamManager(session);
         when(session.getStreamManager()).thenReturn(streamManager);
-        streamManager.setPendingSasl2Redelivery(true);
+        final StreamManager.Sasl2ResumeResult result = StreamManager.Sasl2ResumeResult.resumed(
+            DocumentHelper.createElement("resumed"), session);
+        when(connectionProvider.removeSessionData(SASLAuthentication.SASL2_RESUMPTION_RESULT)).thenReturn(result);
         final Element features = DocumentHelper.createElement("features");
         final ClientStanzaHandler handler = new ClientStanzaHandler(mock(PacketRouter.class), connection) {
             @Override
@@ -89,7 +94,8 @@ public class StanzaHandlerTest
                 return features;
             }
         };
-        handler.setSession(session);
+        handler.setSession(connectionProvider);
+        handler.adoptSasl2ResumedSession();
 
         handler.sasl2Successful();
 
@@ -114,7 +120,10 @@ public class StanzaHandlerTest
         streamManager.sentStanza(acknowledged);
         streamManager.sentStanza(unacknowledged);
         streamManager.process(DocumentHelper.parseText("<a xmlns='urn:xmpp:sm:3' h='1'/>").getRootElement());
-        streamManager.setPendingSasl2Redelivery(true);
+        final LocalClientSession connectionProvider = mock(LocalClientSession.class);
+        final StreamManager.Sasl2ResumeResult result = StreamManager.Sasl2ResumeResult.resumed(
+            DocumentHelper.createElement("resumed"), session);
+        when(connectionProvider.removeSessionData(SASLAuthentication.SASL2_RESUMPTION_RESULT)).thenReturn(result);
         final Element features = DocumentHelper.createElement("features");
         final ClientStanzaHandler handler = new ClientStanzaHandler(mock(PacketRouter.class), connection) {
             @Override
@@ -122,7 +131,8 @@ public class StanzaHandlerTest
                 return features;
             }
         };
-        handler.setSession(session);
+        handler.setSession(connectionProvider);
+        handler.adoptSasl2ResumedSession();
 
         handler.sasl2Successful();
 

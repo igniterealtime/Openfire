@@ -599,6 +599,45 @@ public class SASLAuthenticationTest
         }
     }
 
+    @Test
+    public void failedInlineResumptionContinuesWithBind2AndFreshStreamManagement() throws Exception
+    {
+        try (final MockedStatic<EntityCapabilitiesManager> mockedEntityCaps = mockStatic(EntityCapabilitiesManager.class)) {
+            mockedEntityCaps.when(() -> EntityCapabilitiesManager.getLocalDomainVerHash(any())).thenReturn(null);
+            Bind2Request.registerElementHandler(new Bind2StreamManagementHandler());
+            try {
+                final Connection connection = mock(Connection.class);
+                final ConnectionConfiguration configuration = mock(ConnectionConfiguration.class);
+                when(configuration.getTlsPolicy()).thenReturn(Connection.TLSPolicy.disabled);
+                when(configuration.getCompressionPolicy()).thenReturn(Connection.CompressionPolicy.disabled);
+                when(connection.getConfiguration()).thenReturn(configuration);
+                final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
+                    new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+                final Element resume = DocumentHelper.createElement(QName.get("resume", StreamManager.NAMESPACE_V3));
+                resume.addAttribute("previd", "invalid");
+                resume.addAttribute("h", "0");
+                session.setSessionData(SASLAuthentication.SASL2_RESUME_REQUEST, resume);
+                final Element enable = DocumentHelper.createElement(QName.get("enable", StreamManager.NAMESPACE_V3));
+                session.setSessionData("bind2-request", new Bind2Request("test-client", List.of(enable)));
+                when(XMPPServer.getInstance().getSessionManager().bindResource(any(), any(), any()))
+                    .thenReturn(CompletableFuture.completedFuture(SessionManager.BindResult.BOUND));
+
+                SASLAuthentication.authenticationSuccessful(session, "testuser", "PLAIN", new byte[0], true);
+
+                final ArgumentCaptor<String> delivered = ArgumentCaptor.forClass(String.class);
+                verify(connection, times(2)).deliverRawText(delivered.capture());
+                final Element success = DocumentHelper.parseText(delivered.getAllValues().get(0)).getRootElement();
+                assertNotNull(success.element(QName.get("failed", StreamManager.NAMESPACE_V3)));
+                final Element bound = success.element(QName.get("bound", "urn:xmpp:bind:0"));
+                assertNotNull(bound);
+                assertNotNull(bound.element(QName.get("enabled", StreamManager.NAMESPACE_V3)));
+                assertTrue(session.getStreamManager().isEnabled());
+            } finally {
+                Bind2Request.unregisterElementHandler(StreamManager.NAMESPACE_V3);
+            }
+        }
+    }
+
     /**
      * Verifies that authenticationSuccessful marks the domain as validated for an inbound server session.
      */

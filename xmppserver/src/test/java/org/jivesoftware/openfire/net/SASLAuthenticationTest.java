@@ -566,6 +566,54 @@ public class SASLAuthenticationTest
     }
 
     @Test
+    public void bind2ConflictFailsSasl2WithoutSuccessOrFeatures() throws Exception
+    {
+        final Connection connection = mock(Connection.class);
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
+            new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        final Bind2Request bind2Request = mock(Bind2Request.class);
+        when(bind2Request.generateResourceString(any())).thenReturn("conflicting-resource");
+        session.setSessionData("bind2-request", bind2Request);
+        when(XMPPServer.getInstance().getSessionManager().bindResource(any(), any(), any()))
+            .thenReturn(CompletableFuture.completedFuture(SessionManager.BindResult.CONFLICT));
+
+        SASLAuthentication.authenticationSuccessful(session, "testuser", "PLAIN", new byte[0], true);
+
+        final ArgumentCaptor<String> delivered = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(delivered.capture());
+        final Element failure = DocumentHelper.parseText(delivered.getValue()).getRootElement();
+        assertEquals("failure", failure.getName());
+        assertEquals(SASL2_NAMESPACE, failure.getNamespaceURI());
+        assertNotNull(failure.element(QName.get("temporary-auth-failure", SASL_NAMESPACE)));
+        verify(bind2Request, never()).processFeatureRequests(any(), any());
+        assertFalse(session.isAuthenticated());
+    }
+
+    @Test
+    public void bind2ExceptionFailsSasl2WithoutSuccessOrFeatures() throws Exception
+    {
+        final Connection connection = mock(Connection.class);
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
+            new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        final Bind2Request bind2Request = mock(Bind2Request.class);
+        when(bind2Request.generateResourceString(any())).thenReturn("test-resource");
+        session.setSessionData("bind2-request", bind2Request);
+        final CompletableFuture<SessionManager.BindResult> failedBind = new CompletableFuture<>();
+        failedBind.completeExceptionally(new IllegalStateException("test failure"));
+        when(XMPPServer.getInstance().getSessionManager().bindResource(any(), any(), any())).thenReturn(failedBind);
+
+        SASLAuthentication.authenticationSuccessful(session, "testuser", "PLAIN", new byte[0], true);
+
+        final ArgumentCaptor<String> delivered = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(delivered.capture());
+        final Element failure = DocumentHelper.parseText(delivered.getValue()).getRootElement();
+        assertEquals("failure", failure.getName());
+        assertNotNull(failure.element(QName.get("temporary-auth-failure", SASL_NAMESPACE)));
+        verify(bind2Request, never()).processFeatureRequests(any(), any());
+        assertFalse(session.isAuthenticated());
+    }
+
+    @Test
     public void shouldEnableStreamManagementInlineWithSasl2AndBind2() throws Exception
     {
         try (final MockedStatic<EntityCapabilitiesManager> mockedEntityCaps = mockStatic(EntityCapabilitiesManager.class)) {

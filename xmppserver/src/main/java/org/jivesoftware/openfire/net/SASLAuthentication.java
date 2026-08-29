@@ -998,8 +998,9 @@ public class SASLAuthentication {
                 if (resumeResult != null && resumeResult.isResumed()) {
                     // Successful resumption supersedes resource binding and other inline requests.
                     clientSession.removeSessionData("bind2-request");
-                    final Element success = buildSasl2SuccessElement(successData, authorizationIdentity, null, resumeResult.getResponse());
                     final LocalClientSession resumedSession = resumeResult.getResumedSession();
+                    final String resumedAuthorizationIdentity = authorizationIdentityForSasl2Success(authorizationIdentity, resumedSession.getAddress());
+                    final Element success = buildSasl2SuccessElement(successData, resumedAuthorizationIdentity, null, resumeResult.getResponse());
                     clientSession.setSessionData(SASL2_RESUMED_SESSION, resumedSession);
                     resumedSession.deliverRawText(success.asXML());
                     return false;
@@ -1089,6 +1090,11 @@ public class SASLAuthentication {
             success.add(inlineResponse);
         }
         return success;
+    }
+
+    @VisibleForTesting
+    static String authorizationIdentityForSasl2Success(String authenticatedIdentity, @Nullable JID resumedAddress) {
+        return resumedAddress == null ? authenticatedIdentity : resumedAddress.toString();
     }
 
     static LocalSession consumeSasl2ResumedSession(LocalSession connectionProvider) {

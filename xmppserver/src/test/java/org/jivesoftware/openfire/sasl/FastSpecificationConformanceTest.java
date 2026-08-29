@@ -15,22 +15,17 @@
  */
 package org.jivesoftware.openfire.sasl;
 
-import org.jivesoftware.openfire.fast.FastToken;
 import org.jivesoftware.openfire.fast.FastTokenManager;
+import org.jivesoftware.openfire.fast.FastTokenManager.Ht2ValidationResult;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
 
 import javax.security.sasl.SaslException;
 import java.nio.charset.StandardCharsets;
-import java.time.Instant;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.mockStatic;
 
 /** Conformance tests derived directly from HT-09 and HT2-02's ABNF and HMAC definitions. */
 class FastSpecificationConformanceTest {
@@ -40,19 +35,13 @@ class FastSpecificationConformanceTest {
 
     @Test
     void ht09AcceptsAuthcidNulProofAndReturnsResponderProof() throws Exception {
-        final FastToken token = new FastToken(AUTHCID, FastTokenManager.HT_SHA_256_NONE,
-            "replacement-token".getBytes(StandardCharsets.UTF_8), Instant.now().plusSeconds(60));
-        try (MockedStatic<FastTokenManager> manager = mockStatic(FastTokenManager.class)) {
-            manager.when(() -> FastTokenManager.validateToken(eq(AUTHCID),
-                eq(FastTokenManager.HT_SHA_256_NONE), any())).thenReturn(token);
+        final byte[] response = join(AUTHCID.getBytes(StandardCharsets.UTF_8), new byte[] {0}, PROOF);
+        final HtSaslServer server = new HtSaslServer(FastTokenManager.HT_SHA_256_NONE,
+            Collections.emptyMap(), (u, m, p, c, i, r) -> new Ht2ValidationResult(null, PROOF));
+        final byte[] responderProof = assertDoesNotThrow(() -> server.evaluateResponse(response));
 
-            final byte[] response = join(AUTHCID.getBytes(StandardCharsets.UTF_8), new byte[] {0}, PROOF);
-            final HtSaslServer server = new HtSaslServer(FastTokenManager.HT_SHA_256_NONE, Collections.emptyMap());
-            final byte[] responderProof = assertDoesNotThrow(() -> server.evaluateResponse(response));
-
-            assertArrayEquals(PROOF, responderProof,
-                "HT-09 requires the responder HMAC as SASL success data.");
-        }
+        assertArrayEquals(PROOF, responderProof,
+            "HT-09 requires the responder HMAC as SASL success data.");
     }
 
     @Test

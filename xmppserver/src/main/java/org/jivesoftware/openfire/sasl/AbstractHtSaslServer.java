@@ -16,6 +16,7 @@
 package org.jivesoftware.openfire.sasl;
 
 import org.jivesoftware.openfire.fast.FastToken;
+import org.jivesoftware.openfire.fast.FastTokenManager;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
@@ -24,6 +25,10 @@ import org.slf4j.LoggerFactory;
 import javax.annotation.Nonnull;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
 
@@ -41,19 +46,9 @@ import java.util.Optional;
  * <p>Concrete subclasses must implement {@link #getMechanismName()} and
  * {@link #doEvaluateResponse(byte[], byte[])}.</p>
  *
- * <h3>HT-* vs HT2-* differences</h3>
- * <p>The two mechanism families share identical channel-binding handling but differ in:</p>
- * <ul>
- *   <li><b>Message format</b>: HT uses comma-separated {@code cb-name,authzid,token};
- *       HT2 uses NUL-separated {@code authcid NUL extra-values NUL hashed-token}.</li>
- *   <li><b>Token verification</b>: HT compares a raw hash; HT2 uses HMAC with
- *       {@code "Initiator"}/{{@code "Responder"}} labels and incorporates channel-binding data
- *       into the HMAC input.</li>
- *   <li><b>Mutual authentication</b>: HT returns an empty byte array on success; HT2 returns
- *       a {@code NUL extra-responder-values NUL responder-hashed-token} success message.</li>
- * </ul>
- * <p>Even when the client sends no extra values in an HT2 exchange, the two families are
- * <em>not</em> interchangeable because of the different token-verification schemes above.</p>
+ * HT-09 and HT2 share HMAC verification, mutual authentication and channel-binding handling.
+ * HT2 additionally carries authenticated key/value fields and wraps the responder proof in its
+ * extended response framing.
  */
 abstract class AbstractHtSaslServer implements SaslServer {
 
@@ -67,10 +62,18 @@ abstract class AbstractHtSaslServer implements SaslServer {
      * {@code LocalSession.class.getCanonicalName()} for channel-binding variants.
      */
     protected final Map<String, ?> props;
+    protected final HashedTokenValidator tokenValidator;
 
     protected boolean complete = false;
     protected String authorizationId = null;
     protected FastToken rotatedToken = null;
+
+    protected final void recordAuthenticatedClient(final String clientId) {
+        final Object value = props.get(LocalSession.class.getCanonicalName());
+        if (clientId != null && value instanceof LocalSession session) {
+            session.setSessionData("fast-authenticated-client-id", clientId);
+        }
+    }
 
     /**
      * Constructs an {@code AbstractHtSaslServer} with the given mechanism name and properties map.
@@ -79,8 +82,20 @@ abstract class AbstractHtSaslServer implements SaslServer {
      * @param props         the SASL properties map (cannot be null)
      */
     protected AbstractHtSaslServer(@Nonnull final String mechanismName, @Nonnull final Map<String, ?> props) {
+        this(mechanismName, props, FastTokenManager::validateTokenHt2);
+    }
+
+    protected AbstractHtSaslServer(@Nonnull final String mechanismName, @Nonnull final Map<String, ?> props,
+                                   @Nonnull final HashedTokenValidator tokenValidator) {
         this.mechanismName = mechanismName;
         this.props = props;
+        this.tokenValidator = tokenValidator;
+    }
+
+    @FunctionalInterface
+    interface HashedTokenValidator {
+        FastTokenManager.Ht2ValidationResult validate(String username, String mechanism, byte[] proof,
+            byte[] channelBindingData, String initiatorValues, String responderValues);
     }
 
     @Override
@@ -141,7 +156,8 @@ abstract class AbstractHtSaslServer implements SaslServer {
             case "UNIQ": cbTypeName = "tls-unique"; break;
             case "ENDP": cbTypeName = "tls-server-end-point"; break;
             case "EXPR": cbTypeName = "tls-exporter"; break;
-            default:     cbTypeName = null; break; // NONE — no channel binding
+            case "NONE": cbTypeName = null; break;
+            default: throw new SaslException(mechanismName + ": unknown channel-binding suffix");
         }
         if (cbTypeName == null) {
             return new byte[0];
@@ -232,5 +248,17 @@ abstract class AbstractHtSaslServer implements SaslServer {
             }
         }
         return -1;
+    }
+
+    protected final String decodeUtf8(final byte[] value, final int offset, final int length, final String field)
+        throws SaslException {
+        try {
+            return StandardCharsets.UTF_8.newDecoder()
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT)
+                .decode(ByteBuffer.wrap(value, offset, length)).toString();
+        } catch (final CharacterCodingException e) {
+            throw new SaslException(mechanismName + ": invalid UTF-8 in " + field, e);
+        }
     }
 }

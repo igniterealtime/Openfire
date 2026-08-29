@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.security.sasl.SaslException;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 /**
@@ -73,6 +72,10 @@ public class Ht2SaslServer extends AbstractHtSaslServer {
         super(mechanismName, props);
     }
 
+    Ht2SaslServer(final String mechanismName, final Map<String, ?> props, final HashedTokenValidator validator) {
+        super(mechanismName, props, validator);
+    }
+
     /**
      * Evaluates the client's initiator message (mechanism-specific part).
      *
@@ -99,8 +102,16 @@ public class Ht2SaslServer extends AbstractHtSaslServer {
             throw new SaslException(mechanismName + ": malformed initiator message (missing second NUL)");
         }
 
-        final String authcid = new String(response, 0, firstNul, StandardCharsets.UTF_8);
-        final String extraInitiatorValues = new String(response, firstNul + 1, secondNul - firstNul - 1, StandardCharsets.UTF_8);
+        if (firstNul > 255) {
+            throw new SaslException(mechanismName + ": authcid exceeds 255 octets");
+        }
+        final String authcid = decodeUtf8(response, 0, firstNul, "authcid");
+        final String extraInitiatorValues = decodeUtf8(response, firstNul + 1,
+            secondNul - firstNul - 1, "extra-initiator-values");
+        if (!extraInitiatorValues.isEmpty() && !extraInitiatorValues.matches(
+            "[A-Za-z0-9/+_-]+=[A-Za-z0-9/+_-]+(,[A-Za-z0-9/+_-]+=[A-Za-z0-9/+_-]+)*")) {
+            throw new SaslException(mechanismName + ": malformed extra-initiator-values");
+        }
         final int tokenStart = secondNul + 1;
         final int tokenLength = response.length - tokenStart;
         if (tokenLength <= 0) {
@@ -118,16 +129,20 @@ public class Ht2SaslServer extends AbstractHtSaslServer {
         // channelBindingData resolved by the base class; passed directly to validateTokenHt2
         // so the HMAC covers real channel-binding bytes (unlike HT-*).
 
-        // Validate via FastTokenManager (also rotates on success, computes responder HMAC).
-        final Ht2ValidationResult result = FastTokenManager.validateTokenHt2(
+        // Validate via FastTokenManager (which also applies rollover policy and computes the responder HMAC).
+        final Ht2ValidationResult result = tokenValidator.validate(
             authcid, mechanismName, initiatorHashedToken, channelBindingData, extraInitiatorValues, "");
         if (result == null) {
             complete = true;
             throw new SaslException(mechanismName + ": invalid or expired token for user '" + authcid + "'");
         }
+        if (result.isExpired()) {
+            throw new SaslFailureException(Failure.CREDENTIALS_EXPIRED);
+        }
 
         authorizationId = authcid;
         rotatedToken = result.getRotatedToken();
+        recordAuthenticatedClient(result.getClientId());
         responderHashedToken = result.getResponderHashedToken();
         complete = true;
         Log.debug("{}: authentication successful for user '{}'", mechanismName, authcid);

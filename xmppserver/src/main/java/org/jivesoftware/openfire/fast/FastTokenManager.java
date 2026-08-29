@@ -40,17 +40,15 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
+import java.util.Collection;
+import java.util.List;
+import java.util.Locale;
 
 /**
  * Manages FAST (XEP-0484) authentication tokens.
  *
- * Tokens are stored in the {@code ofFastToken} database table, indexed by (username, mechanism).
- * Only one token slot exists per (username, mechanism) pair; issuing a new token replaces the old one.
- *
- * For the original HT-* mechanisms the {@code tokenHash} column holds a hex-encoded SHA-256 hash of
- * the raw token bytes (the raw secret is never stored). For HT2-* mechanisms
- * (draft-ietf-kitten-sasl-ht) the column holds the Base64-encoded raw token bytes, because the
- * server must use the token as an HMAC key during verification.
+ * Tokens are stored per user, client and mechanism in current/new slots. The recoverable token
+ * string is required to verify the initiator HMAC and produce the responder HMAC.
  */
 public class FastTokenManager {
 
@@ -130,18 +128,38 @@ public class FastTokenManager {
         .setDynamic(Boolean.TRUE)
         .build();
 
-    private static final String INSERT_OR_REPLACE_TOKEN =
-        "DELETE FROM ofFastToken WHERE username=? AND mechanism=?";
+    public static final SystemProperty<Duration> TOKEN_ROTATION_THRESHOLD = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.fast.token.rotation-threshold")
+        .setDefaultValue(Duration.ofDays(1))
+        .setChronoUnit(ChronoUnit.HOURS)
+        .setDynamic(Boolean.TRUE)
+        .build();
+
+    private static final String DELETE_NEW_TOKEN =
+        "DELETE FROM ofFastToken WHERE username=? AND mechanism=? AND clientID=? AND tokenSlot='N'";
     private static final String INSERT_TOKEN =
-        "INSERT INTO ofFastToken (username, mechanism, tokenHash, expiry) VALUES (?,?,?,?)";
+        "INSERT INTO ofFastToken (username, mechanism, clientID, tokenSlot, replayCounter, tokenHash, expiry) VALUES (?,?,?,'N',0,?,?)";
     private static final String SELECT_TOKEN =
-        "SELECT tokenHash, expiry FROM ofFastToken WHERE username=? AND mechanism=?";
+        "SELECT clientID, tokenSlot, tokenHash, expiry FROM ofFastToken WHERE username=? AND mechanism=?";
     private static final String DELETE_TOKENS_FOR_USER =
         "DELETE FROM ofFastToken WHERE username=?";
+    private static final String DELETE_TOKENS_FOR_CLIENT =
+        "DELETE FROM ofFastToken WHERE username=? AND mechanism=? AND clientID=?";
+    private static final String DELETE_CURRENT_TOKEN = DELETE_TOKENS_FOR_CLIENT + " AND tokenSlot='C'";
+    private static final String PROMOTE_NEW_TOKEN =
+        "UPDATE ofFastToken SET tokenSlot='C' WHERE username=? AND mechanism=? AND clientID=? AND tokenSlot='N'";
+    private static final String UPDATE_REPLAY_COUNTER =
+        "UPDATE ofFastToken SET replayCounter=? WHERE username=? AND mechanism=? AND clientID=? AND tokenSlot='C' AND replayCounter<?";
     private static final String DELETE_EXPIRED_TOKENS =
         "DELETE FROM ofFastToken WHERE expiry < ?";
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+    public static final List<String> MECHANISMS = List.of(
+        HT_SHA_256_NONE, HT_SHA_256_UNIQ, HT_SHA_256_ENDP, HT_SHA_256_EXPR,
+        HT_SHA_512_NONE, HT_SHA_512_UNIQ, HT_SHA_512_ENDP, HT_SHA_512_EXPR,
+        HT2_SHA_256_NONE, HT2_SHA_256_UNIQ, HT2_SHA_256_ENDP, HT2_SHA_256_EXPR,
+        HT2_SHA_512_NONE, HT2_SHA_512_UNIQ, HT2_SHA_512_ENDP, HT2_SHA_512_EXPR);
 
     private FastTokenManager() {}
 
@@ -152,31 +170,22 @@ public class FastTokenManager {
      * @return a {@code <fast/>} element in the {@link #NAMESPACE} namespace
      */
     public static Element featureElement() {
+        return featureElement(MECHANISMS);
+    }
+
+    public static Element featureElement(@Nonnull final Collection<String> mechanisms) {
         final Element fast = DocumentHelper.createElement(QName.get("fast", NAMESPACE));
-        // HT-* mechanisms (original HT draft)
-        fast.addElement("mechanism").setText(HT_SHA_256_NONE);
-        fast.addElement("mechanism").setText(HT_SHA_256_UNIQ);
-        fast.addElement("mechanism").setText(HT_SHA_256_ENDP);
-        fast.addElement("mechanism").setText(HT_SHA_256_EXPR);
-        fast.addElement("mechanism").setText(HT_SHA_512_NONE);
-        fast.addElement("mechanism").setText(HT_SHA_512_UNIQ);
-        fast.addElement("mechanism").setText(HT_SHA_512_ENDP);
-        fast.addElement("mechanism").setText(HT_SHA_512_EXPR);
-        // HT2-* mechanisms (draft-ietf-kitten-sasl-ht)
-        fast.addElement("mechanism").setText(HT2_SHA_256_NONE);
-        fast.addElement("mechanism").setText(HT2_SHA_256_UNIQ);
-        fast.addElement("mechanism").setText(HT2_SHA_256_ENDP);
-        fast.addElement("mechanism").setText(HT2_SHA_256_EXPR);
-        fast.addElement("mechanism").setText(HT2_SHA_512_NONE);
-        fast.addElement("mechanism").setText(HT2_SHA_512_UNIQ);
-        fast.addElement("mechanism").setText(HT2_SHA_512_ENDP);
-        fast.addElement("mechanism").setText(HT2_SHA_512_EXPR);
+        mechanisms.stream().filter(MECHANISMS::contains)
+            .forEach(mechanism -> fast.addElement("mechanism").setText(mechanism));
         return fast;
     }
 
+    public static boolean isMechanism(@Nonnull final String mechanism) {
+        return MECHANISMS.contains(mechanism.toUpperCase(Locale.ROOT));
+    }
+
     /**
-     * Returns {@code true} if the given mechanism name is an HT2 mechanism
-     * (draft-ietf-kitten-sasl-ht), which stores the raw token bytes rather than a hash.
+     * Returns {@code true} if the given mechanism name is an HT2 mechanism.
      */
     static boolean isHt2Mechanism(@Nonnull final String mechanism) {
         return mechanism.startsWith("HT2-");
@@ -228,36 +237,46 @@ public class FastTokenManager {
 
     /**
      * Issues a new FAST token for the given username and mechanism, storing it in the database.
-     * Any previously stored token for the same (username, mechanism) pair is replaced.
+     * Any unacknowledged new token for the same user, mechanism and client is replaced. The
+     * current token remains valid until the client proves possession of this new token.
      *
-     * For HT2-* mechanisms the raw token bytes are stored (Base64-encoded) so that the server can
-     * use the token as an HMAC key during verification. For original HT-* mechanisms only the
-     * SHA-256 hash is stored.
+     * The generated token is a Base64 Unicode string. Its UTF-8 representation is persisted so
+     * that both HT families can verify and produce their mutual-authentication HMACs.
      *
      * @param username  the local username (cannot be null)
      * @param mechanism the FAST SASL mechanism name (cannot be null)
-     * @return the newly issued {@link FastToken} containing the raw token bytes and expiry
+     * @return the newly issued {@link FastToken} containing the UTF-8 token bytes and expiry
      */
     @Nonnull
     public static FastToken issueToken(@Nonnull final String username, @Nonnull final String mechanism) {
-        final byte[] rawToken = new byte[32];
-        SECURE_RANDOM.nextBytes(rawToken);
+        return issueToken(username, "legacy", mechanism);
+    }
+
+    @Nonnull
+    public static FastToken issueToken(@Nonnull final String username, @Nonnull final String clientId,
+                                       @Nonnull final String mechanism) {
+        if (!MECHANISMS.contains(mechanism)) {
+            throw new IllegalArgumentException("Unsupported FAST mechanism: " + mechanism);
+        }
+        final byte[] entropy = new byte[32];
+        SECURE_RANDOM.nextBytes(entropy);
+        // SASL-HT defines the token as a Unicode string. The XML attribute value, the value
+        // persisted by the server and the UTF-8 HMAC key must therefore all be identical.
+        final byte[] rawToken = Base64.getEncoder().encode(entropy);
         final Instant expiry = Instant.now().plus(TOKEN_EXPIRY.getValue());
-        // HT2 mechanisms require the raw token for HMAC; store as Base64.
-        // HT mechanisms store a hash of the raw token using the mechanism's hash algorithm.
-        final String storedValue = isHt2Mechanism(mechanism)
-            ? Base64.getEncoder().encodeToString(rawToken)
-            : hashHex(rawToken, hashAlgorithmForMechanism(mechanism));
+        final String storedValue = new String(rawToken, StandardCharsets.US_ASCII);
         final String expiryString = XMPPDateTimeFormat.format(java.util.Date.from(expiry));
 
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
-            // Delete any existing token for this (username, mechanism) pair.
-            pstmt = con.prepareStatement(INSERT_OR_REPLACE_TOKEN);
+            con.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+            con.setAutoCommit(false);
+            pstmt = con.prepareStatement(DELETE_NEW_TOKEN);
             pstmt.setString(1, username);
             pstmt.setString(2, mechanism);
+            pstmt.setString(3, clientId);
             pstmt.executeUpdate();
             DbConnectionManager.fastcloseStmt(pstmt);
 
@@ -265,11 +284,17 @@ public class FastTokenManager {
             pstmt = con.prepareStatement(INSERT_TOKEN);
             pstmt.setString(1, username);
             pstmt.setString(2, mechanism);
-            pstmt.setString(3, storedValue);
-            pstmt.setString(4, expiryString);
+            pstmt.setString(3, clientId);
+            pstmt.setString(4, storedValue);
+            pstmt.setString(5, expiryString);
             pstmt.executeUpdate();
+            con.commit();
         } catch (final SQLException e) {
+            if (con != null) {
+                try { con.rollback(); } catch (final SQLException rollbackError) { e.addSuppressed(rollbackError); }
+            }
             Log.error("Failed to store FAST token for user '{}' mechanism '{}'", username, mechanism, e);
+            throw new IllegalStateException("Unable to persist FAST token", e);
         } finally {
             DbConnectionManager.closeConnection(pstmt, con);
         }
@@ -278,77 +303,16 @@ public class FastTokenManager {
     }
 
     /**
-     * Validates a FAST token presented by a client.
-     *
-     * If the token is valid and not expired, it is rotated (a new token is issued and the old one
-     * is invalidated). The new token is returned. If validation fails, {@code null} is returned.
-     *
-     * @param username  the local username (cannot be null)
-     * @param mechanism the FAST SASL mechanism name (cannot be null)
-     * @param token     the raw token bytes presented by the client (cannot be null)
-     * @return the newly rotated {@link FastToken} on success, or {@code null} on failure
-     */
-    public static FastToken validateToken(@Nonnull final String username, @Nonnull final String mechanism,
-                                          @Nonnull final byte[] token) {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(SELECT_TOKEN);
-            pstmt.setString(1, username);
-            pstmt.setString(2, mechanism);
-            rs = pstmt.executeQuery();
-            if (!rs.next()) {
-                Log.debug("No FAST token found for user '{}' mechanism '{}'", username, mechanism);
-                return null;
-            }
-            final String storedHash = rs.getString("tokenHash");
-            final String expiryString = rs.getString("expiry");
-            DbConnectionManager.closeResultSet(rs);
-            rs = null;
-
-            // Check expiry.
-            final Instant expiry;
-            try {
-                expiry = new XMPPDateTimeFormat().parseString(expiryString).toInstant();
-            } catch (final Exception e) {
-                Log.warn("Failed to parse expiry '{}' for user '{}' mechanism '{}'", expiryString, username, mechanism, e);
-                return null;
-            }
-            if (Instant.now().isAfter(expiry)) {
-                Log.debug("FAST token expired for user '{}' mechanism '{}'", username, mechanism);
-                return null;
-            }
-
-            // Constant-time comparison of hashes.
-            final String presentedHash = hashHex(token, hashAlgorithmForMechanism(mechanism));
-            if (!MessageDigest.isEqual(storedHash.getBytes(), presentedHash.getBytes())) {
-                Log.debug("FAST token mismatch for user '{}' mechanism '{}'", username, mechanism);
-                return null;
-            }
-        } catch (final SQLException e) {
-            Log.error("Failed to validate FAST token for user '{}' mechanism '{}'", username, mechanism, e);
-            return null;
-        } finally {
-            DbConnectionManager.closeConnection(rs, pstmt, con);
-        }
-
-        // Token is valid — rotate it.
-        return issueToken(username, mechanism);
-    }
-
-    /**
      * Validates an HT2 FAST token presented by a client using HMAC verification
      * (draft-ietf-kitten-sasl-ht).
      *
      * The client sends {@code HMAC(token, "Initiator" || cbData || extraValues)} as the
-     * {@code initiator-hashed-token}. This method fetches the stored raw token bytes from
+     * {@code initiator-hashed-token}. This method fetches the stored UTF-8 token bytes from
      * the database and recomputes the expected HMAC for comparison.
      *
-     * If the token is valid and not expired it is rotated (a new token is issued). The new
-     * token is returned together with the responder HMAC so that the caller can send the
-     * success message back to the client. If validation fails, {@code null} is returned.
+     * If the new token is valid, it is promoted to current. If a current token is nearing
+     * expiry, a replacement is issued into the new slot. The optional replacement is returned
+     * together with the responder HMAC. If validation fails, {@code null} is returned.
      *
      * @param username              the local username (cannot be null)
      * @param mechanism             the FAST SASL mechanism name, must start with "HT2-" (cannot be null)
@@ -364,68 +328,91 @@ public class FastTokenManager {
                                                         @Nonnull final byte[] cbData,
                                                         @Nonnull final String extraInitiatorValues,
                                                         @Nonnull final String extraResponderValues) {
-        final byte[] storedRawToken;
-        final String expiryString;
+        byte[] matchedToken = null;
+        String matchedClientId = null;
+        String matchedSlot = null;
+        Instant matchedExpiry = null;
+        boolean matchingExpiredToken = false;
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
+            con.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+            con.setAutoCommit(false);
             pstmt = con.prepareStatement(SELECT_TOKEN);
             pstmt.setString(1, username);
             pstmt.setString(2, mechanism);
             rs = pstmt.executeQuery();
-            if (!rs.next()) {
-                Log.debug("No HT2 FAST token found for user '{}' mechanism '{}'", username, mechanism);
-                return null;
+            final String hmacAlg = hmacAlgorithmForMechanism(mechanism);
+            final byte[] initiatorMsg = buildHmacMessage("Initiator", cbData, extraInitiatorValues);
+            while (rs.next()) {
+                final Instant expiry;
+                try {
+                    expiry = new XMPPDateTimeFormat().parseString(rs.getString("expiry")).toInstant();
+                } catch (final Exception e) {
+                    Log.warn("Ignoring FAST token with malformed expiry for user '{}'", username, e);
+                    continue;
+                }
+                final byte[] candidate = rs.getString("tokenHash").getBytes(StandardCharsets.UTF_8);
+                final byte[] expected = hmac(candidate, initiatorMsg, hmacAlg);
+                final boolean proofMatches = MessageDigest.isEqual(expected, initiatorHashedToken);
+                if (proofMatches && Instant.now().isAfter(expiry)) matchingExpiredToken = true;
+                final boolean valid = !Instant.now().isAfter(expiry) && proofMatches;
+                if (valid && matchedToken == null) {
+                    matchedToken = candidate;
+                    matchedClientId = rs.getString("clientID");
+                    matchedSlot = rs.getString("tokenSlot");
+                    matchedExpiry = expiry;
+                }
             }
-            final String storedValue = rs.getString("tokenHash");
-            expiryString = rs.getString("expiry");
             DbConnectionManager.closeResultSet(rs);
             rs = null;
-            try {
-                storedRawToken = Base64.getDecoder().decode(storedValue);
-            } catch (final IllegalArgumentException e) {
-                Log.warn("Stored HT2 token for user '{}' mechanism '{}' is not valid Base64", username, mechanism);
-                return null;
+            DbConnectionManager.fastcloseStmt(pstmt);
+            pstmt = null;
+            if (matchedToken == null) {
+                con.rollback();
+                return matchingExpiredToken ? Ht2ValidationResult.expired() : null;
             }
+            if ("N".equals(matchedSlot)) {
+                pstmt = con.prepareStatement(DELETE_CURRENT_TOKEN);
+                pstmt.setString(1, username);
+                pstmt.setString(2, mechanism);
+                pstmt.setString(3, matchedClientId);
+                pstmt.executeUpdate();
+                DbConnectionManager.fastcloseStmt(pstmt);
+                pstmt = con.prepareStatement(PROMOTE_NEW_TOKEN);
+                pstmt.setString(1, username);
+                pstmt.setString(2, mechanism);
+                pstmt.setString(3, matchedClientId);
+                pstmt.executeUpdate();
+            }
+            con.commit();
         } catch (final SQLException e) {
+            if (con != null) try { con.rollback(); } catch (final SQLException rollbackError) { e.addSuppressed(rollbackError); }
             Log.error("Failed to fetch HT2 FAST token for user '{}' mechanism '{}'", username, mechanism, e);
             return null;
         } finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
 
-        // Check expiry.
-        final Instant expiry;
-        try {
-            expiry = new XMPPDateTimeFormat().parseString(expiryString).toInstant();
-        } catch (final Exception e) {
-            Log.warn("Failed to parse expiry '{}' for user '{}' mechanism '{}'", expiryString, username, mechanism, e);
-            return null;
-        }
-        if (Instant.now().isAfter(expiry)) {
-            Log.debug("HT2 FAST token expired for user '{}' mechanism '{}'", username, mechanism);
-            return null;
-        }
-
-        // Compute the expected initiator-hashed-token = HMAC(token, "Initiator" || cbData || extraInitiatorValues)
-        final String hmacAlg = hmacAlgorithmForMechanism(mechanism);
-        final byte[] initiatorMsg = buildHmacMessage("Initiator", cbData, extraInitiatorValues);
-        final byte[] expectedInitiatorToken = hmac(storedRawToken, initiatorMsg, hmacAlg);
-        if (!MessageDigest.isEqual(expectedInitiatorToken, initiatorHashedToken)) {
-            Log.debug("HT2 FAST token HMAC mismatch for user '{}' mechanism '{}'", username, mechanism);
-            return null;
-        }
-
         // Compute responder-hashed-token = HMAC(token, "Responder" || cbData || extraResponderValues)
+        final String hmacAlg = hmacAlgorithmForMechanism(mechanism);
         final byte[] responderMsg = buildHmacMessage("Responder", cbData, extraResponderValues);
-        final byte[] responderHashedToken = hmac(storedRawToken, responderMsg, hmacAlg);
+        final byte[] responderHashedToken = hmac(matchedToken, responderMsg, hmacAlg);
 
-        // Token is valid — rotate it.
-        final FastToken newToken = issueToken(username, mechanism);
+        FastToken replacement = null;
+        if ("C".equals(matchedSlot) && matchedExpiry != null
+            && Duration.between(Instant.now(), matchedExpiry).compareTo(TOKEN_ROTATION_THRESHOLD.getValue()) <= 0) {
+            try {
+                replacement = issueToken(username, matchedClientId, mechanism);
+            } catch (final RuntimeException e) {
+                Log.warn("Unable to rotate FAST token for user '{}'", username, e);
+            }
+        }
+
         Log.debug("HT2 FAST authentication successful for user '{}'", username);
-        return new Ht2ValidationResult(newToken, responderHashedToken);
+        return new Ht2ValidationResult(replacement, responderHashedToken, matchedClientId);
     }
 
     /**
@@ -450,14 +437,37 @@ public class FastTokenManager {
     public static final class Ht2ValidationResult {
         private final FastToken rotatedToken;
         private final byte[] responderHashedToken;
+        private final String clientId;
+        private final boolean expired;
 
-        public Ht2ValidationResult(@Nonnull final FastToken rotatedToken, @Nonnull final byte[] responderHashedToken) {
+        public Ht2ValidationResult(final FastToken rotatedToken, @Nonnull final byte[] responderHashedToken) {
+            this(rotatedToken, responderHashedToken, null);
+        }
+
+        public Ht2ValidationResult(final FastToken rotatedToken, @Nonnull final byte[] responderHashedToken,
+                                   final String clientId) {
             this.rotatedToken = rotatedToken;
             this.responderHashedToken = responderHashedToken.clone();
+            this.clientId = clientId;
+            this.expired = false;
+        }
+
+        private Ht2ValidationResult() {
+            rotatedToken = null;
+            responderHashedToken = new byte[0];
+            clientId = null;
+            expired = true;
+        }
+
+        public static Ht2ValidationResult expired() {
+            return new Ht2ValidationResult();
+        }
+
+        public boolean isExpired() {
+            return expired;
         }
 
         /** Returns the newly rotated FAST token. */
-        @Nonnull
         public FastToken getRotatedToken() {
             return rotatedToken;
         }
@@ -466,6 +476,10 @@ public class FastTokenManager {
         @Nonnull
         public byte[] getResponderHashedToken() {
             return responderHashedToken.clone();
+        }
+
+        public String getClientId() {
+            return clientId;
         }
     }
 
@@ -486,6 +500,35 @@ public class FastTokenManager {
             Log.error("Failed to invalidate FAST tokens for user '{}'", username, e);
         } finally {
             DbConnectionManager.closeConnection(pstmt, con);
+        }
+    }
+
+    public static void invalidateToken(@Nonnull final String username, @Nonnull final String mechanism,
+                                       @Nonnull final String clientId) {
+        try (Connection con = DbConnectionManager.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(DELETE_TOKENS_FOR_CLIENT)) {
+            pstmt.setString(1, username);
+            pstmt.setString(2, mechanism);
+            pstmt.setString(3, clientId);
+            pstmt.executeUpdate();
+        } catch (final SQLException e) {
+            throw new IllegalStateException("Unable to invalidate FAST token", e);
+        }
+    }
+
+    public static boolean advanceReplayCounter(@Nonnull final String username, @Nonnull final String mechanism,
+                                               @Nonnull final String clientId, final long count) {
+        if (count <= 0) return false;
+        try (Connection con = DbConnectionManager.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(UPDATE_REPLAY_COUNTER)) {
+            pstmt.setLong(1, count);
+            pstmt.setString(2, username);
+            pstmt.setString(3, mechanism);
+            pstmt.setString(4, clientId);
+            pstmt.setLong(5, count);
+            return pstmt.executeUpdate() == 1;
+        } catch (final SQLException e) {
+            throw new IllegalStateException("Unable to update FAST replay counter", e);
         }
     }
 

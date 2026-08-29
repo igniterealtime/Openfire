@@ -19,6 +19,7 @@ import javax.annotation.Nonnull;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Objects;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Value object representing a FAST (XEP-0484) authentication token.
@@ -76,6 +77,12 @@ public class FastToken {
     @Nonnull
     public byte[] getToken() {
         return token.clone();
+    }
+
+    /** Returns the SASL-HT token string exactly as sent in XEP-0484 XML. */
+    @Nonnull
+    public String getTokenString() {
+        return new String(token, StandardCharsets.UTF_8);
     }
 
     /**

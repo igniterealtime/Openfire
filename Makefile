@@ -1,4 +1,4 @@
-.PHONY: all clean deb
+.PHONY: all clean
 
 all: build-openfire
 
@@ -15,9 +15,6 @@ clean:
 
 dist:
 	./mvnw package --batch-mode --no-transfer-progress -DskipTests=true
-
-deb: dist
-	bash build/debian/build_debs.sh
 
 plugins:
 	./mvnw package --batch-mode --no-transfer-progress

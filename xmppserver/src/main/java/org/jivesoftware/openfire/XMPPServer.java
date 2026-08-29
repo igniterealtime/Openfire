@@ -40,6 +40,7 @@ import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.filetransfer.DefaultFileTransferManager;
 import org.jivesoftware.openfire.filetransfer.FileTransferManager;
 import org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy;
+import org.jivesoftware.openfire.fast.FastTokenLifecycle;
 import org.jivesoftware.openfire.handler.*;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.keystore.IdentityStore;
@@ -758,6 +759,7 @@ public class XMPPServer {
         // Load core modules
         loadModule(PresenceManagerImpl.class.getName());
         loadModule(SessionManager.class.getName());
+        loadModule(FastTokenLifecycle.class.getName());
         loadModule(PacketRouterImpl.class.getName());
         loadModule(IQRouter.class.getName());
         loadModule(MessageRouter.class.getName());

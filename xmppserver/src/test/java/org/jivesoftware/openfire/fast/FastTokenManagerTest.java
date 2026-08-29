@@ -220,6 +220,8 @@ public class FastTokenManagerTest {
         "HT2-SHA-512-UNIQ, SHA-512",
         "HT2-SHA-512-ENDP, SHA-512",
         "HT2-SHA-512-EXPR, SHA-512",
+        "HT-SHA3-512-NONE, SHA3-512",
+        "HT2-SHA3-512-EXPR, SHA3-512",
     })
     public void hashAlgorithmForMechanismShouldExtractCorrectAlgorithm(final String mechanism, final String expectedAlgorithm) {
         assertEquals(expectedAlgorithm.trim(),
@@ -281,6 +283,12 @@ public class FastTokenManagerTest {
             "Expected HmacSHA512 for mechanism '" + mechanism + "'.");
     }
 
+    @Test
+    public void hmacAlgorithmForSha3MechanismUsesRegisteredJcaName() {
+        assertEquals("HmacSHA3-512", FastTokenManager.hmacAlgorithmForMechanism(FastTokenManager.HT2_SHA3_512_NONE));
+        assertEquals(64, FastTokenManager.hmac("key".getBytes(), "message".getBytes(), "HmacSHA3-512").length);
+    }
+
     // -------------------------------------------------------------------------
     // isHt2Mechanism
     // -------------------------------------------------------------------------
@@ -334,7 +342,7 @@ public class FastTokenManagerTest {
     }
 
     /**
-     * Verifies that featureElement() advertises all 16 FAST mechanisms (8 HT-* and 8 HT2-*).
+     * Verifies that featureElement() advertises every supported FAST mechanism.
      */
     @Test
     public void featureElementShouldAdvertiseAllSixteenMechanisms() {
@@ -343,7 +351,7 @@ public class FastTokenManagerTest {
         final List<Element> mechanisms = fast.elements("mechanism");
         final List<String> names = mechanisms.stream().map(Element::getText).collect(Collectors.toList());
 
-        assertEquals(16, names.size(), "Expected exactly 16 mechanism elements.");
+        assertEquals(24, names.size(), "Expected exactly 24 mechanism elements.");
 
         // HT-* (8)
         assertTrue(names.contains(FastTokenManager.HT_SHA_256_NONE), "Expected HT-SHA-256-NONE to be advertised.");
@@ -363,6 +371,14 @@ public class FastTokenManagerTest {
         assertTrue(names.contains(FastTokenManager.HT2_SHA_512_UNIQ), "Expected HT2-SHA-512-UNIQ to be advertised.");
         assertTrue(names.contains(FastTokenManager.HT2_SHA_512_ENDP), "Expected HT2-SHA-512-ENDP to be advertised.");
         assertTrue(names.contains(FastTokenManager.HT2_SHA_512_EXPR), "Expected HT2-SHA-512-EXPR to be advertised.");
+        assertTrue(names.contains(FastTokenManager.HT_SHA3_512_NONE));
+        assertTrue(names.contains(FastTokenManager.HT_SHA3_512_UNIQ));
+        assertTrue(names.contains(FastTokenManager.HT_SHA3_512_ENDP));
+        assertTrue(names.contains(FastTokenManager.HT_SHA3_512_EXPR));
+        assertTrue(names.contains(FastTokenManager.HT2_SHA3_512_NONE));
+        assertTrue(names.contains(FastTokenManager.HT2_SHA3_512_UNIQ));
+        assertTrue(names.contains(FastTokenManager.HT2_SHA3_512_ENDP));
+        assertTrue(names.contains(FastTokenManager.HT2_SHA3_512_EXPR));
     }
 
     // -------------------------------------------------------------------------

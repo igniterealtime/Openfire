@@ -106,7 +106,6 @@ public class HtSaslServer extends AbstractHtSaslServer {
         final Ht2ValidationResult result = tokenValidator.validate(
             username, mechanismName, tokenBytes, channelBindingData, "", "");
         if (result == null) {
-            complete = true;
             throw new SaslException(mechanismName + ": invalid or expired token for user '" + username + "'");
         }
         if (result.isExpired()) {

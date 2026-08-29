@@ -53,6 +53,15 @@ class HtSaslServerTest {
     }
 
     @Test
+    void invalidTokenDoesNotMarkExchangeComplete() {
+        final HtSaslServer server = new HtSaslServer(FastTokenManager.HT_SHA_256_NONE,
+            Collections.emptyMap(), (u, m, p, cb, i, r) -> null);
+
+        assertThrows(SaslException.class, () -> server.evaluateResponse(message("user", PROOF)));
+        assertFalse(server.isComplete());
+    }
+
+    @Test
     void rejectsMalformedAndOversizeMessages() {
         final HtSaslServer server = new HtSaslServer(FastTokenManager.HT_SHA_256_NONE,
             Collections.emptyMap(), (u, m, p, cb, i, r) -> null);

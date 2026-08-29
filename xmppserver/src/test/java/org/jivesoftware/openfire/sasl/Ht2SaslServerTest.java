@@ -57,6 +57,15 @@ class Ht2SaslServerTest {
         assertEquals(Failure.CREDENTIALS_EXPIRED, error.getFailure());
     }
 
+    @Test
+    void invalidTokenDoesNotMarkExchangeComplete() {
+        final Ht2SaslServer server = new Ht2SaslServer(FastTokenManager.HT2_SHA_256_NONE,
+            Collections.emptyMap(), (u, m, p, cb, i, r) -> null);
+
+        assertThrows(SaslException.class, () -> server.evaluateResponse(message("user", "", PROOF)));
+        assertFalse(server.isComplete());
+    }
+
     private static Ht2SaslServer server() {
         return new Ht2SaslServer(FastTokenManager.HT2_SHA_256_NONE, Collections.emptyMap(),
             (u, m, p, cb, i, r) -> new Ht2ValidationResult(null, RESPONDER));

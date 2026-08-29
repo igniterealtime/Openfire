@@ -34,6 +34,7 @@ import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.ServerSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.openfire.handler.Bind2StreamManagementHandler;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.openfire.sasl.SaslFailureException;
 import org.jivesoftware.util.JiveGlobals;
@@ -561,6 +562,40 @@ public class SASLAuthenticationTest
             final String responseValue2 = response.getAllValues().get(1);
             assertTrue(responseValue2.contains("<stream:feature"), "Expected stream features Element to be sent.");
             assertFalse(responseValue2.contains("<bind"), "Expected resource binding not to be offered.");
+        }
+    }
+
+    @Test
+    public void shouldEnableStreamManagementInlineWithSasl2AndBind2() throws Exception
+    {
+        try (final MockedStatic<EntityCapabilitiesManager> mockedEntityCaps = mockStatic(EntityCapabilitiesManager.class)) {
+            mockedEntityCaps.when(() -> EntityCapabilitiesManager.getLocalDomainVerHash(any())).thenReturn(null);
+            Bind2Request.registerElementHandler(new Bind2StreamManagementHandler());
+            try {
+                final Connection connection = mock(Connection.class);
+                final ConnectionConfiguration configuration = mock(ConnectionConfiguration.class);
+                when(configuration.getTlsPolicy()).thenReturn(Connection.TLSPolicy.disabled);
+                when(configuration.getCompressionPolicy()).thenReturn(Connection.CompressionPolicy.disabled);
+                when(connection.getConfiguration()).thenReturn(configuration);
+                final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
+                    new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+                final Element enable = DocumentHelper.createElement(QName.get("enable", StreamManager.NAMESPACE_V3));
+                session.setSessionData("bind2-request", new Bind2Request("test-client", List.of(enable)));
+                when(XMPPServer.getInstance().getSessionManager().bindResource(any(), any(), any()))
+                    .thenReturn(CompletableFuture.completedFuture(SessionManager.BindResult.BOUND));
+
+                SASLAuthentication.authenticationSuccessful(session, "testuser", "PLAIN", new byte[0], true);
+
+                final ArgumentCaptor<String> delivered = ArgumentCaptor.forClass(String.class);
+                verify(connection, times(2)).deliverRawText(delivered.capture());
+                final Element success = DocumentHelper.parseText(delivered.getAllValues().get(0)).getRootElement();
+                final Element bound = success.element(QName.get("bound", "urn:xmpp:bind:0"));
+                assertNotNull(bound);
+                assertNotNull(bound.element(QName.get("enabled", StreamManager.NAMESPACE_V3)));
+                assertTrue(session.getStreamManager().isEnabled());
+            } finally {
+                Bind2Request.unregisterElementHandler(StreamManager.NAMESPACE_V3);
+            }
         }
     }
 

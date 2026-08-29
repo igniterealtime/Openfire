@@ -1023,10 +1023,8 @@ public class SASLAuthentication {
                                 final boolean bound = throwable == null && result == SessionManager.BindResult.BOUND;
                                 final Element success = buildSasl2SuccessElement(finalSuccessData, finalAuthorizationIdentity, bound ? resource : null, resumeResponse);
                                 if (bound) {
-                                    bind2Request.processFeatureRequests(clientSession, success);
-                                }
-                                if (bound) {
                                     clientSession.setStatus(Session.Status.AUTHENTICATED);
+                                    bind2Request.processFeatureRequests(clientSession, success);
                                     SessionEventDispatcher.dispatchEvent(clientSession, SessionEventDispatcher.EventType.resource_bound);
                                 }
                                 // Deliver stream features now that <success/> has been sent.

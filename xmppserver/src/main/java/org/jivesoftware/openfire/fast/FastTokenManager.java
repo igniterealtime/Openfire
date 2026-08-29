@@ -20,6 +20,8 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.SystemProperty;
+import org.jivesoftware.util.Encryptor;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -264,7 +266,7 @@ public class FastTokenManager {
         // persisted by the server and the UTF-8 HMAC key must therefore all be identical.
         final byte[] rawToken = Base64.getEncoder().encode(entropy);
         final Instant expiry = Instant.now().plus(TOKEN_EXPIRY.getValue());
-        final String storedValue = new String(rawToken, StandardCharsets.US_ASCII);
+        final String storedValue = protectToken(new String(rawToken, StandardCharsets.US_ASCII));
         final String expiryString = XMPPDateTimeFormat.format(java.util.Date.from(expiry));
 
         Connection con = null;
@@ -354,7 +356,13 @@ public class FastTokenManager {
                     Log.warn("Ignoring FAST token with malformed expiry for user '{}'", username, e);
                     continue;
                 }
-                final byte[] candidate = rs.getString("tokenHash").getBytes(StandardCharsets.UTF_8);
+                final byte[] candidate;
+                try {
+                    candidate = unprotectToken(rs.getString("tokenHash")).getBytes(StandardCharsets.UTF_8);
+                } catch (final RuntimeException e) {
+                    Log.warn("Ignoring unreadable FAST token for user '{}'", username, e);
+                    continue;
+                }
                 final byte[] expected = hmac(candidate, initiatorMsg, hmacAlg);
                 final boolean proofMatches = MessageDigest.isEqual(expected, initiatorHashedToken);
                 if (proofMatches && Instant.now().isAfter(expiry)) matchingExpiredToken = true;
@@ -573,6 +581,32 @@ public class FastTokenManager {
         } catch (final InvalidKeyException e) {
             throw new IllegalStateException("Invalid HMAC key for " + algorithm, e);
         }
+    }
+
+    private static String protectToken(final String token) {
+        final byte[] iv = new byte[16];
+        SECURE_RANDOM.nextBytes(iv);
+        return protectToken(token, JiveGlobals.getPropertyEncryptor(), iv);
+    }
+
+    static String protectToken(final String token, final Encryptor encryptor, final byte[] iv) {
+        return "v1:" + Base64.getEncoder().encodeToString(iv) + ":" + encryptor.encrypt(token, iv);
+    }
+
+    static String unprotectToken(final String storedValue) {
+        return unprotectToken(storedValue, JiveGlobals.getPropertyEncryptor());
+    }
+
+    static String unprotectToken(final String storedValue, final Encryptor encryptor) {
+        if (!storedValue.startsWith("v1:")) {
+            return storedValue; // Rows issued before encrypted storage was introduced.
+        }
+        final int separator = storedValue.indexOf(':', 3);
+        if (separator < 0) {
+            throw new IllegalArgumentException("Malformed encrypted FAST token");
+        }
+        final byte[] iv = Base64.getDecoder().decode(storedValue.substring(3, separator));
+        return encryptor.decrypt(storedValue.substring(separator + 1), iv);
     }
 
     /**

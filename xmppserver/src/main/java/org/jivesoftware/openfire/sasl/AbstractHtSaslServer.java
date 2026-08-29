@@ -83,7 +83,11 @@ abstract class AbstractHtSaslServer implements SaslServer {
      * @param props         the SASL properties map (cannot be null)
      */
     protected AbstractHtSaslServer(@Nonnull final String mechanismName, @Nonnull final Map<String, ?> props) {
-        this(mechanismName, props, FastTokenManager::validateTokenHt2);
+        this(mechanismName, props, (username, mechanism, proof, cb, initiator, responder) -> {
+            final Object value = props.get(LocalSession.class.getCanonicalName());
+            final Long replayCount = value instanceof LocalSession session ? FastSessionState.getReplayCount(session) : null;
+            return FastTokenManager.validateTokenHt2(username, mechanism, proof, cb, initiator, responder, replayCount);
+        });
     }
 
     protected AbstractHtSaslServer(@Nonnull final String mechanismName, @Nonnull final Map<String, ?> props,

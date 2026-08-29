@@ -22,6 +22,39 @@ import static org.mockito.Mockito.*;
 
 class FastTokenPersistenceTest {
     @Test
+    void replayCounterAndPromotionCommitInOneTransaction() throws Exception {
+        final String token = "new-token";
+        final Connection connection = mock(Connection.class);
+        final PreparedStatement select = mock(PreparedStatement.class);
+        final PreparedStatement delete = mock(PreparedStatement.class);
+        final PreparedStatement promote = mock(PreparedStatement.class);
+        final PreparedStatement counter = mock(PreparedStatement.class);
+        final ResultSet rows = mock(ResultSet.class);
+        when(connection.prepareStatement(anyString())).thenAnswer(invocation -> {
+            final String sql = invocation.getArgument(0);
+            if (sql.startsWith("SELECT")) return select;
+            if (sql.startsWith("DELETE")) return delete;
+            if (sql.contains("tokenSlot='C' WHERE")) return promote;
+            return counter;
+        });
+        when(select.executeQuery()).thenReturn(rows);
+        when(rows.next()).thenReturn(true, false);
+        when(rows.getString("tokenHash")).thenReturn(token);
+        when(rows.getString("clientID")).thenReturn("client-a");
+        when(rows.getString("tokenSlot")).thenReturn("N");
+        when(rows.getString("expiry")).thenReturn(XMPPDateTimeFormat.format(Date.from(Instant.now().plusSeconds(172800))));
+        when(counter.executeUpdate()).thenReturn(1);
+        final byte[] proof = FastTokenManager.hmac(token.getBytes(StandardCharsets.UTF_8),
+            "Initiator".getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        try (MockedStatic<DbConnectionManager> db = mockStatic(DbConnectionManager.class)) {
+            db.when(DbConnectionManager::getConnection).thenReturn(connection);
+            assertNotNull(FastTokenManager.validateTokenHt2("user", FastTokenManager.HT_SHA_256_NONE,
+                proof, new byte[0], "", "", 9L));
+        }
+        verify(counter).setLong(1, 9L);
+        verify(connection).commit();
+    }
+    @Test
     void replayCounterAdvancesOnlyWhenDatabaseAcceptsGreaterValue() throws Exception {
         final Connection connection = mock(Connection.class);
         final PreparedStatement update = mock(PreparedStatement.class);

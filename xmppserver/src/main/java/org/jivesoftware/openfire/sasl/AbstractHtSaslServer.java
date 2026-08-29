@@ -17,6 +17,7 @@ package org.jivesoftware.openfire.sasl;
 
 import org.jivesoftware.openfire.fast.FastToken;
 import org.jivesoftware.openfire.fast.FastTokenManager;
+import org.jivesoftware.openfire.fast.FastSessionState;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
@@ -71,7 +72,7 @@ abstract class AbstractHtSaslServer implements SaslServer {
     protected final void recordAuthenticatedClient(final String clientId) {
         final Object value = props.get(LocalSession.class.getCanonicalName());
         if (clientId != null && value instanceof LocalSession session) {
-            session.setSessionData("fast-authenticated-client-id", clientId);
+            FastSessionState.setAuthenticatedClientId(session, clientId);
         }
     }
 
@@ -129,7 +130,7 @@ abstract class AbstractHtSaslServer implements SaslServer {
         if (complete && rotatedToken != null) {
             final LocalSession session = (LocalSession) props.get(LocalSession.class.getCanonicalName());
             if (session != null) {
-                session.setSessionData("fast-rotated-token", rotatedToken);
+                FastSessionState.setRotatedToken(session, rotatedToken);
             }
         }
         return result;

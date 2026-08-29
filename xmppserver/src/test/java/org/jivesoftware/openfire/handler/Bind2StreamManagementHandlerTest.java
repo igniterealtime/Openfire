@@ -175,4 +175,26 @@ public class Bind2StreamManagementHandlerTest {
         verifyNoInteractions(mockStreamManager);
         assertTrue(boundElement.elements().isEmpty());
     }
+
+    @Test
+    public void testMalformedRequestProducesBadRequestFailure() {
+        final Element wrongElement = DocumentHelper.createElement(QName.get("disable", StreamManager.NAMESPACE_V3));
+
+        handler.handleFailure(mockSession, boundElement, wrongElement, null);
+
+        final Element failed = boundElement.element(QName.get("failed", StreamManager.NAMESPACE_V3));
+        assertNotNull(failed);
+        assertNotNull(failed.element(QName.get("bad-request", "urn:ietf:params:xml:ns:xmpp-stanzas")));
+    }
+
+    @Test
+    public void testProcessingExceptionProducesInternalServerErrorFailure() {
+        final Element enable = DocumentHelper.createElement(QName.get("enable", StreamManager.NAMESPACE_V3));
+
+        handler.handleFailure(mockSession, boundElement, enable, new IllegalStateException("test failure"));
+
+        final Element failed = boundElement.element(QName.get("failed", StreamManager.NAMESPACE_V3));
+        assertNotNull(failed);
+        assertNotNull(failed.element(QName.get("internal-server-error", "urn:ietf:params:xml:ns:xmpp-stanzas")));
+    }
 }

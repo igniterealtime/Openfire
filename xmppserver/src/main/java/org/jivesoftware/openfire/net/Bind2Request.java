@@ -98,9 +98,11 @@ public class Bind2Request {
                 try {
                     if (!handler.handleElement(clientSession, bound, element)) {
                         Log.warn("Handler for namespace {} failed to process element", namespace);
+                        handler.handleFailure(clientSession, bound, element, null);
                     }
                 } catch (Exception e) {
                     Log.error("Error processing element with namespace: " + namespace, e);
+                    handler.handleFailure(clientSession, bound, element, e);
                 }
             } else {
                 Log.debug("No handler registered for namespace: {}", namespace);

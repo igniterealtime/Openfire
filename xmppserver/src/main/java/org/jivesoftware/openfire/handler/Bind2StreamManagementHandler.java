@@ -21,6 +21,7 @@ import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.PacketError;
 
 /**
  * A {@link Bind2InlineHandler} that processes XEP-0198 Stream Management {@code <enable/>} elements
@@ -80,5 +81,14 @@ public class Bind2StreamManagementHandler implements Bind2InlineHandler {
             return true;
         }
         return false;
+    }
+
+    @Override
+    public void handleFailure(LocalClientSession session, Element bound, Element element, Throwable cause) {
+        final PacketError.Condition condition = cause == null
+            ? PacketError.Condition.bad_request
+            : PacketError.Condition.internal_server_error;
+        final Element failed = bound.addElement("failed", StreamManager.NAMESPACE_V3);
+        failed.addElement(condition.toXMPP(), "urn:ietf:params:xml:ns:xmpp-stanzas");
     }
 }

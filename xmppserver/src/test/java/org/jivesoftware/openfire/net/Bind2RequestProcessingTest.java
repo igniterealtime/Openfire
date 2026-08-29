@@ -194,6 +194,7 @@ public class Bind2RequestProcessingTest {
 
         assertNotNull(result);
         verify(mockHandler1).handleElement(any(), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement1));
+        verify(mockHandler1).handleFailure(eq(mockSession), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement1), any(RuntimeException.class));
         verify(mockHandler2).handleElement(any(), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement2));
     }
 
@@ -208,6 +209,7 @@ public class Bind2RequestProcessingTest {
 
         assertNotNull(result);
         verify(mockHandler1).handleElement(any(), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement1));
+        verify(mockHandler1).handleFailure(eq(mockSession), elementWithNameAndNS("bound", "urn:xmpp:bind:0"), eq(featureElement1), isNull());
     }
 
     @Test

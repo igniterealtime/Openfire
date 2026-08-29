@@ -48,4 +48,16 @@ public interface Bind2InlineHandler {
      * @return true if the element was handled successfully, false otherwise
      */
     boolean handleElement(LocalClientSession session, Element bound, Element element);
+
+    /**
+     * Gives a handler an opportunity to add the protocol-defined failure response after request processing failed.
+     *
+     * @param session the client session
+     * @param bound the Bind2 response element
+     * @param element the request that could not be processed
+     * @param cause the processing exception, or {@code null} when the handler returned {@code false}
+     */
+    default void handleFailure(LocalClientSession session, Element bound, Element element, Throwable cause) {
+        // Most inline extensions do not define a failure response.
+    }
 }

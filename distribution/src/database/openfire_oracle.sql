@@ -14,14 +14,11 @@ CREATE INDEX ofUser_cDate_idx ON ofUser (creationDate ASC);
 CREATE TABLE ofUserScram (
   username              VARCHAR2(64)    NOT NULL,
   mechanism             VARCHAR2(32)    NOT NULL,
-  clientID             VARCHAR2(64)     NOT NULL,
-  tokenSlot             VARCHAR2(1)      NOT NULL,
-  replayCounter         NUMBER(19)       NOT NULL,
   storedKey             VARCHAR2(255),
   serverKey             VARCHAR2(255),
   salt                  VARCHAR2(255),
   iterations            INTEGER         NOT NULL,
-  CONSTRAINT ofUserScram_pk PRIMARY KEY (username, mechanism, clientID, tokenSlot)
+  CONSTRAINT ofUserScram_pk PRIMARY KEY (username, mechanism)
 );
 
 CREATE TABLE ofUserProp (

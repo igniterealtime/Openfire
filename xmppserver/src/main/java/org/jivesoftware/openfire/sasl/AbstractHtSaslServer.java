@@ -125,7 +125,8 @@ abstract class AbstractHtSaslServer implements SaslServer {
      * {@link #doEvaluateResponse(byte[], byte[])}.</p>
      *
      * @param response the client response bytes
-     * @return mechanism-specific success bytes (empty for HT-*, responder proof for HT2-*)
+     * @return mechanism-specific success bytes (the responder HMAC for HT-*, or the framed
+     * responder proof for HT2-*)
      * @throws SaslException if authentication fails
      */
     @Override

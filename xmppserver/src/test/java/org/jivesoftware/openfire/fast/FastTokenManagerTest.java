@@ -52,7 +52,10 @@ public class FastTokenManagerTest {
         assertTrue(protectedValue.startsWith("v1:"));
         assertFalse(protectedValue.contains("secret-token"));
         assertEquals("secret-token", FastTokenManager.unprotectToken(protectedValue, encryptor));
-        assertEquals("legacy-plaintext", FastTokenManager.unprotectToken("legacy-plaintext", encryptor));
+        assertThrows(IllegalArgumentException.class,
+            () -> FastTokenManager.unprotectToken("cleartext-token", encryptor));
+        assertThrows(IllegalArgumentException.class,
+            () -> FastTokenManager.unprotectToken("v2:unsupported", encryptor));
     }
 
     // -------------------------------------------------------------------------

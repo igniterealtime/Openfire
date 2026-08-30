@@ -2,6 +2,7 @@
 package org.jivesoftware.openfire.fast;
 
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
@@ -38,7 +39,7 @@ class FastTokenPersistenceTest {
         });
         when(select.executeQuery()).thenReturn(rows);
         when(rows.next()).thenReturn(true, false);
-        when(rows.getString("tokenHash")).thenReturn(token);
+        when(rows.getString("tokenHash")).thenReturn(storedToken(token));
         when(rows.getString("clientID")).thenReturn("client-a");
         when(rows.getString("tokenSlot")).thenReturn("N");
         when(rows.getString("expiry")).thenReturn(XMPPDateTimeFormat.format(Date.from(Instant.now().plusSeconds(172800))));
@@ -115,7 +116,7 @@ class FastTokenPersistenceTest {
         when(connection.prepareStatement(anyString())).thenReturn(select);
         when(select.executeQuery()).thenReturn(rows);
         when(rows.next()).thenReturn(true, false);
-        when(rows.getString("tokenHash")).thenReturn(token);
+        when(rows.getString("tokenHash")).thenReturn(storedToken(token));
         when(rows.getString("tokenSlot")).thenReturn("C");
         when(rows.getString("expiry")).thenReturn(XMPPDateTimeFormat.format(Date.from(Instant.now().plusSeconds(172800))));
         final byte[] proof = FastTokenManager.hmac(token.getBytes(StandardCharsets.UTF_8),
@@ -160,7 +161,7 @@ class FastTokenPersistenceTest {
         when(connection.prepareStatement(anyString())).thenReturn(select);
         when(select.executeQuery()).thenReturn(rows);
         when(rows.next()).thenReturn(true, true, false);
-        when(rows.getString("tokenHash")).thenReturn(current, "unacknowledged-new-token");
+        when(rows.getString("tokenHash")).thenReturn(storedToken(current), storedToken("unacknowledged-new-token"));
         when(rows.getString("clientID")).thenReturn("client-a");
         when(rows.getString("tokenSlot")).thenReturn("C", "N");
         when(rows.getString("expiry")).thenReturn(
@@ -195,7 +196,7 @@ class FastTokenPersistenceTest {
         });
         when(select.executeQuery()).thenReturn(rows);
         when(rows.next()).thenReturn(true, false);
-        when(rows.getString("tokenHash")).thenReturn(token);
+        when(rows.getString("tokenHash")).thenReturn(storedToken(token));
         when(rows.getString("clientID")).thenReturn("client-a");
         when(rows.getString("tokenSlot")).thenReturn("N");
         when(rows.getString("expiry")).thenReturn(
@@ -227,5 +228,9 @@ class FastTokenPersistenceTest {
         verify(delete).setString(2, FastTokenManager.HT2_SHA_512_EXPR);
         verify(delete).setString(3, "client-a");
         verify(delete).executeUpdate();
+    }
+
+    private static String storedToken(final String token) {
+        return FastTokenManager.protectToken(token, JiveGlobals.getPropertyEncryptor(), new byte[16]);
     }
 }

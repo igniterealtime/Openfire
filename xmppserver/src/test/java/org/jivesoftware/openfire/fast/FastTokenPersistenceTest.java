@@ -74,6 +74,7 @@ class FastTokenPersistenceTest {
         final Connection connection = mock(Connection.class);
         final PreparedStatement delete = mock(PreparedStatement.class);
         final PreparedStatement insert = mock(PreparedStatement.class);
+        when(connection.getTransactionIsolation()).thenReturn(Connection.TRANSACTION_READ_COMMITTED);
         when(connection.prepareStatement(anyString())).thenAnswer(invocation ->
             invocation.getArgument(0, String.class).startsWith("DELETE") ? delete : insert);
         try (MockedStatic<DbConnectionManager> db = mockStatic(DbConnectionManager.class)) {
@@ -82,6 +83,8 @@ class FastTokenPersistenceTest {
         }
         verify(connection).setAutoCommit(false);
         verify(connection).commit();
+        verify(connection).setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+        verify(connection).setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
         verify(delete).setString(3, "client-a");
         verify(insert).setString(3, "client-a");
         final ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
@@ -95,6 +98,7 @@ class FastTokenPersistenceTest {
         final Connection connection = mock(Connection.class);
         final PreparedStatement delete = mock(PreparedStatement.class);
         final PreparedStatement insert = mock(PreparedStatement.class);
+        when(connection.getTransactionIsolation()).thenReturn(Connection.TRANSACTION_READ_UNCOMMITTED);
         when(connection.prepareStatement(anyString())).thenAnswer(invocation ->
             invocation.getArgument(0, String.class).startsWith("DELETE") ? delete : insert);
         when(insert.executeUpdate()).thenThrow(new SQLException("disk full"));
@@ -105,6 +109,8 @@ class FastTokenPersistenceTest {
         }
         verify(connection).rollback();
         verify(connection, never()).commit();
+        verify(connection).setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+        verify(connection).setTransactionIsolation(Connection.TRANSACTION_READ_UNCOMMITTED);
     }
 
     @Test
@@ -113,6 +119,7 @@ class FastTokenPersistenceTest {
         final Connection connection = mock(Connection.class);
         final PreparedStatement select = mock(PreparedStatement.class);
         final ResultSet rows = mock(ResultSet.class);
+        when(connection.getTransactionIsolation()).thenReturn(Connection.TRANSACTION_REPEATABLE_READ);
         when(connection.prepareStatement(anyString())).thenReturn(select);
         when(select.executeQuery()).thenReturn(rows);
         when(rows.next()).thenReturn(true, false);
@@ -129,6 +136,8 @@ class FastTokenPersistenceTest {
             assertEquals("client-b", result.getClientId());
         }
         verify(connection).commit();
+        verify(connection).setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+        verify(connection).setTransactionIsolation(Connection.TRANSACTION_REPEATABLE_READ);
         verify(select).setString(3, "client-b");
         verify(connection, never()).prepareStatement(contains("DELETE"));
     }
@@ -138,6 +147,7 @@ class FastTokenPersistenceTest {
         final Connection connection = mock(Connection.class);
         final PreparedStatement select = mock(PreparedStatement.class);
         final ResultSet rows = mock(ResultSet.class);
+        when(connection.getTransactionIsolation()).thenReturn(Connection.TRANSACTION_READ_COMMITTED);
         when(connection.prepareStatement(anyString())).thenReturn(select);
         when(select.executeQuery()).thenReturn(rows);
         when(rows.next()).thenReturn(false);
@@ -150,6 +160,8 @@ class FastTokenPersistenceTest {
         }
         verify(select).setString(3, "client-b");
         verify(connection).rollback();
+        verify(connection).setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
+        verify(connection).setTransactionIsolation(Connection.TRANSACTION_READ_COMMITTED);
     }
 
     @Test

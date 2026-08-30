@@ -281,8 +281,10 @@ public class FastTokenManager {
 
         Connection con = null;
         PreparedStatement pstmt = null;
+        Integer originalTransactionIsolation = null;
         try {
             con = DbConnectionManager.getConnection();
+            originalTransactionIsolation = con.getTransactionIsolation();
             con.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
             con.setAutoCommit(false);
             pstmt = con.prepareStatement(DELETE_NEW_TOKEN);
@@ -308,6 +310,7 @@ public class FastTokenManager {
             Log.error("Failed to store FAST token for user '{}' mechanism '{}'", username, mechanism, e);
             throw new IllegalStateException("Unable to persist FAST token", e);
         } finally {
+            restoreTransactionIsolation(con, originalTransactionIsolation);
             DbConnectionManager.closeConnection(pstmt, con);
         }
 
@@ -362,8 +365,10 @@ public class FastTokenManager {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
+        Integer originalTransactionIsolation = null;
         try {
             con = DbConnectionManager.getConnection();
+            originalTransactionIsolation = con.getTransactionIsolation();
             con.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
             con.setAutoCommit(false);
             pstmt = con.prepareStatement(SELECT_TOKEN);
@@ -445,6 +450,7 @@ public class FastTokenManager {
             Log.error("Failed to fetch HT2 FAST token for user '{}' mechanism '{}'", username, mechanism, e);
             return null;
         } finally {
+            restoreTransactionIsolation(con, originalTransactionIsolation);
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
 
@@ -651,6 +657,17 @@ public class FastTokenManager {
         }
         final byte[] iv = Base64.getDecoder().decode(storedValue.substring(3, separator));
         return encryptor.decrypt(storedValue.substring(separator + 1), iv);
+    }
+
+    private static void restoreTransactionIsolation(final Connection connection, final Integer isolation) {
+        if (connection == null || isolation == null) {
+            return;
+        }
+        try {
+            connection.setTransactionIsolation(isolation);
+        } catch (final SQLException e) {
+            Log.warn("Unable to restore FAST database connection transaction isolation", e);
+        }
     }
 
     /**

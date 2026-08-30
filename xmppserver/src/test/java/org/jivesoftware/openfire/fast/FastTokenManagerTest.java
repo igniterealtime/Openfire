@@ -348,7 +348,7 @@ public class FastTokenManagerTest {
      * Verifies that featureElement() advertises every supported FAST mechanism.
      */
     @Test
-    public void featureElementShouldAdvertiseAllSixteenMechanisms() {
+    public void featureElementShouldAdvertiseAllSupportedMechanisms() {
         final Element fast = FastTokenManager.featureElement();
         @SuppressWarnings("unchecked")
         final List<Element> mechanisms = fast.elements("mechanism");

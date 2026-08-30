@@ -713,6 +713,11 @@ public class SASLAuthentication {
 
                     final String mechanismName = doc.attributeValue( "mechanism" ).toUpperCase();
 
+                    if (isFastMechanism(mechanismName) && !usingSASL2) {
+                        throw new SaslFailureException(Failure.INVALID_MECHANISM,
+                            "FAST mechanisms can only be negotiated with SASL2.");
+                    }
+
                     // See if the mechanism is supported by configuration as well as by implementation.
                     if ( !mechanisms.contains(mechanismName)
                         && !(FastTokenManager.ENABLE_FAST.getValue() && FastTokenManager.isMechanism(mechanismName)) )
@@ -1705,7 +1710,10 @@ public class SASLAuthentication {
         final Set<String> standardMechanisms = advertisableSASLMechanisms.stream()
             .filter(mechanism -> !isFastMechanism(mechanism)).collect(Collectors.toUnmodifiableSet());
         setAdvertisedSASLMechanisms(session, standardMechanisms);
-        session.setSessionData(AVAILABLE_FAST_MECHANISMS_FOR_SESSION, fastMechanisms);
+        final boolean fastFeatureIsAdvertised = session instanceof ClientSession
+            && checkSASL2Permitted(session).isEmpty() && FastTokenManager.ENABLE_FAST.getValue();
+        session.setSessionData(AVAILABLE_FAST_MECHANISMS_FOR_SESSION,
+            fastFeatureIsAdvertised ? fastMechanisms : Collections.emptySet());
 
         final Set<String> advertisableChannelBindingTypes = getAdvertisableChannelBindingTypes(session, advertisableSASLMechanisms);
         setAdvertisedChannelBindingTypes(session, advertisableChannelBindingTypes);

@@ -2036,6 +2036,40 @@ public class SASLAuthenticationTest
         assertTrue(response.getValue().contains("malformed-request"));
     }
 
+    @Test
+    public void sasl1RejectsFastMechanismEvenWhenAValidProofWasOffered() {
+        FastTokenManager.ENABLE_FAST.setValue(true);
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(true);
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
+            new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        session.setSessionData(SASLAuthentication.AVAILABLE_FAST_MECHANISMS_FOR_SESSION,
+            Set.of(FastTokenManager.HT_SHA_256_NONE));
+        final Element auth = authElement(FastTokenManager.HT_SHA_256_NONE);
+        auth.setText(Base64.getEncoder().encodeToString(new byte[32]));
+
+        assertEquals(SASLAuthentication.Status.failed, SASLAuthentication.handle(session, auth, false));
+        final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(response.capture());
+        assertTrue(response.getValue().contains("invalid-mechanism"));
+        assertNull(session.getSessionData("SaslServer"));
+    }
+
+    @Test
+    public void appendFeaturesDoesNotRecordFastMechanismsWhenSasl2IsNotOffered() {
+        FastTokenManager.ENABLE_FAST.setValue(true);
+        SASLAuthentication.ENABLE_SASL2.setValue(false);
+        SASLAuthentication.setEnabledMechanisms(List.of("PLAIN"));
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
+            new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+
+        SASLAuthentication.appendSASLFeatures(session, new ArrayList<>());
+
+        assertEquals(Set.of(), SASLAuthentication.getAdvertisedFastMechanisms(session).orElseThrow());
+    }
+
     private static Element authElement(final String mechanism)
     {
         final Element auth = DocumentHelper.createElement(new QName("auth", Namespace.get("", SASL_NAMESPACE)));

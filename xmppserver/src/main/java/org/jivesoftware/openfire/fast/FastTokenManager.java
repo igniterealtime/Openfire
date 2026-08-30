@@ -643,7 +643,7 @@ public class FastTokenManager {
 
     static String unprotectToken(final String storedValue, final Encryptor encryptor) {
         if (!storedValue.startsWith("v1:")) {
-            return storedValue; // Rows issued before encrypted storage was introduced.
+            throw new IllegalArgumentException("Unsupported encrypted FAST token format");
         }
         final int separator = storedValue.indexOf(':', 3);
         if (separator < 0) {

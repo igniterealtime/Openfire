@@ -801,14 +801,20 @@ public class SASLAuthentication {
                             }
                             FastSessionState.setClientId(session, userAgent.getId());
                         }
-                        if (requestTokenEl != null && FastTokenManager.ENABLE_FAST.getValue()) {
+                        if (requestTokenEl != null) {
                             final String requestedMechanism = requestTokenEl.attributeValue("mechanism");
-                            final Set<String> offered = getAdvertisedFastMechanisms(session).orElse(Collections.emptySet());
-                            if (requestedMechanism != null && FastTokenManager.isMechanism(requestedMechanism)
-                                && offered.contains(requestedMechanism.toUpperCase())) {
-                                FastSessionState.setRequestedMechanism(session, requestedMechanism.toUpperCase(Locale.ROOT));
-                                Log.debug("FAST token requested for mechanism '{}' by {}", requestedMechanism, session);
+                            if (requestedMechanism == null || !FastTokenManager.isMechanism(requestedMechanism)) {
+                                throw new SaslFailureException(Failure.MALFORMED_REQUEST,
+                                    "FAST token requests must specify a known mechanism");
                             }
+                            final String normalizedMechanism = requestedMechanism.toUpperCase(Locale.ROOT);
+                            final Set<String> offered = getAdvertisedFastMechanisms(session).orElse(Collections.emptySet());
+                            if (!FastTokenManager.ENABLE_FAST.getValue() || !offered.contains(normalizedMechanism)) {
+                                throw new SaslFailureException(Failure.INVALID_MECHANISM,
+                                    "The requested FAST mechanism was not offered for this session");
+                            }
+                            FastSessionState.setRequestedMechanism(session, normalizedMechanism);
+                            Log.debug("FAST token requested for mechanism '{}' by {}", normalizedMechanism, session);
                         }
                         // XEP-0484: parse <fast xmlns='urn:xmpp:fast:0' [count='..'] [invalidate='true']/>
                         final Element fastEl = doc.element(new QName("fast", new Namespace("", FastTokenManager.NAMESPACE)));

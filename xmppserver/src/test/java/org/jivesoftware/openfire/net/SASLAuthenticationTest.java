@@ -2170,11 +2170,15 @@ public class SASLAuthenticationTest
     }
 
     @Test
-    public void sasl2EndToEndIgnoresInvalidAndUnadvertisedFastTokenRequests()
+    public void sasl2RejectsMalformedAndUnadvertisedFastTokenRequests()
     {
         SASLAuthentication.ENABLE_SASL2.setValue(true);
         FastTokenManager.ENABLE_FAST.setValue(true);
-        for (final String requested : List.of(FastTokenManager.HT_SHA_512_NONE, "NOT-A-FAST-MECHANISM")) {
+        final Map<String, String> cases = new LinkedHashMap<>();
+        cases.put(" mechanism='HT-SHA-512-NONE'", "invalid-mechanism");
+        cases.put(" mechanism='NOT-A-FAST-MECHANISM'", "malformed-request");
+        cases.put("", "malformed-request");
+        for (final Map.Entry<String, String> testCase : cases.entrySet()) {
             final Connection connection = mock(Connection.class);
             when(connection.isEncrypted()).thenReturn(true);
             final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
@@ -2190,14 +2194,14 @@ public class SASLAuthenticationTest
                     final Element authenticate = DocumentHelper.parseText(
                         "<authenticate xmlns='urn:xmpp:sasl:2' mechanism='TEST-MECHANISM'>"
                             + "<initial-response/><user-agent id='123e4567-e89b-42d3-a456-426614174000'/>"
-                            + "<request-token xmlns='urn:xmpp:fast:0' mechanism='" + requested + "'/>"
+                            + "<request-token xmlns='urn:xmpp:fast:0'" + testCase.getKey() + "/>"
                             + "</authenticate>").getRootElement();
-                    assertEquals(SASLAuthentication.Status.authenticated,
+                    assertEquals(SASLAuthentication.Status.failed,
                         SASLAuthentication.handle(session, authenticate, true));
                     manager.verify(() -> FastTokenManager.issueToken(any(String.class), any(String.class), any(String.class)), never());
                     final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
                     verify(connection).deliverRawText(response.capture());
-                    assertFalse(response.getValue().contains("<token"));
+                    assertTrue(response.getValue().contains(testCase.getValue()), response.getValue());
                 }
             } catch (Exception e) {
                 fail(e);

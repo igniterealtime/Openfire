@@ -26,13 +26,14 @@ import java.util.Map;
 
 /**
  * Implementation of the HT2-* family of SASL mechanisms for FAST (XEP-0484),
- * as defined in draft-ietf-kitten-sasl-ht-02, supporting all hash (SHA-256, SHA-512) and
- * channel-binding (NONE, UNIQ, ENDP, EXPR) variants.
+ * as defined in draft-ietf-kitten-sasl-ht-02, supporting all hash (SHA-256, SHA-512, SHA3-512)
+ * and channel-binding (NONE, UNIQ, ENDP, EXPR) variants.
  *
  * <p>The initiator message format (NUL-byte separated) is:
  * <pre>authcid NUL extra-initiator-values NUL initiator-hashed-token</pre>
  * where {@code initiator-hashed-token = HMAC(token, "Initiator" || cb-data || extra-initiator-values)}
- * and the HMAC algorithm is derived from the mechanism name (e.g. HmacSHA256 for SHA-256 variants).
+ * and the HMAC algorithm is derived from the mechanism name (e.g. HmacSHA256 for SHA-256 variants
+ * and HmacSHA3-512 for SHA3-512 variants).
  * For the NONE (no channel binding) variant, {@code cb-data} is an empty byte sequence.</p>
  *
  * <p>On success the server sends back a success message:
@@ -61,7 +62,7 @@ public class Ht2SaslServer extends AbstractHtSaslServer {
      * Constructs an {@code Ht2SaslServer} for the given mechanism name.
      *
      * <p>The mechanism name must follow the pattern {@code HT2-{HASH}-{CBTYPE}}, e.g.
-     * {@code HT2-SHA-256-NONE} or {@code HT2-SHA-512-UNIQ}.</p>
+     * {@code HT2-SHA-256-NONE}, {@code HT2-SHA-512-UNIQ}, or {@code HT2-SHA3-512-EXPR}.</p>
      *
      * @param mechanismName the SASL mechanism name (cannot be null)
      * @param props         the SASL properties map, which must contain the {@link LocalSession}

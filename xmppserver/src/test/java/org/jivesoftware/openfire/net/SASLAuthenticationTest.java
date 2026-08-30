@@ -32,6 +32,7 @@ import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.sasl.Failure;
+import org.jivesoftware.openfire.sasl.Ht2FailureResponse;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
@@ -2208,6 +2209,30 @@ public class SASLAuthenticationTest
             } finally {
                 TestSaslMechanism.unregisterTestMechanism();
             }
+        }
+    }
+
+    @Test
+    public void sasl2FailureTransportsMechanismFailureData() throws Exception {
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(true);
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
+            new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        final TestSaslMechanism.TestSaslServer server = TestSaslMechanism.registerTestMechanism(session);
+        final byte[] failureData = Ht2FailureResponse.encode(Ht2FailureResponse.INVALID_TOKEN);
+        server.setError(new SaslFailureException("invalid token", null, Failure.NOT_AUTHORIZED, failureData));
+        try {
+            SASLAuthentication.setEnabledMechanisms(List.of("TEST-MECHANISM"));
+            SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("TEST-MECHANISM"));
+            assertEquals(SASLAuthentication.Status.failed,
+                SASLAuthentication.handle(session, sasl2AuthenticateElement("TEST-MECHANISM"), true));
+            final ArgumentCaptor<String> response = ArgumentCaptor.forClass(String.class);
+            verify(connection).deliverRawText(response.capture());
+            final Element failure = DocumentHelper.parseText(response.getValue()).getRootElement();
+            assertArrayEquals(failureData, Base64.getDecoder().decode(failure.elementText("additional-data")));
+        } finally {
+            TestSaslMechanism.unregisterTestMechanism();
         }
     }
 

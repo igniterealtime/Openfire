@@ -91,7 +91,11 @@ abstract class AbstractHtSaslServer implements SaslServer {
             }
             final Object value = props.get(LocalSession.class.getCanonicalName());
             final Long replayCount = value instanceof LocalSession session ? FastSessionState.getReplayCount(session) : null;
-            return FastTokenManager.validateTokenHt2(username, mechanism, proof, cb, initiator, responder, replayCount);
+            final String clientId = value instanceof LocalSession session ? FastSessionState.getClientId(session) : null;
+            if (clientId == null) {
+                return null;
+            }
+            return FastTokenManager.validateTokenHt2(username, clientId, mechanism, proof, cb, initiator, responder, replayCount);
         });
     }
 

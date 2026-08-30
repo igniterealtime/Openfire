@@ -26,6 +26,7 @@ public final class FastSessionState {
     private static final String REQUESTED_MECHANISM = "fast-request-token-mechanism";
     private static final String INVALIDATE = "fast-invalidate";
     private static final String REPLAY_COUNT = "fast-count";
+    private static final String CLIENT_ID = "fast-client-id";
     private static final String AUTHENTICATED_CLIENT_ID = "fast-authenticated-client-id";
     private static final String ROTATED_TOKEN = "fast-rotated-token";
 
@@ -58,6 +59,15 @@ public final class FastSessionState {
         return value(session, REPLAY_COUNT, Long.class);
     }
 
+    public static void setClientId(@Nonnull final LocalSession session, @Nonnull final String clientId) {
+        session.setSessionData(CLIENT_ID, clientId);
+    }
+
+    @Nullable
+    public static String getClientId(@Nonnull final LocalSession session) {
+        return value(session, CLIENT_ID, String.class);
+    }
+
     public static void setAuthenticatedClientId(@Nonnull final LocalSession session, @Nonnull final String clientId) {
         session.setSessionData(AUTHENTICATED_CLIENT_ID, clientId);
     }
@@ -81,6 +91,7 @@ public final class FastSessionState {
         session.removeSessionData(REQUESTED_MECHANISM);
         session.removeSessionData(INVALIDATE);
         session.removeSessionData(REPLAY_COUNT);
+        session.removeSessionData(CLIENT_ID);
     }
 
     /** Clears all state after an authentication attempt has completed. */

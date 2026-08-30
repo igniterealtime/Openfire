@@ -799,6 +799,7 @@ public class SASLAuthentication {
                                 throw new SaslFailureException(Failure.MALFORMED_REQUEST,
                                     "FAST requires a local authenticating JID in the stream 'from' attribute and a valid user-agent id");
                             }
+                            FastSessionState.setClientId(session, userAgent.getId());
                         }
                         if (requestTokenEl != null && FastTokenManager.ENABLE_FAST.getValue()) {
                             final String requestedMechanism = requestTokenEl.attributeValue("mechanism");

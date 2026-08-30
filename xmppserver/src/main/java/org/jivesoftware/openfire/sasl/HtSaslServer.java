@@ -26,7 +26,8 @@ import java.util.Map;
 
 /**
  * Implementation of the HT-* family of SASL mechanisms for FAST (XEP-0484),
- * supporting all hash (SHA-256, SHA-512) and channel-binding (NONE, UNIQ, ENDP, EXPR) variants.
+ * supporting all hash (SHA-256, SHA-512, SHA3-512) and channel-binding
+ * (NONE, UNIQ, ENDP, EXPR) variants.
  *
  * <p>The HT-09 initial response is {@code authcid NUL initiator-hashed-token}.</p>
  *
@@ -48,7 +49,7 @@ public class HtSaslServer extends AbstractHtSaslServer {
      * Constructs an {@code HtSaslServer} for the given mechanism name.
      *
      * <p>The mechanism name must follow the pattern {@code HT-{HASH}-{CBTYPE}}, e.g.
-     * {@code HT-SHA-256-NONE} or {@code HT-SHA-512-UNIQ}.</p>
+     * {@code HT-SHA-256-NONE}, {@code HT-SHA-512-UNIQ}, or {@code HT-SHA3-512-EXPR}.</p>
      *
      * @param mechanismName the SASL mechanism name (cannot be null)
      * @param props         the SASL properties map, which must contain the {@link LocalSession}

@@ -14,7 +14,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Date;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -48,7 +47,7 @@ class FastTokenPersistenceTest {
             "Initiator".getBytes(StandardCharsets.UTF_8), "HmacSHA256");
         try (MockedStatic<DbConnectionManager> db = mockStatic(DbConnectionManager.class)) {
             db.when(DbConnectionManager::getConnection).thenReturn(connection);
-            assertNotNull(FastTokenManager.validateTokenHt2("user", FastTokenManager.HT_SHA_256_NONE,
+            assertNotNull(FastTokenManager.validateTokenHt2("user", "client-a", FastTokenManager.HT_SHA_256_NONE,
                 proof, new byte[0], "", "", 9L));
         }
         verify(counter).setLong(1, 9L);
@@ -108,31 +107,48 @@ class FastTokenPersistenceTest {
     }
 
     @Test
-    void validationFindsTheCorrectClientWithoutInvalidatingAnotherClient() throws Exception {
-        final String[] tokens = {"token-for-a", "token-for-b"};
-        final String[] clients = {"client-a", "client-b"};
+    void validationScopesTokenLookupToThePresentedClientId() throws Exception {
+        final String token = "token-for-b";
         final Connection connection = mock(Connection.class);
         final PreparedStatement select = mock(PreparedStatement.class);
         final ResultSet rows = mock(ResultSet.class);
         when(connection.prepareStatement(anyString())).thenReturn(select);
         when(select.executeQuery()).thenReturn(rows);
-        final AtomicInteger row = new AtomicInteger(-1);
-        when(rows.next()).thenAnswer(i -> row.incrementAndGet() < 2);
-        when(rows.getString("tokenHash")).thenAnswer(i -> tokens[row.get()]);
-        when(rows.getString("clientID")).thenAnswer(i -> clients[row.get()]);
+        when(rows.next()).thenReturn(true, false);
+        when(rows.getString("tokenHash")).thenReturn(token);
         when(rows.getString("tokenSlot")).thenReturn("C");
         when(rows.getString("expiry")).thenReturn(XMPPDateTimeFormat.format(Date.from(Instant.now().plusSeconds(172800))));
-        final byte[] proof = FastTokenManager.hmac(tokens[1].getBytes(StandardCharsets.UTF_8),
+        final byte[] proof = FastTokenManager.hmac(token.getBytes(StandardCharsets.UTF_8),
             "Initiator".getBytes(StandardCharsets.UTF_8), "HmacSHA256");
         try (MockedStatic<DbConnectionManager> db = mockStatic(DbConnectionManager.class)) {
             db.when(DbConnectionManager::getConnection).thenReturn(connection);
             final FastTokenManager.Ht2ValidationResult result = FastTokenManager.validateTokenHt2(
-                "user", FastTokenManager.HT2_SHA_256_NONE, proof, new byte[0], "", "");
+                "user", "client-b", FastTokenManager.HT2_SHA_256_NONE, proof, new byte[0], "", "");
             assertNotNull(result);
             assertEquals("client-b", result.getClientId());
         }
         verify(connection).commit();
+        verify(select).setString(3, "client-b");
         verify(connection, never()).prepareStatement(contains("DELETE"));
+    }
+
+    @Test
+    void validationRejectsAnotherClientsToken() throws Exception {
+        final Connection connection = mock(Connection.class);
+        final PreparedStatement select = mock(PreparedStatement.class);
+        final ResultSet rows = mock(ResultSet.class);
+        when(connection.prepareStatement(anyString())).thenReturn(select);
+        when(select.executeQuery()).thenReturn(rows);
+        when(rows.next()).thenReturn(false);
+        final byte[] clientAProof = FastTokenManager.hmac("token-for-a".getBytes(StandardCharsets.UTF_8),
+            "Initiator".getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+        try (MockedStatic<DbConnectionManager> db = mockStatic(DbConnectionManager.class)) {
+            db.when(DbConnectionManager::getConnection).thenReturn(connection);
+            assertNull(FastTokenManager.validateTokenHt2("user", "client-b",
+                FastTokenManager.HT2_SHA_256_NONE, clientAProof, new byte[0], "", ""));
+        }
+        verify(select).setString(3, "client-b");
+        verify(connection).rollback();
     }
 
     @Test
@@ -154,7 +170,7 @@ class FastTokenPersistenceTest {
         try (MockedStatic<DbConnectionManager> db = mockStatic(DbConnectionManager.class)) {
             db.when(DbConnectionManager::getConnection).thenReturn(connection);
             final FastTokenManager.Ht2ValidationResult result = FastTokenManager.validateTokenHt2(
-                "user", FastTokenManager.HT_SHA_256_NONE, proof, new byte[0], "", "");
+                "user", "client-a", FastTokenManager.HT_SHA_256_NONE, proof, new byte[0], "", "");
             assertNotNull(result);
             assertEquals("client-a", result.getClientId());
         }
@@ -189,7 +205,7 @@ class FastTokenPersistenceTest {
         try (MockedStatic<DbConnectionManager> db = mockStatic(DbConnectionManager.class)) {
             db.when(DbConnectionManager::getConnection).thenReturn(connection);
             assertNotNull(FastTokenManager.validateTokenHt2(
-                "user", FastTokenManager.HT_SHA_256_NONE, proof, new byte[0], "", ""));
+                "user", "client-a", FastTokenManager.HT_SHA_256_NONE, proof, new byte[0], "", ""));
         }
         verify(delete).setString(3, "client-a");
         verify(promote).setString(3, "client-a");

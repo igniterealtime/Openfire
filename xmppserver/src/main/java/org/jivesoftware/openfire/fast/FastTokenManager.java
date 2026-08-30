@@ -150,7 +150,7 @@ public class FastTokenManager {
     private static final String INSERT_TOKEN =
         "INSERT INTO ofFastToken (username, mechanism, clientID, tokenSlot, replayCounter, tokenHash, expiry) VALUES (?,?,?,'N',0,?,?)";
     private static final String SELECT_TOKEN =
-        "SELECT clientID, tokenSlot, replayCounter, tokenHash, expiry FROM ofFastToken WHERE username=? AND mechanism=?";
+        "SELECT tokenSlot, replayCounter, tokenHash, expiry FROM ofFastToken WHERE username=? AND mechanism=? AND clientID=?";
     private static final String DELETE_TOKENS_FOR_USER =
         "DELETE FROM ofFastToken WHERE username=?";
     private static final String DELETE_TOKENS_FOR_CLIENT =
@@ -335,16 +335,18 @@ public class FastTokenManager {
      * @return a {@link Ht2ValidationResult} on success, or {@code null} on failure
      */
     public static Ht2ValidationResult validateTokenHt2(@Nonnull final String username,
+                                                        @Nonnull final String clientId,
                                                         @Nonnull final String mechanism,
                                                         @Nonnull final byte[] initiatorHashedToken,
                                                         @Nonnull final byte[] cbData,
                                                         @Nonnull final String extraInitiatorValues,
                                                         @Nonnull final String extraResponderValues) {
-        return validateTokenHt2(username, mechanism, initiatorHashedToken, cbData,
+        return validateTokenHt2(username, clientId, mechanism, initiatorHashedToken, cbData,
             extraInitiatorValues, extraResponderValues, null);
     }
 
     public static Ht2ValidationResult validateTokenHt2(@Nonnull final String username,
+                                                        @Nonnull final String clientId,
                                                         @Nonnull final String mechanism,
                                                         @Nonnull final byte[] initiatorHashedToken,
                                                         @Nonnull final byte[] cbData,
@@ -367,6 +369,7 @@ public class FastTokenManager {
             pstmt = con.prepareStatement(SELECT_TOKEN);
             pstmt.setString(1, username);
             pstmt.setString(2, mechanism);
+            pstmt.setString(3, clientId);
             rs = pstmt.executeQuery();
             final String hmacAlg = hmacAlgorithmForMechanism(mechanism);
             final byte[] initiatorMsg = buildHmacMessage("Initiator", cbData, extraInitiatorValues);
@@ -391,7 +394,7 @@ public class FastTokenManager {
                 final boolean valid = !Instant.now().isAfter(expiry) && proofMatches;
                 if (valid && matchedToken == null) {
                     matchedToken = candidate;
-                    matchedClientId = rs.getString("clientID");
+                    matchedClientId = clientId;
                     matchedSlot = rs.getString("tokenSlot");
                     matchedExpiry = expiry;
                     matchedReplayCounter = rs.getLong("replayCounter");

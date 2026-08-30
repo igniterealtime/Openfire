@@ -1065,8 +1065,7 @@ public class SASLAuthentication {
                 final String fastRequestedMechanism = FastSessionState.getRequestedMechanism(session);
                 final boolean isFastAuth = mechanismName.startsWith("HT-") || mechanismName.startsWith("HT2-");
                 final String authenticatedClientId = FastSessionState.getAuthenticatedClientId(session);
-                final UserAgentInfo userAgent = (UserAgentInfo) session.getSessionData("user-agent-info");
-                final String requestingClientId = userAgent == null ? null : userAgent.getId();
+                final String requestingClientId = FastSessionState.getClientId(session);
 
                 FastToken fastToken = null;
                 if (fastInvalidate) {

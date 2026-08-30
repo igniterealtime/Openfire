@@ -133,10 +133,13 @@ public class Ht2SaslServer extends AbstractHtSaslServer {
         final Ht2ValidationResult result = tokenValidator.validate(
             authcid, mechanismName, initiatorHashedToken, channelBindingData, extraInitiatorValues, "");
         if (result == null) {
-            throw new SaslException(mechanismName + ": invalid or expired token for user '" + authcid + "'");
+            // Do not distinguish an unknown user from a missing token: that would expose account existence.
+            throw new SaslFailureException(mechanismName + ": invalid token for user '" + authcid + "'", null,
+                Failure.NOT_AUTHORIZED, Ht2FailureResponse.encode(Ht2FailureResponse.INVALID_TOKEN));
         }
         if (result.isExpired()) {
-            throw new SaslFailureException(Failure.CREDENTIALS_EXPIRED);
+            throw new SaslFailureException(mechanismName + ": expired token", null, Failure.CREDENTIALS_EXPIRED,
+                Ht2FailureResponse.encode(Ht2FailureResponse.INVALID_TOKEN));
         }
 
         authorizationId = authcid;

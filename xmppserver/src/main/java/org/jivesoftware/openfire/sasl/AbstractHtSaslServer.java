@@ -134,10 +134,27 @@ abstract class AbstractHtSaslServer implements SaslServer {
             throw new SaslException("Authentication already complete");
         }
         if (response == null || response.length == 0) {
-            throw new SaslException(mechanismName + ": empty initiator message");
+            final SaslException failure = new SaslException(mechanismName + ": empty initiator message");
+            if (mechanismName.startsWith("HT2-")) {
+                throw new SaslFailureException(failure.getMessage(), failure, Failure.NOT_AUTHORIZED,
+                    Ht2FailureResponse.encode(Ht2FailureResponse.OTHER_ERROR));
+            }
+            throw failure;
         }
-        final byte[] channelBindingData = resolveChannelBindingData();
-        final byte[] result = doEvaluateResponse(response, channelBindingData);
+        final byte[] result;
+        try {
+            final byte[] channelBindingData = resolveChannelBindingData();
+            result = doEvaluateResponse(response, channelBindingData);
+        } catch (final SaslException e) {
+            if (mechanismName.startsWith("HT2-")
+                && (!(e instanceof SaslFailureException failure) || failure.getAdditionalData() == null)) {
+                final Failure failure = e instanceof SaslFailureException sfe && sfe.getFailure() != null
+                    ? sfe.getFailure() : Failure.NOT_AUTHORIZED;
+                throw new SaslFailureException(e.getMessage(), e, failure,
+                    Ht2FailureResponse.encode(Ht2FailureResponse.OTHER_ERROR));
+            }
+            throw e;
+        }
         // After successful evaluation, store the rotated token in the session so that
         // SASLAuthentication can include it in the SASL2 <success/> element (XEP-0484).
         if (complete && rotatedToken != null) {

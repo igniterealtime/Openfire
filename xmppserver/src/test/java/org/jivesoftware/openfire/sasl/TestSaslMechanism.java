@@ -57,6 +57,7 @@ public class TestSaslMechanism {
     public static class TestSaslServer implements SaslServer {
         private String authorizationID = null;
         private boolean throwError = false;
+        private SaslException configuredError = null;
         private long steps = 1;
         private boolean anonymous = false;
         private String configuredAuthorizationID = "test-user";
@@ -103,6 +104,7 @@ public class TestSaslMechanism {
         public void reset() {
             authorizationID = null;
             throwError = false;
+            configuredError = null;
             steps = 1;
             anonymous = false;
             configuredAuthorizationID = "test-user";
@@ -138,7 +140,7 @@ public class TestSaslMechanism {
                 }
             }
             if (throwError) {
-                throw new SaslException("Authentication failed");
+                throw configuredError == null ? new SaslException("Authentication failed") : configuredError;
             }
             if (this.steps <= 0) {
                 throw new SaslException("Authentication steps exceeded: " + this.steps);
@@ -190,6 +192,11 @@ public class TestSaslMechanism {
          */
         public void setThrowError(boolean throwError) {
             this.throwError = throwError;
+        }
+
+        public void setError(SaslException error) {
+            this.configuredError = error;
+            this.throwError = error != null;
         }
 
         /**

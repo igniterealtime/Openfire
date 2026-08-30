@@ -1794,8 +1794,8 @@ public class SASLAuthenticationTest
         // Manually set the session data that parsing the <authenticate> element would set.
         session.setSessionData("fast-request-token-mechanism",
             org.jivesoftware.openfire.fast.FastTokenManager.HT_SHA_256_NONE);
-        session.setSessionData("user-agent-info",
-            new UserAgentInfo("123e4567-e89b-42d3-a456-426614174000", null, null));
+        org.jivesoftware.openfire.fast.FastSessionState.setClientId(
+            session, "123e4567-e89b-42d3-a456-426614174000");
 
         try (final MockedStatic<org.jivesoftware.openfire.fast.FastTokenManager> mockedFtm =
                  mockStatic(org.jivesoftware.openfire.fast.FastTokenManager.class))
@@ -1803,7 +1803,7 @@ public class SASLAuthenticationTest
             mockedFtm.when(org.jivesoftware.openfire.fast.FastTokenManager::featureElement)
                 .thenCallRealMethod();
             mockedFtm.when(() -> org.jivesoftware.openfire.fast.FastTokenManager.issueToken(
-                    eq(username), any(String.class),
+                    eq(username), eq("123e4567-e89b-42d3-a456-426614174000"),
                     eq(org.jivesoftware.openfire.fast.FastTokenManager.HT_SHA_256_NONE)))
                 .thenReturn(issuedToken);
 

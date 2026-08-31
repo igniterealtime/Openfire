@@ -39,7 +39,9 @@ onFlowStart:
 - runScript:
       file: scripts/checkForLogs.js
       env:
-          PATTERN: 'jane@example\.org.*Authenticating with SASL\/[A-Z0-9-]+-PLUS'
+          # Pinned to SHA-256/512-PLUS. Conversations won't pick it while stronger mechanisms are available.
+          # Just "-PLUS" would silently pass if a regression caused a downgrade back to SHA-1-PLUS.
+          PATTERN: 'jane@example\.org.*Authenticating with SASL\/SCRAM-SHA-(256|512)-PLUS'
 
 - runScript:
       file: scripts/checkForLogs.js

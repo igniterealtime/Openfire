@@ -50,7 +50,7 @@ runs:
       if: failure()
       uses: actions/upload-artifact@v7
       with:
-        name: adb-logcat
+        name: Conversations e2e (${{ inputs.includeTags }}) Android log
         path: adb_logcat.log
         retention-days: 7
 
@@ -58,7 +58,7 @@ runs:
       if: failure()
       uses: actions/upload-artifact@v7
       with:
-        name: sidecar-log
+        name: Conversations e2e (${{ inputs.includeTags }}) Sidecar log
         path: ${{ runner.temp }}/sidecar.log
         retention-days: 7
 
@@ -66,7 +66,7 @@ runs:
       if: always()
       uses: actions/upload-artifact@v7
       with:
-        name: maestro-logs
+        name: Conversations e2e (${{ inputs.includeTags }}) Maestro logs
         path: ~/.maestro/tests
         retention-days: 7
         include-hidden-files: true

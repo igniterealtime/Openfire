@@ -415,7 +415,7 @@ public class FastTokenManagerTest {
         final FastToken token = new FastToken("user", "HT-SHA-256-NONE", original, Instant.now().plusSeconds(3600));
         final byte[] retrieved = token.getToken();
         retrieved[0] = 99;
-        assertNotEquals(99, token.getToken()[0], "Expected getToken() to return a defensive copy.");
+        assertArrayEquals(original, token.getToken(), "Expected getToken() to return a defensive copy.");
     }
 
     /**
@@ -446,7 +446,7 @@ public class FastTokenManagerTest {
 
         final byte[] retrieved = result.getResponderHashedToken();
         retrieved[0] = 99;
-        assertNotEquals(99, result.getResponderHashedToken()[0],
+        assertArrayEquals(responder, result.getResponderHashedToken(),
             "Expected getResponderHashedToken() to return a defensive copy.");
     }
 

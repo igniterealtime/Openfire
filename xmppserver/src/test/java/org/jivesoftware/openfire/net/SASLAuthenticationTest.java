@@ -1879,9 +1879,7 @@ public class SASLAuthenticationTest
         try (final MockedStatic<org.jivesoftware.openfire.fast.FastTokenManager> mockedFtm =
                  mockStatic(org.jivesoftware.openfire.fast.FastTokenManager.class))
         {
-            mockedFtm.when(() -> org.jivesoftware.openfire.fast.FastTokenManager.invalidateTokens(any()))
-                .then(invocation -> null);
-            mockedFtm.when(() -> org.jivesoftware.openfire.fast.FastTokenManager.issueToken(any(), any()))
+            mockedFtm.when(() -> org.jivesoftware.openfire.fast.FastTokenManager.issueToken(any(), any(), any()))
                 .thenReturn(rotatedToken);
 
             // Execute system under test.
@@ -1991,15 +1989,15 @@ public class SASLAuthenticationTest
         when(connection.isEncrypted()).thenReturn(false);
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        session.setSessionData(SASLAuthentication.AVAILABLE_FAST_MECHANISMS_FOR_SESSION,
+            Set.of(FastTokenManager.HT_SHA_256_NONE));
 
         // Execute system under test.
         final SASLAuthentication.Status status = SASLAuthentication.handle(
             session, sasl2AuthenticateElement("HT-SHA-256-NONE"), true);
 
-        // Verify: authentication must fail (no valid session CB / no SASL server), but the failure
-        // reason must NOT be "invalid-mechanism" from the mechanism-list check — it should be
-        // "invalid-mechanism" from the session-eligibility check (mechanism not available for this
-        // unencrypted session) or a provider-level failure, not from the sasl.mechs list guard.
+        // The advertised mechanism passes both mechanism guards, then the missing FAST inline
+        // marker is rejected as a malformed request.
         assertEquals(SASLAuthentication.Status.failed, status,
             "Expected SASL negotiation to fail (HT-* needs TLS/FAST support), but not due to the mechanism list.");
 
@@ -2008,11 +2006,8 @@ public class SASLAuthenticationTest
         verify(connection).deliverRawText(response.capture());
         final String xml = response.getValue();
 
-        // The important assertion: the failure was NOT "The configuration of Openfire does not
-        // contain or allow the mechanism." from the sasl.mechs list guard. Any failure is
-        // acceptable here (session eligibility, no provider, etc.) but it must be after the list
-        // guard passed — confirmed by the fact that the test did not throw before this point.
-        assertTrue(xml.contains("failure"), "Expected a SASL failure element in the response.");
+        assertTrue(xml.contains("malformed-request"), xml);
+        assertFalse(xml.contains("invalid-mechanism"), xml);
     }
 
     @Test
@@ -2267,6 +2262,7 @@ public class SASLAuthenticationTest
                 verify(connection).deliverRawText(response.capture());
                 assertTrue(response.getValue().contains("<failure"));
                 assertFalse(response.getValue().contains("<success"));
+                assertNull(session.getAuthToken(), "Failed SASL2 authentication must not retain an authentication token.");
             }
         } catch (Exception e) {
             fail(e);

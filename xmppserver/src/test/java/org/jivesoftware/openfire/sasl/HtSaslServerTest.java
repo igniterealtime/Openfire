@@ -75,7 +75,8 @@ class HtSaslServerTest {
 
             final SaslFailureException error = assertThrows(SaslFailureException.class,
                 () -> server.evaluateResponse(message("user", PROOF)));
-            assertEquals(Failure.ACCOUNT_DISABLED, error.getFailure());
+            assertEquals(Failure.NOT_AUTHORIZED, error.getFailure());
+            assertArrayEquals(Ht2FailureResponse.encode(Ht2FailureResponse.INVALID_TOKEN), error.getAdditionalData());
             verify(lockOutManager).recordFailedLogin("user");
             tokens.verifyNoInteractions();
         }

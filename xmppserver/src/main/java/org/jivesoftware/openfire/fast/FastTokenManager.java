@@ -197,13 +197,6 @@ public class FastTokenManager {
     }
 
     /**
-     * Returns {@code true} if the given mechanism name is an HT2 mechanism.
-     */
-    static boolean isHt2Mechanism(@Nonnull final String mechanism) {
-        return mechanism.startsWith("HT2-");
-    }
-
-    /**
      * Extracts the JCA hash algorithm name from a mechanism name of the form
      * {@code HT-SHA-256-NONE}, {@code HT2-SHA-512-UNIQ}, etc.
      *
@@ -248,25 +241,23 @@ public class FastTokenManager {
     }
 
     /**
-     * Issues a new FAST token for the given username and mechanism, storing it in the database.
-     * Any unacknowledged new token for the same user, mechanism and client is replaced. The
-     * current token remains valid until the client proves possession of this new token.
+     * Issues a new FAST token for the given username, client identifier and mechanism, storing
+     * it in the database. Any unacknowledged new token for the same user, mechanism and client
+     * is replaced. The current token remains valid until the client proves possession of this
+     * new token.
      *
      * The generated token is a Base64 Unicode string. Its UTF-8 representation is persisted so
      * that both HT families can verify and produce their mutual-authentication HMACs.
      *
      * @param username  the local username (cannot be null)
+     * @param clientId  the client identifier (cannot be null)
      * @param mechanism the FAST SASL mechanism name (cannot be null)
      * @return the newly issued {@link FastToken} containing the UTF-8 token bytes and expiry
      */
     @Nonnull
-    public static FastToken issueToken(@Nonnull final String username, @Nonnull final String mechanism) {
-        return issueToken(username, "legacy", mechanism);
-    }
-
-    @Nonnull
     public static FastToken issueToken(@Nonnull final String username, @Nonnull final String clientId,
-                                       @Nonnull final String mechanism) {
+                                       @Nonnull final String mechanism)
+    {
         if (!MECHANISMS.contains(mechanism)) {
             throw new IllegalArgumentException("Unsupported FAST mechanism: " + mechanism);
         }
@@ -305,7 +296,11 @@ public class FastTokenManager {
             con.commit();
         } catch (final SQLException e) {
             if (con != null) {
-                try { con.rollback(); } catch (final SQLException rollbackError) { e.addSuppressed(rollbackError); }
+                try {
+                    con.rollback();
+                } catch (final SQLException rollbackError) {
+                    e.addSuppressed(rollbackError);
+                }
             }
             Log.error("Failed to store FAST token for user '{}' mechanism '{}'", username, mechanism, e);
             throw new IllegalStateException("Unable to persist FAST token", e);
@@ -678,52 +673,5 @@ public class FastTokenManager {
         } catch (final SQLException e) {
             Log.warn("Unable to restore FAST database connection transaction isolation", e);
         }
-    }
-
-    /**
-     * Computes a hash of the given bytes using the specified JCA algorithm and returns the
-     * result as a lowercase hex string.
-     *
-     * @param data      the data to hash (cannot be null)
-     * @param algorithm the JCA digest algorithm name, e.g. {@code "SHA-256"} or {@code "SHA-512"}
-     * @return the hex-encoded hash
-     */
-    static String hashHex(@Nonnull final byte[] data, @Nonnull final String algorithm) {
-        try {
-            final MessageDigest digest = MessageDigest.getInstance(algorithm);
-            final byte[] hash = digest.digest(data);
-            final StringBuilder sb = new StringBuilder(hash.length * 2);
-            for (final byte b : hash) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString();
-        } catch (final NoSuchAlgorithmException e) {
-            throw new IllegalStateException(algorithm + " not available", e);
-        }
-    }
-
-    /**
-     * Computes the SHA-256 hash of the given bytes and returns it as a lowercase hex string.
-     *
-     * @param data the data to hash (cannot be null)
-     * @return the hex-encoded SHA-256 hash
-     * @deprecated Use {@link #hashHex(byte[], String)} with algorithm {@code "SHA-256"} instead.
-     */
-    @Deprecated
-    static String sha256Hex(@Nonnull final byte[] data) {
-        return hashHex(data, "SHA-256");
-    }
-
-    /**
-     * Computes HMAC-SHA-256 of the given message using the provided key.
-     *
-     * @param key     the HMAC key bytes (cannot be null)
-     * @param message the message bytes (cannot be null)
-     * @return the raw HMAC-SHA-256 bytes
-     * @deprecated Use {@link #hmac(byte[], byte[], String)} with algorithm {@code "HmacSHA256"} instead.
-     */
-    @Deprecated
-    static byte[] hmacSha256(@Nonnull final byte[] key, @Nonnull final byte[] message) {
-        return hmac(key, message, "HmacSHA256");
     }
 }

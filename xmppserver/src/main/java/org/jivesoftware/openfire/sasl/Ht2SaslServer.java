@@ -106,7 +106,7 @@ public class Ht2SaslServer extends AbstractHtSaslServer {
         if (firstNul > 255) {
             throw new SaslException(mechanismName + ": authcid exceeds 255 octets");
         }
-        final String authcid = decodeUtf8(response, 0, firstNul, "authcid");
+        final String authcid = decodeAuthcId(decodeUtf8(response, 0, firstNul, "authcid"));
         final String extraInitiatorValues = decodeUtf8(response, firstNul + 1,
             secondNul - firstNul - 1, "extra-initiator-values");
         if (!extraInitiatorValues.isEmpty() && !extraInitiatorValues.matches(

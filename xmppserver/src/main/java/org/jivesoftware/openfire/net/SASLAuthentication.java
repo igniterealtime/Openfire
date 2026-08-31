@@ -795,10 +795,12 @@ public class SASLAuthentication {
                         final Element requestTokenEl = doc.element(new QName("request-token", new Namespace("", FastTokenManager.NAMESPACE)));
                         if (isFastMechanism(mechanismName) || requestTokenEl != null) {
                             final UserAgentInfo userAgent = (UserAgentInfo) session.getSessionData("user-agent-info");
-                            if (userAgent == null || userAgent.getId() == null || clientSession.getExpectedUsername().isEmpty()) {
+                            final Optional<String> expected = clientSession.getExpectedUsername();
+                            if (userAgent == null || userAgent.getId() == null || expected.isEmpty()) {
                                 throw new SaslFailureException(Failure.MALFORMED_REQUEST,
                                     "FAST requires a local authenticating JID in the stream 'from' attribute and a valid user-agent id");
                             }
+                            FastSessionState.setExpectedUsername(session, expected.get());
                             FastSessionState.setClientId(session, userAgent.getId());
                         }
                         if (requestTokenEl != null) {

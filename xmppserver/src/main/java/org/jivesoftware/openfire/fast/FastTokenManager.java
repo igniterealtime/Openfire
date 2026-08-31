@@ -20,10 +20,10 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.database.DbConnectionManager;
-import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.Encryptor;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.XMPPDateTimeFormat;
+import org.jivesoftware.util.StringUtils;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -280,7 +280,7 @@ public class FastTokenManager {
         final byte[] rawToken = Base64.getEncoder().encode(entropy);
         final Instant expiry = Instant.now().plus(TOKEN_EXPIRY.getValue());
         final String storedValue = protectToken(new String(rawToken, StandardCharsets.US_ASCII));
-        final String expiryString = XMPPDateTimeFormat.format(java.util.Date.from(expiry));
+        final String expiryString = StringUtils.zeroPadString(String.valueOf(expiry.toEpochMilli()), 15);
 
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -374,8 +374,8 @@ public class FastTokenManager {
             while (rs.next()) {
                 final Instant expiry;
                 try {
-                    expiry = new XMPPDateTimeFormat().parseString(rs.getString("expiry")).toInstant();
-                } catch (final Exception e) {
+                    expiry = Instant.ofEpochMilli(Long.parseLong(rs.getString("expiry").trim()));
+                } catch (final NumberFormatException e) {
                     Log.warn("Ignoring FAST token with malformed expiry for user '{}'", username, e);
                     continue;
                 }
@@ -596,7 +596,7 @@ public class FastTokenManager {
      * Purges all expired FAST tokens from the database.
      */
     public static void purgeExpiredTokens() {
-        final String nowString = XMPPDateTimeFormat.format(java.util.Date.from(Instant.now()));
+        final String nowString = StringUtils.zeroPadString(String.valueOf(System.currentTimeMillis()), 15);
         Connection con = null;
         PreparedStatement pstmt = null;
         try {

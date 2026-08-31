@@ -49,6 +49,13 @@ public class FastTokenLifecycle extends BasicModule {
         public void userDeleting(final User user, final Map<String, Object> params) {
             FastTokenManager.invalidateTokens(user.getUsername());
         }
+
+        @Override
+        public void userModified(User user, Map<String, Object> params) {
+            if (params != null && "passwordModified".equals(params.get("type"))) {
+                FastTokenManager.invalidateTokens(user.getUsername());
+            }
+        }
     };
 
     public FastTokenLifecycle() {

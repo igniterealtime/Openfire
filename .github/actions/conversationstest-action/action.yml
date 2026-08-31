@@ -41,7 +41,6 @@ runs:
       uses: reactivecircus/android-emulator-runner@v2
       with:
         api-level: 34
-        target: google_apis
         arch: x86_64
         profile: pixel_6
         script: ${{ github.action_path }}/run-tests.sh ${{ inputs.includeTags }}

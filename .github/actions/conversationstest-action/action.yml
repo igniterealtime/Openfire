@@ -61,8 +61,8 @@ runs:
         path: ${{ runner.temp }}/sidecar.log
         retention-days: 7
 
-    - name: Upload maestro artifacts on failure
-      if: failure()
+    - name: Upload maestro artifacts
+      if: always()
       uses: actions/upload-artifact@v7
       with:
         name: maestro-logs

@@ -37,12 +37,11 @@ public class FastTokenLifecycle extends BasicModule {
         .setDynamic(false)
         .build();
 
-    private final TimerTask cleanupTask = new TimerTask() {
-        @Override
-        public void run() {
-            FastTokenManager.purgeExpiredTokens();
-        }
-    };
+    /**
+     * The scheduled cleanup task, or null when the module is not started. A TimerTask cannot be
+     * scheduled again after it has been cancelled, so a new instance is created on every start.
+     */
+    private TimerTask cleanupTask;
 
     private final UserEventAdapter userListener = new UserEventAdapter() {
         @Override
@@ -51,7 +50,7 @@ public class FastTokenLifecycle extends BasicModule {
         }
 
         @Override
-        public void userModified(User user, Map<String, Object> params) {
+        public void userModified(final User user, final Map<String, Object> params) {
             if (params != null && "passwordModified".equals(params.get("type"))) {
                 FastTokenManager.invalidateTokens(user.getUsername());
             }
@@ -65,12 +64,21 @@ public class FastTokenLifecycle extends BasicModule {
     @Override
     public void start() {
         UserEventDispatcher.addListener(userListener);
+        cleanupTask = new TimerTask() {
+            @Override
+            public void run() {
+                FastTokenManager.purgeExpiredTokens();
+            }
+        };
         TaskEngine.getInstance().schedule(cleanupTask, CLEANUP_INTERVAL.getValue(), CLEANUP_INTERVAL.getValue());
     }
 
     @Override
     public void stop() {
         UserEventDispatcher.removeListener(userListener);
-        TaskEngine.getInstance().cancelScheduledTask(cleanupTask);
+        if (cleanupTask != null) {
+            TaskEngine.getInstance().cancelScheduledTask(cleanupTask);
+            cleanupTask = null;
+        }
     }
 }

@@ -30,6 +30,8 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.TimerTask;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -159,6 +161,36 @@ class FastTokenLifecycleTest {
         assertSame(scheduled.getValue(), cancelled.getValue(),
             "stop() cancelled a different TimerTask instance than start() scheduled, so the original task " +
                 "is still registered with the TaskEngine and continues to run.");
+    }
+
+    /**
+     * A module that is started, stopped and started again must schedule a fresh task. A TimerTask
+     * cannot be scheduled after cancellation, so reusing one instance across restarts throws.
+     */
+    @Test
+    void restartingTheModuleSchedulesAFreshCleanupTask() {
+        final ArgumentCaptor<TimerTask> scheduled = ArgumentCaptor.forClass(TimerTask.class);
+
+        module.start();
+        module.stop();
+        assertDoesNotThrow(module::start,
+            "Restarting the module failed. A cancelled TimerTask cannot be rescheduled, so start() must " +
+                "create a new one rather than reuse a field.");
+
+        verify(taskEngine, times(2)).schedule(scheduled.capture(), any(Duration.class), any(Duration.class));
+        assertNotSame(scheduled.getAllValues().get(0), scheduled.getAllValues().get(1),
+            "The second start() scheduled the same TimerTask instance the first one did; the TaskEngine " +
+                "would reject it once it has been cancelled.");
+    }
+
+    /**
+     * Stopping a module that was never started must be harmless, since there is no task to cancel.
+     */
+    @Test
+    void stoppingAModuleThatWasNeverStartedIsHarmless() {
+        assertDoesNotThrow(module::stop,
+            "stop() failed on a module that had not been started.");
+        verify(taskEngine, never()).cancelScheduledTask(any(TimerTask.class));
     }
 
     /**

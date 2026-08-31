@@ -17,7 +17,7 @@ package org.jivesoftware.openfire.fast;
 
 import org.jivesoftware.database.DbConnectionManager;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.XMPPDateTimeFormat;
+import org.jivesoftware.util.StringUtils;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
@@ -28,7 +28,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
-import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -540,7 +539,11 @@ class FastTokenPersistenceTest
         verify(delete).setString(1, USER);
     }
 
-    /** Purging must delete by expiry using the same encoding the expiry column is written in. */
+    /**
+     * Purging must delete by expiry using the same encoding {@code issueToken} writes, and that
+     * encoding must be fixed-width so the lexicographic comparison in the delete orders
+     * chronologically.
+     */
     @Test
     void purgingDeletesTokensByExpiry() throws Exception
     {
@@ -549,14 +552,28 @@ class FastTokenPersistenceTest
         final ArgumentCaptor<String> cutoff = ArgumentCaptor.forClass(String.class);
         when(connection.prepareStatement(anyString())).thenReturn(delete);
 
+        final long before = System.currentTimeMillis();
         try (MockedStatic<DbConnectionManager> db = mockStatic(DbConnectionManager.class)) {
             db.when(DbConnectionManager::getConnection).thenReturn(connection);
             FastTokenManager.purgeExpiredTokens();
         }
+        final long after = System.currentTimeMillis();
 
         verify(delete).setString(eq(1), cutoff.capture());
-        assertDoesNotThrow(() -> new XMPPDateTimeFormat().parseString(cutoff.getValue()),
-            "The purge cutoff is not in the format the expiry column is written in, so the comparison is meaningless.");
+        final String value = cutoff.getValue();
+
+        assertTrue(value.matches("\\d{15}"),
+            "The purge cutoff is not 15 digits, so it will not compare correctly against stored expiry values.");
+
+        final long millis = Long.parseLong(value);
+        assertTrue(millis >= before && millis <= after,
+            "The purge cutoff is not the current time, so it deletes the wrong rows.");
+
+        assertTrue(value.compareTo(inSeconds(60)) < 0,
+            "A token expiring in the future does not sort above the purge cutoff and would be deleted.");
+        assertTrue(value.compareTo(inSeconds(-60)) > 0,
+            "A token that expired in the past does not sort below the purge cutoff and would survive.");
+
         verify(delete).executeUpdate();
     }
 
@@ -613,6 +630,6 @@ class FastTokenPersistenceTest
 
     private static String inSeconds(final long seconds)
     {
-        return XMPPDateTimeFormat.format(Date.from(Instant.now().plusSeconds(seconds)));
+        return StringUtils.zeroPadString(String.valueOf(Instant.now().plusSeconds(seconds).toEpochMilli()), 15);
     }
 }

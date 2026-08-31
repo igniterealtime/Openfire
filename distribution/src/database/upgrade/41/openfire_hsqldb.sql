@@ -7,8 +7,9 @@ CREATE TABLE ofFastToken (
   tokenSlot             VARCHAR(1)      NOT NULL,
   replayCounter         BIGINT          NOT NULL,
   encryptedToken        VARCHAR(255)    NOT NULL,
-  expiry                VARCHAR(35)     NOT NULL,
+  expiry                CHAR(15)        NOT NULL,
   CONSTRAINT ofFastToken_pk PRIMARY KEY (username, mechanism, clientID, tokenSlot)
 );
+CREATE INDEX ofFastToken_exp_idx ON ofFastToken (expiry);
 
 UPDATE ofVersion SET version = 41 WHERE name = 'openfire';

@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.openfire.fast;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -123,14 +124,20 @@ public class FastTokenManager {
     public static final String HT2_SHA3_512_ENDP = "HT2-SHA3-512-ENDP";
     public static final String HT2_SHA3_512_EXPR = "HT2-SHA3-512-EXPR";
 
-    /** System property to enable or disable FAST support. */
+    /**
+     * Enables FAST (XEP-0484), which lets clients re-authenticate with a long-lived token instead of their password.
+     */
     public static final SystemProperty<Boolean> ENABLE_FAST = SystemProperty.Builder.ofType(Boolean.class)
         .setKey("xmpp.fast.enabled")
         .setDefaultValue(Boolean.TRUE)
         .setDynamic(Boolean.TRUE)
         .build();
 
-    /** System property controlling the default token expiry duration. */
+    /**
+     * How long an issued FAST token remains valid. This is the window in which a leaked token, or a token belonging to
+     * a password changed outside Openfire (as with LDAP), can still be used to authenticate - lower values shorten that
+     * exposure at the cost of more frequent full re-authentication.
+     */
     public static final SystemProperty<Duration> TOKEN_EXPIRY = SystemProperty.Builder.ofType(Duration.class)
         .setKey("xmpp.fast.token.expiry")
         .setDefaultValue(Duration.ofDays(7))
@@ -138,6 +145,11 @@ public class FastTokenManager {
         .setDynamic(Boolean.TRUE)
         .build();
 
+    /**
+     * How close to expiry a token must be before a successful authentication issues a replacement. It must be
+     * comfortably longer than the longest interval at which a client is expected to reconnect, or clients will find
+     * their token expired and have to re-authenticate with a password.
+     */
     public static final SystemProperty<Duration> TOKEN_ROTATION_THRESHOLD = SystemProperty.Builder.ofType(Duration.class)
         .setKey("xmpp.fast.token.rotation-threshold")
         .setDefaultValue(Duration.ofDays(1))
@@ -148,9 +160,9 @@ public class FastTokenManager {
     private static final String DELETE_NEW_TOKEN =
         "DELETE FROM ofFastToken WHERE username=? AND mechanism=? AND clientID=? AND tokenSlot='N'";
     private static final String INSERT_TOKEN =
-        "INSERT INTO ofFastToken (username, mechanism, clientID, tokenSlot, replayCounter, tokenHash, expiry) VALUES (?,?,?,'N',0,?,?)";
+        "INSERT INTO ofFastToken (username, mechanism, clientID, tokenSlot, replayCounter, encryptedToken, expiry) VALUES (?,?,?,'N',0,?,?)";
     private static final String SELECT_TOKEN =
-        "SELECT tokenSlot, replayCounter, tokenHash, expiry FROM ofFastToken WHERE username=? AND mechanism=? AND clientID=?";
+        "SELECT tokenSlot, replayCounter, encryptedToken, expiry FROM ofFastToken WHERE username=? AND mechanism=? AND clientID=?";
     private static final String DELETE_TOKENS_FOR_USER =
         "DELETE FROM ofFastToken WHERE username=?";
     private static final String DELETE_TOKENS_FOR_CLIENT =
@@ -369,7 +381,7 @@ public class FastTokenManager {
                 }
                 final byte[] candidate;
                 try {
-                    candidate = unprotectToken(rs.getString("tokenHash")).getBytes(StandardCharsets.UTF_8);
+                    candidate = unprotectToken(rs.getString("encryptedToken")).getBytes(StandardCharsets.UTF_8);
                 } catch (final RuntimeException e) {
                     Log.warn("Ignoring unreadable FAST token for user '{}'", username, e);
                     continue;
@@ -610,6 +622,7 @@ public class FastTokenManager {
      * @param algorithm the JCA HMAC algorithm name, e.g. {@code "HmacSHA256"} (cannot be null)
      * @return the raw HMAC bytes
      */
+    @VisibleForTesting
     static byte[] hmac(@Nonnull final byte[] key, @Nonnull final byte[] message,
                        @Nonnull final String algorithm) {
         try {
@@ -623,20 +636,38 @@ public class FastTokenManager {
         }
     }
 
+    /**
+     * The FAST HT mechanisms compute HMAC(token, ...), so the server must be able to recover the token itself. It is
+     * stored encrypted (see JiveGlobals#getPropertyEncryptor) rather than hashed. Anyone holding both this table and
+     * the encryption key holds live credentials for every user until the tokens expire.
+     *
+     * @param token The token to encrypt for storage in the database.
+     * @return the encrypted token.
+     */
     private static String protectToken(final String token) {
         final byte[] iv = new byte[16];
         SECURE_RANDOM.nextBytes(iv);
         return protectToken(token, JiveGlobals.getPropertyEncryptor(), iv);
     }
 
+    @VisibleForTesting
     static String protectToken(final String token, final Encryptor encryptor, final byte[] iv) {
         return "v1:" + Base64.getEncoder().encodeToString(iv) + ":" + encryptor.encrypt(token, iv);
     }
 
-    static String unprotectToken(final String storedValue) {
+    /**
+     * The FAST HT mechanisms compute HMAC(token, ...), so the server must be able to recover the token itself. It is
+     * stored encrypted (see JiveGlobals#getPropertyEncryptor) rather than hashed. Anyone holding both this table and
+     * the encryption key holds live credentials for every user until the tokens expire.
+     *
+     * @param storedValue The encrypted value to be decrypted as a token.
+     * @return the decrypted token.
+     */
+    private static String unprotectToken(final String storedValue) {
         return unprotectToken(storedValue, JiveGlobals.getPropertyEncryptor());
     }
 
+    @VisibleForTesting
     static String unprotectToken(final String storedValue, final Encryptor encryptor) {
         if (!storedValue.startsWith("v1:")) {
             throw new IllegalArgumentException("Unsupported encrypted FAST token format");

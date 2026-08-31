@@ -254,7 +254,7 @@ class FastTokenPersistenceTest
         when(select.executeQuery()).thenReturn(rows);
         when(rows.next()).thenReturn(true, true, false);
         when(rows.getString("expiry")).thenReturn("not-a-timestamp", inDays(2));
-        when(rows.getString("tokenHash")).thenReturn(storedToken(token));
+        when(rows.getString("encryptedToken")).thenReturn(storedToken(token));
         when(rows.getString("tokenSlot")).thenReturn("C");
 
         try (MockedStatic<DbConnectionManager> db = mockStatic(DbConnectionManager.class)) {
@@ -277,7 +277,7 @@ class FastTokenPersistenceTest
         when(select.executeQuery()).thenReturn(rows);
         when(rows.next()).thenReturn(true, true, false);
         when(rows.getString("expiry")).thenReturn(inDays(2));
-        when(rows.getString("tokenHash")).thenReturn("not-an-envelope", storedToken(token));
+        when(rows.getString("encryptedToken")).thenReturn("not-an-envelope", storedToken(token));
         when(rows.getString("tokenSlot")).thenReturn("C");
 
         try (MockedStatic<DbConnectionManager> db = mockStatic(DbConnectionManager.class)) {
@@ -304,7 +304,7 @@ class FastTokenPersistenceTest
         when(select.executeQuery()).thenReturn(rows);
         when(rows.next()).thenReturn(true, true, false);
         when(rows.getString("expiry")).thenReturn(inDays(2));
-        when(rows.getString("tokenHash")).thenReturn(storedToken(current), storedToken("unacknowledged-new-token"));
+        when(rows.getString("encryptedToken")).thenReturn(storedToken(current), storedToken("unacknowledged-new-token"));
         when(rows.getString("tokenSlot")).thenReturn("C");
 
         try (MockedStatic<DbConnectionManager> db = mockStatic(DbConnectionManager.class)) {
@@ -336,7 +336,7 @@ class FastTokenPersistenceTest
         when(select.executeQuery()).thenReturn(rows);
         when(rows.next()).thenReturn(true, false);
         when(rows.getString("expiry")).thenReturn(inDays(2));
-        when(rows.getString("tokenHash")).thenReturn(storedToken(token));
+        when(rows.getString("encryptedToken")).thenReturn(storedToken(token));
         when(rows.getString("tokenSlot")).thenReturn("N");
 
         try (MockedStatic<DbConnectionManager> db = mockStatic(DbConnectionManager.class)) {
@@ -573,7 +573,7 @@ class FastTokenPersistenceTest
         when(connection.prepareStatement(startsWith("SELECT"))).thenReturn(select);
         when(select.executeQuery()).thenReturn(rows);
         when(rows.next()).thenReturn(true, false);
-        when(rows.getString("tokenHash")).thenReturn(storedToken(token));
+        when(rows.getString("encryptedToken")).thenReturn(storedToken(token));
         when(rows.getString("tokenSlot")).thenReturn(slot);
         when(rows.getString("expiry")).thenReturn(expiry);
         return connection;

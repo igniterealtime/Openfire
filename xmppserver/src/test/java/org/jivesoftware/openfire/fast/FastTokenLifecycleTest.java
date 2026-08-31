@@ -21,6 +21,8 @@ import org.jivesoftware.util.TaskEngine;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
 
@@ -36,9 +38,10 @@ import static org.mockito.Mockito.*;
 
 /**
  * Verifies that {@link FastTokenLifecycle} registers and deregisters its collaborators correctly,
- * and that the behaviour those registrations trigger is the intended one.
+ * that user deletions and password changes invalidate the affected user's tokens, and that other
+ * profile modifications do not.
  *
- * <p>Both the user-deletion listener and the periodic cleanup task are private to the module, so
+ * Both the user-deletion listener and the periodic cleanup task are private to the module, so
  * each test drives them the way the server does: by starting the module and then firing the event
  * or running the captured task.
  */
@@ -156,5 +159,95 @@ class FastTokenLifecycleTest {
         assertSame(scheduled.getValue(), cancelled.getValue(),
             "stop() cancelled a different TimerTask instance than start() scheduled, so the original task " +
                 "is still registered with the TaskEngine and continues to run.");
+    }
+
+    /**
+     * Changing a user's password must invalidate that user's FAST tokens. A FAST token is an
+     * independent credential, so leaving it valid would let an old client keep authenticating with
+     * what the password change was meant to revoke.
+     */
+    @Test
+    void passwordChangeInvalidatesFastTokens() {
+        final User user = mock(User.class);
+        when(user.getUsername()).thenReturn("alice");
+
+        try (MockedStatic<FastTokenManager> manager = mockStatic(FastTokenManager.class)) {
+            module.start();
+            UserEventDispatcher.dispatchEvent(user, UserEventDispatcher.EventType.user_modified,
+                Map.of("type", "passwordModified"));
+
+            manager.verify(
+                () -> FastTokenManager.invalidateTokens("alice"),
+                times(1).description("A password change must invalidate the user's FAST tokens, or the " +
+                    "old tokens remain usable as credentials after the password they replaced is gone."));
+        }
+    }
+
+    /**
+     * {@code user_modified} fires for every kind of profile edit. Only password changes may invalidate
+     * tokens; invalidating on a name or email edit would log the user's clients out for no reason.
+     *
+     * @param modificationType the value Openfire places under the {@code type} param key
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {"nameModified", "emailModified", "creationDateModified",
+        "modificationDateModified", "propertyAdded", "propertyModified", "propertyDeleted"})
+    void nonPasswordModificationsLeaveFastTokensIntact(final String modificationType) {
+        final User user = mock(User.class);
+        when(user.getUsername()).thenReturn("alice");
+
+        try (MockedStatic<FastTokenManager> manager = mockStatic(FastTokenManager.class)) {
+            module.start();
+            UserEventDispatcher.dispatchEvent(user, UserEventDispatcher.EventType.user_modified,
+                Map.of("type", modificationType));
+
+            manager.verify(
+                () -> FastTokenManager.invalidateTokens(anyString()),
+                never().description("Only a password change may invalidate FAST tokens, but a '" +
+                    modificationType + "' modification did so too. This logs out every client of a user " +
+                    "who merely edited their profile."));
+        }
+    }
+
+    /**
+     * A {@code user_modified} event carrying no {@code type} param must be ignored rather than treated
+     * as a password change.
+     */
+    @Test
+    void userModificationWithoutTypeLeavesFastTokensIntact() {
+        final User user = mock(User.class);
+        when(user.getUsername()).thenReturn("alice");
+
+        try (MockedStatic<FastTokenManager> manager = mockStatic(FastTokenManager.class)) {
+            module.start();
+            UserEventDispatcher.dispatchEvent(user, UserEventDispatcher.EventType.user_modified, Map.of());
+
+            manager.verify(
+                () -> FastTokenManager.invalidateTokens(anyString()),
+                never().description("A user_modified event with no 'type' param must not be treated as a " +
+                    "password change; the listener invalidated tokens anyway."));
+        }
+    }
+
+    /**
+     * A stopped module must ignore password changes, not just deletions. Both events reach the same
+     * listener instance, so this guards the deregistration from the second event's side too.
+     */
+    @Test
+    void stoppedModuleNoLongerReactsToPasswordChange() {
+        final User user = mock(User.class);
+        when(user.getUsername()).thenReturn("alice");
+
+        try (MockedStatic<FastTokenManager> manager = mockStatic(FastTokenManager.class)) {
+            module.start();
+            module.stop();
+            UserEventDispatcher.dispatchEvent(user, UserEventDispatcher.EventType.user_modified,
+                Map.of("type", "passwordModified"));
+
+            manager.verify(
+                () -> FastTokenManager.invalidateTokens(anyString()),
+                never().description("A stopped module must ignore password changes, but its listener was " +
+                    "still invoked, so stop() did not remove it from UserEventDispatcher."));
+        }
     }
 }

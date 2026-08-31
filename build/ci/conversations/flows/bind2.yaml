@@ -66,7 +66,15 @@ onFlowComplete:
 - tapOn:
     id: "key_pos_ime_action"
     optional: true
-    label: Close keyboard, if visible
+    label: Close Google keyboard, if visible
+- runFlow:
+    when:
+      visible:
+        id: keyboard_view
+    commands:
+      - tapOn: Done
+    label: Close AOSP keyboard, if visible
+
 - assertVisible:
     id: "server_info_bind2"
     text: "available"

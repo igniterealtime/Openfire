@@ -1,4 +1,5 @@
 appId: eu.siacs.conversations
+name: Bind 2
 tags:
     - sasl2
 onFlowStart:

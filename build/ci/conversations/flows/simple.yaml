@@ -1,4 +1,5 @@
 appId: eu.siacs.conversations
+name: Basic Login
 tags:
     - demoboot
 onFlowStart:

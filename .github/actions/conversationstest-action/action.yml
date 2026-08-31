@@ -42,7 +42,7 @@ runs:
       with:
         api-level: 34
         arch: x86_64
-        profile: Nexus 6
+        profile: pixel_6
         script: ${{ github.action_path }}/run-tests.sh ${{ inputs.includeTags }}
 
     - name: Upload ADB logcat on failure

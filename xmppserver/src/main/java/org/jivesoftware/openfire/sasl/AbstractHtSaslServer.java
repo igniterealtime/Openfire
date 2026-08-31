@@ -87,7 +87,9 @@ abstract class AbstractHtSaslServer implements SaslServer {
         this(mechanismName, props, (username, mechanism, proof, cb, initiator, responder) -> {
             if (LockOutManager.getInstance().isAccountDisabled(username)) {
                 LockOutManager.getInstance().recordFailedLogin(username);
-                throw new SaslFailureException(Failure.ACCOUNT_DISABLED);
+                Log.debug("Rejecting FAST authentication for disabled account '{}'.", username);
+                throw new SaslFailureException("Invalid FAST token", null, Failure.NOT_AUTHORIZED,
+                    Ht2FailureResponse.encode(Ht2FailureResponse.INVALID_TOKEN));
             }
             final Object value = props.get(LocalSession.class.getCanonicalName());
             final Long replayCount = value instanceof LocalSession session ? FastSessionState.getReplayCount(session) : null;

@@ -1030,27 +1030,33 @@ public class SASLAuthentication {
         // the session's generated resource (see LocalClientSession#getAnonymousUsername). Must be resolved before the
         // session transitions to an authenticated state.
         final String authorizationIdentity;
+        final AuthToken clientAuthToken;
 
         if (session instanceof LocalClientSession clientSession) {
-            final AuthToken authToken;
             final String node;
             if (username == null) {
                 node = clientSession.getAnonymousUsername();
-                authToken = AuthToken.generateAnonymousToken();
+                clientAuthToken = AuthToken.generateAnonymousToken();
             } else {
-                authToken = AuthToken.generateUserToken(username);
-                node = authToken.getUsername(); // Normalized: strips any domain-part from the authzid.
+                clientAuthToken = AuthToken.generateUserToken(username);
+                node = clientAuthToken.getUsername(); // Normalized: strips any domain-part from the authzid.
             }
             authorizationIdentity = new JID(node, XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null, true).toString();
-            clientSession.setAuthToken(authToken);
+            // Do not retain an authentication token until all synchronous SASL2 success work,
+            // including requested FAST token persistence, has completed successfully.
+            if (!usingSASL2) {
+                clientSession.setAuthToken(clientAuthToken);
+            }
         }
         else if (session instanceof LocalIncomingServerSession serverSession) {
+            clientAuthToken = null;
             authorizationIdentity = username;
             serverSession.addValidatedDomain(username);
             serverSession.setAuthenticationMethod(ServerSession.AuthenticationMethod.fromSaslMechanismName(mechanismName));
             Log.info("Inbound Server {} authenticated using SASL mechanism {}", username, mechanismName);
         }
         else {
+            clientAuthToken = null;
             authorizationIdentity = username;
         }
 
@@ -1063,7 +1069,7 @@ public class SASLAuthentication {
                 // If invalidate=true was requested, delete the existing token and do not rotate.
                 final boolean fastInvalidate = FastSessionState.isInvalidateRequested(session);
                 final String fastRequestedMechanism = FastSessionState.getRequestedMechanism(session);
-                final boolean isFastAuth = mechanismName.startsWith("HT-") || mechanismName.startsWith("HT2-");
+                final boolean isFastAuth = isFastMechanism(mechanismName);
                 final String authenticatedClientId = FastSessionState.getAuthenticatedClientId(session);
                 final String requestingClientId = FastSessionState.getClientId(session);
 
@@ -1073,8 +1079,8 @@ public class SASLAuthentication {
                     if (username != null) {
                         if (isFastAuth && authenticatedClientId != null) {
                             FastTokenManager.invalidateToken(username, mechanismName, authenticatedClientId);
+                            Log.debug("FAST token invalidated for user '{}' per client request.", username);
                         }
-                        Log.debug("FAST token invalidated for user '{}' per client request.", username);
                     }
                     // Still issue a new token if the client also sent <request-token>.
                     if (fastRequestedMechanism != null && username != null) {
@@ -1094,6 +1100,7 @@ public class SASLAuthentication {
                     fastToken = FastSessionState.getRotatedToken(session);
                 }
                 FastSessionState.clearAuthenticationAttempt(session);
+                clientSession.setAuthToken(clientAuthToken);
 
                 final FastToken finalFastToken = fastToken;
                 final Bind2Request bind2Request = (Bind2Request) session.getSessionData("bind2-request");

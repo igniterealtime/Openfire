@@ -563,22 +563,30 @@ public class FastTokenManager {
 
     public static void invalidateToken(@Nonnull final String username, @Nonnull final String mechanism,
                                        @Nonnull final String clientId) {
-        try (Connection con = DbConnectionManager.getConnection();
-             PreparedStatement pstmt = con.prepareStatement(DELETE_TOKENS_FOR_CLIENT)) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(DELETE_TOKENS_FOR_CLIENT);
             pstmt.setString(1, username);
             pstmt.setString(2, mechanism);
             pstmt.setString(3, clientId);
             pstmt.executeUpdate();
         } catch (final SQLException e) {
             throw new IllegalStateException("Unable to invalidate FAST token", e);
+        } finally {
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 
     public static boolean advanceReplayCounter(@Nonnull final String username, @Nonnull final String mechanism,
                                                @Nonnull final String clientId, final long count) {
         if (count <= 0) return false;
-        try (Connection con = DbConnectionManager.getConnection();
-             PreparedStatement pstmt = con.prepareStatement(UPDATE_REPLAY_COUNTER)) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(UPDATE_REPLAY_COUNTER);
             pstmt.setLong(1, count);
             pstmt.setString(2, username);
             pstmt.setString(3, mechanism);
@@ -587,6 +595,8 @@ public class FastTokenManager {
             return pstmt.executeUpdate() == 1;
         } catch (final SQLException e) {
             throw new IllegalStateException("Unable to update FAST replay counter", e);
+        } finally {
+            DbConnectionManager.closeConnection(pstmt, con);
         }
     }
 

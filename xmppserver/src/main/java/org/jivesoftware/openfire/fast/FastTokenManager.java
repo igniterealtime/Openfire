@@ -272,12 +272,9 @@ public class FastTokenManager {
 
         Connection con = null;
         PreparedStatement pstmt = null;
-        Integer originalTransactionIsolation = null;
+        boolean abortTransaction = false;
         try {
-            con = DbConnectionManager.getConnection();
-            originalTransactionIsolation = con.getTransactionIsolation();
-            con.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
-            con.setAutoCommit(false);
+            con = DbConnectionManager.getTransactionConnection();
             pstmt = con.prepareStatement(DELETE_NEW_TOKEN);
             pstmt.setString(1, username);
             pstmt.setString(2, mechanism);
@@ -293,20 +290,12 @@ public class FastTokenManager {
             pstmt.setString(4, storedValue);
             pstmt.setString(5, expiryString);
             pstmt.executeUpdate();
-            con.commit();
         } catch (final SQLException e) {
-            if (con != null) {
-                try {
-                    con.rollback();
-                } catch (final SQLException rollbackError) {
-                    e.addSuppressed(rollbackError);
-                }
-            }
+            abortTransaction = true;
             Log.error("Failed to store FAST token for user '{}' mechanism '{}'", username, mechanism, e);
             throw new IllegalStateException("Unable to persist FAST token", e);
         } finally {
-            restoreTransactionIsolation(con, originalTransactionIsolation);
-            DbConnectionManager.closeConnection(pstmt, con);
+            DbConnectionManager.closeTransactionConnection(pstmt, con, abortTransaction);
         }
 
         return new FastToken(username, mechanism, rawToken, expiry);
@@ -360,12 +349,9 @@ public class FastTokenManager {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
-        Integer originalTransactionIsolation = null;
+        boolean abortTransaction = false;
         try {
-            con = DbConnectionManager.getConnection();
-            originalTransactionIsolation = con.getTransactionIsolation();
-            con.setTransactionIsolation(Connection.TRANSACTION_SERIALIZABLE);
-            con.setAutoCommit(false);
+            con = DbConnectionManager.getTransactionConnection();
             pstmt = con.prepareStatement(SELECT_TOKEN);
             pstmt.setString(1, username);
             pstmt.setString(2, mechanism);
@@ -405,11 +391,11 @@ public class FastTokenManager {
             DbConnectionManager.fastcloseStmt(pstmt);
             pstmt = null;
             if (matchedToken == null) {
-                con.rollback();
+                abortTransaction = true;
                 return matchingExpiredToken ? Ht2ValidationResult.expired() : null;
             }
             if (replayCount != null && (replayCount <= 0 || replayCount <= matchedReplayCounter)) {
-                con.rollback();
+                abortTransaction = true;
                 return null;
             }
             if ("N".equals(matchedSlot)) {
@@ -435,18 +421,17 @@ public class FastTokenManager {
                 pstmt.setString(4, matchedClientId);
                 pstmt.setLong(5, replayCount);
                 if (pstmt.executeUpdate() != 1) {
-                    con.rollback();
+                    abortTransaction = true;
                     return null;
                 }
             }
-            con.commit();
         } catch (final SQLException e) {
-            if (con != null) try { con.rollback(); } catch (final SQLException rollbackError) { e.addSuppressed(rollbackError); }
+            abortTransaction = true;
             Log.error("Failed to fetch HT2 FAST token for user '{}' mechanism '{}'", username, mechanism, e);
             return null;
         } finally {
-            restoreTransactionIsolation(con, originalTransactionIsolation);
-            DbConnectionManager.closeConnection(rs, pstmt, con);
+            DbConnectionManager.closeResultSet(rs);
+            DbConnectionManager.closeTransactionConnection(pstmt, con, abortTransaction);
         }
 
         // Compute responder-hashed-token = HMAC(token, "Responder" || cbData || extraResponderValues)
@@ -662,16 +647,5 @@ public class FastTokenManager {
         }
         final byte[] iv = Base64.getDecoder().decode(storedValue.substring(3, separator));
         return encryptor.decrypt(storedValue.substring(separator + 1), iv);
-    }
-
-    private static void restoreTransactionIsolation(final Connection connection, final Integer isolation) {
-        if (connection == null || isolation == null) {
-            return;
-        }
-        try {
-            connection.setTransactionIsolation(isolation);
-        } catch (final SQLException e) {
-            Log.warn("Unable to restore FAST database connection transaction isolation", e);
-        }
     }
 }

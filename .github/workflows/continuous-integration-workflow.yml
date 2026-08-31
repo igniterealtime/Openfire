@@ -389,7 +389,7 @@ jobs:
         if: ${{ failure() && steps.runConversationsTests.conclusion == 'failure' }}
         uses: actions/upload-artifact@v7
         with:
-          name: Conversations Test (${{ matrix.name }}) Openfire logs
+          name: Conversations e2e (${{ matrix.name }}) Openfire logs
           path: distribution/target/distribution-base/logs/openfire.log
 
 

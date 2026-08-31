@@ -59,88 +59,6 @@ public class FastTokenManagerTest {
     }
 
     // -------------------------------------------------------------------------
-    // sha256Hex (deprecated delegate to hashHex)
-    // -------------------------------------------------------------------------
-
-    /**
-     * Verifies that sha256Hex produces a 64-character lowercase hex string.
-     */
-    @Test
-    public void sha256HexShouldReturnCorrectLength() {
-        final byte[] data = "hello".getBytes();
-        final String hex = FastTokenManager.sha256Hex(data);
-        assertNotNull(hex, "Expected a non-null hash.");
-        assertEquals(64, hex.length(), "Expected a 64-character SHA-256 hex string.");
-        assertTrue(hex.matches("[0-9a-f]+"), "Expected lowercase hex characters only.");
-    }
-
-    /**
-     * Verifies that sha256Hex is deterministic for the same input.
-     */
-    @Test
-    public void sha256HexShouldBeDeterministic() {
-        final byte[] data = "test-data".getBytes();
-        final String hex1 = FastTokenManager.sha256Hex(data);
-        final String hex2 = FastTokenManager.sha256Hex(data);
-        assertEquals(hex1, hex2, "Expected the same hash for the same input.");
-    }
-
-    /**
-     * Verifies that sha256Hex produces different hashes for different inputs.
-     */
-    @Test
-    public void sha256HexShouldProduceDifferentHashesForDifferentInputs() {
-        final String hex1 = FastTokenManager.sha256Hex("input1".getBytes());
-        final String hex2 = FastTokenManager.sha256Hex("input2".getBytes());
-        assertNotEquals(hex1, hex2, "Expected different hashes for different inputs.");
-    }
-
-    // -------------------------------------------------------------------------
-    // hashHex
-    // -------------------------------------------------------------------------
-
-    /**
-     * Verifies that hashHex with SHA-256 produces a 64-character hex string.
-     */
-    @Test
-    public void hashHexSha256ShouldReturnCorrectLength() {
-        final String hex = FastTokenManager.hashHex("hello".getBytes(), "SHA-256");
-        assertEquals(64, hex.length(), "Expected a 64-character SHA-256 hex string.");
-        assertTrue(hex.matches("[0-9a-f]+"), "Expected lowercase hex characters only.");
-    }
-
-    /**
-     * Verifies that hashHex with SHA-512 produces a 128-character hex string.
-     */
-    @Test
-    public void hashHexSha512ShouldReturnCorrectLength() {
-        final String hex = FastTokenManager.hashHex("hello".getBytes(), "SHA-512");
-        assertEquals(128, hex.length(), "Expected a 128-character SHA-512 hex string.");
-        assertTrue(hex.matches("[0-9a-f]+"), "Expected lowercase hex characters only.");
-    }
-
-    /**
-     * Verifies that hashHex SHA-256 and SHA-512 differ for the same input.
-     */
-    @Test
-    public void hashHexShouldDifferBetweenSha256AndSha512() {
-        final byte[] data = "same-input".getBytes();
-        final String hex256 = FastTokenManager.hashHex(data, "SHA-256");
-        final String hex512 = FastTokenManager.hashHex(data, "SHA-512");
-        assertNotEquals(hex256, hex512, "Expected SHA-256 and SHA-512 hashes to differ.");
-    }
-
-    /**
-     * Verifies that hashHex throws IllegalStateException for an unknown algorithm.
-     */
-    @Test
-    public void hashHexShouldThrowForUnknownAlgorithm() {
-        assertThrows(IllegalStateException.class,
-            () -> FastTokenManager.hashHex("data".getBytes(), "NOT-AN-ALGORITHM"),
-            "Expected IllegalStateException for an unknown digest algorithm.");
-    }
-
-    // -------------------------------------------------------------------------
     // hmac
     // -------------------------------------------------------------------------
 
@@ -290,40 +208,6 @@ public class FastTokenManagerTest {
     public void hmacAlgorithmForSha3MechanismUsesRegisteredJcaName() {
         assertEquals("HmacSHA3-512", FastTokenManager.hmacAlgorithmForMechanism(FastTokenManager.HT2_SHA3_512_NONE));
         assertEquals(64, FastTokenManager.hmac("key".getBytes(), "message".getBytes(), "HmacSHA3-512").length);
-    }
-
-    // -------------------------------------------------------------------------
-    // isHt2Mechanism
-    // -------------------------------------------------------------------------
-
-    /**
-     * Verifies that isHt2Mechanism returns true for HT2-* mechanisms.
-     */
-    @ParameterizedTest
-    @CsvSource({
-        "HT2-SHA-256-NONE",
-        "HT2-SHA-256-UNIQ",
-        "HT2-SHA-512-NONE",
-        "HT2-SHA-512-EXPR",
-    })
-    public void isHt2MechanismShouldReturnTrueForHt2(final String mechanism) {
-        assertTrue(FastTokenManager.isHt2Mechanism(mechanism),
-            "Expected isHt2Mechanism to return true for '" + mechanism + "'.");
-    }
-
-    /**
-     * Verifies that isHt2Mechanism returns false for HT-* (non-HT2) mechanisms.
-     */
-    @ParameterizedTest
-    @CsvSource({
-        "HT-SHA-256-NONE",
-        "HT-SHA-256-UNIQ",
-        "HT-SHA-512-NONE",
-        "HT-SHA-512-EXPR",
-    })
-    public void isHt2MechanismShouldReturnFalseForHt(final String mechanism) {
-        assertFalse(FastTokenManager.isHt2Mechanism(mechanism),
-            "Expected isHt2Mechanism to return false for '" + mechanism + "'.");
     }
 
     // -------------------------------------------------------------------------

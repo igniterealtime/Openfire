@@ -15,7 +15,6 @@
  */
 package org.jivesoftware.openfire.sasl;
 
-import org.jivesoftware.openfire.fast.FastTokenManager;
 import org.jivesoftware.openfire.fast.FastTokenManager.Ht2ValidationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,10 +85,10 @@ public class HtSaslServer extends AbstractHtSaslServer {
         if (separator <= 0) {
             throw new SaslException(mechanismName + ": malformed initiator message");
         }
-        final String username = decodeUtf8(response, 0, separator, "authcid");
         if (separator > 255) {
             throw new SaslException(mechanismName + ": authcid exceeds 255 octets");
         }
+        final String username = decodeAuthcId(decodeUtf8(response, 0, separator, "authcid"));
         final int tokenStart = separator + 1;
         final int tokenLength = response.length - tokenStart;
         if (tokenLength <= 0) {

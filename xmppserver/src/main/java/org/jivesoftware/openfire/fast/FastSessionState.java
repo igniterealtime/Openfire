@@ -26,6 +26,7 @@ public final class FastSessionState {
     private static final String REQUESTED_MECHANISM = "fast-request-token-mechanism";
     private static final String INVALIDATE = "fast-invalidate";
     private static final String REPLAY_COUNT = "fast-count";
+    private static final String EXPECTED_USERNAME = "fast-expected-username";
     private static final String CLIENT_ID = "fast-client-id";
     private static final String AUTHENTICATED_CLIENT_ID = "fast-authenticated-client-id";
     private static final String ROTATED_TOKEN = "fast-rotated-token";
@@ -57,6 +58,15 @@ public final class FastSessionState {
     @Nullable
     public static Long getReplayCount(@Nonnull final LocalSession session) {
         return value(session, REPLAY_COUNT, Long.class);
+    }
+
+    public static void setExpectedUsername(@Nonnull final LocalSession session, @Nonnull final String expectedUsername) {
+        session.setSessionData(EXPECTED_USERNAME, expectedUsername);
+    }
+
+    @Nullable
+    public static String getExpectedUsername(@Nonnull final LocalSession session) {
+        return value(session, EXPECTED_USERNAME, String.class);
     }
 
     public static void setClientId(@Nonnull final LocalSession session, @Nonnull final String clientId) {
@@ -91,6 +101,7 @@ public final class FastSessionState {
         session.removeSessionData(REQUESTED_MECHANISM);
         session.removeSessionData(INVALIDATE);
         session.removeSessionData(REPLAY_COUNT);
+        session.removeSessionData(EXPECTED_USERNAME);
         session.removeSessionData(CLIENT_ID);
     }
 

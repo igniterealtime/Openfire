@@ -24,6 +24,7 @@ class FastSessionStateTest {
             "token".getBytes(java.nio.charset.StandardCharsets.UTF_8), java.time.Instant.now().plusSeconds(60));
 
         FastSessionState.setRequestedMechanism(session, FastTokenManager.HT_SHA_256_NONE);
+        FastSessionState.setExpectedUsername(session, "user");
         FastSessionState.setClientId(session, "client-a");
         FastSessionState.setInvalidate(session);
         FastSessionState.setReplayCount(session, 7L);
@@ -31,6 +32,7 @@ class FastSessionStateTest {
         FastSessionState.setRotatedToken(session, token);
 
         assertEquals(FastTokenManager.HT_SHA_256_NONE, FastSessionState.getRequestedMechanism(session));
+        assertEquals("user", FastSessionState.getExpectedUsername(session));
         assertEquals("client-a", FastSessionState.getClientId(session));
         assertTrue(FastSessionState.isInvalidateRequested(session));
         assertEquals(7L, FastSessionState.getReplayCount(session));
@@ -39,6 +41,7 @@ class FastSessionStateTest {
 
         FastSessionState.clearAuthenticationAttempt(session);
         assertNull(FastSessionState.getRequestedMechanism(session));
+        assertNull(FastSessionState.getExpectedUsername(session));
         assertNull(FastSessionState.getClientId(session));
         assertFalse(FastSessionState.isInvalidateRequested(session));
         assertNull(FastSessionState.getReplayCount(session));

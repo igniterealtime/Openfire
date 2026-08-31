@@ -23,6 +23,7 @@ import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
 import javax.security.sasl.SaslException;
@@ -60,8 +61,7 @@ abstract class AbstractHtSaslServer implements SaslServer {
     protected final String mechanismName;
 
     /**
-     * The SASL properties map; must contain a {@link LocalSession} under
-     * {@code LocalSession.class.getCanonicalName()} for channel-binding variants.
+     * The SASL properties map; must contain a {@link LocalSession} under {@code LocalSession.class.getCanonicalName()}
      */
     protected final Map<String, ?> props;
     protected final HashedTokenValidator tokenValidator;
@@ -85,15 +85,24 @@ abstract class AbstractHtSaslServer implements SaslServer {
      */
     protected AbstractHtSaslServer(@Nonnull final String mechanismName, @Nonnull final Map<String, ?> props) {
         this(mechanismName, props, (username, mechanism, proof, cb, initiator, responder) -> {
+            final Object value = props.get(LocalSession.class.getCanonicalName());
+            final LocalSession session = value instanceof LocalSession s ? s : null;
+            final String expectedUsername = session != null ? FastSessionState.getExpectedUsername(session) : null;
+            if (expectedUsername == null || !expectedUsername.equals(username)) {
+                Log.debug("Rejecting FAST authentication. Token claims different username ('{}') than stream's 'from' header ('{}').", username, expectedUsername);
+                throw new SaslFailureException("Invalid FAST token", null, Failure.NOT_AUTHORIZED,
+                    Ht2FailureResponse.encode(Ht2FailureResponse.INVALID_TOKEN));
+            }
+            // Check the claimed identity before the lockout check: otherwise an authcid that does not match
+            // the stream's 'from' could be used to record failed logins against an arbitrary account.
             if (LockOutManager.getInstance().isAccountDisabled(username)) {
                 LockOutManager.getInstance().recordFailedLogin(username);
                 Log.debug("Rejecting FAST authentication for disabled account '{}'.", username);
                 throw new SaslFailureException("Invalid FAST token", null, Failure.NOT_AUTHORIZED,
                     Ht2FailureResponse.encode(Ht2FailureResponse.INVALID_TOKEN));
             }
-            final Object value = props.get(LocalSession.class.getCanonicalName());
-            final Long replayCount = value instanceof LocalSession session ? FastSessionState.getReplayCount(session) : null;
-            final String clientId = value instanceof LocalSession session ? FastSessionState.getClientId(session) : null;
+            final Long replayCount = FastSessionState.getReplayCount(session);
+            final String clientId = FastSessionState.getClientId(session);
             if (clientId == null) {
                 return null;
             }
@@ -293,6 +302,53 @@ abstract class AbstractHtSaslServer implements SaslServer {
                 .decode(ByteBuffer.wrap(value, offset, length)).toString();
         } catch (final CharacterCodingException e) {
             throw new SaslException(mechanismName + ": invalid UTF-8 in " + field, e);
+        }
+    }
+
+    /**
+     * Converts the {@code authcid} from a FAST initiator message into a normalized local username.
+     *
+     * The value is expected to be a bare username, but a domain-qualified form ({@code username@domain}) is also
+     * accepted, provided that the domain matches the domain of this server. In both cases the returned value is the
+     * stringprep'ed node, which is the form that the caller compares against the username claimed in the stream's
+     * 'from' attribute.
+     *
+     * @param value the raw authcid as sent by the client (cannot be null)
+     * @return the normalized local username (never null)
+     * @throws SaslException if the value cannot be prepared as a username, or names another domain
+     */
+    protected String decodeAuthcId(@Nonnull final String value) throws SaslException
+    {
+        if (value.contains("@"))
+        {
+            // Provided value is `username@domain`
+            final JID claimedAuthcId;
+            try {
+                claimedAuthcId = new JID(value);
+            } catch (final IllegalArgumentException e) {
+                throw new SaslException(mechanismName + ": invalid authcid", e);
+            }
+            final LocalSession session = (LocalSession) props.get(LocalSession.class.getCanonicalName());
+            if (session == null) {
+                throw new SaslException(mechanismName + ": invalid authcid (unable to validate domain)");
+            }
+            if (!claimedAuthcId.getDomain().equals(session.getServerName())) {
+                throw new SaslException(mechanismName + ": invalid authcid (domain mismatch)");
+            }
+            final String node = claimedAuthcId.getNode();
+            if (node == null) {
+                throw new SaslException(mechanismName + ": invalid authcid");
+            }
+            return node;
+        }
+        else
+        {
+            // Provided value is `username` (without domain)
+            try {
+                return JID.nodeprep(value);
+            } catch (final IllegalArgumentException e) {
+                throw new SaslException(mechanismName + ": invalid authcid", e);
+            }
         }
     }
 }

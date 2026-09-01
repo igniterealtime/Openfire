@@ -827,7 +827,7 @@ public class SASLAuthentication {
                     if ( !saslServer.isComplete() )
                     {
                         // Not complete: client is challenged for additional steps.
-                        sendChallenge( session, challenge, usingSASL2 );
+                        SaslOutcome.sendChallenge( session, challenge, usingSASL2 );
                         return Status.needResponse;
                     }
 
@@ -867,14 +867,14 @@ public class SASLAuthentication {
             {
                 failure = Failure.NOT_AUTHORIZED;
             }
-            authenticationFailed( session, failure, usingSASL2 );
+            SaslOutcome.authenticationFailed( session, failure, usingSASL2 );
             session.removeSessionData( "SaslServer" );
             return Status.failed;
         }
         catch( Exception ex )
         {
             Log.warn( "An unexpected exception occurred during SASL negotiation. Affected session: {}", session, ex );
-            authenticationFailed( session, Failure.NOT_AUTHORIZED, usingSASL2 );
+            SaslOutcome.authenticationFailed( session, Failure.NOT_AUTHORIZED, usingSASL2 );
             session.removeSessionData( "SaslServer" );
             return Status.failed;
         }
@@ -951,23 +951,6 @@ public class SASLAuthentication {
         return false;
     }
 
-    private static void sendElement(Session session, String element, byte[] data, boolean usingSASL2) {
-        final Element reply = DocumentHelper.createElement(QName.get(element, usingSASL2 ? SASL2_NAMESPACE : SASL_NAMESPACE));
-        if (data != null) {
-            String data_b64 = Base64.getEncoder().encodeToString(data).trim();
-            if (data_b64.isEmpty()) {
-                // Empty-payload sentinel. Only meaningful for SASL1; unreachable on the SASL2 path, whose sole caller here is <challenge>, which is never sent with empty/missing data.
-                data_b64 = "=";
-            }
-            reply.addText(data_b64);
-        }
-        session.deliverRawText(reply.asXML());
-    }
-
-    private static void sendChallenge(Session session, byte[] challenge, boolean usingSASL2) {
-        sendElement(session, "challenge", challenge, usingSASL2);
-    }
-
     /**
      * Processes a successful SASL authentication.
      *
@@ -981,7 +964,7 @@ public class SASLAuthentication {
      * @param usingSASL2 are we using SASL2?
      */
     @VisibleForTesting
-    static void authenticationSuccessful(LocalSession session, String username, String mechanismName, byte[] successData, boolean usingSASL2)
+    static void authenticationSuccessful(final LocalSession session, final String username, final String mechanismName, final byte[] successData, final boolean usingSASL2)
     {
         // The identity to report back to the peer. For clients this is a bare JID; for anonymous clients, the node-part is
         // the session's generated resource (see LocalClientSession#getAnonymousUsername). Must be resolved before the
@@ -1066,8 +1049,6 @@ public class SASLAuthentication {
                     final UserAgentInfo userAgentInfo = (UserAgentInfo) session.getSessionData("user-agent-info");
                     final String resource = bind2Request.generateResourceString(userAgentInfo);
                     final AuthToken authToken = clientSession.getAuthToken();
-                    final byte[] finalSuccessData = successData;
-                    final String finalAuthorizationIdentity = authorizationIdentity;
                     SessionManager.getInstance().bindResource(clientSession, authToken, resource)
                         .whenComplete((result, throwable) -> {
                             try {
@@ -1075,7 +1056,7 @@ public class SASLAuthentication {
                                     Log.warn("An exception occurred while binding resource '{}' for session '{}' during SASL2+Bind2 authentication.", resource, clientSession, throwable);
                                 }
                                 final boolean bound = throwable == null && result == SessionManager.BindResult.BOUND;
-                                final Element success = buildSasl2SuccessElement(finalSuccessData, finalAuthorizationIdentity, bound ? resource : null, finalFastToken);
+                                final Element success = SaslOutcome.buildSasl2SuccessElement(successData, authorizationIdentity, bound ? resource : null, finalFastToken);
                                 if (bound) {
                                     bind2Request.processFeatureRequests(clientSession, success);
                                 }
@@ -1096,85 +1077,29 @@ public class SASLAuthentication {
                                 clientSession.deliverRawText(features.asXML());
                             } catch(Exception e) {
                                 Log.warn("An exception occurred while processing SASL2+Bind2 for '{}' during SASL2+Bind2 authentication.", clientSession, e);
-                                authenticationFailed(clientSession, Failure.TEMPORARY_AUTH_FAILURE, true);
+                                SaslOutcome.authenticationFailed(clientSession, Failure.TEMPORARY_AUTH_FAILURE, true);
                             }
                         });
                     // Response and features are sent asynchronously from the completion stage.
                 } else {
                     // No Bind2 request, or session already authenticated: send <success/> synchronously without <bound/>.
-                    final Element success = buildSasl2SuccessElement(successData, authorizationIdentity, null, finalFastToken);
+                    final Element success = SaslOutcome.buildSasl2SuccessElement(successData, authorizationIdentity, null, finalFastToken);
                     session.deliverRawText(success.asXML());
                 }
             } else {
                 // Non-client session (e.g. server): send <success/> synchronously.
-                final Element success = buildSasl2SuccessElement(successData, authorizationIdentity, null, null);
+                final Element success = SaslOutcome.buildSasl2SuccessElement(successData, authorizationIdentity, null, null);
                 session.deliverRawText(success.asXML());
             }
         } else {
-            sendElement(session, "success", successData, false);
+            SaslOutcome.sendSuccess(session, successData);
         }
-    }
-
-    /**
-     * Builds a SASL2 &lt;success/&gt; element.
-     *
-     * @param successData optional mechanism-specific success data (can be null).
-     * @param authorizationIdentity the bare JID authorization identity (e.g. user@domain or uuid@domain for anonymous).
-     * @param resource the bound resource, or null if no resource was bound.
-     * @param fastToken optional FAST token to include in the response as per XEP-0484 (can be null).
-     * @return the &lt;success/&gt; element.
-     */
-    private static Element buildSasl2SuccessElement(byte[] successData, String authorizationIdentity, String resource, FastToken fastToken) {
-        final Element success = DocumentHelper.createElement(new QName("success", new Namespace("", SASL2_NAMESPACE)));
-        if (successData != null && successData.length > 0) {
-            final String data_b64 = Base64.getEncoder().encodeToString(successData).trim();
-            success.addElement("additional-data").setText(data_b64);
-        }
-        final StringBuilder authId = new StringBuilder(authorizationIdentity != null ? authorizationIdentity : "");
-        if (resource != null) {
-            authId.append('/').append(resource);
-        }
-        success.addElement("authorization-identifier").setText(authId.toString());
-        // XEP-0484: include <token> if a FAST token was issued.
-        if (fastToken != null) {
-            final Element tokenEl = success.addElement(new QName("token", new Namespace("", FastTokenManager.NAMESPACE)));
-            tokenEl.addAttribute("expiry", org.jivesoftware.util.XMPPDateTimeFormat.format(
-                java.util.Date.from(fastToken.getExpiry())));
-            tokenEl.addAttribute("token", fastToken.getTokenString());
-        }
-        return success;
     }
 
     private static FastToken issueFastToken(final String username, final String clientId, final String mechanism) {
         // A request that was accepted is part of the SASL2 operation. Do not report authentication
         // success when the requested credential could not be created and persisted.
         return FastTokenManager.issueToken(username, clientId, mechanism);
-    }
-
-    private static void authenticationFailed(LocalSession session, Failure failure, boolean usingSASL2) {
-        final Element reply = DocumentHelper.createElement(QName.get("failure", usingSASL2 ? SASL2_NAMESPACE : SASL_NAMESPACE));
-        if (usingSASL2) {
-            // SASL2 still uses the original SASL namespace for failure reasons.
-            reply.addElement(failure.toString(), SASL_NAMESPACE);
-        } else {
-            reply.addElement(failure.toString());
-        }
-        session.deliverRawText(reply.asXML());
-        // Give a number of retries before closing the connection
-        Integer retries = (Integer) session.getSessionData("authRetries");
-        if (retries == null) {
-            retries = 1;
-        }
-        else {
-            retries = retries + 1;
-        }
-        session.setSessionData("authRetries", retries);
-        if (retries >= JiveGlobals.getIntProperty("xmpp.auth.retries", 3) ) {
-            // Close the connection
-            Log.debug( "Closing session that failed to authenticate {} times: {}", retries, session );
-            session.markNonResumable();
-            session.close();
-        }
     }
 
     /**

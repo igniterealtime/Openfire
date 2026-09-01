@@ -23,6 +23,7 @@ import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.sasl.AnonymousSaslServer;
+import org.jivesoftware.openfire.sasl.SaslMechanismCatalog;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.JiveGlobals;
@@ -66,7 +67,7 @@ public class StanzaHandlerTest
 
         XMPPServer.setInstance(Fixtures.mockXMPPServer());
         AnonymousSaslServer.ENABLED.setValue(true);
-        SASLAuthentication.setEnabledMechanisms(Arrays.asList("PLAIN", "EXTERNAL", "ANONYMOUS"));
+        SaslMechanismCatalog.setEnabledMechanisms(Arrays.asList("PLAIN", "EXTERNAL", "ANONYMOUS"));
         SASLAuthentication.ENABLE_SASL2.setValue(true);
         SASLAuthentication.SASL2_REQUIRE_TLS.setValue(false);
     }

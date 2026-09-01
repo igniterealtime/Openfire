@@ -28,18 +28,16 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
+import org.jivesoftware.openfire.sasl.*;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthToken;
-import org.jivesoftware.openfire.sasl.Failure;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.ServerSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
-import org.jivesoftware.openfire.sasl.SaslFailureException;
-import org.jivesoftware.openfire.sasl.TestSaslMechanism;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.junit.jupiter.api.AfterAll;
@@ -92,7 +90,7 @@ public class SASLAuthenticationTest
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
 
         XMPPServer.setInstance(Fixtures.mockXMPPServer());
-        SASLAuthentication.setEnabledMechanisms(Arrays.asList("PLAIN", "EXTERNAL"));
+        SaslMechanismCatalog.setEnabledMechanisms(Arrays.asList("PLAIN", "EXTERNAL"));
     }
 
     /**
@@ -279,11 +277,11 @@ public class SASLAuthenticationTest
     public void shouldNotAdvertiseExternalForIncomingServerSessionWhenDisabledGlobally()
     {
         // Save the original enabled mechanisms to restore after the test.
-        final Set<String> originalMechanisms = new HashSet<>(SASLAuthentication.getEnabledMechanisms());
+        final Set<String> originalMechanisms = new HashSet<>(SaslMechanismCatalog.getEnabledMechanisms());
 
         try {
             // Setup test fixture: Disable EXTERNAL in the global mechanisms configuration
-            SASLAuthentication.setEnabledMechanisms(Collections.singletonList("PLAIN")); // Only PLAIN, no EXTERNAL
+            SaslMechanismCatalog.setEnabledMechanisms(Collections.singletonList("PLAIN")); // Only PLAIN, no EXTERNAL
 
             final Connection connection = mock(Connection.class);
             when(connection.isEncrypted()).thenReturn(true);
@@ -298,7 +296,7 @@ public class SASLAuthenticationTest
             assertFalse(mechanisms.contains("EXTERNAL"), "Expected EXTERNAL not to be advertised when disabled in global mechanisms configuration, even for encrypted sessions.");
         } finally {
             // Restore state to prevent affecting other unit tests.
-            SASLAuthentication.setEnabledMechanisms(new ArrayList<>(originalMechanisms));
+            SaslMechanismCatalog.setEnabledMechanisms(new ArrayList<>(originalMechanisms));
         }
     }
 
@@ -707,7 +705,7 @@ public class SASLAuthenticationTest
     public void getSASLMechanismsElement_client_sasl1_suppressEmptyFalse_noMechanisms_returnsEmptyElement()
     {
         // Setup test fixture: no mechanisms available (EXTERNAL requires encryption, PLAIN is removed).
-        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
+        SaslMechanismCatalog.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
         JiveGlobals.setProperty("sasl.client.suppressEmpty", "false");
 
         final Connection connection = mock(Connection.class);
@@ -734,7 +732,7 @@ public class SASLAuthenticationTest
     {
         FastTokenManager.ENABLE_FAST.setValue(false);
         // Setup test fixture: no mechanisms available (EXTERNAL requires encryption, PLAIN is removed).
-        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
+        SaslMechanismCatalog.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
         JiveGlobals.setProperty("sasl.client.suppressEmpty", "true");
 
         final Connection connection = mock(Connection.class);
@@ -760,7 +758,7 @@ public class SASLAuthenticationTest
     {
         FastTokenManager.ENABLE_FAST.setValue(false);
         // Setup test fixture: no mechanisms available (EXTERNAL requires encryption, PLAIN is removed).
-        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
+        SaslMechanismCatalog.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
         JiveGlobals.setProperty("sasl.client.suppressEmpty", "false");
 
         final Connection connection = mock(Connection.class);
@@ -786,7 +784,7 @@ public class SASLAuthenticationTest
     {
         FastTokenManager.ENABLE_FAST.setValue(false);
         // Setup test fixture: no mechanisms available (EXTERNAL requires encryption, PLAIN is removed).
-        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
+        SaslMechanismCatalog.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
         JiveGlobals.setProperty("sasl.client.suppressEmpty", "true");
 
         final Connection connection = mock(Connection.class);
@@ -811,7 +809,7 @@ public class SASLAuthenticationTest
     public void getSASLMechanismsElement_server_sasl1_suppressEmptyFalse_noMechanisms_returnsEmptyElement()
     {
         // Setup test fixture: no mechanisms available (EXTERNAL requires encryption and a trusted cert).
-        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
+        SaslMechanismCatalog.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
         JiveGlobals.setProperty("sasl.server.suppressEmpty", "false");
 
         final Connection connection = mock(Connection.class);
@@ -837,7 +835,7 @@ public class SASLAuthenticationTest
     public void getSASLMechanismsElement_server_sasl1_suppressEmptyTrue_noMechanisms_returnsNull()
     {
         // Setup test fixture: no mechanisms available (EXTERNAL requires encryption and a trusted cert).
-        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
+        SaslMechanismCatalog.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
         JiveGlobals.setProperty("sasl.server.suppressEmpty", "true");
 
         final Connection connection = mock(Connection.class);
@@ -862,7 +860,7 @@ public class SASLAuthenticationTest
     public void getSASLMechanismsElement_server_sasl2_suppressEmptyFalse_noMechanisms_returnsNull()
     {
         // Setup test fixture: no mechanisms available (EXTERNAL requires encryption and a trusted cert).
-        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
+        SaslMechanismCatalog.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
         JiveGlobals.setProperty("sasl.server.suppressEmpty", "false");
 
         final Connection connection = mock(Connection.class);
@@ -887,7 +885,7 @@ public class SASLAuthenticationTest
     public void getSASLMechanismsElement_server_sasl2_suppressEmptyTrue_noMechanisms_returnsNull()
     {
         // Setup test fixture: no mechanisms available (EXTERNAL requires encryption and a trusted cert).
-        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
+        SaslMechanismCatalog.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
         JiveGlobals.setProperty("sasl.server.suppressEmpty", "true");
 
         final Connection connection = mock(Connection.class);
@@ -916,7 +914,7 @@ public class SASLAuthenticationTest
         // PLAIN-only: with EXTERNAL enabled, a regression that bypassed the gate would reach mechanism eligibility and
         // NPE on the bare mock's null config — surfacing as a not-authorized <failure> that mimics the gate rejection.
         // Restricting to PLAIN ensures the only thing that can fail this test is the gate itself.
-        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("PLAIN"));
+        SaslMechanismCatalog.setEnabledMechanisms(Collections.singletonList("PLAIN"));
 
         final Connection connection = mock(Connection.class);
         when(connection.isEncrypted()).thenReturn(true);
@@ -983,7 +981,7 @@ public class SASLAuthenticationTest
         // EXTERNAL branch would dereference connection.getConfiguration() (null on this bare mock) for an encrypted
         // session. This test is about the SASL2 gate, not EXTERNAL, so PLAIN alone keeps it focused.
         SASLAuthentication.ENABLE_SASL2.setValue(true);
-        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("PLAIN"));
+        SaslMechanismCatalog.setEnabledMechanisms(Collections.singletonList("PLAIN"));
 
         final Connection connection = mock(Connection.class);
         when(connection.isEncrypted()).thenReturn(true);
@@ -1464,7 +1462,7 @@ public class SASLAuthenticationTest
     public void testAdvertisedMechanismRejectedAfterConfigurationChange() throws Exception
     {
         // Setup test fixture.
-        final List<String> enabledMechanisms = SASLAuthentication.getEnabledMechanisms();
+        final List<String> enabledMechanisms = SaslMechanismCatalog.getEnabledMechanisms();
         final Connection connection = mock(Connection.class);
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
@@ -1474,7 +1472,7 @@ public class SASLAuthenticationTest
         // Simulate a configuration change after the mechanism was advertised.
         // PLAIN is no longer supported by the current configuration.
         try {
-            SASLAuthentication.setEnabledMechanisms(List.of("EXTERNAL"));
+            SaslMechanismCatalog.setEnabledMechanisms(List.of("EXTERNAL"));
 
             // Execute system under test.
             final SASLAuthentication.Status status = SASLAuthentication.handle(session, authElement("PLAIN"), false);
@@ -1486,7 +1484,7 @@ public class SASLAuthenticationTest
             assertTrue(response.getValue().contains("<invalid-mechanism"), "Expected server to return an invalid-mechanism failure when the advertised mechanism is no longer supported.");
         } finally {
             // Restore fixture.
-            SASLAuthentication.setEnabledMechanisms(enabledMechanisms);
+            SaslMechanismCatalog.setEnabledMechanisms(enabledMechanisms);
         }
     }
 
@@ -1593,7 +1591,7 @@ public class SASLAuthenticationTest
              final MockedStatic<ChannelBindingProviderManager> managers = mockStatic(ChannelBindingProviderManager.class))
         {
             // Setup test fixture: an encrypted session that is offered SCRAM-SHA-1 and its -PLUS variant.
-            SASLAuthentication.setEnabledMechanisms(List.of("SCRAM-SHA-1", "SCRAM-SHA-1-PLUS"));
+            SaslMechanismCatalog.setEnabledMechanisms(List.of("SCRAM-SHA-1", "SCRAM-SHA-1-PLUS"));
             authFactory.when(AuthFactory::supportsScram).thenReturn(true);
             authFactory.when(() -> AuthFactory.getScramMechanisms(any())).thenReturn(Set.of("SCRAM-SHA-1"));
             authFactory.when(AuthFactory::getFallbackScramMechanisms).thenReturn(Set.of("SCRAM-SHA-1"));
@@ -1637,7 +1635,7 @@ public class SASLAuthenticationTest
     public void appendSASLFeatures_recordsExactlyWhatIsAdvertised_withoutChannelBinding()
     {
         // Setup test fixture: an unencrypted session, offered only PLAIN.
-        SASLAuthentication.setEnabledMechanisms(List.of("PLAIN"));
+        SaslMechanismCatalog.setEnabledMechanisms(List.of("PLAIN"));
 
         final Connection connection = mock(Connection.class);
         when(connection.isEncrypted()).thenReturn(false);
@@ -1700,7 +1698,7 @@ public class SASLAuthenticationTest
         // Setup test fixture: SASL2 enabled, FAST enabled, PLAIN mechanism available.
         SASLAuthentication.ENABLE_SASL2.setValue(true);
         JiveGlobals.setProperty("xmpp.fast.enabled", "true");
-        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("PLAIN"));
+        SaslMechanismCatalog.setEnabledMechanisms(Collections.singletonList("PLAIN"));
 
         final Connection connection = mock(Connection.class);
         when(connection.isEncrypted()).thenReturn(false);
@@ -1732,7 +1730,7 @@ public class SASLAuthenticationTest
         // Setup test fixture: SASL2 enabled, FAST disabled, PLAIN mechanism available.
         SASLAuthentication.ENABLE_SASL2.setValue(true);
         JiveGlobals.setProperty("xmpp.fast.enabled", "false");
-        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("PLAIN"));
+        SaslMechanismCatalog.setEnabledMechanisms(Collections.singletonList("PLAIN"));
 
         final Connection connection = mock(Connection.class);
         when(connection.isEncrypted()).thenReturn(false);
@@ -1771,7 +1769,7 @@ public class SASLAuthenticationTest
         // Setup test fixture.
         SASLAuthentication.ENABLE_SASL2.setValue(true);
         JiveGlobals.setProperty("xmpp.fast.enabled", "true");
-        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("PLAIN"));
+        SaslMechanismCatalog.setEnabledMechanisms(Collections.singletonList("PLAIN"));
 
         final Connection connection = mock(Connection.class);
         when(connection.isEncrypted()).thenReturn(false);
@@ -1830,7 +1828,7 @@ public class SASLAuthenticationTest
         // Setup test fixture.
         SASLAuthentication.ENABLE_SASL2.setValue(true);
         JiveGlobals.setProperty("xmpp.fast.enabled", "true");
-        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("PLAIN"));
+        SaslMechanismCatalog.setEnabledMechanisms(Collections.singletonList("PLAIN"));
 
         final Connection connection = mock(Connection.class);
         when(connection.isEncrypted()).thenReturn(false);
@@ -1912,7 +1910,7 @@ public class SASLAuthenticationTest
         JiveGlobals.setProperty("xmpp.fast.enabled", "false");
         SASLAuthentication.ENABLE_SASL2.setValue(true);
         SASLAuthentication.SASL2_REQUIRE_TLS.setValue(false);
-        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("PLAIN")); // HT-* not listed.
+        SaslMechanismCatalog.setEnabledMechanisms(Collections.singletonList("PLAIN")); // HT-* not listed.
 
         final Connection connection = mock(Connection.class);
         when(connection.isEncrypted()).thenReturn(false);
@@ -1946,7 +1944,7 @@ public class SASLAuthenticationTest
         JiveGlobals.setProperty("xmpp.fast.enabled", "true");
         SASLAuthentication.ENABLE_SASL2.setValue(true);
         SASLAuthentication.SASL2_REQUIRE_TLS.setValue(false);
-        SASLAuthentication.setEnabledMechanisms(Collections.singletonList("PLAIN")); // HT-* intentionally not listed.
+        SaslMechanismCatalog.setEnabledMechanisms(Collections.singletonList("PLAIN")); // HT-* intentionally not listed.
 
         final Connection connection = mock(Connection.class);
         when(connection.isEncrypted()).thenReturn(false);
@@ -2015,7 +2013,7 @@ public class SASLAuthenticationTest
     public void appendFeaturesDoesNotRecordFastMechanismsWhenSasl2IsNotOffered() {
         FastTokenManager.ENABLE_FAST.setValue(true);
         SASLAuthentication.ENABLE_SASL2.setValue(false);
-        SASLAuthentication.setEnabledMechanisms(List.of("PLAIN"));
+        SaslMechanismCatalog.setEnabledMechanisms(List.of("PLAIN"));
         final Connection connection = mock(Connection.class);
         when(connection.isEncrypted()).thenReturn(false);
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
@@ -2058,7 +2056,7 @@ public class SASLAuthenticationTest
         session.setClaimedIdentity(new org.xmpp.packet.JID("test-user@" + Fixtures.XMPP_DOMAIN));
         TestSaslMechanism.registerTestMechanism(session);
         try {
-            SASLAuthentication.setEnabledMechanisms(List.of("TEST-MECHANISM"));
+            SaslMechanismCatalog.setEnabledMechanisms(List.of("TEST-MECHANISM"));
             SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("TEST-MECHANISM"));
             FastSessionState.setAdvertisedMechanisms(session, Set.of(FastTokenManager.HT_SHA_256_NONE));
             final FastToken issued = new FastToken("test-user", FastTokenManager.HT_SHA_256_NONE,
@@ -2103,7 +2101,7 @@ public class SASLAuthenticationTest
             }
             TestSaslMechanism.registerTestMechanism(session);
             try {
-                SASLAuthentication.setEnabledMechanisms(List.of("TEST-MECHANISM"));
+                SaslMechanismCatalog.setEnabledMechanisms(List.of("TEST-MECHANISM"));
                 SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("TEST-MECHANISM"));
                 FastSessionState.setAdvertisedMechanisms(session, Set.of(FastTokenManager.HT_SHA_256_NONE));
                 final Element authenticate = DocumentHelper.parseText(
@@ -2140,7 +2138,7 @@ public class SASLAuthenticationTest
             session.setClaimedIdentity(new org.xmpp.packet.JID("test-user@" + Fixtures.XMPP_DOMAIN));
             TestSaslMechanism.registerTestMechanism(session);
             try {
-                SASLAuthentication.setEnabledMechanisms(List.of("TEST-MECHANISM"));
+                SaslMechanismCatalog.setEnabledMechanisms(List.of("TEST-MECHANISM"));
                 SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("TEST-MECHANISM"));
                 FastSessionState.setAdvertisedMechanisms(session, Set.of(FastTokenManager.HT_SHA_256_NONE));
                 try (MockedStatic<FastTokenManager> manager = mockStatic(FastTokenManager.class, CALLS_REAL_METHODS)) {
@@ -2176,7 +2174,7 @@ public class SASLAuthenticationTest
         session.setClaimedIdentity(new org.xmpp.packet.JID("test-user@" + Fixtures.XMPP_DOMAIN));
         TestSaslMechanism.registerTestMechanism(session);
         try {
-            SASLAuthentication.setEnabledMechanisms(List.of("TEST-MECHANISM"));
+            SaslMechanismCatalog.setEnabledMechanisms(List.of("TEST-MECHANISM"));
             SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("TEST-MECHANISM"));
             FastSessionState.setAdvertisedMechanisms(session, Set.of(FastTokenManager.HT_SHA_256_NONE));
             try (MockedStatic<FastTokenManager> manager = mockStatic(FastTokenManager.class, CALLS_REAL_METHODS)) {

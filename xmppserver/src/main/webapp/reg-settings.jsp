@@ -31,6 +31,7 @@
 <%@ page import="java.util.stream.Collectors" %>
 <%@ page import="org.jivesoftware.util.IpUtils" %>
 <%@ page import="java.util.*" %>
+<%@ page import="org.jivesoftware.openfire.sasl.SaslMechanismCatalog" %>
 
 <%@ taglib uri="admin" prefix="admin" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -163,7 +164,7 @@
         regHandler.setCanChangePassword(canChangePassword);
         AnonymousSaslServer.ENABLED.setValue(anonLogin);
         UserManager.ALLOW_FUTURE_USERS.setValue( futureUsersEnabled );
-        SASLAuthentication.setEnabledMechanisms( mechsEnabled );
+        SaslMechanismCatalog.setEnabledMechanisms( mechsEnabled );
         SASLAuthentication.SSDP_ENABLED.setValue(ssdpEnabled);
 
         // Log the event
@@ -185,9 +186,9 @@
     pageContext.setAttribute( "allowedIPs",         LocalClientSession.getWhitelistedIPs().stream().sorted().collect(Collectors.toList()));
     pageContext.setAttribute( "allowedAnonymIPs",   LocalClientSession.getWhitelistedAnonymousIPs().stream().sorted().collect(Collectors.toList()));
     pageContext.setAttribute( "futureUsersEnabled", futureUsersEnabled );
-    pageContext.setAttribute( "saslEnabledMechanisms",     SASLAuthentication.getEnabledMechanisms() );
-    pageContext.setAttribute( "saslImplementedMechanisms", SASLAuthentication.getImplementedMechanisms() );
-    pageContext.setAttribute( "saslSupportedMechanisms",   SASLAuthentication.getSupportedMechanisms() );
+    pageContext.setAttribute( "saslEnabledMechanisms",     SaslMechanismCatalog.getEnabledMechanisms() );
+    pageContext.setAttribute( "saslImplementedMechanisms", SaslMechanismCatalog.getImplementedMechanisms() );
+    pageContext.setAttribute( "saslSupportedMechanisms",   SaslMechanismCatalog.getSupportedMechanisms() );
     pageContext.setAttribute( "ssdpEnabled",               ssdpEnabled );
     pageContext.setAttribute( "blockValue", blockValue );
     pageContext.setAttribute( "allowValue", allowValue );
@@ -195,8 +196,8 @@
     pageContext.setAttribute( "saveSuccess", save && errors.isEmpty());
 
     final SortedSet<String> union = new TreeSet<>();
-    union.addAll( SASLAuthentication.getEnabledMechanisms() );
-    union.addAll( SASLAuthentication.getImplementedMechanisms() );
+    union.addAll( SaslMechanismCatalog.getEnabledMechanisms() );
+    union.addAll( SaslMechanismCatalog.getImplementedMechanisms() );
     pageContext.setAttribute( "saslConsideredOrImplementedMechanisms", union );
 %>
 

@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jivesoftware.openfire.net;
+package org.jivesoftware.openfire.sasl;
 
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
-import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
-import org.jivesoftware.openfire.sasl.ScramSha256SaslServer;
-import org.jivesoftware.openfire.sasl.ScramSha512SaslServer;
+import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.util.JiveGlobals;
 import org.junit.jupiter.api.AfterEach;
@@ -50,7 +48,7 @@ import static org.mockito.Mockito.withSettings;
 
 /**
  * Verifies the session-scoped caching of SCRAM mechanism lookups performed by
- * {@link SASLAuthentication#getScramMechanismsForSession(LocalClientSession)}.
+ * {@link SaslMechanismEligibility#getScramMechanismsForSession(LocalClientSession)}.
  *
  * Determining these mechanisms requires a credential lookup that is driven by a username which an unauthenticated peer
  * supplies. A stream is typically opened more than once before authentication completes, and each of those regenerates
@@ -61,7 +59,7 @@ import static org.mockito.Mockito.withSettings;
  * as the transition to an authenticated identity. When {@link SASLAuthentication#SCRAM_MECHANISMS_PER_USER} is
  * disabled, no username is used at all and every session is answered with the same mechanisms.
  */
-public class SASLAuthenticationScramMechanismsForSessionTest
+public class SaslMechanismEligibilityScramTest
 {
     private static final String SERVER_NAME = "example.org";
 
@@ -80,9 +78,10 @@ public class SASLAuthenticationScramMechanismsForSessionTest
         Fixtures.reconfigureOpenfireHome();
         Fixtures.disableDatabasePersistence();
 
-        // Force class initialization here, while no statics are mocked. The static initializer of this class registers
-        // a security provider and reads configuration and AuthFactory additionally instantiates the configured auth
-        // provider. Left to happen on first use, that would occur inside the mocked-static scope of a test.
+        // Force class initialization here, while no statics are mocked. Initializing SASLAuthentication registers a
+        // security provider and reads configuration (by way of SaslMechanismCatalog), and AuthFactory additionally
+        // instantiates the configured auth provider. Left to happen on first use, that would occur inside the
+        // mocked-static scope of a test.
         Class.forName(SASLAuthentication.class.getName());
         Class.forName(AuthFactory.class.getName());
     }
@@ -114,7 +113,7 @@ public class SASLAuthenticationScramMechanismsForSessionTest
         authFactory.when(() -> AuthFactory.getScramMechanisms("juliet")).thenReturn(SHA1_ONLY);
 
         // Execute system under test.
-        final Set<String> result = SASLAuthentication.getScramMechanismsForSession(session);
+        final Set<String> result = SaslMechanismEligibility.getScramMechanismsForSession(session);
 
         // Verify result.
         assertEquals(Set.of(ScramSha1SaslServer.MECHANISM_NAME, ScramSha1SaslServer.MECHANISM_NAME + "-PLUS"), result, "The channel binding variant of a reported mechanism must be included, as it shares that mechanism's credentials.");
@@ -130,10 +129,10 @@ public class SASLAuthenticationScramMechanismsForSessionTest
         final LocalClientSession session = sessionStub();
         session.setClaimedIdentity(new JID("juliet@" + SERVER_NAME));
         authFactory.when(() -> AuthFactory.getScramMechanisms("juliet")).thenReturn(ALL_MECHANISMS);
-        final Set<String> first = SASLAuthentication.getScramMechanismsForSession(session);
+        final Set<String> first = SaslMechanismEligibility.getScramMechanismsForSession(session);
 
         // Execute system under test.
-        final Set<String> second = SASLAuthentication.getScramMechanismsForSession(session);
+        final Set<String> second = SaslMechanismEligibility.getScramMechanismsForSession(session);
 
         // Verify result.
         assertEquals(first, second, "A repeated invocation for an unchanged expected username must yield the same mechanisms.");
@@ -152,11 +151,11 @@ public class SASLAuthenticationScramMechanismsForSessionTest
         session.setClaimedIdentity(new JID("juliet@" + SERVER_NAME));
         authFactory.when(() -> AuthFactory.getScramMechanisms("juliet")).thenReturn(SHA1_ONLY);
         authFactory.when(() -> AuthFactory.getScramMechanisms("romeo")).thenReturn(ALL_MECHANISMS);
-        SASLAuthentication.getScramMechanismsForSession(session);
+        SaslMechanismEligibility.getScramMechanismsForSession(session);
 
         // Execute system under test.
         session.setClaimedIdentity(new JID("romeo@" + SERVER_NAME));
-        final Set<String> result = SASLAuthentication.getScramMechanismsForSession(session);
+        final Set<String> result = SaslMechanismEligibility.getScramMechanismsForSession(session);
 
         // Verify result.
         assertEquals(withChannelBindingVariants(ALL_MECHANISMS), result, "A changed claim must yield the mechanisms of the newly claimed user.");
@@ -175,11 +174,11 @@ public class SASLAuthenticationScramMechanismsForSessionTest
         final LocalClientSession session = sessionStub();
         session.setClaimedIdentity(new JID("juliet@" + SERVER_NAME));
         authFactory.when(() -> AuthFactory.getScramMechanisms("juliet")).thenReturn(ALL_MECHANISMS);
-        SASLAuthentication.getScramMechanismsForSession(session);
+        SaslMechanismEligibility.getScramMechanismsForSession(session);
 
         // Execute system under test.
         session.setClaimedIdentity(null);
-        final Set<String> result = SASLAuthentication.getScramMechanismsForSession(session);
+        final Set<String> result = SaslMechanismEligibility.getScramMechanismsForSession(session);
 
         // Verify result.
         assertEquals(withChannelBindingVariants(SHA1_ONLY), result, "A cleared claim must yield the fallback mechanisms, not those that were derived from the claim made on an earlier stream.");
@@ -196,7 +195,7 @@ public class SASLAuthenticationScramMechanismsForSessionTest
         final LocalClientSession session = sessionStub();
 
         // Execute system under test.
-        final Set<String> result = SASLAuthentication.getScramMechanismsForSession(session);
+        final Set<String> result = SaslMechanismEligibility.getScramMechanismsForSession(session);
 
         // Verify result.
         assertEquals(withChannelBindingVariants(SHA1_ONLY), result, "A session for which no claim was made must be answered with the fallback mechanisms.");
@@ -211,10 +210,10 @@ public class SASLAuthenticationScramMechanismsForSessionTest
     {
         // Setup test fixture.
         final LocalClientSession session = sessionStub();
-        final Set<String> first = SASLAuthentication.getScramMechanismsForSession(session);
+        final Set<String> first = SaslMechanismEligibility.getScramMechanismsForSession(session);
 
         // Execute system under test.
-        final Set<String> second = SASLAuthentication.getScramMechanismsForSession(session);
+        final Set<String> second = SaslMechanismEligibility.getScramMechanismsForSession(session);
 
         // Verify result.
         assertEquals(first, second, "A repeated invocation for a session without a claim must yield the same mechanisms.");
@@ -233,11 +232,11 @@ public class SASLAuthenticationScramMechanismsForSessionTest
         session.setClaimedIdentity(new JID("juliet@" + SERVER_NAME));
         authFactory.when(() -> AuthFactory.getScramMechanisms("juliet")).thenReturn(SHA1_ONLY);
         authFactory.when(() -> AuthFactory.getScramMechanisms("romeo")).thenReturn(ALL_MECHANISMS);
-        SASLAuthentication.getScramMechanismsForSession(session);
+        SaslMechanismEligibility.getScramMechanismsForSession(session);
 
         // Execute system under test.
         session.setAuthToken(authenticatedTokenFor("romeo"));
-        final Set<String> result = SASLAuthentication.getScramMechanismsForSession(session);
+        final Set<String> result = SaslMechanismEligibility.getScramMechanismsForSession(session);
 
         // Verify result.
         assertEquals(withChannelBindingVariants(ALL_MECHANISMS), result, "Once authenticated, the mechanisms must be those of the authenticated user, not those derived from the identity that was merely claimed.");
@@ -258,7 +257,7 @@ public class SASLAuthenticationScramMechanismsForSessionTest
         authFactory.when(() -> AuthFactory.getScramMechanisms("juliet")).thenReturn(ALL_MECHANISMS);
 
         // Execute system under test.
-        final Set<String> result = SASLAuthentication.getScramMechanismsForSession(session);
+        final Set<String> result = SaslMechanismEligibility.getScramMechanismsForSession(session);
 
         // Verify result.
         assertEquals(withChannelBindingVariants(SHA1_ONLY), result, "With tailoring disabled, a session that claims an identity must be answered with the fallback mechanisms.");

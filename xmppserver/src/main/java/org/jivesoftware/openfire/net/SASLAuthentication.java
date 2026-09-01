@@ -32,16 +32,17 @@ import org.jivesoftware.openfire.fast.FastSessionState;
 import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.keystore.TrustStore;
 import org.jivesoftware.openfire.lockout.LockOutManager;
+import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.sasl.AnonymousSaslServer;
 import org.jivesoftware.openfire.sasl.Failure;
 import org.jivesoftware.openfire.sasl.JiveSharedSecretSaslServer;
+import org.jivesoftware.openfire.sasl.MechanismName;
 import org.jivesoftware.openfire.sasl.SaslFailureException;
 import org.jivesoftware.openfire.sasl.ScramSaslServer;
 import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
 import org.jivesoftware.openfire.sasl.ScramSha256SaslServer;
 import org.jivesoftware.openfire.sasl.ScramSha512SaslServer;
-import org.jivesoftware.openfire.SessionManager;
-import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CertificateManager;
@@ -540,7 +541,7 @@ public class SASLAuthentication {
         final QName qName = new QName(usingSASL2 ? "authentication" : "mechanisms", namespace);
         final Element result = DocumentHelper.createElement( qName );
         for (final String mech : advertisableMechanismNames) {
-            if (isFastMechanism(mech)) continue; // FAST mechanisms live in the inline FAST feature.
+            if (MechanismName.isFast(mech)) continue; // FAST mechanisms live in the inline FAST feature.
             final Element mechanism = result.addElement("mechanism");
             mechanism.setText(mech);
         }
@@ -551,7 +552,7 @@ public class SASLAuthentication {
             // Element sm = inlineElement.addElement(...);
             if (FastTokenManager.ENABLE_FAST.getValue()) {
                 final Set<String> fastMechanisms = advertisableMechanismNames.stream()
-                    .filter(SASLAuthentication::isFastMechanism).collect(Collectors.toSet());
+                    .filter(MechanismName::isFast).collect(Collectors.toSet());
                 if (!fastMechanisms.isEmpty()) inlineElement.add(FastTokenManager.featureElement(fastMechanisms));
             }
         }
@@ -713,20 +714,20 @@ public class SASLAuthentication {
 
                     final String mechanismName = doc.attributeValue( "mechanism" ).toUpperCase();
 
-                    if (isFastMechanism(mechanismName) && !usingSASL2) {
+                    if (MechanismName.isFast(mechanismName) && !usingSASL2) {
                         throw new SaslFailureException(Failure.INVALID_MECHANISM,
                             "FAST mechanisms can only be negotiated with SASL2.");
                     }
 
                     // See if the mechanism is supported by configuration as well as by implementation.
                     if ( !mechanisms.contains(mechanismName)
-                        && !(FastTokenManager.ENABLE_FAST.getValue() && FastTokenManager.isMechanism(mechanismName)) )
+                        && !(FastTokenManager.ENABLE_FAST.getValue() && MechanismName.isFast(mechanismName)) )
                     {
                         throw new SaslFailureException( Failure.INVALID_MECHANISM, "The configuration of Openfire does not contain or allow the mechanism." );
                     }
 
                     // Enforce session-specific eligibility (as advertised in stream features) See OF-3273.
-                    final Set<String> advertisedMechanisms = (isFastMechanism(mechanismName)
+                    final Set<String> advertisedMechanisms = (MechanismName.isFast(mechanismName)
                         ? getAdvertisedFastMechanisms(session) : getAdvertisedSASLMechanisms(session))
                         .orElseThrow(() -> {
                             Log.warn("No advertised SASL mechanisms detected for session. This can happen if SASL authentication is attempted before the applicable mechanism names are advertised, or if the session has not properly recorded the SASL mechanism names that are advertised to it. Both suggest a bug in Openfire (or possible the client). Affected session: {}", session);
@@ -793,7 +794,7 @@ public class SASLAuthentication {
                         }
                         // XEP-0484: parse <request-token xmlns='urn:xmpp:fast:0' mechanism='...'/>
                         final Element requestTokenEl = doc.element(new QName("request-token", new Namespace("", FastTokenManager.NAMESPACE)));
-                        if (isFastMechanism(mechanismName) || requestTokenEl != null) {
+                        if (MechanismName.isFast(mechanismName) || requestTokenEl != null) {
                             final UserAgentInfo userAgent = (UserAgentInfo) session.getSessionData("user-agent-info");
                             final Optional<String> expected = clientSession.getExpectedUsername();
                             if (userAgent == null || userAgent.getId() == null || expected.isEmpty()) {
@@ -805,7 +806,7 @@ public class SASLAuthentication {
                         }
                         if (requestTokenEl != null) {
                             final String requestedMechanism = requestTokenEl.attributeValue("mechanism");
-                            if (requestedMechanism == null || !FastTokenManager.isMechanism(requestedMechanism)) {
+                            if (requestedMechanism == null || !MechanismName.isFast(requestedMechanism)) {
                                 throw new SaslFailureException(Failure.MALFORMED_REQUEST,
                                     "FAST token requests must specify a known mechanism");
                             }
@@ -820,7 +821,7 @@ public class SASLAuthentication {
                         }
                         // XEP-0484: parse <fast xmlns='urn:xmpp:fast:0' [count='..'] [invalidate='true']/>
                         final Element fastEl = doc.element(new QName("fast", new Namespace("", FastTokenManager.NAMESPACE)));
-                        if (isFastMechanism(mechanismName) && fastEl == null) {
+                        if (MechanismName.isFast(mechanismName) && fastEl == null) {
                             throw new SaslFailureException(Failure.MALFORMED_REQUEST,
                                 "FAST token authentication requires a <fast/> element");
                         }
@@ -889,7 +890,7 @@ public class SASLAuthentication {
                     session.removeSessionData( "SaslServer" );
                     session.removeSessionData( SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY );
                     session.setSessionData("SaslMechanism", saslServer.getMechanismName());
-                    if (requiresChannelBinding(saslServer.getMechanismName())) {
+                    if (MechanismName.requiresChannelBinding(saslServer.getMechanismName())) {
                         session.setSessionData("ChannelBindingType", saslServer.getNegotiatedProperty(ScramSaslServer.PROPNAME_CHANNELBINDINGTYPE));
                     }
                     return hasBind2Request ? Status.authenticatedAwaitingFeatures : Status.authenticated;
@@ -1069,7 +1070,7 @@ public class SASLAuthentication {
                 // If invalidate=true was requested, delete the existing token and do not rotate.
                 final boolean fastInvalidate = FastSessionState.isInvalidateRequested(session);
                 final String fastRequestedMechanism = FastSessionState.getRequestedMechanism(session);
-                final boolean isFastAuth = isFastMechanism(mechanismName);
+                final boolean isFastAuth = MechanismName.isFast(mechanismName);
                 final String authenticatedClientId = FastSessionState.getAuthenticatedClientId(session);
                 final String requestingClientId = FastSessionState.getClientId(session);
 
@@ -1285,8 +1286,8 @@ public class SASLAuthentication {
                 continue;
             }
 
-            if (requiresChannelBinding(mechanism)) {
-                final String requiredCbType = requiredChannelBindingType(mechanism);
+            if (MechanismName.requiresChannelBinding(mechanism)) {
+                final String requiredCbType = MechanismName.requiredChannelBindingType(mechanism);
                 final ChannelBindingProviderManager cbManager = ChannelBindingProviderManager.getInstance();
                 if (requiredCbType != null) {
                     // Mechanism encodes a specific CB type (e.g. HT-*-UNIQ): only offer it when
@@ -1455,87 +1456,9 @@ public class SASLAuthentication {
         initMechanisms();
     }
 
-    /**
-     * Returns the specific TLS channel-binding type name required by the given SASL mechanism, or
-     * {@code null} if the mechanism does not require channel binding.
-     *
-     * <p>Two naming conventions are recognised:</p>
-     * <ul>
-     *   <li>The {@code -PLUS} suffix used by SCRAM mechanisms (e.g. {@code SCRAM-SHA-1-PLUS}) —
-     *       these mechanisms negotiate the exact CB type at runtime, so {@code null} is returned
-     *       and availability is checked elsewhere (any CB type is sufficient).</li>
-     *   <li>The {@code -UNIQ}, {@code -ENDP}, and {@code -EXPR} suffixes used by HT-* and HT2-*
-     *       mechanisms — these encode a specific CB type in the mechanism name, so the exact type
-     *       is returned ({@code "tls-unique"}, {@code "tls-server-end-point"}, or
-     *       {@code "tls-exporter"} per the HT draft, Table 1).</li>
-     * </ul>
-     *
-     * @param mechanismName the SASL mechanism name to check (cannot be null)
-     * @return the required TLS channel-binding type name (e.g. {@code "tls-unique"}), or
-     *         {@code null} if no specific type is required (includes NONE and PLUS mechanisms)
-     */
-    @VisibleForTesting
-    @Nullable
-    static String requiredChannelBindingType(@Nonnull final String mechanismName) {
-        if (mechanismName.endsWith("-UNIQ")) return "tls-unique";
-        if (mechanismName.endsWith("-ENDP")) return "tls-server-end-point";
-        if (mechanismName.endsWith("-EXPR")) return "tls-exporter";
-        return null; // NONE, PLUS (negotiated at runtime), or any non-CB mechanism
-    }
-
-    /**
-     * Returns {@code true} if the given SASL mechanism name is a FAST mechanism (HT-* or HT2-*).
-     *
-     * <p>FAST mechanisms are not registered in the {@code sasl.mechs} configuration property, so
-     * they must be recognised independently of the standard mechanism list when FAST is enabled.</p>
-     *
-     * @param mechanismName the SASL mechanism name to check (cannot be null)
-     * @return {@code true} if the mechanism is a FAST HT-family mechanism; {@code false} otherwise
-     */
-    @VisibleForTesting
-    static boolean isFastMechanism(@Nonnull final String mechanismName) {
-        return FastTokenManager.isMechanism(mechanismName);
-    }
-
     static Optional<Set<String>> getAdvertisedFastMechanisms(@Nonnull final LocalSession session) {
         final Object value = session.getSessionData(AVAILABLE_FAST_MECHANISMS_FOR_SESSION);
         return value instanceof Set ? Optional.of((Set<String>) value) : Optional.empty();
-    }
-
-    /**
-     * Returns {@code true} if the given SASL mechanism name is a member of the SCRAM family.
-     *
-     * SCRAM mechanism names are, per RFC 5802 § 4, the string {@code SCRAM-} followed by the name of the underlying
-     * hash function (optionally suffixed with {@code -PLUS} for the channel binding variant).
-     *
-     * @param mechanismName the SASL mechanism name to check (cannot be null)
-     * @return {@code true} if the mechanism is a SCRAM mechanism; {@code false} otherwise
-     */
-    @VisibleForTesting
-    static boolean isScramMechanism(@Nonnull final String mechanismName) {
-        return mechanismName.startsWith("SCRAM-");
-    }
-
-    /**
-     * Returns {@code true} if the given SASL mechanism name requires channel binding.
-     *
-     * <p>Two naming conventions are recognised:</p>
-     * <ul>
-     *   <li>The {@code -PLUS} suffix used by SCRAM mechanisms (e.g. {@code SCRAM-SHA-1-PLUS}).</li>
-     *   <li>The {@code -UNIQ}, {@code -ENDP}, and {@code -EXPR} suffixes used by HT-* and HT2-*
-     *       mechanisms, mapping to {@code tls-unique}, {@code tls-server-end-point}, and
-     *       {@code tls-exporter} channel-binding types respectively (per the HT draft, Table 1).</li>
-     * </ul>
-     *
-     * @param mechanismName the SASL mechanism name to check (cannot be null)
-     * @return {@code true} if the mechanism requires channel binding; {@code false} otherwise
-     */
-    @VisibleForTesting
-    static boolean requiresChannelBinding(@Nonnull final String mechanismName) {
-        return mechanismName.endsWith("-PLUS")
-            || mechanismName.endsWith("-UNIQ")
-            || mechanismName.endsWith("-ENDP")
-            || mechanismName.endsWith("-EXPR");
     }
 
     private static void initMechanisms()
@@ -1595,16 +1518,16 @@ public class SASLAuthentication {
             }
 
             // Prevent offering SCRAM mechanism when no mechanism-specific credentials (salt, iterations, keys) are available.
-            if (isScramMechanism(mech) && !mechanismsForWhichCredentialsAreAvailable.contains(mech)) {
+            if (MechanismName.isScram(mech) && !mechanismsForWhichCredentialsAreAvailable.contains(mech)) {
                 continue;
             }
 
-            if (requiresChannelBinding(mech)) {
+            if (MechanismName.requiresChannelBinding(mech)) {
                 // Channel binding would be a binding to TLS, thus encryption is required for channel binding.
                 if (!session.isEncrypted()) { // This ought to be redundant, as getSupportedChannelBindingTypes() will return an empty set if not encrypted.
                     continue;
                 }
-                final String requiredCbType = requiredChannelBindingType(mech);
+                final String requiredCbType = MechanismName.requiredChannelBindingType(mech);
                 if (requiredCbType != null) {
                     // Mechanism encodes a specific CB type (e.g. HT-*-UNIQ): only offer it when
                     // that exact type is available on this connection.
@@ -1721,9 +1644,9 @@ public class SASLAuthentication {
     {
         final Set<String> advertisableSASLMechanisms = getAdvertisableSASLMechanisms(session);
         final Set<String> fastMechanisms = advertisableSASLMechanisms.stream()
-            .filter(SASLAuthentication::isFastMechanism).collect(Collectors.toUnmodifiableSet());
+            .filter(MechanismName::isFast).collect(Collectors.toUnmodifiableSet());
         final Set<String> standardMechanisms = advertisableSASLMechanisms.stream()
-            .filter(mechanism -> !isFastMechanism(mechanism)).collect(Collectors.toUnmodifiableSet());
+            .filter(mechanism -> !MechanismName.isFast(mechanism)).collect(Collectors.toUnmodifiableSet());
         setAdvertisedSASLMechanisms(session, standardMechanisms);
         final boolean fastFeatureIsAdvertised = session instanceof ClientSession
             && checkSASL2Permitted(session).isEmpty() && FastTokenManager.ENABLE_FAST.getValue();
@@ -1753,7 +1676,7 @@ public class SASLAuthentication {
     @Nonnull
     static Set<String> getAdvertisableChannelBindingTypes(@Nonnull final LocalSession session, @Nonnull final Set<String> advertisableSASLMechanisms)
     {
-        if (advertisableSASLMechanisms.stream().noneMatch(SASLAuthentication::requiresChannelBinding)) {
+        if (advertisableSASLMechanisms.stream().noneMatch(MechanismName::requiresChannelBinding)) {
             return Set.of();
         }
         final Connection connection = session.getConnection();

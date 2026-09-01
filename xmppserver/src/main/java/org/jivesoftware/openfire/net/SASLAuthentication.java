@@ -36,20 +36,14 @@ import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.event.SessionEventDispatcher;
 import org.jivesoftware.openfire.sasl.AnonymousSaslServer;
 import org.jivesoftware.openfire.sasl.Failure;
-import org.jivesoftware.openfire.sasl.JiveSharedSecretSaslServer;
 import org.jivesoftware.openfire.sasl.MechanismName;
 import org.jivesoftware.openfire.sasl.SaslFailureException;
+import org.jivesoftware.openfire.sasl.SaslMechanismCatalog;
 import org.jivesoftware.openfire.sasl.ScramSaslServer;
-import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
-import org.jivesoftware.openfire.sasl.ScramSha256SaslServer;
-import org.jivesoftware.openfire.sasl.ScramSha512SaslServer;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
-import org.jivesoftware.util.PropertyEventDispatcher;
-import org.jivesoftware.util.PropertyEventListener;
 import org.jivesoftware.util.SystemProperty;
-import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
@@ -59,9 +53,7 @@ import javax.annotation.Nullable;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
-import javax.security.sasl.SaslServerFactory;
 import java.nio.charset.StandardCharsets;
-import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.*;
@@ -265,54 +257,11 @@ public class SASLAuthentication {
      */
     private record CachedScramMechanisms(@Nullable String expectedUsername, @Nonnull Set<String> mechanisms) {}
 
-    /**
-     * List of mechanisms supported by the server. These are not necessarily available to all sessions.
-     */
-    private static Set<String> mechanisms = new HashSet<>();
-
     static
     {
-        // Add (proprietary) Providers of SASL implementation to the Java security context.
-        if (Security.getProvider( "JiveSoftware" ) == null) {
-            Security.addProvider(new org.jivesoftware.openfire.sasl.SaslProvider());
-        }
-
-        // Convert XML based provider setup to Database based
-        JiveGlobals.migrateProperty("sasl.mechs");
-        JiveGlobals.migrateProperty("sasl.gssapi.debug");
-        JiveGlobals.migrateProperty("sasl.gssapi.config");
-        JiveGlobals.migrateProperty("sasl.gssapi.useSubjectCredsOnly");
-
-        initMechanisms();
-
-        PropertyEventDispatcher.addListener( new PropertyEventListener()
-        {
-            @Override
-            public void propertySet( String property, Map<String, Object> params )
-            {
-                if ("sasl.mechs".equals( property ) )
-                {
-                    initMechanisms();
-                }
-            }
-
-            @Override
-            public void propertyDeleted( String property, Map<String, Object> params )
-            {
-                if ("sasl.mechs".equals( property ) )
-                {
-                    initMechanisms();
-                }
-            }
-
-            @Override
-            public void xmlPropertySet( String property, Map<String, Object> params )
-            {}
-
-            @Override
-            public void xmlPropertyDeleted( String property, Map<String, Object> params )
-            {}
-        } );
+        // Historically this class registered Openfire's SASL provider and loaded the mechanism configuration when it
+        // was first loaded. Preserve that timing for code that depends on it.
+        SaslMechanismCatalog.initialize();
     }
 
     public enum ElementType
@@ -718,7 +667,7 @@ public class SASLAuthentication {
                     }
 
                     // See if the mechanism is supported by configuration as well as by implementation.
-                    if ( !mechanisms.contains(mechanismName)
+                    if ( !SaslMechanismCatalog.isEnabled(mechanismName)
                         && !(FastTokenManager.ENABLE_FAST.getValue() && MechanismName.isFast(mechanismName)) )
                     {
                         throw new SaslFailureException( Failure.INVALID_MECHANISM, "The configuration of Openfire does not contain or allow the mechanism." );
@@ -1092,147 +1041,42 @@ public class SASLAuthentication {
     /**
      * Adds a new SASL mechanism to the list of supported SASL mechanisms by the server. The
      * new mechanism will be offered to clients and connection managers as stream features.<p>
-     *
+     * <p>
      * Note: this method simply registers the SASL mechanism to be advertised as a supported
      * mechanism by Openfire. Actual SASL handling is done by Java itself, so you must add
      * the provider to Java.
      *
      * @param mechanismName the name of the new SASL mechanism (cannot be null or an empty String).
+     * @deprecated Moved to {@link SaslMechanismCatalog#addSupportedMechanism(String)}
      */
+    @Deprecated(forRemoval = true, since = "5.2.0") // Remove in or after Openfire 5.3.0
     public static void addSupportedMechanism(String mechanismName) {
-        if ( mechanismName == null || mechanismName.isEmpty() ) {
-            throw new IllegalArgumentException( "Argument 'mechanism' must cannot be null or an empty string." );
-        }
-        mechanisms.add( mechanismName.toUpperCase() );
-        Log.info( "Support added for the '{}' SASL mechanism.", mechanismName.toUpperCase() );
+        SaslMechanismCatalog.addSupportedMechanism(mechanismName);
     }
 
     /**
      * Removes a SASL mechanism from the list of supported SASL mechanisms by the server.
      *
      * @param mechanismName the name of the SASL mechanism to remove (cannot be null or empty, not case-sensitive).
+     * @deprecated Moved to {@link SaslMechanismCatalog#removeSupportedMechanism(String)}
      */
+    @Deprecated(forRemoval = true, since = "5.2.0") // Remove in or after Openfire 5.3.0
     public static void removeSupportedMechanism(String mechanismName) {
-        if ( mechanismName == null || mechanismName.isEmpty() ) {
-            throw new IllegalArgumentException( "Argument 'mechanism' must cannot be null or an empty string." );
-        }
-
-        if ( mechanisms.remove( mechanismName.toUpperCase() ) )
-        {
-            Log.info( "Support removed for the '{}' SASL mechanism.", mechanismName.toUpperCase() );
-        }
+        SaslMechanismCatalog.removeSupportedMechanism(mechanismName);
     }
 
     /**
      * Returns the list of supported SASL mechanisms by the server. Note that Java may have
      * support for more mechanisms but some of them may not be returned since a special setup
-     * is required that might be missing. Use {@link #addSupportedMechanism(String)} to add
+     * is required that might be missing. Use {@link SaslMechanismCatalog#addSupportedMechanism(String)} to add
      * new SASL mechanisms.
      *
      * @return the set of supported SASL mechanisms by the server.
+     * @deprecated Moved to {@link SaslMechanismCatalog#getSupportedMechanisms()}
      */
-    public static Set<String> getSupportedMechanisms()
-    {
-        // List all mechanism names for which there's an implementation.
-        final Set<String> implementedMechanisms = getImplementedMechanisms();
-
-        // Start off with all mechanisms that we intend to support.
-        final Set<String> answer = new HashSet<>( mechanisms );
-        if (FastTokenManager.ENABLE_FAST.getValue()) {
-            answer.addAll(FastTokenManager.MECHANISMS);
-        }
-
-        // Clean up not-available mechanisms.
-        for ( final Iterator<String> it = answer.iterator(); it.hasNext(); )
-        {
-            final String mechanism = it.next();
-
-            if ( !implementedMechanisms.contains( mechanism ) )
-            {
-                Log.trace( "Cannot support '{}' as there's no implementation available.", mechanism );
-                it.remove();
-                continue;
-            }
-
-            if (MechanismName.requiresChannelBinding(mechanism)) {
-                final String requiredCbType = MechanismName.requiredChannelBindingType(mechanism);
-                final ChannelBindingProviderManager cbManager = ChannelBindingProviderManager.getInstance();
-                if (requiredCbType != null) {
-                    // Mechanism encodes a specific CB type (e.g. HT-*-UNIQ): only offer it when
-                    // that exact type is supported.
-                    if (!cbManager.supportsChannelBinding(requiredCbType)) {
-                        Log.trace( "Cannot support '{}' as channel binding type '{}' is not available.", mechanism, requiredCbType );
-                        it.remove();
-                        continue;
-                    }
-                } else {
-                    // Mechanism uses runtime-negotiated CB (e.g. SCRAM-SHA-1-PLUS): require at
-                    // least one CB type to be available.
-                    if (cbManager.getSupportedChannelBindingTypes().isEmpty()) {
-                        Log.trace( "Cannot support '{}' as there's no implementation available for channel binding.", mechanism );
-                        it.remove();
-                        continue;
-                    }
-                }
-            }
-
-            switch ( mechanism )
-            {
-                case "CRAM-MD5": // intended fall-through
-                case "DIGEST-MD5":
-                    // Check if the user provider in use supports passwords retrieval. Access to the users passwords will be required by the CallbackHandler.
-                    if ( !AuthFactory.supportsPasswordRetrieval() )
-                    {
-                        Log.trace( "Cannot support '{}' as the AuthProvider that's in use does not support password retrieval.", mechanism );
-                        it.remove();
-                    }
-                    break;
-
-                case ScramSha1SaslServer.MECHANISM_NAME: // intended fall-through
-                case ScramSha1SaslServer.MECHANISM_NAME+"-PLUS": // intended fall-through
-                case ScramSha256SaslServer.MECHANISM_NAME: // intended fall-through
-                case ScramSha256SaslServer.MECHANISM_NAME+"-PLUS": // intended fall-through
-                case ScramSha512SaslServer.MECHANISM_NAME: // intended fall-through
-                case ScramSha512SaslServer.MECHANISM_NAME+"-PLUS":
-                    if ( !AuthFactory.supportsScram() )
-                    {
-                        Log.trace( "Cannot support '{}' as the AuthProvider that's in use does not support SCRAM.", mechanism );
-                        it.remove();
-                    }
-                    break;
-
-                case "ANONYMOUS":
-                    if (!AnonymousSaslServer.ENABLED.getValue()) {
-                        Log.trace( "Cannot support '{}' as it has been disabled by configuration.", mechanism );
-                        it.remove();
-                    }
-                    break;
-
-                case "JIVE-SHAREDSECRET":
-                    if ( !JiveSharedSecretSaslServer.isSharedSecretAllowed() )
-                    {
-                        Log.trace( "Cannot support '{}' as it has been disabled by configuration.", mechanism );
-                        it.remove();
-                    }
-                    break;
-
-                case "GSSAPI":
-                    final String gssapiConfig = JiveGlobals.getProperty( "sasl.gssapi.config" );
-                    if ( gssapiConfig != null )
-                    {
-                        System.setProperty( "java.security.krb5.debug", JiveGlobals.getProperty( "sasl.gssapi.debug", "false" ) );
-                        System.setProperty( "java.security.auth.login.config", gssapiConfig );
-                        System.setProperty( "javax.security.auth.useSubjectCredsOnly", JiveGlobals.getProperty( "sasl.gssapi.useSubjectCredsOnly", "false" ) );
-                    }
-                    else
-                    {
-                        Log.trace( "Cannot support '{}' as the 'sasl.gssapi.config' property has not been defined.", mechanism );
-                        it.remove();
-                    }
-                    break;
-            }
-        }
-        return answer;
+    @Deprecated(forRemoval = true, since = "5.2.0") // Remove in or after Openfire 5.3.0
+    public static Set<String> getSupportedMechanisms() {
+        return SaslMechanismCatalog.getSupportedMechanisms();
     }
 
     /**
@@ -1242,17 +1086,12 @@ public class SASLAuthentication {
      * peer entities, which is provided by #getSupportedMechanisms.
      *
      * @return a collection of SASL mechanism names (never null, possibly empty)
+     * @deprecated Moved to {@link SaslMechanismCatalog#getImplementedMechanisms()}
      */
+    @Deprecated(forRemoval = true, since = "5.2.0") // Remove in or after Openfire 5.3.0
     public static Set<String> getImplementedMechanisms()
     {
-        final Set<String> result = new HashSet<>();
-        final Enumeration<SaslServerFactory> saslServerFactories = Sasl.getSaslServerFactories();
-        while ( saslServerFactories.hasMoreElements() )
-        {
-            final SaslServerFactory saslServerFactory = saslServerFactories.nextElement();
-            Collections.addAll( result, saslServerFactory.getMechanismNames( null ) );
-        }
-        return result;
+        return SaslMechanismCatalog.getImplementedMechanisms();
     }
 
     /**
@@ -1281,64 +1120,34 @@ public class SASLAuthentication {
     /**
      * Returns a collection of SASL mechanism names that forms the source pool from which the mechanisms that are
      * eventually being offered to peers are obtained.
-     **
+     *
      * When a mechanism is not returned by this method, it will never be offered, but when a mechanism is returned
      * by this method, there is no guarantee that it will be offered.
      *
-     * Apart from being returned in this method, an implementation must be available (see {@link #getImplementedMechanisms()}
+     * Apart from being returned in this method, an implementation must be available (see {@link SaslMechanismCatalog#getImplementedMechanisms()}
      * and configuration or other characteristics of this server must not prevent a particular mechanism from being
-     * used (see @{link {@link #getSupportedMechanisms()}}.
+     * used (see @{link {@link SaslMechanismCatalog#getSupportedMechanisms()}}.
      *
      * @return A collection of mechanisms that are considered for use in this instance of Openfire.
+     * @deprecated Moved to {@link SaslMechanismCatalog#getEnabledMechanisms()}
      */
+    @Deprecated(forRemoval = true, since = "5.2.0") // Remove in or after Openfire 5.3.0
     public static List<String> getEnabledMechanisms()
     {
-        return JiveGlobals.getListProperty("sasl.mechs",
-            Arrays.asList(
-                "ANONYMOUS",
-                "PLAIN",
-                "DIGEST-MD5",
-                "CRAM-MD5",
-                ScramSha1SaslServer.MECHANISM_NAME,
-                ScramSha1SaslServer.MECHANISM_NAME+"-PLUS",
-                ScramSha256SaslServer.MECHANISM_NAME,
-                ScramSha256SaslServer.MECHANISM_NAME+"-PLUS",
-                ScramSha512SaslServer.MECHANISM_NAME,
-                ScramSha512SaslServer.MECHANISM_NAME+"-PLUS",
-                "JIVE-SHAREDSECRET",
-                "GSSAPI",
-                "EXTERNAL"
-            )
-        );
+        return SaslMechanismCatalog.getEnabledMechanisms();
     }
 
     /**
      * Sets the collection of mechanism names that the system administrator allows to be used.
      *
      * @param mechanisms A collection of mechanisms that are considered for use in this instance of Openfire. Null to reset the default setting.
-     * @see #getEnabledMechanisms()
+     * @see SaslMechanismCatalog#getEnabledMechanisms()
+     * @deprecated Moved to {@link SaslMechanismCatalog#setEnabledMechanisms(List)}
      */
+    @Deprecated(forRemoval = true, since = "5.2.0") // Remove in or after Openfire 5.3.0
     public static void setEnabledMechanisms( List<String> mechanisms )
     {
-        JiveGlobals.setProperty( "sasl.mechs", mechanisms );
-        initMechanisms();
-    }
-
-    private static void initMechanisms()
-    {
-        final List<String> propertyValues = getEnabledMechanisms();
-        mechanisms = new HashSet<>();
-        for ( final String propertyValue : propertyValues )
-        {
-            try
-            {
-                addSupportedMechanism( propertyValue );
-            }
-            catch ( Exception ex )
-            {
-                Log.warn( "An exception occurred while trying to add support for SASL Mechanism '{}':", propertyValue, ex );
-            }
-        }
+        SaslMechanismCatalog.setEnabledMechanisms(mechanisms);
     }
 
     /**
@@ -1360,7 +1169,7 @@ public class SASLAuthentication {
 
         final Set<String> mechanismsForWhichCredentialsAreAvailable = getScramMechanismsForSession(localClientSession);
 
-        for (String mech : getSupportedMechanisms())
+        for (String mech : SaslMechanismCatalog.getSupportedMechanisms())
         {
             // Prevent offering EXTERNAL mechanism when no usable peer certificate is available.
             if (mech.equals("EXTERNAL")) {
@@ -1469,7 +1278,7 @@ public class SASLAuthentication {
         final Set<String> result = new HashSet<>();
 
         // Check if EXTERNAL is enabled in the supported mechanisms configuration
-        if (!getSupportedMechanisms().contains("EXTERNAL")) {
+        if (!SaslMechanismCatalog.getSupportedMechanisms().contains("EXTERNAL")) {
             return result;
         }
 

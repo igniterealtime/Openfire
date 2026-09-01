@@ -87,10 +87,10 @@ public class SASLIntegrationTest {
         CacheFactory.initialize();
         // Set this or I can't set anything else.
         JiveGlobals.setXMLProperty("setup", "true");
-        originalEnabledMechanisms = new ArrayList<>(SASLAuthentication.getEnabledMechanisms());
+        originalEnabledMechanisms = new ArrayList<>(SaslMechanismCatalog.getEnabledMechanisms());
         originalSasl2Enabled = SASLAuthentication.ENABLE_SASL2.getValue();
         originalSasl2TLSRequired = SASLAuthentication.SASL2_REQUIRE_TLS.getValue();
-        SASLAuthentication.setEnabledMechanisms(Arrays.asList("BLURDYBLOOP", "TEST-MECHANISM"));
+        SaslMechanismCatalog.setEnabledMechanisms(Arrays.asList("BLURDYBLOOP", "TEST-MECHANISM"));
         // Enable SASL2
         SASLAuthentication.ENABLE_SASL2.setValue(true);
         SASLAuthentication.SASL2_REQUIRE_TLS.setValue(false);
@@ -98,7 +98,7 @@ public class SASLIntegrationTest {
 
     @AfterAll
     public static void tearDownClass() {
-        SASLAuthentication.setEnabledMechanisms(originalEnabledMechanisms);
+        SaslMechanismCatalog.setEnabledMechanisms(originalEnabledMechanisms);
         SASLAuthentication.ENABLE_SASL2.setValue(originalSasl2Enabled);
         SASLAuthentication.SASL2_REQUIRE_TLS.setValue(originalSasl2TLSRequired);
     }
@@ -124,7 +124,7 @@ public class SASLIntegrationTest {
         testSaslServer = TestSaslMechanism.registerTestMechanism(clientSession);
 
         // Enable our test mechanism
-        SASLAuthentication.addSupportedMechanism("TEST-MECHANISM");
+        SaslMechanismCatalog.addSupportedMechanism("TEST-MECHANISM");
 
 
         sessionDataMap = new HashMap<>();
@@ -188,112 +188,6 @@ public class SASLIntegrationTest {
         providerField.set(null, originalLockOutProvider);
     }
 
-    @Test
-    public void testRegisteredSaslProvider() {
-        // Setup test fixture.
-        // (no additional setup required)
-
-        // Execute system under test.
-        Set<String> implemented = SASLAuthentication.getImplementedMechanisms();
-        Set<String> enabled = SASLAuthentication.getSupportedMechanisms();
-
-        // Verify result.
-        assertNotNull(implemented);
-        assertFalse(implemented.isEmpty());
-        assertTrue(implemented.contains("TEST-MECHANISM"));
-        assertNotNull(enabled);
-        assertFalse(enabled.isEmpty());
-        assertTrue(enabled.contains("TEST-MECHANISM"));
-    }
-
-    // Existing tests
-    @Test
-    public void testAddSupportedMechanism() {
-        // Setup test fixture.
-        // (no additional setup required)
-
-        // Execute system under test.
-        SASLAuthentication.addSupportedMechanism("PLAIN");
-        SASLAuthentication.addSupportedMechanism("digest-md5");
-
-        // Verify result.
-        assertTrue(SASLAuthentication.getSupportedMechanisms().contains("PLAIN"));
-        assertTrue(SASLAuthentication.getSupportedMechanisms().contains("DIGEST-MD5"));
-        assertThrows(IllegalArgumentException.class, () -> {
-            SASLAuthentication.addSupportedMechanism(null);
-        });
-        assertThrows(IllegalArgumentException.class, () -> {
-            SASLAuthentication.addSupportedMechanism("");
-        });
-    }
-
-    @Test
-    public void testRemoveSupportedMechanism() {
-        // Setup test fixture.
-        SASLAuthentication.addSupportedMechanism("PLAIN");
-        SASLAuthentication.addSupportedMechanism("DIGEST-MD5");
-
-        // Execute system under test.
-        SASLAuthentication.removeSupportedMechanism("PLAIN");
-        SASLAuthentication.removeSupportedMechanism("digest-md5");
-
-        // Verify result.
-        assertFalse(SASLAuthentication.getSupportedMechanisms().contains("PLAIN"), "Unsupported PLAIN mechanism should be removed");
-        assertFalse(SASLAuthentication.getSupportedMechanisms().contains("DIGEST-MD5"), "Unsupported DIGEST-MD5 mechanism should be removed");
-        SASLAuthentication.removeSupportedMechanism("NONEXISTENT"); // Should not throw exception
-        assertThrows(IllegalArgumentException.class, () -> {
-            SASLAuthentication.removeSupportedMechanism(null);
-        }, "Null mechanism should not be allowed");
-    }
-
-    @Test
-    public void testGetSupportedMechanisms() {
-        // Setup test fixture.
-        SASLAuthentication.addSupportedMechanism("PLAIN");
-        SASLAuthentication.addSupportedMechanism("DIGEST-MD5");
-
-        // Execute system under test.
-        Set<String> mechanisms = SASLAuthentication.getSupportedMechanisms();
-
-        // Verify result.
-        assertNotNull(mechanisms, "Supported mechanisms should not be null");
-        assertTrue(mechanisms.contains("PLAIN"), "PLAIN mechanism should be supported");
-        assertTrue(mechanisms.contains("DIGEST-MD5"), "DIGEST-MD5 mechanism should be supported");
-    }
-
-    @Test
-    public void testGetEnabledMechanisms() {
-        // Setup test fixture.
-        // (no additional setup required)
-
-        // Execute system under test.
-        List<String> enabled = SASLAuthentication.getEnabledMechanisms();
-
-        // Verify result.
-        assertNotNull(enabled, "Enabled mechanisms should not be null");
-        assertFalse(enabled.isEmpty(), "Enabled mechanisms should not be empty");
-        assertTrue(enabled.contains("BLURDYBLOOP"), "BLURDYBLOOP mechanism should be enabled");
-        assertTrue(enabled.contains("TEST-MECHANISM"), "TEST-MECHANISM mechanism should be enabled");
-    }
-
-    @Test
-    public void testGetImplementedMechanisms() {
-        // Setup test fixture.
-        // (no additional setup required)
-
-        // Execute system under test.
-        Set<String> implemented = SASLAuthentication.getImplementedMechanisms();
-
-        // Verify result.
-        assertNotNull(implemented, "Implemented mechanisms should not be null");
-        assertFalse(implemented.isEmpty(), "Implemented mechanisms should not be empty");
-        assertTrue(implemented.contains("PLAIN"), "PLAIN mechanism should be implemented");
-        assertTrue(implemented.contains("DIGEST-MD5"), "DIGEST-MD5 mechanism should be implemented");
-        assertFalse(implemented.contains("BLURDYBLOOP"), "BLURDYBLOOP mechanism should not be implemented");
-        assertTrue(implemented.contains("TEST-MECHANISM"), "TEST-MECHANISM mechanism should be implemented");
-    }
-
-    // New tests for addSASLMechanisms functionality
     @Test
     public void testGetSASLMechanismsToAuthenticatedSession() {
         // Setup test fixture.

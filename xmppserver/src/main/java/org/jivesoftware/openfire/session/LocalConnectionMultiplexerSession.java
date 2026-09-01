@@ -23,7 +23,7 @@ import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.multiplex.ConnectionMultiplexerManager;
 import org.jivesoftware.openfire.multiplex.MultiplexerPacketDeliverer;
-import org.jivesoftware.openfire.net.SASLAuthentication;
+import org.jivesoftware.openfire.sasl.SaslMechanismCatalog;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.StringUtils;
@@ -258,7 +258,7 @@ public class LocalConnectionMultiplexerSession extends LocalSession implements C
 
         }
         // Add info about SASL mechanisms
-        Collection<String> mechanisms = SASLAuthentication.getSupportedMechanisms();
+        Collection<String> mechanisms = SaslMechanismCatalog.getSupportedMechanisms();
         if (!mechanisms.isEmpty()) {
             Element sasl = child.addElement("mechanisms", "urn:ietf:params:xml:ns:xmpp-sasl");
             for (String mechanism : mechanisms) {

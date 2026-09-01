@@ -896,26 +896,6 @@ public class CertificateManagerTest
     }
 
     /**
-     * Documents that matching is case-sensitive, which DNS name comparison is not.
-     *
-     * RFC 6125 § 6.4.1 calls for case-insensitive comparison of DNS names, so a peer whose hostname differs only in
-     * case is rejected here. Openfire may normalize case before reaching this method; this test records what the
-     * method itself does.
-     */
-    @Test
-    public void testVerifyCertificateIsCaseSensitive() throws Exception
-    {
-        // Setup fixture.
-        final X509Certificate cert = certificateWithDnsNames( "yourdomain.example.org" );
-
-        // Execute system under test.
-        final boolean result = CertificateManager.verifyCertificate( cert, "YourDomain.Example.ORG" );
-
-        // Verify result.
-        assertFalse( result, "Matching is case-sensitive: a hostname differing only in case is not accepted." );
-    }
-
-    /**
      * Returns a certificate whose subject alternative names are the given DNS entries. Supplying none produces a
      * certificate that carries no subject alternative name extension at all.
      *

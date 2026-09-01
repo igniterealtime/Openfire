@@ -571,27 +571,6 @@ public class FastTokenManager {
         }
     }
 
-    public static boolean advanceReplayCounter(@Nonnull final String username, @Nonnull final String mechanism,
-                                               @Nonnull final String clientId, final long count) {
-        if (count <= 0) return false;
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        try {
-            con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(UPDATE_REPLAY_COUNTER);
-            pstmt.setLong(1, count);
-            pstmt.setString(2, username);
-            pstmt.setString(3, mechanism);
-            pstmt.setString(4, clientId);
-            pstmt.setLong(5, count);
-            return pstmt.executeUpdate() == 1;
-        } catch (final SQLException e) {
-            throw new IllegalStateException("Unable to update FAST replay counter", e);
-        } finally {
-            DbConnectionManager.closeConnection(pstmt, con);
-        }
-    }
-
     /**
      * Purges all expired FAST tokens from the database.
      */

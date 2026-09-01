@@ -26,6 +26,7 @@ import org.jivesoftware.openfire.lockout.LockOutFlag;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.lockout.LockOutProvider;
 import org.jivesoftware.openfire.net.SASLAuthentication;
+import org.jivesoftware.openfire.net.SaslStreamFeatures;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
@@ -195,7 +196,7 @@ public class SASLIntegrationTest {
         
         // Execute system under test.
         final Set<String> advertisableSASLMechanisms = SaslMechanismEligibility.getAdvertisableSASLMechanisms(clientSession);
-        final List<Element> mechanisms = SASLAuthentication.asSASLMechanisms(clientSession, advertisableSASLMechanisms, Set.of());
+        final List<Element> mechanisms = SaslStreamFeatures.asSASLMechanisms(clientSession, advertisableSASLMechanisms, Set.of());
 
         // Verify result.
         assertTrue(mechanisms.isEmpty(),
@@ -214,7 +215,7 @@ public class SASLIntegrationTest {
 
             // Execute system under test.
             final Set<String> advertisableSASLMechanisms = SaslMechanismEligibility.getAdvertisableSASLMechanisms(clientSession);
-            final List<Element> mechanisms = SASLAuthentication.asSASLMechanisms(clientSession, advertisableSASLMechanisms, Set.of());
+            final List<Element> mechanisms = SaslStreamFeatures.asSASLMechanisms(clientSession, advertisableSASLMechanisms, Set.of());
 
             // Verify result.
             assertFalse(mechanisms.isEmpty(), "SASL mechanisms should be added");
@@ -243,7 +244,7 @@ public class SASLIntegrationTest {
 
         // Execute system under test.
         final Set<String> advertisableSASLMechanisms = SaslMechanismEligibility.getAdvertisableSASLMechanisms(clientSession);
-        final List<Element> mechanisms = SASLAuthentication.asSASLMechanisms(clientSession, advertisableSASLMechanisms, Set.of());
+        final List<Element> mechanisms = SaslStreamFeatures.asSASLMechanisms(clientSession, advertisableSASLMechanisms, Set.of());
 
         // Verify result.
         assertFalse(mechanisms.isEmpty(), "SASL mechanisms should be added");
@@ -269,7 +270,7 @@ public class SASLIntegrationTest {
         
         // Execute system under test.
         final Set<String> advertisableSASLMechanisms = SaslMechanismEligibility.getAdvertisableSASLMechanisms(unknownSession);
-        final List<Element> mechanisms = SASLAuthentication.asSASLMechanisms(unknownSession, advertisableSASLMechanisms, Set.of());
+        final List<Element> mechanisms = SaslStreamFeatures.asSASLMechanisms(unknownSession, advertisableSASLMechanisms, Set.of());
         
         // Verify result.
         assertTrue(mechanisms.isEmpty(),

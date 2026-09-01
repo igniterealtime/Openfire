@@ -26,7 +26,7 @@ import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.multiplex.UnknownStanzaException;
 import org.jivesoftware.openfire.net.MXParser;
-import org.jivesoftware.openfire.net.SASLAuthentication;
+import org.jivesoftware.openfire.net.SaslStreamFeatures;
 import org.jivesoftware.openfire.net.VirtualConnection;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
@@ -227,7 +227,7 @@ public class HttpSession extends LocalClientSession {
 
         // If authentication has not happened yet, include available authentication mechanisms.
         if (getAuthToken() == null) {
-            SASLAuthentication.appendSASLFeatures(this, elements);
+            SaslStreamFeatures.appendSASLFeatures(this, elements);
         }
 
         if (XMPPServer.getInstance().getIQRegisterHandler().isInbandRegEnabled()) {

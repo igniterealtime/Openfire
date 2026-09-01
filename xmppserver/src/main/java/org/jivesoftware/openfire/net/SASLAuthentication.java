@@ -30,7 +30,6 @@ import org.jivesoftware.openfire.fast.FastRequest;
 import org.jivesoftware.openfire.fast.FastToken;
 import org.jivesoftware.openfire.fast.FastTokenManager;
 import org.jivesoftware.openfire.fast.FastSessionState;
-import org.jivesoftware.openfire.keystore.CertificateStoreManager;
 import org.jivesoftware.openfire.keystore.TrustStore;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.SessionManager;
@@ -45,7 +44,6 @@ import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
 import org.jivesoftware.openfire.sasl.ScramSha256SaslServer;
 import org.jivesoftware.openfire.sasl.ScramSha512SaslServer;
 import org.jivesoftware.openfire.session.*;
-import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.PropertyEventDispatcher;
@@ -911,19 +909,12 @@ public class SASLAuthentication {
      * @param trustedCert the X.509 certificate to verify (cannot be null)
      * @param hostname    the hostname to verify the certificate against (cannot be null)
      * @return {@code true} if the certificate is valid for the given hostname; {@code false} otherwise
+     * @deprecated Moved to {@link CertificateManager#verifyCertificate(X509Certificate, String)}
      */
-    public static boolean verifyCertificate(X509Certificate trustedCert, String hostname) {
-        for (String identity : CertificateManager.getServerIdentities(trustedCert)) {
-            // Verify that either the identity is the same as the hostname, or for wildcarded
-            // identities that the hostname ends with .domainspecified or -is- domainspecified.
-            if ((identity.startsWith("*.")
-                 && (hostname.endsWith(identity.replace("*.", "."))
-                     || hostname.equals(identity.replace("*.", ""))))
-                    || hostname.equals(identity)) {
-                return true;
-            }
-        }
-        return false;
+    @Deprecated(forRemoval = true, since = "5.2.0") // Remove in or after Openfire 5.3.0
+    public static boolean verifyCertificate(X509Certificate trustedCert, String hostname)
+    {
+        return CertificateManager.verifyCertificate(trustedCert, hostname);
     }
 
     /**
@@ -939,16 +930,12 @@ public class SASLAuthentication {
      *                 {@code false} if this is a client-to-server connection (uses the C2S trust store)
      * @return {@code true} if a trusted end-entity certificate is found in the chain and it is valid
      *         for the given hostname; {@code false} otherwise
+     * @deprecated Moved to {@link CertificateManager#verifyCertificates(Certificate[], String, boolean)}
      */
-    public static boolean verifyCertificates(Certificate[] chain, String hostname, boolean isS2S) {
-        final CertificateStoreManager certificateStoreManager = XMPPServer.getInstance().getCertificateStoreManager();
-        final ConnectionType connectionType = isS2S ? ConnectionType.SOCKET_S2S : ConnectionType.SOCKET_C2S;
-        final TrustStore trustStore = certificateStoreManager.getTrustStore( connectionType );
-        final X509Certificate trusted = trustStore.getEndEntityCertificate( chain );
-        if (trusted != null) {
-            return verifyCertificate(trusted, hostname);
-        }
-        return false;
+    @Deprecated(forRemoval = true, since = "5.2.0") // Remove in or after Openfire 5.3.0
+    public static boolean verifyCertificates(Certificate[] chain, String hostname, boolean isS2S)
+    {
+        return CertificateManager.verifyCertificates(chain, hostname, isS2S);
     }
 
     /**
@@ -1493,7 +1480,7 @@ public class SASLAuthentication {
 
             boolean haveTrustedCertificate = trusted != null;
             if (trusted != null && session.getDefaultIdentity() != null) {
-                haveTrustedCertificate = verifyCertificate(trusted, session.getDefaultIdentity());
+                haveTrustedCertificate = CertificateManager.verifyCertificate(trusted, session.getDefaultIdentity());
             }
             if (haveTrustedCertificate) {
                 // Offer SASL EXTERNAL only if TLS has already been negotiated and the peer has a trusted cert.

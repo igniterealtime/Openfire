@@ -798,6 +798,159 @@ public class CertificateManagerTest
         );
     }
 
+    /**
+     * {@link CertificateManager#verifyCertificate(X509Certificate, String)} must accept a hostname that appears
+     * verbatim as an identity in the certificate.
+     */
+    @Test
+    public void testVerifyCertificateExactMatch() throws Exception
+    {
+        // Setup fixture.
+        final X509Certificate cert = certificateWithDnsNames( "yourdomain.example.org" );
+
+        // Execute system under test.
+        final boolean result = CertificateManager.verifyCertificate( cert, "yourdomain.example.org" );
+
+        // Verify result.
+        assertTrue( result, "Expected a certificate naming the hostname to be accepted for it (but it was not)." );
+    }
+
+    /**
+     * A certificate that names a different host must not be accepted, as that is the entire point of the check.
+     */
+    @Test
+    public void testVerifyCertificateRejectsDifferentHostname() throws Exception
+    {
+        // Setup fixture.
+        final X509Certificate cert = certificateWithDnsNames( "yourdomain.example.org" );
+
+        // Execute system under test.
+        final boolean result = CertificateManager.verifyCertificate( cert, "otherdomain.example.org" );
+
+        // Verify result.
+        assertFalse( result, "Expected a certificate naming a different host to be rejected (but it was accepted)." );
+    }
+
+    /**
+     * A certificate from which no server identity can be derived names no host, so it can be valid for none.
+     */
+    @Test
+    public void testVerifyCertificateRejectsCertificateWithoutIdentities() throws Exception
+    {
+        // Setup fixture: a certificate carrying only a Common Name, which OF-3122 excludes from server identities.
+        final X509Certificate cert = certificateWithDnsNames();
+
+        // Execute system under test.
+        final boolean result = CertificateManager.verifyCertificate( cert, "yourdomain.example.org" );
+
+        // Verify result.
+        assertFalse( result, "Expected a certificate from which no identity can be derived to be rejected (but it was accepted)." );
+    }
+
+    /**
+     * A certificate that names several hosts must be accepted for each of them, not only the first.
+     */
+    @Test
+    public void testVerifyCertificateMatchesAnyOfSeveralIdentities() throws Exception
+    {
+        // Setup fixture.
+        final X509Certificate cert = certificateWithDnsNames( "first.example.org", "second.example.org", "third.example.org" );
+
+        // Execute system under test & verify result.
+        assertTrue( CertificateManager.verifyCertificate( cert, "first.example.org" ), "Expected the first identity to be matched (but it was not)." );
+        assertTrue( CertificateManager.verifyCertificate( cert, "second.example.org" ), "Expected a middle identity to be matched (but it was not)." );
+        assertTrue( CertificateManager.verifyCertificate( cert, "third.example.org" ), "Expected the last identity to be matched (but it was not)." );
+        assertFalse( CertificateManager.verifyCertificate( cert, "fourth.example.org" ), "Did not expect an unlisted host to be matched (but it was)." );
+    }
+
+    /**
+     * A wildcard identity must be accepted for a host in the domain it wildcards, which is the case the wildcard
+     * exists to serve.
+     */
+    @Test
+    public void testVerifyCertificateWildcardMatchesSingleLabel() throws Exception
+    {
+        // Setup fixture.
+        final X509Certificate cert = certificateWithDnsNames( "*.example.org" );
+
+        // Execute system under test.
+        final boolean result = CertificateManager.verifyCertificate( cert, "yourdomain.example.org" );
+
+        // Verify result.
+        assertTrue( result, "Expected a wildcard identity to be accepted for a host in the domain it wildcards (but it was not)." );
+    }
+
+    /**
+     * A wildcard identity must not be accepted for a domain that merely ends in the same characters. Matching on the
+     * bare suffix rather than on a label boundary would let a certificate for one domain be accepted for another.
+     */
+    @Test
+    public void testVerifyCertificateWildcardRejectsUnrelatedDomain() throws Exception
+    {
+        // Setup fixture.
+        final X509Certificate cert = certificateWithDnsNames( "*.example.org" );
+
+        // Execute system under test & verify result.
+        assertFalse( CertificateManager.verifyCertificate( cert, "notexample.org" ), "Did not expect a wildcard identity to be accepted for a domain that merely ends in the same characters (but it was)." );
+        assertFalse( CertificateManager.verifyCertificate( cert, "example.org.evil.example.net" ), "Did not expect a wildcard identity to be accepted for a domain that merely contains it (but it was)." );
+    }
+
+    /**
+     * Documents that matching is case-sensitive, which DNS name comparison is not.
+     *
+     * RFC 6125 § 6.4.1 calls for case-insensitive comparison of DNS names, so a peer whose hostname differs only in
+     * case is rejected here. Openfire may normalize case before reaching this method; this test records what the
+     * method itself does.
+     */
+    @Test
+    public void testVerifyCertificateIsCaseSensitive() throws Exception
+    {
+        // Setup fixture.
+        final X509Certificate cert = certificateWithDnsNames( "yourdomain.example.org" );
+
+        // Execute system under test.
+        final boolean result = CertificateManager.verifyCertificate( cert, "YourDomain.Example.ORG" );
+
+        // Verify result.
+        assertFalse( result, "Matching is case-sensitive: a hostname differing only in case is not accepted." );
+    }
+
+    /**
+     * Returns a certificate whose subject alternative names are the given DNS entries. Supplying none produces a
+     * certificate that carries no subject alternative name extension at all.
+     *
+     * @param dnsNames the DNS names to include, possibly none
+     * @return a certificate
+     */
+    private static X509Certificate certificateWithDnsNames( final String... dnsNames ) throws Exception
+    {
+        final X509v3CertificateBuilder builder = new JcaX509v3CertificateBuilder(
+            new X500Name( "CN=MyIssuer" ),
+            BigInteger.valueOf( Math.abs( new SecureRandom().nextInt() ) ),
+            Date.from( Instant.now().minus( Duration.ofDays( 1 ) ) ),
+            Date.from( Instant.now().plus( Duration.ofDays( 99 ) ) ),
+            new X500Name( "CN=MySubject" ),
+            subjectKeyPair.getPublic()
+        );
+
+        if ( dnsNames.length > 0 )
+        {
+            final GeneralName[] names = new GeneralName[ dnsNames.length ];
+            for ( int i = 0; i < dnsNames.length; i++ )
+            {
+                names[ i ] = new GeneralName( GeneralName.dNSName, dnsNames[ i ] );
+            }
+            builder.addExtension( Extension.subjectAlternativeName, false, new GeneralNames( names ) );
+        }
+
+        final X509CertificateHolder holder = builder.build( contentSigner );
+        final X509Certificate cert = new JcaX509CertificateConverter().getCertificate( holder );
+
+        // FIXME: as elsewhere in this class, round-trip through PEM to avoid Java 17 parsing quirks.
+        final String pem = CertificateManager.toPemRepresentation( cert );
+        return CertificateManager.parseCertificates( pem ).iterator().next();
+    }
+
     public static Date addDays( int amount )
     {
         final Calendar instance = Calendar.getInstance();

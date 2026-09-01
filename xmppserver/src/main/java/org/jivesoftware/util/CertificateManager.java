@@ -16,7 +16,15 @@
 
 package org.jivesoftware.util;
 
-import org.bouncycastle.asn1.*;
+import org.bouncycastle.asn1.ASN1Encodable;
+import org.bouncycastle.asn1.ASN1EncodableVector;
+import org.bouncycastle.asn1.ASN1InputStream;
+import org.bouncycastle.asn1.ASN1ObjectIdentifier;
+import org.bouncycastle.asn1.ASN1Primitive;
+import org.bouncycastle.asn1.ASN1Sequence;
+import org.bouncycastle.asn1.ASN1TaggedObject;
+import org.bouncycastle.asn1.DERSequence;
+import org.bouncycastle.asn1.DERTaggedObject;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -32,7 +40,11 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.openssl.*;
+import org.bouncycastle.openssl.MiscPEMGenerator;
+import org.bouncycastle.openssl.PEMDecryptorProvider;
+import org.bouncycastle.openssl.PEMEncryptedKeyPair;
+import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.PEMParser;
 import org.bouncycastle.openssl.jcajce.JcaMiscPEMGenerator;
 import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
 import org.bouncycastle.openssl.jcajce.JceOpenSSLPKCS8DecryptorProviderBuilder;
@@ -52,21 +64,41 @@ import org.bouncycastle.util.io.pem.PemWriter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.disco.DiscoItem;
 import org.jivesoftware.openfire.keystore.CertificateStore;
-import org.jivesoftware.util.cert.CNCertificateIdentityMapping;
+import org.jivesoftware.openfire.keystore.CertificateStoreManager;
+import org.jivesoftware.openfire.keystore.TrustStore;
+import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.util.cert.CertificateIdentityMapping;
 import org.jivesoftware.util.cert.SANCertificateIdentityMapping;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringWriter;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
-import java.security.*;
+import java.security.GeneralSecurityException;
+import java.security.KeyPair;
+import java.security.NoSuchProviderException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.SecureRandom;
+import java.security.Security;
+import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.CertificateParsingException;
 import java.security.cert.X509Certificate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.StringTokenizer;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -190,6 +222,54 @@ public class CertificateManager {
         }
 
         return names;
+    }
+
+    /**
+     * Verifies that the given X.509 certificate is valid for the specified hostname. The certificate's
+     * server identities are checked against the hostname, with support for wildcard certificates.
+     * A wildcard identity (e.g. {@code *.example.com}) matches any direct subdomain of the base domain.
+     *
+     * @param trustedCert the X.509 certificate to verify (cannot be null)
+     * @param hostname    the hostname to verify the certificate against (cannot be null)
+     * @return {@code true} if the certificate is valid for the given hostname; {@code false} otherwise
+     */
+    public static boolean verifyCertificate(X509Certificate trustedCert, String hostname) {
+        for (String identity : getServerIdentities(trustedCert)) {
+            // Verify that either the identity is the same as the hostname, or for wildcarded
+            // identities that the hostname ends with .domainspecified or -is- domainspecified.
+            if ((identity.startsWith("*.")
+                && (hostname.endsWith(identity.replace("*.", "."))
+                || hostname.equals(identity.replace("*.", ""))))
+                || hostname.equals(identity)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Verifies that the end-entity certificate in the given certificate chain is trusted and valid
+     * for the specified hostname. The appropriate trust store is selected based on whether this is
+     * a server-to-server (S2S) or client-to-server (C2S) connection.
+     *
+     * @param chain    the certificate chain to verify; the end-entity certificate will be extracted
+     *                 and checked against the trust store (may be null or empty, in which case
+     *                 verification will fail)
+     * @param hostname the hostname that the certificate must be valid for (cannot be null)
+     * @param isS2S    {@code true} if this is a server-to-server connection (uses the S2S trust store);
+     *                 {@code false} if this is a client-to-server connection (uses the C2S trust store)
+     * @return {@code true} if a trusted end-entity certificate is found in the chain and it is valid
+     *         for the given hostname; {@code false} otherwise
+     */
+    public static boolean verifyCertificates(Certificate[] chain, String hostname, boolean isS2S) {
+        final CertificateStoreManager certificateStoreManager = XMPPServer.getInstance().getCertificateStoreManager();
+        final ConnectionType connectionType = isS2S ? ConnectionType.SOCKET_S2S : ConnectionType.SOCKET_C2S;
+        final TrustStore trustStore = certificateStoreManager.getTrustStore( connectionType );
+        final X509Certificate trusted = trustStore.getEndEntityCertificate( chain );
+        if (trusted != null) {
+            return verifyCertificate(trusted, hostname);
+        }
+        return false;
     }
 
     /**

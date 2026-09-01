@@ -25,49 +25,26 @@ import javax.security.sasl.SaslException;
 public class SaslFailureException extends SaslException
 {
     private final Failure failure;
-    private final byte[] additionalData;
 
     public SaslFailureException( Failure failure, String message )
     {
         super( message );
         this.failure = failure;
-        this.additionalData = null;
     }
 
     public SaslFailureException( Failure failure )
     {
         this.failure = failure;
-        this.additionalData = null;
-    }
-
-    public SaslFailureException( String detail, Failure failure )
-    {
-        super( detail );
-        this.failure = failure;
-        this.additionalData = null;
     }
 
     public SaslFailureException( String detail, Throwable ex, Failure failure )
     {
         super( detail, ex );
         this.failure = failure;
-        this.additionalData = null;
-    }
-
-    public SaslFailureException(String detail, Throwable ex, Failure failure, byte[] additionalData)
-    {
-        super(detail, ex);
-        this.failure = failure;
-        this.additionalData = additionalData == null ? null : additionalData.clone();
     }
 
     public Failure getFailure()
     {
         return failure;
-    }
-
-    public byte[] getAdditionalData()
-    {
-        return additionalData == null ? null : additionalData.clone();
     }
 }

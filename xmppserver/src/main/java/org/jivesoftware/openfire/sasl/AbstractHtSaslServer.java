@@ -90,16 +90,14 @@ abstract class AbstractHtSaslServer implements SaslServer {
             final String expectedUsername = session != null ? FastSessionState.getExpectedUsername(session) : null;
             if (expectedUsername == null || !expectedUsername.equals(username)) {
                 Log.debug("Rejecting FAST authentication. Token claims different username ('{}') than stream's 'from' header ('{}').", username, expectedUsername);
-                throw new SaslFailureException("Invalid FAST token", null, Failure.NOT_AUTHORIZED,
-                    Ht2FailureResponse.encode(Ht2FailureResponse.INVALID_TOKEN));
+                throw new SaslFailureException("Invalid FAST token", null, Failure.NOT_AUTHORIZED);
             }
             // Check the claimed identity before the lockout check: otherwise an authcid that does not match
             // the stream's 'from' could be used to record failed logins against an arbitrary account.
             if (LockOutManager.getInstance().isAccountDisabled(username)) {
                 LockOutManager.getInstance().recordFailedLogin(username);
                 Log.debug("Rejecting FAST authentication for disabled account '{}'.", username);
-                throw new SaslFailureException("Invalid FAST token", null, Failure.NOT_AUTHORIZED,
-                    Ht2FailureResponse.encode(Ht2FailureResponse.INVALID_TOKEN));
+                throw new SaslFailureException("Invalid FAST token", null, Failure.NOT_AUTHORIZED);
             }
             final Long replayCount = FastSessionState.getReplayCount(session);
             final String clientId = FastSessionState.getClientId(session);
@@ -148,25 +146,13 @@ abstract class AbstractHtSaslServer implements SaslServer {
         if (response == null || response.length == 0) {
             final SaslException failure = new SaslException(mechanismName + ": empty initiator message");
             if (mechanismName.startsWith("HT2-")) {
-                throw new SaslFailureException(failure.getMessage(), failure, Failure.NOT_AUTHORIZED,
-                    Ht2FailureResponse.encode(Ht2FailureResponse.OTHER_ERROR));
+                throw new SaslFailureException(failure.getMessage(), failure, Failure.NOT_AUTHORIZED);
             }
             throw failure;
         }
         final byte[] result;
-        try {
-            final byte[] channelBindingData = resolveChannelBindingData();
-            result = doEvaluateResponse(response, channelBindingData);
-        } catch (final SaslException e) {
-            if (mechanismName.startsWith("HT2-")
-                && (!(e instanceof SaslFailureException failure) || failure.getAdditionalData() == null)) {
-                final Failure failure = e instanceof SaslFailureException sfe && sfe.getFailure() != null
-                    ? sfe.getFailure() : Failure.NOT_AUTHORIZED;
-                throw new SaslFailureException(e.getMessage(), e, failure,
-                    Ht2FailureResponse.encode(Ht2FailureResponse.OTHER_ERROR));
-            }
-            throw e;
-        }
+        final byte[] channelBindingData = resolveChannelBindingData();
+        result = doEvaluateResponse(response, channelBindingData);
         // After successful evaluation, store the rotated token in the session so that
         // SASLAuthentication can include it in the SASL2 <success/> element (XEP-0484).
         if (complete && rotatedToken != null) {

@@ -94,7 +94,6 @@ class HtSaslServerTest {
             final SaslFailureException error = assertThrows(SaslFailureException.class,
                 () -> server.evaluateResponse(message("user", PROOF)));
             assertEquals(Failure.NOT_AUTHORIZED, error.getFailure());
-            assertArrayEquals(Ht2FailureResponse.encode(Ht2FailureResponse.INVALID_TOKEN), error.getAdditionalData());
             verify(lockOutManager).recordFailedLogin("user");
             tokens.verifyNoInteractions();
         }
@@ -124,8 +123,6 @@ class HtSaslServerTest {
                 () -> server.evaluateResponse(message("bob", PROOF)),
                 "An authcid naming a different account than the stream's 'from' was accepted.");
             assertEquals(Failure.NOT_AUTHORIZED, error.getFailure());
-            assertArrayEquals(Ht2FailureResponse.encode(Ht2FailureResponse.INVALID_TOKEN), error.getAdditionalData(),
-                "A mismatched authcid is distinguishable from an invalid token, which reveals whether an account exists.");
             assertFalse(server.isComplete());
             tokens.verifyNoInteractions();
             lockOut.verifyNoInteractions();

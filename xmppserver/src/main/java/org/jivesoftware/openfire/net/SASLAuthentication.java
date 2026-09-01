@@ -910,9 +910,7 @@ public class SASLAuthentication {
             {
                 failure = Failure.NOT_AUTHORIZED;
             }
-            final byte[] additionalData = ex instanceof SaslFailureException saslFailure
-                ? saslFailure.getAdditionalData() : null;
-            authenticationFailed( session, failure, usingSASL2, additionalData );
+            authenticationFailed( session, failure, usingSASL2 );
             session.removeSessionData( "SaslServer" );
             return Status.failed;
         }
@@ -1197,17 +1195,10 @@ public class SASLAuthentication {
     }
 
     private static void authenticationFailed(LocalSession session, Failure failure, boolean usingSASL2) {
-        authenticationFailed(session, failure, usingSASL2, null);
-    }
-
-    private static void authenticationFailed(LocalSession session, Failure failure, boolean usingSASL2, byte[] additionalData) {
         final Element reply = DocumentHelper.createElement(QName.get("failure", usingSASL2 ? SASL2_NAMESPACE : SASL_NAMESPACE));
         if (usingSASL2) {
             // SASL2 still uses the original SASL namespace for failure reasons.
             reply.addElement(failure.toString(), SASL_NAMESPACE);
-            if (additionalData != null) {
-                reply.addElement("additional-data").setText(Base64.getEncoder().encodeToString(additionalData));
-            }
         } else {
             reply.addElement(failure.toString());
         }

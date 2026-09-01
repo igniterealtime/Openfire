@@ -27,7 +27,7 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.csi.CsiManager;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
-import org.jivesoftware.openfire.net.SASLAuthentication;
+import org.jivesoftware.openfire.net.SaslStreamFeatures;
 import org.jivesoftware.openfire.nio.XMLLightweightParser;
 import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
@@ -854,7 +854,7 @@ public class LocalClientSession extends LocalSession implements ClientSession {
 
         if (getAuthToken() == null) {
             // If authentication has not happened yet, include available authentication mechanisms.
-            SASLAuthentication.appendSASLFeatures(this, result);
+            SaslStreamFeatures.appendSASLFeatures(this, result);
 
             // Advertise that the server supports Non-SASL Authentication
             if ( XMPPServer.getInstance().getIQRouter().supports( "jabber:iq:auth" ) ) {

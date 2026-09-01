@@ -21,12 +21,11 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.net.SASLAuthentication;
+import org.jivesoftware.openfire.net.SaslStreamFeatures;
 import org.jivesoftware.openfire.nio.XMLLightweightParser;
 import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.server.ServerDialbackErrorException;
 import org.jivesoftware.openfire.server.ServerDialbackKeyInvalidException;
-import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.StreamErrorException;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
@@ -40,8 +39,6 @@ import org.xmpp.packet.StreamError;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -412,7 +409,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
 
         // If authentication has not happened yet, include available authentication mechanisms.
         if (!isAuthenticated()) {
-            SASLAuthentication.appendSASLFeatures(this, result);
+            SaslStreamFeatures.appendSASLFeatures(this, result);
         }
 
         // Include Stream Compression Mechanism

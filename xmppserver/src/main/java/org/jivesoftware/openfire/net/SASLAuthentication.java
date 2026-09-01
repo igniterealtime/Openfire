@@ -26,6 +26,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerInfo;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.auth.AuthToken;
+import org.jivesoftware.openfire.fast.FastRequest;
 import org.jivesoftware.openfire.fast.FastToken;
 import org.jivesoftware.openfire.fast.FastTokenManager;
 import org.jivesoftware.openfire.fast.FastSessionState;
@@ -215,7 +216,6 @@ public class SASLAuthentication {
      * which encapsulate the business-logic related to this constant.
      */
     public static final String AVAILABLE_MECHANISMS_FOR_SESSION = "SaslMechanismsOfferedByServer";
-    public static final String AVAILABLE_FAST_MECHANISMS_FOR_SESSION = "FastMechanismsOfferedByServer";
 
     /**
      * Session Data property name used to store which channel bindings were advertised by the server to the peer as being
@@ -728,7 +728,7 @@ public class SASLAuthentication {
 
                     // Enforce session-specific eligibility (as advertised in stream features) See OF-3273.
                     final Set<String> advertisedMechanisms = (MechanismName.isFast(mechanismName)
-                        ? getAdvertisedFastMechanisms(session) : getAdvertisedSASLMechanisms(session))
+                        ? FastSessionState.getAdvertisedMechanisms(session) : getAdvertisedSASLMechanisms(session))
                         .orElseThrow(() -> {
                             Log.warn("No advertised SASL mechanisms detected for session. This can happen if SASL authentication is attempted before the applicable mechanism names are advertised, or if the session has not properly recorded the SASL mechanism names that are advertised to it. Both suggest a bug in Openfire (or possible the client). Affected session: {}", session);
                             return new SaslFailureException(Failure.INVALID_MECHANISM, "The mechanism is not available for this session.");
@@ -780,9 +780,10 @@ public class SASLAuthentication {
                     session.removeSessionData("user-agent-info");
                     FastSessionState.clearRequest(session);
                     if (usingSASL2 && session instanceof LocalClientSession clientSession) {
+                        UserAgentInfo userAgentInfo = null;
                         Element userAgentElement = doc.element("user-agent");
                         if (userAgentElement != null) {
-                            UserAgentInfo userAgentInfo = UserAgentInfo.extract(userAgentElement);
+                            userAgentInfo = UserAgentInfo.extract(userAgentElement);
                             if (userAgentInfo != null) {
                                 // Store the user agent info in the session
                                 session.setSessionData("user-agent-info", userAgentInfo);
@@ -792,55 +793,10 @@ public class SASLAuthentication {
                         if (bind2Request != null) {
                             session.setSessionData("bind2-request", bind2Request);
                         }
-                        // XEP-0484: parse <request-token xmlns='urn:xmpp:fast:0' mechanism='...'/>
-                        final Element requestTokenEl = doc.element(new QName("request-token", new Namespace("", FastTokenManager.NAMESPACE)));
-                        if (MechanismName.isFast(mechanismName) || requestTokenEl != null) {
-                            final UserAgentInfo userAgent = (UserAgentInfo) session.getSessionData("user-agent-info");
-                            final Optional<String> expected = clientSession.getExpectedUsername();
-                            if (userAgent == null || userAgent.getId() == null || expected.isEmpty()) {
-                                throw new SaslFailureException(Failure.MALFORMED_REQUEST,
-                                    "FAST requires a local authenticating JID in the stream 'from' attribute and a valid user-agent id");
-                            }
-                            FastSessionState.setExpectedUsername(session, expected.get());
-                            FastSessionState.setClientId(session, userAgent.getId());
-                        }
-                        if (requestTokenEl != null) {
-                            final String requestedMechanism = requestTokenEl.attributeValue("mechanism");
-                            if (requestedMechanism == null || !MechanismName.isFast(requestedMechanism)) {
-                                throw new SaslFailureException(Failure.MALFORMED_REQUEST,
-                                    "FAST token requests must specify a known mechanism");
-                            }
-                            final String normalizedMechanism = requestedMechanism.toUpperCase(Locale.ROOT);
-                            final Set<String> offered = getAdvertisedFastMechanisms(session).orElse(Collections.emptySet());
-                            if (!FastTokenManager.ENABLE_FAST.getValue() || !offered.contains(normalizedMechanism)) {
-                                throw new SaslFailureException(Failure.INVALID_MECHANISM,
-                                    "The requested FAST mechanism was not offered for this session");
-                            }
-                            FastSessionState.setRequestedMechanism(session, normalizedMechanism);
-                            Log.debug("FAST token requested for mechanism '{}' by {}", normalizedMechanism, session);
-                        }
-                        // XEP-0484: parse <fast xmlns='urn:xmpp:fast:0' [count='..'] [invalidate='true']/>
-                        final Element fastEl = doc.element(new QName("fast", new Namespace("", FastTokenManager.NAMESPACE)));
-                        if (MechanismName.isFast(mechanismName) && fastEl == null) {
-                            throw new SaslFailureException(Failure.MALFORMED_REQUEST,
-                                "FAST token authentication requires a <fast/> element");
-                        }
-                        if (fastEl != null) {
-                            final String countAttr = fastEl.attributeValue("count");
-                            if (countAttr != null) {
-                                try {
-                                    final long count = Long.parseLong(countAttr);
-                                    if (count <= 0) throw new NumberFormatException();
-                                    FastSessionState.setReplayCount(session, count);
-                                } catch (final NumberFormatException e) {
-                                    throw new SaslFailureException(Failure.MALFORMED_REQUEST, "FAST count must be a positive integer");
-                                }
-                            }
-                            final String invalidateAttr = fastEl.attributeValue("invalidate");
-                            if ("true".equalsIgnoreCase(invalidateAttr) || "1".equals(invalidateAttr)) {
-                                FastSessionState.setInvalidate(session);
-                                Log.debug("FAST token invalidation requested by {}", session);
-                            }
+                        final FastRequest fastRequest = FastRequest.from(doc, mechanismName,
+                            userAgentInfo == null ? null : userAgentInfo.getId(), clientSession);
+                        if (fastRequest != null) {
+                            fastRequest.applyTo(session);
                         }
                     }
 
@@ -1456,11 +1412,6 @@ public class SASLAuthentication {
         initMechanisms();
     }
 
-    static Optional<Set<String>> getAdvertisedFastMechanisms(@Nonnull final LocalSession session) {
-        final Object value = session.getSessionData(AVAILABLE_FAST_MECHANISMS_FOR_SESSION);
-        return value instanceof Set ? Optional.of((Set<String>) value) : Optional.empty();
-    }
-
     private static void initMechanisms()
     {
         final List<String> propertyValues = getEnabledMechanisms();
@@ -1650,8 +1601,7 @@ public class SASLAuthentication {
         setAdvertisedSASLMechanisms(session, standardMechanisms);
         final boolean fastFeatureIsAdvertised = session instanceof ClientSession
             && checkSASL2Permitted(session).isEmpty() && FastTokenManager.ENABLE_FAST.getValue();
-        session.setSessionData(AVAILABLE_FAST_MECHANISMS_FOR_SESSION,
-            fastFeatureIsAdvertised ? fastMechanisms : Collections.emptySet());
+        FastSessionState.setAdvertisedMechanisms(session, fastFeatureIsAdvertised ? fastMechanisms : Collections.emptySet());
 
         final Set<String> advertisableChannelBindingTypes = getAdvertisableChannelBindingTypes(session, advertisableSASLMechanisms);
         setAdvertisedChannelBindingTypes(session, advertisableChannelBindingTypes);

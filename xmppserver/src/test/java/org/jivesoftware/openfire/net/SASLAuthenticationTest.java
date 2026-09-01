@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.openfire.net;
 
+import org.jivesoftware.openfire.fast.FastSessionState;
 import org.jivesoftware.openfire.fast.FastTokenManager;
 import org.jivesoftware.openfire.fast.FastToken;
 
@@ -1951,8 +1952,7 @@ public class SASLAuthenticationTest
         when(connection.isEncrypted()).thenReturn(false);
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
-        session.setSessionData(SASLAuthentication.AVAILABLE_FAST_MECHANISMS_FOR_SESSION,
-            Set.of(FastTokenManager.HT_SHA_256_NONE));
+        FastSessionState.setAdvertisedMechanisms(session, Set.of(FastTokenManager.HT_SHA_256_NONE));
 
         // Execute system under test.
         final SASLAuthentication.Status status = SASLAuthentication.handle(
@@ -1983,8 +1983,7 @@ public class SASLAuthenticationTest
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
             new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
         session.setClaimedIdentity(new org.xmpp.packet.JID("test-user@" + Fixtures.XMPP_DOMAIN));
-        session.setSessionData(SASLAuthentication.AVAILABLE_FAST_MECHANISMS_FOR_SESSION,
-            Set.of(FastTokenManager.HT_SHA_256_NONE));
+        FastSessionState.setAdvertisedMechanisms(session, Set.of(FastTokenManager.HT_SHA_256_NONE));
 
         final Element authenticate = sasl2AuthenticateElement(FastTokenManager.HT_SHA_256_NONE);
         authenticate.addElement("user-agent").addAttribute("id", "123e4567-e89b-42d3-a456-426614174000");
@@ -2001,8 +2000,7 @@ public class SASLAuthenticationTest
         when(connection.isEncrypted()).thenReturn(true);
         final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
             new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
-        session.setSessionData(SASLAuthentication.AVAILABLE_FAST_MECHANISMS_FOR_SESSION,
-            Set.of(FastTokenManager.HT_SHA_256_NONE));
+        FastSessionState.setAdvertisedMechanisms(session, Set.of(FastTokenManager.HT_SHA_256_NONE));
         final Element auth = authElement(FastTokenManager.HT_SHA_256_NONE);
         auth.setText(Base64.getEncoder().encodeToString(new byte[32]));
 
@@ -2025,7 +2023,7 @@ public class SASLAuthenticationTest
 
         SASLAuthentication.appendSASLFeatures(session, new ArrayList<>());
 
-        assertEquals(Set.of(), SASLAuthentication.getAdvertisedFastMechanisms(session).orElseThrow());
+        assertEquals(Set.of(), FastSessionState.getAdvertisedMechanisms(session).orElseThrow());
     }
 
     private static Element authElement(final String mechanism)
@@ -2062,8 +2060,7 @@ public class SASLAuthenticationTest
         try {
             SASLAuthentication.setEnabledMechanisms(List.of("TEST-MECHANISM"));
             SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("TEST-MECHANISM"));
-            session.setSessionData(SASLAuthentication.AVAILABLE_FAST_MECHANISMS_FOR_SESSION,
-                Set.of(FastTokenManager.HT_SHA_256_NONE));
+            FastSessionState.setAdvertisedMechanisms(session, Set.of(FastTokenManager.HT_SHA_256_NONE));
             final FastToken issued = new FastToken("test-user", FastTokenManager.HT_SHA_256_NONE,
                 "issued-token".getBytes(java.nio.charset.StandardCharsets.UTF_8),
                 java.time.Instant.now().plusSeconds(60));
@@ -2108,8 +2105,7 @@ public class SASLAuthenticationTest
             try {
                 SASLAuthentication.setEnabledMechanisms(List.of("TEST-MECHANISM"));
                 SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("TEST-MECHANISM"));
-                session.setSessionData(SASLAuthentication.AVAILABLE_FAST_MECHANISMS_FOR_SESSION,
-                    Set.of(FastTokenManager.HT_SHA_256_NONE));
+                FastSessionState.setAdvertisedMechanisms(session, Set.of(FastTokenManager.HT_SHA_256_NONE));
                 final Element authenticate = DocumentHelper.parseText(
                     "<authenticate xmlns='urn:xmpp:sasl:2' mechanism='TEST-MECHANISM'>"
                         + "<initial-response/>" + inline + "</authenticate>").getRootElement();
@@ -2146,8 +2142,7 @@ public class SASLAuthenticationTest
             try {
                 SASLAuthentication.setEnabledMechanisms(List.of("TEST-MECHANISM"));
                 SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("TEST-MECHANISM"));
-                session.setSessionData(SASLAuthentication.AVAILABLE_FAST_MECHANISMS_FOR_SESSION,
-                    Set.of(FastTokenManager.HT_SHA_256_NONE));
+                FastSessionState.setAdvertisedMechanisms(session, Set.of(FastTokenManager.HT_SHA_256_NONE));
                 try (MockedStatic<FastTokenManager> manager = mockStatic(FastTokenManager.class, CALLS_REAL_METHODS)) {
                     final Element authenticate = DocumentHelper.parseText(
                         "<authenticate xmlns='urn:xmpp:sasl:2' mechanism='TEST-MECHANISM'>"
@@ -2183,8 +2178,7 @@ public class SASLAuthenticationTest
         try {
             SASLAuthentication.setEnabledMechanisms(List.of("TEST-MECHANISM"));
             SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("TEST-MECHANISM"));
-            session.setSessionData(SASLAuthentication.AVAILABLE_FAST_MECHANISMS_FOR_SESSION,
-                Set.of(FastTokenManager.HT_SHA_256_NONE));
+            FastSessionState.setAdvertisedMechanisms(session, Set.of(FastTokenManager.HT_SHA_256_NONE));
             try (MockedStatic<FastTokenManager> manager = mockStatic(FastTokenManager.class, CALLS_REAL_METHODS)) {
                 manager.when(() -> FastTokenManager.issueToken(eq("test-user"), any(String.class),
                     eq(FastTokenManager.HT_SHA_256_NONE))).thenThrow(new IllegalStateException("database unavailable"));

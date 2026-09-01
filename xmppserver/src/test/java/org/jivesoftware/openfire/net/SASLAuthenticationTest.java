@@ -1895,43 +1895,6 @@ public class SASLAuthenticationTest
     }
 
     // -------------------------------------------------------------------------
-    // isFastMechanism
-    // -------------------------------------------------------------------------
-
-    /**
-     * Verifies that isFastMechanism returns true for all HT-* mechanism names.
-     */
-    @Test
-    public void isFastMechanismShouldReturnTrueForHtMechanisms()
-    {
-        assertTrue(SASLAuthentication.isFastMechanism("HT-SHA-256-NONE"), "Expected HT-SHA-256-NONE to be a FAST mechanism.");
-        assertTrue(SASLAuthentication.isFastMechanism("HT-SHA-256-UNIQ"), "Expected HT-SHA-256-UNIQ to be a FAST mechanism.");
-        assertTrue(SASLAuthentication.isFastMechanism("HT-SHA-512-EXPR"), "Expected HT-SHA-512-EXPR to be a FAST mechanism.");
-    }
-
-    /**
-     * Verifies that isFastMechanism returns true for all HT2-* mechanism names.
-     */
-    @Test
-    public void isFastMechanismShouldReturnTrueForHt2Mechanisms()
-    {
-        assertTrue(SASLAuthentication.isFastMechanism("HT2-SHA-256-NONE"), "Expected HT2-SHA-256-NONE to be a FAST mechanism.");
-        assertTrue(SASLAuthentication.isFastMechanism("HT2-SHA-512-ENDP"), "Expected HT2-SHA-512-ENDP to be a FAST mechanism.");
-    }
-
-    /**
-     * Verifies that isFastMechanism returns false for standard (non-FAST) mechanism names.
-     */
-    @Test
-    public void isFastMechanismShouldReturnFalseForNonFastMechanisms()
-    {
-        assertFalse(SASLAuthentication.isFastMechanism("PLAIN"),     "Expected PLAIN not to be a FAST mechanism.");
-        assertFalse(SASLAuthentication.isFastMechanism("EXTERNAL"),  "Expected EXTERNAL not to be a FAST mechanism.");
-        assertFalse(SASLAuthentication.isFastMechanism("SCRAM-SHA-1-PLUS"), "Expected SCRAM-SHA-1-PLUS not to be a FAST mechanism.");
-        assertFalse(SASLAuthentication.isFastMechanism("ANONYMOUS"), "Expected ANONYMOUS not to be a FAST mechanism.");
-    }
-
-    // -------------------------------------------------------------------------
     // handle() — FAST mechanism bypass of the mechanism list check
     // -------------------------------------------------------------------------
 

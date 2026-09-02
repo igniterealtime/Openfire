@@ -32,7 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -72,20 +72,25 @@ public class SaslStreamFeatures
      */
     public static void appendSASLFeatures(@Nonnull final LocalSession session, @Nonnull final List<Element> features)
     {
-        final Set<String> advertisableSASLMechanisms = SaslMechanismEligibility.getAdvertisableSASLMechanisms(session);
-        final Set<String> fastMechanisms = advertisableSASLMechanisms.stream()
-            .filter(MechanismName::isFast).collect(Collectors.toUnmodifiableSet());
-        final Set<String> standardMechanisms = advertisableSASLMechanisms.stream()
-            .filter(mechanism -> !MechanismName.isFast(mechanism)).collect(Collectors.toUnmodifiableSet());
+        final Set<String> advertisable = SaslMechanismEligibility.getAdvertisableSASLMechanisms(session);
+        final Set<String> standardMechanisms = advertisable.stream().filter(mechanism -> !MechanismName.isFast(mechanism)).collect(Collectors.toUnmodifiableSet());
+        final boolean fastFeatureIsAdvertised = session instanceof ClientSession && SASLAuthentication.checkSASL2Permitted(session).isEmpty() && FastTokenManager.ENABLE_FAST.getValue();
+        final Set<String> fastMechanisms = fastFeatureIsAdvertised
+            ? advertisable.stream().filter(MechanismName::isFast).collect(Collectors.toUnmodifiableSet())
+            : Set.of();
+
         SASLAuthentication.setAdvertisedSASLMechanisms(session, standardMechanisms);
-        final boolean fastFeatureIsAdvertised = session instanceof ClientSession
-            && SASLAuthentication.checkSASL2Permitted(session).isEmpty() && FastTokenManager.ENABLE_FAST.getValue();
-        FastSessionState.setAdvertisedMechanisms(session, fastFeatureIsAdvertised ? fastMechanisms : Collections.emptySet());
+        FastSessionState.setAdvertisedMechanisms(session, fastMechanisms);
 
-        final Set<String> advertisableChannelBindingTypes = SaslMechanismEligibility.getAdvertisableChannelBindingTypes(session, advertisableSASLMechanisms);
-        SASLAuthentication.setAdvertisedChannelBindingTypes(session, advertisableChannelBindingTypes);
+        // Everything that is actually offered, and nothing that is not: a FAST mechanism that is filtered out here
+        // must not go on to contribute a channel-binding type or make a feature element look non-empty.
+        final Set<String> offered = new HashSet<>(standardMechanisms);
+        offered.addAll(fastMechanisms);
 
-        features.addAll(asSASLMechanisms(session, advertisableSASLMechanisms, advertisableChannelBindingTypes));
+        final Set<String> channelBindingTypes = SaslMechanismEligibility.getAdvertisableChannelBindingTypes(session, offered);
+        SASLAuthentication.setAdvertisedChannelBindingTypes(session, channelBindingTypes);
+
+        features.addAll(asSASLMechanisms(session, offered, channelBindingTypes));
     }
 
     /**
@@ -161,32 +166,28 @@ public class SaslStreamFeatures
     @VisibleForTesting
     static Element asSASLMechanismsElementForClientSessions(@Nonnull final Set<String> advertisableMechanismNames, final boolean usingSASL2)
     {
-        final Namespace namespace = new Namespace("", usingSASL2 ? SASLAuthentication.SASL2_NAMESPACE : SASLAuthentication.SASL_NAMESPACE );
-        final QName qName = new QName(usingSASL2 ? "authentication" : "mechanisms", namespace);
-        final Element result = DocumentHelper.createElement( qName );
+        final Set<String> fastMechanisms = advertisableMechanismNames.stream().filter(MechanismName::isFast).collect(Collectors.toSet());
+        final Set<String> standardMechanisms = advertisableMechanismNames.stream().filter(mechanism -> !MechanismName.isFast(mechanism)).collect(Collectors.toSet());
 
-        for (final String mech : advertisableMechanismNames) {
-            if (MechanismName.isFast(mech)) continue; // FAST mechanisms live in the inline FAST feature.
-            final Element mechanism = result.addElement("mechanism");
-            mechanism.setText(mech);
-        }
-        if ( usingSASL2 )
-        {
-            Element inlineElement = result.addElement("inline");
-            inlineElement.add(Bind2Request.featureElement());
-            // Element sm = inlineElement.addElement(...);
-            if (FastTokenManager.ENABLE_FAST.getValue()) {
-                final Set<String> fastMechanisms = advertisableMechanismNames.stream()
-                    .filter(MechanismName::isFast).collect(Collectors.toSet());
-                if (!fastMechanisms.isEmpty()) inlineElement.add(FastTokenManager.featureElement(fastMechanisms));
-            }
-        }
-
-        // OF-2072: Return null instead of an empty element, if so configured.
-        if ( (usingSASL2 || JiveGlobals.getBooleanProperty("sasl.client.suppressEmpty", false)) && advertisableMechanismNames.isEmpty() ) {
+        // FAST mechanisms live in the inline feature, which only SASL2 carries, so they cannot make a SASL1 element non-empty.
+        final boolean isEmpty = usingSASL2 ? advertisableMechanismNames.isEmpty() : standardMechanisms.isEmpty();
+        if ((usingSASL2 || JiveGlobals.getBooleanProperty("sasl.client.suppressEmpty", false)) && isEmpty) {
             return null;
         }
 
+        final Namespace namespace = new Namespace("", usingSASL2 ? SASLAuthentication.SASL2_NAMESPACE : SASLAuthentication.SASL_NAMESPACE);
+        final Element result = DocumentHelper.createElement(new QName(usingSASL2 ? "authentication" : "mechanisms", namespace));
+        for (final String mech : standardMechanisms) {
+            result.addElement("mechanism").setText(mech);
+        }
+
+        if (usingSASL2) {
+            final Element inlineElement = result.addElement("inline");
+            inlineElement.add(Bind2Request.featureElement());
+            if (!fastMechanisms.isEmpty()) {
+                inlineElement.add(FastTokenManager.featureElement(fastMechanisms));
+            }
+        }
         return result;
     }
 

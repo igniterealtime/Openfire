@@ -229,21 +229,21 @@ public class Bind2Request {
             // Using a fixed constant here - building a rainbow table here for the case
             // where the client supplies no tag is going to be very expensive, so this
             // prevents an id recovery attack.
-            String valueToHmac = resource.toString() + "OpenfireResourceConstant";
+            String valueToHmac = resource + "OpenfireResourceConstant";
 
             // Compute HMAC
-            byte[] hmacResult = ScramUtils.computeHmac(keyBytes, valueToHmac);
+            byte[] hmacResult = ScramUtils.computeHmac(keyBytes, valueToHmac, "HmacSHA1");
 
             // Convert first 8 bytes of HMAC to hex for resource suffix (16 chars)
             String hmacHex = StringUtils.encodeHex(Arrays.copyOf(hmacResult, 8));
 
             // Construct final resource string
-            return resource.toString() + hmacHex;
+            return resource + hmacHex;
 
         } catch (SaslException e) {
             // Fall back to UUID in case of HMAC computation failure
             Log.error("Failed to compute HMAC for resource string", e);
-            return resource.toString() + UUID.randomUUID().toString();
+            return resource.toString() + UUID.randomUUID();
         }
     }
 }

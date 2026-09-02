@@ -64,8 +64,11 @@ public class SaslMechanismCatalog
     /**
      * The mechanism names that configuration allows. Not all of them are necessarily available; see
      * {@link #getSupportedMechanisms()}.
+     *
+     * Replaced wholesale, never mutated in place, so that a reader sees either the previous configuration or the next
+     * one and never a partially built set.
      */
-    private static Set<String> mechanisms = new HashSet<>();
+    private static volatile Set<String> mechanisms = Set.of();
 
     static
     {
@@ -151,11 +154,13 @@ public class SaslMechanismCatalog
      *
      * @param mechanismName the name of the new SASL mechanism (cannot be null or an empty String).
      */
-    public static void addSupportedMechanism(String mechanismName) {
+    public static synchronized void addSupportedMechanism(String mechanismName) {
         if ( mechanismName == null || mechanismName.isEmpty() ) {
             throw new IllegalArgumentException( "Argument 'mechanism' must cannot be null or an empty string." );
         }
-        mechanisms.add( mechanismName.toUpperCase() );
+        final Set<String> updated = new HashSet<>( mechanisms );
+        updated.add( mechanismName.toUpperCase() );
+        mechanisms = Set.copyOf( updated );
         Log.info( "Support added for the '{}' SASL mechanism.", mechanismName.toUpperCase() );
     }
 
@@ -164,13 +169,14 @@ public class SaslMechanismCatalog
      *
      * @param mechanismName the name of the SASL mechanism to remove (cannot be null or empty, not case-sensitive).
      */
-    public static void removeSupportedMechanism(String mechanismName) {
+    public static synchronized void removeSupportedMechanism(String mechanismName) {
         if ( mechanismName == null || mechanismName.isEmpty() ) {
             throw new IllegalArgumentException( "Argument 'mechanism' must cannot be null or an empty string." );
         }
-
-        if ( mechanisms.remove( mechanismName.toUpperCase() ) )
+        final Set<String> updated = new HashSet<>( mechanisms );
+        if ( updated.remove( mechanismName.toUpperCase() ) )
         {
+            mechanisms = Set.copyOf( updated );
             Log.info( "Support removed for the '{}' SASL mechanism.", mechanismName.toUpperCase() );
         }
     }
@@ -353,20 +359,18 @@ public class SaslMechanismCatalog
         initMechanisms();
     }
 
-    private static void initMechanisms()
+    private static synchronized void initMechanisms()
     {
-        final List<String> propertyValues = getEnabledMechanisms();
-        mechanisms = new HashSet<>();
-        for ( final String propertyValue : propertyValues )
+        final Set<String> result = new HashSet<>();
+        for ( final String propertyValue : getEnabledMechanisms() )
         {
-            try
-            {
-                addSupportedMechanism( propertyValue );
+            if ( propertyValue == null || propertyValue.isEmpty() ) {
+                Log.warn( "Ignoring an empty SASL mechanism name in the 'sasl.mechs' property." );
+                continue;
             }
-            catch ( Exception ex )
-            {
-                Log.warn( "An exception occurred while trying to add support for SASL Mechanism '{}':", propertyValue, ex );
-            }
+            result.add( propertyValue.toUpperCase() );
+            Log.info( "Support added for the '{}' SASL mechanism.", propertyValue.toUpperCase() );
         }
+        mechanisms = Set.copyOf( result );
     }
 }

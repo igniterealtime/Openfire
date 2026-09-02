@@ -1705,8 +1705,13 @@ public class MUCRoom implements GroupEventListener, UserEventListener, Externali
 
                 // Determine what stanza flavor to send to this occupant.
                 final Presence toSend;
-                if (occupant.getPresence().getFrom().equals(presence.getTo())) {
+                if (occupant.getOccupantJID().equals(presence.getFrom())) {
                     // This occupant is the subject of the stanza. Send the 'self-presence' stanza.
+                    // XEP-0045 §7.2.2: "the self-presence MUST include a status code of 110 so that
+                    // the user knows this presence refers to itself as an occupant."
+                    // Use presence.getFrom() (always set to the occupant JID by setPresence()) rather
+                    // than presence.getTo(), which can be null or a bare room JID when a client omits
+                    // the resource part, causing self-presence detection to silently fail.
                     Log.trace( "Sending self-presence of '{}' to {}", presence.getFrom(), occupant.getUserAddress() );
                     toSend = selfPresence;
                 } else if ( !canAnyoneDiscoverJID && Role.moderator != occupant.getRole() ) {

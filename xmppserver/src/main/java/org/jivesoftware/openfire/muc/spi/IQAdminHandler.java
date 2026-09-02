@@ -180,6 +180,13 @@ public class IQAdminHandler {
                             && Affiliation.owner != senderAffiliation) {
                         throw new ForbiddenException();
                     }
+                    // XEP-0045 §5.2.1: In semi-anonymous rooms, members SHOULD NOT be allowed to
+                    // retrieve the member list (as that list MUST contain the JID of each member).
+                    if (!room.canAnyoneDiscoverJID()
+                            && Affiliation.admin != senderAffiliation
+                            && Affiliation.owner != senderAffiliation) {
+                        throw new ForbiddenException();
+                    }
                     for (JID jid : room.getMembers()) {
                         if (GroupJID.isGroup(jid)) {
                             try {

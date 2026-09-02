@@ -17,135 +17,158 @@
 package org.jivesoftware.openfire.net;
 
 import org.dom4j.Element;
-import org.dom4j.DocumentHelper;
-import org.junit.jupiter.api.BeforeEach;
+import org.jivesoftware.openfire.session.LocalClientSession;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.AfterEach;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
 /**
  * Tests for the Bind2InlineHandler registration and processing functionality.
  */
 public class Bind2InlineHandlerTest {
 
-    private Bind2InlineHandler mockHandler;
-    private Element mockBoundElement;
-    private Element mockFeatureElement;
-
-    @BeforeEach
-    public void setUp() {
-        mockHandler = mock(Bind2InlineHandler.class);
-        mockBoundElement = DocumentHelper.createElement("bound");
-        mockFeatureElement = DocumentHelper.createElement("feature");
-        mockFeatureElement.addNamespace("test", "http://test.namespace");
-    }
-
-    @AfterEach
-    public void tearDown() {
-        // Clean up any registered handlers to avoid test interference
-        Bind2Request.unregisterElementHandler("http://test.namespace");
-    }
-
     @Test
     public void testRegisterElementHandler() {
-        // Setup
-        when(mockHandler.getNamespace()).thenReturn("http://test.namespace");
+        Bind2InlineHandler handler = new TestBind2InlineHandler("urn:xmpp:test:0");
 
-        // Execute
-        assertDoesNotThrow(() -> Bind2Request.registerElementHandler(mockHandler));
+        assertDoesNotThrow(
+            () -> Bind2Request.registerElementHandler(handler),
+            "A handler should be registered when its namespace is not already registered"
+        );
 
-        // Verify registration was successful by attempting to unregister
-        Bind2InlineHandler removed = Bind2Request.unregisterElementHandler("http://test.namespace");
-        assertNotNull(removed);
-        assertEquals(mockHandler, removed);
+        assertTrue(
+            Bind2Request.unregisterElementHandler(handler),
+            "The registered handler should be removable using the same handler instance"
+        );
     }
 
     @Test
-    public void testRegisterNullHandler() {
-        // Execute & Verify
-        assertThrows(NullPointerException.class, () -> 
-            Bind2Request.registerElementHandler(null));
+    public void testRegisterElementHandlerRejectsNullNamespace() {
+        Bind2InlineHandler handler = new TestBind2InlineHandler(null);
+
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> Bind2Request.registerElementHandler(handler),
+            "Registering a handler without a namespace should fail"
+        );
     }
 
     @Test
-    public void testRegisterHandlerWithNullNamespace() {
-        // Setup
-        when(mockHandler.getNamespace()).thenReturn(null);
+    public void testRegisterElementHandlerRejectsEmptyNamespace() {
+        Bind2InlineHandler handler = new TestBind2InlineHandler("");
 
-        // Execute & Verify
-        assertThrows(IllegalArgumentException.class, () -> 
-            Bind2Request.registerElementHandler(mockHandler));
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> Bind2Request.registerElementHandler(handler),
+            "Registering a handler with an empty namespace should fail"
+        );
     }
 
     @Test
-    public void testRegisterHandlerWithEmptyNamespace() {
-        // Setup
-        when(mockHandler.getNamespace()).thenReturn("");
+    public void testUnregisterElementHandlerRejectsNullNamespace() {
+        Bind2InlineHandler handler = new TestBind2InlineHandler(null);
 
-        // Execute & Verify
-        assertThrows(IllegalArgumentException.class, () -> 
-            Bind2Request.registerElementHandler(mockHandler));
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> Bind2Request.unregisterElementHandler(handler),
+            "Unregistering a handler without a namespace should fail"
+        );
     }
 
     @Test
-    public void testUnregisterElementHandler() {
-        // Setup
-        when(mockHandler.getNamespace()).thenReturn("http://test.namespace");
-        Bind2Request.registerElementHandler(mockHandler);
+    public void testUnregisterElementHandlerRejectsEmptyNamespace() {
+        Bind2InlineHandler handler = new TestBind2InlineHandler("");
 
-        // Execute
-        Bind2InlineHandler removed = Bind2Request.unregisterElementHandler("http://test.namespace");
-
-        // Verify
-        assertNotNull(removed);
-        assertEquals(mockHandler, removed);
-        
-        // Verify it's actually gone
-        Bind2InlineHandler removedAgain = Bind2Request.unregisterElementHandler("http://test.namespace");
-        assertNull(removedAgain);
+        assertThrows(
+            IllegalArgumentException.class,
+            () -> Bind2Request.unregisterElementHandler(handler),
+            "Unregistering a handler with an empty namespace should fail"
+        );
     }
 
     @Test
-    public void testUnregisterNonExistentHandler() {
-        // Execute
-        Bind2InlineHandler removed = Bind2Request.unregisterElementHandler("http://nonexistent.namespace");
+    public void testRegisterElementHandlerRejectsDuplicateNamespace() {
+        String namespace = "urn:xmpp:test:0";
+        Bind2InlineHandler firstHandler = new TestBind2InlineHandler(namespace);
+        Bind2InlineHandler secondHandler = new TestBind2InlineHandler(namespace);
 
-        // Verify
-        assertNull(removed);
-    }
-
-    @Test
-    public void testUnregisterWithNullNamespace() {
-        // Execute & Verify
-        assertThrows(IllegalArgumentException.class, () -> 
-            Bind2Request.unregisterElementHandler(null));
-    }
-
-    @Test
-    public void testUnregisterWithEmptyNamespace() {
-        // Execute & Verify
-        assertThrows(IllegalArgumentException.class, () -> 
-            Bind2Request.unregisterElementHandler(""));
-    }
-
-    @Test
-    public void testReplaceHandler() {
-        // Setup
-        Bind2InlineHandler firstHandler = mock(Bind2InlineHandler.class);
-        Bind2InlineHandler secondHandler = mock(Bind2InlineHandler.class);
-        when(firstHandler.getNamespace()).thenReturn("http://test.namespace");
-        when(secondHandler.getNamespace()).thenReturn("http://test.namespace");
-
-        // Execute
         Bind2Request.registerElementHandler(firstHandler);
-        Bind2Request.registerElementHandler(secondHandler); // Should replace first
 
-        Bind2InlineHandler retrieved = Bind2Request.unregisterElementHandler("http://test.namespace");
+        try {
+            assertThrows(
+                IllegalStateException.class,
+                () -> Bind2Request.registerElementHandler(secondHandler),
+                "Registering a second handler for an existing namespace should fail"
+            );
 
-        // Verify
-        assertEquals(secondHandler, retrieved);
-        assertNotEquals(firstHandler, retrieved);
+            assertTrue(
+                Bind2Request.unregisterElementHandler(firstHandler),
+                "The original handler should remain registered after duplicate registration fails"
+            );
+
+            assertFalse(
+                Bind2Request.unregisterElementHandler(secondHandler),
+                "The rejected handler should never be registered"
+            );
+        } finally {
+            Bind2Request.unregisterElementHandler(firstHandler);
+            Bind2Request.unregisterElementHandler(secondHandler);
+        }
+    }
+
+    @Test
+    public void testUnregisterElementHandlerRequiresRegisteredHandler() {
+        String namespace = "urn:xmpp:test:0";
+        Bind2InlineHandler registeredHandler = new TestBind2InlineHandler(namespace);
+        Bind2InlineHandler otherHandler = new TestBind2InlineHandler(namespace);
+
+        Bind2Request.registerElementHandler(registeredHandler);
+
+        try {
+            assertFalse(
+                Bind2Request.unregisterElementHandler(otherHandler),
+                "A handler that is not registered should not remove the registered handler"
+            );
+
+            assertTrue(
+                Bind2Request.unregisterElementHandler(registeredHandler),
+                "The actually registered handler should still be removable"
+            );
+        } finally {
+            Bind2Request.unregisterElementHandler(registeredHandler);
+            Bind2Request.unregisterElementHandler(otherHandler);
+        }
+    }
+
+    @Test
+    public void testUnregisterElementHandlerReturnsFalseForUnregisteredHandler() {
+        Bind2InlineHandler handler = new TestBind2InlineHandler("urn:xmpp:test:0");
+
+        assertFalse(
+            Bind2Request.unregisterElementHandler(handler),
+            "Unregistering a handler that was never registered should return false"
+        );
+    }
+
+    private static class TestBind2InlineHandler implements Bind2InlineHandler
+    {
+        private final String namespace;
+
+        private TestBind2InlineHandler(String namespace) {
+            this.namespace = namespace;
+        }
+
+        @Override
+        public String getNamespace() {
+            return namespace;
+        }
+
+        @Override
+        public boolean handleElement(LocalClientSession clientSession, Element bound, Element element) {
+            return true;
+        }
     }
 }

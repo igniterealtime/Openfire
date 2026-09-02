@@ -42,44 +42,56 @@ public class Bind2Request {
     private static final Logger Log = LoggerFactory.getLogger(Bind2Request.class);
     
     // Add a map to store registered handlers by namespace
-    private static final Map<String, Bind2InlineHandler> elementHandlers = 
-        new ConcurrentHashMap<>();
-        
+    private static final Map<String, Bind2InlineHandler> elementHandlers = new ConcurrentHashMap<>();
+
     /**
      * Registers a handler for processing inline elements with a specific namespace.
      *
+     * Only one handler can be registered for each namespace. Attempting to register a handler for an already registered
+     * namespace will result in an IllegalStateException.
+     *
      * @param handler The handler to register
      */
-    public static void registerElementHandler(Bind2InlineHandler handler) {
-        if (handler == null) {
-            throw new NullPointerException("Handler cannot be null");
-        }
-        String namespace = handler.getNamespace();
+    public static void registerElementHandler(@Nonnull final Bind2InlineHandler handler)
+    {
+        final String namespace = handler.getNamespace();
         if (namespace == null || namespace.isEmpty()) {
             throw new IllegalArgumentException("Handler namespace cannot be null or empty");
         }
-        
-        elementHandlers.put(namespace, handler);
-        if (Log.isDebugEnabled()) {
-            Log.debug("Registered inline element handler for namespace: {}", namespace);
+
+        if (elementHandlers.putIfAbsent(namespace, handler) != null) {
+            throw new IllegalStateException("An inline element handler is already registered for namespace: " + namespace);
         }
+
+        Log.debug("Registered inline element handler for namespace: {}", namespace);
     }
 
     /**
-     * Unregisters a handler for a specific namespace.
+     * Unregisters an inline element handler associated with a specific namespace.
      *
-     * @param namespace The namespace of the handler to remove
-     * @return The removed handler, or null if none was registered for this namespace
+     * This method removes the handler previously registered for processing inline elements
+     * with the specified namespace. If no handler is registered for the given namespace or
+     * if the provided handler does not match the currently registered handler, no action
+     * will be performed.
+     *
+     * @param handler The inline element handler to unregister. Must not be null and must provide a valid namespace.
+     * @return {@code true} if the handler was successfully unregistered, {@code false} otherwise.
+     * @throws IllegalArgumentException if the handler's namespace is {@code null} or empty.
      */
-    public static Bind2InlineHandler unregisterElementHandler(String namespace) {
+    public static boolean unregisterElementHandler(@Nonnull final Bind2InlineHandler handler)
+    {
+        final String namespace = handler.getNamespace();
+
         if (namespace == null || namespace.isEmpty()) {
-            throw new IllegalArgumentException("Namespace cannot be null or empty");
+            throw new IllegalArgumentException("Handler namespace cannot be null or empty");
         }
-        
-        Bind2InlineHandler removed = elementHandlers.remove(namespace);
-        if (removed != null && Log.isDebugEnabled()) {
+
+        boolean removed = elementHandlers.remove(namespace, handler);
+
+        if (removed) {
             Log.debug("Unregistered inline element handler for namespace: {}", namespace);
         }
+
         return removed;
     }
 

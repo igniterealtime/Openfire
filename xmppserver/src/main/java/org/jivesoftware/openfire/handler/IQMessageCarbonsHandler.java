@@ -38,6 +38,7 @@ public final class IQMessageCarbonsHandler extends IQHandler implements ServerFe
     private static final String NAMESPACE = "urn:xmpp:carbons:2";
 
     private IQHandlerInfo info;
+    private Bind2CarbonsHandler bind2Handler;
 
     public IQMessageCarbonsHandler() {
         super("XEP-0280: Message Carbons");
@@ -83,12 +84,13 @@ public final class IQMessageCarbonsHandler extends IQHandler implements ServerFe
     @Override
     public void start() throws IllegalStateException {
         super.start();
-        Bind2Request.registerElementHandler(new Bind2CarbonsHandler());
+        bind2Handler = new Bind2CarbonsHandler();
+        Bind2Request.registerElementHandler(bind2Handler);
     }
 
     @Override
     public void stop() {
         super.stop();
-        Bind2Request.unregisterElementHandler("urn:xmpp:carbons:2");
+        Bind2Request.unregisterElementHandler(bind2Handler);
     }
 }

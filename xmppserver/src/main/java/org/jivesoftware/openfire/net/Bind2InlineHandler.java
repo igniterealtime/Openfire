@@ -39,4 +39,30 @@ public interface Bind2InlineHandler {
      * @return true if the element was handled successfully, false otherwise
      */
     boolean handleElement(LocalClientSession session, Element bound, Element element);
+
+    /**
+     * Indicates whether this handler is currently available for advertisement and request processing.
+     *
+     * A handler whose feature is disabled by configuration is neither advertised in the Bind2 inline feature list nor
+     * invoked for a request that names its namespace, so that a peer is never offered something it cannot use.
+     *
+     * @return {@code true} when the inline feature is available
+     */
+    default boolean isEnabled() {
+        return true;
+    }
+
+    /**
+     * Gives a handler an opportunity to add the protocol-defined failure response after request processing failed.
+     *
+     * Not every inline extension defines one, so the default does nothing.
+     *
+     * @param session the client session
+     * @param bound the Bind2 response element
+     * @param element the request that could not be processed
+     * @param cause the processing exception, or {@code null} when the handler returned {@code false}
+     */
+    default void handleFailure(LocalClientSession session, Element bound, Element element, Throwable cause) {
+        // Most inline extensions do not define a failure response.
+    }
 }

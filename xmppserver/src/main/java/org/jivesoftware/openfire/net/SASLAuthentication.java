@@ -820,14 +820,16 @@ public class SASLAuthentication {
                                     Log.warn("An exception occurred while binding resource '{}' for session '{}' during SASL2+Bind2 authentication.", resource, clientSession, throwable);
                                 }
                                 final boolean bound = throwable == null && result == SessionManager.BindResult.BOUND;
-                                final Element success = SaslOutcome.buildSasl2SuccessElement(successData, authorizationIdentity, bound ? resource : null, finalFastToken);
-                                if (bound) {
-                                    bind2Request.processFeatureRequests(clientSession, success);
+                                if (!bound) {
+                                    Log.warn("Unable to bind resource '{}' for session '{}' during SASL2+Bind2 authentication. Bind result: {}", resource, clientSession, result);
+                                    SaslOutcome.authenticationFailed(clientSession, Failure.TEMPORARY_AUTH_FAILURE, true);
+                                    return;
                                 }
-                                if (bound) {
-                                    clientSession.setStatus(Session.Status.AUTHENTICATED);
-                                    SessionEventDispatcher.dispatchEvent(clientSession, SessionEventDispatcher.EventType.resource_bound);
-                                }
+                                final Element success = SaslOutcome.buildSasl2SuccessElement(successData, authorizationIdentity, resource, finalFastToken);
+                                clientSession.setStatus(Session.Status.AUTHENTICATED);
+                                bind2Request.processFeatureRequests(clientSession, success);
+                                SessionEventDispatcher.dispatchEvent(clientSession, SessionEventDispatcher.EventType.resource_bound);
+
                                 // Deliver stream features now that <success/> has been sent.
                                 final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
                                 final List<org.dom4j.Element> specificFeatures = clientSession.getAvailableStreamFeatures();

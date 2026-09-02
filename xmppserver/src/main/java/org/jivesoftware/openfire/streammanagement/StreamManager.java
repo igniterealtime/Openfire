@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -244,23 +244,44 @@ public class StreamManager {
      */
     private void enable( String namespace, boolean resume )
     {
-        boolean offerResume = allowResume();
-        // Ensure that resource binding has occurred.
-        if (!session.isAuthenticated()) {
-            this.namespace = namespace;
-            sendUnexpectedError();
+        final Element outcome;
+        try {
+            outcome = enableAndBuildElement(namespace, resume);
+        } catch (final StreamManagementException e) {
+            Log.debug("Unable to enable stream management for session {}: {}", session, e.getMessage());
+            session.deliverRawText(buildFailedElement(namespace, e.getCondition()).asXML());
             return;
+        }
+        session.deliverRawText(outcome.asXML());
+    }
+
+    /**
+     * Enables stream management, returning the {@code <enabled/>} element rather than sending it.
+     *
+     * Leaving delivery to the caller allows an inline caller to embed the element in its enclosing response, as
+     * XEP-0198 § 9.1 requires of a Bind2 inline request.
+     *
+     * @param namespace the SM namespace to use
+     * @param resume    whether the client requests a resumable session
+     * @return the {@code <enabled/>} element
+     * @throws StreamManagementException when stream management could not be enabled, carrying the condition to report
+     */
+    @Nonnull
+    public Element enableAndBuildElement( String namespace, boolean resume ) throws StreamManagementException
+    {
+        boolean offerResume = allowResume();
+        if (!session.isAuthenticated()) {
+            throw new StreamManagementException(PacketError.Condition.unexpected_request,
+                "Stream management cannot be enabled before the session is authenticated.");
         }
 
         String smId = null;
-
         synchronized ( this )
         {
-            // Do nothing if already enabled
             if ( isEnabled() )
             {
-                sendUnexpectedError();
-                return;
+                throw new StreamManagementException(PacketError.Condition.unexpected_request,
+                    "Stream management is already enabled for this session.");
             }
             this.namespace = namespace;
 
@@ -271,7 +292,7 @@ public class StreamManager {
             }
         }
 
-        // Send confirmation to the requestee.
+        // Build confirmation element.
         Element enabled = new DOMElement(QName.get("enabled", namespace));
         if (this.resume) {
             enabled.addAttribute("resume", "true");
@@ -289,7 +310,7 @@ public class StreamManager {
                 }
             }
         }
-        session.deliverRawText(enabled.asXML());
+        return enabled;
     }
 
     private void startResume(String namespace, String previd, long h) {
@@ -456,10 +477,22 @@ public class StreamManager {
      * @param error PacketError describing the failure.
      */
     private void sendError(PacketError error) {
-        final Element failed = DocumentHelper.createElement(QName.get("failed", namespace));
-        failed.addElement(QName.get(error.getCondition().toXMPP(), "urn:ietf:params:xml:ns:xmpp-stanzas"));
+        final Element failed = buildFailedElement(namespace, error.getCondition());
         session.deliverRawText(failed.asXML());
         this.namespace = null; // isEnabled() is testing this.
+    }
+
+    /**
+     * Constructs an XML element representing a failed stream management negotiation.
+     *
+     * @param namespace The namespace indicating the version of stream management being used. Must not be null.
+     * @param condition The specific error condition that caused the failure. Must not be null.
+     * @return An XML {@code <failed>} element containing information about the failure.
+     */
+    private static Element buildFailedElement(@Nonnull final String namespace, @Nonnull final PacketError.Condition condition) {
+        final Element failed = DocumentHelper.createElement(QName.get("failed", namespace));
+        failed.addElement(QName.get(condition.toXMPP(), "urn:ietf:params:xml:ns:xmpp-stanzas"));
+        return failed;
     }
 
     /**

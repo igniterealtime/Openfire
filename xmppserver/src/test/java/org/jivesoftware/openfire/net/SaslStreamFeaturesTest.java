@@ -25,6 +25,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthFactory;
 import org.jivesoftware.openfire.fast.FastSessionState;
 import org.jivesoftware.openfire.fast.FastTokenManager;
+import org.jivesoftware.openfire.sasl.MechanismName;
 import org.jivesoftware.openfire.sasl.SaslMechanismCatalog;
 import org.jivesoftware.openfire.sasl.SaslMechanismEligibility;
 import org.jivesoftware.openfire.session.LocalClientSession;
@@ -90,6 +91,7 @@ public class SaslStreamFeaturesTest
         JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
 
         XMPPServer.setInstance(Fixtures.mockXMPPServer());
+        FastTokenManager.ENABLE_FAST.setValue(FastTokenManager.ENABLE_FAST.getDefaultValue());
         SaslMechanismCatalog.setEnabledMechanisms(Arrays.asList("PLAIN", "EXTERNAL"));
     }
 
@@ -130,7 +132,6 @@ public class SaslStreamFeaturesTest
     @Test
     public void getSASLMechanismsElement_client_sasl1_suppressEmptyTrue_noMechanisms_returnsNull()
     {
-        FastTokenManager.ENABLE_FAST.setValue(false);
         // Setup test fixture: no mechanisms available (EXTERNAL requires encryption, PLAIN is removed).
         SaslMechanismCatalog.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
         JiveGlobals.setProperty("sasl.client.suppressEmpty", "true");
@@ -199,6 +200,141 @@ public class SaslStreamFeaturesTest
 
         // Verify result.
         assertNull(result, "Expected null for SASL2 when no mechanisms are available, even when suppressEmpty is true.");
+    }
+
+    /**
+     * A SASL1 mechanisms element that would carry nothing must be suppressed when configured to be, even when FAST
+     * mechanisms are eligible for the session.
+     *
+     * FAST mechanisms are rendered in the XEP-0484 inline feature, which only the SASL2 element carries, so they can
+     * never populate a SASL1 element. Counting them when deciding whether that element is empty leaves an empty
+     * <mechanisms/> on the wire despite sasl.client.suppressEmpty being set.
+     */
+    @Test
+    public void getSASLMechanismsElement_client_sasl1_suppressEmptyTrue_onlyFastMechanisms_returnsNull()
+    {
+        try (final MockedStatic<ChannelBindingProviderManager> managers = mockStatic(ChannelBindingProviderManager.class))
+        {
+            // Setup test fixture: no standard mechanism is eligible (EXTERNAL requires encryption), but the FAST
+            // mechanisms that need no channel binding are.
+            final ChannelBindingProviderManager manager = mock(ChannelBindingProviderManager.class);
+            managers.when(ChannelBindingProviderManager::getInstance).thenReturn(manager);
+            when(manager.getSupportedChannelBindingTypes()).thenReturn(Set.of());
+
+            FastTokenManager.ENABLE_FAST.setValue(true);
+            SaslMechanismCatalog.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
+            JiveGlobals.setProperty("sasl.client.suppressEmpty", "true");
+
+            final Connection connection = mock(Connection.class);
+            when(connection.isEncrypted()).thenReturn(false);
+            when(connection.getSupportedChannelBindingTypes()).thenReturn(Set.of());
+
+            final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+            final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+            final Set<String> advertisableSASLMechanisms = SaslMechanismEligibility.getAdvertisableSASLMechanisms(session);
+            assertFalse(advertisableSASLMechanisms.isEmpty(),
+                "Test setup issue: expected the FAST mechanisms that need no channel binding to be eligible.");
+            assertTrue(advertisableSASLMechanisms.stream().allMatch(MechanismName::isFast),
+                "Test setup issue: expected no standard mechanism to be eligible, but found " + advertisableSASLMechanisms);
+
+            // Execute system under test.
+            final Element result = SaslStreamFeatures.asSASLMechanismsElementForClientSessions(advertisableSASLMechanisms, false);
+
+            // Verify result.
+            assertNull(result, "A SASL1 element that can carry no mechanism must be suppressed, as FAST mechanisms are " +
+                "rendered in the SASL2 inline feature rather than here.");
+        }
+    }
+
+    /**
+     * No channel-binding types are advertised on the strength of FAST mechanisms that are not themselves being
+     * offered.
+     *
+     * The XEP-0484 inline feature is carried only by the SASL2 element, so a session that is not offered SASL2 is not
+     * offered any FAST mechanism either. Deriving the XEP-0440 capability from those mechanisms announces a
+     * channel-binding type that nothing offered can use, and records it as advertised, which the XEP-0474
+     * downgrade-protection hash is computed over.
+     */
+    @Test
+    public void appendSASLFeatures_recordsNoChannelBindingTypes_whenOnlyFastMechanismsNeedThem()
+    {
+        try (final MockedStatic<ChannelBindingProviderManager> managers = mockStatic(ChannelBindingProviderManager.class))
+        {
+            // Setup test fixture: an encrypted session that can supply tls-exporter, offered PLAIN and (were SASL2
+            // available) the FAST variants that bind to it. SASL2 is disabled, so none of the latter can be offered.
+            final ChannelBindingProviderManager manager = mock(ChannelBindingProviderManager.class);
+            managers.when(ChannelBindingProviderManager::getInstance).thenReturn(manager);
+            when(manager.getSupportedChannelBindingTypes()).thenReturn(Set.of("tls-exporter"));
+            when(manager.supportsChannelBinding("tls-exporter")).thenReturn(true);
+
+            FastTokenManager.ENABLE_FAST.setValue(true);
+            SASLAuthentication.ENABLE_SASL2.setValue(false);
+            SaslMechanismCatalog.setEnabledMechanisms(Collections.singletonList("PLAIN"));
+
+            final Connection connection = mock(Connection.class);
+            when(connection.isEncrypted()).thenReturn(true);
+            when(connection.getSupportedChannelBindingTypes()).thenReturn(Set.of("tls-exporter"));
+
+            final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+            final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+            assertTrue(SaslMechanismEligibility.getAdvertisableSASLMechanisms(session).stream()
+                    .anyMatch(mechanism -> MechanismName.isFast(mechanism) && mechanism.endsWith("-EXPR")),
+                "Test setup issue: expected a channel-binding FAST variant to be eligible, so that suppressing it is " +
+                    "what this test observes.");
+
+            // Execute system under test.
+            final List<Element> features = new ArrayList<>();
+            SaslStreamFeatures.appendSASLFeatures(session, features);
+
+            // Verify result.
+            assertEquals(Set.of("PLAIN"), advertisedMechanismsIn(features),
+                "Only the standard mechanism can be offered when SASL2, and with it the FAST inline feature, is unavailable.");
+            assertFalse(features.stream().anyMatch(e -> "sasl-channel-binding".equals(e.getName())),
+                "No channel-binding capability may be announced when no mechanism that could use one was offered.");
+            assertEquals(Set.of(), SASLAuthentication.getAdvertisedChannelBindingTypes(session).orElseThrow(),
+                "No channel-binding types may be recorded as advertised when none were, or the XEP-0474 hash the " +
+                    "server computes will not match the one the peer computes.");
+            assertEquals(Set.of(), FastSessionState.getAdvertisedMechanisms(session).orElseThrow(),
+                "No FAST mechanisms may be recorded as advertised when the inline feature carrying them was not.");
+        }
+    }
+
+    /**
+     * A SASL2 element is still offered when only FAST mechanisms are eligible, since the XEP-0484 inline feature it
+     * carries is how those are advertised.
+     *
+     * The element has no <mechanism> children in that case, which is only useful to a client that already holds a
+     * token — but such a client can complete the negotiation, so suppressing the element would deny it a mechanism it
+     * can actually use. Contrast the SASL1 element, which cannot carry FAST mechanisms at all.
+     */
+    @Test
+    public void getSASLMechanismsElement_client_sasl2_onlyFastMechanisms_returnsElementWithInlineFeature()
+    {
+        // Setup test fixture: no standard mechanism is eligible, but FAST is enabled.
+        FastTokenManager.ENABLE_FAST.setValue(true);
+        SaslMechanismCatalog.setEnabledMechanisms(Collections.singletonList("EXTERNAL"));
+        JiveGlobals.setProperty("sasl.client.suppressEmpty", "true");
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        final Set<String> advertisableSASLMechanisms = SaslMechanismEligibility.getAdvertisableSASLMechanisms(session);
+        assertTrue(advertisableSASLMechanisms.stream().allMatch(MechanismName::isFast),
+            "Test setup issue: expected only FAST mechanisms to be eligible, but found " + advertisableSASLMechanisms);
+
+        // Execute system under test.
+        final Element result = SaslStreamFeatures.asSASLMechanismsElementForClientSessions(advertisableSASLMechanisms, true);
+
+        // Verify result.
+        assertNotNull(result, "A SASL2 element must still be offered when the inline feature can carry a usable mechanism.");
+        assertTrue(result.elements("mechanism").isEmpty(), "No FAST mechanism may be rendered as a <mechanism/> child.");
+        assertNotNull(result.element("inline").element(new QName("fast", Namespace.get("", FastTokenManager.NAMESPACE))),
+            "The FAST mechanisms must be advertised in the inline feature instead.");
     }
 
     // -------------------------------------------------------------------------

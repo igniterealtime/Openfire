@@ -31,6 +31,7 @@ import org.jivesoftware.openfire.sasl.Failure;
 import org.jivesoftware.openfire.sasl.SaslFailureException;
 import org.jivesoftware.openfire.sasl.SaslMechanismCatalog;
 import org.jivesoftware.openfire.sasl.TestSaslMechanism;
+import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
@@ -50,12 +51,14 @@ import org.mockito.MockedStatic;
 import javax.security.sasl.SaslServer;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jivesoftware.openfire.net.SASLAuthentication.SASL_NAMESPACE;
 import static org.jivesoftware.openfire.net.SASLAuthentication.SASL2_NAMESPACE;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -335,6 +338,107 @@ public class SASLAuthenticationTest
             assertTrue(responseValue2.contains("<stream:feature"), "Expected stream features Element to be sent.");
             assertFalse(responseValue2.contains("<bind"), "Expected resource binding not to be offered.");
         }
+    }
+
+    /**
+     * Verifies that a SASL2 authentication whose inline Bind2 request cannot be honoured fails, rather than reporting
+     * success for a session that has no resource bound.
+     *
+     * A client that receives {@code <success/>} without {@code <bound/>} has no way to tell that binding failed: it
+     * believes it is authenticated, and the stream features that follow tell it nothing to the contrary.
+     */
+    @Test
+    public void bind2ConflictFailsSasl2WithoutSuccessOrFeatures() throws Exception
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
+            new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        final Bind2Request bind2Request = mock(Bind2Request.class);
+        when(bind2Request.generateResourceString(any())).thenReturn("conflicting-resource");
+        session.setSessionData("bind2-request", bind2Request);
+        when(XMPPServer.getInstance().getSessionManager().bindResource(any(), any(), any()))
+            .thenReturn(CompletableFuture.completedFuture(SessionManager.BindResult.CONFLICT));
+
+        // Execute system under test.
+        SASLAuthentication.authenticationSuccessful(session, "testuser", "PLAIN", new byte[0], true);
+
+        // Verify result.
+        final ArgumentCaptor<String> delivered = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(delivered.capture());
+        final Element failure = DocumentHelper.parseText(delivered.getValue()).getRootElement();
+        assertEquals("failure", failure.getName(), "A bind that could not be honoured must fail the authentication.");
+        assertEquals(SASLAuthentication.SASL2_NAMESPACE, failure.getNamespaceURI(), "The failure must be in the SASL2 namespace.");
+        assertNotNull(failure.element(QName.get("temporary-auth-failure", SASLAuthentication.SASL_NAMESPACE)),
+            "A bind conflict is not permanent, so the client must be told it may try again.");
+        verify(bind2Request, never()).processFeatureRequests(any(), any());
+        assertFalse(session.isAuthenticated(), "A session whose resource could not be bound must not be authenticated.");
+    }
+
+    /**
+     * Verifies the same for a resource binding that fails by throwing, rather than by reporting a conflict.
+     */
+    @Test
+    public void bind2ExceptionFailsSasl2WithoutSuccessOrFeatures() throws Exception
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
+            new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        final Bind2Request bind2Request = mock(Bind2Request.class);
+        when(bind2Request.generateResourceString(any())).thenReturn("test-resource");
+        session.setSessionData("bind2-request", bind2Request);
+        final CompletableFuture<SessionManager.BindResult> failedBind = new CompletableFuture<>();
+        failedBind.completeExceptionally(new IllegalStateException("test failure"));
+        when(XMPPServer.getInstance().getSessionManager().bindResource(any(), any(), any())).thenReturn(failedBind);
+
+        // Execute system under test.
+        SASLAuthentication.authenticationSuccessful(session, "testuser", "PLAIN", new byte[0], true);
+
+        // Verify result.
+        final ArgumentCaptor<String> delivered = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(delivered.capture());
+        final Element failure = DocumentHelper.parseText(delivered.getValue()).getRootElement();
+        assertEquals("failure", failure.getName(), "A bind that threw must fail the authentication.");
+        assertNotNull(failure.element(QName.get("temporary-auth-failure", SASLAuthentication.SASL_NAMESPACE)),
+            "An unexpected failure to bind is not permanent, so the client must be told it may try again.");
+        verify(bind2Request, never()).processFeatureRequests(any(), any());
+        assertFalse(session.isAuthenticated(), "A session whose resource could not be bound must not be authenticated.");
+    }
+
+    /**
+     * Verifies that inline feature handlers run against a session that is already authenticated.
+     *
+     * Some inline features are only permitted once a resource has been bound and the session is authenticated;
+     * XEP-0198 § 3 says as much of stream management, and its handler consults the session's state. Running the
+     * handlers first would make every such feature report an unexpected-request failure.
+     */
+    @Test
+    public void bind2InlineHandlersRunAgainstAnAuthenticatedSession() throws Exception
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
+            new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        final Bind2Request bind2Request = mock(Bind2Request.class);
+        when(bind2Request.generateResourceString(any())).thenReturn("test-resource");
+        session.setSessionData("bind2-request", bind2Request);
+        when(XMPPServer.getInstance().getSessionManager().bindResource(any(), any(), any()))
+            .thenReturn(CompletableFuture.completedFuture(SessionManager.BindResult.BOUND));
+
+        final AtomicReference<Session.Status> statusWhenHandlersRan = new AtomicReference<>();
+        when(bind2Request.processFeatureRequests(any(), any())).thenAnswer(invocation -> {
+            statusWhenHandlersRan.set(session.getStatus());
+            return DocumentHelper.createElement(QName.get("bound", "urn:xmpp:bind:0"));
+        });
+
+        // Execute system under test.
+        SASLAuthentication.authenticationSuccessful(session, "testuser", "PLAIN", new byte[0], true);
+
+        // Verify result.
+        verify(bind2Request).processFeatureRequests(any(), any());
+        assertEquals(Session.Status.AUTHENTICATED, statusWhenHandlersRan.get(),
+            "An inline feature handler must observe a session that is already authenticated, as some features are only permitted then.");
     }
 
     /**

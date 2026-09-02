@@ -25,6 +25,8 @@ import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.security.sasl.SaslException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -96,24 +98,40 @@ public class Bind2Request {
             if (handler != null && handler.isEnabled()) {
                 try {
                     if (!handler.handleElement(clientSession, bound, element)) {
-                        Log.warn("Handler for namespace {} failed to process element", namespace);
-                        handler.handleFailure(clientSession, bound, element, null);
+                        Log.info("Handler for namespace {} failed to process element", namespace);
+                        invokeFailureHandler(clientSession, bound, element, null, handler, namespace);
                     }
                 } catch (Exception e) {
-                    Log.error("Error processing element with namespace: " + namespace, e);
-                    try {
-                        handler.handleFailure(clientSession, bound, element, e);
-                    } catch (Exception ex) {
-                        Log.error("Error invoking failure handler after trying to processing element with namespace: " + namespace, ex);
-                    }
+                    Log.warn("Error processing element with namespace: {}", namespace, e);
+                    invokeFailureHandler(clientSession, bound, element, e, handler, namespace);
                 }
             } else {
-                Log.debug("No handler registered for namespace: {}", namespace);
+                Log.debug("No handler registered/enabled for namespace: {}", namespace);
                 // We don't fail here because there's no obvious way we could fail.
             }
         }
 
         return bound;
+    }
+
+    /**
+     * Invokes the failure-handler of a Bind2-handler, logging but otherwise suppressing any exception thrown by the
+     * failure-handler.
+     *
+     * @param clientSession the client session.
+     * @param bound the bound element.
+     * @param element the element that failed to be processed.
+     * @param cause the processing exception, or {@code null} when the handler returned {@code false}.
+     * @param handler the Bind2-handler that failed to process the element.
+     * @param namespace the namespace of the element.
+     */
+    private static void invokeFailureHandler(final LocalClientSession clientSession, final Element bound, final Element element, @Nullable final Exception cause, @Nonnull final Bind2InlineHandler handler, final String namespace)
+    {
+        try {
+            handler.handleFailure(clientSession, bound, element, cause);
+        } catch (Exception ex) {
+            Log.warn("Error invoking failure handler after failing to process element with namespace: {}", namespace, ex);
+        }
     }
 
     public static Element featureElement() {

@@ -62,7 +62,7 @@ public interface Bind2InlineHandler {
      * @param element the request that could not be processed
      * @param cause the processing exception, or {@code null} when the handler returned {@code false}
      */
-    default void handleFailure(LocalClientSession session, Element bound, Element element, Throwable cause) {
+    default void handleFailure(LocalClientSession session, Element bound, Element element, Exception cause) {
         // Most inline extensions do not define a failure response.
     }
 }

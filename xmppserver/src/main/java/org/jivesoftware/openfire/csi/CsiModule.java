@@ -56,7 +56,7 @@ public class CsiModule extends BasicModule {
 
     @Override
     public void stop() {
-        Bind2Request.unregisterElementHandler(handler.getNamespace());
+        Bind2Request.unregisterElementHandler(handler);
         super.stop();
     }
 }

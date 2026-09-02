@@ -97,9 +97,8 @@ public class Bind2RequestProcessingTest {
 
     @AfterEach
     public void tearDown() {
-        Bind2Request.unregisterElementHandler("http://test1.namespace");
-        Bind2Request.unregisterElementHandler("http://test2.namespace");
-        Bind2Request.unregisterElementHandler("http://unhandled.namespace");
+        Bind2Request.unregisterElementHandler(mockHandler1);
+        Bind2Request.unregisterElementHandler(mockHandler2);
     }
 
     // -------------------------------------------------------------------------
@@ -289,7 +288,7 @@ public class Bind2RequestProcessingTest {
     public void testFeatureElementAfterUnregisteringHandler() {
         Bind2Request.registerElementHandler(mockHandler1);
         Bind2Request.registerElementHandler(mockHandler2);
-        Bind2Request.unregisterElementHandler("http://test1.namespace");
+        Bind2Request.unregisterElementHandler(mockHandler1);
 
         Element feature = Bind2Request.featureElement();
 

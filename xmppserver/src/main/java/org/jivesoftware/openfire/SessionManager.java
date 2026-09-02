@@ -38,6 +38,8 @@ import org.jivesoftware.openfire.server.OutgoingSessionPromise;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.spi.ConnectionType;
+import org.jivesoftware.openfire.handler.Bind2StreamManagementHandler;
+import org.jivesoftware.openfire.net.Bind2Request;
 import org.jivesoftware.openfire.streammanagement.TerminationDelegate;
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.*;
@@ -270,6 +272,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     private RoutingTable routingTable;
 
     private StreamIDFactory streamIDFactory;
+    private Bind2StreamManagementHandler bind2StreamManagementHandler;
 
     /**
      * Returns the instance of <CODE>SessionManagerImpl</CODE> being used by the XMPPServer.
@@ -1897,9 +1900,14 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     @Override
-    public void start() throws IllegalStateException {
+    public synchronized void start() throws IllegalStateException {
         super.start();
         localSessionManager.start();
+
+        // Register the XEP-0198 Stream Management handler for SASL2 Bind2 inline feature processing.
+        final Bind2StreamManagementHandler localHandler = new Bind2StreamManagementHandler();
+        Bind2Request.registerElementHandler(localHandler);
+        bind2StreamManagementHandler = localHandler; // Only dereference any previous handler after registration succeeds, otherwise that previous handler can never be removed again.
 
         // Run through the server sessions every 10% of the time of the maximum time that a session is allowed to be
         // detached, or every 3 minutes if the max time is outside the default boundaries.
@@ -1915,8 +1923,14 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     @Override
-    public void stop() {
+    public synchronized void stop() {
         Log.debug("SessionManager: Stopping server");
+
+        if (bind2StreamManagementHandler != null) {
+            Bind2Request.unregisterElementHandler(bind2StreamManagementHandler);
+            bind2StreamManagementHandler = null;
+        }
+
         // Stop threads that are sending packets to remote servers
         OutgoingSessionPromise.getInstance().shutdown();
         if (JiveGlobals.getBooleanProperty("shutdownMessage.enabled")) {

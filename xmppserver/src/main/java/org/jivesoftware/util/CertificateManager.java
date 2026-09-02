@@ -229,6 +229,8 @@ public class CertificateManager {
      * server identities are checked against the hostname, with support for wildcard certificates.
      * A wildcard identity (e.g. {@code *.example.com}) matches any direct subdomain of the base domain.
      *
+     * Note that the implementation is more permissive than this: see OF-3125.
+     *
      * @param trustedCert the X.509 certificate to verify (cannot be null)
      * @param hostname    the hostname to verify the certificate against (cannot be null)
      * @return {@code true} if the certificate is valid for the given hostname; {@code false} otherwise

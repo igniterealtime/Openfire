@@ -120,9 +120,9 @@ public class StreamManager {
     private AtomicLong clientProcessedStanzas = new AtomicLong( 0 );
 
     /**
-     * The value (2^32)-1, used to emulate roll-over
+     * The value (2^32)-1, used to emulate roll-over and the largest legal value for the 'h' attribute (XEP-0198 § 4).
      */
-    private static final long MASK = new BigInteger( "2" ).pow( 32 ).longValue() - 1;
+    static final long MASK = new BigInteger( "2" ).pow( 32 ).longValue() - 1;
 
     /**
      * Collection of stanzas/packets sent to client that haven't been acknowledged.
@@ -183,26 +183,17 @@ public class StreamManager {
                 enable( element.getNamespace().getStringValue(), resume );
                 break;
             case "resume":
-                final String hValue = element.attributeValue("h");
-                final long h;
+                final ResumeRequest resumeRequest;
                 try {
-                    h = Long.parseLong(hValue);
-                } catch (NumberFormatException e) {
-                    Log.warn( "Closing client session. Client sends non-numeric value for SM 'h': {}, affected session: {}", hValue, session );
-                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a 'h' value that is not a number (which is illegal). Your Ack h: " + hValue + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
+                    resumeRequest = ResumeRequest.from(element);
+                } catch (MalformedResumeRequestException e) {
+                    Log.info( "Closing client session that sent a malformed 'resume' request. Error message: {}. Affected session: {}", e.getMessage(), session );
+                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, e.getMessage() + " Our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
                     session.deliverRawText( error.toXML() );
                     session.close();
                     return;
                 }
-                if (h < 0) {
-                    Log.warn( "Closing client session. Client sends negative value for SM 'h': {}, affected session: {}", h, session );
-                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a negative value (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
-                    session.deliverRawText( error.toXML() );
-                    session.close();
-                    return;
-                }
-                String previd = element.attributeValue("previd");
-                startResume( element.getNamespaceURI(), previd, h);
+                processResume( resumeRequest );
 
                 break;
             case "r":
@@ -313,30 +304,87 @@ public class StreamManager {
         return enabled;
     }
 
-    private void startResume(String namespace, String previd, long h) {
+    /**
+     * Attempts to process (validate and perform) a {@code <resume/>} request, as defined by XEP-0198.
+     *
+     * This writes its response (either a stream error, or the effects of
+     * {@link LocalSession#reattach(LocalSession, long)}) directly to the connection.
+     *
+     * @param request the parsed resume request (cannot be null).
+     */
+    private void processResume(@Nonnull final ResumeRequest request)
+    {
+        this.namespace = request.getNamespace();
+
+        final ResumeRequestValidationResult validation = validateResumeRequest(request);
+        if (!validation.isSuccess()) {
+            assert validation.getFailureCondition() != null; // Per definition of the method contract.
+            sendError(new PacketError(validation.getFailureCondition()));
+            return;
+        }
+
+        final LocalClientSession otherSession = validation.getTarget();
+        assert otherSession != null; // Per definition of the method contract.
+        detachIfNeeded(otherSession);
+
+        // If we're all happy, re-attach the connection from the pre-existing session to the new session, discarding the old session.
+        Log.debug("Attaching to other session '{}'.", otherSession.getStreamID());
+        otherSession.reattach(session, request.getH());
+        Log.debug("Perform resumption of session {}, using connection from session {}", otherSession.getStreamID(), session.getStreamID());
+    }
+
+    /**
+     * Detaches the connection of a to-be-resumed session, unless it is already detached.
+     *
+     * @param otherSession the pre-existing session that is about to be resumed.
+     */
+    private void detachIfNeeded(@Nonnull final LocalClientSession otherSession)
+    {
+        if (!otherSession.isDetached()) {
+            Log.debug("Existing session {} is not detached; detaching.", otherSession.getStreamID());
+            final Connection oldConnection = otherSession.getConnection();
+            otherSession.setDetached();
+            assert oldConnection != null; // If the other session is not detached, the connection can't be null.
+            oldConnection.close(new StreamError(StreamError.Condition.conflict, "The stream previously served over this connection is resumed on a new connection."));
+        }
+    }
+
+    /**
+     * Validates a stream resumption request, without performing any of the state changes
+     * (detaching/reattaching) that are needed to actually resume the session.
+     *
+     * @param request the parsed resume request (cannot be null).
+     * @return the outcome of the validation.
+     */
+    @Nonnull
+    private ResumeRequestValidationResult validateResumeRequest(@Nonnull final ResumeRequest request)
+    {
+        final String namespace = request.getNamespace();
+        final String previd = request.getPrevId();
+        final long h = request.getH();
+
         Log.debug("Attempting resumption for {}, h={}", previd, h);
-        this.namespace = namespace;
+
         // Ensure that resource binding has NOT occurred.
-        if (!allowResume() ) {
+        if (!allowResume()) {
             Log.debug("Unable to process session resumption attempt, as session {} is in a state where session resumption is not allowed.", session);
-            sendUnexpectedError();
-            return;
+            return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
         }
+
         if (session.isAuthenticated()) {
-            Log.debug("Unable to process session resumption attempt, as session {} is not authenticated.", session);
-            sendUnexpectedError();
-            return;
+            Log.debug("Unable to process session resumption attempt, as session {} is already authenticated.", session);
+            return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
         }
+
         AuthToken authToken = null;
-        // Ensure that resource binding has occurred.
         if (session instanceof ClientSession) {
             authToken = ((LocalClientSession) session).getAuthToken();
         }
         if (authToken == null) {
             Log.debug("Unable to process session resumption attempt, as session {} does not provide any auth context.", session);
-            sendUnexpectedError();
-            return;
+            return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
         }
+
         // Decode previd.
         String resource;
         String streamId;
@@ -346,8 +394,7 @@ public class StreamManager {
             streamId = toks.nextToken();
         } catch (Exception e) {
             Log.debug("Exception from previd decode:", e);
-            sendUnexpectedError();
-            return;
+            return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
         }
         final JID fullJid;
         if ( authToken.isAnonymous() ){
@@ -365,66 +412,48 @@ public class StreamManager {
                 // When the client tries to resume a connection on this host, it is unlikely to try other hosts. Remove any detached sessions living elsewhere in the cluster. (OF-2753)
                 CacheFactory.doClusterTask(new ClientSessionTask(fullJid, RemoteSessionTask.Operation.removeDetached));
             }
-            sendError(new PacketError(PacketError.Condition.item_not_found));
-            return;
+            return ResumeRequestValidationResult.failure(PacketError.Condition.item_not_found);
         }
 
-        if (!(route instanceof LocalClientSession)) {
+        if (!(route instanceof LocalClientSession otherSession)) {
             Log.debug("Not allowing a client of '{}' to resume a session on this cluster node. The session can only be resumed on the Openfire cluster node where the original session was connected.", fullJid);
             if (LOCATION_TERMINATE_OTHERS_ENABLED.getValue()) {
                 // When the client tries to resume a connection on this host, it is unlikely to try other hosts. Remove any detached sessions living elsewhere in the cluster. (OF-2753)
                 CacheFactory.doClusterTask(new ClientSessionTask(fullJid, RemoteSessionTask.Operation.removeDetached));
             }
-            sendError(new PacketError(PacketError.Condition.unexpected_request));
-            return;
+            return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
         }
 
-        final LocalClientSession otherSession = (LocalClientSession) route;
         if (!otherSession.getStreamID().getID().equals(streamId)) {
-            sendError(new PacketError(PacketError.Condition.item_not_found));
-            return;
+            return ResumeRequestValidationResult.failure(PacketError.Condition.item_not_found);
         }
         Log.debug("Found existing session for '{}', checking status", fullJid);
 
         // OF-2811: Cannot resume a session that's already closed. That session is likely busy firing its 'closeListeners'.
         if (route.isClosed()) {
             Log.debug("Not allowing a client of '{}' to resume a session, as the preexisting session is already in process of being closed.", fullJid);
-            sendError(new PacketError(PacketError.Condition.unexpected_request));
-            return;
+            return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
         }
 
         // Previd identifies proper session. Now check SM status
         if (!otherSession.getStreamManager().resume) {
             Log.debug("Not allowing a client of '{}' to resume a session, the session to be resumed does not have the stream management resumption feature enabled.", fullJid);
-            sendError(new PacketError(PacketError.Condition.unexpected_request));
-            return;
+            return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
         }
         if (otherSession.getStreamManager().namespace == null) {
             Log.debug("Not allowing a client of '{}' to resume a session, the session to be resumed disabled SM functionality as a response to an earlier error.", fullJid);
-            sendError(new PacketError(PacketError.Condition.unexpected_request));
-            return;
+            return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
         }
         if (!otherSession.getStreamManager().namespace.equals(namespace)) {
             Log.debug("Not allowing a client of '{}' to resume a session, the session to be resumed used a different version ({}) of the session management resumption feature as compared to the version that's requested now: {}.", fullJid, otherSession.getStreamManager().namespace, namespace);
-            sendError(new PacketError(PacketError.Condition.unexpected_request));
-            return;
+            return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
         }
         if (!otherSession.getStreamManager().validateClientAcknowledgement(h)) {
             Log.debug("Not allowing a client of '{}' to resume a session, as it reports it received more stanzas from us than that we've send it.", fullJid);
-            sendError(new PacketError(PacketError.Condition.unexpected_request));
-            return;
+            return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
         }
-        if (!otherSession.isDetached()) {
-            Log.debug("Existing session {} of '{}' is not detached; detaching.", otherSession.getStreamID(), fullJid);
-            Connection oldConnection = otherSession.getConnection();
-            otherSession.setDetached();
-            assert oldConnection != null; // If the other session is not detached, the connection can't be null.
-            oldConnection.close(new StreamError(StreamError.Condition.conflict, "The stream previously served over this connection is resumed on a new connection."));
-        }
-        Log.debug("Attaching to other session '{}' of '{}'.", otherSession.getStreamID(), fullJid);
-        // If we're all happy, re-attach the connection from the pre-existing session to the new session, discarding the old session.
-        otherSession.reattach(session, h);
-        Log.debug("Perform resumption of session {} for '{}', using connection from session {}", otherSession.getStreamID(), fullJid, session.getStreamID());
+
+        return ResumeRequestValidationResult.success(otherSession);
     }
 
     /**

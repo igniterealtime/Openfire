@@ -43,6 +43,7 @@ import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.StreamError;
 
 import javax.annotation.Nonnull;
 import javax.security.sasl.Sasl;
@@ -642,15 +643,24 @@ public class SASLAuthentication {
             {
                 failure = Failure.NOT_AUTHORIZED;
             }
-            SaslOutcome.authenticationFailed( session, failure, usingSASL2 );
-            session.removeSessionData( "SaslServer" );
+
+            if (usingSASL2) {
+                abortSasl2(session, failure);
+            } else {
+                SaslOutcome.authenticationFailed(session, failure, usingSASL2);
+                session.removeSessionData("SaslServer");
+            }
             return Status.failed;
         }
         catch( Exception ex )
         {
             Log.warn( "An unexpected exception occurred during SASL negotiation. Affected session: {}", session, ex );
-            SaslOutcome.authenticationFailed( session, Failure.NOT_AUTHORIZED, usingSASL2 );
-            session.removeSessionData( "SaslServer" );
+            if (usingSASL2) {
+                abortSasl2(session, Failure.NOT_AUTHORIZED);
+            } else {
+                SaslOutcome.authenticationFailed(session, Failure.NOT_AUTHORIZED, usingSASL2);
+                session.removeSessionData("SaslServer");
+            }
             return Status.failed;
         }
     }
@@ -804,7 +814,6 @@ public class SASLAuthentication {
                     fastToken = FastSessionState.getRotatedToken(session);
                 }
                 FastSessionState.clearAuthenticationAttempt(session);
-                clientSession.setAuthToken(clientAuthToken);
 
                 final FastToken finalFastToken = fastToken;
                 final Bind2Request bind2Request = (Bind2Request) session.getSessionData("bind2-request");
@@ -812,43 +821,36 @@ public class SASLAuthentication {
                     clientSession.removeSessionData("bind2-request");
                     final UserAgentInfo userAgentInfo = (UserAgentInfo) session.getSessionData("user-agent-info");
                     final String resource = bind2Request.generateResourceString(userAgentInfo);
-                    final AuthToken authToken = clientSession.getAuthToken();
-                    SessionManager.getInstance().bindResource(clientSession, authToken, resource)
-                        .whenComplete((result, throwable) -> {
-                            try {
+                    final JID preBindAddress = clientSession.getAddress();
+
+                    if (clientAuthToken.isAnonymous()) {
+                        // An anonymous session needs no conflict resolution: its node-part and resource are both the session's
+                        // own generated identifier, so no other session can hold the same full JID. SessionManager#bindResource
+                        // documents this and dereferences the (null) username, so it must not be used here. Note that this
+                        // discards the resource that Bind2 generated; XEP-0386 leaves the assigned resource to the server.
+                        clientSession.setAnonymousAuth();
+                        final JID bound = clientSession.getAddress();
+                        completeSasl2Bind2(clientSession, bind2Request, successData, finalFastToken, bound.toBareJID(), bound.getResource(), preBindAddress);
+                    } else {
+                        // A non-anonymous session performs regular resource binding.
+                        final String bareJid = new JID(clientAuthToken.getUsername(), XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null, true).toString();
+                        SessionManager.getInstance().bindResource(clientSession, clientAuthToken, resource)
+                            .whenComplete((result, throwable) -> {
                                 if (throwable != null) {
                                     Log.warn("An exception occurred while binding resource '{}' for session '{}' during SASL2+Bind2 authentication.", resource, clientSession, throwable);
                                 }
-                                final boolean bound = throwable == null && result == SessionManager.BindResult.BOUND;
-                                if (!bound) {
+                                if (throwable != null || result != SessionManager.BindResult.BOUND) {
                                     Log.warn("Unable to bind resource '{}' for session '{}' during SASL2+Bind2 authentication. Bind result: {}", resource, clientSession, result);
-                                    SaslOutcome.authenticationFailed(clientSession, Failure.TEMPORARY_AUTH_FAILURE, true);
+                                    abortSasl2(clientSession, Failure.TEMPORARY_AUTH_FAILURE);
                                     return;
                                 }
-                                final Element success = SaslOutcome.buildSasl2SuccessElement(successData, authorizationIdentity, resource, finalFastToken);
-                                clientSession.setStatus(Session.Status.AUTHENTICATED);
-                                bind2Request.processFeatureRequests(clientSession, success);
-                                SessionEventDispatcher.dispatchEvent(clientSession, SessionEventDispatcher.EventType.resource_bound);
-
-                                // Deliver stream features now that <success/> has been sent.
-                                final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
-                                final List<org.dom4j.Element> specificFeatures = clientSession.getAvailableStreamFeatures();
-                                if (specificFeatures != null) {
-                                    for (final org.dom4j.Element feature : specificFeatures) {
-                                        features.add(feature);
-                                    }
-                                }
-                                // Deliver these here.
-                                clientSession.deliverRawText(success.asXML());
-                                clientSession.deliverRawText(features.asXML());
-                            } catch(Exception e) {
-                                Log.warn("An exception occurred while processing SASL2+Bind2 for '{}' during SASL2+Bind2 authentication.", clientSession, e);
-                                SaslOutcome.authenticationFailed(clientSession, Failure.TEMPORARY_AUTH_FAILURE, true);
-                            }
-                        });
-                    // Response and features are sent asynchronously from the completion stage.
+                                clientSession.setAuthToken(clientAuthToken);
+                                completeSasl2Bind2(clientSession, bind2Request, successData, finalFastToken, bareJid, resource, preBindAddress);
+                            });
+                    }
                 } else {
                     // No Bind2 request, or session already authenticated: send <success/> synchronously without <bound/>.
+                    clientSession.setAuthToken(clientAuthToken);
                     final Element success = SaslOutcome.buildSasl2SuccessElement(successData, authorizationIdentity, null, finalFastToken);
                     session.deliverRawText(success.asXML());
                 }
@@ -866,6 +868,95 @@ public class SASLAuthentication {
         // A request that was accepted is part of the SASL2 operation. Do not report authentication
         // success when the requested credential could not be created and persisted.
         return FastTokenManager.issueToken(username, clientId, mechanism);
+    }
+
+    /**
+     * Aborts the SASL2 authentication process for a given session and handles the failure scenario.
+     *
+     * @param session The LocalSession object representing the session. Must not be null.
+     * @param failure The Failure object representing the reason for the authentication failure. Must not be null.
+     */
+    private static void abortSasl2(@Nonnull final LocalSession session, @Nonnull final Failure failure)
+    {
+        if (session instanceof LocalClientSession clientSession) {
+            clientSession.setAuthToken(null);
+        }
+        session.removeSessionData("bind2-request");
+        session.removeSessionData("user-agent-info");
+        session.removeSessionData("SaslServer");
+        FastSessionState.clearAuthenticationAttempt(session);
+        SaslOutcome.authenticationFailed(session, failure, true);
+    }
+
+    /**
+     * Completes a SASL2 negotiation for which a resource has been bound: renders and delivers {@code <success/>},
+     * then the post-authentication stream features.
+     * <p>
+     * Failure is handled differently either side of the {@code <success/>} write. Before it, the peer has not been
+     * told anything, so the bind is undone and the negotiation fails. After it, authentication genuinely succeeded
+     * and the session is live and routable. A failure then is a stream-level problem rather than a SASL one.
+     *
+     * @param clientSession The LocalClientSession object representing the client session. Must not be null.
+     * @param bind2Request The Bind2Request object representing the bind request. Must not be null.
+     * @param successData The byte array representing the success data.
+     * @param fastToken The FastToken if one was issued.
+     * @param authorizationIdentity the bare JID authorization identity (e.g. user@domain or uuid@domain for anonymous).
+     * @param resource the bound resource, or null if no resource was bound.
+     * @param preBindAddress The session's address prior to the binding attempt. Must not be null.
+     */
+    private static void completeSasl2Bind2(@Nonnull final LocalClientSession clientSession,
+                                           @Nonnull final Bind2Request bind2Request,
+                                           final byte[] successData,
+                                           final FastToken fastToken,
+                                           final String authorizationIdentity,
+                                           final String resource,
+                                           @Nonnull final JID preBindAddress)
+    {
+        boolean successDelivered = false;
+        try
+        {
+            final Element success = SaslOutcome.buildSasl2SuccessElement(successData, authorizationIdentity, resource, fastToken);
+            bind2Request.processFeatureRequests(clientSession, success);
+            clientSession.deliverRawText(success.asXML());
+            successDelivered = true;
+
+            SessionEventDispatcher.dispatchEvent(clientSession, SessionEventDispatcher.EventType.resource_bound);
+
+            // Deliver stream features now that <success/> has been sent.
+            final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
+            final List<Element> specificFeatures = clientSession.getAvailableStreamFeatures();
+            if (specificFeatures != null) {
+                specificFeatures.forEach(features::add);
+            }
+            clientSession.deliverRawText(features.asXML());
+        }
+        catch (final Exception e)
+        {
+            if (successDelivered) {
+                Log.warn("An exception occurred after SASL2+Bind2 success was delivered to '{}'. The session is authenticated and bound, so it is closed with a stream error rather than failed.", clientSession, e);
+                clientSession.close(new StreamError(StreamError.Condition.internal_server_error, "An error occurred while completing resource binding."));
+            } else {
+                Log.warn("An exception occurred while processing SASL2+Bind2 for '{}'. Undoing the resource binding.", clientSession, e);
+                unwindBind(clientSession, preBindAddress);
+                abortSasl2(clientSession, Failure.TEMPORARY_AUTH_FAILURE);
+            }
+        }
+    }
+
+    /**
+     * Reverses the session state installed by a successful resource binding, returning the session to the
+     * pre-binding state in which another SASL2 negotiation can be attempted.
+     *
+     * @param clientSession The LocalClientSession object representing the client session. Must not be null.
+     * @param preBindAddress The session's address prior to the binding attempt. Must not be null.
+     */
+    private static void unwindBind(@Nonnull final LocalClientSession clientSession, @Nonnull final JID preBindAddress)
+    {
+        // removeSession reads the auth token to decide which session-destroyed event to fire, so it must run before
+        // abortSasl2 clears that token - otherwise a named session is reported as an anonymous one.
+        SessionManager.getInstance().removeSession(clientSession);
+        clientSession.setStatus(Session.Status.CONNECTED);
+        clientSession.setAddress(preBindAddress);
     }
 
     /**

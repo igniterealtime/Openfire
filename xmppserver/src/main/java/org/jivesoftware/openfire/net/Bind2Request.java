@@ -69,10 +69,11 @@ public class Bind2Request {
     /**
      * Unregisters an inline element handler associated with a specific namespace.
      *
-     * This method removes the handler previously registered for processing inline elements
-     * with the specified namespace. If no handler is registered for the given namespace or
-     * if the provided handler does not match the currently registered handler, no action
-     * will be performed.
+     * This method removes a registration using handler equality, not just namespace matching. As a result, an
+     * invocation must retain the exact handler instance they registered.
+     *
+     * If no handler is registered for the given namespace or if the provided handler does not match the currently
+     * registered handler, no action will be performed.
      *
      * @param handler The inline element handler to unregister. Must not be null and must provide a valid namespace.
      * @return {@code true} if the handler was successfully unregistered, {@code false} otherwise.

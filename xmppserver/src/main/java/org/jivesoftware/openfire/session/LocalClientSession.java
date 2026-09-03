@@ -831,16 +831,22 @@ public class LocalClientSession extends LocalSession implements ClientSession {
 
     @Override
     public List<Element> getAvailableStreamFeatures() {
+        final Connection connection = conn;
+        if (connection == null) {
+            // Detached or closed: there is no stream on which to advertise anything.
+            return Collections.emptyList();
+        }
+
         // Offer authenticate and registration only if TLS was not required or if required
         // then the connection is already encrypted
-        if (conn.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required && !conn.isEncrypted()) {
+        if (connection.getConfiguration().getTlsPolicy() == Connection.TLSPolicy.required && !connection.isEncrypted()) {
             return Collections.emptyList();
         }
 
         final List<Element> result = new LinkedList<>();
 
         // Include Stream Compression Mechanism
-        if (conn.getConfiguration().getCompressionPolicy() != Connection.CompressionPolicy.disabled && !conn.isCompressed()) {
+        if (connection.getConfiguration().getCompressionPolicy() != Connection.CompressionPolicy.disabled && !connection.isCompressed()) {
             final Element compression = DocumentHelper.createElement(QName.get("compression", "http://jabber.org/features/compress"));
             compression.addElement("method").addText("zlib");
             result.add(compression);

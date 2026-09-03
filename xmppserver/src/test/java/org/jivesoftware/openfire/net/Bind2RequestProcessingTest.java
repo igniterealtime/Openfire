@@ -493,6 +493,7 @@ public class Bind2RequestProcessingTest {
 
         // Verify result.
         assertNotNull(bound);
+        verify(mockHandler1, times(1)).handleFailure(any(), any(), any(), any());
         verify(mockHandler2).handleElement(any(), any(), eq(featureElement2));
     }
 

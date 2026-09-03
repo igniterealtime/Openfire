@@ -365,6 +365,10 @@ public class NodeAffiliate implements Cacheable
          */
         publisher,
         /**
+         * A member can subscribe to and retrieve items from whitelist nodes.
+         */
+        member,
+        /**
          * A user with no affiliation can susbcribe to the node.
          */
         none,

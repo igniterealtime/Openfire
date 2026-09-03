@@ -581,10 +581,16 @@ public abstract class StanzaHandler {
 
     /**
      * Emits post-authentication stream features for SASL2 (XEP-0388), which does NOT restart the stream.
-     * On TCP the features element is sent inline in the existing stream. Transports with different framing
-     * (e.g. RFC 7395 WebSocket) override this.
      */
     protected void sasl2Successful() {
+        deliverSasl2Features();
+    }
+
+    /**
+     * Delivers post-authentication stream features for SASL2 (XEP-0388). On TCP the features element is sent
+     * inline in the existing stream. Transports with different framing (e.g. RFC 7395 WebSocket) override this.
+     */
+    protected void deliverSasl2Features() {
         final Element features = generateFeatures();
         connection.deliverRawText(features.asXML());
     }

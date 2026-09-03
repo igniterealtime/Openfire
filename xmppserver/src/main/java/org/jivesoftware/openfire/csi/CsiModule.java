@@ -22,9 +22,51 @@ import org.jivesoftware.openfire.net.Bind2InlineHandler;
 import org.jivesoftware.openfire.net.Bind2Request;
 import org.jivesoftware.openfire.session.LocalClientSession;
 
-public class CsiModule extends BasicModule {
-    static class Bind2CSIHandler implements Bind2InlineHandler {
 
+/**
+ * The CsiModule provides functionality for managing Client State Indication (CSI) within an XMPP server.
+ *
+ * This module interacts with incoming bind2 requests and processes inline elements related to client state activation
+ * and deactivation. It registers a handler for handling CSI-specific operations during the start of the module and
+ * unregisters it during the module's stop operation.
+ */
+public class CsiModule extends BasicModule
+{
+    private Bind2CSIHandler bind2CSIHandler;
+
+    /**
+     * Create a basic module with the given name.
+     */
+    public CsiModule() {
+        super("Client State Indication");
+    }
+
+    @Override
+    public synchronized void start() throws IllegalStateException {
+        super.start();
+        final Bind2CSIHandler localHandler = new Bind2CSIHandler();
+        Bind2Request.registerElementHandler(localHandler);
+        bind2CSIHandler = localHandler; // Only dereference any previous handler after registration succeeds, otherwise that previous handler can never be removed again.
+    }
+
+    @Override
+    public synchronized void stop() {
+        super.stop();
+        if (bind2CSIHandler != null) {
+            Bind2Request.unregisterElementHandler(bind2CSIHandler);
+            bind2CSIHandler = null;
+        }
+    }
+
+    /**
+     * Handles inline elements related to Client State Indication (CSI) during bind2 requests.
+     *
+     * Implements the {@link Bind2InlineHandler} interface to integrate with the bind2 inline element handling
+     * mechanism. Acts as a bridge between the bind2 processing flow and the specific functionalities of the
+     * Client State Indication module.
+     */
+    static class Bind2CSIHandler implements Bind2InlineHandler
+    {
         @Override
         public String getNamespace() {
             return CsiManager.NAMESPACE;
@@ -39,24 +81,5 @@ public class CsiModule extends BasicModule {
             }
             return true;
         }
-    }
-    private static final Bind2CSIHandler handler = new Bind2CSIHandler();
-    /**
-     * <p>Create a basic module with the given name.</p>
-     */
-    public CsiModule() {
-        super("Client State Indication");
-    }
-
-    @Override
-    public void start() throws IllegalStateException {
-        super.start();
-        Bind2Request.registerElementHandler(handler);
-    }
-
-    @Override
-    public void stop() {
-        Bind2Request.unregisterElementHandler(handler);
-        super.stop();
     }
 }

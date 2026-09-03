@@ -82,15 +82,19 @@ public final class IQMessageCarbonsHandler extends IQHandler implements ServerFe
     }
 
     @Override
-    public void start() throws IllegalStateException {
+    public synchronized void start() throws IllegalStateException {
         super.start();
-        bind2Handler = new Bind2CarbonsHandler();
-        Bind2Request.registerElementHandler(bind2Handler);
+        final Bind2CarbonsHandler localHandler = new Bind2CarbonsHandler();
+        Bind2Request.registerElementHandler(localHandler);
+        bind2Handler = localHandler; // Only dereference any previous handler after registration succeeds, otherwise that previous handler can never be removed again.
     }
 
     @Override
-    public void stop() {
+    public synchronized void stop() {
         super.stop();
-        Bind2Request.unregisterElementHandler(bind2Handler);
+        if (bind2Handler != null) {
+            Bind2Request.unregisterElementHandler(bind2Handler);
+            bind2Handler = null;
+        }
     }
 }

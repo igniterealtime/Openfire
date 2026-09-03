@@ -47,6 +47,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedStatic;
+import org.xmpp.packet.JID;
 
 import javax.security.sasl.SaslServer;
 import java.util.*;
@@ -60,6 +61,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -312,10 +314,8 @@ public class SASLAuthenticationTest
             when(bind2Request.generateResourceString(any())).thenReturn(anonymousUsername);
             session.setSessionData("bind2-request", bind2Request);
 
-            // Stub SessionManager.bindResource to complete successfully (synchronously).
             final SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
-            when(sessionManager.bindResource(any(), any(), any()))
-                .thenReturn(CompletableFuture.completedFuture(SessionManager.BindResult.BOUND));
+            // Deliberately no bindResource stub: an anonymous session must not be bound through SessionManager.
 
             // Execute system under test.
             SASLAuthentication.authenticationSuccessful(session, null, "ANONYMOUS", new byte[0], true);
@@ -337,6 +337,9 @@ public class SASLAuthenticationTest
             final String responseValue2 = response.getAllValues().get(1);
             assertTrue(responseValue2.contains("<stream:feature"), "Expected stream features Element to be sent.");
             assertFalse(responseValue2.contains("<bind"), "Expected resource binding not to be offered.");
+            verify(sessionManager, never()).bindResource(any(), any(), any());
+            assertEquals(Session.Status.AUTHENTICATED, session.getStatus(),
+                "Expected an anonymous session to be authenticated by setAnonymousAuth().");
         }
     }
 
@@ -357,7 +360,7 @@ public class SASLAuthenticationTest
         final Bind2Request bind2Request = mock(Bind2Request.class);
         when(bind2Request.generateResourceString(any())).thenReturn("conflicting-resource");
         session.setSessionData("bind2-request", bind2Request);
-        when(XMPPServer.getInstance().getSessionManager().bindResource(any(), any(), any()))
+        when(XMPPServer.getInstance().getSessionManager().bindResource(notNull(), notNull(), notNull()))
             .thenReturn(CompletableFuture.completedFuture(SessionManager.BindResult.CONFLICT));
 
         // Execute system under test.
@@ -373,6 +376,7 @@ public class SASLAuthenticationTest
             "A bind conflict is not permanent, so the client must be told it may try again.");
         verify(bind2Request, never()).processFeatureRequests(any(), any());
         assertFalse(session.isAuthenticated(), "A session whose resource could not be bound must not be authenticated.");
+        assertNull(session.getAuthToken(), "A session whose resource could not be bound must not have an auth token.");
     }
 
     /**
@@ -390,7 +394,7 @@ public class SASLAuthenticationTest
         session.setSessionData("bind2-request", bind2Request);
         final CompletableFuture<SessionManager.BindResult> failedBind = new CompletableFuture<>();
         failedBind.completeExceptionally(new IllegalStateException("test failure"));
-        when(XMPPServer.getInstance().getSessionManager().bindResource(any(), any(), any())).thenReturn(failedBind);
+        when(XMPPServer.getInstance().getSessionManager().bindResource(notNull(), notNull(), notNull())).thenReturn(failedBind);
 
         // Execute system under test.
         SASLAuthentication.authenticationSuccessful(session, "testuser", "PLAIN", new byte[0], true);
@@ -404,6 +408,7 @@ public class SASLAuthenticationTest
             "An unexpected failure to bind is not permanent, so the client must be told it may try again.");
         verify(bind2Request, never()).processFeatureRequests(any(), any());
         assertFalse(session.isAuthenticated(), "A session whose resource could not be bound must not be authenticated.");
+        assertNull(session.getAuthToken(), "A session whose resource could not be bound must not have an auth token.");
     }
 
     /**
@@ -423,8 +428,8 @@ public class SASLAuthenticationTest
         final Bind2Request bind2Request = mock(Bind2Request.class);
         when(bind2Request.generateResourceString(any())).thenReturn("test-resource");
         session.setSessionData("bind2-request", bind2Request);
-        when(XMPPServer.getInstance().getSessionManager().bindResource(any(), any(), any()))
-            .thenReturn(CompletableFuture.completedFuture(SessionManager.BindResult.BOUND));
+        final SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
+        stubSuccessfulBind(sessionManager);
 
         final AtomicReference<Session.Status> statusWhenHandlersRan = new AtomicReference<>();
         when(bind2Request.processFeatureRequests(any(), any())).thenAnswer(invocation -> {
@@ -532,8 +537,7 @@ public class SASLAuthenticationTest
 
             // Stub SessionManager.bindResource to complete successfully (synchronously).
             final SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
-            when(sessionManager.bindResource(any(), any(), any()))
-                .thenReturn(CompletableFuture.completedFuture(SessionManager.BindResult.BOUND));
+            stubSuccessfulBind(sessionManager);
 
             // Execute system under test.
             SASLAuthentication.authenticationSuccessful(session, username, "PLAIN", new byte[0], true);
@@ -555,7 +559,123 @@ public class SASLAuthenticationTest
             final String responseValue2 = response.getAllValues().get(1);
             assertTrue(responseValue2.contains("<stream:feature"), "Expected stream features Element to be sent.");
             assertFalse(responseValue2.contains("<bind"), "Expected resource binding not to be offered.");
+            assertEquals(username + "@" + Fixtures.XMPP_DOMAIN + "/" + resource, session.getAddress().toString(),
+                "Expected the session to be bound to the full JID reported in the authorization-identifier.");
         }
+    }
+
+    /**
+     * Verifies that resource binding is driven by the token for the identity that just authenticated.
+     *
+     * The token is passed to {@link SessionManager#bindResource(LocalClientSession, AuthToken, String)}, which
+     * dereferences its username before doing anything else. Passing null (or another session's token) fails the
+     * authentication of an otherwise valid client.
+     */
+    @Test
+    public void bind2BindsUsingTheAuthenticatedIdentity()
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        final ConnectionConfiguration connectionConfiguration = mock(ConnectionConfiguration.class);
+        when(connectionConfiguration.getTlsPolicy()).thenReturn(Connection.TLSPolicy.disabled);
+        when(connectionConfiguration.getCompressionPolicy()).thenReturn(Connection.CompressionPolicy.disabled);
+        when(connection.getConfiguration()).thenReturn(connectionConfiguration);
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
+            new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        final Bind2Request bind2Request = mock(Bind2Request.class);
+        when(bind2Request.generateResourceString(any())).thenReturn("test-resource");
+        session.setSessionData("bind2-request", bind2Request);
+        final SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
+        stubSuccessfulBind(sessionManager);
+
+        // Execute system under test.
+        SASLAuthentication.authenticationSuccessful(session, "testuser", "PLAIN", new byte[0], true);
+
+        // Verify result.
+        final ArgumentCaptor<AuthToken> token = ArgumentCaptor.forClass(AuthToken.class);
+        verify(sessionManager).bindResource(same(session), token.capture(), eq("test-resource"));
+        assertNotNull(token.getValue(), "The bind must be driven by an authentication token, not null.");
+        assertFalse(token.getValue().isAnonymous(), "Expected the token of the user that authenticated.");
+        assertEquals("testuser", token.getValue().getUsername(), "Expected the token of the user that authenticated.");
+    }
+
+    /**
+     * Verifies that a failure occurring after the resource was bound, but before {@code <success/>} reached the peer,
+     * returns the session to its pre-binding state.
+     *
+     * The peer has been told the negotiation failed and may attempt another one. A session left authenticated, bound
+     * and holding a route would have that retry skip binding altogether, and would leave a routable session for an
+     * authentication the peer believes did not happen.
+     */
+    @Test
+    public void bind2FailureBeforeSuccessUnwindsTheBind() throws Exception
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
+            new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        final JID preBindAddress = session.getAddress();
+        final Bind2Request bind2Request = mock(Bind2Request.class);
+        when(bind2Request.generateResourceString(any())).thenReturn("test-resource");
+        when(bind2Request.processFeatureRequests(any(), any())).thenThrow(new IllegalStateException("test failure"));
+        session.setSessionData("bind2-request", bind2Request);
+        final SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
+        stubSuccessfulBind(sessionManager);
+
+        // Execute system under test.
+        SASLAuthentication.authenticationSuccessful(session, "testuser", "PLAIN", new byte[0], true);
+
+        // Verify result.
+        final ArgumentCaptor<String> delivered = ArgumentCaptor.forClass(String.class);
+        verify(connection).deliverRawText(delivered.capture());
+        final Element failure = DocumentHelper.parseText(delivered.getValue()).getRootElement();
+        assertEquals("failure", failure.getName(), "Expected the negotiation to fail, as <success/> was never delivered.");
+        assertNotNull(failure.element(QName.get("temporary-auth-failure", SASLAuthentication.SASL_NAMESPACE)),
+            "The client may retry, so the failure must not be permanent.");
+        verify(sessionManager).removeSession(session);
+        assertNull(session.getAuthToken(), "An undone bind must not leave an authentication token behind.");
+        assertEquals(Session.Status.CONNECTED, session.getStatus(), "An undone bind must not leave the session authenticated.");
+        assertSame(preBindAddress, session.getAddress(), "An undone bind must restore the pre-binding address.");
+    }
+
+    /**
+     * Verifies that a failure occurring after {@code <success/>} was delivered closes the stream with an error, rather
+     * than following it with a SASL {@code <failure/>}.
+     *
+     * By that point the authentication genuinely succeeded and the session is live and routable. Two contradictory
+     * outcomes for one negotiation leave the peer with no defined behaviour, and the SASL failure would not remove the
+     * route in any case.
+     */
+    @Test
+    public void bind2FailureAfterSuccessClosesTheStream() throws Exception
+    {
+        // Setup test fixture: feature generation fails, which happens only after <success/> has been written.
+        final Connection connection = mock(Connection.class);
+        final ConnectionConfiguration connectionConfiguration = mock(ConnectionConfiguration.class);
+        when(connectionConfiguration.getTlsPolicy()).thenReturn(Connection.TLSPolicy.disabled);
+        when(connectionConfiguration.getCompressionPolicy()).thenThrow(new IllegalStateException("test failure"));
+        when(connection.getConfiguration()).thenReturn(connectionConfiguration);
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
+            new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        final Bind2Request bind2Request = mock(Bind2Request.class);
+        when(bind2Request.generateResourceString(any())).thenReturn("test-resource");
+        session.setSessionData("bind2-request", bind2Request);
+        stubSuccessfulBind(XMPPServer.getInstance().getSessionManager());
+
+        // Execute system under test.
+        SASLAuthentication.authenticationSuccessful(session, "testuser", "PLAIN", new byte[0], true);
+
+        // Verify result.
+        final ArgumentCaptor<String> delivered = ArgumentCaptor.forClass(String.class);
+        verify(connection, times(2)).deliverRawText(delivered.capture());
+        assertEquals("success", DocumentHelper.parseText(delivered.getAllValues().get(0)).getRootElement().getName(),
+            "Expected <success/> to have been delivered before the failure occurred.");
+        assertTrue(delivered.getAllValues().get(1).contains("internal-server-error"),
+            "Expected the stream to be closed with an error: " + delivered.getAllValues().get(1));
+        assertFalse(delivered.getAllValues().stream().anyMatch(xml -> xml.contains("<failure")),
+            "A negotiation that already reported success must not also report failure.");
+        verify(connection).close();
+        assertNotNull(session.getAuthToken(), "The authentication itself succeeded, so the token stands.");
     }
 
     /**
@@ -1652,5 +1772,34 @@ public class SASLAuthenticationTest
         } finally {
             TestSaslMechanism.unregisterTestMechanism();
         }
+    }
+
+    /**
+     * Stubs {@link SessionManager#bindResource(LocalClientSession, AuthToken, String)} to emulate a successful bind,
+     * rather than merely returning {@code BOUND}.
+     *
+     * A stub that ignores its arguments hides regressions in what is passed to it, and leaves the session in a state
+     * the real bind would never produce: {@link LocalClientSession#setAuthToken(AuthToken, String)} installs the
+     * address, token and status, and the code that runs after the bind reads all three.
+     *
+     * The privacy-list lookup and {@code SessionManager#addSession} that the real method also performs are deliberately
+     * not emulated here: they need infrastructure that these unit tests do not stand up, and nothing under test reads
+     * their effects.
+     *
+     * The {@code notNull()} matchers are load-bearing. They make the stub miss (returning null, which fails the bind)
+     * when a null token or resource is passed, instead of silently accepting it.
+     */
+    private static void stubSuccessfulBind(final SessionManager sessionManager)
+    {
+        when(sessionManager.bindResource(notNull(), notNull(), notNull())).thenAnswer(invocation -> {
+            final LocalClientSession bound = invocation.getArgument(0);
+            final AuthToken token = invocation.getArgument(1);
+            final String resource = invocation.getArgument(2);
+            final String node = token.isAnonymous() ? resource : token.getUsername();
+            bound.setAddress(new JID(node, bound.getServerName(), resource, true));
+            bound.setAuthToken(token);
+            bound.setStatus(Session.Status.AUTHENTICATED);
+            return CompletableFuture.completedFuture(SessionManager.BindResult.BOUND);
+        });
     }
 }

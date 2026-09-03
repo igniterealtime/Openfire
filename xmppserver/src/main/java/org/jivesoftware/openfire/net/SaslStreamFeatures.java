@@ -27,6 +27,7 @@ import org.jivesoftware.openfire.sasl.SaslMechanismEligibility;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
+import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -173,8 +174,12 @@ public class SaslStreamFeatures
         if ( usingSASL2 )
         {
             Element inlineElement = result.addElement("inline");
+
+            if (StreamManager.isStreamManagementActive()) {
+                inlineElement.add(StreamManager.sasl2InlineFeatureElement());
+            }
             inlineElement.add(Bind2Request.featureElement());
-            // Element sm = inlineElement.addElement(...);
+
             if (FastTokenManager.ENABLE_FAST.getValue()) {
                 final Set<String> fastMechanisms = advertisableMechanismNames.stream()
                     .filter(MechanismName::isFast).collect(Collectors.toSet());

@@ -25,6 +25,7 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.net.Bind2Request;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;
@@ -167,6 +168,8 @@ public class StreamManager {
     /**
      * Processes a stream management element.
      *
+     * Inline resume requests, nested in a SASL2 <authenticate/> element, are not processed here; see processSasl2Resume(ResumeRequest)
+     *
      * @param element The stream management element to be processed.
      */
     public void process( Element element )
@@ -305,10 +308,11 @@ public class StreamManager {
     }
 
     /**
-     * Attempts to process (validate and perform) a {@code <resume/>} request, as defined by XEP-0198.
+     * Attempts to process (validate and perform) a traditional {@code <resume/>} request, as defined by XEP-0198.
      *
-     * This writes its response (either a stream error, or the effects of
-     * {@link LocalSession#reattach(LocalSession, long)}) directly to the connection.
+     * Unlike {@link #processSasl2Resume(ResumeRequest)}, this writes its response (either a stream error, or the
+     * effects of {@link LocalSession#reattach(LocalSession, long)}) directly to the connection, rather than
+     * returning a result to the caller.
      *
      * @param request the parsed resume request (cannot be null).
      */
@@ -334,6 +338,49 @@ public class StreamManager {
     }
 
     /**
+     * Attempts to process (validate and perform) an inline SASL2 (XEP-0388) resume request, as defined by XEP-0198
+     * § 9.2 ("Inline Stream Resumption").
+     *
+     * Unlike {@link #processResume(ResumeRequest)}, this does not write its response to the connection. Instead, the
+     * outcome is returned as a {@link Sasl2ResumeResult}, for the caller to embed in the SASL2 {@code <success/>}
+     * response that it is constructing.
+     *
+     * This method is invoked on the stream manager of the temporary session that is negotiating the SASL2
+     * authentication. On success, the connection has been transferred to the resumed session, which is the session
+     * that the {@code <success/>} must be delivered to. Having delivered it, the caller completes the resumption by
+     * invoking {@link LocalSession#completeSasl2Resume(long)} on that session: everything it delivers must follow the
+     * resumption confirmation on the wire, which is why it cannot be done here.
+     *
+     * On failure, no state is changed: the temporary session remains usable, and the caller is expected to proceed
+     * with resource binding, reporting the returned {@code <failed/>} element alongside the outcome of that bind.
+     *
+     * @param request the parsed inline resume request (cannot be null).
+     * @return the outcome of the resume attempt.
+     */
+    @Nonnull
+    public Sasl2ResumeResult processSasl2Resume(@Nonnull final ResumeRequest request)
+    {
+        final ResumeRequestValidationResult validation = validateResumeRequest(request);
+        if (!validation.isSuccess()) {
+            assert validation.getFailureCondition() != null; // Per definition of the method contract.
+            // Note: deliberately no side effects on this (temporary) session's stream management state. Unlike the
+            // traditional flow, a failed inline resume does not abandon the stream: the client proceeds to Bind2,
+            // possibly inlining an <enable/> of its own (XEP-0198 § 9.2.1).
+            return Sasl2ResumeResult.failure(buildFailedElement(request.getNamespace(), validation.getFailureCondition()));
+        }
+
+        final LocalClientSession otherSession = validation.getTarget();
+        assert otherSession != null; // Per definition of the method contract.
+        detachIfNeeded(otherSession);
+
+        Log.debug("Attaching to other session '{}' via inline SASL2 resume.", otherSession.getStreamID());
+        otherSession.reattachForSasl2(session);
+
+        final Element resumed = otherSession.getStreamManager().buildResumedElement();
+        return Sasl2ResumeResult.success(resumed, otherSession);
+    }
+
+    /**
      * Detaches the connection of a to-be-resumed session, unless it is already detached.
      *
      * @param otherSession the pre-existing session that is about to be resumed.
@@ -350,8 +397,10 @@ public class StreamManager {
     }
 
     /**
-     * Validates a stream resumption request, without performing any of the state changes
-     * (detaching/reattaching) that are needed to actually resume the session.
+     * Validates a stream resumption request (traditional or inline SASL2), without performing any of the state
+     * changes (detaching/reattaching) needed to actually resume the session. This is shared by {@link #processResume(ResumeRequest)}
+     * and {@link #processSasl2Resume(ResumeRequest)}, so that the two flows agree on what is (and is not) an
+     * acceptable resumption attempt.
      *
      * @param request the parsed resume request (cannot be null).
      * @return the outcome of the validation.
@@ -837,5 +886,19 @@ public class StreamManager {
     public void removeTerminationDelegate(@Nonnull final TerminationDelegate delegate)
     {
         terminationDelegates.remove(delegate);
+    }
+
+    /**
+     * Returns the element that advertises support for inline stream resumption in the {@code <inline/>} element of
+     * the SASL2 stream feature, as defined in XEP-0198 § 9.2.
+     *
+     * Note that this is distinct from the Bind2 inline feature (XEP-0198 § 9.1) that allows a client to enable
+     * stream management as part of a resource bind: that one is advertised through {@link Bind2Request#featureElement()}.
+     *
+     * @return the {@code <sm/>} feature element.
+     */
+    @Nonnull
+    public static Element sasl2InlineFeatureElement() {
+        return DocumentHelper.createElement(QName.get("sm", NAMESPACE_V3));
     }
 }

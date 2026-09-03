@@ -93,6 +93,13 @@ public abstract class StanzaHandler {
     protected boolean usingSASL2 = false;
 
     /**
+     * Flag that indicates that SASL2 authentication succeeded by inline-resuming a pre-existing session (XEP-0198
+     * § 9.2), rather than by binding a (new or Bind2) resource. When set, {@link #sasl2Successful()} must not
+     * (re)send post-authentication stream features, per XEP-0198 § 9.2.
+     */
+    protected boolean sasl2SessionResumed = false;
+
+    /**
      * SASL status based on the last SASL interaction
      */
     protected SASLAuthentication.Status saslStatus;
@@ -243,7 +250,11 @@ public abstract class StanzaHandler {
             // User is trying to authenticate using SASL2.
             startedSASL = true;
             usingSASL2 = true;
-            saslStatus = SASLAuthentication.handle(session, doc, usingSASL2);
+            // An inline XEP-0198 resumption transfers the connection to the resumed session, which (through
+            // Connection#reinit) replaces this handler's 'session' field before handle() returns. Retain the session
+            // that is negotiating the authentication, as that is where the outcome of the negotiation is recorded.
+            final LocalSession authenticatingSession = session;
+            saslStatus = SASLAuthentication.handle(authenticatingSession, doc, usingSASL2);
             if (saslStatus == SASLAuthentication.Status.authenticated && usingSASL2) {
                 // No Bind2: send features synchronously now.
                 startedSASL = false; // Without a multi-step SASL mechanism, this can be reset here immediately, rather than in initiateSession (as SASL1 does).
@@ -251,12 +262,19 @@ public abstract class StanzaHandler {
             } else if (saslStatus == SASLAuthentication.Status.authenticatedAwaitingFeatures) {
                 // Bind2: <success/> and features are delivered asynchronously by SASLAuthentication.
                 startedSASL = false;
+            } else if (saslStatus == SASLAuthentication.Status.authenticatedResumed) {
+                // Inline XEP-0198 resume: <success/> (with <resumed/>) was already delivered, over the resumed
+                // session, by SASLAuthentication. Adopt that session and suppress stream features (XEP-0198 § 9.2).
+                startedSASL = false;
+                adoptSasl2ResumedSession(authenticatingSession);
             }
             // If authenticatedAwaitingFeatures, <success/> and features are delivered asynchronously
             // by SASLAuthentication once Bind2 resource binding completes.
         } else if (startedSASL && ("response".equals(tag) || "abort".equals(tag))) {
             // User is responding to SASL challenge. Process response
-            saslStatus = SASLAuthentication.handle(session, doc, usingSASL2);
+            // See the 'authenticate' branch: an inline XEP-0198 resumption can replace this handler's session.
+            final LocalSession authenticatingSession = session;
+            saslStatus = SASLAuthentication.handle(authenticatingSession, doc, usingSASL2);
             if (saslStatus == SASLAuthentication.Status.failed) {
                 startedSASL = false;
                 usingSASL2 = false;
@@ -267,6 +285,11 @@ public abstract class StanzaHandler {
             } else if (saslStatus == SASLAuthentication.Status.authenticatedAwaitingFeatures) {
                 // Bind2: <success/> and features are delivered asynchronously by SASLAuthentication.
                 startedSASL = false;
+            } else if (saslStatus == SASLAuthentication.Status.authenticatedResumed) {
+                // Inline XEP-0198 resume: <success/> (with <resumed/>) was already delivered, over the resumed
+                // session, by SASLAuthentication. Adopt that session and suppress stream features (XEP-0198 § 9.2).
+                startedSASL = false;
+                adoptSasl2ResumedSession(authenticatingSession);
             }
             // If authenticatedAwaitingFeatures, <success/> and features are delivered asynchronously
             // by SASLAuthentication once Bind2 resource binding completes.
@@ -581,9 +604,15 @@ public abstract class StanzaHandler {
 
     /**
      * Emits post-authentication stream features for SASL2 (XEP-0388), which does NOT restart the stream.
+     *
+     * When the SASL2 authentication succeeded by inline-resuming a pre-existing session (XEP-0198 § 9.2), features
+     * are deliberately not (re)sent: the resumed stream is considered re-established immediately after the
+     * {@code <success/>} element, and XEP-0198 § 9.2 mandates that stream features MUST NOT be sent in this case.
      */
     protected void sasl2Successful() {
-        deliverSasl2Features();
+        if (!sasl2SessionResumed) {
+            deliverSasl2Features();
+        }
     }
 
     /**
@@ -593,6 +622,37 @@ public abstract class StanzaHandler {
     protected void deliverSasl2Features() {
         final Element features = generateFeatures();
         connection.deliverRawText(features.asXML());
+    }
+
+    /**
+     * Adopts the pre-existing session that a SASL2 authentication resumed inline (XEP-0198 § 9.2), replacing the
+     * temporary session that was negotiating the SASL2 authentication.
+     *
+     * The {@code <success/>} response (including the {@code <resumed/>} element) has already been delivered, over
+     * the resumed session, by {@link SASLAuthentication}, and XEP-0198 § 9.2 forbids sending stream features after
+     * it. This method therefore only switches this handler over to the resumed session; no features are sent. The
+     * {@link #sasl2SessionResumed} flag it sets guards {@link #sasl2Successful()} against a future caller that
+     * would.
+     *
+     * Note that transferring the connection re-initializes it for its new owner, which on some transports already
+     * replaces this handler's session. The switch is performed here regardless, so that this does not depend on the
+     * transport. For the same reason, the session that negotiated the authentication (which holds the outcome of
+     * that negotiation) must be provided by the caller, rather than read from {@link #session}.
+     *
+     * @param authenticatingSession the session that negotiated the SASL2 authentication (cannot be null).
+     */
+    protected void adoptSasl2ResumedSession(final LocalSession authenticatingSession) {
+        final Object data = authenticatingSession.removeSessionData(SASLAuthentication.SASL2_RESUMED_SESSION);
+        if (!(data instanceof LocalSession resumedSession)) {
+            // Unreachable in practice: SASLAuthentication only reports 'authenticatedResumed' after having stored the
+            // resumed session under this key. If it does happen, the client has already been told that its stream was
+            // resumed, over a connection that this handler can no longer serve. There is nothing to do but disconnect.
+            Log.error("Expected a resumed session to be available in session data under key '{}', but found: {}. Closing the connection.", SASLAuthentication.SASL2_RESUMED_SESSION, data);
+            connection.close(new StreamError(StreamError.Condition.internal_server_error, "Unable to complete inline stream resumption."));
+            return;
+        }
+        this.session = resumedSession;
+        sasl2SessionResumed = true;
     }
 
     /**

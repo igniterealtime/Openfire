@@ -31,6 +31,7 @@ import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.channelbinding.ChannelBindingProviderManager;
 import org.junit.jupiter.api.AfterAll;
@@ -80,6 +81,7 @@ public class SaslStreamFeaturesTest
     @AfterAll
     public static void tearDownClass()
     {
+        StreamManager.ACTIVE.setValue(StreamManager.ACTIVE.getDefaultValue());
         Fixtures.clearExistingProperties();
     }
 
@@ -557,6 +559,88 @@ public class SaslStreamFeaturesTest
         SaslStreamFeatures.appendSASLFeatures(session, new ArrayList<>());
 
         assertEquals(Set.of(), FastSessionState.getAdvertisedMechanisms(session).orElseThrow());
+    }
+
+    // -------------------------------------------------------------------------
+    // Stream management / XEP-0198 inline feature
+    // -------------------------------------------------------------------------
+
+    /**
+     * Verifies that the SASL2 inline feature list advertises support for inline stream resumption, as required by
+     * XEP-0198 § 9.2, when stream management is active.
+     */
+    @Test
+    public void testSasl2InlineAdvertisesStreamResumption() throws Exception
+    {
+        // Setup test fixture.
+        StreamManager.ACTIVE.setValue(true);
+
+        // Execute system under test.
+        final Element result = SaslStreamFeatures.asSASLMechanismsElementForClientSessions(Set.of("SCRAM-SHA-1"), true);
+
+        // Verify result.
+        assertNotNull(result, "Expected a SASL2 'authentication' element to be generated.");
+        final Element inline = result.element("inline");
+        assertNotNull(inline, "Expected the SASL2 'authentication' element to contain an 'inline' element.");
+        assertNotNull(inline.element(QName.get("sm", StreamManager.NAMESPACE_V3)), "Expected the SASL2 inline feature list to advertise inline stream resumption.");
+    }
+
+    /**
+     * Verifies that the SASL2 inline feature list does not advertise inline stream resumption when stream management
+     * is not active, while continuing to advertise Bind2.
+     */
+    @Test
+    public void testSasl2InlineDoesNotAdvertiseStreamResumptionWhenInactive() throws Exception
+    {
+        // Setup test fixture.
+        StreamManager.ACTIVE.setValue(false);
+
+        // Execute system under test.
+        final Element result = SaslStreamFeatures.asSASLMechanismsElementForClientSessions(Set.of("SCRAM-SHA-1"), true);
+
+        // Verify result.
+        assertNotNull(result, "Expected a SASL2 'authentication' element to be generated.");
+        final Element inline = result.element("inline");
+        assertNotNull(inline, "Expected the SASL2 'authentication' element to contain an 'inline' element.");
+        assertNull(inline.element(QName.get("sm", StreamManager.NAMESPACE_V3)), "Expected the SASL2 inline feature list to not advertise inline stream resumption while stream management is inactive.");
+        assertNotNull(inline.element("bind"), "Expected the SASL2 inline feature list to advertise Bind2 regardless of the stream management configuration.");
+    }
+
+    /**
+     * Verifies that the advertisement of inline stream resumption (XEP-0198 § 9.2) is a direct child of the SASL2
+     * {@code <inline/>} element, and is not confused with the distinct Bind2 inline feature (XEP-0198 § 9.1) that
+     * allows stream management to be enabled as part of a resource bind.
+     */
+    @Test
+    public void testSasl2InlineStreamResumptionIsNotNestedInBind2() throws Exception
+    {
+        // Setup test fixture.
+        StreamManager.ACTIVE.setValue(true);
+
+        // Execute system under test.
+        final Element result = SaslStreamFeatures.asSASLMechanismsElementForClientSessions(Set.of("SCRAM-SHA-1"), true);
+
+        // Verify result.
+        final Element bind = result.element("inline").element("bind");
+        assertNotNull(bind, "Expected the SASL2 inline feature list to advertise Bind2.");
+        assertNull(bind.element("sm"), "Expected the Bind2 inline feature list to advertise stream management as a 'feature' element, rather than as an 'sm' element.");
+    }
+
+    /**
+     * Verifies that no {@code <inline/>} element is generated for SASL1 (RFC 6120), for which it is not defined.
+     */
+    @Test
+    public void testSasl1HasNoInlineElement() throws Exception
+    {
+        // Setup test fixture.
+        StreamManager.ACTIVE.setValue(true);
+
+        // Execute system under test.
+        final Element result = SaslStreamFeatures.asSASLMechanismsElementForClientSessions(Set.of("SCRAM-SHA-1"), false);
+
+        // Verify result.
+        assertNotNull(result, "Expected a SASL1 'mechanisms' element to be generated.");
+        assertNull(result.element("inline"), "Expected no 'inline' element to be generated for SASL1.");
     }
 
     // -------------------------------------------------------------------------

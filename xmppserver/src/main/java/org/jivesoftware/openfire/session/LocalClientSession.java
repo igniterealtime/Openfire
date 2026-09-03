@@ -755,9 +755,10 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         }
     }
 
-    public void reattach(LocalSession connectionProvider, long h)
+    @Override
+    protected void onReattached()
     {
-        super.reattach(connectionProvider, h);
+        super.onReattached();
 
         // XEP-0352: "After a previous stream was resumed using mechanisms like Stream Management (XEP-0198), the CSI
         // state is not restored. That is, stream resumption does not affect the current CSI state, which always

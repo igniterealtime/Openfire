@@ -698,15 +698,48 @@ public class StreamManager {
 
     public void onResume(JID serverAddress, long h) {
         Log.debug("Agreeing to resume");
-        Element resumed = new DOMElement(QName.get("resumed", namespace));
-        resumed.addAttribute("previd", Base64.getEncoder().encodeToString((session.getAddress().getResource() + "\0" + session.getStreamID().getID()).getBytes(StandardCharsets.UTF_8)));
-        resumed.addAttribute("h", Long.toString(serverProcessedStanzas.get()));
+        final Element resumed = buildResumedElement();
         final Connection connection = session.getConnection();
         assert connection != null; // While the client is resuming a session, the connection on which the session is resumed can't be null.
         connection.deliverRawText(resumed.asXML());
+        redeliverUnackedStanzas(serverAddress, h);
+    }
+
+    /**
+     * Constructs the XEP-0198 {@code <resumed/>} element for this session's stream manager, without delivering it.
+     *
+     * This is used by the traditional resume flow (through {@link #onResume(JID, long)}, which sends it directly),
+     * as well as by the inline SASL2 resume flow, which instead needs to embed the element in a SASL2
+     * {@code <success/>} response, rather than write it to the connection itself.
+     *
+     * @return the {@code <resumed/>} element.
+     */
+    @Nonnull
+    Element buildResumedElement() {
+        final Element resumed = new DOMElement(QName.get("resumed", namespace));
+        resumed.addAttribute("previd", Base64.getEncoder().encodeToString((session.getAddress().getResource() + "\0" + session.getStreamID().getID()).getBytes(StandardCharsets.UTF_8)));
+        resumed.addAttribute("h", Long.toString(serverProcessedStanzas.get()));
+        return resumed;
+    }
+
+    /**
+     * Processes the client's acknowledgement of 'h' as reported in its (traditional or inline SASL2) resume request,
+     * and retransmits any stanzas that remain unacknowledged after that.
+     *
+     * This is the second half of what {@link #onResume(JID, long)} does for the traditional resume flow. It is
+     * split out so that the inline SASL2 resume flow can defer this until after it has delivered its own response
+     * (typically, the SASL2 {@code <success/>} that embeds the {@code <resumed/>} element built by
+     * {@link #buildResumedElement()}), handled by {@link LocalSession#completeSasl2Resume(long)}.
+     *
+     * @param serverAddress this server's bare-domain address, used to stamp delay information on redelivered stanzas.
+     * @param h the sequence number of the last handled stanza, as reported by the client that is resuming.
+     */
+    public void redeliverUnackedStanzas(@Nonnull final JID serverAddress, final long h) {
         Log.debug("Resuming session: Ack for {}", h);
         processClientAcknowledgement(h);
         Log.debug("Processing remaining unacked stanzas");
+        final Connection connection = session.getConnection();
+        assert connection != null; // While the client is resuming a session, the connection on which the session is resumed can't be null.
         // Re-deliver unacknowledged stanzas from broken stream (XEP-0198)
         synchronized (this) {
             if(isEnabled()) {

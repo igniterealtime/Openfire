@@ -38,6 +38,9 @@ import org.jivesoftware.openfire.sasl.SaslMechanismCatalog;
 import org.jivesoftware.openfire.sasl.SaslMechanismEligibility;
 import org.jivesoftware.openfire.sasl.ScramSaslServer;
 import org.jivesoftware.openfire.session.*;
+import org.jivesoftware.openfire.streammanagement.MalformedResumeRequestException;
+import org.jivesoftware.openfire.streammanagement.ResumeRequest;
+import org.jivesoftware.openfire.streammanagement.Sasl2ResumeResult;
 import org.jivesoftware.util.CertificateManager;
 import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
@@ -46,6 +49,7 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.StreamError;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.security.sasl.Sasl;
 import javax.security.sasl.SaslException;
 import javax.security.sasl.SaslServer;
@@ -217,6 +221,23 @@ public class SASLAuthentication {
     public static final String AVAILABLE_CHANNEL_BINDING_TYPES_FOR_SESSION = "ChannelBindingTypesOfferedByServer";
 
     /**
+     * Session Data property name used, on the temporary session that is negotiating a SASL2 authentication, to hand
+     * off the pre-existing session that was resumed inline (XEP-0198 § 9.2) to the caller of {@link #handle(LocalSession, Element, boolean)}.
+     *
+     * The resumed session itself cannot be represented in {@link Status}, so this session data, together with
+     * {@link Status#authenticatedResumed}, is used instead to communicate the outcome. A caller (typically
+     * {@code StanzaHandler}) is expected to switch to using the referenced session, and to remove this session data.
+     */
+    public static final String SASL2_RESUMED_SESSION = "Sasl2.resumed-session";
+
+    /**
+     * Session Data property name used to store a parsed inline XEP-0198 resume request (see
+     * {@link ResumeRequest}), between the moment it is parsed from the SASL2 {@code <authenticate/>} element
+     * and the moment SASL authentication succeeds and the request can be acted on.
+     */
+    private static final String SASL2_RESUME_REQUEST = "Sasl2.resume-request";
+
+    /**
      * Controls whether the SCRAM mechanisms that are advertised to a client are tailored to the user that is expected
      * to authenticate.
      *
@@ -299,7 +320,15 @@ public class SASLAuthentication {
          * delivered asynchronously (e.g. when Bind2 resource binding completes). The caller must not
          * send stream features itself.
          */
-        authenticatedAwaitingFeatures
+        authenticatedAwaitingFeatures,
+
+        /**
+         * SASL2 negotiation has been successful by inline-resuming a pre-existing session (XEP-0198 § 9.2). The
+         * {@code <success/>} response (including the {@code <resumed/>} element) has already been delivered, over
+         * the resumed session, by {@link SASLAuthentication}. The caller must adopt the session referenced by
+         * {@link #SASL2_RESUMED_SESSION} session data, and must NOT send stream features, per XEP-0198 § 9.2.
+         */
+        authenticatedResumed
     }
 
     /**
@@ -554,6 +583,7 @@ public class SASLAuthentication {
                     // Clear any unexecuted bind2-request
                     session.removeSessionData("bind2-request");
                     session.removeSessionData("user-agent-info");
+                    session.removeSessionData(SASL2_RESUME_REQUEST);
                     FastSessionState.clearRequest(session);
                     if (usingSASL2 && session instanceof LocalClientSession clientSession) {
                         UserAgentInfo userAgentInfo = null;
@@ -565,14 +595,28 @@ public class SASLAuthentication {
                                 session.setSessionData("user-agent-info", userAgentInfo);
                             }
                         }
-                        Bind2Request bind2Request = Bind2Request.from(doc);
-                        if (bind2Request != null) {
-                            session.setSessionData("bind2-request", bind2Request);
-                        }
-                        final FastRequest fastRequest = FastRequest.from(doc, mechanismName,
-                            userAgentInfo == null ? null : userAgentInfo.getId(), clientSession);
+
+                        // XEP-0484 § 3.1 & § 3.2: one of several requests related to Fast Authentication Streamlining Tokens.
+                        final FastRequest fastRequest = FastRequest.from(doc, mechanismName, userAgentInfo == null ? null : userAgentInfo.getId(), clientSession);
                         if (fastRequest != null) {
                             fastRequest.applyTo(session);
+                        }
+
+                        // XEP-0198 § 9.2: an inline stream resumption request.
+                        final ResumeRequest resumeRequest;
+                        try {
+                            resumeRequest = ResumeRequest.fromSasl2Authenticate(doc);
+                        } catch (final MalformedResumeRequestException e) {
+                            throw new SaslFailureException(Failure.MALFORMED_REQUEST, e.getMessage());
+                        }
+                        if (resumeRequest != null) {
+                            session.setSessionData(SASL2_RESUME_REQUEST, resumeRequest);
+                        }
+
+                        // XEP-0386 § 3.2: a resource binding request.
+                        final Bind2Request bind2Request = Bind2Request.from(doc);
+                        if (bind2Request != null) {
+                            session.setSessionData("bind2-request", bind2Request);
                         }
                     }
 
@@ -624,6 +668,12 @@ public class SASLAuthentication {
                     session.setSessionData("SaslMechanism", saslServer.getMechanismName());
                     if (MechanismName.requiresChannelBinding(saslServer.getMechanismName())) {
                         session.setSessionData("ChannelBindingType", saslServer.getNegotiatedProperty(ScramSaslServer.PROPNAME_CHANNELBINDINGTYPE));
+                    }
+                    if (usingSASL2 && session.getSessionData(SASL2_RESUMED_SESSION) != null) {
+                        // XEP-0198 § 9.2: the session was resumed inline. The <success/> (with <resumed/>) has
+                        // already been delivered, over the resumed session, by authenticationSuccessful(). The
+                        // caller must adopt that session and must not send stream features.
+                        return Status.authenticatedResumed;
                     }
                     return hasBind2Request ? Status.authenticatedAwaitingFeatures : Status.authenticated;
 
@@ -774,93 +824,156 @@ public class SASLAuthentication {
             authorizationIdentity = username;
         }
 
-        if (usingSASL2) {
-            if (session instanceof LocalClientSession clientSession) {
-                // XEP-0484: determine if a FAST token should be issued.
-                // A token is issued when:
-                //   (a) the client included <request-token> with a valid mechanism, OR
-                //   (b) this was a FAST authentication and invalidate was NOT requested (token rotation).
-                // If invalidate=true was requested, delete the existing token and do not rotate.
-                final boolean fastInvalidate = FastSessionState.isInvalidateRequested(session);
-                final String fastRequestedMechanism = FastSessionState.getRequestedMechanism(session);
-                final boolean isFastAuth = MechanismName.isFast(mechanismName);
-                final String authenticatedClientId = FastSessionState.getAuthenticatedClientId(session);
-                final String requestingClientId = FastSessionState.getClientId(session);
+        if (!usingSASL2) {
+            Log.debug("Sending SASL success response for user '{}'.", username);
+            SaslOutcome.sendSuccess(session, successData);
+            return;
+        }
 
-                FastToken fastToken = null;
-                if (fastInvalidate) {
-                    // Client requested token invalidation: delete the token used for this auth, do not rotate.
-                    if (username != null) {
-                        if (isFastAuth && authenticatedClientId != null) {
-                            FastTokenManager.invalidateToken(username, mechanismName, authenticatedClientId);
-                            Log.debug("FAST token invalidated for user '{}' per client request.", username);
-                        }
+        // The remainder of this method is specific to SASL2.
+        Log.debug("Processing SASL2 request for user '{}'.", username);
+        if (session instanceof LocalClientSession clientSession) {
+            // XEP-0484: determine if a FAST token should be issued.
+            // A token is issued when:
+            //   (a) the client included <request-token> with a valid mechanism, OR
+            //   (b) this was a FAST authentication and invalidate was NOT requested (token rotation).
+            // If invalidate=true was requested, delete the existing token and do not rotate.
+            final boolean fastInvalidate = FastSessionState.isInvalidateRequested(session);
+            final String fastRequestedMechanism = FastSessionState.getRequestedMechanism(session);
+            final boolean isFastAuth = MechanismName.isFast(mechanismName);
+            final String authenticatedClientId = FastSessionState.getAuthenticatedClientId(session);
+            final String requestingClientId = FastSessionState.getClientId(session);
+
+            FastToken fastToken = null;
+            if (fastInvalidate) {
+                // Client requested token invalidation: delete the token used for this auth, do not rotate.
+                if (username != null) {
+                    if (isFastAuth && authenticatedClientId != null) {
+                        FastTokenManager.invalidateToken(username, mechanismName, authenticatedClientId);
+                        Log.debug("FAST token invalidated for user '{}' per client request.", username);
                     }
-                    // Still issue a new token if the client also sent <request-token>.
-                    if (fastRequestedMechanism != null && username != null) {
-                        fastToken = issueFastToken(username, requestingClientId, fastRequestedMechanism);
-                        Log.debug("FAST token (re-)issued for user '{}' mechanism '{}' after invalidation+request.", username, fastRequestedMechanism);
-                    }
-                } else if (fastRequestedMechanism != null && username != null) {
-                    // Client requested a new FAST token (e.g. during initial password auth).
-                    fastToken = issueFastToken(username, requestingClientId, fastRequestedMechanism);
-                    Log.debug("FAST token issued for user '{}' mechanism '{}'.", username, fastRequestedMechanism);
-                } else if (isFastAuth && username != null) {
-                    // FAST authentication: the SaslServer already rotated the token internally;
-                    // retrieve the new token from the SaslServer's rotatedToken field if accessible,
-                    // or issue a fresh token here for inclusion in the <success/>.
-                    // The rotated token is stored by HtSaslServer/Ht2SaslServer via AbstractHtSaslServer.
-                    // We expose it via the "RotatedToken" session data key set by AbstractHtSaslServer.
-                    fastToken = FastSessionState.getRotatedToken(session);
                 }
-                FastSessionState.clearAuthenticationAttempt(session);
+                // Still issue a new token if the client also sent <request-token>.
+                if (fastRequestedMechanism != null && username != null) {
+                    fastToken = issueFastToken(username, requestingClientId, fastRequestedMechanism);
+                    Log.debug("FAST token (re-)issued for user '{}' mechanism '{}' after invalidation+request.", username, fastRequestedMechanism);
+                }
+            } else if (fastRequestedMechanism != null && username != null) {
+                // Client requested a new FAST token (e.g. during initial password auth).
+                fastToken = issueFastToken(username, requestingClientId, fastRequestedMechanism);
+                Log.debug("FAST token issued for user '{}' mechanism '{}'.", username, fastRequestedMechanism);
+            } else if (isFastAuth && username != null) {
+                // FAST authentication: the SaslServer already rotated the token internally;
+                // retrieve the new token from the SaslServer's rotatedToken field if accessible,
+                // or issue a fresh token here for inclusion in the <success/>.
+                // The rotated token is stored by HtSaslServer/Ht2SaslServer via AbstractHtSaslServer.
+                // We expose it via the "RotatedToken" session data key set by AbstractHtSaslServer.
+                fastToken = FastSessionState.getRotatedToken(session);
+                Log.debug("FAST token rotated for user '{}'.", username);
+            }
+            FastSessionState.clearAuthenticationAttempt(session);
+            final FastToken finalFastToken = fastToken;
 
-                final FastToken finalFastToken = fastToken;
-                final Bind2Request bind2Request = (Bind2Request) session.getSessionData("bind2-request");
-                if (bind2Request != null && clientSession.getStatus() != Session.Status.AUTHENTICATED) {
-                    clientSession.removeSessionData("bind2-request");
-                    final UserAgentInfo userAgentInfo = (UserAgentInfo) session.getSessionData("user-agent-info");
-                    final String resource = bind2Request.generateResourceString(userAgentInfo);
-                    final JID preBindAddress = clientSession.getAddress();
+            // SASL authentication has completed, but resource binding has not (yet). This one-argument form
+            // records the identity without transitioning the session to AUTHENTICATED, which is exactly the state
+            // that inline XEP-0198 resumption (below) and StreamManager#allowResume() require.
+            clientSession.setAuthToken(clientAuthToken);
 
-                    if (clientAuthToken.isAnonymous()) {
-                        // An anonymous session needs no conflict resolution: its node-part and resource are both the session's
-                        // own generated identifier, so no other session can hold the same full JID. SessionManager#bindResource
-                        // documents this and dereferences the (null) username, so it must not be used here. Note that this
-                        // discards the resource that Bind2 generated; XEP-0386 leaves the assigned resource to the server.
-                        clientSession.setAnonymousAuth();
-                        final JID bound = clientSession.getAddress();
-                        completeSasl2Bind2(clientSession, bind2Request, successData, finalFastToken, bound.toBareJID(), bound.getResource(), preBindAddress);
-                    } else {
-                        // A non-anonymous session performs regular resource binding.
-                        final String bareJid = new JID(clientAuthToken.getUsername(), XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null, true).toString();
-                        SessionManager.getInstance().bindResource(clientSession, clientAuthToken, resource)
-                            .whenComplete((result, throwable) -> {
-                                if (throwable != null) {
-                                    Log.warn("An exception occurred while binding resource '{}' for session '{}' during SASL2+Bind2 authentication.", resource, clientSession, throwable);
-                                }
-                                if (throwable != null || result != SessionManager.BindResult.BOUND) {
-                                    Log.warn("Unable to bind resource '{}' for session '{}' during SASL2+Bind2 authentication. Bind result: {}", resource, clientSession, result);
-                                    abortSasl2(clientSession, Failure.TEMPORARY_AUTH_FAILURE);
-                                    return;
-                                }
-                                clientSession.setAuthToken(clientAuthToken);
-                                completeSasl2Bind2(clientSession, bind2Request, successData, finalFastToken, bareJid, resource, preBindAddress);
-                            });
+            // XEP-0198 § 9.2: an inline resume request, if present, must be processed before any Bind2 request.
+            Element resumeFailedElement = null;
+            final ResumeRequest resumeRequest = (ResumeRequest) session.removeSessionData(SASL2_RESUME_REQUEST);
+            if (resumeRequest != null) {
+                Log.debug("Processing inline resume request for user '{}'.", username);
+                final Sasl2ResumeResult resumeResult = clientSession.getStreamManager().processSasl2Resume(resumeRequest);
+                if (resumeResult.isSuccess()) {
+                    final LocalClientSession resumedSession = resumeResult.getResumedSession();
+                    assert resumedSession != null; // Per contract of Sasl2ResumeResult
+                    final JID resumedAddress = resumedSession.getAddress();
+                    final Element success = SaslOutcome.buildSasl2SuccessElement(successData, resumedAddress.toBareJID(), resumedAddress.getResource(), finalFastToken);
+                    success.add(resumeResult.getResultElement());
+
+                    // Signal to the caller (typically StanzaHandler) that it must adopt the resumed session, and
+                    // must not deliver a fresh set of post-authentication stream features (XEP-0198 § 9.2). This is
+                    // recorded before the response is delivered: the connection now belongs to the resumed session,
+                    // so the caller must adopt it even when delivering that response fails.
+                    session.setSessionData(SASL2_RESUMED_SESSION, resumedSession);
+
+                    // The connection has already been transferred to the resumed session (by processSasl2Resume(),
+                    // through StreamManager and LocalSession#reattachForSasl2()). It must be delivered to, and only
+                    // to, that session; the temporary session is being discarded.
+                    try {
+                        resumedSession.deliverRawText(success.asXML());
+                        resumedSession.completeSasl2Resume(resumeRequest.getH());
+                    } catch (final Exception e) {
+                        // The connection is no longer the temporary session's to fail on: a SASL failure cannot be
+                        // reported over it, and the resumed session cannot be left half-resumed. Close it instead.
+                        Log.warn("An exception occurred while completing an inline stream resumption for user '{}'. Closing the resumed session.", username, e);
+                        resumedSession.close(new StreamError(StreamError.Condition.internal_server_error, "An error occurred while resuming the stream."));
                     }
+
+                    // If resumption succeeds, resource binding (and any inlined Bind2 request) is skipped entirely: a
+                    // resumed session already has a resource bound.
+                    Log.debug("Inline resume request for user '{}' processed successfully.", username);
+                    if (session.getSessionData("bind2-request") != null) {
+                        Log.debug("Inline resume for user '{}' succeeded; ignoring the inlined bind2 request per XEP-0198 §9.2.", username);
+                    }
+                    return;
+                }
+                // Resumption failed: fall through to the normal Bind2 (or plain) success flow below, embedding
+                // the <failed/> element in the response, as required by XEP-0198 § 9.2.1.
+                Log.debug("Inline resume request for user '{}' failed.", username);
+                resumeFailedElement = resumeResult.getResultElement();
+            }
+            final Element finalResumeFailedElement = resumeFailedElement;
+
+            // Resumption was not requested or has failed: fall through to the normal Bind2 (or plain) success flow.
+            final Bind2Request bind2Request = (Bind2Request) session.getSessionData("bind2-request");
+            if (bind2Request != null && clientSession.getStatus() != Session.Status.AUTHENTICATED) {
+                Log.debug("Processing bind2 request for user '{}'.", username);
+                clientSession.removeSessionData("bind2-request");
+                final UserAgentInfo userAgentInfo = (UserAgentInfo) session.getSessionData("user-agent-info");
+                final String resource = bind2Request.generateResourceString(userAgentInfo);
+                final JID preBindAddress = clientSession.getAddress();
+
+                if (clientAuthToken.isAnonymous()) {
+                    // An anonymous session needs no conflict resolution: its node-part and resource are both the session's
+                    // own generated identifier, so no other session can hold the same full JID. SessionManager#bindResource
+                    // documents this and dereferences the (null) username, so it must not be used here. Note that this
+                    // discards the resource that Bind2 generated; XEP-0386 leaves the assigned resource to the server.
+                    clientSession.setAnonymousAuth();
+                    final JID bound = clientSession.getAddress();
+                    completeSasl2Bind2(clientSession, bind2Request, successData, finalFastToken, bound.toBareJID(), bound.getResource(), preBindAddress, finalResumeFailedElement);
+                    Log.debug("Bind2 request for anonymous user '{}' processed successfully.", username);
                 } else {
-                    // No Bind2 request, or session already authenticated: send <success/> synchronously without <bound/>.
-                    clientSession.setAuthToken(clientAuthToken);
-                    final Element success = SaslOutcome.buildSasl2SuccessElement(successData, authorizationIdentity, null, finalFastToken);
-                    session.deliverRawText(success.asXML());
+                    // A non-anonymous session performs regular resource binding.
+                    final String bareJid = new JID(clientAuthToken.getUsername(), XMPPServer.getInstance().getServerInfo().getXMPPDomain(), null, true).toString();
+                    SessionManager.getInstance().bindResource(clientSession, clientAuthToken, resource)
+                        .whenComplete((result, throwable) -> {
+                            if (throwable != null) {
+                                Log.warn("An exception occurred while binding resource '{}' for session '{}' during SASL2+Bind2 authentication.", resource, clientSession, throwable);
+                            }
+                            if (throwable != null || result != SessionManager.BindResult.BOUND) {
+                                Log.warn("Unable to bind resource '{}' for session '{}' during SASL2+Bind2 authentication. Bind result: {}", resource, clientSession, result);
+                                abortSasl2(clientSession, Failure.TEMPORARY_AUTH_FAILURE);
+                                return;
+                            }
+                            // bindResource() already installs the auth token (two-argument form, which also transitions the session to AUTHENTICATED); no need to set it again here.
+                            completeSasl2Bind2(clientSession, bind2Request, successData, finalFastToken, bareJid, resource, preBindAddress, finalResumeFailedElement);
+                            Log.debug("Bind2 request for user '{}' processed successfully.", username);
+                        });
                 }
             } else {
-                // Non-client session (e.g. server): send <success/> synchronously.
-                final Element success = SaslOutcome.buildSasl2SuccessElement(successData, authorizationIdentity, null, null);
+                Log.debug("No bind2 request, or session already authenticated for user '{}'; sending <success/> synchronously without <bound/>.", username);
+                final Element success = SaslOutcome.buildSasl2SuccessElement(successData, authorizationIdentity, null, finalFastToken);
+                if (finalResumeFailedElement != null) {
+                    success.add(finalResumeFailedElement);
+                }
                 session.deliverRawText(success.asXML());
             }
         } else {
-            SaslOutcome.sendSuccess(session, successData);
+            Log.debug("Non-client session (e.g. server) for user '{}'; sending <success/> synchronously.", username);
+            final Element success = SaslOutcome.buildSasl2SuccessElement(successData, authorizationIdentity, null, null);
+            session.deliverRawText(success.asXML());
         }
     }
 
@@ -883,6 +996,8 @@ public class SASLAuthentication {
         }
         session.removeSessionData("bind2-request");
         session.removeSessionData("user-agent-info");
+        session.removeSessionData(SASL2_RESUME_REQUEST);
+        session.removeSessionData(SASL2_RESUMED_SESSION);
         session.removeSessionData("SaslServer");
         FastSessionState.clearAuthenticationAttempt(session);
         SaslOutcome.authenticationFailed(session, failure, true);
@@ -903,6 +1018,8 @@ public class SASLAuthentication {
      * @param authorizationIdentity the bare JID authorization identity (e.g. user@domain or uuid@domain for anonymous).
      * @param resource the bound resource, or null if no resource was bound.
      * @param preBindAddress The session's address prior to the binding attempt. Must not be null.
+     * @param resumeFailedElement the {@code <failed/>} element from a failed inline XEP-0198 resume attempt that
+     *                            preceded this bind, or {@code null} if no resume was attempted.
      */
     private static void completeSasl2Bind2(@Nonnull final LocalClientSession clientSession,
                                            @Nonnull final Bind2Request bind2Request,
@@ -910,12 +1027,17 @@ public class SASLAuthentication {
                                            final FastToken fastToken,
                                            final String authorizationIdentity,
                                            final String resource,
-                                           @Nonnull final JID preBindAddress)
+                                           @Nonnull final JID preBindAddress,
+                                           @Nullable final Element resumeFailedElement)
     {
         boolean successDelivered = false;
         try
         {
             final Element success = SaslOutcome.buildSasl2SuccessElement(successData, authorizationIdentity, resource, fastToken);
+            if (resumeFailedElement != null) {
+                // XEP-0198 § 9.2.1: a failed inline resume is reported alongside (and before) <bound/>.
+                success.add(resumeFailedElement);
+            }
             bind2Request.processFeatureRequests(clientSession, success);
             clientSession.deliverRawText(success.asXML());
             successDelivered = true;

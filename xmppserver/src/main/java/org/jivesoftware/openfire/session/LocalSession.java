@@ -187,6 +187,53 @@ public abstract class LocalSession implements Session {
      * @param h the sequence number of the last handled stanza sent over the former stream
      */
     public void reattach(LocalSession connectionProvider, long h) {
+        reattachConnection(connectionProvider);
+        this.streamManager.onResume(new JID(null, this.serverName, null, true), h);
+        this.sessionManager.removeSession((LocalClientSession) connectionProvider);
+        onReattached();
+    }
+
+    /**
+     * Reattach the (existing) session to the connection provided by a new session, for an inline XEP-0198 resume
+     * request that is embedded in a SASL2 (XEP-0388) authentication exchange (see XEP-0198 § 9.2).
+     *
+     * This transfers the connection exactly as {@link #reattach(LocalSession, long)} does, but, unlike that method,
+     * does <em>not</em> complete the resumption: a SASL2 caller cannot have the stream manager write a
+     * {@code <resumed/>} directly to the connection, since that element needs to be embedded in the SASL2
+     * {@code <success/>} response that the caller is still constructing. Callers must invoke
+     * {@link #completeSasl2Resume(long)} after they have written that response.
+     *
+     * @param connectionProvider Session from which to obtain the connection from.
+     */
+    public void reattachForSasl2(LocalSession connectionProvider) {
+        reattachConnection(connectionProvider);
+        this.sessionManager.removeSession((LocalClientSession) connectionProvider);
+    }
+
+    /**
+     * Completes an inline SASL2 resumption, after the caller has delivered the SASL2 {@code <success/>} response
+     * carrying the {@code <resumed/>} element built by StreamManager#buildResumedElement().
+     *
+     * This performs the second half of what {@link StreamManager#onResume(JID, long)} does for the traditional flow:
+     * it processes the client's acknowledgement, retransmits anything still unacknowledged, and then invokes
+     * {@link #onReattached()}. It must not be invoked before the {@code <success/>} has been written: everything it
+     * delivers would otherwise precede the resumption confirmation on the wire.
+     *
+     * @param h the sequence number of the last handled stanza, as reported by the resuming client.
+     */
+    public void completeSasl2Resume(final long h) {
+        this.streamManager.redeliverUnackedStanzas(new JID(null, this.serverName, null, true), h);
+        onReattached();
+    }
+
+    /**
+     * Transfers the connection of connectionProvider to this session, closing any (stale) connection that this session
+     * might still have. Note that this does not invoke onReattached(): that is deferred until the resumption has been
+     * confirmed to the client (see reattach(LocalSession, long) and completeSasl2Resume(long)).
+     *
+     * @param connectionProvider Session from which to obtain the connection from.
+     */
+    private void reattachConnection(LocalSession connectionProvider) {
         lock.lock();
         try {
             Log.debug("Reattaching session with address {} and streamID {} using connection from session with address {} and streamID {}.", this.address, this.streamID, connectionProvider.getAddress(), connectionProvider.getStreamID());
@@ -196,13 +243,24 @@ public abstract class LocalSession implements Session {
             }
             this.conn = connectionProvider.releaseConnection();
             this.conn.reinit(this);
-        }finally {
+        } finally {
             lock.unlock();
         }
         this.status = Session.Status.AUTHENTICATED;
         this.sessionManager.removeDetached(this);
-        this.streamManager.onResume(new JID(null, this.serverName, null, true), h);
-        this.sessionManager.removeSession((LocalClientSession)connectionProvider);
+        Log.debug("Reattach complete for session with address {} and streamID {}: status={}, resumable={}, detached={}.", this.address, this.streamID, this.status, this.streamManager.getResume(), this.isDetached());
+    }
+
+    /**
+     * Hook invoked after this session's connection has been transferred from another session, either through
+     * {@link #reattach(LocalSession, long)} or {@link #completeSasl2Resume(long)}.
+     *
+     * This is invoked only after the resumption has been confirmed and unacknowledged stanzas retransmitted.
+     *
+     * The default implementation does nothing; subclasses can override this to restore state that a resumed stream is
+     * expected to reset.
+     */
+    protected void onReattached() {
     }
 
     /**

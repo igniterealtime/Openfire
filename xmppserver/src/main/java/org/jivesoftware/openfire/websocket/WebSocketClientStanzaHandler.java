@@ -207,7 +207,7 @@ public class WebSocketClientStanzaHandler extends ClientStanzaHandler
      * updated features, as their own RFC 7395 frame.
      */
     @Override
-    protected void sasl2Successful() {
+    protected void deliverSasl2Features() {
         sendStreamFeatures();
     }
 

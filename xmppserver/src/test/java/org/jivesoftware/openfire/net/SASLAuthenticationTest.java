@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.openfire.net;
 
+import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.fast.FastSessionState;
 import org.jivesoftware.openfire.fast.FastTokenManager;
 import org.jivesoftware.openfire.fast.FastToken;
@@ -24,8 +25,6 @@ import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.QName;
 import org.jivesoftware.Fixtures;
-import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.entitycaps.EntityCapabilitiesManager;
 import org.jivesoftware.openfire.sasl.Failure;
 import org.jivesoftware.openfire.sasl.SaslFailureException;
@@ -33,23 +32,27 @@ import org.jivesoftware.openfire.sasl.SaslMechanismCatalog;
 import org.jivesoftware.openfire.sasl.TestSaslMechanism;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
-import org.jivesoftware.openfire.StreamID;
-import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.ServerSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.openfire.streammanagement.ResumeRequest;
+import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.InOrder;
 import org.mockito.MockedStatic;
+import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Packet;
 
 import javax.security.sasl.SaslServer;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
@@ -1775,6 +1778,134 @@ public class SASLAuthenticationTest
     }
 
     /**
+     * Verifies that a successful inline XEP-0198 resume (XEP-0198 § 9.2) delivers {@code <success/>}, embedding
+     * {@code <resumed/>}, on the connection of the session that is negotiating the authentication - not on the
+     * pre-existing session's old connection, which by this point has already been superseded.
+     */
+    @Test
+    public void inlineResumeSuccessDeliversSuccessOnNewConnection() throws Exception
+    {
+        // Setup test fixture.
+        final Connection oldConnection = mock(Connection.class);
+        final LocalClientSession otherSession = new LocalClientSession(Fixtures.XMPP_DOMAIN, oldConnection, new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        final String previd = makeResumableSession(otherSession, "testuser", "test-resource");
+
+        final Connection newConnection = mock(Connection.class);
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, newConnection, new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        session.setSessionData("Sasl2.resume-request", resumeRequest(previd, 0));
+
+        // Execute system under test.
+        SASLAuthentication.authenticationSuccessful(session, "testuser", "PLAIN", new byte[0], true);
+
+        // Verify result.
+        // Note: completeSasl2Resume() also sends a trailing <r/> ack-request after retransmission, even with nothing
+        // to retransmit, so more than one deliverRawText call on newConnection is expected; only the first matters here.
+        final ArgumentCaptor<String> delivered = ArgumentCaptor.forClass(String.class);
+        verify(newConnection, atLeastOnce()).deliverRawText(delivered.capture());
+        final Element success = DocumentHelper.parseText(delivered.getAllValues().get(0)).getRootElement();
+        assertEquals("success", success.getName(), "Expected a successful resume to deliver <success/>.");
+        assertNotNull(success.element(QName.get("resumed", StreamManager.NAMESPACE_V3)), "Expected <success/> to embed <resumed/> for an inline resume, per XEP-0198 § 9.2.");
+        verify(oldConnection, never()).deliverRawText(any());
+    }
+
+    /**
+     * Verifies that when a client hedges by inlining both {@code <resume/>} and a Bind2 {@code <bind/>} request in
+     * the same {@code <authenticate/>} element, a successful resume causes the Bind2 request to be entirely ignored,
+     * as XEP-0198 § 9.2 requires: "the server MUST skip resource binding ... and MUST entirely ignore the
+     * {@code <bind/>} request".
+     */
+    @Test
+    public void inlineResumeSuccessSuppressesInlinedBind2() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession otherSession = new LocalClientSession(Fixtures.XMPP_DOMAIN, mock(Connection.class), new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        final String previd = makeResumableSession(otherSession, "testuser", "test-resource");
+
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, mock(Connection.class), new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        session.setSessionData("Sasl2.resume-request", resumeRequest(previd, 0));
+        final Bind2Request bind2Request = mock(Bind2Request.class);
+        session.setSessionData("bind2-request", bind2Request); // client hedged: sent <resume/> and <bind/> together
+
+        // Execute system under test.
+        SASLAuthentication.authenticationSuccessful(session, "testuser", "PLAIN", new byte[0], true);
+
+        // Verify result.
+        verify(bind2Request, never()).generateResourceString(any());
+        verify(bind2Request, never()).processFeatureRequests(any(), any());
+        verify(XMPPServer.getInstance().getSessionManager(), never()).bindResource(any(), any(), any());
+    }
+
+    /**
+     * Verifies that the resumption confirmation reaches the wire before any retransmission of stanzas that went
+     * unacknowledged on the former stream. Reordering these would mean a client sees retransmitted stanzas before
+     * {@code <success/>}, out of the sequence XEP-0198/XEP-0388 assume, and (per the analogous CSI-queue fix in
+     * OF-2534) risks the client processing them a second time after the confirmation.
+     */
+    @Test
+    public void inlineResumeDeliversSuccessBeforeRetransmittingUnackedStanzas() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession otherSession = new LocalClientSession(Fixtures.XMPP_DOMAIN, mock(Connection.class), new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        final String previd = makeResumableSession(otherSession, "testuser", "test-resource");
+        otherSession.getStreamManager().sentStanza(new IQ()); // x=1
+        otherSession.getStreamManager().sentStanza(new IQ()); // x=2, left unacknowledged below
+
+        final Connection newConnection = mock(Connection.class);
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, newConnection, new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        session.setSessionData("Sasl2.resume-request", resumeRequest(previd, 1)); // acks only x=1
+
+        // Execute system under test.
+        SASLAuthentication.authenticationSuccessful(session, "testuser", "PLAIN", new byte[0], true);
+
+        // Verify result.
+        final InOrder inOrder = inOrder(newConnection);
+        inOrder.verify(newConnection).deliverRawText(contains("<success"));
+        inOrder.verify(newConnection).deliver(any(Packet.class)); // the still-unacknowledged x=2 stanza
+    }
+
+    /**
+     * Verifies that a failed inline resume (here, because previd names a streamID that does not match the target
+     * session) does not abandon the stream: the server must still process the inlined Bind2 request, reporting the
+     * resume failure alongside the successful bind, per XEP-0198 § 9.2.1.
+     */
+    @Test
+    public void inlineResumeFailureFallsThroughToBind2() throws Exception
+    {
+        // Setup test fixture: previd names a streamID that does not match any resumable session.
+        final LocalClientSession otherSession = new LocalClientSession(Fixtures.XMPP_DOMAIN, mock(Connection.class), new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        makeResumableSession(otherSession, "testuser", "test-resource");
+        final String mismatchedPrevid = Base64.getEncoder().encodeToString(("test-resource\0not-the-real-stream-id").getBytes(StandardCharsets.UTF_8));
+
+        final Connection connection = mock(Connection.class);
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        session.setSessionData("Sasl2.resume-request", resumeRequest(mismatchedPrevid, 0));
+        final Bind2Request bind2Request = mock(Bind2Request.class);
+        when(bind2Request.generateResourceString(any())).thenReturn("test-resource");
+
+        // processFeatureRequests mutates the passed-in <success/> element directly, per its real contract.
+        when(bind2Request.processFeatureRequests(any(), any())).thenAnswer(invocation -> {
+            final Element successElement = invocation.getArgument(1);
+            return successElement.addElement(QName.get("bound", "urn:xmpp:bind:0"));
+        });
+        session.setSessionData("bind2-request", bind2Request);
+        stubSuccessfulBind(XMPPServer.getInstance().getSessionManager());
+
+        // Execute system under test.
+        SASLAuthentication.authenticationSuccessful(session, "testuser", "PLAIN", new byte[0], true);
+
+        // Verify result.
+        verify(bind2Request).processFeatureRequests(any(), any());
+        // Note: a completed Bind2 always delivers <success/> followed by post-bind stream features as a second,
+        // separate call (see bind2FailureAfterSuccessClosesTheStream); only the first delivery matters here.
+        final ArgumentCaptor<String> delivered = ArgumentCaptor.forClass(String.class);
+        verify(connection, atLeastOnce()).deliverRawText(delivered.capture());
+        final Element success = DocumentHelper.parseText(delivered.getAllValues().get(0)).getRootElement();
+        assertEquals("success", success.getName(), "A failed resume must not abandon the stream; Bind2 must still complete it.");
+        assertNotNull(success.element(QName.get("failed", StreamManager.NAMESPACE_V3)), "Expected the failed resume's <failed/> to be reported alongside <bound/>, per XEP-0198 § 9.2.1.");
+        assertNotNull(success.element(QName.get("bound", "urn:xmpp:bind:0")), "Expected the fallback bind to still complete.");
+    }
+
+    /**
      * Stubs {@link SessionManager#bindResource(LocalClientSession, AuthToken, String)} to emulate a successful bind,
      * rather than merely returning {@code BOUND}.
      *
@@ -1801,5 +1932,40 @@ public class SASLAuthenticationTest
             bound.setStatus(Session.Status.AUTHENTICATED);
             return CompletableFuture.completedFuture(SessionManager.BindResult.BOUND);
         });
+    }
+
+    /**
+     * Builds an authenticated, SM-resumable session and registers it in the (mocked) routing table, so that
+     * {@link org.jivesoftware.openfire.streammanagement.StreamManager#processSasl2Resume} can locate it as an
+     * existing session to resume.
+     *
+     * @return the previd (SM-ID) a client would use to resume the returned session.
+     */
+    private static String makeResumableSession(final LocalClientSession otherSession, final String username, final String resource) throws Exception
+    {
+        final AuthToken authToken = AuthToken.generateUserToken(username);
+        otherSession.setAddress(new JID(authToken.getUsername(), otherSession.getServerName(), resource, true));
+        otherSession.setAuthToken(authToken); // one-arg overload: avoids PrivacyListManager/sessionManager.addSession side effects
+        otherSession.setStatus(Session.Status.AUTHENTICATED);
+
+        final Element enabled = otherSession.getStreamManager().enableAndBuildElement(StreamManager.NAMESPACE_V3, true);
+        final String previd = enabled.attributeValue("id");
+
+        final RoutingTable routingTable = Fixtures.mockRoutingTable();
+        when(routingTable.getClientRoute(otherSession.getAddress())).thenReturn(otherSession);
+        when(XMPPServer.getInstance().getRoutingTable()).thenReturn(routingTable);
+        return previd;
+    }
+
+    /**
+     * Builds a parsed {@link ResumeRequest}, as if a client had sent {@code <resume previd='...' h='...'/>} inline
+     * in its SASL2 {@code <authenticate/>} element.
+     */
+    private static ResumeRequest resumeRequest(final String previd, final long h) throws Exception
+    {
+        final Element resumeElement = DocumentHelper.createElement(QName.get("resume", StreamManager.NAMESPACE_V3));
+        resumeElement.addAttribute("h", Long.toString(h));
+        resumeElement.addAttribute("previd", previd);
+        return ResumeRequest.from(resumeElement);
     }
 }

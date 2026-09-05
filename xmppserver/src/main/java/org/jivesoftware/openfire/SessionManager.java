@@ -1653,6 +1653,19 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         public CompletableFuture<Void> onConnectionClosing(Object handback)
         {
             final LocalClientSession session = (LocalClientSession) handback;
+            Log.trace("onConnectionClosing invoked for session with address {} and streamID {}: isDetached={}, resume={}, currentConnection={}.", session.getAddress(), session.getStreamID(), session.isDetached(), session.getStreamManager().getResume(), session.getConnection());
+
+            // A close notification can arrive for a connection that has since been superseded by a resumed session
+            // (XEP-0198, traditional or inline SASL2): the old connection is closed deliberately as part of the
+            // handoff, but this listener callback is asynchronous and may run after the session has already been
+            // reattached to a different, live connection. Treat that as a no-op rather than tearing down a session
+            // that is connected right now.
+            final Connection currentConnection = session.getConnection();
+            if (currentConnection != null && !currentConnection.isClosed()) {
+                Log.debug("Ignoring stale close notification for session with address {} and streamID {}: it already has a different, live connection.", session.getAddress(), session.getStreamID());
+                return CompletableFuture.completedFuture(null);
+            }
+
             if (session.isDetached()) {
                 Log.debug("Closing client session with address {} and streamID {} is detached already; this is a no-op.", session.getAddress(), session.getStreamID());
                 return CompletableFuture.completedFuture(null);

@@ -914,6 +914,9 @@ public class SASLAuthentication {
                     // If resumption succeeds, resource binding (and any inlined Bind2 request) is skipped entirely: a
                     // resumed session already has a resource bound.
                     Log.debug("Inline resume request for user '{}' processed successfully.", username);
+                    if (session.getSessionData("bind2-request") != null) {
+                        Log.debug("Inline resume for user '{}' succeeded; ignoring the inlined bind2 request per XEP-0198 §9.2.", username);
+                    }
                     return;
                 }
                 // Resumption failed: fall through to the normal Bind2 (or plain) success flow below, embedding

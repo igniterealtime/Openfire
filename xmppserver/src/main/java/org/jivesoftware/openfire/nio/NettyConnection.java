@@ -226,8 +226,15 @@ public class NettyConnection extends AbstractConnection
             ChannelFuture f;
 
             if (session != null) {
-                // If the stream was ended because of an error, it should not be possible to resume it (OF-2751).
-                if (error != null) {
+                // If the stream ended because of an error, it should not be possible to resume it (OF-2751).
+                // Exception: if the session is already detached by the time this runs, the error isn't reporting a
+                // genuine failure of this stream. It's StreamManager#detachIfNeeded() closing a connection that has
+                // already been handed off to a newly resumed session, choosing to still send a 'conflict' StreamError
+                // only because XEP-0198 §5 recommends that for a superseded former stream that is still open.
+                // detachIfNeeded() always detaches the session before closing its connection, so a detached session
+                // at this point reliably signals that hand-off, not a failure - and that hand-off must not disable
+                // resumption of the very session it's transferring the connection to.
+                if (error != null && !session.isDetached()) {
                     session.getStreamManager().formalClose();
                 }
 

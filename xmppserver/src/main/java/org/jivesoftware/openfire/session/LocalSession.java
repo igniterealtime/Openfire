@@ -248,6 +248,7 @@ public abstract class LocalSession implements Session {
         }
         this.status = Session.Status.AUTHENTICATED;
         this.sessionManager.removeDetached(this);
+        Log.debug("Reattach complete for session with address {} and streamID {}: status={}, resumable={}, detached={}.", this.address, this.streamID, this.status, this.streamManager.getResume(), this.isDetached());
     }
 
     /**

@@ -159,6 +159,11 @@ public abstract class NettyConnectionHandler<H extends StanzaHandler> extends Si
 
     @Override
     public void channelRead0(ChannelHandlerContext ctx, String message) {
+        final Connection connection = ctx.channel().attr(CONNECTION).get();
+        if (connection != null && connection.isClosed()) {
+            Log.warn("Processing message on {} whose connection is already closed. This can cascade into a null-session error downstream: {}",
+                ctx.channel().remoteAddress() == null ? ctx.channel().localAddress() : ctx.channel().localAddress() + "--" + ctx.channel().remoteAddress(), message);
+        }
         // Get the parser to use to process stanza. For optimization there is going
         // to be a parser for each running thread. Each Filter will be executed
         // by the Executor placed as the first Filter. So we can have a parser associated
@@ -174,7 +179,6 @@ public abstract class NettyConnectionHandler<H extends StanzaHandler> extends Si
             ctx.channel().attr(HANDLER).get().process(message, parser);
         } catch (Throwable e) { // Make sure to catch Throwable, not (only) Exception! See OF-2367
             Log.error("Closing connection on {} due to error while processing message: {}", ctx.channel().remoteAddress() == null ? ctx.channel().localAddress() : ctx.channel().localAddress() + "--" + ctx.channel().remoteAddress(), message, e);
-            final Connection connection = ctx.channel().attr(CONNECTION).get();
             if ( connection != null ) {
                 connection.close(new StreamError(StreamError.Condition.internal_server_error, "An error occurred while processing data raw inbound data."));
             }

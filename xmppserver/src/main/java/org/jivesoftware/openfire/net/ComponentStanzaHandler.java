@@ -222,6 +222,14 @@ public class ComponentStanzaHandler extends StanzaHandler {
     void createSession(String serverName, XmlPullParser xpp, Connection connection) throws XmlPullParserException
     {
         // The connected client is a connection manager so create a ConnectionMultiplexerSession
-        session = LocalComponentSession.createSession(serverName, xpp, connection);
+        try {
+            session = LocalComponentSession.createSession(serverName, xpp, connection);
+        } catch (final RuntimeException e) {
+            Log.warn("LocalComponentSession.createSession() threw for connection {}. session remains: {}.", connection, session, e);
+            throw e;
+        }
+        if (session == null) {
+            Log.trace("LocalComponentSession.createSession() returned null (no exception) for connection {}.", connection);
+        }
     }
 }

@@ -144,9 +144,17 @@ public class MultiplexerStanzaHandler extends StanzaHandler {
     void createSession(String serverName, XmlPullParser xpp, Connection connection) throws XmlPullParserException
     {
         // The connected client is a connection manager so create a ConnectionMultiplexerSession
-        session = LocalConnectionMultiplexerSession.createSession(serverName, xpp, connection);
-        if (session != null) {
-            packetHandler = new MultiplexerPacketHandler(session.getAddress().getDomain());
+        try {
+            session = LocalConnectionMultiplexerSession.createSession(serverName, xpp, connection);
+            if (session != null) {
+                packetHandler = new MultiplexerPacketHandler(session.getAddress().getDomain());
+            }
+        } catch (final RuntimeException e) {
+            Log.warn("LocalConnectionMultiplexerSession.createSession() threw for connection {}. session remains: {}.", connection, session, e);
+            throw e;
+        }
+        if (session == null) {
+            Log.trace("LocalConnectionMultiplexerSession.createSession() returned null (no exception) for connection {}.", connection);
         }
     }
 

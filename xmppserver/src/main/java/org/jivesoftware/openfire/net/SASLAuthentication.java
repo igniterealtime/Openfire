@@ -470,6 +470,7 @@ public class SASLAuthentication {
      */
     public static Status handle(LocalSession session, Element doc, boolean usingSASL2)
     {
+        Log.trace("handle() invoked: usingSASL2={}, element={}, session={}", usingSASL2, doc.getName(), session);
         try
         {
             if (usingSASL2)
@@ -989,8 +990,12 @@ public class SASLAuthentication {
      * @param session The LocalSession object representing the session. Must not be null.
      * @param failure The Failure object representing the reason for the authentication failure. Must not be null.
      */
-    private static void abortSasl2(@Nonnull final LocalSession session, @Nonnull final Failure failure)
+    private static void abortSasl2(@Nullable final LocalSession session, @Nonnull final Failure failure)
     {
+        if (session == null) {
+            Log.warn("Unable to report SASL2 failure ({}): session is unexpectedly null.", failure);
+            return;
+        }
         if (session instanceof LocalClientSession clientSession) {
             clientSession.setAuthToken(null);
         }

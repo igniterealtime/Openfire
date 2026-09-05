@@ -129,6 +129,12 @@ public class ServerStanzaHandler extends StanzaHandler {
             session = LocalIncomingServerSession.createSession(serverName, xpp, connection, this.directTLS, this.startedTLS);
         } catch (IOException e) {
             Log.error(e.getMessage(), e);
+        } catch (final RuntimeException e) {
+            Log.warn("LocalIncomingServerSession.createSession() threw for connection {}. session remains: {}.", connection, session, e);
+            throw e;
+        }
+        if (session == null) {
+            Log.trace("LocalIncomingServerSession.createSession() returned null (no exception) for connection {}.", connection);
         }
     }
 

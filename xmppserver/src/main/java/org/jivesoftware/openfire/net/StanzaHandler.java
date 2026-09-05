@@ -198,6 +198,7 @@ public abstract class StanzaHandler {
             }
             return;
         }
+
         // Ignore <?xml version="1.0"?> stanzas sent by clients
         if (stanza.startsWith("<?xml")) {
             return;
@@ -230,6 +231,13 @@ public abstract class StanzaHandler {
             // No document found.
             return;
         }
+
+        if (session == null) {
+            Log.warn("Processing data received on a connection that is associated to a null session. sessionCreated={}, connection={}, data={}", sessionCreated, connection, doc.asXML());
+        } else {
+            Log.trace("Processing data received on session {}, element name={}.", session, doc.getName());
+        }
+
         String tag = doc.getName();
         if ("starttls".equals(tag)) {
             // Negotiate TLS
@@ -238,6 +246,7 @@ public abstract class StanzaHandler {
             }
             else {
                 connection.close();
+                Log.debug("TLS negotiation failed; session for connection {} is being cleared.", connection);
                 session = null;
             }
         }
@@ -254,6 +263,7 @@ public abstract class StanzaHandler {
             // Connection#reinit) replaces this handler's 'session' field before handle() returns. Retain the session
             // that is negotiating the authentication, as that is where the outcome of the negotiation is recorded.
             final LocalSession authenticatingSession = session;
+            Log.trace("Dispatching SASL2 <authenticate> for session {}.", authenticatingSession);
             saslStatus = SASLAuthentication.handle(authenticatingSession, doc, usingSASL2);
             if (saslStatus == SASLAuthentication.Status.authenticated && usingSASL2) {
                 // No Bind2: send features synchronously now.
@@ -274,6 +284,11 @@ public abstract class StanzaHandler {
             // User is responding to SASL challenge. Process response
             // See the 'authenticate' branch: an inline XEP-0198 resumption can replace this handler's session.
             final LocalSession authenticatingSession = session;
+            if (authenticatingSession == null) {
+                Log.warn("Dispatching SASL2 <{}> with a null session. sessionCreated={}, connection={}, stanza={}", tag, sessionCreated, connection, doc.asXML());
+            } else {
+                Log.trace("Dispatching SASL2 <{}> for session {}.", tag, authenticatingSession);
+            }
             saslStatus = SASLAuthentication.handle(authenticatingSession, doc, usingSASL2);
             if (saslStatus == SASLAuthentication.Status.failed) {
                 startedSASL = false;
@@ -828,11 +843,13 @@ public abstract class StanzaHandler {
             createSession(serverName, xpp, connection);
 
             if (session == null) {
+                Log.warn("createSession(serverName, xpp, connection) returned without assigning a session for connection: {}. Converting to a stream error.", connection);
                 throw new StreamErrorException(StreamError.Condition.internal_server_error, "Unable to create a session.");
             }
+            Log.trace("Session created for connection {}: {}", connection, session);
         }
         catch (final StreamErrorException ex) {
-            Log.warn("Failed to create a session, as the stream opened by the peer has a problem: {} - '{}' (a full stack trace is logged on debug level). Closing connection: {}", ex.getStreamError().getCondition(), ex.getStreamError().getText(), connection);
+            Log.warn("Failed to create a session, as the stream opened by the peer has a problem: {} - '{}' (a full stack trace is logged on debug level). Closing connection: {}. session is now: {}", ex.getStreamError().getCondition(), ex.getStreamError().getText(), connection, session);
             Log.debug("Failed to create a session.", ex);
             final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
             final Document document = DocumentHelper.createDocument(stream);

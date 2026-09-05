@@ -384,7 +384,12 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
     @Override
     void createSession(String serverName, XmlPullParser xpp, Connection connection) throws XmlPullParserException {
         String currentStreamId = xpp.getAttributeValue("", "id");
-        session = createLocalOutgoingServerSession(currentStreamId,  connection);
+        try {
+            session = createLocalOutgoingServerSession(currentStreamId,  connection);
+        } catch (final RuntimeException e) {
+            LOG.warn("createLocalOutgoingServerSession() threw for connection {}. session remains: {}.", connection, session, e);
+            throw e;
+        }
     }
 
     /**

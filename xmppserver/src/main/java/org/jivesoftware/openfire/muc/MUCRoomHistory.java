@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -324,8 +324,9 @@ public final class MUCRoomHistory implements Externalizable {
      * @return The maximum number of historic messages to keep for this room, or -1.
      */
     public int getMaxMessages() {
-        return switch (historyStrategy.getType()) {
-            case number -> historyStrategy.getMaxNumber();
+        final HistoryStrategy effective = historyStrategy.resolveEffective();
+        return switch (effective.getType()) {
+            case number -> effective.getMaxNumber();
             case none -> 0;
             default -> -1;
         };

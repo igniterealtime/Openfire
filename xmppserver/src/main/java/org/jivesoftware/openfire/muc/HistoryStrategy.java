@@ -124,7 +124,7 @@ public class HistoryStrategy implements Externalizable {
             maxNumber = DEFAULT_MAX_NUMBER;
         }
         else {
-            type = Type.defaulType;
+            type = Type.defaultType;
             maxNumber = parent.getMaxNumber();
         }
     }
@@ -312,14 +312,14 @@ public class HistoryStrategy implements Externalizable {
 
     /**
      * Resolves this strategy to the one whose settings are actually in effect: if this strategy's type is
-     * {@link Type#defaulType}, walks up the parent chain until a strategy with a concrete type (or no parent) is found.
-     * Returns this instance if its type is not defaulType, or if it has no parent to defer to.
+     * {@link Type#defaultType}, walks up the parent chain until a strategy with a concrete type (or no parent) is found.
+     * Returns this instance if its type is not defaultType, or if it has no parent to defer to.
      *
      * @return The strategy instance whose type/maxNumber values should be treated as authoritative.
      */
     HistoryStrategy resolveEffective() {
         HistoryStrategy strategy = this;
-        while (strategy.type == Type.defaulType && strategy.parent != null) {
+        while (strategy.type == Type.defaultType && strategy.parent != null) {
             strategy = strategy.parent;
         }
         return strategy;
@@ -387,7 +387,7 @@ public class HistoryStrategy implements Externalizable {
      * Strategy type.
      */
     public enum Type {
-        defaulType, none, all, number;
+        defaultType, none, all, number;
     }
 
     /**
@@ -404,7 +404,7 @@ public class HistoryStrategy implements Externalizable {
         }
         catch (Exception e) {
             if (parent != null) {
-                type = Type.defaulType;
+                type = Type.defaultType;
             }
             else {
                 type = Type.number;

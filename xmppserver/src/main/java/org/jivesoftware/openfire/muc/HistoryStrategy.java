@@ -205,16 +205,9 @@ public class HistoryStrategy implements Externalizable {
         }
 
         // get the conditions based on default or not
-        final Type strategyType;
-        final int strategyMaxNumber;
-        if (type == Type.defaulType && parent != null) {
-            strategyType = parent.getType();
-            strategyMaxNumber = parent.getMaxNumber();
-        }
-        else {
-            strategyType = type;
-            strategyMaxNumber = maxNumber;
-        }
+        final HistoryStrategy effective = resolveEffective();
+        final Type strategyType = effective.getType();
+        final int strategyMaxNumber = effective.getMaxNumber();
 
         final Lock lock = MUC_HISTORY_CACHE.getLock(roomJID);
         lock.lock();
@@ -238,11 +231,7 @@ public class HistoryStrategy implements Externalizable {
     }
 
     boolean isHistoryEnabled() {
-        Type strategyType = type;
-        if (type == Type.defaulType && parent != null) {
-            strategyType = parent.getType();
-        }
-        return strategyType != HistoryStrategy.Type.none;
+        return resolveEffective().getType() != Type.none;
     }
 
     /**

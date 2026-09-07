@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2008 Jive Software, 2016-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2004-2008 Jive Software, 2016-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -319,6 +319,21 @@ public class HistoryStrategy implements Externalizable {
         } finally {
             lock.unlock();
         }
+    }
+
+    /**
+     * Resolves this strategy to the one whose settings are actually in effect: if this strategy's type is
+     * {@link Type#defaulType}, walks up the parent chain until a strategy with a concrete type (or no parent) is found.
+     * Returns this instance if its type is not defaulType, or if it has no parent to defer to.
+     *
+     * @return The strategy instance whose type/maxNumber values should be treated as authoritative.
+     */
+    HistoryStrategy resolveEffective() {
+        HistoryStrategy strategy = this;
+        while (strategy.type == Type.defaulType && strategy.parent != null) {
+            strategy = strategy.parent;
+        }
+        return strategy;
     }
 
     @Override

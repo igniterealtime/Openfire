@@ -437,7 +437,7 @@ public abstract class UserMultiProvider implements UserProvider
     @Override
     public void setName(String username, String name) throws UserNotFoundException
     {
-        getUserProvider(username).setEmail(username, name);
+        getUserProvider(username).setName(username, name);
     }
 
     /**

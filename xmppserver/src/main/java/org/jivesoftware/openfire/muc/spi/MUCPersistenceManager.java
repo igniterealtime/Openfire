@@ -108,9 +108,6 @@ public class MUCPersistenceManager {
         "SELECT jid, affiliation FROM ofMucAffiliation WHERE roomID=?";
     private static final String LOAD_MEMBERS =
         "SELECT jid, nickname FROM ofMucMember WHERE roomID=?";
-    private static final String LOAD_HISTORY =
-        "SELECT sender, nickname, logTime, subject, body, stanza FROM ofMucConversationLog " +
-        "WHERE logTime>? AND roomID=? AND (nickname IS NOT NULL OR subject IS NOT NULL) ORDER BY logTime";
     private static final String RELOAD_ALL_ROOMS_WITH_RECENT_ACTIVITY =
         "SELECT roomID, creationDate, modificationDate, name, naturalName, description, " +
         "lockedDate, emptyDate, canChangeSubject, maxUsers, publicRoom, moderated, membersOnly, " +
@@ -953,6 +950,7 @@ public class MUCPersistenceManager {
     {
         Log.debug("Loading room history for room '{}' (max: {})", room.getJID(), maxNumber == -1 ? "all" : maxNumber);
 
+        final boolean applyLimit = maxNumber > -1;
         final List<Message> oldMessages = new LinkedList<>();
         if (room.isLogEnabled() && maxNumber != 0)
         {
@@ -962,7 +960,8 @@ public class MUCPersistenceManager {
             try {
                 // Reload historic messages from the database.
                 con = DbConnectionManager.getConnection();
-                pstmt = con.prepareStatement(LOAD_HISTORY, ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+                final String sql = buildHistoryQuery(maxNumber);
+                pstmt = con.prepareStatement(sql);
 
                 // Reload the history, using "muc.history.reload.limit" (days) if present
                 long from = 0;
@@ -974,21 +973,22 @@ public class MUCPersistenceManager {
                     from = System.currentTimeMillis() - (BigInteger.valueOf(86400000).multiply(BigInteger.valueOf(reloadLimitDays))).longValue();
                 }
 
-                pstmt.setString(1, StringUtils.dateToMillis(new Date(from)));
-                pstmt.setLong(2, room.getID());
+                int paramIndex = 1;
+                if (applyLimit && DbConnectionManager.isResultSetLimitKeywordPrefix()) {
+                    pstmt.setInt(paramIndex++, maxNumber);
+                }
+                pstmt.setString(paramIndex++, StringUtils.dateToMillis(new Date(from)));
+                pstmt.setLong(paramIndex++, room.getID());
+                if (applyLimit && !DbConnectionManager.isResultSetLimitKeywordPrefix()) {
+                    pstmt.setInt(paramIndex++, maxNumber);
+                }
+
+                Log.debug("Executing bounded history query for room '{}' using SQL: {}", room.getJID(), sql);
+
                 rs = pstmt.executeQuery();
 
                 // When reloading history, make sure that the old data is removed from memory before re-adding it.
                 room.getRoomHistory().purge();
-
-                try {
-                    if (maxNumber > -1 && rs.last()) {
-                        // Try to skip to the last few rows from the result set.
-                        rs.relative(maxNumber * -1);
-                    }
-                } catch (SQLException e) {
-                    Log.debug("Unable to skip to the last {} rows of the result set.", maxNumber, e);
-                }
 
                 while (rs.next()) {
                     String senderJID = rs.getString("sender");
@@ -999,6 +999,14 @@ public class MUCPersistenceManager {
                     String stanza = rs.getString("stanza");
                     oldMessages.add(room.getRoomHistory().parseHistoricMessage(senderJID, nickname, sentDate, subject, body, stanza));
                 }
+
+                if (applyLimit) {
+                    // Rows came back newest-first (DESC) so the LIMIT/TOP/FETCH FIRST kept the last N messages.
+                    // Reverse to restore chronological order before they're added to history.
+                    Collections.reverse(oldMessages);
+                }
+
+                Log.debug("Room '{}': database returned {} rows for the bounded history query (limit: {}).", room.getJID(), oldMessages.size(), applyLimit ? maxNumber : "none");
             } finally {
                 DbConnectionManager.closeConnection(rs, pstmt, con);
             }
@@ -1008,13 +1016,49 @@ public class MUCPersistenceManager {
         if (!oldMessages.isEmpty()) {
             room.getRoomHistory().addOldMessages(oldMessages);
         }
+        Log.debug("Loaded {} messages() of room history for room '{}' (max: {})", oldMessages.size(), room.getJID(), maxNumber == -1 ? "all" : maxNumber);
 
-        // If the room does not include the last subject in the history, then recreate one if possible.
         if (!room.getRoomHistory().hasChangedSubject() && room.getSubject() != null && !room.getSubject().isEmpty()) {
             final Message subject = room.getRoomHistory().parseHistoricMessage(room.getSelfRepresentation().getOccupantJID().toString(),
                 null, room.getModificationDate(), room.getSubject(), null, null);
             room.getRoomHistory().addOldMessages(subject);
         }
+    }
+
+    /**
+     * Builds the SQL for loading room history, applying a database-appropriate row limit when maxNumber is
+     * non-negative. When a limit is applied, rows are ordered by logTime DESC (most recent first) so the limit keeps
+     * the *last* N messages; callers must reverse the result to restore chronological order.
+     */
+    private static String buildHistoryQuery(final int maxNumber)
+    {
+        final boolean applyLimit = maxNumber > -1;
+        final StringBuilder sql = new StringBuilder("SELECT ");
+
+        if (applyLimit && DbConnectionManager.isResultSetLimitKeywordPrefix()) {
+            sql.append(DbConnectionManager.getResultSetLimitKeyword().name()).append(" (?) ");
+        }
+
+        sql.append("sender, nickname, logTime, subject, body, stanza FROM ofMucConversationLog ")
+            .append("WHERE logTime>? AND roomID=? AND (nickname IS NOT NULL OR subject IS NOT NULL) ")
+            .append("ORDER BY logTime ").append(applyLimit ? "DESC" : "ASC");
+
+        if (applyLimit && !DbConnectionManager.isResultSetLimitKeywordPrefix())
+        {
+            final DbConnectionManager.ResultSetLimitKeyword keyword = DbConnectionManager.getResultSetLimitKeyword();
+            switch (keyword) {
+                case LIMIT:
+                    sql.append(" LIMIT ?");
+                    break;
+                case FETCH_FIRST:
+                    sql.append(" FETCH FIRST ? ROWS ONLY");
+                    break;
+                default:
+                    throw new IllegalStateException("Unexpected non-prefix result-set limit keyword: " + keyword);
+            }
+        }
+
+        return sql.toString();
     }
 
     /**

@@ -161,7 +161,7 @@ public abstract class NettyConnectionHandler<H extends StanzaHandler> extends Si
     public void channelRead0(ChannelHandlerContext ctx, String message) {
         final Connection connection = ctx.channel().attr(CONNECTION).get();
         if (connection != null && connection.isClosed()) {
-            Log.warn("Processing message on {} whose connection is already closed. This can cascade into a null-session error downstream: {}",
+            Log.debug("Processing message on {} whose connection is already closed. This can cascade into a null-session error downstream: {}",
                 ctx.channel().remoteAddress() == null ? ctx.channel().localAddress() : ctx.channel().localAddress() + "--" + ctx.channel().remoteAddress(), message);
         }
         // Get the parser to use to process stanza. For optimization there is going

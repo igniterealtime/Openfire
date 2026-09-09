@@ -21,6 +21,8 @@ import org.jivesoftware.openfire.container.BasicModule;
 import org.jivesoftware.openfire.net.Bind2InlineHandler;
 import org.jivesoftware.openfire.net.Bind2Request;
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -67,6 +69,8 @@ public class CsiModule extends BasicModule
      */
     static class Bind2CSIHandler implements Bind2InlineHandler
     {
+        private static final Logger Log = LoggerFactory.getLogger(Bind2CSIHandler.class);
+
         @Override
         public String getNamespace() {
             return CsiManager.NAMESPACE;
@@ -78,11 +82,15 @@ public class CsiModule extends BasicModule
         }
 
         @Override
-        public boolean handleElement(LocalClientSession session, Element bound, Element element) {
+        public boolean handleElement(LocalClientSession session, Element bound, Element element)
+        {
             if (element.getName().equals("active")) {
                 session.getCsiManager().activate();
             } else if (element.getName().equals("inactive")) {
                 session.getCsiManager().deactivate();
+            } else {
+                Log.debug("Received unexpected element '{}'; ignoring.", element.getName());
+                return false;
             }
             return true;
         }

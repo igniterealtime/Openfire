@@ -40,6 +40,13 @@
 <%@ page import="org.slf4j.LoggerFactory" %>
 <%@ page import="java.nio.charset.StandardCharsets" %>
 <%@ page import="org.jivesoftware.openfire.session.*" %>
+<%@ page import="org.jivesoftware.openfire.net.SASLAuthentication" %>
+<%@ page import="org.jivesoftware.openfire.net.Bind2Request" %>
+<%@ page import="org.jivesoftware.openfire.net.Bind2InlineHandler" %>
+<%@ page import="org.jivesoftware.openfire.streammanagement.StreamManager" %>
+<%@ page import="org.jivesoftware.openfire.csi.CsiManager" %>
+<%@ page import="java.util.Set" %>
+<%@ page import="java.util.Optional" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn" %>
@@ -135,6 +142,11 @@
 
     pageContext.setAttribute("address", address);
     pageContext.setAttribute("clusteringEnabled", ClusterManager.isClusteringStarted() || ClusterManager.isClusteringStarting() );
+
+    final boolean bind2Used = currentSess instanceof LocalSession && Boolean.TRUE.equals(((LocalSession) currentSess).getSessionData(SASLAuthentication.BIND2_USED));
+
+    @SuppressWarnings("unchecked")
+    final Set<String> bind2FeatureNamespaces = currentSess instanceof LocalSession ? (Set<String>) ((LocalSession) currentSess).getSessionData(SASLAuthentication.BIND2_INLINE_FEATURES) : null;
 %>
 
 <html>
@@ -457,6 +469,39 @@
                     </td>
                 </tr>
                 <% } %>
+                <tr>
+                    <td class="c1">
+                        <fmt:message key="session.details.bind-method"/>:
+                    </td>
+                    <td>
+                        <% if (bind2Used) { %>
+                        <fmt:message key="session.details.bind-method-bind2"/>
+                        <% } else { %>
+                        <fmt:message key="session.details.bind-method-legacy"/>
+                        <% } %>
+                    </td>
+                </tr>
+                <% if (bind2Used && bind2FeatureNamespaces != null && !bind2FeatureNamespaces.isEmpty()) { %>
+                <tr>
+                    <td class="c1">
+                        <fmt:message key="session.details.bind2-inline-features"/>:
+                    </td>
+                    <td>
+                        <%
+                            final StringBuilder bind2FeatureNames = new StringBuilder();
+                            for (final String featureNamespace : new TreeSet<>(bind2FeatureNamespaces)) {
+                                final Optional<Bind2InlineHandler> featureHandler = Bind2Request.getHandler(featureNamespace);
+                                final String featureDisplayName = featureHandler.map(Bind2InlineHandler::getDisplayName).orElse(featureNamespace);
+                                if (!bind2FeatureNames.isEmpty()) {
+                                    bind2FeatureNames.append(", ");
+                                }
+                                bind2FeatureNames.append(featureDisplayName);
+                            }
+                        %>
+                        <%= StringUtils.escapeHTMLTags(bind2FeatureNames.toString()) %>
+                    </td>
+                </tr>
+                <% } %>
                 <% if (currentSess instanceof LocalSession && ((LocalSession) currentSess).getSessionData("ChannelBindingType") != null) { %>
                 <tr>
                     <td class="c1">
@@ -467,6 +512,91 @@
                     </td>
                 </tr>
                 <% } %>
+            </tbody>
+        </table>
+    </div>
+
+    <br>
+
+    <div class="jive-table">
+        <table style="width: 100%">
+            <thead>
+                <tr>
+                    <th colspan="2">
+                        <fmt:message key="session.details.features"/>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (currentSess instanceof LocalClientSession) {
+                    LocalClientSession s = (LocalClientSession)currentSess; %>
+                <tr>
+                    <td class="c1">
+                        <fmt:message key="session.details.sm-status"/>:
+                    </td>
+                    <td>
+                        <%
+                            if (s.isDetached()) {
+                        %><fmt:message key="session.details.sm-detached"/><%
+                    } else if (s.getStreamManager().isEnabled()) {
+                        if (s.getStreamManager().getResume()) {
+                    %><fmt:message key="session.details.sm-resume"/><%
+                    } else {
+                    %><fmt:message key="session.details.sm-enabled"/><%
+                        }
+                    } else {
+                    %><fmt:message key="session.details.sm-disabled"/><%
+                        }
+                        if (bind2Used && bind2FeatureNamespaces != null && bind2FeatureNamespaces.contains(StreamManager.NAMESPACE_V3)) {
+                    %>
+                        <span class="jive-description"> (<fmt:message key="session.details.negotiated-via-bind2"/>)</span>
+                        <% } %>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="c1">
+                        <fmt:message key="session.details.csi-status"/>:
+                    </td>
+                    <td>
+                        <% if (s.getCsiManager().isActive()) { %>
+                        <fmt:message key="session.details.csi-active"/>
+                        <% } else { %>
+                        <fmt:message key="session.details.csi-inactive"/>
+                        (<fmt:message key="session.details.csi-delayed-stanzas"/>: <%= s.getCsiManager().getDelayQueueSize() %>)
+                        <% } %>
+                        <% if (bind2Used && bind2FeatureNamespaces != null && bind2FeatureNamespaces.contains(CsiManager.NAMESPACE)) { %>
+                        <span class="jive-description"> (<fmt:message key="session.details.negotiated-via-bind2"/>)</span>
+                        <% } %>
+                    </td>
+                </tr>
+                <% } %>
+                <tr>
+                    <td class="c1">
+                        <fmt:message key="session.details.cc-status"/>:
+                    </td>
+                    <td>
+                        <% if (currentSess.isMessageCarbonsEnabled()) { %>
+                        <fmt:message key="session.details.cc-enabled" />
+                        <% } else { %>
+                        <fmt:message key="session.details.cc-disabled" />
+                        <% } %>
+                        <% if (bind2Used && bind2FeatureNamespaces != null && bind2FeatureNamespaces.contains("urn:xmpp:carbons:2")) { %>
+                        <span class="jive-description"> (<fmt:message key="session.details.negotiated-via-bind2"/>)</span>
+                        <% } %>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="c1">
+                        <fmt:message key="session.details.flomr-status"/>:
+                    </td>
+                    <td>
+                        <% if (currentSess.isOfflineFloodStopped()) { %>
+                        <fmt:message key="session.details.flomr-enabled" />
+                        <% } else { %>
+                        <fmt:message key="session.details.flomr-disabled" />
+                        <% } %>
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>
@@ -504,82 +634,6 @@
         </table>
     </div>
     <%  } %>
-
-    <br>
-
-    <div class="jive-table">
-        <table style="width: 100%">
-            <thead>
-                <tr>
-                    <th colspan="2">
-                        <fmt:message key="session.details.features"/>
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                <% if (currentSess instanceof LocalClientSession) {
-                    LocalClientSession s = (LocalClientSession)currentSess; %>
-                <tr>
-                    <td class="c1">
-                        <fmt:message key="session.details.sm-status"/>:
-                    </td>
-                    <td>
-                        <%
-                            if (s.isDetached()) {
-                        %><fmt:message key="session.details.sm-detached"/><%
-                    } else if (s.getStreamManager().isEnabled()) {
-                        if (s.getStreamManager().getResume()) {
-                    %><fmt:message key="session.details.sm-resume"/><%
-                    } else {
-                    %><fmt:message key="session.details.sm-enabled"/><%
-                        }
-                    } else {
-                    %><fmt:message key="session.details.sm-disabled"/><%
-                        }
-                    %>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="c1">
-                        <fmt:message key="session.details.csi-status"/>:
-                    </td>
-                    <td>
-                        <% if (s.getCsiManager().isActive()) { %>
-                        <fmt:message key="session.details.csi-active"/>
-                        <% } else { %>
-                        <fmt:message key="session.details.csi-inactive"/>
-                        (<fmt:message key="session.details.csi-delayed-stanzas"/>: <%= s.getCsiManager().getDelayQueueSize() %>)
-                        <% } %>
-                    </td>
-                </tr>
-                <% } %>
-                <tr>
-                    <td class="c1">
-                        <fmt:message key="session.details.cc-status"/>:
-                    </td>
-                    <td>
-                        <% if (currentSess.isMessageCarbonsEnabled()) { %>
-                        <fmt:message key="session.details.cc-enabled" />
-                        <% } else { %>
-                        <fmt:message key="session.details.cc-disabled" />
-                        <% } %>
-                    </td>
-                </tr>
-                <tr>
-                    <td class="c1">
-                        <fmt:message key="session.details.flomr-status"/>:
-                    </td>
-                    <td>
-                        <% if (currentSess.isOfflineFloodStopped()) { %>
-                        <fmt:message key="session.details.flomr-enabled" />
-                        <% } else { %>
-                        <fmt:message key="session.details.flomr-disabled" />
-                        <% } %>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
 
 <%
     final EntityCapabilities caps = XMPPServer.getInstance().getEntityCapabilitiesManager().getEntityCapabilities(address);

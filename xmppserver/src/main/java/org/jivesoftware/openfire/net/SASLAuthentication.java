@@ -238,6 +238,20 @@ public class SASLAuthentication {
     private static final String SASL2_RESUME_REQUEST = "Sasl2.resume-request";
 
     /**
+     * Session Data property name used to record that a session's resource was bound via an inline XEP-0386 Bind 2
+     * request during SASL2 authentication, as opposed to legacy IQ-based binding. Set only once binding has actually
+     * completed successfully; never set for sessions that bind via legacy IQ, and never set when an inline XEP-0198
+     * resume made the inlined bind2 request moot.
+     */
+    public static final String BIND2_USED = "Bind2.used";
+
+    /**
+     * Session Data property name holding the set of XML namespaces of inline feature requests that
+     * were successfully negotiated via a XEP-0386 Bind 2 request, if any.
+     */
+    public static final String BIND2_INLINE_FEATURES = "Bind2.inline-features";
+
+    /**
      * Controls whether the SCRAM mechanisms that are advertised to a client are tailored to the user that is expected
      * to authenticate.
      *
@@ -1046,6 +1060,11 @@ public class SASLAuthentication {
             bind2Request.processFeatureRequests(clientSession, success);
             clientSession.deliverRawText(success.asXML());
             successDelivered = true;
+
+            clientSession.setSessionData(BIND2_USED, Boolean.TRUE);
+            if (!bind2Request.getNegotiatedFeatureNamespaces().isEmpty()) {
+                clientSession.setSessionData(BIND2_INLINE_FEATURES, bind2Request.getNegotiatedFeatureNamespaces());
+            }
 
             SessionEventDispatcher.dispatchEvent(clientSession, SessionEventDispatcher.EventType.resource_bound);
 

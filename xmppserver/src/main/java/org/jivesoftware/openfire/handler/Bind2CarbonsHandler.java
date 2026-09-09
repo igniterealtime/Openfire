@@ -27,6 +27,11 @@ public class Bind2CarbonsHandler implements Bind2InlineHandler {
     }
 
     @Override
+    public String getDisplayName() {
+        return "Message Carbons";
+    }
+
+    @Override
     public boolean handleElement(LocalClientSession session, Element bound, Element element) {
         session.setMessageCarbonsEnabled(element.getName().equals("enable"));
         return true;

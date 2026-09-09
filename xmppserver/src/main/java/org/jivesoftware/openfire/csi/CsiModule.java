@@ -73,6 +73,11 @@ public class CsiModule extends BasicModule
         }
 
         @Override
+        public String getDisplayName() {
+            return "Client State Indication";
+        }
+
+        @Override
         public boolean handleElement(LocalClientSession session, Element bound, Element element) {
             if (element.getName().equals("active")) {
                 session.getCsiManager().activate();

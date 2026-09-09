@@ -125,11 +125,8 @@
     }
 
     // See if there are multiple sessions for this user:
-    Collection<ClientSession> sessions = null;
-    int sessionCount = sessionManager.getSessionCount(address.getNode());
-    if (!isAnonymous && sessionCount > 1) {
-        sessions = sessionManager.getSessions(address);
-    }
+    final Collection<ClientSession> sessions = sessionManager.getSessions(isAnonymous ? address : address.asBareJID());
+    final int sessionCount = sessions.size();
 
     // Number dateFormatter for all numbers on this page:
     NumberFormat numFormatter = NumberFormat.getNumberInstance();
@@ -667,39 +664,41 @@
         <th nowrap><fmt:message key="session.details.close_connect" /></th>
     </tr>
 
-    <%  int count = 0;
+    <%  pageContext.setAttribute("showName", true);
+        pageContext.setAttribute("showResource", false);
+        pageContext.setAttribute("showVersion", true);
+        pageContext.setAttribute("showClusterNode", true);
+        pageContext.setAttribute("showStatus", true);
+        pageContext.setAttribute("showPresence", true);
+        pageContext.setAttribute("showRxTx", true);
+        pageContext.setAttribute("showIp", true);
+
+        int count = 0;
+        int currentIndex = 0;
         String linkURL = "session-details.jsp";
         for (ClientSession sess : sessions) {
             count++;
             boolean current = sess.getAddress().equals(address);
+            if (current) {
+                currentIndex = count;
+            }
     %>
         <%@ include file="session-row.jspf" %>
 
-    <%  } %>
+    <%  }
+        pageContext.setAttribute("currentIndex", currentIndex);
+        %>
 
     </table>
     </div>
 
     <br>
 
-    <table>
-    <tr>
-        <td style="width: 1%; white-space: nowrap">
-
-            <div class="jive-table">
-            <table>
-            <tr class="jive-current"><td><img src="images/blank.gif" width="12" height="12" alt=""></td></tr>
-            </table>
-            </div>
-
-        </td>
-        <td>
-
-            &nbsp; = <fmt:message key="session.details.session_detail" />
-
-        </td>
-    </tr>
-    </table>
+    <span class="jive-current">
+        <fmt:message key="session.details.session_detail_current_index">
+            <fmt:param><fmt:formatNumber value="${currentIndex}" /></fmt:param>
+        </fmt:message>
+    </span> = <fmt:message key="session.details.session_detail" />
 
 <%  } %>
 

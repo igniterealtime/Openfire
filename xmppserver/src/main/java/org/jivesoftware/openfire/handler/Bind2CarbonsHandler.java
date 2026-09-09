@@ -19,8 +19,16 @@ package org.jivesoftware.openfire.handler;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.net.Bind2InlineHandler;
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-public class Bind2CarbonsHandler implements Bind2InlineHandler {
+/**
+ * Handles inline elements related to Message Carbons during Bind2 requests.
+ */
+public class Bind2CarbonsHandler implements Bind2InlineHandler
+{
+    private static final Logger Log = LoggerFactory.getLogger(Bind2CarbonsHandler.class);
+
     @Override
     public String getNamespace() {
         return "urn:xmpp:carbons:2";
@@ -32,8 +40,14 @@ public class Bind2CarbonsHandler implements Bind2InlineHandler {
     }
 
     @Override
-    public boolean handleElement(LocalClientSession session, Element bound, Element element) {
-        session.setMessageCarbonsEnabled(element.getName().equals("enable"));
+    public boolean handleElement(LocalClientSession session, Element bound, Element element)
+    {
+        final String name = element.getName();
+        if (!"enable".equals(name) && !"disable".equals(name)) {
+            Log.debug("Received unexpected element '{}'; ignoring.", element.getName());
+            return false;
+        }
+        session.setMessageCarbonsEnabled("enable".equals(name));
         return true;
     }
 }

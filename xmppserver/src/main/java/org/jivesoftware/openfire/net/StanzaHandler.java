@@ -280,7 +280,7 @@ public abstract class StanzaHandler {
             }
             // If authenticatedAwaitingFeatures, <success/> and features are delivered asynchronously
             // by SASLAuthentication once Bind2 resource binding completes.
-        } else if (startedSASL && ("response".equals(tag) || "abort".equals(tag))) {
+        } else if (startedSASL && ("response".equals(tag) || "abort".equals(tag) || "next".equals(tag) || "task-data".equals(tag))) {
             // User is responding to SASL challenge. Process response
             // See the 'authenticate' branch: an inline XEP-0198 resumption can replace this handler's session.
             final LocalSession authenticatingSession = session;

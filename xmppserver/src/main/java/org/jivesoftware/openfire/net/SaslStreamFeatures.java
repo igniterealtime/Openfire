@@ -24,6 +24,7 @@ import org.jivesoftware.openfire.fast.FastSessionState;
 import org.jivesoftware.openfire.fast.FastTokenManager;
 import org.jivesoftware.openfire.sasl.MechanismName;
 import org.jivesoftware.openfire.sasl.SaslMechanismEligibility;
+import org.jivesoftware.openfire.sasl.task.Sasl2TaskManager;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
@@ -114,6 +115,7 @@ public class SaslStreamFeatures
             if (SASLAuthentication.checkSASL2Permitted(session).isEmpty()) {
                 final Element sasl2Mechs = asSASLMechanismsElementForClientSessions(advertisableMechanismNames, true);
                 if (sasl2Mechs != null) {
+                    Sasl2TaskManager.getInstance().addStreamFeatures(session, sasl2Mechs);
                     features.add(sasl2Mechs);
                 }
             }
@@ -125,6 +127,7 @@ public class SaslStreamFeatures
             if (SASLAuthentication.checkSASL2Permitted(session).isEmpty()) {
                 final Element sasl2Mechs = asSASLMechanismsElementForServerSessions(advertisableMechanismNames, true);
                 if (sasl2Mechs != null) {
+                    Sasl2TaskManager.getInstance().addStreamFeatures(session, sasl2Mechs);
                     features.add(sasl2Mechs);
                 }
             }

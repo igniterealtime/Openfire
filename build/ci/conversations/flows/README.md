@@ -37,6 +37,11 @@ Flows are tagged by which config they need, not by feature: `fast.yaml` is tagge
 and reuses `configs/sasl2.xml`, since FAST (XEP-0484) is only advertised as a SASL2 inline
 feature and needs no config of its own — `xmpp.fast.enabled` defaults to `true`.
 
+`fast-rotation.yaml` needs its own config (`configs/fast-rotation.xml`): FAST token rotation
+happens once the time left before expiry drops to or below the rotation threshold, but the
+real defaults are multi-day, so the config sets the threshold >= the expiry to make rotation
+happen on every reconnect instead of waiting on the clock.
+
 ### 2. Start an Android emulator
 
 Launch an emulator with API 34 and x86_64 architecture. With Maestro installed, you can create or

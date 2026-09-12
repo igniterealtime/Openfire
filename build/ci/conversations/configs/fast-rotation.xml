@@ -1,5 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jive>
+  <!-- Enable SASL2 (xmpp.auth.sasl2). TLS is required too, but is satisfied by the CI server's self-signed certificate. -->
+  <xmpp>
+    <auth>
+      <sasl2>true</sasl2>
+    </auth>
+    <!--
+      Force FAST token rotation on every reconnect: rotation happens whenever the time left
+      before expiry is <= the rotation threshold. Setting the threshold >= the expiry means
+      that's true from the moment a token is issued, without waiting on the real (multi-day)
+      defaults.
+    -->
+    <fast>
+      <token>
+        <expiry>1</expiry> <!-- days -->
+        <rotation-threshold>48</rotation-threshold> <!-- hours -->
+      </token>
+    </fast>
+  </xmpp>
+
+  <!-- Everything below this line is unchanged from distribution/src/conf/openfire-demoboot.xml -->
   <adminConsole>
       <port>9090</port>
       <securePort>9091</securePort>
@@ -75,22 +95,4 @@
           </user3>
       </users>
   </autosetup>
-  <!-- Enable SASL2 (xmpp.auth.sasl2). TLS is required too, but is satisfied by the CI server's self-signed certificate. -->
-  <xmpp>
-    <auth>
-      <sasl2>true</sasl2>
-    </auth>
-    <!--
-      Force FAST token rotation on every reconnect: rotation happens whenever the time left
-      before expiry is <= the rotation threshold. Setting the threshold >= the expiry means
-      that's true from the moment a token is issued, without waiting on the real (multi-day)
-      defaults.
-    -->
-    <fast>
-      <token>
-        <expiry>1</expiry> <!-- days -->
-        <rotation-threshold>48</rotation-threshold> <!-- hours -->
-      </token>
-    </fast>
-  </xmpp>
 </jive>

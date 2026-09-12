@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jive>
+  <!-- Enable SASL2 (xmpp.auth.sasl2). TLS is required too, but is satisfied by the CI server's self-signed certificate. -->
+  <xmpp>
+    <auth>
+      <sasl2>true</sasl2>
+    </auth>
+  </xmpp>
+
+  <!-- Everything below this line is unchanged from distribution/src/conf/openfire-demoboot.xml -->
   <adminConsole>
       <port>9090</port>
       <securePort>9091</securePort>
@@ -75,10 +83,4 @@
           </user3>
       </users>
   </autosetup>
-  <!-- Enable SASL2 (xmpp.auth.sasl2). TLS is required too, but is satisfied by the CI server's self-signed certificate. -->
-  <xmpp>
-    <auth>
-      <sasl2>true</sasl2>
-    </auth>
-  </xmpp>
 </jive>

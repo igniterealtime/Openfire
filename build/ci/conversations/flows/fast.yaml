@@ -1,0 +1,84 @@
+appId: eu.siacs.conversations
+name: FAST
+tags:
+    - sasl2
+onFlowStart:
+    - runScript: scripts/checkHealth.js
+---
+
+- runScript: scripts/startSession.js
+
+- launchApp:
+    clearState: true
+
+- assertVisible: "I already have an account"
+
+- runScript:
+    file: scripts/checkForLogs.js
+    env:
+        PATTERN: initializing database.*
+
+- tapOn: "I already have an account"
+- tapOn: "More options"
+- tapOn: "Settings"
+- tapOn: "Connection"
+- tapOn: "Show extended connection settings when setting up an account"
+- tapOn: "Navigate up"
+- tapOn: "Navigate up"
+
+- tapOn: "XMPP address"
+- inputText: "jane@example.org"
+- tapOn: "Password"
+- inputText: "secret"
+- tapOn: "Hostname"
+- inputText: "10.0.2.2"
+- tapOn: "Next"
+
+- assertVisible: "Accept Unknown Certificate?"
+- tapOn: "Always"
+
+- assertVisible: "Publish avatar"
+- tapOn: "Skip"
+
+- runFlow:
+    when:
+      visible: "Battery optimizations enabled"
+    commands:
+      - tapOn: "Next"
+      - assertVisible: "Let app always run in background?"
+      - tapOn: "Allow"
+
+- assertVisible: "Once you start a new conversation.*"
+
+# The initial, password-based login should obtain and cache a FAST (XEP-0484) token for next time
+- runScript:
+    file: scripts/checkForLogs.js
+    env:
+        PATTERN: 'jane@example\.org: storing hashed token Mechanism\['
+
+# Restart the app (preserving state, unlike the clearState launch above) to force a fresh
+# connection. This should authenticate using the cached FAST token via SASL2 quick start,
+# rather than the password.
+- runScript: scripts/startSession.js
+
+- launchApp
+
+- assertVisible: "Once you start a new conversation.*"
+
+# The XMPP reconnection happens in a background service after the UI above is already
+# showing, so poll (rather than a single snapshot check) for these lines.
+
+# Quick start picks an HT-*/HT2-* (FAST) mechanism, not a password-based one
+- runScript:
+    file: scripts/checkForLogs.js
+    env:
+        PATTERN: 'jane@example\.org.*quick start with HT'
+        MAX_ATTEMPTS: 30
+        DELAY_MS: 1000
+
+- runScript:
+    file: scripts/checkForLogs.js
+    env:
+        PATTERN: 'jane@example\.org.*logged in \(using SASL_2\)'
+        MAX_ATTEMPTS: 30
+        DELAY_MS: 1000

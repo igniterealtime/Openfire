@@ -1,0 +1,12 @@
+appId: eu.siacs.conversations
+---
+- assertVisible: "Publish avatar"
+- tapOn: "Skip"
+
+- runFlow:
+    when:
+      visible: "Battery optimizations enabled"
+    commands:
+      - tapOn: "Next"
+      - assertVisible: "Let app always run in background?"
+      - tapOn: "Allow"

@@ -105,6 +105,20 @@ for the full API reference.
 
 The `LOGCAT_TAGS` default filters to Conversations output only — override to capture additional tags if needed.
 
+## Reusing steps across flows: subflows
+
+Common sequences (e.g. logging in) live in `subflows/` and are pulled into a flow with `runFlow`:
+
+```yaml
+- runFlow:
+    file: subflows/login.yaml
+```
+
+Subflow files need an `appId` header and a `---` separator like any flow, but no `tags` -
+that's what keeps them from being picked up as a standalone flow when Maestro scans the
+`flows/` directory. A `runScript` path inside a subflow resolves relative to the subflow's
+own directory, not the calling flow's, hence `../scripts/...` inside `subflows/*.yaml`.
+
 ## Writing regex patterns
 
 Use `checkForLogs.js` in a flow:

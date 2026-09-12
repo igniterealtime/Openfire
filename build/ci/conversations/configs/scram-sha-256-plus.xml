@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jive>
+  <!-- Pins to SCRAM-SHA-256-PLUS: Conversations always prefers the strongest mechanism
+       available, which would otherwise be SCRAM-SHA-512-PLUS. -->
+  <sasl>
+    <mechs>SCRAM-SHA-256-PLUS</mechs>
+  </sasl>
+
+  <!-- Everything below this line is unchanged from distribution/src/conf/openfire-demoboot.xml -->
   <adminConsole>
       <port>9090</port>
       <securePort>9091</securePort>
@@ -75,11 +82,4 @@
           </user3>
       </users>
   </autosetup>
-  <!-- Restrict to only SCRAM-SHA-256-PLUS, so a client that always prefers the strongest
-       available mechanism can't drift up to SCRAM-SHA-512-PLUS instead. Without this, cb.yaml's
-       assertion of "256 or 512-PLUS" can never actually pin down that SHA-256's own channel
-       binding wiring (as opposed to SHA-512's) works. -->
-  <sasl>
-    <mechs>SCRAM-SHA-256-PLUS</mechs>
-  </sasl>
 </jive>

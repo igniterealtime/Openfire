@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jive>
+  <!-- Pins to plain SCRAM-SHA-512: Conversations always prefers channel binding when it's
+       available, so this is the only way to force the non-PLUS mechanism. -->
+  <sasl>
+    <mechs>SCRAM-SHA-512</mechs>
+  </sasl>
+
+  <!-- Everything below this line is unchanged from distribution/src/conf/openfire-demoboot.xml -->
   <adminConsole>
       <port>9090</port>
       <securePort>9091</securePort>
@@ -75,12 +82,4 @@
           </user3>
       </users>
   </autosetup>
-  <!-- Restrict to only the base (non-PLUS) SCRAM-SHA-512 mechanism, so a client that always
-       prefers channel binding when it's on offer has no stronger/PLUS option to fall through
-       to. This is the only way to force a deterministic test of the plain mechanism, since the
-       default demoboot config already offers TLS channel binding (see configs/scram-sha-512-plus.xml
-       and cb.yaml, which test that path instead). -->
-  <sasl>
-    <mechs>SCRAM-SHA-512</mechs>
-  </sasl>
 </jive>

@@ -354,6 +354,9 @@ jobs:
           - name: sasl2
             maestro-tags: sasl2
             config-file: build/ci/conversations/configs/sasl2.xml
+          - name: fast-rotation
+            maestro-tags: fast-rotation
+            config-file: build/ci/conversations/configs/fast-rotation.xml
 
     steps:
       - name: Checkout local actions and test flows # Do this _before_ untarring the distribution, as the checkout will empty the directory prior to the checkout!

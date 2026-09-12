@@ -1,0 +1,100 @@
+appId: eu.siacs.conversations
+name: FAST token rotation
+tags:
+    - fast-rotation
+onFlowStart:
+    - runScript: scripts/checkHealth.js
+---
+
+- runScript: scripts/startSession.js
+
+- runFlow:
+    file: subflows/login.yaml
+
+- runFlow:
+    file: subflows/dismiss-onboarding-dialogs.yaml
+
+- assertVisible: "Once you start a new conversation.*"
+
+# The initial, password-based login should obtain and cache a FAST (XEP-0484) token
+- runScript:
+    file: scripts/checkForLogs.js
+    env:
+        PATTERN: 'jane@example\.org: storing hashed token Mechanism\['
+
+# A freshly issued token starts in a "new" slot, and is only promoted to "current" the first
+# time it's actually used - the rotation-threshold check (see configs/fast-rotation.xml, which
+# forces it to always be due) only applies to a "current" token. So it's this token's SECOND
+# use, not its first, where the server should rotate it.
+
+# Reconnect #1: first use of the initial token - promotes it, no rotation expected yet.
+- runScript: scripts/startSession.js
+
+- launchApp
+
+- assertVisible: "Once you start a new conversation.*"
+
+- runScript:
+    file: scripts/checkForLogs.js
+    env:
+        PATTERN: 'jane@example\.org.*quick start with HT'
+        MAX_ATTEMPTS: 30
+        DELAY_MS: 1000
+
+- runScript:
+    file: scripts/checkForLogs.js
+    env:
+        PATTERN: 'jane@example\.org.*logged in \(using SASL_2\)'
+        MAX_ATTEMPTS: 30
+        DELAY_MS: 1000
+
+# Reconnect #2: second use of that same token - now "current", so the server should rotate it.
+- runScript: scripts/startSession.js
+
+- launchApp
+
+- assertVisible: "Once you start a new conversation.*"
+
+- runScript:
+    file: scripts/checkForLogs.js
+    env:
+        PATTERN: 'jane@example\.org.*quick start with HT'
+        MAX_ATTEMPTS: 30
+        DELAY_MS: 1000
+
+- runScript:
+    file: scripts/checkForLogs.js
+    env:
+        PATTERN: 'jane@example\.org.*logged in \(using SASL_2\)'
+        MAX_ATTEMPTS: 30
+        DELAY_MS: 1000
+
+- runScript:
+    file: scripts/checkForLogs.js
+    env:
+        PATTERN: 'jane@example\.org: storing hashed token Mechanism\['
+        MAX_ATTEMPTS: 30
+        DELAY_MS: 1000
+
+# Reconnect #3: proves the rotated token was actually persisted and is usable - if rotation had
+# silently broken (e.g. the replacement was never stored, or was stored but unusable), this
+# reconnect would fail FAST and fall back to a password prompt instead.
+- runScript: scripts/startSession.js
+
+- launchApp
+
+- assertVisible: "Once you start a new conversation.*"
+
+- runScript:
+    file: scripts/checkForLogs.js
+    env:
+        PATTERN: 'jane@example\.org.*quick start with HT'
+        MAX_ATTEMPTS: 30
+        DELAY_MS: 1000
+
+- runScript:
+    file: scripts/checkForLogs.js
+    env:
+        PATTERN: 'jane@example\.org.*logged in \(using SASL_2\)'
+        MAX_ATTEMPTS: 30
+        DELAY_MS: 1000

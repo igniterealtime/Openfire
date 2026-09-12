@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 if [ -z "${1:-}" ]; then
   echo "Usage: run-tests.sh <tag>" >&2
-  echo "Available tags: demoboot, sasl2" >&2
+  echo "Available tags: demoboot, sasl2, fast-rotation" >&2
   exit 1
 fi
 INCLUDE_TAGS="$1"

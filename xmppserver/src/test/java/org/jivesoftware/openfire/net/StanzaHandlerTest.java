@@ -36,9 +36,12 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 
+import org.xmpp.packet.StreamError;
+
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -213,5 +216,103 @@ public class StanzaHandlerTest
         // Verify result: startedSASL must be false after SASL2+Bind2 async completion.
         assertFalse(handler.isStartedSASL(),
             "Expected startedSASL to be reset to false after SASL2+Bind2 async completion, but it was still true.");
+    }
+
+    /**
+     * Verifies that traffic other than {@code <response/>} or {@code <abort/>} received while a SASL2 negotiation
+     * is in progress causes the connection to be disconnected with a stream error, per XEP-0388 § 2.4 ("Servers
+     * MUST disconnect Clients immediately if any other traffic is received"). Regression test for OF-3361.
+     */
+    @Test
+    public void strayStanzaDuringSasl2Negotiation_shouldDisconnect() throws Exception
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+        when(connection.getAdditionalNamespaces()).thenReturn(java.util.Collections.emptySet());
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        final ClientStanzaHandler handler = new ClientStanzaHandler(mock(PacketRouter.class), connection);
+        handler.setSession(session);
+
+        // Manually prime the handler as if a SASL2 <authenticate> was sent and the server replied with a
+        // <challenge/>, leaving the negotiation mid-flight, awaiting a <response/> or <abort/>.
+        handler.sessionCreated = true;
+        handler.startedSASL = true;
+        handler.usingSASL2 = true;
+
+        // Execute system under test: a stray stanza arrives instead of <response/> or <abort/>.
+        handler.processStanza("<presence/>", new XMPPPacketReader());
+
+        // Verify result: the connection must be closed with a stream error.
+        verify(connection).close(any(StreamError.class));
+    }
+
+    /**
+     * Verifies that a further {@code <authenticate/>} received after a SASL2 negotiation has already completed
+     * successfully causes the connection to be disconnected with a stream error, per XEP-0388 § 4.8 ("once
+     * <success/> or <continue/> has been sent by the server, any further <authenticate/> element MUST result in a
+     * stream error"), rather than being processed as a new login attempt. Regression test for OF-3362.
+     */
+    @Test
+    public void secondAuthenticateAfterSasl2Success_shouldDisconnect() throws Exception
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+        when(connection.getAdditionalNamespaces()).thenReturn(java.util.Collections.emptySet());
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        final ClientStanzaHandler handler = new ClientStanzaHandler(mock(PacketRouter.class), connection);
+        handler.setSession(session);
+
+        // Manually prime the handler as if a SASL2 negotiation already completed successfully on this stream.
+        handler.sessionCreated = true;
+        handler.startedSASL = false;
+        handler.usingSASL2 = true;
+        handler.sasl2AuthenticationCompleted = true;
+
+        // Execute system under test: a second <authenticate/> arrives on the same stream.
+        final String secondAuthenticate = "<authenticate xmlns='" + SASLAuthentication.SASL2_NAMESPACE + "' mechanism='PLAIN'/>";
+        handler.processStanza(secondAuthenticate, new XMPPPacketReader());
+
+        // Verify result: the connection must be closed with a stream error.
+        verify(connection).close(any(StreamError.class));
+    }
+
+    /**
+     * Verifies that {@code startedSASL} and {@code usingSASL2} are reset after a SASL2 {@code <authenticate/>}
+     * attempt fails (e.g. no mechanism specified), so that a retry - which {@link SaslOutcome#authenticationFailed}
+     * permits up to the configured retry limit - is not mistaken for stray traffic mid-negotiation and disconnected.
+     */
+    @Test
+    public void startedSASL_shouldBeResetAfterFailedSasl2AuthenticateAttempt() throws Exception
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+        when(connection.getAdditionalNamespaces()).thenReturn(java.util.Collections.emptySet());
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        final ClientStanzaHandler handler = new ClientStanzaHandler(mock(PacketRouter.class), connection);
+        handler.setSession(session);
+        handler.sessionCreated = true;
+
+        // Execute system under test: a SASL2 <authenticate/> with no mechanism attribute, which
+        // SASLAuthentication.handle() rejects, returning Status.failed.
+        final String invalidAuthenticate = "<authenticate xmlns='" + SASLAuthentication.SASL2_NAMESPACE + "'/>";
+        handler.processStanza(invalidAuthenticate, new XMPPPacketReader());
+
+        // Verify result: the negotiation is no longer 'in progress', so a retry remains possible.
+        assertFalse(handler.isStartedSASL(),
+            "Expected startedSASL to be reset to false after a failed SASL2 <authenticate/> attempt, so the peer can retry.");
+        assertFalse(handler.usingSASL2,
+            "Expected usingSASL2 to be reset to false after a failed SASL2 <authenticate/> attempt.");
     }
 }

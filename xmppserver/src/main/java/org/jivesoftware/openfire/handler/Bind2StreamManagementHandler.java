@@ -49,6 +49,11 @@ public class Bind2StreamManagementHandler implements Bind2InlineHandler {
     }
 
     @Override
+    public String getDisplayName() {
+        return "Stream Management";
+    }
+
+    @Override
     public boolean isEnabled() {
         return StreamManager.isStreamManagementActive();
     }

@@ -45,6 +45,13 @@ public class Bind2Request {
     private static final Map<String, Bind2InlineHandler> elementHandlers = new ConcurrentHashMap<>();
 
     /**
+     * The namespaces of inline feature requests that were successfully processed
+     * during {@link #processFeatureRequests}, for observability purposes. Empty until that
+     * method has run.
+     */
+    private Set<String> negotiatedFeatureNamespaces = Collections.emptySet();
+
+    /**
      * Registers a handler for processing inline elements with a specific namespace.
      *
      * Only one handler can be registered for each namespace. Attempting to register a handler for an already registered
@@ -103,6 +110,7 @@ public class Bind2Request {
      */
     public Element processFeatureRequests(LocalClientSession clientSession, Element successElement) {
         Element bound = successElement.addElement(new QName("bound", new Namespace("", NAMESPACE)));
+        final Set<String> succeeded = new LinkedHashSet<>();
 
         for (Element element : featureRequests) {
             String namespace = element.getNamespaceURI();
@@ -110,20 +118,24 @@ public class Bind2Request {
 
             if (handler != null && handler.isEnabled()) {
                 try {
-                    if (!handler.handleElement(clientSession, bound, element)) {
-                        Log.info("Handler for namespace {} failed to process element", namespace);
+                    if (handler.handleElement(clientSession, bound, element)) {
+                        Log.trace("Handler for namespace {} successfully processed element for session: {}", namespace, clientSession);
+                        succeeded.add(namespace);
+                    } else {
+                        Log.info("Handler for namespace {} failed to process element for session: {}", namespace, clientSession);
                         invokeFailureHandler(clientSession, bound, element, null, handler, namespace);
                     }
                 } catch (Exception e) {
-                    Log.warn("Error processing element with namespace: {}", namespace, e);
+                    Log.warn("Error processing element with namespace: {} for session: {}", namespace, clientSession, e);
                     invokeFailureHandler(clientSession, bound, element, e, handler, namespace);
                 }
             } else {
-                Log.debug("No handler registered/enabled for namespace: {}", namespace);
+                Log.debug("No handler registered/enabled for namespace: {} for session: {}", namespace, clientSession);
                 // We don't fail here because there's no obvious way we could fail.
             }
         }
 
+        negotiatedFeatureNamespaces = Collections.unmodifiableSet(succeeded);
         return bound;
     }
 
@@ -145,6 +157,25 @@ public class Bind2Request {
         } catch (Exception ex) {
             Log.warn("Error invoking failure handler after failing to process element with namespace: {}", namespace, ex);
         }
+    }
+
+    /**
+     * Returns the namespaces of inline feature requests that were successfully processed
+     * during {@link #processFeatureRequests}, for observability purposes. Empty until that
+     * method has run.
+     */
+    public Set<String> getNegotiatedFeatureNamespaces() {
+        return negotiatedFeatureNamespaces;
+    }
+
+    /**
+     * Looks up the registered inline handler for a given namespace, if any.
+     *
+     * @param namespace The namespace to look up.
+     * @return An Optional containing the handler, or an empty Optional if no handler is registered for the namespace.
+     */
+    public static Optional<Bind2InlineHandler> getHandler(@Nonnull final String namespace) {
+        return Optional.ofNullable(elementHandlers.get(namespace));
     }
 
     public static Element featureElement() {

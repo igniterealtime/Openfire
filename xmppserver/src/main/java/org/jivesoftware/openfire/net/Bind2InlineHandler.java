@@ -32,6 +32,15 @@ public interface Bind2InlineHandler {
     String getNamespace();
 
     /**
+     * Gets a human-friendly name for this handler.
+     *
+     * @return a human-friendly name for this handler.
+     */
+    default String getDisplayName() {
+        return getNamespace();
+    }
+
+    /**
      * Process an inline element from a bind2 request.
      *
      * @param bound The "bound" element to add any output to

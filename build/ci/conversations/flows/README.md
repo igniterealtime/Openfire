@@ -33,6 +33,10 @@ The `demoboot` flows need no extra configuration beyond launching Openfire with 
 For flows with a specific config, copy the matching file from `build/ci/conversations/configs/`
 into your distribution's `conf/` directory as `openfire-demoboot.xml` before starting demoboot mode.
 
+Flows are tagged by which config they need, not by feature: `fast.yaml` is tagged `sasl2`
+and reuses `configs/sasl2.xml`, since FAST (XEP-0484) is only advertised as a SASL2 inline
+feature and needs no config of its own — `xmpp.fast.enabled` defaults to `true`.
+
 ### 2. Start an Android emulator
 
 Launch an emulator with API 34 and x86_64 architecture. With Maestro installed, you can create or
@@ -115,3 +119,16 @@ Use `checkForLogs.js` in a flow:
 The above returns `HTTP/200` if a log line containing "SMACK" followed later by "connected" exists.
 
 The matched lines are available in subsequent steps as `${checkForLogs.output.matchedLines}`.
+
+For a log line produced by work that happens asynchronously after the UI has already settled
+(for example, a background reconnect), pass `MAX_ATTEMPTS`/`DELAY_MS` to poll the sidecar
+instead of taking a single snapshot:
+
+```yaml
+- runScript:
+    file: scripts/checkForLogs.js
+    env:
+      PATTERN: 'quick start with HT'
+      MAX_ATTEMPTS: 30 # default: 1 (single snapshot, no retry)
+      DELAY_MS: 1000    # default: 1000
+```

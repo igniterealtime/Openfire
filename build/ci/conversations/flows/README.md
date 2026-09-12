@@ -42,6 +42,14 @@ happens once the time left before expiry drops to or below the rotation threshol
 real defaults are multi-day, so the config sets the threshold >= the expiry to make rotation
 happen on every reconnect instead of waiting on the clock.
 
+`scram-sha-256.yaml`, `scram-sha-256-plus.yaml`, `scram-sha-512.yaml` and
+`scram-sha-512-plus.yaml` each need their own config that restricts the `sasl.mechs` list to
+exactly one mechanism. Conversations always picks the strongest mechanism on offer, and always
+prefers a channel-binding (`-PLUS`) variant when one is available, so under the default
+mechanism list it would never negotiate a plain (non-PLUS) mechanism, and would always drift up
+to `SCRAM-SHA-512-PLUS` rather than any other `-PLUS` variant. Restricting the offered mechanism
+to exactly one is the only way to deterministically pin the client to each.
+
 ### 2. Start an Android emulator
 
 Launch an emulator with API 34 and x86_64 architecture. With Maestro installed, you can create or

@@ -357,6 +357,18 @@ jobs:
           - name: fast-rotation
             maestro-tags: fast-rotation
             config-file: build/ci/conversations/configs/fast-rotation.xml
+          - name: scram-sha-256
+            maestro-tags: scram-sha-256
+            config-file: build/ci/conversations/configs/scram-sha-256.xml
+          - name: scram-sha-256-plus
+            maestro-tags: scram-sha-256-plus
+            config-file: build/ci/conversations/configs/scram-sha-256-plus.xml
+          - name: scram-sha-512
+            maestro-tags: scram-sha-512
+            config-file: build/ci/conversations/configs/scram-sha-512.xml
+          - name: scram-sha-512-plus
+            maestro-tags: scram-sha-512-plus
+            config-file: build/ci/conversations/configs/scram-sha-512-plus.xml
 
     steps:
       - name: Checkout local actions and test flows # Do this _before_ untarring the distribution, as the checkout will empty the directory prior to the checkout!

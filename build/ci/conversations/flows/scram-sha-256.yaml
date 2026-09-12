@@ -1,0 +1,30 @@
+appId: eu.siacs.conversations
+name: Login succeeds with only SCRAM-SHA-256 enabled
+tags:
+    - scram-sha-256
+onFlowStart:
+    - runScript: scripts/checkHealth.js
+---
+
+- runScript: scripts/startSession.js
+
+- runFlow:
+    file: subflows/login.yaml
+
+- runFlow:
+    file: subflows/dismiss-onboarding-dialogs.yaml
+
+# Only SCRAM-SHA-256 is offered (see configs/scram-sha-256.xml), so a successful login proves
+# the base mechanism itself works - not just its -PLUS/channel-binding variant, which is what
+# a client would otherwise always prefer and which is tested separately by
+# scram-sha-256-plus.yaml. The negative lookahead guards against a regression that widens the
+# server's offer back to include the -PLUS suffix, which would otherwise still match here.
+- runScript:
+      file: scripts/checkForLogs.js
+      env:
+          PATTERN: 'jane@example\.org.*Authenticating with SASL\/SCRAM-SHA-256(?!-PLUS)'
+
+- runScript:
+      file: scripts/checkForLogs.js
+      env:
+          PATTERN: 'jane@example\.org.*logged in \(using SASL\)'

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jive>
+  <adminConsole>
+      <port>9090</port>
+      <securePort>9091</securePort>
+  </adminConsole>
+  <connectionProvider>
+    <className>org.jivesoftware.database.EmbeddedConnectionProvider</className>
+  </connectionProvider>
+  <autosetup>
+      <run>true</run>
+      <locale>en</locale>
+      <xmpp>
+          <auth>
+              <anonymous>true</anonymous>
+          </auth>
+          <domain>example.org</domain>
+          <fqdn>example.org</fqdn>
+      </xmpp>
+      <database>
+          <mode>embedded</mode>
+      </database>
+      <admin>
+          <email>admin@example.com</email>
+          <password>admin</password>
+      </admin>
+      <users>
+          <user1>
+              <username>john</username>
+              <password>secret</password>
+              <name>John Doe</name>
+              <email>john.doe@example.com</email>
+              <roster>
+                  <item1>
+                      <jid>jane@example.org</jid>
+                      <nickname>Jane</nickname>
+                  </item1>
+                  <item2>
+                      <jid>juan@example.org</jid>
+                      <nickname>Juan</nickname>
+                  </item2>
+              </roster>
+          </user1>
+          <user2>
+              <username>jane</username>
+              <password>secret</password>
+              <name>Jane Doe</name>
+              <email>jane.doe@example.com</email>
+              <roster>
+                  <item1>
+                      <jid>john@example.org</jid>
+                      <nickname>John</nickname>
+                  </item1>
+                  <item2>
+                      <jid>juan@example.org</jid>
+                      <nickname>Juan</nickname>
+                  </item2>
+              </roster>
+          </user2>
+          <user3>
+              <username>juan</username>
+              <password>secret</password>
+              <name>Juan Doe</name>
+              <email>juan.doe@example.com</email>
+              <roster>
+                  <item1>
+                      <jid>john@example.org</jid>
+                      <nickname>John</nickname>
+                  </item1>
+                  <item2>
+                      <jid>jane@example.org</jid>
+                      <nickname>Jane</nickname>
+                  </item2>
+              </roster>
+          </user3>
+      </users>
+  </autosetup>
+  <!-- Restrict to only the base (non-PLUS) SCRAM-SHA-256 mechanism, so a client that always
+       prefers channel binding when it's on offer has no stronger/PLUS option to fall through
+       to. This is the only way to force a deterministic test of the plain mechanism, since the
+       default demoboot config already offers TLS channel binding (see configs/scram-sha-256-plus.xml
+       and cb.yaml, which test that path instead). -->
+  <sasl>
+    <mechs>SCRAM-SHA-256</mechs>
+  </sasl>
+</jive>

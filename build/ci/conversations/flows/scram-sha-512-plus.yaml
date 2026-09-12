@@ -1,0 +1,28 @@
+appId: eu.siacs.conversations
+name: Login succeeds with only SCRAM-SHA-512-PLUS enabled
+tags:
+    - scram-sha-512-plus
+onFlowStart:
+    - runScript: scripts/checkHealth.js
+---
+
+- runScript: scripts/startSession.js
+
+- runFlow:
+    file: subflows/login.yaml
+
+- runFlow:
+    file: subflows/dismiss-onboarding-dialogs.yaml
+
+# Only SCRAM-SHA-512-PLUS is offered (see configs/scram-sha-512-plus.xml), pinning the
+# channel-binding exchange to SHA-512 specifically and deliberately, rather than incidentally
+# via cb.yaml's ambiguous "256 or 512" assertion.
+- runScript:
+      file: scripts/checkForLogs.js
+      env:
+          PATTERN: 'jane@example\.org.*Authenticating with SASL\/SCRAM-SHA-512-PLUS'
+
+- runScript:
+      file: scripts/checkForLogs.js
+      env:
+          PATTERN: 'jane@example\.org.*logged in \(using SASL\)'

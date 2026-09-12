@@ -1,0 +1,29 @@
+appId: eu.siacs.conversations
+name: Login succeeds with only SCRAM-SHA-256-PLUS enabled
+tags:
+    - scram-sha-256-plus
+onFlowStart:
+    - runScript: scripts/checkHealth.js
+---
+
+- runScript: scripts/startSession.js
+
+- runFlow:
+    file: subflows/login.yaml
+
+- runFlow:
+    file: subflows/dismiss-onboarding-dialogs.yaml
+
+# Only SCRAM-SHA-256-PLUS is offered (see configs/scram-sha-256-plus.xml), pinning the
+# channel-binding exchange to SHA-256 specifically. cb.yaml already proves that *some* -PLUS
+# mechanism works, but a client that always prefers the strongest option would silently mask
+# a SHA-256-specific regression by using SHA-512-PLUS instead - this test removes that option.
+- runScript:
+      file: scripts/checkForLogs.js
+      env:
+          PATTERN: 'jane@example\.org.*Authenticating with SASL\/SCRAM-SHA-256-PLUS'
+
+- runScript:
+      file: scripts/checkForLogs.js
+      env:
+          PATTERN: 'jane@example\.org.*logged in \(using SASL\)'

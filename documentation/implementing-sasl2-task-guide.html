@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Openfire: Custom SASL2 Task Guide</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<article>
+
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
+        <h1>Custom SASL2 Task Guide</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </nav>
+
+    <section id="intro">
+
+        <h2>Introduction</h2>
+
+        <p>
+            This document explains how to extend Openfire's authentication process with a <em>SASL2 task</em>: a step
+            that runs after a client has proven its identity, but before it is granted access. Tasks are how Openfire
+            supports things like a second authentication factor, a mandatory acceptance of updated terms of service,
+            or a one-time upgrade of stored credentials, without any of that logic living in the SASL mechanism
+            itself.
+        </p>
+        <p>
+            The API is small, but the protocol it drives (defined in <a href="https://xmpp.org/extensions/xep-0388.html">XEP-0388:
+            Extensible SASL Profile</a>) has a few moving parts, so this guide spends some time on the flow before it
+            gets to the code.
+        </p>
+
+        <p>Topics that are covered in this document:</p>
+
+        <nav>
+            <ul>
+                <li><a href="#background">Background</a>
+                <li><a href="#protocol">The task negotiation, on the wire</a>
+                <li><a href="#extension-points">The extension points</a>
+                <li><a href="#registering">Registering a provider</a>
+                <li><a href="#offering">Deciding when to offer a task</a>
+                <li><a href="#configuration">Configuration</a>
+                <li><a href="#security">Security and threading notes</a>
+                <li><a href="#walkthrough">Walkthrough: writing a task</a>
+                <li><a href="#faq">Frequently Asked Questions</a>
+            </ul>
+        </nav>
+
+    </section>
+
+    <section id="background">
+
+        <h2>Background</h2>
+
+        <p>
+            SASL2 (the SASL profile defined by XEP-0388) authenticates a client in a single round trip in the common
+            case: the client sends an <code>&lt;authenticate/&gt;</code> element, the server verifies it, and a
+            <code>&lt;success/&gt;</code> comes back. XEP-0388 defines an optional extension to that flow: after
+            the SASL exchange itself has succeeded, but before <code>&lt;success/&gt;</code> is sent, the server may
+            require the client to complete one or more <em>tasks</em>. Each task is a small, self-contained exchange
+            of its own, using <code>&lt;task-data/&gt;</code> elements whose content is entirely up to the task.
+        </p>
+        <aside>
+            <p>
+                A task is not a SASL mechanism. It does not verify a password or a certificate; the SASL exchange has
+                already done that by the time a task runs. A task is better understood as a gate that sits between
+                "the client proved who it claims to be" and "the client is now a logged-in session".
+            </p>
+        </aside>
+        <p>
+            This makes the task flow a good fit for requirements that are orthogonal to identity verification, such as:
+        </p>
+        <ul>
+            <li>a second authentication factor (a TOTP code, a WebAuthn challenge, a push approval);</li>
+            <li>enforcing acceptance of updated terms of service before a session is allowed to proceed;</li>
+            <li>having a client that authenticated with a password derive and hand over credentials for a stronger
+                mechanism, so it can use that mechanism next time (this is the pattern described by
+                <a href="https://xmpp.org/extensions/xep-0480.html">XEP-0480: SASL Upgrade Tasks</a>);</li>
+            <li>anything else that should run once, exactly at login time.</li>
+        </ul>
+        <p>
+            The API described in this guide,
+            <a href="javadoc/org/jivesoftware/openfire/sasl/task/package-summary.html">org.jivesoftware.openfire.sasl.task</a>,
+            is a registry that third-party code plugs into.
+        </p>
+
+    </section>
+
+    <section id="protocol">
+
+        <h2>The task negotiation, on the wire</h2>
+
+        <p>
+            It helps to have seen the shape of the protocol before looking at the Java API that drives it. The
+            example below is a task that asks the client to accept a piece of text (the pattern used by the terms of
+            service example discussed later in this guide):
+        </p>
+
+        <fieldset>
+            <legend>A SASL2 negotiation that includes one task</legend>
+            <pre><code>C: &lt;authenticate xmlns='urn:xmpp:sasl:2' mechanism='SCRAM-SHA-256'&gt;
+     &lt;initial-response&gt;...&lt;/initial-response&gt;
+   &lt;/authenticate&gt;
+...
+S: &lt;continue xmlns='urn:xmpp:sasl:2'&gt;
+     &lt;tasks&gt;&lt;task&gt;TOS-ACCEPT&lt;/task&gt;&lt;/tasks&gt;
+     &lt;text&gt;The terms of service have changed and must be accepted before you can sign in.&lt;/text&gt;
+   &lt;/continue&gt;
+C: &lt;next xmlns='urn:xmpp:sasl:2' task='TOS-ACCEPT'/&gt;
+S: &lt;task-data xmlns='urn:xmpp:sasl:2'&gt;
+     &lt;terms xmlns='urn:xmpp:termsofservice:0' version='2026-01'&gt;https://example.org/tos/terms&lt;/terms&gt;
+   &lt;/task-data&gt;
+C: &lt;task-data xmlns='urn:xmpp:sasl:2'&gt;
+     &lt;accept xmlns='urn:xmpp:termsofservice:0' version='2026-01'/&gt;
+   &lt;/task-data&gt;
+S: &lt;success xmlns='urn:xmpp:sasl:2'&gt;...&lt;/success&gt;</code></pre>
+        </fieldset>
+
+        <p>A few things worth noting about this flow, since they shape the API:</p>
+        <ul>
+            <li>
+                The SASL exchange itself (the <code>&lt;authenticate/&gt;</code> / challenge-response part) has
+                already finished by the time <code>&lt;continue/&gt;</code> is sent. Any success data the mechanism
+                produced travels in that first <code>&lt;continue/&gt;</code>, not in a separate
+                <code>&lt;success/&gt;</code>: the session is not yet authenticated, so nothing that marks it as such
+                (a resource binding, a FAST token, an inline stream resumption) has happened yet.
+            </li>
+            <li>
+                <code>&lt;tasks/&gt;</code> can list more than one task name. That is a set of <em>alternatives</em>,
+                not a sequence: the client picks exactly one with <code>&lt;next task='...'/&gt;</code>. To require
+                several tasks one after another, the server sends a further <code>&lt;continue/&gt;</code> once the
+                first has completed.
+            </li>
+            <li>
+                Everything inside <code>&lt;task-data/&gt;</code> is opaque to the framework. Its meaning is defined
+                entirely by the task; the child elements carry their own namespace.
+            </li>
+            <li>
+                A client that does not understand a task it is offered can only abort. There is no "decline"; see
+                <a href="#offering">Deciding when to offer a task</a> for how to avoid locking out clients that were
+                never written with a particular task in mind.
+            </li>
+        </ul>
+
+    </section>
+
+    <section id="extension-points">
+
+        <h2>The extension points</h2>
+
+        <p>
+            Four types make up the API, all in
+            <code>org.jivesoftware.openfire.sasl.task</code>. Openfire's <code>SASLAuthentication</code> class
+            drives them; a task author never calls into <code>SASLAuthentication</code> directly.
+        </p>
+
+        <h3><code>Sasl2TaskProvider</code></h3>
+        <p>
+            The <a href="javadoc/org/jivesoftware/openfire/sasl/task/Sasl2TaskProvider.html">Sasl2TaskProvider</a>
+            interface is what you implement and register. One instance serves every session concurrently, so it must
+            be thread-safe; it holds no per-negotiation state itself. Its methods are invoked, per negotiation, in
+            this order:
+        </p>
+        <dl>
+            <dt><code>getStreamFeatureElements(LocalSession)</code></dt>
+            <dd>
+                optional. Lets a task advertise itself in the SASL2 <code>&lt;authentication/&gt;</code> stream feature,
+                before the client has even authenticated, so that it can discover and opt in to the task. Defaults to
+                advertising nothing.
+            </dd>
+            <dt><code>onAuthenticateReceived(Sasl2TaskContext, Element)</code></dt>
+            <dd>
+                optional. Called with the client's <code>&lt;authenticate/&gt;</code> element, before the SASL exchange has
+                completed. This is where an opt-in the client inlined into that element is parsed and stashed as a
+                context attribute for later. Defaults to doing nothing.
+            </dd>
+            <dt><code>getOfferedTasks(Sasl2TaskContext)</code></dt>
+            <dd>
+                required. The eligibility check: given everything known about this negotiation so far, which of this
+                provider's tasks (if any) should be offered right now? Called once the SASL exchange has succeeded, and
+                again after every task completes, so that a provider can offer a further task or withdraw an alternative
+                that another provider's task already satisfied.
+            </dd>
+            <dt><code>createTask(String, Sasl2TaskContext)</code></dt>
+            <dd>
+                required. Called once, when the client selects one of the task names this provider offered, to produce
+                the <code>Sasl2Task</code> instance that will run it.
+            </dd>
+            <dt><code>getContinueText(Sasl2TaskContext)</code></dt>
+            <dd>
+                optional. Human-readable text to include in the <code>&lt;continue/&gt;</code> element, when this provider
+                contributed a task to that round.
+            </dd>
+            <dt><code>onNegotiationEnded(Sasl2TaskContext, boolean)</code></dt>
+            <dd>
+                optional. Called exactly once per negotiation this provider participated in, successful or not, so it
+                can release anything it allocated. See the note on the <code>successful</code> parameter in the Javadoc:
+                it reports the outcome of the task flow, not of the SASL2 negotiation as a whole.
+            </dd>
+        </dl>
+        <p>
+            A provider also declares a stable <code>getIdentifier()</code> and the full set of <code>getTaskNames()</code>
+            it can ever offer. Both are checked for collisions with other registered providers at registration time.
+            An optional <code>getPriority()</code> (default zero) controls the order in which providers are consulted;
+            higher values run first, which matters when a client is offered tasks from more than one provider in the
+            same round.
+        </p>
+
+        <h3><code>Sasl2Task</code></h3>
+        <p>
+            <a href="javadoc/org/jivesoftware/openfire/sasl/task/Sasl2Task.html">Sasl2Task</a> is the stateful,
+            per-negotiation counterpart to the provider: a fresh instance is created for every negotiation in which
+            the client selects it, and it is never reused across sessions. Its contract is small:
+        </p>
+        <ul>
+            <li>
+                <code>begin(Element next)</code> is invoked with the client's <code>&lt;next/&gt;</code> element
+                (which may itself carry a payload, letting a simple task finish in one round trip).
+            </li>
+            <li>
+                Whenever a step returns <code>Sasl2TaskResult.taskData(...)</code>, Openfire sends a
+                <code>&lt;task-data/&gt;</code> element and the client's reply is delivered to
+                <code>onTaskData(Element)</code>. This repeats for as long as the task needs; the default
+                implementation of <code>onTaskData(...)</code> aborts the negotiation, which is correct for a task
+                that never expects data back.
+            </li>
+            <li>
+                Returning <code>Sasl2TaskResult.completed()</code> (optionally carrying
+                <code>&lt;additional-data/&gt;</code>) finishes the task.
+            </li>
+            <li>
+                Throwing <code>SaslFailureException</code> at any point aborts the <em>entire</em> SASL2 negotiation,
+                not just the task: the client gets <code>&lt;failure/&gt;</code>, and no resource is bound and no inline
+                stream resumption can take place, even though the password (or other mechanism) had already checked out.
+            </li>
+            <li>
+                <code>onAborted()</code> is called if the negotiation ends while the task is still in progress (the
+                client aborted, another task failed, the connection dropped). It must not write to the session, and
+                must be safe to call on a task that never started or has already finished cleaning up.
+            </li>
+        </ul>
+
+        <h3><code>Sasl2TaskContext</code></h3>
+        <p>
+            <a href="javadoc/org/jivesoftware/openfire/sasl/task/Sasl2TaskContext.html">Sasl2TaskContext</a> is the
+            window a provider (and the tasks it creates) has onto one negotiation. Each provider gets its own view:
+            <code>getAttribute(...)</code> / <code>setAttribute(...)</code> scratch storage is scoped per provider
+            identifier, so two providers using the same attribute name never collide. Besides attribute storage, the
+            context exposes:
+        </p>
+        <dl>
+            <dt><code>isAuthenticated()</code> / <code>getAuthorizationIdentity()</code></dt>
+            <dd>
+                only meaningful once the SASL exchange has succeeded; both are unset (false / null) during
+                <code>onAuthenticateReceived(...)</code>.
+            </dd>
+            <dt><code>getSaslMechanismName()</code></dt>
+            <dd>
+                the mechanism the client used. Before authentication has succeeded this is only the client's
+                <em>claim</em>, not yet verified; do not base an eligibility decision on it until
+                <code>isAuthenticated()</code> is true.
+            </dd>
+            <dt><code>getChannelBindingType()</code>, <code>getUserAgentInfo()</code></dt>
+            <dd>
+                useful for making a task conditional on how the client connected, or on which client it is (see
+                <a href="#offering">below</a>). User agent information is client-supplied and should not be trusted.
+            </dd>
+            <dt><code>getCompletedTaskNames()</code>, <code>getOfferedTaskNames()</code>, <code>getRound()</code></dt>
+            <dd>
+                the negotiation's history so far, useful for a provider offering a choice of alternatives.
+            </dd>
+            <dt><code>getAdvertisedFeatureElements()</code></dt>
+            <dd>
+                the elements <em>this</em> provider itself put into the stream feature earlier, so it can validate a client's request against what it actually
+                offered rather than trusting the request outright.
+            </dd>
+        </dl>
+
+        <h3><code>Sasl2TaskResult</code></h3>
+        <p>
+            <a href="javadoc/org/jivesoftware/openfire/sasl/task/Sasl2TaskResult.html">Sasl2TaskResult</a> is the
+            small, immutable value a <code>Sasl2Task</code> step returns: either
+            <code>Sasl2TaskResult.taskData(Element...)</code> or <code>Sasl2TaskResult.completed()</code> /
+            <code>Sasl2TaskResult.completed(byte[] additionalData)</code>. There is no way to signal a soft failure
+            through this type. A step that must reject the client's input throws <code>SaslFailureException</code>
+            instead.
+        </p>
+
+        <h3><code>Sasl2TaskManager</code></h3>
+        <p>
+            <a href="javadoc/org/jivesoftware/openfire/sasl/task/Sasl2TaskManager.html">Sasl2TaskManager</a> is the
+            singleton registry (<code>Sasl2TaskManager.getInstance()</code>) and the driver of the flow described
+            above. As a task author you mostly interact with it only to register and unregister your provider; see
+            the next section.
+        </p>
+
+    </section>
+
+    <section id="registering">
+
+        <h2>Registering a provider</h2>
+
+        <p>
+            Unlike the <a href="implementing-authprovider-guide.html"><code>AuthProvider</code></a> extension point,
+            a <code>Sasl2TaskProvider</code> is designed to be registered and unregistered at runtime, and this is the
+            recommended way to deploy one: from an
+            <a href="plugin-dev-guide.html">Openfire plugin's</a> <code>initializePlugin(...)</code> and
+            <code>destroyPlugin()</code>.
+        </p>
+
+        <fieldset>
+            <legend>Registering from a plugin</legend>
+            <pre><code>public class MyPlugin implements Plugin {
+
+    private Sasl2TaskProvider provider;
+
+    @Override
+    public void initializePlugin(PluginManager manager, File pluginDirectory) {
+        provider = new MyTaskProvider();
+        Sasl2TaskManager.getInstance().register(provider);
+    }
+
+    @Override
+    public void destroyPlugin() {
+        Sasl2TaskManager.getInstance().unregister(provider);
+    }
+}</code></pre>
+        </fieldset>
+
+        <p>
+            Unregistering does not disturb a negotiation that is already in progress: a running negotiation holds a
+            direct reference to the provider and to the <code>Sasl2Task</code> instances it created, so an in-flight
+            client is unaffected by a plugin reload that happens mid-negotiation. See the <a href="#faq">FAQ</a> for
+            why this is a better fit for a plugin than the lib-directory approach used by <code>AuthProvider</code>
+            and similar interfaces.
+        </p>
+        <p>
+            <code>register(...)</code> throws <code>IllegalArgumentException</code> if the identifier is empty, if no
+            task names are declared, or if either the identifier or one of the task names is already claimed by
+            another registered provider. Check for this at plugin start-up; a collision usually means two plugins
+            (or two versions of the same plugin) are both active.
+        </p>
+
+    </section>
+
+    <section id="offering">
+
+        <h2>Deciding when to offer a task</h2>
+
+        <p>
+            <code>getOfferedTasks(Sasl2TaskContext)</code> is where the real design decisions live. Because a client
+            faced with an unrecognised task can only abort the entire login, offering a task unconditionally locks
+            out every client that has not implemented it. There are three patterns for avoiding that, and which one
+            applies depends on whether the task is optional or mandatory:
+        </p>
+
+        <ul>
+            <li>
+                <strong>Opt-in</strong> (recommended for optional tasks). Advertise the task via
+                <code>getStreamFeatureElements(...)</code>, and only return it from
+                <code>getOfferedTasks(...)</code> if <code>onAuthenticateReceived(...)</code> recorded that the
+                client actually asked for it. This is the pattern used for a credential upgrade: a client that never
+                requests the upgrade is never offered it.
+            </li>
+            <li>
+                <strong>Client-conditional</strong>. Use <code>Sasl2TaskContext.getUserAgentInfo()</code> to restrict
+                the offer to client software that is known to support the task. Since user agent data is
+                client-supplied, treat this as a courtesy to well-behaved clients rather than a security boundary.
+            </li>
+            <li>
+                <strong>Unconditional / mandatory</strong>. Appropriate for a task that genuinely must be performed
+                by the users it applies to, like a second factor required on an account, or acceptance of terms of
+                service that changed. There is no opt-in to check; the eligibility logic instead checks server-side
+                state (has this account already completed this, does this apply to this account at all) and offers
+                the task to everyone the check applies to, including clients that have never seen it before. Those
+                clients will simply be unable to log in until they add support for the task, so use this pattern
+                deliberately. Note that this only holds for clients authenticating via SASL2; see
+                <a href="#security">Security and threading notes</a> for what "mandatory" actually means if this
+                server also accepts the legacy SASL profile.
+            </li>
+        </ul>
+
+        <aside>
+            <p>
+                Openfire isolates providers from each other: if <code>getOfferedTasks(...)</code> throws, the
+                exception is logged and that provider is skipped for the round rather than failing the whole
+                negotiation. This fail-open behaviour is convenient for optional tasks, but it means a
+                <em>mandatory</em> task must fail closed from within its own eligibility check (for example, by
+                treating "I could not determine whether this task is needed" as "yes, offer it") rather than relying
+                on the manager to do that for it.
+            </p>
+        </aside>
+
+        <p>
+            A related point: <code>getStreamFeatureElements(...)</code> runs for every session that reaches feature
+            advertisement, including ones that have not authenticated yet. Anything this method does is reachable by
+            an unauthenticated peer, and anything it varies on is observable by one. Keep this method cheap and,
+            ideally, independent of any claimed identity.
+        </p>
+
+    </section>
+
+    <section id="configuration">
+
+        <h2>Configuration</h2>
+
+        <p>
+            The task flow as a whole is governed by three dynamic system properties, independent of any individual
+            provider's own configuration:
+        </p>
+
+        <dl>
+            <dt><code>xmpp.auth.sasl2.tasks.enabled</code></dt>
+            <dd>
+                Boolean, default <code>true</code>. The overall kill switch: when set to <code>false</code>, no task
+                is advertised or offered by any provider, and a client that sends <code>&lt;next/&gt;</code> or
+                <code>&lt;task-data/&gt;</code> anyway has its negotiation failed. Useful if a third-party provider
+                misbehaves in production and needs to be taken out of the loop without a restart.
+            </dd>
+            <dt><code>xmpp.auth.sasl2.tasks.disabled</code></dt>
+            <dd>
+                A comma-separated list of provider identifiers (see <code>getIdentifier()</code>). Lets an
+                administrator disable one specific provider while leaving every other registered provider, and the
+                plugin that supplies the disabled one, running.
+            </dd>
+            <dt><code>xmpp.auth.sasl2.tasks.max-rounds</code></dt>
+            <dd>
+                Integer, default <code>5</code>. The maximum number of <code>&lt;continue/&gt;</code> elements sent
+                during a single negotiation. This bounds the damage a provider can do if it keeps offering a task
+                that never becomes ineligible; exceeding it fails the negotiation rather than looping forever. It is
+                not usually something a task author needs to think about, beyond making sure
+                <code>getOfferedTasks(...)</code> reliably stops returning a task's name once that task has actually
+                been completed.
+            </dd>
+        </dl>
+
+    </section>
+
+    <section id="security">
+
+        <h2>Security and threading notes</h2>
+
+        <p>
+            Task enforcement is scoped to SASL2. A client is only ever offered a task if it authenticates using the
+            SASL2 profile defined by XEP-0388; the <code>&lt;continue/&gt;</code> / <code>&lt;next/&gt;</code> /
+            <code>&lt;task-data/&gt;</code> exchange has no equivalent in the legacy SASL profile of
+            <a href="https://xmpp.org/rfcs/rfc6120.html">RFC 6120</a>. If this server is configured to also accept
+            that legacy profile, or any other authentication path that does not go through SASL2, a client that
+            authenticates over one of those paths never sees a task at all, and none of the requirements a task
+            implements (a second factor, a mandatory terms-of-service acceptance, a credential upgrade) are enforced
+            on it. A task is therefore only as mandatory as the set of authentication paths this server is configured
+            to accept; if legacy SASL should not be an escape hatch around a task, that has to be addressed in your
+            mechanism/connection configuration, not in the task itself.
+        </p>
+        <p>
+            A task runs after the SASL exchange has already succeeded. Openfire holds back everything that would mark
+            the session as authenticated &mdash (the authentication token, resource binding, FAST token issuance,
+            inline XEP-0198 stream resumption, etc.) until every eligible task has completed, so a task can genuinely
+            function as an additional factor.
+        </p>
+        <p>
+            There is a limit to that, worth keeping in mind when designing a task: it cannot protect against an
+            attacker who already holds valid credentials <em>and</em> is willing to simply abandon the connection.
+            The password (or other mechanism) was verified before the task ran, so a failed task confirms to that
+            attacker that the credential was correct, even though no session was ever granted.
+        </p>
+        <p>
+            On threading: a provider instance is shared across every concurrent session, so it must be thread-safe.
+            <code>Sasl2Task</code> and <code>Sasl2TaskContext</code> instances are scoped to one negotiation and are
+            never invoked concurrently for that negotiation, but they are not synchronized for you either.
+            Avoid holding a reference to one beyond the negotiation it belongs to. Task methods are called on the
+            thread that processes inbound data for the client's connection and must not block: a quick database
+            round trip is fine, a call-out to a third-party service is not, since there is currently no support for
+            resolving a task step asynchronously.
+        </p>
+
+    </section>
+
+    <section id="walkthrough">
+
+        <h2>Walkthrough: writing a task</h2>
+
+        <p>
+            The steps below build a minimal, mandatory, single-round-trip task: one that simply asks the client to
+            echo back a value the server sends it. It deliberately skips the opt-in machinery
+            (<code>getStreamFeatureElements(...)</code> / <code>onAuthenticateReceived(...)</code>); add that if your
+            own task is optional, per <a href="#offering">Deciding when to offer a task</a>.
+        </p>
+
+        <ol>
+            <li>
+                <p>Pick a stable provider identifier and a task name, and declare them:</p>
+                <fieldset>
+                    <legend>Provider skeleton</legend>
+                    <pre><code>public class MyTaskProvider implements Sasl2TaskProvider {
+
+    static final String TASK_NAME = "MY-TASK";
+
+    @Override
+    public String getIdentifier() {
+        return "org.example.my-task";
+    }
+
+    @Override
+    public Set&lt;String&gt; getTaskNames() {
+        return Set.of(TASK_NAME);
+    }
+    // ...
+}</code></pre>
+                </fieldset>
+            </li>
+            <li>
+                <p>
+                    Implement the eligibility check. This example is mandatory for every non-anonymous login that
+                    has not completed it yet in this negotiation:
+                </p>
+                <fieldset>
+                    <legend>getOfferedTasks(...)</legend>
+                    <pre><code>@Override
+public List&lt;String&gt; getOfferedTasks(Sasl2TaskContext context) {
+    if (context.getAuthorizationIdentity() == null) {
+        return List.of(); // nothing to gate for an anonymous login
+    }
+    if (context.getCompletedTaskNames().contains(TASK_NAME)) {
+        return List.of();
+    }
+    return List.of(TASK_NAME);
+}</code></pre>
+                </fieldset>
+            </li>
+            <li>
+                <p>Produce a task instance when the client selects it:</p>
+                <fieldset>
+                    <legend>createTask(...)</legend>
+                    <pre><code>@Override
+public Sasl2Task createTask(String taskName, Sasl2TaskContext context) {
+    return new MyTask();
+}</code></pre>
+                </fieldset>
+            </li>
+            <li>
+                <p>Implement the task itself. Here, one round trip is enough:</p>
+                <fieldset>
+                    <legend>The task</legend>
+                    <pre><code>private static class MyTask implements Sasl2Task {
+
+    private static final String NAMESPACE = "urn:example:my-task:0";
+
+    @Override
+    public String getName() {
+        return TASK_NAME;
+    }
+
+    @Override
+    public Sasl2TaskResult begin(Element next) {
+        Element challenge = DocumentHelper.createElement(QName.get("challenge", NAMESPACE));
+        challenge.setText("some-value");
+        return Sasl2TaskResult.taskData(challenge);
+    }
+
+    @Override
+    public Sasl2TaskResult onTaskData(Element taskData) throws SaslFailureException {
+        Element response = taskData.element(QName.get("response", NAMESPACE));
+        if (response == null || !"some-value".equals(response.getTextTrim())) {
+            throw new SaslFailureException(Failure.NOT_AUTHORIZED, "Unexpected response.");
+        }
+        return Sasl2TaskResult.completed();
+    }
+}</code></pre>
+                </fieldset>
+            </li>
+            <li>
+                Register the provider from your plugin's <code>initializePlugin(...)</code>, as shown in
+                <a href="#registering">Registering a provider</a>, and unregister it from
+                <code>destroyPlugin()</code>.
+            </li>
+            <li>
+                Restart (or reload) the plugin. On the next SASL2 login, the client should receive a
+                <code>&lt;continue/&gt;</code> offering <code>MY-TASK</code>, and cannot complete authentication
+                until it responds correctly.
+            </li>
+        </ol>
+
+        <p>
+            Two more complete, worked examples exist, illustrating each of the offering patterns described earlier:
+        </p>
+        <ul>
+            <li>
+                A terms-of-service acceptance task (mandatory pattern): it offers <code>TOS-ACCEPT</code> to every
+                account whose recorded acceptance is not for the currently active document version, walks the client
+                through a <code>&lt;terms/&gt;</code> / <code>&lt;accept/&gt;</code> exchange, and records the
+                acceptance once the version presented in <code>begin(...)</code> matches the version accepted in
+                <code>onTaskData(...)</code> (guarding against the document being changed mid-negotiation). This task
+                is part of the <a href="https://github.com/igniterealtime/openfire-termsofservice-plugin/">"Terms of
+                Service" plugin</a> for Openfire.
+            </li>
+            <li>
+                A SCRAM credential upgrade task (opt-in pattern), modelled on XEP-0480: it advertises the mechanisms
+                it can upgrade to only over an encrypted connection, records a client's opt-in from its
+                <code>&lt;authenticate/&gt;</code> element after validating it against what was actually advertised,
+                and only then offers the corresponding <code>UPGR-&lt;mechanism&gt;</code> task.
+            </li>
+        </ul>
+        <p>
+            Both use only the public API described in this guide, and are a good reference for questions this guide
+            does not answer directly.
+        </p>
+
+    </section>
+
+    <section id="faq">
+
+        <h2>Frequently Asked Questions</h2>
+
+        <h4>Do I have to implement every method on <code>Sasl2TaskProvider</code>?</h4>
+        <p>
+            No. Only <code>getIdentifier()</code>, <code>getTaskNames()</code>, <code>getOfferedTasks(...)</code> and
+            <code>createTask(...)</code> are required. <code>getStreamFeatureElements(...)</code>,
+            <code>onAuthenticateReceived(...)</code>, <code>getContinueText(...)</code>,
+            <code>onNegotiationEnded(...)</code> and <code>getPriority()</code> all have sensible defaults for a task
+            that does not need them.
+        </p>
+
+        <h4>Can I offer more than one task from a single provider?</h4>
+        <p>
+            Yes. <code>getTaskNames()</code> and the list returned by <code>getOfferedTasks(...)</code> are not
+            limited to one entry. This is the mechanism used to offer several second-factor alternatives at once (the
+            client picks one), or to require unrelated tasks from the same provider in sequence (return the next one
+            only after the previous has completed).
+        </p>
+
+        <h4>Can I have more than one <code>Sasl2TaskProvider</code> registered at the same time?</h4>
+        <p>
+            Yes, and this is the normal case: separate concerns (a terms-of-service check, a second factor, a
+            credential upgrade) are expected to live in separate providers, possibly shipped by separate plugins.
+            They are consulted independently every round, in descending order of <code>getPriority()</code>. The only
+            constraint is that no two registered providers may declare the same identifier or the same task name.
+        </p>
+
+        <h4>Isn't it better to deploy this as a jar on the classpath, like an <code>AuthProvider</code>?</h4>
+        <p>
+            For <code>Sasl2TaskProvider</code>, no. This is the opposite recommendation from the
+            <a href="implementing-authprovider-guide.html">Custom Authentication Provider Guide</a>, and
+            deliberately so. <code>AuthProvider</code> and similar interfaces are read from a static configuration
+            property at start-up, so Openfire needs them to be reliably present on the classpath for the service's
+            entire lifetime. <code>Sasl2TaskManager</code>, by contrast, is a runtime registry built around
+            <code>register(...)</code> / <code>unregister(...)</code> calls, specifically so that a plugin can add
+            and remove a provider as it is loaded and unloaded, without disturbing a negotiation already in progress.
+            Deploying as a plugin is therefore the supported path for this extension point.
+        </p>
+
+        <h4>What happens if my code throws an unexpected exception?</h4>
+        <p>
+            It depends on where. An exception from <code>onAuthenticateReceived(...)</code> that is a
+            <code>SaslFailureException</code> rejects the authentication attempt outright, as intended; any other
+            exception there is logged and ignored. An exception from <code>getStreamFeatureElements(...)</code> or
+            <code>getOfferedTasks(...)</code> is logged and that provider is skipped for the round (see the note on
+            fail-open behaviour in <a href="#offering">Deciding when to offer a task</a>). An exception from
+            <code>createTask(...)</code>, or a <code>SaslFailureException</code> from a task's own
+            <code>begin(...)</code> or <code>onTaskData(...)</code>, aborts the whole SASL2 negotiation with
+            <code>&lt;failure/&gt;</code>.
+        </p>
+
+        <h4>How do I test a task provider without a real XMPP client?</h4>
+        <p>
+            The unit tests that were added alongside this API (for example those covering the negotiation's state
+            machine and the default provider/task behaviour) construct the relevant objects directly with mocked
+            sessions, rather than driving a real connection. That is a reasonable starting point for testing a task's
+            own logic in isolation. Exercising the full wire protocol against your provider is best done with an
+            actual XMPP client library that has been updated to support SASL2 tasks, or with a raw XML test harness.
+        </p>
+
+        <h4>My task needs to call an external service (an SMS gateway, a push notification API, ...). Can I do that from <code>begin(...)</code> or <code>onTaskData(...)</code>?</h4>
+        <p>
+            Not synchronously, and not from those calls directly - they run on the connection's inbound
+            processing thread and must not block on network I/O to a third party. There is currently no supported way
+            to resolve a task step asynchronously. If your task depends on an external service, trigger the call
+            beforehand or fire it off in the background and treat the client interaction purely as a "did this
+            complete" check, or issue and validate the challenge, entirely from state your own code manages.
+        </p>
+
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
+
+</body>
+</html>

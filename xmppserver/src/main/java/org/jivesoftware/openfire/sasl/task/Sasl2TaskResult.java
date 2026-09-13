@@ -133,12 +133,16 @@ public final class Sasl2TaskResult
     /**
      * The children of the {@code <task-data/>} element to send to the peer. Only meaningful for {@link Type#TASK_DATA}.
      *
+     * This list is immutable and contains defensive copies of the original elements.
+     *
      * @return an immutable list of elements (never null, possibly empty).
      */
     @Nonnull
     public List<Element> getTaskData()
     {
-        return taskData;
+        final List<Element> copies = new ArrayList<>(taskData.size());
+        taskData.forEach(element -> copies.add(element.createCopy()));
+        return Collections.unmodifiableList(copies);
     }
 
     /**

@@ -100,13 +100,18 @@ public abstract class StanzaHandler {
     protected boolean sasl2SessionResumed = false;
 
     /**
-     * Flag that indicates that a SASL2 {@code <success/>} has already been delivered on this connection (either
-     * synchronously, or - for a Bind2 request - once resource binding completes).
+     * Flag that indicates that a SASL2 {@code <success/>} has already been delivered on this connection,
+     * synchronously (no Bind2 request, or an inline XEP-0198 resume).
      *
      * Per XEP-0388 § 4.8, once this has happened, any further {@code <authenticate/>} element received on the same
      * stream MUST result in a stream error, rather than being processed as a new SASL2 negotiation attempt. Unlike
      * {@link #startedSASL}, this is not reset: it captures a durable fact, for the lifetime of the connection.
      * See OF-3362.
+     * <p>
+     * This does <em>not</em> cover a Bind2 request: {@code <success/>} for that is sent asynchronously, once
+     * resource binding completes, by {@code SASLAuthentication} rather than by this handler. That case is tracked
+     * separately, via {@link SASLAuthentication#SASL2_BIND2_PENDING_OR_SUCCEEDED} session data - see the guard in
+     * {@link #processStanza(String, XMPPPacketReader)}.
      */
     protected boolean sasl2AuthenticationCompleted = false;
 
@@ -262,11 +267,13 @@ public abstract class StanzaHandler {
             return;
         }
 
-        if ("authenticate".equals(tag) && usingSASL2 && sasl2AuthenticationCompleted) {
+        if ("authenticate".equals(tag) && usingSASL2 && (sasl2AuthenticationCompleted || (session != null && session.getSessionData(SASLAuthentication.SASL2_BIND2_PENDING_OR_SUCCEEDED) != null))) {
             // XEP-0388 § 4.8: once <success/> (or <continue/>) has been sent by the server, any further
             // <authenticate/> element MUST result in a stream error, rather than being processed as a new login.
-            // See OF-3362.
-            Log.warn("Disconnecting session {} for sending <authenticate/> after a SASL2 negotiation already completed.", session);
+            // See OF-3362. This also rejects a repeat attempt while a Bind2 request from an earlier <authenticate/>
+            // is still awaiting its asynchronous outcome: allowing a second negotiation to start concurrently with
+            // one still in flight would be at least as wrong as allowing one after a completed one.
+            Log.warn("Disconnecting session {} for sending <authenticate/> after a SASL2 negotiation already completed (or still awaiting a pending Bind2 outcome).", session);
             connection.close(new StreamError(StreamError.Condition.not_authorized, "SASL2 authentication has already completed on this stream."));
             return;
         }
@@ -309,9 +316,11 @@ public abstract class StanzaHandler {
                 sasl2AuthenticationCompleted = true;
                 sasl2Successful();
             } else if (saslStatus == SASLAuthentication.Status.authenticatedAwaitingFeatures) {
-                // Bind2: <success/> and features are delivered asynchronously by SASLAuthentication.
+                // Bind2: <success/> and features are delivered asynchronously by SASLAuthentication, once resource
+                // binding completes - which has not yet happened here, so this must not be treated as a durably
+                // completed negotiation yet. See SASL2_BIND2_PENDING_OR_SUCCEEDED. OF-3362.
                 startedSASL = false;
-                sasl2AuthenticationCompleted = true;
+                authenticatingSession.setSessionData(SASLAuthentication.SASL2_BIND2_PENDING_OR_SUCCEEDED, Boolean.TRUE);
             } else if (saslStatus == SASLAuthentication.Status.authenticatedResumed) {
                 // Inline XEP-0198 resume: <success/> (with <resumed/>) was already delivered, over the resumed
                 // session, by SASLAuthentication. Adopt that session and suppress stream features (XEP-0198 § 9.2).
@@ -340,9 +349,11 @@ public abstract class StanzaHandler {
                 sasl2AuthenticationCompleted = true;
                 sasl2Successful();
             } else if (saslStatus == SASLAuthentication.Status.authenticatedAwaitingFeatures) {
-                // Bind2: <success/> and features are delivered asynchronously by SASLAuthentication.
+                // Bind2: <success/> and features are delivered asynchronously by SASLAuthentication, once resource
+                // binding completes - which has not yet happened here, so this must not be treated as a durably
+                // completed negotiation yet. See SASL2_BIND2_PENDING_OR_SUCCEEDED. OF-3362.
                 startedSASL = false;
-                sasl2AuthenticationCompleted = true;
+                authenticatingSession.setSessionData(SASLAuthentication.SASL2_BIND2_PENDING_OR_SUCCEEDED, Boolean.TRUE);
             } else if (saslStatus == SASLAuthentication.Status.authenticatedResumed) {
                 // Inline XEP-0198 resume: <success/> (with <resumed/>) was already delivered, over the resumed
                 // session, by SASLAuthentication. Adopt that session and suppress stream features (XEP-0198 § 9.2).

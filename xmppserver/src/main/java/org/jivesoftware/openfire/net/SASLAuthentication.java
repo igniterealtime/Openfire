@@ -37,6 +37,8 @@ import org.jivesoftware.openfire.sasl.SaslFailureException;
 import org.jivesoftware.openfire.sasl.SaslMechanismCatalog;
 import org.jivesoftware.openfire.sasl.SaslMechanismEligibility;
 import org.jivesoftware.openfire.sasl.ScramSaslServer;
+import org.jivesoftware.openfire.sasl.task.Sasl2Negotiation;
+import org.jivesoftware.openfire.sasl.task.Sasl2TaskManager;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.openfire.streammanagement.MalformedResumeRequestException;
 import org.jivesoftware.openfire.streammanagement.ResumeRequest;
@@ -273,6 +275,8 @@ public class SASLAuthentication {
         RESPONSE,
         CHALLENGE,
         FAILURE,
+        NEXT,       // XEP-0388 § 2.5: the peer selects a task.
+        TASK_DATA,  // XEP-0388 § 2.5: task payload, in either direction.
         UNDEF;
 
         /**
@@ -289,7 +293,7 @@ public class SASLAuthentication {
             }
             try
             {
-                return ElementType.valueOf( name.toUpperCase() );
+                return ElementType.valueOf( name.toUpperCase().replace('-', '_') );
             }
             catch ( Throwable t )
             {
@@ -581,11 +585,18 @@ public class SASLAuthentication {
                         // the RFC, so we just strip any initial token.
                         if (data != null) data = null;
                     }
+
                     // Clear any unexecuted bind2-request
                     session.removeSessionData("bind2-request");
                     session.removeSessionData("user-agent-info");
                     session.removeSessionData(SASL2_RESUME_REQUEST);
+                    // Clear the outcome of any preceding attempt, so that a mechanism without channel binding cannot
+                    // observe the channel binding type of an earlier one.
+                    session.removeSessionData("SaslMechanism");
+                    session.removeSessionData("ChannelBindingType");
                     FastSessionState.clearRequest(session);
+                    Sasl2TaskManager.getInstance().reset(session);
+
                     if (usingSASL2 && session instanceof LocalClientSession clientSession) {
                         UserAgentInfo userAgentInfo = null;
                         Element userAgentElement = doc.element("user-agent");
@@ -619,12 +630,22 @@ public class SASLAuthentication {
                         if (bind2Request != null) {
                             session.setSessionData("bind2-request", bind2Request);
                         }
+
+                        // XEP-0388 § 2.5: let task providers record any task-related request that the peer inlined.
+                        Sasl2TaskManager.getInstance().onAuthenticateElement(session, doc, mechanismName);
                     }
 
                     // intended fall-through
                 case RESPONSE:
                     if ( saslServer == null )
                     {
+                        if ( usingSASL2 && Sasl2TaskManager.getInstance().getNegotiation( session ) != null )
+                        {
+                            // The SASL exchange has completed and a task negotiation is in progress. A <response/>
+                            // is not part of that flow. This is a peer-triggerable condition, so it is reported as a
+                            // protocol error rather than as an unexpected internal state.
+                            throw new SaslFailureException( Failure.MALFORMED_REQUEST, "A <response/> element was received while a SASL2 task negotiation is in progress." );
+                        }
                         // Client sends response without a preceding auth?
                         throw new IllegalStateException( "A SaslServer instance was not initialized and/or stored on the session." );
                     }
@@ -658,18 +679,28 @@ public class SASLAuthentication {
                         throw new SaslFailureException(Failure.ACCOUNT_DISABLED);
                     }
 
-                    // Success! Any mechanism-specific verification (such as certificate checks for EXTERNAL) is
-                    // performed by the SaslServer implementation.
-                    // Check before calling authenticationSuccessful whether a Bind2 request is pending;
-                    // if so, the response and stream features will be delivered asynchronously.
-                    final boolean hasBind2Request = usingSASL2 && session.getSessionData("bind2-request") != null;
-                    authenticationSuccessful( session, saslServer.getAuthorizationID(), saslServer.getMechanismName(), challenge, usingSASL2 );
+                    // The SASL exchange itself has succeeded. Record its outcome on the session before any
+                    // post-authentication task runs: tasks are allowed to inspect the mechanism and channel binding.
                     session.removeSessionData( "SaslServer" );
                     session.removeSessionData( SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY );
                     session.setSessionData("SaslMechanism", saslServer.getMechanismName());
                     if (MechanismName.requiresChannelBinding(saslServer.getMechanismName())) {
                         session.setSessionData("ChannelBindingType", saslServer.getNegotiatedProperty(ScramSaslServer.PROPNAME_CHANNELBINDINGTYPE));
                     }
+
+                    // XEP-0388 § 2.5: one or more tasks may have to be performed before authentication can be
+                    // reported as successful. When a task is offered, a <continue/> has been sent (carrying the
+                    // mechanism's success data) and the negotiation is suspended until the peer selects a task.
+                    // Nothing that marks the session as authenticated may happen until every task has completed.
+                    if (usingSASL2 && Sasl2TaskManager.getInstance().offerTasks(session, saslServer.getAuthorizationID(), saslServer.getMechanismName(), challenge)) {
+                        return Status.needResponse;
+                    }
+
+                    // Check before calling authenticationSuccessful whether a Bind2 request is pending; if so, the
+                    // response and stream features will be delivered asynchronously.
+                    final boolean hasBind2Request = usingSASL2 && session.getSessionData("bind2-request") != null;
+                    authenticationSuccessful( session, saslServer.getAuthorizationID(), saslServer.getMechanismName(), challenge, usingSASL2 );
+
                     if (usingSASL2 && session.getSessionData(SASL2_RESUMED_SESSION) != null) {
                         // XEP-0198 § 9.2: the session was resumed inline. The <success/> (with <resumed/>) has
                         // already been delivered, over the resumed session, by authenticationSuccessful(). The
@@ -677,6 +708,18 @@ public class SASLAuthentication {
                         return Status.authenticatedResumed;
                     }
                     return hasBind2Request ? Status.authenticatedAwaitingFeatures : Status.authenticated;
+
+                case NEXT: // intended fall-through
+                case TASK_DATA:
+                    if ( !usingSASL2 )
+                    {
+                        throw new IllegalStateException( "Unexpected data received while negotiating SASL authentication. SASL2 tasks require SASL2. Name of the offending root element: " + doc.getName() + " Namespace: " + doc.getNamespaceURI() );
+                    }
+                    if ( Sasl2TaskManager.getInstance().handleTaskElement( session, doc ) == Sasl2TaskManager.Outcome.AWAITING_PEER )
+                    {
+                        return Status.needResponse;
+                    }
+                    return completeSasl2AfterTasks( session );
 
                 default:
                     throw new IllegalStateException( "Unexpected data received while negotiating SASL authentication. Name of the offending root element: " + doc.getName() + " Namespace: " + doc.getNamespaceURI() );
@@ -737,6 +780,51 @@ public class SASLAuthentication {
             return Optional.of(Failure.ENCRYPTION_REQUIRED);
         }
         return Optional.empty();
+    }
+
+    /**
+     * Concludes a SASL2 negotiation whose tasks have all completed: applies the deferred authentication outcome,
+     * which delivers {@code <success/>} and performs any inlined Bind2 or XEP-0198 resumption.
+     *
+     * @param session the session that is authenticating (cannot be null).
+     * @return the status of the negotiation.
+     */
+    private static Status completeSasl2AfterTasks(@Nonnull final LocalSession session)
+    {
+        final Sasl2Negotiation negotiation = Sasl2TaskManager.getInstance().endNegotiation(session, true);
+        if (negotiation == null) {
+            Log.warn("Unable to conclude the SASL2 negotiation of session '{}': no task negotiation state is present.", session);
+            abortSasl2(session, Failure.TEMPORARY_AUTH_FAILURE);
+            return Status.failed;
+        }
+        try {
+            final boolean hasBind2Request = session.getSessionData("bind2-request") != null;
+            authenticationSuccessful(session, negotiation.getAuthorizationIdentity(), negotiation.getSaslMechanismName(), negotiation.getFinalAdditionalData(), true);
+
+            if (session.getSessionData(SASL2_RESUMED_SESSION) != null) {
+                return Status.authenticatedResumed;
+            }
+            return hasBind2Request ? Status.authenticatedAwaitingFeatures : Status.authenticated;
+        } catch (final Exception e) {
+            Log.warn("An exception occurred while concluding the SASL2 negotiation of session '{}' after its tasks completed.", session, e);
+            abortSasl2(session, Failure.TEMPORARY_AUTH_FAILURE);
+            return Status.failed;
+        }
+    }
+
+    /**
+     * Delivers the stream features that apply once a session has authenticated.
+     *
+     * @param clientSession the session (cannot be null).
+     */
+    private static void deliverPostAuthenticationStreamFeatures(@Nonnull final LocalClientSession clientSession)
+    {
+        final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
+        final List<Element> specificFeatures = clientSession.getAvailableStreamFeatures();
+        if (specificFeatures != null) {
+            specificFeatures.forEach(features::add);
+        }
+        clientSession.deliverRawText(features.asXML());
     }
 
     /**
@@ -1004,6 +1092,7 @@ public class SASLAuthentication {
         session.removeSessionData(SASL2_RESUME_REQUEST);
         session.removeSessionData(SASL2_RESUMED_SESSION);
         session.removeSessionData("SaslServer");
+        Sasl2TaskManager.getInstance().endNegotiation(session, false);
         FastSessionState.clearAuthenticationAttempt(session);
         SaslOutcome.authenticationFailed(session, failure, true);
     }
@@ -1050,12 +1139,7 @@ public class SASLAuthentication {
             SessionEventDispatcher.dispatchEvent(clientSession, SessionEventDispatcher.EventType.resource_bound);
 
             // Deliver stream features now that <success/> has been sent.
-            final Element features = DocumentHelper.createElement(QName.get("features", "stream", "http://etherx.jabber.org/streams"));
-            final List<Element> specificFeatures = clientSession.getAvailableStreamFeatures();
-            if (specificFeatures != null) {
-                specificFeatures.forEach(features::add);
-            }
-            clientSession.deliverRawText(features.asXML());
+            deliverPostAuthenticationStreamFeatures(clientSession);
         }
         catch (final Exception e)
         {

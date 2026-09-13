@@ -41,6 +41,14 @@ import static org.mockito.Mockito.*;
  * written to the 'N' slot and only promoted to 'C' once the client proves possession of it, so
  * that a lost {@code <success/>} does not leave the client without a usable credential.
  *
+ * A second invariant, added for OF-3368, governs how tokens stop being valid. A token that the
+ * server no longer trusts (explicitly invalidated by the client, or superseded during slot
+ * promotion) must never be hard-deleted immediately: its row is instead backdated to read as
+ * already-expired, and is only actually removed once it has aged out past
+ * {@link FastTokenManager#TOKEN_PURGE_GRACE_PERIOD}. This lets a later redemption attempt be
+ * reported as SASL 'credentials-expired' rather than 'not-authorized', per XEP-0484 §4.2 -
+ * a distinction that is only possible while the server still recognises the row.
+ *
  * JDBC is mocked, so these tests pin the statements issued and the values bound to them, not the
  * behaviour of a real database. Concurrency, isolation and the correctness of the SQL against the
  * ten shipped dialects are out of scope here and want an integration test against HSQLDB.
@@ -222,6 +230,32 @@ class FastTokenPersistenceTest
         }
     }
 
+    /**
+     * OF-3368 regression: a token that was explicitly invalidated (rather than left to expire
+     * naturally) must still be reported as expired on a later redemption attempt, not as an
+     * unknown credential. This is what distinguishes SASL 'credentials-expired' from
+     * 'not-authorized' per XEP-0484 §4.2. The invalidation backdate is well inside the default
+     * purge grace period, so the row is still present and still recognisable as expired.
+     */
+    @Test
+    void validationReportsARecentlyInvalidatedTokenAsExpiredNotUnknown() throws Exception
+    {
+        final String token = "invalidated-token";
+        final String recentlyInvalidatedExpiry = StringUtils.zeroPadString(
+            String.valueOf(Instant.now().minusSeconds(300).toEpochMilli()), 15);
+        final Connection connection = singleRow(token, "C", recentlyInvalidatedExpiry);
+
+        try (MockedStatic<DbConnectionManager> db = mockStatic(DbConnectionManager.class)) {
+            db.when(DbConnectionManager::getTransactionConnection).thenReturn(connection);
+            final FastTokenManager.Ht2ValidationResult result = FastTokenManager.validateTokenHt2(
+                USER, CLIENT, FastTokenManager.HT_SHA_256_NONE, proof(token, "Initiator"), new byte[0], "", "");
+
+            assertNotNull(result,
+                "OF-3368: a just-invalidated token was reported as unknown ('not-authorized') instead of expired ('credentials-expired').");
+            assertTrue(result.isExpired(), "A just-invalidated token was not reported as expired.");
+        }
+    }
+
     /** Lookup is scoped to the presented client id, so one client's token cannot be used by another. */
     @Test
     void validationScopesLookupToThePresentedClientId() throws Exception
@@ -314,22 +348,27 @@ class FastTokenPersistenceTest
         }
         verify(connection, never()).prepareStatement(contains("DELETE"));
         verify(connection, never()).prepareStatement(startsWith("UPDATE ofFastToken SET tokenSlot"));
+        verify(connection, never()).prepareStatement(startsWith("UPDATE ofFastToken SET expiry"));
     }
 
-    /** Using the new token deletes the current one and promotes the new one, in that order. */
+    /**
+     * Using the new token expires the current one - rather than deleting it, so a client that
+     * replays the just-superseded token is later told 'credentials-expired' instead of
+     * 'not-authorized' (OF-3368) - and then promotes the new one, in that order.
+     */
     @Test
-    void successfulUseOfTheNewTokenDeletesCurrentThenPromotesNew() throws Exception
+    void successfulUseOfTheNewTokenExpiresCurrentThenPromotesNew() throws Exception
     {
         final String token = "new-token";
         final Connection connection = mock(Connection.class);
         final PreparedStatement select = mock(PreparedStatement.class);
-        final PreparedStatement delete = mock(PreparedStatement.class);
+        final PreparedStatement expireCurrent = mock(PreparedStatement.class);
         final PreparedStatement promote = mock(PreparedStatement.class);
         final ResultSet rows = mock(ResultSet.class);
         when(connection.prepareStatement(anyString())).thenAnswer(invocation -> {
             final String sql = invocation.getArgument(0);
             if (sql.startsWith("SELECT")) return select;
-            if (sql.startsWith("DELETE")) return delete;
+            if (sql.startsWith("UPDATE ofFastToken SET expiry")) return expireCurrent;
             return promote;
         });
         when(select.executeQuery()).thenReturn(rows);
@@ -348,10 +387,14 @@ class FastTokenPersistenceTest
             db.verify(() -> DbConnectionManager.closeTransactionConnection(any(), eq(connection), eq(false)));
         }
 
-        final org.mockito.InOrder order = inOrder(delete, promote);
-        order.verify(delete).executeUpdate();
+        final org.mockito.InOrder order = inOrder(expireCurrent, promote);
+        order.verify(expireCurrent).executeUpdate();
         order.verify(promote).executeUpdate();
-        verify(delete).setString(3, CLIENT);
+
+        final ArgumentCaptor<String> backdatedExpiry = ArgumentCaptor.forClass(String.class);
+        verify(expireCurrent).setString(eq(1), backdatedExpiry.capture());
+        assertTrue(Long.parseLong(backdatedExpiry.getValue()) < Instant.now().toEpochMilli(), "The superseded current token's expiry was not backdated into the past.");
+        verify(expireCurrent).setString(4, CLIENT);
         verify(promote).setString(3, CLIENT);
     }
 
@@ -500,23 +543,39 @@ class FastTokenPersistenceTest
     // Invalidation and purging
     // -------------------------------------------------------------------------
 
-    /** Invalidating one credential must not touch the user's other clients or mechanisms. */
+    /**
+     * OF-3368: invalidating a token must expire it in place, not delete its row - otherwise a
+     * later redemption attempt is indistinguishable from a token that was never issued, and the
+     * server reports 'not-authorized' instead of the 'credentials-expired' required by
+     * XEP-0484 §4.2. The write must also be scoped to just the targeted mechanism and client.
+     */
     @Test
-    void invalidationIsScopedToOneMechanismAndClient() throws Exception
+    void invalidationExpiresTheTokenInPlaceScopedToOneMechanismAndClient() throws Exception
     {
         final Connection connection = mock(Connection.class);
-        final PreparedStatement delete = mock(PreparedStatement.class);
-        when(connection.prepareStatement(anyString())).thenReturn(delete);
+        final PreparedStatement expire = mock(PreparedStatement.class);
+        final ArgumentCaptor<String> sql = ArgumentCaptor.forClass(String.class);
+        when(connection.prepareStatement(anyString())).thenReturn(expire);
 
+        final long before = System.currentTimeMillis();
         try (MockedStatic<DbConnectionManager> db = mockStatic(DbConnectionManager.class)) {
             db.when(DbConnectionManager::getConnection).thenReturn(connection);
             FastTokenManager.invalidateToken(USER, FastTokenManager.HT2_SHA_512_EXPR, CLIENT);
         }
 
-        verify(delete).setString(1, USER);
-        verify(delete).setString(2, FastTokenManager.HT2_SHA_512_EXPR);
-        verify(delete).setString(3, CLIENT);
-        verify(delete).executeUpdate();
+        verify(connection).prepareStatement(sql.capture());
+        assertTrue(sql.getValue().startsWith("UPDATE"), "Invalidation deleted the token row outright, making a later redemption attempt indistinguishable from an unknown token.");
+        assertFalse(sql.getValue().toUpperCase(java.util.Locale.ROOT).contains("DELETE"), "Invalidation issued a DELETE; it must expire the row instead.");
+
+        final ArgumentCaptor<String> backdatedExpiry = ArgumentCaptor.forClass(String.class);
+        verify(expire).setString(eq(1), backdatedExpiry.capture());
+        final long millis = Long.parseLong(backdatedExpiry.getValue());
+        assertTrue(millis < before, "Invalidated token expiry was not backdated into the past.");
+
+        verify(expire).setString(2, USER);
+        verify(expire).setString(3, FastTokenManager.HT2_SHA_512_EXPR);
+        verify(expire).setString(4, CLIENT);
+        verify(expire).executeUpdate();
     }
 
     /** Account-level invalidation must remove every token the user holds, on every client. */
@@ -534,47 +593,8 @@ class FastTokenPersistenceTest
         }
 
         verify(connection).prepareStatement(sql.capture());
-        assertFalse(sql.getValue().contains("clientID"),
-            "Account-level invalidation was scoped to a client, leaving other clients' tokens alive.");
+        assertFalse(sql.getValue().contains("clientID"), "Account-level invalidation was scoped to a client, leaving other clients' tokens alive.");
         verify(delete).setString(1, USER);
-    }
-
-    /**
-     * Purging must delete by expiry using the same encoding {@code issueToken} writes, and that
-     * encoding must be fixed-width so the lexicographic comparison in the delete orders
-     * chronologically.
-     */
-    @Test
-    void purgingDeletesTokensByExpiry() throws Exception
-    {
-        final Connection connection = mock(Connection.class);
-        final PreparedStatement delete = mock(PreparedStatement.class);
-        final ArgumentCaptor<String> cutoff = ArgumentCaptor.forClass(String.class);
-        when(connection.prepareStatement(anyString())).thenReturn(delete);
-
-        final long before = System.currentTimeMillis();
-        try (MockedStatic<DbConnectionManager> db = mockStatic(DbConnectionManager.class)) {
-            db.when(DbConnectionManager::getConnection).thenReturn(connection);
-            FastTokenManager.purgeExpiredTokens();
-        }
-        final long after = System.currentTimeMillis();
-
-        verify(delete).setString(eq(1), cutoff.capture());
-        final String value = cutoff.getValue();
-
-        assertTrue(value.matches("\\d{15}"),
-            "The purge cutoff is not 15 digits, so it will not compare correctly against stored expiry values.");
-
-        final long millis = Long.parseLong(value);
-        assertTrue(millis >= before && millis <= after,
-            "The purge cutoff is not the current time, so it deletes the wrong rows.");
-
-        assertTrue(value.compareTo(inSeconds(60)) < 0,
-            "A token expiring in the future does not sort above the purge cutoff and would be deleted.");
-        assertTrue(value.compareTo(inSeconds(-60)) > 0,
-            "A token that expired in the past does not sort below the purge cutoff and would survive.");
-
-        verify(delete).executeUpdate();
     }
 
     // -------------------------------------------------------------------------

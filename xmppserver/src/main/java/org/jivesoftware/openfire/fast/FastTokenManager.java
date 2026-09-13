@@ -157,6 +157,33 @@ public class FastTokenManager {
         .setDynamic(Boolean.TRUE)
         .build();
 
+    /**
+     * How long an invalidated or naturally-expired token's row is retained past its expiry before being purged. While
+     * the row exists, a client redeeming that token is refused with SASL 'credentials-expired' (XEP-0484 §4.2), telling
+     * it to fall back to another mechanism. Once purged, the same attempt is indistinguishable from a token that was
+     * never issued and gets the generic 'not-authorized' instead. This is a minimum retention guarantee, independent of
+     * how often the purge task itself runs ({@link FastTokenLifecycle#CLEANUP_INTERVAL}).
+     */
+    public static final SystemProperty<Duration> TOKEN_PURGE_GRACE_PERIOD = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.fast.token.purge-grace-period")
+        .setDefaultValue(Duration.ofHours(1))
+        .setChronoUnit(ChronoUnit.MINUTES)
+        .setDynamic(Boolean.TRUE)
+        .setMinValue(Duration.ZERO)
+        .build();
+
+    /**
+     * How far in the past to backdate a token's expiry when it is explicitly invalidated, rather than left to expire
+     * naturally. A backdate (instead of {@code Instant.now()} exactly) guarantees the token reads as already-expired
+     * even across a modest clock skew between the node that invalidates it and a different node (in a clustered
+     * deployment) that later validates a redemption attempt against it.
+     */
+    private static final Duration INVALIDATION_BACKDATE = Duration.ofMinutes(5);
+
+    private static String invalidatedExpiryString() {
+        return StringUtils.zeroPadString(String.valueOf(Instant.now().minus(INVALIDATION_BACKDATE).toEpochMilli()), 15);
+    }
+
     private static final String DELETE_NEW_TOKEN =
         "DELETE FROM ofFastToken WHERE username=? AND mechanism=? AND clientID=? AND tokenSlot='N'";
     private static final String INSERT_TOKEN =
@@ -165,9 +192,10 @@ public class FastTokenManager {
         "SELECT tokenSlot, replayCounter, encryptedToken, expiry FROM ofFastToken WHERE username=? AND mechanism=? AND clientID=?";
     private static final String DELETE_TOKENS_FOR_USER =
         "DELETE FROM ofFastToken WHERE username=?";
-    private static final String DELETE_TOKENS_FOR_CLIENT =
-        "DELETE FROM ofFastToken WHERE username=? AND mechanism=? AND clientID=?";
-    private static final String DELETE_CURRENT_TOKEN = DELETE_TOKENS_FOR_CLIENT + " AND tokenSlot='C'";
+    private static final String EXPIRE_CURRENT_TOKEN =
+        "UPDATE ofFastToken SET expiry=? WHERE username=? AND mechanism=? AND clientID=? AND tokenSlot='C'";
+    private static final String EXPIRE_TOKENS_FOR_CLIENT =
+        "UPDATE ofFastToken SET expiry=? WHERE username=? AND mechanism=? AND clientID=?";
     private static final String PROMOTE_NEW_TOKEN =
         "UPDATE ofFastToken SET tokenSlot='C' WHERE username=? AND mechanism=? AND clientID=? AND tokenSlot='N'";
     private static final String UPDATE_REPLAY_COUNTER =
@@ -411,10 +439,11 @@ public class FastTokenManager {
                 return null;
             }
             if ("N".equals(matchedSlot)) {
-                pstmt = con.prepareStatement(DELETE_CURRENT_TOKEN);
-                pstmt.setString(1, username);
-                pstmt.setString(2, mechanism);
-                pstmt.setString(3, matchedClientId);
+                pstmt = con.prepareStatement(EXPIRE_CURRENT_TOKEN);
+                pstmt.setString(1, invalidatedExpiryString());
+                pstmt.setString(2, username);
+                pstmt.setString(3, mechanism);
+                pstmt.setString(4, matchedClientId);
                 pstmt.executeUpdate();
                 DbConnectionManager.fastcloseStmt(pstmt);
                 pstmt = con.prepareStatement(PROMOTE_NEW_TOKEN);
@@ -553,16 +582,31 @@ public class FastTokenManager {
         }
     }
 
+    /**
+     * Invalidates the FAST token(s) held for a specific client and mechanism.
+     *
+     * Per XEP-0484 §4.2, a server that no longer trusts a token must fail a later authentication attempt
+     * against it with the SASL 'credentials-expired' condition rather than 'not-authorized', so the client
+     * knows to fall back to another mechanism instead of concluding its credentials are simply wrong. That
+     * distinction can only be drawn for a token the server still recognises - an outright delete would make
+     * an invalidated token indistinguishable from one that was never issued. So rather than deleting the
+     * row(s), this marks them as expired (in the distant past).
+     *
+     * @param username  the local username (cannot be null)
+     * @param mechanism the FAST SASL mechanism name (cannot be null)
+     * @param clientId  the client identifier (cannot be null)
+     */
     public static void invalidateToken(@Nonnull final String username, @Nonnull final String mechanism,
                                        @Nonnull final String clientId) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
-            pstmt = con.prepareStatement(DELETE_TOKENS_FOR_CLIENT);
-            pstmt.setString(1, username);
-            pstmt.setString(2, mechanism);
-            pstmt.setString(3, clientId);
+            pstmt = con.prepareStatement(EXPIRE_TOKENS_FOR_CLIENT);
+            pstmt.setString(1, invalidatedExpiryString());
+            pstmt.setString(2, username);
+            pstmt.setString(3, mechanism);
+            pstmt.setString(4, clientId);
             pstmt.executeUpdate();
         } catch (final SQLException e) {
             throw new IllegalStateException("Unable to invalidate FAST token", e);
@@ -572,16 +616,22 @@ public class FastTokenManager {
     }
 
     /**
-     * Purges all expired FAST tokens from the database.
+     * Purges expired FAST tokens from the database.
+     *
+     * This will delete tokens from the database that expired a while ago, but not those that have recently
+     * expired. This allows the server to return an appropriate error message ('credentials-expired' vs 'not-authorized').
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3368">OF-3368</a>
      */
     public static void purgeExpiredTokens() {
-        final String nowString = StringUtils.zeroPadString(String.valueOf(System.currentTimeMillis()), 15);
+        final Instant cutoff = Instant.now().minus(TOKEN_PURGE_GRACE_PERIOD.getValue()).minus(INVALIDATION_BACKDATE);
+        final String cutoffString = StringUtils.zeroPadString(String.valueOf(cutoff.toEpochMilli()), 15);
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DbConnectionManager.getConnection();
             pstmt = con.prepareStatement(DELETE_EXPIRED_TOKENS);
-            pstmt.setString(1, nowString);
+            pstmt.setString(1, cutoffString);
             final int deleted = pstmt.executeUpdate();
             if (deleted > 0) {
                 Log.debug("Purged {} expired FAST token(s)", deleted);

@@ -17,6 +17,8 @@ package org.jivesoftware.openfire.sasl.task;
 
 import org.dom4j.Element;
 import org.jivesoftware.openfire.net.UserAgentInfo;
+import org.jivesoftware.openfire.sasl.Failure;
+import org.jivesoftware.openfire.sasl.SaslFailureException;
 import org.jivesoftware.openfire.session.LocalSession;
 
 import javax.annotation.Nonnull;
@@ -272,19 +274,30 @@ public class Sasl2Negotiation
     }
 
     /**
-     * Advances the round counter by one.
+     * Advances to the next round, enforcing the {@code xmpp.auth.sasl2.tasks.max-rounds} limit.
      *
-     * Expected to be invoked once per {@code <continue/>} element sent, so that the
-     * {@code xmpp.auth.sasl2.tasks.max-rounds} limit can be enforced.
+     * Must be called before any provider is consulted for that round: {@link Sasl2TaskContext#getRound()} is
+     * documented to report the round now being assembled (starting at 1 on the first call), and providers are
+     * entitled to rely on that when they make a round-dependent eligibility decision. Calling this after consulting
+     * providers would leave every {@code getRound()} reading one behind for that round.
+     *
+     * @param maxRounds the maximum number of rounds allowed for this negotiation, as configured by
+     *                  {@link Sasl2TaskManager#MAX_ROUNDS} at the time of this call (re-read by the caller on every
+     *                  invocation, so that lowering the property takes effect for a negotiation already in progress).
+     * @throws SaslFailureException if advancing would exceed {@code maxRounds}. This guards against a provider that
+     *                              keeps offering a task that never becomes ineligible, which would otherwise let a
+     *                              peer loop indefinitely.
      */
-    void nextRound()
+    void advanceRound(final int maxRounds) throws SaslFailureException
     {
+        if (round >= maxRounds) {
+            throw new SaslFailureException(Failure.TEMPORARY_AUTH_FAILURE, "SASL2 task negotiation of session '" + session + "' exceeded the maximum of " + maxRounds + " rounds.");
+        }
         round++;
     }
 
     /**
-     * The number of {@code <continue/>} elements sent so far during this negotiation, including the one currently
-     * being assembled.
+     * The number of rounds started so far during this negotiation, including the one currently being assembled.
      *
      * @return the current round number; 0 before the first round begins.
      */

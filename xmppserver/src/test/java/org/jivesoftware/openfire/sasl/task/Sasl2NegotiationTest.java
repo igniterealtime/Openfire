@@ -15,10 +15,10 @@
  */
 package org.jivesoftware.openfire.sasl.task;
 
+import org.jivesoftware.openfire.sasl.SaslFailureException;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import java.util.List;
 import java.util.Optional;
@@ -237,30 +237,42 @@ class Sasl2NegotiationTest
     }
 
     @Test
-    void nextRoundIncrementsRoundCounter()
+    void advanceRoundIncrementsRoundCounter() throws SaslFailureException
     {
         // Setup test fixture.
         final int before = negotiation.getRound();
 
         // Execute system under test.
-        negotiation.nextRound();
+        negotiation.advanceRound(5);
 
         // Verify result.
-        assertEquals(before + 1, negotiation.getRound(), "nextRound() must increment the round counter by exactly one");
+        assertEquals(before + 1, negotiation.getRound(), "advanceRound() must increment the round counter by exactly one");
     }
 
     @Test
-    void contextGetRoundReflectsNegotiationRound()
+    void contextGetRoundReflectsNegotiationRound() throws SaslFailureException
     {
         // Setup test fixture.
-        negotiation.nextRound();
-        negotiation.nextRound();
+        negotiation.advanceRound(5);
+        negotiation.advanceRound(5);
 
         // Execute system under test.
         final int result = negotiation.contextFor(provider).getRound();
 
         // Verify result.
         assertEquals(2, result, "The context's getRound() must mirror the negotiation's own round counter");
+    }
+
+    @Test
+    void advanceRoundAdheresToLimit() throws SaslFailureException
+    {
+        // Setup test fixture.
+        negotiation.advanceRound(3);
+        negotiation.advanceRound(3);
+        negotiation.advanceRound(3); // These should _not_ throw
+
+        // Execute system under test & Verify result.
+        assertThrows(SaslFailureException.class, () -> negotiation.advanceRound(3), "advanceRound() must throw SaslFailureException when the limit is exceeded");
     }
 
     @Test

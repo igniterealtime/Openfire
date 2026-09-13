@@ -409,10 +409,12 @@ public class Sasl2TaskManager
      *                        sent, this data is delivered in that element (XEP-0388 § 2.5), which is why the caller
      *                        must not also place it in a {@code <success/>} element.
      * @return true if a {@code <continue/>} was sent, false if no task applies.
-     * @throws SaslFailureException if a provider failed unexpectedly while determining eligible tasks, or if the
-     *                               maximum number of {@code <continue/>} rounds ({@link #MAX_ROUNDS}) was exceeded.
-     *                               The negotiation is torn down (as if by {@link #endNegotiation(LocalSession, boolean)}
-     *                               with {@code successful=false}) before this exception propagates.
+     * @throws SaslFailureException if the maximum number of {@code <continue/>} rounds ({@link #MAX_ROUNDS}) was
+     *                              exceeded, or if an unexpected internal error occurred while assembling the round.
+     *                              A provider's own failure to determine its eligible tasks is isolated and logged,
+     *                              and does not, by itself, cause this. The negotiation is torn down (as if by
+     *                              {@link #endNegotiation(LocalSession, boolean)} with {@code successful=false}) before
+     *                              this exception propagates.
      */
     public boolean offerTasks(@Nonnull final LocalSession session, @Nullable final String authorizationIdentity, @Nonnull final String saslMechanismName, @Nullable final byte[] saslSuccessData) throws SaslFailureException
     {
@@ -560,6 +562,8 @@ public class Sasl2TaskManager
      */
     private boolean startRound(@Nonnull final LocalSession session, @Nonnull final Sasl2Negotiation negotiation, @Nullable final byte[] additionalData) throws SaslFailureException
     {
+        negotiation.advanceRound(MAX_ROUNDS.getValue());
+
         final List<Offer> offers = new ArrayList<>();
         final List<String> texts = new ArrayList<>();
         final Set<String> claimed = new LinkedHashSet<>();
@@ -607,13 +611,6 @@ public class Sasl2TaskManager
         if (offers.isEmpty()) {
             return false;
         }
-
-        // Guard against accidental loops.
-        final int maxRounds = MAX_ROUNDS.getValue();
-        if (negotiation.getRound() >= maxRounds) {
-            throw new SaslFailureException(Failure.TEMPORARY_AUTH_FAILURE, "SASL2 task negotiation of session '" + session + "' exceeded the maximum of " + maxRounds + " rounds.");
-        }
-        negotiation.nextRound();
 
         negotiation.beginRound(offers);
         Log.debug("Offering SASL2 task(s) {} to session '{}' (round {}).", claimed, session, negotiation.getRound());

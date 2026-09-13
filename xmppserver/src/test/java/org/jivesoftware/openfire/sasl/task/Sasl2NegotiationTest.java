@@ -243,7 +243,7 @@ class Sasl2NegotiationTest
         final int before = negotiation.getRound();
 
         // Execute system under test.
-        negotiation.advanceRound(5);
+        negotiation.advanceRound();
 
         // Verify result.
         assertEquals(before + 1, negotiation.getRound(), "advanceRound() must increment the round counter by exactly one");
@@ -253,8 +253,8 @@ class Sasl2NegotiationTest
     void contextGetRoundReflectsNegotiationRound() throws SaslFailureException
     {
         // Setup test fixture.
-        negotiation.advanceRound(5);
-        negotiation.advanceRound(5);
+        negotiation.advanceRound();
+        negotiation.advanceRound();
 
         // Execute system under test.
         final int result = negotiation.contextFor(provider).getRound();
@@ -267,12 +267,13 @@ class Sasl2NegotiationTest
     void advanceRoundAdheresToLimit() throws SaslFailureException
     {
         // Setup test fixture.
-        negotiation.advanceRound(3);
-        negotiation.advanceRound(3);
-        negotiation.advanceRound(3); // These should _not_ throw
+        negotiation.advanceRound();
+        negotiation.advanceRound();
+        negotiation.advanceRound();
 
         // Execute system under test & Verify result.
-        assertThrows(SaslFailureException.class, () -> negotiation.advanceRound(3), "advanceRound() must throw SaslFailureException when the limit is exceeded");
+        assertDoesNotThrow(() -> negotiation.enforceRoundLimit(3), "enforceRoundLimit() must not throw SaslFailureException when the limit is not exceeded");
+        assertThrows(SaslFailureException.class, () -> negotiation.enforceRoundLimit(2), "enforceRoundLimit() must throw SaslFailureException when the limit is exceeded");
     }
 
     @Test

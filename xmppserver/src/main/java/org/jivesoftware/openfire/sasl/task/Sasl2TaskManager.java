@@ -562,7 +562,10 @@ public class Sasl2TaskManager
      */
     private boolean startRound(@Nonnull final LocalSession session, @Nonnull final Sasl2Negotiation negotiation, @Nullable final byte[] additionalData) throws SaslFailureException
     {
-        negotiation.advanceRound(MAX_ROUNDS.getValue());
+        // Advanced before any provider is consulted, so getRound() reports the round now being considered. The
+        // limit is deliberately NOT enforced here: a round that ends up with nothing to offer (see below) must be
+        // able to conclude the negotiation successfully even if this candidate round number is past the limit.
+        negotiation.advanceRound();
 
         final List<Offer> offers = new ArrayList<>();
         final List<String> texts = new ArrayList<>();
@@ -611,6 +614,9 @@ public class Sasl2TaskManager
         if (offers.isEmpty()) {
             return false;
         }
+
+        // Only now that this round is actually going to be sent, check it against the limit.
+        negotiation.enforceRoundLimit(MAX_ROUNDS.getValue());
 
         negotiation.beginRound(offers);
         Log.debug("Offering SASL2 task(s) {} to session '{}' (round {}).", claimed, session, negotiation.getRound());

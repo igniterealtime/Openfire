@@ -249,12 +249,32 @@ public class Sasl2TaskManager
     @Nonnull
     protected List<Sasl2TaskProvider> getEnabledProviders()
     {
+        return filterAndOrderEnabled(providers.values());
+    }
+
+    /**
+     * Filters the given providers down to the ones that are currently enabled (per {@link #ENABLED} and
+     * {@link #DISABLED_PROVIDERS}), in the order in which they are to be consulted.
+     *
+     * Unlike {@link #getEnabledProviders()}, this can be applied to any collection of providers, not just the live
+     * registry. In particular it can be applied to a negotiation's captured participants, so that a provider
+     * unregistered mid-negotiation is still consulted for the rest of that negotiation, per the contract documented on
+     * {@link #unregister(Sasl2TaskProvider)}. The {@code xmpp.auth.sasl2.tasks.enabled} and
+     * {@code xmpp.auth.sasl2.tasks.disabled} properties are still re-evaluated every round, so the administrative
+     * kill switches keep taking effect immediately even for a provider that remains registered.
+     *
+     * @param candidates the providers to filter (cannot be null).
+     * @return an ordered list of the enabled providers among the candidates (never null, possibly empty).
+     */
+    @Nonnull
+    private List<Sasl2TaskProvider> filterAndOrderEnabled(@Nonnull final Collection<Sasl2TaskProvider> candidates)
+    {
         if (!ENABLED.getValue()) {
             return Collections.emptyList();
         }
         final List<String> disabled = DISABLED_PROVIDERS.getValue();
         final List<Sasl2TaskProvider> result = new ArrayList<>();
-        for (final Sasl2TaskProvider provider : providers.values()) {
+        for (final Sasl2TaskProvider provider : candidates) {
             if (!disabled.contains(provider.getIdentifier())) {
                 result.add(provider);
             }
@@ -543,11 +563,7 @@ public class Sasl2TaskManager
         final List<Offer> offers = new ArrayList<>();
         final List<String> texts = new ArrayList<>();
         final Set<String> claimed = new LinkedHashSet<>();
-        for (final Sasl2TaskProvider provider : getEnabledProviders()) {
-            if (!negotiation.getParticipants().contains(provider)) {
-                // Registered after this negotiation started. It never saw the <authenticate/> element, so it is not consulted for this negotiation.
-                continue;
-            }
+        for (final Sasl2TaskProvider provider : filterAndOrderEnabled(negotiation.getParticipants())) {
             final Sasl2TaskContext context = negotiation.contextFor(provider);
             final List<String> proposed;
             try {

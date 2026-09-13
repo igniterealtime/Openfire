@@ -274,26 +274,35 @@ public class Sasl2Negotiation
     }
 
     /**
-     * Advances to the next round, enforcing the {@code xmpp.auth.sasl2.tasks.max-rounds} limit.
+     * Advances to the next round. Called before any provider is consulted for that round, so that
+     * {@link Sasl2TaskContext#getRound()} reports the round now being considered - regardless of whether that
+     * round ultimately turns out to have anything to offer. Does not enforce any limit; see
+     * {@link #enforceRoundLimit(int)} for that.
+     */
+    void advanceRound()
+    {
+        round++;
+    }
+
+    /**
+     * Enforces the {@code xmpp.auth.sasl2.tasks.max-rounds} limit against the round now being assembled.
      *
-     * Must be called before any provider is consulted for that round: {@link Sasl2TaskContext#getRound()} is
-     * documented to report the round now being assembled (starting at 1 on the first call), and providers are
-     * entitled to rely on that when they make a round-dependent eligibility decision. Calling this after consulting
-     * providers would leave every {@code getRound()} reading one behind for that round.
+     * Call this only once it is known that this round will actually be sent to the peer (i.e. at least one
+     * provider proposed a task): a round that turns out to have nothing to offer must be free to conclude the
+     * negotiation successfully, even if its round number is beyond the limit, since no {@code <continue/>} is
+     * sent for it.
      *
      * @param maxRounds the maximum number of rounds allowed for this negotiation, as configured by
-     *                  {@link Sasl2TaskManager#MAX_ROUNDS} at the time of this call (re-read by the caller on every
-     *                  invocation, so that lowering the property takes effect for a negotiation already in progress).
-     * @throws SaslFailureException if advancing would exceed {@code maxRounds}. This guards against a provider that
-     *                              keeps offering a task that never becomes ineligible, which would otherwise let a
-     *                              peer loop indefinitely.
+     *                  {@link Sasl2TaskManager#MAX_ROUNDS} at the time of this call.
+     * @throws SaslFailureException if the round now being assembled exceeds {@code maxRounds}. This guards
+     *                              against a provider that keeps offering a task that never becomes ineligible,
+     *                              which would otherwise let a peer loop indefinitely.
      */
-    void advanceRound(final int maxRounds) throws SaslFailureException
+    void enforceRoundLimit(final int maxRounds) throws SaslFailureException
     {
-        if (round >= maxRounds) {
+        if (round > maxRounds) {
             throw new SaslFailureException(Failure.TEMPORARY_AUTH_FAILURE, "SASL2 task negotiation of session '" + session + "' exceeded the maximum of " + maxRounds + " rounds.");
         }
-        round++;
     }
 
     /**

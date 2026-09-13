@@ -18,15 +18,25 @@ package org.jivesoftware.openfire.sasl.task;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
+import org.jivesoftware.openfire.auth.ScramUtils;
 import org.jivesoftware.openfire.sasl.Failure;
 import org.jivesoftware.openfire.sasl.SaslFailureException;
+import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
+import org.jivesoftware.openfire.sasl.ScramSha256SaslServer;
+import org.jivesoftware.openfire.sasl.ScramSha512SaslServer;
 import org.jivesoftware.openfire.session.LocalSession;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import java.security.SecureRandom;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -50,12 +60,12 @@ import java.util.stream.Collectors;
  * S: <features xmlns='http://etherx.jabber.org/streams'>
  *      <authentication xmlns='urn:xmpp:sasl:2'>
  *        <mechanism>SCRAM-SHA-1</mechanism>
- *        <upgrade xmlns='urn:xmpp:sasl:upgrade:0'>SCRAM-SHA-512</upgrade>
+ *        <upgrade xmlns='urn:xmpp:sasl:upgrade:0'>UPGR-SCRAM-SHA-512</upgrade>
  *      </authentication>
  *    </features>
  * C: <authenticate xmlns='urn:xmpp:sasl:2' mechanism='SCRAM-SHA-1'>
  *      <initial-response>...</initial-response>
- *      <upgrade xmlns='urn:xmpp:sasl:upgrade:0'>SCRAM-SHA-512</upgrade>
+ *      <upgrade xmlns='urn:xmpp:sasl:upgrade:0'>UPGR-SCRAM-SHA-512</upgrade>
  *    </authenticate>
  * ...
  * S: <continue xmlns='urn:xmpp:sasl:2'>
@@ -64,10 +74,10 @@ import java.util.stream.Collectors;
  *    </continue>
  * C: <next xmlns='urn:xmpp:sasl:2' task='UPGR-SCRAM-SHA-512'/>
  * S: <task-data xmlns='urn:xmpp:sasl:2'>
- *      <salt xmlns='urn:xmpp:sasl:upgrade:0' iterations='4096'>...</salt>
+ *      <salt xmlns='urn:xmpp:scram-upgrade:0' iterations='4096'>...</salt>
  *    </task-data>
  * C: <task-data xmlns='urn:xmpp:sasl:2'>
- *      <hash xmlns='urn:xmpp:sasl:upgrade:0'>...</hash>
+ *      <hash xmlns='urn:xmpp:scram-upgrade:0'>...</hash>
  *    </task-data>
  * S: <success xmlns='urn:xmpp:sasl:2'>...</success>
  * }</pre>
@@ -82,14 +92,28 @@ public class ScramUpgradeTaskProvider implements Sasl2TaskProvider
 {
     private static final Logger Log = LoggerFactory.getLogger(ScramUpgradeTaskProvider.class);
 
-    /** Verify against the current revision of XEP-0480 before use. */
-    public static final String NAMESPACE = "urn:xmpp:sasl:upgrade:0";
+    public static final String PROVIDER_ID = "org.igniterealtime.scram-upgrade";
+
+    public static final SystemProperty<Boolean> ENABLED = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.auth.sasl2.tasks.scramupgrade.enabled")
+        .setDefaultValue(false)
+        .setDynamic(true)
+        .addListener(enabled -> {
+            if (enabled) {
+                Sasl2TaskManager.getInstance().register(new ScramUpgradeTaskProvider(null)); // FIXME: use a store reference here. Also register an instance of ScramUpgradeTaskProvider when Openfire starts
+            } else {
+                Sasl2TaskManager.getInstance().unregister(PROVIDER_ID);
+            }
+        })
+        .build();
+
+    public static final String SASL_UPGRADE_NAMESPACE = "urn:xmpp:sasl:upgrade:0";
+    public static final String SCRAM_UPGRADE_NAMESPACE = "urn:xmpp:scram-upgrade:0";
 
     private static final String TASK_PREFIX = "UPGR-";
-    private static final String ATTRIBUTE_REQUESTED = "requested-mechanism";
+    private static final String ATTRIBUTE_REQUESTED = "requested-tasks";
 
     private static final int SALT_LENGTH = 16;
-    private static final int ITERATION_COUNT = 4096;
 
     private final SecureRandom random = new SecureRandom();
     private final ScramCredentialStore store;
@@ -142,7 +166,7 @@ public class ScramUpgradeTaskProvider implements Sasl2TaskProvider
     @Nonnull
     public String getIdentifier()
     {
-        return "org.example.scram-upgrade";
+        return PROVIDER_ID;
     }
 
     @Override
@@ -175,8 +199,8 @@ public class ScramUpgradeTaskProvider implements Sasl2TaskProvider
         }
         final List<Element> result = new ArrayList<>();
         for (final String mechanismName : store.getWritableMechanisms()) {
-            final Element upgrade = DocumentHelper.createElement(QName.get("upgrade", NAMESPACE));
-            upgrade.setText(mechanismName);
+            final Element upgrade = DocumentHelper.createElement(QName.get("upgrade", SASL_UPGRADE_NAMESPACE));
+            upgrade.setText(TASK_PREFIX + mechanismName);
             result.add(upgrade);
         }
         return result;
@@ -185,28 +209,34 @@ public class ScramUpgradeTaskProvider implements Sasl2TaskProvider
     @Override
     public void onAuthenticateReceived(@Nonnull final Sasl2TaskContext context, @Nonnull final Element authenticate) throws SaslFailureException
     {
-        final Element requested = authenticate.element(QName.get("upgrade", NAMESPACE));
-        if (requested == null) {
+        final List<Element> requested = authenticate.elements(QName.get("upgrade", SASL_UPGRADE_NAMESPACE));
+        if (requested == null || requested.isEmpty()) {
             return;
         }
-        final String mechanismName = requested.getTextTrim().toUpperCase(Locale.ROOT);
 
-        // Only honour a request for something that was actually advertised to this session. Without this check, a
-        // peer could drive the task on a connection on which it was never offered.
-        final boolean advertised = context.getAdvertisedFeatureElements().stream()
-            .anyMatch(element -> mechanismName.equalsIgnoreCase(element.getTextTrim()));
-        if (!advertised) {
-            throw new SaslFailureException(Failure.MALFORMED_REQUEST, "An upgrade to '" + mechanismName + "' was requested, which was not offered to this session.");
+        final Set<String> requestedTaskNames = new LinkedHashSet<>();
+        for (final Element element : requested)
+        {
+            final String taskName = element.getTextTrim().toUpperCase(Locale.ROOT);
+
+            // Only honour a request for something that was actually advertised to this session. Without this check, a
+            // peer could drive the task on a connection on which it was never offered.
+            final boolean advertised = context.getAdvertisedFeatureElements().stream()
+                .anyMatch(el -> el.getQName().equals(QName.get("upgrade", SASL_UPGRADE_NAMESPACE)) && taskName.equalsIgnoreCase(el.getTextTrim()));
+            if (!advertised) {
+                throw new SaslFailureException(Failure.MALFORMED_REQUEST, "An upgrade to '" + taskName + "' was requested, which was not offered to this session.");
+            }
+            requestedTaskNames.add(taskName);
         }
-        context.setAttribute(ATTRIBUTE_REQUESTED, mechanismName);
+        context.setAttribute(ATTRIBUTE_REQUESTED, requestedTaskNames);
     }
 
     @Override
     @Nonnull
     public List<String> getOfferedTasks(@Nonnull final Sasl2TaskContext context)
     {
-        final String mechanismName = context.getAttribute(ATTRIBUTE_REQUESTED, String.class).orElse(null);
-        if (mechanismName == null) {
+        final Set<String> requestedTaskNames = context.getAttribute(ATTRIBUTE_REQUESTED, Set.class).orElse(null);
+        if (requestedTaskNames == null || requestedTaskNames.isEmpty()) {
             // The peer did not opt in.
             return List.of();
         }
@@ -219,23 +249,31 @@ public class ScramUpgradeTaskProvider implements Sasl2TaskProvider
             // new credential would have to be derived.
             return List.of();
         }
-        final String taskName = TASK_PREFIX + mechanismName;
-        if (context.getCompletedTaskNames().contains(taskName)) {
-            return List.of();
+
+        final List<String> taskNames = new ArrayList<>();
+        for (final String taskName : requestedTaskNames) {
+            if (context.getCompletedTaskNames().contains(taskName)) {
+                continue;
+            }
+            final String mechanismName = taskName.substring(TASK_PREFIX.length());
+            if (!store.getWritableMechanisms().contains(mechanismName)) {
+                continue;
+            }
+            if (store.hasCredentials(username, mechanismName)) {
+                continue;
+            }
+            taskNames.add(taskName);
         }
-        if (!store.getWritableMechanisms().contains(mechanismName)) {
-            return List.of();
-        }
-        if (store.hasCredentials(username, mechanismName)) {
-            return List.of();
-        }
-        return List.of(taskName);
+        return taskNames;
     }
 
     @Override
     @Nonnull
     public Sasl2Task createTask(@Nonnull final String taskName, @Nonnull final Sasl2TaskContext context)
     {
+        if (!taskName.startsWith(TASK_PREFIX)) {
+            throw new IllegalArgumentException("The task name '" + taskName + "' is not a valid upgrade task name.");
+        }
         return new ScramUpgradeTask(taskName, taskName.substring(TASK_PREFIX.length()), context);
     }
 
@@ -248,11 +286,37 @@ public class ScramUpgradeTaskProvider implements Sasl2TaskProvider
         return mechanismName.equals("PLAIN") || mechanismName.startsWith("SCRAM-") || mechanismName.equals("DIGEST-MD5");
     }
 
+    /**
+     * Determines the iteration count for a given SASL mechanism.
+     *
+     * This method fetches the predefined iteration count for specific mechanisms or defaults to the standard iteration count if
+     * the provided mechanism is unrecognized.
+     *
+     * @param mechanismName The name of the SASL mechanism for which the iteration count is to be determined. Must not be null.
+     * @return The iteration count associated with the provided mechanism. Defaults to the standard iteration count if the
+     *         mechanism is not explicitly handled.
+     */
+    private int determineIterationCount(@Nonnull final String mechanismName)
+    {
+        if (mechanismName.equals("SCRAM-SHA-1")) {
+            return ScramSha1SaslServer.ITERATION_COUNT.getValue();
+        }
+        if (mechanismName.equals("SCRAM-SHA-256")) {
+            return ScramSha256SaslServer.ITERATION_COUNT.getValue();
+        }
+        if (mechanismName.equals("SCRAM-SHA-512")) {
+            return ScramSha512SaslServer.ITERATION_COUNT.getValue();
+        }
+        Log.debug("No known default iteration count for mechanism '{}'; falling back to the default iteration count.", mechanismName);
+        return ScramUtils.DEFAULT_ITERATION_COUNT;
+    }
+
     private class ScramUpgradeTask implements Sasl2Task
     {
         private final String taskName;
         private final String mechanismName;
         private final Sasl2TaskContext context;
+        private final int iterationCount;
         private byte[] salt;
 
         private ScramUpgradeTask(@Nonnull final String taskName, @Nonnull final String mechanismName, @Nonnull final Sasl2TaskContext context)
@@ -260,6 +324,7 @@ public class ScramUpgradeTaskProvider implements Sasl2TaskProvider
             this.taskName = taskName;
             this.mechanismName = mechanismName;
             this.context = context;
+            iterationCount = determineIterationCount(mechanismName);
         }
 
         @Override
@@ -276,8 +341,8 @@ public class ScramUpgradeTaskProvider implements Sasl2TaskProvider
             salt = new byte[SALT_LENGTH];
             random.nextBytes(salt);
 
-            final Element element = DocumentHelper.createElement(QName.get("salt", NAMESPACE));
-            element.addAttribute("iterations", String.valueOf(ITERATION_COUNT));
+            final Element element = DocumentHelper.createElement(QName.get("salt", SCRAM_UPGRADE_NAMESPACE));
+            element.addAttribute("iterations", String.valueOf(iterationCount));
             element.setText(Base64.getEncoder().encodeToString(salt));
             return Sasl2TaskResult.taskData(element);
         }
@@ -286,7 +351,7 @@ public class ScramUpgradeTaskProvider implements Sasl2TaskProvider
         @Nonnull
         public Sasl2TaskResult onTaskData(@Nonnull final Element taskData) throws SaslFailureException
         {
-            final Element hash = taskData.element(QName.get("hash", NAMESPACE));
+            final Element hash = taskData.element(QName.get("hash", SCRAM_UPGRADE_NAMESPACE));
             if (hash == null) {
                 throw new SaslFailureException(Failure.MALFORMED_REQUEST, "The upgrade task data does not contain a hash.");
             }
@@ -302,7 +367,7 @@ public class ScramUpgradeTaskProvider implements Sasl2TaskProvider
                 throw new SaslFailureException(Failure.TEMPORARY_AUTH_FAILURE, "There is no account to store credentials for.");
             }
             try {
-                store.store(username, mechanismName, salt, ITERATION_COUNT, saltedPassword);
+                store.store(username, mechanismName, salt, iterationCount, saltedPassword);
             } catch (final Exception e) {
                 Log.warn("Unable to store upgraded '{}' credentials for user '{}'.", mechanismName, username, e);
                 throw new SaslFailureException(Failure.TEMPORARY_AUTH_FAILURE, "Unable to store the upgraded credentials.");

@@ -240,6 +240,22 @@ public class SASLAuthentication {
     private static final String SASL2_RESUME_REQUEST = "Sasl2.resume-request";
 
     /**
+     * Session Data property name used to mark that a SASL2 {@code <authenticate/>} that requested Bind2 resource
+     * binding is either still awaiting the outcome of the asynchronous {@link SessionManager#bindResource} call
+     * it triggered, or has already completed successfully. {@code StanzaHandler} sets this when it dispatches such
+     * a request (at that point, {@code Status.authenticatedAwaitingFeatures} is all it knows: the bind itself has
+     * not yet resolved), and treats its presence, like {@code sasl2AuthenticationCompleted}, as a reason to refuse
+     * any further {@code <authenticate/>} on the same stream, per XEP-0388 § 4.8.
+     * <p>
+     * Unlike {@code sasl2AuthenticationCompleted}, this is not durable: {@link #abortSasl2} removes it if the bind
+     * ultimately fails, since the peer was never sent {@code <success/>} and is permitted to retry (up to the
+     * configured limit, enforced by {@link SaslOutcome#authenticationFailed}). Once the bind succeeds, this is left
+     * set for the lifetime of the session; nothing subsequently promotes it into {@code sasl2AuthenticationCompleted}.
+     * See OF-3362.
+     */
+    static final String SASL2_BIND2_PENDING_OR_SUCCEEDED = "Sasl2.bind2-pending-or-succeeded";
+
+    /**
      * Session Data property name used to record that a session's resource was bound via an inline XEP-0386 Bind 2
      * request during SASL2 authentication, as opposed to legacy IQ-based binding. Set only once binding has actually
      * completed successfully; never set for sessions that bind via legacy IQ, and never set when an inline XEP-0198
@@ -1109,6 +1125,9 @@ public class SASLAuthentication {
         session.removeSessionData("user-agent-info");
         session.removeSessionData(SASL2_RESUME_REQUEST);
         session.removeSessionData(SASL2_RESUMED_SESSION);
+        // OF-3362: a failed Bind2 bind was never reported to the peer as <success/>, so it must not be left looking
+        // like a completed negotiation - see SASL2_BIND2_PENDING_OR_SUCCEEDED.
+        session.removeSessionData(SASL2_BIND2_PENDING_OR_SUCCEEDED);
         session.removeSessionData("SaslServer");
         Sasl2TaskManager.getInstance().endNegotiation(session, false);
         FastSessionState.clearAuthenticationAttempt(session);

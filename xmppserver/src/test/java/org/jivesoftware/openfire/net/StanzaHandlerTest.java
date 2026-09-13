@@ -39,10 +39,9 @@ import java.util.concurrent.CompletableFuture;
 import org.xmpp.packet.StreamError;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests for {@link StanzaHandler}, focusing on the {@code startedSASL} flag lifecycle.
@@ -314,5 +313,117 @@ public class StanzaHandlerTest
             "Expected startedSASL to be reset to false after a failed SASL2 <authenticate/> attempt, so the peer can retry.");
         assertFalse(handler.usingSASL2,
             "Expected usingSASL2 to be reset to false after a failed SASL2 <authenticate/> attempt.");
+    }
+
+    /**
+     * Verifies that a further {@code <authenticate/>} received while an earlier one's Bind2 resource-bind is still
+     * awaiting its asynchronous outcome (i.e. before {@code <success/>} or {@code <failure/>} has been sent) causes
+     * the connection to be disconnected, per XEP-0388 § 4.8 - the same as a repeat after a completed negotiation.
+     * Allowing a second negotiation to start while one is still resolving would be at least as wrong as allowing one
+     * after it durably succeeded. Regression test for OF-3362.
+     */
+    @Test
+    public void secondAuthenticateWhileBind2Pending_shouldDisconnect() throws Exception
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+        when(connection.getAdditionalNamespaces()).thenReturn(java.util.Collections.emptySet());
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        final ClientStanzaHandler handler = new ClientStanzaHandler(mock(PacketRouter.class), connection);
+        handler.setSession(session);
+
+        // Manually prime the handler and session as if an earlier <authenticate/> dispatched a Bind2 request whose
+        // asynchronous resource-bind outcome has not yet been confirmed.
+        handler.sessionCreated = true;
+        handler.startedSASL = false;
+        handler.usingSASL2 = true;
+        session.setSessionData(SASLAuthentication.SASL2_BIND2_PENDING_OR_SUCCEEDED, Boolean.TRUE);
+
+        // Execute system under test: a second <authenticate/> arrives while the bind is still pending.
+        final String secondAuthenticate = "<authenticate xmlns='" + SASLAuthentication.SASL2_NAMESPACE + "' mechanism='PLAIN'/>";
+        handler.processStanza(secondAuthenticate, new XMPPPacketReader());
+
+        // Verify result: the connection must be closed with a stream error.
+        verify(connection).close(any(StreamError.class));
+    }
+
+    /**
+     * Verifies that a further {@code <authenticate/>} sent after an earlier negotiation's Bind2 resource-bind
+     * fails asynchronously is processed as a new attempt, rather than being disconnected as a repeat of an
+     * "already completed" one. {@link SASLAuthentication#handle} returns {@code authenticatedAwaitingFeatures}
+     * before the outcome of the asynchronous {@link SessionManager#bindResource} call is known; if that call
+     * later fails, the peer is sent {@code <failure/>} - not {@code <success/>} - and is entitled to retry, up to
+     * the configured limit enforced by {@link SaslOutcome#authenticationFailed}. Regression test for a gap in the
+     * OF-3362 fix found in PR review, where {@code sasl2AuthenticationCompleted} was set as soon as the bind was
+     * dispatched, before its outcome was known, permanently blocking a legitimate retry after an async failure.
+     */
+    @Test
+    public void authenticateRetryAllowedAfterAsyncBind2Failure() throws Exception
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+        when(connection.getAdditionalNamespaces()).thenReturn(java.util.Collections.emptySet());
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Set up a Bind2Request for a *non-anonymous* user, so that resource binding goes through the
+        // asynchronous SessionManager#bindResource path (an anonymous user's bind completes synchronously instead).
+        final Bind2Request bind2Request = mock(Bind2Request.class);
+        when(bind2Request.generateResourceString(any())).thenReturn("resource");
+        session.setSessionData("bind2-request", bind2Request);
+
+        // Stub SessionManager.bindResource with a future that is not yet resolved, so that it behaves like the real
+        // method: the caller (handle(), and in turn processStanza()) is freed immediately, and the outcome - success
+        // or failure - is only known once this future is later completed.
+        final SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
+        final CompletableFuture<SessionManager.BindResult> bindFuture = new CompletableFuture<>();
+        when(sessionManager.bindResource(any(), any(), any())).thenReturn(bindFuture);
+
+        // Stub the SaslServer to complete immediately, for a named (non-anonymous) user.
+        final javax.security.sasl.SaslServer saslServer = mock(javax.security.sasl.SaslServer.class);
+        when(saslServer.evaluateResponse(any())).thenReturn(new byte[0]);
+        when(saslServer.isComplete()).thenReturn(true);
+        when(saslServer.getAuthorizationID()).thenReturn("testuser");
+        when(saslServer.getMechanismName()).thenReturn("PLAIN");
+        session.setSessionData("SaslServer", saslServer);
+
+        final ClientStanzaHandler handler = new ClientStanzaHandler(mock(PacketRouter.class), connection);
+        handler.setSession(session);
+
+        // Manually prime the handler as if a SASL2 <authenticate> was already processed (multi-step, awaiting response).
+        handler.sessionCreated = true;
+        handler.startedSASL = true;
+        handler.usingSASL2 = true;
+        handler.saslStatus = SASLAuthentication.Status.needResponse;
+
+        // Execute system under test: process a <response/> that completes SASL, dispatching a Bind2 request whose
+        // outcome is not yet known.
+        final String responseStanza = "<response xmlns='" + SASLAuthentication.SASL_NAMESPACE + "'/>";
+        handler.processStanza(responseStanza, new XMPPPacketReader());
+
+        // Resolve the bind asynchronously (e.g. a conflicting resource could not be displaced) - as if this
+        // happened after processStanza() above already returned, matching the real, asynchronous bindResource().
+        bindFuture.complete(SessionManager.BindResult.CONFLICT);
+
+        // Verify result: the failed bind must not leave the negotiation looking durably completed.
+        assertFalse(handler.sasl2AuthenticationCompleted,
+            "Expected sasl2AuthenticationCompleted to remain false after an async Bind2 failure.");
+        assertNull(session.getSessionData(SASLAuthentication.SASL2_BIND2_PENDING_OR_SUCCEEDED),
+            "Expected the Bind2-pending session data to be cleared after an async Bind2 failure, so a retry is possible.");
+        verify(connection, never()).close(any(StreamError.class));
+
+        // Execute system under test: a retry <authenticate/> arrives on the same stream.
+        final String retryAuthenticate = "<authenticate xmlns='" + SASLAuthentication.SASL2_NAMESPACE + "'/>";
+        handler.processStanza(retryAuthenticate, new XMPPPacketReader());
+
+        // Verify result: the retry must not be rejected as a repeat of an already-completed (or still-pending)
+        // negotiation.
+        verify(connection, never()).close(any(StreamError.class));
     }
 }

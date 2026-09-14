@@ -27,6 +27,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -49,9 +50,18 @@ import static org.mockito.Mockito.*;
  * reported as SASL 'credentials-expired' rather than 'not-authorized', per XEP-0484 §4.2 -
  * a distinction that is only possible while the server still recognises the row.
  *
+ * Retiring a token this way still has to respect the primary key, which includes tokenSlot and
+ * therefore permits only one live row per slot value at a time. A superseded current token is
+ * moved to a third slot, 'R' (retired), rather than having its expiry updated in place while
+ * staying labelled 'C' - otherwise promoting the incoming 'N' token into 'C' would collide with
+ * the still-'C'-labelled retired row. Any older 'R' row still waiting out its own grace period is
+ * cleared first, since only one retired row can exist per client at a time.
+ *
  * JDBC is mocked, so these tests pin the statements issued and the values bound to them, not the
  * behaviour of a real database. Concurrency, isolation and the correctness of the SQL against the
- * ten shipped dialects are out of scope here and want an integration test against HSQLDB.
+ * ten shipped dialects are out of scope here and want an integration test against HSQLDB - which
+ * is exactly the class of bug (a primary key collision) that surfaced only once this code ran
+ * against a real HSQLDB instance rather than these mocks.
  */
 class FastTokenPersistenceTest
 {
@@ -346,30 +356,40 @@ class FastTokenPersistenceTest
                     proof(current, "Initiator"), new byte[0], "", ""),
                 "The current token stopped working as soon as a replacement was issued but not yet used.");
         }
-        verify(connection, never()).prepareStatement(contains("DELETE"));
-        verify(connection, never()).prepareStatement(startsWith("UPDATE ofFastToken SET tokenSlot"));
-        verify(connection, never()).prepareStatement(startsWith("UPDATE ofFastToken SET expiry"));
+        // Only the initial SELECT should ever be prepared: no retirement, no promotion. Asserting
+        // a single prepareStatement call is a stronger guarantee than matching against specific
+        // SQL prefixes, which drift out of sync with the statement constants as those evolve.
+        verify(connection, times(1)).prepareStatement(anyString());
     }
 
     /**
-     * Using the new token expires the current one - rather than deleting it, so a client that
-     * replays the just-superseded token is later told 'credentials-expired' instead of
-     * 'not-authorized' (OF-3368) - and then promotes the new one, in that order.
+     * Using the new token retires the current one into the 'R' (retired) slot - rather than
+     * deleting it, so a client that replays the just-superseded token is later told
+     * 'credentials-expired' instead of 'not-authorized' (OF-3368) - and only then promotes the
+     * new one into 'C'.
+     *
+     * The retirement must happen, and complete, strictly before promotion: the primary key
+     * includes tokenSlot, so if the outgoing token were left labelled 'C' while only its expiry
+     * was updated, promoting the incoming 'N' row into 'C' would collide with it. Any pre-existing
+     * 'R' row (from an earlier, still-within-grace-period rotation) is cleared first, since the
+     * primary key permits only one row per slot value.
      */
     @Test
-    void successfulUseOfTheNewTokenExpiresCurrentThenPromotesNew() throws Exception
+    void successfulUseOfTheNewTokenClearsOldRetiredRowThenRetiresCurrentThenPromotesNew() throws Exception
     {
         final String token = "new-token";
         final Connection connection = mock(Connection.class);
         final PreparedStatement select = mock(PreparedStatement.class);
-        final PreparedStatement expireCurrent = mock(PreparedStatement.class);
-        final PreparedStatement promote = mock(PreparedStatement.class);
+        final PreparedStatement deleteRetired = mock(PreparedStatement.class);
+        final PreparedStatement retireCurrent = mock(PreparedStatement.class);
+        final PreparedStatement promoteNew = mock(PreparedStatement.class);
         final ResultSet rows = mock(ResultSet.class);
         when(connection.prepareStatement(anyString())).thenAnswer(invocation -> {
             final String sql = invocation.getArgument(0);
             if (sql.startsWith("SELECT")) return select;
-            if (sql.startsWith("UPDATE ofFastToken SET expiry")) return expireCurrent;
-            return promote;
+            if (sql.startsWith("DELETE")) return deleteRetired;
+            if (sql.startsWith("UPDATE ofFastToken SET tokenSlot='R'")) return retireCurrent;
+            return promoteNew; // UPDATE ofFastToken SET tokenSlot='C' ...
         });
         when(select.executeQuery()).thenReturn(rows);
         when(rows.next()).thenReturn(true, false);
@@ -387,15 +407,22 @@ class FastTokenPersistenceTest
             db.verify(() -> DbConnectionManager.closeTransactionConnection(any(), eq(connection), eq(false)));
         }
 
-        final org.mockito.InOrder order = inOrder(expireCurrent, promote);
-        order.verify(expireCurrent).executeUpdate();
-        order.verify(promote).executeUpdate();
+        final org.mockito.InOrder order = inOrder(deleteRetired, retireCurrent, promoteNew);
+        order.verify(deleteRetired).executeUpdate();
+        order.verify(retireCurrent).executeUpdate();
+        order.verify(promoteNew).executeUpdate();
+
+        verify(deleteRetired).setString(1, USER);
+        verify(deleteRetired).setString(2, FastTokenManager.HT_SHA_256_NONE);
+        verify(deleteRetired).setString(3, CLIENT);
 
         final ArgumentCaptor<String> backdatedExpiry = ArgumentCaptor.forClass(String.class);
-        verify(expireCurrent).setString(eq(1), backdatedExpiry.capture());
-        assertTrue(Long.parseLong(backdatedExpiry.getValue()) < Instant.now().toEpochMilli(), "The superseded current token's expiry was not backdated into the past.");
-        verify(expireCurrent).setString(4, CLIENT);
-        verify(promote).setString(3, CLIENT);
+        verify(retireCurrent).setString(eq(1), backdatedExpiry.capture());
+        assertTrue(Long.parseLong(backdatedExpiry.getValue()) < Instant.now().toEpochMilli(),
+            "The superseded current token's expiry was not backdated into the past.");
+        verify(retireCurrent).setString(4, CLIENT);
+
+        verify(promoteNew).setString(3, CLIENT);
     }
 
     // -------------------------------------------------------------------------
@@ -547,10 +574,13 @@ class FastTokenPersistenceTest
      * OF-3368: invalidating a token must expire it in place, not delete its row - otherwise a
      * later redemption attempt is indistinguishable from a token that was never issued, and the
      * server reports 'not-authorized' instead of the 'credentials-expired' required by
-     * XEP-0484 §4.2. The write must also be scoped to just the targeted mechanism and client.
+     * XEP-0484 §4.2. The write must also be scoped to just the targeted mechanism and client, and
+     * specifically to the 'C' slot: the client's invalidate request applies only to the token it
+     * just authenticated with, not to an unacknowledged rotation offer sitting in 'N' or an
+     * already-retired token sitting in 'R'.
      */
     @Test
-    void invalidationExpiresTheTokenInPlaceScopedToOneMechanismAndClient() throws Exception
+    void invalidationExpiresTheCurrentTokenInPlaceScopedToOneMechanismAndClient() throws Exception
     {
         final Connection connection = mock(Connection.class);
         final PreparedStatement expire = mock(PreparedStatement.class);
@@ -564,8 +594,12 @@ class FastTokenPersistenceTest
         }
 
         verify(connection).prepareStatement(sql.capture());
-        assertTrue(sql.getValue().startsWith("UPDATE"), "Invalidation deleted the token row outright, making a later redemption attempt indistinguishable from an unknown token.");
-        assertFalse(sql.getValue().toUpperCase(java.util.Locale.ROOT).contains("DELETE"), "Invalidation issued a DELETE; it must expire the row instead.");
+        assertTrue(sql.getValue().startsWith("UPDATE"),
+            "Invalidation deleted the token row outright, making a later redemption attempt indistinguishable from an unknown token.");
+        assertFalse(sql.getValue().toUpperCase(java.util.Locale.ROOT).contains("DELETE"),
+            "Invalidation issued a DELETE; it must expire the row instead.");
+        assertTrue(sql.getValue().contains("tokenSlot='C'"),
+            "Invalidation was not scoped to the 'C' slot; it risks backdating an unacknowledged 'N' token or an already-retired 'R' token that the client never authenticated with.");
 
         final ArgumentCaptor<String> backdatedExpiry = ArgumentCaptor.forClass(String.class);
         verify(expire).setString(eq(1), backdatedExpiry.capture());
@@ -593,8 +627,55 @@ class FastTokenPersistenceTest
         }
 
         verify(connection).prepareStatement(sql.capture());
-        assertFalse(sql.getValue().contains("clientID"), "Account-level invalidation was scoped to a client, leaving other clients' tokens alive.");
+        assertFalse(sql.getValue().contains("clientID"),
+            "Account-level invalidation was scoped to a client, leaving other clients' tokens alive.");
         verify(delete).setString(1, USER);
+    }
+
+    /**
+     * Purging must delete by expiry using the same encoding {@code issueToken} writes, and that
+     * encoding must be fixed-width so the lexicographic comparison in the delete orders
+     * chronologically. The cutoff is backdated by {@link FastTokenManager#TOKEN_PURGE_GRACE_PERIOD},
+     * not "now" - OF-3368 requires a retention window so an invalidated or newly-expired token can
+     * still be reported as 'credentials-expired' for a while before it is truly forgotten.
+     *
+     * The grace period is pinned to a known value for the duration of this test, rather than
+     * trusting whatever is currently configured. Unlike the mocked JDBC layer used everywhere
+     * else in this file, {@code TOKEN_PURGE_GRACE_PERIOD} is a real, JVM-wide value backed by
+     * JiveGlobals; reading it live makes the test's expectations depend on whatever this
+     * environment happens to have persisted, rather than on the behaviour under test.
+     */
+    @Test
+    void purgingRetainsTokensWithinTheGracePeriodAndDropsTokensBeyondIt() throws Exception
+    {
+        final Duration originalGracePeriod = FastTokenManager.TOKEN_PURGE_GRACE_PERIOD.getValue();
+        FastTokenManager.TOKEN_PURGE_GRACE_PERIOD.setValue(Duration.ofMinutes(30));
+        try {
+            final Connection connection = mock(Connection.class);
+            final PreparedStatement delete = mock(PreparedStatement.class);
+            final ArgumentCaptor<String> cutoff = ArgumentCaptor.forClass(String.class);
+            when(connection.prepareStatement(anyString())).thenReturn(delete);
+
+            try (MockedStatic<DbConnectionManager> db = mockStatic(DbConnectionManager.class)) {
+                db.when(DbConnectionManager::getConnection).thenReturn(connection);
+                FastTokenManager.purgeExpiredTokens();
+            }
+
+            verify(delete).setString(eq(1), cutoff.capture());
+            final long millis = Long.parseLong(cutoff.getValue());
+
+            final String justWithinGracePeriod = StringUtils.zeroPadString(
+                String.valueOf(millis + 1), 15);
+            final String justBeyondGracePeriod = StringUtils.zeroPadString(
+                String.valueOf(millis - 1), 15);
+
+            assertTrue(justWithinGracePeriod.compareTo(cutoff.getValue()) > 0,
+                "A token just inside the retention window would be deleted too early (OF-3368).");
+            assertTrue(justBeyondGracePeriod.compareTo(cutoff.getValue()) < 0,
+                "A token just outside the retention window would survive indefinitely.");
+        } finally {
+            FastTokenManager.TOKEN_PURGE_GRACE_PERIOD.setValue(originalGracePeriod);
+        }
     }
 
     // -------------------------------------------------------------------------

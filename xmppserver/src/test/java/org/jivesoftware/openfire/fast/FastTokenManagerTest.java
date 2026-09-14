@@ -328,6 +328,7 @@ public class FastTokenManagerTest {
         final FastTokenManager.Ht2ValidationResult result =
             new FastTokenManager.Ht2ValidationResult(rotated, responder);
 
+        assertFalse(result.isExpired(), "Expected a normally-constructed result not to be reported as expired.");
         final byte[] retrieved = result.getResponderHashedToken();
         retrieved[0] = 99;
         assertArrayEquals(responder, result.getResponderHashedToken(),
@@ -342,6 +343,43 @@ public class FastTokenManagerTest {
         final FastToken rotated = new FastToken("user", "HT2-SHA-256-NONE", new byte[32], Instant.now().plusSeconds(3600));
         final FastTokenManager.Ht2ValidationResult result =
             new FastTokenManager.Ht2ValidationResult(rotated, new byte[32]);
+        assertFalse(result.isExpired(), "Expected a normally-constructed result not to be reported as expired.");
         assertSame(rotated, result.getRotatedToken(), "Expected getRotatedToken() to return the same FastToken instance.");
+    }
+
+    /**
+     * Verifies that Ht2ValidationResult.getClientId() returns the client id passed at construction.
+     */
+    @Test
+    public void ht2ValidationResultShouldReturnClientId() {
+        final FastTokenManager.Ht2ValidationResult result =
+            new FastTokenManager.Ht2ValidationResult(null, new byte[32], "client-a");
+        assertEquals("client-a", result.getClientId(), "Expected getClientId() to return the constructed client id.");
+    }
+
+    /**
+     * Verifies that the two-argument constructor (used where no client id is tracked) leaves it null.
+     */
+    @Test
+    public void ht2ValidationResultTwoArgConstructorShouldLeaveClientIdNull() {
+        final FastTokenManager.Ht2ValidationResult result =
+            new FastTokenManager.Ht2ValidationResult(null, new byte[32]);
+        assertNull(result.getClientId(), "Expected the two-argument constructor to leave the client id null.");
+    }
+
+    /**
+     * OF-3368: verifies that the expired() factory - returned when a token is found but past its
+     * expiry, so the caller can report SASL 'credentials-expired' rather than 'not-authorized' -
+     * reports isExpired() true and carries no rotated token, responder proof, or client id. A
+     * caller that forgot to check isExpired() and instead read any of these fields as if this
+     * were a successful result would find them empty rather than silently wrong.
+     */
+    @Test
+    public void ht2ValidationResultExpiredFactoryShouldCarryNoCredentialData() {
+        final FastTokenManager.Ht2ValidationResult result = FastTokenManager.Ht2ValidationResult.expired();
+        assertTrue(result.isExpired(), "Expected the expired() factory to report isExpired() true.");
+        assertNull(result.getRotatedToken(), "Expected no rotated token on an expired result.");
+        assertEquals(0, result.getResponderHashedToken().length, "Expected no responder proof on an expired result.");
+        assertNull(result.getClientId(), "Expected no client id on an expired result.");
     }
 }

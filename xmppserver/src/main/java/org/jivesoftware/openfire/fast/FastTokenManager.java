@@ -192,10 +192,12 @@ public class FastTokenManager {
         "SELECT tokenSlot, replayCounter, encryptedToken, expiry FROM ofFastToken WHERE username=? AND mechanism=? AND clientID=?";
     private static final String DELETE_TOKENS_FOR_USER =
         "DELETE FROM ofFastToken WHERE username=?";
-    private static final String EXPIRE_CURRENT_TOKEN =
-        "UPDATE ofFastToken SET expiry=? WHERE username=? AND mechanism=? AND clientID=? AND tokenSlot='C'";
+    private static final String DELETE_RETIRED_TOKEN =
+        "DELETE FROM ofFastToken WHERE username=? AND mechanism=? AND clientID=? AND tokenSlot='R'";
+    private static final String RETIRE_CURRENT_TOKEN =
+        "UPDATE ofFastToken SET tokenSlot='R', expiry=? WHERE username=? AND mechanism=? AND clientID=? AND tokenSlot='C'";
     private static final String EXPIRE_TOKENS_FOR_CLIENT =
-        "UPDATE ofFastToken SET expiry=? WHERE username=? AND mechanism=? AND clientID=?";
+        "UPDATE ofFastToken SET expiry=? WHERE username=? AND mechanism=? AND clientID=? AND tokenSlot='C'";
     private static final String PROMOTE_NEW_TOKEN =
         "UPDATE ofFastToken SET tokenSlot='C' WHERE username=? AND mechanism=? AND clientID=? AND tokenSlot='N'";
     private static final String UPDATE_REPLAY_COUNTER =
@@ -439,12 +441,27 @@ public class FastTokenManager {
                 return null;
             }
             if ("N".equals(matchedSlot)) {
-                pstmt = con.prepareStatement(EXPIRE_CURRENT_TOKEN);
+                // The primary key includes tokenSlot, and only 'C'/'N' are expected to hold a live row at once. To
+                // retire the outgoing current token without deleting it (OF-3368), it must first be moved out of the
+                // 'C' slot entirely, not just have its expiry updated in place - otherwise promoting this 'N' row into
+                // 'C' collides with the still-'C'-labelled retired row. Only one retired row is kept per client; an
+                // older one still waiting on purgeExpiredTokens() is superseded rather than accumulated, since a second
+                // rotation within one grace period is a rare edge case and not one XEP-0484 requires unbounded history
+                // for.
+                pstmt = con.prepareStatement(DELETE_RETIRED_TOKEN);
+                pstmt.setString(1, username);
+                pstmt.setString(2, mechanism);
+                pstmt.setString(3, matchedClientId);
+                pstmt.executeUpdate();
+                DbConnectionManager.fastcloseStmt(pstmt);
+
+                pstmt = con.prepareStatement(RETIRE_CURRENT_TOKEN);
                 pstmt.setString(1, invalidatedExpiryString());
                 pstmt.setString(2, username);
                 pstmt.setString(3, mechanism);
                 pstmt.setString(4, matchedClientId);
                 pstmt.executeUpdate();
+
                 DbConnectionManager.fastcloseStmt(pstmt);
                 pstmt = con.prepareStatement(PROMOTE_NEW_TOKEN);
                 pstmt.setString(1, username);

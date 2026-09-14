@@ -1,7 +1,7 @@
 appId: eu.siacs.conversations
 name: FAST
 tags:
-    - sasl2
+    - demoboot
 onFlowStart:
     - runScript: scripts/checkHealth.js
 ---

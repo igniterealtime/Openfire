@@ -16,9 +16,11 @@ onFlowStart:
       env:
           # Pinned to SHA-256/512-PLUS. Conversations won't pick it while stronger mechanisms are available.
           # Just "-PLUS" would silently pass if a regression caused a downgrade back to SHA-1-PLUS.
-          PATTERN: 'jane@example\.org.*Authenticating with SASL\/SCRAM-SHA-(256|512)-PLUS'
+          # SASL2 is on by default, so this now goes over SASL_2 rather than legacy SASL - sasl2.yaml
+          # already covers SASL_2 channel binding in general, with a looser "-PLUS" pattern.
+          PATTERN: 'jane@example\.org.*Authenticating with SASL_2\/SCRAM-SHA-(256|512)-PLUS'
 
 - runScript:
       file: scripts/checkForLogs.js
       env:
-          PATTERN: 'jane@example\.org.*logged in \(using SASL\)'
+          PATTERN: 'jane@example\.org.*logged in \(using SASL_2\)'

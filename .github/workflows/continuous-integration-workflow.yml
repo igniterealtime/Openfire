@@ -351,9 +351,6 @@ jobs:
           - name: demoboot
             maestro-tags: demoboot
             config-file: '' # Use default demoboot config
-          - name: sasl2
-            maestro-tags: sasl2
-            config-file: build/ci/conversations/configs/sasl2.xml
           - name: fast-rotation
             maestro-tags: fast-rotation
             config-file: build/ci/conversations/configs/fast-rotation.xml

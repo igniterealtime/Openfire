@@ -166,7 +166,7 @@ public class FastTokenManager {
      */
     public static final SystemProperty<Duration> TOKEN_PURGE_GRACE_PERIOD = SystemProperty.Builder.ofType(Duration.class)
         .setKey("xmpp.fast.token.purge-grace-period")
-        .setDefaultValue(Duration.ofHours(1))
+        .setDefaultValue(Duration.ofDays(4))
         .setChronoUnit(ChronoUnit.MINUTES)
         .setDynamic(Boolean.TRUE)
         .setMinValue(Duration.ZERO)

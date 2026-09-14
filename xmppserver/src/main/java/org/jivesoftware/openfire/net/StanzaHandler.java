@@ -24,6 +24,7 @@ import org.jivesoftware.openfire.StreamIDFactory;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
+import org.jivesoftware.openfire.sasl.task.Sasl2TaskManager;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
@@ -62,6 +63,19 @@ public abstract class StanzaHandler {
      * A factory that generates random stream IDs
      */
     private static final StreamIDFactory STREAM_ID_FACTORY = new BasicStreamIDFactory();
+
+    /**
+     * Elements a peer may legally send while the base SASL2 mechanism exchange itself is mid-flight: a response to
+     * the current challenge, or an abort of the whole negotiation (XEP-0388 § 2.4).
+     */
+    private static final Set<String> PERMITTED_DURING_SASL2_MECHANISM_EXCHANGE = Set.of("response", "abort");
+
+    /**
+     * Elements a peer may legally send once a SASL2 task has been offered and a task negotiation is active:
+     * selecting or continuing a task, or aborting the whole negotiation (XEP-0388 § 2.5). A {@code <response/>} is
+     * not part of this phase - the base mechanism exchange has already completed.
+     */
+    private static final Set<String> PERMITTED_DURING_SASL2_TASK_NEGOTIATION = Set.of("next", "task-data", "abort");
 
     protected Connection connection;
 
@@ -256,15 +270,24 @@ public abstract class StanzaHandler {
 
         String tag = doc.getName();
 
-        if (startedSASL && usingSASL2 && !("response".equals(tag) || "abort".equals(tag))) {
-            // XEP-0388 § 2.4: once <authenticate/> has been sent and the SASL2 exchange is mid-flight, the only
-            // elements a compliant server may accept are <response/> or <abort/>. Any other traffic - including a
-            // stray stanza, or a further <authenticate/> - MUST cause the server to disconnect the client immediately,
-            // rather than being bounced as an ordinary stanza error or processed as a fresh negotiation attempt.
-            // See OF-3361.
-            Log.warn("Disconnecting session {} for sending unexpected '{}' data while a SASL2 negotiation is in progress.", session, tag);
-            connection.close(new StreamError(StreamError.Condition.not_authorized, "Unexpected data received while negotiating SASL2 authentication."));
-            return;
+        if (startedSASL && usingSASL2) {
+            // Once a task has been offered (XEP-0388 § 2.5), the SaslServer used for the mechanism exchange has
+            // already been removed from the session (see SASLAuthentication#handle), and a task negotiation is
+            // tracked instead. Use that to tell the two sub-phases of a SASL2 negotiation apart, as each permits a
+            // different set of elements.
+            final boolean inTaskNegotiation = session != null && Sasl2TaskManager.getInstance().getNegotiation(session) != null;
+            final Set<String> permittedTags = inTaskNegotiation
+                ? PERMITTED_DURING_SASL2_TASK_NEGOTIATION
+                : PERMITTED_DURING_SASL2_MECHANISM_EXCHANGE;
+            if (!permittedTags.contains(tag)) {
+                // Anything other than what's permitted for the current sub-phase - including a stray stanza, or a
+                // further <authenticate/> - MUST cause the server to disconnect the client immediately, rather than
+                // being bounced as an ordinary stanza error or processed as a fresh negotiation attempt (XEP-0388
+                // § 2.4). See OF-3361.
+                Log.warn("Disconnecting session {} for sending unexpected '{}' data while a SASL2 negotiation is in progress.", session, tag);
+                connection.close(new StreamError(StreamError.Condition.not_authorized, "Unexpected data received while negotiating SASL2 authentication."));
+                return;
+            }
         }
 
         if ("authenticate".equals(tag) && usingSASL2 && (sasl2AuthenticationCompleted || (session != null && session.getSessionData(SASLAuthentication.SASL2_BIND2_NEGOTIATION_ACTIVE_OR_DONE) != null))) {

@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire.nio;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.DecoderException;
@@ -88,13 +89,24 @@ public class NettyXMPPDecoder extends ByteToMessageDecoder {
             parser.resetWhitespaceFound();
             parser.resetNonWhitespaceExtraneousDataFound();
 
-            final NettyConnection connection = ctx.channel().attr(CONNECTION).get();
-            final LocalSession session = connection.getSession();
-            if (session != null && SASLAuthentication.isSasl2NegotiationInProgress(session)) {
-                Log.warn("Received {} data outside of an XML element while a SASL2 negotiation was in progress (XEP-0388 § 2.4), closing connection: {}", hadWhitespace && hadNonWhitespace ? "whitespace and non-whitespace" : (hadWhitespace ? "whitespace" : "non-whitespace"), connection);
-                connection.close(new StreamError(StreamError.Condition.not_authorized, "Unexpected data received during SASL2 negotiation."));
-                return;
-            }
+            // Deferred rather than checked synchronously here: Netty only dispatches the stanza(s) just
+            // decoded from this same buffer, which may themselves be what starts a SASL2 negotiation,
+            // to the rest of the pipeline AFTER decode() returns. Checking synchronously would race ahead
+            // of SASLAuthentication.handle() setting SASL2_NEGOTIATION_IN_PROGRESS for a SASL2 element
+            // that arrived earlier in this very buffer. Scheduling on the channel's event loop queues this
+            // check behind that dispatch, since both run on the same single-threaded event loop.
+            final Channel channel = ctx.channel();
+            channel.eventLoop().execute(() -> {
+                if (!channel.isOpen()) {
+                    return;
+                }
+                final NettyConnection connection = channel.attr(CONNECTION).get();
+                final LocalSession session = connection == null ? null : connection.getSession();
+                if (session != null && SASLAuthentication.isSasl2NegotiationInProgress(session)) {
+                    Log.warn("Received {} data outside of an XML element while a SASL2 negotiation was in progress (XEP-0388 § 2.4), closing connection: {}", hadWhitespace && hadNonWhitespace ? "whitespace and non-whitespace" : (hadWhitespace ? "whitespace" : "non-whitespace"), connection);
+                    connection.close(new StreamError(StreamError.Condition.not_authorized, "Unexpected data received during SASL2 negotiation."));
+                }
+            });
         }
 
         // Add any decoded messages to our outbound list to be processed by subsequent channelRead() events

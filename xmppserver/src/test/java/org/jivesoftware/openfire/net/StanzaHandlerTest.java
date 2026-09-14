@@ -24,6 +24,8 @@ import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.sasl.AnonymousSaslServer;
 import org.jivesoftware.openfire.sasl.SaslMechanismCatalog;
+import org.jivesoftware.openfire.sasl.task.Sasl2Negotiation;
+import org.jivesoftware.openfire.sasl.task.Sasl2TaskManager;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.JiveGlobals;
@@ -417,5 +419,76 @@ public class StanzaHandlerTest
         // Verify result: the retry must not be rejected as a repeat of an already-completed (or still-pending)
         // negotiation.
         verify(connection, never()).close(any(StreamError.class));
+    }
+
+    /**
+     * Verifies that {@code <next/>} and {@code <task-data/>}, received while a SASL2 task negotiation (XEP-0388
+     * § 2.5) is active, are let through to dispatch rather than being disconnected as stray traffic. Regression
+     * test for a PR review finding: after the base SASL mechanism completes and a task is offered, {@code
+     * startedSASL} remains {@code true}, but the mid-negotiation guard only recognised {@code <response/>} and
+     * {@code <abort/>} as legal, so a legitimate task reply was disconnected before it could reach the dispatch
+     * branch that already handled {@code next}/{@code task-data} tags.
+     */
+    @Test
+    public void taskElementDuringActiveTaskNegotiation_shouldNotDisconnect() throws Exception
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        when(connection.getAdditionalNamespaces()).thenReturn(java.util.Collections.emptySet());
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        final ClientStanzaHandler handler = new ClientStanzaHandler(mock(PacketRouter.class), connection);
+        handler.setSession(session);
+
+        // Manually prime the handler and session as if the base SASL mechanism has completed and a task has been
+        // offered: the SaslServer is gone, a task negotiation is tracked instead, and startedSASL is still true.
+        handler.sessionCreated = true;
+        handler.startedSASL = true;
+        handler.usingSASL2 = true;
+        session.setSessionData(Sasl2TaskManager.NEGOTIATION_KEY, mock(Sasl2Negotiation.class));
+
+        // Execute system under test: the peer selects a task.
+        final String nextStanza = "<next xmlns='" + SASLAuthentication.SASL2_NAMESPACE + "' task='EXAMPLE'/>";
+        handler.processStanza(nextStanza, new XMPPPacketReader());
+
+        // Verify result: the guard must not disconnect a legal task-negotiation element. (Whatever
+        // SASLAuthentication/Sasl2TaskManager subsequently makes of a task it does not recognise is out of scope
+        // here; only the top-level guard's dispatch decision is under test.)
+        verify(connection, never()).close(any(StreamError.class));
+    }
+
+    /**
+     * Verifies that {@code <next/>} and {@code <task-data/>}, received while the base SASL mechanism exchange is
+     * still in progress (i.e. no task negotiation is active yet), still cause a disconnect, per XEP-0388 § 2.4.
+     * The state-aware guard must not become permissive for these tags across the board - only once a task has
+     * actually been offered.
+     */
+    @Test
+    public void taskElementWithoutActiveTaskNegotiation_shouldDisconnect() throws Exception
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        when(connection.getAdditionalNamespaces()).thenReturn(java.util.Collections.emptySet());
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        final ClientStanzaHandler handler = new ClientStanzaHandler(mock(PacketRouter.class), connection);
+        handler.setSession(session);
+
+        // Manually prime the handler as if a SASL2 <authenticate> was sent and the server replied with a
+        // <challenge/>: the mechanism exchange is mid-flight, but no task has been offered yet.
+        handler.sessionCreated = true;
+        handler.startedSASL = true;
+        handler.usingSASL2 = true;
+
+        // Execute system under test: a task-negotiation element arrives prematurely, before any task was offered.
+        final String nextStanza = "<next xmlns='" + SASLAuthentication.SASL2_NAMESPACE + "' task='EXAMPLE'/>";
+        handler.processStanza(nextStanza, new XMPPPacketReader());
+
+        // Verify result: the connection must be closed with a stream error.
+        verify(connection).close(any(StreamError.class));
     }
 }

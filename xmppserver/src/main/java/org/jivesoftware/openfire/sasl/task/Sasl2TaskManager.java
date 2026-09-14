@@ -438,6 +438,7 @@ public class Sasl2TaskManager
             throw new SaslFailureException(Failure.TEMPORARY_AUTH_FAILURE, "Unable to determine SASL2 tasks.");
         }
         if (!offered) {
+            Log.trace("No SASL2 task is eligible for session '{}'; concluding the negotiation as successful.", session);
             endNegotiation(session, true);
         }
         return offered;
@@ -454,13 +455,16 @@ public class Sasl2TaskManager
     @Nonnull
     public Outcome handleTaskElement(@Nonnull final LocalSession session, @Nonnull final Element element) throws SaslFailureException
     {
+        Log.trace("Handling SASL2 task element '<{}/>' for session '{}'.", element.getName(), session);
         final Sasl2Negotiation negotiation = getNegotiation(session);
         if (negotiation == null) {
+            Log.debug("Received SASL2 task element '<{}/>' for session '{}', but no task negotiation is in progress.", element.getName(), session);
             throw new SaslFailureException(Failure.MALFORMED_REQUEST, "No SASL2 task negotiation is in progress for this session.");
         }
 
         synchronized (negotiation) {
             if (!negotiation.isAuthenticated() || negotiation.getState() == Sasl2Negotiation.State.FINISHED) {
+                Log.debug("Received SASL2 task element '<{}/>' for session '{}', but the negotiation is not in a state to accept it (authenticated={}, state={}).", element.getName(), session, negotiation.isAuthenticated(), negotiation.getState());
                 throw new SaslFailureException(Failure.MALFORMED_REQUEST, "No SASL2 task negotiation is in progress for this session.");
             }
             final Sasl2TaskResult result;
@@ -489,12 +493,15 @@ public class Sasl2TaskManager
     {
         final Sasl2Negotiation negotiation = getNegotiation(session);
         if (negotiation == null) {
+            Log.trace("Asked to end the SASL2 task negotiation of session '{}' (successful={}), but none is in progress.", session, successful);
             return null;
         }
+        Log.debug("Ending SASL2 task negotiation of session '{}' (successful={}).", session, successful);
 
         synchronized (negotiation) {
             if (!negotiation.markFinished()) {
                 // Another thread (typically a connection close racing with inbound processing) already tore this negotiation down.
+                Log.debug("SASL2 task negotiation of session '{}' was already torn down by another thread; nothing more to do.", session);
                 return null;
             }
             session.removeSessionData(NEGOTIATION_KEY);
@@ -631,6 +638,7 @@ public class Sasl2TaskManager
     private Sasl2TaskResult begin(@Nonnull final LocalSession session, @Nonnull final Sasl2Negotiation negotiation, @Nonnull final Element next) throws SaslFailureException
     {
         if (negotiation.getState() != Sasl2Negotiation.State.AWAITING_NEXT) {
+            Log.debug("Received a <next/> element for session '{}' while the negotiation was not awaiting a task selection (state: {}).", session, negotiation.getState());
             throw new SaslFailureException(Failure.MALFORMED_REQUEST, "A <next/> element was received while the server was not awaiting a task selection.");
         }
         final String taskName = next.attributeValue("task");
@@ -641,6 +649,7 @@ public class Sasl2TaskManager
         // mechanism names (OF-3273): a peer must not be able to drive a task that was never offered to it.
         final Offer offer = negotiation.findOffer(taskName);
         if (offer == null) {
+            Log.warn("Session '{}' selected SASL2 task '{}', which was not offered to it. Failing the negotiation.", session, taskName);
             throw new SaslFailureException(Failure.MALFORMED_REQUEST, "Task '" + taskName + "' was not offered to this session.");
         }
 
@@ -660,12 +669,15 @@ public class Sasl2TaskManager
     private Sasl2TaskResult advance(@Nonnull final Sasl2Negotiation negotiation, @Nonnull final Element taskData) throws SaslFailureException
     {
         if (negotiation.getState() != Sasl2Negotiation.State.AWAITING_TASK_DATA) {
+            Log.debug("Received a <task-data/> element while the negotiation was not awaiting one (state: {}).", negotiation.getState());
             throw new SaslFailureException(Failure.MALFORMED_REQUEST, "A <task-data/> element was received while the server was not awaiting one.");
         }
         final Sasl2Task task = negotiation.getActiveTask();
         if (task == null) {
+            Log.warn("Received a <task-data/> element while no SASL2 task is in progress. This suggests a bug in Openfire.");
             throw new SaslFailureException(Failure.MALFORMED_REQUEST, "A <task-data/> element was received while no task is in progress.");
         }
+        Log.trace("Forwarding <task-data/> element to active SASL2 task '{}'.", task.getName());
         return task.onTaskData(taskData);
     }
 
@@ -677,12 +689,15 @@ public class Sasl2TaskManager
     private Outcome applyResult(@Nonnull final LocalSession session, @Nonnull final Sasl2Negotiation negotiation, @Nullable final Sasl2TaskResult result) throws SaslFailureException
     {
         if (result == null) {
+            Log.warn("A SASL2 task did not produce a result for session '{}'. This suggests a bug in the task implementation.", session);
             throw new SaslFailureException(Failure.TEMPORARY_AUTH_FAILURE, "A SASL2 task did not produce a result.");
         }
+        Log.trace("Applying SASL2 task result of type '{}' for session '{}'.", result.getType(), session);
         switch (result.getType()) {
             case TASK_DATA -> {
                 negotiation.setState(Sasl2Negotiation.State.AWAITING_TASK_DATA);
                 session.deliverRawText(buildTaskDataElement(result.getTaskData()).asXML());
+                Log.trace("Sent <task-data/> to session '{}'; awaiting the peer's response.", session);
                 return Outcome.AWAITING_PEER;
             }
             case COMPLETED -> {
@@ -692,6 +707,7 @@ public class Sasl2TaskManager
                     return Outcome.AWAITING_PEER;
                 }
                 negotiation.setFinalAdditionalData(additionalData);
+                Log.debug("Every eligible SASL2 task has completed for session '{}'; the negotiation can now be concluded.", session);
                 return Outcome.NEGOTIATION_COMPLETE;
             }
             default -> throw new SaslFailureException(Failure.TEMPORARY_AUTH_FAILURE, "Unrecognized SASL2 task result: " + result.getType());

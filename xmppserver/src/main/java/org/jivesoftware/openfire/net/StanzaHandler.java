@@ -626,7 +626,10 @@ public abstract class StanzaHandler {
      */
     protected void sasl2Successful() {
         if (!sasl2SessionResumed) {
+            Log.trace("SASL2 authentication succeeded for session '{}'; delivering post-authentication stream features.", session);
             deliverSasl2Features();
+        } else {
+            Log.trace("SASL2 authentication succeeded for session '{}' by inline stream resumption; suppressing stream features per XEP-0198 §9.2.", session);
         }
     }
 
@@ -668,6 +671,7 @@ public abstract class StanzaHandler {
         }
         this.session = resumedSession;
         sasl2SessionResumed = true;
+        Log.debug("Adopted resumed session '{}' after inline SASL2+XEP-0198 stream resumption.", resumedSession);
     }
 
     /**

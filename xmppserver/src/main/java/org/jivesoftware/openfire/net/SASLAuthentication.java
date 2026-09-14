@@ -689,6 +689,7 @@ public class SASLAuthentication {
 
                     if (saslServer.getAuthorizationID() != null && LockOutManager.getInstance().isAccountDisabled(saslServer.getAuthorizationID())) {
                         // Interception!  This person is locked out, fail instead!
+                        Log.info("SASL authentication for account '{}' succeeded, but the account is locked out. Failing the authentication attempt for session '{}'.", saslServer.getAuthorizationID(), session);
                         LockOutManager.getInstance().recordFailedLogin(saslServer.getAuthorizationID());
                         throw new SaslFailureException(Failure.ACCOUNT_DISABLED);
                     }
@@ -788,9 +789,11 @@ public class SASLAuthentication {
     static Optional<Failure> checkSASL2Permitted(@Nonnull final LocalSession session)
     {
         if (!ENABLE_SASL2.getValue()) {
+            Log.trace("SASL2 is not permitted for session '{}': SASL2 is disabled by configuration.", session);
             return Optional.of(Failure.NOT_AUTHORIZED);
         }
         if (SASL2_REQUIRE_TLS.getValue() && !session.isEncrypted()) {
+            Log.trace("SASL2 is not permitted for session '{}': TLS is required for SASL2, but the session is not encrypted.", session);
             return Optional.of(Failure.ENCRYPTION_REQUIRED);
         }
         return Optional.empty();
@@ -1098,6 +1101,7 @@ public class SASLAuthentication {
             Log.warn("Unable to report SASL2 failure ({}): session is unexpectedly null.", failure);
             return;
         }
+        Log.debug("Aborting SASL2 negotiation for session '{}' with failure: {}.", session, failure);
         if (session instanceof LocalClientSession clientSession) {
             clientSession.setAuthToken(null);
         }

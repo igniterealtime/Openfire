@@ -84,7 +84,6 @@ public class StanzaHandlerTest
     {
         // Setup test fixture.
         final Connection connection = mock(Connection.class);
-        when(connection.isEncrypted()).thenReturn(false);
         when(connection.getAdditionalNamespaces()).thenReturn(java.util.Collections.emptySet());
 
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
@@ -122,7 +121,6 @@ public class StanzaHandlerTest
     {
         // Setup test fixture.
         final Connection connection = mock(Connection.class);
-        when(connection.isEncrypted()).thenReturn(false);
         when(connection.getAdditionalNamespaces()).thenReturn(java.util.Collections.emptySet());
 
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
@@ -173,7 +171,6 @@ public class StanzaHandlerTest
     {
         // Setup test fixture.
         final Connection connection = mock(Connection.class);
-        when(connection.isEncrypted()).thenReturn(false);
         when(connection.getAdditionalNamespaces()).thenReturn(java.util.Collections.emptySet());
 
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
@@ -227,7 +224,6 @@ public class StanzaHandlerTest
     {
         // Setup test fixture.
         final Connection connection = mock(Connection.class);
-        when(connection.isEncrypted()).thenReturn(false);
         when(connection.getAdditionalNamespaces()).thenReturn(java.util.Collections.emptySet());
 
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
@@ -260,7 +256,6 @@ public class StanzaHandlerTest
     {
         // Setup test fixture.
         final Connection connection = mock(Connection.class);
-        when(connection.isEncrypted()).thenReturn(false);
         when(connection.getAdditionalNamespaces()).thenReturn(java.util.Collections.emptySet());
 
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
@@ -293,7 +288,6 @@ public class StanzaHandlerTest
     {
         // Setup test fixture.
         final Connection connection = mock(Connection.class);
-        when(connection.isEncrypted()).thenReturn(false);
         when(connection.getAdditionalNamespaces()).thenReturn(java.util.Collections.emptySet());
 
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
@@ -327,7 +321,6 @@ public class StanzaHandlerTest
     {
         // Setup test fixture.
         final Connection connection = mock(Connection.class);
-        when(connection.isEncrypted()).thenReturn(false);
         when(connection.getAdditionalNamespaces()).thenReturn(java.util.Collections.emptySet());
 
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();
@@ -366,7 +359,6 @@ public class StanzaHandlerTest
     {
         // Setup test fixture.
         final Connection connection = mock(Connection.class);
-        when(connection.isEncrypted()).thenReturn(false);
         when(connection.getAdditionalNamespaces()).thenReturn(java.util.Collections.emptySet());
 
         final StreamID streamID = new BasicStreamIDFactory().createStreamID();

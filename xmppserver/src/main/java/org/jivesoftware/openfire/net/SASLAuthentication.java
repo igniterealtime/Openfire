@@ -262,6 +262,12 @@ public class SASLAuthentication {
     static final String SASL2_BIND2_NEGOTIATION_ACTIVE_OR_DONE = "Sasl2.bind2-negotiation-active-or-done";
 
     /**
+     * Session Data property name used to record that a SASL2 negotiation, from the first valid SASL2 element received
+     * until a terminal outcome (success, failure, or abort), is currently in progress for a session.
+     */
+    static final String SASL2_NEGOTIATION_IN_PROGRESS = "Sasl2.negotiation-in-progress";
+
+    /**
      * Session Data property name used to record that a session's resource was bound via an inline XEP-0386 Bind 2
      * request during SASL2 authentication, as opposed to legacy IQ-based binding. Set only once binding has actually
      * completed successfully; never set for sessions that bind via legacy IQ, and never set when an inline XEP-0198
@@ -528,6 +534,7 @@ public class SASLAuthentication {
                 if (!SASL2_NAMESPACE.equals(doc.getNamespaceURI())) {
                     throw new IllegalStateException("Unexpected data received while negotiating SASL2 authentication. Offending root element: " + doc.getName() + " Namespace: " + doc.getNamespaceURI());
                 }
+                session.setSessionData(SASL2_NEGOTIATION_IN_PROGRESS, Boolean.TRUE);
             }
             else
             {
@@ -827,6 +834,18 @@ public class SASLAuthentication {
     }
 
     /**
+     * Returns whether a SASL2 negotiation is currently in progress for the given session, per
+     * {@link #SASL2_NEGOTIATION_IN_PROGRESS}.
+     *
+     * @param session the session to check (cannot be null).
+     * @return true if a SASL2 negotiation is in progress, false otherwise.
+     */
+    public static boolean isSasl2NegotiationInProgress(@Nonnull final LocalSession session)
+    {
+        return Boolean.TRUE.equals(session.getSessionData(SASL2_NEGOTIATION_IN_PROGRESS));
+    }
+
+    /**
      * Concludes a SASL2 negotiation whose tasks have all completed: applies the deferred authentication outcome,
      * which delivers {@code <success/>} and performs any inlined Bind2 or XEP-0198 resumption.
      *
@@ -1037,6 +1056,7 @@ public class SASLAuthentication {
                     try {
                         resumedSession.deliverRawText(success.asXML());
                         resumedSession.completeSasl2Resume(resumeRequest.getH());
+                        session.removeSessionData(SASL2_NEGOTIATION_IN_PROGRESS);
                     } catch (final Exception e) {
                         // The connection is no longer the temporary session's to fail on: a SASL failure cannot be
                         // reported over it, and the resumed session cannot be left half-resumed. Close it instead.
@@ -1102,11 +1122,13 @@ public class SASLAuthentication {
                     success.add(finalResumeFailedElement);
                 }
                 session.deliverRawText(success.asXML());
+                session.removeSessionData(SASL2_NEGOTIATION_IN_PROGRESS);
             }
         } else {
             Log.debug("Non-client session (e.g. server) for user '{}'; sending <success/> synchronously.", username);
             final Element success = SaslOutcome.buildSasl2SuccessElement(successData, authorizationIdentity, null, null);
             session.deliverRawText(success.asXML());
+            session.removeSessionData(SASL2_NEGOTIATION_IN_PROGRESS);
         }
     }
 
@@ -1140,6 +1162,7 @@ public class SASLAuthentication {
         // like a completed negotiation - see SASL2_BIND2_PENDING_OR_SUCCEEDED.
         session.removeSessionData(SASL2_BIND2_NEGOTIATION_ACTIVE_OR_DONE);
         session.removeSessionData("SaslServer");
+        session.removeSessionData(SASL2_NEGOTIATION_IN_PROGRESS);
         Sasl2TaskManager.getInstance().endNegotiation(session, false);
         FastSessionState.clearAuthenticationAttempt(session);
         SaslOutcome.authenticationFailed(session, failure, true);
@@ -1183,6 +1206,7 @@ public class SASLAuthentication {
             bind2Request.processFeatureRequests(clientSession, success);
             clientSession.deliverRawText(success.asXML());
             successDelivered = true;
+            clientSession.removeSessionData(SASL2_NEGOTIATION_IN_PROGRESS);
 
             clientSession.setSessionData(BIND2_USED, Boolean.TRUE);
             // Note: SASL2_BIND2_NEGOTIATION_ACTIVE_OR_DONE was already set by StanzaHandler before this method ran;

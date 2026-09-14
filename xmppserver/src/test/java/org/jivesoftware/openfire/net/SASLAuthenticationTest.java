@@ -1905,6 +1905,235 @@ public class SASLAuthenticationTest
         assertNotNull(success.element(QName.get("bound", "urn:xmpp:bind:0")), "Expected the fallback bind to still complete.");
     }
 
+    // =========================================================================
+    // SASL2_NEGOTIATION_IN_PROGRESS tests
+    // =========================================================================
+
+    /**
+     * Verifies that a SASL2 negotiation that has not yet completed (still awaiting the peer's response to a
+     * challenge) is reported as in progress.
+     *
+     * @see <a href="https://xmpp.org/extensions/xep-0388.html">XEP-0388 § 2.4</a>
+     */
+    @Test
+    public void sasl2NegotiationInProgressFlagSetWhileAwaitingChallengeResponse()
+    {
+        // Setup test fixture.
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        SaslMechanismCatalog.setEnabledMechanisms(Collections.singletonList("PLAIN"));
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(true);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("PLAIN"));
+
+        // Execute system under test.
+        final SASLAuthentication.Status status = SASLAuthentication.handle(session, sasl2AuthenticateElement("PLAIN"), true);
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.needResponse, status, "Expected negotiation to be incomplete, awaiting a challenge response.");
+        assertTrue(SASLAuthentication.isSasl2NegotiationInProgress(session), "Expected a SASL2 negotiation that has not yet reached a terminal outcome to be reported as in progress.");
+    }
+
+    /**
+     * Verifies that the SASL2-in-progress flag is never set for a SASL1 negotiation, since XEP-0388 § 2.4 only
+     * applies to SASL2.
+     */
+    @Test
+    public void sasl2NegotiationInProgressFlagNeverSetForSasl1()
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(true);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("PLAIN"));
+
+        // Execute system under test.
+        final SASLAuthentication.Status status = SASLAuthentication.handle(session, authElement("PLAIN"), false);
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.needResponse, status, "Expected SASL1 negotiation to proceed normally.");
+        assertFalse(SASLAuthentication.isSasl2NegotiationInProgress(session), "Expected the SASL2-in-progress flag to never be set for a SASL1 negotiation.");
+    }
+
+    /**
+     * Verifies that a SASL2 request rejected by SASLAuthentication#checkSASL2Permitted(LocalSession) - i.e.
+     * before any negotiation state is established - never sets the SASL2-in-progress flag.
+     */
+    @Test
+    public void sasl2NegotiationInProgressFlagNotSetWhenSasl2RequestIsRejectedByGate()
+    {
+        // Setup test fixture: SASL2 enabled, TLS required, session unencrypted - the gate must reject before the flag is set.
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        SASLAuthentication.SASL2_REQUIRE_TLS.setValue(true);
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        SASLAuthentication.setAdvertisedSASLMechanisms(session, Set.of("PLAIN"));
+
+        // Execute system under test.
+        final SASLAuthentication.Status status = SASLAuthentication.handle(session, sasl2AuthenticateElement("PLAIN"), true);
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.failed, status, "Expected the SASL2 gate to reject the request.");
+        assertFalse(SASLAuthentication.isSasl2NegotiationInProgress(session), "Expected the SASL2-in-progress flag to never be set for a request rejected by the eligibility gate.");
+    }
+
+    /**
+     * Verifies that a client-initiated {@code <abort/>} clears the SASL2-in-progress flag, having first set it (since
+     * the flag is set as soon as a valid SASL2 element is accepted for processing, before the element type is
+     * inspected).
+     */
+    @Test
+    public void sasl2NegotiationInProgressFlagClearedAfterAbort()
+    {
+        // Setup test fixture.
+        SASLAuthentication.ENABLE_SASL2.setValue(true);
+        SASLAuthentication.SASL2_REQUIRE_TLS.setValue(false);
+
+        final Connection connection = mock(Connection.class);
+        when(connection.isEncrypted()).thenReturn(false);
+
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+
+        // Execute system under test.
+        final SASLAuthentication.Status status = SASLAuthentication.handle(session, sasl2AbortElement(), true);
+
+        // Verify result.
+        assertEquals(SASLAuthentication.Status.failed, status, "Expected an <abort/> to fail the negotiation.");
+        assertFalse(SASLAuthentication.isSasl2NegotiationInProgress(session), "Expected the SASL2-in-progress flag to be cleared once the negotiation was aborted.");
+    }
+
+    /**
+     * Verifies that a plain SASL2 success (no Bind2, no inline resume) clears the SASL2-in-progress flag once
+     * {@code <success/>} has been delivered.
+     */
+    @Test
+    public void sasl2NegotiationInProgressFlagClearedAfterPlainSuccess()
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+        session.setSessionData("Sasl2.negotiation-in-progress", Boolean.TRUE);
+
+        // Execute system under test.
+        SASLAuthentication.authenticationSuccessful(session, "testuser", "PLAIN", new byte[0], true);
+
+        // Verify result.
+        assertFalse(SASLAuthentication.isSasl2NegotiationInProgress(session), "Expected the SASL2-in-progress flag to be cleared once a plain SASL2 success was delivered.");
+    }
+
+    /**
+     * Verifies that a non-client (e.g. inbound server) SASL2 success clears the SASL2-in-progress flag.
+     */
+    @Test
+    public void sasl2NegotiationInProgressFlagClearedAfterIncomingServerSuccess()
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+        final LocalIncomingServerSession session = new LocalIncomingServerSession(Fixtures.XMPP_DOMAIN, connection, streamID, "remote.example.org");
+        session.setSessionData("Sasl2.negotiation-in-progress", Boolean.TRUE);
+
+        // Execute system under test.
+        SASLAuthentication.authenticationSuccessful(session, "remote.example.org", "EXTERNAL", new byte[0], true);
+
+        // Verify result.
+        assertFalse(SASLAuthentication.isSasl2NegotiationInProgress(session), "Expected the SASL2-in-progress flag to be cleared once an inbound server SASL2 success was delivered.");
+    }
+
+    /**
+     * Verifies that a SASL2+Bind2 success clears the SASL2-in-progress flag once {@code <success/>} has been
+     * delivered (i.e. at the same point {@link #bind2FailureAfterSuccessClosesTheStream} treats as the point of no
+     * return for the negotiation itself).
+     */
+    @Test
+    public void sasl2NegotiationInProgressFlagClearedAfterBind2Success()
+    {
+        try (final MockedStatic<EntityCapabilitiesManager> mockedEntityCaps = mockStatic(EntityCapabilitiesManager.class)) {
+            mockedEntityCaps.when(() -> EntityCapabilitiesManager.getLocalDomainVerHash(any())).thenReturn(null);
+
+            // Setup test fixture.
+            final Connection connection = mock(Connection.class);
+            final ConnectionConfiguration connectionConfiguration = mock(ConnectionConfiguration.class);
+            when(connectionConfiguration.getTlsPolicy()).thenReturn(Connection.TLSPolicy.disabled);
+            when(connectionConfiguration.getCompressionPolicy()).thenReturn(Connection.CompressionPolicy.disabled);
+            when(connection.getConfiguration()).thenReturn(connectionConfiguration);
+            final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+            final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, streamID, Locale.ENGLISH);
+            session.setSessionData("Sasl2.negotiation-in-progress", Boolean.TRUE);
+
+            final Bind2Request bind2Request = mock(Bind2Request.class);
+            when(bind2Request.generateResourceString(any())).thenReturn("test-resource");
+            session.setSessionData("bind2-request", bind2Request);
+            stubSuccessfulBind(XMPPServer.getInstance().getSessionManager());
+
+            // Execute system under test.
+            SASLAuthentication.authenticationSuccessful(session, "testuser", "PLAIN", new byte[0], true);
+
+            // Verify result.
+            assertFalse(SASLAuthentication.isSasl2NegotiationInProgress(session), "Expected the SASL2-in-progress flag to be cleared once a SASL2+Bind2 success was delivered.");
+        }
+    }
+
+    /**
+     * Verifies that a Bind2 failure that occurs before {@code <success/>} is delivered - which fails the negotiation
+     * via {@code abortSasl2} - clears the SASL2-in-progress flag.
+     */
+    @Test
+    public void sasl2NegotiationInProgressFlagClearedAfterBind2Failure()
+    {
+        // Setup test fixture.
+        final Connection connection = mock(Connection.class);
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection,
+            new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        session.setSessionData("Sasl2.negotiation-in-progress", Boolean.TRUE);
+        final Bind2Request bind2Request = mock(Bind2Request.class);
+        when(bind2Request.generateResourceString(any())).thenReturn("conflicting-resource");
+        session.setSessionData("bind2-request", bind2Request);
+        when(XMPPServer.getInstance().getSessionManager().bindResource(notNull(), notNull(), notNull()))
+            .thenReturn(CompletableFuture.completedFuture(SessionManager.BindResult.CONFLICT));
+
+        // Execute system under test.
+        SASLAuthentication.authenticationSuccessful(session, "testuser", "PLAIN", new byte[0], true);
+
+        // Verify result.
+        assertFalse(SASLAuthentication.isSasl2NegotiationInProgress(session), "Expected the SASL2-in-progress flag to be cleared once a Bind2 failure aborted the negotiation.");
+    }
+
+    /**
+     * Verifies that a successful inline XEP-0198 resume (XEP-0198 § 9.2) clears the SASL2-in-progress flag on the
+     * (temporary) session that negotiated the authentication - the one the flag was set on - even though the
+     * connection itself is handed off to the pre-existing, resumed session.
+     */
+    @Test
+    public void sasl2NegotiationInProgressFlagClearedAfterInlineResumeSuccess() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession otherSession = new LocalClientSession(Fixtures.XMPP_DOMAIN, mock(Connection.class), new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        final String previd = makeResumableSession(otherSession, "testuser", "test-resource");
+
+        final Connection newConnection = mock(Connection.class);
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, newConnection, new BasicStreamIDFactory().createStreamID(), Locale.ENGLISH);
+        session.setSessionData("Sasl2.resume-request", resumeRequest(previd, 0));
+        session.setSessionData("Sasl2.negotiation-in-progress", Boolean.TRUE);
+
+        // Execute system under test.
+        SASLAuthentication.authenticationSuccessful(session, "testuser", "PLAIN", new byte[0], true);
+
+        // Verify result.
+        assertFalse(SASLAuthentication.isSasl2NegotiationInProgress(session), "Expected the SASL2-in-progress flag to be cleared, on the negotiating session, once an inline resume succeeded.");
+    }
+
     /**
      * Stubs {@link SessionManager#bindResource(LocalClientSession, AuthToken, String)} to emulate a successful bind,
      * rather than merely returning {@code BOUND}.
@@ -1967,5 +2196,10 @@ public class SASLAuthenticationTest
         resumeElement.addAttribute("h", Long.toString(h));
         resumeElement.addAttribute("previd", previd);
         return ResumeRequest.from(resumeElement);
+    }
+
+    private static Element sasl2AbortElement()
+    {
+        return DocumentHelper.createElement(new QName("abort", Namespace.get("", SASL2_NAMESPACE)));
     }
 }

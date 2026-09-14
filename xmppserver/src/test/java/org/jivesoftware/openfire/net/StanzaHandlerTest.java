@@ -334,7 +334,7 @@ public class StanzaHandlerTest
         handler.sessionCreated = true;
         handler.startedSASL = false;
         handler.usingSASL2 = true;
-        session.setSessionData(SASLAuthentication.SASL2_BIND2_PENDING_OR_SUCCEEDED, Boolean.TRUE);
+        session.setSessionData(SASLAuthentication.SASL2_BIND2_NEGOTIATION_ACTIVE_OR_DONE, Boolean.TRUE);
 
         // Execute system under test: a second <authenticate/> arrives while the bind is still pending.
         final String secondAuthenticate = "<authenticate xmlns='" + SASLAuthentication.SASL2_NAMESPACE + "' mechanism='PLAIN'/>";
@@ -406,7 +406,7 @@ public class StanzaHandlerTest
         // Verify result: the failed bind must not leave the negotiation looking durably completed.
         assertFalse(handler.sasl2AuthenticationCompleted,
             "Expected sasl2AuthenticationCompleted to remain false after an async Bind2 failure.");
-        assertNull(session.getSessionData(SASLAuthentication.SASL2_BIND2_PENDING_OR_SUCCEEDED),
+        assertNull(session.getSessionData(SASLAuthentication.SASL2_BIND2_NEGOTIATION_ACTIVE_OR_DONE),
             "Expected the Bind2-pending session data to be cleared after an async Bind2 failure, so a retry is possible.");
         verify(connection, never()).close(any(StreamError.class));
 

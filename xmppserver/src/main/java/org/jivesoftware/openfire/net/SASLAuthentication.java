@@ -150,14 +150,14 @@ public class SASLAuthentication {
         .build();
 
     /**
-     * Enable (or disable) SASL2. This is currently off by default, and means that SASL2 is not advertised in features, primarily.
+     * Enable (or disable) SASL2. When disabled, it means that SASL2 is not advertised in features, primarily.
      *
      * @see <a href="https://xmpp.org/extensions/xep-0388.html">XEP-0388: Extensible SASL Profile</a>
      */
     public static final SystemProperty<Boolean> ENABLE_SASL2 = SystemProperty.Builder.ofType(Boolean.class)
         .setKey("xmpp.auth.sasl2")
         .setDynamic(true)
-        .setDefaultValue(false)
+        .setDefaultValue(true)
         .build();
 
     /**

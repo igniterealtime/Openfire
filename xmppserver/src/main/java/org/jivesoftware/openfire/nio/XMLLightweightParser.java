@@ -102,6 +102,14 @@ public class XMLLightweightParser {
     private int depth = 0;
     private boolean maxBufferSizeExceeded = false;
 
+    // Set when a whitespace character is found outside of any element (i.e. between stanzas).
+    // Legitimate XMPP whitespace keep-alives look exactly like this.
+    private boolean whitespaceFound = false;
+
+    // Set when a non-whitespace character is found outside of any element (i.e. between stanzas).
+    // Unlike whitespace, this is never a recognised part of any XMPP convention.
+    private boolean nonWhitespaceExtraneousDataFound = false;
+
     protected boolean insideChildrenTag = false;
 
     CharsetDecoder encoder = StandardCharsets.UTF_8.newDecoder()
@@ -166,6 +174,44 @@ public class XMLLightweightParser {
 
     public boolean isMaxBufferSizeExceeded() {
         return maxBufferSizeExceeded;
+    }
+
+    /**
+     * Returns true if at least one whitespace character has been encountered outside of any XML element (i.e. between
+     * stanzas) since this flag was last reset.
+     *
+     * This is the mechanism by which XMPP "whitespace keep-alive" pings are tolerated: such characters are skipped
+     * rather than becoming part of any parsed stanza, but this flag lets a caller detect that it happened.
+     *
+     * @return true if extraneous whitespace was found, false otherwise.
+     */
+    public boolean isWhitespaceFound() {
+        return whitespaceFound;
+    }
+
+    /**
+     * Clears the flag tracked by {@link #isWhitespaceFound()}.
+     */
+    public void resetWhitespaceFound() {
+        whitespaceFound = false;
+    }
+
+    /**
+     * Returns true if at least one non-whitespace character has been encountered outside of any XML element (i.e.
+     * before the first stanza, or between stanzas) since this flag was last reset. Unlike whitespace, such data is not
+     * the result of any recognised XMPP convention and is more likely to indicate a misbehaving peer.
+     *
+     * @return true if extraneous non-whitespace data was found, false otherwise.
+     */
+    public boolean isNonWhitespaceExtraneousDataFound() {
+        return nonWhitespaceExtraneousDataFound;
+    }
+
+    /**
+     * Clears the flag tracked by {@link #isNonWhitespaceExtraneousDataFound()}.
+     */
+    public void resetNonWhitespaceExtraneousDataFound() {
+        nonWhitespaceExtraneousDataFound = false;
     }
 
     public void read(ByteBuf in) throws Exception {
@@ -362,6 +408,11 @@ public class XMLLightweightParser {
                 }
                 else {
                     startLastMsg++;
+                    if (Character.isWhitespace(ch)) {
+                        whitespaceFound = true;
+                    } else {
+                        nonWhitespaceExtraneousDataFound = true;
+                    }
                 }
             } else if (status == XMLLightweightParser.OUTSIDE) {
                 if (ch == '<') {

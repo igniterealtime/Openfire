@@ -542,4 +542,195 @@ public class XMLLightweightParserTest {
         assertTrue(parser.isMaxBufferSizeExceeded(),
             "The maxBufferSizeExceeded flag should be set after exceeding the parser's buffer limit.");
     }
+
+    /**
+     * Asserts that a whitespace character received between stanzas (a common XMPP "keep-alive" convention) is skipped
+     * from the parsed output, but recorded via {@link XMLLightweightParser#isWhitespaceFound()}.
+     */
+    @Test
+    public void testWhitespaceBetweenStanzasSetsWhitespaceFlag() throws Exception
+    {
+        // Setup test fixture.
+        final String input = " <presence/>";
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(input.getBytes(StandardCharsets.UTF_8).length);
+        buffer.writeCharSequence(input, StandardCharsets.UTF_8);
+        final XMLLightweightParser parser = new XMLLightweightParser();
+
+        // Execute system under test.
+        parser.read(buffer);
+
+        // Verify results.
+        assertTrue(parser.isWhitespaceFound(), "Leading whitespace before a stanza should set the whitespace flag.");
+        assertFalse(parser.isNonWhitespaceExtraneousDataFound(), "No non-whitespace extraneous data was sent.");
+        final String[] result = parser.getMsgs();
+        assertEquals(1, result.length);
+        assertEquals("<presence/>", result[0], "The leading whitespace should not be included in the parsed stanza.");
+    }
+
+    /**
+     * Asserts that non-whitespace data received before a stanza is skipped from the parsed output, but recorded via
+     * {@link XMLLightweightParser#isNonWhitespaceExtraneousDataFound()}, and does not also set the whitespace flag.
+     */
+    @Test
+    public void testNonWhitespaceDataBetweenStanzasSetsNonWhitespaceFlag() throws Exception
+    {
+        // Setup test fixture.
+        final String input = "garbage<presence/>";
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(input.getBytes(StandardCharsets.UTF_8).length);
+        buffer.writeCharSequence(input, StandardCharsets.UTF_8);
+        final XMLLightweightParser parser = new XMLLightweightParser();
+
+        // Execute system under test.
+        parser.read(buffer);
+
+        // Verify results.
+        assertTrue(parser.isNonWhitespaceExtraneousDataFound(), "Leading non-whitespace data should set the non-whitespace flag.");
+        assertFalse(parser.isWhitespaceFound(), "No whitespace was sent.");
+        final String[] result = parser.getMsgs();
+        assertEquals(1, result.length);
+        assertEquals("<presence/>", result[0], "The leading garbage should not be included in the parsed stanza.");
+    }
+
+    /**
+     * Asserts that input containing both whitespace and non-whitespace characters before a stanza sets both flags.
+     */
+    @Test
+    public void testMixedExtraneousDataSetsBothFlags() throws Exception
+    {
+        // Setup test fixture.
+        final String input = " x<presence/>";
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(input.getBytes(StandardCharsets.UTF_8).length);
+        buffer.writeCharSequence(input, StandardCharsets.UTF_8);
+        final XMLLightweightParser parser = new XMLLightweightParser();
+
+        // Execute system under test.
+        parser.read(buffer);
+
+        // Verify results.
+        assertTrue(parser.isWhitespaceFound(), "The space character should set the whitespace flag.");
+        assertTrue(parser.isNonWhitespaceExtraneousDataFound(), "The 'x' character should set the non-whitespace flag.");
+    }
+
+    /**
+     * Asserts that neither extraneous-data flag is set when the input contains only a well-formed stanza with no
+     * leading or interstitial noise.
+     */
+    @Test
+    public void testNoExtraneousDataFlagsSetForCleanInput() throws Exception
+    {
+        // Setup test fixture.
+        final String input = "<presence/>";
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(input.getBytes(StandardCharsets.UTF_8).length);
+        buffer.writeCharSequence(input, StandardCharsets.UTF_8);
+        final XMLLightweightParser parser = new XMLLightweightParser();
+
+        // Execute system under test.
+        parser.read(buffer);
+
+        // Verify results.
+        assertFalse(parser.isWhitespaceFound());
+        assertFalse(parser.isNonWhitespaceExtraneousDataFound());
+    }
+
+    /**
+     * Asserts that whitespace occurring between two stanzas in the same buffer sets the whitespace flag, and that both
+     * stanzas are still parsed correctly.
+     */
+    @Test
+    public void testWhitespaceBetweenTwoStanzasSetsFlag() throws Exception
+    {
+        // Setup test fixture.
+        final String input = "<presence/> <presence/>";
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(input.getBytes(StandardCharsets.UTF_8).length);
+        buffer.writeCharSequence(input, StandardCharsets.UTF_8);
+        final XMLLightweightParser parser = new XMLLightweightParser();
+
+        // Execute system under test.
+        parser.read(buffer);
+
+        // Verify results.
+        assertTrue(parser.isWhitespaceFound(), "The whitespace between the two stanzas should set the flag.");
+        final String[] result = parser.getMsgs();
+        assertEquals(2, result.length);
+        assertEquals("<presence/>", result[0]);
+        assertEquals("<presence/>", result[1]);
+    }
+
+    /**
+     * Asserts that whitespace or text content occurring inside an open stanza (i.e. between child elements, not between
+     * stanzas) does NOT set either extraneous-data flag, since that data is preserved as part of the stanza rather than
+     * being extraneous.
+     */
+    @Test
+    public void testWhitespaceInsideStanzaDoesNotSetFlags() throws Exception
+    {
+        // Setup test fixture.
+        final String input = "<message to='foo@example.org'>\n  <body>Hello</body>\n</message>";
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(input.getBytes(StandardCharsets.UTF_8).length);
+        buffer.writeCharSequence(input, StandardCharsets.UTF_8);
+        final XMLLightweightParser parser = new XMLLightweightParser();
+
+        // Execute system under test.
+        parser.read(buffer);
+
+        // Verify results.
+        assertFalse(parser.isWhitespaceFound(), "Whitespace inside an open stanza is not extraneous.");
+        assertFalse(parser.isNonWhitespaceExtraneousDataFound());
+        final String[] result = parser.getMsgs();
+        assertEquals(1, result.length);
+        assertEquals(input, result[0], "Whitespace between child elements should be preserved verbatim.");
+    }
+
+    /**
+     * Asserts that {@link XMLLightweightParser#resetWhitespaceFound()} and {@link XMLLightweightParser#resetNonWhitespaceExtraneousDataFound()}
+     * clear their respective flags independently of one another.
+     */
+    @Test
+    public void testFlagsResetIndependently() throws Exception
+    {
+        // Setup test fixture.
+        final String input = " x<presence/>";
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(input.getBytes(StandardCharsets.UTF_8).length);
+        buffer.writeCharSequence(input, StandardCharsets.UTF_8);
+        final XMLLightweightParser parser = new XMLLightweightParser();
+        parser.read(buffer);
+        assertTrue(parser.isWhitespaceFound());
+        assertTrue(parser.isNonWhitespaceExtraneousDataFound());
+
+        // Execute system under test.
+        parser.resetWhitespaceFound();
+
+        // Verify results.
+        assertFalse(parser.isWhitespaceFound(), "Resetting the whitespace flag should clear only that flag.");
+        assertTrue(parser.isNonWhitespaceExtraneousDataFound(), "The non-whitespace flag should be unaffected.");
+
+        parser.resetNonWhitespaceExtraneousDataFound();
+        assertFalse(parser.isNonWhitespaceExtraneousDataFound());
+    }
+
+    /**
+     * Asserts that the extraneous-data flags persist across multiple {@code read()} calls until explicitly reset,
+     * mirroring the behaviour of {@link XMLLightweightParser#isMaxBufferSizeExceeded()}.
+     */
+    @Test
+    public void testWhitespaceFlagPersistsAcrossReadsUntilReset() throws Exception
+    {
+        // Setup test fixture.
+        final XMLLightweightParser parser = new XMLLightweightParser();
+        final String firstChunk = " <presence/>";
+        ByteBuf firstBuffer = ByteBufAllocator.DEFAULT.buffer(firstChunk.getBytes(StandardCharsets.UTF_8).length);
+        firstBuffer.writeCharSequence(firstChunk, StandardCharsets.UTF_8);
+        parser.read(firstBuffer);
+        parser.getMsgs();
+        assertTrue(parser.isWhitespaceFound());
+
+        // Execute system under test: a second, entirely clean read.
+        final String secondChunk = "<presence/>";
+        ByteBuf secondBuffer = ByteBufAllocator.DEFAULT.buffer(secondChunk.getBytes(StandardCharsets.UTF_8).length);
+        secondBuffer.writeCharSequence(secondChunk, StandardCharsets.UTF_8);
+        parser.read(secondBuffer);
+
+        // Verify results: the flag from the first read is still set, since nothing reset it.
+        assertTrue(parser.isWhitespaceFound(), "The flag should persist across reads until explicitly reset.");
+    }
 }

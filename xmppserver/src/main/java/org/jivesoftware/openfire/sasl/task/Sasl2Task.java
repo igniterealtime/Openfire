@@ -18,6 +18,8 @@ package org.jivesoftware.openfire.sasl.task;
 import org.dom4j.Element;
 import org.jivesoftware.openfire.sasl.Failure;
 import org.jivesoftware.openfire.sasl.SaslFailureException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 
@@ -59,6 +61,8 @@ import javax.annotation.Nonnull;
  */
 public interface Sasl2Task
 {
+    Logger Log = LoggerFactory.getLogger(Sasl2Task.class);
+
     /**
      * The name of this task, as it was advertised in the {@code <continue/>} element and selected by the peer.
      *
@@ -93,6 +97,7 @@ public interface Sasl2Task
     @Nonnull
     default Sasl2TaskResult onTaskData(@Nonnull final Element taskData) throws SaslFailureException
     {
+        Log.debug("Task '{}' received unexpected task data from the peer; it does not implement onTaskData(). Aborting the negotiation.", getName());
         throw new SaslFailureException(Failure.MALFORMED_REQUEST, "Task '" + getName() + "' does not expect task data from the peer.");
     }
 

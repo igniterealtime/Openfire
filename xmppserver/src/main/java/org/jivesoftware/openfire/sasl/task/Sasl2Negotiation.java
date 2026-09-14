@@ -20,6 +20,8 @@ import org.jivesoftware.openfire.net.UserAgentInfo;
 import org.jivesoftware.openfire.sasl.Failure;
 import org.jivesoftware.openfire.sasl.SaslFailureException;
 import org.jivesoftware.openfire.session.LocalSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -41,6 +43,8 @@ import java.util.*;
  */
 public class Sasl2Negotiation
 {
+    private static final Logger Log = LoggerFactory.getLogger(Sasl2Negotiation.class);
+
     /**
      * The point that a negotiation has reached. Used to reject protocol elements that arrive out of order.
      */
@@ -109,6 +113,7 @@ public class Sasl2Negotiation
     {
         this.session = session;
         this.saslMechanismName = saslMechanismName;
+        Log.trace("Created SASL2 task negotiation for session '{}' (claimed mechanism: '{}').", session, saslMechanismName);
     }
 
     // -- Accessors used by SASLAuthentication to conclude the negotiation ------------------------------------------
@@ -179,6 +184,8 @@ public class Sasl2Negotiation
         this.channelBindingType = channelBindingType;
         this.authenticated = true;
         this.state = State.AUTHENTICATED;
+        Log.debug("SASL exchange succeeded for session '{}' (mechanism: '{}', channel binding: '{}', authorization identity: '{}'). Task negotiation continues before authentication is finalized.",
+            session, this.saslMechanismName, channelBindingType, authorizationIdentity);
     }
 
     /**
@@ -191,6 +198,7 @@ public class Sasl2Negotiation
         if (state == State.FINISHED) {
             throw new IllegalArgumentException("Use markFinished() to end a negotiation, so that teardown runs exactly once.");
         }
+        Log.trace("Session '{}': SASL2 task negotiation state {} -> {}.", session, this.state, state);
         this.state = state;
     }
 
@@ -205,9 +213,11 @@ public class Sasl2Negotiation
     boolean markFinished()
     {
         if (state == State.FINISHED) {
+            Log.trace("Session '{}': SASL2 task negotiation was already marked as finished; ignoring redundant call.", session);
             return false;
         }
         state = State.FINISHED;
+        Log.debug("Session '{}': SASL2 task negotiation marked as finished (round {}, completed tasks: {}).", session, round, completedTaskNames);
         return true;
     }
 
@@ -240,6 +250,7 @@ public class Sasl2Negotiation
     synchronized void addParticipant(@Nonnull final Sasl2TaskProvider provider)
     {
         participants.add(provider);
+        Log.trace("Session '{}': SASL2 task provider '{}' is now a participant in this negotiation.", session, provider.getIdentifier());
     }
 
     /**
@@ -271,6 +282,8 @@ public class Sasl2Negotiation
         currentOffer.addAll(offers);
         activeTask = null;
         state = State.AWAITING_NEXT;
+        Log.debug("Session '{}': beginning SASL2 task round {} with offer(s): {}.", session, round,
+            offers.stream().map(Sasl2TaskManager.Offer::taskName).toList());
     }
 
     /**
@@ -282,6 +295,7 @@ public class Sasl2Negotiation
     void advanceRound()
     {
         round++;
+        Log.trace("Session '{}': advancing SASL2 task negotiation to round {}.", session, round);
     }
 
     /**
@@ -301,6 +315,7 @@ public class Sasl2Negotiation
     void enforceRoundLimit(final int maxRounds) throws SaslFailureException
     {
         if (round > maxRounds) {
+            Log.warn("Session '{}': SASL2 task negotiation exceeded the maximum of {} round(s) (currently at round {}). Failing the negotiation.", session, maxRounds, round);
             throw new SaslFailureException(Failure.TEMPORARY_AUTH_FAILURE, "SASL2 task negotiation of session '" + session + "' exceeded the maximum of " + maxRounds + " rounds.");
         }
     }
@@ -365,8 +380,10 @@ public class Sasl2Negotiation
     void completeActiveTask()
     {
         if (activeTask == null) {
+            Log.error("Session '{}': attempted to complete a SASL2 task, but no task is active. This suggests a bug in Openfire.", session);
             throw new IllegalStateException("No SASL2 task is active. This suggests a bug in Openfire.");
         }
+        Log.debug("Session '{}': SASL2 task '{}' completed successfully.", session, activeTask.getName());
         completedTaskNames.add(activeTask.getName());
         activeTask = null;
     }

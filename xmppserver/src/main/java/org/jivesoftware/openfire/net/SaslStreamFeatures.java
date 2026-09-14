@@ -74,18 +74,26 @@ public class SaslStreamFeatures
      */
     public static void appendSASLFeatures(@Nonnull final LocalSession session, @Nonnull final List<Element> features)
     {
+        Log.trace("Appending SASL-related stream features for session '{}'.", session);
         final Set<String> advertisableSASLMechanisms = SaslMechanismEligibility.getAdvertisableSASLMechanisms(session);
         final Set<String> fastMechanisms = advertisableSASLMechanisms.stream()
             .filter(MechanismName::isFast).collect(Collectors.toUnmodifiableSet());
         final Set<String> standardMechanisms = advertisableSASLMechanisms.stream()
             .filter(mechanism -> !MechanismName.isFast(mechanism)).collect(Collectors.toUnmodifiableSet());
         SASLAuthentication.setAdvertisedSASLMechanisms(session, standardMechanisms);
+        Log.trace("Recorded advertised (non-FAST) SASL mechanisms for session '{}': {}", session, standardMechanisms);
         final boolean fastFeatureIsAdvertised = session instanceof ClientSession
             && SASLAuthentication.checkSASL2Permitted(session).isEmpty() && FastTokenManager.ENABLE_FAST.getValue();
         FastSessionState.setAdvertisedMechanisms(session, fastFeatureIsAdvertised ? fastMechanisms : Collections.emptySet());
+        if (fastFeatureIsAdvertised) {
+            Log.trace("Recorded advertised FAST mechanisms for session '{}': {}", session, fastMechanisms);
+        } else {
+            Log.trace("Not advertising FAST mechanisms for session '{}' (either not a client session, SASL2 is not permitted, or FAST is disabled).", session);
+        }
 
         final Set<String> advertisableChannelBindingTypes = SaslMechanismEligibility.getAdvertisableChannelBindingTypes(session, advertisableSASLMechanisms);
         SASLAuthentication.setAdvertisedChannelBindingTypes(session, advertisableChannelBindingTypes);
+        Log.trace("Recorded advertised channel-binding types for session '{}': {}", session, advertisableChannelBindingTypes);
 
         features.addAll(asSASLMechanisms(session, advertisableSASLMechanisms, advertisableChannelBindingTypes));
     }
@@ -105,7 +113,10 @@ public class SaslStreamFeatures
     {
         final List<Element> features = new LinkedList<>();
         // Never list these if the session is already authenticated.
-        if (session.isAuthenticated()) return features;
+        if (session.isAuthenticated()) {
+            Log.trace("Session '{}' is already authenticated; not offering any SASL mechanism feature.", session);
+            return features;
+        }
 
         if (session instanceof ClientSession) {
             final Element sasl1Mechs = asSASLMechanismsElementForClientSessions(advertisableMechanismNames, false);
@@ -118,6 +129,8 @@ public class SaslStreamFeatures
                     Sasl2TaskManager.getInstance().addStreamFeatures(session, sasl2Mechs);
                     features.add(sasl2Mechs);
                 }
+            } else {
+                Log.trace("SASL2 is not permitted for client session '{}'; only offering SASL1 mechanisms.", session);
             }
         } else if (session instanceof LocalIncomingServerSession) {
             final Element sasl1Mechs = asSASLMechanismsElementForServerSessions(advertisableMechanismNames, false);
@@ -130,6 +143,8 @@ public class SaslStreamFeatures
                     Sasl2TaskManager.getInstance().addStreamFeatures(session, sasl2Mechs);
                     features.add(sasl2Mechs);
                 }
+            } else {
+                Log.trace("SASL2 is not permitted for incoming server session '{}'; only offering SASL1 mechanisms.", session);
             }
         } else {
             Log.debug("Unable to determine SASL mechanisms that are applicable to session '{}'. Unrecognized session type.", session);
@@ -137,6 +152,7 @@ public class SaslStreamFeatures
         }
 
         if (!advertisableChannelBindingTypes.isEmpty()) {
+            Log.trace("Advertising channel-binding types {} to session '{}'.", advertisableChannelBindingTypes, session);
             final Element channelBindingTypesEl = DocumentHelper.createElement(new QName("sasl-channel-binding", new Namespace("", SASLAuthentication.SASL_CHANNEL_BINDING_NAMESPACE)));
             for (final String channelBindingType : advertisableChannelBindingTypes) {
                 channelBindingTypesEl.addElement("channel-binding").addAttribute("type", channelBindingType);
@@ -144,6 +160,7 @@ public class SaslStreamFeatures
             features.add(channelBindingTypesEl);
         }
 
+        Log.trace("Assembled {} SASL-related feature element(s) for session '{}'.", features.size(), session);
         return features;
     }
 
@@ -192,6 +209,7 @@ public class SaslStreamFeatures
 
         // OF-2072: Return null instead of an empty element, if so configured.
         if ( (usingSASL2 || JiveGlobals.getBooleanProperty("sasl.client.suppressEmpty", false)) && advertisableMechanismNames.isEmpty() ) {
+            Log.trace("Suppressing empty {} element for client sessions (usingSASL2={}).", usingSASL2 ? "authentication" : "mechanisms", usingSASL2);
             return null;
         }
 
@@ -219,6 +237,7 @@ public class SaslStreamFeatures
         // OF-2072: Return null instead of an empty element, if so configured.
         // For SASL2, always null.
         if ((usingSASL2 || JiveGlobals.getBooleanProperty("sasl.server.suppressEmpty", false)) && advertisableMechanismNames.isEmpty()) {
+            Log.trace("Suppressing empty {} element for server sessions (usingSASL2={}).", usingSASL2 ? "authentication" : "mechanisms", usingSASL2);
             return null;
         }
 

@@ -1,7 +1,7 @@
 appId: eu.siacs.conversations
 name: Bind 2
 tags:
-    - sasl2
+    - demoboot
 onFlowStart:
     - runScript: scripts/checkHealth.js
     - startRecording: bind2

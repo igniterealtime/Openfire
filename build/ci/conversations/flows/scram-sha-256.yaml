@@ -19,12 +19,13 @@ onFlowStart:
 # a client would otherwise always prefer and which is tested separately by
 # scram-sha-256-plus.yaml. The negative lookahead guards against a regression that widens the
 # server's offer back to include the -PLUS suffix, which would otherwise still match here.
+# SASL2 is on by default, so this goes over SASL_2 rather than legacy SASL.
 - runScript:
       file: scripts/checkForLogs.js
       env:
-          PATTERN: 'jane@example\.org.*Authenticating with SASL\/SCRAM-SHA-256(?!-PLUS)'
+          PATTERN: 'jane@example\.org.*Authenticating with SASL_2\/SCRAM-SHA-256(?!-PLUS)'
 
 - runScript:
       file: scripts/checkForLogs.js
       env:
-          PATTERN: 'jane@example\.org.*logged in \(using SASL\)'
+          PATTERN: 'jane@example\.org.*logged in \(using SASL_2\)'

@@ -33,9 +33,9 @@ The `demoboot` flows need no extra configuration beyond launching Openfire with 
 For flows with a specific config, copy the matching file from `build/ci/conversations/configs/`
 into your distribution's `conf/` directory as `openfire-demoboot.xml` before starting demoboot mode.
 
-Flows are tagged by which config they need, not by feature: `fast.yaml` is tagged `sasl2`
-and reuses `configs/sasl2.xml`, since FAST (XEP-0484) is only advertised as a SASL2 inline
-feature and needs no config of its own — `xmpp.fast.enabled` defaults to `true`.
+Flows are tagged by which config they need, not by feature: `fast.yaml` is tagged `demoboot`
+and needs no config of its own, since SASL2 is on by default and FAST (XEP-0484) is only
+advertised as a SASL2 inline feature — `xmpp.fast.enabled` defaults to `true`.
 
 `fast-rotation.yaml` needs its own config (`configs/fast-rotation.xml`): FAST token rotation
 happens once the time left before expiry drops to or below the rotation threshold, but the

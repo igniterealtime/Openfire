@@ -101,6 +101,12 @@ public class XMLLightweightParser {
     protected List<String> msgs = new ArrayList<>();
     private int depth = 0;
     private boolean maxBufferSizeExceeded = false;
+    // Set when a character is received at the top level, between stanzas (status == INIT; typically a whitespace
+    // keep-alive ping, per RFC 6120 § 4.6.1). Deliberately NOT set for whitespace/text found *inside* a stanza
+    // (status == OUTSIDE), which is ordinary, well-formed content (e.g. indentation between a stanza's own child
+    // elements) and must never be treated as suspicious. Such top-level data is otherwise silently discarded by
+    // this parser - it never becomes a message - so this flag is the only way for a caller to learn it was received.
+    private boolean nonStanzaDataReceived = false;
 
     protected boolean insideChildrenTag = false;
 
@@ -166,6 +172,21 @@ public class XMLLightweightParser {
 
     public boolean isMaxBufferSizeExceeded() {
         return maxBufferSizeExceeded;
+    }
+
+    /**
+     * Reports, and clears, whether a character was received at the top level, between stanzas, since the last call
+     * to this method (typically a whitespace keep-alive ping; see RFC 6120 § 4.6.1). Such data is otherwise
+     * invisible to callers of this parser: it is discarded during {@link #read(ByteBuf)} without ever becoming a
+     * message returned by {@link #getMsgs()}. This deliberately excludes whitespace/text found inside a stanza
+     * (e.g. indentation between a stanza's own child elements), which is ordinary well-formed content.
+     *
+     * @return {@code true} if data was received between stanzas since this method was last called.
+     */
+    public boolean pollNonStanzaDataReceived() {
+        final boolean result = nonStanzaDataReceived;
+        nonStanzaDataReceived = false;
+        return result;
     }
 
     public void read(ByteBuf in) throws Exception {
@@ -361,6 +382,10 @@ public class XMLLightweightParser {
                     depth = 1;
                 }
                 else {
+                    // A character received at the top level, between stanzas (not inside one - this state is
+                    // entered fresh after every completed stanza, see foundMsg()). Typically a whitespace
+                    // keep-alive ping (RFC 6120 § 4.6.1), but flagged regardless of content.
+                    nonStanzaDataReceived = true;
                     startLastMsg++;
                 }
             } else if (status == XMLLightweightParser.OUTSIDE) {

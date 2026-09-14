@@ -20,6 +20,7 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.embedded.EmbeddedChannel;
 import io.netty.handler.codec.DecoderException;
 import io.netty.handler.ssl.NotSslRecordException;
+import org.jivesoftware.openfire.net.StanzaHandler;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,9 @@ import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 /**
  * Unit tests that verify the functionality as implemented in {@link NettyXMPPDecoder}.
@@ -241,5 +245,58 @@ public class NettyXMPPDecoderTest {
         final String result = channel.readInbound();
         assertNotNull(result);
         assertEquals(stanza, result);
+    }
+
+    /**
+     * Asserts that a whitespace character received between two stanzas (typically a keep-alive ping, per
+     * RFC 6120 § 4.6.1) is reported to the channel's {@link StanzaHandler}, via
+     * {@link NettyConnectionHandler#HANDLER}. This is the wiring that lets a SASL2 negotiation in progress be
+     * correctly disconnected per XEP-0388 § 2.4, even when the "other traffic" received is whitespace rather than a
+     * further stanza (see {@code StanzaHandler#nonStanzaDataReceived()}).
+     */
+    @Test
+    public void testWhitespaceBetweenStanzasNotifiesStanzaHandler() {
+        // Setup test fixture.
+        final StanzaHandler stanzaHandler = mock(StanzaHandler.class);
+        channel.attr(NettyConnectionHandler.HANDLER).set(stanzaHandler);
+        final ByteBuf input = Unpooled.copiedBuffer("<presence/> ", StandardCharsets.UTF_8);
+
+        // Execute system under test.
+        channel.writeInbound(input);
+
+        // Verify results.
+        verify(stanzaHandler).nonStanzaDataReceived();
+    }
+
+    /**
+     * Asserts that the channel's {@link StanzaHandler} is not notified of non-stanza data when none was received -
+     * specifically, that whitespace found between a stanza's own child elements (ordinary, well-formed content) is
+     * not mistaken for a whitespace keep-alive ping sent between stanzas.
+     */
+    @Test
+    public void testNoStanzaHandlerNotificationWithoutNonStanzaData() {
+        // Setup test fixture.
+        final StanzaHandler stanzaHandler = mock(StanzaHandler.class);
+        channel.attr(NettyConnectionHandler.HANDLER).set(stanzaHandler);
+        final ByteBuf input = Unpooled.copiedBuffer("<iq type='set' id='1'>\n  <query xmlns='jabber:iq:roster'/>\n</iq>", StandardCharsets.UTF_8);
+
+        // Execute system under test.
+        channel.writeInbound(input);
+
+        // Verify results.
+        verify(stanzaHandler, never()).nonStanzaDataReceived();
+    }
+
+    /**
+     * Asserts that the decoder does not fail when non-stanza data is received but no {@link StanzaHandler} has been
+     * associated with the channel yet (e.g. very early in connection setup).
+     */
+    @Test
+    public void testWhitespaceBetweenStanzasWithoutStanzaHandlerDoesNotFail() {
+        // Setup test fixture: deliberately leave the HANDLER channel attribute unset.
+        final ByteBuf input = Unpooled.copiedBuffer("<presence/> ", StandardCharsets.UTF_8);
+
+        // Execute system under test.
+        assertDoesNotThrow(() -> channel.writeInbound(input));
     }
 }

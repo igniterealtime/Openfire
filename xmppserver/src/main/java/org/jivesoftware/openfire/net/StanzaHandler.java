@@ -143,6 +143,22 @@ public abstract class StanzaHandler {
         return startedSASL;
     }
 
+    /**
+     * Notifies this handler that the lower-level XML tokenizer discarded data received at the top level, between
+     * stanzas (for example, a whitespace keep-alive ping, per RFC 6120 § 4.6.1). Such data never becomes a
+     * parseable stanza, so it is invisible to {@link #process(String, XMPPPacketReader)} - but per XEP-0388 § 2.4,
+     * it still counts as "other traffic" that MUST cause a disconnect when received while a SASL2 exchange is
+     * mid-flight, exactly as a stray stanza already does (see the check in {@link #processStanza(String,
+     * XMPPPacketReader)}). Outside of a SASL2 negotiation, this is a no-op: such data is normal, and already resets
+     * the connection's idle timer at the transport level regardless.
+     */
+    public void nonStanzaDataReceived() {
+        if (startedSASL && usingSASL2) {
+            Log.warn("Disconnecting session {} for sending non-stanza data (e.g. whitespace) while a SASL2 negotiation is in progress.", session);
+            connection.close(new StreamError(StreamError.Condition.not_authorized, "Unexpected data received while negotiating SASL2 authentication."));
+        }
+    }
+
     public void process(String stanza, XMPPPacketReader reader) throws Exception {
         if (isStartOfStream(stanza) || !sessionCreated) {
             initiateSession(stanza, reader);

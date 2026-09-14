@@ -542,4 +542,96 @@ public class XMLLightweightParserTest {
         assertTrue(parser.isMaxBufferSizeExceeded(),
             "The maxBufferSizeExceeded flag should be set after exceeding the parser's buffer limit.");
     }
+
+    /**
+     * Asserts that a whitespace character received at the top level, between two stanzas (typically a keep-alive
+     * ping, per RFC 6120 § 4.6.1), is reported by {@link XMLLightweightParser#pollNonStanzaDataReceived()}.
+     */
+    @Test
+    public void testWhitespaceBetweenStanzasSetsNonStanzaDataReceivedFlag() throws Exception
+    {
+        // Setup test fixture: a stanza immediately followed by a whitespace keep-alive ping.
+        final String input = "<presence/> ";
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(input.getBytes(StandardCharsets.UTF_8).length);
+        buffer.writeCharSequence(input, StandardCharsets.UTF_8);
+        final XMLLightweightParser parser = new XMLLightweightParser();
+
+        // Execute system under test.
+        parser.read(buffer);
+
+        // Verify results.
+        assertTrue(parser.pollNonStanzaDataReceived(),
+            "Expected whitespace received between stanzas (at the top level) to be flagged.");
+    }
+
+    /**
+     * Asserts that {@link XMLLightweightParser#pollNonStanzaDataReceived()} returns {@code false} when no data has
+     * been received outside of a stanza.
+     */
+    @Test
+    public void testNoNonStanzaDataReceivedFlagWithoutWhitespaceBetweenStanzas() throws Exception
+    {
+        // Setup test fixture: a single, cleanly-formed stanza, with no surrounding whitespace.
+        final String input = "<presence/>";
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(input.getBytes(StandardCharsets.UTF_8).length);
+        buffer.writeCharSequence(input, StandardCharsets.UTF_8);
+        final XMLLightweightParser parser = new XMLLightweightParser();
+
+        // Execute system under test.
+        parser.read(buffer);
+
+        // Verify results.
+        assertFalse(parser.pollNonStanzaDataReceived(),
+            "Expected no non-stanza data to have been flagged, since none was received.");
+    }
+
+    /**
+     * Asserts that whitespace found between a stanza's own child elements (ordinary, well-formed content - for
+     * example, indentation in a pretty-printed stanza) is NOT reported by
+     * {@link XMLLightweightParser#pollNonStanzaDataReceived()}. This must never be conflated with a whitespace
+     * keep-alive ping sent between top-level stanzas: doing so would cause a false-positive disconnect for any
+     * client sending ordinary, multi-child stanzas while, for example, a SASL2 negotiation is in progress (see
+     * {@code StanzaHandler#nonStanzaDataReceived()}).
+     */
+    @Test
+    public void testWhitespaceInsideStanzaDoesNotSetNonStanzaDataReceivedFlag() throws Exception
+    {
+        // Setup test fixture: a pretty-printed stanza, with whitespace/newlines between its own child elements.
+        final String input = "<iq type='set' id='1'>\n  <query xmlns='jabber:iq:roster'/>\n  <bind xmlns='urn:xmpp:bind:0'/>\n</iq>";
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(input.getBytes(StandardCharsets.UTF_8).length);
+        buffer.writeCharSequence(input, StandardCharsets.UTF_8);
+        final XMLLightweightParser parser = new XMLLightweightParser();
+
+        // Execute system under test.
+        parser.read(buffer);
+        final String[] result = parser.getMsgs();
+
+        // Verify results: the stanza itself is parsed correctly, as a single message...
+        assertEquals(1, result.length);
+        assertEquals(input, result[0]);
+        // ...and the whitespace between its child elements must not be flagged as non-stanza data.
+        assertFalse(parser.pollNonStanzaDataReceived(),
+            "Expected whitespace between a stanza's own child elements to not be flagged as non-stanza data.");
+    }
+
+    /**
+     * Asserts that {@link XMLLightweightParser#pollNonStanzaDataReceived()} clears the flag it reports, so that the
+     * same non-stanza data is not reported again on a subsequent call.
+     */
+    @Test
+    public void testPollNonStanzaDataReceivedClearsFlag() throws Exception
+    {
+        // Setup test fixture: a whitespace keep-alive ping followed by a stanza.
+        final String input = " <presence/>";
+        ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(input.getBytes(StandardCharsets.UTF_8).length);
+        buffer.writeCharSequence(input, StandardCharsets.UTF_8);
+        final XMLLightweightParser parser = new XMLLightweightParser();
+
+        // Execute system under test.
+        parser.read(buffer);
+
+        // Verify results.
+        assertTrue(parser.pollNonStanzaDataReceived(), "Expected the first poll to report the flag as set.");
+        assertFalse(parser.pollNonStanzaDataReceived(), "Expected a second poll to find the flag already cleared.");
+    }
 }

@@ -21,6 +21,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.DecoderException;
 import io.netty.handler.ssl.NotSslRecordException;
+import org.jivesoftware.openfire.net.StanzaHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.StreamError;
@@ -83,6 +84,18 @@ public class NettyXMPPDecoder extends ByteToMessageDecoder {
         // Add any decoded messages to our outbound list to be processed by subsequent channelRead() events
         if (parser.areThereMsgs()) {
             Collections.addAll(out, parser.getMsgs());
+        }
+
+        // Data received at the top level, between stanzas (typically a whitespace keep-alive ping) never becomes a
+        // message - it's silently discarded by the parser - so it can't be detected by the stray-traffic check in
+        // StanzaHandler#processStanza(String, XMPPPacketReader). Surface it here instead, so that a SASL2
+        // negotiation in progress is still correctly disconnected per XEP-0388 § 2.4, even when the "other traffic"
+        // received is whitespace rather than a further stanza.
+        if (parser.pollNonStanzaDataReceived()) {
+            final StanzaHandler stanzaHandler = ctx.channel().attr(NettyConnectionHandler.HANDLER).get();
+            if (stanzaHandler != null) {
+                stanzaHandler.nonStanzaDataReceived();
+            }
         }
     }
 

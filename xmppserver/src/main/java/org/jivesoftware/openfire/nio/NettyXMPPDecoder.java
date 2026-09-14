@@ -21,6 +21,8 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.ByteToMessageDecoder;
 import io.netty.handler.codec.DecoderException;
 import io.netty.handler.ssl.NotSslRecordException;
+import org.jivesoftware.openfire.net.SASLAuthentication;
+import org.jivesoftware.openfire.session.LocalSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.StreamError;
@@ -79,6 +81,21 @@ public class NettyXMPPDecoder extends ByteToMessageDecoder {
 
         // Parse as many stanzas as possible from the received data
         parser.read(in);
+
+        if (parser.isWhitespaceFound() || parser.isNonWhitespaceExtraneousDataFound()) {
+            final boolean hadWhitespace = parser.isWhitespaceFound();
+            final boolean hadNonWhitespace = parser.isNonWhitespaceExtraneousDataFound();
+            parser.resetWhitespaceFound();
+            parser.resetNonWhitespaceExtraneousDataFound();
+
+            final NettyConnection connection = ctx.channel().attr(CONNECTION).get();
+            final LocalSession session = connection.getSession();
+            if (session != null && SASLAuthentication.isSasl2NegotiationInProgress(session)) {
+                Log.warn("Received {} data outside of an XML element while a SASL2 negotiation was in progress (XEP-0388 § 2.4), closing connection: {}", hadWhitespace && hadNonWhitespace ? "whitespace and non-whitespace" : (hadWhitespace ? "whitespace" : "non-whitespace"), connection);
+                connection.close(new StreamError(StreamError.Condition.not_authorized, "Unexpected data received during SASL2 negotiation."));
+                return;
+            }
+        }
 
         // Add any decoded messages to our outbound list to be processed by subsequent channelRead() events
         if (parser.areThereMsgs()) {

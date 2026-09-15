@@ -20,15 +20,49 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.QName;
+import org.jivesoftware.Fixtures;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 public class Bind2RequestTest {
+
+    IQDiscoInfoHandler mockIQDiscoInfoHandler;
+
+    @BeforeAll
+    public static void setUpClass() throws Exception {
+        Fixtures.reconfigureOpenfireHome();
+        Fixtures.disableDatabasePersistence();
+    }
+
+    @BeforeEach
+    public void setUp() {
+        //noinspection deprecation
+        final XMPPServer xmppServer = Fixtures.mockXMPPServer();
+        mockIQDiscoInfoHandler = mock(IQDiscoInfoHandler.class, withSettings().lenient());
+        doReturn(mockIQDiscoInfoHandler).when(xmppServer).getIQDiscoInfoHandler();
+        when(mockIQDiscoInfoHandler.hasServerFeature("urn:xmpp:mam:2")).thenReturn(false);
+        XMPPServer.setInstance(xmppServer);
+    }
+
+    @AfterEach
+    public void tearDown() {
+        Fixtures.clearExistingProperties();
+    }
+
     QName bindQName = new QName("bind", new Namespace("", "urn:xmpp:bind:0"));
 
     @Test
@@ -156,5 +190,39 @@ public class Bind2RequestTest {
         assertThrows(UnsupportedOperationException.class, () -> {
             request.getFeatureRequests().add(DocumentHelper.createElement("newfeature"));
         });
+    }
+
+    @Test
+    public void testUnilaterallyAddedMamFeatureWithServerSupport()
+    {
+        // Setup test fixture.
+        when(mockIQDiscoInfoHandler.hasServerFeature("urn:xmpp:mam:2")).thenReturn(true);
+
+        final Element authenticate = DocumentHelper.createElement("authenticate");
+        authenticate.addElement(bindQName);
+
+        // Execute system under test.
+        Bind2Request result = Bind2Request.from(authenticate);
+
+        // Verify result.
+        assertNotNull(result);
+        assertTrue(result.getFeatureRequests().stream().anyMatch(e -> e.getNamespaceURI().equals("urn:xmpp:mam:2")));
+    }
+
+    @Test
+    public void testUnilaterallyAddedMamFeatureWithoutServerSupport()
+    {
+        // Setup test fixture.
+        when(mockIQDiscoInfoHandler.hasServerFeature("urn:xmpp:mam:2")).thenReturn(false);
+
+        Element authenticate = DocumentHelper.createElement("authenticate");
+        authenticate.addElement(bindQName);
+
+        // Execute system under test.
+        Bind2Request result = Bind2Request.from(authenticate);
+
+        // Verify result.
+        assertNotNull(result);
+        assertFalse(result.getFeatureRequests().stream().anyMatch(e -> e.getNamespaceURI().equals("urn:xmpp:mam:2")));
     }
 }

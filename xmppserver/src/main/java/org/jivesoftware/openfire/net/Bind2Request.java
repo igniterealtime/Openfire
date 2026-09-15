@@ -21,7 +21,6 @@ import org.dom4j.Namespace;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.ScramUtils;
-import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
@@ -240,10 +239,8 @@ public class Bind2Request {
             }
         }
         // Add urn:xmpp:mam:2 feature request unilaterally, as it's a SHOULD to send unilaterally. This is only
-        // done when the monitoring plugin (which implements MAM) is installed and loaded.
-        final XMPPServer xmppServer = XMPPServer.getInstance();
-        final PluginManager pluginManager = xmppServer == null ? null : xmppServer.getPluginManager();
-        if (pluginManager != null && pluginManager.isLoaded("monitoring")) {
+        // done when the server is currently supporting urn:xmpp:mam:2.
+        if (XMPPServer.getInstance().getIQDiscoInfoHandler().hasServerFeature("urn:xmpp:mam:2")) {
             featureRequests.add(DocumentHelper.createElement(new QName("dummy-feature", new Namespace("", "urn:xmpp:mam:2"))));
         }
 

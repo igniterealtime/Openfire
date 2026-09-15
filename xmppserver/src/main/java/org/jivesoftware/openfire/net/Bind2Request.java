@@ -19,6 +19,7 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.QName;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.ScramUtils;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.util.StringUtils;
@@ -237,8 +238,11 @@ public class Bind2Request {
                 featureRequests.add(element.createCopy());
             }
         }
-        // Add urn:xmpp:mam:2 feature request unilaterally, as it's a SHOULD to send unilaterally.
-        featureRequests.add(DocumentHelper.createElement(new QName("dummy-feature", new Namespace("", "urn:xmpp:mam:2"))));
+        // Add urn:xmpp:mam:2 feature request unilaterally, as it's a SHOULD to send unilaterally. This is only
+        // done when the monitoring plugin (which implements MAM) is installed and loaded.
+        if (XMPPServer.getInstance().getPluginManager().isLoaded("monitoring")) {
+            featureRequests.add(DocumentHelper.createElement(new QName("dummy-feature", new Namespace("", "urn:xmpp:mam:2"))));
+        }
 
         return new Bind2Request(clientTag, featureRequests);
     }

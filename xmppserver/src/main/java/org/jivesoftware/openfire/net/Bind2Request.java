@@ -237,6 +237,8 @@ public class Bind2Request {
                 featureRequests.add(element.createCopy());
             }
         }
+        // Add urn:xmpp:mam:2 feature request unilaterally, as it's a SHOULD to send unilaterally.
+        featureRequests.add(DocumentHelper.createElement(new QName("dummy-feature", new Namespace("", "urn:xmpp:mam:2"))));
 
         return new Bind2Request(clientTag, featureRequests);
     }

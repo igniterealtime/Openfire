@@ -22,6 +22,7 @@ import org.dom4j.Namespace;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.XMPPServerInfo;
+import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.openfire.lockout.LockOutFlag;
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.lockout.LockOutProvider;
@@ -120,6 +121,10 @@ public class SASLIntegrationTest {
         // Setup Connection mock
         when(clientSession.getConnection()).thenReturn(connection);
         when(connection.getSupportedChannelBindingTypes()).thenReturn(Collections.emptySet());
+
+        // Setup
+        IQDiscoInfoHandler mockIQDiscoInfoHandler = mock(IQDiscoInfoHandler.class, withSettings().lenient());
+        doReturn(mockIQDiscoInfoHandler).when(xmppServer).getIQDiscoInfoHandler();
 
         // Create our test SASL server
         testSaslServer = TestSaslMechanism.registerTestMechanism(clientSession);

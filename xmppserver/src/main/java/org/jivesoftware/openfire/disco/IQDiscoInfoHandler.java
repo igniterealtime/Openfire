@@ -462,6 +462,26 @@ public class IQDiscoInfoHandler extends IQHandler implements ClusterEventListene
         }
     }
 
+    /**
+     * Check if the provided server feature is currently registered.
+     *
+     * @param namespace the namespace identifying the new server feature.
+     */
+    public boolean hasServerFeature(String namespace) {
+        if (localServerFeatures.contains(namespace)) {
+            return true;
+        }
+        Lock lock = serverFeatures.getLock(namespace);
+        lock.lock();
+        try {
+            final HashSet<NodeID> nodeIDs = serverFeatures.get(namespace);
+            return nodeIDs != null && !nodeIDs.isEmpty();
+        }
+        finally {
+            lock.unlock();
+        }
+    }
+
     @Override
     public void initialize(XMPPServer server) {
         super.initialize(server);

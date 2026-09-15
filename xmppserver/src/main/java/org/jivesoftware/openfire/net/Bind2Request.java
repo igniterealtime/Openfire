@@ -232,16 +232,22 @@ public class Bind2Request {
         String clientTag = tagElement != null ? tagElement.getTextTrim() : null;
 
         // Collect feature requests (elements from other namespaces)
+        final String mam_namespace = "urn:xmpp:mam:2";
+        boolean hasMAM = false;
+
         List<Element> featureRequests = new ArrayList<>();
         for (Element element : bindElement.elements()) {
             if (!NAMESPACE.equals(element.getNamespaceURI()) && !element.getName().equals(TAG_ELEMENT)) {
                 featureRequests.add(element.createCopy());
             }
+            if (mam_namespace.equals(element.getNamespaceURI())) {
+                hasMAM = true;
+            }
         }
         // Add urn:xmpp:mam:2 feature request unilaterally, as it's a SHOULD to send unilaterally. This is only
         // done when the server is currently supporting urn:xmpp:mam:2.
-        if (XMPPServer.getInstance().getIQDiscoInfoHandler().hasServerFeature("urn:xmpp:mam:2")) {
-            featureRequests.add(DocumentHelper.createElement(new QName("dummy-feature", new Namespace("", "urn:xmpp:mam:2"))));
+        if (!hasMAM && XMPPServer.getInstance().getIQDiscoInfoHandler().hasServerFeature(mam_namespace)) {
+            featureRequests.add(DocumentHelper.createElement(new QName("dummy-feature", new Namespace("", mam_namespace))));
         }
 
         return new Bind2Request(clientTag, featureRequests);

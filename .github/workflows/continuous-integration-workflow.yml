@@ -323,7 +323,7 @@ jobs:
         with:
           logLevel: debug
       - name: Run XMPP Interop Testing Framework tests against server
-        uses: XMPP-Interop-Testing/xmpp-interop-tests-action@v1.7.2
+        uses: XMPP-Interop-Testing/xmpp-interop-tests-action@v1.8.0
         with:
           testId: interop # Used in the naming of the artifacts that this action uploads (eg: "XMPP debug logs (for test ID 'interop')").
           domain: 'example.org'

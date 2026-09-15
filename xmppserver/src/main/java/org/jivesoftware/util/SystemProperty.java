@@ -366,14 +366,23 @@ public final class SystemProperty<T> {
      * Sets the value of the SystemProperty. Note that the new value can be outside any minimum/maximum for the property,
      * and will be saved to the database as such, however subsequent attempts to retrieve its value will return the default.
      *
+     * @param value the new value for the SystemProperty
+     */
+    public void setValue(final T value) {
+        JiveGlobals.setProperty(key, TO_STRING.get(getConverterClass()).apply(value, this), isEncrypted());
+    }
+
+    /**
+     * Sets the value of the SystemProperty. Note that the new value can be outside any minimum/maximum for the property,
+     * and will be saved to the database as such, however subsequent attempts to retrieve its value will return the default.
+     *
      * This method returns the previous value of the property, or {@code null} if it didn't exist. The returned value
      * may also be outside any minimum/maximum for the property.
      *
      * @param value the new value for the SystemProperty
      * @return the previous value of the property, or {@code null} if it didn't exist.
      */
-    public T setValue(final T value)
-    {
+    public T getAndSetValue(final T value) {
         final String previousValue = JiveGlobals.setProperty(key, TO_STRING.get(getConverterClass()).apply(value, this), isEncrypted());
         if (previousValue != null) {
             //noinspection unchecked

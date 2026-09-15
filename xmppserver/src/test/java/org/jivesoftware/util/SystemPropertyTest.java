@@ -680,7 +680,7 @@ public class SystemPropertyTest {
     }
 
     @Test
-    public void setValueReturnsNullWhenNoPreviousValueExists() {
+    public void getAndSetValueReturnsNullWhenNoPreviousValueExists() {
 
         final SystemProperty<Long> longProperty = SystemProperty.Builder.ofType(Long.class)
             .setKey("a-test-previous-value-absent")
@@ -689,11 +689,11 @@ public class SystemPropertyTest {
             .build();
 
         // Even though a default is configured, nothing has been persisted, so there is no previous value.
-        assertThat(longProperty.setValue(84L), is(nullValue()));
+        assertThat(longProperty.getAndSetValue(84L), is(nullValue()));
     }
 
     @Test
-    public void setValueReturnsThePreviousValue() {
+    public void getAndSetValueReturnsThePreviousValue() {
 
         final SystemProperty<Long> longProperty = SystemProperty.Builder.ofType(Long.class)
             .setKey("a-test-previous-value-present")
@@ -701,13 +701,13 @@ public class SystemPropertyTest {
             .setDynamic(true)
             .build();
 
-        assertThat(longProperty.setValue(84L), is(nullValue()));
-        assertThat(longProperty.setValue(168L), is(84L));
+        assertThat(longProperty.getAndSetValue(84L), is(nullValue()));
+        assertThat(longProperty.getAndSetValue(168L), is(84L));
         assertThat(longProperty.getValue(), is(168L));
     }
 
     @Test
-    public void setValueReturnsThePreviousValueForAStringProperty() {
+    public void getAndSetValueReturnsThePreviousValueForAStringProperty() {
 
         final SystemProperty<String> stringProperty = SystemProperty.Builder.ofType(String.class)
             .setKey("a-test-previous-string-value")
@@ -715,12 +715,12 @@ public class SystemPropertyTest {
             .setDynamic(true)
             .build();
 
-        assertThat(stringProperty.setValue("first"), is(nullValue()));
-        assertThat(stringProperty.setValue("second"), is("first"));
+        assertThat(stringProperty.getAndSetValue("first"), is(nullValue()));
+        assertThat(stringProperty.getAndSetValue("second"), is("first"));
     }
 
     @Test
-    public void setValueReturnsThePreviousValueConvertedToType() {
+    public void getAndSetValueReturnsThePreviousValueConvertedToType() {
 
         // Confirms the returned previous value is converted back from its stored String form, not returned raw.
         final SystemProperty<Duration> durationProperty = SystemProperty.Builder.ofType(Duration.class)
@@ -730,13 +730,13 @@ public class SystemPropertyTest {
             .setDynamic(true)
             .build();
 
-        assertThat(durationProperty.setValue(Duration.ofMinutes(30)), is(nullValue()));
-        final Duration previous = durationProperty.setValue(Duration.ofMinutes(90));
+        assertThat(durationProperty.getAndSetValue(Duration.ofMinutes(30)), is(nullValue()));
+        final Duration previous = durationProperty.getAndSetValue(Duration.ofMinutes(90));
         assertThat(previous, is(Duration.ofMinutes(30)));
     }
 
     @Test
-    public void setValueReturnsThePreviousPlaintextValueForAnEncryptedProperty() {
+    public void getAndSetValueReturnsThePreviousPlaintextValueForAnEncryptedProperty() {
 
         // The previous value must be returned as decrypted plaintext, converted back to type - not as ciphertext.
         final SystemProperty<Long> longProperty = SystemProperty.Builder.ofType(Long.class)
@@ -746,9 +746,9 @@ public class SystemPropertyTest {
             .setEncrypted(true)
             .build();
 
-        assertThat(longProperty.setValue(84L), is(nullValue()));
+        assertThat(longProperty.getAndSetValue(84L), is(nullValue()));
         assertThat(JiveGlobals.isPropertyEncrypted("a-test-encrypted-previous-value"), is(true));
-        assertThat(longProperty.setValue(168L), is(84L));
+        assertThat(longProperty.getAndSetValue(168L), is(84L));
     }
 
     @Test

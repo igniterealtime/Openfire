@@ -123,12 +123,10 @@ public class DbConnectionManager {
         try ( final Connection con = DbConnectionManager.getConnection() )
         {
             // See if the Jive db schema is installed.
-            try
+            try ( Statement stmt = con.createStatement() )
             {
-                Statement stmt = con.createStatement();
                 // Pick an arbitrary table to see if it's there.
                 stmt.executeQuery( "SELECT * FROM ofID" );
-                stmt.close();
             }
             catch ( SQLException sqle )
             {

@@ -16,6 +16,7 @@
 
 package org.jivesoftware.util;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.lang3.StringUtils;
 import org.jivesoftware.database.DbConnectionManager;
 import org.slf4j.Logger;
@@ -62,6 +63,7 @@ public class JiveGlobals {
     private static final String ENCRYPTION_ALGORITHM_AES = "AES";
     private static final String ENCRYPTION_ALGORITHM_BLOWFISH = "Blowfish";
     private static final String BLOWFISH_KDF = ENCRYPTED_PROPERTY_NAME_PREFIX + "blowfish.kdf";
+    private static final String BLOWFISH_USER_KDF = ENCRYPTED_PROPERTY_NAME_PREFIX + "blowfish.user-kdf";
     private static final String BLOWFISH_SALT = ENCRYPTED_PROPERTY_NAME_PREFIX + "blowfish.salt";
 
     /** Blowfish key derivation function using PBKDF2-HMAC-SHA512 */
@@ -1249,6 +1251,53 @@ public class JiveGlobals {
 
         // Reinitialise the encryptor cache so new properties use the updated KDF immediately
         reinitialisePropertyEncryptor();
+    }
+
+    /**
+     * Gets the Blowfish KDF used to encrypt/decrypt user passwords ({@code ofUser.encryptedPassword},
+     * via {@code AuthFactory}).
+     *
+     * The SHA1-to-PBKDF2 migration re-encrypts encrypted properties but not user passwords, so once
+     * it has run, passwords must keep using the KDF they were encrypted with (OF-3374). The migration
+     * records that here before changing {@link #getBlowfishKdf()}. When nothing has been recorded,
+     * passwords were encrypted with whatever {@link #getBlowfishKdf()} says, so fall back to it.
+     *
+     * @return The KDF type ("sha1" or "pbkdf2") to use for password encryption
+     */
+    public static String getBlowfishKdfForPasswords() {
+        if (securityProperties == null) {
+            loadSecurityProperties();
+        }
+
+        String kdf = securityProperties.getProperty(BLOWFISH_USER_KDF);
+        if (kdf != null && !kdf.trim().isEmpty()) {
+            return kdf;
+        }
+        return getBlowfishKdf();
+    }
+
+    /**
+     * Records that user passwords are encrypted with the legacy SHA1 KDF, so they stay readable after
+     * the SHA1-to-PBKDF2 migration changes {@link #getBlowfishKdf()} (OF-3374). Only that migration
+     * calls this, and it only runs while the KDF is still SHA1.
+     */
+    public static void preserveLegacyPasswordKdf() {
+        if (securityProperties == null) {
+            loadSecurityProperties();
+        }
+        securityProperties.setProperty(BLOWFISH_USER_KDF, BLOWFISH_KDF_SHA1);
+    }
+
+    /**
+     * Clears the recorded password KDF, so {@link #getBlowfishKdfForPasswords()} falls back to
+     * {@link #getBlowfishKdf()} again. Exists only so tests can reset state between runs.
+     */
+    @VisibleForTesting
+    static void clearBlowfishKdfForPasswords() {
+        if (securityProperties == null) {
+            loadSecurityProperties();
+        }
+        securityProperties.deleteProperty(BLOWFISH_USER_KDF);
     }
 
     /**

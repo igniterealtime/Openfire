@@ -1021,7 +1021,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
                 // Add the user as a member of the room if the room is members only
                 if (room.isMembersOnly())
                 {
-                    room.addMember(jid, null, preExistingOccupantData.getAffiliation());
+                    addInviteeAsMember(room, jid, preExistingOccupantData);
                 }
 
                 // Send the invitation to the invitee
@@ -1043,6 +1043,19 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             Log.debug("Rejecting invitation message from occupant '{}' in room '{}': The user being invited does not have access to the room.", packet.getFrom(), room.getName(), e);
             sendErrorPacket(packet, PacketError.Condition.not_acceptable, "The user being invited does not have access to the room.");
         }
+    }
+
+    static void addInviteeAsMember(
+        @Nonnull final MUCRoom room,
+        @Nonnull final JID invitee,
+        @Nonnull final MUCOccupant inviter ) throws ForbiddenException, ConflictException
+    {
+        // An invitation that is allowed by the room grants membership on behalf of the room. Using the inviter's
+        // affiliation here would reject regular members even when the room explicitly allows occupants to invite.
+        final Affiliation actorAffiliation = room.canOccupantsInvite()
+            ? room.getSelfRepresentation().getAffiliation()
+            : inviter.getAffiliation();
+        room.addMember(invitee, null, actorAffiliation);
     }
 
     /**

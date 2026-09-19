@@ -305,6 +305,17 @@ public abstract class Node implements Cacheable, Externalizable {
     }
 
     /**
+     * Adds a new affiliation or updates an existing affiliation of the specified entity JID
+     * to become a member affiliate.
+     *
+     * @param jid the JID of the member.
+     * @return the newly created or modified affiliation to the node.
+     */
+    public NodeAffiliate addMember(JID jid) {
+        return addAffiliation(jid, NodeAffiliate.Affiliation.member);
+    }
+
+    /**
      * Sets that the specified entity is an outcast of the node. Outcast entities are not
      * able to publish or subscribe to the node. Existing subscriptions will be deleted.
      *

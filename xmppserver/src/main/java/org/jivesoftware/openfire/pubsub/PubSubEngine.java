@@ -1761,6 +1761,9 @@ public class PubSubEngine
             else if ("publisher".equals(newAffiliation)) {
                 node.addPublisher(owner);
             }
+            else if ("member".equals(newAffiliation)) {
+                node.addMember(owner);
+            }
             else if ("none".equals(newAffiliation)) {
                 node.addNoneAffiliation(owner);
             }

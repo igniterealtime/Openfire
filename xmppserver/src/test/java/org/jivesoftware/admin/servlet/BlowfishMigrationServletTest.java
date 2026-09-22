@@ -16,15 +16,20 @@
 package org.jivesoftware.admin.servlet;
 
 import org.jivesoftware.Fixtures;
+import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.auth.AuthFactory;
+import org.jivesoftware.openfire.auth.EncryptedPasswordMigration;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.ClusterNodeInfo;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.WebManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -140,6 +145,7 @@ public class BlowfishMigrationServletTest {
         verify(request).setAttribute(eq("currentKdf"), eq(JiveGlobals.BLOWFISH_KDF_SHA1));
         verify(request).setAttribute(eq("encryptedPropertyCountDb"), anyInt());
         verify(request).setAttribute(eq("encryptedPropertyCountXml"), anyInt());
+        verify(request, description("The page is expected to show the number of encrypted user passwords, which the migration re-encrypts as well.")).setAttribute(eq("encryptedPasswordCount"), anyInt());
         verify(request).setAttribute(eq("csrf"), anyString());
         verify(requestDispatcher).forward(request, response);
     }
@@ -164,6 +170,7 @@ public class BlowfishMigrationServletTest {
         verify(request).setAttribute("needsMigration", false);
         verify(request).setAttribute("alreadyMigrated", true);
         verify(request).setAttribute(eq("currentKdf"), eq(JiveGlobals.BLOWFISH_KDF_PBKDF2));
+        verify(request, description("The page is expected to show the number of encrypted user passwords, which the password repair evaluates.")).setAttribute(eq("encryptedPasswordCount"), anyInt());
         verify(request).setAttribute(eq("csrf"), anyString());
         verify(response).addCookie(any(Cookie.class));
         verify(requestDispatcher).forward(request, response);
@@ -399,6 +406,124 @@ public class BlowfishMigrationServletTest {
         verify(response).sendRedirect("security-blowfish-migration.jsp");
         verify(session, never()).setAttribute(eq("errorMessage"), anyString());
         verify(session, never()).setAttribute(eq("successMessage"), anyString());
+    }
+
+    // ========== Password Repair Tests (OF-3374) ==========
+
+    /**
+     * Sets up a request that passes CSRF validation, for the provided action.
+     */
+    private void validCsrfRequestFor(final String action) {
+        final String csrfToken = "valid-token";
+        when(request.getParameter("csrf")).thenReturn(csrfToken);
+        when(request.getCookies()).thenReturn(new Cookie[]{new Cookie("csrf", csrfToken)});
+        when(request.getParameter("action")).thenReturn(action);
+    }
+
+    /**
+     * Test doPost() refuses to re-encrypt user passwords when the database backup was not confirmed.
+     */
+    @Test
+    public void testDoPost_RepairPasswords_MissingBackupConfirmation() throws Exception {
+        validCsrfRequestFor("repair-passwords");
+        when(request.getParameter("dbBackup")).thenReturn(null);
+
+        try (MockedStatic<EncryptedPasswordMigration> migration = mockStatic(EncryptedPasswordMigration.class)) {
+            servlet.doPost(request, response);
+
+            verify(session, description("The administrator is expected to be told that the database backup must be confirmed.")).setAttribute("errorMessage", "security.blowfish.migration.error.backups-required");
+            verify(response, description("The administrator is expected to be sent back to the migration page.")).sendRedirect("security-blowfish-migration.jsp");
+            assertDoesNotThrow(migration::verifyNoInteractions, "No password is expected to be re-encrypted before the database backup is confirmed.");
+        }
+    }
+
+    /**
+     * Test doPost() blocks the password repair the same way it blocks the property migration when multiple cluster
+     * nodes are active: both write to tables that every node reads (OF-3374).
+     */
+    @Test
+    public void testDoPost_RepairPasswords_BlocksWithMultipleClusterNodes() throws Exception {
+        JiveGlobals.setBlowfishKdf(JiveGlobals.BLOWFISH_KDF_PBKDF2);
+        validCsrfRequestFor("repair-passwords");
+        when(request.getParameter("dbBackup")).thenReturn("true");
+
+        try (MockedStatic<ClusterManager> clusterManagerMock = mockStatic(ClusterManager.class);
+             MockedStatic<EncryptedPasswordMigration> migration = mockStatic(EncryptedPasswordMigration.class)) {
+            clusterManagerMock.when(ClusterManager::isClusteringEnabled).thenReturn(true);
+            clusterManagerMock.when(ClusterManager::isClusteringStarted).thenReturn(true);
+            clusterManagerMock.when(ClusterManager::getNodesInfo).thenReturn(List.of(mock(org.jivesoftware.openfire.cluster.ClusterNodeInfo.class), mock(org.jivesoftware.openfire.cluster.ClusterNodeInfo.class)));
+
+            servlet.doPost(request, response);
+
+            verify(session, description("The administrator is expected to be told that other cluster nodes must be stopped before checking user passwords.")).setAttribute("errorMessage", "security.blowfish.migration.passwords.error.multi-node-active");
+            verify(response, description("The administrator is expected to be sent back to the migration page.")).sendRedirect("security-blowfish-migration.jsp");
+            assertDoesNotThrow(migration::verifyNoInteractions, "No password is expected to be re-encrypted while other cluster nodes are active, as they could write passwords concurrently.");
+        }
+    }
+
+    /**
+     * Test doPost() refuses to re-encrypt user passwords while the configured KDF is still SHA1. Re-encrypting them
+     * with PBKDF2 at that point would make them unreadable.
+     */
+    @Test
+    public void testDoPost_RepairPasswords_RejectedBeforeMigration() throws Exception {
+        JiveGlobals.setBlowfishKdf(JiveGlobals.BLOWFISH_KDF_SHA1);
+        validCsrfRequestFor("repair-passwords");
+        when(request.getParameter("dbBackup")).thenReturn("true");
+
+        try (MockedStatic<EncryptedPasswordMigration> migration = mockStatic(EncryptedPasswordMigration.class)) {
+            servlet.doPost(request, response);
+
+            verify(session, description("The administrator is expected to be told that the repair requires the migration to PBKDF2 to be completed first.")).setAttribute("errorMessage", "security.blowfish.migration.error.passwords-require-pbkdf2");
+            verify(response, description("The administrator is expected to be sent back to the migration page.")).sendRedirect("security-blowfish-migration.jsp");
+            assertDoesNotThrow(migration::verifyNoInteractions, "No password is expected to be re-encrypted with PBKDF2 while the configured KDF is still SHA1, as that would make it unreadable.");
+        }
+    }
+
+    /**
+     * Test doPost() re-encrypts user passwords from SHA1 to PBKDF2 on an installation that was already migrated, in a
+     * transaction that is committed, leaves the cached password cipher alone (it already uses PBKDF2), records that
+     * passwords are re-encrypted (OF-3374), and reports the outcome as counts only (the affected usernames are logged, not put on the page).
+     */
+    @Test
+    public void testDoPost_RepairPasswords_ReencryptsAndReportsOutcome() throws Exception {
+        JiveGlobals.setBlowfishKdf(JiveGlobals.BLOWFISH_KDF_PBKDF2);
+        validCsrfRequestFor("repair-passwords");
+        when(request.getParameter("dbBackup")).thenReturn("true");
+
+        final java.sql.Connection connection = mock(java.sql.Connection.class);
+        final EncryptedPasswordMigration.Result outcome = new EncryptedPasswordMigration.Result(2, List.of("dave"), List.of("alice", "bob"), List.of("mallory"), List.of("carol"));
+
+        try (MockedStatic<DbConnectionManager> db = mockStatic(DbConnectionManager.class);
+             MockedStatic<AuthFactory> authFactory = mockStatic(AuthFactory.class);
+             MockedStatic<EncryptedPasswordMigration> migration = mockStatic(EncryptedPasswordMigration.class);
+             MockedConstruction<WebManager> ignored = mockConstruction(WebManager.class))
+        {
+            db.when(DbConnectionManager::getTransactionConnection).thenReturn(connection);
+            migration.when(() -> EncryptedPasswordMigration.reencryptVerified(connection, JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.BLOWFISH_KDF_PBKDF2)).thenReturn(outcome);
+
+            servlet.doPost(request, response);
+
+            assertDoesNotThrow(authFactory::verifyNoInteractions, "The repair is expected to leave the cached password cipher alone, as it already uses PBKDF2.");
+            migration.verify(() -> EncryptedPasswordMigration.reencryptVerified(connection, JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.BLOWFISH_KDF_PBKDF2),
+                    description("Only passwords that verify against SCRAM credentials are expected to be re-encrypted, as others may already use PBKDF2."));
+            db.verify(() -> DbConnectionManager.closeTransactionConnection(connection, false),
+                    description("The transaction is expected to be committed, not rolled back, after a successful repair."));
+
+            verify(session, description("The administrator is expected to be told that the repair succeeded.")).setAttribute("successMessage", "security.blowfish.migration.passwords.repair-success");
+            verify(session, description("The number of re-encrypted passwords is expected to be reported.")).setAttribute("passwordsReencrypted", 2);
+            verify(session, description("The number of users without a SCRAM credential is expected to be reported, as their password may need to be reset.")).setAttribute("passwordsUnverifiableCount", 2);
+            verify(session, description("The number of passwords that did not decrypt is expected to be reported, as they may need to be reset.")).setAttribute("passwordsUndecryptableCount", 1);
+            verify(session, description("The number of passwords that changed while the repair ran is expected to be reported.")).setAttribute("passwordsModifiedCount", 1);
+            // Only counts are reported: the usernames themselves are logged by EncryptedPasswordMigration, not repeated here.
+            verify(session, never().description("Usernames without a SCRAM credential are expected to be logged, not put in the session.")).setAttribute(eq("passwordsUnverifiable"), any());
+            verify(session, never().description("Usernames whose password did not decrypt are expected to be logged, not put in the session.")).setAttribute(eq("passwordsUndecryptable"), any());
+            verify(session, never().description("Usernames whose password changed while the repair ran are expected to be logged, not put in the session.")).setAttribute(eq("passwordsModified"), any());
+            verify(session, never().description("A successful repair is expected not to report an error.")).setAttribute(eq("errorMessage"), anyString());
+            verify(response, description("The administrator is expected to be sent back to the migration page.")).sendRedirect("security-blowfish-migration.jsp");
+            assertFalse(JiveGlobals.isPasswordReencryptionNeeded(),
+                    "A completed repair, however partial, should not keep prompting the administrator to run it again.");
+        }
     }
 
     // ========== Clustering Tests ==========

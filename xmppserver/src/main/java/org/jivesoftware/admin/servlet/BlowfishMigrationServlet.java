@@ -17,6 +17,8 @@
 package org.jivesoftware.admin.servlet;
 
 import org.jivesoftware.database.DbConnectionManager;
+import org.jivesoftware.openfire.auth.AuthFactory;
+import org.jivesoftware.openfire.auth.EncryptedPasswordMigration;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.util.Blowfish;
 import org.jivesoftware.util.CookieUtils;
@@ -41,6 +43,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Servlet for migrating Blowfish-encrypted properties from SHA1 to PBKDF2 key derivation.
@@ -62,6 +65,10 @@ public class BlowfishMigrationServlet extends HttpServlet {
     private static final String PARAM_SECURITY_BACKUP = "securityBackup";
     private static final String PARAM_OPENFIRE_BACKUP = "openfireBackup";
     private static final String ACTION_MIGRATE = "migrate";
+    private static final String ACTION_REPAIR_PASSWORDS = "repair-passwords";
+
+    /** Prevents starting an operation while another (which can take minutes) is still running. */
+    private static final AtomicBoolean operationInProgress = new AtomicBoolean(false);
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -91,6 +98,12 @@ public class BlowfishMigrationServlet extends HttpServlet {
             int xmlCount = getEncryptedXMLPropertyCount();
             request.setAttribute("encryptedPropertyCountDb", dbCount);
             request.setAttribute("encryptedPropertyCountXml", xmlCount);
+        }
+
+        // User passwords are re-encrypted by the migration, or repaired after a migration by an older version (OF-3374).
+        if (needsMigration || alreadyMigrated) {
+            request.setAttribute("encryptedPasswordCount", getEncryptedPasswordCount());
+            request.setAttribute("passwordReencryptionNeeded", EncryptedPasswordMigration.isRepairNeeded());
         }
 
         // Detect clustering status using multiple checks to avoid race conditions
@@ -133,77 +146,222 @@ public class BlowfishMigrationServlet extends HttpServlet {
 
         String action = request.getParameter(PARAM_ACTION);
 
-        if (ACTION_MIGRATE.equals(action)) {
-            // Verify checkboxes confirmed
-            boolean dbBackup = "true".equals(request.getParameter(PARAM_DB_BACKUP));
-            boolean securityBackup = "true".equals(request.getParameter(PARAM_SECURITY_BACKUP));
-            boolean openfireBackup = "true".equals(request.getParameter(PARAM_OPENFIRE_BACKUP));
+        final boolean isOperation = ACTION_MIGRATE.equals(action) || ACTION_REPAIR_PASSWORDS.equals(action);
+        if (isOperation && !operationInProgress.compareAndSet(false, true)) {
+            request.getSession().setAttribute("errorMessage",
+                    "security.blowfish.migration.error.in-progress");
+            response.sendRedirect("security-blowfish-migration.jsp");
+            return;
+        }
 
-            if (!dbBackup || !securityBackup || !openfireBackup) {
-                request.getSession().setAttribute("errorMessage",
-                        "security.blowfish.migration.error.backups-required");
-                response.sendRedirect("security-blowfish-migration.jsp");
-                return;
+        try {
+
+            if (ACTION_MIGRATE.equals(action)) {
+                // Verify checkboxes confirmed
+                boolean dbBackup = "true".equals(request.getParameter(PARAM_DB_BACKUP));
+                boolean securityBackup = "true".equals(request.getParameter(PARAM_SECURITY_BACKUP));
+                boolean openfireBackup = "true".equals(request.getParameter(PARAM_OPENFIRE_BACKUP));
+
+                if (!dbBackup || !securityBackup || !openfireBackup) {
+                    request.getSession().setAttribute("errorMessage",
+                            "security.blowfish.migration.error.backups-required");
+                    response.sendRedirect("security-blowfish-migration.jsp");
+                    return;
+                }
+
+                if (blockIfClusteringUnsafe(request, response, "security.blowfish.migration.error.")) {
+                    return;
+                }
+
+                // Block if security.xml cannot be persisted. The migration must store a new PBKDF2 salt
+                // and the kdf=pbkdf2 flag in conf/security.xml; if those writes are silently discarded
+                // (security.xml missing, empty, corrupt or not writable), the re-encrypted data becomes
+                // unrecoverable after a restart. Fail fast here, before any database changes. (OF-3305)
+                if (!JiveGlobals.isSecurityPropertiesPersistable()) {
+                    request.getSession().setAttribute("errorMessage",
+                            "security.blowfish.migration.error.security-xml-not-writable");
+                    response.sendRedirect("security-blowfish-migration.jsp");
+                    return;
+                }
+
+                try {
+                    // Perform migration
+                    MigrationResult result = migrateBlowfishToPBKDF2();
+
+                    final WebManager webManager = new WebManager();
+                    webManager.init(request, response, request.getSession(), request.getServletContext());
+                    webManager.logEvent("Migrated encrypted properties to more secure encryption standard", "Successfully migrated " + result.databaseCount() + " database properties, " + result.xmlCount() + " XML properties and " + result.passwords().reencrypted() + " user passwords from SHA1 to PBKDF2.");
+
+                    request.getSession().setAttribute("successMessage",
+                            "security.blowfish.migration.success");
+                    request.getSession().setAttribute("successParamDb", result.databaseCount());
+                    request.getSession().setAttribute("successParamXml", result.xmlCount());
+                    storePasswordOutcome(request, result.passwords());
+
+                } catch (Exception e) {
+                    request.getSession().setAttribute("errorMessage",
+                            "security.blowfish.migration.error.detail");
+                    request.getSession().setAttribute("errorParam", e.getMessage());
+                    Log.error("Blowfish migration failed", e);
+                }
+            } else if (ACTION_REPAIR_PASSWORDS.equals(action)) {
+                if (!"true".equals(request.getParameter(PARAM_DB_BACKUP))) {
+                    request.getSession().setAttribute("errorMessage",
+                            "security.blowfish.migration.error.backups-required");
+                    response.sendRedirect("security-blowfish-migration.jsp");
+                    return;
+                }
+
+                if (blockIfClusteringUnsafe(request, response, "security.blowfish.migration.passwords.error.")) {
+                    return;
+                }
+
+                // Before the migration, re-encrypting with PBKDF2 would make passwords unreadable.
+                if (!ENCRYPTION_ALGORITHM_BLOWFISH.equalsIgnoreCase(JiveGlobals.getEncryptionAlgorithm())
+                        || !JiveGlobals.BLOWFISH_KDF_PBKDF2.equalsIgnoreCase(JiveGlobals.getBlowfishKdf())) {
+                    request.getSession().setAttribute("errorMessage",
+                            "security.blowfish.migration.error.passwords-require-pbkdf2");
+                    response.sendRedirect("security-blowfish-migration.jsp");
+                    return;
+                }
+
+                try {
+                    final EncryptedPasswordMigration.Result result = repairEncryptedPasswords();
+
+                    // Passwords that could not be verified need a reset, which running this again cannot change.
+                    JiveGlobals.setPasswordsReencrypted(true);
+
+                    final WebManager webManager = new WebManager();
+                    webManager.init(request, response, request.getSession(), request.getServletContext());
+                    webManager.logEvent("Re-encrypted user passwords to more secure encryption standard", "Re-encrypted " + result.reencrypted() + " user passwords from SHA1 to PBKDF2. " + result.unverifiable().size() + " could not be verified.");
+
+                    request.getSession().setAttribute("successMessage",
+                            "security.blowfish.migration.passwords.repair-success");
+                    storePasswordOutcome(request, result);
+
+                } catch (Exception e) {
+                    request.getSession().setAttribute("errorMessage",
+                            "security.blowfish.migration.error.detail");
+                    request.getSession().setAttribute("errorParam", e.getMessage());
+                    Log.error("Re-encryption of user passwords failed", e);
+                }
             }
 
-            // Check clustering status - block migration in unsafe scenarios
-            // See ADR-004 for detailed explanation of clustering detection approach
-            boolean clusteringEnabled = ClusterManager.isClusteringEnabled();
-            boolean clusteringStarted = ClusterManager.isClusteringStarted();
-            int clusterNodeCount = clusteringStarted ? ClusterManager.getNodesInfo().size() : 0;
-
-            // Block if clustering is enabled but not yet started (race condition risk)
-            // Other nodes might be starting simultaneously
-            if (clusteringEnabled && !clusteringStarted) {
-                request.getSession().setAttribute("errorMessage",
-                        "security.blowfish.migration.error.cluster-enabled-not-started");
-                response.sendRedirect("security-blowfish-migration.jsp");
-                return;
-            }
-
-            // Block if multiple cluster nodes are active
-            if (clusterNodeCount > 1) {
-                request.getSession().setAttribute("errorMessage",
-                        "security.blowfish.migration.error.multi-node-active");
-                request.getSession().setAttribute("errorParam", String.valueOf(clusterNodeCount));
-                response.sendRedirect("security-blowfish-migration.jsp");
-                return;
-            }
-
-            // Block if security.xml cannot be persisted. The migration must store a new PBKDF2 salt
-            // and the kdf=pbkdf2 flag in conf/security.xml; if those writes are silently discarded
-            // (security.xml missing, empty, corrupt or not writable), the re-encrypted data becomes
-            // unrecoverable after a restart. Fail fast here, before any database changes. (OF-3305)
-            if (!JiveGlobals.isSecurityPropertiesPersistable()) {
-                request.getSession().setAttribute("errorMessage",
-                        "security.blowfish.migration.error.security-xml-not-writable");
-                response.sendRedirect("security-blowfish-migration.jsp");
-                return;
-            }
-
-            try {
-                // Perform migration
-                MigrationResult result = migrateBlowfishToPBKDF2();
-
-                final WebManager webManager = new WebManager();
-                webManager.init(request, response, request.getSession(), request.getServletContext());
-                webManager.logEvent("Migrated encrypted properties to more secure encryption standard", "Successfully migrated " + result.databaseCount() + " database properties and " + result.xmlCount() + " XML properties from SHA1 to PBKDF2.");
-
-                request.getSession().setAttribute("successMessage",
-                        "security.blowfish.migration.success");
-                request.getSession().setAttribute("successParamDb", result.databaseCount());
-                request.getSession().setAttribute("successParamXml", result.xmlCount());
-
-            } catch (Exception e) {
-                request.getSession().setAttribute("errorMessage",
-                        "security.blowfish.migration.error.detail");
-                request.getSession().setAttribute("errorParam", e.getMessage());
-                Log.error("Blowfish migration failed", e);
+        } finally {
+            if (isOperation) {
+                operationInProgress.set(false);
             }
         }
 
         // Redirect to GET to prevent form resubmission
         response.sendRedirect("security-blowfish-migration.jsp");
+    }
+
+    /**
+     * Blocks an operation, redirecting back with an error, unless this is the only running cluster node.
+     *
+     * @param request        the request that triggered the operation
+     * @param response       the response to redirect on, if blocked
+     * @param errorKeyPrefix the prefix of the keys of the error messages for the operation
+     * @return {@code true} if the operation was blocked (and the caller must not proceed), {@code false} otherwise
+     * @throws IOException if the redirect fails
+     */
+    private boolean blockIfClusteringUnsafe(HttpServletRequest request, HttpServletResponse response, String errorKeyPrefix) throws IOException {
+        // See ADR-004 for detailed explanation of clustering detection approach.
+        boolean clusteringEnabled = ClusterManager.isClusteringEnabled();
+        boolean clusteringStarted = ClusterManager.isClusteringStarted();
+        int clusterNodeCount = clusteringStarted ? ClusterManager.getNodesInfo().size() : 0;
+
+        // Block if clustering is enabled but not yet started (race condition risk).
+        // Other nodes might be starting simultaneously.
+        if (clusteringEnabled && !clusteringStarted) {
+            request.getSession().setAttribute("errorMessage",
+                    errorKeyPrefix + "cluster-enabled-not-started");
+            response.sendRedirect("security-blowfish-migration.jsp");
+            return true;
+        }
+
+        // Block if multiple cluster nodes are active.
+        if (clusterNodeCount > 1) {
+            request.getSession().setAttribute("errorMessage",
+                    errorKeyPrefix + "multi-node-active");
+            request.getSession().setAttribute("errorParam", String.valueOf(clusterNodeCount));
+            response.sendRedirect("security-blowfish-migration.jsp");
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Re-encrypts user passwords that still use SHA1 after a migration to PBKDF2 by an older version (OF-3374).
+     *
+     * @return the outcome of the operation
+     * @throws SQLException if the stored passwords could not be read or updated (in which case nothing is changed)
+     */
+    private EncryptedPasswordMigration.Result repairEncryptedPasswords() throws SQLException {
+        // Unlike the migration, this does not replace the password cipher: it already uses PBKDF2.
+        Connection con = null;
+        boolean abortTransaction = false;
+        try {
+            con = DbConnectionManager.getTransactionConnection();
+            return EncryptedPasswordMigration.reencryptVerified(con, JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.BLOWFISH_KDF_PBKDF2);
+        } catch (SQLException | RuntimeException e) {
+            abortTransaction = true;
+            throw e;
+        } finally {
+            DbConnectionManager.closeTransactionConnection(con, abortTransaction);
+        }
+    }
+
+    /**
+     * Stores the outcome of re-encrypting user passwords in the session, for the page to render after the redirect.
+     * Only counts are stored; the usernames are in the server log. Unverified passwords (typically already using
+     * PBKDF2) are not reported.
+     *
+     * @param request the request that caused the passwords to be re-encrypted
+     * @param result the outcome of re-encrypting user passwords
+     */
+    private static void storePasswordOutcome(HttpServletRequest request, EncryptedPasswordMigration.Result result) {
+        request.getSession().setAttribute("passwordsReencrypted", result.reencrypted());
+        if (!result.unverifiable().isEmpty()) {
+            request.getSession().setAttribute("passwordsUnverifiableCount", result.unverifiable().size());
+        }
+        if (!result.undecryptable().isEmpty()) {
+            request.getSession().setAttribute("passwordsUndecryptableCount", result.undecryptable().size());
+        }
+        if (!result.modifiedConcurrently().isEmpty()) {
+            request.getSession().setAttribute("passwordsModifiedCount", result.modifiedConcurrently().size());
+        }
+    }
+
+    /**
+     * Counts the user passwords that are stored encrypted in the database.
+     *
+     * @return Number of users with a non-null ofUser.encryptedPassword
+     */
+    private int getEncryptedPasswordCount() {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            con = DbConnectionManager.getConnection();
+            pstmt = con.prepareStatement(
+                    "SELECT COUNT(*) FROM ofUser WHERE encryptedPassword IS NOT NULL");
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+            return 0;
+
+        } catch (SQLException e) {
+            Log.error("Error counting encrypted user passwords", e);
+            return 0;
+        } finally {
+            DbConnectionManager.closeConnection(rs, pstmt, con);
+        }
     }
 
     /**
@@ -368,40 +526,57 @@ public class BlowfishMigrationServlet extends HttpServlet {
                         "Database has been rolled back. Check logs for details.");
             }
 
-            // 7. Explicitly commit the database transaction before updating security.xml.
-            // This provides clarity of intent - the transaction boundary is explicit, and
-            // it's clear that what follows is post-commit work.
+            // 7. Re-encrypt user passwords in the same transaction: they use the same KDF setting, so would otherwise
+            // become unreadable (OF-3374). They all still use SHA1, so all can be re-encrypted.
             //
-            // Note: True atomicity across database and XML file operations isn't possible
-            // since they're separate systems. The openfire XML properties were already
-            // migrated in step 2 before this transaction started, so we're already
-            // committed to PBKDF2 at that point. This commit finalises the database
-            // portion of the migration.
-            //
-            // The closeTransactionConnection in the finally block will call commit() again,
-            // but this is harmless - committing an already-committed transaction is a no-op.
-            con.commit();
-            Log.info("Database transaction committed successfully");
+            // Steps 7 to 9 run while no password can be encrypted, decrypted or stored, so that none is stored with the
+            // cached SHA1 cipher in the meantime. User logins wait for this to complete.
+            final Connection transaction = con;
+            final EncryptedPasswordMigration.Result passwords = AuthFactory.replacePasswordCipher(() -> {
+                final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencryptAll(
+                        transaction, JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.BLOWFISH_KDF_PBKDF2);
 
-            // 8. Update security.xml to switch KDF to PBKDF2
-            // This only updates the local node's security.xml
-            // In clustered deployments, admin must manually sync to other nodes
-            //
-            // Known limitation (OF-3305): persistability was verified before the migration, but this
-            // KDF write happens after the database commit. If security.xml became unwritable in that
-            // narrow window (e.g. conf/ remounted read-only, or the disk filled), this save fails and
-            // is only logged. The salt was already persisted earlier (during setKey), so this state is
-            // recoverable by setting encrypt.blowfish.kdf=pbkdf2 in security.xml by hand. Surfacing this
-            // failure properly is tracked as a follow-up (make security-critical saves report failure).
-            JiveGlobals.setBlowfishKdf(JiveGlobals.BLOWFISH_KDF_PBKDF2);
-            Log.info("Updated security.xml: encrypt.blowfish.kdf=pbkdf2");
+                // 8. Explicitly commit the database transaction before updating security.xml.
+                // This provides clarity of intent - the transaction boundary is explicit, and
+                // it's clear that what follows is post-commit work.
+                //
+                // Note: True atomicity across database and XML file operations isn't possible
+                // since they're separate systems. The openfire XML properties were already
+                // migrated in step 2 before this transaction started, so we're already
+                // committed to PBKDF2 at that point. This commit finalises the database
+                // portion of the migration.
+                //
+                // The closeTransactionConnection in the finally block will call commit() again,
+                // but this is harmless - committing an already-committed transaction is a no-op.
+                transaction.commit();
+                Log.info("Database transaction committed successfully");
 
-            // 9. Log success
-            Log.info("Successfully migrated {} database properties and {} XML properties from SHA1 to PBKDF2",
-                    migrated, xmlMigrated);
+                // 9. Update security.xml to switch KDF to PBKDF2
+                // This only updates the local node's security.xml
+                // In clustered deployments, admin must manually sync to other nodes
+                //
+                // Known limitation (OF-3305): persistability was verified before the migration, but this
+                // KDF write happens after the database commit. If security.xml became unwritable in that
+                // narrow window (e.g. conf/ remounted read-only, or the disk filled), this save fails and
+                // is only logged. The salt was already persisted earlier (during setKey), so this state is
+                // recoverable by setting encrypt.blowfish.kdf=pbkdf2 in security.xml by hand. Surfacing this
+                // failure properly is tracked as a follow-up (make security-critical saves report failure).
+                JiveGlobals.setBlowfishKdf(JiveGlobals.BLOWFISH_KDF_PBKDF2);
+                Log.info("Updated security.xml: encrypt.blowfish.kdf=pbkdf2");
+
+                // 10. Returning discards the cached password cipher.
+                return result;
+            });
+
+            // 11. Every stored password was re-encrypted, so no repair is needed (OF-3374).
+            JiveGlobals.setPasswordsReencrypted(true);
+
+            // 12. Log success
+            Log.info("Successfully migrated {} database properties, {} XML properties and {} user passwords from SHA1 to PBKDF2",
+                    migrated, xmlMigrated, passwords.reencrypted());
             Log.info("Blowfish KDF is now set to PBKDF2-HMAC-SHA512 in security.xml");
 
-            return new MigrationResult(migrated, xmlMigrated);
+            return new MigrationResult(migrated, xmlMigrated, passwords);
 
         } catch (Exception e) {
             abortTransaction = true;
@@ -483,7 +658,8 @@ public class BlowfishMigrationServlet extends HttpServlet {
     private record EncryptedProperty(String name, String value) {}
 
     /**
-     * Result of migration operation containing counts for both database and XML properties.
+     * Result of migration operation containing counts for both database and XML properties, and the outcome for user
+     * passwords.
      */
-    private record MigrationResult(int databaseCount, int xmlCount) {}
+    private record MigrationResult(int databaseCount, int xmlCount, EncryptedPasswordMigration.Result passwords) {}
 }

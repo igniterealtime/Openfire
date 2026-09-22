@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -602,6 +603,7 @@ public class DefaultAuthProviderScramStorageTest
         {
             db.when(DbConnectionManager::getTransactionConnection).thenReturn(con);
             auth.when(() -> AuthFactory.encryptPassword(anyString())).thenReturn("encrypted");
+            auth.when(AuthFactory::getPasswordCipherUseLock).thenReturn(new ReentrantLock());
 
             // Let every mechanism derive, except SCRAM-SHA-256.
             scramUtils.when(() -> ScramUtils.deriveScramKeys(

@@ -482,8 +482,9 @@ public class BlowfishMigrationServletTest {
 
     /**
      * Test doPost() re-encrypts user passwords from SHA1 to PBKDF2 on an installation that was already migrated, in a
-     * transaction that is committed, leaves the cached password cipher alone (it already uses PBKDF2), records that
-     * passwords are re-encrypted (OF-3374), and reports the outcome as counts only (the affected usernames are logged, not put on the page).
+     * transaction that is committed, leaves the cached password cipher alone (it already uses PBKDF2), keeps the repair
+     * on offer while unverifiable passwords remain (OF-3374), and reports the outcome as counts only (the affected
+     * usernames are logged, not put on the page).
      */
     @Test
     public void testDoPost_RepairPasswords_ReencryptsAndReportsOutcome() throws Exception {
@@ -500,12 +501,12 @@ public class BlowfishMigrationServletTest {
              MockedConstruction<WebManager> ignored = mockConstruction(WebManager.class))
         {
             db.when(DbConnectionManager::getTransactionConnection).thenReturn(connection);
-            migration.when(() -> EncryptedPasswordMigration.reencryptVerified(connection, JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.BLOWFISH_KDF_PBKDF2)).thenReturn(outcome);
+            migration.when(() -> EncryptedPasswordMigration.reencryptVerified(connection, JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.BLOWFISH_KDF_PBKDF2, false)).thenReturn(outcome);
 
             servlet.doPost(request, response);
 
             assertDoesNotThrow(authFactory::verifyNoInteractions, "The repair is expected to leave the cached password cipher alone, as it already uses PBKDF2.");
-            migration.verify(() -> EncryptedPasswordMigration.reencryptVerified(connection, JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.BLOWFISH_KDF_PBKDF2),
+            migration.verify(() -> EncryptedPasswordMigration.reencryptVerified(connection, JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.BLOWFISH_KDF_PBKDF2, false),
                     description("Only passwords that verify against SCRAM credentials are expected to be re-encrypted, as others may already use PBKDF2."));
             db.verify(() -> DbConnectionManager.closeTransactionConnection(connection, false),
                     description("The transaction is expected to be committed, not rolled back, after a successful repair."));
@@ -521,8 +522,8 @@ public class BlowfishMigrationServletTest {
             verify(session, never().description("Usernames whose password changed while the repair ran are expected to be logged, not put in the session.")).setAttribute(eq("passwordsModified"), any());
             verify(session, never().description("A successful repair is expected not to report an error.")).setAttribute(eq("errorMessage"), anyString());
             verify(response, description("The administrator is expected to be sent back to the migration page.")).sendRedirect("security-blowfish-migration.jsp");
-            assertFalse(JiveGlobals.isPasswordReencryptionNeeded(),
-                    "A completed repair, however partial, should not keep prompting the administrator to run it again.");
+            assertTrue(JiveGlobals.isPasswordReencryptionNeeded(),
+                    "While passwords of users without SCRAM credentials remain unverified, they may still use SHA1, so re-encryption is expected to remain needed.");
         }
     }
 
@@ -543,12 +544,42 @@ public class BlowfishMigrationServletTest {
              MockedConstruction<WebManager> ignored = mockConstruction(WebManager.class))
         {
             db.when(DbConnectionManager::getTransactionConnection).thenReturn(connection);
-            migration.when(() -> EncryptedPasswordMigration.reencryptVerified(connection, JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.BLOWFISH_KDF_PBKDF2)).thenReturn(outcome);
+            migration.when(() -> EncryptedPasswordMigration.reencryptVerified(connection, JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.BLOWFISH_KDF_PBKDF2, false)).thenReturn(outcome);
 
             servlet.doPost(request, response);
 
             verify(session, description("The administrator is expected to be told that no user password needed to be re-encrypted.")).setAttribute("successMessage", "security.blowfish.migration.passwords.repair-success.none");
             verify(session, description("The number of re-encrypted passwords is expected to be reported, also when it is zero.")).setAttribute("passwordsReencrypted", 0);
+        }
+    }
+
+    /**
+     * Test doPost() also re-encrypts the passwords of users without SCRAM credentials when that is requested, and then
+     * no longer considers re-encryption to be needed.
+     */
+    @Test
+    public void testDoPost_RepairPasswords_IncludesUsersWithoutScramWhenRequested() throws Exception {
+        JiveGlobals.setBlowfishKdf(JiveGlobals.BLOWFISH_KDF_PBKDF2);
+        validCsrfRequestFor("repair-passwords");
+        when(request.getParameter("dbBackup")).thenReturn("true");
+        when(request.getParameter("includeWithoutScram")).thenReturn("true");
+
+        final java.sql.Connection connection = mock(java.sql.Connection.class);
+        final EncryptedPasswordMigration.Result outcome = new EncryptedPasswordMigration.Result(3, List.of(), List.of(), List.of(), List.of());
+
+        try (MockedStatic<DbConnectionManager> db = mockStatic(DbConnectionManager.class);
+             MockedStatic<EncryptedPasswordMigration> migration = mockStatic(EncryptedPasswordMigration.class);
+             MockedConstruction<WebManager> ignored = mockConstruction(WebManager.class))
+        {
+            db.when(DbConnectionManager::getTransactionConnection).thenReturn(connection);
+            migration.when(() -> EncryptedPasswordMigration.reencryptVerified(connection, JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.BLOWFISH_KDF_PBKDF2, true)).thenReturn(outcome);
+
+            servlet.doPost(request, response);
+
+            migration.verify(() -> EncryptedPasswordMigration.reencryptVerified(connection, JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.BLOWFISH_KDF_PBKDF2, true),
+                    description("The passwords of users without SCRAM credentials are expected to be included, as requested."));
+            assertFalse(JiveGlobals.isPasswordReencryptionNeeded(),
+                    "Once no unverifiable password remains, re-encryption is expected to no longer be needed.");
         }
     }
 

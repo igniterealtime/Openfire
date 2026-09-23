@@ -64,6 +64,7 @@ public class BlowfishMigrationServlet extends HttpServlet {
     private static final String PARAM_DB_BACKUP = "dbBackup";
     private static final String PARAM_SECURITY_BACKUP = "securityBackup";
     private static final String PARAM_OPENFIRE_BACKUP = "openfireBackup";
+    private static final String PARAM_INCLUDE_WITHOUT_SCRAM = "includeWithoutScram";
     private static final String ACTION_MIGRATE = "migrate";
     private static final String ACTION_REPAIR_PASSWORDS = "repair-passwords";
 
@@ -225,15 +226,19 @@ public class BlowfishMigrationServlet extends HttpServlet {
                     return;
                 }
 
+                final boolean includeWithoutScram = "true".equals(request.getParameter(PARAM_INCLUDE_WITHOUT_SCRAM));
                 try {
-                    final EncryptedPasswordMigration.Result result = repairEncryptedPasswords();
+                    final EncryptedPasswordMigration.Result result = repairEncryptedPasswords(includeWithoutScram);
 
-                    // Passwords that could not be verified need a reset, which running this again cannot change.
-                    JiveGlobals.setPasswordsReencrypted(true);
+                    // While passwords of users without SCRAM credentials remain unverified, they may still use SHA1: the
+                    // repair then stays on offer, and logins do not derive credentials from those passwords.
+                    JiveGlobals.setPasswordsReencrypted(result.unverifiable().isEmpty());
 
                     final WebManager webManager = new WebManager();
                     webManager.init(request, response, request.getSession(), request.getServletContext());
-                    webManager.logEvent("Re-encrypted user passwords to more secure encryption standard", "Re-encrypted " + result.reencrypted() + " user passwords from SHA1 to PBKDF2. " + result.unverifiable().size() + " could not be verified.");
+                    webManager.logEvent("Re-encrypted user passwords to more secure encryption standard", "Re-encrypted " + result.reencrypted() + " user passwords from SHA1 to PBKDF2"
+                            + (includeWithoutScram ? ", including those of users without SCRAM credentials, without verification. " : ". ")
+                            + result.unverifiable().size() + " could not be verified.");
 
                     request.getSession().setAttribute("successMessage", result.reencrypted() > 0
                             ? "security.blowfish.migration.passwords.repair-success"
@@ -297,16 +302,17 @@ public class BlowfishMigrationServlet extends HttpServlet {
     /**
      * Re-encrypts user passwords that still use SHA1 after a migration to PBKDF2 by an older version (OF-3374).
      *
+     * @param includeWithoutScram whether to also re-encrypt, without verification, the passwords of users without SCRAM credentials
      * @return the outcome of the operation
      * @throws SQLException if the stored passwords could not be read or updated (in which case nothing is changed)
      */
-    private EncryptedPasswordMigration.Result repairEncryptedPasswords() throws SQLException {
+    private EncryptedPasswordMigration.Result repairEncryptedPasswords(final boolean includeWithoutScram) throws SQLException {
         // Unlike the migration, this does not replace the password cipher: it already uses PBKDF2.
         Connection con = null;
         boolean abortTransaction = false;
         try {
             con = DbConnectionManager.getTransactionConnection();
-            return EncryptedPasswordMigration.reencryptVerified(con, JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.BLOWFISH_KDF_PBKDF2);
+            return EncryptedPasswordMigration.reencryptVerified(con, JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.BLOWFISH_KDF_PBKDF2, includeWithoutScram);
         } catch (SQLException | RuntimeException e) {
             abortTransaction = true;
             throw e;

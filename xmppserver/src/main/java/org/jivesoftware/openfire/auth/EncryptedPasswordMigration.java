@@ -41,7 +41,8 @@ import java.util.function.Consumer;
  * Decrypting with a key from the wrong KDF does not fail, but yields a wrong value. While the configured KDF is still
  * the source KDF, every stored password uses it, so {@link #reencryptAll} can re-encrypt all of them. Afterwards,
  * stored passwords may use either KDF (OF-3374), so {@link #reencryptVerified} only re-encrypts a password that matches
- * the SCRAM credentials of its user when decrypted with the source KDF.
+ * the SCRAM credentials of its user when decrypted with the source KDF, or (optionally) that of a user without SCRAM
+ * credentials, which is assumed to use the source KDF.
  *
  * A row is only updated if it still holds the value that was read, so a concurrently changed password is never
  * overwritten.
@@ -153,23 +154,27 @@ public final class EncryptedPasswordMigration
     @Nonnull
     public static Result reencryptAll(@Nonnull final Connection con, @Nonnull final String sourceKdf, @Nonnull final String targetKdf) throws SQLException
     {
-        return reencrypt(con, sourceKdf, targetKdf, false);
+        return reencrypt(con, sourceKdf, targetKdf, false, false);
     }
 
     /**
      * Re-encrypts the stored user passwords that, decrypted with {@code sourceKdf}, match the SCRAM credentials of their
      * user. Any other password is left unchanged. Committing is left to the caller.
      *
-     * @param con       the database connection to use
-     * @param sourceKdf the KDF that the passwords to re-encrypt use
-     * @param targetKdf the KDF to re-encrypt with
+     * Optionally, the passwords of users without SCRAM credentials are re-encrypted too, assuming that they use
+     * {@code sourceKdf}. A password among them that already uses {@code targetKdf} is destroyed by that.
+     *
+     * @param con                 the database connection to use
+     * @param sourceKdf           the KDF that the passwords to re-encrypt use
+     * @param targetKdf           the KDF to re-encrypt with
+     * @param includeWithoutScram whether to also re-encrypt the passwords of users without SCRAM credentials
      * @return the outcome of the operation
      * @throws SQLException if the stored passwords could not be read or updated
      */
     @Nonnull
-    public static Result reencryptVerified(@Nonnull final Connection con, @Nonnull final String sourceKdf, @Nonnull final String targetKdf) throws SQLException
+    public static Result reencryptVerified(@Nonnull final Connection con, @Nonnull final String sourceKdf, @Nonnull final String targetKdf, final boolean includeWithoutScram) throws SQLException
     {
-        return reencrypt(con, sourceKdf, targetKdf, true);
+        return reencrypt(con, sourceKdf, targetKdf, true, includeWithoutScram);
     }
 
     /**
@@ -178,14 +183,15 @@ public final class EncryptedPasswordMigration
      * @param con       the database connection to use
      * @param sourceKdf the KDF that the passwords to re-encrypt use
      * @param targetKdf the KDF to re-encrypt with
-     * @param verify    whether to only re-encrypt passwords that match the SCRAM credentials of their user
+     * @param verify              whether to only re-encrypt passwords that match the SCRAM credentials of their user
+     * @param includeWithoutScram when verifying, whether to also re-encrypt the passwords of users without SCRAM credentials
      * @return the outcome of the operation
      * @throws SQLException if the stored passwords could not be read or updated
      * @throws IllegalArgumentException if both KDFs are the same
      * @throws IllegalStateException if both KDFs yield the same key (PBKDF2 falls back to SHA1 when it fails)
      */
     @Nonnull
-    private static Result reencrypt(@Nonnull final Connection con, @Nonnull final String sourceKdf, @Nonnull final String targetKdf, final boolean verify) throws SQLException
+    private static Result reencrypt(@Nonnull final Connection con, @Nonnull final String sourceKdf, @Nonnull final String targetKdf, final boolean verify, final boolean includeWithoutScram) throws SQLException
     {
         if (sourceKdf.equalsIgnoreCase(targetKdf)) {
             throw new IllegalArgumentException("The source and target KDF are the same: " + sourceKdf);
@@ -205,7 +211,7 @@ public final class EncryptedPasswordMigration
             throw new IllegalStateException("The keys that are derived for KDF '" + sourceKdf + "' and KDF '" + targetKdf + "' are identical. Refusing to re-encrypt user passwords.");
         }
 
-        return reencrypt(con, source, target, verify);
+        return reencrypt(con, source, target, verify, includeWithoutScram);
     }
 
     /**
@@ -214,20 +220,24 @@ public final class EncryptedPasswordMigration
      * @param con    the database connection to use
      * @param source the cipher that the passwords to re-encrypt use
      * @param target the cipher to re-encrypt with
-     * @param verify whether to only re-encrypt passwords that match the SCRAM credentials of their user
+     * @param verify              whether to only re-encrypt passwords that match the SCRAM credentials of their user
+     * @param includeWithoutScram when verifying, whether to also re-encrypt the passwords of users without SCRAM credentials
      * @return the outcome of the operation
      * @throws SQLException if the stored passwords could not be read or updated
      */
     @Nonnull
-    static Result reencrypt(@Nonnull final Connection con, @Nonnull final Blowfish source, @Nonnull final Blowfish target, final boolean verify) throws SQLException
+    static Result reencrypt(@Nonnull final Connection con, @Nonnull final Blowfish source, @Nonnull final Blowfish target, final boolean verify, final boolean includeWithoutScram) throws SQLException
     {
-        Log.info("Re-encrypting stored user passwords ({}).", verify ? "only those that verify against SCRAM credentials" : "all of them");
+        Log.info("Re-encrypting stored user passwords ({}).", !verify ? "all of them"
+            : includeWithoutScram ? "those that verify against SCRAM credentials, and those of users without SCRAM credentials"
+            : "only those that verify against SCRAM credentials");
 
         int reencrypted = 0;
         final List<String> unverified = new ArrayList<>();
         final List<String> unverifiable = new ArrayList<>();
         final List<String> undecryptable = new ArrayList<>();
         final List<String> modifiedConcurrently = new ArrayList<>();
+        final List<String> reencryptedWithoutVerification = new ArrayList<>();
 
         int evaluated = 0;
         Instant lastLogTime = Instant.now();
@@ -242,6 +252,7 @@ public final class EncryptedPasswordMigration
 
                 // Determine the plaintext to re-encrypt, or null when this row is to be left unchanged.
                 final String plaintext;
+                boolean withoutVerification = false;
                 if (!verify) {
                     plaintext = decrypt(username, encryptedPassword, source);
                     if (plaintext == null) {
@@ -249,7 +260,13 @@ public final class EncryptedPasswordMigration
                     }
                 } else {
                     final List<ScramCredentialData> credentials = loadScramCredentials(con, username);
-                    if (credentials.isEmpty()) {
+                    if (credentials.isEmpty() && includeWithoutScram) {
+                        plaintext = decrypt(username, encryptedPassword, source);
+                        withoutVerification = true;
+                        if (plaintext == null) {
+                            undecryptable.add(username);
+                        }
+                    } else if (credentials.isEmpty()) {
                         plaintext = null;
                         unverifiable.add(username);
                     } else {
@@ -266,6 +283,9 @@ public final class EncryptedPasswordMigration
                 if (plaintext != null) {
                     if (updateIfUnchanged(con, username, encryptedPassword, target.encryptString(plaintext))) {
                         reencrypted++;
+                        if (withoutVerification) {
+                            reencryptedWithoutVerification.add(username);
+                        }
                     } else {
                         modifiedConcurrently.add(username);
                     }
@@ -282,8 +302,8 @@ public final class EncryptedPasswordMigration
 
         final Result result = new Result(reencrypted, List.copyOf(unverified), List.copyOf(unverifiable), List.copyOf(undecryptable), List.copyOf(modifiedConcurrently));
         if (verify) {
-            Log.info("Re-encryption of stored user passwords complete: {} re-encrypted, {} not verified, {} without a SCRAM credential, {} that did not decrypt, {} changed while this operation ran.",
-                result.reencrypted(), result.unverified().size(), result.unverifiable().size(), result.undecryptable().size(), result.modifiedConcurrently().size());
+            Log.info("Re-encryption of stored user passwords complete: {} re-encrypted (of which {} without verification), {} not verified, {} without a SCRAM credential, {} that did not decrypt, {} changed while this operation ran.",
+                result.reencrypted(), reencryptedWithoutVerification.size(), result.unverified().size(), result.unverifiable().size(), result.undecryptable().size(), result.modifiedConcurrently().size());
         } else {
             Log.info("Re-encryption of stored user passwords complete: {} re-encrypted, {} that did not decrypt, {} changed while this operation ran.",
                 result.reencrypted(), result.undecryptable().size(), result.modifiedConcurrently().size());
@@ -292,6 +312,8 @@ public final class EncryptedPasswordMigration
             result.unverified());
         logUsers(names -> Log.warn("The stored password of these users cannot be verified, as they have no SCRAM credential. It was left unchanged, and may need to be reset by an administrator: {}", names),
             result.unverifiable());
+        logUsers(names -> Log.warn("The stored password of these users, who have no SCRAM credential, was re-encrypted without verification. If it already used the target KDF, it is now unusable, and needs to be reset by an administrator: {}", names),
+            reencryptedWithoutVerification);
         logUsers(names -> Log.warn("The stored password of these users did not decrypt to a usable value, and was left unchanged. It may need to be reset by an administrator: {}", names),
             result.undecryptable());
         logUsers(names -> Log.warn("The stored password of these users was changed while this operation ran, and was therefore left unchanged: {}", names),

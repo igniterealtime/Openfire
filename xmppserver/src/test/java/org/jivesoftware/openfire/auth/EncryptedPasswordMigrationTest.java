@@ -130,7 +130,7 @@ public class EncryptedPasswordMigrationTest
         insertScramSha1Credential(con, "alice", "secret-alice");
 
         // Execute system under test.
-        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, true);
+        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, true, false);
 
         // Verify results.
         assertEquals(new EncryptedPasswordMigration.Result(1, List.of(), List.of(), List.of(), List.of()), result, "A password that is encrypted with the source KDF and that matches the SCRAM credential of its user is expected to be reported as re-encrypted, and nothing else.");
@@ -152,7 +152,7 @@ public class EncryptedPasswordMigrationTest
         insertScramSha1Credential(con, "bob", "secret-bob");
 
         // Execute system under test.
-        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, true);
+        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, true, false);
 
         // Verify results.
         assertEquals(new EncryptedPasswordMigration.Result(0, List.of("bob"), List.of(), List.of(), List.of()), result, "A password that is already encrypted with the target KDF is expected to be reported as unverified, not re-encrypted.");
@@ -170,7 +170,7 @@ public class EncryptedPasswordMigrationTest
         insertUser(con, "carol", null, original);
 
         // Execute system under test.
-        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, true);
+        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, true, false);
 
         // Verify results.
         assertEquals(new EncryptedPasswordMigration.Result(0, List.of(), List.of("carol"), List.of(), List.of()), result, "A user without a SCRAM credential is expected to be reported as unverifiable, not re-encrypted.");
@@ -192,7 +192,7 @@ public class EncryptedPasswordMigrationTest
         }
 
         // Execute system under test.
-        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, true);
+        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, true, false);
 
         // Verify results.
         assertEquals(new EncryptedPasswordMigration.Result(0, List.of(), List.of("carol"), List.of(), List.of()), result, "A user with only an incomplete SCRAM credential is expected to be reported as unverifiable, like a user without one.");
@@ -212,7 +212,7 @@ public class EncryptedPasswordMigrationTest
         insertScramSha1Credential(con, "dave", "a-different-password");
 
         // Execute system under test.
-        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, true);
+        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, true, false);
 
         // Verify results.
         assertEquals(new EncryptedPasswordMigration.Result(0, List.of("dave"), List.of(), List.of(), List.of()), result, "A password that does not match the SCRAM credential of its user is expected to be reported as unverified, not re-encrypted.");
@@ -231,7 +231,7 @@ public class EncryptedPasswordMigrationTest
         insertScramCredential(con, "erin", "secret-erin", ScramSha256SaslServer.MECHANISM_NAME, ScramSha256SaslServer.HMAC_ALGORITHM_NAME, ScramSha256SaslServer.DIGEST_ALGORITHM_NAME);
 
         // Execute system under test.
-        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, true);
+        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, true, false);
 
         // Verify results.
         assertEquals(new EncryptedPasswordMigration.Result(1, List.of(), List.of(), List.of(), List.of()), result, "A password that matches a SCRAM-SHA-256 credential is expected to be verified using the algorithms of that mechanism, and re-encrypted.");
@@ -252,12 +252,34 @@ public class EncryptedPasswordMigrationTest
         insertScramSha1Credential(con, "grace", "secret-grace");
 
         // Execute system under test.
-        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, true);
+        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, true, false);
 
         // Verify results.
         assertEquals(new EncryptedPasswordMigration.Result(0, List.of(), List.of(), List.of(), List.of()), result, "Users without an encrypted password are expected not to be evaluated, and therefore not to appear in the result.");
         assertNull(storedEncryptedPassword(con, "frank"), "A user whose password is stored in plain text is expected to still have no encrypted password.");
         assertNull(storedEncryptedPassword(con, "grace"), "A user without any stored password is expected to still have no encrypted password.");
+    }
+
+    /**
+     * Verifies that the passwords of users without SCRAM credentials are re-encrypted when requested, while passwords
+     * that do not match the SCRAM credentials of their user are still left unchanged.
+     */
+    @Test
+    public void testReencryptsUsersWithoutScramCredentialWhenIncluded() throws Exception
+    {
+        // Setup test fixture.
+        insertUser(con, "carol", null, sha1.encryptString("secret-carol")); // without SCRAM credential
+        final String bob = pbkdf2.encryptString("secret-bob"); // already uses the target KDF
+        insertUser(con, "bob", null, bob);
+        insertScramSha1Credential(con, "bob", "secret-bob");
+
+        // Execute system under test.
+        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, true, true);
+
+        // Verify results.
+        assertEquals(new EncryptedPasswordMigration.Result(1, List.of("bob"), List.of(), List.of(), List.of()), result, "Only the password of the user without SCRAM credential is expected to be re-encrypted, and none to be reported as unverifiable.");
+        assertEquals("secret-carol", pbkdf2.decryptString(storedEncryptedPassword(con, "carol")), "The password of the user without SCRAM credential is expected to decrypt to the original with the target KDF.");
+        assertEquals(bob, storedEncryptedPassword(con, "bob"), "A password that does not match the SCRAM credential of its user is expected to be left unchanged.");
     }
 
     /**
@@ -277,7 +299,7 @@ public class EncryptedPasswordMigrationTest
         insertUser(con, "carol", null, carol);
 
         // Execute system under test.
-        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, true);
+        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, true, false);
 
         // Verify results.
         assertEquals(new EncryptedPasswordMigration.Result(1, List.of("bob"), List.of("carol"), List.of(), List.of()), result, "In a mixed table, only the legacy password that verifies is expected to be re-encrypted; the others are expected to be reported.");
@@ -302,7 +324,7 @@ public class EncryptedPasswordMigrationTest
         insertScramSha1Credential(con, "zara", "secret-zara");
 
         // Execute system under test.
-        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, true);
+        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, true, false);
 
         // Verify results.
         assertEquals(1, result.reencrypted(), "The only verifiable user sorts after the first page, and is expected to be re-encrypted, which requires reading more than one page.");
@@ -320,11 +342,11 @@ public class EncryptedPasswordMigrationTest
         // Setup test fixture.
         insertUser(con, "alice", null, sha1.encryptString("secret-alice"));
         insertScramSha1Credential(con, "alice", "secret-alice");
-        EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, true);
+        EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, true, false);
         final String afterFirstRun = storedEncryptedPassword(con, "alice");
 
         // Execute system under test.
-        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, true);
+        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, true, false);
 
         // Verify results.
         assertEquals(new EncryptedPasswordMigration.Result(0, List.of("alice"), List.of(), List.of(), List.of()), result, "A second run is expected to re-encrypt nothing, and to report the already re-encrypted password as unverified.");
@@ -382,7 +404,7 @@ public class EncryptedPasswordMigrationTest
         insertScramSha1Credential(con, "alice", "secret-alice");
 
         // Execute system under test.
-        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencryptVerified(con, JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.BLOWFISH_KDF_PBKDF2);
+        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencryptVerified(con, JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.BLOWFISH_KDF_PBKDF2, false);
 
         // Verify results.
         assertEquals(new EncryptedPasswordMigration.Result(1, List.of(), List.of(), List.of(), List.of()), result, "With the configured password key, a password that verifies is expected to be re-encrypted, and nothing else.");
@@ -401,7 +423,7 @@ public class EncryptedPasswordMigrationTest
         insertScramSha1Credential(con, "alice", "secret-alice");
 
         // Execute system under test.
-        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencryptVerified(con, JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.BLOWFISH_KDF_PBKDF2);
+        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencryptVerified(con, JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.BLOWFISH_KDF_PBKDF2, false);
 
         // Verify results.
         assertEquals(new EncryptedPasswordMigration.Result(0, List.of(), List.of(), List.of(), List.of()), result, "Without a password key, nothing can have been encrypted with it, so nothing is expected to be evaluated or re-encrypted.");
@@ -423,7 +445,7 @@ public class EncryptedPasswordMigrationTest
         insertScramSha1Credential(con, "dave", "a-different-password");     // password and credential disagree
 
         // Execute system under test.
-        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, false);
+        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, false, false);
 
         // Verify results.
         assertEquals(new EncryptedPasswordMigration.Result(3, List.of(), List.of(), List.of(), List.of()), result, "Unverified re-encryption is expected to re-encrypt every stored password, regardless of SCRAM credentials.");
@@ -444,7 +466,7 @@ public class EncryptedPasswordMigrationTest
         insertUser(con, "alice", null, sha1.encryptString("secret-alice"));
 
         // Execute system under test.
-        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, false);
+        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(con, sha1, pbkdf2, false, false);
 
         // Verify results.
         assertEquals(new EncryptedPasswordMigration.Result(1, List.of(), List.of(), List.of("mallory"), List.of()), result, "A stored password that does not decrypt is expected to be reported as undecryptable, while other passwords are still re-encrypted.");
@@ -476,7 +498,7 @@ public class EncryptedPasswordMigrationTest
     @Test
     public void testRefusesIdenticalKdfs()
     {
-        assertThrows(IllegalArgumentException.class, () -> EncryptedPasswordMigration.reencryptVerified(con, JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.BLOWFISH_KDF_SHA1), "Re-encrypting from a KDF to the same KDF is expected to be refused, as it cannot change anything and indicates a mistake.");
+        assertThrows(IllegalArgumentException.class, () -> EncryptedPasswordMigration.reencryptVerified(con, JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.BLOWFISH_KDF_SHA1, false), "Re-encrypting from a KDF to the same KDF is expected to be refused, as it cannot change anything and indicates a mistake.");
     }
 
     /**
@@ -703,7 +725,7 @@ public class EncryptedPasswordMigrationTest
         insertUser(con, "bob", null, sha1.encryptString("secret-bob"));
 
         // Execute system under test.
-        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(emptyStringIsNull(con), sha1, pbkdf2, false);
+        final EncryptedPasswordMigration.Result result = EncryptedPasswordMigration.reencrypt(emptyStringIsNull(con), sha1, pbkdf2, false, false);
 
         // Verify results.
         assertEquals(2, result.reencrypted(), "Every user is expected to be re-encrypted, also when an empty string is treated as NULL.");

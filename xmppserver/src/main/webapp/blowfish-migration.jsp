@@ -295,6 +295,10 @@
 
                     <div class="migration-checklist">
                         <label>
+                            <input type="checkbox" name="includeWithoutScram" value="true">
+                            <fmt:message key="security.blowfish.migration.passwords.include-without-scram"/>
+                        </label>
+                        <label>
                             <input type="checkbox" name="dbBackup" value="true" required>
                             <fmt:message key="security.blowfish.migration.checklist.db-backup"/>
                         </label>

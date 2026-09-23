@@ -529,7 +529,7 @@ public class BlowfishMigrationServlet extends HttpServlet {
             // 7. Re-encrypt user passwords in the same transaction: they use the same KDF setting, so would otherwise
             // become unreadable (OF-3374). They all still use SHA1, so all can be re-encrypted.
             //
-            // Steps 7 to 9 run while no password can be encrypted, decrypted or stored, so that none is stored with the
+            // Steps 7 to 11 run while no password can be encrypted, decrypted or stored, so that none is stored with the
             // cached SHA1 cipher in the meantime. User logins wait for this to complete.
             final Connection transaction = con;
             final EncryptedPasswordMigration.Result passwords = AuthFactory.replacePasswordCipher(() -> {
@@ -564,12 +564,13 @@ public class BlowfishMigrationServlet extends HttpServlet {
                 JiveGlobals.setBlowfishKdf(JiveGlobals.BLOWFISH_KDF_PBKDF2);
                 Log.info("Updated security.xml: encrypt.blowfish.kdf=pbkdf2");
 
-                // 10. Returning discards the cached password cipher.
+                // 10. Every stored password was re-encrypted, so no repair is needed (OF-3374). Set this before the lock
+                // is released, so that waiting logins never see the new KDF without it.
+                JiveGlobals.setPasswordsReencrypted(true);
+
+                // 11. Returning discards the cached password cipher.
                 return result;
             });
-
-            // 11. Every stored password was re-encrypted, so no repair is needed (OF-3374).
-            JiveGlobals.setPasswordsReencrypted(true);
 
             // 12. Log success
             Log.info("Successfully migrated {} database properties, {} XML properties and {} user passwords from SHA1 to PBKDF2",

@@ -194,25 +194,16 @@
                 <fmt:message key="${successMessage}">
                     <fmt:param><fmt:formatNumber>${successParamDb}</fmt:formatNumber></fmt:param>
                     <fmt:param><fmt:formatNumber>${successParamXml}</fmt:formatNumber></fmt:param>
+                    <fmt:param><fmt:formatNumber>${passwordsReencrypted}</fmt:formatNumber></fmt:param>
                 </fmt:message>
             </c:when>
-            <c:otherwise>
-                <fmt:message><c:out value="${successMessage}"/></fmt:message>
-            </c:otherwise>
-        </c:choose>
-    </admin:infobox>
-</c:if>
-
-<c:if test="${not empty passwordsReencrypted}">
-    <admin:infobox type="info">
-        <c:choose>
-            <c:when test="${passwordsReencrypted > 0}">
-                <fmt:message key="security.blowfish.migration.passwords.result">
+            <c:when test="${not empty passwordsReencrypted}">
+                <fmt:message key="${successMessage}">
                     <fmt:param><fmt:formatNumber>${passwordsReencrypted}</fmt:formatNumber></fmt:param>
                 </fmt:message>
             </c:when>
             <c:otherwise>
-                <fmt:message key="security.blowfish.migration.passwords.result.none"/>
+                <fmt:message><c:out value="${successMessage}"/></fmt:message>
             </c:otherwise>
         </c:choose>
     </admin:infobox>

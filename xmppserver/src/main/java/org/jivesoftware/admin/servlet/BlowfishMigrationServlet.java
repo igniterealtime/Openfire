@@ -235,8 +235,9 @@ public class BlowfishMigrationServlet extends HttpServlet {
                     webManager.init(request, response, request.getSession(), request.getServletContext());
                     webManager.logEvent("Re-encrypted user passwords to more secure encryption standard", "Re-encrypted " + result.reencrypted() + " user passwords from SHA1 to PBKDF2. " + result.unverifiable().size() + " could not be verified.");
 
-                    request.getSession().setAttribute("successMessage",
-                            "security.blowfish.migration.passwords.repair-success");
+                    request.getSession().setAttribute("successMessage", result.reencrypted() > 0
+                            ? "security.blowfish.migration.passwords.repair-success"
+                            : "security.blowfish.migration.passwords.repair-success.none");
                     storePasswordOutcome(request, result);
 
                 } catch (Exception e) {

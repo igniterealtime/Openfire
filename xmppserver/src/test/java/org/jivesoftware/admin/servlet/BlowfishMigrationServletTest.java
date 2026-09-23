@@ -526,6 +526,32 @@ public class BlowfishMigrationServletTest {
         }
     }
 
+    /**
+     * Test doPost() reports, in its success message, when the repair found no user password to re-encrypt.
+     */
+    @Test
+    public void testDoPost_RepairPasswords_ReportsWhenNoneReencrypted() throws Exception {
+        JiveGlobals.setBlowfishKdf(JiveGlobals.BLOWFISH_KDF_PBKDF2);
+        validCsrfRequestFor("repair-passwords");
+        when(request.getParameter("dbBackup")).thenReturn("true");
+
+        final java.sql.Connection connection = mock(java.sql.Connection.class);
+        final EncryptedPasswordMigration.Result outcome = new EncryptedPasswordMigration.Result(0, List.of("dave"), List.of(), List.of(), List.of());
+
+        try (MockedStatic<DbConnectionManager> db = mockStatic(DbConnectionManager.class);
+             MockedStatic<EncryptedPasswordMigration> migration = mockStatic(EncryptedPasswordMigration.class);
+             MockedConstruction<WebManager> ignored = mockConstruction(WebManager.class))
+        {
+            db.when(DbConnectionManager::getTransactionConnection).thenReturn(connection);
+            migration.when(() -> EncryptedPasswordMigration.reencryptVerified(connection, JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.BLOWFISH_KDF_PBKDF2)).thenReturn(outcome);
+
+            servlet.doPost(request, response);
+
+            verify(session, description("The administrator is expected to be told that no user password needed to be re-encrypted.")).setAttribute("successMessage", "security.blowfish.migration.passwords.repair-success.none");
+            verify(session, description("The number of re-encrypted passwords is expected to be reported, also when it is zero.")).setAttribute("passwordsReencrypted", 0);
+        }
+    }
+
     // ========== Clustering Tests ==========
 
     /**

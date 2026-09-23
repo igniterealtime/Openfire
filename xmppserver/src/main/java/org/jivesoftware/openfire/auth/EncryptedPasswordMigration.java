@@ -281,8 +281,13 @@ public final class EncryptedPasswordMigration
         }
 
         final Result result = new Result(reencrypted, List.copyOf(unverified), List.copyOf(unverifiable), List.copyOf(undecryptable), List.copyOf(modifiedConcurrently));
-        Log.info("Re-encryption of stored user passwords complete: {} re-encrypted, {} not verified, {} without a SCRAM credential, {} that did not decrypt, {} changed while this operation ran.",
-            result.reencrypted(), result.unverified().size(), result.unverifiable().size(), result.undecryptable().size(), result.modifiedConcurrently().size());
+        if (verify) {
+            Log.info("Re-encryption of stored user passwords complete: {} re-encrypted, {} not verified, {} without a SCRAM credential, {} that did not decrypt, {} changed while this operation ran.",
+                result.reencrypted(), result.unverified().size(), result.unverifiable().size(), result.undecryptable().size(), result.modifiedConcurrently().size());
+        } else {
+            Log.info("Re-encryption of stored user passwords complete: {} re-encrypted, {} that did not decrypt, {} changed while this operation ran.",
+                result.reencrypted(), result.undecryptable().size(), result.modifiedConcurrently().size());
+        }
         logUsers(names -> Log.info("The stored password of these users did not verify against their SCRAM credentials, and was left unchanged. This is expected for passwords that are already encrypted with the target KDF: {}", names),
             result.unverified());
         logUsers(names -> Log.warn("The stored password of these users cannot be verified, as they have no SCRAM credential. It was left unchanged, and may need to be reset by an administrator: {}", names),

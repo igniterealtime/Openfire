@@ -180,6 +180,9 @@ public class DefaultAuthProvider implements AuthProvider {
             // Reject the operation since the provider does not support SCRAM
             throw new UnsupportedOperationException();
         }
+        // Determined before reading the stored password: a repair that runs meanwhile only records that passwords are
+        // re-encrypted after committing them, so the password read afterwards is then known to use the configured KDF.
+        final boolean reencryptionNeeded = JiveGlobals.isPasswordReencryptionNeeded();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -214,7 +217,7 @@ public class DefaultAuthProvider implements AuthProvider {
                     // failure for a JVM-standard mechanism isn't expected.
                     boolean scramOnly = JiveGlobals.getBooleanProperty("user.scramHashedPasswordOnly");
                     if ((scramOnly || hasIncompleteSetOfScramCredentials(username))
-                        && (!decrypted || isDecryptedPasswordTrustworthy(username, userInfo.plainText)))
+                        && (!decrypted || isDecryptedPasswordTrustworthy(username, userInfo.plainText, reencryptionNeeded)))
                     {
                         // If we have a password here, but we're meant to be scramOnly, we should reset it.
                         setPassword(username, userInfo.plainText);
@@ -243,11 +246,12 @@ public class DefaultAuthProvider implements AuthProvider {
      * It is trusted if it matches a SCRAM credential of the user or, if the user has none, if no stored password is
      * expected to still use SHA1.
      *
-     * @param username  the user
-     * @param decrypted the decrypted password of the user
+     * @param username           the user
+     * @param decrypted          the decrypted password of the user
+     * @param reencryptionNeeded {@link JiveGlobals#isPasswordReencryptionNeeded()}, as it was before the stored password was read
      * @return true if credentials can safely be derived from the decrypted password
      */
-    private boolean isDecryptedPasswordTrustworthy(@Nonnull final String username, @Nonnull final String decrypted)
+    private boolean isDecryptedPasswordTrustworthy(@Nonnull final String username, @Nonnull final String decrypted, final boolean reencryptionNeeded)
     {
         final List<ScramCredentialData> credentials;
         Connection con = null;
@@ -262,7 +266,7 @@ public class DefaultAuthProvider implements AuthProvider {
         }
 
         final boolean trustworthy = credentials.isEmpty()
-            ? !JiveGlobals.isPasswordReencryptionNeeded()
+            ? !reencryptionNeeded
             : matchesAnyScramCredential(username, decrypted, credentials);
         if (!trustworthy) {
             Log.info("The stored password of user '{}' cannot be verified to decrypt correctly, so no credentials are derived from it. It may still be encrypted using a superseded key derivation function (OF-3374).", username);

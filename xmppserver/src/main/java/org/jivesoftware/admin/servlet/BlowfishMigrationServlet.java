@@ -226,6 +226,15 @@ public class BlowfishMigrationServlet extends HttpServlet {
                     return;
                 }
 
+                // Once repaired, the passwords of users without SCRAM credentials use PBKDF2. Repeating the repair (for
+                // example, by resubmitting a stale form) must not decrypt those with SHA1.
+                if (!EncryptedPasswordMigration.isRepairNeeded()) {
+                    request.getSession().setAttribute("errorMessage",
+                            "security.blowfish.migration.passwords.error.not-needed");
+                    response.sendRedirect("security-blowfish-migration.jsp");
+                    return;
+                }
+
                 final boolean includeWithoutScram = "true".equals(request.getParameter(PARAM_INCLUDE_WITHOUT_SCRAM));
                 try {
                     final EncryptedPasswordMigration.Result result = repairEncryptedPasswords(includeWithoutScram);

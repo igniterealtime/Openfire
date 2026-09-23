@@ -501,6 +501,7 @@ public class BlowfishMigrationServletTest {
              MockedConstruction<WebManager> ignored = mockConstruction(WebManager.class))
         {
             db.when(DbConnectionManager::getTransactionConnection).thenReturn(connection);
+            migration.when(EncryptedPasswordMigration::isRepairNeeded).thenReturn(true);
             migration.when(() -> EncryptedPasswordMigration.reencryptVerified(connection, JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.BLOWFISH_KDF_PBKDF2, false)).thenReturn(outcome);
 
             servlet.doPost(request, response);
@@ -544,6 +545,7 @@ public class BlowfishMigrationServletTest {
              MockedConstruction<WebManager> ignored = mockConstruction(WebManager.class))
         {
             db.when(DbConnectionManager::getTransactionConnection).thenReturn(connection);
+            migration.when(EncryptedPasswordMigration::isRepairNeeded).thenReturn(true);
             migration.when(() -> EncryptedPasswordMigration.reencryptVerified(connection, JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.BLOWFISH_KDF_PBKDF2, false)).thenReturn(outcome);
 
             servlet.doPost(request, response);
@@ -572,6 +574,7 @@ public class BlowfishMigrationServletTest {
              MockedConstruction<WebManager> ignored = mockConstruction(WebManager.class))
         {
             db.when(DbConnectionManager::getTransactionConnection).thenReturn(connection);
+            migration.when(EncryptedPasswordMigration::isRepairNeeded).thenReturn(true);
             migration.when(() -> EncryptedPasswordMigration.reencryptVerified(connection, JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.BLOWFISH_KDF_PBKDF2, true)).thenReturn(outcome);
 
             servlet.doPost(request, response);
@@ -580,6 +583,26 @@ public class BlowfishMigrationServletTest {
                     description("The passwords of users without SCRAM credentials are expected to be included, as requested."));
             assertFalse(JiveGlobals.isPasswordReencryptionNeeded(),
                     "Once no unverifiable password remains, re-encryption is expected to no longer be needed.");
+        }
+    }
+
+    /**
+     * Test doPost() refuses to repair user passwords when that is not needed (anymore). Repeating a repair that
+     * included users without SCRAM credentials would decrypt their re-encrypted passwords with SHA1.
+     */
+    @Test
+    public void testDoPost_RepairPasswords_RejectedWhenNotNeeded() throws Exception {
+        JiveGlobals.setBlowfishKdf(JiveGlobals.BLOWFISH_KDF_PBKDF2);
+        validCsrfRequestFor("repair-passwords");
+        when(request.getParameter("dbBackup")).thenReturn("true");
+
+        try (MockedStatic<EncryptedPasswordMigration> migration = mockStatic(EncryptedPasswordMigration.class)) {
+            migration.when(EncryptedPasswordMigration::isRepairNeeded).thenReturn(false);
+
+            servlet.doPost(request, response);
+
+            verify(session, description("The administrator is expected to be told that the repair is not needed.")).setAttribute("errorMessage", "security.blowfish.migration.passwords.error.not-needed");
+            migration.verify(() -> EncryptedPasswordMigration.reencryptVerified(any(), any(), any(), anyBoolean()), never().description("No password is expected to be re-encrypted when the repair is not needed."));
         }
     }
 

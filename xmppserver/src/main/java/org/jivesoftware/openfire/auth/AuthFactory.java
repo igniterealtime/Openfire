@@ -19,6 +19,10 @@ package org.jivesoftware.openfire.auth;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.jivesoftware.openfire.lockout.LockOutManager;
 import org.jivesoftware.openfire.sasl.ScramSha1SaslServer;
@@ -63,6 +67,11 @@ public class AuthFactory {
     private static MessageDigest digest;
     private static final Object DIGEST_LOCK = new Object();
     private static Blowfish cipher = null;
+
+    /**
+     * Using the password cipher requires the read lock; replacing it (see {@link #replacePasswordCipher}) the write lock.
+     */
+    private static final ReadWriteLock CIPHER_LOCK = new ReentrantReadWriteLock();
 
     static {
         // Create a message digest instance.
@@ -218,11 +227,16 @@ public class AuthFactory {
         if (password == null) {
             return null;
         }
-        Blowfish cipher = getCipher();
-        if (cipher == null) {
-            throw new UnsupportedOperationException();
+        CIPHER_LOCK.readLock().lock();
+        try {
+            Blowfish cipher = getCipher();
+            if (cipher == null) {
+                throw new UnsupportedOperationException();
+            }
+            return cipher.encryptString(password);
+        } finally {
+            CIPHER_LOCK.readLock().unlock();
         }
-        return cipher.encryptString(password);
     }
 
     /**
@@ -239,11 +253,16 @@ public class AuthFactory {
         if (encryptedPassword == null) {
             return null;
         }
-        Blowfish cipher = getCipher();
-        if (cipher == null) {
-            throw new UnsupportedOperationException();
+        CIPHER_LOCK.readLock().lock();
+        try {
+            Blowfish cipher = getCipher();
+            if (cipher == null) {
+                throw new UnsupportedOperationException();
+            }
+            return cipher.decryptString(encryptedPassword);
+        } finally {
+            CIPHER_LOCK.readLock().unlock();
         }
-        return cipher.decryptString(encryptedPassword);
     }
 
     /**
@@ -308,6 +327,62 @@ public class AuthFactory {
             Log.error(e.getMessage(), e);
         }
         return cipher;
+    }
+
+    /**
+     * Discards the cached password cipher, so that the next one uses the KDF that is configured by then. Outside of
+     * tests, use {@link #replacePasswordCipher(Callable)} instead.
+     */
+    static synchronized void resetCipher() {
+        cipher = null;
+    }
+
+    /**
+     * Returns the (shared, reentrant) lock to hold from encrypting a password until it is stored, so that the cipher is
+     * not replaced in between.
+     *
+     * @return the shared lock for using the password cipher.
+     */
+    static Lock getPasswordCipherUseLock() {
+        return CIPHER_LOCK.readLock();
+    }
+
+    /**
+     * Runs an operation that re-encrypts stored passwords and changes the configured KDF, then discards the cached
+     * password cipher (also on failure). Meanwhile, passwords cannot be encrypted, decrypted or stored, so none is
+     * stored with the cipher that is being replaced (OF-3374). The operation must not wait for a thread that does so.
+     *
+     * @param operation the operation that re-encrypts stored passwords and changes the configured KDF.
+     * @param <T> the type of the result of the operation.
+     * @return the result of the operation.
+     * @throws Exception when the operation throws one.
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3374">OF-3374</a>
+     */
+    public static <T> T replacePasswordCipher(@Nonnull final Callable<T> operation) throws Exception {
+        CIPHER_LOCK.writeLock().lock();
+        try {
+            return operation.call();
+        } finally {
+            resetCipher();
+            CIPHER_LOCK.writeLock().unlock();
+        }
+    }
+
+    /**
+     * Creates a password cipher with the specified KDF rather than the configured one, for re-encrypting passwords.
+     *
+     * @param kdf {@link JiveGlobals#BLOWFISH_KDF_SHA1} or {@link JiveGlobals#BLOWFISH_KDF_PBKDF2}
+     * @return a cipher, or {@code null} when no password key is configured (so no password has been encrypted)
+     */
+    @Nullable
+    static Blowfish createPasswordCipher(@Nonnull final String kdf) {
+        final String keyString = PASSWORD_KEY.getValue();
+        if (keyString == null) {
+            return null;
+        }
+        final Blowfish result = new Blowfish();
+        result.setKey(keyString, kdf);
+        return result;
     }
 
     public static boolean supportsScram() {

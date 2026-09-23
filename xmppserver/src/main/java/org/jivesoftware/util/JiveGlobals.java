@@ -64,6 +64,12 @@ public class JiveGlobals {
     private static final String BLOWFISH_KDF = ENCRYPTED_PROPERTY_NAME_PREFIX + "blowfish.kdf";
     private static final String BLOWFISH_SALT = ENCRYPTED_PROPERTY_NAME_PREFIX + "blowfish.salt";
 
+    /** Stored in the database rather than in (node-local) security.xml, so that every cluster node sees it. */
+    private static final String BLOWFISH_PASSWORDS_REENCRYPTED = "blowfish.passwordsReencrypted";
+
+    /** Set in security.xml when an installation starts out with PBKDF2, so that no password ever used SHA1. */
+    private static final String BLOWFISH_PBKDF2_SINCE_SETUP = ENCRYPTED_PROPERTY_NAME_PREFIX + "blowfish.pbkdf2SinceSetup";
+
     /** Blowfish key derivation function using PBKDF2-HMAC-SHA512 */
     public static final String BLOWFISH_KDF_PBKDF2 = "pbkdf2";
 
@@ -1421,6 +1427,40 @@ public class JiveGlobals {
     }
 
     /**
+     * Records whether stored user passwords are known to no longer use a superseded Blowfish KDF. This is set by the
+     * migration or repair, not derived from the stored passwords.
+     *
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3374">OF-3374</a>
+     * @since 5.1.2
+     */
+    public static void setPasswordsReencrypted(boolean reencrypted) {
+        setProperty(BLOWFISH_PASSWORDS_REENCRYPTED, Boolean.toString(reencrypted));
+    }
+
+    /**
+     * Checks whether stored user passwords may still need to be re-encrypted from SHA1 to PBKDF2: the configured KDF is
+     * PBKDF2, the installation did not start out with PBKDF2, and {@link #setPasswordsReencrypted(boolean)} was never
+     * called (as after a migration by an Openfire version that predates OF-3374). This does not query the stored
+     * passwords.
+     *
+     * @return true if user passwords may still need to be re-encrypted, false otherwise
+     * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3374">OF-3374</a>
+     * @since 5.1.2
+     */
+    public static boolean isPasswordReencryptionNeeded() {
+        if (!ENCRYPTION_ALGORITHM_BLOWFISH.equalsIgnoreCase(getEncryptionAlgorithm())) {
+            return false;
+        }
+        if (!BLOWFISH_KDF_PBKDF2.equalsIgnoreCase(getBlowfishKdf())) {
+            return false;
+        }
+        if (Boolean.parseBoolean(securityProperties.getProperty(BLOWFISH_PBKDF2_SINCE_SETUP))) {
+            return false;
+        }
+        return !Boolean.parseBoolean(getProperty(BLOWFISH_PASSWORDS_REENCRYPTED, "false"));
+    }
+
+    /**
      * Returns the encryption algorithm configured in security.xml.
      *
      * @return The encryption algorithm ("AES" or "Blowfish"), defaults to "Blowfish" if not configured
@@ -1705,6 +1745,9 @@ public class JiveGlobals {
                 // New installation (setup not complete): set PBKDF2 as default
                 securityProperties.setProperty(BLOWFISH_KDF, BLOWFISH_KDF_PBKDF2);
                 // Salt will be auto-generated when first accessed by getBlowfishSalt()
+                // No password is ever encrypted with SHA1 here. This is recorded in security.xml: database properties
+                // cannot be set during setup, and writing openfire.xml deadlocks when this runs while it is being read.
+                securityProperties.setProperty(BLOWFISH_PBKDF2_SINCE_SETUP, "true");
                 Log.info("New installation detected: Blowfish KDF set to PBKDF2-HMAC-SHA512");
             } else {
                 // Existing installation (setup complete): keep SHA1 for backward compatibility

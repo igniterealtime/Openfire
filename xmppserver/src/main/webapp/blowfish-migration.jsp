@@ -244,9 +244,18 @@
 
     <c:when test="${alreadyMigrated}">
         <c:if test="${empty successMessage}">
-            <admin:infobox type="success">
-                <fmt:message key="security.blowfish.migration.already-migrated"/>
-            </admin:infobox>
+            <c:choose>
+                <c:when test="${passwordReencryptionNeeded}">
+                    <admin:infobox type="warning">
+                        <fmt:message key="security.blowfish.migration.already-migrated.passwords-pending"/>
+                    </admin:infobox>
+                </c:when>
+                <c:otherwise>
+                    <admin:infobox type="success">
+                        <fmt:message key="security.blowfish.migration.already-migrated"/>
+                    </admin:infobox>
+                </c:otherwise>
+            </c:choose>
         </c:if>
 
         <div class="jive-table">

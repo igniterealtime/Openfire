@@ -175,6 +175,7 @@ public class DefaultAuthProviderScramStorageTest
             if (withDecrypt) {
                 try (final MockedStatic<AuthFactory> authFactory = Mockito.mockStatic(AuthFactory.class)) {
                     authFactory.when(() -> AuthFactory.decryptPassword(ENCRYPTED_VALUE)).thenReturn(PASSWORD);
+                    authFactory.when(AuthFactory::getPasswordCipherUseLock).thenReturn(new ReentrantLock());
                     return new DefaultAuthProvider().checkPassword(username, testPassword);
                 }
             }

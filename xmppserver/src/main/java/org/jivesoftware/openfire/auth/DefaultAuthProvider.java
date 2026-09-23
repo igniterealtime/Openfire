@@ -373,6 +373,24 @@ public class DefaultAuthProvider implements AuthProvider {
 
     @Override
     public String getPassword(String username) throws UserNotFoundException {
+        // Keep the password cipher from being replaced between reading the stored password and decrypting it (OF-3374).
+        final Lock cipherLock = AuthFactory.getPasswordCipherUseLock();
+        cipherLock.lock();
+        try {
+            return loadPassword(username);
+        } finally {
+            cipherLock.unlock();
+        }
+    }
+
+    /**
+     * Implements {@link #getPassword(String)}. The caller must hold the password cipher use lock.
+     *
+     * @param username the user
+     * @return the plain-text password of the user
+     * @throws UserNotFoundException if the user does not exist
+     */
+    private String loadPassword(String username) throws UserNotFoundException {
         if (!supportsPasswordRetrieval()) {
             // Reject the operation since the provider is read-only
             throw new UnsupportedOperationException();
@@ -423,6 +441,25 @@ public class DefaultAuthProvider implements AuthProvider {
     }
 
     public boolean checkPassword(String username, String testPassword) throws UserNotFoundException {
+        // Keep the password cipher from being replaced between reading the stored password and decrypting it (OF-3374).
+        final Lock cipherLock = AuthFactory.getPasswordCipherUseLock();
+        cipherLock.lock();
+        try {
+            return checkStoredPassword(username, testPassword);
+        } finally {
+            cipherLock.unlock();
+        }
+    }
+
+    /**
+     * Implements {@link #checkPassword(String, String)}. The caller must hold the password cipher use lock.
+     *
+     * @param username     the user
+     * @param testPassword the password to check
+     * @return true if the password is correct
+     * @throws UserNotFoundException if the user does not exist
+     */
+    private boolean checkStoredPassword(String username, String testPassword) throws UserNotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -558,6 +595,13 @@ public class DefaultAuthProvider implements AuthProvider {
         }
     }
 
+    /**
+     * Implements {@link #setPassword(String, String)}. The caller must hold the password cipher use lock.
+     *
+     * @param username the user
+     * @param password the new plain-text password
+     * @throws UserNotFoundException if the user does not exist
+     */
     private void storePassword(String username, String password) throws UserNotFoundException {
         // Determine if the password should be stored as plain text or encrypted.
         boolean usePlainPassword = JiveGlobals.getBooleanProperty("user.usePlainPassword");

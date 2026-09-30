@@ -752,44 +752,44 @@ public class SystemPropertyTest {
     }
 
     @Test
-    public void jiveGlobalsSetPropertyReturnsNullWhenNoPreviousValueExists() {
-        assertThat(JiveGlobals.setProperty("a-test-jiveglobals-absent", "value"), is(nullValue()));
+    public void jiveGlobalsGetAndSetPropertyReturnsNullWhenNoPreviousValueExists() {
+        assertThat(JiveGlobals.getAndSetProperty("a-test-jiveglobals-absent", "value"), is(nullValue()));
     }
 
     @Test
-    public void jiveGlobalsSetPropertyReturnsThePreviousValue() {
+    public void jiveGlobalsGetAndSetPropertyReturnsThePreviousValue() {
         final String key = "a-test-jiveglobals-present";
-        assertThat(JiveGlobals.setProperty(key, "first"), is(nullValue()));
-        assertThat(JiveGlobals.setProperty(key, "second"), is("first"));
+        assertThat(JiveGlobals.getAndSetProperty(key, "first"), is(nullValue()));
+        assertThat(JiveGlobals.getAndSetProperty(key, "second"), is("first"));
     }
 
     @Test
-    public void jiveGlobalsDeletePropertyReturnsThePreviousValue() {
+    public void jiveGlobalsGetAndDeletePropertyReturnsThePreviousValue() {
         final String key = "a-test-jiveglobals-delete";
         JiveGlobals.setProperty(key, "value-to-delete");
-        assertThat(JiveGlobals.deleteProperty(key), is("value-to-delete"));
-        assertThat(JiveGlobals.deleteProperty(key), is(nullValue()));
+        assertThat(JiveGlobals.getAndDeleteProperty(key), is("value-to-delete"));
+        assertThat(JiveGlobals.getAndDeleteProperty(key), is(nullValue()));
     }
 
     @Test
-    public void jiveGlobalsSetListPropertyReturnsNullWhenNoPreviousValueExists() {
+    public void jiveGlobalsGetAndSetListPropertyReturnsNullWhenNoPreviousValueExists() {
         final String key = "a-test-jiveglobals-list-absent";
-        assertThat(JiveGlobals.setProperty(key, Arrays.asList("a", "b")), is(nullValue()));
+        assertThat(JiveGlobals.getAndSetProperty(key, Arrays.asList("a", "b")), is(nullValue()));
     }
 
     @Test
-    public void jiveGlobalsSetListPropertyReturnsThePreviousValue() {
+    public void jiveGlobalsGetAndSetListPropertyReturnsThePreviousValue() {
         final String key = "a-test-jiveglobals-list-present";
-        assertThat(JiveGlobals.setProperty(key, Arrays.asList("a", "b")), is(nullValue()));
-        assertThat(JiveGlobals.setProperty(key, Arrays.asList("c", "d")), is(Arrays.asList("a", "b")));
+        assertThat(JiveGlobals.getAndSetProperty(key, Arrays.asList("a", "b")), is(nullValue()));
+        assertThat(JiveGlobals.getAndSetProperty(key, Arrays.asList("c", "d")), is(Arrays.asList("a", "b")));
     }
 
     @Test
-    public void jiveGlobalsSetListPropertyReturnsThePreviousValueOnUnchangedSet() {
+    public void jiveGlobalsGetAndSetListPropertyReturnsThePreviousValueOnUnchangedSet() {
         // The no-change early-return path: a present, unchanged value should still report the prior list (non-empty),
         // consistent with the changed path returning null only when the prior value was absent/empty.
         final String key = "a-test-jiveglobals-list-unchanged";
         JiveGlobals.setProperty(key, Arrays.asList("a", "b"));
-        assertThat(JiveGlobals.setProperty(key, Arrays.asList("a", "b")), is(Arrays.asList("a", "b")));
+        assertThat(JiveGlobals.getAndSetProperty(key, Arrays.asList("a", "b")), is(Arrays.asList("a", "b")));
     }
 }

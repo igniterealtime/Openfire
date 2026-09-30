@@ -383,7 +383,7 @@ public final class SystemProperty<T> {
      * @return the previous value of the property, or {@code null} if it didn't exist.
      */
     public T getAndSetValue(final T value) {
-        final String previousValue = JiveGlobals.setProperty(key, TO_STRING.get(getConverterClass()).apply(value, this), isEncrypted());
+        final String previousValue = JiveGlobals.getAndSetProperty(key, TO_STRING.get(getConverterClass()).apply(value, this), isEncrypted());
         if (previousValue != null) {
             //noinspection unchecked
             return (T) FROM_STRING.get(getConverterClass()).apply(previousValue, this);

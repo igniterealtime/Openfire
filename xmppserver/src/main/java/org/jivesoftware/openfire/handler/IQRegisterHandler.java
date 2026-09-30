@@ -169,9 +169,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         if (session == null) {
             Log.warn("Error during registration. No session found for '{}'", packet.getFrom());
             // This error packet probably won't make it through
-            reply = IQ.createResultIQ(packet);
-            reply.setChildElement(packet.getChildElement().createCopy());
-            reply.setError(PacketError.Condition.internal_server_error);
+            reply = createErrorReply(packet, PacketError.Condition.internal_server_error);
             return reply;
         }
         if (IQ.Type.get.equals(packet.getType())) {
@@ -179,10 +177,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             // form is part of creating an account, which is governed by in-band registration.
             final boolean allowed = session.isAuthenticated() ? canChangePassword : registrationEnabled;
             if (!allowed) {
-                reply = IQ.createResultIQ(packet);
-                reply.setChildElement(packet.getChildElement().createCopy());
                 // XEP-0077 3.1: a host that does not support in-band registration MUST return service-unavailable.
-                reply.setError(session.isAuthenticated() ? PacketError.Condition.forbidden : PacketError.Condition.service_unavailable);
+                reply = createErrorReply(packet, session.isAuthenticated() ? PacketError.Condition.forbidden : PacketError.Condition.service_unavailable);
             }
             else {
                 reply = IQ.createResultIQ(packet);
@@ -235,17 +231,13 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                 if (iqElement.element("remove") != null) {
                     // XEP-0077 3.2: <remove/> must be the only child element of the query.
                     if (iqElement.elements().size() != 1) {
-                        reply = IQ.createResultIQ(packet);
-                        reply.setChildElement(packet.getChildElement().createCopy());
-                        reply.setError(PacketError.Condition.bad_request);
+                        reply = createErrorReply(packet, PacketError.Condition.bad_request);
                         session.process(reply);
                         return null;
                     }
                     // If account deletion is not allowed (it is governed by in-band registration), return an error.
                     if (!registrationEnabled) {
-                        reply = IQ.createResultIQ(packet);
-                        reply.setChildElement(packet.getChildElement().createCopy());
-                        reply.setError(PacketError.Condition.not_allowed);
+                        reply = createErrorReply(packet, PacketError.Condition.not_allowed);
                     }
                     else {
                         if (session.isAuthenticated()) {
@@ -272,9 +264,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         }
                         else {
                             // The entity is not registered, so there is nothing to remove.
-                            reply = IQ.createResultIQ(packet);
-                            reply.setChildElement(packet.getChildElement().createCopy());
-                            reply.setError(PacketError.Condition.registration_required);
+                            reply = createErrorReply(packet, PacketError.Condition.registration_required);
                             session.process(reply);
                             return null;
                         }
@@ -362,34 +352,26 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         final User user = userManager.getUser(session.getUsername());
                         if (username == null) {
                             // XEP-0077 3.3: the request does not contain complete information.
-                            reply = IQ.createResultIQ(packet);
-                            reply.setChildElement(packet.getChildElement().createCopy());
-                            reply.setError(PacketError.Condition.bad_request);
+                            reply = createErrorReply(packet, PacketError.Condition.bad_request);
                             session.process(reply);
                             return null;
                         }
                         else if (!user.getUsername().equalsIgnoreCase(username)) {
                             Log.debug("Rejecting registration request from '{}' for another user '{}'.", session.getAddress(), username);
-                            reply = IQ.createResultIQ(packet);
-                            reply.setChildElement(packet.getChildElement().createCopy());
-                            reply.setError(PacketError.Condition.forbidden);
+                            reply = createErrorReply(packet, PacketError.Condition.forbidden);
                             session.process(reply);
                             return null;
                         }
                         else if (!canChangePassword) {
                             // If users are not allowed to update their registration (XEP-0077 3.3), return an error.
-                            reply = IQ.createResultIQ(packet);
-                            reply.setChildElement(packet.getChildElement().createCopy());
-                            reply.setError(PacketError.Condition.not_allowed);
+                            reply = createErrorReply(packet, PacketError.Condition.not_allowed);
                             session.process(reply);
                             return null;
                         }
                         // Reject explicitly emptied required fields before changing anything.
                         else if ((emailPresent && email == null && UserManager.getUserProvider().isEmailRequired())
                             || (namePresent && name == null && UserManager.getUserProvider().isNameRequired())) {
-                            reply = IQ.createResultIQ(packet);
-                            reply.setChildElement(packet.getChildElement().createCopy());
-                            reply.setError(PacketError.Condition.not_acceptable);
+                            reply = createErrorReply(packet, PacketError.Condition.not_acceptable);
                             session.process(reply);
                             return null;
                         }
@@ -410,18 +392,14 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                     else {
                         // If inband registration is not allowed, return an error.
                         if (!registrationEnabled) {
-                            reply = IQ.createResultIQ(packet);
-                            reply.setChildElement(packet.getChildElement().createCopy());
-                            reply.setError(PacketError.Condition.service_unavailable);
+                            reply = createErrorReply(packet, PacketError.Condition.service_unavailable);
                             session.process(reply);
                             return null;
                         }
                         // Inform the entity of failed registration if some required
                         // information was not provided
                         else if (username == null || password == null || password.trim().isEmpty()) {
-                            reply = IQ.createResultIQ(packet);
-                            reply.setChildElement(packet.getChildElement().createCopy());
-                            reply.setError(PacketError.Condition.not_acceptable);
+                            reply = createErrorReply(packet, PacketError.Condition.not_acceptable);
                             session.process(reply);
                             return null;
                         }
@@ -439,39 +417,27 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                 }
             }
             catch (UserAlreadyExistsException e) {
-                reply = IQ.createResultIQ(packet);
-                reply.setChildElement(packet.getChildElement().createCopy());
-                reply.setError(PacketError.Condition.conflict);
+                reply = createErrorReply(packet, PacketError.Condition.conflict);
             }
             catch (UserNotFoundException e) {
-                reply = IQ.createResultIQ(packet);
-                reply.setChildElement(packet.getChildElement().createCopy());
-                reply.setError(PacketError.Condition.bad_request);
+                reply = createErrorReply(packet, PacketError.Condition.bad_request);
             }
             catch (StringprepException e) {
                 // The specified username is not correct according to the stringprep specs
-                reply = IQ.createResultIQ(packet);
-                reply.setChildElement(packet.getChildElement().createCopy());
-                reply.setError(PacketError.Condition.jid_malformed);
+                reply = createErrorReply(packet, PacketError.Condition.jid_malformed);
             }
             catch (IllegalArgumentException e) {
                 // At least one of the fields passed in is not valid
-                reply = IQ.createResultIQ(packet);
-                reply.setChildElement(packet.getChildElement().createCopy());
-                reply.setError(PacketError.Condition.not_acceptable);
+                reply = createErrorReply(packet, PacketError.Condition.not_acceptable);
                 Log.warn(e.getMessage(), e);
             }
             catch (UnsupportedOperationException e) {
                 // The User provider is read-only so this operation is not allowed
-                reply = IQ.createResultIQ(packet);
-                reply.setChildElement(packet.getChildElement().createCopy());
-                reply.setError(PacketError.Condition.not_allowed);
+                reply = createErrorReply(packet, PacketError.Condition.not_allowed);
             }
             catch (Exception e) {
                 // Some unexpected error happened so return an internal_server_error
-                reply = IQ.createResultIQ(packet);
-                reply.setChildElement(packet.getChildElement().createCopy());
-                reply.setError(PacketError.Condition.internal_server_error);
+                reply = createErrorReply(packet, PacketError.Condition.internal_server_error);
                 Log.error(e.getMessage(), e);
             }
         }
@@ -480,6 +446,16 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             session.process(reply);
         }
         return null;
+    }
+
+    /**
+     * Creates an error reply to the provided request, which includes the request's payload.
+     */
+    private static IQ createErrorReply(final IQ request, final PacketError.Condition condition) {
+        final IQ reply = IQ.createResultIQ(request);
+        reply.setChildElement(request.getChildElement().createCopy());
+        reply.setError(condition);
+        return reply;
     }
 
     public boolean isInbandRegEnabled()

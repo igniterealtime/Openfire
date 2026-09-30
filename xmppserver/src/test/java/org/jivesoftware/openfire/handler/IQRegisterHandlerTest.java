@@ -28,6 +28,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
@@ -314,6 +316,28 @@ public class IQRegisterHandlerTest
         assertError(PacketError.Condition.not_acceptable, process(PREFIX + "<username>alice</username><password>newpass456</password><name/>" + SUFFIX));
         verify(user, never()).setPassword(anyString());
         verify(user, never()).setName(any());
+    }
+
+    /**
+     * OF-3390: naming the session's own account in a form that is equivalent after nodeprep is a self-update.
+     */
+    @ParameterizedTest
+    @CsvSource({
+        "strasse, straße",
+        "alice, \uFF21\uFF2C\uFF29\uFF23\uFF25", // fullwidth
+        "alice, alice\u00AD",                        // soft hyphen
+        "alice, ALICE"
+    })
+    public void testSelfUpdateWithEquivalentUsername(final String account, final String requested) throws Exception
+    {
+        final User target = mock(User.class, withSettings().lenient());
+        doReturn(account).when(target).getUsername();
+        doReturn(account).when(session).getUsername();
+        doReturn(target).when(userManager).getUser(account);
+
+        assertResult(process(PREFIX + "<username>" + requested + "</username><password>newpass456</password>" + SUFFIX));
+        verify(target).setPassword("newpass456");
+        verify(userManager, never()).createUser(anyString(), anyString(), any(), any());
     }
 
     // ----- Settings -----

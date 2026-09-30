@@ -347,8 +347,9 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                     
                     // So that we can set a more informative error message back, lets test this for
                     // stringprep validity now.
+                    // The prepared form is used from here on, as it's what identifies the account.
                     if (username != null) {
-                        Stringprep.nodeprep(username);
+                        username = Stringprep.nodeprep(username);
                     }
 
                     if (session.isAuthenticated()) {

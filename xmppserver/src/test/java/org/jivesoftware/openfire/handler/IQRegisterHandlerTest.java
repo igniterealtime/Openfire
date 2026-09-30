@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserProvider;
 import org.jivesoftware.util.JiveGlobals;
@@ -50,6 +51,7 @@ import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -348,6 +350,60 @@ public class IQRegisterHandlerTest
         assertResult(process(PREFIX + "<username>" + requested + "</username><password>newpass456</password>" + SUFFIX));
         verify(target).setPassword("newpass456");
         verify(userManager, never()).createUser(anyString(), anyString(), any(), any());
+    }
+
+    // ----- Error replies -----
+
+    private static void assertDoesNotEchoPassword(final IQ reply)
+    {
+        assertEquals(IQ.Type.error, reply.getType(), "Expected an error, but got: " + reply);
+        assertNull(reply.getChildElement(), "Expected the error not to include the request payload, but got: " + reply);
+        assertFalse(reply.toXML().contains("newpass456"), "The password was echoed in: " + reply);
+    }
+
+    /** OF-3393: XEP-0077 3.3, the original XML SHOULD NOT be returned in errors for password changes. */
+    @Test
+    public void testRefusedPasswordChangeDoesNotEchoPassword() throws Exception
+    {
+        handler.setCanChangePassword(false);
+        assertDoesNotEchoPassword(process(PREFIX + "<username>alice</username><password>newpass456</password>" + SUFFIX));
+    }
+
+    /** OF-3393 */
+    @Test
+    public void testRefusedFormPasswordChangeDoesNotEchoPassword() throws Exception
+    {
+        handler.setCanChangePassword(false);
+        assertDoesNotEchoPassword(process(PREFIX + form("<field var='username'><value>alice</value></field><field var='password'><value>newpass456</value></field>") + SUFFIX));
+    }
+
+    /** OF-3393: registration errors echoed the chosen password too. */
+    @Test
+    public void testRegistrationConflictDoesNotEchoPassword() throws Exception
+    {
+        doReturn(false).when(session).isAuthenticated();
+        doThrow(new UserAlreadyExistsException()).when(userManager).createUser(anyString(), anyString(), any(), any());
+        final IQ reply = process(PREFIX + "<username>bob</username><password>newpass456</password>" + SUFFIX);
+        assertError(PacketError.Condition.conflict, reply);
+        assertDoesNotEchoPassword(reply);
+    }
+
+    /** OF-3393 */
+    @Test
+    public void testRefusedRegistrationForAnotherUserDoesNotEchoPassword() throws Exception
+    {
+        assertDoesNotEchoPassword(process(PREFIX + "<username>bob</username><password>newpass456</password>" + SUFFIX));
+    }
+
+    /** OF-3393: only requests that contain a password are kept out of the error reply. */
+    @Test
+    public void testErrorWithoutPasswordIncludesPayload() throws Exception
+    {
+        handler.setCanChangePassword(false);
+        final IQ reply = process(PREFIX + "<username>alice</username><name>Alice Liddell</name>" + SUFFIX);
+        assertError(PacketError.Condition.not_allowed, reply);
+        assertNotNull(reply.getChildElement(), "Expected the request's payload to be included, but got: " + reply);
+        assertEquals("Alice Liddell", reply.getChildElement().elementText("name"));
     }
 
     // ----- Service discovery -----

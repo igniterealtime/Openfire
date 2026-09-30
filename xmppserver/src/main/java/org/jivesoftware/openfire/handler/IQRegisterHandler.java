@@ -449,13 +449,34 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
     }
 
     /**
-     * Creates an error reply to the provided request, which includes the request's payload.
+     * Creates an error reply to the provided request. The request's payload is included, unless it contains a
+     * password: that should not be echoed back (XEP-0077 3.3).
      */
     private static IQ createErrorReply(final IQ request, final PacketError.Condition condition) {
         final IQ reply = IQ.createResultIQ(request);
-        reply.setChildElement(request.getChildElement().createCopy());
+        if (!containsPassword(request.getChildElement())) {
+            reply.setChildElement(request.getChildElement().createCopy());
+        }
         reply.setError(condition);
         return reply;
+    }
+
+    /**
+     * Checks if a registration query contains a password, either as an element or as a field in a data form.
+     */
+    private static boolean containsPassword(final Element query) {
+        if (query.element("password") != null) {
+            return true;
+        }
+        final Element form = query.element(QName.get("x", "jabber:x:data"));
+        if (form != null) {
+            for (final Element field : form.elements("field")) {
+                if ("password".equals(field.attributeValue("var"))) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public boolean isInbandRegEnabled()

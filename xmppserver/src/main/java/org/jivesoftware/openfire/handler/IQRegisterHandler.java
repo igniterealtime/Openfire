@@ -25,6 +25,7 @@ import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.PacketException;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.openfire.disco.ServerFeaturesProvider;
 import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.roster.RosterManager;
@@ -73,6 +74,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
 
     private static final Logger Log = LoggerFactory.getLogger(IQRegisterHandler.class);
 
+    private static final String NAMESPACE = "jabber:iq:register";
+
     private static boolean registrationEnabled;
     private static boolean canChangePassword;
     private static Element probeResult;
@@ -87,7 +90,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
      */
     public IQRegisterHandler() {
         super("XMPP Registration Handler");
-        info = new IQHandlerInfo("query", "jabber:iq:register");
+        info = new IQHandlerInfo("query", NAMESPACE);
     }
 
     @Override
@@ -492,6 +495,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         }
         registrationEnabled = allowed;
         JiveGlobals.setProperty("register.inband", registrationEnabled ? "true" : "false");
+        updateAdvertisedFeature();
     }
 
     public boolean canChangePassword()
@@ -507,6 +511,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         }
         canChangePassword = allowed;
         JiveGlobals.setProperty("register.password", canChangePassword ? "true" : "false");
+        updateAdvertisedFeature();
     }
 
     @Override
@@ -514,8 +519,30 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         return info;
     }
 
+    /**
+     * The feature is only advertised when at least one registration operation can succeed: creating (and deleting)
+     * accounts, or updating an existing registration.
+     */
     @Override
     public Iterator<String> getFeatures() {
-        return Collections.singleton("jabber:iq:register").iterator();
+        if (isInbandRegEnabled() || canChangePassword()) {
+            return Collections.singleton(NAMESPACE).iterator();
+        }
+        return Collections.emptyIterator();
+    }
+
+    /**
+     * Brings the feature that is advertised in service discovery in line with the current settings.
+     */
+    private void updateAdvertisedFeature() {
+        final IQDiscoInfoHandler discoInfoHandler = XMPPServer.getInstance().getIQDiscoInfoHandler();
+        if (discoInfoHandler == null) {
+            return; // Not (yet) running as part of a server.
+        }
+        if (getFeatures().hasNext()) {
+            discoInfoHandler.addServerFeature(NAMESPACE);
+        } else {
+            discoInfoHandler.removeServerFeature(NAMESPACE);
+        }
     }
 }

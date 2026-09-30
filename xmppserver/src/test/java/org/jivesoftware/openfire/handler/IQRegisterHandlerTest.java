@@ -18,6 +18,7 @@ package org.jivesoftware.openfire.handler;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.user.User;
@@ -36,12 +37,17 @@ import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 
+import java.util.Iterator;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
@@ -62,6 +68,7 @@ public class IQRegisterHandlerTest
     private User user;
     private ClientSession session;
     private IQRegisterHandler handler;
+    private IQDiscoInfoHandler discoInfoHandler;
 
     @BeforeAll
     public static void setUpClass() throws Exception
@@ -102,6 +109,9 @@ public class IQRegisterHandlerTest
         doReturn(new JID("alice", Fixtures.XMPP_DOMAIN, "res")).when(session).getAddress();
         final SessionManager sessionManager = xmppServer.getSessionManager();
         doReturn(session).when(sessionManager).getSession(any(JID.class));
+
+        discoInfoHandler = mock(IQDiscoInfoHandler.class, withSettings().lenient());
+        doReturn(discoInfoHandler).when(xmppServer).getIQDiscoInfoHandler();
 
         handler = new IQRegisterHandler();
         handler.initialize(xmppServer);
@@ -338,6 +348,89 @@ public class IQRegisterHandlerTest
         assertResult(process(PREFIX + "<username>" + requested + "</username><password>newpass456</password>" + SUFFIX));
         verify(target).setPassword("newpass456");
         verify(userManager, never()).createUser(anyString(), anyString(), any(), any());
+    }
+
+    // ----- Service discovery -----
+
+    private boolean advertisesRegistration()
+    {
+        final Iterator<String> features = handler.getFeatures();
+        while (features.hasNext()) {
+            if ("jabber:iq:register".equals(features.next())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** OF-3391 */
+    @Test
+    public void testAdvertisedWhenEnabled()
+    {
+        assertTrue(advertisesRegistration());
+    }
+
+    /** OF-3391: every jabber:iq:register request is refused when both settings are off. */
+    @Test
+    public void testNotAdvertisedWhenBothDisabled()
+    {
+        handler.setInbandRegEnabled(false);
+        handler.setCanChangePassword(false);
+        assertFalse(advertisesRegistration());
+    }
+
+    /** OF-3391 */
+    @Test
+    public void testAdvertisedWhenOnlyInbandRegistrationEnabled()
+    {
+        handler.setCanChangePassword(false);
+        assertTrue(advertisesRegistration());
+    }
+
+    /** OF-3391: clients use the feature to determine if password changes are possible. */
+    @Test
+    public void testAdvertisedWhenOnlyPasswordChangeEnabled()
+    {
+        handler.setInbandRegEnabled(false);
+        assertTrue(advertisesRegistration());
+    }
+
+    /** OF-3391: a read-only provider refuses every set, so neither operation is available. */
+    @Test
+    public void testNotAdvertisedWhenUserProviderIsReadOnly()
+    {
+        UserManager.setProvider(new Fixtures.StubUserProvider() {
+            @Override
+            public boolean isReadOnly()
+            {
+                return true;
+            }
+        });
+        assertFalse(advertisesRegistration());
+    }
+
+    /** OF-3391: the feature follows runtime changes of the settings. */
+    @Test
+    public void testFeatureIsRemovedWhenBothSettingsAreDisabled()
+    {
+        handler.setInbandRegEnabled(false);
+        verify(discoInfoHandler, never()).removeServerFeature("jabber:iq:register");
+        handler.setCanChangePassword(false);
+        verify(discoInfoHandler).removeServerFeature("jabber:iq:register");
+    }
+
+    /** OF-3391 */
+    @Test
+    public void testFeatureIsAddedWhenASettingIsEnabled()
+    {
+        handler.setInbandRegEnabled(false);
+        handler.setCanChangePassword(false);
+        clearInvocations(discoInfoHandler);
+
+        handler.setCanChangePassword(true);
+
+        verify(discoInfoHandler).addServerFeature("jabber:iq:register");
+        verify(discoInfoHandler, never()).removeServerFeature(anyString());
     }
 
     // ----- Settings -----

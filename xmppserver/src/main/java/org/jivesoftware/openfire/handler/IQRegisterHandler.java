@@ -292,8 +292,15 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         // Get the sent form
                         registrationForm = new DataForm(formElement);
                         // Get the username sent in the form
-                        List<String> values = registrationForm.getField("username").getValues();
-                        username = (!values.isEmpty() ? values.get(0) : " ");
+                        field = registrationForm.getField("username");
+                        List<String> values;
+                        if (field != null) {
+                            values = field.getValues();
+                            username = (!values.isEmpty() ? values.get(0) : null);
+                        }
+                        else {
+                            username = null;
+                        }
                         // Get the password sent in the form
                         field = registrationForm.getField("password");
                         if (field != null) {
@@ -323,6 +330,10 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         name = iqElement.elementText("name");
                         emailPresent = iqElement.element("email") != null;
                         namePresent = iqElement.element("name") != null;
+                    }
+                    // A missing or blank username is treated as not provided.
+                    if (username != null && username.matches("\\s*")) {
+                        username = null;
                     }
                     if (email != null && email.matches("\\s*")) {
                         email = null;
@@ -417,7 +428,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         }
                         // Inform the entity of failed registration if some required
                         // information was not provided
-                        else if (password == null || password.trim().isEmpty()) {
+                        else if (username == null || password == null || password.trim().isEmpty()) {
                             reply = IQ.createResultIQ(packet);
                             reply.setChildElement(packet.getChildElement().createCopy());
                             reply.setError(PacketError.Condition.not_acceptable);

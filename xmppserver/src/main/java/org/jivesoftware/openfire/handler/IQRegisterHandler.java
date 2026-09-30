@@ -172,8 +172,10 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             return reply;
         }
         if (IQ.Type.get.equals(packet.getType())) {
-            // If inband registration is not allowed, return an error.
-            if (!registrationEnabled) {
+            // Reading an existing registration is governed by the ability to change it. Retrieving the registration
+            // form is part of creating an account, which is governed by in-band registration.
+            final boolean allowed = session.isAuthenticated() ? canChangePassword : registrationEnabled;
+            if (!allowed) {
                 reply = IQ.createResultIQ(packet);
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.forbidden);
@@ -235,11 +237,11 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         session.process(reply);
                         return null;
                     }
-                    // If inband registration is not allowed, return an error.
+                    // If account deletion is not allowed (it is governed by in-band registration), return an error.
                     if (!registrationEnabled) {
                         reply = IQ.createResultIQ(packet);
                         reply.setChildElement(packet.getChildElement().createCopy());
-                        reply.setError(PacketError.Condition.forbidden);
+                        reply.setError(PacketError.Condition.not_allowed);
                     }
                     else {
                         if (session.isAuthenticated()) {
@@ -349,72 +351,55 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                     }
 
                     if (session.isAuthenticated()) {
-                        // Flag that indicates if the user is *only* changing his password
-                        boolean onlyPassword = false;
-                        if (iqElement.elements().size() == 2 &&
-                                iqElement.element("username") != null &&
-                                iqElement.element("password") != null) {
-                            onlyPassword = true;
+                        // An authenticated entity can only modify its own registration (XEP-0077), which is governed by
+                        // 'register.password'. Creating accounts on behalf of others is not supported: use XEP-0133
+                        // add-user, the admin console or the REST API plugin.
+                        final User user = userManager.getUser(session.getUsername());
+                        if (username == null) {
+                            // XEP-0077 3.3: the request does not contain complete information.
+                            reply = IQ.createResultIQ(packet);
+                            reply.setChildElement(packet.getChildElement().createCopy());
+                            reply.setError(PacketError.Condition.bad_request);
+                            session.process(reply);
+                            return null;
                         }
-                        // If users are not allowed to change their password, return an error.
-                        if (password != null && !canChangePassword) {
+                        else if (!user.getUsername().equalsIgnoreCase(username)) {
+                            Log.debug("Rejecting registration request from '{}' for another user '{}'.", session.getAddress(), username);
                             reply = IQ.createResultIQ(packet);
                             reply.setChildElement(packet.getChildElement().createCopy());
                             reply.setError(PacketError.Condition.forbidden);
                             session.process(reply);
                             return null;
                         }
-                        // If inband registration is not allowed, return an error.
-                        else if (!onlyPassword && !registrationEnabled) {
+                        else if (!canChangePassword) {
+                            // If users are not allowed to update their registration, return an error.
                             reply = IQ.createResultIQ(packet);
                             reply.setChildElement(packet.getChildElement().createCopy());
                             reply.setError(PacketError.Condition.forbidden);
+                            session.process(reply);
+                            return null;
+                        }
+                        // Reject explicitly emptied required fields before changing anything.
+                        else if ((emailPresent && email == null && UserManager.getUserProvider().isEmailRequired())
+                            || (namePresent && name == null && UserManager.getUserProvider().isNameRequired())) {
+                            reply = IQ.createResultIQ(packet);
+                            reply.setChildElement(packet.getChildElement().createCopy());
+                            reply.setError(PacketError.Condition.not_acceptable);
                             session.process(reply);
                             return null;
                         }
                         else {
-                            User user = userManager.getUser(session.getUsername());
-                            if (username == null) {
-                                // XEP-0077 3.3: the request does not contain complete information.
-                                reply = IQ.createResultIQ(packet);
-                                reply.setChildElement(packet.getChildElement().createCopy());
-                                reply.setError(PacketError.Condition.bad_request);
-                                session.process(reply);
-                                return null;
+                            if (password != null && !password.trim().isEmpty()) {
+                                user.setPassword(password);
                             }
-                            else if (user.getUsername().equalsIgnoreCase(username)) {
-                                // Reject explicitly emptied required fields before changing anything.
-                                if ((emailPresent && email == null && UserManager.getUserProvider().isEmailRequired())
-                                    || (namePresent && name == null && UserManager.getUserProvider().isNameRequired())) {
-                                    reply = IQ.createResultIQ(packet);
-                                    reply.setChildElement(packet.getChildElement().createCopy());
-                                    reply.setError(PacketError.Condition.not_acceptable);
-                                    session.process(reply);
-                                    return null;
-                                }
-                                if (password != null && !password.trim().isEmpty()) {
-                                    user.setPassword(password);
-                                }
-                                // Omitted fields are left unchanged, explicitly empty ones are cleared.
-                                if (emailPresent) {
-                                    user.setEmail(email);
-                                }
-                                if (namePresent) {
-                                    user.setName(name);
-                                }
-                                newUser = user;
+                            // Omitted fields are left unchanged, explicitly empty ones are cleared.
+                            if (emailPresent) {
+                                user.setEmail(email);
                             }
-                            else {
-                                // An authenticated entity can only modify its own registration (XEP-0077). Creating
-                                // accounts on behalf of others is done through XEP-0133 add-user, the admin console
-                                // or the REST API plugin.
-                                Log.debug("Rejecting registration request from '{}' for another user '{}'.", session.getAddress(), username);
-                                reply = IQ.createResultIQ(packet);
-                                reply.setChildElement(packet.getChildElement().createCopy());
-                                reply.setError(PacketError.Condition.forbidden);
-                                session.process(reply);
-                                return null;
+                            if (namePresent) {
+                                user.setName(name);
                             }
+                            newUser = user;
                         }
                     }
                     else {

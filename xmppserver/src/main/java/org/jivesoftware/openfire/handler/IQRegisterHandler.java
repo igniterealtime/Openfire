@@ -178,7 +178,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             if (!allowed) {
                 reply = IQ.createResultIQ(packet);
                 reply.setChildElement(packet.getChildElement().createCopy());
-                reply.setError(PacketError.Condition.forbidden);
+                // XEP-0077 3.1: a host that does not support in-band registration MUST return service-unavailable.
+                reply.setError(session.isAuthenticated() ? PacketError.Condition.forbidden : PacketError.Condition.service_unavailable);
             }
             else {
                 reply = IQ.createResultIQ(packet);

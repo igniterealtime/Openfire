@@ -372,12 +372,12 @@ public class IQRegisterHandlerTest
         assertError(PacketError.Condition.forbidden, process("<iq type='get' id='test' from='alice@" + Fixtures.XMPP_DOMAIN + "/res' to='" + Fixtures.XMPP_DOMAIN + "'><query xmlns='jabber:iq:register'/></iq>"));
     }
 
-    /** OF-3388: the registration form is governed by 'register.inband'. */
+    /** OF-3388: the registration form is governed by 'register.inband'. OF-3389: refused with service-unavailable. */
     @Test
     public void testUnauthenticatedGetWhenInbandRegistrationDisabled() throws Exception
     {
         doReturn(false).when(session).isAuthenticated();
         handler.setInbandRegEnabled(false);
-        assertError(PacketError.Condition.forbidden, process("<iq type='get' id='test' from='alice@" + Fixtures.XMPP_DOMAIN + "/res' to='" + Fixtures.XMPP_DOMAIN + "'><query xmlns='jabber:iq:register'/></iq>"));
+        assertError(PacketError.Condition.service_unavailable, process("<iq type='get' id='test' from='alice@" + Fixtures.XMPP_DOMAIN + "/res' to='" + Fixtures.XMPP_DOMAIN + "'><query xmlns='jabber:iq:register'/></iq>"));
     }
 }

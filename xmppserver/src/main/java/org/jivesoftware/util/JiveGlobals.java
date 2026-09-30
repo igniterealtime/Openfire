@@ -808,10 +808,33 @@ public class JiveGlobals {
      *
      * @param name the name of the property being set.
      * @param value the value of the property being set.
+     */
+    public static void setProperty(String name, String value) {
+        getAndSetProperty(name, value, false);
+    }
+
+    /**
+     * Sets a Jive property. If the property doesn't already exists, a new
+     * one will be created.
+     *
+     * @param name the name of the property being set.
+     * @param value the value of the property being set.
      * @return the previous value of the property, or {@code null} if it didn't exist.
      */
-    public static String setProperty(String name, String value) {
-        return setProperty(name, value, false);
+    public static String getAndSetProperty(String name, String value) {
+        return getAndSetProperty(name, value, false);
+    }
+
+    /**
+     * Sets a Jive property. If the property doesn't already exists, a new
+     * one will be created.
+     *
+     * @param name the name of the property being set.
+     * @param value the value of the property being set.
+     * @param encrypt {@code true} to encrypt the property in the database, other {@code false}
+     */
+    public static void setProperty(String name, String value, boolean encrypt) {
+        getAndSetProperty(name, value, encrypt);
     }
 
     /**
@@ -823,7 +846,7 @@ public class JiveGlobals {
      * @param encrypt {@code true} to encrypt the property in the database, other {@code false}
      * @return the previous value of the property, or {@code null} if it didn't exist.
      */
-    public static String setProperty(String name, String value, boolean encrypt) {
+    public static String getAndSetProperty(String name, String value, boolean encrypt) {
         if (properties == null) {
             if (isSetupMode()) {
                 return null;
@@ -852,9 +875,21 @@ public class JiveGlobals {
      *
      * @param name   the name of the property being set.
      * @param values the values of the property.
+     */
+    public static void setProperty(String name, List<String> values)
+    {
+        getAndSetProperty(name, values);
+    }
+
+    /**
+     * Sets a Jive property with a list of values, returning the previous value. Apart from the returned value, this
+     * method behaves exactly like {@link #setProperty(String, List)}.
+     *
+     * @param name   the name of the property being set.
+     * @param values the values of the property.
      * @return the previous value of the property, or {@code null} if it didn't exist.
      */
-    public static List<String> setProperty(String name, List<String> values)
+    public static List<String> getAndSetProperty(String name, List<String> values)
     {
         if ( properties == null )
         {
@@ -923,9 +958,19 @@ public class JiveGlobals {
      * does nothing. All children of the property will be deleted as well.
      *
      * @param name the name of the property to delete.
+     */
+    public static void deleteProperty(String name) {
+        getAndDeleteProperty(name);
+    }
+
+    /**
+     * Deletes a Jive property, returning its previous value. If the property doesn't exist, the method
+     * does nothing. All children of the property will be deleted as well.
+     *
+     * @param name the name of the property to delete.
      * @return the previous value associated with this property, or null if there was no property.
      */
-    public static String deleteProperty(String name) {
+    public static String getAndDeleteProperty(String name) {
         if (properties == null) {
             if (isSetupMode()) {
                 return null;

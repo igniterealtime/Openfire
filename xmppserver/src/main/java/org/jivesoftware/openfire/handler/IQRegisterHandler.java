@@ -356,7 +356,15 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         }
                         else {
                             User user = userManager.getUser(session.getUsername());
-                            if (user.getUsername().equalsIgnoreCase(username)) {
+                            if (username == null) {
+                                // XEP-0077 3.3: the request does not contain complete information.
+                                reply = IQ.createResultIQ(packet);
+                                reply.setChildElement(packet.getChildElement().createCopy());
+                                reply.setError(PacketError.Condition.bad_request);
+                                session.process(reply);
+                                return null;
+                            }
+                            else if (user.getUsername().equalsIgnoreCase(username)) {
                                 if (password != null && !password.trim().isEmpty()) {
                                     user.setPassword(password);
                                 }

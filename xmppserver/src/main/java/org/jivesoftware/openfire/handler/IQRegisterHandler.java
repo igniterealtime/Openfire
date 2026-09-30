@@ -227,6 +227,14 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             try {
                 Element iqElement = packet.getChildElement();
                 if (iqElement.element("remove") != null) {
+                    // XEP-0077 3.2: <remove/> must be the only child element of the query.
+                    if (iqElement.elements().size() != 1) {
+                        reply = IQ.createResultIQ(packet);
+                        reply.setChildElement(packet.getChildElement().createCopy());
+                        reply.setError(PacketError.Condition.bad_request);
+                        session.process(reply);
+                        return null;
+                    }
                     // If inband registration is not allowed, return an error.
                     if (!registrationEnabled) {
                         reply = IQ.createResultIQ(packet);

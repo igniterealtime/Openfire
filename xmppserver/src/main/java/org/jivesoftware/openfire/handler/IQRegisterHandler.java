@@ -35,6 +35,7 @@ import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
@@ -76,8 +77,25 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
 
     private static final String NAMESPACE = "jabber:iq:register";
 
-    private static boolean registrationEnabled;
-    private static boolean canChangePassword;
+    /**
+     * Controls in-band account creation and deletion.
+     */
+    public static final SystemProperty<Boolean> INBAND_REGISTRATION = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("register.inband")
+        .setDefaultValue(true)
+        .setDynamic(true)
+        .addListener(enabled -> updateAdvertisedFeature())
+        .build();
+
+    /**
+     * Controls users updating (and reading) their own registration: their password, name and email address.
+     */
+    public static final SystemProperty<Boolean> PASSWORD_CHANGE = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("register.password")
+        .setDefaultValue(true)
+        .setDynamic(true)
+        .addListener(enabled -> updateAdvertisedFeature())
+        .build();
     private static Element probeResult;
 
     private UserManager userManager;
@@ -155,10 +173,6 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         JiveGlobals.migrateProperty("register.inband");
         JiveGlobals.migrateProperty("register.password");
         
-        // See if in-band registration should be enabled (default is true).
-        registrationEnabled = JiveGlobals.getBooleanProperty("register.inband", true);
-        // See if users can change their passwords (default is true).
-        canChangePassword = JiveGlobals.getBooleanProperty("register.password", true);
     }
 
     @Override
@@ -176,7 +190,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             // Reading an existing registration is possible when either setting is enabled, in line with when the
             // feature is advertised. Retrieving the registration form is part of creating an account, which is
             // governed by in-band registration.
-            final boolean allowed = session.isAuthenticated() ? (registrationEnabled || canChangePassword) : registrationEnabled;
+            final boolean allowed = session.isAuthenticated() ? (INBAND_REGISTRATION.getValue() || PASSWORD_CHANGE.getValue()) : INBAND_REGISTRATION.getValue();
             if (!allowed) {
                 // XEP-0077 3.1: a host that does not support in-band registration MUST return service-unavailable.
                 reply = createErrorReply(packet, PacketError.Condition.service_unavailable);
@@ -237,7 +251,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         return null;
                     }
                     // If account deletion is not allowed (it is governed by in-band registration), return an error.
-                    if (!registrationEnabled) {
+                    if (!INBAND_REGISTRATION.getValue()) {
                         reply = createErrorReply(packet, PacketError.Condition.not_allowed);
                     }
                     else {
@@ -363,7 +377,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                             session.process(reply);
                             return null;
                         }
-                        else if (!canChangePassword) {
+                        else if (!PASSWORD_CHANGE.getValue()) {
                             // If users are not allowed to update their registration (XEP-0077 3.3), return an error.
                             reply = createErrorReply(packet, PacketError.Condition.not_allowed);
                             session.process(reply);
@@ -392,7 +406,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                     }
                     else {
                         // If inband registration is not allowed, return an error.
-                        if (!registrationEnabled) {
+                        if (!INBAND_REGISTRATION.getValue()) {
                             reply = createErrorReply(packet, PacketError.Condition.service_unavailable);
                             session.process(reply);
                             return null;
@@ -482,7 +496,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
 
     public boolean isInbandRegEnabled()
     {
-        return registrationEnabled && !UserManager.getUserProvider().isReadOnly();
+        return INBAND_REGISTRATION.getValue() && !UserManager.getUserProvider().isReadOnly();
     }
 
     public void setInbandRegEnabled(boolean allowed)
@@ -491,14 +505,12 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         {
             Log.warn( "Enabling in-band registration has no effect, as the user provider for this system is read-only." );
         }
-        registrationEnabled = allowed;
-        JiveGlobals.setProperty("register.inband", registrationEnabled ? "true" : "false");
-        updateAdvertisedFeature();
+        INBAND_REGISTRATION.setValue(allowed);
     }
 
     public boolean canChangePassword()
     {
-        return canChangePassword && !UserManager.getUserProvider().isReadOnly();
+        return PASSWORD_CHANGE.getValue() && !UserManager.getUserProvider().isReadOnly();
     }
 
     public void setCanChangePassword(boolean allowed)
@@ -507,9 +519,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         {
             Log.warn( "Allowing password changes has no effect, as the user provider for this system is read-only." );
         }
-        canChangePassword = allowed;
-        JiveGlobals.setProperty("register.password", canChangePassword ? "true" : "false");
-        updateAdvertisedFeature();
+        PASSWORD_CHANGE.setValue(allowed);
     }
 
     @Override
@@ -523,21 +533,26 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
      */
     @Override
     public Iterator<String> getFeatures() {
-        if (isInbandRegEnabled() || canChangePassword()) {
+        if (isRegistrationAvailable()) {
             return Collections.singleton(NAMESPACE).iterator();
         }
         return Collections.emptyIterator();
     }
 
+    private static boolean isRegistrationAvailable() {
+        return !UserManager.getUserProvider().isReadOnly() && (INBAND_REGISTRATION.getValue() || PASSWORD_CHANGE.getValue());
+    }
+
     /**
      * Brings the feature that is advertised in service discovery in line with the current settings.
      */
-    private void updateAdvertisedFeature() {
-        final IQDiscoInfoHandler discoInfoHandler = XMPPServer.getInstance().getIQDiscoInfoHandler();
+    private static void updateAdvertisedFeature() {
+        final XMPPServer server = XMPPServer.getInstance();
+        final IQDiscoInfoHandler discoInfoHandler = server == null ? null : server.getIQDiscoInfoHandler();
         if (discoInfoHandler == null) {
             return; // Not (yet) running as part of a server.
         }
-        if (getFeatures().hasNext()) {
+        if (isRegistrationAvailable()) {
             discoInfoHandler.addServerFeature(NAMESPACE);
         } else {
             discoInfoHandler.removeServerFeature(NAMESPACE);

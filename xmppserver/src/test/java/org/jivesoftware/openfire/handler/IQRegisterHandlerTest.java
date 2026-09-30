@@ -26,12 +26,14 @@ import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserProvider;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
@@ -487,6 +489,42 @@ public class IQRegisterHandlerTest
 
         verify(discoInfoHandler).addServerFeature("jabber:iq:register");
         verify(discoInfoHandler, never()).removeServerFeature(anyString());
+    }
+
+    // ----- System properties -----
+
+    /** OF-3394: the settings are declared as system properties, so that the admin console can describe them. */
+    @ParameterizedTest
+    @ValueSource(strings = {"register.inband", "register.password"})
+    public void testSettingIsASystemProperty(final String key)
+    {
+        final SystemProperty<?> property = SystemProperty.getProperty(key).orElseThrow(() -> new AssertionError("Not a system property: " + key));
+        assertEquals(Boolean.TRUE, property.getDefaultValue());
+        assertTrue(property.isDynamic());
+        assertNotNull(property.getDescription());
+        assertFalse(property.getDescription().isBlank(), "Expected a description for " + key);
+        assertFalse(property.getDescription().contains("system_property."), "Expected a description for " + key + ", but got: " + property.getDescription());
+    }
+
+    /** OF-3394: a change to the property itself is acted on, not just a change made through the setters. */
+    @Test
+    public void testSettingsFollowPropertyChanges() throws Exception
+    {
+        JiveGlobals.setProperty("register.password", "false");
+        assertError(PacketError.Condition.not_allowed, process(PREFIX + "<username>alice</username><name>Alice Liddell</name>" + SUFFIX));
+    }
+
+    /** OF-3394: the advertised feature follows a change to the properties (OF-3391). */
+    @Test
+    public void testAdvertisedFeatureFollowsPropertyChanges()
+    {
+        JiveGlobals.setProperty("register.inband", "false");
+        JiveGlobals.setProperty("register.password", "false");
+        verify(discoInfoHandler).removeServerFeature("jabber:iq:register");
+
+        clearInvocations(discoInfoHandler);
+        JiveGlobals.setProperty("register.password", "true");
+        verify(discoInfoHandler).addServerFeature("jabber:iq:register");
     }
 
     // ----- Settings -----

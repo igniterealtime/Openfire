@@ -330,14 +330,16 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                             reply = IQ.createResultIQ(packet);
                             reply.setChildElement(packet.getChildElement().createCopy());
                             reply.setError(PacketError.Condition.forbidden);
-                            return reply;
+                            session.process(reply);
+                            return null;
                         }
                         // If inband registration is not allowed, return an error.
                         else if (!onlyPassword && !registrationEnabled) {
                             reply = IQ.createResultIQ(packet);
                             reply.setChildElement(packet.getChildElement().createCopy());
                             reply.setError(PacketError.Condition.forbidden);
-                            return reply;
+                            session.process(reply);
+                            return null;
                         }
                         else {
                             User user = userManager.getUser(session.getUsername());
@@ -358,7 +360,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                                 reply = IQ.createResultIQ(packet);
                                 reply.setChildElement(packet.getChildElement().createCopy());
                                 reply.setError(PacketError.Condition.forbidden);
-                                return reply;
+                                session.process(reply);
+                                return null;
                             }
                         }
                     }
@@ -367,8 +370,9 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         if (!registrationEnabled) {
                             reply = IQ.createResultIQ(packet);
                             reply.setChildElement(packet.getChildElement().createCopy());
-                            reply.setError(PacketError.Condition.forbidden);
-                            return reply;
+                            reply.setError(PacketError.Condition.service_unavailable);
+                            session.process(reply);
+                            return null;
                         }
                         // Inform the entity of failed registration if some required
                         // information was not provided
@@ -376,7 +380,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                             reply = IQ.createResultIQ(packet);
                             reply.setChildElement(packet.getChildElement().createCopy());
                             reply.setError(PacketError.Condition.not_acceptable);
-                            return reply;
+                            session.process(reply);
+                            return null;
                         }
                         else {
                             // Create the new account

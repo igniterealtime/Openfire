@@ -265,7 +265,12 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                             reply = null;
                         }
                         else {
-                            throw new UnauthorizedException();
+                            // The entity is not registered, so there is nothing to remove.
+                            reply = IQ.createResultIQ(packet);
+                            reply.setChildElement(packet.getChildElement().createCopy());
+                            reply.setError(PacketError.Condition.registration_required);
+                            session.process(reply);
+                            return null;
                         }
                     }
                 }

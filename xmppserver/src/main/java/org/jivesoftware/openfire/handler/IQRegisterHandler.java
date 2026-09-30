@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -350,15 +350,14 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                                 }
                                 newUser = user;
                             }
-                            else if (password != null && !password.trim().isEmpty()) {
-                                // An admin can create new accounts when logged in.
-                                newUser = userManager.createUser(username, password, null, email);
-                            }
                             else {
-                                // Deny registration of users with no password
+                                // An authenticated entity can only modify its own registration (XEP-0077). Creating
+                                // accounts on behalf of others is done through XEP-0133 add-user, the admin console
+                                // or the REST API plugin.
+                                Log.debug("Rejecting registration request from '{}' for another user '{}'.", session.getAddress(), username);
                                 reply = IQ.createResultIQ(packet);
                                 reply.setChildElement(packet.getChildElement().createCopy());
-                                reply.setError(PacketError.Condition.not_acceptable);
+                                reply.setError(PacketError.Condition.forbidden);
                                 return reply;
                             }
                         }

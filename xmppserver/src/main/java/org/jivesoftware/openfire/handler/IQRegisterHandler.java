@@ -377,10 +377,10 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                             return null;
                         }
                         else if (!canChangePassword) {
-                            // If users are not allowed to update their registration, return an error.
+                            // If users are not allowed to update their registration (XEP-0077 3.3), return an error.
                             reply = IQ.createResultIQ(packet);
                             reply.setChildElement(packet.getChildElement().createCopy());
-                            reply.setError(PacketError.Condition.forbidden);
+                            reply.setError(PacketError.Condition.not_allowed);
                             session.process(reply);
                             return null;
                         }

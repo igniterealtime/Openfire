@@ -453,21 +453,21 @@ public class IQRegisterHandlerTest
         verify(user).setPassword("newpass456");
     }
 
-    /** OF-3388 (b): name/email updates are governed by 'register.password'. */
+    /** OF-3388 (b): name/email updates are governed by 'register.password'. OF-3392: refused with not-allowed. */
     @Test
     public void testNameUpdateWhenPasswordChangeDisabled() throws Exception
     {
         handler.setCanChangePassword(false);
-        assertError(PacketError.Condition.forbidden, process(PREFIX + "<username>alice</username><name>Alice Liddell</name>" + SUFFIX));
+        assertError(PacketError.Condition.not_allowed, process(PREFIX + "<username>alice</username><name>Alice Liddell</name>" + SUFFIX));
         verify(user, never()).setName(any());
     }
 
-    /** OF-3388 */
+    /** OF-3392: XEP-0077 3.3, the server does not allow password changes. */
     @Test
     public void testPasswordChangeWhenPasswordChangeDisabled() throws Exception
     {
         handler.setCanChangePassword(false);
-        assertError(PacketError.Condition.forbidden, process(PREFIX + "<username>alice</username><password>newpass456</password>" + SUFFIX));
+        assertError(PacketError.Condition.not_allowed, process(PREFIX + "<username>alice</username><password>newpass456</password>" + SUFFIX));
         verify(user, never()).setPassword(anyString());
     }
 

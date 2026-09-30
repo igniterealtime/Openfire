@@ -527,12 +527,14 @@ public class IQRegisterHandlerTest
         verify(user, never()).setPassword(anyString());
     }
 
-    /** OF-3388: reading your own registration is governed by 'register.password'. */
+    private static final String AUTHENTICATED_GET = "<iq type='get' id='test' from='alice@" + Fixtures.XMPP_DOMAIN + "/res' to='" + Fixtures.XMPP_DOMAIN + "'><query xmlns='jabber:iq:register'/></iq>";
+
+    /** OF-3388: reading your own registration is allowed when either setting is enabled. */
     @Test
     public void testAuthenticatedGetWhenInbandRegistrationDisabled() throws Exception
     {
         handler.setInbandRegEnabled(false);
-        final IQ reply = process("<iq type='get' id='test' from='alice@" + Fixtures.XMPP_DOMAIN + "/res' to='" + Fixtures.XMPP_DOMAIN + "'><query xmlns='jabber:iq:register'/></iq>");
+        final IQ reply = process(AUTHENTICATED_GET);
         assertResult(reply);
         assertNotNull(reply.getChildElement().element("registered"));
     }
@@ -542,7 +544,18 @@ public class IQRegisterHandlerTest
     public void testAuthenticatedGetWhenPasswordChangeDisabled() throws Exception
     {
         handler.setCanChangePassword(false);
-        assertError(PacketError.Condition.forbidden, process("<iq type='get' id='test' from='alice@" + Fixtures.XMPP_DOMAIN + "/res' to='" + Fixtures.XMPP_DOMAIN + "'><query xmlns='jabber:iq:register'/></iq>"));
+        final IQ reply = process(AUTHENTICATED_GET);
+        assertResult(reply);
+        assertNotNull(reply.getChildElement().element("registered"));
+    }
+
+    /** OF-3388: when both settings are disabled the feature is not supported, see XEP-0077 3.1. */
+    @Test
+    public void testAuthenticatedGetWhenBothDisabled() throws Exception
+    {
+        handler.setInbandRegEnabled(false);
+        handler.setCanChangePassword(false);
+        assertError(PacketError.Condition.service_unavailable, process(AUTHENTICATED_GET));
     }
 
     /** OF-3388: the registration form is governed by 'register.inband'. OF-3389: refused with service-unavailable. */

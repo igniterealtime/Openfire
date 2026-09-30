@@ -173,12 +173,13 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             return reply;
         }
         if (IQ.Type.get.equals(packet.getType())) {
-            // Reading an existing registration is governed by the ability to change it. Retrieving the registration
-            // form is part of creating an account, which is governed by in-band registration.
-            final boolean allowed = session.isAuthenticated() ? canChangePassword : registrationEnabled;
+            // Reading an existing registration is possible when either setting is enabled, in line with when the
+            // feature is advertised. Retrieving the registration form is part of creating an account, which is
+            // governed by in-band registration.
+            final boolean allowed = session.isAuthenticated() ? (registrationEnabled || canChangePassword) : registrationEnabled;
             if (!allowed) {
                 // XEP-0077 3.1: a host that does not support in-band registration MUST return service-unavailable.
-                reply = createErrorReply(packet, session.isAuthenticated() ? PacketError.Condition.forbidden : PacketError.Condition.service_unavailable);
+                reply = createErrorReply(packet, PacketError.Condition.service_unavailable);
             }
             else {
                 reply = IQ.createResultIQ(packet);

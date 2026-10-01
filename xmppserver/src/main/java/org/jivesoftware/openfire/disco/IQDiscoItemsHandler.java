@@ -159,8 +159,10 @@ public class IQDiscoItemsHandler extends IQHandler implements ServerFeaturesProv
             Element iq = packet.getChildElement();
             String node = iq.attributeValue("node");
 
-            // Check if we have items associated with the requested name and node
-            Iterator<DiscoItem> itemsItr = itemsProvider.getItems(name, node, packet.getFrom());
+            // Check if we have items associated with the requested name and node. Pass a defensive copy of the
+            // query element: providers may be third-party implementations, and mutating the live element would
+            // leak into the reply built below (and into anything else holding packet.getChildElement()).
+            Iterator<DiscoItem> itemsItr = itemsProvider.getItems(name, node, packet.getFrom(), iq.createCopy());
             if (itemsItr != null) {
                 reply.setChildElement(iq.createCopy());
                 Element queryElement = reply.getChildElement();

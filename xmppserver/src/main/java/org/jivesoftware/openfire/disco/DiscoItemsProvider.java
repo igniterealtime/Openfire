@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.disco;
 
+import org.dom4j.Element;
 import org.xmpp.packet.JID;
 
 import java.util.Iterator;
@@ -45,5 +46,19 @@ public interface DiscoItemsProvider {
      * @return an Iterator (of DiscoItem) with the target entity's items or null if none.
      */
     Iterator<DiscoItem> getItems( String name, String node, JID senderJID );
+
+    /**
+     * Returns disco items, optionally using the full query element (for XEP-0462 type filtering, XEP-0499 metadata, etc.).
+     * The default implementation ignores the query element and delegates to {@link #getItems(String, String, JID)}.
+     *
+     * @param name the recipient JID's name.
+     * @param node the requested disco node.
+     * @param senderJID the XMPPAddress of user that sent the disco items request.
+     * @param query the full disco#items query element.
+     * @return an Iterator (of DiscoItem) with the target entity's items or null if none.
+     */
+    default Iterator<DiscoItem> getItems(String name, String node, JID senderJID, Element query) {
+        return getItems(name, node, senderJID);
+    }
 
 }

@@ -294,8 +294,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                     String email = null;
                     String name = null;
                     // Distinguishes a field that was omitted from one that was explicitly left empty.
-                    boolean emailPresent;
-                    boolean namePresent;
+                    boolean emailFieldPresent;
+                    boolean nameFieldPresent;
                     User newUser;
                     DataForm registrationForm;
                     FormField field;
@@ -323,14 +323,14 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         }
                         // Get the email sent in the form
                         field = registrationForm.getField("email");
-                        emailPresent = field != null;
+                        emailFieldPresent = field != null;
                         if (field != null) {
                             values = field.getValues();
                             email = (!values.isEmpty() ? values.get(0) : " ");
                         }
                         // Get the name sent in the form
                         field = registrationForm.getField("name");
-                        namePresent = field != null;
+                        nameFieldPresent = field != null;
                         if (field != null) {
                             values = field.getValues();
                             name = (!values.isEmpty() ? values.get(0) : " ");
@@ -342,8 +342,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         password = iqElement.elementText("password");
                         email = iqElement.elementText("email");
                         name = iqElement.elementText("name");
-                        emailPresent = iqElement.element("email") != null;
-                        namePresent = iqElement.element("name") != null;
+                        emailFieldPresent = iqElement.element("email") != null;
+                        nameFieldPresent = iqElement.element("name") != null;
                     }
                     // A missing or blank username is treated as not provided.
                     if (username != null && username.matches("\\s*")) {
@@ -387,8 +387,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                             return null;
                         }
                         // Reject explicitly emptied required fields before changing anything.
-                        else if ((emailPresent && email == null && UserManager.getUserProvider().isEmailRequired())
-                            || (namePresent && name == null && UserManager.getUserProvider().isNameRequired())) {
+                        else if ((emailFieldPresent && email == null && UserManager.getUserProvider().isEmailRequired())
+                            || (nameFieldPresent && name == null && UserManager.getUserProvider().isNameRequired())) {
                             reply = createErrorReply(packet, PacketError.Condition.not_acceptable);
                             session.process(reply);
                             return null;
@@ -398,10 +398,10 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                                 user.setPassword(password);
                             }
                             // Omitted fields are left unchanged, explicitly empty ones are cleared.
-                            if (emailPresent) {
+                            if (emailFieldPresent) {
                                 user.setEmail(email);
                             }
-                            if (namePresent) {
+                            if (nameFieldPresent) {
                                 user.setName(name);
                             }
                             newUser = user;

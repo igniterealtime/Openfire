@@ -47,6 +47,8 @@
     int sslPort = ParamUtils.getIntParameter(request, "sslPort", -1);
     int embeddedPort = ParamUtils.getIntParameter(request, "embeddedPort", -1);
     int embeddedSecurePort = ParamUtils.getIntParameter(request, "embeddedSecurePort", -1);
+    boolean embeddedPortEnabled = ParamUtils.getBooleanParameter(request, "embeddedPortEnabled");
+    boolean embeddedSecurePortEnabled = ParamUtils.getBooleanParameter(request, "embeddedSecurePortEnabled");
     boolean sslEnabled = ParamUtils.getBooleanParameter(request, "sslEnabled");
     int componentPort = ParamUtils.getIntParameter(request, "componentPort", -1);
     int serverPort = ParamUtils.getIntParameter(request, "serverPort", -1);
@@ -57,6 +59,7 @@
     boolean save = request.getParameter("save") != null;
     boolean defaults = request.getParameter("defaults") != null;
     boolean cancel = request.getParameter("cancel") != null;
+    final boolean connectedUsingSecureAdminPort = request.isSecure();
 
     if (cancel) {
         response.sendRedirect("index.jsp");
@@ -72,6 +75,8 @@
         serverSslPort = ConnectionManager.DEFAULT_SERVER_SSL_PORT;
         embeddedPort = 9090;
         embeddedSecurePort = 9091;
+        embeddedPortEnabled = true;
+        embeddedSecurePortEnabled = true;
         sslEnabled = true;
         jmxEnabled = false;
         jmxSecure = true;
@@ -95,6 +100,20 @@
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
     pageContext.setAttribute("csrf", csrfParam);
     if (save) {
+        // Do not allow an administrator to disable the listener that is serving this request.
+        // Apart from preventing an accidental lockout, this also protects against crafted requests
+        // that bypass the disabled checkbox in the form.
+        if (connectedUsingSecureAdminPort) {
+            embeddedSecurePortEnabled = true;
+        } else {
+            embeddedPortEnabled = true;
+        }
+        if (!embeddedPortEnabled) {
+            embeddedPort = -1;
+        }
+        if (!embeddedSecurePortEnabled) {
+            embeddedSecurePort = -1;
+        }
         if (serverName == null) {
             errors.put("serverName", "");
         } else {
@@ -120,10 +139,10 @@
             errors.put("serverSslPort", "");
         }
         if (XMPPServer.getInstance().isStandAlone()) {
-            if (embeddedPort < 1) {
+            if (embeddedPortEnabled && embeddedPort < 1) {
                 errors.put("embeddedPort", "");
             }
-            if (embeddedSecurePort < 1) {
+            if (embeddedSecurePortEnabled && embeddedSecurePort < 1) {
                 errors.put("embeddedSecurePort", "");
             }
             if (embeddedPort > 0 && embeddedSecurePort > 0) {
@@ -189,6 +208,8 @@
         componentPort = connectionManager.getPort(ConnectionType.COMPONENT, false);
         serverPort = connectionManager.getPort(ConnectionType.SOCKET_S2S, false);
         serverSslPort = connectionManager.getPort(ConnectionType.SOCKET_S2S, true);
+        embeddedPort = 9090;
+        embeddedSecurePort = 9091;
         try {
             embeddedPort = Integer.parseInt(JiveGlobals.getXMLProperty("adminConsole.port"));
         } catch (Exception ignored) {
@@ -197,6 +218,8 @@
             embeddedSecurePort = Integer.parseInt(JiveGlobals.getXMLProperty("adminConsole.securePort"));
         } catch (Exception ignored) {
         }
+        embeddedPortEnabled = embeddedPort > 0;
+        embeddedSecurePortEnabled = embeddedSecurePort > 0;
         jmxEnabled = JMXManager.isEnabled();
         jmxSecure = JMXManager.isSecure();
         jmxPort = JMXManager.getPort();
@@ -207,6 +230,14 @@
     <head>
         <title><fmt:message key="server.props.title"/></title>
         <meta name="pageID" content="server-settings"/>
+        <script>
+            function togglePort(enabledInput, portInput, defaultPort) {
+                portInput.disabled = !enabledInput.checked;
+                if (!enabledInput.checked) {
+                    portInput.value = defaultPort;
+                }
+            }
+        </script>
     </head>
     <body>
     <style>
@@ -380,8 +411,13 @@
             <label for="embeddedPort"><fmt:message key="server.props.admin_port" /></label>
         </td>
         <td>
-            <input type="text" id="embeddedPort" name="embeddedPort" value="<%= (embeddedPort > 0 ? String.valueOf(embeddedPort) : "") %>"
-             size="5" maxlength="5">
+            <input type="checkbox" id="embeddedPortEnabled" name="embeddedPortEnabled"
+                   <%= (embeddedPortEnabled ? "checked" : "") %>
+                   <%= (!connectedUsingSecureAdminPort ? "disabled" : "") %>
+                   onchange="togglePort(this, document.getElementById('embeddedPort'), 9090)">
+            <label for="embeddedPortEnabled"><fmt:message key="server.props.enable" /></label>
+            <input type="text" id="embeddedPort" name="embeddedPort" value="<%= (embeddedPort > 0 ? String.valueOf(embeddedPort) : "9090") %>"
+             size="5" maxlength="5" <%= (embeddedPortEnabled ? "" : "disabled") %>>
             <%  if (errors.containsKey("embeddedPort")) { %>
                 <br>
                 <span class="jive-error-text">
@@ -402,8 +438,13 @@
             <label for="embeddedSecurePort"><fmt:message key="server.props.admin_secure_port" /></label>
         </td>
         <td>
-            <input type="text" id="embeddedSecurePort" name="embeddedSecurePort" value="<%= (embeddedSecurePort > 0 ? String.valueOf(embeddedSecurePort) : "") %>"
-             size="5" maxlength="5">
+            <input type="checkbox" id="embeddedSecurePortEnabled" name="embeddedSecurePortEnabled"
+                   <%= (embeddedSecurePortEnabled ? "checked" : "") %>
+                   <%= (connectedUsingSecureAdminPort ? "disabled" : "") %>
+                   onchange="togglePort(this, document.getElementById('embeddedSecurePort'), 9091)">
+            <label for="embeddedSecurePortEnabled"><fmt:message key="server.props.enable" /></label>
+            <input type="text" id="embeddedSecurePort" name="embeddedSecurePort" value="<%= (embeddedSecurePort > 0 ? String.valueOf(embeddedSecurePort) : "9091") %>"
+             size="5" maxlength="5" <%= (embeddedSecurePortEnabled ? "" : "disabled") %>>
             <%  if (errors.containsKey("embeddedSecurePort")) { %>
                 <br>
                 <span class="jive-error-text">

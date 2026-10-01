@@ -29,12 +29,14 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.Lock;
 import java.util.function.IntSupplier;
 import java.util.stream.Collectors;
 
@@ -162,7 +164,15 @@ public class DefaultAuthProvider implements AuthProvider {
     }
 
     private UserInfo getUserInfo(String username) throws UnsupportedOperationException, UserNotFoundException {
-        return getUserInfo(username, false);
+        // Keep the password cipher from being replaced between reading the stored password and decrypting it, or
+        // storing credentials derived from it (OF-3374).
+        final Lock cipherLock = AuthFactory.getPasswordCipherUseLock();
+        cipherLock.lock();
+        try {
+            return getUserInfo(username, false);
+        } finally {
+            cipherLock.unlock();
+        }
     }
 
     private UserInfo getUserInfo(String username, boolean recurse) throws UnsupportedOperationException, UserNotFoundException {
@@ -170,6 +180,9 @@ public class DefaultAuthProvider implements AuthProvider {
             // Reject the operation since the provider does not support SCRAM
             throw new UnsupportedOperationException();
         }
+        // Determined before reading the stored password: a repair that runs meanwhile only records that passwords are
+        // re-encrypted after committing them, so the password read afterwards is then known to use the configured KDF.
+        final boolean reencryptionNeeded = JiveGlobals.isPasswordReencryptionNeeded();
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -184,9 +197,11 @@ public class DefaultAuthProvider implements AuthProvider {
             UserInfo userInfo = new UserInfo();
             userInfo.plainText = rs.getString(1);
             userInfo.encrypted = rs.getString(2);
+            boolean decrypted = false;
             if (userInfo.encrypted != null) {
                 try {
                     userInfo.plainText = AuthFactory.decryptPassword(userInfo.encrypted);
+                    decrypted = true;
                 }
                 catch (UnsupportedOperationException uoe) {
                     // Ignore and return plain password instead.
@@ -201,7 +216,9 @@ public class DefaultAuthProvider implements AuthProvider {
                     // This is bounded by 'recurse' (no infinite loop) and accepted as a per-login cost since derivation
                     // failure for a JVM-standard mechanism isn't expected.
                     boolean scramOnly = JiveGlobals.getBooleanProperty("user.scramHashedPasswordOnly");
-                    if (scramOnly || hasIncompleteSetOfScramCredentials(username)) {
+                    if ((scramOnly || hasIncompleteSetOfScramCredentials(username))
+                        && (!decrypted || isDecryptedPasswordTrustworthy(username, userInfo.plainText, reencryptionNeeded)))
+                    {
                         // If we have a password here, but we're meant to be scramOnly, we should reset it.
                         setPassword(username, userInfo.plainText);
                         // RECURSE
@@ -219,6 +236,42 @@ public class DefaultAuthProvider implements AuthProvider {
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
+    }
+
+    /**
+     * Determines whether a decrypted password can be trusted to derive credentials from. A password that is still
+     * encrypted with SHA1 decrypts to a wrong value rather than failing (OF-3374); deriving credentials from that would
+     * replace every credential of the user.
+     *
+     * It is trusted if it matches a SCRAM credential of the user or, if the user has none, if no stored password is
+     * expected to still use SHA1.
+     *
+     * @param username           the user
+     * @param decrypted          the decrypted password of the user
+     * @param reencryptionNeeded {@link JiveGlobals#isPasswordReencryptionNeeded()}, as it was before the stored password was read
+     * @return true if credentials can safely be derived from the decrypted password
+     */
+    private boolean isDecryptedPasswordTrustworthy(@Nonnull final String username, @Nonnull final String decrypted, final boolean reencryptionNeeded)
+    {
+        final List<ScramCredentialData> credentials;
+        Connection con = null;
+        try {
+            con = DbConnectionManager.getConnection();
+            credentials = EncryptedPasswordMigration.loadScramCredentials(con, username);
+        } catch (SQLException e) {
+            Log.warn("Unable to load the SCRAM credentials of user '{}' to verify their decrypted password. No credentials are derived from it.", username, e);
+            return false;
+        } finally {
+            DbConnectionManager.closeConnection(con);
+        }
+
+        final boolean trustworthy = credentials.isEmpty()
+            ? !reencryptionNeeded
+            : matchesAnyScramCredential(username, decrypted, credentials);
+        if (!trustworthy) {
+            Log.info("The stored password of user '{}' cannot be verified to decrypt correctly, so no credentials are derived from it. It may still be encrypted using a superseded key derivation function (OF-3374).", username);
+        }
+        return trustworthy;
     }
 
     /**
@@ -324,6 +377,24 @@ public class DefaultAuthProvider implements AuthProvider {
 
     @Override
     public String getPassword(String username) throws UserNotFoundException {
+        // Keep the password cipher from being replaced between reading the stored password and decrypting it (OF-3374).
+        final Lock cipherLock = AuthFactory.getPasswordCipherUseLock();
+        cipherLock.lock();
+        try {
+            return loadPassword(username);
+        } finally {
+            cipherLock.unlock();
+        }
+    }
+
+    /**
+     * Implements {@link #getPassword(String)}. The caller must hold the password cipher use lock.
+     *
+     * @param username the user
+     * @return the plain-text password of the user
+     * @throws UserNotFoundException if the user does not exist
+     */
+    private String loadPassword(String username) throws UserNotFoundException {
         if (!supportsPasswordRetrieval()) {
             // Reject the operation since the provider is read-only
             throw new UnsupportedOperationException();
@@ -374,6 +445,25 @@ public class DefaultAuthProvider implements AuthProvider {
     }
 
     public boolean checkPassword(String username, String testPassword) throws UserNotFoundException {
+        // Keep the password cipher from being replaced between reading the stored password and decrypting it (OF-3374).
+        final Lock cipherLock = AuthFactory.getPasswordCipherUseLock();
+        cipherLock.lock();
+        try {
+            return checkStoredPassword(username, testPassword);
+        } finally {
+            cipherLock.unlock();
+        }
+    }
+
+    /**
+     * Implements {@link #checkPassword(String, String)}. The caller must hold the password cipher use lock.
+     *
+     * @param username     the user
+     * @param testPassword the password to check
+     * @return true if the password is correct
+     * @throws UserNotFoundException if the user does not exist
+     */
+    private boolean checkStoredPassword(String username, String testPassword) throws UserNotFoundException {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -400,21 +490,25 @@ public class DefaultAuthProvider implements AuthProvider {
 
             String plainText = rs.getString(1);
             String encrypted = rs.getString(2);
+            boolean decrypted = false;
             if (encrypted != null) {
                 try {
                     plainText = AuthFactory.decryptPassword(encrypted);
+                    decrypted = true;
                 }
                 catch (UnsupportedOperationException uoe) {
                     // Ignore and return plain password instead.
                 }
             }
             if (plainText != null) {
+                final boolean matches = testPassword.equals(plainText);
                 boolean scramOnly = JiveGlobals.getBooleanProperty("user.scramHashedPasswordOnly");
-                if (scramOnly) {
+                // Only derive credentials from a decrypted password that the user has confirmed (OF-3374).
+                if (scramOnly && (!decrypted || matches)) {
                     // If we have a password here, but we're meant to be scramOnly, we should reset it.
                     setPassword(username, plainText);
                 }
-                return testPassword.equals(plainText);
+                return matches;
             }
 
             // Don't have either plain or encrypted, so test SCRAM hash.
@@ -442,26 +536,8 @@ public class DefaultAuthProvider implements AuthProvider {
 
 
             // We don't know what algorithm was used for the provided credentials. We'll have to try all supported ones.
-            for (final ScramCredentialData credential : credentialsByMechanismName.values())
-            {
-                final ScramMechanism mech = SCRAM_MECHANISMS.stream()
-                    .filter(m -> m.mechanismName().equals(credential.mechanism))
-                    .findFirst().orElse(null);
-                if (mech == null) {
-                    Log.debug("Skipping unsupported SCRAM mechanism '{}' for user {}", credential.mechanism, username); continue;
-                }
-                try {
-                    final byte[] saltShaker = DatatypeConverter.parseBase64Binary(credential.salt);
-                    final ScramUtils.ScramKeys keys = ScramUtils.deriveScramKeys(
-                        saltShaker, testPassword, credential.iterations,
-                        mech.hmacAlgorithm(), mech.digestAlgorithm());
-                    final byte[] expectedStoredKey = DatatypeConverter.parseBase64Binary(credential.storedKey);
-                    if (MessageDigest.isEqual(keys.storedKey, expectedStoredKey)) {
-                        return true;
-                    }
-                } catch (SaslException | NoSuchAlgorithmException | IllegalArgumentException e) {
-                    Log.warn("Unable to check SCRAM values for PLAIN authentication for user '{}'", username, e);
-                }
+            if (matchesAnyScramCredential(username, testPassword, credentialsByMechanismName.values())) {
+                return true;
             }
             Log.debug("No usable SCRAM credential found for user {}", username);
             return false;
@@ -475,8 +551,62 @@ public class DefaultAuthProvider implements AuthProvider {
         }
     }
 
+    /**
+     * Determines whether a candidate password matches any of the provided SCRAM credentials of a user. Credentials of
+     * unsupported mechanisms, or that cannot be evaluated, are skipped.
+     *
+     * @param username    the user that the credentials belong to (for logging only)
+     * @param candidate   the password to test
+     * @param credentials the stored SCRAM credentials of the user
+     * @return true if the candidate matches at least one of the credentials, otherwise false
+     */
+    static boolean matchesAnyScramCredential(@Nonnull final String username, @Nonnull final String candidate, @Nonnull final Collection<ScramCredentialData> credentials)
+    {
+        for (final ScramCredentialData credential : credentials)
+        {
+            final ScramMechanism mech = SCRAM_MECHANISMS.stream()
+                .filter(m -> m.mechanismName().equals(credential.mechanism))
+                .findFirst().orElse(null);
+            if (mech == null) {
+                Log.debug("Skipping unsupported SCRAM mechanism '{}' for user {}", credential.mechanism, username);
+                continue;
+            }
+            try {
+                final byte[] saltShaker = DatatypeConverter.parseBase64Binary(credential.salt);
+                final ScramUtils.ScramKeys keys = ScramUtils.deriveScramKeys(
+                    saltShaker, candidate, credential.iterations,
+                    mech.hmacAlgorithm(), mech.digestAlgorithm());
+                final byte[] expectedStoredKey = DatatypeConverter.parseBase64Binary(credential.storedKey);
+                if (MessageDigest.isEqual(keys.storedKey, expectedStoredKey)) {
+                    return true;
+                }
+            } catch (SaslException | NoSuchAlgorithmException | IllegalArgumentException e) {
+                Log.warn("Unable to check SCRAM values ({}) for user '{}'", credential.mechanism, username, e);
+            }
+        }
+        return false;
+    }
+
     @Override
     public void setPassword(String username, String password) throws UserNotFoundException {
+        // Keep the password cipher from being replaced between encrypting the password and storing it (OF-3374).
+        final Lock cipherLock = AuthFactory.getPasswordCipherUseLock();
+        cipherLock.lock();
+        try {
+            storePassword(username, password);
+        } finally {
+            cipherLock.unlock();
+        }
+    }
+
+    /**
+     * Implements {@link #setPassword(String, String)}. The caller must hold the password cipher use lock.
+     *
+     * @param username the user
+     * @param password the new plain-text password
+     * @throws UserNotFoundException if the user does not exist
+     */
+    private void storePassword(String username, String password) throws UserNotFoundException {
         // Determine if the password should be stored as plain text or encrypted.
         boolean usePlainPassword = JiveGlobals.getBooleanProperty("user.usePlainPassword");
         boolean scramOnly = JiveGlobals.getBooleanProperty("user.scramHashedPasswordOnly");

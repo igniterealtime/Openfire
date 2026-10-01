@@ -40,6 +40,7 @@
 <%@ page import="java.util.concurrent.Future" %>
 <%@ page import="java.util.concurrent.TimeUnit" %>
 <%@ page import="org.jivesoftware.openfire.pubsub.PubSubSubscriptionMaintenance" %>
+<%@ page import="org.jivesoftware.openfire.auth.EncryptedPasswordMigration" %>
 
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
@@ -122,8 +123,10 @@
 
     pageContext.setAttribute( "hasPluginWarnings", XMPPServer.getInstance().getPluginManager().hasLoadWarnings());
 
-    // Check if Blowfish migration is needed
+    // Check if Blowfish migration, or a repair of previously-migrated user passwords (OF-3374), is needed. Both are
+    // cheap; the latter queries the database at most once.
     pageContext.setAttribute( "needsBlowfishMigration", JiveGlobals.isBlowfishMigrationNeeded() );
+    pageContext.setAttribute( "needsPasswordReencryption", EncryptedPasswordMigration.isRepairNeeded() );
 
     // Cheap, cached check (never blocks; refreshes in the background) for redundant pubsub subscription rows (OF-3306).
     pageContext.setAttribute( "pubsubCleanupAdvisable", PubSubSubscriptionMaintenance.isCleanupAdvisable() );
@@ -167,6 +170,16 @@
     <c:if test="${needsBlowfishMigration}">
         <admin:infoBox type="warning">
             <fmt:message key="index.blowfish-migration.warning">
+                <fmt:param value="<a href=\"./security-blowfish-migration.jsp\">" />
+                <fmt:param value="</a>"/>
+            </fmt:message>
+        </admin:infoBox>
+    </c:if>
+
+    <%-- Mutually exclusive with the warning above, which applies before the migration. --%>
+    <c:if test="${needsPasswordReencryption}">
+        <admin:infoBox type="warning">
+            <fmt:message key="index.blowfish-password-repair.warning">
                 <fmt:param value="<a href=\"./security-blowfish-migration.jsp\">" />
                 <fmt:param value="</a>"/>
             </fmt:message>

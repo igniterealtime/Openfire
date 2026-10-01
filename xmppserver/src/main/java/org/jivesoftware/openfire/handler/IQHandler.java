@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.handler;
 
+import org.dom4j.QName;
 import org.jivesoftware.openfire.ChannelHandler;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.PacketDeliverer;
@@ -176,6 +177,18 @@ public abstract class IQHandler extends BasicModule implements ChannelHandler<IQ
      * @return The IQHandlerInfo for this handler
      */
     public abstract IQHandlerInfo getInfo();
+
+
+    /**
+     * Returns a qualified name (QName) object using the namespace and name
+     * provided by the IQHandler's associated information.
+     *
+     * @return a QName object representing the fully qualified name of the
+     *         root IQ element handled by this IQHandler.
+     */
+    public QName getQName() {
+        return QName.get(getInfo().getName(), getInfo().getNamespace());
+    }
 
     @Override
     public void initialize(XMPPServer server) {

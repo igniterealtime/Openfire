@@ -241,6 +241,9 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             }
         }
         else if (IQ.Type.set.equals(packet.getType())) {
+            // Replies, including refusals that exit early, must be delivered by passing them to session.process(), and
+            // not by returning them (see the end of this method). Otherwise, no response is sent to an entity that is
+            // registering (OF-3382).
             try {
                 Element iqElement = packet.getChildElement();
                 if (iqElement.element("remove") != null) {
@@ -457,7 +460,10 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             }
         }
         if (reply != null) {
-            // why is this done here instead of letting the iq handler do it?
+            // The reply is delivered directly to the session, instead of being returned for the IQ handler to route.
+            // A returned reply goes through regular routing, which cannot deliver to a session that has not
+            // authenticated yet. That is the case for an entity that is registering an account, which would then
+            // never receive a response (OF-3382).
             session.process(reply);
         }
         return null;

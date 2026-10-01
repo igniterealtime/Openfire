@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2018-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,6 +88,7 @@ public class ListPager<T> {
     private final int sortOrder;
     private final String[] additionalFormFields;
     private final HttpServletRequest request;
+    private boolean inlineJsDisabled = false;
 
     /**
      * Creates a unfiltered list pager.
@@ -229,15 +230,46 @@ public class ListPager<T> {
     }
 
     /**
+     * @return {@code true} if inline JavaScript generation is disabled for this pager
+     */
+    public boolean isInlineJsDisabled() {
+        return inlineJsDisabled;
+    }
+
+    /**
+     * When set to {@code true}, methods like {@link #getPageSizeSelection()}, {@link #getPageLinks()},
+     * and {@link #getPageFunctions()} will suppress inline JavaScript attributes (onclick, onchange)
+     * and inline script blocks. This allows pages to use external JavaScript files for CSP compliance.
+     *
+     * @param inlineJsDisabled {@code true} to suppress inline JavaScript output
+     */
+    public void setInlineJsDisabled(boolean inlineJsDisabled) {
+        this.inlineJsDisabled = inlineJsDisabled;
+    }
+
+    /**
      * @return a string that contains HTML for selecting the page size
      */
     public String getPageSizeSelection() {
         final StringBuilder sb = new StringBuilder();
-        sb.append(String.format("<select name='%s' onchange='return setPageSize(this.value);'>", REQUEST_PARAMETER_KEY_PAGE_SIZE));
+
+        sb.append(String.format("<select name='%s'", REQUEST_PARAMETER_KEY_PAGE_SIZE));
+
+        if (!inlineJsDisabled) {
+            sb.append(" onchange='return setPageSize(this.value);'");
+        }
+        sb.append(">");
+
         for (final int optionSize : PAGE_SIZES) {
-            sb.append(String.format("<option value='%d'%s>%d</option>", optionSize, pageSize == optionSize ? " selected" : "", optionSize));
+            sb.append(String.format(
+                "<option value='%d'%s>%d</option>",
+                optionSize,
+                pageSize == optionSize ? " selected" : "",
+                optionSize
+            ));
         }
         sb.append("</select>");
+
         return sb.toString();
     }
 
@@ -275,17 +307,28 @@ public class ListPager<T> {
 
     private void appendPageLink(final StringBuilder sb, final int pageToLink) {
         final String cssClass;
+
         if (currentPage == pageToLink) {
             cssClass = " class='jive-current'";
         } else {
             cssClass = "";
         }
 
-        sb.append(String.format("\n<a href='%s' onclick='return jumpToPage(%d)'%s>%s</a>",
-            String.format("?%s=%d", REQUEST_PARAMETER_KEY_CURRENT_PAGE, pageToLink),
-            pageToLink,
-            cssClass,
-            pageToLink));
+        sb.append("\n<a href='");
+        sb.append(String.format("?%s=%d", REQUEST_PARAMETER_KEY_CURRENT_PAGE, pageToLink));
+        sb.append("'");
+
+        if (!inlineJsDisabled) {
+            sb.append(String.format(
+                " onclick='return jumpToPage(%d)'",
+                pageToLink
+            ));
+        }
+
+        sb.append(cssClass);
+        sb.append(">");
+        sb.append(pageToLink);
+        sb.append("</a>");
     }
 
     /**
@@ -355,6 +398,9 @@ public class ListPager<T> {
      * @return a string containing JavaScript that helps with navigation between pages
      */
     public String getPageFunctions() {
+        if (inlineJsDisabled) {
+            return "";
+        }
         final StringBuilder sb = new StringBuilder("\n")
             .append("\tvar additionalFormFields = [");
         // The list of additional form fields

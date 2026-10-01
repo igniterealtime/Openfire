@@ -640,6 +640,26 @@ public class IQRegisterHandlerTest
         assertEquals(StreamError.Condition.not_authorized, error.getValue().getCondition());
     }
 
+    // XEP-0077 does not say which error takes precedence when a request is refused for more than one reason. These
+    // tests pin the precedence that the handler has always had: the request is checked before the settings are.
+
+    @Test
+    public void testRemoveWithOtherChildElementsWhenInbandRegistrationDisabled() throws Exception
+    {
+        handler.setInbandRegEnabled(false);
+        assertError(PacketError.Condition.bad_request, process(PREFIX + "<remove/><username>alice</username>" + SUFFIX));
+        verify(userManager, never().description("An account must not be deleted when in-band registration is disabled (OF-3388)")).deleteUser(any());
+    }
+
+    @Test
+    public void testCreateWithInvalidUsernameWhenInbandRegistrationDisabled() throws Exception
+    {
+        doReturn(false).when(session).isAuthenticated();
+        handler.setInbandRegEnabled(false);
+        assertError(PacketError.Condition.jid_malformed, process(PREFIX + "<username>b o b</username><password>secret</password>" + SUFFIX));
+        verify(userManager, never().description("An account must not be created when in-band registration is disabled (OF-3388)")).createUser(anyString(), anyString(), any(), any());
+    }
+
     // ----- Service discovery -----
 
     private boolean advertisesRegistration()

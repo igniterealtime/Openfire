@@ -15,16 +15,17 @@
  */
 package org.jivesoftware.openfire.handler;
 
+import org.dom4j.Element;
+import org.dom4j.QName;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.admin.AdminManager;
 import org.jivesoftware.openfire.disco.IQDiscoInfoHandler;
+import org.jivesoftware.openfire.group.GroupManager;
 import org.jivesoftware.openfire.roster.RosterManager;
 import org.jivesoftware.openfire.session.ClientSession;
-import org.jivesoftware.openfire.user.User;
-import org.jivesoftware.openfire.user.UserAlreadyExistsException;
-import org.jivesoftware.openfire.user.UserManager;
-import org.jivesoftware.openfire.user.UserProvider;
+import org.jivesoftware.openfire.user.*;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;
 import org.junit.jupiter.api.AfterEach;
@@ -35,29 +36,15 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
-import org.xmpp.packet.Packet;
-import org.xmpp.packet.PacketError;
+import org.mockito.MockedStatic;
+import org.xmpp.packet.*;
 
 import java.util.Iterator;
+import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.clearInvocations;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.withSettings;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 /**
  * Unit tests that verify the functionality as implemented in {@link IQRegisterHandler}.
@@ -73,6 +60,8 @@ public class IQRegisterHandlerTest
     private ClientSession session;
     private IQRegisterHandler handler;
     private IQDiscoInfoHandler discoInfoHandler;
+    private RosterManager rosterManager;
+    private SessionManager sessionManager;
 
     @BeforeAll
     public static void setUpClass() throws Exception
@@ -105,13 +94,14 @@ public class IQRegisterHandlerTest
         doReturn(user).when(userManager).getUser("alice");
         doReturn(user).when(userManager).createUser(anyString(), anyString(), any(), any());
         doReturn(userManager).when(xmppServer).getUserManager();
-        doReturn(mock(RosterManager.class, withSettings().lenient())).when(xmppServer).getRosterManager();
+        rosterManager = mock(RosterManager.class, withSettings().lenient());
+        doReturn(rosterManager).when(xmppServer).getRosterManager();
 
         session = mock(ClientSession.class, withSettings().lenient());
         doReturn(true).when(session).isAuthenticated();
         doReturn("alice").when(session).getUsername();
         doReturn(new JID("alice", Fixtures.XMPP_DOMAIN, "res")).when(session).getAddress();
-        final SessionManager sessionManager = xmppServer.getSessionManager();
+        sessionManager = xmppServer.getSessionManager();
         doReturn(session).when(sessionManager).getSession(any(JID.class));
 
         discoInfoHandler = mock(IQDiscoInfoHandler.class, withSettings().lenient());
@@ -406,6 +396,247 @@ public class IQRegisterHandlerTest
         assertError(PacketError.Condition.not_allowed, reply);
         assertNotNull(reply.getChildElement(), "Expected the request's payload to be included, but got: " + reply);
         assertEquals("Alice Liddell", reply.getChildElement().elementText("name"));
+    }
+
+    // ----- Additional coverage -----
+
+    // A session that has not authenticated yet has a placeholder address.
+    private static final String UNAUTHENTICATED_GET = "<iq type='get' id='test' from='" + Fixtures.XMPP_DOMAIN + "/stream-id' to='" + Fixtures.XMPP_DOMAIN + "'><query xmlns='jabber:iq:register'/></iq>";
+
+    /** OF-3381: the refusal applies whoever the caller is, including an administrator. */
+    @Test
+    public void testAdministratorCannotCreateAnotherAccountEither() throws Exception
+    {
+        AdminManager.getInstance().addAdminAccount(new JID("alice", Fixtures.XMPP_DOMAIN, null));
+        try {
+            assertError(PacketError.Condition.forbidden, process(PREFIX + "<username>bob</username><password>secret</password>" + SUFFIX));
+            verify(userManager, never()).createUser(anyString(), anyString(), any(), any());
+        } finally {
+            AdminManager.getInstance().clearAdminUsers();
+        }
+    }
+
+    @Test
+    public void testAnotherAccountWithoutPasswordIsRefused() throws Exception
+    {
+        assertError(PacketError.Condition.forbidden, process(PREFIX + "<username>bob</username>" + SUFFIX));
+        verify(userManager, never()).createUser(anyString(), anyString(), any(), any());
+    }
+
+    @Test
+    public void testAnotherAccountIsRefusedWhenPasswordChangeDisabled() throws Exception
+    {
+        handler.setCanChangePassword(false);
+        assertError(PacketError.Condition.forbidden, process(PREFIX + "<username>bob</username><password>secret</password>" + SUFFIX));
+        verify(userManager, never()).createUser(anyString(), anyString(), any(), any());
+    }
+
+    // Creation
+
+    @Test
+    public void testCreateWithName() throws Exception
+    {
+        doReturn(false).when(session).isAuthenticated();
+        assertResult(process(PREFIX + "<username>bob</username><password>secret</password><name>Bob Smith</name>" + SUFFIX));
+        verify(userManager).createUser("bob", "secret", "Bob Smith", null);
+    }
+
+    @Test
+    public void testCreateWithForm() throws Exception
+    {
+        doReturn(false).when(session).isAuthenticated();
+        assertResult(process(PREFIX + form("<field var='username'><value>bob</value></field><field var='password'><value>secret</value></field><field var='email'><value>bob@example.com</value></field><field var='name'><value>Bob Smith</value></field>") + SUFFIX));
+        verify(userManager).createUser("bob", "secret", "Bob Smith", "bob@example.com");
+    }
+
+    @Test
+    public void testCreateWithBlankUsername() throws Exception
+    {
+        doReturn(false).when(session).isAuthenticated();
+        assertError(PacketError.Condition.not_acceptable, process(PREFIX + "<username/><password>secret</password>" + SUFFIX));
+        verify(userManager, never()).createUser(anyString(), anyString(), any(), any());
+    }
+
+    /** XEP-0077 3.1: a username that is not valid after nodeprep. */
+    @Test
+    public void testCreateWithInvalidUsername() throws Exception
+    {
+        doReturn(false).when(session).isAuthenticated();
+        assertError(PacketError.Condition.jid_malformed, process(PREFIX + "<username>b o b</username><password>secret</password>" + SUFFIX));
+        verify(userManager, never()).createUser(anyString(), anyString(), any(), any());
+    }
+
+    @Test
+    public void testCreateWhenUserProviderIsReadOnly() throws Exception
+    {
+        doReturn(false).when(session).isAuthenticated();
+        doThrow(new UnsupportedOperationException()).when(userManager).createUser(anyString(), anyString(), any(), any());
+        assertError(PacketError.Condition.not_allowed, process(PREFIX + "<username>bob</username><password>secret</password>" + SUFFIX));
+    }
+
+    @Test
+    public void testCreateWithInvalidValues() throws Exception
+    {
+        doReturn(false).when(session).isAuthenticated();
+        doThrow(new IllegalArgumentException("Invalid email")).when(userManager).createUser(anyString(), anyString(), any(), any());
+        assertError(PacketError.Condition.not_acceptable, process(PREFIX + "<username>bob</username><password>secret</password><email>nope</email>" + SUFFIX));
+    }
+
+    @Test
+    public void testCreateWithUnexpectedFailure() throws Exception
+    {
+        doReturn(false).when(session).isAuthenticated();
+        doThrow(new IllegalStateException("Unexpected")).when(userManager).createUser(anyString(), anyString(), any(), any());
+        assertError(PacketError.Condition.internal_server_error, process(PREFIX + "<username>bob</username><password>secret</password>" + SUFFIX));
+    }
+
+    // Self-update
+
+    @Test
+    public void testEmailIsUpdated() throws Exception
+    {
+        assertResult(process(PREFIX + "<username>alice</username><email>alice.liddell@example.com</email>" + SUFFIX));
+        verify(user).setEmail("alice.liddell@example.com");
+        verify(user, never()).setName(any());
+        verify(user, never()).setPassword(anyString());
+    }
+
+    @Test
+    public void testFormEmailIsUpdated() throws Exception
+    {
+        assertResult(process(PREFIX + form("<field var='username'><value>alice</value></field><field var='email'><value>alice.liddell@example.com</value></field>") + SUFFIX));
+        verify(user).setEmail("alice.liddell@example.com");
+        verify(user, never()).setName(any());
+    }
+
+    @Test
+    public void testPasswordChangeWhenInbandRegistrationDisabled() throws Exception
+    {
+        handler.setInbandRegEnabled(false);
+        assertResult(process(PREFIX + "<username>alice</username><password>newpass456</password>" + SUFFIX));
+        verify(user).setPassword("newpass456");
+    }
+
+    @Test
+    public void testFormWithoutUsernameWhenAuthenticated() throws Exception
+    {
+        assertError(PacketError.Condition.bad_request, process(PREFIX + form("<field var='password'><value>newpass456</value></field>") + SUFFIX));
+        verify(user, never()).setPassword(anyString());
+    }
+
+    @Test
+    public void testEmptyRequiredEmailIsRejectedBeforeAnythingChanges() throws Exception
+    {
+        UserManager.setProvider(new Fixtures.StubUserProvider() {
+            @Override
+            public boolean isEmailRequired()
+            {
+                return true;
+            }
+        });
+
+        assertError(PacketError.Condition.not_acceptable, process(PREFIX + "<username>alice</username><password>newpass456</password><email/>" + SUFFIX));
+        verify(user, never()).setPassword(anyString());
+        verify(user, never()).setEmail(any());
+    }
+
+    @Test
+    public void testSelfUpdateWhenUserProviderIsReadOnly() throws Exception
+    {
+        doThrow(new UnsupportedOperationException()).when(user).setName(any());
+        assertError(PacketError.Condition.not_allowed, process(PREFIX + "<username>alice</username><name>Alice Liddell</name>" + SUFFIX));
+    }
+
+    @Test
+    public void testSelfUpdateWithInvalidValue() throws Exception
+    {
+        doThrow(new IllegalArgumentException("Invalid email")).when(user).setEmail(any());
+        assertError(PacketError.Condition.not_acceptable, process(PREFIX + "<username>alice</username><email>nope</email>" + SUFFIX));
+    }
+
+    @Test
+    public void testSelfUpdateOfAnAccountThatNoLongerExists() throws Exception
+    {
+        doThrow(new UserNotFoundException()).when(userManager).getUser("alice");
+        assertError(PacketError.Condition.bad_request, process(PREFIX + "<username>alice</username><password>newpass456</password>" + SUFFIX));
+    }
+
+    @Test
+    public void testRequestWithoutSession() throws Exception
+    {
+        doReturn(null).when(sessionManager).getSession(any(JID.class));
+        final IQ reply = handler.handleIQ(Fixtures.iqFrom(PREFIX + "<username>alice</username><password>newpass456</password>" + SUFFIX));
+        assertNotNull(reply, "Without a session there is nothing to deliver to, so the reply is returned.");
+        assertError(PacketError.Condition.internal_server_error, reply);
+        verify(user, never()).setPassword(anyString());
+    }
+
+    // Retrieving the registration
+
+    @Test
+    public void testUnauthenticatedGetReturnsRegistrationForm() throws Exception
+    {
+        doReturn(false).when(session).isAuthenticated();
+        final IQ reply = process(UNAUTHENTICATED_GET);
+        assertResult(reply);
+        final Element query = reply.getChildElement();
+        assertEquals("jabber:iq:register", query.getNamespaceURI());
+        assertNotNull(query.element("username"));
+        assertNotNull(query.element("password"));
+        assertNotNull(query.element("email"));
+        assertNotNull(query.element("name"));
+        assertNull(query.element("registered"), "An entity that is not registered is not 'registered'.");
+        assertNotNull(query.element(QName.get("x", "jabber:x:data")), "Expected a data form.");
+    }
+
+    @Test
+    public void testAuthenticatedGetReturnsCurrentRegistration() throws Exception
+    {
+        final IQ reply = process(AUTHENTICATED_GET);
+        assertResult(reply);
+        final Element query = reply.getChildElement();
+        assertNotNull(query.element("registered"));
+        assertEquals("alice", query.elementText("username"));
+        assertEquals("alice@example.com", query.elementText("email"));
+        assertEquals("Alice", query.elementText("name"));
+        assertEquals("", query.elementText("password"), "The password must not be returned.");
+
+        final Element form = query.element(QName.get("x", "jabber:x:data"));
+        assertNotNull(form);
+        for (final Element field : form.elements("field")) {
+            switch (field.attributeValue("var")) {
+                case "username": assertEquals("alice", field.elementText("value")); break;
+                case "email": assertEquals("alice@example.com", field.elementText("value")); break;
+                case "name": assertEquals("Alice", field.elementText("value")); break;
+                case "password": assertNull(field.element("value"), "The password must not be returned."); break;
+                default: break;
+            }
+        }
+    }
+
+    // Removal
+
+    /** XEP-0077 3.2: the account is removed, together with its roster and group memberships, and its sessions are closed. */
+    @Test
+    public void testRemove() throws Exception
+    {
+        final ClientSession otherSession = mock(ClientSession.class, withSettings().lenient());
+        doReturn(List.of(session, otherSession)).when(sessionManager).getSessions(any(JID.class));
+        final GroupManager groupManager = mock(GroupManager.class, withSettings().lenient());
+
+        try (MockedStatic<GroupManager> groups = mockStatic(GroupManager.class)) {
+            groups.when(GroupManager::getInstance).thenReturn(groupManager);
+
+            assertResult(process(PREFIX + "<remove/>" + SUFFIX));
+
+            verify(userManager).deleteUser(user);
+            verify(rosterManager).deleteRoster(session.getAddress());
+            verify(groupManager).deleteUser(user);
+        }
+        final ArgumentCaptor<StreamError> error = ArgumentCaptor.forClass(StreamError.class);
+        verify(session).close(error.capture());
+        verify(otherSession).close(any(StreamError.class));
+        assertEquals(StreamError.Condition.not_authorized, error.getValue().getCondition());
     }
 
     // ----- Service discovery -----

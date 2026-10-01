@@ -54,6 +54,7 @@ public class IQRegisterHandlerTest
     private static final String PREFIX = "<iq type='set' id='test' from='alice@" + Fixtures.XMPP_DOMAIN + "/res' to='" + Fixtures.XMPP_DOMAIN + "'><query xmlns='jabber:iq:register'>";
     private static final String SUFFIX = "</query></iq>";
 
+
     private UserProvider originalUserProvider;
     private UserManager userManager;
     private User user;
@@ -128,7 +129,7 @@ public class IQRegisterHandlerTest
     {
         assertNull(handler.handleIQ(Fixtures.iqFrom(stanza)), "Expected the reply to be delivered directly to the session.");
         final ArgumentCaptor<Packet> captor = ArgumentCaptor.forClass(Packet.class);
-        verify(session).process(captor.capture());
+        verify(session, description("A reply must be delivered by passing it to the session, exactly once (OF-3382)")).process(captor.capture());
         return (IQ) captor.getValue();
     }
 
@@ -156,7 +157,7 @@ public class IQRegisterHandlerTest
     {
         doReturn(false).when(session).isAuthenticated();
         assertError(PacketError.Condition.not_acceptable, process(PREFIX + "<username>bob</username><password/>" + SUFFIX));
-        verify(userManager, never()).createUser(anyString(), anyString(), any(), any());
+        verify(userManager, never().description("A registration without a usable password must not create an account (XEP-0077 3.1)")).createUser(anyString(), anyString(), any(), any());
     }
 
     /** OF-3382 */
@@ -174,7 +175,7 @@ public class IQRegisterHandlerTest
         doReturn(false).when(session).isAuthenticated();
         handler.setInbandRegEnabled(false);
         assertError(PacketError.Condition.service_unavailable, process(PREFIX + "<username>bob</username><password>secret</password>" + SUFFIX));
-        verify(userManager, never()).createUser(anyString(), anyString(), any(), any());
+        verify(userManager, never().description("An account must not be created when in-band registration is disabled (OF-3388)")).createUser(anyString(), anyString(), any(), any());
     }
 
     @Test
@@ -191,7 +192,7 @@ public class IQRegisterHandlerTest
     {
         doReturn(false).when(session).isAuthenticated();
         assertError(PacketError.Condition.not_acceptable, process(PREFIX + form("<field var='password'><value>secret</value></field>") + SUFFIX));
-        verify(userManager, never()).createUser(anyString(), anyString(), any(), any());
+        verify(userManager, never().description("A registration without a username must not create an account (OF-3387)")).createUser(anyString(), anyString(), any(), any());
     }
 
     /** OF-3387 */
@@ -200,7 +201,7 @@ public class IQRegisterHandlerTest
     {
         doReturn(false).when(session).isAuthenticated();
         assertError(PacketError.Condition.not_acceptable, process(PREFIX + form("<field var='username'/><field var='password'><value>secret</value></field>") + SUFFIX));
-        verify(userManager, never()).createUser(anyString(), anyString(), any(), any());
+        verify(userManager, never().description("A registration with an empty username must not create an account (OF-3387)")).createUser(anyString(), anyString(), any(), any());
     }
 
     // ----- Account creation on behalf of others (authenticated) -----
@@ -210,7 +211,7 @@ public class IQRegisterHandlerTest
     public void testAuthenticatedCannotCreateAnotherAccount() throws Exception
     {
         assertError(PacketError.Condition.forbidden, process(PREFIX + "<username>bob</username><password>secret</password>" + SUFFIX));
-        verify(userManager, never()).createUser(anyString(), anyString(), any(), any());
+        verify(userManager, never().description("An authenticated user must not be able to create an account for someone else (OF-3381)")).createUser(anyString(), anyString(), any(), any());
     }
 
     // ----- Account deletion -----
@@ -220,7 +221,7 @@ public class IQRegisterHandlerTest
     public void testRemoveWithOtherChildElements() throws Exception
     {
         assertError(PacketError.Condition.bad_request, process(PREFIX + "<remove/><username>alice</username><password>secret</password>" + SUFFIX));
-        verify(userManager, never()).deleteUser(any());
+        verify(userManager, never().description("A <remove/> that has other child elements is ambiguous, and must not delete the account (OF-3383)")).deleteUser(any());
     }
 
     /** OF-3384 */
@@ -229,7 +230,7 @@ public class IQRegisterHandlerTest
     {
         doReturn(false).when(session).isAuthenticated();
         assertError(PacketError.Condition.registration_required, process(PREFIX + "<remove/>" + SUFFIX));
-        verify(userManager, never()).deleteUser(any());
+        verify(userManager, never().description("An entity that is not registered has no account to delete (OF-3384)")).deleteUser(any());
     }
 
     /** OF-3388 */
@@ -238,7 +239,7 @@ public class IQRegisterHandlerTest
     {
         handler.setInbandRegEnabled(false);
         assertError(PacketError.Condition.not_allowed, process(PREFIX + "<remove/>" + SUFFIX));
-        verify(userManager, never()).deleteUser(any());
+        verify(userManager, never().description("An account must not be deleted when in-band registration is disabled (OF-3388)")).deleteUser(any());
     }
 
     // ----- Self-update -----
@@ -248,7 +249,7 @@ public class IQRegisterHandlerTest
     public void testPasswordChangeWithoutUsername() throws Exception
     {
         assertError(PacketError.Condition.bad_request, process(PREFIX + "<password>newpass456</password>" + SUFFIX));
-        verify(user, never()).setPassword(anyString());
+        verify(user, never().description("A password change that does not say which account it is for must not be applied (OF-3385)")).setPassword(anyString());
     }
 
     @Test
@@ -264,8 +265,8 @@ public class IQRegisterHandlerTest
     {
         assertResult(process(PREFIX + "<username>alice</username><name>Alice Liddell</name>" + SUFFIX));
         verify(user).setName("Alice Liddell");
-        verify(user, never()).setEmail(any());
-        verify(user, never()).setPassword(anyString());
+        verify(user, never().description("An update that omits the email address must leave the stored one as it is (OF-3386)")).setEmail(any());
+        verify(user, never().description("An update that omits the password must not change it (OF-3386)")).setPassword(anyString());
     }
 
     /** OF-3386 */
@@ -274,8 +275,8 @@ public class IQRegisterHandlerTest
     {
         assertResult(process(PREFIX + form("<field var='username'><value>alice</value></field><field var='password'><value>newpass456</value></field>") + SUFFIX));
         verify(user).setPassword("newpass456");
-        verify(user, never()).setEmail(any());
-        verify(user, never()).setName(any());
+        verify(user, never().description("A password change in a data form must not wipe the email address (OF-3386)")).setEmail(any());
+        verify(user, never().description("A password change in a data form must not wipe the name (OF-3386)")).setName(any());
     }
 
     /** OF-3386 */
@@ -283,8 +284,8 @@ public class IQRegisterHandlerTest
     public void testEmptyEmailClearsEmail() throws Exception
     {
         assertResult(process(PREFIX + "<username>alice</username><email/>" + SUFFIX));
-        verify(user).setEmail(isNull());
-        verify(user, never()).setName(any());
+        verify(user, description("An email address that is explicitly empty must clear the stored one (OF-3386)")).setEmail(isNull());
+        verify(user, never().description("Only the field that was submitted may change: the name must be left as it is (OF-3386)")).setName(any());
     }
 
     /** OF-3386 */
@@ -292,8 +293,8 @@ public class IQRegisterHandlerTest
     public void testEmptyNameClearsName() throws Exception
     {
         assertResult(process(PREFIX + "<username>alice</username><name/>" + SUFFIX));
-        verify(user).setName(isNull());
-        verify(user, never()).setEmail(any());
+        verify(user, description("A name that is explicitly empty must clear the stored one (OF-3386)")).setName(isNull());
+        verify(user, never().description("Only the field that was submitted may change: the email address must be left as it is (OF-3386)")).setEmail(any());
     }
 
     /** OF-3386 */
@@ -301,7 +302,7 @@ public class IQRegisterHandlerTest
     public void testEmptyPasswordLeavesPasswordUnchanged() throws Exception
     {
         assertResult(process(PREFIX + "<username>alice</username><password/><name>Alice Liddell</name>" + SUFFIX));
-        verify(user, never()).setPassword(anyString());
+        verify(user, never().description("An empty password must be treated as not provided, and must not be applied (OF-3386)")).setPassword(anyString());
         verify(user).setName("Alice Liddell");
     }
 
@@ -318,8 +319,8 @@ public class IQRegisterHandlerTest
         });
 
         assertError(PacketError.Condition.not_acceptable, process(PREFIX + "<username>alice</username><password>newpass456</password><name/>" + SUFFIX));
-        verify(user, never()).setPassword(anyString());
-        verify(user, never()).setName(any());
+        verify(user, never().description("A request with an emptied required name must be rejected before anything changes, including the password (OF-3386)")).setPassword(anyString());
+        verify(user, never().description("A required name must not be cleared (OF-3386)")).setName(any());
     }
 
     /**
@@ -340,8 +341,8 @@ public class IQRegisterHandlerTest
         doReturn(target).when(userManager).getUser(account);
 
         assertResult(process(PREFIX + "<username>" + requested + "</username><password>newpass456</password>" + SUFFIX));
-        verify(target).setPassword("newpass456");
-        verify(userManager, never()).createUser(anyString(), anyString(), any(), any());
+        verify(target, description("A username that is equivalent to the user's own after nodeprep names their own account, so this is a self-update (OF-3390)")).setPassword("newpass456");
+        verify(userManager, never().description("A self-update must not be treated as the creation of an account (OF-3390)")).createUser(anyString(), anyString(), any(), any());
     }
 
     // ----- Error replies -----
@@ -410,7 +411,7 @@ public class IQRegisterHandlerTest
         AdminManager.getInstance().addAdminAccount(new JID("alice", Fixtures.XMPP_DOMAIN, null));
         try {
             assertError(PacketError.Condition.forbidden, process(PREFIX + "<username>bob</username><password>secret</password>" + SUFFIX));
-            verify(userManager, never()).createUser(anyString(), anyString(), any(), any());
+            verify(userManager, never().description("An administrator must not be able to create an account for someone else through in-band registration either (OF-3381)")).createUser(anyString(), anyString(), any(), any());
         } finally {
             AdminManager.getInstance().clearAdminUsers();
         }
@@ -420,7 +421,7 @@ public class IQRegisterHandlerTest
     public void testAnotherAccountWithoutPasswordIsRefused() throws Exception
     {
         assertError(PacketError.Condition.forbidden, process(PREFIX + "<username>bob</username>" + SUFFIX));
-        verify(userManager, never()).createUser(anyString(), anyString(), any(), any());
+        verify(userManager, never().description("An authenticated user must not be able to create an account for someone else, with or without a password (OF-3381)")).createUser(anyString(), anyString(), any(), any());
     }
 
     @Test
@@ -428,7 +429,7 @@ public class IQRegisterHandlerTest
     {
         handler.setCanChangePassword(false);
         assertError(PacketError.Condition.forbidden, process(PREFIX + "<username>bob</username><password>secret</password>" + SUFFIX));
-        verify(userManager, never()).createUser(anyString(), anyString(), any(), any());
+        verify(userManager, never().description("An authenticated user must not be able to create an account for someone else, whatever the settings (OF-3381)")).createUser(anyString(), anyString(), any(), any());
     }
 
     // Creation
@@ -454,7 +455,7 @@ public class IQRegisterHandlerTest
     {
         doReturn(false).when(session).isAuthenticated();
         assertError(PacketError.Condition.not_acceptable, process(PREFIX + "<username/><password>secret</password>" + SUFFIX));
-        verify(userManager, never()).createUser(anyString(), anyString(), any(), any());
+        verify(userManager, never().description("A registration with a blank username must not create an account (OF-3387)")).createUser(anyString(), anyString(), any(), any());
     }
 
     /** XEP-0077 3.1: a username that is not valid after nodeprep. */
@@ -463,7 +464,7 @@ public class IQRegisterHandlerTest
     {
         doReturn(false).when(session).isAuthenticated();
         assertError(PacketError.Condition.jid_malformed, process(PREFIX + "<username>b o b</username><password>secret</password>" + SUFFIX));
-        verify(userManager, never()).createUser(anyString(), anyString(), any(), any());
+        verify(userManager, never().description("A username that is not valid after nodeprep must not create an account")).createUser(anyString(), anyString(), any(), any());
     }
 
     @Test
@@ -497,8 +498,8 @@ public class IQRegisterHandlerTest
     {
         assertResult(process(PREFIX + "<username>alice</username><email>alice.liddell@example.com</email>" + SUFFIX));
         verify(user).setEmail("alice.liddell@example.com");
-        verify(user, never()).setName(any());
-        verify(user, never()).setPassword(anyString());
+        verify(user, never().description("Only the field that was submitted may change: the name must be left as it is (OF-3386)")).setName(any());
+        verify(user, never().description("Only the field that was submitted may change: the password must be left as it is (OF-3386)")).setPassword(anyString());
     }
 
     @Test
@@ -506,7 +507,7 @@ public class IQRegisterHandlerTest
     {
         assertResult(process(PREFIX + form("<field var='username'><value>alice</value></field><field var='email'><value>alice.liddell@example.com</value></field>") + SUFFIX));
         verify(user).setEmail("alice.liddell@example.com");
-        verify(user, never()).setName(any());
+        verify(user, never().description("Only the field that was submitted may change: the name must be left as it is (OF-3386)")).setName(any());
     }
 
     @Test
@@ -514,14 +515,14 @@ public class IQRegisterHandlerTest
     {
         handler.setInbandRegEnabled(false);
         assertResult(process(PREFIX + "<username>alice</username><password>newpass456</password>" + SUFFIX));
-        verify(user).setPassword("newpass456");
+        verify(user, description("Changing your own password is governed by register.password, not register.inband (OF-3388)")).setPassword("newpass456");
     }
 
     @Test
     public void testFormWithoutUsernameWhenAuthenticated() throws Exception
     {
         assertError(PacketError.Condition.bad_request, process(PREFIX + form("<field var='password'><value>newpass456</value></field>") + SUFFIX));
-        verify(user, never()).setPassword(anyString());
+        verify(user, never().description("A form that does not say which account it is for must not change a password (OF-3385)")).setPassword(anyString());
     }
 
     @Test
@@ -536,8 +537,8 @@ public class IQRegisterHandlerTest
         });
 
         assertError(PacketError.Condition.not_acceptable, process(PREFIX + "<username>alice</username><password>newpass456</password><email/>" + SUFFIX));
-        verify(user, never()).setPassword(anyString());
-        verify(user, never()).setEmail(any());
+        verify(user, never().description("A request with an emptied required email address must be rejected before anything changes, including the password (OF-3386)")).setPassword(anyString());
+        verify(user, never().description("A required email address must not be cleared (OF-3386)")).setEmail(any());
     }
 
     @Test
@@ -568,7 +569,7 @@ public class IQRegisterHandlerTest
         final IQ reply = handler.handleIQ(Fixtures.iqFrom(PREFIX + "<username>alice</username><password>newpass456</password>" + SUFFIX));
         assertNotNull(reply, "Without a session there is nothing to deliver to, so the reply is returned.");
         assertError(PacketError.Condition.internal_server_error, reply);
-        verify(user, never()).setPassword(anyString());
+        verify(user, never().description("Without a session the request can't be attributed to an account, so nothing may change")).setPassword(anyString());
     }
 
     // Retrieving the registration
@@ -634,8 +635,8 @@ public class IQRegisterHandlerTest
             verify(groupManager).deleteUser(user);
         }
         final ArgumentCaptor<StreamError> error = ArgumentCaptor.forClass(StreamError.class);
-        verify(session).close(error.capture());
-        verify(otherSession).close(any(StreamError.class));
+        verify(session, description("The sessions of a removed account must be closed, as they would otherwise outlive the account")).close(error.capture());
+        verify(otherSession, description("This includes the sessions of the account's other resources")).close(any(StreamError.class));
         assertEquals(StreamError.Condition.not_authorized, error.getValue().getCondition());
     }
 
@@ -703,9 +704,9 @@ public class IQRegisterHandlerTest
     public void testFeatureIsRemovedWhenBothSettingsAreDisabled()
     {
         handler.setInbandRegEnabled(false);
-        verify(discoInfoHandler, never()).removeServerFeature("jabber:iq:register");
+        verify(discoInfoHandler, never().description("jabber:iq:register must stay advertised while one of the settings is enabled (OF-3391)")).removeServerFeature("jabber:iq:register");
         handler.setCanChangePassword(false);
-        verify(discoInfoHandler).removeServerFeature("jabber:iq:register");
+        verify(discoInfoHandler, description("jabber:iq:register must stop being advertised once neither setting is enabled (OF-3391)")).removeServerFeature("jabber:iq:register");
     }
 
     /** OF-3391 */
@@ -718,8 +719,8 @@ public class IQRegisterHandlerTest
 
         handler.setCanChangePassword(true);
 
-        verify(discoInfoHandler).addServerFeature("jabber:iq:register");
-        verify(discoInfoHandler, never()).removeServerFeature(anyString());
+        verify(discoInfoHandler, description("jabber:iq:register must be advertised again once a setting is enabled (OF-3391)")).addServerFeature("jabber:iq:register");
+        verify(discoInfoHandler, never().description("Enabling a setting must not remove the feature (OF-3391)")).removeServerFeature(anyString());
     }
 
     // ----- System properties -----
@@ -751,11 +752,11 @@ public class IQRegisterHandlerTest
     {
         JiveGlobals.setProperty("register.inband", "false");
         JiveGlobals.setProperty("register.password", "false");
-        verify(discoInfoHandler).removeServerFeature("jabber:iq:register");
+        verify(discoInfoHandler, description("The advertised feature must follow a change to the property itself, not only a change made through the setters (OF-3394)")).removeServerFeature("jabber:iq:register");
 
         clearInvocations(discoInfoHandler);
         JiveGlobals.setProperty("register.password", "true");
-        verify(discoInfoHandler).addServerFeature("jabber:iq:register");
+        verify(discoInfoHandler, description("The advertised feature must follow a change to the property itself, not only a change made through the setters (OF-3394)")).addServerFeature("jabber:iq:register");
     }
 
     // ----- Settings -----
@@ -766,7 +767,7 @@ public class IQRegisterHandlerTest
     {
         handler.setInbandRegEnabled(false);
         assertResult(process(PREFIX + "<username>alice</username><name>Alice Liddell</name>" + SUFFIX));
-        verify(user).setName("Alice Liddell");
+        verify(user, description("Updating your own name is governed by register.password, not register.inband (OF-3388)")).setName("Alice Liddell");
     }
 
     /** OF-3388 (a) */
@@ -775,7 +776,7 @@ public class IQRegisterHandlerTest
     {
         handler.setInbandRegEnabled(false);
         assertResult(process(PREFIX + form("<field var='username'><value>alice</value></field><field var='password'><value>newpass456</value></field>") + SUFFIX));
-        verify(user).setPassword("newpass456");
+        verify(user, description("Changing your own password is governed by register.password, not register.inband (OF-3388)")).setPassword("newpass456");
     }
 
     /** OF-3388 (b): name/email updates are governed by 'register.password'. OF-3392: refused with not-allowed. */
@@ -784,7 +785,7 @@ public class IQRegisterHandlerTest
     {
         handler.setCanChangePassword(false);
         assertError(PacketError.Condition.not_allowed, process(PREFIX + "<username>alice</username><name>Alice Liddell</name>" + SUFFIX));
-        verify(user, never()).setName(any());
+        verify(user, never().description("A name update must be refused when register.password is disabled (OF-3388)")).setName(any());
     }
 
     /** OF-3392: XEP-0077 3.3, the server does not allow password changes. */
@@ -793,7 +794,7 @@ public class IQRegisterHandlerTest
     {
         handler.setCanChangePassword(false);
         assertError(PacketError.Condition.not_allowed, process(PREFIX + "<username>alice</username><password>newpass456</password>" + SUFFIX));
-        verify(user, never()).setPassword(anyString());
+        verify(user, never().description("A password change must be refused when register.password is disabled (OF-3388)")).setPassword(anyString());
     }
 
     private static final String AUTHENTICATED_GET = "<iq type='get' id='test' from='alice@" + Fixtures.XMPP_DOMAIN + "/res' to='" + Fixtures.XMPP_DOMAIN + "'><query xmlns='jabber:iq:register'/></iq>";

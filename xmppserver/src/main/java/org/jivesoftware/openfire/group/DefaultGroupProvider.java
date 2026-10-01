@@ -57,10 +57,8 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
     private static final String DELETE_GROUP =
         "DELETE FROM ofGroup WHERE groupName=?";
     private static final String GROUP_COUNT = "SELECT count(*) FROM ofGroup";
-     private static final String LOAD_ADMINS =
-        "SELECT username FROM ofGroupUser WHERE administrator=1 AND groupName=? ORDER BY username";
-    private static final String LOAD_MEMBERS =
-        "SELECT username FROM ofGroupUser WHERE administrator=0 AND groupName=? ORDER BY username";
+    private static final String LOAD_MEMBERS_AND_ADMINS =
+        "SELECT username, administrator FROM ofGroupUser WHERE groupName=? ORDER BY username";
     private static final String LOAD_GROUP =
         "SELECT description FROM ofGroup WHERE groupName=?";
     private static final String REMOVE_USER =
@@ -105,9 +103,9 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
             DbConnectionManager.closeConnection(pstmt, con);
         }
 
-        // TODO Replace these two database queries with one. OF-2710
-        Collection<JID> members = getMembers(name, false);
-        Collection<JID> administrators = getMembers(name, true);
+        List<JID> members = new ArrayList<>();
+        List<JID> administrators = new ArrayList<>();
+        loadMembersAndAdmins(name, members, administrators);
 
         return new Group(name, "", members, administrators);
     }
@@ -137,9 +135,9 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
 
-        // TODO Replace these two database queries with one. OF-2710
-        Collection<JID> members = getMembers(name, false);
-        Collection<JID> administrators = getMembers(name, true);
+        List<JID> members = new ArrayList<>();
+        List<JID> administrators = new ArrayList<>();
+        loadMembersAndAdmins(name, members, administrators);
 
         return new Group(name, description, members, administrators);
     }
@@ -507,23 +505,18 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
         return true;
     }
 
-    private Collection<JID> getMembers(String groupName, boolean adminsOnly) {
-        List<JID> members = new ArrayList<>();
+    private void loadMembersAndAdmins(String groupName, Collection<JID> members, Collection<JID> administrators) {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
             con = DbConnectionManager.getConnection();
-            if (adminsOnly) {
-                pstmt = con.prepareStatement(LOAD_ADMINS);
-            }
-            else {
-                pstmt = con.prepareStatement(LOAD_MEMBERS);
-            }
+            pstmt = con.prepareStatement(LOAD_MEMBERS_AND_ADMINS);
             pstmt.setString(1, groupName);
             rs = pstmt.executeQuery();
             while (rs.next()) {
                 String user = rs.getString(1);
+                boolean isAdmin = rs.getInt(2) == 1;
                 JID userJID = null;
                 if (user.indexOf('@') == -1) {
                     // Create JID of local user if JID does not match a component's JID
@@ -541,7 +534,14 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
                     Log.warn("Group '{}' has a member that is persisted using its full JID, instead of a bare JID: '{}'. This is unexpected, and possibly a data consistency error. Groups should only contain bare JIDs.", groupName, userJID);
                     userJID = userJID.asBareJID();
                 }
-                members.add(userJID);
+
+                if (userJID != null) {
+                    if (isAdmin) {
+                        administrators.add(userJID);
+                    } else {
+                        members.add(userJID);
+                    }
+                }
             }
         }
         catch (SQLException e) {
@@ -550,6 +550,5 @@ public class DefaultGroupProvider extends AbstractGroupProvider {
         finally {
             DbConnectionManager.closeConnection(rs, pstmt, con);
         }
-        return members;
     }
 }

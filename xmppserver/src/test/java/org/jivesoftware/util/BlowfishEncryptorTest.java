@@ -307,4 +307,48 @@ public class BlowfishEncryptorTest {
             JiveGlobals.setBlowfishKdf(originalKdf);
         }
     }
+
+    /**
+     * With no password KDF recorded, passwords use the property KDF: SHA1 for installs that predate
+     * 5.1 and have never migrated, PBKDF2 for installs created on 5.1 or later (OF-3374).
+     */
+    @Test
+    public void testPasswordKdfFollowsPropertyKdfWhenNotRecorded() {
+        String originalKdf = JiveGlobals.getBlowfishKdf();
+        try {
+            JiveGlobals.clearBlowfishKdfForPasswords();
+
+            JiveGlobals.setBlowfishKdf(JiveGlobals.BLOWFISH_KDF_SHA1);
+            assertEquals(JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.getBlowfishKdfForPasswords());
+
+            JiveGlobals.setBlowfishKdf(JiveGlobals.BLOWFISH_KDF_PBKDF2);
+            assertEquals(JiveGlobals.BLOWFISH_KDF_PBKDF2, JiveGlobals.getBlowfishKdfForPasswords());
+        } finally {
+            JiveGlobals.clearBlowfishKdfForPasswords();
+            JiveGlobals.setBlowfishKdf(originalKdf);
+        }
+    }
+
+    /**
+     * After the SHA1-to-PBKDF2 migration, passwords (which it does not re-encrypt) must stay on SHA1
+     * even though the property KDF is now PBKDF2 (OF-3374).
+     */
+    @Test
+    public void testPasswordKdfStaysSHA1AfterMigration() {
+        String originalKdf = JiveGlobals.getBlowfishKdf();
+        try {
+            JiveGlobals.setBlowfishKdf(JiveGlobals.BLOWFISH_KDF_SHA1);
+            JiveGlobals.clearBlowfishKdfForPasswords();
+
+            // What BlowfishMigrationServlet does, in this order
+            JiveGlobals.preserveLegacyPasswordKdf();
+            JiveGlobals.setBlowfishKdf(JiveGlobals.BLOWFISH_KDF_PBKDF2);
+
+            assertEquals(JiveGlobals.BLOWFISH_KDF_SHA1, JiveGlobals.getBlowfishKdfForPasswords());
+            assertEquals(JiveGlobals.BLOWFISH_KDF_PBKDF2, JiveGlobals.getBlowfishKdf());
+        } finally {
+            JiveGlobals.clearBlowfishKdfForPasswords();
+            JiveGlobals.setBlowfishKdf(originalKdf);
+        }
+    }
 }

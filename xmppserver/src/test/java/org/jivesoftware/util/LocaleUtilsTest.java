@@ -15,18 +15,53 @@
  */
 package org.jivesoftware.util;
 
-import org.hamcrest.MatcherAssert;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Locale;
+
+import static java.util.Arrays.asList;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 public class LocaleUtilsTest {
 
     @Test
     public void getLocalizedStringWillReturnASensibleDefaultValue() {
-
         final String key = "if.this.key.exists.the.test.will.fail";
+        assertThat(LocaleUtils.getLocalizedString(key), is("???" + key + "???"));
+    }
 
-        MatcherAssert.assertThat(LocaleUtils.getLocalizedString(key), is("???" + key + "???"));
+    @Test
+    public void bestMatchingSupportedLocale() {
+        Enumeration<Locale> reqLocales;
+        String preferredLocale;
+        reqLocales = Collections.enumeration(List.of(
+            new Locale("en")
+        ));
+        preferredLocale = LocaleUtils.bestMatchingSupportedLocale(reqLocales);
+        assertThat(preferredLocale, is("en"));
+
+        reqLocales = Collections.enumeration(List.of(
+            new Locale("en", "US")
+        ));
+        preferredLocale = LocaleUtils.bestMatchingSupportedLocale(reqLocales);
+        assertThat(preferredLocale, is("en"));
+
+        reqLocales = Collections.enumeration(List.of(
+            new Locale("pt", "BR"),
+            new Locale("pt", "PT"),
+            new Locale("pt")
+            ));
+        preferredLocale = LocaleUtils.bestMatchingSupportedLocale(reqLocales);
+        assertThat(preferredLocale, is("pt_BR"));
+
+        reqLocales = Collections.enumeration(List.of(
+            new Locale("pt")
+        ));
+        preferredLocale = LocaleUtils.bestMatchingSupportedLocale(reqLocales);
+        assertThat(preferredLocale, is("pt_PT"));
     }
 }

@@ -17,9 +17,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="java.lang.reflect.Method" %>
-<%@ page import="java.util.HashMap"%>
-<%@ page import="java.util.Locale"%>
-<%@ page import="java.util.Map"%>
+<%@ page import="java.util.*"%>
 <%@ page import="org.jivesoftware.util.*" %>
 <%@ page import="java.nio.file.Path" %>
 <%@ page import="java.nio.file.Files" %>
@@ -131,7 +129,8 @@
         }
     }
 
-    Locale locale = JiveGlobals.getLocale();
+    pageContext.setAttribute( "locales", LocaleUtils.getSupportedLocales() );
+    pageContext.setAttribute( "locale", LocaleUtils.bestMatchingSupportedLocale(request.getLocales()) );
     pageContext.setAttribute( "localizedTitle", LocaleUtils.getLocalizedString("title") );
     pageContext.setAttribute( "errors", errors );
 %>
@@ -305,113 +304,14 @@
 
                 <form action="index.jsp" name="sform">
                     <input type="hidden" name="csrf" value="${csrf}">
-                    <%  boolean usingPreset = false;
-                        Locale[] locales = Locale.getAvailableLocales();
-                        for ( final Locale value : locales ) {
-                            usingPreset = value.equals( locale );
-                            if ( usingPreset ) { break; }
-                        }
-
-                        pageContext.setAttribute( "usingPreset", usingPreset );
-                        pageContext.setAttribute( "locale", locale.toString() );
-                    %>
                     <div id="jive-setup-language">
                         <p>
-                            <label for="cs_CZ">
-                                <input type="radio" name="localeCode" value="cs_CZ" ${locale eq 'cs_CZ' ? 'checked' : ''} id="cs_CZ" />
-                                <b>Czech</b> (cs_CZ)
+                        <c:forEach var="l" items="${locales}">
+                            <label for="${l.key}">
+                                <input type="radio" name="localeCode" value="${l.key}" ${locale eq l.key ? 'checked' : ''} id="${l.key}"/>
+                                <b>${l.value}</b> (${l.key})
                             </label><br>
-
-                            <label for="de">
-                                <input type="radio" name="localeCode" value="de" ${locale eq 'de' ? 'checked' : ''} id="de" />
-                                <b>Deutsch</b> (de)
-                            </label><br>
-
-                            <label for="en">
-                                <input type="radio" name="localeCode" value="en" ${locale eq 'en' ? 'checked' : ''} id="en" />
-                                <b>English</b> (en)
-                            </label><br>
-
-                            <label for="es">
-                                <input type="radio" name="localeCode" value="es" ${locale eq 'es' ? 'checked' : ''} id="es" />
-                                <b>Espa&ntilde;ol</b> (es)
-                            </label><br>
-
-                            <label for="fa_IR">
-                                <input type="radio" name="localeCode" value="fa_IR" ${locale eq 'fa_IR' ? 'checked' : ''} id="fa_IR" />
-                                (fa_IR) <b>فارسی</b>
-                            </label><br>
-
-                            <label for="fr">
-                                <input type="radio" name="localeCode" value="fr" ${locale eq 'fr' ? 'checked' : ''} id="fr" />
-                                <b>Fran&ccedil;ais</b> (fr)
-                            </label><br>
-
-                            <label for="he">
-                                <input type="radio" name="localeCode" value="he" ${locale eq 'he' ? 'checked' : ''} id="he" />
-                                (he) <b>עברית</b>
-                            </label><br>
-
-                            <label for="it_IT">
-                                <input type="radio" name="localeCode" value="it_IT" ${locale eq 'it_IT' ? 'checked' : ''} id="it_IT" />
-                                <b>Italiano</b> (it_IT)
-                            </label><br>
-
-                            <label for="ja_JP">
-                                <input type="radio" name="localeCode" value="ja_JP" ${locale eq 'ja_JP' ? 'checked' : ''} id="ja_JP" />
-                                <b>日本語</b> (ja_JP)
-                            </label><br>
-
-                            <label for="nl">
-                                <input type="radio" name="localeCode" value="nl" ${locale eq 'nl' ? 'checked' : ''} id="nl" />
-                                <b>Nederlands</b> (nl)
-                            </label><br>
-
-                            <label for="pl_PL">
-                                <input type="radio" name="localeCode" value="pl_PL" ${locale eq 'pl_PL' ? 'checked' : ''} id="pl_PL" />
-                                <b>Polski</b> (pl_PL)
-                            </label><br>
-
-                            <label for="pt_PT">
-                                <input type="radio" name="localeCode" value="pt_PT" ${locale eq 'pt_PT' ? 'checked' : ''} id="pt_PT" />
-                                <b>Portugu&ecirc;s Portugal</b> (pt_PT)
-                            </label><br>
-
-                            <label for="pt_BR">
-                                <input type="radio" name="localeCode" value="pt_BR" ${locale eq 'pt_BR' ? 'checked' : ''} id="pt_BR" />
-                                <b>Portugu&ecirc;s Brasileiro</b> (pt_BR)
-                            </label><br>
-
-                            <label for="ru_RU">
-                                <input type="radio" name="localeCode" value="ru_RU" ${locale eq 'ru_RU' ? 'checked' : ''} id="ru_RU" />
-                                <b>&#x420;&#x443;&#x441;&#x441;&#x43A;&#x438;&#x439;</b> (ru_RU)
-                            </label><br>
-
-                            <label for="sk">
-                                <input type="radio" name="localeCode" value="sk" ${locale eq 'sk' ? 'checked' : ''} id="sk" />
-                                <b>Sloven&#269;ina</b> (sk)
-                            </label><br>
-
-                            <label for="sv">
-                                <input type="radio" name="localeCode" value="sv" ${locale eq 'sv' ? 'checked' : ''} id="sv" />
-                                <b>Svenska</b> (sv)
-                            </label><br>
-
-                            <label for="tr_TR">
-                                <input type="radio" name="localeCode" value="tr_TR" ${locale eq 'tr_TR' ? 'checked' : ''} id="tr_TR" />
-                                <b>Türkçe</b> (tr_TR)
-                            </label><br>
-
-                            <label for="uk_UA">
-                                <input type="radio" name="localeCode" value="uk_UA" ${locale eq 'uk_UA' ? 'checked' : ''} id="uk_UA" />
-                                <b>Українська</b> (uk_UA)
-                            </label><br>
-
-                            <label for="zh_CN">
-                                <input type="radio" name="localeCode" value="zh_CN" ${locale eq 'zh_CN' ? 'checked' : ''} id="zh_CN" />
-                                <img src="../images/setup_language_zh_CN.gif" align="top" />
-                                <b>Simplified Chinese</b> (zh_CN)
-                            </label><br>
+                        </c:forEach>
                         </p>
                     </div>
 

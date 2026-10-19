@@ -22,7 +22,6 @@
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.filetransfer.proxy.FileTransferProxy" %>
 <%@ page import="org.jivesoftware.openfire.keystore.IdentityStore" %>
-<%@ page import="org.jivesoftware.openfire.mediaproxy.MediaProxyService" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionListener" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.openfire.update.Update" %>
@@ -64,7 +63,6 @@
 
     ConnectionManager connectionManager = XMPPServer.getInstance().getConnectionManager();
     FileTransferProxy fileTransferProxy = XMPPServer.getInstance().getFileTransferProxy();
-    MediaProxyService mediaProxyService = XMPPServer.getInstance().getMediaProxyService();
 
     boolean rssEnabled = BlogPostServlet.ENABLED.getValue();;
 
@@ -608,17 +606,6 @@
         <td><img src="images/blank.gif" width="1" height="1" alt=""></td>
         <td><fmt:message key="ports.file_proxy" /></td>
         <td><fmt:message key="ports.file_proxy.desc" /></td>
-    </tr>
-    <% } %>
-    <%
-        if (mediaProxyService.isEnabled()) {
-    %>
-    <tr>
-        <td><%= interfaceName %></td>
-        <td><%= mediaProxyService.getMinPort() %> - <%= mediaProxyService.getMaxPort() %></td>
-        <td><img src="images/blank.gif" width="1" height="1" alt=""></td>
-        <td><fmt:message key="ports.media_proxy" /></td>
-        <td><fmt:message key="ports.media_proxy.desc" /></td>
     </tr>
     <% } %>
     <%

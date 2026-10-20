@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Openfire: Audio and Video Calls Guide</title>
+    <link href="style.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+
+<article>
+
+    <header>
+        <img src="images/header_logo.gif" alt="Openfire Logo" />
+        <h1>Audio and Video Calls Guide</h1>
+    </header>
+
+    <nav>
+        <a href="index.html">&laquo; Back to documentation index</a>
+    </nav>
+
+    <section id="intro">
+
+        <h2>Introduction</h2>
+
+        <aside>
+            <p>
+                Which configuration works best depends heavily on the networks that your users and your server are in.
+                This guide is not exhaustive, but aims to describe common setups.
+            </p>
+        </aside>
+
+        <p>
+            Many XMPP clients can make audio and video calls. This guide describes what is needed, on the side of
+            Openfire and the network that it is in, to allow such calls to connect reliably.
+        </p>
+
+        <p>This guide contains the following topics</p>
+
+        <nav>
+            <ul>
+                <li><a href="#how-calls-work">How calls are connected</a></li>
+                <li><a href="#components">Components</a></li>
+                <li><a href="#credentials">Credentials for TURN</a></li>
+                <li><a href="#scenarios">Common environments</a></li>
+                <li><a href="#group-calls">Group calls</a></li>
+                <li><a href="#legacy">Legacy options</a></li>
+                <li><a href="#troubleshooting">Troubleshooting</a></li>
+            </ul>
+        </nav>
+
+    </section>
+
+    <section id="how-calls-work">
+
+        <h2>How calls are connected</h2>
+
+        <p>
+            A one-to-one call between two XMPP clients is set up using <a href="https://xmpp.org/extensions/xep-0166.html">Jingle</a>.
+            Openfire is used to deliver the messages with which the clients negotiate the call, but the audio and video
+            itself does not pass through Openfire. Instead, the clients try to send it directly to each other.
+        </p>
+
+        <p>
+            Clients find a way to reach each other using ICE (Interactive Connectivity Establishment). Each client
+            gathers a list of addresses on which it can possibly be reached (its <em>candidates</em>), sends that list
+            to the other client, after which both try every combination until one works. Clients use three kinds of
+            candidates:
+        </p>
+
+        <dl>
+            <dt>Host candidates</dt>
+            <dd>The addresses of the network interfaces of the device itself. These work when both clients are in the
+                same network, or when a client has a public IP address.</dd>
+
+            <dt>Server-reflexive candidates</dt>
+            <dd>The public address that a NAT router uses for the client. A client learns this address by asking a
+                <strong>STUN</strong> server. These often work when one or both clients are behind a home router.</dd>
+
+            <dt>Relayed candidates</dt>
+            <dd>An address on a <strong>TURN</strong> server, which relays all audio and video between the clients.
+                This works in nearly all cases, including networks where direct connections are impossible, such as
+                many mobile networks (which commonly use carrier-grade NAT) and corporate networks.</dd>
+        </dl>
+
+        <p>
+            Without a STUN or TURN server, calls typically only connect when both clients are in the same network. With
+            STUN, many (but not all) calls over the internet connect. A TURN server is needed to make calls connect
+            reliably. As a TURN server relays the audio and video of calls that cannot be connected directly, it needs
+            enough bandwidth for those calls.
+        </p>
+
+        <p>
+            Clients learn which STUN and TURN servers to use by asking their XMPP server, using
+            <a href="https://xmpp.org/extensions/xep-0215.html">XEP-0215: External Service Discovery</a>. Openfire does
+            not provide that functionality itself: it is added by a plugin, as described below.
+        </p>
+
+    </section>
+
+    <section id="components">
+
+        <h2>Components</h2>
+
+        <p>
+            A typical setup consists of a STUN/TURN server, and the External Service Discovery plugin that tells clients
+            how to use it. All plugins mentioned in this guide can be installed from the Plugins page of the Openfire
+            Admin Console, or downloaded from the <a href="https://www.igniterealtime.org/projects/openfire/plugins.jsp">Openfire
+            plugins page</a>.
+        </p>
+
+        <section id="components-extdisco">
+
+            <h3>External Service Discovery plugin</h3>
+
+            <p>
+                The <a href="https://github.com/igniterealtime/openfire-externalservicediscovery-plugin">External
+                Service Discovery</a> plugin implements XEP-0215. After installation, it can be configured on the
+                <em>Server &gt; Media Services &gt; Ext. Service Discovery</em> page of the Admin Console. Add an entry
+                for each STUN or TURN service that clients should use. Each entry consists of a host, a port, a transport
+                (UDP or TCP), a type (STUN, TURN or TURNS) and, for TURN, the credentials that clients need to use the
+                service (see <a href="#credentials">Credentials for TURN</a>).
+            </p>
+
+            <p>
+                This plugin is needed regardless of which STUN/TURN server is used, as without it, clients will not learn
+                about the server.
+            </p>
+
+        </section>
+
+        <section id="components-pionturn">
+
+            <h3>Pion TURN plugin</h3>
+
+            <p>
+                The <a href="https://github.com/igniterealtime/openfire-pionturn-plugin">Pion TURN</a> plugin runs a
+                STUN/TURN server (based on the <a href="https://github.com/pion/turn">Pion TURN</a> project) on the
+                same machine as Openfire. It is the easiest way to add a TURN server to an Openfire installation, as no
+                additional software needs to be installed or managed. The plugin reads its configuration from the
+                External Service Discovery plugin, which needs to be installed too. The README of the plugin describes
+                how to configure both plugins.
+            </p>
+
+            <p>Be aware of the following limitations:</p>
+
+            <ul>
+                <li>It contains executables for 64-bit Linux and 64-bit Windows only.</li>
+                <li>It uses UDP only. It does not provide TURN over TCP or TLS, which some clients need in networks
+                    that block UDP traffic.</li>
+                <li>It relays traffic on the IP address that is configured in the plugin. That needs to be an address
+                    that is reachable by all clients, which in practice means a public IP address. When Openfire runs
+                    behind a NAT router, the public IP address of the router needs to be configured, and the router needs
+                    to forward the TURN port (default: 3478) and the entire relay port range (default: 50000-55000) to
+                    Openfire, for UDP.</li>
+                <li>A firewall on the server needs to allow UDP traffic on the same ports.</li>
+            </ul>
+
+        </section>
+
+        <section id="components-external">
+
+            <h3>A standalone STUN/TURN server</h3>
+
+            <p>
+                Instead of using the Pion TURN plugin, you can install a dedicated STUN/TURN server, such as
+                <a href="https://github.com/coturn/coturn">coturn</a> or <a href="https://eturnal.net/">eturnal</a>.
+                These can run on the same machine as Openfire, or on a different machine. Compared to the Pion TURN
+                plugin, these servers offer more options, including TURN over TCP and TLS, and explicit configuration
+                for running behind NAT. Configuring and maintaining them is not covered by this guide: please refer to
+                their documentation.
+            </p>
+
+            <p>
+                Once the server is running, add its services to the External Service Discovery plugin. When possible,
+                configure the TURN server to use a shared secret (see <a href="#credentials">Credentials for TURN</a>).
+                For coturn, this is done with these options in its configuration file:
+            </p>
+
+            <pre><code>use-auth-secret
+static-auth-secret=<em>a long, random, alphanumeric secret</em>
+realm=<em>example.org</em></code></pre>
+
+            <p>
+                A server that is used by clients on various networks typically gets four entries in the External
+                Service Discovery plugin: STUN over UDP, TURN over UDP and TURN over TCP (all commonly on port 3478),
+                and TURNS (TURN over TLS, commonly on port 5349 or 443) to support clients in networks that only allow
+                encrypted web traffic.
+            </p>
+
+        </section>
+
+    </section>
+
+    <section id="credentials">
+
+        <h2>Credentials for TURN</h2>
+
+        <p>
+            A TURN server relays traffic for anyone that can authenticate with it. Without proper access control, others
+            can use your server, and your bandwidth. The External Service Discovery plugin can give clients credentials
+            in two ways:
+        </p>
+
+        <dl>
+            <dt>Shared secret (recommended)</dt>
+            <dd>The plugin and the TURN server share a secret. For every client that asks, the plugin uses that secret
+                to generate a username and password that are valid for 24 hours. This is the mechanism that is
+                commonly known as the "TURN REST API", which is supported by coturn, eturnal and the Pion TURN plugin.
+                The secret itself is never given to clients.</dd>
+
+            <dt>Static username and password</dt>
+            <dd>All clients get the same username and password. Anyone that has ever obtained these can keep using the
+                TURN server, until the password is changed on both the server and in the plugin.</dd>
+        </dl>
+
+        <p>
+            Use a long secret or password that consists of letters and digits only. Special characters have been
+            reported to cause problems.
+        </p>
+
+    </section>
+
+    <section id="scenarios">
+
+        <h2>Common environments</h2>
+
+        <section id="scenario-lan">
+
+            <h3>All users are in the same network</h3>
+
+            <p>
+                When all users are in the same local network (for example, an office network in which Openfire is used
+                internally), clients can usually reach each other using host candidates. No additional configuration is
+                needed. When there are several network segments that are separated by a firewall, the firewall needs to
+                allow UDP traffic between those segments, or a TURN server needs to be added.
+            </p>
+
+        </section>
+
+        <section id="scenario-public">
+
+            <h3>Openfire runs on a server with a public IP address</h3>
+
+            <p>
+                This is the case for many servers that are hosted in a data center or with a cloud provider. Here, the
+                simplest setup is to install the Pion TURN and External Service Discovery plugins. Make sure that the
+                firewall of the server (and of the hosting provider, if any) allows UDP traffic on the TURN port and the
+                relay port range.
+            </p>
+
+            <p>
+                When users are expected to be in restrictive networks, such as corporate networks that block UDP
+                traffic, use a standalone TURN server that also offers TURN over TCP and TURNS.
+            </p>
+
+        </section>
+
+        <section id="scenario-nat">
+
+            <h3>Openfire runs behind a NAT router</h3>
+
+            <p>
+                This is common when Openfire is installed in a home or office network, and users connect to it from the
+                internet. A TURN server needs to be reachable from the internet. There are two options:
+            </p>
+
+            <ul>
+                <li>Run the TURN server in the same network as Openfire (either using the Pion TURN plugin, or a
+                    standalone TURN server). Configure it with the public IP address of the router, and configure the
+                    router to forward the TURN port and the entire relay port range to the TURN server. If the public IP
+                    address changes from time to time, the configuration needs to be updated whenever that happens.</li>
+                <li>Run a standalone TURN server elsewhere, on a machine that has a public IP address (for example, a
+                    small virtual server that is hosted with a cloud provider), and add it to the External Service
+                    Discovery plugin. This avoids the need to forward a large range of ports.</li>
+            </ul>
+
+        </section>
+
+        <section id="scenario-containers">
+
+            <h3>Openfire runs in a container</h3>
+
+            <p>
+                When Openfire runs in a container (for example, using Docker), the container usually has an internal
+                IP address that is translated to the address of the host, much like a NAT router does. The considerations
+                for running <a href="#scenario-nat">behind a NAT router</a> apply.
+            </p>
+
+            <p>
+                Mapping a large range of UDP ports into a container is often slow or impractical. When running a TURN
+                server (or the Pion TURN plugin) in a container, consider using the network of the host directly (with
+                Docker, by using <code>--network host</code>), or run the TURN server outside of the container.
+            </p>
+
+            <p>
+                When the host has a public IPv6 address but a translated IPv4 address, clients that have IPv6 connectivity
+                may be able to reach each other directly, but clients that only have IPv4 connectivity still need a TURN
+                server that is reachable over IPv4.
+            </p>
+
+        </section>
+
+    </section>
+
+    <section id="group-calls">
+
+        <h2>Group calls</h2>
+
+        <p>
+            The setup described above is for calls between two people. Calls with more participants are commonly
+            handled by a server component that receives the audio and video of every participant and forwards it to all
+            others (a Selective Forwarding Unit, or SFU). Several plugins provide such functionality, including
+            <a href="https://github.com/igniterealtime/openfire-galene-plugin">Galene</a> and
+            <a href="https://github.com/igniterealtime/openfire-ofmeet-plugin">Openfire Meetings</a> (based on Jitsi
+            Meet). These have their own network requirements, which are described in their documentation.
+        </p>
+
+    </section>
+
+    <section id="legacy">
+
+        <h2>Legacy options</h2>
+
+        <p>
+            Some plugins provide functionality that predates the mechanisms described in this guide. Current clients
+            are not known to use these.
+        </p>
+
+        <dl>
+            <dt><a href="https://github.com/igniterealtime/openfire-stunserver-plugin">STUN server plugin</a></dt>
+            <dd>Runs a STUN server (but not a TURN server), which is configured with two IP addresses. Clients learn about it
+                through the <code>google:jingleinfo</code> protocol of Google Talk, rather than through External Service
+                Discovery.</dd>
+
+            <dt><a href="https://github.com/igniterealtime/openfire-jinglenodes-plugin">Jingle Nodes plugin</a></dt>
+            <dd>Relays traffic for clients that implement <a href="https://xmpp.org/extensions/xep-0278.html">XEP-0278:
+                Jingle Relay Nodes</a>.</dd>
+
+            <dt><a href="https://github.com/igniterealtime/openfire-rtpbridge-plugin">RTP Bridge plugin</a></dt>
+            <dd>Relays traffic for clients that use a protocol that was never standardized. This was part of Openfire
+                until version 5.2.0, where it was known as the Media Proxy. It was used by the voice call functionality
+                of older versions of Spark.</dd>
+        </dl>
+
+    </section>
+
+    <section id="troubleshooting">
+
+        <h2>Troubleshooting</h2>
+
+        <ul>
+            <li>When calls connect in the same network but not over the internet (for example, when one of the users
+                switches from Wi-Fi to a mobile network), a TURN server is missing, unreachable, or not announced to
+                clients.</li>
+            <li>When calls connect but no audio or video arrives, the relay port range of the TURN server is
+                often not reachable. Check the firewall and port forwarding configuration.</li>
+            <li>When using the Pion TURN plugin, restart the plugin (from the Plugins page of the Admin Console) after
+                changing its configuration.</li>
+            <li>Some clients show which services are announced by the server. Conversations, for example, lists these
+                in its server information screen.</li>
+        </ul>
+
+        <p>
+            Community members have written guides that describe their own setups. These may be outdated, but can be
+            helpful:
+        </p>
+
+        <ul>
+            <li><a href="https://discourse.igniterealtime.org/t/preparing-openfire-for-audio-video-calls-with-conversations/87828">Preparing
+                Openfire for Audio/Video calls with Conversations</a> (which includes a description of a setup with
+                eturnal in its replies)</li>
+            <li><a href="https://discourse.igniterealtime.org/t/guide-pionturn-external-service-discovery-usage-for-people-trying-to-set-up-calls/93699">Pionturn/External
+                Service Discovery usage</a></li>
+        </ul>
+
+    </section>
+
+    <footer>
+        <p>
+            An active support community for Openfire is available at
+            <a href="https://discourse.igniterealtime.org">https://discourse.igniterealtime.org</a>.
+        </p>
+    </footer>
+
+</article>
+
+</body>
+</html>

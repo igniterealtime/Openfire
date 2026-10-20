@@ -124,7 +124,16 @@ public class CollectionNode extends Node {
         else if ("pubsub#leaf_nodes_max".equals(field.getVariable()) ||
                 "pubsub#children_max".equals(field.getVariable())) {
             values = field.getValues();
-            maxLeafNodes = !values.isEmpty() ? Integer.parseInt(values.get(0)) : -1;
+            if (values.isEmpty()) {
+                maxLeafNodes = -1;
+            }
+            else if ("max".equalsIgnoreCase( values.get(0) )) {
+                // XEP-0060 allows 'max' to be used to request the service-imposed maximum (or no limit at all when the service does not impose one).
+                maxLeafNodes = -1;
+            }
+            else {
+                maxLeafNodes = Integer.parseInt(values.get(0));
+            }
             Log.trace("Configuring {}: {}", field.getVariable(), maxLeafNodes);
         }
         else if ("pubsub#children".endsWith(field.getVariable())) {
@@ -227,7 +236,7 @@ public class CollectionNode extends Node {
             formField.setType(FormField.Type.text_single);
             formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children_max", preferredLocale));
         }
-        formField.addValue(maxLeafNodes);
+        formField.addValue(maxLeafNodes < 0 ? "max" : String.valueOf(maxLeafNodes));
 
         formField = form.addField();
         formField.setVariable("pubsub#children_max");
@@ -235,7 +244,7 @@ public class CollectionNode extends Node {
             formField.setType(FormField.Type.text_single);
             formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.children_max", preferredLocale));
         }
-        formField.addValue(maxLeafNodes);
+        formField.addValue(maxLeafNodes < 0 ? "max" : String.valueOf(maxLeafNodes));
 
         formField = form.addField();
         formField.setVariable("pubsub#children");

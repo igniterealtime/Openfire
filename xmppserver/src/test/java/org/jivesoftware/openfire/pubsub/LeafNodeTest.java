@@ -15,14 +15,19 @@
  */
 package org.jivesoftware.openfire.pubsub;
 
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.xmpp.forms.DataForm;
 import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -33,6 +38,18 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class LeafNodeTest
 {
+    private XMPPServer originalXMPPServer;
+    private boolean xmppServerWasReplaced = false;
+
+    @AfterEach
+    public void tearDown() {
+        if (xmppServerWasReplaced) {
+            XMPPServer.setInstance(originalXMPPServer);
+            originalXMPPServer = null;
+            xmppServerWasReplaced = false;
+        }
+    }
+
     /** Creates a minimal LeafNode for use in tests. */
     private static LeafNode createTestLeafNode() {
         final DefaultNodeConfiguration config = new DefaultNodeConfiguration(true);
@@ -214,5 +231,56 @@ public class LeafNodeTest
         final FormField field = form.getField("pubsub#max_items");
         assertNotNull(field);
         assertEquals("max", field.getFirstValue());
+    }
+
+    // =========================================================================
+    // getPublishedItems(int) — do not trim the list for the unlimited sentinel
+    //
+    // When recentItems is -1 (unlimited) and the persistence provider does not
+    // (yet) return the last published item, getPublishedItems(int) adds it to
+    // the result, then must NOT remove it again just because the resulting
+    // collection size is greater than -1.
+    // =========================================================================
+
+    /**
+     * Verifies that {@link LeafNode#getPublishedItems(int)} does not trim the last
+     * published item from the result when {@code recentItems} is the "no limit"
+     * sentinel value ({@code -1}).
+     *
+     * <p>Before the fix, the method added {@code lastPublished} to the list returned
+     * by the persistence provider (when that list did not already contain it), then
+     * unconditionally checked {@code publishedItems.size() > recentItems}. Since any
+     * non-negative size is greater than {@code -1}, the just-added item was immediately
+     * removed again, even though {@code -1} does not represent an actual numeric limit.
+     */
+    @Test
+    public void testGetPublishedItemsDoesNotTrimLastItemWhenUnlimited() {
+        // Setup fixture: a node configured without a limit on the number of published items.
+        final LeafNode node = createTestLeafNode();
+        final JID publisher = new JID("user@example.org");
+        final PublishedItem lastItem = new PublishedItem(node, publisher, "item-1", new Date());
+        node.setLastPublishedItem(lastItem);
+
+        // The persistence provider has not (yet) persisted the last published item.
+        final PubSubPersistenceProvider mockProvider = Mockito.mock(PubSubPersistenceProvider.class);
+        Mockito.when(mockProvider.getPublishedItems(Mockito.eq(node), Mockito.anyInt()))
+            .thenAnswer(invocation -> new ArrayList<PublishedItem>());
+
+        final PubSubModule mockModule = Mockito.mock(PubSubModule.class);
+        Mockito.when(mockModule.getPersistenceProvider()).thenReturn(mockProvider);
+
+        final XMPPServer mockServer = Mockito.mock(XMPPServer.class);
+        Mockito.when(mockServer.getPubSubModule()).thenReturn(mockModule);
+
+        originalXMPPServer = XMPPServer.getInstance();
+        xmppServerWasReplaced = true;
+        XMPPServer.setInstance(mockServer);
+
+        // Execute system under test: request with recentItems = -1 (unlimited).
+        final List<PublishedItem> result = node.getPublishedItems(-1);
+
+        // Verify result: the last published item must still be present, not trimmed away.
+        assertEquals(1, result.size(), "The unlimited sentinel (-1) must not cause the last published item to be trimmed");
+        assertSame(lastItem, result.get(0));
     }
 }

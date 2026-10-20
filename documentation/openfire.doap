@@ -61,31 +61,40 @@
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0012.html"/>
+                <xmpp:status>complete</xmpp:status>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0013.html"/>
+                <xmpp:status>complete</xmpp:status>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0016.html"/>
+                <xmpp:status>partial</xmpp:status>
+                <xmpp:note xml:lang='en'>Unavailable presence is not sent to a contact when outbound presence to that contact gets blocked.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0030.html"/>
+                <xmpp:status>complete</xmpp:status>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0033.html"/>
+                <xmpp:status>partial</xmpp:status>
+                <xmpp:note xml:lang='en'>Addresses that use a 'uri' attribute instead of a 'jid' attribute are not supported.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0045.html"/>
+                <xmpp:status>partial</xmpp:status>
+                <xmpp:note xml:lang='en'>Voice requests are not supported.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -101,11 +110,13 @@
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0050.html"/>
+                <xmpp:status>complete</xmpp:status>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0054.html"/>
+                <xmpp:status>complete</xmpp:status>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -117,11 +128,15 @@
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0059.html"/>
+                <xmpp:version>1.0</xmpp:version>
+                <xmpp:since>3.4.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0060.html"/>
+                <xmpp:status>partial</xmpp:status>
+                <xmpp:note xml:lang='en'>The 'member' and 'publish-only' affiliations, leased subscriptions and subscription notifications are not supported.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -153,16 +168,21 @@
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0090.html"/>
+                <xmpp:status>removed</xmpp:status>
+                <xmpp:note xml:lang='en'>Removed in Openfire 4.0.0.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0091.html"/>
+                <xmpp:status>removed</xmpp:status>
+                <xmpp:note xml:lang='en'>Removed in Openfire 4.0.0.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0092.html"/>
+                <xmpp:status>complete</xmpp:status>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -186,16 +206,20 @@
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0114.html"/>
+                <xmpp:status>complete</xmpp:status>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0115.html"/>
+                <xmpp:status>complete</xmpp:status>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0124.html"/>
+                <xmpp:status>partial</xmpp:status>
+                <xmpp:note xml:lang='en'>Multiple streams per session and key sequencing are not supported.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -206,16 +230,21 @@
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0128.html"/>
+                <xmpp:status>complete</xmpp:status>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0129.html"/>
+                <xmpp:status>removed</xmpp:status>
+                <xmpp:note xml:lang='en'>Removed in Openfire 4.7.0.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0133.html"/>
+                <xmpp:status>partial</xmpp:status>
+                <xmpp:note xml:lang='en'>The get-user-lastlogin, user-stats, set-motd, edit-motd, delete-motd, set-welcome, delete-welcome, restart and shutdown commands are not implemented.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -227,6 +256,7 @@
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0138.html"/>
+                <xmpp:status>complete</xmpp:status>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -243,22 +273,22 @@
         </implements>
         <implements>
             <xmpp:SupportedXep>
-                <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0156.html"/>
-            </xmpp:SupportedXep>
-        </implements>
-        <implements>
-            <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0157.html"/>
+                <xmpp:status>complete</xmpp:status>
+                <xmpp:since>4.3.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0160.html"/>
+                <xmpp:status>complete</xmpp:status>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0163.html"/>
+                <xmpp:status>complete</xmpp:status>
+                <xmpp:since>3.4.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -273,37 +303,48 @@
         </implements>
         <implements>
             <xmpp:SupportedXep>
-                <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0182.html"/>
-            </xmpp:SupportedXep>
-        </implements>
-        <implements>
-            <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0191.html"/>
+                <xmpp:status>partial</xmpp:status>
+                <xmpp:version>1.3</xmpp:version>
+                <xmpp:since>4.3.0</xmpp:since>
+                <xmpp:note xml:lang='en'>Unavailable presence is not sent to newly blocked contacts, and errors for stanzas sent to blocked contacts do not include the 'blocked' application-specific condition.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0198.html"/>
+                <xmpp:status>partial</xmpp:status>
+                <xmpp:since>4.0.0</xmpp:since>
+                <xmpp:note xml:lang='en'>Supported on client-to-server connections only.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0199.html"/>
+                <xmpp:status>complete</xmpp:status>
+                <xmpp:since>3.6.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0202.html"/>
+                <xmpp:status>complete</xmpp:status>
+                <xmpp:version>2.0</xmpp:version>
+                <xmpp:since>3.9.2</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0203.html"/>
+                <xmpp:status>complete</xmpp:status>
+                <xmpp:version>2.0</xmpp:version>
+                <xmpp:since>3.7.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0206.html"/>
+                <xmpp:status>complete</xmpp:status>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -315,6 +356,7 @@
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0220.html"/>
+                <xmpp:status>complete</xmpp:status>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -331,11 +373,9 @@
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0232.html"/>
-            </xmpp:SupportedXep>
-        </implements>
-        <implements>
-            <xmpp:SupportedXep>
-                <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0233.html"/>
+                <xmpp:status>complete</xmpp:status>
+                <xmpp:version>0.3</xmpp:version>
+                <xmpp:since>4.5.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -352,11 +392,15 @@
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0280.html"/>
+                <xmpp:status>complete</xmpp:status>
+                <xmpp:version>1.0.1</xmpp:version>
+                <xmpp:since>3.9.2</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0289.html"/>
+                <xmpp:since>4.6.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -386,6 +430,9 @@
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0352.html"/>
+                <xmpp:status>complete</xmpp:status>
+                <xmpp:version>1.0.0</xmpp:version>
+                <xmpp:since>4.8.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -397,6 +444,9 @@
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0359.html"/>
+                <xmpp:status>partial</xmpp:status>
+                <xmpp:since>4.4.0</xmpp:since>
+                <xmpp:note xml:lang='en'>Stanza IDs are added to messages in multi-user chat rooms only.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -408,6 +458,8 @@
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0368.html"/>
+                <xmpp:status>complete</xmpp:status>
+                <xmpp:since>4.3.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -415,11 +467,14 @@
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0386.html"/>
                 <xmpp:status>complete</xmpp:status>
                 <xmpp:version>1.1.0</xmpp:version>
+                <xmpp:since>5.2.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0388.html"/>
+                <xmpp:status>complete</xmpp:status>
+                <xmpp:since>5.2.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -427,16 +482,21 @@
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0398.html"/>
                 <xmpp:status>complete</xmpp:status>
                 <xmpp:version>1.0.0</xmpp:version>
+                <xmpp:since>5.1.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0410.html"/>
+                <xmpp:status>complete</xmpp:status>
+                <xmpp:since>4.4.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0411.html"/>
+                <xmpp:status>complete</xmpp:status>
+                <xmpp:since>4.3.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -448,23 +508,26 @@
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0433.html"/>
-                <xmpp:status>full</xmpp:status>
+                <xmpp:status>complete</xmpp:status>
                 <xmpp:version>0.1.0</xmpp:version>
+                <xmpp:since>5.0.0</xmpp:since>
                 <xmpp:note xml:lang='en'>As Openfire does not support MIX, the 'service types' search form field is not supported by the implementation. All searches cover MUC only, as per the specification.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0440.html"/>
-                <xmpp:status>full</xmpp:status>
+                <xmpp:status>complete</xmpp:status>
                 <xmpp:version>1.0.0</xmpp:version>
+                <xmpp:since>5.1.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0474.html"/>
-                <xmpp:status>full</xmpp:status>
+                <xmpp:status>complete</xmpp:status>
                 <xmpp:version>0.5.0</xmpp:version>
+                <xmpp:since>5.2.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -472,6 +535,7 @@
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0478.html"/>
                 <xmpp:status>partial</xmpp:status>
                 <xmpp:version>0.1.0</xmpp:version>
+                <xmpp:since>4.8.0</xmpp:since>
                 <xmpp:note xml:lang='en'>Advertises applicable limits, does not use limits advertised by others.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
@@ -479,6 +543,15 @@
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0483.html"/>
                 <xmpp:note xml:lang='en'>Provided by the 'Openfire Meetings, Galene and OrinAyo' plugins</xmpp:note>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0484.html"/>
+                <xmpp:status>partial</xmpp:status>
+                <xmpp:version>0.2.0</xmpp:version>
+                <xmpp:since>5.2.0</xmpp:since>
+                <xmpp:note xml:lang='en'>TLS 0-RTT is not supported.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -492,7 +565,8 @@
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0486.html"/>
                 <xmpp:version>0.1.0</xmpp:version>
-                <xmpp:status>full</xmpp:status>
+                <xmpp:status>complete</xmpp:status>
+                <xmpp:since>5.1.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -500,6 +574,7 @@
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0495.html"/>
                 <xmpp:status>partial</xmpp:status>
                 <xmpp:version>0.1.0</xmpp:version>
+                <xmpp:since>5.0.0</xmpp:since>
                 <xmpp:note xml:lang='en'>Implements most features, except for much of the Destination Address Selection as defined in RFC 6724, Section 6.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>

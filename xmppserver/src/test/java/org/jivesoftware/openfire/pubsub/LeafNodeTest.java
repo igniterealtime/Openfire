@@ -18,6 +18,8 @@ package org.jivesoftware.openfire.pubsub;
 import org.jivesoftware.openfire.pubsub.models.AccessModel;
 import org.jivesoftware.openfire.pubsub.models.PublisherModel;
 import org.junit.jupiter.api.Test;
+import org.xmpp.forms.DataForm;
+import org.xmpp.forms.FormField;
 import org.xmpp.packet.JID;
 
 import java.util.Date;
@@ -160,5 +162,57 @@ public class LeafNodeTest
 
         assertSame(item2, node.getLastPublishedItem(),
             "A newer item (later timestamp, different ID) must update lastPublished");
+    }
+
+    // =========================================================================
+    // postConfigure / pubsub#max_items — XEP-0060 'config-node-max' support
+    //
+    // A node owner can submit the literal value "max" for pubsub#max_items to
+    // request that the service applies its own maximum (or no limit at all,
+    // represented internally as -1).
+    // =========================================================================
+
+    /**
+     * Verifies that submitting the literal value "max" for pubsub#max_items is
+     * interpreted as 'no limit' (represented internally as -1).
+     */
+    @Test
+    public void testMaxItemsAcceptsLiteralMaxValue() {
+        // Setup fixture.
+        final DefaultNodeConfiguration config = new DefaultNodeConfiguration(true);
+        config.setPersistPublishedItems(true);
+        final LeafNode node = new LeafNode(new PubSubService.UniqueIdentifier("test-service-id"), null, "test-node-id", new JID("unit-test@example.org"), config);
+
+        final DataForm form = new DataForm(DataForm.Type.submit);
+        final FormField field = form.addField();
+        field.setVariable("pubsub#max_items");
+        field.addValue("max");
+
+        // Execute system under test.
+        node.postConfigure(form);
+
+        // Verify result.
+        assertEquals(-1, node.getMaxPublishedItems(), "A 'max' value for pubsub#max_items should be mapped to 'no limit' (-1)");
+    }
+
+    /**
+     * Verifies that an unlimited (-1) max_items configuration is advertised back to clients
+     * using the XEP-0060 literal value "max", rather than a raw negative number.
+     */
+    @Test
+    public void testMaxItemsFormFieldRendersMaxWhenUnlimited() {
+        // Setup fixture.
+        final DefaultNodeConfiguration config = new DefaultNodeConfiguration(true);
+        config.setPersistPublishedItems(true);
+        config.setMaxPublishedItems(-1);
+        final LeafNode node = new LeafNode(new PubSubService.UniqueIdentifier("test-service-id"), null, "test-node-id", new JID("unit-test@example.org"), config);
+
+        // Execute system under test.
+        final DataForm form = node.getConfigurationForm(null);
+
+        // Verify result.
+        final FormField field = form.getField("pubsub#max_items");
+        assertNotNull(field);
+        assertEquals("max", field.getFirstValue());
     }
 }

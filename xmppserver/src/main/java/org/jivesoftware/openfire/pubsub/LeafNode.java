@@ -128,7 +128,17 @@ public class LeafNode extends Node {
         else {
             FormField field = completedForm.getField("pubsub#max_items");
             if (field != null) {
-                maxPublishedItems = field.getFirstValue() != null ? Integer.parseInt( field.getFirstValue() ) : 50;
+                final String value = field.getFirstValue();
+                if (value == null) {
+                    maxPublishedItems = 50;
+                }
+                else if ("max".equalsIgnoreCase( value )) {
+                    // XEP-0060 allows 'max' to be used to request the service-imposed maximum (or no limit at all when the service does not impose one).
+                    maxPublishedItems = -1;
+                }
+                else {
+                    maxPublishedItems = Integer.parseInt( value );
+                }
                 Log.trace("Configuring {}: {}", field.getVariable(), maxPublishedItems);
             }
         }
@@ -164,7 +174,7 @@ public class LeafNode extends Node {
             formField.setType(FormField.Type.text_single);
             formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.max_items", preferredLocale));
         }
-        formField.addValue(maxPublishedItems);
+        formField.addValue(maxPublishedItems < 0 ? "max" : String.valueOf(maxPublishedItems));
 
         formField = form.addField();
         formField.setVariable("pubsub#max_payload_size");

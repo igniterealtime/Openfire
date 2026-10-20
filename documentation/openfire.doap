@@ -213,6 +213,7 @@
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0115.html"/>
                 <xmpp:status>complete</xmpp:status>
+                <xmpp:since>3.4.2</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -289,6 +290,12 @@
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0163.html"/>
                 <xmpp:status>complete</xmpp:status>
                 <xmpp:since>3.4.0</xmpp:since>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0164.html"/>
+                <xmpp:status>complete</xmpp:status>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -445,7 +452,7 @@
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0359.html"/>
                 <xmpp:status>partial</xmpp:status>
-                <xmpp:since>4.4.0</xmpp:since>
+                <xmpp:since>4.3.1</xmpp:since>
                 <xmpp:note xml:lang='en'>Stanza IDs are added to messages in multi-user chat rooms only.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
@@ -489,14 +496,22 @@
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0410.html"/>
                 <xmpp:status>complete</xmpp:status>
-                <xmpp:since>4.4.0</xmpp:since>
+                <xmpp:since>4.3.1</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0411.html"/>
                 <xmpp:status>complete</xmpp:status>
-                <xmpp:since>4.3.0</xmpp:since>
+                <xmpp:since>4.5.0</xmpp:since>
+            </xmpp:SupportedXep>
+        </implements>
+        <implements>
+            <xmpp:SupportedXep>
+                <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0421.html"/>
+                <xmpp:status>complete</xmpp:status>
+                <xmpp:version>1.0.0</xmpp:version>
+                <xmpp:since>5.0.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>

@@ -62,18 +62,21 @@
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0012.html"/>
                 <xmpp:status>complete</xmpp:status>
+                <xmpp:since>2.2.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0013.html"/>
                 <xmpp:status>complete</xmpp:status>
+                <xmpp:since>2.2.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0016.html"/>
                 <xmpp:status>partial</xmpp:status>
+                <xmpp:since>2.5.0</xmpp:since>
                 <xmpp:note xml:lang='en'>Unavailable presence is not sent to a contact when outbound presence to that contact gets blocked.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
@@ -87,6 +90,7 @@
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0033.html"/>
                 <xmpp:status>partial</xmpp:status>
+                <xmpp:since>2.4.1</xmpp:since>
                 <xmpp:note xml:lang='en'>Addresses that use a 'uri' attribute instead of a 'jid' attribute are not supported.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
@@ -111,6 +115,7 @@
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0050.html"/>
                 <xmpp:status>complete</xmpp:status>
+                <xmpp:since>2.3.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -136,12 +141,14 @@
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0060.html"/>
                 <xmpp:status>partial</xmpp:status>
+                <xmpp:since>2.6.0</xmpp:since>
                 <xmpp:note xml:lang='en'>The 'member' and 'publish-only' affiliations, leased subscriptions and subscription notifications are not supported.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0065.html"/>
+                <xmpp:since>2.5.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -158,6 +165,7 @@
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0082.html"/>
+                <xmpp:since>2.2.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -196,17 +204,20 @@
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0096.html"/>
+                <xmpp:since>2.6.2</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0106.html"/>
+                <xmpp:since>2.1.4</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0114.html"/>
                 <xmpp:status>complete</xmpp:status>
+                <xmpp:since>2.1.2</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -220,6 +231,7 @@
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0124.html"/>
                 <xmpp:status>partial</xmpp:status>
+                <xmpp:since>3.2.0</xmpp:since>
                 <xmpp:note xml:lang='en'>Multiple streams per session and key sequencing are not supported.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
@@ -245,6 +257,7 @@
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0133.html"/>
                 <xmpp:status>partial</xmpp:status>
+                <xmpp:since>2.6.1</xmpp:since>
                 <xmpp:note xml:lang='en'>The get-user-lastlogin, user-stats, set-motd, edit-motd, delete-motd, set-welcome, delete-welcome, restart and shutdown commands are not implemented.</xmpp:note>
             </xmpp:SupportedXep>
         </implements>
@@ -258,6 +271,7 @@
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0138.html"/>
                 <xmpp:status>complete</xmpp:status>
+                <xmpp:since>2.4.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -296,16 +310,19 @@
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0164.html"/>
                 <xmpp:status>complete</xmpp:status>
+                <xmpp:since>3.0.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0175.html"/>
+                <xmpp:since>2.5.1</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0178.html"/>
+                <xmpp:since>2.3.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -352,6 +369,7 @@
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0206.html"/>
                 <xmpp:status>complete</xmpp:status>
+                <xmpp:since>3.6.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -364,6 +382,7 @@
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0220.html"/>
                 <xmpp:status>complete</xmpp:status>
+                <xmpp:since>2.2.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>
@@ -375,6 +394,7 @@
         <implements>
             <xmpp:SupportedXep>
                 <xmpp:xep rdf:resource="https://xmpp.org/extensions/xep-0223.html"/>
+                <xmpp:since>4.3.0</xmpp:since>
             </xmpp:SupportedXep>
         </implements>
         <implements>

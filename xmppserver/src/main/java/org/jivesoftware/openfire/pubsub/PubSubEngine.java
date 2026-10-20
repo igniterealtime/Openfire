@@ -560,6 +560,15 @@ public class PubSubEngine
         return true;
     }
 
+    /**
+     * The configuration fields that express an "unlimited" value using the sentinel value {@code -1}, that,
+     * per XEP-0060, can also be expressed by a client (or, as of this implementation, by the service itself when
+     * rendering the configuration form) using the literal value {@code "max"}.
+     */
+    private static final Set<String> UNLIMITED_VALUE_FIELDS = Set.of(
+        "pubsub#max_items", "pubsub#leaf_nodes_max", "pubsub#children_max"
+    );
+
     private static Set<String> normalizeValues(final FormField field)
     {
         final Set<String> normalized = new HashSet<>();
@@ -567,10 +576,19 @@ public class PubSubEngine
         {
             return normalized;
         }
+        final boolean isUnlimitedValueField = UNLIMITED_VALUE_FIELDS.contains( field.getVariable() );
         for ( final String value : field.getValues() )
         {
             if ( value == null )
             {
+                continue;
+            }
+            if ( isUnlimitedValueField && ( "-1".equals( value ) || "max".equalsIgnoreCase( value ) ) )
+            {
+                // XEP-0060 allows 'max' to be used as an alias for 'no limit', which is represented internally
+                // (and in rendered configuration forms) using the sentinel value -1. Normalize both notations to
+                // the same value, so that otherwise-equivalent 'unlimited' values compare as equal.
+                normalized.add( "max" );
                 continue;
             }
             switch ( value )

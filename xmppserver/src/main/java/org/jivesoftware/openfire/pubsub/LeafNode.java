@@ -480,8 +480,9 @@ public class LeafNode extends Node {
                 // And if not, include the last item.
                 publishedItems.add(0, lastPublished);
                 // Recheck the collection size, it might have one more element now (the last item).
-                // Remove it, if it exceeds the max items.
-                if (publishedItems.size() > recentItems) {
+                // Remove it, if it exceeds the max items. A negative 'recentItems' value signifies 'no limit',
+                // in which case the list should never be trimmed.
+                if (recentItems >= 0 && publishedItems.size() > recentItems) {
                     publishedItems.remove(publishedItems.size() - 1);
                 }
             }

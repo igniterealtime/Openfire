@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire;
 
 import org.dom4j.Element;
+import org.dom4j.QName;
 import org.jivesoftware.openfire.cluster.ClusterManager;
 import org.jivesoftware.openfire.cluster.IQResultListenerTask;
 import org.jivesoftware.openfire.cluster.NodeID;
@@ -60,7 +61,7 @@ public class IQRouter extends BasicModule {
     private MulticastRouter multicastRouter;
     private String serverName;
     private final List<IQHandler> iqHandlers = new ArrayList<>();
-    private final Map<String, IQHandler> namespace2Handlers = new ConcurrentHashMap<>();
+    private final Map<QName, IQHandler> qName2Handlers = new ConcurrentHashMap<>();
     private final Map<String, IQResultListener> resultListeners = new ConcurrentHashMap<>();
     private final Map<String, Long> resultTimeout = new ConcurrentHashMap<>();
     private final Cache<String, NodeID> resultPending = CacheFactory.createCache("Routing Result Listeners");
@@ -171,7 +172,7 @@ public class IQRouter extends BasicModule {
         // Ask the handler to be initialized
         handler.initialize(XMPPServer.getInstance());
         // Register the handler as the handler of the namespace
-        namespace2Handlers.put(handler.getInfo().getNamespace(), handler);
+        qName2Handlers.put(handler.getQName(), handler);
     }
 
     /**
@@ -190,7 +191,7 @@ public class IQRouter extends BasicModule {
             throw new IllegalArgumentException("Cannot remove an IQHandler provided by the server");
         }
         // Unregister the handler as the handler of the namespace
-        namespace2Handlers.remove(handler.getInfo().getNamespace());
+        qName2Handlers.remove(QName.get(handler.getInfo().getName(), handler.getInfo().getNamespace()));
     }
 
     /**
@@ -355,11 +356,12 @@ public class IQRouter extends BasicModule {
             if (isLocalServer(recipientJID)) {
                 // Let the server handle the Packet
                 Element childElement = packet.getChildElement();
-                String namespace = null;
+                QName qName = null;
+
                 if (childElement != null) {
-                    namespace = childElement.getNamespaceURI();
+                    qName = childElement.getQName();
                 }
-                if (namespace == null) {
+                if (qName == null) {
                     if (packet.getType() != IQ.Type.result && packet.getType() != IQ.Type.error) {
                         // Do nothing. We can't handle queries outside of a valid namespace
                         Log.warn("Unknown packet " + packet.toXML());
@@ -380,7 +382,7 @@ public class IQRouter extends BasicModule {
                             return;
                         }
                     }
-                    IQHandler handler = getHandler(namespace);
+                    IQHandler handler = getHandler(qName);
                     if (handler == null) {
                         if (recipientJID == null) {
                             // Answer an error since the server can't handle the requested namespace
@@ -488,19 +490,38 @@ public class IQRouter extends BasicModule {
      *
      * @param namespace Identifier of functionality (cannot be null)
      * @return true if the functionality identified by the namespace is supported, otherwise false.
+     * @deprecated use {@link #supports(QName)} instead.
      */
-    public boolean supports( String namespace ) {
-        return getHandler( namespace ) != null;
+    @Deprecated(forRemoval = true, since = "5.2.0") // Remove in or after Openfire 5.3.0
+    public boolean supports(String namespace)
+    {
+        return getHandler(QName.get("dummy", namespace)) != null;
     }
 
-    private IQHandler getHandler(String namespace) {
-        IQHandler handler = namespace2Handlers.get(namespace);
+    /**
+     * Determines if this instance has support (formally: has a IQ Handler) for the provided qualified name.
+     *
+     * @param qName Identifier of functionality (cannot be null)
+     * @return true if the functionality identified by the qName is supported, otherwise false.
+     */
+    public boolean supports( QName qName  )
+    {
+        return getHandler( qName ) != null;
+    }
+
+    private IQHandler getHandler(QName qName) {
+        IQHandler handler = qName2Handlers.get(qName);
+        if (handler == null) {
+            // Fall back to pre 5.2.0 behavior: look up handlers based on namespace only
+            handler = qName2Handlers.entrySet().stream().filter(
+                (e) -> e.getKey().getNamespace().equals(qName.getNamespace())
+            ).findFirst().map(Map.Entry::getValue).orElse(null);
+        }
         if (handler == null) {
             for (IQHandler handlerCandidate : iqHandlers) {
                 IQHandlerInfo handlerInfo = handlerCandidate.getInfo();
-                if (handlerInfo != null && namespace.equalsIgnoreCase(handlerInfo.getNamespace())) {
+                if (handlerInfo != null && qName.getNamespaceURI().equalsIgnoreCase(handlerInfo.getNamespace())) {
                     handler = handlerCandidate;
-                    namespace2Handlers.put(namespace, handler);
                     break;
                 }
             }

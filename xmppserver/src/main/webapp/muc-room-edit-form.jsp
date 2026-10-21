@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%--
   -
-  - Copyright (C) 2004-2008 Jive Software, 2017-2025 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2004-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -54,6 +54,9 @@
     boolean clearchatsuccess = ParamUtils.getBooleanParameter(request,"clearchatsuccess");
     String roomName = ParamUtils.getParameter(request,"roomName");
     String mucName = ParamUtils.getParameter(request,"mucName");
+    if (mucName == null) {
+        mucName = ParamUtils.getParameter(request,"mucname");
+    }
     String roomJIDStr = ParamUtils.getParameter(request,"roomJID");
     JID roomJID = null;
     if (roomName != null && mucName != null) {
@@ -306,11 +309,32 @@
     }
     else {
         if (create) {
-            // Before a selection for a service has been made (which is part of the room creation process in cases where
-            // more than one service exists) it's impossible to predict what service-specific configuration to use. To prevent
-            // having the user to go through a second step, we'll use the first available service. Given that having more than one
-            // service is a very uncommon scenario, this is an acceptable shortcut.
-            final String serviceName = webManager.getMultiUserChatManager().getMultiUserChatServices().iterator().next().getServiceName();
+            // OF-31: Retrieve and validate the candidate service context parameter (mucName).
+            // Fall back to the alphabetically first service if missing, invalid, or does not exist.
+            // This ensures backwards compatibility and graceful fallback when accessed directly.
+            String resolvedServiceName = null;
+            if (mucName != null) {
+                if (webManager.getMultiUserChatManager().isServiceRegistered(mucName)) {
+                    resolvedServiceName = mucName;
+                } else {
+                    try {
+                        org.jivesoftware.openfire.muc.MultiUserChatService service = webManager.getMultiUserChatManager().getMultiUserChatService(new JID(null, mucName, null));
+                        if (service != null) {
+                            resolvedServiceName = service.getServiceName();
+                        }
+                    } catch (Exception e) {
+                        // ignore
+                    }
+                }
+            }
+            if (resolvedServiceName == null) {
+                resolvedServiceName = webManager.getMultiUserChatManager().getMultiUserChatServices().iterator().next().getServiceName();
+            }
+            final String serviceName = resolvedServiceName;
+            org.jivesoftware.openfire.muc.MultiUserChatService resolvedService = webManager.getMultiUserChatManager().getMultiUserChatService(serviceName);
+            if (resolvedService != null) {
+                mucName = resolvedService.getServiceDomain();
+            }
             maxUsers = MUCPersistenceManager.getProperty(serviceName, "room.maxUsers", "30");
             broadcastModerator = MUCPersistenceManager.getBooleanProperty(serviceName, "room.broadcastModerator", true);
             broadcastParticipant = MUCPersistenceManager.getBooleanProperty(serviceName, "room.broadcastParticipant", true);

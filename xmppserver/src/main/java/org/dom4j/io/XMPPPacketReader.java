@@ -30,6 +30,11 @@ import java.util.Set;
  * <a href="http://www.extreme.indiana.edu/soap/xpp/">XML Pull Parser 3.x</a>.
  * It is very fast for use in SOAP style environments.</p>
  *
+ * <p>This class originates as a copy of dom4j's {@code org.dom4j.io.XPP3Reader}, adapted for XMPP. It diverges from the
+ * original in several ways, both to support XMPP's stanza-oriented streaming model and to apply stricter validation of
+ * the data that is received. The upstream {@code XPP3Reader} has remained unchanged across dom4j releases, so no
+ * upstream fixes are outstanding against this copy.</p>
+ *
  * @author <a href="mailto:pelle@neubia.com">Pelle Braendgaard</a>
  * @author <a href="mailto:jstrachan@apache.org">James Strachan</a>
  */
@@ -410,6 +415,12 @@ public class XMPPPacketReader {
                 }
                 case XmlPullParser.ENTITY_REF: {
                     String text = pp.getText();
+                    if (text == null) {
+                        // The parser could not resolve the entity reference to a replacement text. This occurs for
+                        // entity references other than the five that are predefined in XML (which require a document
+                        // type definition to be declared). These are not permitted in XMPP, so the stanza is rejected.
+                        throw new DocumentException("Cannot resolve the entity reference: " + pp.getName());
+                    }
                     if (parent != null) {
                         parent.addText(text);
                     }

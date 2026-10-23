@@ -24,6 +24,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.quality.Strictness;
 import org.xmpp.packet.JID;
@@ -280,6 +281,29 @@ public class SessionManagerBindResourceFailClosedTest
         assertEquals(SessionManager.BindResult.BOUND, result, "With no conflicting route, the bind must succeed.");
         verify(bindingSession).setAuthToken(eq(authToken), eq(RESOURCE));
         verify(routeLock).unlock();
+    }
+
+    /**
+     * Verify resource-length enforcement: a resource that exceeds {@link SessionManager#MAX_RESOURCE_LENGTH} is
+     * truncated before the route is installed, so the bound resource never exceeds the configured maximum.
+     */
+    @Test
+    public void bindResourceTruncatesOverlongResource() throws Exception
+    {
+        // Setup test fixture: no conflicting route; a resource that exceeds SessionManager.MAX_RESOURCE_LENGTH.
+        when(routingTable.getClientRoute(any(JID.class))).thenReturn(null);
+        final String overlongResource = "x".repeat(SessionManager.MAX_RESOURCE_LENGTH.getValue() + 50);
+
+        // Execute system under test.
+        final CompletableFuture<SessionManager.BindResult> future = sessionManager.bindResource(bindingSession, authToken, overlongResource);
+        final SessionManager.BindResult result = future.get(5, TimeUnit.SECONDS);
+
+        // Verify result: bound, but with a resource truncated to the maximum allowed length.
+        assertEquals(SessionManager.BindResult.BOUND, result, "An overlong resource must still be bound, after truncation.");
+        final ArgumentCaptor<String> resourceCaptor = ArgumentCaptor.forClass(String.class);
+        verify(bindingSession).setAuthToken(eq(authToken), resourceCaptor.capture());
+        assertEquals(SessionManager.MAX_RESOURCE_LENGTH.getValue(), resourceCaptor.getValue().length(), "The bound resource must be truncated to the maximum allowed length.");
+        assertTrue(overlongResource.startsWith(resourceCaptor.getValue()), "The truncated resource must be a prefix of the original, overlong resource.");
     }
 
     /**

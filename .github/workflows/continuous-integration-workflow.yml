@@ -248,25 +248,18 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       is_publishable_branch: ${{ steps.check-branch.outputs.is_publishable_branch }}
-      branch_tag: ${{ steps.check-branch.outputs.branch_tag }}
     steps:
       - name: check if ${{ github.ref }} is main, a version branch, or a version tag
         id: check-branch
         run: |
           if [[ ${{ github.ref }} == 'refs/heads/main' ]]; then
             echo "is_publishable_branch=true" >> "${GITHUB_OUTPUT}"
-            echo "branch_tag=development" >> "${GITHUB_OUTPUT}"
           elif [[ ${{ github.ref }} =~ ^refs\/heads\/[0-9]+\.[0-9]+$ ]]; then
             echo "is_publishable_branch=true" >> "${GITHUB_OUTPUT}"
-            echo -n "branch_tag=" >> "${GITHUB_OUTPUT}"
-            echo "${{ github.ref }}" | sed -e 's!refs/heads/!!' >> "${GITHUB_OUTPUT}"
           elif [[ ${{ github.ref }} =~ ^refs\/tags\/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "is_publishable_branch=true" >> "${GITHUB_OUTPUT}"
-            echo -n "branch_tag=" >> "${GITHUB_OUTPUT}"
-            echo "${{ github.ref }}" | sed -e 's!refs/tags/!!' >> "${GITHUB_OUTPUT}"
           else
             echo "is_publishable_branch=false" >> "${GITHUB_OUTPUT}"
-            echo "branch_tag=rando" >> "${GITHUB_OUTPUT}"
           fi
 
   connectivity:
@@ -1274,6 +1267,12 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build-docker, aioxmpp, connectivity, integration, xitf, check_branch, hsqldb-install, hsqldb-upgrade, sqlserver-install, sqlserver-upgrade, postgres-install, postgres-upgrade, cockroachdb-install, cockroachdb-upgrade, firebird-install, firebird-upgrade, mysql-install, mysql-upgrade, mariadb-install, mariadb-upgrade, oracle-install, oracle-upgrade]
     if: ${{ github.repository == 'igniterealtime/Openfire' && github.event_name == 'push' && needs.check_branch.outputs.is_publishable_branch == 'true' }}
+    # concurrency to prevent races for highest published version; queue: max because the
+    # default queue is 1, and there might be multiple releases.
+    concurrency:
+      group: openfire-docker-publication
+      cancel-in-progress: false
+      queue: max
 
     permissions:
       contents: read
@@ -1301,11 +1300,37 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Determine if this is the highest published GHCR version
+        # Ensure patches to previous versions don't reclaim latest.
+        id: check-latest
+        if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          CURRENT="${GITHUB_REF_NAME#v}"
+          if ! PUBLISHED_TAGS=$(gh api "orgs/igniterealtime/packages/container/${IMAGE_NAME}/versions" --paginate \
+            --jq '.[].metadata.container.tags[]'); then
+            echo "::error::Failed to query published GHCR versions for ${IMAGE_NAME}" >&2
+            exit 1
+          fi
+          HIGHEST=$(printf '%s\n' "${PUBLISHED_TAGS}" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n1 || true)
+          if [[ -z "${HIGHEST}" ]] || [[ "$(printf '%s\n%s\n' "${CURRENT}" "${HIGHEST}" | sort -V | tail -n1)" == "${CURRENT}" ]]; then
+            echo "is_latest=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "is_latest=false" >> "${GITHUB_OUTPUT}"
+          fi
+
       - name: Extract metadata (tags, labels) for image registry
         id: meta
         uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/igniterealtime/${{ env.IMAGE_NAME }}
+          flavor: |
+            latest=false
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=raw,value=latest,enable=${{ steps.check-latest.outputs.is_latest == 'true' }}
 
       - name: Retag and push final image
         id: push
@@ -1324,7 +1349,9 @@ jobs:
         with:
           subject-name: ${{ env.REGISTRY }}/igniterealtime/${{ env.IMAGE_NAME }}
           subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true
+          # Provenance is recorded by GitHub regardless (see the repo's Attestations tab)
+          # so don't add junk to the registry too.
+          push-to-registry: false
 
   build-deb-artifact:
     name: Generate DEB artifact

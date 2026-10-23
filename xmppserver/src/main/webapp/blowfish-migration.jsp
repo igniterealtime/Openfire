@@ -20,6 +20,8 @@
 <%--@elvariable id="encryptionAlgorithm" type="java.lang.String"--%>
 <%--@elvariable id="encryptedPropertyCountDb" type="java.lang.Integer"--%>
 <%--@elvariable id="encryptedPropertyCountXml" type="java.lang.Integer"--%>
+<%--@elvariable id="encryptedPasswordCount" type="java.lang.Integer"--%>
+<%--@elvariable id="passwordReencryptionNeeded" type="java.lang.Boolean"--%>
 <%--@elvariable id="clusteringAvailable" type="java.lang.Boolean"--%>
 <%--@elvariable id="clusteringEnabled" type="java.lang.Boolean"--%>
 <%--@elvariable id="clusteringStarted" type="java.lang.Boolean"--%>
@@ -42,8 +44,21 @@
     String successMessage = (String) session.getAttribute("successMessage");
     Integer successParamDb = (Integer) session.getAttribute("successParamDb");
     Integer successParamXml = (Integer) session.getAttribute("successParamXml");
+    Integer passwordsReencrypted = (Integer) session.getAttribute("passwordsReencrypted");
 
     // Clear session attributes after retrieving to prevent message reappearance
+    if (passwordsReencrypted != null) {
+        session.removeAttribute("passwordsReencrypted");
+        request.setAttribute("passwordsReencrypted", passwordsReencrypted);
+        // Only counts are shown; the affected usernames are in the server log.
+        for (String name : new String[]{"passwordsUnverifiableCount", "passwordsUndecryptableCount", "passwordsModifiedCount"}) {
+            Object count = session.getAttribute(name);
+            session.removeAttribute(name);
+            if (count != null) {
+                request.setAttribute(name, count);
+            }
+        }
+    }
     if (errorMessage != null) {
         session.removeAttribute("errorMessage");
         session.removeAttribute("errorParam");
@@ -135,6 +150,21 @@
             font-weight: bold;
         }
     </style>
+    <script>
+        // These operations can take minutes. Prevent submitting the form again meanwhile.
+        function confirmAndDisable(form, message) {
+            if (!confirm(message)) {
+                return false;
+            }
+            var button = form.querySelector('input[type=submit]');
+            if (button) {
+                button.value = button.getAttribute('data-busy');
+                // Disable after this handler returns, as a disabled button would not submit the form.
+                window.setTimeout(function() { button.disabled = true; }, 0);
+            }
+            return true;
+        }
+    </script>
 </head>
 <body>
 
@@ -164,12 +194,42 @@
                 <fmt:message key="${successMessage}">
                     <fmt:param><fmt:formatNumber>${successParamDb}</fmt:formatNumber></fmt:param>
                     <fmt:param><fmt:formatNumber>${successParamXml}</fmt:formatNumber></fmt:param>
+                    <fmt:param><fmt:formatNumber>${passwordsReencrypted}</fmt:formatNumber></fmt:param>
+                </fmt:message>
+            </c:when>
+            <c:when test="${not empty passwordsReencrypted}">
+                <fmt:message key="${successMessage}">
+                    <fmt:param><fmt:formatNumber>${passwordsReencrypted}</fmt:formatNumber></fmt:param>
                 </fmt:message>
             </c:when>
             <c:otherwise>
                 <fmt:message><c:out value="${successMessage}"/></fmt:message>
             </c:otherwise>
         </c:choose>
+    </admin:infobox>
+</c:if>
+
+<c:if test="${not empty passwordsUndecryptableCount}">
+    <admin:infobox type="warning">
+        <fmt:message key="security.blowfish.migration.passwords.undecryptable">
+            <fmt:param><fmt:formatNumber>${passwordsUndecryptableCount}</fmt:formatNumber></fmt:param>
+        </fmt:message>
+    </admin:infobox>
+</c:if>
+
+<c:if test="${not empty passwordsUnverifiableCount}">
+    <admin:infobox type="warning">
+        <fmt:message key="security.blowfish.migration.passwords.unverifiable">
+            <fmt:param><fmt:formatNumber>${passwordsUnverifiableCount}</fmt:formatNumber></fmt:param>
+        </fmt:message>
+    </admin:infobox>
+</c:if>
+
+<c:if test="${not empty passwordsModifiedCount}">
+    <admin:infobox type="warning">
+        <fmt:message key="security.blowfish.migration.passwords.modified-concurrently">
+            <fmt:param><fmt:formatNumber>${passwordsModifiedCount}</fmt:formatNumber></fmt:param>
+        </fmt:message>
     </admin:infobox>
 </c:if>
 
@@ -184,9 +244,18 @@
 
     <c:when test="${alreadyMigrated}">
         <c:if test="${empty successMessage}">
-            <admin:infobox type="success">
-                <fmt:message key="security.blowfish.migration.already-migrated"/>
-            </admin:infobox>
+            <c:choose>
+                <c:when test="${passwordReencryptionNeeded}">
+                    <admin:infobox type="warning">
+                        <fmt:message key="security.blowfish.migration.already-migrated.passwords-pending"/>
+                    </admin:infobox>
+                </c:when>
+                <c:otherwise>
+                    <admin:infobox type="success">
+                        <fmt:message key="security.blowfish.migration.already-migrated"/>
+                    </admin:infobox>
+                </c:otherwise>
+            </c:choose>
         </c:if>
 
         <div class="jive-table">
@@ -206,9 +275,39 @@
                             <fmt:message key="security.blowfish.migration.status.using-pbkdf2"/>
                         </td>
                     </tr>
+                    <tr>
+                        <td class="c1"><fmt:message key="security.blowfish.migration.status.encrypted-password-count"/></td>
+                        <td class="c2"><strong><fmt:formatNumber value="${encryptedPasswordCount}"/></strong></td>
+                    </tr>
                 </tbody>
             </table>
         </div>
+
+        <%-- Not offered once passwords are re-encrypted, or right after an operation whose outcome is shown above. --%>
+        <c:if test="${passwordReencryptionNeeded and empty passwordsReencrypted}">
+            <div class="migration-instructions">
+                <h3><fmt:message key="security.blowfish.migration.passwords.title"/></h3>
+                <p><fmt:message key="security.blowfish.migration.passwords.info"/></p>
+
+                <form action="security-blowfish-migration.jsp" method="post" onsubmit="return confirmAndDisable(this, '<fmt:message key="security.blowfish.migration.passwords.confirm"/>');">
+                    <input type="hidden" name="csrf" value="${admin:escapeHTMLTags(csrf)}">
+                    <input type="hidden" name="action" value="repair-passwords">
+
+                    <div class="migration-checklist">
+                        <label>
+                            <input type="checkbox" name="includeWithoutScram" value="true">
+                            <fmt:message key="security.blowfish.migration.passwords.include-without-scram"/>
+                        </label>
+                        <label>
+                            <input type="checkbox" name="dbBackup" value="true" required>
+                            <fmt:message key="security.blowfish.migration.checklist.db-backup"/>
+                        </label>
+                    </div>
+
+                    <input type="submit" value="<fmt:message key="security.blowfish.migration.passwords.button"/>" data-busy="<fmt:message key="security.blowfish.migration.button.working"/>">
+                </form>
+            </div>
+        </c:if>
     </c:when>
 
     <c:when test="${needsMigration}">
@@ -321,11 +420,15 @@
                         <td class="c1"><fmt:message key="security.blowfish.migration.status.encrypted-count-xml"/></td>
                         <td class="c2"><strong><fmt:formatNumber value="${encryptedPropertyCountXml}"/></strong></td>
                     </tr>
+                    <tr>
+                        <td class="c1"><fmt:message key="security.blowfish.migration.status.encrypted-password-count"/></td>
+                        <td class="c2"><strong><fmt:formatNumber value="${encryptedPasswordCount}"/></strong></td>
+                    </tr>
                 </tbody>
             </table>
         </div>
 
-        <form action="security-blowfish-migration.jsp" method="post" onsubmit="return confirm('<fmt:message key="security.blowfish.migration.confirm"/>');">
+        <form action="security-blowfish-migration.jsp" method="post" onsubmit="return confirmAndDisable(this, '<fmt:message key="security.blowfish.migration.confirm"/>');">
             <input type="hidden" name="csrf" value="${admin:escapeHTMLTags(csrf)}">
             <input type="hidden" name="action" value="migrate">
 
@@ -345,7 +448,7 @@
                 </label>
             </div>
 
-                    <input type="submit" value="<fmt:message key="security.blowfish.migration.button.migrate"/>">
+                    <input type="submit" value="<fmt:message key="security.blowfish.migration.button.migrate"/>" data-busy="<fmt:message key="security.blowfish.migration.button.working"/>">
                 </form>
             </c:otherwise>
         </c:choose>

@@ -206,4 +206,80 @@ public class ExternalServerSaslServerTest
         assertEquals(Failure.NOT_AUTHORIZED, result.getFailure());
         assertNull(server.getAuthorizationID(), "No identity should be authorised after a failed certificate check");
     }
+
+    /**
+     * Verify that when an initial response is given that differs from the streamID as transmitted over the connection,
+     * authentication fails with 'invalid-authzid', even when the provided TLS certificates are valid for that initial
+     * response.
+     */
+    @Test
+    public void testInitialResponseDifferentFromStreamID() throws Exception
+    {
+        // Setup test fixture.
+        final String streamID = "example.org";
+        final String authzID = "other.example.com";
+
+        when(session.getDefaultIdentity()).thenReturn(streamID);
+        lenient().when(session.getConnection()).thenReturn(connection); // Reached only if the authzid check is bypassed.
+        saslAuthentication.when(() -> SASLAuthentication.verifyCertificates(any(), eq(authzID), anyBoolean())).thenReturn(true);
+
+        final ExternalServerSaslServer server = new ExternalServerSaslServer(session);
+        final byte[] input = authzID.getBytes(StandardCharsets.UTF_8);
+
+        // Execute system under test.
+        final SaslFailureException result = assertThrows(SaslFailureException.class, () -> server.evaluateResponse(input));
+
+        // Verify results.
+        assertEquals(Failure.INVALID_AUTHZID, result.getFailure());
+    }
+
+    /**
+     * Verify that when an <em>empty</em> initial response is given, and the provided TLS certificates can not be used
+     * to validate the streamID as transmitted over the connection, authentication fails with 'not-authorized'.
+     */
+    @Test
+    public void testEmptyInitialResponseNotMatchingCertificate() throws Exception
+    {
+        // Setup test fixture.
+        final String streamID = "example.org";
+
+        when(session.getSessionData(SASLAuthentication.SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY)).thenReturn(true);
+        when(session.getDefaultIdentity()).thenReturn(streamID);
+        when(session.getConnection()).thenReturn(connection);
+        saslAuthentication.when(() -> SASLAuthentication.verifyCertificates(any(), eq(streamID), anyBoolean())).thenReturn(false);
+
+        final ExternalServerSaslServer server = new ExternalServerSaslServer(session);
+        final byte[] input = new byte[]{};
+
+        // Execute system under test.
+        final SaslFailureException result = assertThrows(SaslFailureException.class, () -> server.evaluateResponse(input));
+
+        // Verify results.
+        assertEquals(Failure.NOT_AUTHORIZED, result.getFailure());
+    }
+
+    /**
+     * Verify that when <em>no</em> initial response is given (and none is required), and the provided TLS certificates
+     * can not be used to validate the streamID as transmitted over the connection, authentication fails with
+     * 'not-authorized'.
+     */
+    @Test
+    public void testNoInitialResponseNotMatchingCertificate() throws Exception
+    {
+        // Setup test fixture.
+        final String streamID = "example.org";
+
+        when(session.getDefaultIdentity()).thenReturn(streamID);
+        when(session.getConnection()).thenReturn(connection);
+        saslAuthentication.when(() -> SASLAuthentication.verifyCertificates(any(), eq(streamID), anyBoolean())).thenReturn(false);
+
+        final ExternalServerSaslServer server = new ExternalServerSaslServer(session);
+        final byte[] input = new byte[]{};
+
+        // Execute system under test.
+        final SaslFailureException result = assertThrows(SaslFailureException.class, () -> server.evaluateResponse(input));
+
+        // Verify results.
+        assertEquals(Failure.NOT_AUTHORIZED, result.getFailure());
+    }
 }

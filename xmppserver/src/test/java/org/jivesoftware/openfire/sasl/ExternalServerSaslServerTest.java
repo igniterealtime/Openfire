@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -183,10 +183,10 @@ public class ExternalServerSaslServerTest
 
     /**
      * Verify that when an initial response is given that matches the streamID as transmitted over the connection, but
-     * <em>can not</em> be used to validate the provided TLS certificates, authentication fails.
+     * <em>can not</em> be used to validate the provided TLS certificates, authentication fails with 'not-authorized'.
      */
     @Test
-    public void testInitialResponseDifferentFromStreamID() throws Exception
+    public void testInitialResponseMatchingStreamIDButNotCertificate() throws Exception
     {
         // Setup test fixture.
         final String authzID = "foo.example.org";
@@ -200,6 +200,10 @@ public class ExternalServerSaslServerTest
         final byte[] input = authzID.getBytes(StandardCharsets.UTF_8);
 
         // Execute system under test.
-        assertThrows(SaslFailureException.class, () -> server.evaluateResponse(input));
+        final SaslFailureException result = assertThrows(SaslFailureException.class, () -> server.evaluateResponse(input));
+
+        // Verify results.
+        assertEquals(Failure.NOT_AUTHORIZED, result.getFailure());
+        assertNull(server.getAuthorizationID(), "No identity should be authorised after a failed certificate check");
     }
 }

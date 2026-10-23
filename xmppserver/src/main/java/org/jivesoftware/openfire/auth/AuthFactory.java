@@ -302,7 +302,9 @@ public class AuthFactory {
                     return null;
                 }
             }
-            cipher = new Blowfish(keyString);
+            cipher = new Blowfish();
+            // Passwords keep the KDF they were encrypted with, which may differ from the property KDF (OF-3374).
+            cipher.setKey(keyString, JiveGlobals.getBlowfishKdfForPasswords());
         }
         catch (Exception e) {
             Log.error(e.getMessage(), e);

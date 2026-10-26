@@ -73,6 +73,18 @@ public class ServerStanzaHandler extends StanzaHandler {
         .build();
 
     /**
+     * Controls if the 'to' attribute of stream headers sent by remote servers is validated. When enabled, a stream that
+     * names a domain that is not serviced by this server is refused with a host-unknown stream error.
+     *
+     * @see #isLocallyServiced(String)
+     */
+    public static final SystemProperty<Boolean> VALIDATE_HOST = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.server.validate.host")
+        .setDefaultValue(false)
+        .setDynamic(true)
+        .build();
+
+    /**
      * Checks if a domain that a remote server addresses is serviced by this server. That is the case for the XMPP
      * domain of this server, for subdomains of it that have a component route, and for domains for which trunking is
      * enabled.
@@ -132,8 +144,13 @@ public class ServerStanzaHandler extends StanzaHandler {
 
     @Override
     boolean validateHost() {
-        // Hosts are not currently validated for S2S
-        return false;
+        return VALIDATE_HOST.getValue();
+    }
+
+    @Override
+    protected boolean isHostUnknown(String host) {
+        // A missing 'to' attribute is accepted, as servers that use legacy Server Dialback omit it.
+        return host != null && !isLocallyServiced(host);
     }
 
     @Override

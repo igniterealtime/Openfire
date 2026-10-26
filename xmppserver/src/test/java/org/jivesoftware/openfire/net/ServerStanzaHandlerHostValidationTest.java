@@ -53,6 +53,10 @@ import static org.mockito.Mockito.withSettings;
  * host-unknown stream error. Serviced domains are the XMPP domain of this server, subdomains of it that have a
  * component route, and domains for which trunking is enabled. A stream header that has no 'to' attribute is accepted,
  * as servers that use legacy Server Dialback omit it.
+ *
+ * Stream headers are validated both when the stream is first opened, and when it is restarted after TLS has been
+ * negotiated: RFC 6120 section 5.4.3.3 requires values obtained before TLS took effect to be discarded, which makes the
+ * header that follows TLS negotiation the one that counts.
  */
 public class ServerStanzaHandlerHostValidationTest
 {
@@ -171,6 +175,69 @@ public class ServerStanzaHandlerHostValidationTest
 
         // Verify result.
         assertEquals(1, handler.sessionsCreated, "A session must be created for a stream that has no 'to' attribute.");
+    }
+
+    /**
+     * Asserts that, with validation enabled, a stream that names a serviced domain before TLS is negotiated, but a
+     * domain that is not serviced after, is refused with a host-unknown stream error.
+     */
+    @Test
+    public void testStreamAfterTlsToUnservicedDomainIsRefused() throws Exception
+    {
+        // Setup test fixture.
+        ServerStanzaHandler.VALIDATE_HOST.setValue(true);
+        handler.initiateSession(streamHeader(Fixtures.XMPP_DOMAIN), reader);
+        handler.startedTLS = true;
+
+        // Execute system under test.
+        handler.initiateSession(streamHeader(UNSERVICED_DOMAIN), reader);
+
+        // Verify result.
+        assertEquals(1, handler.sessionsCreated, "The session must not be re-created for a stream that names a domain that is not serviced.");
+        assertTrue(deliveredText().contains("host-unknown"), "The peer must be told that the host is unknown.");
+        verify(connection).close();
+    }
+
+    /**
+     * Asserts that, with validation enabled, a stream that names a serviced domain after TLS is negotiated is
+     * accepted. Peers that use trunking typically negotiate TLS before authenticating with Server Dialback, which
+     * makes this the path by which trunked domains are normally validated.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {Fixtures.XMPP_DOMAIN, COMPONENT_DOMAIN, TRUNKED_DOMAIN})
+    public void testStreamAfterTlsToServicedDomainIsAccepted(final String domain) throws Exception
+    {
+        // Setup test fixture.
+        ServerStanzaHandler.VALIDATE_HOST.setValue(true);
+        Trunking.ENABLED.setValue(true);
+        Trunking.ALLOWABLE_DOMAINS.setValue(List.of(TRUNKED_DOMAIN));
+        handler.initiateSession(streamHeader(domain), reader);
+        handler.startedTLS = true;
+
+        // Execute system under test.
+        handler.initiateSession(streamHeader(domain), reader);
+
+        // Verify result.
+        assertEquals(2, handler.sessionsCreated, "The session must be re-created for the stream that follows TLS negotiation, when it names '" + domain + "'.");
+        assertFalse(deliveredText().contains("host-unknown"), "The stream must not be refused.");
+    }
+
+    /**
+     * Asserts that, with validation disabled, a stream that names a domain that is not serviced after TLS is
+     * negotiated is accepted, as it was before validation was introduced.
+     */
+    @Test
+    public void testStreamAfterTlsToUnservicedDomainIsAcceptedWhenValidationIsDisabled() throws Exception
+    {
+        // Setup test fixture.
+        handler.initiateSession(streamHeader(Fixtures.XMPP_DOMAIN), reader);
+        handler.startedTLS = true;
+
+        // Execute system under test.
+        handler.initiateSession(streamHeader(UNSERVICED_DOMAIN), reader);
+
+        // Verify result.
+        assertEquals(2, handler.sessionsCreated, "The session must be re-created when validation is disabled.");
     }
 
     /**

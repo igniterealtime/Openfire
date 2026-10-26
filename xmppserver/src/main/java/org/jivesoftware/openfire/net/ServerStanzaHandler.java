@@ -221,6 +221,16 @@ public class ServerStanzaHandler extends StanzaHandler {
         for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
             eventType = xpp.next();
         }
+
+        // The stream header that was sent before TLS was negotiated has been validated already, but its values are to
+        // be discarded. Validate the 'to' attribute of the stream header that was sent after TLS was negotiated.
+        final String host = xpp.getAttributeValue("", "to");
+        if (validateHost() && isHostUnknown(host)) {
+            Log.warn("Refusing stream that was opened after TLS was negotiated, as it addresses a host that is not serviced: '{}'. Closing connection: {}", host, connection);
+            refuseStream(xpp, host, new StreamError(StreamError.Condition.host_unknown, "Incorrect hostname in stream header: " + host));
+            return;
+        }
+
         this.domainPair = new DomainPair(XMPPServer.getInstance().getServerInfo().getXMPPDomain(), xpp.getAttributeValue("", "from"));
 
         // Discard session data obtained from unencrypted initiating stream

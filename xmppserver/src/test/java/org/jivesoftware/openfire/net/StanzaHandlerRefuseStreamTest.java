@@ -28,6 +28,7 @@ import org.mockito.ArgumentCaptor;
 import org.xmlpull.v1.XmlPullParserFactory;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.atLeastOnce;
@@ -108,6 +109,42 @@ public class StanzaHandlerRefuseStreamTest
         assertEquals(1, countOccurrences(delivered, "<stream:stream"), "Exactly one stream must be opened, to carry the refusal.");
         verify(connection).close();
         assertNull(handler.session, "No session must be created for a refused stream.");
+    }
+
+    /**
+     * Asserts that a stream that is refused because it addresses an unknown host is opened from the XMPP domain of
+     * this server, as RFC 6120 section 4.9.1.3 requires an authoritative name for the receiving entity, rather than
+     * from the unknown host.
+     */
+    @Test
+    public void testStreamToUnknownHostIsRefusedFromOwnDomain() throws Exception
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("xmpp.client.validate.host", "true");
+
+        // Execute system under test.
+        handler.initiateSession("<stream:stream xmlns:stream='http://etherx.jabber.org/streams' xmlns='jabber:client' to='unserviced.example.com' version='1.0'>", reader);
+
+        // Verify result.
+        final String delivered = deliveredText();
+        assertTrue(delivered.contains("from=\"" + Fixtures.XMPP_DOMAIN + "\""), "The stream must be opened from the XMPP domain of this server.");
+        assertFalse(delivered.contains("from=\"unserviced.example.com\""), "The stream must not be opened from the unknown host.");
+    }
+
+    /**
+     * Asserts that a stream header that does not address a host, and that is refused, is answered with a stream that
+     * is opened from the XMPP domain of this server, as RFC 6120 section 4.9.1.3 requires.
+     */
+    @Test
+    public void testStreamWithoutToIsRefusedFromOwnDomain() throws Exception
+    {
+        // Execute system under test.
+        handler.initiateSession("<stream:stream xmlns:stream='http://etherx.jabber.org/streams' xmlns='jabber:server' version='1.0'>", reader);
+
+        // Verify result.
+        final String delivered = deliveredText();
+        assertTrue(delivered.contains("<invalid-namespace xmlns=\"urn:ietf:params:xml:ns:xmpp-streams\""), "The stream must be refused.");
+        assertTrue(delivered.contains("from=\"" + Fixtures.XMPP_DOMAIN + "\""), "The stream must be opened from the XMPP domain of this server.");
     }
 
     /**

@@ -124,6 +124,7 @@ public class ServerStanzaHandlerHostValidationTest
         // Verify result.
         assertEquals(0, handler.sessionsCreated, "No session must be created for a stream that names a domain that is not serviced.");
         assertTrue(deliveredText().contains("host-unknown"), "The peer must be told that the host is unknown.");
+        assertTrue(deliveredText().contains("from=\"" + Fixtures.XMPP_DOMAIN + "\""), "The refusal must be sent from the XMPP domain of this server.");
         verify(connection).close();
     }
 
@@ -195,6 +196,7 @@ public class ServerStanzaHandlerHostValidationTest
         // Verify result.
         assertEquals(1, handler.sessionsCreated, "The session must not be re-created for a stream that names a domain that is not serviced.");
         assertTrue(deliveredText().contains("host-unknown"), "The peer must be told that the host is unknown.");
+        assertFalse(deliveredText().contains("from=\"" + UNSERVICED_DOMAIN + "\""), "The refusal must not be sent from the domain that is not serviced.");
         verify(connection).close();
     }
 

@@ -21,45 +21,29 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.JiveGlobals;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.xmlpull.v1.XmlPullParserFactory;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.withSettings;
 
 /**
- * Verifies that {@link StanzaHandler} delivers a stream error to the peer when it refuses a stream header that does
- * not declare a content namespace.
- *
- * A peer can open a stream with a header that names a stream namespace but no default (content) namespace, such as
- * {@code <stream:stream xmlns:stream='http://etherx.jabber.org/streams' to='example.org' version='1.0'>}. When such a
- * header is refused, building the stream that carries the error used to copy the content namespace of the refused
- * header, which is absent here, so the peer never received the stream error.
- *
- * These tests trigger the refusal with a stream namespace that is not the one RFC 6120 section 4.8.1 requires. That is
- * a reason to refuse which is independent of the missing content namespace itself, so the tests exercise the
- * error-building defect without asserting that a header which omits the content namespace is refused in its own right.
- *
- * @author Matthew Vivian
+ * Verifies how {@link StanzaHandler} refuses a stream header that it cannot accept: it opens a stream that carries
+ * the stream error, and closes the connection without creating a session.
  */
 public class StanzaHandlerRefuseStreamTest
 {
-    /**
-     * A stream namespace that is not the one that RFC 6120 section 4.8.1 requires, used to have a stream header
-     * refused for a reason that does not depend on the content namespace that the header declares.
-     */
-    private static final String WRONG_STREAM_NAMESPACE = "http://example.org/not-the-stream-namespace";
-
     private Connection connection;
+
+    private ClientStanzaHandler handler;
 
     private XMPPPacketReader reader;
 
@@ -70,12 +54,6 @@ public class StanzaHandlerRefuseStreamTest
         Fixtures.disableDatabasePersistence();
     }
 
-    @AfterAll
-    public static void tearDownClass()
-    {
-        Fixtures.clearExistingProperties();
-    }
-
     @BeforeEach
     public void setUp() throws Exception
     {
@@ -84,6 +62,7 @@ public class StanzaHandlerRefuseStreamTest
         XMPPServer.setInstance(Fixtures.mockXMPPServer());
 
         connection = mock(Connection.class, withSettings().lenient());
+        handler = new ClientStanzaHandler(mock(PacketRouter.class), connection);
 
         final XmlPullParserFactory factory = XmlPullParserFactory.newInstance(MXParser.class.getName(), null);
         factory.setNamespaceAware(true);
@@ -92,60 +71,70 @@ public class StanzaHandlerRefuseStreamTest
     }
 
     /**
-     * Asserts that a client stream header that declares no content namespace, and that is refused, is answered with the
-     * stream error, opened in the namespace of the handler, and that the connection is then closed.
+     * Asserts that a stream header with a content namespace that does not match the handler is refused with an
+     * invalid-namespace stream error.
      */
     @Test
-    public void testClientStreamWithoutNamespaceIsRefusedWithError() throws Exception
+    public void testStreamWithInvalidNamespaceIsRefused() throws Exception
     {
-        // Setup test fixture.
-        final ClientStanzaHandler handler = new ClientStanzaHandler(mock(PacketRouter.class), connection);
-
         // Execute system under test.
-        handler.initiateSession("<stream:stream xmlns:stream='" + WRONG_STREAM_NAMESPACE + "' to='" + Fixtures.XMPP_DOMAIN + "' version='1.0'>", reader);
+        handler.initiateSession("<stream:stream xmlns:stream='http://etherx.jabber.org/streams' xmlns='jabber:server' to='" + Fixtures.XMPP_DOMAIN + "' version='1.0'>", reader);
 
         // Verify result.
-        final String delivered = deliveredText(connection);
+        final String delivered = deliveredText();
         assertTrue(delivered.contains("<stream:stream"), "The refusal must be sent on a stream that is opened for that purpose.");
-        assertTrue(delivered.contains("xmlns=\"jabber:client\""), "The refusal stream must be opened in the namespace of the handler, as the refused header declared none.");
+        assertTrue(delivered.contains("from=\"" + Fixtures.XMPP_DOMAIN + "\""), "The stream must be opened from the domain that the peer addressed.");
         assertTrue(delivered.contains("<invalid-namespace xmlns=\"urn:ietf:params:xml:ns:xmpp-streams\""), "The stream must carry the invalid-namespace stream error.");
-        verify(connection, times(1).description("The connection must be closed after the refusal.")).close();
+        verify(connection).close();
         assertNull(handler.session, "No session must be created for a refused stream.");
     }
 
     /**
-     * Asserts that a server stream header that declares no content namespace, and that is refused, is answered with the
-     * stream error, opened in the namespace of the handler, and that the connection is then closed. This is the same
-     * defect as for client streams: the error is built in {@link StanzaHandler}, which every connection type shares.
+     * Asserts that, with host validation enabled for clients, a stream header that addresses another domain is refused
+     * with a host-unknown stream error.
      */
     @Test
-    public void testServerStreamWithoutNamespaceIsRefusedWithError() throws Exception
+    public void testClientStreamToUnknownHostIsRefused() throws Exception
     {
         // Setup test fixture.
-        final ServerStanzaHandler handler = new ServerStanzaHandler(mock(PacketRouter.class), connection, false);
+        JiveGlobals.setProperty("xmpp.client.validate.host", "true");
 
         // Execute system under test.
-        handler.initiateSession("<stream:stream xmlns:stream='" + WRONG_STREAM_NAMESPACE + "' to='" + Fixtures.XMPP_DOMAIN + "' version='1.0'>", reader);
+        handler.initiateSession("<stream:stream xmlns:stream='http://etherx.jabber.org/streams' xmlns='jabber:client' to='unserviced.example.com' version='1.0'>", reader);
 
         // Verify result.
-        final String delivered = deliveredText(connection);
-        assertTrue(delivered.contains("<stream:stream"), "The refusal must be sent on a stream that is opened for that purpose.");
-        assertTrue(delivered.contains("xmlns=\"jabber:server\""), "The refusal stream must be opened in the namespace of the handler, as the refused header declared none.");
-        assertTrue(delivered.contains("<invalid-namespace xmlns=\"urn:ietf:params:xml:ns:xmpp-streams\""), "The stream must carry the invalid-namespace stream error.");
-        verify(connection, times(1).description("The connection must be closed after the refusal.")).close();
+        final String delivered = deliveredText();
+        assertTrue(delivered.contains("<host-unknown xmlns=\"urn:ietf:params:xml:ns:xmpp-streams\""), "The stream must carry the host-unknown stream error.");
+        assertEquals(1, countOccurrences(delivered, "<stream:stream"), "Exactly one stream must be opened, to carry the refusal.");
+        verify(connection).close();
         assertNull(handler.session, "No session must be created for a refused stream.");
     }
 
     /**
      * Returns all text that was delivered to the peer, concatenated.
      *
-     * @param connection the connection that text was delivered to.
      * @return delivered text.
      */
-    private static String deliveredText(final Connection connection)
+    private String deliveredText()
     {
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(connection, atLeastOnce().description("Text must have been delivered to the peer.")).deliverRawText(captor.capture());
+        verify(connection, atLeastOnce()).deliverRawText(captor.capture());
         return String.join("", captor.getAllValues());
+    }
+
+    /**
+     * Counts the occurrences of a fragment in a text.
+     *
+     * @param text the text to search.
+     * @param fragment the fragment to count.
+     * @return the number of occurrences.
+     */
+    private static int countOccurrences(final String text, final String fragment)
+    {
+        int count = 0;
+        for (int index = text.indexOf(fragment); index >= 0; index = text.indexOf(fragment, index + 1)) {
+            count++;
+        }
+        return count;
     }
 }

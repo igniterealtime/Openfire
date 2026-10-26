@@ -1,0 +1,240 @@
+/*
+ * Copyright (C) 2026 Ignite Realtime Foundation. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.jivesoftware.openfire.net;
+
+import org.dom4j.io.XMPPPacketReader;
+import org.jivesoftware.Fixtures;
+import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.session.LocalIncomingServerSession;
+import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.util.JiveGlobals;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserFactory;
+import org.xmpp.packet.JID;
+
+import java.util.List;
+import java.util.Locale;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.withSettings;
+
+/**
+ * Verifies the validation of the 'to' attribute of stream headers that are sent by remote servers (OF-2643).
+ *
+ * When validation is enabled, a stream that names a domain that is not serviced by this server is refused with a
+ * host-unknown stream error. Serviced domains are the XMPP domain of this server, subdomains of it that have a
+ * component route, and domains for which trunking is enabled. A stream header that has no 'to' attribute is accepted,
+ * as servers that use legacy Server Dialback omit it.
+ */
+public class ServerStanzaHandlerHostValidationTest
+{
+    private static final String COMPONENT_DOMAIN = "conference." + Fixtures.XMPP_DOMAIN;
+
+    private static final String TRUNKED_DOMAIN = "trunked.example.net";
+
+    private static final String UNSERVICED_DOMAIN = "unserviced.example.com";
+
+    private Connection connection;
+
+    private RoutingTable routingTable;
+
+    private RecordingServerStanzaHandler handler;
+
+    private XMPPPacketReader reader;
+
+    @BeforeAll
+    public static void setUpClass() throws Exception
+    {
+        Fixtures.reconfigureOpenfireHome();
+        Fixtures.disableDatabasePersistence();
+    }
+
+    @BeforeEach
+    public void setUp() throws Exception
+    {
+        Fixtures.clearExistingProperties();
+        JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
+
+        final XMPPServer xmppServer = Fixtures.mockXMPPServer();
+        routingTable = Fixtures.mockRoutingTable();
+        doReturn(true).when(routingTable).hasComponentRoute(new JID(COMPONENT_DOMAIN));
+        doReturn(routingTable).when(xmppServer).getRoutingTable();
+        XMPPServer.setInstance(xmppServer);
+
+        connection = mock(Connection.class, withSettings().lenient());
+        handler = new RecordingServerStanzaHandler(mock(PacketRouter.class), connection);
+        reader = newPacketReader();
+    }
+
+    /**
+     * Asserts that validation is disabled by default, so that existing installations keep accepting the connections
+     * that they accepted before validation was introduced.
+     */
+    @Test
+    public void testValidationIsDisabledByDefault()
+    {
+        assertFalse(handler.validateHost());
+    }
+
+    /**
+     * Asserts that, with validation enabled, a stream that names a domain that is not serviced is refused with a
+     * host-unknown stream error before a session is created.
+     */
+    @Test
+    public void testInitialStreamToUnservicedDomainIsRefused() throws Exception
+    {
+        // Setup test fixture.
+        ServerStanzaHandler.VALIDATE_HOST.setValue(true);
+
+        // Execute system under test.
+        handler.initiateSession(streamHeader(UNSERVICED_DOMAIN), reader);
+
+        // Verify result.
+        assertEquals(0, handler.sessionsCreated, "No session must be created for a stream that names a domain that is not serviced.");
+        assertTrue(deliveredText().contains("host-unknown"), "The peer must be told that the host is unknown.");
+        verify(connection).close();
+    }
+
+    /**
+     * Asserts that, with validation disabled, a stream that names a domain that is not serviced is accepted, as it was
+     * before validation was introduced.
+     */
+    @Test
+    public void testInitialStreamToUnservicedDomainIsAcceptedWhenValidationIsDisabled() throws Exception
+    {
+        // Execute system under test.
+        handler.initiateSession(streamHeader(UNSERVICED_DOMAIN), reader);
+
+        // Verify result.
+        assertEquals(1, handler.sessionsCreated, "A session must be created when validation is disabled.");
+    }
+
+    /**
+     * Asserts that, with validation enabled, streams that name a serviced domain are accepted.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {Fixtures.XMPP_DOMAIN, COMPONENT_DOMAIN, TRUNKED_DOMAIN})
+    public void testInitialStreamToServicedDomainIsAccepted(final String domain) throws Exception
+    {
+        // Setup test fixture.
+        ServerStanzaHandler.VALIDATE_HOST.setValue(true);
+        Trunking.ENABLED.setValue(true);
+        Trunking.ALLOWABLE_DOMAINS.setValue(List.of(TRUNKED_DOMAIN));
+
+        // Execute system under test.
+        handler.initiateSession(streamHeader(domain), reader);
+
+        // Verify result.
+        assertEquals(1, handler.sessionsCreated, "A session must be created for a stream that names '" + domain + "'.");
+    }
+
+    /**
+     * Asserts that, with validation enabled, a stream that does not name a domain at all is accepted, as servers that
+     * use legacy Server Dialback omit the 'to' attribute.
+     */
+    @Test
+    public void testInitialStreamWithoutToIsAccepted() throws Exception
+    {
+        // Setup test fixture.
+        ServerStanzaHandler.VALIDATE_HOST.setValue(true);
+
+        // Execute system under test.
+        handler.initiateSession(streamHeader(null), reader);
+
+        // Verify result.
+        assertEquals(1, handler.sessionsCreated, "A session must be created for a stream that has no 'to' attribute.");
+    }
+
+    /**
+     * Returns an opening stream header as sent by a remote server.
+     *
+     * @param to the value of the 'to' attribute, or null to omit the attribute.
+     * @return a stream header.
+     */
+    private static String streamHeader(final String to)
+    {
+        return "<stream:stream xmlns:stream='http://etherx.jabber.org/streams' xmlns='jabber:server' xmlns:db='jabber:server:dialback' from='remote.example.org'"
+            + (to == null ? "" : " to='" + to + "'")
+            + " version='1.0'>";
+    }
+
+    /**
+     * Returns all text that was delivered to the peer, concatenated.
+     *
+     * @return delivered text.
+     */
+    private String deliveredText()
+    {
+        final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(connection, atLeastOnce()).deliverRawText(captor.capture());
+        return String.join("", captor.getAllValues());
+    }
+
+    /**
+     * Returns a namespace-aware packet reader, configured as the production code configures its own.
+     *
+     * @return a packet reader.
+     */
+    private static XMPPPacketReader newPacketReader() throws Exception
+    {
+        final XmlPullParserFactory factory = XmlPullParserFactory.newInstance(MXParser.class.getName(), null);
+        factory.setNamespaceAware(true);
+        final XMPPPacketReader reader = new XMPPPacketReader();
+        reader.setXPPFactory(factory);
+        return reader;
+    }
+
+    /**
+     * A {@link ServerStanzaHandler} that replaces the creation of a session with a stub, and counts how often a session
+     * is created. A real session requires collaborators (an identity store, a session manager) that are not what these
+     * tests are about.
+     */
+    private static class RecordingServerStanzaHandler extends ServerStanzaHandler
+    {
+        private int sessionsCreated;
+
+        RecordingServerStanzaHandler(final PacketRouter router, final Connection connection)
+        {
+            super(router, connection, false);
+        }
+
+        @Override
+        void createSession(final String serverName, final XmlPullParser xpp, final Connection connection)
+        {
+            sessionsCreated++;
+            final LocalIncomingServerSession stub = mock(LocalIncomingServerSession.class, withSettings().lenient());
+            doReturn(new BasicStreamIDFactory().createStreamID()).when(stub).getStreamID();
+            doReturn(Locale.ENGLISH).when(stub).getLanguage();
+            doReturn(List.of()).when(stub).getAvailableStreamFeatures();
+            session = stub;
+        }
+    }
+}

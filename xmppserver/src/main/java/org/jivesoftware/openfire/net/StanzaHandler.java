@@ -933,21 +933,33 @@ public abstract class StanzaHandler {
         catch (final StreamErrorException ex) {
             Log.warn("Failed to create a session, as the stream opened by the peer has a problem: {} - '{}' (a full stack trace is logged on debug level). Closing connection: {}. session is now: {}", ex.getStreamError().getCondition(), ex.getStreamError().getText(), connection, session);
             Log.debug("Failed to create a session.", ex);
-            final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
-            final Document document = DocumentHelper.createDocument(stream);
-            document.setXMLEncoding(StandardCharsets.UTF_8.toString());
-            stream.add(Namespace.get(xpp.getNamespace(null)));
-            stream.addAttribute("from", host);
-            stream.addAttribute("id", STREAM_ID_FACTORY.createStreamID().getID());
-            stream.addAttribute("version", "1.0");
-            stream.add(ex.getStreamError().getElement());
-
-            // Deliver stanza
-            connection.deliverRawText(StringUtils.asUnclosedStream(document));
-
-            // Close the underlying connection
-            connection.close();
+            refuseStream(xpp, host, ex.getStreamError());
         }
+    }
+
+    /**
+     * Responds to a stream header that cannot be accepted by opening a stream that carries the provided stream error,
+     * and then closes the underlying connection.
+     *
+     * @param xpp a parser positioned on the stream header that is refused.
+     * @param host the value of the 'to' attribute of the refused stream header (can be null).
+     * @param error the stream error to send to the peer.
+     */
+    protected void refuseStream(XmlPullParser xpp, String host, StreamError error) {
+        final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
+        final Document document = DocumentHelper.createDocument(stream);
+        document.setXMLEncoding(StandardCharsets.UTF_8.toString());
+        stream.add(Namespace.get(xpp.getNamespace(null)));
+        stream.addAttribute("from", host);
+        stream.addAttribute("id", STREAM_ID_FACTORY.createStreamID().getID());
+        stream.addAttribute("version", "1.0");
+        stream.add(error.getElement());
+
+        // Deliver stanza
+        connection.deliverRawText(StringUtils.asUnclosedStream(document));
+
+        // Close the underlying connection
+        connection.close();
     }
 
     /**

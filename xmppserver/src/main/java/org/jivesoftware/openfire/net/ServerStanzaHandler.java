@@ -35,6 +35,7 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.*;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
@@ -70,6 +71,34 @@ public class ServerStanzaHandler extends StanzaHandler {
         .setDefaultValue(false)
         .setDynamic(true)
         .build();
+
+    /**
+     * Checks if a domain that a remote server addresses is serviced by this server. That is the case for the XMPP
+     * domain of this server, for subdomains of it that have a component route, and for domains for which trunking is
+     * enabled.
+     *
+     * @param domain the domain to check.
+     * @return true if the domain is serviced by this server, otherwise false (including when the value is not a valid domain name).
+     */
+    public static boolean isLocallyServiced(@Nonnull final String domain) {
+        final String requested;
+        try {
+            requested = JID.domainprep(domain);
+        } catch (final IllegalArgumentException e) {
+            Log.debug("Value '{}' is not a valid domain name.", domain, e);
+            return false;
+        }
+
+        final XMPPServer server = XMPPServer.getInstance();
+        final String xmppDomain = server.getServerInfo().getXMPPDomain();
+        if (requested.equals(xmppDomain)) {
+            return true;
+        }
+        if (requested.endsWith("." + xmppDomain) && server.getRoutingTable().hasComponentRoute(new JID(requested))) {
+            return true;
+        }
+        return Trunking.isTrunkingEnabledFor(requested);
+    }
 
     private final boolean directTLS;
 

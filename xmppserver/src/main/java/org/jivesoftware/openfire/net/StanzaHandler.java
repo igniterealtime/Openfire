@@ -941,16 +941,16 @@ public abstract class StanzaHandler {
      * Responds to a stream header that cannot be accepted by opening a stream that carries the provided stream error,
      * and then closes the underlying connection.
      *
-     * The stream is opened from the host that the peer addressed, unless that host is missing or unknown: then it is
-     * opened from the XMPP domain of this server, as RFC 6120 section 4.9.1.3 requires an authoritative name for the
-     * receiving entity.
+     * The stream is opened from the host that the peer addressed, unless that host is missing or is not serviced (as
+     * determined by {@link #isHostUnknown(String)}), whatever the reason for the refusal: then it is opened from the XMPP
+     * domain of this server, as RFC 6120 section 4.9.1.3 requires an authoritative name for the receiving entity.
      *
      * @param xpp a parser positioned on the stream header that is refused.
      * @param host the value of the 'to' attribute of the refused stream header (can be null).
      * @param error the stream error to send to the peer.
      */
     protected void refuseStream(XmlPullParser xpp, String host, StreamError error) {
-        final String from = host == null || error.getCondition() == StreamError.Condition.host_unknown
+        final String from = host == null || isHostUnknown(host)
             ? XMPPServer.getInstance().getServerInfo().getXMPPDomain()
             : host;
         final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));

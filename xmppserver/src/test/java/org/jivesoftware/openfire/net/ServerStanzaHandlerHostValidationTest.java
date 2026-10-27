@@ -179,6 +179,39 @@ public class ServerStanzaHandlerHostValidationTest
     }
 
     /**
+     * Asserts that a stream that is refused for a reason other than its host, while validation is disabled, is
+     * answered from the XMPP domain when it names a domain that is not serviced, rather than from that domain.
+     */
+    @Test
+    public void testStreamToUnservicedDomainRefusedForOtherReasonIsRefusedFromOwnDomain() throws Exception
+    {
+        // Execute system under test.
+        handler.initiateSession(streamHeaderWithNamespace(UNSERVICED_DOMAIN, "jabber:client"), reader);
+
+        // Verify result.
+        final String delivered = deliveredText();
+        assertTrue(delivered.contains("invalid-namespace"), "The stream must be refused for its namespace.");
+        assertTrue(delivered.contains("from=\"" + Fixtures.XMPP_DOMAIN + "\""), "The refusal must be sent from the XMPP domain of this server.");
+        assertFalse(delivered.contains("from=\"" + UNSERVICED_DOMAIN + "\""), "The refusal must not be sent from the domain that is not serviced.");
+    }
+
+    /**
+     * Asserts that a stream that is refused for a reason other than its host is answered from the domain that it names,
+     * when that domain is serviced.
+     */
+    @Test
+    public void testStreamToServicedDomainRefusedForOtherReasonIsRefusedFromThatDomain() throws Exception
+    {
+        // Execute system under test.
+        handler.initiateSession(streamHeaderWithNamespace(COMPONENT_DOMAIN, "jabber:client"), reader);
+
+        // Verify result.
+        final String delivered = deliveredText();
+        assertTrue(delivered.contains("invalid-namespace"), "The stream must be refused for its namespace.");
+        assertTrue(delivered.contains("from=\"" + COMPONENT_DOMAIN + "\""), "The refusal must be sent from the serviced domain that the peer addressed.");
+    }
+
+    /**
      * Asserts that, with validation enabled, a stream that names a serviced domain before TLS is negotiated, but a
      * domain that is not serviced after, is refused with a host-unknown stream error.
      */
@@ -250,7 +283,19 @@ public class ServerStanzaHandlerHostValidationTest
      */
     private static String streamHeader(final String to)
     {
-        return "<stream:stream xmlns:stream='http://etherx.jabber.org/streams' xmlns='jabber:server' xmlns:db='jabber:server:dialback' from='remote.example.org'"
+        return streamHeaderWithNamespace(to, "jabber:server");
+    }
+
+    /**
+     * Returns an opening stream header as sent by a remote server, with the provided content namespace.
+     *
+     * @param to the value of the 'to' attribute, or null to omit the attribute.
+     * @param namespace the content namespace.
+     * @return a stream header.
+     */
+    private static String streamHeaderWithNamespace(final String to, final String namespace)
+    {
+        return "<stream:stream xmlns:stream='http://etherx.jabber.org/streams' xmlns='" + namespace + "' xmlns:db='jabber:server:dialback' from='remote.example.org'"
             + (to == null ? "" : " to='" + to + "'")
             + " version='1.0'>";
     }

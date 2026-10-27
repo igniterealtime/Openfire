@@ -23,7 +23,9 @@ import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Configuration of Openfire's 'gateway' or 'trunking' functionality, which allows Openfire to act as a gateway to
@@ -68,25 +70,41 @@ public class Trunking
         if (!ENABLED.getValue()) {
             return false;
         }
-        final String requested = JID.domainprep(domain);
-        return ALLOWABLE_DOMAINS.getValue().stream().anyMatch(v -> requested.equals(domainprepOrNull(v)));
+        return normalisedDomains().contains(JID.domainprep(domain));
     }
 
     /**
-     * Normalises a domain that is configured for trunking. A configured value that is not a valid domain name is
-     * ignored, so that it does not prevent the other configured domains from being recognised.
-     *
-     * @param configured a value of the trunking domains property.
-     * @return the normalised domain, or null when the value is not a valid domain name.
+     * The configured trunking domains, and their normalised form. Recomputed only when the configuration changes.
      */
-    private static String domainprepOrNull(@Nonnull final String configured)
+    private record NormalisedDomains(List<String> configured, Set<String> normalised) {}
+
+    private static volatile NormalisedDomains normalisedDomains = new NormalisedDomains(List.of(), Set.of());
+
+    /**
+     * Returns the normalised form of the domains that are configured for trunking. A configured value that is not a
+     * valid domain name is ignored, so that it does not prevent the other configured domains from being recognised.
+     * The configuration is normalised again only when it changes, so that an invalid value is reported once per change
+     * rather than on every check.
+     *
+     * @return the normalised domains.
+     */
+    private static Set<String> normalisedDomains()
     {
-        try {
-            return JID.domainprep(configured);
-        } catch (final IllegalArgumentException e) {
-            Log.warn("Ignoring a value of {} that is not a valid domain name: {}", ALLOWABLE_DOMAINS.getKey(), configured, e);
-            return null;
+        final List<String> configured = ALLOWABLE_DOMAINS.getValue();
+        NormalisedDomains current = normalisedDomains;
+        if (!current.configured().equals(configured)) {
+            final Set<String> normalised = new HashSet<>();
+            for (final String value : configured) {
+                try {
+                    normalised.add(JID.domainprep(value));
+                } catch (final IllegalArgumentException e) {
+                    Log.warn("Ignoring a value of {} that is not a valid domain name: '{}'", ALLOWABLE_DOMAINS.getKey(), value);
+                }
+            }
+            current = new NormalisedDomains(List.copyOf(configured), Set.copyOf(normalised));
+            normalisedDomains = current;
         }
+        return current.normalised();
     }
 }
 

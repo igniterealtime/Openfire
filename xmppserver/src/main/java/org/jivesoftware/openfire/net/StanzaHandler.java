@@ -999,7 +999,16 @@ public abstract class StanzaHandler {
             // have a TO attribute
             return false;
         }
-        if (XMPPServer.getInstance().getServerInfo().getXMPPDomain().equals( host )) {
+        final String requested;
+        try {
+            // Domain names are compared after normalisation, which (among other things) makes the comparison
+            // case-insensitive.
+            requested = JID.domainprep(host);
+        } catch (final IllegalArgumentException e) {
+            Log.debug("The host '{}' is not a valid domain name.", host, e);
+            return true;
+        }
+        if (XMPPServer.getInstance().getServerInfo().getXMPPDomain().equals( requested )) {
             // requested host matched the server name
             return false;
         }

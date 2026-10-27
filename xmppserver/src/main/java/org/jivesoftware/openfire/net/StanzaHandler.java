@@ -901,9 +901,9 @@ public abstract class StanzaHandler {
         String host = xpp.getAttributeValue("", "to");
 
         try {
-            // Check that the TO attribute of the stream header matches the server name or a valid
-            // subdomain. If the value of the 'to' attribute is not valid then return a host-unknown
-            // error and close the underlying connection.
+            // Check that the TO attribute of the stream header names a host that is serviced, as
+            // determined by isHostUnknown. If the value of the 'to' attribute is not valid then return
+            // a host-unknown error and close the underlying connection.
             if (validateHost() && isHostUnknown(host)) {
                 throw new StreamErrorException(StreamError.Condition.host_unknown, "Incorrect hostname in stream header: " + host);
             }
@@ -933,21 +933,42 @@ public abstract class StanzaHandler {
         catch (final StreamErrorException ex) {
             Log.warn("Failed to create a session, as the stream opened by the peer has a problem: {} - '{}' (a full stack trace is logged on debug level). Closing connection: {}. session is now: {}", ex.getStreamError().getCondition(), ex.getStreamError().getText(), connection, session);
             Log.debug("Failed to create a session.", ex);
-            final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
-            final Document document = DocumentHelper.createDocument(stream);
-            document.setXMLEncoding(StandardCharsets.UTF_8.toString());
-            stream.add(Namespace.get(xpp.getNamespace(null)));
-            stream.addAttribute("from", host);
-            stream.addAttribute("id", STREAM_ID_FACTORY.createStreamID().getID());
-            stream.addAttribute("version", "1.0");
-            stream.add(ex.getStreamError().getElement());
-
-            // Deliver stanza
-            connection.deliverRawText(StringUtils.asUnclosedStream(document));
-
-            // Close the underlying connection
-            connection.close();
+            refuseStream(xpp, host, ex.getStreamError());
         }
+    }
+
+    /**
+     * Responds to a stream header that cannot be accepted by opening a stream that carries the provided stream error,
+     * and then closes the underlying connection.
+     *
+     * The stream is opened from the host that the peer addressed, unless that host is missing or is not serviced (as
+     * determined by {@link #isHostUnknown(String)}), whatever the reason for the refusal: then it is opened from the XMPP
+     * domain of this server, as RFC 6120 section 4.9.1.3 requires an authoritative name for the receiving entity.
+     *
+     * @param xpp a parser positioned on the stream header that is refused.
+     * @param host the value of the 'to' attribute of the refused stream header (can be null).
+     * @param error the stream error to send to the peer.
+     */
+    protected void refuseStream(XmlPullParser xpp, String host, StreamError error) {
+        final String from = host == null || isHostUnknown(host)
+            ? XMPPServer.getInstance().getServerInfo().getXMPPDomain()
+            : host;
+        final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
+        final Document document = DocumentHelper.createDocument(stream);
+        document.setXMLEncoding(StandardCharsets.UTF_8.toString());
+        // A peer that does not declare a content namespace is answered in the namespace of this handler.
+        final String namespace = xpp.getNamespace(null);
+        stream.add(Namespace.get(namespace != null ? namespace : getNamespace().getURI()));
+        stream.addAttribute("from", from);
+        stream.addAttribute("id", STREAM_ID_FACTORY.createStreamID().getID());
+        stream.addAttribute("version", "1.0");
+        stream.add(error.getElement());
+
+        // Deliver stanza
+        connection.deliverRawText(StringUtils.asUnclosedStream(document));
+
+        // Close the underlying connection
+        connection.close();
     }
 
     /**
@@ -978,7 +999,16 @@ public abstract class StanzaHandler {
             // have a TO attribute
             return false;
         }
-        if (XMPPServer.getInstance().getServerInfo().getXMPPDomain().equals( host )) {
+        final String requested;
+        try {
+            // Domain names are compared after normalisation, which (among other things) makes the comparison
+            // case-insensitive.
+            requested = JID.domainprep(host);
+        } catch (final IllegalArgumentException e) {
+            Log.debug("The host '{}' is not a valid domain name.", host, e);
+            return true;
+        }
+        if (XMPPServer.getInstance().getServerInfo().getXMPPDomain().equals( requested )) {
             // requested host matched the server name
             return false;
         }

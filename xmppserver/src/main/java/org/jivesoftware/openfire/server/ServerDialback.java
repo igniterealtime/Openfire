@@ -105,7 +105,6 @@ public class ServerDialback {
     private Connection connection;
     private DomainPair domainPair;
     private final SessionManager sessionManager = SessionManager.getInstance();
-    private final RoutingTable routingTable = XMPPServer.getInstance().getRoutingTable();
 
     /**
      * Returns true if server dialback is enabled. When enabled remote servers may connect to this
@@ -436,7 +435,7 @@ public class ServerDialback {
                         session.setAuthenticationMethod(ServerSession.AuthenticationMethod.DIALBACK);
                         // Set the domain or subdomain of the local server used when
                         // validating the session
-                        session.setLocalDomain(recipient);
+                        session.setLocalDomain(doc.attributeValue("to"));
                         // After the session has been created, inform all listeners as well.
                         ServerSessionEventDispatcher.dispatchEvent(session, ServerSessionEventDispatcher.EventType.session_created);
                         return session;
@@ -539,6 +538,11 @@ public class ServerDialback {
             throw new ServerDialbackErrorException(recipient, remoteDomain, new PacketError(PacketError.Condition.item_not_found, PacketError.Type.cancel, "Service not hosted here"));
         }
         else {
+            // The domain is serviced. Continue with its normalised form, and record that in the request, so that the
+            // session is created for, and the result is reported from, the domain as this server knows it.
+            recipient = JID.domainprep(recipient);
+            doc.addAttribute("to", recipient);
+
             log.debug( "Check if the remote domain already has a connection to the target domain/subdomain" );
             boolean alreadyExists = false;
             for (IncomingServerSession session : sessionManager.getIncomingServerSessions(remoteDomain)) {
@@ -643,19 +647,19 @@ public class ServerDialback {
         }
     }
 
-    private boolean isHostUnknown(String recipient) {
-        boolean host_unknown = !domainPair.getLocal().equals(recipient);
-        // If the recipient does not match the local domain then check if it matches a subdomain. This
-        // trick is useful when subdomains of this server are registered in the DNS so remote
-        // servers may establish connections directly to a subdomain of this server
-        if (host_unknown && recipient.contains(domainPair.getLocal())) {
-            host_unknown = !routingTable.hasComponentRoute(new JID(recipient));
-        }
-
-        if (host_unknown) {
-            host_unknown = !Trunking.isTrunkingEnabledFor(recipient);
-        }
-        return host_unknown;
+    /**
+     * Checks if the domain that the remote server addresses is not serviced by this server. Subdomains of this server
+     * are serviced when they have a component route, which is useful when they are registered in the DNS so that remote
+     * servers can establish connections directly to them.
+     *
+     * XEP-0220 requires the 'to' attribute on dialback requests, so a request that has none is for an unknown host.
+     *
+     * @param recipient the domain addressed by the remote server (can be null).
+     * @return true if the domain is not serviced by this server.
+     * @see ServerStanzaHandler#isLocallyServiced(String)
+     */
+    boolean isHostUnknown(String recipient) {
+        return recipient == null || !ServerStanzaHandler.isLocallyServiced(recipient);
     }
 
     private VerifyResult sendVerifyKey(String key, StreamID streamID, String recipient, String remoteDomain, Writer writer, XMPPPacketReader reader, Socket socket, boolean skipTLS, boolean directTLS) throws IOException, XmlPullParserException, RemoteConnectionFailedException {

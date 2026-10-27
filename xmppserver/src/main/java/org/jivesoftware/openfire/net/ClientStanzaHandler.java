@@ -31,15 +31,19 @@ import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Presence;
+import org.xmpp.packet.StreamError;
+
+import java.io.IOException;
 
 /** Handler of XML stanzas sent by clients connected directly to the server. Received packet will
  * have their FROM attribute overridden to avoid spoofing.<p>
  *
  * By default, the hostname specified in the stream header sent by clients will not be validated.
- * When validated the TO attribute of the stream header has to match the server name or a valid
- * subdomain. If the value of the 'to' attribute is not valid then a host-unknown error
- * will be returned. To enable the validation set the system property
- * <b>xmpp.client.validate.host</b> to true.
+ * When validated the TO attribute of the stream header, if present, has to match the XMPP domain
+ * of the server, in any case (subdomains are not accepted). If the value of the 'to' attribute is not valid
+ * then a host-unknown error will be returned. To enable the validation set the system property
+ * <b>xmpp.client.validate.host</b> to true. Both the initial stream header and the one that is
+ * sent after TLS is negotiated are validated.
  *
  * @author Gaston Dombiak
  */
@@ -69,6 +73,25 @@ public class ClientStanzaHandler extends StanzaHandler {
     @Override
     protected boolean validateHost() {
         return JiveGlobals.getBooleanProperty("xmpp.client.validate.host",false);
+    }
+
+    @Override
+    protected void tlsNegotiated(XmlPullParser xpp) throws XmlPullParserException, IOException {
+        for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
+            eventType = xpp.next();
+        }
+
+        // The stream header that was sent before TLS was negotiated has been validated already, but its values are to
+        // be discarded (RFC 6120 section 5.4.3.3). Validate the 'to' attribute of the stream header that was sent after
+        // TLS was negotiated.
+        final String host = xpp.getAttributeValue("", "to");
+        if (validateHost() && isHostUnknown(host)) {
+            Log.warn("Refusing stream that was opened after TLS was negotiated, as it addresses a host that is not serviced: '{}'. Closing connection: {}", host, connection);
+            refuseStream(xpp, host, new StreamError(StreamError.Condition.host_unknown, "Incorrect hostname in stream header: " + host));
+            return;
+        }
+
+        super.tlsNegotiated(xpp);
     }
 
     @Override

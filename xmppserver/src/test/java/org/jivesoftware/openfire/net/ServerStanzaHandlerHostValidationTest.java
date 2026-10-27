@@ -196,6 +196,26 @@ public class ServerStanzaHandlerHostValidationTest
     }
 
     /**
+     * Asserts that, with validation enabled, a stream that is opened after TLS is negotiated without declaring a
+     * content namespace, and that names a domain that is not serviced, is refused with a host-unknown stream error.
+     */
+    @Test
+    public void testStreamAfterTlsWithoutNamespaceToUnservicedDomainIsRefused() throws Exception
+    {
+        // Setup test fixture.
+        ServerStanzaHandler.VALIDATE_HOST.setValue(true);
+        handler.initiateSession(streamHeader(Fixtures.XMPP_DOMAIN), reader);
+        handler.startedTLS = true;
+
+        // Execute system under test.
+        handler.initiateSession("<stream:stream xmlns:stream='http://etherx.jabber.org/streams' from='remote.example.org' to='" + UNSERVICED_DOMAIN + "' version='1.0'>", reader);
+
+        // Verify result.
+        assertTrue(deliveredText().contains("host-unknown"), "The peer must be told that the host is unknown.");
+        verify(connection).close();
+    }
+
+    /**
      * Asserts that a stream that is refused for a reason other than its host is answered from the domain that it names,
      * when that domain is serviced.
      */

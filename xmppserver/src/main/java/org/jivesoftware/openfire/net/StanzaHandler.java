@@ -956,7 +956,9 @@ public abstract class StanzaHandler {
         final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
         final Document document = DocumentHelper.createDocument(stream);
         document.setXMLEncoding(StandardCharsets.UTF_8.toString());
-        stream.add(Namespace.get(xpp.getNamespace(null)));
+        // A peer that does not declare a content namespace is answered in the namespace of this handler.
+        final String namespace = xpp.getNamespace(null);
+        stream.add(Namespace.get(namespace != null ? namespace : getNamespace().getURI()));
         stream.addAttribute("from", from);
         stream.addAttribute("id", STREAM_ID_FACTORY.createStreamID().getID());
         stream.addAttribute("version", "1.0");

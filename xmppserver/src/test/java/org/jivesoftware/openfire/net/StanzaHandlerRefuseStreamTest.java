@@ -91,6 +91,22 @@ public class StanzaHandlerRefuseStreamTest
     }
 
     /**
+     * Asserts that a stream header that does not declare a content namespace is refused with an invalid-namespace
+     * stream error.
+     */
+    @Test
+    public void testStreamWithoutNamespaceIsRefused() throws Exception
+    {
+        // Execute system under test.
+        handler.initiateSession("<stream:stream xmlns:stream='http://etherx.jabber.org/streams' to='" + Fixtures.XMPP_DOMAIN + "' version='1.0'>", reader);
+
+        // Verify result.
+        assertTrue(deliveredText().contains("<invalid-namespace xmlns=\"urn:ietf:params:xml:ns:xmpp-streams\""), "The stream must carry the invalid-namespace stream error.");
+        verify(connection).close();
+        assertNull(handler.session, "No session must be created for a refused stream.");
+    }
+
+    /**
      * Asserts that, with host validation enabled for clients, a stream header that addresses another domain is refused
      * with a host-unknown stream error.
      */

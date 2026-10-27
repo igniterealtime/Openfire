@@ -40,7 +40,7 @@ import java.io.IOException;
  *
  * By default, the hostname specified in the stream header sent by clients will not be validated.
  * When validated the TO attribute of the stream header, if present, has to match the XMPP domain
- * of the server (subdomains are not accepted). If the value of the 'to' attribute is not valid
+ * of the server, in any case (subdomains are not accepted). If the value of the 'to' attribute is not valid
  * then a host-unknown error will be returned. To enable the validation set the system property
  * <b>xmpp.client.validate.host</b> to true. Both the initial stream header and the one that is
  * sent after TLS is negotiated are validated.

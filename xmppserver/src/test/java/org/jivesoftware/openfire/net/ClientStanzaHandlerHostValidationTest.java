@@ -103,6 +103,64 @@ public class ClientStanzaHandlerHostValidationTest
     }
 
     /**
+     * Asserts that, with validation enabled, a stream that names the XMPP domain in a different case is accepted, as
+     * domain names are compared after normalisation.
+     */
+    @Test
+    public void testInitialStreamToXmppDomainInOtherCaseIsAccepted() throws Exception
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("xmpp.client.validate.host", "true");
+
+        // Execute system under test.
+        handler.initiateSession(streamHeader(Fixtures.XMPP_DOMAIN.toUpperCase(Locale.ROOT)), reader);
+
+        // Verify result.
+        assertNotNull(handler.session, "A session must be created for a stream that names the XMPP domain in a different case.");
+        verify(connection, never()).close();
+    }
+
+    /**
+     * Asserts that, with validation enabled, a stream that names a host that is not a valid domain name is refused with
+     * a host-unknown stream error.
+     */
+    @Test
+    public void testInitialStreamToInvalidDomainIsRefused() throws Exception
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("xmpp.client.validate.host", "true");
+
+        // Execute system under test.
+        handler.initiateSession(streamHeader("a".repeat(64) + "." + Fixtures.XMPP_DOMAIN), reader);
+
+        // Verify result.
+        assertNull(handler.session, "No session must be created for a stream that names an invalid domain.");
+        assertTrue(deliveredText().contains("<host-unknown xmlns=\"urn:ietf:params:xml:ns:xmpp-streams\""), "The peer must be told that the host is unknown.");
+    }
+
+    /**
+     * Asserts that, with validation enabled, a stream that names the XMPP domain in a different case after TLS is
+     * negotiated is accepted.
+     */
+    @Test
+    public void testStreamAfterTlsToXmppDomainInOtherCaseIsAccepted() throws Exception
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("xmpp.client.validate.host", "true");
+        handler.initiateSession(streamHeader(Fixtures.XMPP_DOMAIN), reader);
+        handler.startedTLS = true;
+
+        // Execute system under test.
+        handler.initiateSession(streamHeader(Fixtures.XMPP_DOMAIN.toUpperCase(Locale.ROOT)), reader);
+
+        // Verify result.
+        final String delivered = deliveredText();
+        assertTrue(delivered.contains("<stream:features"), "Stream features must be offered on the stream that follows TLS negotiation.");
+        assertFalse(delivered.contains("host-unknown"), "The stream must not be refused.");
+        verify(connection, never()).close();
+    }
+
+    /**
      * Asserts that, with validation enabled, a stream that names the XMPP domain is accepted.
      */
     @Test

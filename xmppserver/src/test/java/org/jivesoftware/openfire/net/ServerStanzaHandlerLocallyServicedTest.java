@@ -174,6 +174,27 @@ public class ServerStanzaHandlerLocallyServicedTest
     }
 
     /**
+     * Asserts that a change to the domains that are configured for trunking takes effect for the checks that follow
+     * it: a domain that is added becomes serviced, and a domain that is removed stops being serviced.
+     */
+    @Test
+    public void testChangeOfTrunkedDomainsTakesEffect()
+    {
+        // Setup test fixture.
+        final String otherTrunkedDomain = "other-trunked.example.net";
+        Trunking.ENABLED.setValue(true);
+        Trunking.ALLOWABLE_DOMAINS.setValue(List.of(TRUNKED_DOMAIN));
+        assertTrue(ServerStanzaHandler.isLocallyServiced(TRUNKED_DOMAIN), "The initially configured domain must be serviced.");
+
+        // Execute system under test.
+        Trunking.ALLOWABLE_DOMAINS.setValue(List.of(otherTrunkedDomain));
+
+        // Verify result.
+        assertTrue(ServerStanzaHandler.isLocallyServiced(otherTrunkedDomain), "A domain that is added must be serviced.");
+        assertFalse(ServerStanzaHandler.isLocallyServiced(TRUNKED_DOMAIN), "A domain that is removed must no longer be serviced.");
+    }
+
+    /**
      * Asserts that a domain for which trunking is enabled is serviced when the configuration also lists a value that
      * is not a valid domain name.
      */

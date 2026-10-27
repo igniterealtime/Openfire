@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2022-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 package org.jivesoftware.openfire.net;
 
 import org.jivesoftware.util.SystemProperty;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xmpp.packet.JID;
 
 import javax.annotation.Nonnull;
@@ -32,6 +34,8 @@ import java.util.List;
  */
 public class Trunking
 {
+    private static final Logger Log = LoggerFactory.getLogger(Trunking.class);
+
     /**
      * Enables or disables the trunking functionality that allows Openfire to act as a gateway to transfer data between
      * other XMPP domains.
@@ -61,7 +65,28 @@ public class Trunking
      */
     public static boolean isTrunkingEnabledFor(@Nonnull final String domain)
     {
-        return ENABLED.getValue() && ALLOWABLE_DOMAINS.getValue().stream().anyMatch(v -> JID.domainprep(v).equals(JID.domainprep(domain)));
+        if (!ENABLED.getValue()) {
+            return false;
+        }
+        final String requested = JID.domainprep(domain);
+        return ALLOWABLE_DOMAINS.getValue().stream().anyMatch(v -> requested.equals(domainprepOrNull(v)));
+    }
+
+    /**
+     * Normalises a domain that is configured for trunking. A configured value that is not a valid domain name is
+     * ignored, so that it does not prevent the other configured domains from being recognised.
+     *
+     * @param configured a value of the trunking domains property.
+     * @return the normalised domain, or null when the value is not a valid domain name.
+     */
+    private static String domainprepOrNull(@Nonnull final String configured)
+    {
+        try {
+            return JID.domainprep(configured);
+        } catch (final IllegalArgumentException e) {
+            Log.warn("Ignoring a value of {} that is not a valid domain name: {}", ALLOWABLE_DOMAINS.getKey(), configured, e);
+            return null;
+        }
     }
 }
 

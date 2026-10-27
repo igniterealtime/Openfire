@@ -43,6 +43,11 @@ public class ServerStanzaHandlerLocallyServicedTest
 
     private static final String UNSERVICED_DOMAIN = "unserviced.example.com";
 
+    /**
+     * A value that cannot be a domain name, as its first label exceeds 63 characters.
+     */
+    private static final String INVALID_DOMAIN = "a".repeat(64) + ".example.org";
+
     private RoutingTable routingTable;
 
     @BeforeAll
@@ -162,6 +167,36 @@ public class ServerStanzaHandlerLocallyServicedTest
     }
 
     /**
+     * Asserts that a domain for which trunking is enabled is serviced when the configuration also lists a value that
+     * is not a valid domain name.
+     */
+    @Test
+    public void testTrunkedDomainIsServicedDespiteInvalidConfiguredDomain()
+    {
+        // Setup test fixture.
+        Trunking.ENABLED.setValue(true);
+        Trunking.ALLOWABLE_DOMAINS.setValue(List.of(INVALID_DOMAIN, TRUNKED_DOMAIN));
+
+        // Execute system under test & verify result.
+        assertTrue(ServerStanzaHandler.isLocallyServiced(TRUNKED_DOMAIN));
+    }
+
+    /**
+     * Asserts that a domain that is not serviced is reported as such, rather than causing an exception, when the
+     * configuration for trunking lists a value that is not a valid domain name.
+     */
+    @Test
+    public void testUnrelatedDomainIsNotServicedDespiteInvalidConfiguredDomain()
+    {
+        // Setup test fixture.
+        Trunking.ENABLED.setValue(true);
+        Trunking.ALLOWABLE_DOMAINS.setValue(List.of(INVALID_DOMAIN));
+
+        // Execute system under test & verify result.
+        assertFalse(ServerStanzaHandler.isLocallyServiced(UNSERVICED_DOMAIN));
+    }
+
+    /**
      * Asserts that a domain that is unrelated to this server is not serviced.
      */
     @Test
@@ -177,6 +212,6 @@ public class ServerStanzaHandlerLocallyServicedTest
     @Test
     public void testInvalidDomainIsNotServiced()
     {
-        assertFalse(ServerStanzaHandler.isLocallyServiced("a".repeat(64) + ".example.org"));
+        assertFalse(ServerStanzaHandler.isLocallyServiced(INVALID_DOMAIN));
     }
 }

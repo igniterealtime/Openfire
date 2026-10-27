@@ -901,9 +901,9 @@ public abstract class StanzaHandler {
         String host = xpp.getAttributeValue("", "to");
 
         try {
-            // Check that the TO attribute of the stream header matches the server name or a valid
-            // subdomain. If the value of the 'to' attribute is not valid then return a host-unknown
-            // error and close the underlying connection.
+            // Check that the TO attribute of the stream header names a host that is serviced, as
+            // determined by isHostUnknown. If the value of the 'to' attribute is not valid then return
+            // a host-unknown error and close the underlying connection.
             if (validateHost() && isHostUnknown(host)) {
                 throw new StreamErrorException(StreamError.Condition.host_unknown, "Incorrect hostname in stream header: " + host);
             }

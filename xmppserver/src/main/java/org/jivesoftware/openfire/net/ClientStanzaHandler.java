@@ -36,9 +36,9 @@ import org.xmpp.packet.Presence;
  * have their FROM attribute overridden to avoid spoofing.<p>
  *
  * By default, the hostname specified in the stream header sent by clients will not be validated.
- * When validated the TO attribute of the stream header has to match the server name or a valid
- * subdomain. If the value of the 'to' attribute is not valid then a host-unknown error
- * will be returned. To enable the validation set the system property
+ * When validated the TO attribute of the stream header, if present, has to match the XMPP domain
+ * of the server (subdomains are not accepted). If the value of the 'to' attribute is not valid
+ * then a host-unknown error will be returned. To enable the validation set the system property
  * <b>xmpp.client.validate.host</b> to true.
  *
  * @author Gaston Dombiak

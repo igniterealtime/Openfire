@@ -24,6 +24,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.JiveGlobals;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -79,6 +80,12 @@ public class ServerStanzaHandlerHostValidationTest
     {
         Fixtures.reconfigureOpenfireHome();
         Fixtures.disableDatabasePersistence();
+    }
+
+    @AfterAll
+    public static void tearDownClass()
+    {
+        Fixtures.clearExistingProperties();
     }
 
     @BeforeEach
@@ -179,8 +186,8 @@ public class ServerStanzaHandlerHostValidationTest
     }
 
     /**
-     * Asserts that a stream that is refused for a reason other than its host, while validation is disabled, is
-     * answered from the XMPP domain when it names a domain that is not serviced, rather than from that domain.
+     * Asserts that, with validation disabled, a stream that names a domain that is not serviced, and that is refused
+     * for another reason, is answered from the XMPP domain.
      */
     @Test
     public void testStreamToUnservicedDomainRefusedForOtherReasonIsRefusedFromOwnDomain() throws Exception

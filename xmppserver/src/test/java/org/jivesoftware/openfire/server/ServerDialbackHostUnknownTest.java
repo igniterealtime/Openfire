@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.Trunking;
 import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.util.JiveGlobals;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,6 +56,12 @@ public class ServerDialbackHostUnknownTest
     {
         Fixtures.reconfigureOpenfireHome();
         Fixtures.disableDatabasePersistence();
+    }
+
+    @AfterAll
+    public static void tearDownClass()
+    {
+        Fixtures.clearExistingProperties();
     }
 
     @BeforeEach

@@ -435,7 +435,7 @@ public class ServerDialback {
                         session.setAuthenticationMethod(ServerSession.AuthenticationMethod.DIALBACK);
                         // Set the domain or subdomain of the local server used when
                         // validating the session
-                        session.setLocalDomain(recipient);
+                        session.setLocalDomain(doc.attributeValue("to"));
                         // After the session has been created, inform all listeners as well.
                         ServerSessionEventDispatcher.dispatchEvent(session, ServerSessionEventDispatcher.EventType.session_created);
                         return session;
@@ -538,6 +538,11 @@ public class ServerDialback {
             throw new ServerDialbackErrorException(recipient, remoteDomain, new PacketError(PacketError.Condition.item_not_found, PacketError.Type.cancel, "Service not hosted here"));
         }
         else {
+            // The domain is serviced. Continue with its normalised form, and record that in the request, so that the
+            // session is created for, and the result is reported from, the domain as this server knows it.
+            recipient = JID.domainprep(recipient);
+            doc.addAttribute("to", recipient);
+
             log.debug( "Check if the remote domain already has a connection to the target domain/subdomain" );
             boolean alreadyExists = false;
             for (IncomingServerSession session : sessionManager.getIncomingServerSessions(remoteDomain)) {

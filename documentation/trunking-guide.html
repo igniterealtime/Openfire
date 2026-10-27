@@ -128,6 +128,10 @@
             To enable the trunking functionality in Openfire, the property <code>xmpp.gateway.enabled</code> needs to be set to <code>true</code>, and the property <code>xmpp.gateway.domains</code> needs to be populated with a (comma-separated) list of XMPP domain names of remote XMPP domains that the Openfire server will forward data to.
         </p>
 
+        <p>
+            When the property <code>xmpp.server.validate.host</code> is enabled, Openfire refuses inbound server-to-server connections that address a domain it does not service. The domains listed in <code>xmpp.gateway.domains</code> count as serviced, so connections to them are still accepted while trunking is enabled. Subdomains of those domains do not count: list each domain that is to be trunked.
+        </p>
+
         <section id="setup-example">
 
             <h3>Full example</h3>

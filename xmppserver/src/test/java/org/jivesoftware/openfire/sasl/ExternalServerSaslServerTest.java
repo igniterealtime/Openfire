@@ -271,6 +271,7 @@ public class ExternalServerSaslServerTest
         // Setup test fixture.
         final String streamID = "example.org";
 
+        when(session.getSessionData(SASLAuthentication.SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY)).thenReturn(null);
         when(session.getDefaultIdentity()).thenReturn(streamID);
         when(session.getConnection()).thenReturn(connection);
         saslAuthentication.when(() -> SASLAuthentication.verifyCertificates(any(), eq(streamID), anyBoolean())).thenReturn(false);

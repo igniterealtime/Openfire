@@ -84,7 +84,7 @@ public class ServerStanzaHandlerLocallyServicedTest
     @Test
     public void testXmppDomainIsServiced()
     {
-        assertTrue(ServerStanzaHandler.isLocallyServiced(Fixtures.XMPP_DOMAIN));
+        assertTrue(ServerStanzaHandler.isLocallyServiced(Fixtures.XMPP_DOMAIN), "The XMPP domain must be serviced.");
     }
 
     /**
@@ -94,7 +94,7 @@ public class ServerStanzaHandlerLocallyServicedTest
     @Test
     public void testXmppDomainInDifferentCaseIsServiced()
     {
-        assertTrue(ServerStanzaHandler.isLocallyServiced(Fixtures.XMPP_DOMAIN.toUpperCase(Locale.ROOT)));
+        assertTrue(ServerStanzaHandler.isLocallyServiced(Fixtures.XMPP_DOMAIN.toUpperCase(Locale.ROOT)), "The XMPP domain must be serviced when it is written in a different case.");
     }
 
     /**
@@ -104,7 +104,7 @@ public class ServerStanzaHandlerLocallyServicedTest
     @Test
     public void testComponentSubdomainIsServiced()
     {
-        assertTrue(ServerStanzaHandler.isLocallyServiced(COMPONENT_DOMAIN));
+        assertTrue(ServerStanzaHandler.isLocallyServiced(COMPONENT_DOMAIN), "A subdomain that has a component route must be serviced.");
     }
 
     /**
@@ -113,7 +113,7 @@ public class ServerStanzaHandlerLocallyServicedTest
     @Test
     public void testSubdomainWithoutComponentIsNotServiced()
     {
-        assertFalse(ServerStanzaHandler.isLocallyServiced("unknown." + Fixtures.XMPP_DOMAIN));
+        assertFalse(ServerStanzaHandler.isLocallyServiced("unknown." + Fixtures.XMPP_DOMAIN), "A subdomain that has no component route must not be serviced.");
     }
 
     /**
@@ -142,7 +142,7 @@ public class ServerStanzaHandlerLocallyServicedTest
         Trunking.ALLOWABLE_DOMAINS.setValue(List.of(TRUNKED_DOMAIN));
 
         // Execute system under test & verify result.
-        assertTrue(ServerStanzaHandler.isLocallyServiced(TRUNKED_DOMAIN));
+        assertTrue(ServerStanzaHandler.isLocallyServiced(TRUNKED_DOMAIN), "A domain for which trunking is enabled must be serviced.");
     }
 
     /**
@@ -156,7 +156,7 @@ public class ServerStanzaHandlerLocallyServicedTest
         Trunking.ALLOWABLE_DOMAINS.setValue(List.of(TRUNKED_DOMAIN));
 
         // Execute system under test & verify result.
-        assertFalse(ServerStanzaHandler.isLocallyServiced(TRUNKED_DOMAIN));
+        assertFalse(ServerStanzaHandler.isLocallyServiced(TRUNKED_DOMAIN), "A domain that is configured for trunking must not be serviced while trunking is disabled.");
     }
 
     /**
@@ -171,7 +171,7 @@ public class ServerStanzaHandlerLocallyServicedTest
         Trunking.ALLOWABLE_DOMAINS.setValue(List.of(TRUNKED_DOMAIN));
 
         // Execute system under test & verify result.
-        assertFalse(ServerStanzaHandler.isLocallyServiced("conference." + TRUNKED_DOMAIN));
+        assertFalse(ServerStanzaHandler.isLocallyServiced("conference." + TRUNKED_DOMAIN), "A subdomain of a domain for which trunking is enabled must not be serviced.");
     }
 
     /**
@@ -207,7 +207,7 @@ public class ServerStanzaHandlerLocallyServicedTest
         Trunking.ALLOWABLE_DOMAINS.setValue(List.of(INVALID_DOMAIN, TRUNKED_DOMAIN));
 
         // Execute system under test & verify result.
-        assertTrue(ServerStanzaHandler.isLocallyServiced(TRUNKED_DOMAIN));
+        assertTrue(ServerStanzaHandler.isLocallyServiced(TRUNKED_DOMAIN), "A domain for which trunking is enabled must be serviced when another configured value is invalid.");
     }
 
     /**
@@ -222,7 +222,7 @@ public class ServerStanzaHandlerLocallyServicedTest
         Trunking.ALLOWABLE_DOMAINS.setValue(List.of(INVALID_DOMAIN));
 
         // Execute system under test & verify result.
-        assertFalse(ServerStanzaHandler.isLocallyServiced(UNSERVICED_DOMAIN));
+        assertFalse(ServerStanzaHandler.isLocallyServiced(UNSERVICED_DOMAIN), "An unrelated domain must not be serviced when a configured trunking value is invalid.");
     }
 
     /**
@@ -231,7 +231,7 @@ public class ServerStanzaHandlerLocallyServicedTest
     @Test
     public void testUnrelatedDomainIsNotServiced()
     {
-        assertFalse(ServerStanzaHandler.isLocallyServiced(UNSERVICED_DOMAIN));
+        assertFalse(ServerStanzaHandler.isLocallyServiced(UNSERVICED_DOMAIN), "An unrelated domain must not be serviced.");
     }
 
     /**
@@ -241,6 +241,6 @@ public class ServerStanzaHandlerLocallyServicedTest
     @Test
     public void testInvalidDomainIsNotServiced()
     {
-        assertFalse(ServerStanzaHandler.isLocallyServiced(INVALID_DOMAIN));
+        assertFalse(ServerStanzaHandler.isLocallyServiced(INVALID_DOMAIN), "A value that is not a valid domain name must not be serviced.");
     }
 }

@@ -44,6 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.withSettings;
 
@@ -112,7 +113,7 @@ public class ServerStanzaHandlerHostValidationTest
     @Test
     public void testValidationIsDisabledByDefault()
     {
-        assertFalse(handler.validateHost());
+        assertFalse(handler.validateHost(), "Host validation must be disabled when it has not been configured.");
     }
 
     /**
@@ -132,7 +133,7 @@ public class ServerStanzaHandlerHostValidationTest
         assertEquals(0, handler.sessionsCreated, "No session must be created for a stream that names a domain that is not serviced.");
         assertTrue(deliveredText().contains("host-unknown"), "The peer must be told that the host is unknown.");
         assertTrue(deliveredText().contains("from=\"" + Fixtures.XMPP_DOMAIN + "\""), "The refusal must be sent from the XMPP domain of the local XMPP service.");
-        verify(connection).close();
+        verify(connection, times(1).description("The connection must be closed after the refusal.")).close();
     }
 
     /**
@@ -203,6 +204,26 @@ public class ServerStanzaHandlerHostValidationTest
     }
 
     /**
+     * Asserts that, with validation enabled, a stream that is opened after TLS is negotiated without declaring a
+     * content namespace, and that names a domain that is not serviced, is refused with a host-unknown stream error.
+     */
+    @Test
+    public void testStreamAfterTlsWithoutNamespaceToUnservicedDomainIsRefused() throws Exception
+    {
+        // Setup test fixture.
+        ServerStanzaHandler.VALIDATE_HOST.setValue(true);
+        handler.initiateSession(streamHeader(Fixtures.XMPP_DOMAIN), reader);
+        handler.startedTLS = true;
+
+        // Execute system under test.
+        handler.initiateSession("<stream:stream xmlns:stream='http://etherx.jabber.org/streams' from='remote.example.org' to='" + UNSERVICED_DOMAIN + "' version='1.0'>", reader);
+
+        // Verify result.
+        assertTrue(deliveredText().contains("host-unknown"), "The peer must be told that the host is unknown.");
+        verify(connection, times(1).description("The connection must be closed after the refusal.")).close();
+    }
+
+    /**
      * Asserts that a stream that is refused for a reason other than its host is answered from the domain that it names,
      * when that domain is serviced.
      */
@@ -237,7 +258,7 @@ public class ServerStanzaHandlerHostValidationTest
         assertEquals(1, handler.sessionsCreated, "The session must not be re-created for a stream that names a domain that is not serviced.");
         assertTrue(deliveredText().contains("host-unknown"), "The peer must be told that the host is unknown.");
         assertFalse(deliveredText().contains("from=\"" + UNSERVICED_DOMAIN + "\""), "The refusal must not be sent from the domain that is not serviced.");
-        verify(connection).close();
+        verify(connection, times(1).description("The connection must be closed after the refusal.")).close();
     }
 
     /**
@@ -315,7 +336,7 @@ public class ServerStanzaHandlerHostValidationTest
     private String deliveredText()
     {
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(connection, atLeastOnce()).deliverRawText(captor.capture());
+        verify(connection, atLeastOnce().description("Text must have been delivered to the peer.")).deliverRawText(captor.capture());
         return String.join("", captor.getAllValues());
     }
 

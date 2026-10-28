@@ -125,7 +125,7 @@ public class ServerDialbackValidateRemoteDomainTest
             final ServerDialbackErrorException exception = assertThrows(ServerDialbackErrorException.class,
                 () -> dialback.validateRemoteDomain(dbResult, new BasicStreamIDFactory().createStreamID()),
                 "A second session for the same domain, written in a different case, must be refused.");
-            assertEquals("resource-constraint", exception.getError().getCondition().toXMPP());
+            assertEquals("resource-constraint", exception.getError().getCondition().toXMPP(), "The refusal must report that a session for the domain already exists.");
         }
     }
 

@@ -34,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.withSettings;
 
@@ -93,7 +94,23 @@ public class StanzaHandlerRefuseStreamTest
         assertTrue(delivered.contains("<stream:stream"), "The refusal must be sent on a stream that is opened for that purpose.");
         assertTrue(delivered.contains("from=\"" + Fixtures.XMPP_DOMAIN + "\""), "The stream must be opened from the domain that the peer addressed.");
         assertTrue(delivered.contains("<invalid-namespace xmlns=\"urn:ietf:params:xml:ns:xmpp-streams\""), "The stream must carry the invalid-namespace stream error.");
-        verify(connection).close();
+        verify(connection, times(1).description("The connection must be closed after the refusal.")).close();
+        assertNull(handler.session, "No session must be created for a refused stream.");
+    }
+
+    /**
+     * Asserts that a stream header that does not declare a content namespace is refused with an invalid-namespace
+     * stream error.
+     */
+    @Test
+    public void testStreamWithoutNamespaceIsRefused() throws Exception
+    {
+        // Execute system under test.
+        handler.initiateSession("<stream:stream xmlns:stream='http://etherx.jabber.org/streams' to='" + Fixtures.XMPP_DOMAIN + "' version='1.0'>", reader);
+
+        // Verify result.
+        assertTrue(deliveredText().contains("<invalid-namespace xmlns=\"urn:ietf:params:xml:ns:xmpp-streams\""), "The stream must carry the invalid-namespace stream error.");
+        verify(connection, times(1).description("The connection must be closed after the refusal.")).close();
         assertNull(handler.session, "No session must be created for a refused stream.");
     }
 
@@ -114,7 +131,7 @@ public class StanzaHandlerRefuseStreamTest
         final String delivered = deliveredText();
         assertTrue(delivered.contains("<host-unknown xmlns=\"urn:ietf:params:xml:ns:xmpp-streams\""), "The stream must carry the host-unknown stream error.");
         assertEquals(1, countOccurrences(delivered, "<stream:stream"), "Exactly one stream must be opened, to carry the refusal.");
-        verify(connection).close();
+        verify(connection, times(1).description("The connection must be closed after the refusal.")).close();
         assertNull(handler.session, "No session must be created for a refused stream.");
     }
 
@@ -162,7 +179,7 @@ public class StanzaHandlerRefuseStreamTest
     private String deliveredText()
     {
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(connection, atLeastOnce()).deliverRawText(captor.capture());
+        verify(connection, atLeastOnce().description("Text must have been delivered to the peer.")).deliverRawText(captor.capture());
         return String.join("", captor.getAllValues());
     }
 

@@ -85,7 +85,7 @@ public class ServerDialbackHostUnknownTest
     @Test
     public void testXmppDomainIsKnown()
     {
-        assertFalse(dialback.isHostUnknown(Fixtures.XMPP_DOMAIN));
+        assertFalse(dialback.isHostUnknown(Fixtures.XMPP_DOMAIN), "The XMPP domain must not be unknown.");
     }
 
     /**
@@ -94,7 +94,7 @@ public class ServerDialbackHostUnknownTest
     @Test
     public void testComponentSubdomainIsKnown()
     {
-        assertFalse(dialback.isHostUnknown(COMPONENT_DOMAIN));
+        assertFalse(dialback.isHostUnknown(COMPONENT_DOMAIN), "A subdomain that has a component route must not be unknown.");
     }
 
     /**
@@ -108,7 +108,7 @@ public class ServerDialbackHostUnknownTest
         Trunking.ALLOWABLE_DOMAINS.setValue(List.of(TRUNKED_DOMAIN));
 
         // Execute system under test & verify result.
-        assertFalse(dialback.isHostUnknown(TRUNKED_DOMAIN));
+        assertFalse(dialback.isHostUnknown(TRUNKED_DOMAIN), "A domain for which trunking is enabled must not be unknown.");
     }
 
     /**
@@ -117,7 +117,7 @@ public class ServerDialbackHostUnknownTest
     @Test
     public void testUnrelatedDomainIsUnknown()
     {
-        assertTrue(dialback.isHostUnknown("unserviced.example.com"));
+        assertTrue(dialback.isHostUnknown("unserviced.example.com"), "An unrelated domain must be unknown.");
     }
 
     /**
@@ -142,6 +142,6 @@ public class ServerDialbackHostUnknownTest
     @Test
     public void testMissingDomainIsUnknown()
     {
-        assertTrue(dialback.isHostUnknown(null));
+        assertTrue(dialback.isHostUnknown(null), "A dialback request without a 'to' attribute must be treated as being for an unknown host.");
     }
 }

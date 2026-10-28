@@ -287,6 +287,26 @@ public class ServerStanzaHandlerHostValidationTest
     }
 
     /**
+     * Asserts that, with validation enabled, a stream that does not name a domain after TLS is negotiated is accepted,
+     * in the same way as a stream that does not name a domain before TLS is negotiated.
+     */
+    @Test
+    public void testStreamAfterTlsWithoutToIsAccepted() throws Exception
+    {
+        // Setup test fixture.
+        ServerStanzaHandler.VALIDATE_HOST.setValue(true);
+        handler.initiateSession(streamHeader(Fixtures.XMPP_DOMAIN), reader);
+        handler.startedTLS = true;
+
+        // Execute system under test.
+        handler.initiateSession(streamHeader(null), reader);
+
+        // Verify result.
+        assertEquals(2, handler.sessionsCreated, "The session must be re-created for the stream that follows TLS negotiation, when it has no 'to' attribute.");
+        assertFalse(deliveredText().contains("host-unknown"), "The stream must not be refused.");
+    }
+
+    /**
      * Asserts that, with validation disabled, a stream that names a domain that is not serviced after TLS is
      * negotiated is accepted, as it was before validation was introduced.
      */

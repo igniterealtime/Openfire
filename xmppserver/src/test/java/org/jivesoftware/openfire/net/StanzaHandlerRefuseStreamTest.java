@@ -122,7 +122,7 @@ public class StanzaHandlerRefuseStreamTest
     public void testClientStreamToUnknownHostIsRefused() throws Exception
     {
         // Setup test fixture.
-        JiveGlobals.setProperty("xmpp.client.validate.host", "true");
+        ClientStanzaHandler.VALIDATE_HOST.setValue(true);
 
         // Execute system under test.
         handler.initiateSession("<stream:stream xmlns:stream='http://etherx.jabber.org/streams' xmlns='jabber:client' to='unserviced.example.com' version='1.0'>", reader);
@@ -144,7 +144,7 @@ public class StanzaHandlerRefuseStreamTest
     public void testStreamToUnknownHostIsRefusedFromOwnDomain() throws Exception
     {
         // Setup test fixture.
-        JiveGlobals.setProperty("xmpp.client.validate.host", "true");
+        ClientStanzaHandler.VALIDATE_HOST.setValue(true);
 
         // Execute system under test.
         handler.initiateSession("<stream:stream xmlns:stream='http://etherx.jabber.org/streams' xmlns='jabber:client' to='unserviced.example.com' version='1.0'>", reader);

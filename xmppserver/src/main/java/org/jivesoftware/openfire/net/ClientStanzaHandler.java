@@ -23,7 +23,7 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.csi.CsiManager;
 import org.jivesoftware.openfire.session.LocalClientSession;
-import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmlpull.v1.XmlPullParser;
@@ -47,6 +47,18 @@ public class ClientStanzaHandler extends StanzaHandler {
 
     private static final Logger Log = LoggerFactory.getLogger(ClientStanzaHandler.class);
 
+    /**
+     * Controls if the 'to' attribute of stream headers sent by clients is validated. When enabled, a stream that names
+     * a domain other than the XMPP domain of the local XMPP service is refused with a host-unknown stream error.
+     *
+     * @see #isHostUnknown(String)
+     */
+    public static final SystemProperty<Boolean> VALIDATE_HOST = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.client.validate.host")
+        .setDefaultValue(false)
+        .setDynamic(true)
+        .build();
+
     public ClientStanzaHandler(PacketRouter router, Connection connection) {
         super(router, connection);
     }
@@ -68,7 +80,7 @@ public class ClientStanzaHandler extends StanzaHandler {
 
     @Override
     protected boolean validateHost() {
-        return JiveGlobals.getBooleanProperty("xmpp.client.validate.host",false);
+        return VALIDATE_HOST.getValue();
     }
 
     @Override

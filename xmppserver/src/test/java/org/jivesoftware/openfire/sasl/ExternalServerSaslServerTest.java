@@ -22,6 +22,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -281,5 +283,26 @@ public class ExternalServerSaslServerTest
 
         // Verify results.
         assertEquals(Failure.NOT_AUTHORIZED, result.getFailure());
+    }
+
+    /**
+     * Verify that when the stream as transmitted over the connection has no (or an empty) 'from' attribute value,
+     * authentication fails with 'not-authorized'.
+     */
+    @ParameterizedTest
+    @NullAndEmptySource
+    public void testMissingStreamFrom(final String streamFrom) throws Exception
+    {
+        // Setup test fixture.
+        when(session.getDefaultIdentity()).thenReturn(streamFrom);
+
+        final ExternalServerSaslServer server = new ExternalServerSaslServer(session);
+        final byte[] input = "example.org".getBytes(StandardCharsets.UTF_8);
+
+        // Execute system under test.
+        final SaslFailureException result = assertThrows(SaslFailureException.class, () -> server.evaluateResponse(input), "Authentication should fail when the stream has no 'from' value");
+
+        // Verify results.
+        assertEquals(Failure.NOT_AUTHORIZED, result.getFailure(), "A stream without a 'from' value should be rejected with 'not-authorized'");
     }
 }

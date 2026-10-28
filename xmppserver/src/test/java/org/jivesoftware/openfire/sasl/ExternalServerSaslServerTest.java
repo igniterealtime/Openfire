@@ -190,11 +190,10 @@ public class ExternalServerSaslServerTest
     {
         // Setup test fixture.
         final String authzID = "foo.example.org";
-        final String certID = "bar.example.com";
 
         when(session.getDefaultIdentity()).thenReturn(authzID);
         when(session.getConnection()).thenReturn(connection);
-        saslAuthentication.when(() -> SASLAuthentication.verifyCertificates(any(), eq(certID), anyBoolean())).thenReturn(true);
+        saslAuthentication.when(() -> SASLAuthentication.verifyCertificates(any(), eq(authzID), anyBoolean())).thenReturn(false);
 
         final ExternalServerSaslServer server = new ExternalServerSaslServer(session);
         final byte[] input = authzID.getBytes(StandardCharsets.UTF_8);
@@ -205,6 +204,7 @@ public class ExternalServerSaslServerTest
         // Verify results.
         assertEquals(Failure.NOT_AUTHORIZED, result.getFailure());
         assertNull(server.getAuthorizationID(), "No identity should be authorised after a failed certificate check");
+        saslAuthentication.verify(() -> SASLAuthentication.verifyCertificates(any(), eq(authzID), eq(true)));
     }
 
     /**

@@ -130,8 +130,8 @@ public class ServerDialbackValidateRemoteDomainTest
     }
 
     /**
-     * Asserts that, once accepted, the domain that a remote server asks to be authenticated for is normalised in the
-     * request, so that the session is created for, and the result is reported from, the normalised domain.
+     * Asserts that, once accepted, the domain that a remote server asks to be authenticated for is returned in
+     * normalised form, so that the session is created for, and the result is reported from, the normalised domain.
      */
     @Test
     public void testAcceptedDomainIsNormalised() throws Exception
@@ -144,6 +144,7 @@ public class ServerDialbackValidateRemoteDomainTest
         dbResult.addAttribute("to", Fixtures.XMPP_DOMAIN.toUpperCase(Locale.ROOT));
         dbResult.setText("key");
 
+        final String result;
         try (final MockedStatic<RemoteServerManager> remoteServers = mockStatic(RemoteServerManager.class);
              final MockedStatic<SASLAuthentication> sasl = mockStatic(SASLAuthentication.class))
         {
@@ -151,10 +152,10 @@ public class ServerDialbackValidateRemoteDomainTest
             sasl.when(() -> SASLAuthentication.verifyCertificates(any(), anyString(), anyBoolean())).thenReturn(true);
 
             // Execute system under test.
-            dialback.validateRemoteDomain(dbResult, new BasicStreamIDFactory().createStreamID());
+            result = dialback.validateRemoteDomain(dbResult, new BasicStreamIDFactory().createStreamID());
         }
 
         // Verify result.
-        assertEquals(Fixtures.XMPP_DOMAIN, dbResult.attributeValue("to"), "The accepted domain must be normalised.");
+        assertEquals(Fixtures.XMPP_DOMAIN, result, "The accepted domain must be returned in normalised form.");
     }
 }

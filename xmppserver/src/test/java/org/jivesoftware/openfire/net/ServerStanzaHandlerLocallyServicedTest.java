@@ -34,7 +34,8 @@ import static org.mockito.Mockito.doReturn;
 
 /**
  * Verifies {@link ServerStanzaHandler#isLocallyServiced(String)}, which decides whether a domain that a remote server
- * addresses is serviced by this server (OF-2643). Both the validation of stream headers and Server Dialback use it.
+ * addresses is serviced by the local XMPP service (OF-2643). Both the validation of stream headers and Server Dialback
+ * use it.
  */
 public class ServerStanzaHandlerLocallyServicedTest
 {
@@ -78,7 +79,7 @@ public class ServerStanzaHandlerLocallyServicedTest
     }
 
     /**
-     * Asserts that the XMPP domain of this server is serviced.
+     * Asserts that the XMPP domain of the local XMPP service is serviced.
      */
     @Test
     public void testXmppDomainIsServiced()
@@ -87,8 +88,8 @@ public class ServerStanzaHandlerLocallyServicedTest
     }
 
     /**
-     * Asserts that the XMPP domain of this server is serviced when a peer names it in a different case. Domain names
-     * are compared after normalisation, as RFC 6120 requires.
+     * Asserts that the XMPP domain of the local XMPP service is serviced when a peer names it in a different case.
+     * Domain names are compared after normalisation, as RFC 6120 requires.
      */
     @Test
     public void testXmppDomainInDifferentCaseIsServiced()
@@ -225,7 +226,7 @@ public class ServerStanzaHandlerLocallyServicedTest
     }
 
     /**
-     * Asserts that a domain that is unrelated to this server is not serviced.
+     * Asserts that a domain that is unrelated to the local XMPP service is not serviced.
      */
     @Test
     public void testUnrelatedDomainIsNotServiced()

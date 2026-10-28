@@ -539,7 +539,7 @@ public class ServerDialback {
         }
         else {
             // The domain is serviced. Continue with its normalised form, and record that in the request, so that the
-            // session is created for, and the result is reported from, the domain as this server knows it.
+            // session is created for, and the result is reported from, the domain as the local XMPP service knows it.
             recipient = JID.domainprep(recipient);
             doc.addAttribute("to", recipient);
 
@@ -648,14 +648,14 @@ public class ServerDialback {
     }
 
     /**
-     * Checks if the domain that the remote server addresses is not serviced by this server. Subdomains of this server
-     * are serviced when they have a component route, which is useful when they are registered in the DNS so that remote
-     * servers can establish connections directly to them.
+     * Checks if the domain that the remote server addresses is not serviced by the local XMPP service. Subdomains of its
+     * XMPP domain are serviced when they have a component route, which is useful when they are registered in the DNS so
+     * that remote servers can establish connections directly to them.
      *
      * XEP-0220 requires the 'to' attribute on dialback requests, so a request that has none is for an unknown host.
      *
      * @param recipient the domain addressed by the remote server (can be null).
-     * @return true if the domain is not serviced by this server.
+     * @return true if the domain is not serviced by the local XMPP service.
      * @see ServerStanzaHandler#isLocallyServiced(String)
      */
     boolean isHostUnknown(String recipient) {

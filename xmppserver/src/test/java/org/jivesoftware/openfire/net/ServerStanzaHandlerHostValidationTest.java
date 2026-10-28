@@ -132,7 +132,7 @@ public class ServerStanzaHandlerHostValidationTest
         // Verify result.
         assertEquals(0, handler.sessionsCreated, "No session must be created for a stream that names a domain that is not serviced.");
         assertTrue(deliveredText().contains("host-unknown"), "The peer must be told that the host is unknown.");
-        assertTrue(deliveredText().contains("from=\"" + Fixtures.XMPP_DOMAIN + "\""), "The refusal must be sent from the XMPP domain of the local XMPP service.");
+        assertTrue(isOpenedFromAuthoritativeNameOrEmptyString(deliveredText()), "The refusal must be sent from an authoritative name of the local XMPP service, or from the empty string.");
         verify(connection, times(1).description("The connection must be closed after the refusal.")).close();
     }
 
@@ -188,10 +188,11 @@ public class ServerStanzaHandlerHostValidationTest
 
     /**
      * Asserts that, with validation disabled, a stream that names a domain that is not serviced, and that is refused
-     * for another reason, is answered from the XMPP domain.
+     * for another reason, is answered from an authoritative name of the local XMPP service or from the empty string,
+     * as RFC 6120 section 4.9.1.3 allows.
      */
     @Test
-    public void testStreamToUnservicedDomainRefusedForOtherReasonIsRefusedFromOwnDomain() throws Exception
+    public void testStreamToUnservicedDomainRefusedForOtherReasonIsRefusedFromAuthoritativeNameOrEmptyString() throws Exception
     {
         // Execute system under test.
         handler.initiateSession(streamHeaderWithNamespace(UNSERVICED_DOMAIN, "jabber:client"), reader);
@@ -199,7 +200,7 @@ public class ServerStanzaHandlerHostValidationTest
         // Verify result.
         final String delivered = deliveredText();
         assertTrue(delivered.contains("invalid-namespace"), "The stream must be refused for its namespace.");
-        assertTrue(delivered.contains("from=\"" + Fixtures.XMPP_DOMAIN + "\""), "The refusal must be sent from the XMPP domain of the local XMPP service.");
+        assertTrue(isOpenedFromAuthoritativeNameOrEmptyString(delivered), "The refusal must be sent from an authoritative name of the local XMPP service, or from the empty string.");
         assertFalse(delivered.contains("from=\"" + UNSERVICED_DOMAIN + "\""), "The refusal must not be sent from the domain that is not serviced.");
     }
 
@@ -338,6 +339,19 @@ public class ServerStanzaHandlerHostValidationTest
         final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(connection, atLeastOnce().description("Text must have been delivered to the peer.")).deliverRawText(captor.capture());
         return String.join("", captor.getAllValues());
+    }
+
+    /**
+     * Checks if text that was delivered to the peer opens a stream from a value that RFC 6120 section 4.9.1.3 allows
+     * when the peer addressed no host or an unknown host: an authoritative name for the receiving entity (in these
+     * tests, the XMPP domain), or the empty string.
+     *
+     * @param delivered text that was delivered to the peer.
+     * @return true if the stream is opened from an allowed value.
+     */
+    private static boolean isOpenedFromAuthoritativeNameOrEmptyString(final String delivered)
+    {
+        return delivered.contains("from=\"" + Fixtures.XMPP_DOMAIN + "\"") || delivered.contains("from=\"\"");
     }
 
     /**

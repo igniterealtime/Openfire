@@ -37,7 +37,7 @@ import static org.mockito.Mockito.mock;
 
 /**
  * Verifies how Server Dialback, acting as the Receiving Server, decides whether the domain that a remote server asks
- * to be authenticated for is serviced by this server (OF-2643).
+ * to be authenticated for is serviced by the local XMPP service (OF-2643).
  *
  * This decision is shared with the validation of stream headers, so that both paths accept the same domains.
  */
@@ -80,7 +80,7 @@ public class ServerDialbackHostUnknownTest
     }
 
     /**
-     * Asserts that the XMPP domain of this server is not unknown.
+     * Asserts that the XMPP domain of the local XMPP service is not unknown.
      */
     @Test
     public void testXmppDomainIsKnown()
@@ -112,7 +112,7 @@ public class ServerDialbackHostUnknownTest
     }
 
     /**
-     * Asserts that a domain that is unrelated to this server is unknown.
+     * Asserts that a domain that is unrelated to the local XMPP service is unknown.
      */
     @Test
     public void testUnrelatedDomainIsUnknown()

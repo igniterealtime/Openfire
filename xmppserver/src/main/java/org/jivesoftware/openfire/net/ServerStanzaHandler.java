@@ -74,7 +74,8 @@ public class ServerStanzaHandler extends StanzaHandler {
 
     /**
      * Controls if the 'to' attribute of stream headers sent by remote servers is validated. When enabled, a stream that
-     * names a domain that is not serviced by this server is refused with a host-unknown stream error.
+     * names a domain that is not serviced by the local XMPP service (the service that this Openfire instance provides,
+     * alone or together with the other nodes of its cluster) is refused with a host-unknown stream error.
      *
      * @see #isLocallyServiced(String)
      */
@@ -85,12 +86,12 @@ public class ServerStanzaHandler extends StanzaHandler {
         .build();
 
     /**
-     * Checks if a domain that a remote server addresses is serviced by this server. That is the case for the XMPP
-     * domain of this server, for subdomains of it that have a component route, and for domains for which trunking is
-     * enabled.
+     * Checks if a domain that a remote server addresses is serviced by the local XMPP service. That is the case for the
+     * XMPP domain of the service, for subdomains of it that have a component route, and for domains for which trunking
+     * is enabled.
      *
      * @param domain the domain to check.
-     * @return true if the domain is serviced by this server, otherwise false (including when the value is not a valid domain name).
+     * @return true if the domain is serviced by the local XMPP service, otherwise false (including when the value is not a valid domain name).
      */
     public static boolean isLocallyServiced(@Nonnull final String domain) {
         final String requested;

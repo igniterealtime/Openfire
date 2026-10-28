@@ -50,8 +50,8 @@ import static org.mockito.Mockito.withSettings;
 /**
  * Verifies the validation of the 'to' attribute of stream headers that are sent by remote servers (OF-2643).
  *
- * When validation is enabled, a stream that names a domain that is not serviced by this server is refused with a
- * host-unknown stream error. Serviced domains are the XMPP domain of this server, subdomains of it that have a
+ * When validation is enabled, a stream that names a domain that is not serviced by the local XMPP service is refused
+ * with a host-unknown stream error. Serviced domains are the XMPP domain of the service, subdomains of it that have a
  * component route, and domains for which trunking is enabled. A stream header that has no 'to' attribute is accepted,
  * as servers that use legacy Server Dialback omit it.
  *
@@ -131,7 +131,7 @@ public class ServerStanzaHandlerHostValidationTest
         // Verify result.
         assertEquals(0, handler.sessionsCreated, "No session must be created for a stream that names a domain that is not serviced.");
         assertTrue(deliveredText().contains("host-unknown"), "The peer must be told that the host is unknown.");
-        assertTrue(deliveredText().contains("from=\"" + Fixtures.XMPP_DOMAIN + "\""), "The refusal must be sent from the XMPP domain of this server.");
+        assertTrue(deliveredText().contains("from=\"" + Fixtures.XMPP_DOMAIN + "\""), "The refusal must be sent from the XMPP domain of the local XMPP service.");
         verify(connection).close();
     }
 
@@ -198,7 +198,7 @@ public class ServerStanzaHandlerHostValidationTest
         // Verify result.
         final String delivered = deliveredText();
         assertTrue(delivered.contains("invalid-namespace"), "The stream must be refused for its namespace.");
-        assertTrue(delivered.contains("from=\"" + Fixtures.XMPP_DOMAIN + "\""), "The refusal must be sent from the XMPP domain of this server.");
+        assertTrue(delivered.contains("from=\"" + Fixtures.XMPP_DOMAIN + "\""), "The refusal must be sent from the XMPP domain of the local XMPP service.");
         assertFalse(delivered.contains("from=\"" + UNSERVICED_DOMAIN + "\""), "The refusal must not be sent from the domain that is not serviced.");
     }
 

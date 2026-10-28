@@ -46,7 +46,10 @@ public class ServerStanzaHandlerLocallyServicedTest
     private static final String UNSERVICED_DOMAIN = "unserviced.example.com";
 
     /**
-     * A value that cannot be a domain name, as its first label exceeds 63 characters.
+     * A value that cannot be a domain name, as its first label exceeds 63 characters, which is the maximum length of a
+     * label that RFC 1035 section 2.3.4 defines.
+     *
+     * @see <a href="https://www.rfc-editor.org/rfc/rfc1035#section-2.3.4">RFC 1035 section 2.3.4: Size limits</a>
      */
     private static final String INVALID_DOMAIN = "a".repeat(64) + ".example.org";
 

@@ -201,12 +201,12 @@ public class ExternalServerSaslServerTest
         final byte[] input = authzID.getBytes(StandardCharsets.UTF_8);
 
         // Execute system under test.
-        final SaslFailureException result = assertThrows(SaslFailureException.class, () -> server.evaluateResponse(input));
+        final SaslFailureException result = assertThrows(SaslFailureException.class, () -> server.evaluateResponse(input), "Authentication should fail when the certificate is not valid for the stream 'from' value");
 
         // Verify results.
-        assertEquals(Failure.NOT_AUTHORIZED, result.getFailure());
+        assertEquals(Failure.NOT_AUTHORIZED, result.getFailure(), "A certificate that is not valid for the stream 'from' value should be rejected with 'not-authorized'");
         assertNull(server.getAuthorizationID(), "No identity should be authorised after a failed certificate check");
-        saslAuthentication.verify(() -> SASLAuthentication.verifyCertificates(any(), eq(authzID), eq(true)));
+        saslAuthentication.verify(() -> SASLAuthentication.verifyCertificates(any(), eq(authzID), eq(true)), description("The certificate should have been checked against the stream 'from' value"));
     }
 
     /**
@@ -229,10 +229,10 @@ public class ExternalServerSaslServerTest
         final byte[] input = authzID.getBytes(StandardCharsets.UTF_8);
 
         // Execute system under test.
-        final SaslFailureException result = assertThrows(SaslFailureException.class, () -> server.evaluateResponse(input));
+        final SaslFailureException result = assertThrows(SaslFailureException.class, () -> server.evaluateResponse(input), "Authentication should fail when the authzid differs from the stream 'from' value");
 
         // Verify results.
-        assertEquals(Failure.INVALID_AUTHZID, result.getFailure());
+        assertEquals(Failure.INVALID_AUTHZID, result.getFailure(), "An authzid that differs from the stream 'from' value should be rejected with 'invalid-authzid'");
     }
 
     /**
@@ -254,10 +254,10 @@ public class ExternalServerSaslServerTest
         final byte[] input = new byte[]{};
 
         // Execute system under test.
-        final SaslFailureException result = assertThrows(SaslFailureException.class, () -> server.evaluateResponse(input));
+        final SaslFailureException result = assertThrows(SaslFailureException.class, () -> server.evaluateResponse(input), "Authentication with an empty initial response should fail when the certificate is not valid for the stream 'from' value");
 
         // Verify results.
-        assertEquals(Failure.NOT_AUTHORIZED, result.getFailure());
+        assertEquals(Failure.NOT_AUTHORIZED, result.getFailure(), "A certificate that is not valid for the stream 'from' value should be rejected with 'not-authorized'");
     }
 
     /**
@@ -279,10 +279,10 @@ public class ExternalServerSaslServerTest
         final byte[] input = new byte[]{};
 
         // Execute system under test.
-        final SaslFailureException result = assertThrows(SaslFailureException.class, () -> server.evaluateResponse(input));
+        final SaslFailureException result = assertThrows(SaslFailureException.class, () -> server.evaluateResponse(input), "Authentication without an initial response should fail when the certificate is not valid for the stream 'from' value");
 
         // Verify results.
-        assertEquals(Failure.NOT_AUTHORIZED, result.getFailure());
+        assertEquals(Failure.NOT_AUTHORIZED, result.getFailure(), "A certificate that is not valid for the stream 'from' value should be rejected with 'not-authorized'");
     }
 
     /**

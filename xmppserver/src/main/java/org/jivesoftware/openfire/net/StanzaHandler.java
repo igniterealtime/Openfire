@@ -943,8 +943,8 @@ public abstract class StanzaHandler {
      *
      * The stream is opened from the host that the peer addressed, unless that host is missing or is not serviced (as
      * determined by {@link #isHostUnknown(String)}), whatever the reason for the refusal: then it is opened from the XMPP
-     * domain of the local XMPP service, as RFC 6120 section 4.9.1.3 requires an authoritative name for the receiving
-     * entity.
+     * domain of the local XMPP service. In that case, RFC 6120 section 4.9.1.3 allows either an authoritative name for
+     * the receiving entity or the empty string; the XMPP domain is such an authoritative name.
      *
      * @param xpp a parser positioned on the stream header that is refused.
      * @param host the value of the 'to' attribute of the refused stream header (can be null).

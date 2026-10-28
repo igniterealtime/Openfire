@@ -150,7 +150,8 @@ public class ServerStanzaHandler extends StanzaHandler {
 
     @Override
     protected boolean isHostUnknown(String host) {
-        // A missing 'to' attribute is accepted, as servers that use legacy Server Dialback omit it.
+        // OF-2643: Accept a missing 'to', as RFC 6120 section 4.7.2 asks to be liberal towards peers that omit it. The
+        // stream is then treated as addressing the XMPP domain (see LocalIncomingServerSession#createSession).
         return host != null && !isLocallyServiced(host);
     }
 

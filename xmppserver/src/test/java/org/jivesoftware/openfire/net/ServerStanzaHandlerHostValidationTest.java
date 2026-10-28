@@ -54,7 +54,7 @@ import static org.mockito.Mockito.withSettings;
  * When validation is enabled, a stream that names a domain that is not serviced by the local XMPP service is refused
  * with a host-unknown stream error. Serviced domains are the XMPP domain of the service, subdomains of it that have a
  * component route, and domains for which trunking is enabled. A stream header that has no 'to' attribute is accepted,
- * as servers that use legacy Server Dialback omit it.
+ * as RFC 6120 section 4.7.2 asks to be liberal towards peers that omit it.
  *
  * Stream headers are validated both when the stream is first opened, and when it is restarted after TLS has been
  * negotiated: RFC 6120 section 5.4.3.3 requires values obtained before TLS took effect to be discarded, which makes the
@@ -170,8 +170,8 @@ public class ServerStanzaHandlerHostValidationTest
     }
 
     /**
-     * Asserts that, with validation enabled, a stream that does not name a domain at all is accepted, as servers that
-     * use legacy Server Dialback omit the 'to' attribute.
+     * Asserts that, with validation enabled, a stream that does not name a domain at all is accepted, as RFC 6120
+     * section 4.7.2 asks to be liberal towards peers that omit the 'to' attribute.
      */
     @Test
     public void testInitialStreamWithoutToIsAccepted() throws Exception

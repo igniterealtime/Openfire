@@ -248,9 +248,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         final DomainPair domainPair = new DomainPair(getServerName(), fromDomain);
         ServerDialback method = new ServerDialback(getConnection(), domainPair);
         try {
-            method.validateRemoteDomain(dbResult, getStreamID());
-
-            final String recipient = dbResult.attributeValue("to");
+            final String recipient = method.validateRemoteDomain(dbResult, getStreamID());
             final String remoteDomain = dbResult.attributeValue("from");
 
             // Add the validated domain as a valid domain. Do this before notifying the remote domain of success! (OF-2626)

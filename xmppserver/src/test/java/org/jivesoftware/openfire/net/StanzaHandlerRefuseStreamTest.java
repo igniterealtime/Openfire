@@ -44,6 +44,12 @@ import static org.mockito.Mockito.withSettings;
  */
 public class StanzaHandlerRefuseStreamTest
 {
+    /**
+     * A stream namespace that is not the one that RFC 6120 section 4.8.1 requires, used to have a stream header
+     * refused for a reason that does not depend on the content namespace that the header declares.
+     */
+    private static final String WRONG_STREAM_NAMESPACE = "http://example.org/not-the-stream-namespace";
+
     private Connection connection;
 
     private ClientStanzaHandler handler;
@@ -99,19 +105,48 @@ public class StanzaHandlerRefuseStreamTest
     }
 
     /**
-     * Asserts that a stream header that does not declare a content namespace is refused with an invalid-namespace
-     * stream error.
+     * Asserts that a client stream header that declares no content namespace, and that is refused, is answered with the
+     * stream error, opened in the namespace of the handler, and that the connection is then closed. Building that error
+     * must not depend on the refused header declaring a content namespace (OF-3425).
      */
     @Test
-    public void testStreamWithoutNamespaceIsRefused() throws Exception
+    public void testClientStreamWithoutNamespaceIsRefusedWithError() throws Exception
     {
-        // Execute system under test.
-        handler.initiateSession("<stream:stream xmlns:stream='http://etherx.jabber.org/streams' to='" + Fixtures.XMPP_DOMAIN + "' version='1.0'>", reader);
+        // Execute system under test. The stream namespace is not the one RFC 6120 section 4.8.1 requires, so the header
+        // is refused; it also declares no content namespace, which is what exercises the error-building defect.
+        handler.initiateSession("<stream:stream xmlns:stream='" + WRONG_STREAM_NAMESPACE + "' to='" + Fixtures.XMPP_DOMAIN + "' version='1.0'>", reader);
 
         // Verify result.
-        assertTrue(deliveredText().contains("<invalid-namespace xmlns=\"urn:ietf:params:xml:ns:xmpp-streams\""), "The stream must carry the invalid-namespace stream error.");
+        final String delivered = deliveredText();
+        assertTrue(delivered.contains("<stream:stream"), "The refusal must be sent on a stream that is opened for that purpose.");
+        assertTrue(delivered.contains("xmlns=\"jabber:client\""), "The refusal stream must be opened in the namespace of the handler, as the refused header declared none.");
+        assertTrue(delivered.contains("<invalid-namespace xmlns=\"urn:ietf:params:xml:ns:xmpp-streams\""), "The stream must carry the invalid-namespace stream error.");
         verify(connection, times(1).description("The connection must be closed after the refusal.")).close();
         assertNull(handler.session, "No session must be created for a refused stream.");
+    }
+
+    /**
+     * Asserts that a server stream header that declares no content namespace, and that is refused, is answered with the
+     * stream error, opened in the namespace of the handler, and that the connection is then closed. This is the same
+     * defect as for client streams: the error is built in {@link StanzaHandler}, which every connection type shares
+     * (OF-3425).
+     */
+    @Test
+    public void testServerStreamWithoutNamespaceIsRefusedWithError() throws Exception
+    {
+        // Setup test fixture.
+        final ServerStanzaHandler serverHandler = new ServerStanzaHandler(mock(PacketRouter.class), connection, false);
+
+        // Execute system under test.
+        serverHandler.initiateSession("<stream:stream xmlns:stream='" + WRONG_STREAM_NAMESPACE + "' to='" + Fixtures.XMPP_DOMAIN + "' version='1.0'>", reader);
+
+        // Verify result.
+        final String delivered = deliveredText();
+        assertTrue(delivered.contains("<stream:stream"), "The refusal must be sent on a stream that is opened for that purpose.");
+        assertTrue(delivered.contains("xmlns=\"jabber:server\""), "The refusal stream must be opened in the namespace of the handler, as the refused header declared none.");
+        assertTrue(delivered.contains("<invalid-namespace xmlns=\"urn:ietf:params:xml:ns:xmpp-streams\""), "The stream must carry the invalid-namespace stream error.");
+        verify(connection, times(1).description("The connection must be closed after the refusal.")).close();
+        assertNull(serverHandler.session, "No session must be created for a refused stream.");
     }
 
     /**

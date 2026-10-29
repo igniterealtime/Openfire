@@ -13,7 +13,7 @@ Guidance for AI coding agents contributing to Openfire. These are conventions, n
 
 - UK English in comments and documentation (organisation, behaviour, colour).
 - New files carry the current-year Apache 2.0 header (Ignite Realtime Foundation); bump the end year on existing files you change.
-- Javadoc: plain text, no HTML tags; blank lines between paragraphs; `@author` on new classes.
+- Javadoc on new public classes and methods, following the surrounding style: HTML paragraph tags (`<p>`) between paragraphs and inline tags (`{@code}`, `{@link}`) are both common. `@author` on new classes.
 - Prefer constants to magic strings; check `JiveGlobals` for an existing key first.
 - Expose tunables as a `SystemProperty` (with a description in the i18n files), not raw `JiveGlobals.getXxxProperty(...)`.
 - Match surrounding style in legacy code; use modern idioms (try-with-resources, `java.nio.file`, `java.time`) in new code; don't refactor working code for style alone.

@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Guidance for AI coding agents contributing to Openfire. It is advisory — match the surrounding code when it differs. See the README for the full build and developer instructions.
+Guidance for AI coding agents contributing to Openfire. These are conventions, not hard rules: where they conflict with the surrounding code, follow the surrounding code. See the README for the full build and developer instructions.
 
 ## Build & test
 

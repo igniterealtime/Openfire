@@ -936,7 +936,10 @@ public abstract class StanzaHandler {
             final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
             final Document document = DocumentHelper.createDocument(stream);
             document.setXMLEncoding(StandardCharsets.UTF_8.toString());
-            stream.add(Namespace.get(xpp.getNamespace(null)));
+            // The refused header need not declare a content namespace. When it does not, the error is answered in the
+            // namespace of this handler, rather than copying the absent namespace (which would fail to build the error).
+            final String contentNamespace = xpp.getNamespace(null);
+            stream.add(Namespace.get(contentNamespace != null ? contentNamespace : getNamespace().getURI()));
             stream.addAttribute("from", host);
             stream.addAttribute("id", STREAM_ID_FACTORY.createStreamID().getID());
             stream.addAttribute("version", "1.0");

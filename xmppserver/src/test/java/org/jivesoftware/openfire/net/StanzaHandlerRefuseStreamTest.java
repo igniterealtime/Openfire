@@ -208,6 +208,16 @@ public class StanzaHandlerRefuseStreamTest
     }
 
     /**
+     * Asserts that client host validation is disabled unless it is configured, so that upgrading a deployment that has
+     * not set xmpp.client.validate.host does not start refusing client streams that address another domain.
+     */
+    @Test
+    public void testClientHostValidationIsDisabledByDefault()
+    {
+        assertFalse(handler.validateHost(), "Client host validation must be disabled when it has not been configured.");
+    }
+
+    /**
      * Returns all text that was delivered to the peer, concatenated.
      *
      * @return delivered text.

@@ -577,8 +577,8 @@ public class StreamManager {
     }
 
     /**
-     * Checks if the amount of stanzas that the client acknowledges is equal to or less than the amount of stanzas that
-     * we've sent to the client.
+     * Checks if the amount of stanzas that the client acknowledges is not higher than the amount of stanzas that we've
+     * sent to the client.
      *
      * @param h Then number of stanzas that the client acknowledges it has received from us.
      * @return false if we sent fewer stanzas to the client than the number it is acknowledging.
@@ -595,14 +595,37 @@ public class StreamManager {
         return validateClientAcknowledgement(h, oldH, lastUnackedX);
     }
 
+    /**
+     * Checks a value of 'h' against the stanzas that were sent, taking into account that stanza numbers and 'h' roll
+     * over from 2^32-1 to zero (XEP-0198 § 4).
+     *
+     * A value from the last acknowledged value up to and including the number of the last stanza sent is valid. A value
+     * lower than the last acknowledged value is valid too, as it is not higher than the number of stanzas that were sent
+     * (XEP-0198 § 6), but it does not acknowledge any new stanzas (XEP-0198 § 4). A value that is more than half of the
+     * range lower than the last acknowledged value is not considered to be lower: that is a value that has rolled over.
+     *
+     * @param h The value to check.
+     * @param oldH The last acknowledged value.
+     * @param lastUnackedX The number of the last stanza sent, or null if all stanzas that were sent are acknowledged.
+     * @return false if the value is higher than the number of stanzas that were sent.
+     */
     @VisibleForTesting
     static boolean validateClientAcknowledgement(final long h, final long oldH, final Long lastUnackedX) {
-        if (lastUnackedX == null) {
-            // No unacked stanzas.
-            return h == oldH;
-        }
+        final long lastSentX = lastUnackedX == null ? oldH : lastUnackedX;
+        return isInRange(h, oldH, lastSentX) || (h < oldH && oldH - h <= MASK >> 1);
+    }
 
-        return h <= lastUnackedX;
+    /**
+     * Checks if a value is in a range, taking into account that the range can include the roll-over from 2^32-1 to zero
+     * (XEP-0198 § 4).
+     *
+     * @param value The value to check.
+     * @param first The first value of the range.
+     * @param last The last value of the range.
+     * @return true if the value is in the range.
+     */
+    private static boolean isInRange(final long value, final long first, final long last) {
+        return ((value - first) & MASK) <= ((last - first) & MASK);
     }
 
     /**
@@ -618,27 +641,24 @@ public class StreamManager {
                 throw new IllegalStateException( "Client acknowledges stanzas that we didn't send! Client Ack h: "+h+", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
             }
 
+            final long oldH = clientProcessedStanzas.get();
+            final long lastSentX = unacknowledgedServerStanzas.isEmpty() ? oldH : unacknowledgedServerStanzas.getLast().x;
+            if ( !isInRange( h, oldH, lastSentX ) )
+            {
+                // OF-3433: A value lower than an earlier one does not acknowledge anything new (XEP-0198 § 4).
+                Log.debug( "Ignoring client Ack (h={}), as it is lower than an earlier one: {}", h, oldH );
+                return;
+            }
+
             clientProcessedStanzas.set( h );
 
             // Remove stanzas from temporary storage as now acknowledged
             Log.trace( "Before processing client Ack (h={}): {} unacknowledged stanzas.", h, unacknowledgedServerStanzas.size() );
 
             // Pop all acknowledged stanzas.
-            while( !unacknowledgedServerStanzas.isEmpty() && unacknowledgedServerStanzas.getFirst().x <= h )
+            while( !unacknowledgedServerStanzas.isEmpty() && isInRange( unacknowledgedServerStanzas.getFirst().x, oldH, h ) )
             {
                 unacknowledgedServerStanzas.removeFirst();
-            }
-
-            // Ensure that unacknowledged stanzas are purged after the client rolled over 'h' which occurs at h= (2^32)-1
-            final int maxUnacked = getMaximumUnacknowledgedStanzas();
-            final boolean clientHadRollOver = h < maxUnacked && !unacknowledgedServerStanzas.isEmpty() && unacknowledgedServerStanzas.getLast().x > MASK - maxUnacked;
-            if ( clientHadRollOver )
-            {
-                Log.info( "Client rolled over 'h'. Purging high-numbered unacknowledged stanzas." );
-                while ( !unacknowledgedServerStanzas.isEmpty() && unacknowledgedServerStanzas.getLast().x > MASK - maxUnacked)
-                {
-                    unacknowledgedServerStanzas.removeLast();
-                }
             }
 
             Log.trace( "After processing client Ack (h={}): {} unacknowledged stanzas.", h, unacknowledgedServerStanzas.size());
@@ -670,6 +690,13 @@ public class StreamManager {
                     session.close();
                     return;
                 }
+                if (h > MASK) {
+                    Log.warn( "Closing client session. Client sends value for SM 'h' that is larger than 2^32-1: {}, affected session: {}", h, session );
+                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a value larger than 2^32-1 (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
+                    session.deliverRawText( error.toXML() );
+                    session.close();
+                    return;
+                }
 
                 Log.debug( "Received acknowledgement from client: h={}", h );
 
@@ -677,6 +704,8 @@ public class StreamManager {
                     if (!validateClientAcknowledgement(h)) {
                         Log.warn( "Closing client session. Client acknowledges stanzas that we didn't send! Client Ack h: {}, our last unacknowledged stanza: {}, affected session: {}", h, unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x, session );
                         final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas that we didn't send. Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
+                        final long sendCount = unacknowledgedServerStanzas.isEmpty() ? clientProcessedStanzas.get() : unacknowledgedServerStanzas.getLast().x;
+                        error.getElement().addElement( QName.get( "handled-count-too-high", namespace ) ).addAttribute( "h", String.valueOf( h ) ).addAttribute( "send-count", String.valueOf( sendCount ) );
                         session.deliverRawText( error.toXML() );
                         session.close();
                         return;
@@ -700,8 +729,8 @@ public class StreamManager {
 
             synchronized (this)
             {
-                // The next ID is one higher than the last stanza that was sent (which might be unacknowledged!)
-                final long x = 1 + ( unacknowledgedServerStanzas.isEmpty() ? clientProcessedStanzas.get() : unacknowledgedServerStanzas.getLast().x );
+                // The next ID is one higher than the last stanza that was sent (which might be unacknowledged!), rolling over after 2^32-1 (XEP-0198 § 4).
+                final long x = ( 1 + ( unacknowledgedServerStanzas.isEmpty() ? clientProcessedStanzas.get() : unacknowledgedServerStanzas.getLast().x ) ) & MASK;
                 unacknowledgedServerStanzas.addLast( new StreamManager.UnackedPacket( x, packet.createCopy() ) );
 
                 size = unacknowledgedServerStanzas.size();
@@ -770,7 +799,7 @@ public class StreamManager {
     Element buildResumedElement() {
         final Element resumed = new DOMElement(QName.get("resumed", namespace));
         resumed.addAttribute("previd", Base64.getEncoder().encodeToString((session.getAddress().getResource() + "\0" + session.getStreamID().getID()).getBytes(StandardCharsets.UTF_8)));
-        resumed.addAttribute("h", Long.toString(serverProcessedStanzas.get()));
+        resumed.addAttribute("h", Long.toString(serverProcessedStanzas.get() & MASK));
         return resumed;
     }
 

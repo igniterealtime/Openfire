@@ -1,0 +1,60 @@
+name: Clean up GHCR image cruft
+
+on:
+  schedule:
+    # Every Sunday at 03:00 UTC
+    - cron: '0 3 * * 0'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run (log what would be deleted, but delete nothing)'
+        type: boolean
+        default: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: openfire
+
+# ghcr-cleanup-action is documented as unsafe to run concurrently against the same
+# package, so serialize scheduled/manual runs instead of letting them race.
+concurrency:
+  group: ghcr-cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: Remove untagged versions and attestation noise
+    runs-on: ubuntu-latest
+    if: ${{ github.repository == 'igniterealtime/Openfire' }}
+
+    permissions:
+      packages: write
+
+    steps:
+      # Requires the "openfire" package's Actions access settings (Package settings >
+      # Manage Actions access) to grant this repository the Admin role - the default
+      # GITHUB_TOKEN isn't enough to delete versions of an org-owned package otherwise.
+      - name: Remove attestation-alias tags
+        # A separate step so it's easy to drop once the historical sha256-* tags left by
+        # push-to-registry attestations (see continuous-integration-workflow.yml) are gone.
+        uses: dataaxiom/ghcr-cleanup-action@v1.2.2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          owner: igniterealtime
+          package: ${{ env.IMAGE_NAME }}
+          delete-tags: 'sha256-*'
+          older-than: 1 day
+          dry-run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
+
+      - name: Remove untagged and orphaned versions
+        uses: dataaxiom/ghcr-cleanup-action@v1.2.2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          owner: igniterealtime
+          package: ${{ env.IMAGE_NAME }}
+          delete-untagged: true
+          delete-orphaned-images: true
+          delete-ghost-images: true
+          delete-partial-images: true
+          older-than: 1 day
+          dry-run: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}

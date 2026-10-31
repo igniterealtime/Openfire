@@ -34,14 +34,12 @@ import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.StreamError;
 
+import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 /**
  * Stanza handler for responding to incoming stanzas when the server is acting as the client in an S2S scenario.
@@ -120,19 +118,17 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
         boolean startOfStream = isStartOfStream(stanza);
 
         if (startOfStream) {
-            // We initiate the stream for a RespondingServerStanzaHandler, so we need to add the stream namespace
-            // Pull namespaces off of the stream:stream stanza and add them to the additional
-            List<Namespace> receivedNamespaces;
+            // Capture the prefixed namespaces declared on the peer's stream header so that prefixed content in
+            // stanzas can be parsed later (OF-2556), using the same pull-parser extraction as every other session type.
             try {
-                Element rootElement = DocumentHelper.parseText(stanza + "</stream:stream>").getRootElement();
-                receivedNamespaces = rootElement.declaredNamespaces();
-                Set<Namespace> additionalNamespaces = receivedNamespaces
-                    .stream()
-                    .filter(RespondingServerStanzaHandler::isRelevantNamespace)
-                    .collect(Collectors.toSet());
-                connection.setAdditionalNamespaces(additionalNamespaces);
+                final MXParser parser = reader.getXPPParser();
+                parser.setInput(new StringReader(stanza));
+                for (int eventType = parser.getEventType(); eventType != XmlPullParser.START_TAG; ) {
+                    eventType = parser.next();
+                }
+                connection.setAdditionalNamespaces(XMPPPacketReader.getPrefixedNamespacesOnCurrentElement(parser));
 
-                final String streamHeaderId = rootElement.attributeValue("id");
+                final String streamHeaderId = parser.getAttributeValue("", "id");
                 if (streamHeaderId == null || streamHeaderId.isBlank()) { // OF-2692: the peer is required to send a Stream ID. Some servers do not, when they are sending a stream error.
                     LOG.info("Closing connection {}. As the initiating party in a server-to-server connection, we require the receiving party to supply a stream ID value. The peer that sent this stream element did not: {}", connection, stanza);
                     connection.close(new StreamError(StreamError.Condition.invalid_xml, "Expected a stream ID value, but none was received."));
@@ -149,8 +145,8 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                         : null;
                     transferConnectionToNewSession(streamHeaderId, existingAuthMethod);
                 }
-            } catch (DocumentException e) {
-                LOG.error("Failed extract additional namespaces", e);
+            } catch (XmlPullParserException | IOException e) {
+                LOG.error("Failed to extract namespaces and stream ID from the peer's stream header", e);
             }
         }
 
@@ -169,10 +165,6 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
     private boolean isNewStreamId(String streamHeaderId) {
         return !streamHeaderId.equals(session.getStreamID().getID());
-    }
-
-    private static boolean isRelevantNamespace(Namespace ns) {
-        return !XMPPPacketReader.IGNORED_NAMESPACE_ON_STANZA.contains(ns.getURI());
     }
 
     @Override

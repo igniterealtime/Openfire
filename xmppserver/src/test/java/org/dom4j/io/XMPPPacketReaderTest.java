@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package dom.io;
+package org.dom4j.io;
 
 import org.dom4j.Document;
+import org.dom4j.DocumentException;
 import org.dom4j.Namespace;
-import org.dom4j.io.XMPPPacketReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.xmlpull.v1.XmlPullParser;
@@ -366,5 +366,79 @@ public class XMPPPacketReaderTest
         // Verify results.
         assertEquals(1, namespacesOnCurrentElement.size());
         assertEquals(Namespace.get("unittest", "custom:namespace"), namespacesOnCurrentElement.iterator().next());
+    }
+
+    /**
+     * Verifies that character content expressed through an entity reference is retained in the parsed element. This
+     * behavior is an Openfire-specific addition over the original dom4j {@code XPP3Reader}, which silently discards
+     * entity references.
+     */
+    @Test
+    public void testRetainEntityReferenceContent() throws Exception
+    {
+        // Setup test fixture.
+        final String input = "<message><body>a &amp; b</body></message>";
+
+        // Execute system under test.
+        final Document result = packetReader.read( new StringReader( input ) );
+
+        // Verify result.
+        assertEquals( "a & b", result.getRootElement().element( "body" ).getText(),
+            "Expected the content of the entity reference to be retained in the body, but it was not." );
+    }
+
+    /**
+     * Verifies that an entity reference that cannot be resolved (anything other than the five entities predefined in
+     * XML, which would require a document type definition that is not permitted in XMPP) is rejected with a
+     * {@link DocumentException} rather than an unchecked exception.
+     */
+    @Test
+    public void testRejectUnresolvableEntityReference()
+    {
+        // Setup test fixture.
+        final String input = "<message><body>x &unresolvable; y</body></message>";
+
+        // Execute system under test & verify result.
+        assertThrows( DocumentException.class, () -> packetReader.read( new StringReader( input ) ),
+            "Expected a stanza with an unresolvable entity reference to be rejected with a DocumentException, but it was not." );
+    }
+
+    /**
+     * Verifies that the reader returns after reading a single top-level element, leaving any subsequent element
+     * unparsed. This stanza-by-stanza behavior is an Openfire-specific addition over the original dom4j
+     * {@code XPP3Reader}, which parses until the end of the document.
+     */
+    @Test
+    public void testReadsOneStanzaAtATime() throws Exception
+    {
+        // Setup test fixture.
+        final String input = "<message>first</message><iq type='get'/>";
+
+        // Execute system under test.
+        final Document result = packetReader.read( new StringReader( input ) );
+
+        // Verify result.
+        assertEquals( "message", result.getRootElement().getName(),
+            "Expected the first top-level element to be returned, but a different element was returned." );
+        assertFalse( result.asXML().contains( "iq" ),
+            "Expected the second top-level element to be left unparsed, but it was included in the result: " + result.asXML() );
+    }
+
+    /**
+     * Verifies that insignificant whitespace preceding a stanza (such as the whitespace keep-alives that XMPP peers
+     * send) does not cause parsing to fail. This leniency is an Openfire-specific addition over the original dom4j
+     * {@code XPP3Reader}, which rejects any character content outside of the root element.
+     */
+    @Test
+    public void testTolerateInsignificantWhitespaceOutsideRoot() throws Exception
+    {
+        // Setup test fixture.
+        final String input = "   \n   <message>x</message>";
+
+        // Execute system under test & verify result.
+        final Document result = assertDoesNotThrow(() -> packetReader.read( new StringReader( input ) ),
+            "Expected insignificant whitespace preceding a stanza to be tolerated, but parsing failed." );
+        assertEquals( "message", result.getRootElement().getName(),
+            "Expected the stanza following the whitespace to be parsed, but a different element was returned." );
     }
 }

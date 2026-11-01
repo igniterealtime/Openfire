@@ -1197,11 +1197,24 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
 
     @Override
     public void userDeleting(User user, Map<String, Object> params) {
+        final JID userJID = XMPPServer.getInstance().createJID(user.getUsername(), null, true);
+
         // When a user is being deleted, all its affiliations need to be removed from chat rooms (OF-2166). Note that
         // every room is an event listener for the same event, which should update rooms that are loaded into memory
         // from the database. This event handler intends to update rooms that are not in memory, but only in the database.
-        MUCPersistenceManager
-                .removeAffiliationFromDB(XMPPServer.getInstance().createJID(user.getUsername(), null, true));
+        MUCPersistenceManager.removeAffiliationFromDB(userJID);
+
+        // The user must also be removed from the service-level lists (MUC service administrators, users allowed to
+        // create rooms). These are matched by bare JID only: if they were left in place, a user that is later created
+        // with the same name would automatically inherit these privileges (compare OF-2758).
+        for (final MultiUserChatService service : getMultiUserChatServices()) {
+            if (service.getSysadmins().contains(userJID)) {
+                service.removeSysadmin(userJID);
+            }
+            if (service.getUsersAllowedToCreate().contains(userJID)) {
+                service.removeUserAllowedToCreate(userJID);
+            }
+        }
     }
 
     @Override

@@ -500,7 +500,7 @@ public class DefaultNodeConfiguration implements Cacheable {
             formField.setVariable("pubsub#max_items");
             formField.setType(FormField.Type.text_single);
             formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.max_items", preferredLocale));
-            formField.addValue(maxPublishedItems);
+            formField.addValue(maxPublishedItems < 0 ? "max" : String.valueOf(maxPublishedItems));
 
             formField = form.addField();
             formField.setVariable("pubsub#max_payload_size");
@@ -557,7 +557,7 @@ public class DefaultNodeConfiguration implements Cacheable {
             formField.setVariable("pubsub#leaf_nodes_max");
             formField.setType(FormField.Type.text_single);
             formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.leaf_nodes_max", preferredLocale));
-            formField.addValue(maxLeafNodes);
+            formField.addValue(maxLeafNodes < 0 ? "max" : String.valueOf(maxLeafNodes));
         }
 
         return form;

@@ -273,7 +273,13 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
     public void broadcastPacket(Message packet, boolean onlyLocal) {
         // Send the message to client sessions connected to this JVM
         for(ClientSession session : localClientRoutingTable.getRoutes()) {
-            session.process(packet);
+            // Catch here to ensure that a problem with one recipient (e.g. a privacy list that cannot be evaluated)
+            // does not prevent delivery to all other recipients.
+            try {
+                session.process(packet);
+            } catch (Exception e) {
+                Log.error("Unable to broadcast packet to {}", session.getAddress(), e);
+            }
         }
 
         // Check if we need to broadcast the message to client sessions connected to remote cluter nodes

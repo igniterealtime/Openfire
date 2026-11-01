@@ -128,7 +128,17 @@ public class LeafNode extends Node {
         else {
             FormField field = completedForm.getField("pubsub#max_items");
             if (field != null) {
-                maxPublishedItems = field.getFirstValue() != null ? Integer.parseInt( field.getFirstValue() ) : 50;
+                final String value = field.getFirstValue();
+                if (value == null) {
+                    maxPublishedItems = 50;
+                }
+                else if ("max".equalsIgnoreCase( value )) {
+                    // XEP-0060 allows 'max' to be used to request the service-imposed maximum (or no limit at all when the service does not impose one).
+                    maxPublishedItems = -1;
+                }
+                else {
+                    maxPublishedItems = Integer.parseInt( value );
+                }
                 Log.trace("Configuring {}: {}", field.getVariable(), maxPublishedItems);
             }
         }
@@ -164,7 +174,7 @@ public class LeafNode extends Node {
             formField.setType(FormField.Type.text_single);
             formField.setLabel(LocaleUtils.getLocalizedString("pubsub.form.conf.max_items", preferredLocale));
         }
-        formField.addValue(maxPublishedItems);
+        formField.addValue(maxPublishedItems < 0 ? "max" : String.valueOf(maxPublishedItems));
 
         formField = form.addField();
         formField.setVariable("pubsub#max_payload_size");
@@ -470,8 +480,9 @@ public class LeafNode extends Node {
                 // And if not, include the last item.
                 publishedItems.add(0, lastPublished);
                 // Recheck the collection size, it might have one more element now (the last item).
-                // Remove it, if it exceeds the max items.
-                if (publishedItems.size() > recentItems) {
+                // Remove it, if it exceeds the max items. A negative 'recentItems' value signifies 'no limit',
+                // in which case the list should never be trimmed.
+                if (recentItems >= 0 && publishedItems.size() > recentItems) {
                     publishedItems.remove(publishedItems.size() - 1);
                 }
             }

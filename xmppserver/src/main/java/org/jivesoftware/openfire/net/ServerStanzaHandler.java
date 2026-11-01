@@ -35,6 +35,7 @@ import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.*;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
@@ -71,6 +72,47 @@ public class ServerStanzaHandler extends StanzaHandler {
         .setDynamic(true)
         .build();
 
+    /**
+     * Controls if the 'to' attribute of stream headers sent by remote servers is validated. When enabled, a stream that
+     * names a domain that is not serviced by the local XMPP service (the service that this Openfire instance provides,
+     * alone or together with the other nodes of its cluster) is refused with a host-unknown stream error.
+     *
+     * @see #isLocallyServiced(String)
+     */
+    public static final SystemProperty<Boolean> VALIDATE_HOST = SystemProperty.Builder.ofType(Boolean.class)
+        .setKey("xmpp.server.validate.host")
+        .setDefaultValue(false)
+        .setDynamic(true)
+        .build();
+
+    /**
+     * Checks if a domain that a remote server addresses is serviced by the local XMPP service. That is the case for the
+     * XMPP domain of the service, for subdomains of it that have a component route, and for domains for which trunking
+     * is enabled.
+     *
+     * @param domain the domain to check.
+     * @return true if the domain is serviced by the local XMPP service, otherwise false (including when the value is not a valid domain name).
+     */
+    public static boolean isLocallyServiced(@Nonnull final String domain) {
+        final String requested;
+        try {
+            requested = JID.domainprep(domain);
+        } catch (final IllegalArgumentException e) {
+            Log.debug("Value '{}' is not a valid domain name.", domain, e);
+            return false;
+        }
+
+        final XMPPServer server = XMPPServer.getInstance();
+        final String xmppDomain = server.getServerInfo().getXMPPDomain();
+        if (requested.equals(xmppDomain)) {
+            return true;
+        }
+        if (requested.endsWith("." + xmppDomain) && server.getRoutingTable().hasComponentRoute(new JID(requested))) {
+            return true;
+        }
+        return Trunking.isTrunkingEnabledFor(requested);
+    }
+
     private final boolean directTLS;
 
     public ServerStanzaHandler(PacketRouter router, Connection connection, boolean directTLS) {
@@ -103,8 +145,14 @@ public class ServerStanzaHandler extends StanzaHandler {
 
     @Override
     boolean validateHost() {
-        // Hosts are not currently validated for S2S
-        return false;
+        return VALIDATE_HOST.getValue();
+    }
+
+    @Override
+    protected boolean isHostUnknown(String host) {
+        // OF-2643: Accept a missing 'to', as RFC 6120 section 4.7.2 asks to be liberal towards peers that omit it. The
+        // stream is then treated as addressing the XMPP domain (see LocalIncomingServerSession#createSession).
+        return host != null && !isLocallyServiced(host);
     }
 
     @Override
@@ -175,6 +223,16 @@ public class ServerStanzaHandler extends StanzaHandler {
         for (int eventType = xpp.getEventType(); eventType != XmlPullParser.START_TAG;) {
             eventType = xpp.next();
         }
+
+        // The stream header that was sent before TLS was negotiated has been validated already, but its values are to
+        // be discarded. Validate the 'to' attribute of the stream header that was sent after TLS was negotiated.
+        final String host = xpp.getAttributeValue("", "to");
+        if (validateHost() && isHostUnknown(host)) {
+            Log.warn("Refusing stream that was opened after TLS was negotiated, as it addresses a host that is not serviced: '{}'. Closing connection: {}", host, connection);
+            refuseStream(xpp, host, new StreamError(StreamError.Condition.host_unknown, "Incorrect hostname in stream header: " + host));
+            return;
+        }
+
         this.domainPair = new DomainPair(XMPPServer.getInstance().getServerInfo().getXMPPDomain(), xpp.getAttributeValue("", "from"));
 
         // Discard session data obtained from unencrypted initiating stream

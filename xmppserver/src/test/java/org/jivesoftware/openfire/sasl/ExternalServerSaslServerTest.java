@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
@@ -183,23 +185,125 @@ public class ExternalServerSaslServerTest
 
     /**
      * Verify that when an initial response is given that matches the streamID as transmitted over the connection, but
-     * <em>can not</em> be used to validate the provided TLS certificates, authentication fails.
+     * <em>can not</em> be used to validate the provided TLS certificates, authentication fails with 'not-authorized'.
      */
     @Test
-    public void testInitialResponseDifferentFromStreamID() throws Exception
+    public void testInitialResponseMatchingStreamIDButNotCertificate() throws Exception
     {
         // Setup test fixture.
         final String authzID = "foo.example.org";
-        final String certID = "bar.example.com";
 
         when(session.getDefaultIdentity()).thenReturn(authzID);
         when(session.getConnection()).thenReturn(connection);
-        saslAuthentication.when(() -> SASLAuthentication.verifyCertificates(any(), eq(certID), anyBoolean())).thenReturn(true);
+        saslAuthentication.when(() -> SASLAuthentication.verifyCertificates(any(), eq(authzID), anyBoolean())).thenReturn(false);
 
         final ExternalServerSaslServer server = new ExternalServerSaslServer(session);
         final byte[] input = authzID.getBytes(StandardCharsets.UTF_8);
 
         // Execute system under test.
-        assertThrows(SaslFailureException.class, () -> server.evaluateResponse(input));
+        final SaslFailureException result = assertThrows(SaslFailureException.class, () -> server.evaluateResponse(input), "Authentication should fail when the certificate is not valid for the stream 'from' value");
+
+        // Verify results.
+        assertEquals(Failure.NOT_AUTHORIZED, result.getFailure(), "A certificate that is not valid for the stream 'from' value should be rejected with 'not-authorized'");
+        assertNull(server.getAuthorizationID(), "No identity should be authorised after a failed certificate check");
+        saslAuthentication.verify(() -> SASLAuthentication.verifyCertificates(any(), eq(authzID), eq(true)), description("The certificate should have been checked against the stream 'from' value"));
+    }
+
+    /**
+     * Verify that when an initial response is given that differs from the streamID as transmitted over the connection,
+     * authentication fails with 'invalid-authzid', even when the provided TLS certificates are valid for that initial
+     * response.
+     */
+    @Test
+    public void testInitialResponseDifferentFromStreamID() throws Exception
+    {
+        // Setup test fixture.
+        final String streamID = "example.org";
+        final String authzID = "other.example.com";
+
+        when(session.getDefaultIdentity()).thenReturn(streamID);
+        lenient().when(session.getConnection()).thenReturn(connection); // Reached only if the authzid check is bypassed.
+        saslAuthentication.when(() -> SASLAuthentication.verifyCertificates(any(), eq(authzID), anyBoolean())).thenReturn(true);
+
+        final ExternalServerSaslServer server = new ExternalServerSaslServer(session);
+        final byte[] input = authzID.getBytes(StandardCharsets.UTF_8);
+
+        // Execute system under test.
+        final SaslFailureException result = assertThrows(SaslFailureException.class, () -> server.evaluateResponse(input), "Authentication should fail when the authzid differs from the stream 'from' value");
+
+        // Verify results.
+        assertEquals(Failure.INVALID_AUTHZID, result.getFailure(), "An authzid that differs from the stream 'from' value should be rejected with 'invalid-authzid'");
+    }
+
+    /**
+     * Verify that when an <em>empty</em> initial response is given, and the provided TLS certificates can not be used
+     * to validate the streamID as transmitted over the connection, authentication fails with 'not-authorized'.
+     */
+    @Test
+    public void testEmptyInitialResponseNotMatchingCertificate() throws Exception
+    {
+        // Setup test fixture.
+        final String streamID = "example.org";
+
+        when(session.getSessionData(SASLAuthentication.SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY)).thenReturn(true);
+        when(session.getDefaultIdentity()).thenReturn(streamID);
+        when(session.getConnection()).thenReturn(connection);
+        saslAuthentication.when(() -> SASLAuthentication.verifyCertificates(any(), eq(streamID), anyBoolean())).thenReturn(false);
+
+        final ExternalServerSaslServer server = new ExternalServerSaslServer(session);
+        final byte[] input = new byte[]{};
+
+        // Execute system under test.
+        final SaslFailureException result = assertThrows(SaslFailureException.class, () -> server.evaluateResponse(input), "Authentication with an empty initial response should fail when the certificate is not valid for the stream 'from' value");
+
+        // Verify results.
+        assertEquals(Failure.NOT_AUTHORIZED, result.getFailure(), "A certificate that is not valid for the stream 'from' value should be rejected with 'not-authorized'");
+    }
+
+    /**
+     * Verify that when <em>no</em> initial response is given (and none is required), and the provided TLS certificates
+     * can not be used to validate the streamID as transmitted over the connection, authentication fails with
+     * 'not-authorized'.
+     */
+    @Test
+    public void testNoInitialResponseNotMatchingCertificate() throws Exception
+    {
+        // Setup test fixture.
+        final String streamID = "example.org";
+
+        when(session.getSessionData(SASLAuthentication.SASL_LAST_RESPONSE_WAS_PROVIDED_BUT_EMPTY)).thenReturn(null);
+        when(session.getDefaultIdentity()).thenReturn(streamID);
+        when(session.getConnection()).thenReturn(connection);
+        saslAuthentication.when(() -> SASLAuthentication.verifyCertificates(any(), eq(streamID), anyBoolean())).thenReturn(false);
+
+        final ExternalServerSaslServer server = new ExternalServerSaslServer(session);
+        final byte[] input = new byte[]{};
+
+        // Execute system under test.
+        final SaslFailureException result = assertThrows(SaslFailureException.class, () -> server.evaluateResponse(input), "Authentication without an initial response should fail when the certificate is not valid for the stream 'from' value");
+
+        // Verify results.
+        assertEquals(Failure.NOT_AUTHORIZED, result.getFailure(), "A certificate that is not valid for the stream 'from' value should be rejected with 'not-authorized'");
+    }
+
+    /**
+     * Verify that when the stream as transmitted over the connection has no (or an empty) 'from' attribute value,
+     * authentication fails with 'not-authorized'.
+     */
+    @ParameterizedTest
+    @NullAndEmptySource
+    public void testMissingStreamFrom(final String streamFrom) throws Exception
+    {
+        // Setup test fixture.
+        when(session.getDefaultIdentity()).thenReturn(streamFrom);
+
+        final ExternalServerSaslServer server = new ExternalServerSaslServer(session);
+        final byte[] input = "example.org".getBytes(StandardCharsets.UTF_8);
+
+        // Execute system under test.
+        final SaslFailureException result = assertThrows(SaslFailureException.class, () -> server.evaluateResponse(input), "Authentication should fail when the stream has no 'from' value");
+
+        // Verify results.
+        assertEquals(Failure.NOT_AUTHORIZED, result.getFailure(), "A stream without a 'from' value should be rejected with 'not-authorized'");
     }
 }

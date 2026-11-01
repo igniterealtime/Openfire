@@ -933,21 +933,44 @@ public abstract class StanzaHandler {
         catch (final StreamErrorException ex) {
             Log.warn("Failed to create a session, as the stream opened by the peer has a problem: {} - '{}' (a full stack trace is logged on debug level). Closing connection: {}. session is now: {}", ex.getStreamError().getCondition(), ex.getStreamError().getText(), connection, session);
             Log.debug("Failed to create a session.", ex);
-            final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
-            final Document document = DocumentHelper.createDocument(stream);
-            document.setXMLEncoding(StandardCharsets.UTF_8.toString());
-            stream.add(Namespace.get(xpp.getNamespace(null)));
-            stream.addAttribute("from", host);
-            stream.addAttribute("id", STREAM_ID_FACTORY.createStreamID().getID());
-            stream.addAttribute("version", "1.0");
-            stream.add(ex.getStreamError().getElement());
-
-            // Deliver stanza
-            connection.deliverRawText(StringUtils.asUnclosedStream(document));
-
-            // Close the underlying connection
-            connection.close();
+            refuseStream(xpp, host, ex.getStreamError());
         }
+    }
+
+    /**
+     * Responds to a stream header that cannot be accepted by opening a stream that carries the provided stream error,
+     * and then closes the underlying connection.
+     *
+     * The stream is opened from the host that the peer addressed, unless that host is missing or is not serviced (as
+     * determined by {@link #isHostUnknown(String)}), whatever the reason for the refusal: then it is opened from the XMPP
+     * domain of the local XMPP service. In that case, RFC 6120 section 4.9.1.3 allows either an authoritative name for
+     * the receiving entity or the empty string; the XMPP domain is such an authoritative name.
+     *
+     * @param xpp a parser positioned on the stream header that is refused.
+     * @param host the value of the 'to' attribute of the refused stream header (can be null).
+     * @param error the stream error to send to the peer.
+     */
+    protected void refuseStream(XmlPullParser xpp, String host, StreamError error) {
+        final String from = host == null || isHostUnknown(host)
+            ? XMPPServer.getInstance().getServerInfo().getXMPPDomain()
+            : host;
+        final Element stream = DocumentHelper.createElement(QName.get("stream", "stream", "http://etherx.jabber.org/streams"));
+        final Document document = DocumentHelper.createDocument(stream);
+        document.setXMLEncoding(StandardCharsets.UTF_8.toString());
+        // The refused header need not declare a content namespace. When it does not, the error is answered in the
+        // namespace of this handler, rather than copying the absent namespace (which would fail to build the error).
+        final String contentNamespace = xpp.getNamespace(null);
+        stream.add(Namespace.get(contentNamespace != null ? contentNamespace : getNamespace().getURI()));
+        stream.addAttribute("from", from);
+        stream.addAttribute("id", STREAM_ID_FACTORY.createStreamID().getID());
+        stream.addAttribute("version", "1.0");
+        stream.add(error.getElement());
+
+        // Deliver stanza
+        connection.deliverRawText(StringUtils.asUnclosedStream(document));
+
+        // Close the underlying connection
+        connection.close();
     }
 
     /**

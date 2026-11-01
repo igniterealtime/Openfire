@@ -276,6 +276,145 @@ public class PubSubEngineTest
     }
 
     /**
+     * XEP-0060 allows the literal value "max" to be used as an alias for the "no limit" sentinel value -1 for
+     * fields such as pubsub#max_items. A node rendering its configuration form reports "max" for such a field,
+     * while a publisher requesting the precondition may use the (also valid) numeric value "-1". These two
+     * notations must be treated as equivalent, or an existing publisher requesting an unlimited max_items node
+     * would incorrectly receive a precondition-not-met error.
+     */
+    @Test
+    public void testNodeMeetsPreconditionsTreatsMaxAndNegativeOneAsEquivalentForMaxItems()
+    {
+        // Setup test fixture.
+        final Node node = Mockito.mock(Node.class);
+        final DataForm configuration = new DataForm(DataForm.Type.form);
+        final FormField configField = configuration.addField();
+        configField.setVariable("pubsub#max_items");
+        configField.addValue("max");
+        Mockito.when(node.getConfigurationForm(null)).thenReturn(configuration);
+
+        final DataForm preconditions = new DataForm(DataForm.Type.submit);
+        final FormField preconditionField = preconditions.addField();
+        preconditionField.setVariable("pubsub#max_items");
+        preconditionField.addValue("-1");
+
+        // Execute system under test.
+        final boolean result = PubSubEngine.nodeMeetsPreconditions(node, preconditions);
+
+        // Verify result.
+        assertTrue(result);
+    }
+
+    /**
+     * As {@link #testNodeMeetsPreconditionsTreatsMaxAndNegativeOneAsEquivalentForMaxItems}, but exercises the
+     * reverse direction: the node reports the numeric sentinel value, while the precondition uses the literal
+     * "max" value.
+     */
+    @Test
+    public void testNodeMeetsPreconditionsTreatsNegativeOneAndMaxAsEquivalentForMaxItems()
+    {
+        // Setup test fixture.
+        final Node node = Mockito.mock(Node.class);
+        final DataForm configuration = new DataForm(DataForm.Type.form);
+        final FormField configField = configuration.addField();
+        configField.setVariable("pubsub#max_items");
+        configField.addValue("-1");
+        Mockito.when(node.getConfigurationForm(null)).thenReturn(configuration);
+
+        final DataForm preconditions = new DataForm(DataForm.Type.submit);
+        final FormField preconditionField = preconditions.addField();
+        preconditionField.setVariable("pubsub#max_items");
+        preconditionField.addValue("max");
+
+        // Execute system under test.
+        final boolean result = PubSubEngine.nodeMeetsPreconditions(node, preconditions);
+
+        // Verify result.
+        assertTrue(result);
+    }
+
+    /**
+     * Case variants of the literal "max" value (e.g. "MAX", "Max") must also be recognized as equivalent to the
+     * "no limit" sentinel, consistent with the case-insensitive parsing applied during node configuration.
+     */
+    @Test
+    public void testNodeMeetsPreconditionsTreatsMaxCaseInsensitivelyForChildrenMax()
+    {
+        // Setup test fixture.
+        final Node node = Mockito.mock(Node.class);
+        final DataForm configuration = new DataForm(DataForm.Type.form);
+        final FormField configField = configuration.addField();
+        configField.setVariable("pubsub#children_max");
+        configField.addValue("-1");
+        Mockito.when(node.getConfigurationForm(null)).thenReturn(configuration);
+
+        final DataForm preconditions = new DataForm(DataForm.Type.submit);
+        final FormField preconditionField = preconditions.addField();
+        preconditionField.setVariable("pubsub#children_max");
+        preconditionField.addValue("MAX");
+
+        // Execute system under test.
+        final boolean result = PubSubEngine.nodeMeetsPreconditions(node, preconditions);
+
+        // Verify result.
+        assertTrue(result);
+    }
+
+    /**
+     * The 'max'/-1 normalization is limited to the known "unlimited" fields. For other fields, "max" and "-1"
+     * must continue to be compared literally (i.e. must not match each other).
+     */
+    @Test
+    public void testNodeMeetsPreconditionsDoesNotNormalizeMaxForUnrelatedFields()
+    {
+        // Setup test fixture.
+        final Node node = Mockito.mock(Node.class);
+        final DataForm configuration = new DataForm(DataForm.Type.form);
+        final FormField configField = configuration.addField();
+        configField.setVariable("pubsub#some_other_field");
+        configField.addValue("-1");
+        Mockito.when(node.getConfigurationForm(null)).thenReturn(configuration);
+
+        final DataForm preconditions = new DataForm(DataForm.Type.submit);
+        final FormField preconditionField = preconditions.addField();
+        preconditionField.setVariable("pubsub#some_other_field");
+        preconditionField.addValue("max");
+
+        // Execute system under test.
+        final boolean result = PubSubEngine.nodeMeetsPreconditions(node, preconditions);
+
+        // Verify result.
+        assertFalse(result);
+    }
+
+    /**
+     * A finite max_items value does not match "max"/-1, confirming the normalization only equates the two
+     * "unlimited" notations with each other, not arbitrary values.
+     */
+    @Test
+    public void testNodeMeetsPreconditionsRejectsFiniteMaxItemsAgainstMax()
+    {
+        // Setup test fixture.
+        final Node node = Mockito.mock(Node.class);
+        final DataForm configuration = new DataForm(DataForm.Type.form);
+        final FormField configField = configuration.addField();
+        configField.setVariable("pubsub#max_items");
+        configField.addValue("10");
+        Mockito.when(node.getConfigurationForm(null)).thenReturn(configuration);
+
+        final DataForm preconditions = new DataForm(DataForm.Type.submit);
+        final FormField preconditionField = preconditions.addField();
+        preconditionField.setVariable("pubsub#max_items");
+        preconditionField.addValue("max");
+
+        // Execute system under test.
+        final boolean result = PubSubEngine.nodeMeetsPreconditions(node, preconditions);
+
+        // Verify result.
+        assertFalse(result);
+    }
+
+    /**
      * Null preconditions are trivially satisfied.
      */
     @Test

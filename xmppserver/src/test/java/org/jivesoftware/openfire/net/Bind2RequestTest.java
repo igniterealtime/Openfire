@@ -180,6 +180,20 @@ public class Bind2RequestTest {
     }
 
     @Test
+    public void testGenerateResourceStringWithLongTagIsTruncated() {
+        // A tag long enough that, combined with the separator and HMAC suffix, would exceed SessionManager.MAX_RESOURCE_LENGTH.
+        final String longTag = "a".repeat(300);
+        Bind2Request request = new Bind2Request(longTag, List.of());
+        UserAgentInfo userAgentInfo = new UserAgentInfo(null, null, null);
+
+        String result = request.generateResourceString(userAgentInfo);
+
+        assertTrue(result.length() <= org.jivesoftware.openfire.SessionManager.MAX_RESOURCE_LENGTH.getValue());
+        assertTrue(result.substring(result.length() - 16).matches("^[0-9a-f]{16}$")); // HMAC suffix is preserved
+        assertFalse(result.startsWith(longTag)); // the (too long) tag itself must have been shortened
+    }
+
+    @Test
     public void testFeatureRequestsImmutability() {
         List<Element> features = new ArrayList<>();
         Element feature = DocumentHelper.createElement("feature");

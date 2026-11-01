@@ -129,6 +129,23 @@ public class SessionManager extends BasicModule implements ClusterEventListener
 
     public static final int NEVER_KICK = -1;
 
+    /**
+     * The maximum length, in characters, of a resource identifier that will be bound to a session. Resource
+     * identifiers that are longer than this are truncated (see {@link #bindResource(LocalClientSession, AuthToken, String)}).
+     * This guards against unbounded, (partially) client-supplied resource identifiers ending up in routing-table
+     * keys, caches and log messages.
+     *
+     * The default of 255 characters is not derived from any stricter requirement in the XMPP specifications (RFC
+     * 7622 resourceparts are limited only by the generic 1023-byte XMPP address length), but is a sensible,
+     * conservative upper bound for a value that is used in routing-table keys, caches and log messages.
+     */
+    public static final SystemProperty<Integer> MAX_RESOURCE_LENGTH = SystemProperty.Builder.ofType(Integer.class)
+        .setKey("xmpp.session.resource.max-length")
+        .setMinValue(1)
+        .setDefaultValue(255)
+        .setDynamic(true)
+        .build();
+
     private XMPPServer server;
     private PacketRouter router;
     private String serverName;
@@ -1467,7 +1484,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * @param session   the authenticated session being bound (not null).
      * @param authToken the session's auth token (not null, not anonymous - anonymous sessions need no
      *                  conflict resolution; see {@link LocalClientSession#setAnonymousAuth()}).
-     * @param resource  the already-resourceprep'd resource (not null).
+     * @param resource  the already-resourceprep'd resource (not null); truncated to {@link #MAX_RESOURCE_LENGTH}'s
+     *                  configured value, if needed, before binding.
      * @return a future completing with {@link BindResult#BOUND} or {@link BindResult#CONFLICT}; only
      *         unexpected errors complete it exceptionally.
      * @see <a href="https://igniterealtime.atlassian.net/browse/OF-3319">OF-3319</a>
@@ -1477,10 +1495,11 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                                                       @Nonnull final String resource)
     {
         final String username = authToken.getUsername().toLowerCase();
-        final JID desiredJid = new JID(username, serverName, resource, true);
+        final String boundedResource = truncateResource(resource);
+        final JID desiredJid = new JID(username, serverName, boundedResource, true);
 
         try {
-            return submitBindTask(() -> resolveConflictAndBind(session, authToken, resource, desiredJid));
+            return submitBindTask(() -> resolveConflictAndBind(session, authToken, boundedResource, desiredJid));
         } catch (final RejectedExecutionException e) {
             // OF-3319: the dedicated bind-conflict pool is saturated. Fail CLOSED: refuse this bind rather than admit a
             // potentially-duplicate session or block a packet worker.
@@ -1501,6 +1520,27 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     protected CompletableFuture<BindResult> submitBindTask(@Nonnull final Supplier<BindResult> task)
     {
         return CompletableFuture.supplyAsync(task, bindConflictExecutor);
+    }
+
+    /**
+     * Truncates the provided resource identifier to {@link #MAX_RESOURCE_LENGTH}'s configured value, in characters,
+     * if needed. This is applied to all resources being bound (see
+     * {@link #bindResource(LocalClientSession, AuthToken, String)}), regardless of whether they were client-supplied
+     * or server-generated, to protect routing-table keys, caches and log messages from unbounded resource
+     * identifiers.
+     *
+     * @param resource the resource identifier to (possibly) truncate.
+     * @return the resource identifier, truncated to at most {@link #MAX_RESOURCE_LENGTH}'s configured value, in characters.
+     */
+    private static String truncateResource(@Nonnull final String resource)
+    {
+        final int maxLength = MAX_RESOURCE_LENGTH.getValue();
+        if (resource.length() <= maxLength) {
+            return resource;
+        }
+        final String truncated = resource.substring(0, maxLength);
+        Log.warn("Resource identifier '{}' exceeds the maximum allowed length of {} characters. Truncating it to '{}'.", resource, maxLength, truncated);
+        return truncated;
     }
 
     /**

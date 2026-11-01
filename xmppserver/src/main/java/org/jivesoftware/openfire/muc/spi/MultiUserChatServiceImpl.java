@@ -18,6 +18,7 @@ package org.jivesoftware.openfire.muc.spi;
 
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.dom4j.Namespace;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.*;
 import org.jivesoftware.openfire.archive.Archiver;
@@ -185,7 +186,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
     /**
      * Plugin (etc) provided IQ Handlers for MUC:
      */
-    private Map<String,IQHandler> iqHandlers = null;
+    private Map<QName,IQHandler> iqHandlers = null;
 
     /**
      * The total time all agents took to chat *
@@ -363,14 +364,14 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
         if (this.iqHandlers == null) {
             this.iqHandlers = new HashMap<>();
         }
-        this.iqHandlers.put(iqHandler.getInfo().getNamespace(), iqHandler);
+        this.iqHandlers.put(iqHandler.getQName(), iqHandler);
     }
 
     @Override
     public void removeIQHandler(final IQHandler iqHandler) {
         if (this.iqHandlers != null) {
-            if (iqHandler == this.iqHandlers.get(iqHandler.getInfo().getNamespace())) {
-                this.iqHandlers.remove(iqHandler.getInfo().getNamespace());
+            if (iqHandler == this.iqHandlers.get(iqHandler.getQName())) {
+                this.iqHandlers.remove(iqHandler.getQName());
             }
         }
     }
@@ -479,7 +480,7 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
      */
     private boolean process(final IQ iq) {
         final Element childElement = iq.getChildElement();
-        String namespace = null;
+        QName qName = null;
         // Ignore IQs of type ERROR
         if (IQ.Type.error == iq.getType()) {
             return false;
@@ -489,59 +490,70 @@ public class MultiUserChatServiceImpl implements Component, MultiUserChatService
             return false;
         }
         if (childElement != null) {
-            namespace = childElement.getNamespaceURI();
+            qName = childElement.getQName();
         }
-        if ("jabber:iq:register".equals(namespace)) {
+        if (qName == null) {
+            return false;
+        }
+        if ("jabber:iq:register".equals(qName.getNamespaceURI())) {
             final IQ reply = registerHandler.handleIQ(iq);
             if (reply != null) {
                 XMPPServer.getInstance().getPacketRouter().route(reply);
             }
         }
-        else if ("jabber:iq:search".equals(namespace)) {
+        else if ("jabber:iq:search".equals(qName.getNamespaceURI())) {
             final IQ reply = searchHandler.handleIQ(iq);
             if (reply != null) {
                 XMPPServer.getInstance().getPacketRouter().route(reply);
             }
         }
-        else if (IQExtendedChannelSearchHandler.NAMESPACE.equals(namespace)) {
+        else if (IQExtendedChannelSearchHandler.NAMESPACE.equals(qName.getNamespaceURI())) {
             final IQ reply = extendedChannelSearchHandler.handleIQ(iq);
             if (reply != null) {
                 XMPPServer.getInstance().getPacketRouter().route(reply);
             }
         }
-        else if (IQMuclumbusSearchHandler.NAMESPACE.equals(namespace)) {
+        else if (IQMuclumbusSearchHandler.NAMESPACE.equals(qName.getNamespaceURI())) {
             final IQ reply = muclumbusSearchHandler.handleIQ(iq);
             if (reply != null) {
                 XMPPServer.getInstance().getPacketRouter().route(reply);
             }
         }
-        else if (IQMUCvCardHandler.NAMESPACE.equals(namespace)) {
+        else if (IQMUCvCardHandler.NAMESPACE.equals(qName.getNamespaceURI())) {
             final IQ reply = mucVCardHandler.handleIQ(iq);
             if (reply != null) {
                 XMPPServer.getInstance().getPacketRouter().route(reply);
             }
         }
-        else if ("http://jabber.org/protocol/disco#info".equals(namespace)) {
+        else if ("http://jabber.org/protocol/disco#info".equals(qName.getNamespaceURI())) {
             // TODO MUC should have an IQDiscoInfoHandler of its own when MUC becomes a component
             final IQ reply = XMPPServer.getInstance().getIQDiscoInfoHandler().handleIQ(iq);
             if (reply != null) {
                 XMPPServer.getInstance().getPacketRouter().route(reply);
             }
         }
-        else if ("http://jabber.org/protocol/disco#items".equals(namespace)) {
+        else if ("http://jabber.org/protocol/disco#items".equals(qName.getNamespaceURI())) {
             // TODO MUC should have an IQDiscoItemsHandler of its own when MUC becomes a component
             final IQ reply = XMPPServer.getInstance().getIQDiscoItemsHandler().handleIQ(iq);
             if (reply != null) {
                 XMPPServer.getInstance().getPacketRouter().route(reply);
             }
         }
-        else if ("urn:xmpp:ping".equals(namespace)) {
+        else if ("urn:xmpp:ping".equals(qName.getNamespaceURI())) {
             if (iq.isRequest()) {
                 XMPPServer.getInstance().getPacketRouter().route( IQ.createResultIQ(iq) );
             }
         }
         else if (this.iqHandlers != null) {
-            final IQHandler h = this.iqHandlers.get(namespace);
+            IQHandler h = this.iqHandlers.get(qName);
+            if (h == null) {
+                // Fall back to pre 5.2.0 behavior: look up handlers based on namespace only
+                final Namespace namespace = qName.getNamespace();
+                h = this.iqHandlers.entrySet().stream().filter(
+                    (e) -> e.getKey().getNamespace().equals(namespace)
+                ).findFirst().map(Map.Entry::getValue).orElse(null);
+
+            }
             if (h != null) {
                 try {
                     final IQ reply = h.handleIQ(iq);

@@ -129,8 +129,10 @@ public class ListPager<T> {
         final HttpSession session = request.getSession();
         final WebManager webManager = new WebManager();
         webManager.init(request, response, session, session.getServletContext());
-        final String requestURI = request.getRequestURI();
-        final int initialPageSize = webManager.getRowsPerPage(requestURI, DEFAULT_PAGE_SIZE);
+        // Identify the page by the path that it is mapped on, rather than by the request URI: that is the raw request
+        // line, which can carry arbitrary path parameters (";x=y") and percent-encoding.
+        final String pageName = request.getContextPath() + request.getServletPath() + (request.getPathInfo() == null ? "" : request.getPathInfo());
+        final int initialPageSize = webManager.getRowsPerPage(pageName, DEFAULT_PAGE_SIZE);
         final List<T> filteredItems = items.stream().filter(filter).collect(Collectors.toList());
 
         this.request = request;
@@ -148,7 +150,7 @@ public class ListPager<T> {
         this.sortColumnNumber = sortColumnNumber;
         this.additionalFormFields = additionalFormFields;
 
-        webManager.setRowsPerPage(requestURI, pageSize);
+        webManager.setRowsPerPage(pageName, pageSize);
     }
 
     private static int bound(final int value, final int maxValue) {

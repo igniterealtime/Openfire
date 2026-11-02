@@ -25,7 +25,6 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.StringTokenizer;
 
 import org.jivesoftware.openfire.PresenceManager;
 import org.jivesoftware.openfire.PrivateStorage;
@@ -368,11 +367,16 @@ public class WebManager extends WebBean {
         if (user != null) {
             String values = user.getProperties().get(property);
             if (values != null) {
-                StringTokenizer tokens = new StringTokenizer(values, ",=");
-                while (tokens.hasMoreTokens()) {
-                    String page = tokens.nextToken().trim();
-                    String rows = tokens.nextToken().trim();
-                    if  (pageName.equals(page)) {
+                for (String entry : values.split(",")) {
+                    // Values are numbers, so the last '=' is the separator.
+                    int separator = entry.lastIndexOf('=');
+                    if (separator == -1) {
+                        // Not a "pageName=value" pair. Skip it, rather than failing to look up every page.
+                        continue;
+                    }
+                    String page = entry.substring(0, separator).trim();
+                    String rows = entry.substring(separator + 1).trim();
+                    if (pageName.equals(page)) {
                         try {
                             return Integer.parseInt(rows);
                         }
@@ -387,26 +391,44 @@ public class WebManager extends WebBean {
     }
 
     public void setPageProperty(String pageName, String property, int newValue) {
+        if (pageName.contains(",") || pageName.contains("=")) {
+            // These characters delimit the "pageName1=value,pageName2=value" encoding. Storing them would make the
+            // stored value of every other page unreadable.
+            Log.warn("Unable to store property '{}' for a page name that contains ',' or '=': {}", property, pageName);
+            return;
+        }
         String toStore = pageName + "=" + newValue;
         User user = getUser();
         if (user != null) {
             String values = user.getProperties().get(property);
             if (values != null) {
-                if (values.contains(toStore)) {
-                    // The new value for the page was already stored so do nothing
-                    return;
-                }
-                else {
-                    if (values.contains(pageName)) {
+                StringBuilder newValues = new StringBuilder();
+                boolean stored = false;
+                for (String entry : values.split(",")) {
+                    int separator = entry.lastIndexOf('=');
+                    if (separator != -1 && pageName.equals(entry.substring(0, separator).trim())) {
+                        if (stored) {
+                            // Drop a duplicate entry for the page.
+                            continue;
+                        }
                         // Replace an old value for the page with the new value
-                        int oldValue = getPageProperty(pageName, property, -1);
-                        String toRemove = pageName + "=" + oldValue;
-                        user.getProperties().put(property, values.replace(toRemove, toStore));
+                        entry = toStore;
+                        stored = true;
                     }
-                    else {
-                        // Append the new page-value
-                        user.getProperties().put(property, values + "," + toStore);
+                    if (newValues.length() > 0) {
+                        newValues.append(',');
                     }
+                    newValues.append(entry);
+                }
+                if (!stored) {
+                    // Append the new page-value
+                    if (newValues.length() > 0) {
+                        newValues.append(',');
+                    }
+                    newValues.append(toStore);
+                }
+                if (!values.contentEquals(newValues)) {
+                    user.getProperties().put(property, newValues.toString());
                 }
             }
             else {

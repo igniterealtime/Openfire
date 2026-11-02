@@ -1211,8 +1211,11 @@ public class MultiUserChatManager extends BasicModule implements MUCServicePrope
             if (service.getSysadmins().contains(userJID)) {
                 service.removeSysadmin(userJID);
             }
-            if (service.getUsersAllowedToCreate().contains(userJID)) {
-                service.removeUserAllowedToCreate(userJID);
+            final List<JID> creationJIDsToRemove = service.getUsersAllowedToCreate().stream()
+                .filter(allowedJID -> allowedJID.asBareJID().equals(userJID))
+                .collect(Collectors.toList());
+            if (!creationJIDsToRemove.isEmpty()) {
+                service.removeUsersAllowedToCreate(creationJIDsToRemove);
             }
         }
     }

@@ -726,8 +726,8 @@ public class StreamManager {
                 if (h > MASK) {
                     Log.warn( "Closing client session. Client sends value for SM 'h' that is larger than 2^32-1: {}, affected session: {}", h, session );
                     final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a value larger than 2^32-1 (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
-                    session.deliverRawText( error.toXML() );
-                    session.close();
+                    // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).
+                    session.close( error );
                     return;
                 }
 

@@ -656,7 +656,8 @@ public class StreamManagerTest
 
     /**
      * Verifies that a value of 'h' above 2^32-1 closes the session with a stream error, like other invalid values. XEP-0198
-     * § 13 defines 'h' as an xs:unsignedInt, and § 6 allows for misuse of stream management to terminate the stream.
+     * § 13 defines 'h' as an xs:unsignedInt, and § 6 allows for misuse of stream management to terminate the stream. The
+     * session is closed with the error, which also makes it non-resumable (OF-3443).
      */
     @Test
     void acknowledgementWithValueAboveLegalMaximumClosesSession() throws Exception
@@ -670,10 +671,7 @@ public class StreamManagerTest
         sm.process(ack(StreamManager.NAMESPACE_V3, String.valueOf(StreamManager.MASK + 1)));
 
         // Verify result.
-        final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(session, times(1).description("Exactly one stream error must be sent.")).deliverRawText(captor.capture());
-        assertTrue(captor.getValue().contains("undefined-condition"), "The stream error must use the 'undefined-condition' condition, but was: " + captor.getValue());
-        verify(session, times(1).description("The session must be closed after the stream error was sent.")).close();
+        assertSessionClosedWithStreamError(session);
         assertEquals(List.of("1"), unacknowledgedMessageIds(sm), "An invalid acknowledgement must not remove any stanzas.");
     }
 

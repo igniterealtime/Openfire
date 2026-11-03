@@ -78,10 +78,10 @@ public class StreamManagerCloseWithErrorTest
      * Verifies that a resumable stream is no longer resumable after it is closed for an acknowledgement with a value of
      * 'h' that is not valid, so that the session is ended rather than kept detached.
      *
-     * @param h a value of 'h' that is not a number, negative, or higher than the number of stanzas that were sent.
+     * @param h a value of 'h' that is not a number, negative, higher than the number of stanzas that were sent, or above 2^32-1.
      */
     @ParameterizedTest
-    @ValueSource(strings = {"not-a-number", "-1", "1"})
+    @ValueSource(strings = {"not-a-number", "-1", "1", "4294967296"})
     public void streamClosedForInvalidAcknowledgementIsNotResumable(final String h) throws Exception
     {
         // Setup test fixture.

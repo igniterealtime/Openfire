@@ -727,6 +727,19 @@ public class StreamManager {
 
     }
 
+    /**
+     * Handles the stanzas that the client did not acknowledge, for a session that closed without being resumed, and
+     * disables Stream Management for the session.
+     *
+     * XEP-0198 § 4 has a server treat unacknowledged stanzas in the same way as stanzas sent to an unavailable resource.
+     * Messages are routed again, with a delay stamp. Other stanzas are discarded.
+     *
+     * This must be invoked after the session is removed. While the session is registered, a message routed to its address
+     * reaches that session rather than another resource of the user or offline storage.
+     *
+     * @param router the router used to route the stanzas.
+     * @param serverAddress this server's bare-domain address, used to stamp delay information on messages.
+     */
     public void onClose(PacketRouter router, JID serverAddress) {
         // Re-deliver unacknowledged stanzas from broken stream (XEP-0198)
         synchronized (this) {

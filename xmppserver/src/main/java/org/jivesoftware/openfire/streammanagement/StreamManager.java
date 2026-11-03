@@ -192,8 +192,8 @@ public class StreamManager {
                 } catch (MalformedResumeRequestException e) {
                     Log.info( "Closing client session that sent a malformed 'resume' request. Error message: {}. Affected session: {}", e.getMessage(), session );
                     final StreamError error = new StreamError( StreamError.Condition.undefined_condition, e.getMessage() + " Our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
-                    session.deliverRawText( error.toXML() );
-                    session.close();
+                    // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).
+                    session.close( error );
                     return;
                 }
                 processResume( resumeRequest );
@@ -659,15 +659,15 @@ public class StreamManager {
                 } catch (NumberFormatException e) {
                     Log.warn( "Closing client session. Client sends non-numeric value for SM 'h': {}, affected session: {}", hValue, session );
                     final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a 'h' value that is not a number (which is illegal). Your Ack h: " + hValue + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
-                    session.deliverRawText( error.toXML() );
-                    session.close();
+                    // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).
+                    session.close( error );
                     return;
                 }
                 if (h < 0) {
                     Log.warn( "Closing client session. Client sends negative value for SM 'h': {}, affected session: {}", h, session );
                     final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a negative value (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
-                    session.deliverRawText( error.toXML() );
-                    session.close();
+                    // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).
+                    session.close( error );
                     return;
                 }
 
@@ -677,8 +677,8 @@ public class StreamManager {
                     if (!validateClientAcknowledgement(h)) {
                         Log.warn( "Closing client session. Client acknowledges stanzas that we didn't send! Client Ack h: {}, our last unacknowledged stanza: {}, affected session: {}", h, unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x, session );
                         final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas that we didn't send. Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
-                        session.deliverRawText( error.toXML() );
-                        session.close();
+                        // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).
+                        session.close( error );
                         return;
                     }
 

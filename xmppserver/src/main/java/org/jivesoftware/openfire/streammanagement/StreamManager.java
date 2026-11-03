@@ -732,10 +732,13 @@ public class StreamManager {
      * disables Stream Management for the session.
      *
      * XEP-0198 § 4 has a server treat unacknowledged stanzas in the same way as stanzas sent to an unavailable resource.
-     * Messages are routed again, with a delay stamp. Other stanzas are discarded.
+     * Messages are routed again, with a delay stamp. The sender of an IQ request of type 'get' or 'set' receives a
+     * 'service-unavailable' error, as RFC 6120 § 8.2.3 requires a response to every IQ request, and RFC 6121 § 8.5.3.2.3
+     * defines that error for an unavailable resource. Other stanzas are discarded.
      *
      * This must be invoked after the session is removed. While the session is registered, a message routed to its address
-     * reaches that session rather than another resource of the user or offline storage.
+     * reaches that session rather than another resource of the user or offline storage, and the IQ router does not accept
+     * an error that has the address of the session as its sender, as the session is no longer authenticated.
      *
      * @param router the router used to route the stanzas.
      * @param serverAddress this server's bare-domain address, used to stamp delay information on messages.
@@ -746,14 +749,29 @@ public class StreamManager {
             if(isEnabled()) {
                 namespace = null; // disable stream management.
                 for (StreamManager.UnackedPacket unacked : unacknowledgedServerStanzas) {
-                    if (unacked.packet instanceof Message) {
-                        Message m = (Message) unacked.packet;
-                        if (m.getExtension("delay", "urn:xmpp:delay") == null) {
-                            Element delayInformation = m.addChildElement("delay", "urn:xmpp:delay");
-                            delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.timestamp));
-                            delayInformation.addAttribute("from", serverAddress.toBareJID());
+                    // OF-3442: A failure to handle one stanza must not prevent the others from being handled.
+                    try {
+                        if (unacked.packet instanceof Message) {
+                            Message m = (Message) unacked.packet;
+                            if (m.getExtension("delay", "urn:xmpp:delay") == null) {
+                                Element delayInformation = m.addChildElement("delay", "urn:xmpp:delay");
+                                delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.timestamp));
+                                delayInformation.addAttribute("from", serverAddress.toBareJID());
+                            }
+                            router.route(unacked.packet);
+                        } else if (unacked.packet instanceof IQ iq && iq.isRequest()) {
+                            // OF-3442: Every IQ request needs a response (RFC 6120 § 8.2.3), here the one for an unavailable resource (RFC 6121 § 8.5.3.2.3).
+                            final IQ error = IQ.createResultIQ(iq);
+                            if (error.getFrom() == null) {
+                                // A request without a 'to' was addressed to this session.
+                                error.setFrom(session.getAddress());
+                            }
+                            error.setError(PacketError.Condition.service_unavailable);
+                            router.route(error);
                         }
-                        router.route(unacked.packet);
+                    } catch (Exception e) {
+                        // The stanza itself is not logged, as it can have private content.
+                        Log.warn("Unable to handle an unacknowledged '{}' stanza of type '{}' with ID '{}', of session {} that closed.", unacked.packet.getElement().getName(), unacked.packet.getElement().attributeValue("type"), unacked.packet.getID(), session, e);
                     }
                 }
             }

@@ -26,9 +26,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
 
 import java.lang.reflect.Field;
@@ -63,6 +65,12 @@ public class SessionManagerCloseListenerUnacknowledgedStanzasTest
     private PacketRouter packetRouter;
 
     /**
+     * For each IQ that was routed, by ID: whether a session was registered for its sender at that time. The IQ router
+     * does not accept stanzas from a registered session that is no longer authenticated, such as one that is closing.
+     */
+    private final Map<String, Boolean> senderSessionRegisteredWhenRouted = new HashMap<>();
+
+    /**
      * For each message that was routed, by ID: whether a route existed for its recipient at that time. While the closing
      * session owns the route for its address, a message for that address is routed back to it.
      */
@@ -80,6 +88,7 @@ public class SessionManagerCloseListenerUnacknowledgedStanzasTest
     {
         routingTable = mock(RoutingTable.class, withSettings().lenient());
         packetRouter = mock(PacketRouter.class, withSettings().lenient());
+        senderSessionRegisteredWhenRouted.clear();
         recipientRouteExistedWhenRouted.clear();
         doAnswer(invocation -> {
             if (invocation.getArgument(0) instanceof Message message) {
@@ -87,6 +96,11 @@ public class SessionManagerCloseListenerUnacknowledgedStanzasTest
             }
             return null;
         }).when(packetRouter).route(any(Packet.class));
+        doAnswer(invocation -> {
+            final IQ iq = invocation.getArgument(0);
+            senderSessionRegisteredWhenRouted.put(iq.getID(), sessionManager.getSession(iq.getFrom()) != null);
+            return null;
+        }).when(packetRouter).route(any(IQ.class));
 
         final XMPPServer server = Fixtures.mockXMPPServer();
         doReturn(routingTable).when(server).getRoutingTable();
@@ -130,6 +144,114 @@ public class SessionManagerCloseListenerUnacknowledgedStanzasTest
     }
 
     /**
+     * Verifies that the sender of an unacknowledged IQ request of type 'get' receives a 'service-unavailable' error when
+     * the session closes. RFC 6120 § 8.2.3 requires a response to every IQ request, and RFC 6121 § 8.5.3.2.3 defines
+     * this error for an IQ stanza for a full JID that matches no resource.
+     */
+    @Test
+    public void unacknowledgedIqGetIsAnsweredWithError() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = sessionWithStreamManagement();
+        session.getStreamManager().sentStanza(iqRequest(IQ.Type.get, "iq-get-1"));
+
+        // Execute system under test.
+        fireConnectionClose(session);
+
+        // Verify result.
+        assertErrorReturnedToSender("iq-get-1");
+    }
+
+    /**
+     * Verifies that the sender of an unacknowledged IQ request of type 'set' receives a 'service-unavailable' error when
+     * the session closes. RFC 6120 § 8.2.3 requires a response to every IQ request, and RFC 6121 § 8.5.3.2.3 defines
+     * this error for an IQ stanza for a full JID that matches no resource.
+     */
+    @Test
+    public void unacknowledgedIqSetIsAnsweredWithError() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = sessionWithStreamManagement();
+        session.getStreamManager().sentStanza(iqRequest(IQ.Type.set, "iq-set-1"));
+
+        // Execute system under test.
+        fireConnectionClose(session);
+
+        // Verify result.
+        assertErrorReturnedToSender("iq-set-1");
+    }
+
+    /**
+     * Verifies that an unacknowledged IQ request that has no 'from' address, which is one that the server sent itself, is
+     * answered with an error that has no 'to' address, so that it reaches the server.
+     */
+    @Test
+    public void unacknowledgedIqRequestFromServerIsAnsweredWithErrorToServer() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = sessionWithStreamManagement();
+        final IQ request = iqRequest(IQ.Type.get, "iq-from-server-1");
+        request.setFrom((JID) null);
+        session.getStreamManager().sentStanza(request);
+
+        // Execute system under test.
+        fireConnectionClose(session);
+
+        // Verify result.
+        final List<Packet> routed = routedPackets();
+        assertTrue(routed.stream().anyMatch(packet -> packet instanceof IQ iq && iq.getType() == IQ.Type.error && "iq-from-server-1".equals(iq.getID()) && iq.getTo() == null),
+            "The server must receive an error for an unacknowledged IQ request that it sent, but the stanzas routed were: " + routed);
+        assertNoSessionForSenderWhenRouted("iq-from-server-1");
+    }
+
+    /**
+     * Verifies that a failure to handle one unacknowledged stanza does not prevent the stanzas after it from being
+     * handled.
+     */
+    @Test
+    public void failureToHandleOneUnacknowledgedStanzaDoesNotPreventOthers() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = sessionWithStreamManagement();
+        session.getStreamManager().sentStanza(iqRequest(IQ.Type.get, "iq-get-failing-1"));
+        final Message message = new Message();
+        message.setID("message-after-failure-1");
+        message.setFrom(SENDER);
+        message.setTo(FULL_JID);
+        session.getStreamManager().sentStanza(message);
+        doThrow(new IllegalStateException("Failure used for testing")).when(packetRouter).route(any(IQ.class));
+
+        // Execute system under test.
+        fireConnectionClose(session);
+
+        // Verify result.
+        assertEquals(Boolean.FALSE, recipientRouteExistedWhenRouted.get("message-after-failure-1"), "The message must be routed again, even though routing the error for the IQ request before it failed.");
+    }
+
+    /**
+     * Verifies that the error for an unacknowledged IQ request without a 'to' address, which was addressed to the session,
+     * has the address of the session as its sender.
+     */
+    @Test
+    public void errorForUnacknowledgedIqRequestWithoutRecipientHasSessionAsSender() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = sessionWithStreamManagement();
+        final IQ request = iqRequest(IQ.Type.get, "iq-without-to-1");
+        request.setTo((JID) null);
+        session.getStreamManager().sentStanza(request);
+
+        // Execute system under test.
+        fireConnectionClose(session);
+
+        // Verify result.
+        final IQ error = (IQ) routedPackets().stream().filter(packet -> packet instanceof IQ && "iq-without-to-1".equals(packet.getID())).findFirst()
+            .orElseThrow(() -> new AssertionError("Expected an error to be routed for the unacknowledged IQ request."));
+        assertEquals(FULL_JID, error.getFrom(), "The error must have the address of the session as its sender, as the request was addressed to that session.");
+        assertEquals(SENDER, error.getTo(), "The error must be addressed to the sender of the request.");
+    }
+
+    /**
      * Verifies that unacknowledged stanzas are still handled when removing a detached session fails after its route was
      * removed. The registration of the session as detached is already cleared at that point, so there is no later
      * attempt to handle them.
@@ -145,6 +267,7 @@ public class SessionManagerCloseListenerUnacknowledgedStanzasTest
         message.setFrom(SENDER);
         message.setTo(FULL_JID);
         session.getStreamManager().sentStanza(message);
+        session.getStreamManager().sentStanza(iqRequest(IQ.Type.get, "iq-get-failure-1"));
         sessionManager.addDetached(session);
 
         // Routing an unavailable presence fails, which also happens while removing the session, after its route was removed.
@@ -155,18 +278,20 @@ public class SessionManagerCloseListenerUnacknowledgedStanzasTest
 
         // Verify result.
         assertEquals(Boolean.FALSE, recipientRouteExistedWhenRouted.get("message-failure-1"), "The message must be routed again, after the route of the detached session was removed.");
+        assertErrorReturnedToSender("iq-get-failure-1");
     }
 
     /**
      * Verifies that the unacknowledged stanzas of a detached session are still handled when removing its route fails,
      * rather than being kept for another attempt to terminate the session, which would fail in the same way. As the
-     * session still owns the route, its messages are routed back to it, from where they go to offline storage.
+     * session still owns the route, its messages are routed back to it, from where they go to offline storage, and the
+     * IQ router drops its errors.
      */
     @Test
     public void failureToRemoveRouteOfDetachedSessionStillHandlesUnacknowledgedStanzas() throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession session = detachedSessionWithUnacknowledgedStanzas("message-route-failure-1");
+        final LocalClientSession session = detachedSessionWithUnacknowledgedStanzas("message-route-failure-1", "iq-get-route-failure-1");
         doThrow(new IllegalStateException("Failure used for testing")).when(routingTable).removeClientRoute(FULL_JID);
 
         // Execute system under test.
@@ -186,7 +311,7 @@ public class SessionManagerCloseListenerUnacknowledgedStanzasTest
     public void unacknowledgedStanzasOfReplacedDetachedSessionAreHandled() throws Exception
     {
         // Setup test fixture.
-        final LocalClientSession session = detachedSessionWithUnacknowledgedStanzas("message-replaced-1");
+        final LocalClientSession session = detachedSessionWithUnacknowledgedStanzas("message-replaced-1", "iq-get-replaced-1");
         final LocalClientSession replacement = mock(LocalClientSession.class, withSettings().lenient());
         doReturn(BasicStreamIDFactory.createStreamID("replacement-stream-id")).when(replacement).getStreamID();
         doReturn(FULL_JID).when(replacement).getAddress();
@@ -198,6 +323,9 @@ public class SessionManagerCloseListenerUnacknowledgedStanzasTest
 
         // Verify result.
         assertTrue(recipientRouteExistedWhenRouted.containsKey("message-replaced-1"), "The message must be routed again.");
+        final List<Packet> routed = routedPackets();
+        assertTrue(routed.stream().anyMatch(packet -> packet instanceof IQ iq && iq.getType() == IQ.Type.error && "iq-get-replaced-1".equals(iq.getID()) && SENDER.equals(iq.getTo())),
+            "The sender of the IQ request must receive an error, but the stanzas routed were: " + routed);
     }
 
     /**
@@ -222,6 +350,68 @@ public class SessionManagerCloseListenerUnacknowledgedStanzasTest
 
         // Verify result.
         assertEquals(Boolean.FALSE, recipientRouteExistedWhenRouted.get("message-detached-1"), "The message must be routed again, after the detached session is removed.");
+    }
+
+    /**
+     * Verifies that the sender of an unacknowledged IQ request receives a 'service-unavailable' error when a detached
+     * session is ended without being resumed.
+     */
+    @Test
+    public void unacknowledgedIqRequestIsAnsweredWithErrorWhenDetachedSessionIsEnded() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = sessionWithStreamManagement();
+        doReturn(true).when(session).isDetached();
+        session.getStreamManager().sentStanza(iqRequest(IQ.Type.get, "iq-get-detached-1"));
+        sessionManager.addDetached(session);
+
+        // Execute system under test.
+        sessionManager.terminateDetached(session);
+
+        // Verify result.
+        assertErrorReturnedToSender("iq-get-detached-1");
+    }
+
+    /**
+     * Verifies that the error for an unacknowledged IQ request does not include the payload of the request. RFC 6120
+     * § 8.3.1 allows for it to be left out, and an error without a payload cannot be mistaken for a request by a handler
+     * for the namespace of that payload.
+     */
+    @Test
+    public void errorForUnacknowledgedIqRequestHasNoPayload() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = sessionWithStreamManagement();
+        session.getStreamManager().sentStanza(iqRequest(IQ.Type.get, "iq-get-2"));
+
+        // Execute system under test.
+        fireConnectionClose(session);
+
+        // Verify result.
+        final IQ error = (IQ) routedPackets().stream().filter(packet -> packet instanceof IQ && "iq-get-2".equals(packet.getID())).findFirst()
+            .orElseThrow(() -> new AssertionError("Expected an error to be routed for the unacknowledged IQ request."));
+        assertNull(error.getChildElement(), "The error must not include the payload of the request, but was: " + error.toXML());
+    }
+
+    /**
+     * Verifies that an unacknowledged IQ response is not answered when the session closes, as RFC 6120 § 8.2.3 forbids
+     * responding to an IQ of type 'result' or 'error'.
+     */
+    @Test
+    public void unacknowledgedIqResultIsNotAnswered() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = sessionWithStreamManagement();
+        final IQ result = new IQ(IQ.Type.result, "iq-result-1");
+        result.setFrom(SENDER);
+        result.setTo(FULL_JID);
+        session.getStreamManager().sentStanza(result);
+
+        // Execute system under test.
+        fireConnectionClose(session);
+
+        // Verify result.
+        assertTrue(routedPackets().stream().noneMatch(packet -> "iq-result-1".equals(packet.getID())), "An unacknowledged IQ response must not be answered, but something was routed for it: " + routedPackets());
     }
 
     /**
@@ -275,9 +465,9 @@ public class SessionManagerCloseListenerUnacknowledgedStanzasTest
 
     /**
      * A detached session of the test fixture, registered as such with the session manager, with an unacknowledged
-     * message.
+     * message and IQ request.
      */
-    private LocalClientSession detachedSessionWithUnacknowledgedStanzas(final String messageId)
+    private LocalClientSession detachedSessionWithUnacknowledgedStanzas(final String messageId, final String iqId)
     {
         final LocalClientSession session = sessionWithStreamManagement();
         doReturn(true).when(session).isDetached();
@@ -286,8 +476,32 @@ public class SessionManagerCloseListenerUnacknowledgedStanzasTest
         message.setFrom(SENDER);
         message.setTo(FULL_JID);
         session.getStreamManager().sentStanza(message);
+        session.getStreamManager().sentStanza(iqRequest(IQ.Type.get, iqId));
         sessionManager.addDetached(session);
         return session;
+    }
+
+    private static IQ iqRequest(final IQ.Type type, final String id)
+    {
+        final IQ iq = new IQ(type, id);
+        iq.setFrom(SENDER);
+        iq.setTo(FULL_JID);
+        iq.setChildElement("query", "jabber:iq:version");
+        return iq;
+    }
+
+    private void assertErrorReturnedToSender(final String id)
+    {
+        final List<Packet> routed = routedPackets();
+        assertTrue(routed.stream().anyMatch(packet -> packet instanceof IQ iq && iq.getType() == IQ.Type.error && id.equals(iq.getID()) && SENDER.equals(iq.getTo())
+                && iq.getError() != null && iq.getError().getCondition() == PacketError.Condition.service_unavailable),
+            "The sender of an unacknowledged IQ request must receive a 'service-unavailable' error with the same ID when the session closes, but the stanzas routed were: " + routed);
+        assertNoSessionForSenderWhenRouted(id);
+    }
+
+    private void assertNoSessionForSenderWhenRouted(final String id)
+    {
+        assertEquals(Boolean.FALSE, senderSessionRegisteredWhenRouted.get(id), "The error must be routed after the closing session is removed, as the IQ router does not accept it while that session is registered as its sender.");
     }
 
     /**

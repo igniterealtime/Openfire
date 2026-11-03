@@ -117,6 +117,8 @@ public class SessionManagerCloseListenerUnacknowledgedStanzasTest
     public void tearDown()
     {
         Fixtures.clearExistingProperties();
+        //noinspection deprecation
+        XMPPServer.setInstance(null);
     }
 
     /**

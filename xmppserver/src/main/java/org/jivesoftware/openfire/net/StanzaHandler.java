@@ -997,8 +997,8 @@ public abstract class StanzaHandler {
 
     protected boolean isHostUnknown(String host) {
         if (host == null) {
-            // Answer false since when using server dialback the stream header will not
-            // have a TO attribute
+            // RFC 6120 section 4.7.2 requires a 'to' attribute in an initial stream header, but one without it is
+            // not refused, which keeps the behaviour for clients that omit it.
             return false;
         }
         final String requested;

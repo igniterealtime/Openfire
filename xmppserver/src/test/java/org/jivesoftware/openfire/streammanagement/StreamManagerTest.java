@@ -22,9 +22,13 @@ import org.dom4j.QName;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
+import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -64,6 +68,14 @@ public class StreamManagerTest
     {
         Fixtures.reconfigureOpenfireHome();
         Fixtures.disableDatabasePersistence();
+    }
+
+    @AfterEach
+    public void tearDown()
+    {
+        Fixtures.clearExistingProperties();
+        //noinspection deprecation
+        XMPPServer.setInstance(null);
     }
 
     @Test
@@ -927,6 +939,116 @@ public class StreamManagerTest
     }
 
     /**
+     * Verifies that a resume request with a value of 'h' lower than the last acknowledged value is accepted when no
+     * stanzas are unacknowledged. A client can send such a value when it restores a count that is older than its last
+     * acknowledgement. XEP-0198 § 5 has 'h' in a resume request handled as in an {@code <a/>}, for which a lower value
+     * does not acknowledge any new stanzas (§ 4).
+     */
+    @Test
+    void resumeWithLowerValueIsAcceptedWhenNoStanzasAreUnacknowledged() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession original = resumableClientSession();
+        final StreamManager sm = streamManagerWithResumption(original);
+        final String previd = lastDelivered(original).attributeValue("id");
+        sm.sentStanza(message("1"));
+        sm.sentStanza(message("2"));
+        sm.process(ack(StreamManager.NAMESPACE_V3, "2"));
+        final LocalClientSession resuming = resumingClientSession();
+
+        // Execute system under test.
+        new StreamManager(resuming).process(resume(previd, 1));
+
+        // Verify result.
+        verify(original, times(1).description("The session must be resumed, as a lower value of 'h' is not too high.")).reattach(resuming, 1L);
+        verify(resuming, never().description("No failure is to be reported for a lower value of 'h'.")).deliverRawText(anyString());
+    }
+
+    /**
+     * Verifies that a resume request with a value of 'h' lower than the last acknowledged value is accepted when stanzas
+     * are unacknowledged, and that the stanzas that remain unacknowledged are sent again on resumption, without the lower
+     * value affecting the stanzas that the client acknowledges after that.
+     */
+    @Test
+    void resumeWithLowerValueRedeliversUnacknowledgedStanzas() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession original = resumableClientSession();
+        final StreamManager sm = streamManagerWithResumption(original);
+        final String previd = lastDelivered(original).attributeValue("id");
+        sm.sentStanza(message("1"));
+        sm.sentStanza(message("2"));
+        sm.sentStanza(message("3"));
+        sm.process(ack(StreamManager.NAMESPACE_V3, "2"));
+        final LocalClientSession resuming = resumingClientSession();
+        new StreamManager(resuming).process(resume(previd, 1));
+        verify(original, times(1).description("Test fixture expects the session to be resumed.")).reattach(resuming, 1L);
+        final Connection newConnection = mock(Connection.class);
+        doReturn(newConnection).when(original).getConnection();
+
+        // Execute system under test.
+        sm.redeliverUnackedStanzas(SERVER_ADDRESS, 1);
+        sm.process(ack(StreamManager.NAMESPACE_V3, "3"));
+
+        // Verify result.
+        final ArgumentCaptor<Packet> captor = ArgumentCaptor.forClass(Packet.class);
+        verify(newConnection, times(1).description("Only the stanza that remained unacknowledged is to be sent again.")).deliver(captor.capture());
+        assertEquals("3", captor.getValue().getID(), "The stanza that remained unacknowledged is to be sent again.");
+        verify(original, never().description("Acknowledging the stanza that was sent again must not close the session.")).close();
+        assertEquals(List.of(), unacknowledgedMessageIds(sm), "No stanzas must remain after the stanza that was sent again is acknowledged.");
+    }
+
+    /**
+     * Verifies that a resume request with a value of 'h' that is too high is refused after the acknowledged count rolled
+     * over, as it is at any other time.
+     */
+    @Test
+    void resumeWithValueAboveNumberOfStanzasSentIsRefusedAfterRollOver() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession original = resumableClientSession();
+        final StreamManager sm = streamManagerWithResumption(original);
+        final String previd = lastDelivered(original).attributeValue("id");
+        setCounter(sm, ACKNOWLEDGED_COUNTER_FIELD, StreamManager.MASK - 1);
+        sm.sentStanza(message("peer-counts-2^32-1"));
+        sm.sentStanza(message("peer-counts-0"));
+        sm.process(ack(StreamManager.NAMESPACE_V3, "0"));
+        final LocalClientSession resuming = resumingClientSession();
+
+        // Execute system under test.
+        new StreamManager(resuming).process(resume(previd, 5));
+
+        // Verify result.
+        verify(original, never().description("The session must not be resumed with a value of 'h' that is too high.")).reattach(any(), anyLong());
+        assertFailedWithUnexpectedRequest(lastDelivered(resuming), StreamManager.NAMESPACE_V3);
+    }
+
+    /**
+     * Verifies that a resume request with a value of 'h' from before the roll-over, which is lower than an earlier
+     * acknowledgement that rolled over, is accepted.
+     */
+    @Test
+    void resumeWithLowerValueFromBeforeRollOverIsAccepted() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession original = resumableClientSession();
+        final StreamManager sm = streamManagerWithResumption(original);
+        final String previd = lastDelivered(original).attributeValue("id");
+        setCounter(sm, ACKNOWLEDGED_COUNTER_FIELD, StreamManager.MASK - 1);
+        sm.sentStanza(message("peer-counts-2^32-1"));
+        sm.sentStanza(message("peer-counts-0"));
+        sm.process(ack(StreamManager.NAMESPACE_V3, "0"));
+        final LocalClientSession resuming = resumingClientSession();
+
+        // Execute system under test.
+        new StreamManager(resuming).process(resume(previd, StreamManager.MASK));
+
+        // Verify result.
+        verify(original, times(1).description("The session must be resumed, as a value from before the roll-over is not too high.")).reattach(resuming, StreamManager.MASK);
+        verify(resuming, never().description("No failure is to be reported for a value from before the roll-over.")).deliverRawText(anyString());
+    }
+
+    /**
      * A mock of an authenticated client session that has a full JID and a stream ID.
      */
     private static LocalClientSession authenticatedClientSession()
@@ -949,6 +1071,63 @@ public class StreamManagerTest
         assertTrue(sm.isEnabled(), "Test fixture expects Stream Management to be enabled.");
         clearInvocations(session);
         return sm;
+    }
+
+    /**
+     * A mock of a detached client session that can be resumed: it has a non-anonymous authentication token, and is the
+     * route for its full JID in the routing table of a mocked server.
+     */
+    private static LocalClientSession resumableClientSession()
+    {
+        final LocalClientSession session = authenticatedClientSession();
+        final AuthToken authToken = mock(AuthToken.class);
+        doReturn(FULL_JID.getNode()).when(authToken).getUsername();
+        doReturn(authToken).when(session).getAuthToken();
+        doReturn(true).when(session).isDetached();
+
+        final XMPPServer server = Fixtures.mockXMPPServer();
+        final RoutingTable routingTable = mock(RoutingTable.class);
+        doReturn(session).when(routingTable).getClientRoute(FULL_JID);
+        doReturn(routingTable).when(server).getRoutingTable();
+        //noinspection deprecation
+        XMPPServer.setInstance(server);
+        return session;
+    }
+
+    /**
+     * A mock of a new client session from which a resumption is requested: it authenticated as the same user, but did
+     * not bind a resource.
+     */
+    private static LocalClientSession resumingClientSession()
+    {
+        final LocalClientSession session = mock(LocalClientSession.class);
+        final AuthToken authToken = mock(AuthToken.class);
+        doReturn(FULL_JID.getNode()).when(authToken).getUsername();
+        doReturn(authToken).when(session).getAuthToken();
+        doReturn(false).when(session).isAuthenticated();
+        doReturn(Fixtures.XMPP_DOMAIN).when(session).getServerName();
+        doReturn(BasicStreamIDFactory.createStreamID("resuming-stream-id")).when(session).getStreamID();
+        return session;
+    }
+
+    /**
+     * Creates the stream manager of a session, with Stream Management enabled with resumption. The {@code <enabled/>}
+     * element remains the last element that was delivered to the session.
+     */
+    private static StreamManager streamManagerWithResumption(final LocalClientSession session)
+    {
+        final StreamManager sm = new StreamManager(session);
+        doReturn(sm).when(session).getStreamManager();
+        final Element enable = smElement("enable", StreamManager.NAMESPACE_V3);
+        enable.addAttribute("resume", "true");
+        sm.process(enable);
+        assertTrue(sm.getResume(), "Test fixture expects a resumable stream.");
+        return sm;
+    }
+
+    private static Element resume(final String previd, final long h)
+    {
+        return smElement("resume", StreamManager.NAMESPACE_V3).addAttribute("previd", previd).addAttribute("h", String.valueOf(h));
     }
 
     private static Element smElement(final String name, final String namespace)

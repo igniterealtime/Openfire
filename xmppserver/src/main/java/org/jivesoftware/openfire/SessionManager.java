@@ -352,16 +352,21 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                     presence.setFrom(session.getAddress());
                     router.route(presence);
                 }
-
-                session.getStreamManager().onClose(router, serverAddress);
             } finally {
-                // Remove the session
-                removeSession(clientSession);
+                try {
+                    // Remove the session
+                    removeSession(clientSession);
+                } finally {
+                    // OF-3442: Only once the session is removed are its unacknowledged stanzas routed like stanzas for an unavailable resource.
+                    session.getStreamManager().onClose(router, serverAddress);
+                }
             }
         } else {
             // This could be the start of data state inconsistency. See OF-3044.
             Log.warn("Not removing detached session '{}' ({}) that appears to have been replaced by another session.", session.getAddress(), session.getStreamID());
             // TODO investigate if the session should be removed (see OF-3320).
+            // OF-3442: The route is owned by the session that replaced this one, so this session's unacknowledged stanzas can be handled.
+            session.getStreamManager().onClose(router, serverAddress);
         }
     }
 
@@ -1697,10 +1702,11 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             // In the completion stage remove the session (which means it'll be removed no matter if the previous stage had exceptions).
             return result.whenComplete((v,t) -> {
                 try {
-                    session.getStreamManager().onClose(router, serverAddress);
-                } finally {
                     // Note that the session can't be removed before the unavailable presence has been sent (as session-provided data is used by the broadcast).
                     removeSession(session);
+                } finally {
+                    // OF-3442: Only once the session is removed are its unacknowledged stanzas routed like stanzas for an unavailable resource.
+                    session.getStreamManager().onClose(router, serverAddress);
                 }
             });
         }

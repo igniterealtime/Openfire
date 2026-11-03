@@ -901,9 +901,9 @@ public abstract class StanzaHandler {
         String host = xpp.getAttributeValue("", "to");
 
         try {
-            // Check that the TO attribute of the stream header matches the server name or a valid
-            // subdomain. If the value of the 'to' attribute is not valid then return a host-unknown
-            // error and close the underlying connection.
+            // Check that the TO attribute of the stream header names a host that is serviced, as
+            // determined by isHostUnknown. If the value of the 'to' attribute is not valid then return
+            // a host-unknown error and close the underlying connection.
             if (validateHost() && isHostUnknown(host)) {
                 throw new StreamErrorException(StreamError.Condition.host_unknown, "Incorrect hostname in stream header: " + host);
             }
@@ -997,11 +997,20 @@ public abstract class StanzaHandler {
 
     protected boolean isHostUnknown(String host) {
         if (host == null) {
-            // Answer false since when using server dialback the stream header will not
-            // have a TO attribute
+            // RFC 6120 section 4.7.2 requires a 'to' attribute in an initial stream header, but one without it is
+            // not refused, which keeps the behaviour for clients that omit it.
             return false;
         }
-        if (XMPPServer.getInstance().getServerInfo().getXMPPDomain().equals( host )) {
+        final String requested;
+        try {
+            // Domain names are compared after normalisation, which (among other things) makes the comparison
+            // case-insensitive.
+            requested = JID.domainprep(host);
+        } catch (final IllegalArgumentException e) {
+            Log.debug("The host '{}' is not a valid domain name.", host, e);
+            return true;
+        }
+        if (XMPPServer.getInstance().getServerInfo().getXMPPDomain().equals( requested )) {
             // requested host matched the server name
             return false;
         }

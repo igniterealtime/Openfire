@@ -880,6 +880,30 @@ public class StreamManagerTest
     }
 
     /**
+     * Verifies that an acknowledgement with a value from before the roll-over, which is lower than an earlier one that
+     * rolled over, is no error and does not remove any stanzas (XEP-0198 § 4 and § 6).
+     */
+    @Test
+    void lowerAcknowledgementFromBeforeRollOverIsNotAnError() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        setCounter(sm, ACKNOWLEDGED_COUNTER_FIELD, StreamManager.MASK - 1);
+        sm.sentStanza(message("peer-counts-2^32-1"));
+        sm.sentStanza(message("peer-counts-0"));
+        sm.sentStanza(message("peer-counts-1"));
+        sm.process(ack(StreamManager.NAMESPACE_V3, "0"));
+
+        // Execute system under test.
+        sm.process(ack(StreamManager.NAMESPACE_V3, String.valueOf(StreamManager.MASK)));
+
+        // Verify result.
+        verify(session, never().description("A lower acknowledgement is not too high, so it must not close the session.")).close();
+        assertEquals(List.of("peer-counts-1"), unacknowledgedMessageIds(sm), "A lower acknowledgement must not remove any stanzas.");
+    }
+
+    /**
      * Verifies that acknowledging a stanza that was never sent is detected around the roll-over, as XEP-0198 § 6 requires
      * at any other time. The value of 'send-count' has to roll over too, as it is an xs:unsignedInt (§ 13).
      */

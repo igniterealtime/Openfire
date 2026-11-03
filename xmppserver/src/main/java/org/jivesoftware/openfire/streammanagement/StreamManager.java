@@ -121,6 +121,12 @@ public class StreamManager {
     private AtomicLong clientProcessedStanzas = new AtomicLong( 0 );
 
     /**
+     * Whether the count of stanzas sent from the server that the client has processed has rolled over from (2^32)-1 to
+     * zero at least once.
+     */
+    private boolean clientProcessedStanzasRolledOver = false;
+
+    /**
      * The value (2^32)-1, used to emulate roll-over and the largest legal value for the 'h' attribute (XEP-0198 § 4).
      */
     static final long MASK = new BigInteger( "2" ).pow( 32 ).longValue() - 1;
@@ -592,7 +598,22 @@ public class StreamManager {
         }
         final long oldH = clientProcessedStanzas.get();
         final Long lastUnackedX = unacknowledgedServerStanzas.isEmpty() ? null : unacknowledgedServerStanzas.getLast().x;
-        return validateClientAcknowledgement(h, oldH, lastUnackedX);
+        return validateClientAcknowledgement(h, oldH, lastUnackedX, clientProcessedStanzasRolledOver);
+    }
+
+    /**
+     * Checks a value of 'h' against the stanzas that were sent, on a stream on which the acknowledged count has not
+     * rolled over.
+     *
+     * @param h The value to check.
+     * @param oldH The last acknowledged value.
+     * @param lastUnackedX The number of the last stanza sent, or null if all stanzas that were sent are acknowledged.
+     * @return false if the value is higher than the number of stanzas that were sent.
+     * @see #validateClientAcknowledgement(long, long, Long, boolean)
+     */
+    @VisibleForTesting
+    static boolean validateClientAcknowledgement(final long h, final long oldH, final Long lastUnackedX) {
+        return validateClientAcknowledgement(h, oldH, lastUnackedX, false);
     }
 
     /**
@@ -601,18 +622,26 @@ public class StreamManager {
      *
      * A value from the last acknowledged value up to and including the number of the last stanza sent is valid. A value
      * lower than the last acknowledged value is valid too, as it is not higher than the number of stanzas that were sent
-     * (XEP-0198 § 6), but it does not acknowledge any new stanzas (XEP-0198 § 4). A value that is more than half of the
-     * range lower than the last acknowledged value is not considered to be lower: that is a value that has rolled over.
+     * (XEP-0198 § 6), but it does not acknowledge any new stanzas (XEP-0198 § 4).
+     *
+     * A value counts as lower when it is at most half of the range below the last acknowledged value, counting back
+     * across the roll-over. Until the acknowledged count has rolled over, it can't be below zero either, as the values
+     * that would be reached by counting back across the roll-over were never sent.
      *
      * @param h The value to check.
      * @param oldH The last acknowledged value.
      * @param lastUnackedX The number of the last stanza sent, or null if all stanzas that were sent are acknowledged.
+     * @param rolledOver Whether the acknowledged count has rolled over at least once.
      * @return false if the value is higher than the number of stanzas that were sent.
      */
     @VisibleForTesting
-    static boolean validateClientAcknowledgement(final long h, final long oldH, final Long lastUnackedX) {
+    static boolean validateClientAcknowledgement(final long h, final long oldH, final Long lastUnackedX, final boolean rolledOver) {
         final long lastSentX = lastUnackedX == null ? oldH : lastUnackedX;
-        return isInRange(h, oldH, lastSentX) || (h < oldH && oldH - h <= MASK >> 1);
+        if (isInRange(h, oldH, lastSentX)) {
+            return true;
+        }
+        final long earliestLowerH = rolledOver ? (oldH - (MASK >> 1)) & MASK : Math.max(0, oldH - (MASK >> 1));
+        return isInRange(h, earliestLowerH, oldH);
     }
 
     /**
@@ -650,6 +679,10 @@ public class StreamManager {
                 return;
             }
 
+            if ( h < oldH ) {
+                // OF-3433: This acknowledges new stanzas, so a smaller value means that the count rolled over.
+                clientProcessedStanzasRolledOver = true;
+            }
             clientProcessedStanzas.set( h );
 
             // Remove stanzas from temporary storage as now acknowledged

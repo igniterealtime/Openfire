@@ -1028,7 +1028,7 @@ public class SASLAuthentication {
 
             // SASL authentication has completed, but resource binding has not (yet). This one-argument form
             // records the identity without transitioning the session to AUTHENTICATED, which is exactly the state
-            // that inline XEP-0198 resumption (below) and StreamManager#allowResume() require.
+            // that inline XEP-0198 resumption (below) requires.
             clientSession.setAuthToken(clientAuthToken);
 
             // XEP-0198 § 9.2: an inline resume request, if present, must be processed before any Bind2 request.

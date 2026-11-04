@@ -417,6 +417,12 @@ public abstract class StanzaHandler {
         String tag = doc.getName();
         if ("error".equals(tag)) {
             Log.info("The stream is being closed by the peer ('{}'), which sent this stream error: {}", session.getAddress(), doc.asXML());
+            try {
+                streamErrorReceived(doc);
+            } catch (final RuntimeException e) {
+                // The hook only observes the error; the stream is closed regardless.
+                Log.debug("Unable to process the stream error sent by '{}'.", session.getAddress(), e);
+            }
             session.markNonResumable();
             session.close();
         }
@@ -626,6 +632,14 @@ public abstract class StanzaHandler {
      * @throws UnauthorizedException if stanza failed to be processed. Connection will be closed.
      */
     abstract boolean processUnknowPacket(Element doc) throws UnauthorizedException;
+
+    /**
+     * Called when the peer sends a stream error, before the session is closed. Does nothing by default.
+     *
+     * @param error the stream error element the peer sent.
+     */
+    protected void streamErrorReceived(Element error) {
+    }
 
     /**
      * Tries to encrypt the connection using TLS. If the connection is encrypted then reset

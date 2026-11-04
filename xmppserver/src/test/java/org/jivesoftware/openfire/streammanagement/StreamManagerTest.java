@@ -407,7 +407,7 @@ public class StreamManagerTest
     }
 
     /**
-     * Verifies that {@link StreamManager#detachIfNeeded(LocalClientSession)} closes the pre-existing session's
+     * Verifies that {@link StreamManager#detachIfNeeded(LocalSession)} closes the pre-existing session's
      * connection with a 'conflict' {@link StreamError}, as recommended by XEP-0198 §5 for a former stream that is still
      * open when it is superseded by a resumed session.
      */
@@ -436,7 +436,7 @@ public class StreamManagerTest
     }
 
     /**
-     * Verifies that {@link StreamManager#detachIfNeeded(LocalClientSession)} is a no-op for a session
+     * Verifies that {@link StreamManager#detachIfNeeded(LocalSession)} is a no-op for a session
      * that is already detached, leaving its (already absent) connection untouched.
      */
     @Test
@@ -456,7 +456,7 @@ public class StreamManagerTest
     }
 
     /**
-     * Verifies that {@link StreamManager#detachIfNeeded(LocalClientSession)} marks the pre-existing session as detached
+     * Verifies that {@link StreamManager#detachIfNeeded(LocalSession)} marks the pre-existing session as detached
      * strictly before closing its connection. This ordering is not incidental: it is what lets
      * NettyConnection#close(StreamError) tell a benign resumption hand-off (session already detached when close() runs)
      * apart from a genuine stream failure (session not yet detached), and so decide whether to disable resumption

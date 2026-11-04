@@ -452,6 +452,52 @@ public class StreamManagerResumptionTest
     }
 
     /**
+     * Verifies that a resume request from a session that is not a client session is refused, as resumption is only
+     * supported for client sessions. XEP-0198 does not define the condition for this; it currently is
+     * 'unexpected-request'.
+     */
+    @Test
+    void resumeRequestFromNonClientSessionIsRefused() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession original = resumableClientSession();
+        final String previd = enableResumption(original, StreamManager.NAMESPACE_V3);
+        final LocalSession resuming = mock(LocalSession.class);
+        doReturn(false).when(resuming).isAuthenticated();
+
+        // Execute system under test.
+        new StreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previd, 0));
+
+        // Verify result.
+        assertFailed(lastDelivered(resuming), StreamManager.NAMESPACE_V3, PacketError.Condition.unexpected_request);
+        verify(original, never().description("No session must be resumed from a session that is not a client session.")).reattach(any(), anyLong());
+    }
+
+    /**
+     * Verifies that an inline resume request (XEP-0198 § 9.2) from a session that is not a client session is refused
+     * with a {@code <failed/>} element, as inline resumption is defined for SASL2, which only clients use. XEP-0198 does
+     * not define the condition for this; it currently is 'unexpected-request'.
+     */
+    @Test
+    void inlineResumeRequestFromNonClientSessionIsRefused() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession original = resumableClientSession();
+        final String previd = enableResumption(original, StreamManager.NAMESPACE_V3);
+        final LocalSession resuming = mock(LocalSession.class);
+        doReturn(false).when(resuming).isAuthenticated();
+
+        // Execute system under test.
+        final Sasl2ResumeResult result = new StreamManager(resuming).processSasl2Resume(ResumeRequest.from(resume(StreamManager.NAMESPACE_V3, previd, 0)));
+
+        // Verify result.
+        assertFalse(result.isSuccess(), "An inline resume request from a session that is not a client session must be refused.");
+        assertFailed(result.getResultElement(), StreamManager.NAMESPACE_V3, PacketError.Condition.unexpected_request);
+        verify(resuming, never().description("Nothing must be delivered for an inline resume request: the caller includes the outcome in its response.")).deliverRawText(anyString());
+        verify(original, never().description("No session must be resumed from a session that is not a client session.")).reattachForSasl2(any());
+    }
+
+    /**
      * Verifies that a resume request from a session that did not authenticate is refused, as XEP-0198 § 10 does not
      * allow a session to be resumed before the client authenticated. XEP-0198 does not define the condition for this; it
      * currently is 'unexpected-request'.

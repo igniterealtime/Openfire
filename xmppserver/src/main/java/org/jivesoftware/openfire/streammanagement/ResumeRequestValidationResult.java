@@ -15,22 +15,26 @@
  */
 package org.jivesoftware.openfire.streammanagement;
 
-import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.LocalSession;
 import org.xmpp.packet.PacketError;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
- * Outcome of StreamManager#validateResumeRequest(ResumeRequest): either the pre-existing session that
- * is to be resumed, or the condition to report as to why the resumption request cannot be honored.
+ * Outcome of the validation of a resume request: either the pre-existing session that is to be resumed, or the
+ * condition to report as to why the resumption request cannot be honored.
+ *
+ * Instances are immutable.
+ *
+ * @param <S> the type of the session that is to be resumed.
  */
-final class ResumeRequestValidationResult
+final class ResumeRequestValidationResult<S extends LocalSession>
 {
-    @Nullable private final LocalClientSession target;
+    @Nullable private final S target;
     @Nullable private final PacketError.Condition failureCondition;
 
-    private ResumeRequestValidationResult(@Nullable final LocalClientSession target, @Nullable final PacketError.Condition failureCondition)
+    private ResumeRequestValidationResult(@Nullable final S target, @Nullable final PacketError.Condition failureCondition)
     {
         this.target = target;
         this.failureCondition = failureCondition;
@@ -40,22 +44,24 @@ final class ResumeRequestValidationResult
      * Creates a result representing a successfully validated resume request.
      *
      * @param target the pre-existing session that is to be resumed (cannot be null).
+     * @param <S> the type of the session that is to be resumed.
      * @return a success result.
      */
-    static ResumeRequestValidationResult success(@Nonnull final LocalClientSession target)
+    static <S extends LocalSession> ResumeRequestValidationResult<S> success(@Nonnull final S target)
     {
-        return new ResumeRequestValidationResult(target, null);
+        return new ResumeRequestValidationResult<>(target, null);
     }
 
     /**
      * Creates a result representing a resume request that failed validation.
      *
      * @param condition the condition to report as to why the resumption request cannot be honored (cannot be null).
+     * @param <S> the type of the session that would have been resumed.
      * @return a failure result.
      */
-    static ResumeRequestValidationResult failure(@Nonnull final PacketError.Condition condition)
+    static <S extends LocalSession> ResumeRequestValidationResult<S> failure(@Nonnull final PacketError.Condition condition)
     {
-        return new ResumeRequestValidationResult(null, condition);
+        return new ResumeRequestValidationResult<>(null, condition);
     }
 
     /**
@@ -75,7 +81,7 @@ final class ResumeRequestValidationResult
      * @return the target session, or {@code null} on failure.
      */
     @Nullable
-    LocalClientSession getTarget()
+    S getTarget()
     {
         return target;
     }

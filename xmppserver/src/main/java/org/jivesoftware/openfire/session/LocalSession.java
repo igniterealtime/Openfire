@@ -430,7 +430,7 @@ public abstract class LocalSession implements Session {
     public void incrementClientPacketCount() {
         clientPacketCount.incrementAndGet();
         lastActiveDate = System.currentTimeMillis();
-        streamManager.incrementServerProcessedStanzas();
+        streamManager.incrementHandledInboundStanzas();
     }
 
     /**

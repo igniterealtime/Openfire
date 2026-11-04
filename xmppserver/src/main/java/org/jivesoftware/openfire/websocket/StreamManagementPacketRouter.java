@@ -63,7 +63,7 @@ public class StreamManagementPacketRouter extends SessionPacketRouter {
         } else {
             super.route(wrappedElement);
             if (isUnsolicitedAckExpected()) {
-                session.getStreamManager().sendServerAcknowledgement();
+                session.getStreamManager().acknowledgeInboundStanzas();
             }
         }
     }

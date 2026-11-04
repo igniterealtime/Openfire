@@ -448,6 +448,10 @@
             revocation checking, you can set this property to <code>true</code>. When set to <code>true</code>, the
             connection will be allowed if a certificate's revocation status cannot be established.</p>
 
+        <p>To see how a remote server's certificate fares in these checks, run the S2S Connection Test against its
+            domain, as described in the <a href="s2s-connection-test-guide.html#check-6">S2S Connection Test
+            Guide</a>.</p>
+
         <p>By default, revocation checking considers the entire certificate chain. If you want to limit revocation
             checking to only the leaf certificate in a chain you can set the system
             property <code>xmpp.socket.ssl.certificate.revocation.only-end-entity</code> to <code>true</code>.</p>

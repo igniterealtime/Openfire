@@ -21,28 +21,35 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalSession;
+import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.util.JiveGlobals;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
+import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
 import org.xmpp.packet.StreamError;
 
 import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -69,6 +76,14 @@ public class StreamManagerTest
     {
         Fixtures.reconfigureOpenfireHome();
         Fixtures.disableDatabasePersistence();
+    }
+
+    @BeforeEach
+    public void setUp()
+    {
+        final XMPPServer server = Fixtures.mockXMPPServer();
+        //noinspection deprecation
+        XMPPServer.setInstance(server);
     }
 
     @AfterEach
@@ -1045,13 +1060,238 @@ public class StreamManagerTest
     }
 
     /**
-     * A mock of an authenticated client session that has a full JID and a stream ID.
+     * Verifies that the stream remains open, with all stanzas tracked, at the maximum number of unacknowledged stanzas.
+     */
+    @Test
+    void reachingMaximumOfUnacknowledgedStanzasKeepsStreamOpen() throws Exception
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("stream.management.max-unacked", "3");
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+
+        // Execute system under test.
+        sm.sentStanza(message("1"));
+        sm.sentStanza(message("2"));
+        sm.sentStanza(message("3"));
+
+        // Verify result.
+        assertFalse(session.getConnection().isClosed(), "The stream must not be closed at the maximum number of unacknowledged stanzas.");
+        assertFalse(session.isClosed(), "The session must not be closed at the maximum number of unacknowledged stanzas.");
+        assertTrue(sm.isEnabled(), "Stream Management must remain enabled at the maximum number of unacknowledged stanzas.");
+        assertEquals(List.of("1", "2", "3"), unacknowledgedMessageIds(sm), "All stanzas must be tracked at the maximum number of unacknowledged stanzas.");
+    }
+
+    /**
+     * Verifies that exceeding the maximum number of unacknowledged stanzas closes the stream with a 'policy-violation'
+     * stream error, so that the peer learns why. XEP-0198 defines no such maximum, and no way to stop tracking stanzas on
+     * an open stream.
+     */
+    @Test
+    void exceedingMaximumOfUnacknowledgedStanzasClosesStream()
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("stream.management.max-unacked", "3");
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        sm.sentStanza(message("1"));
+        sm.sentStanza(message("2"));
+        sm.sentStanza(message("3"));
+
+        // Execute system under test.
+        sm.sentStanza(message("4"));
+
+        // Verify result.
+        final ArgumentCaptor<StreamError> captor = ArgumentCaptor.forClass(StreamError.class);
+        verify(session.getConnection(), times(1).description("The stream must be closed when the maximum number of unacknowledged stanzas is exceeded.")).close(captor.capture());
+        assertNotNull(captor.getValue(), "The stream must be closed with a stream error, so that the peer learns why.");
+        assertEquals(StreamError.Condition.policy_violation, captor.getValue().getCondition(), "The stream error must use the 'policy-violation' condition, as a configured limit was exceeded.");
+    }
+
+    /**
+     * Verifies that exceeding the maximum number of unacknowledged stanzas does not discard them. XEP-0198 § 4 leaves a
+     * stanza the responsibility of the sender until it is acknowledged, and states that a server should treat it as a
+     * stanza for an unavailable resource when the stream ends.
+     */
+    @Test
+    void exceedingMaximumOfUnacknowledgedStanzasDoesNotDiscardThem() throws Exception
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("stream.management.max-unacked", "3");
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        sm.sentStanza(message("1"));
+        sm.sentStanza(message("2"));
+        sm.sentStanza(message("3"));
+
+        // Execute system under test.
+        sm.sentStanza(message("4"));
+
+        // Verify result.
+        assertEquals(List.of("1", "2", "3", "4"), unacknowledgedMessageIds(sm), "Stanzas that were not acknowledged must still be routed when the session closes.");
+    }
+
+    /**
+     * Verifies that exceeding the maximum number of unacknowledged stanzas disables resumption, so that the session closes
+     * and its unacknowledged stanzas are handled, rather than being kept for a peer that does not acknowledge them.
+     */
+    @Test
+    void exceedingMaximumOfUnacknowledgedStanzasDisablesResumption()
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("stream.management.max-unacked", "1");
+        final LocalClientSession session = authenticatedClientSession();
+        final AuthToken authToken = mock(AuthToken.class);
+        doReturn(authToken).when(session).getAuthToken();
+        final StreamManager sm = new StreamManager(session);
+        final Element enable = smElement("enable", StreamManager.NAMESPACE_V3);
+        enable.addAttribute("resume", "true");
+        sm.process(enable);
+        assertTrue(sm.getResume(), "Test fixture expects a resumable stream.");
+        sm.sentStanza(message("1"));
+
+        // Execute system under test.
+        sm.sentStanza(message("2"));
+
+        // Verify result.
+        assertFalse(sm.getResume(), "The stream must not be resumable after the maximum number of unacknowledged stanzas was exceeded.");
+    }
+
+    /**
+     * Verifies that the stream is closed once, rather than for every stanza that is sent after exceeding the maximum
+     * number of unacknowledged stanzas, and that stanzas that are sent after that are not tracked. The connection is
+     * closed, so it hands those stanzas to its fallback, which would deliver them a second time if they were also routed
+     * again when the session closes.
+     */
+    @Test
+    void exceedingMaximumOfUnacknowledgedStanzasClosesStreamOnce() throws Exception
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("stream.management.max-unacked", "1");
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        sm.sentStanza(message("1"));
+
+        // Execute system under test.
+        sm.sentStanza(message("2"));
+        sm.sentStanza(message("3"));
+
+        // Verify result.
+        verify(session.getConnection(), times(1).description("The stream must be closed once.")).close(any());
+        assertEquals(List.of("1", "2"), unacknowledgedMessageIds(sm), "Stanzas that are sent after the stream was closed must not be tracked, as the closed connection hands them to its fallback.");
+    }
+
+    /**
+     * Verifies that a message in a batch that is delivered after the stream was closed for exceeding the maximum number of
+     * unacknowledged stanzas is handed to the connection only, which stores it offline, and not tracked to be routed again.
+     */
+    @Test
+    void stanzasInBatchAfterExceedingMaximumAreNotTracked() throws Exception
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("stream.management.max-unacked", "1");
+        final Connection connection = closableConnection();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, BasicStreamIDFactory.createStreamID(STREAM_ID), Locale.ENGLISH);
+        session.setStatus(Session.Status.AUTHENTICATED);
+        session.getStreamManager().process(smElement("enable", StreamManager.NAMESPACE_V3));
+        assertTrue(session.getStreamManager().isEnabled(), "Test fixture expects Stream Management to be enabled.");
+
+        // Execute system under test.
+        session.pushPackets(List.of(message("1"), message("2"), message("3")));
+
+        // Verify result.
+        verify(connection, times(1).description("The stream must be closed once.")).close(any());
+        verify(connection, times(3).description("Each stanza in the batch is to be handed to the connection, which hands it to its fallback once it is closed.")).deliver(any());
+        assertEquals(List.of("1", "2"), unacknowledgedMessageIds(session.getStreamManager()), "A message that is handed to the closed connection must not also be tracked, as it would then be delivered twice.");
+    }
+
+    /**
+     * Verifies that a stanza in a batch that is delivered after the stream was closed for exceeding the maximum number of
+     * unacknowledged stanzas is still tracked when the connection has no fallback, as the closed connection then drops
+     * the stanza, and it would otherwise be lost.
+     */
+    @Test
+    void stanzasInBatchAfterExceedingMaximumAreTrackedWithoutFallback() throws Exception
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("stream.management.max-unacked", "1");
+        final Connection connection = closableConnection();
+        doReturn(null).when(connection).getPacketDeliverer();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, BasicStreamIDFactory.createStreamID(STREAM_ID), Locale.ENGLISH);
+        session.setStatus(Session.Status.AUTHENTICATED);
+        session.getStreamManager().process(smElement("enable", StreamManager.NAMESPACE_V3));
+        assertTrue(session.getStreamManager().isEnabled(), "Test fixture expects Stream Management to be enabled.");
+
+        // Execute system under test.
+        session.pushPackets(List.of(message("1"), message("2"), message("3")));
+
+        // Verify result.
+        assertTrue(connection.isClosed(), "Test fixture expects the stream to be closed for exceeding the maximum.");
+        assertEquals(List.of("1", "2", "3"), unacknowledgedMessageIds(session.getStreamManager()), "A stanza that the closed connection drops, as it has no fallback, must be tracked, so that it is routed when the session closes.");
+    }
+
+    /**
+     * Verifies that an IQ request in a batch that is delivered after the stream was closed for exceeding the maximum
+     * number of unacknowledged stanzas is answered with an error when the session closes. The fallback of the closed
+     * connection drops IQ stanzas, so the request must remain tracked, as RFC 6120 § 8.2.3 requires a response to every
+     * IQ request.
+     */
+    @Test
+    void iqRequestInBatchAfterExceedingMaximumIsAnsweredWhenSessionCloses() throws Exception
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("stream.management.max-unacked", "1");
+        final Connection connection = closableConnection();
+        final LocalClientSession session = new LocalClientSession(Fixtures.XMPP_DOMAIN, connection, BasicStreamIDFactory.createStreamID(STREAM_ID), Locale.ENGLISH);
+        session.setStatus(Session.Status.AUTHENTICATED);
+        session.getStreamManager().process(smElement("enable", StreamManager.NAMESPACE_V3));
+        assertTrue(session.getStreamManager().isEnabled(), "Test fixture expects Stream Management to be enabled.");
+        final IQ request = new IQ(IQ.Type.get, "3");
+        request.setFrom(new JID("contact", Fixtures.XMPP_DOMAIN, "desktop"));
+        request.setTo(new JID("user", Fixtures.XMPP_DOMAIN, "mobile"));
+        request.setChildElement("query", "jabber:iq:version");
+
+        // Execute system under test.
+        session.pushPackets(List.of(message("1"), message("2"), request));
+
+        // Verify result.
+        assertTrue(connection.isClosed(), "Test fixture expects the stream to be closed for exceeding the maximum.");
+        final PacketRouter router = mock(PacketRouter.class);
+        session.getStreamManager().onClose(router, SERVER_ADDRESS);
+        final ArgumentCaptor<IQ> captor = ArgumentCaptor.forClass(IQ.class);
+        verify(router, atLeast(0)).route(captor.capture());
+        assertEquals(1, captor.getAllValues().size(), "Exactly one response must be routed for the IQ request, but these were routed: " + captor.getAllValues());
+        final IQ error = captor.getValue();
+        assertEquals(IQ.Type.error, error.getType(), "The response to the IQ request must be an error.");
+        assertEquals("3", error.getID(), "The response must have the ID of the IQ request.");
+        assertEquals(request.getFrom(), error.getTo(), "The response must be addressed to the sender of the IQ request.");
+        assertEquals(PacketError.Condition.service_unavailable, error.getError().getCondition(), "The response must report the condition for an unavailable resource.");
+    }
+
+    /**
+     * A mock of a connection that reports itself as closed once it is closed, through either close() or
+     * close(StreamError), and that has a fallback for stanzas that it cannot deliver.
+     */
+    private static Connection closableConnection()
+    {
+        final Connection connection = mock(Connection.class);
+        doReturn(mock(PacketDeliverer.class)).when(connection).getPacketDeliverer();
+        final AtomicBoolean closed = new AtomicBoolean(false);
+        doAnswer(invocation -> { closed.set(true); return null; }).when(connection).close();
+        doAnswer(invocation -> { closed.set(true); return null; }).when(connection).close(nullable(StreamError.class));
+        doAnswer(invocation -> closed.get()).when(connection).isClosed();
+        return connection;
+    }
+
+    /**
+     * A mock of an authenticated client session that has a connection, a full JID and a stream ID.
      *
      * The session will set its closed flag when it is closed through invocation of either close() or close(StreamError)
      */
     private static LocalClientSession authenticatedClientSession()
     {
         final LocalClientSession session = mock(LocalClientSession.class);
+        doReturn(closableConnection()).when(session).getConnection();
         doReturn(true).when(session).isAuthenticated();
         doReturn(FULL_JID).when(session).getAddress();
         doReturn(BasicStreamIDFactory.createStreamID(STREAM_ID)).when(session).getStreamID();

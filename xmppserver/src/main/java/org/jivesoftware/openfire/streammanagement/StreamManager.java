@@ -127,6 +127,11 @@ public class StreamManager {
     private boolean clientProcessedStanzasRolledOver = false;
 
     /**
+     * Whether the number of unacknowledged stanzas exceeded the maximum, which causes the session to be closed.
+     */
+    private boolean exceededMaximumUnacknowledgedStanzas = false;
+
+    /**
      * The value (2^32)-1, used to emulate roll-over and the largest legal value for the 'h' attribute (XEP-0198 § 4).
      */
     static final long MASK = new BigInteger( "2" ).pow( 32 ).longValue() - 1;
@@ -759,9 +764,17 @@ public class StreamManager {
         if(isEnabled()) {
             final long requestFrequency = JiveGlobals.getLongProperty( "stream.management.requestFrequency", 5 );
             final int size;
+            final boolean closeForExceedingMaximum;
 
             synchronized (this)
             {
+                final Connection connection = session.getConnection();
+                if ( exceededMaximumUnacknowledgedStanzas && packet instanceof Message && connection != null && connection.isClosed() && connection.getPacketDeliverer() != null ) {
+                    // OF-3434: The fallback of the closed connection stores this message offline. Tracking it as well would deliver it twice.
+                    // The fallback drops other stanzas, so they remain tracked, to be handled when the session closes.
+                    return;
+                }
+
                 // The next ID is one higher than the last stanza that was sent (which might be unacknowledged!), rolling over after 2^32-1 (XEP-0198 § 4).
                 final long x = ( 1 + ( unacknowledgedServerStanzas.isEmpty() ? clientProcessedStanzas.get() : unacknowledgedServerStanzas.getLast().x ) ) & MASK;
                 unacknowledgedServerStanzas.addLast( new StreamManager.UnackedPacket( x, packet.createCopy() ) );
@@ -770,14 +783,16 @@ public class StreamManager {
 
                 Log.trace( "Added stanza of type '{}' to collection of unacknowledged stanzas (x={}). Collection size is now {}.", packet.getElement().getName(), x, size );
 
-                // Prevent keeping to many stanzas in memory.
-                if ( size > getMaximumUnacknowledgedStanzas() )
-                {
-                    Log.warn( "To many stanzas go unacknowledged for this connection. Clearing queue and disabling functionality." );
-                    namespace = null;
-                    unacknowledgedServerStanzas.clear();
-                    return;
+                // Prevent keeping to many stanzas in memory. OF-3434: the stanzas are kept, to be handled when the session closes.
+                closeForExceedingMaximum = size > getMaximumUnacknowledgedStanzas() && !exceededMaximumUnacknowledgedStanzas;
+                if ( closeForExceedingMaximum ) {
+                    exceededMaximumUnacknowledgedStanzas = true;
                 }
+            }
+
+            if ( closeForExceedingMaximum ) {
+                closeForExceedingMaximum( size );
+                return;
             }
 
             // When we have a sizable amount of unacknowledged stanzas, request acknowledgement.
@@ -787,6 +802,25 @@ public class StreamManager {
             }
         }
 
+    }
+
+    /**
+     * Ends the session after the number of unacknowledged stanzas exceeded the maximum.
+     *
+     * XEP-0198 defines no such maximum, and no way to stop tracking stanzas on an open stream. Instead, the stream is
+     * closed with a stream error, and resumption is disabled. The session then closes, which handles its unacknowledged
+     * stanzas as for any other session that closes without being resumed (XEP-0198 § 4).
+     *
+     * @param size The number of unacknowledged stanzas.
+     */
+    private void closeForExceedingMaximum( final int size )
+    {
+        Log.warn( "Closing session, as too many stanzas go unacknowledged: {}, the maximum is {}. Affected session: {}", size, getMaximumUnacknowledgedStanzas(), session );
+        formalClose();
+        final Connection connection = session.getConnection();
+        if ( connection != null ) {
+            connection.close( new StreamError( StreamError.Condition.policy_violation, "Too many stanzas went unacknowledged: " + size + ", while the maximum is " + getMaximumUnacknowledgedStanzas() + "." ) );
+        }
     }
 
     /**

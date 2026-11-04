@@ -52,6 +52,7 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -1384,6 +1385,154 @@ public class StreamManagerTest
         // Verify result.
         assertTrue(terminated.await(5, TimeUnit.SECONDS), "A detached session must be ended when the maximum number of unacknowledged stanzas is exceeded.");
         verify(sessionManager, times(1).description("A detached session must be ended once.")).terminateDetached(session);
+    }
+
+    /**
+     * Verifies that a stanza is still tracked when it is delivered on a connection that is not closed, after the maximum
+     * number of unacknowledged stanzas was exceeded. That happens when a detached session that exceeded the maximum is
+     * resumed: its new connection delivers the stanza before the resumed stream is closed, so no fallback handles it.
+     */
+    @Test
+    void stanzaDeliveredOnResumedConnectionAfterExceedingMaximumIsTracked() throws Exception
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("stream.management.max-unacked", "1");
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        doReturn(true).when(session).isDetached();
+        doReturn(null).when(session).getConnection();
+        final CountDownLatch terminated = new CountDownLatch(1);
+        doAnswer(invocation -> { terminated.countDown(); return null; }).when(sessionManager).terminateDetached(session);
+        sm.sentStanza(message("1"));
+        sm.sentStanza(message("2"));
+        assertTrue(terminated.await(5, TimeUnit.SECONDS), "Test fixture expects the detached session to be ended.");
+        doReturn(false).when(session).isDetached();
+        final Connection resumedConnection = closableConnection();
+        doReturn(resumedConnection).when(session).getConnection();
+
+        // Execute system under test.
+        sm.sentStanza(message("3"));
+
+        // Verify result.
+        assertEquals(List.of("1", "2", "3"), unacknowledgedMessageIds(sm), "A stanza that is delivered on a connection that is not closed must be tracked, as no fallback handles it.");
+        assertFalse(resumedConnection.isClosed(), "A stanza that is sent after the maximum was exceeded must not close the stream again; closing a resumed stream is up to its resumption.");
+    }
+
+    /**
+     * Verifies that a detached session that exceeded the maximum number of unacknowledged stanzas is closed when it is
+     * resumed before it could be ended, rather than continuing on the new connection without a limit.
+     */
+    @Test
+    void resumptionAfterExceedingMaximumOfUnacknowledgedStanzasClosesStream() throws Exception
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("stream.management.max-unacked", "1");
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        doReturn(true).when(session).isDetached();
+        doReturn(null).when(session).getConnection();
+        // Hold the task that ends the detached session until the session was resumed, so that the resumption runs first.
+        final CountDownLatch resumed = new CountDownLatch(1);
+        final CountDownLatch terminated = new CountDownLatch(1);
+        doAnswer(invocation -> {
+            resumed.await(5, TimeUnit.SECONDS);
+            terminated.countDown();
+            return null;
+        }).when(sessionManager).terminateDetached(session);
+        sm.sentStanza(message("1"));
+        sm.sentStanza(message("2"));
+        final Connection newConnection = closableConnection();
+        doReturn(false).when(session).isDetached();
+        doReturn(newConnection).when(session).getConnection();
+
+        // Execute system under test.
+        sm.redeliverUnackedStanzas(SERVER_ADDRESS, 0);
+        resumed.countDown();
+
+        // Verify result.
+        assertTrue(terminated.await(5, TimeUnit.SECONDS), "Test fixture expects the task that ends the detached session to complete.");
+        final ArgumentCaptor<StreamError> captor = ArgumentCaptor.forClass(StreamError.class);
+        verify(newConnection, times(1).description("The resumed stream must be closed, as the maximum number of unacknowledged stanzas was exceeded.")).close(captor.capture());
+        assertEquals(StreamError.Condition.policy_violation, captor.getValue().getCondition(), "The stream error must use the 'policy-violation' condition, as a configured limit was exceeded.");
+        verify(newConnection, never().description("Stanzas must not be sent again on a stream that is being closed.")).deliver(any());
+        assertEquals(List.of("1", "2"), unacknowledgedMessageIds(sm), "Stanzas that were not acknowledged must still be routed when the session closes.");
+    }
+
+    /**
+     * Verifies that a resumed stream that is closed for exceeding the maximum number of unacknowledged stanzas is closed
+     * while the lock of the stream manager is held. The session delivers and tracks stanzas under that lock. Closing the
+     * stream between those two steps would leave a stanza that was delivered on the open stream untracked.
+     */
+    @Test
+    void resumedStreamIsClosedForExceedingMaximumWhileHoldingLock() throws Exception
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("stream.management.max-unacked", "1");
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        doReturn(true).when(session).isDetached();
+        doReturn(null).when(session).getConnection();
+        final CountDownLatch terminated = new CountDownLatch(1);
+        doAnswer(invocation -> { terminated.countDown(); return null; }).when(sessionManager).terminateDetached(session);
+        sm.sentStanza(message("1"));
+        sm.sentStanza(message("2"));
+        assertTrue(terminated.await(5, TimeUnit.SECONDS), "Test fixture expects the detached session to be ended.");
+        final Connection newConnection = mock(Connection.class);
+        final AtomicBoolean closedWhileHoldingLock = new AtomicBoolean(false);
+        doAnswer(invocation -> { closedWhileHoldingLock.set(Thread.holdsLock(sm)); return null; }).when(newConnection).close(any());
+        doReturn(false).when(session).isDetached();
+        doReturn(newConnection).when(session).getConnection();
+
+        // Execute system under test.
+        sm.redeliverUnackedStanzas(SERVER_ADDRESS, 0);
+
+        // Verify result.
+        verify(newConnection, times(1).description("The resumed stream must be closed, as the maximum number of unacknowledged stanzas was exceeded.")).close(any());
+        assertTrue(closedWhileHoldingLock.get(), "The resumed stream must be closed while the lock of the stream manager is held, so that no stanza is delivered on it without being tracked.");
+    }
+
+    /**
+     * Verifies that a stanza that is sent while a session is resumed, and that exceeds the maximum number of
+     * unacknowledged stanzas, cannot close the resumed stream before the unacknowledged stanzas are re-delivered on it.
+     * The closed stream would hand the re-delivered stanzas to its fallback, while they are also routed again when the
+     * session closes.
+     */
+    @Test
+    void stanzaExceedingMaximumDuringResumptionDoesNotCloseStreamBeforeRedelivery() throws Exception
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("stream.management.max-unacked", "2");
+        final LocalClientSession session = authenticatedClientSession();
+        final Connection connection = session.getConnection();
+        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        sm.sentStanza(message("1"));
+        sm.sentStanza(message("2"));
+        final List<String> deliveredWhileClosed = new CopyOnWriteArrayList<>();
+        doAnswer(invocation -> {
+            if (connection.isClosed()) {
+                deliveredWhileClosed.add(((Packet) invocation.getArgument(0)).getID());
+            }
+            return null;
+        }).when(connection).deliver(any());
+        // Send a stanza from another thread, as LocalClientSession#pushPackets() does, when the connection is obtained for the re-delivery.
+        final AtomicBoolean sending = new AtomicBoolean(false);
+        final Thread[] sender = new Thread[1];
+        doAnswer(invocation -> {
+            if (sending.compareAndSet(false, true)) {
+                sender[0] = new Thread(() -> { synchronized (sm) { sm.sentStanza(message("3")); } });
+                sender[0].start();
+                sender[0].join(500);
+            }
+            return connection;
+        }).when(session).getConnection();
+
+        // Execute system under test.
+        sm.redeliverUnackedStanzas(SERVER_ADDRESS, 0);
+
+        // Verify result.
+        sender[0].join(5000);
+        assertTrue(connection.isClosed(), "Test fixture expects the stream to be closed for exceeding the maximum.");
+        assertEquals(List.of(), deliveredWhileClosed, "Unacknowledged stanzas must be re-delivered before the stream is closed, as the stanzas on a closed stream go to its fallback, and are also routed again when the session closes.");
     }
 
     /**

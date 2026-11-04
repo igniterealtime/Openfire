@@ -29,6 +29,7 @@ import org.jivesoftware.openfire.net.Bind2Request;
 import org.jivesoftware.openfire.session.*;
 import org.jivesoftware.util.JiveGlobals;
 import org.jivesoftware.util.SystemProperty;
+import org.jivesoftware.util.TaskEngine;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
@@ -820,6 +821,15 @@ public class StreamManager {
         final Connection connection = session.getConnection();
         if ( connection != null ) {
             connection.close( new StreamError( StreamError.Condition.policy_violation, "Too many stanzas went unacknowledged: " + size + ", while the maximum is " + getMaximumUnacknowledgedStanzas() + "." ) );
+            // OF-3434: If the connection was already closing, its close listener can have detached the session before resumption was disabled. End it then.
+            connection.getCloseFuture().thenRun( () -> {
+                if ( session.isDetached() ) {
+                    TaskEngine.getInstance().submit( () -> XMPPServer.getInstance().getSessionManager().terminateDetached( session ) );
+                }
+            } );
+        } else {
+            // OF-3434: A detached session has no connection to close. End it now, rather than after its detach timeout.
+            TaskEngine.getInstance().submit( () -> XMPPServer.getInstance().getSessionManager().terminateDetached( session ) );
         }
     }
 

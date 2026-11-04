@@ -810,7 +810,8 @@ public class StreamManager {
      *
      * XEP-0198 defines no such maximum, and no way to stop tracking stanzas on an open stream. Instead, the stream is
      * closed with a stream error, and resumption is disabled. The session then closes, which handles its unacknowledged
-     * stanzas as for any other session that closes without being resumed (XEP-0198 § 4).
+     * stanzas as for any other session that closes without being resumed (XEP-0198 § 4). This also applies to a detached
+     * session that is resumed before it could be ended.
      *
      * @param size The number of unacknowledged stanzas.
      */
@@ -926,11 +927,17 @@ public class StreamManager {
     public void redeliverUnackedStanzas(@Nonnull final JID serverAddress, final long h) {
         Log.debug("Resuming session: Ack for {}", h);
         processClientAcknowledgement(h);
-        Log.debug("Processing remaining unacked stanzas");
-        final Connection connection = session.getConnection();
-        assert connection != null; // While the client is resuming a session, the connection on which the session is resumed can't be null.
-        // Re-deliver unacknowledged stanzas from broken stream (XEP-0198)
         synchronized (this) {
+            if (exceededMaximumUnacknowledgedStanzas) {
+                // OF-3434: The maximum was exceeded while detached. Closing under this lock keeps a stanza that LocalClientSession#pushPackets() delivers from going untracked.
+                closeForExceedingMaximum(unacknowledgedServerStanzas.size());
+                return;
+            }
+            // OF-3434: Re-delivering under the same lock keeps a stanza that exceeds the maximum from closing the stream first, which would route the re-delivered stanzas twice.
+            Log.debug("Processing remaining unacked stanzas");
+            final Connection connection = session.getConnection();
+            assert connection != null; // While the client is resuming a session, the connection on which the session is resumed can't be null.
+            // Re-deliver unacknowledged stanzas from broken stream (XEP-0198)
             if(isEnabled()) {
                 for (StreamManager.UnackedPacket unacked : unacknowledgedServerStanzas) {
                     try {

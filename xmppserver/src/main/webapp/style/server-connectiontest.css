@@ -1,4 +1,5 @@
-/* styles specific to the server-to-server connection test page (server-connectiontest.jsp) */
+
+/* styles specific to the server-to-server connection test page (server-connectiontest-view.jsp) */
 
 #spinner {
     display: none;
@@ -11,17 +12,43 @@
     animation: spin 2s linear infinite;
 }
 
+/* Domain names can be long, and the form has the width of the page. */
+#server2server-testing-domain {
+    width: 40em;
+    max-width: 70%;
+    box-sizing: border-box;
+}
+
+#spinner.s2s-running {
+    display: inline-block;
+}
+
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
 
-/* The labels take only the width they need; the output boxes take the rest. */
-.s2s-label {
-    width: 1%;
-    white-space: nowrap;
-}
+.s2s-checklist td { vertical-align: top; }
+/* The striped-row rule in global.css is more specific than its jive-highlight rule, so restate the highlight. */
+.jive-table.s2s-checklist tr.jive-highlight td { background-color: #FFFFCC; }
+.s2s-checklist td.s2s-status { white-space: nowrap; }
+.s2s-checklist td.s2s-status img { vertical-align: text-bottom; margin-right: 4px; }
+.s2s-checklist tr.s2s-unreached td { color: #767676; }
 
-.s2s-output {
-    width: 100%;
+/* The content box header style hides the browser's own disclosure arrow, so draw one that turns when the section opens. */
+.s2s-details summary { cursor: pointer; list-style: none; }
+.s2s-details summary::-webkit-details-marker { display: none; }
+.s2s-details summary::before {
+    content: "\25B6";
+    display: inline-block;
+    font-size: 0.75em;
+    margin-right: 6px;
+    transition: transform 0.15s ease-in-out;
 }
+.s2s-details[open] summary::before { transform: rotate(90deg); }
+/* The content box header has no bottom border, as the box below draws one; with the section closed, there is no box. */
+.s2s-details:not([open]) summary { border-bottom: 1px solid #CCCCCC; }
+
+.s2s-details table { width: 100%; }
+.s2s-details td.s2s-details-label { width: 1%; white-space: nowrap; }
+.s2s-details textarea { width: 100%; }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2018-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -200,6 +200,32 @@ public class KeystoreTestUtils
      */
     private static ResultHolder generateCertificateChainWithExpiredCertOnPosition(@Nullable final String subjectCommonName, final int certificateInChainThatIsExpired) throws Exception
     {
+        return generateCertificateChain(subjectCommonName, certificateInChainThatIsExpired, Instant.now().minus(40, ChronoUnit.DAYS), Instant.now().minus(10, ChronoUnit.DAYS));
+    }
+
+    /**
+     * Generates a chain of certificates, identical to {@link #generateValidCertificateChain()}, with one exception:
+     * the first certificate (the end-entity) is not valid yet: its validity period starts in the future.
+     *
+     * @param subjectCommonName The CN value to use in the end-entity certificate.
+     * @return an array of certificates. Never null, never an empty array.
+     */
+    public static ResultHolder generateCertificateChainWithNotYetValidEndEntityCert(@Nullable final String subjectCommonName) throws Exception
+    {
+        return generateCertificateChain(subjectCommonName, 0, Instant.now().plus(10, ChronoUnit.DAYS), Instant.now().plus(99, ChronoUnit.DAYS));
+    }
+
+    /**
+     * Generates a chain of certificates in which one certificate has the given validity period, and all others are valid.
+     *
+     * @param subjectCommonName The CN value to use in the end-entity certificate.
+     * @param position certificate position in chain that gets the given validity period (zero-based).
+     * @param notBefore the start of the validity period of that certificate.
+     * @param notAfter the end of the validity period of that certificate.
+     * @return an array of certificates. Never null, never an empty array.
+     */
+    private static ResultHolder generateCertificateChain(@Nullable final String subjectCommonName, final int position, final Instant notBefore, final Instant notAfter) throws Exception
+    {
         final KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance( KEY_ALGORITHM );
         keyPairGenerator.initialize( KEY_SIZE );
 
@@ -210,8 +236,10 @@ public class KeystoreTestUtils
         final X509Certificate[] result = new X509Certificate[ CHAIN_LENGTH ];
         for ( int i = CHAIN_LENGTH - 1 ; i >= 0; i-- )
         {
-            boolean isValid = ( i != certificateInChainThatIsExpired ); // one certificate needs to be expired!
-            result[ i ] = generateTestCertificate( i == 0 ? subjectCommonName : null, isValid, issuerKeyPair, subjectKeyPair, i );
+            final String commonName = i == 0 ? subjectCommonName : null;
+            result[ i ] = i == position
+                ? generateTestCertificate( commonName, notBefore, notAfter, issuerKeyPair, subjectKeyPair, i )
+                : generateTestCertificate( commonName, true, issuerKeyPair, subjectKeyPair, i );
 
             // Further away from the root CA, each certificate is issued by the previous subject.
             issuerKeyPair = subjectKeyPair;
@@ -224,6 +252,16 @@ public class KeystoreTestUtils
 
     private static X509Certificate generateTestCertificate(@Nullable final String subjectCommonName, final boolean isValid, final KeyPair issuerKeyPair, final KeyPair subjectKeyPair, int indexAwayFromEndEntity) throws Exception
     {
+        if ( isValid )
+        {
+            return generateTestCertificate(subjectCommonName, Instant.now().minus(30, ChronoUnit.DAYS), Instant.now().plus(99, ChronoUnit.DAYS), issuerKeyPair, subjectKeyPair, indexAwayFromEndEntity);
+        }
+        // Generate a certificate for which the validate period has expired.
+        return generateTestCertificate(subjectCommonName, Instant.now().minus(40, ChronoUnit.DAYS), Instant.now().minus(10, ChronoUnit.DAYS), issuerKeyPair, subjectKeyPair, indexAwayFromEndEntity);
+    }
+
+    private static X509Certificate generateTestCertificate(@Nullable final String subjectCommonName, final Instant notBefore, final Instant notAfter, final KeyPair issuerKeyPair, final KeyPair subjectKeyPair, int indexAwayFromEndEntity) throws Exception
+    {
         // Issuer and Subject.
         final String subjectName = (subjectCommonName != null ? subjectCommonName : asSemiUniqueName(subjectKeyPair.getPublic()));
         final String issuerName = issuerKeyPair == subjectKeyPair ? subjectName : asSemiUniqueName(issuerKeyPair.getPublic());
@@ -233,21 +271,6 @@ public class KeystoreTestUtils
         final X500NameBuilder issuerBuilder = new X500NameBuilder();
         issuerBuilder.addRDN(BCStyle.CN, issuerName);
         final X500Name issuer = issuerBuilder.build();
-
-        // Validity
-        final Instant notBefore;
-        final Instant notAfter;
-        if ( isValid )
-        {
-            notBefore = Instant.now().minus(30, ChronoUnit.DAYS); // 30 days ago
-            notAfter  = Instant.now().plus(99, ChronoUnit.DAYS); // 99 days from now.
-        }
-        else
-        {
-            // Generate a certificate for which the validate period has expired.
-            notBefore = Instant.now().minus(40, ChronoUnit.DAYS); // 40 days ago
-            notAfter  = Instant.now().minus(10, ChronoUnit.DAYS); // 10 days ago
-        }
 
         // The new certificate should get a unique serial number.
         final BigInteger serial = BigInteger.valueOf( Math.abs( new SecureRandom().nextInt() ) );

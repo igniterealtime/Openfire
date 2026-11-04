@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -124,6 +124,29 @@ public class TrustStore extends CertificateStore
      */
     public X509Certificate getEndEntityCertificate( Certificate chain[] )
     {
+        return getEndEntityCertificate( chain, true );
+    }
+
+    /**
+     * Does the same as {@link #getEndEntityCertificate(Certificate[])}, without logging why a chain is not trusted. For
+     * callers that only explain a decision that was already made, and logged, by a call to that method, so that the
+     * reason is not logged twice.
+     *
+     * @param chain an array of X509Certificate where the first one is the endEntityCertificate.
+     * @return trusted end-entity certificate, or null.
+     */
+    public X509Certificate getEndEntityCertificateWithoutLogging( Certificate chain[] )
+    {
+        return getEndEntityCertificate( chain, false );
+    }
+
+    /**
+     * @param chain an array of X509Certificate where the first one is the endEntityCertificate.
+     * @param logFailures whether to log why a chain is not trusted.
+     * @return trusted end-entity certificate, or null.
+     */
+    private X509Certificate getEndEntityCertificate( Certificate chain[], boolean logFailures )
+    {
         if ( chain == null || chain.length == 0 )
         {
             return null;
@@ -136,7 +159,7 @@ public class TrustStore extends CertificateStore
         }
         catch ( CertificateException e )
         {
-            Log.warn( "EE Certificate not valid: " + e.getMessage() );
+            if ( logFailures ) Log.warn( "EE Certificate not valid: " + e.getMessage() );
             return null;
         }
 
@@ -153,7 +176,7 @@ public class TrustStore extends CertificateStore
             }
             catch ( KeyStoreException e )
             {
-                Log.warn( "Keystore error while looking for self-signed cert; assuming untrusted." );
+                if ( logFailures ) Log.warn( "Keystore error while looking for self-signed cert; assuming untrusted." );
             }
             return null;
         }
@@ -221,15 +244,15 @@ public class TrustStore extends CertificateStore
         }
         catch ( CertPathBuilderException e )
         {
-            Log.warn( "Path builder exception while validating certificate chain:", e );
+            if ( logFailures ) Log.warn( "Path builder exception while validating certificate chain:", e );
         }
         catch ( CertPathValidatorException e )
         {
-            Log.warn( "Path exception while validating certificate chain:", e );
+            if ( logFailures ) Log.warn( "Path exception while validating certificate chain:", e );
         }
         catch ( Exception e )
         {
-            Log.warn( "Unknown exception while validating certificate chain:", e );
+            if ( logFailures ) Log.warn( "Unknown exception while validating certificate chain:", e );
         }
         return null;
     }

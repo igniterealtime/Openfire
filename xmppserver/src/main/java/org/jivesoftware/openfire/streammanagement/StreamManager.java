@@ -45,7 +45,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * XEP-0198 Stream Manager.
- * Handles client/server messages acknowledgement.
+ * Handles the acknowledgement of stanzas on a stream: inbound stanzas are those that Openfire receives from the peer,
+ * outbound stanzas are those that Openfire sends to the peer.
  *
  * @author jonnyheavey
  */
@@ -100,32 +101,30 @@ public class StreamManager {
     public static final String NAMESPACE_V3 = "urn:xmpp:sm:3";
 
     /**
-     * Session (stream) to client.
+     * Session (stream) to the peer.
      */
     private final LocalSession session;
 
     /**
-     * Namespace to be used in stanzas sent to client (depending on XEP-0198 version used by client)
+     * Namespace to be used in stanzas sent to the peer (depending on XEP-0198 version used by the peer)
      */
     private String namespace;
 
     /**
-     * Count of how many stanzas/packets
-     * sent from the client that the server has processed
+     * Count of how many inbound stanzas/packets Openfire has handled
      */
-    private AtomicLong serverProcessedStanzas = new AtomicLong( 0 );
+    private AtomicLong handledInboundStanzas = new AtomicLong( 0 );
 
     /**
-     * Count of how many stanzas/packets
-     * sent from the server that the client has processed
+     * Count of how many outbound stanzas/packets the peer has acknowledged as handled
      */
-    private AtomicLong clientProcessedStanzas = new AtomicLong( 0 );
+    private AtomicLong acknowledgedOutboundStanzas = new AtomicLong( 0 );
 
     /**
-     * Whether the count of stanzas sent from the server that the client has processed has rolled over from (2^32)-1 to
+     * Whether the count of outbound stanzas that the peer has acknowledged as handled has rolled over from (2^32)-1 to
      * zero at least once.
      */
-    private boolean clientProcessedStanzasRolledOver = false;
+    private boolean acknowledgedOutboundStanzasRolledOver = false;
 
     /**
      * Whether the number of unacknowledged stanzas exceeded the maximum, which causes the session to be closed.
@@ -138,9 +137,9 @@ public class StreamManager {
     static final long MASK = new BigInteger( "2" ).pow( 32 ).longValue() - 1;
 
     /**
-     * Collection of stanzas/packets sent to client that haven't been acknowledged.
+     * Collection of outbound stanzas/packets that haven't been acknowledged.
      */
-    private Deque<UnackedPacket> unacknowledgedServerStanzas = new LinkedList<>();
+    private Deque<UnackedPacket> unacknowledgedOutboundStanzas = new LinkedList<>();
 
     /**
      * Delegates that can determine if a detached session can be terminated.
@@ -203,7 +202,7 @@ public class StreamManager {
                     resumeRequest = ResumeRequest.from(element);
                 } catch (MalformedResumeRequestException e) {
                     Log.info( "Closing client session that sent a malformed 'resume' request. Error message: {}. Affected session: {}", e.getMessage(), session );
-                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, e.getMessage() + " Our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
+                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, e.getMessage() + " Our last unacknowledged stanza: " + (unacknowledgedOutboundStanzas.isEmpty() ? "(none)" : unacknowledgedOutboundStanzas.getLast().x) );
                     // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).
                     session.close( error );
                     return;
@@ -212,10 +211,10 @@ public class StreamManager {
 
                 break;
             case "r":
-                sendServerAcknowledgement();
+                acknowledgeInboundStanzas();
                 break;
             case "a":
-                processClientAcknowledgement(element);
+                processOutboundAcknowledgement(element);
                 break;
             default:
                 sendUnexpectedError();
@@ -511,7 +510,7 @@ public class StreamManager {
             Log.debug("Not allowing a client of '{}' to resume a session, the session to be resumed used a different version ({}) of the session management resumption feature as compared to the version that's requested now: {}.", fullJid, otherSession.getStreamManager().namespace, namespace);
             return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
         }
-        if (!otherSession.getStreamManager().validateClientAcknowledgement(h)) {
+        if (!otherSession.getStreamManager().validateOutboundAcknowledgement(h)) {
             Log.debug("Not allowing a client of '{}' to resume a session, as it reports it received more stanzas from us than that we've send it.", fullJid);
             return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
         }
@@ -529,23 +528,33 @@ public class StreamManager {
     }
 
     /**
-     * Sends XEP-0198 acknowledgement &lt;a /&gt; to client from server
+     * Sends XEP-0198 acknowledgement &lt;a /&gt; of inbound stanzas to the peer
      */
-    public void sendServerAcknowledgement() {
+    public void acknowledgeInboundStanzas() {
         if(isEnabled()) {
             if (session.isDetached()) {
                 Log.debug("Session is detached, won't request an ack.");
                 return;
             }
-            String ack = String.format("<a xmlns='%s' h='%s' />", namespace, serverProcessedStanzas.get() & MASK );
+            String ack = String.format("<a xmlns='%s' h='%s' />", namespace, handledInboundStanzas.get() & MASK );
             session.deliverRawText( ack );
         }
     }
 
     /**
-     * Sends XEP-0198 request <r /> to client from server
+     * Sends XEP-0198 acknowledgement &lt;a /&gt; of inbound stanzas to the peer
+     *
+     * @deprecated Use {@link #acknowledgeInboundStanzas()} instead.
      */
-    private void sendServerRequest() {
+    @Deprecated(forRemoval = true, since = "5.2.0") // Remove in or after Openfire 5.3.0
+    public void sendServerAcknowledgement() {
+        acknowledgeInboundStanzas();
+    }
+
+    /**
+     * Sends XEP-0198 request <r /> to the peer, for an acknowledgement of outbound stanzas
+     */
+    private void requestOutboundAcknowledgement() {
         if(isEnabled()) {
             if (session.isDetached()) {
                 Log.debug("Session is detached, won't request an ack.");
@@ -589,22 +598,22 @@ public class StreamManager {
     }
 
     /**
-     * Checks if the amount of stanzas that the client acknowledges is not higher than the amount of stanzas that we've
-     * sent to the client.
+     * Checks if the amount of stanzas that the peer acknowledges is not higher than the amount of stanzas that we've
+     * sent to the peer.
      *
-     * @param h Then number of stanzas that the client acknowledges it has received from us.
-     * @return false if we sent fewer stanzas to the client than the number it is acknowledging.
+     * @param h Then number of stanzas that the peer acknowledges it has received from us.
+     * @return false if we sent fewer stanzas to the peer than the number it is acknowledging.
      */
-    private synchronized boolean validateClientAcknowledgement(long h) {
+    private synchronized boolean validateOutboundAcknowledgement(long h) {
         if (h < 0) {
             throw new IllegalArgumentException("Argument 'h' cannot be negative, but was: " + h);
         }
         if (h > MASK) {
             throw new IllegalArgumentException("Argument 'h' cannot be larger than 2^32 -1, but was: " + h);
         }
-        final long oldH = clientProcessedStanzas.get();
-        final Long lastUnackedX = unacknowledgedServerStanzas.isEmpty() ? null : unacknowledgedServerStanzas.getLast().x;
-        return validateClientAcknowledgement(h, oldH, lastUnackedX, clientProcessedStanzasRolledOver);
+        final long oldH = acknowledgedOutboundStanzas.get();
+        final Long lastUnackedX = unacknowledgedOutboundStanzas.isEmpty() ? null : unacknowledgedOutboundStanzas.getLast().x;
+        return validateOutboundAcknowledgement(h, oldH, lastUnackedX, acknowledgedOutboundStanzasRolledOver);
     }
 
     /**
@@ -615,11 +624,11 @@ public class StreamManager {
      * @param oldH The last acknowledged value.
      * @param lastUnackedX The number of the last stanza sent, or null if all stanzas that were sent are acknowledged.
      * @return false if the value is higher than the number of stanzas that were sent.
-     * @see #validateClientAcknowledgement(long, long, Long, boolean)
+     * @see #validateOutboundAcknowledgement(long, long, Long, boolean)
      */
     @VisibleForTesting
-    static boolean validateClientAcknowledgement(final long h, final long oldH, final Long lastUnackedX) {
-        return validateClientAcknowledgement(h, oldH, lastUnackedX, false);
+    static boolean validateOutboundAcknowledgement(final long h, final long oldH, final Long lastUnackedX) {
+        return validateOutboundAcknowledgement(h, oldH, lastUnackedX, false);
     }
 
     /**
@@ -641,7 +650,7 @@ public class StreamManager {
      * @return false if the value is higher than the number of stanzas that were sent.
      */
     @VisibleForTesting
-    static boolean validateClientAcknowledgement(final long h, final long oldH, final Long lastUnackedX, final boolean rolledOver) {
+    static boolean validateOutboundAcknowledgement(final long h, final long oldH, final Long lastUnackedX, final boolean rolledOver) {
         final long lastSentX = lastUnackedX == null ? oldH : lastUnackedX;
         if (isInRange(h, oldH, lastSentX)) {
             return true;
@@ -664,51 +673,51 @@ public class StreamManager {
     }
 
     /**
-     * Process client acknowledgements for a given value of h.
+     * Process acknowledgements of outbound stanzas for a given value of h.
      *
      * @param h Last handled stanza to be acknowledged.
      */
-    private void processClientAcknowledgement(long h) {
+    private void processOutboundAcknowledgement(long h) {
         synchronized (this) {
 
-            if ( !validateClientAcknowledgement(h) ) {
+            if ( !validateOutboundAcknowledgement(h) ) {
                 // All paths leading up to here should have checked for this. Race condition?
-                throw new IllegalStateException( "Client acknowledges stanzas that we didn't send! Client Ack h: "+h+", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
+                throw new IllegalStateException( "Peer acknowledges stanzas that we didn't send! Peer Ack h: "+h+", our last unacknowledged stanza: " + (unacknowledgedOutboundStanzas.isEmpty() ? "(none)" : unacknowledgedOutboundStanzas.getLast().x) );
             }
 
-            final long oldH = clientProcessedStanzas.get();
-            final long lastSentX = unacknowledgedServerStanzas.isEmpty() ? oldH : unacknowledgedServerStanzas.getLast().x;
+            final long oldH = acknowledgedOutboundStanzas.get();
+            final long lastSentX = unacknowledgedOutboundStanzas.isEmpty() ? oldH : unacknowledgedOutboundStanzas.getLast().x;
             if ( !isInRange( h, oldH, lastSentX ) )
             {
                 // OF-3433: A value lower than an earlier one does not acknowledge anything new (XEP-0198 § 4).
-                Log.debug( "Ignoring client Ack (h={}), as it is lower than an earlier one: {}", h, oldH );
+                Log.debug( "Ignoring peer Ack (h={}), as it is lower than an earlier one: {}", h, oldH );
                 return;
             }
 
             if ( h < oldH ) {
                 // OF-3433: This acknowledges new stanzas, so a smaller value means that the count rolled over.
-                clientProcessedStanzasRolledOver = true;
+                acknowledgedOutboundStanzasRolledOver = true;
             }
-            clientProcessedStanzas.set( h );
+            acknowledgedOutboundStanzas.set( h );
 
             // Remove stanzas from temporary storage as now acknowledged
-            Log.trace( "Before processing client Ack (h={}): {} unacknowledged stanzas.", h, unacknowledgedServerStanzas.size() );
+            Log.trace( "Before processing peer Ack (h={}): {} unacknowledged stanzas.", h, unacknowledgedOutboundStanzas.size() );
 
             // Pop all acknowledged stanzas.
-            while( !unacknowledgedServerStanzas.isEmpty() && isInRange( unacknowledgedServerStanzas.getFirst().x, oldH, h ) )
+            while( !unacknowledgedOutboundStanzas.isEmpty() && isInRange( unacknowledgedOutboundStanzas.getFirst().x, oldH, h ) )
             {
-                unacknowledgedServerStanzas.removeFirst();
+                unacknowledgedOutboundStanzas.removeFirst();
             }
 
-            Log.trace( "After processing client Ack (h={}): {} unacknowledged stanzas.", h, unacknowledgedServerStanzas.size());
+            Log.trace( "After processing peer Ack (h={}): {} unacknowledged stanzas.", h, unacknowledgedOutboundStanzas.size());
         }
     }
 
     /**
-     * Receive and process acknowledgement packet from client
+     * Receive and process acknowledgement packet of outbound stanzas from the peer
      * @param ack XEP-0198 acknowledgement <a /> stanza to process
      */
-    private void processClientAcknowledgement(Element ack) {
+    private void processOutboundAcknowledgement(Element ack) {
         if(isEnabled()) {
             if (ack.attribute("h") != null) {
                 final String hValue = ack.attributeValue("h");
@@ -716,48 +725,48 @@ public class StreamManager {
                 try {
                     h = Long.parseLong(hValue);
                 } catch (NumberFormatException e) {
-                    Log.warn( "Closing client session. Client sends non-numeric value for SM 'h': {}, affected session: {}", hValue, session );
-                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a 'h' value that is not a number (which is illegal). Your Ack h: " + hValue + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
+                    Log.warn( "Closing session. Peer sends non-numeric value for SM 'h': {}, affected session: {}", hValue, session );
+                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a 'h' value that is not a number (which is illegal). Your Ack h: " + hValue + ", our last unacknowledged stanza: " + (unacknowledgedOutboundStanzas.isEmpty() ? "(none)" : unacknowledgedOutboundStanzas.getLast().x) );
                     // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).
                     session.close( error );
                     return;
                 }
                 if (h < 0) {
-                    Log.warn( "Closing client session. Client sends negative value for SM 'h': {}, affected session: {}", h, session );
-                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a negative value (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
+                    Log.warn( "Closing session. Peer sends negative value for SM 'h': {}, affected session: {}", h, session );
+                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a negative value (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedOutboundStanzas.isEmpty() ? "(none)" : unacknowledgedOutboundStanzas.getLast().x) );
                     // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).
                     session.close( error );
                     return;
                 }
                 if (h > MASK) {
-                    Log.warn( "Closing client session. Client sends value for SM 'h' that is larger than 2^32-1: {}, affected session: {}", h, session );
-                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a value larger than 2^32-1 (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
+                    Log.warn( "Closing session. Peer sends value for SM 'h' that is larger than 2^32-1: {}, affected session: {}", h, session );
+                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a value larger than 2^32-1 (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedOutboundStanzas.isEmpty() ? "(none)" : unacknowledgedOutboundStanzas.getLast().x) );
                     // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).
                     session.close( error );
                     return;
                 }
 
-                Log.debug( "Received acknowledgement from client: h={}", h );
+                Log.debug( "Received acknowledgement from peer: h={}", h );
 
                 synchronized ( this ) {
-                    if (!validateClientAcknowledgement(h)) {
-                        Log.warn( "Closing client session. Client acknowledges stanzas that we didn't send! Client Ack h: {}, our last unacknowledged stanza: {}, affected session: {}", h, unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x, session );
-                        final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas that we didn't send. Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedServerStanzas.isEmpty() ? "(none)" : unacknowledgedServerStanzas.getLast().x) );
-                        final long sendCount = unacknowledgedServerStanzas.isEmpty() ? clientProcessedStanzas.get() : unacknowledgedServerStanzas.getLast().x;
+                    if (!validateOutboundAcknowledgement(h)) {
+                        Log.warn( "Closing session. Peer acknowledges stanzas that we didn't send! Peer Ack h: {}, our last unacknowledged stanza: {}, affected session: {}", h, unacknowledgedOutboundStanzas.isEmpty() ? "(none)" : unacknowledgedOutboundStanzas.getLast().x, session );
+                        final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas that we didn't send. Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedOutboundStanzas.isEmpty() ? "(none)" : unacknowledgedOutboundStanzas.getLast().x) );
+                        final long sendCount = unacknowledgedOutboundStanzas.isEmpty() ? acknowledgedOutboundStanzas.get() : unacknowledgedOutboundStanzas.getLast().x;
                         error.getElement().addElement( QName.get( "handled-count-too-high", namespace ) ).addAttribute( "h", String.valueOf( h ) ).addAttribute( "send-count", String.valueOf( sendCount ) );
                         // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).
                         session.close( error );
                         return;
                     }
 
-                    processClientAcknowledgement(h);
+                    processOutboundAcknowledgement(h);
                 }
             }
         }
     }
 
     /**
-     * Registers that Openfire sends a stanza to the client (which is expected to be acknowledged later).
+     * Registers that Openfire sends a stanza to the peer (which is expected to be acknowledged later).
      * @param packet The stanza that is sent.
      */
     public void sentStanza(Packet packet) {
@@ -777,10 +786,10 @@ public class StreamManager {
                 }
 
                 // The next ID is one higher than the last stanza that was sent (which might be unacknowledged!), rolling over after 2^32-1 (XEP-0198 § 4).
-                final long x = ( 1 + ( unacknowledgedServerStanzas.isEmpty() ? clientProcessedStanzas.get() : unacknowledgedServerStanzas.getLast().x ) ) & MASK;
-                unacknowledgedServerStanzas.addLast( new StreamManager.UnackedPacket( x, packet.createCopy() ) );
+                final long x = ( 1 + ( unacknowledgedOutboundStanzas.isEmpty() ? acknowledgedOutboundStanzas.get() : unacknowledgedOutboundStanzas.getLast().x ) ) & MASK;
+                unacknowledgedOutboundStanzas.addLast( new StreamManager.UnackedPacket( x, packet.createCopy() ) );
 
-                size = unacknowledgedServerStanzas.size();
+                size = unacknowledgedOutboundStanzas.size();
 
                 Log.trace( "Added stanza of type '{}' to collection of unacknowledged stanzas (x={}). Collection size is now {}.", packet.getElement().getName(), x, size );
 
@@ -799,7 +808,7 @@ public class StreamManager {
             // When we have a sizable amount of unacknowledged stanzas, request acknowledgement.
             if ( size % requestFrequency == 0 ) {
                 Log.debug( "Requesting acknowledgement from peer, as we have {} or more unacknowledged stanzas.", requestFrequency );
-                sendServerRequest();
+                requestOutboundAcknowledgement();
             }
         }
 
@@ -835,7 +844,7 @@ public class StreamManager {
     }
 
     /**
-     * Handles the stanzas that the client did not acknowledge, for a session that closed without being resumed, and
+     * Handles the stanzas that the peer did not acknowledge, for a session that closed without being resumed, and
      * disables Stream Management for the session.
      *
      * XEP-0198 § 4 has a server treat unacknowledged stanzas in the same way as stanzas sent to an unavailable resource.
@@ -855,7 +864,7 @@ public class StreamManager {
         synchronized (this) {
             if(isEnabled()) {
                 namespace = null; // disable stream management.
-                for (StreamManager.UnackedPacket unacked : unacknowledgedServerStanzas) {
+                for (StreamManager.UnackedPacket unacked : unacknowledgedOutboundStanzas) {
                     // OF-3442: A failure to handle one stanza must not prevent the others from being handled.
                     try {
                         if (unacked.packet instanceof Message) {
@@ -908,7 +917,7 @@ public class StreamManager {
     Element buildResumedElement() {
         final Element resumed = new DOMElement(QName.get("resumed", namespace));
         resumed.addAttribute("previd", Base64.getEncoder().encodeToString((session.getAddress().getResource() + "\0" + session.getStreamID().getID()).getBytes(StandardCharsets.UTF_8)));
-        resumed.addAttribute("h", Long.toString(serverProcessedStanzas.get() & MASK));
+        resumed.addAttribute("h", Long.toString(handledInboundStanzas.get() & MASK));
         return resumed;
     }
 
@@ -926,11 +935,11 @@ public class StreamManager {
      */
     public void redeliverUnackedStanzas(@Nonnull final JID serverAddress, final long h) {
         Log.debug("Resuming session: Ack for {}", h);
-        processClientAcknowledgement(h);
+        processOutboundAcknowledgement(h);
         synchronized (this) {
             if (exceededMaximumUnacknowledgedStanzas) {
                 // OF-3434: The maximum was exceeded while detached. Closing under this lock keeps a stanza that LocalClientSession#pushPackets() delivers from going untracked.
-                closeForExceedingMaximum(unacknowledgedServerStanzas.size());
+                closeForExceedingMaximum(unacknowledgedOutboundStanzas.size());
                 return;
             }
             // OF-3434: Re-delivering under the same lock keeps a stanza that exceeds the maximum from closing the stream first, which would route the re-delivered stanzas twice.
@@ -939,7 +948,7 @@ public class StreamManager {
             assert connection != null; // While the client is resuming a session, the connection on which the session is resumed can't be null.
             // Re-deliver unacknowledged stanzas from broken stream (XEP-0198)
             if(isEnabled()) {
-                for (StreamManager.UnackedPacket unacked : unacknowledgedServerStanzas) {
+                for (StreamManager.UnackedPacket unacked : unacknowledgedOutboundStanzas) {
                     try {
                         if (unacked.packet instanceof Message) {
                             Message m = (Message) unacked.packet;
@@ -965,7 +974,7 @@ public class StreamManager {
                     }
                 }
 
-                sendServerRequest();
+                requestOutboundAcknowledgement();
             }
         }
     }
@@ -980,13 +989,30 @@ public class StreamManager {
     }
 
     /**
-     * Increments the count of stanzas processed by the server since
+     * Increments the count of inbound stanzas that Openfire has handled since
      * Stream Management was enabled.
+     *
+     * This is part of the processing of every inbound stanza. An invocation for a stanza that was not handled makes the
+     * count that is reported to the peer incorrect.
      */
-    public void incrementServerProcessedStanzas() {
+    public void incrementHandledInboundStanzas() {
         if(isEnabled()) {
-            this.serverProcessedStanzas.incrementAndGet();
+            this.handledInboundStanzas.incrementAndGet();
         }
+    }
+
+    /**
+     * Increments the count of inbound stanzas that Openfire has handled since
+     * Stream Management was enabled.
+     *
+     * This is part of the processing of every inbound stanza. An invocation for a stanza that was not handled makes the
+     * count that is reported to the peer incorrect.
+     *
+     * @deprecated Use {@link #incrementHandledInboundStanzas()} instead.
+     */
+    @Deprecated(forRemoval = true, since = "5.2.0") // Remove in or after Openfire 5.3.0
+    public void incrementServerProcessedStanzas() {
+        incrementHandledInboundStanzas();
     }
 
     /**

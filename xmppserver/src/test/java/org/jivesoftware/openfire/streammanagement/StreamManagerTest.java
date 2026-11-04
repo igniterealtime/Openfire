@@ -88,8 +88,8 @@ public class StreamManagerTest
     private static final int DETACH_TIME_MILLIS = 120_000;
 
     // OF-3433: Names of private fields, used to reach the roll-over at 2^32 without sending that many stanzas.
-    private static final String HANDLED_COUNTER_FIELD = "serverProcessedStanzas";
-    private static final String ACKNOWLEDGED_COUNTER_FIELD = "clientProcessedStanzas";
+    private static final String HANDLED_COUNTER_FIELD = "handledInboundStanzas";
+    private static final String ACKNOWLEDGED_COUNTER_FIELD = "acknowledgedOutboundStanzas";
 
     private SessionManager sessionManager;
 
@@ -128,7 +128,7 @@ public class StreamManagerTest
         final Long lastUnackedX = null;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -143,7 +143,7 @@ public class StreamManagerTest
         final Long lastUnackedX = 1L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -158,7 +158,7 @@ public class StreamManagerTest
         final Long lastUnackedX = 12L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -173,7 +173,7 @@ public class StreamManagerTest
         final Long lastUnackedX = null;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertFalse(result);
@@ -188,7 +188,7 @@ public class StreamManagerTest
         final Long lastUnackedX = 2L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertFalse(result);
@@ -204,7 +204,7 @@ public class StreamManagerTest
         final Long lastUnackedX = null;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -220,7 +220,7 @@ public class StreamManagerTest
         final Long lastUnackedX = null;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertFalse(result);
@@ -237,7 +237,7 @@ public class StreamManagerTest
         final Long lastUnackedX = MAX;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -253,7 +253,7 @@ public class StreamManagerTest
         final Long lastUnackedX = null;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -269,7 +269,7 @@ public class StreamManagerTest
         final Long lastUnackedX = MAX;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -284,7 +284,7 @@ public class StreamManagerTest
         final Long lastUnackedX = 0L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -300,7 +300,7 @@ public class StreamManagerTest
         final Long lastUnackedX = 4L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -316,7 +316,7 @@ public class StreamManagerTest
         final Long lastUnackedX = null;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertFalse(result);
@@ -332,7 +332,7 @@ public class StreamManagerTest
         final Long lastUnackedX = 0L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -348,7 +348,7 @@ public class StreamManagerTest
         final Long lastUnackedX = 3L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -363,7 +363,7 @@ public class StreamManagerTest
         final Long lastUnackedX = null;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertFalse(result);
@@ -379,7 +379,7 @@ public class StreamManagerTest
         final Long lastUnackedX = 4L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -395,7 +395,7 @@ public class StreamManagerTest
         final Long lastUnackedX = 4L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -411,7 +411,7 @@ public class StreamManagerTest
         final Long lastUnackedX = 4L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateClientAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertFalse(result);
@@ -709,7 +709,7 @@ public class StreamManagerTest
         // Setup test fixture.
         final LocalClientSession session = authenticatedClientSession();
         final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
-        sm.incrementServerProcessedStanzas();
+        sm.incrementHandledInboundStanzas();
 
         // Execute system under test.
         sm.process(smElement("enable", StreamManager.NAMESPACE_V2));
@@ -735,9 +735,9 @@ public class StreamManagerTest
         // Setup test fixture.
         final LocalClientSession session = authenticatedClientSession();
         final StreamManager sm = enabledStreamManager(session, namespace);
-        sm.incrementServerProcessedStanzas();
-        sm.incrementServerProcessedStanzas();
-        sm.incrementServerProcessedStanzas();
+        sm.incrementHandledInboundStanzas();
+        sm.incrementHandledInboundStanzas();
+        sm.incrementHandledInboundStanzas();
 
         // Execute system under test.
         sm.process(smElement("r", namespace));
@@ -774,9 +774,9 @@ public class StreamManagerTest
         // Setup test fixture.
         final LocalClientSession session = authenticatedClientSession();
         final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
-        sm.incrementServerProcessedStanzas();
+        sm.incrementHandledInboundStanzas();
         sm.process(smElement("r", StreamManager.NAMESPACE_V3));
-        sm.incrementServerProcessedStanzas();
+        sm.incrementHandledInboundStanzas();
 
         // Execute system under test.
         sm.process(smElement("r", StreamManager.NAMESPACE_V3));
@@ -794,7 +794,7 @@ public class StreamManagerTest
         // Setup test fixture.
         final LocalClientSession session = authenticatedClientSession();
         final StreamManager sm = new StreamManager(session);
-        sm.incrementServerProcessedStanzas();
+        sm.incrementHandledInboundStanzas();
         sm.process(smElement("enable", StreamManager.NAMESPACE_V3));
 
         // Execute system under test.
@@ -1282,11 +1282,11 @@ public class StreamManagerTest
         // Execute system under test.
         sm.process(smElement("r", StreamManager.NAMESPACE_V3));
         final String before = lastDelivered(session).attributeValue("h");
-        sm.incrementServerProcessedStanzas();
+        sm.incrementHandledInboundStanzas();
         clearInvocations(session);
         sm.process(smElement("r", StreamManager.NAMESPACE_V3));
         final String after = lastDelivered(session).attributeValue("h");
-        sm.incrementServerProcessedStanzas();
+        sm.incrementHandledInboundStanzas();
         clearInvocations(session);
         sm.process(smElement("r", StreamManager.NAMESPACE_V3));
         final String afterNext = lastDelivered(session).attributeValue("h");
@@ -1308,7 +1308,7 @@ public class StreamManagerTest
         final LocalClientSession session = authenticatedClientSession();
         final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         setCounter(sm, HANDLED_COUNTER_FIELD, StreamManager.MASK);
-        sm.incrementServerProcessedStanzas();
+        sm.incrementHandledInboundStanzas();
 
         // Execute system under test.
         final Element result = sm.buildResumedElement();
@@ -2507,7 +2507,7 @@ public class StreamManagerTest
      */
     private static int unacknowledgedStanzaCount(final StreamManager sm) throws Exception
     {
-        final Field field = StreamManager.class.getDeclaredField("unacknowledgedServerStanzas");
+        final Field field = StreamManager.class.getDeclaredField("unacknowledgedOutboundStanzas");
         field.setAccessible(true);
         synchronized (sm) {
             return ((Collection<?>) field.get(sm)).size();

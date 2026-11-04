@@ -177,7 +177,7 @@ public class StreamManagerResumptionTest
         enableResumption(original, StreamManager.NAMESPACE_V3);
         final StreamManager sm = original.getStreamManager();
         for (int i = 0; i < handled; i++) {
-            sm.incrementServerProcessedStanzas();
+            sm.incrementHandledInboundStanzas();
         }
         final Connection connection = reattached(original);
 

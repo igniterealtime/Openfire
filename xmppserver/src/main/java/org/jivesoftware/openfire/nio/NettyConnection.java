@@ -31,6 +31,7 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.net.AbstractConnection;
 import org.jivesoftware.openfire.net.ServerTrafficCounter;
 import org.jivesoftware.openfire.net.StanzaHandler;
+import org.jivesoftware.openfire.server.diagnostics.AttemptRecorder;
 import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
@@ -71,6 +72,12 @@ public class NettyConnection extends AbstractConnection
     private static final Logger Log = LoggerFactory.getLogger(NettyConnection.class);
     public static final String SSL_HANDLER_NAME = "ssl";
     public static final AttributeKey<DomainPair> DOMAIN_PAIR = AttributeKey.valueOf("OF_OUTBOUND_DOMAIN_PAIR");
+
+    /**
+     * The recorder of the outbound server-to-server connection attempt that a channel belongs to, so that the
+     * handlers can record the milestones of the attempt without changes to their constructors.
+     */
+    public static final AttributeKey<AttemptRecorder> ATTEMPT_RECORDER = AttributeKey.valueOf("OF_OUTBOUND_ATTEMPT_RECORDER");
     private final ConnectionConfiguration configuration;
     private final ChannelHandlerContext channelHandlerContext;
 
@@ -107,6 +114,14 @@ public class NettyConnection extends AbstractConnection
         }
         deliverRawText(" ");
         return !isClosed();
+    }
+
+    /**
+     * @return the recorder of the outbound server-to-server connection attempt that this connection belongs to; empty
+     *         for any other connection.
+     */
+    public Optional<AttemptRecorder> getAttemptRecorder() {
+        return Optional.ofNullable(channelHandlerContext.channel().attr(ATTEMPT_RECORDER).get());
     }
 
     public SocketAddress getPeer() {

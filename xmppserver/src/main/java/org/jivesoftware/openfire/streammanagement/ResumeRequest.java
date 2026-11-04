@@ -119,7 +119,7 @@ public final class ResumeRequest
         }
         if (h < 0 || h > StreamManager.MASK) {
             // XEP-0198 § 4: 'h' is an unsigned 32-bit integer. Out-of-range values are rejected here rather than
-            // later by StreamManager#validateClientAcknowledgement(long), which throws for them.
+            // later by StreamManager#validateOutboundAcknowledgement(long), which throws for them.
             throw new MalformedResumeRequestException("Stream resumption 'h' attribute must be an unsigned 32-bit integer, but was: " + h);
         }
 

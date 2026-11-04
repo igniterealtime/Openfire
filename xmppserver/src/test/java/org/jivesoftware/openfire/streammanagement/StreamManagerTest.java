@@ -24,6 +24,7 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketDeliverer;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.session.LocalClientSession;
@@ -50,6 +51,9 @@ import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -71,6 +75,8 @@ public class StreamManagerTest
     private static final String HANDLED_COUNTER_FIELD = "serverProcessedStanzas";
     private static final String ACKNOWLEDGED_COUNTER_FIELD = "clientProcessedStanzas";
 
+    private SessionManager sessionManager;
+
     @BeforeAll
     public static void setUpClass() throws Exception
     {
@@ -82,6 +88,8 @@ public class StreamManagerTest
     public void setUp()
     {
         final XMPPServer server = Fixtures.mockXMPPServer();
+        sessionManager = server.getSessionManager();
+
         //noinspection deprecation
         XMPPServer.setInstance(server);
     }
@@ -1182,6 +1190,35 @@ public class StreamManagerTest
     }
 
     /**
+     * Verifies that stanzas that are sent to a detached session after exceeding the maximum number of unacknowledged
+     * stanzas are still tracked. A detached session has no connection to hand them to, so they would otherwise be lost.
+     */
+    @Test
+    void stanzasSentToDetachedSessionAfterExceedingMaximumAreTracked() throws Exception
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("stream.management.max-unacked", "1");
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        doReturn(true).when(session).isDetached();
+        doReturn(null).when(session).getConnection();
+        final CountDownLatch terminated = new CountDownLatch(1);
+        final CountDownLatch terminatedAgain = new CountDownLatch(2);
+        doAnswer(invocation -> { terminated.countDown(); terminatedAgain.countDown(); return null; }).when(sessionManager).terminateDetached(session);
+        sm.sentStanza(message("1"));
+        sm.sentStanza(message("2"));
+        assertTrue(terminated.await(5, TimeUnit.SECONDS), "Test fixture expects the detached session to be ended.");
+
+        // Execute system under test.
+        sm.sentStanza(message("3"));
+
+        // Verify result.
+        assertEquals(List.of("1", "2", "3"), unacknowledgedMessageIds(sm), "Stanzas that are sent to a detached session must be tracked, so that they are routed when the session closes.");
+        // OF-3434: Wait with a latch, as verify() with a timeout holds the lock of the synchronized terminateDetached() on the mock.
+        assertFalse(terminatedAgain.await(500, TimeUnit.MILLISECONDS), "The detached session must be ended once, not again for every stanza that is sent after exceeding the maximum.");
+    }
+
+    /**
      * Verifies that a message in a batch that is delivered after the stream was closed for exceeding the maximum number of
      * unacknowledged stanzas is handed to the connection only, which stores it offline, and not tracked to be routed again.
      */
@@ -1266,6 +1303,87 @@ public class StreamManagerTest
         assertEquals("3", error.getID(), "The response must have the ID of the IQ request.");
         assertEquals(request.getFrom(), error.getTo(), "The response must be addressed to the sender of the IQ request.");
         assertEquals(PacketError.Condition.service_unavailable, error.getError().getCondition(), "The response must report the condition for an unavailable resource.");
+    }
+
+    /**
+     * Verifies that a session is ended when its close listener detached it while it was closed for exceeding the
+     * maximum number of unacknowledged stanzas. That happens when the connection was already closing, and its close
+     * listener found the session to be resumable before resumption was disabled.
+     */
+    @Test
+    void sessionDetachedWhileClosingForExceedingMaximumIsEnded() throws Exception
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("stream.management.max-unacked", "1");
+        final LocalClientSession session = authenticatedClientSession();
+        final Connection connection = session.getConnection();
+        final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
+        doReturn(closeFuture).when(connection).getCloseFuture();
+        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final CountDownLatch terminated = new CountDownLatch(1);
+        doAnswer(invocation -> { terminated.countDown(); return null; }).when(sessionManager).terminateDetached(session);
+        sm.sentStanza(message("1"));
+        sm.sentStanza(message("2"));
+
+        // Execute system under test.
+        doReturn(true).when(session).isDetached();
+        closeFuture.complete(null);
+
+        // Verify result.
+        assertTrue(terminated.await(5, TimeUnit.SECONDS), "A session that was detached while it was closed for exceeding the maximum must be ended.");
+    }
+
+    /**
+     * Verifies that a session that is not detached when its connection finished closing, after it was closed for
+     * exceeding the maximum number of unacknowledged stanzas, is not ended as a detached session, as it has been closed.
+     */
+    @Test
+    void sessionNotDetachedWhenClosedForExceedingMaximumIsNotEndedAgain() throws Exception
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("stream.management.max-unacked", "1");
+        final LocalClientSession session = authenticatedClientSession();
+        final Connection connection = session.getConnection();
+        final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
+        doReturn(closeFuture).when(connection).getCloseFuture();
+        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final CountDownLatch terminated = new CountDownLatch(1);
+        doAnswer(invocation -> { terminated.countDown(); return null; }).when(sessionManager).terminateDetached(session);
+        sm.sentStanza(message("1"));
+        sm.sentStanza(message("2"));
+
+        // Execute system under test.
+        closeFuture.complete(null);
+
+        // Verify result.
+        assertFalse(terminated.await(500, TimeUnit.MILLISECONDS), "A session that is not detached must not be ended as a detached session.");
+    }
+
+    /**
+     * Verifies that a detached session, which has no stream to close, is ended when the maximum number of unacknowledged
+     * stanzas is exceeded, rather than after its detach timeout.
+     */
+    @Test
+    void exceedingMaximumOfUnacknowledgedStanzasOnDetachedSessionEndsSession() throws Exception
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("stream.management.max-unacked", "1");
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        doReturn(true).when(session).isDetached();
+        doReturn(null).when(session).getConnection();
+        sm.sentStanza(message("1"));
+
+        // OF-3434: Wait with a latch, as verify() with a timeout holds the lock of the synchronized terminateDetached() on the mock.
+        final CountDownLatch terminated = new CountDownLatch(1);
+        doAnswer(invocation -> { terminated.countDown(); return null; }).when(sessionManager).terminateDetached(session);
+
+        // Execute system under test.
+        sm.sentStanza(message("2"));
+
+        // Verify result.
+        assertTrue(terminated.await(5, TimeUnit.SECONDS), "A detached session must be ended when the maximum number of unacknowledged stanzas is exceeded.");
+        verify(sessionManager, times(1).description("A detached session must be ended once.")).terminateDetached(session);
     }
 
     /**

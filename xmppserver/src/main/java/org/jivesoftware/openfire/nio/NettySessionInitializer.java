@@ -32,6 +32,7 @@ import org.dom4j.*;
 import org.jivesoftware.openfire.net.RespondingServerStanzaHandler;
 import org.jivesoftware.openfire.net.SocketUtil;
 import org.jivesoftware.openfire.server.ServerDialback;
+import org.jivesoftware.openfire.server.diagnostics.AttemptRecorder;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
@@ -57,6 +58,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
@@ -199,6 +201,8 @@ public class NettySessionInitializer {
      */
     @Nullable
     private final String location;
+
+    private final AttemptRecorder recorder;
     private boolean directTLS = false;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
     private Channel channel;
@@ -210,12 +214,31 @@ public class NettySessionInitializer {
     @VisibleForTesting
     volatile NettyOutboundConnectionHandler connectionHandler;
 
+    /**
+     * Creates an initializer whose connection attempt is recorded by a recorder of its own, which nothing reads, so the
+     * S2S connection test and the failed-session page do not show it. Use
+     * {@link #NettySessionInitializer(DomainPair, int, AttemptRecorder)} for an attempt that they show.
+     *
+     * @param domainPair the local and remote domain of the connection.
+     * @param port the default port to connect to.
+     */
     public NettySessionInitializer(DomainPair domainPair, int port) {
         this(domainPair, port, null, null);
     }
 
     /**
-     * Creates an initialiser for a new connection, which can be used to resume the stream of a detached session.
+     * @param domainPair the local and remote domain of the connection.
+     * @param port the default port to connect to.
+     * @param recorder records the milestones of this connection attempt; made available to the channel's handlers.
+     */
+    public NettySessionInitializer(DomainPair domainPair, int port, AttemptRecorder recorder) {
+        this(domainPair, port, recorder, null, null);
+    }
+
+    /**
+     * Creates an initialiser for a new connection, which can be used to resume the stream of a detached session. The
+     * connection attempt is recorded by a recorder of its own, which nothing reads, so the S2S connection test and the
+     * failed-session page do not show it.
      *
      * @param domainPair the local and remote domain for which the connection is opened.
      * @param port default port to use to open the connection.
@@ -226,8 +249,13 @@ public class NettySessionInitializer {
      *                 remote domain only (see {@link SocketUtil#createSocketToLocation(String, String, int, Duration, java.util.function.Predicate)}).
      */
     public NettySessionInitializer(DomainPair domainPair, int port, @Nullable LocalOutgoingServerSession resumeTarget, @Nullable String location) {
+        this(domainPair, port, new AttemptRecorder(domainPair.getLocal(), domainPair.getRemote()), resumeTarget, location);
+    }
+
+    private NettySessionInitializer(DomainPair domainPair, int port, AttemptRecorder recorder, @Nullable LocalOutgoingServerSession resumeTarget, @Nullable String location) {
         this.domainPair = domainPair;
         this.port = port;
+        this.recorder = Objects.requireNonNull(recorder, "recorder");
         this.resumeTarget = resumeTarget;
         this.location = location;
 
@@ -243,6 +271,10 @@ public class NettySessionInitializer {
     public Future<LocalSession> init(ConnectionListener listener) {
         // Connect to remote server using XMPP 1.0 (TLS + SASL EXTERNAL or TLS + server dialback or server dialback)
         Log.debug( "Creating plain socket connection to a host that belongs to the remote XMPP domain." );
+        // Records DNS and the TCP connection. The direct TLS restart in exceptionCaught calls init again, which records
+        // the second connection over the first: the page then shows the connection that the session is made on. An
+        // attempt to resume a stream records on a recorder that nothing reads, and a connection to the location that the
+        // peer named for that is not recorded at all.
         Map.Entry<Socket, Boolean> socketToXmppDomain = null;
         if (location != null) {
             // OF-2425: XEP-0198 § 3: prefer the location that the peer named. If connecting to it fails, the usual connection algorithm applies.
@@ -261,9 +293,9 @@ public class NettySessionInitializer {
             final Duration timeLeft = resumeTarget.getTimeLeftWhileDetached();
             final Duration timeout = timeLeft == null || timeLeft.compareTo(SocketUtil.RESOLUTION_TIMEOUT.getValue()) > 0 ? SocketUtil.RESOLUTION_TIMEOUT.getValue() : timeLeft;
             Log.debug("Connecting to the hosts of the remote domain of {} to resume the stream of session {}, for at most {}.", domainPair, resumeTarget, timeout);
-            socketToXmppDomain = SocketUtil.createSocketToXmppDomain(domainPair.getRemote(), port, timeout);
+            socketToXmppDomain = SocketUtil.createSocketToXmppDomain(domainPair.getRemote(), port, timeout, recorder);
         } else if (socketToXmppDomain == null) {
-            socketToXmppDomain = SocketUtil.createSocketToXmppDomain(domainPair.getRemote(), port);
+            socketToXmppDomain = SocketUtil.createSocketToXmppDomain(domainPair.getRemote(), port, SocketUtil.RESOLUTION_TIMEOUT.getValue(), recorder);
         }
 
         if ( socketToXmppDomain == null ) {
@@ -271,6 +303,7 @@ public class NettySessionInitializer {
         }
         Socket socket = socketToXmppDomain.getKey();
         this.directTLS = socketToXmppDomain.getValue();
+        AttemptRecorder.safely(() -> recorder.directTls(directTLS));
 
         final SocketAddress socketAddress = socket.getRemoteSocketAddress();
         try {
@@ -278,6 +311,7 @@ public class NettySessionInitializer {
             socket.close();
         } catch (IOException e) {
             Log.warn("Unable to close socket to remote address: {}", socketAddress, e);
+            AttemptRecorder.safely(recorder::loggedWarning);
         }
 
         Log.debug( "Opening a new connection to {} {}.", socketAddress, directTLS ? "using directTLS" : "that is initially not encrypted" );
@@ -299,6 +333,7 @@ public class NettySessionInitializer {
                     // Make the remote domain available for the channel's whole lifetime, independent of pipeline membership, so that
                     // startTLS can obtain it for SNI without racing the removal of the outbound connection handler (OF-3332).
                     ch.attr(NettyConnection.DOMAIN_PAIR).set(domainPair);
+                    ch.attr(NettyConnection.ATTEMPT_RECORDER).set(recorder);
 
                     Duration maxIdleTimeBeforeClosing = businessLogicHandler.getMaxIdleTime().isNegative() ? Duration.ZERO : businessLogicHandler.getMaxIdleTime();
 
@@ -328,6 +363,7 @@ public class NettySessionInitializer {
                                             // after the TLS handshake completes, and we'll let that one through above.
                                         } catch (Exception e) {
                                             Log.error("Failed to start DirectTLS on channel {}: {}", ctx.channel(), e.getMessage(), e);
+                                            AttemptRecorder.safely(recorder::loggedError);
                                             ctx.channel().close();
                                         }
                                     })
@@ -353,6 +389,7 @@ public class NettySessionInitializer {
                                 factory.addNewHandlerTo(ch.pipeline(), blockingHandlerExecutor);
                             } catch (Throwable t) {
                                 Log.warn("Unable to add ChannelHandler from '{}' to pipeline of new channel: {}", factory, ch, t);
+                                AttemptRecorder.safely(recorder::loggedWarning);
                             }
                         });
                     }
@@ -367,6 +404,7 @@ public class NettySessionInitializer {
                             cause.getMessage().contains("plaintext connection?")
                         ) {
                             Log.warn("Plaintext detected on a new connection that is was started in DirectTLS mode (socket address: {}). Attempting to restart the connection in non-DirectTLS mode.", domainPair.getRemote());
+                            AttemptRecorder.safely(recorder::loggedWarning);
                             directTLS = false;
                             Log.info("Re-establishing connection to {}. Proceeding without directTLS.", domainPair.getRemote());
                             init(listener);
@@ -381,8 +419,14 @@ public class NettySessionInitializer {
 
             this.channel = b.connect(socketAddress).sync().channel();
 
-            // Make sure we free up resources (worker group MultiThreadIoEventLoopGroup) when the channel is closed
-            this.channel.closeFuture().addListener(future -> stop());
+            // Make sure we free up resources (worker group MultiThreadIoEventLoopGroup) when the channel is closed. A close
+            // that this initialiser did not start is recorded as the connection closing.
+            this.channel.closeFuture().addListener(future -> {
+                if (!isStopped.get()) {
+                    AttemptRecorder.safely(recorder::connectionClosed);
+                }
+                stop();
+            });
 
             // When using directTLS a Netty SSLHandler is added to the pipeline from instantiation. This initiates the TLS handshake, and as such we do not need to send an opening stream element.
             // The opening stream element will be sent by the StanzaHandler once TLS has been negotiated.

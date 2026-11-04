@@ -15,6 +15,7 @@
  */
 package org.jivesoftware.openfire.server.diagnostics;
 
+import java.nio.channels.ClosedChannelException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -649,6 +650,24 @@ public final class AttemptMilestones
         public static Tls handshakeFailed(final String reason)
         {
             return new Tls(Outcome.HANDSHAKE_FAILED, null, null, remoteText(reason));
+        }
+
+        /**
+         * When the connection closed during the handshake, Netty fails it with a closed channel exception that has no
+         * message, so the reason is put in words instead; otherwise the reason is the exception's message, or its type
+         * when it has none.
+         *
+         * @param cause why the handshake failed.
+         * @return the milestone.
+         */
+        public static Tls handshakeFailed(final Throwable cause)
+        {
+            for (Throwable t = cause; t != null; t = t.getCause()) {
+                if (t instanceof ClosedChannelException) {
+                    return handshakeFailed("the connection was closed during the handshake");
+                }
+            }
+            return handshakeFailed(cause.getMessage() == null ? cause.getClass().getSimpleName() : cause.getMessage());
         }
 
         public static Tls notTls()

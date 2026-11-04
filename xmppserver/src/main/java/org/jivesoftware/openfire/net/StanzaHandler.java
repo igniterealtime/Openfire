@@ -395,8 +395,13 @@ public abstract class StanzaHandler {
                 waitingCompressionACK = true;
             }
         } else if (isStreamManagementStanza(doc)) {
-            Log.trace("Client '{}' is sending stream management stanza.", session.getAddress());
-            session.getStreamManager().process( doc );
+            if (session.getConnection() != connection) {
+                // OF-3443: a resumption moved the session to another connection; data that this one still delivers must not affect it.
+                Log.debug("Ignoring stream management stanza received over connection {}, which no longer serves session {}: {}", connection, session, doc.asXML());
+            } else {
+                Log.trace("Client '{}' is sending stream management stanza.", session.getAddress());
+                session.getStreamManager().process( doc );
+            }
         }
         else {
             process(doc);

@@ -15,9 +15,9 @@
             return;
         }
         submitted = true;
-        spinner.style.display = 'inline-block';
+        spinner.classList.add('s2s-running');
         // Disable the button only once this submission is under way: a button that is disabled any earlier is left
-        // out of the submitted form, and the page runs the test only when the button's name ('s2s-test') is present.
+        // out of the submitted form.
         setTimeout(() => { button.disabled = true; }, 0);
     }, false);
 
@@ -26,7 +26,7 @@
         if (event.persisted) {
             submitted = false;
             button.disabled = false;
-            spinner.style.display = '';
+            spinner.classList.remove('s2s-running');
         }
     });
 })();

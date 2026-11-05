@@ -19,6 +19,7 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Namespace;
 import org.dom4j.QName;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.ScramUtils;
 import org.jivesoftware.openfire.session.LocalClientSession;
@@ -197,6 +198,12 @@ public class Bind2Request {
     private static final String ELEMENT_NAME = "bind";
     private static final String TAG_ELEMENT = "tag";
 
+    /**
+     * The length, in characters, of the hex-encoded HMAC-derived suffix that {@link #generateResourceString(UserAgentInfo)}
+     * appends to the (optional) client tag. This is the hex representation of the first 8 bytes of the HMAC result.
+     */
+    private static final int HMAC_SUFFIX_LENGTH = 16;
+
     private final String clientTag;
     private final List<Element> featureRequests;
 
@@ -281,10 +288,18 @@ public class Bind2Request {
     public String generateResourceString(UserAgentInfo userAgentInfo) {
         StringBuilder resource = new StringBuilder();
 
-        // Add the client tag if available
+        // Add the client tag if available. The tag is supplied by the client and is truncated (if needed) so
+        // that the final resource (tag + separator + HMAC-derived suffix, below) stays within the server's
+        // maximum resource length. Truncating here, rather than the final resource, preserves the HMAC suffix
+        // that protects against an id recovery (rainbow table) attack.
         if (clientTag != null && !clientTag.isEmpty()) {
-            resource.append(clientTag);
-            resource.append('/');
+            final int suffixLength = 1 + HMAC_SUFFIX_LENGTH; // separator + hex-encoded HMAC suffix
+            final int maxTagLength = Math.max(0, SessionManager.MAX_RESOURCE_LENGTH.getValue() - suffixLength);
+            final String tag = clientTag.length() > maxTagLength ? clientTag.substring(0, maxTagLength) : clientTag;
+            if (!tag.isEmpty()) {
+                resource.append(tag);
+                resource.append('/');
+            }
         }
 
         String hmacKey;

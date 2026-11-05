@@ -595,9 +595,15 @@ public final class AttemptMilestones
             CERTIFICATE_REJECTED,
 
             /**
-             * The connection went ahead without encryption.
+             * The connection went ahead without encryption, as this server's STARTTLS policy allows: TLS is optional and
+             * the remote did not offer it, or this server's policy disables TLS and the remote does not require it.
              */
             UNENCRYPTED,
+
+            /**
+             * The remote requires TLS, but this server's STARTTLS policy disables it, so this server closed the connection.
+             */
+            REQUIRED_BUT_DISABLED,
 
             /**
              * Over direct TLS, the remote did not complete the handshake before this server stopped waiting.
@@ -691,13 +697,23 @@ public final class AttemptMilestones
         }
 
         /**
-         * The connection went ahead without encryption.
+         * The connection went ahead without encryption, as this server's STARTTLS policy allows.
          *
          * @return the milestone.
          */
         public static Tls unencrypted()
         {
             return new Tls(Outcome.UNENCRYPTED, null, null, null);
+        }
+
+        /**
+         * The remote requires TLS, which this server's STARTTLS policy disables, so this server closed the connection.
+         *
+         * @return the milestone.
+         */
+        public static Tls requiredButDisabled()
+        {
+            return new Tls(Outcome.REQUIRED_BUT_DISABLED, null, null, null);
         }
     }
 

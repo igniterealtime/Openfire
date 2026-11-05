@@ -42,9 +42,12 @@ import java.util.function.Function;
  *
  * Each check is judged only on its own recorded fact. A check with nothing recorded shows "not observed", never a pass.
  *
+ * A connection that goes ahead unencrypted, as this server's policy allows, is a warning on the TLS check, and the
+ * certificate check shows "not reached", as no certificate is exchanged.
+ *
  * After a check fails, a later check shows "not reached" unless its step still ran. Openfire can carry on past some
- * failures (a connection that goes ahead unencrypted, or Server Dialback after this server rejects the remote
- * certificate), and a step that ran shows its own result. A failed session, ping or response that follows an earlier
+ * failures (Server Dialback after this server rejects the remote certificate), and a step that ran shows its own
+ * result. A failed session, ping or response that follows an earlier
  * failure is a consequence of it, so it also shows "not reached". When the domain itself is rejected no attempt is made,
  * and every other check shows "not reached". Otherwise the log check is judged whenever the log was captured, even
  * after a failure, because it covers the whole attempt.
@@ -168,12 +171,12 @@ public final class S2SChecklistBuilder
         // direct TLS the handshake, and with it the certificate, comes before the stream; over STARTTLS, after it.
         if (milestones.isDirectTls()) {
             sequence.addStep(S2SCheck.TLS, milestones.getTls().map(S2SChecklistBuilder::judgeTls));
-            sequence.addStep(S2SCheck.CERTIFICATE, milestones.getCertificate().map(this::judgeCertificate));
+            sequence.addStep(S2SCheck.CERTIFICATE, certificateResult());
             sequence.addStep(S2SCheck.STREAM, milestones.getStream().map(S2SChecklistBuilder::judgeStream));
         } else {
             sequence.addStep(S2SCheck.STREAM, milestones.getStream().map(S2SChecklistBuilder::judgeStream));
             sequence.addStep(S2SCheck.TLS, milestones.getTls().map(S2SChecklistBuilder::judgeTls));
-            sequence.addStep(S2SCheck.CERTIFICATE, milestones.getCertificate().map(this::judgeCertificate));
+            sequence.addStep(S2SCheck.CERTIFICATE, certificateResult());
         }
         sequence.addStep(S2SCheck.AUTHENTICATION, milestones.getAuthentication().map(S2SChecklistBuilder::judgeAuthentication));
         sequence.addConsequence(S2SCheck.SESSION, Optional.ofNullable(sessionRegistered).map(S2SChecklistBuilder::judgeSession));
@@ -296,11 +299,26 @@ public final class S2SChecklistBuilder
             case NOT_TLS -> result(S2SCheck.TLS, CheckStatus.FAIL, "fail.not_tls");
             // The certificate check, which follows, says which property of the certificate failed.
             case CERTIFICATE_REJECTED -> result(S2SCheck.TLS, CheckStatus.FAIL, "fail.certificate");
-            case UNENCRYPTED -> result(S2SCheck.TLS, CheckStatus.FAIL, "fail.unencrypted");
+            // This server's policy allows the connection to go ahead without TLS, and it did.
+            case UNENCRYPTED -> result(S2SCheck.TLS, CheckStatus.WARNING, "warning.unencrypted");
+            case REQUIRED_BUT_DISABLED -> result(S2SCheck.TLS, CheckStatus.FAIL, "fail.disabled");
             case TIMED_OUT -> result(S2SCheck.TLS, CheckStatus.FAIL, "fail.timed_out", tls.reason());
             case NOT_SET_UP_IN_TIME -> result(S2SCheck.TLS, CheckStatus.FAIL, "fail.stalled", tls.reason());
             case CLOSED_BEFORE_SET_UP -> result(S2SCheck.TLS, CheckStatus.FAIL, "fail.closed");
         };
+    }
+
+    /**
+     * @return the verdict on the remote certificate; on a connection that went ahead unencrypted, where no certificate is
+     *         exchanged, "not reached" with that reason, rather than "not observed".
+     */
+    private Optional<CheckResult> certificateResult()
+    {
+        final Optional<CheckResult> recorded = milestones.getCertificate().map(this::judgeCertificate);
+        if (recorded.isEmpty() && milestones.getTls().map(tls -> tls.outcome() == Tls.Outcome.UNENCRYPTED).orElse(false)) {
+            return Optional.of(result(S2SCheck.CERTIFICATE, CheckStatus.NOT_REACHED, "not_reached.unencrypted"));
+        }
+        return recorded;
     }
 
     private CheckResult judgeCertificate(final Certificate certificate)

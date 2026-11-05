@@ -171,15 +171,15 @@ public class S2SChecklistBuilderTest
     @Test
     public void testFirstFailureIsTheEarliestFailedCheck()
     {
-        // Setup test fixture.
+        // Setup test fixture: the certificate was rejected, and Server Dialback was then refused too.
         final S2SChecklistBuilder builder = successfulTest()
-            .milestones(successfulMilestones().tls(Tls.unencrypted()).authentication(Authentication.dialbackRefused()).build());
+            .milestones(successfulMilestones().certificate(Certificate.untrusted()).authentication(Authentication.dialbackRefused()).build());
 
         // Execute system under test.
         final S2SChecklist checklist = builder.build();
 
         // Verify results.
-        assertEquals(S2SCheck.TLS, checklist.getFirstFailure().orElseThrow().check(), "the first failure must be the earliest failed check, which is where the administrator should look");
+        assertEquals(S2SCheck.CERTIFICATE, checklist.getFirstFailure().orElseThrow().check(), "the first failure must be the earliest failed check, which is where the administrator should look");
     }
 
     @Test
@@ -712,7 +712,7 @@ public class S2SChecklistBuilderTest
             Arguments.of(Tls.refused(), "tls.fail.refused", List.of()),
             Arguments.of(Tls.handshakeFailed("Received fatal alert: handshake_failure"), "tls.fail.handshake", List.of("Received fatal alert: handshake_failure")),
             Arguments.of(Tls.notTls(), "tls.fail.not_tls", List.of()),
-            Arguments.of(Tls.unencrypted(), "tls.fail.unencrypted", List.of()),
+            Arguments.of(Tls.requiredButDisabled(), "tls.fail.disabled", List.of()),
             Arguments.of(Tls.notSetUpInTime(Duration.ofSeconds(10)), "tls.fail.stalled", List.of("10")),
             Arguments.of(Tls.closedBeforeSetUp(), "tls.fail.closed", List.of())
         );
@@ -1100,8 +1100,27 @@ public class S2SChecklistBuilderTest
     @Test
     public void testStepsRecordedAfterAFailureShowTheirOwnResult()
     {
-        // Setup test fixture: the connection went ahead unencrypted (TLS optional on both sides), so no certificate was
-        // exchanged, and the remote was authenticated with dialback.
+        // Setup test fixture: this server did not trust the remote certificate, so it went on with Server Dialback, which
+        // the remote accepted.
+        final S2SChecklistBuilder builder = successfulTest()
+            .milestones(successfulMilestones().certificate(Certificate.untrusted()).authentication(Authentication.dialbackAfterExternalRefused()).build());
+
+        // Execute system under test.
+        final S2SChecklist checklist = builder.build();
+
+        // Verify results.
+        assertCheck(checklist, S2SCheck.CERTIFICATE, CheckStatus.FAIL, "certificate.fail.untrusted");
+        assertCheck(checklist, S2SCheck.AUTHENTICATION, CheckStatus.WARNING, "authentication.warning.dialback.refused");
+        assertCheck(checklist, S2SCheck.SESSION, CheckStatus.PASS, "session.pass");
+        assertCheck(checklist, S2SCheck.PING, CheckStatus.PASS, "ping.pass");
+        assertCheck(checklist, S2SCheck.RESPONSE, CheckStatus.PASS, "response.pass");
+    }
+
+    @Test
+    public void testUnencryptedConnectionThatWentAheadIsAWarning()
+    {
+        // Setup test fixture: TLS is optional on this server and the remote did not offer it, so the connection went
+        // ahead unencrypted, no certificate was exchanged, and the remote was authenticated with dialback.
         final S2SChecklistBuilder builder = successfulTest()
             .milestones(successfulMilestones().tls(Tls.unencrypted()).certificate(null).authentication(Authentication.dialbackAfterExternalNotOffered()).build());
 
@@ -1109,12 +1128,32 @@ public class S2SChecklistBuilderTest
         final S2SChecklist checklist = builder.build();
 
         // Verify results.
-        assertCheck(checklist, S2SCheck.TLS, CheckStatus.FAIL, "tls.fail.unencrypted");
-        assertNotReached(checklist, S2SCheck.CERTIFICATE);
+        assertCheck(checklist, S2SCheck.TLS, CheckStatus.WARNING, "tls.warning.unencrypted");
+        assertCheck(checklist, S2SCheck.CERTIFICATE, CheckStatus.NOT_REACHED, "certificate.not_reached.unencrypted");
         assertCheck(checklist, S2SCheck.AUTHENTICATION, CheckStatus.WARNING, "authentication.warning.dialback.not_offered");
         assertCheck(checklist, S2SCheck.SESSION, CheckStatus.PASS, "session.pass");
         assertCheck(checklist, S2SCheck.PING, CheckStatus.PASS, "ping.pass");
         assertCheck(checklist, S2SCheck.RESPONSE, CheckStatus.PASS, "response.pass");
+        assertTrue(checklist.getFirstFailure().isEmpty(), "a connection that works unencrypted, as this server's settings allow, has not failed");
+    }
+
+    @Test
+    public void testEncryptionRequiredByTheRemoteButDisabledHereFails()
+    {
+        // Setup test fixture: this server's STARTTLS policy is Disabled, and the remote requires TLS, so this server
+        // closed the connection.
+        final S2SChecklistBuilder builder = successfulTest()
+            .milestones(successfulMilestones().tls(Tls.requiredButDisabled()).certificate(null).authentication(null).build())
+            .sessionRegistered(false)
+            .ping(PingOutcome.localError("remote-server-not-found"));
+
+        // Execute system under test.
+        final S2SChecklist checklist = builder.build();
+
+        // Verify results.
+        assertCheck(checklist, S2SCheck.TLS, CheckStatus.FAIL, "tls.fail.disabled");
+        assertEquals(S2SCheck.TLS, checklist.getFirstFailure().orElseThrow().check(), "a connection this server refused, as its settings disable the encryption the remote requires, has failed at TLS");
+        assertNotReached(checklist, S2SCheck.CERTIFICATE, S2SCheck.AUTHENTICATION, S2SCheck.SESSION, S2SCheck.PING, S2SCheck.RESPONSE);
     }
 
     @Test

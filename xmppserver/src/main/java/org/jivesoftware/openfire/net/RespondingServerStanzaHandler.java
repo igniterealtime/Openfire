@@ -223,7 +223,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 return true;
             } else if (cannotUseTls() && remoteFeaturesRequiresStartTLS(doc)) {
                 LOG.debug("I CANNOT use TLS but remote domain '{}' requires the STARTTLS feature.", domainPair.getRemote());
-                record(recorder -> recorder.tls(AttemptMilestones.Tls.unencrypted()));
+                record(recorder -> recorder.tls(AttemptMilestones.Tls.requiredButDisabled()));
                 abandonSessionInitiation();
                 connection.close(new StreamError(StreamError.Condition.policy_violation, "Encryption (TLS) disabled by our server configuration, but required by you."));
                 return true;

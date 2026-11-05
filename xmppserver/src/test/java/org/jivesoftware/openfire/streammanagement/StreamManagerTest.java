@@ -43,6 +43,7 @@ import org.xmpp.packet.StreamError;
 import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -470,7 +471,7 @@ public class StreamManagerTest
 
         // Verify result.
         assertEquals(List.of("3"), unacknowledgedMessageIds(sm), "Only the stanza that was not acknowledged must remain.");
-        verify(session, never().description("A valid acknowledgement must not close the session.")).close();
+        assertFalse(session.isClosed(), "A valid acknowledgement must not close the session.");
     }
 
     /**
@@ -490,7 +491,7 @@ public class StreamManagerTest
 
         // Verify result.
         assertEquals(List.of(), unacknowledgedMessageIds(sm), "No stanzas must remain after all of them were acknowledged.");
-        verify(session, never().description("A valid acknowledgement must not close the session.")).close();
+        assertFalse(session.isClosed(), "A valid acknowledgement must not close the session.");
     }
 
     /**
@@ -532,7 +533,7 @@ public class StreamManagerTest
         sm.process(ack(StreamManager.NAMESPACE_V3, "1"));
 
         // Verify result.
-        verify(session, never().description("Repeating an acknowledgement must not close the session.")).close();
+        assertFalse(session.isClosed(), "Repeating an acknowledgement must not close the session.");
     }
 
     /**
@@ -549,7 +550,7 @@ public class StreamManagerTest
         sm.process(ack(StreamManager.NAMESPACE_V3, "1"));
 
         // Verify result.
-        assertSessionClosedWithStreamError(session, "You acknowledged stanzas that we didn't send.");
+        assertSessionClosedWithStreamError(session, StreamError.Condition.undefined_condition, "You acknowledged stanzas that we didn't send.");
     }
 
     /**
@@ -569,7 +570,7 @@ public class StreamManagerTest
         sm.process(ack(StreamManager.NAMESPACE_V3, "3"));
 
         // Verify result.
-        assertSessionClosedWithStreamError(session, "You acknowledged stanzas that we didn't send.");
+        assertSessionClosedWithStreamError(session, StreamError.Condition.undefined_condition, "You acknowledged stanzas that we didn't send.");
         assertEquals(List.of("1", "2"), unacknowledgedMessageIds(sm), "An invalid acknowledgement must not remove any stanzas.");
     }
 
@@ -590,8 +591,7 @@ public class StreamManagerTest
         sm.process(ack(StreamManager.NAMESPACE_V3, "3"));
 
         // Verify result.
-        final String streamError = assertSessionClosedWithStreamError(session);
-        assertHandledCountTooHigh(streamError, "3", "2");
+        assertHandledCountTooHigh(session, "3", "2");
     }
 
     /**
@@ -610,8 +610,7 @@ public class StreamManagerTest
         sm.process(ack(StreamManager.NAMESPACE_V3, "3000000000"));
 
         // Verify result.
-        final String streamError = assertSessionClosedWithStreamError(session);
-        assertHandledCountTooHigh(streamError, "3000000000", "1");
+        assertHandledCountTooHigh(session, "3000000000", "1");
         assertEquals(List.of("1"), unacknowledgedMessageIds(sm), "An invalid acknowledgement must not remove any stanzas.");
     }
 
@@ -631,7 +630,7 @@ public class StreamManagerTest
         sm.process(ack(StreamManager.NAMESPACE_V3, h));
 
         // Verify result.
-        assertSessionClosedWithStreamError(session, "is not a number");
+        assertSessionClosedWithStreamError(session, StreamError.Condition.undefined_condition, "is not a number");
         assertEquals(List.of("1"), unacknowledgedMessageIds(sm), "An invalid acknowledgement must not remove any stanzas.");
     }
 
@@ -650,7 +649,7 @@ public class StreamManagerTest
         sm.process(ack(StreamManager.NAMESPACE_V3, "-1"));
 
         // Verify result.
-        assertSessionClosedWithStreamError(session, "negative value");
+        assertSessionClosedWithStreamError(session, StreamError.Condition.undefined_condition, "negative value");
         assertEquals(List.of("1"), unacknowledgedMessageIds(sm), "An invalid acknowledgement must not remove any stanzas.");
     }
 
@@ -671,7 +670,7 @@ public class StreamManagerTest
         sm.process(ack(StreamManager.NAMESPACE_V3, String.valueOf(StreamManager.MASK + 1)));
 
         // Verify result.
-        assertSessionClosedWithStreamError(session);
+        assertSessionClosedWithStreamError(session, StreamError.Condition.undefined_condition);
         assertEquals(List.of("1"), unacknowledgedMessageIds(sm), "An invalid acknowledgement must not remove any stanzas.");
     }
 
@@ -695,7 +694,7 @@ public class StreamManagerTest
         sm.process(ack(StreamManager.NAMESPACE_V3, "1"));
 
         // Verify result.
-        verify(session, never().description("A lower acknowledgement is not too high, so it must not close the session.")).close();
+        assertFalse(session.isClosed(), "A lower acknowledgement is not too high, so it must not close the session.");
         assertEquals(List.of("3"), unacknowledgedMessageIds(sm), "Stanzas that were acknowledged earlier must not come back.");
     }
 
@@ -720,7 +719,7 @@ public class StreamManagerTest
         sm.process(ack(StreamManager.NAMESPACE_V3, "3"));
 
         // Verify result.
-        verify(session, never().description("A lower acknowledgement is not too high, so it must not close the session.")).close();
+        assertFalse(session.isClosed(), "A lower acknowledgement is not too high, so it must not close the session.");
         assertEquals(List.of("4"), unacknowledgedMessageIds(sm), "A lower acknowledgement must not affect the numbers of the stanzas that follow.");
     }
 
@@ -790,7 +789,7 @@ public class StreamManagerTest
         sm.process(ack(StreamManager.NAMESPACE_V3, String.valueOf(StreamManager.MASK)));
 
         // Verify result.
-        verify(session, never().description("An acknowledgement with the largest legal value of 'h' must not close the session.")).close();
+        assertFalse(session.isClosed(), "An acknowledgement with the largest legal value of 'h' must not close the session.");
         assertEquals(List.of("2"), unacknowledgedMessageIds(sm), "Only the stanza that was not acknowledged must remain.");
     }
 
@@ -815,7 +814,7 @@ public class StreamManagerTest
         sm.process(ack(StreamManager.NAMESPACE_V3, "1"));
 
         // Verify result.
-        verify(session, never().description("Acknowledgements that rolled over must not close the session.")).close();
+        assertFalse(session.isClosed(), "Acknowledgements that rolled over must not close the session.");
         assertEquals(List.of("peer-counts-2"), unacknowledgedMessageIds(sm), "Only the stanza that was not acknowledged must remain.");
     }
 
@@ -885,7 +884,7 @@ public class StreamManagerTest
         sm.process(ack(StreamManager.NAMESPACE_V3, "1"));
 
         // Verify result.
-        verify(session, never().description("A valid acknowledgement must not close the session.")).close();
+        assertFalse(session.isClosed(), "A valid acknowledgement must not close the session.");
         assertEquals(List.of(), unacknowledgedMessageIds(sm), "No stanzas must remain after all of them were acknowledged.");
     }
 
@@ -909,7 +908,7 @@ public class StreamManagerTest
         sm.process(ack(StreamManager.NAMESPACE_V3, String.valueOf(StreamManager.MASK)));
 
         // Verify result.
-        verify(session, never().description("A lower acknowledgement is not too high, so it must not close the session.")).close();
+        assertFalse(session.isClosed(), "A lower acknowledgement is not too high, so it must not close the session.");
         assertEquals(List.of("peer-counts-1"), unacknowledgedMessageIds(sm), "A lower acknowledgement must not remove any stanzas.");
     }
 
@@ -931,8 +930,7 @@ public class StreamManagerTest
         sm.process(ack(StreamManager.NAMESPACE_V3, "5"));
 
         // Verify result.
-        final String streamError = assertSessionClosedWithStreamError(session);
-        assertHandledCountTooHigh(streamError, "5", "0");
+        assertHandledCountTooHigh(session, "5", "0");
         assertEquals(List.of("peer-counts-2^32-1", "peer-counts-0"), unacknowledgedMessageIds(sm), "An invalid acknowledgement must not remove any stanzas.");
     }
 
@@ -992,7 +990,7 @@ public class StreamManagerTest
         final ArgumentCaptor<Packet> captor = ArgumentCaptor.forClass(Packet.class);
         verify(newConnection, times(1).description("Only the stanza that remained unacknowledged is to be sent again.")).deliver(captor.capture());
         assertEquals("3", captor.getValue().getID(), "The stanza that remained unacknowledged is to be sent again.");
-        verify(original, never().description("Acknowledging the stanza that was sent again must not close the session.")).close();
+        assertFalse(original.isClosed(), "Acknowledging the stanza that was sent again must not close the session.");
         assertEquals(List.of(), unacknowledgedMessageIds(sm), "No stanzas must remain after the stanza that was sent again is acknowledged.");
     }
 
@@ -1048,6 +1046,8 @@ public class StreamManagerTest
 
     /**
      * A mock of an authenticated client session that has a full JID and a stream ID.
+     *
+     * The session will set its closed flag when it is closed through invocation of either close() or close(StreamError)
      */
     private static LocalClientSession authenticatedClientSession()
     {
@@ -1055,6 +1055,7 @@ public class StreamManagerTest
         doReturn(true).when(session).isAuthenticated();
         doReturn(FULL_JID).when(session).getAddress();
         doReturn(BasicStreamIDFactory.createStreamID(STREAM_ID)).when(session).getStreamID();
+        mockCloseTracking(session);
         return session;
     }
 
@@ -1105,6 +1106,7 @@ public class StreamManagerTest
         doReturn(false).when(session).isAuthenticated();
         doReturn(Fixtures.XMPP_DOMAIN).when(session).getServerName();
         doReturn(BasicStreamIDFactory.createStreamID("resuming-stream-id")).when(session).getStreamID();
+        mockCloseTracking(session);
         return session;
     }
 
@@ -1175,30 +1177,68 @@ public class StreamManagerTest
         assertNotNull(failed.element(QName.get("unexpected-request", "urn:ietf:params:xml:ns:xmpp-stanzas")), "The response must report the 'unexpected-request' condition, but was: " + failed.asXML());
     }
 
-    private static void assertSessionClosedWithStreamError(final LocalSession session, final String expectedText)
-    {
-        final String streamError = assertSessionClosedWithStreamError(session);
-        assertTrue(streamError.contains(expectedText), "The stream error must contain the text '" + expectedText + "', but was: " + streamError);
-    }
-
     /**
-     * Verifies that the session was closed with one stream error, which also makes it non-resumable (OF-3443), and
-     * returns that stream error.
+     * Verifies that the session was closed with one stream error of the specified condition. Returns that stream
+     * error's XML representation.
+     *
+     * @param expectedCondition the condition of the stream error
+     * @return the XML representation of the stream error
      */
-    private static String assertSessionClosedWithStreamError(final LocalSession session)
+    private static String assertSessionClosedWithStreamError(final LocalSession session, final StreamError.Condition expectedCondition)
     {
         final ArgumentCaptor<StreamError> captor = ArgumentCaptor.forClass(StreamError.class);
         verify(session, times(1).description("The session must be closed with exactly one stream error.")).close(captor.capture());
-        assertEquals(StreamError.Condition.undefined_condition, captor.getValue().getCondition(), "The stream error must use the 'undefined-condition' condition, but was: " + captor.getValue().toXML());
+        assertTrue(session.isClosed(), "The session must report itself as closed.");
+        assertEquals(expectedCondition, captor.getValue().getCondition(), "The stream error must use the '" + expectedCondition + "' condition, but was: " + captor.getValue());
         return captor.getValue().toXML();
     }
 
-    private static void assertHandledCountTooHigh(final String streamError, final String expectedH, final String expectedSendCount) throws DocumentException
+    /**
+     * Verifies that the session was closed with one stream error of the specified condition, containing the specified
+     * text.
+     *
+     * @param expectedCondition the condition of the stream error
+     * @param expectedText      the text that must be contained in the stream error
+     */
+    private static void assertSessionClosedWithStreamError(final LocalSession session, final StreamError.Condition expectedCondition, final String expectedText)
     {
+        final ArgumentCaptor<StreamError> captor = ArgumentCaptor.forClass(StreamError.class);
+        verify(session, times(1).description("The session must be closed with exactly one stream error.")).close(captor.capture());
+        assertTrue(session.isClosed(), "The session must report itself as closed.");
+        assertEquals(expectedCondition, captor.getValue().getCondition(), "The stream error must use the '" + expectedCondition + "' condition, but was: " + captor.getValue());
+        final String streamError = captor.getValue().toXML();
+        assertTrue(streamError.contains(expectedText), "The stream error must contain the text '" + expectedText + "', but was: " + streamError);
+    }
+
+    private static void assertHandledCountTooHigh(final LocalSession session, final String expectedH, final String expectedSendCount) throws DocumentException
+    {
+        final String streamError = assertSessionClosedWithStreamError(session, StreamError.Condition.undefined_condition);
         final Element element = DocumentHelper.parseText(streamError).getRootElement().element(QName.get("handled-count-too-high", StreamManager.NAMESPACE_V3));
         assertNotNull(element, "The stream error must include a 'handled-count-too-high' element, but was: " + streamError);
         assertEquals(expectedH, element.attributeValue("h"), "The element must report the value of 'h' that was received.");
         assertEquals(expectedSendCount, element.attributeValue("send-count"), "The element must report the number of stanzas that were sent.");
+    }
+
+    /**
+     * Mocks the session to track whether it is closed.
+     *
+     * @param session the session to mock.
+     */
+    private static void mockCloseTracking(final LocalClientSession session)
+    {
+        final AtomicBoolean closed = new AtomicBoolean(false);
+
+        doAnswer(invocation -> {
+            closed.set(true);
+            return null;
+        }).when(session).close();
+
+        doAnswer(invocation -> {
+            closed.set(true);
+            return null;
+        }).when(session).close(nullable(StreamError.class));
+
+        doAnswer(invocation -> closed.get()).when(session).isClosed();
     }
 
     /**

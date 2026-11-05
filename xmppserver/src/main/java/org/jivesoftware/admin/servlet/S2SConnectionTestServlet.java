@@ -23,6 +23,7 @@ import org.jivesoftware.openfire.server.s2stest.ChecklistSummary;
 import org.jivesoftware.openfire.server.s2stest.DomainCheck;
 import org.jivesoftware.openfire.server.s2stest.DomainValidation;
 import org.jivesoftware.openfire.server.s2stest.DomainValidator;
+import org.jivesoftware.openfire.server.s2stest.S2SAdvice;
 import org.jivesoftware.openfire.server.s2stest.S2SCheck;
 import org.jivesoftware.openfire.server.s2stest.S2SChecklist;
 import org.jivesoftware.openfire.server.s2stest.S2SChecklistBuilder;
@@ -195,6 +196,130 @@ public class S2SConnectionTestServlet extends HttpServlet
         request.setAttribute("summaryType", summaryType);
         request.setAttribute("resultsHeading", LocaleUtils.getLocalizedString(KEY_PREFIX + "results", List.of(domain)));
         request.setAttribute("rows", rows);
+        request.setAttribute("advice", advice(checklist));
+    }
+
+    private static List<AdviceItem> advice(final S2SChecklist checklist)
+    {
+        final List<AdviceItem> items = new ArrayList<>();
+        for (final S2SAdvice.Suggestion suggestion : S2SAdvice.forChecklist(checklist)) {
+            final S2SAdvice.Advice advice = suggestion.advice();
+            // Advice for one exact result message can fill in that result's values, such as the names in a certificate.
+            final List<String> values = suggestion.result().parameters();
+            final List<S2SAdvice.AdminPage> pages = new ArrayList<>(advice.pages());
+            // A DNS override that was used decided where this server connected, so it is named, with its page.
+            final String dnsOverride = suggestion.dnsOverride()
+                .map(dns -> LocaleUtils.getLocalizedString(KEY_PREFIX + "advice.dns_override", dns.parameters()))
+                .orElse(null);
+            if (dnsOverride != null && !pages.contains(S2SAdvice.AdminPage.DNS_OVERRIDES)) {
+                pages.add(0, S2SAdvice.AdminPage.DNS_OVERRIDES);
+            }
+            final List<Link> links = new ArrayList<>();
+            for (final S2SAdvice.AdminPage page : pages) {
+                links.add(new Link(page.url(), LocaleUtils.getLocalizedString(page.labelKey())));
+            }
+            final S2SCheck check = suggestion.result().check();
+            items.add(new AdviceItem(
+                LocaleUtils.getLocalizedString(KEY_PREFIX + "advice.check", List.of(check.ordinal() + 1, LocaleUtils.getLocalizedString(check.titleKey()))),
+                dnsOverride,
+                advice.localKey().map(key -> LocaleUtils.getLocalizedString(key, values)).orElse(null),
+                links,
+                advice.remoteKey().map(key -> LocaleUtils.getLocalizedString(key, values)).orElse(null),
+                advice.noteKey().map(LocaleUtils::getLocalizedString).orElse(null)));
+        }
+        return items;
+    }
+
+    /**
+     * What the administrator can do next about one check, with every text already localised. Plain text only: the page
+     * escapes it.
+     */
+    public static final class AdviceItem
+    {
+        private final String heading;
+        private final String dnsOverride;
+        private final String local;
+        private final List<Link> links;
+        private final String remote;
+        private final String note;
+
+        AdviceItem(final String heading, final String dnsOverride, final String local, final List<Link> links, final String remote, final String note)
+        {
+            this.heading = heading;
+            this.dnsOverride = dnsOverride;
+            this.local = local;
+            this.links = List.copyOf(links);
+            this.remote = remote;
+            this.note = note;
+        }
+
+        public String getHeading()
+        {
+            return heading;
+        }
+
+        /**
+         * @return where a DNS override on this server sent the connection, when one was used and a later step failed;
+         *         otherwise null.
+         */
+        public String getDnsOverride()
+        {
+            return dnsOverride;
+        }
+
+        /**
+         * @return what to look at on this server, or null when nothing on this server can change the outcome.
+         */
+        public String getLocal()
+        {
+            return local;
+        }
+
+        /**
+         * @return a note shared with other advice, such as the server-wide certificate settings, or null.
+         */
+        public String getNote()
+        {
+            return note;
+        }
+
+        public List<Link> getLinks()
+        {
+            return links;
+        }
+
+        /**
+         * @return what could be wrong on the remote server, or null when the advice does not say.
+         */
+        public String getRemote()
+        {
+            return remote;
+        }
+    }
+
+    /**
+     * A link to an admin console page. The address is one of the fixed pages in {@link S2SAdvice.AdminPage}.
+     */
+    public static final class Link
+    {
+        private final String url;
+        private final String label;
+
+        Link(final String url, final String label)
+        {
+            this.url = url;
+            this.label = label;
+        }
+
+        public String getUrl()
+        {
+            return url;
+        }
+
+        public String getLabel()
+        {
+            return label;
+        }
     }
 
     /**

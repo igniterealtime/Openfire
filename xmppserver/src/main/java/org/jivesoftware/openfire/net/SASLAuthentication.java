@@ -1112,6 +1112,8 @@ public class SASLAuthentication {
                             }
                             // bindResource() already installs the auth token (two-argument form, which also transitions the session to AUTHENTICATED); no need to set it again here.
                             completeSasl2Bind2(clientSession, bind2Request, successData, finalFastToken, bareJid, resource, preBindAddress, finalResumeFailedElement);
+                            // OF-3442: Only now that the client has the result can it receive the stanzas of a detached session that the bind replaced.
+                            SessionManager.getInstance().handleStanzasOfReplacedDetachedSession(clientSession);
                             Log.debug("Bind2 request for user '{}' processed successfully.", username);
                         });
                 }

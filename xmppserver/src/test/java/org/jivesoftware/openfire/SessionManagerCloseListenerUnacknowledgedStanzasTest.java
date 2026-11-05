@@ -18,6 +18,7 @@ package org.jivesoftware.openfire;
 import org.dom4j.DocumentHelper;
 import org.dom4j.QName;
 import org.jivesoftware.Fixtures;
+import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.Session;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
@@ -32,6 +33,7 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
+import org.xmpp.packet.StreamError;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -39,7 +41,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -331,6 +337,115 @@ public class SessionManagerCloseListenerUnacknowledgedStanzasTest
     }
 
     /**
+     * Verifies that the unacknowledged stanzas of a detached session are handled when a new session binds the same
+     * resource, which kicks the detached session instead of resuming it. They are handled only once the client has the
+     * result of the bind, and its messages are routed while the new session owns the route of the resource.
+     */
+    @Test
+    public void unacknowledgedStanzasOfDetachedSessionKickedByBindAreHandledAfterBindResult() throws Exception
+    {
+        // Setup test fixture.
+        kickableDetachedSession("message-kicked-1", "iq-get-kicked-1");
+        final LocalClientSession binding = bindingSession();
+        final CountDownLatch anyRouted = new CountDownLatch(1);
+        doAnswer(invocation -> { anyRouted.countDown(); return null; }).when(packetRouter).route(any(Packet.class));
+        final CountDownLatch errorRouted = new CountDownLatch(1);
+        doAnswer(invocation -> { anyRouted.countDown(); errorRouted.countDown(); return null; }).when(packetRouter).route(any(IQ.class));
+        final SessionManager.BindResult result = sessionManager.resolveConflictAndBind(binding, mock(AuthToken.class), FULL_JID.getResource(), FULL_JID);
+        assertEquals(SessionManager.BindResult.BOUND, result, "Test fixture expects the new session to be bound.");
+        assertFalse(anyRouted.await(500, TimeUnit.MILLISECONDS), "No stanza of the kicked session may be routed before the client has the result of the bind, but these were: " + routedPackets());
+
+        // Execute system under test.
+        sessionManager.handleStanzasOfReplacedDetachedSession(binding);
+
+        // Verify result.
+        assertTrue(errorRouted.await(5, TimeUnit.SECONDS), "The sender of the unacknowledged IQ request must receive an error.");
+        final List<Packet> routed = routedPackets();
+        assertTrue(routed.stream().anyMatch(packet -> packet instanceof Message && "message-kicked-1".equals(packet.getID())),
+            "The unacknowledged message must be routed again, to the full JID that the new session now owns, but the stanzas routed were: " + routed);
+        assertTrue(routed.stream().anyMatch(packet -> packet instanceof IQ iq && iq.getType() == IQ.Type.error && "iq-get-kicked-1".equals(iq.getID()) && SENDER.equals(iq.getTo())
+                && iq.getError() != null && iq.getError().getCondition() == PacketError.Condition.service_unavailable),
+            "The sender of the IQ request must receive a 'service-unavailable' error, but the stanzas routed were: " + routed);
+    }
+
+    /**
+     * Verifies that a bind that fails after kicking a detached session does not record that session on the session that
+     * failed to bind, as that session did not get the resource, and the route of the resource still belongs to the
+     * kicked session.
+     */
+    @Test
+    public void detachedSessionKickedByFailedBindIsNotRecordedOnBindingSession() throws Exception
+    {
+        // Setup test fixture.
+        kickableDetachedSession("message-failed-bind-1", "iq-get-failed-bind-1");
+        final LocalClientSession binding = bindingSession();
+        doThrow(new IllegalStateException("Simulated failure to install the route.")).when(binding).setAuthToken(any(), anyString());
+
+        // Execute system under test.
+        final SessionManager.BindResult result = sessionManager.resolveConflictAndBind(binding, mock(AuthToken.class), FULL_JID.getResource(), FULL_JID);
+
+        // Verify result.
+        assertEquals(SessionManager.BindResult.CONFLICT, result, "Test fixture expects the bind to fail.");
+        verify(binding, never().description("A bind that failed must not record the session that it kicked on the session that failed to bind.")).setSessionData(anyString(), any());
+    }
+
+    /**
+     * Verifies that the stanzas of a kicked detached session are not handled when a resumption that raced the bind
+     * reattached that session before they could be handled, as the resumed session then delivers them itself.
+     */
+    @Test
+    public void unacknowledgedStanzasOfKickedSessionThatWasResumedAreNotHandled() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession detached = kickableDetachedSession("message-resumed-1", "iq-get-resumed-1");
+        final LocalClientSession binding = bindingSession();
+        final CountDownLatch routed = new CountDownLatch(1);
+        doAnswer(invocation -> { routed.countDown(); return null; }).when(packetRouter).route(any(Packet.class));
+        doAnswer(invocation -> { routed.countDown(); return null; }).when(packetRouter).route(any(IQ.class));
+        final SessionManager.BindResult result = sessionManager.resolveConflictAndBind(binding, mock(AuthToken.class), FULL_JID.getResource(), FULL_JID);
+        assertEquals(SessionManager.BindResult.BOUND, result, "Test fixture expects the new session to be bound.");
+        doReturn(mock(Connection.class)).when(detached).getConnection();
+
+        // Execute system under test.
+        sessionManager.handleStanzasOfReplacedDetachedSession(binding);
+
+        // Verify result.
+        assertFalse(routed.await(500, TimeUnit.MILLISECONDS), "The stanzas of a kicked session that was resumed must be left to the resumed session, but these were routed: " + routedPackets());
+    }
+
+    /**
+     * Verifies that a bind that kicks a session that is not detached leaves its unacknowledged stanzas to the close
+     * listener of its connection, as handling them in both places would route them twice.
+     */
+    @Test
+    public void unacknowledgedStanzasOfConnectedSessionKickedByBindAreLeftToCloseListener() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession connected = sessionWithStreamManagement();
+        doReturn(Session.Status.AUTHENTICATED).when(connected).getStatus();
+        doReturn(1).when(connected).incrementConflictCount();
+        final Message message = new Message();
+        message.setID("message-connected-1");
+        message.setFrom(SENDER);
+        message.setTo(FULL_JID);
+        connected.getStreamManager().sentStanza(message);
+        doReturn(new ReentrantLock()).when(routingTable).getClientRouteLock(FULL_JID);
+        sessionManager.setConflictKickLimit(0);
+        final LocalClientSession binding = bindingSession();
+        final CountDownLatch routed = new CountDownLatch(1);
+        doAnswer(invocation -> { routed.countDown(); return null; }).when(packetRouter).route(any(Packet.class));
+        final SessionManager.BindResult result = sessionManager.resolveConflictAndBind(binding, mock(AuthToken.class), FULL_JID.getResource(), FULL_JID);
+        assertEquals(SessionManager.BindResult.BOUND, result, "Test fixture expects the new session to be bound.");
+        verify(connected, times(1).description("Test fixture expects the connected session to be kicked.")).close(any(StreamError.class));
+
+        // Execute system under test.
+        sessionManager.handleStanzasOfReplacedDetachedSession(binding);
+
+        // Verify result.
+        assertFalse(routed.await(500, TimeUnit.MILLISECONDS), "The unacknowledged stanzas of a kicked session that is not detached must be left to its close listener, but these were routed: " + routedPackets());
+    }
+
+    /**
      * Verifies that an unacknowledged message is routed again after a detached session is removed, when it is ended
      * without being resumed.
      */
@@ -480,6 +595,36 @@ public class SessionManagerCloseListenerUnacknowledgedStanzasTest
         session.getStreamManager().sentStanza(message);
         session.getStreamManager().sentStanza(iqRequest(IQ.Type.get, iqId));
         sessionManager.addDetached(session);
+        return session;
+    }
+
+    /**
+     * A detached session of the test fixture with an unacknowledged message and IQ request, which a bind of its resource
+     * kicks: the conflict kick limit is zero, and the route lock is available. A session that can be resumed keeps its
+     * status when its connection closes, so it is not closed.
+     */
+    private LocalClientSession kickableDetachedSession(final String messageId, final String iqId)
+    {
+        final LocalClientSession session = detachedSessionWithUnacknowledgedStanzas(messageId, iqId);
+        doReturn(Session.Status.AUTHENTICATED).when(session).getStatus();
+        doReturn(false).when(session).isClosed();
+        doReturn(1).when(session).incrementConflictCount();
+        doReturn(new ReentrantLock()).when(routingTable).getClientRouteLock(FULL_JID);
+        sessionManager.setConflictKickLimit(0);
+        return session;
+    }
+
+    /**
+     * A mock of a session that binds the resource of the test fixture, and that keeps its session data.
+     */
+    private static LocalClientSession bindingSession()
+    {
+        final LocalClientSession session = mock(LocalClientSession.class, withSettings().lenient());
+        doReturn(BasicStreamIDFactory.createStreamID("binding-stream-id")).when(session).getStreamID();
+        doReturn(true).when(session).isAuthenticated();
+        final Map<String, Object> data = new ConcurrentHashMap<>();
+        doAnswer(invocation -> data.put(invocation.getArgument(0), invocation.getArgument(1))).when(session).setSessionData(anyString(), any());
+        doAnswer(invocation -> data.remove(invocation.getArgument(0))).when(session).removeSessionData(anyString());
         return session;
     }
 

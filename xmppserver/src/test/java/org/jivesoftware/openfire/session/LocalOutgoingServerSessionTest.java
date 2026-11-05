@@ -797,6 +797,9 @@ public class LocalOutgoingServerSessionTest
         if (local.encryptionPolicy == Connection.TLSPolicy.required && remote.encryptionPolicy == Connection.TLSPolicy.disabled) {
             assertEquals(AttemptMilestones.Tls.notOffered(), tls, "a remote that does not offer TLS to a server that requires it must be recorded as not offering it");
             assertNull(certificate, "without TLS there is no certificate to judge");
+        } else if (local.encryptionPolicy == Connection.TLSPolicy.disabled && remote.encryptionPolicy == Connection.TLSPolicy.required) {
+            assertEquals(AttemptMilestones.Tls.requiredButDisabled(), tls, "a remote that requires TLS from a server whose policy disables it must be recorded as such, as this server then closes the connection");
+            assertNull(certificate, "without TLS there is no certificate to judge");
         } else if (!bothSupportTls) {
             assertEquals(AttemptMilestones.Tls.unencrypted(), tls, "when either side cannot use TLS, the connection must be recorded as unencrypted");
             assertNull(certificate, "without TLS there is no certificate to judge");

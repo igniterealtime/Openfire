@@ -28,6 +28,8 @@
     100% { transform: rotate(360deg); }
 }
 
+/* The same 20px gap as below a content box, so the checklist, the suggestions and the details are evenly spaced. */
+.s2s-checklist { margin-bottom: 20px; }
 .s2s-checklist td { vertical-align: top; }
 /* The striped-row rule in global.css is more specific than its jive-highlight rule, so restate the highlight. */
 .jive-table.s2s-checklist tr.jive-highlight td { background-color: #FFFFCC; }
@@ -48,6 +50,12 @@
 .s2s-details[open] summary::before { transform: rotate(90deg); }
 /* The content box header has no bottom border, as the box below draws one; with the section closed, there is no box. */
 .s2s-details:not([open]) summary { border-bottom: 1px solid #CCCCCC; }
+
+/* The "Suggested next steps" box below the checklist. */
+.s2s-advice p { margin: 0 0 6px; }
+.s2s-advice-next { border-top: 1px solid #EEEEEE; margin-top: 10px; padding-top: 10px; }
+.s2s-advice-heading { font-weight: bold; }
+.s2s-advice-note { color: #767676; font-size: 0.9em; }
 
 .s2s-details table { width: 100%; }
 .s2s-details td.s2s-details-label { width: 1%; white-space: nowrap; }

@@ -203,6 +203,34 @@
 
         </section>
 
+        <section id="suggested-next-steps">
+
+            <h3>Suggested next steps</h3>
+
+            <p>
+                Below the table, a <em>Suggested next steps</em> box gives advice on the first failed check, where to start,
+                or, when no check failed, on each check that shows a warning. A test in which every check passes has
+                no box. When this server stopped the TLS handshake because it rejected the remote certificate, the
+                advice is that of <a href="#check-6">check 6</a> (the remote certificate), which says why. The advice for a
+                check has up to three parts:
+            </p>
+
+            <ul>
+                <li><em>On this server</em>: what to look at on this server, such as a setting, a firewall rule or the
+                    server's own certificate. It is left out where nothing on this server can change the result, as
+                    for an expired remote certificate. Advice on a certificate failure also points to the settings
+                    that can let such a connection go ahead, which apply to every remote server, except for a revoked
+                    certificate: its issuer withdrew it, so the advice offers no way around it. When a DNS override
+                    on this server decided where the connection went (<a href="#check-2">check 2</a> says so) and a
+                    later step failed, the advice names where the override sent it.</li>
+                <li><em>Admin console</em>: links to the admin console pages that hold those settings, for example the
+                    Server to Server settings page, the Server to Server trust store or DNS Overrides.</li>
+                <li><em>Possible causes on the remote server</em>: what could be wrong on the other side. The test sees
+                    only this server's side of the connection, so these are possibilities to consider with the
+                    administrator of the remote server.</li>
+            </ul>
+
+        </section>
 
     </section>
 
@@ -739,6 +767,8 @@
                 certificates have not been revoked, described in the
                 <a href="ssl-guide.html#revocation">TLS Guide</a>) and the option to treat invalid TLS certificates as
                 fatal (strict certificate validation, <code>xmpp.socket.ssl.certificate.strict-validation</code>).
+                These settings apply to every server-to-server connection, not only to connections to one remote
+                domain.
             </p>
 
         </section>

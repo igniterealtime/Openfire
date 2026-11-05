@@ -282,6 +282,110 @@ public class S2SConnectionTestServletTest
         assertEquals(CheckStatus.NOT_OBSERVED, rows.get(6).getStatus(), "a registered session must not fill check 7: only what this attempt recorded can pass a check");
     }
 
+    @SuppressWarnings("unchecked")
+    private List<S2SConnectionTestServlet.AdviceItem> advice()
+    {
+        final ArgumentCaptor<Object> captor = ArgumentCaptor.forClass(Object.class);
+        verify(request).setAttribute(eq("advice"), captor.capture());
+        return (List<S2SConnectionTestServlet.AdviceItem>) captor.getValue();
+    }
+
+    @Test
+    public void testAFailureComesWithAdviceOnWhatToDoNext() throws Exception
+    {
+        // Setup test fixture: the domain does not resolve.
+        final AttemptMilestones milestones = AttemptMilestones.builder().dns(AttemptMilestones.Dns.noAddress()).build();
+        nextResult = new S2STestService.Result(PingOutcome.localError("remote-server-not-found"), false, milestones, null, "", "", "");
+        post("remote.example.org", CSRF);
+
+        // Execute system under test.
+        servlet.doPost(request, response);
+
+        // Verify results.
+        final List<S2SConnectionTestServlet.AdviceItem> advice = advice();
+        assertEquals(1, advice.size(), "a failed test must come with advice for its first failed check only");
+        final S2SConnectionTestServlet.AdviceItem item = advice.get(0);
+        assertEquals(LocaleUtils.getLocalizedString("server2server.settings.testing.advice.check", List.of(2, LocaleUtils.getLocalizedString(S2SCheck.DNS.titleKey()))), item.getHeading(), "the advice must name the check it is about");
+        assertEquals(LocaleUtils.getLocalizedString("server2server.settings.testing.advice.dns.fail.local"), item.getLocal(), "the advice must say what to look at on this server");
+        assertEquals(List.of("dns-overrides.jsp"), item.getLinks().stream().map(S2SConnectionTestServlet.Link::getUrl).toList(), "the advice must link to the admin console page that holds the setting");
+        assertEquals(LocaleUtils.getLocalizedString("server2server.settings.testing.advice.dns.fail.remote"), item.getRemote(), "the advice must say what could be wrong on the remote server");
+    }
+
+    @Test
+    public void testNameMismatchAdviceNamesTheDomainAndTheCertificateNames() throws Exception
+    {
+        // Setup test fixture: the encrypted connection worked, but the certificate is issued for another name.
+        final AttemptMilestones milestones = AttemptMilestones.builder()
+            .tls(AttemptMilestones.Tls.negotiated("TLSv1.3", "TLS_AES_256_GCM_SHA384"))
+            .certificate(AttemptMilestones.Certificate.nameMismatch(List.of("other.example.org"))).build();
+        nextResult = new S2STestService.Result(PingOutcome.localError("remote-server-not-found"), false, milestones, null, "", "", "");
+        post("remote.example.org", CSRF);
+
+        // Execute system under test.
+        servlet.doPost(request, response);
+
+        // Verify results.
+        final S2SConnectionTestServlet.AdviceItem item = advice().get(0);
+        assertTrue(item.getLocal().contains("other.example.org"), "the advice must name what the certificate is issued for: " + item.getLocal());
+        assertTrue(item.getLocal().contains("remote.example.org"), "the advice must name the domain that was tested: " + item.getLocal());
+        assertNotNull(item.getNote(), "certificate advice must point to the server-wide settings that let such a connection go ahead");
+    }
+
+    @Test
+    public void testExpiredCertificateAdviceHasNothingToDoOnThisServer() throws Exception
+    {
+        // Setup test fixture: this server stopped the handshake, as the remote certificate has expired.
+        final AttemptMilestones milestones = AttemptMilestones.builder()
+            .tls(AttemptMilestones.Tls.certificateRejected())
+            .certificate(AttemptMilestones.Certificate.expired(java.time.Instant.parse("2026-10-06T09:17:19Z"))).build();
+        nextResult = new S2STestService.Result(PingOutcome.localError("remote-server-not-found"), false, milestones, null, "", "", "");
+        post("remote.example.org", CSRF);
+
+        // Execute system under test.
+        servlet.doPost(request, response);
+
+        // Verify results.
+        final S2SConnectionTestServlet.AdviceItem item = advice().get(0);
+        assertTrue(item.getHeading().startsWith(LocaleUtils.getLocalizedString("server2server.settings.testing.advice.check", List.of(6, LocaleUtils.getLocalizedString(S2SCheck.CERTIFICATE.titleKey())))), "a certificate rejected during the handshake must get the advice of check 6, which says why: " + item.getHeading());
+        assertNull(item.getLocal(), "nothing on this server can make an expired certificate valid, so the advice must not suggest anything here");
+        assertNotNull(item.getRemote(), "the advice must say what could be wrong on the remote server");
+    }
+
+    @Test
+    public void testADnsOverrideThatWasUsedIsNamedInTheAdvice() throws Exception
+    {
+        // Setup test fixture: a DNS override on this server sent the connection to a host that closed it without a stream.
+        final AttemptMilestones milestones = AttemptMilestones.builder()
+            .dns(AttemptMilestones.Dns.override(List.of(AttemptMilestones.Dns.Target.plain("xmpp.example.org:5269"))))
+            .tcp(Tcp.connected("192.0.2.10:5269"))
+            .stream(AttemptMilestones.Stream.closedByRemote()).build();
+        nextResult = new S2STestService.Result(PingOutcome.localError("remote-server-not-found"), false, milestones, null, "", "", "");
+        post("remote.example.org", CSRF);
+
+        // Execute system under test.
+        servlet.doPost(request, response);
+
+        // Verify results.
+        final S2SConnectionTestServlet.AdviceItem item = advice().get(0);
+        assertNotNull(item.getDnsOverride(), "the advice must point to the DNS override that decided where this server connected");
+        assertTrue(item.getDnsOverride().contains("xmpp.example.org:5269"), "the advice must name where the override sent the connection: " + item.getDnsOverride());
+        assertTrue(item.getLinks().stream().anyMatch(link -> link.getUrl().equals("dns-overrides.jsp")), "the advice must link to the DNS Overrides page");
+    }
+
+    @Test
+    public void testAPassingTestComesWithNoAdvice() throws Exception
+    {
+        // Setup test fixture.
+        nextResult = new S2STestService.Result(PingOutcome.result(), true, AttemptMilestones.builder().build(), null, "", "", "");
+        post("remote.example.org", CSRF);
+
+        // Execute system under test.
+        servlet.doPost(request, response);
+
+        // Verify results.
+        assertTrue(advice().isEmpty(), "a test with no failure or warning needs no advice");
+    }
+
     @Test
     public void testRecordedAuthenticationFillsCheckSeven() throws Exception
     {

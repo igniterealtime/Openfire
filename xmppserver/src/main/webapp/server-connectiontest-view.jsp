@@ -80,8 +80,39 @@
             </table>
         </div>
 
+        <c:if test="${not empty advice}">
+            <fmt:message key="server2server.settings.testing.advice.title" var="adviceTitle"/>
+            <admin:contentBox title="${adviceTitle}">
+                <c:forEach var="item" items="${advice}" varStatus="adviceStatus">
+                    <div class="s2s-advice${adviceStatus.first ? '' : ' s2s-advice-next'}">
+                        <p class="s2s-advice-heading"><c:out value="${item.heading}"/></p>
+                        <c:if test="${not empty item.dnsOverride or not empty item.local}">
+                            <p><b><fmt:message key="server2server.settings.testing.advice.local"/>:</b>
+                                <c:if test="${not empty item.dnsOverride}"><c:out value="${item.dnsOverride}"/></c:if>
+                                <c:if test="${not empty item.local}"><c:out value="${item.local}"/></c:if></p>
+                        </c:if>
+                        <c:if test="${not empty item.note}">
+                            <p><c:out value="${item.note}"/></p>
+                        </c:if>
+                        <c:if test="${not empty item.links}">
+                            <p>
+                                <fmt:message key="server2server.settings.testing.advice.pages"/>
+                                <c:forEach var="link" items="${item.links}" varStatus="linkStatus">
+                                    <%-- A new tab, so that the results stay: they come from a POST, which going back would resubmit. --%>
+                                    <a href="<c:out value='${link.url}'/>" target="_blank" rel="noopener"><c:out value="${link.label}"/></a><c:if test="${not linkStatus.last}">,</c:if>
+                                </c:forEach>
+                            </p>
+                        </c:if>
+                        <c:if test="${not empty item.remote}">
+                            <p><b><fmt:message key="server2server.settings.testing.advice.remote"/>:</b> <c:out value="${item.remote}"/></p>
+                            <p class="s2s-advice-note"><fmt:message key="server2server.settings.testing.advice.remote.note"/></p>
+                        </c:if>
+                    </div>
+                </c:forEach>
+            </admin:contentBox>
+        </c:if>
+
         <c:if test="${not empty stanzas or not empty certs or not empty logs}">
-            <br/>
             <details class="s2s-details">
                 <summary class="jive-contentBoxHeader"><fmt:message key="server2server.settings.testing.details"/></summary>
                 <div class="jive-contentBox">

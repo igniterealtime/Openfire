@@ -49,6 +49,7 @@ import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -628,6 +629,36 @@ public class SASLIntegrationTest {
         Element response = DocumentHelper.parseText(responseCaptor.getValue()).getRootElement();
         if (!"success".equals(response.getName())) { throw new IllegalStateException("Test setup issue: if authentication does not succeed, this test assertion does not prove anything."); };
         assertNull(serverSession.getSessionData("user-agent-info"));
+    }
+
+    /**
+     * Verifies that the unacknowledged stanzas of a detached session that a SASL2+Bind2 bind replaced are handed over to
+     * be handled only after the SASL2 success, which carries the result of the bind, was delivered (OF-3442).
+     */
+    @Test
+    public void testSasl2Bind2HandsOverStanzasOfReplacedSessionAfterSuccess() throws Exception {
+        // Setup test fixture.
+        SessionManager sessionManager = mock(SessionManager.class);
+        when(xmppServer.getSessionManager()).thenReturn(sessionManager);
+        when(sessionManager.bindResource(any(), any(), any()))
+            .thenReturn(CompletableFuture.completedFuture(SessionManager.BindResult.BOUND));
+        when(clientSession.isAuthenticated()).thenReturn(false);
+        when(clientSession.getStatus()).thenReturn(org.jivesoftware.openfire.session.Session.Status.CONNECTED);
+        when(clientSession.getAuthToken()).thenReturn(AuthToken.generateUserToken("testuser"));
+        when(clientSession.getAvailableStreamFeatures()).thenReturn(Collections.emptyList());
+        sessionDataMap.put(SASLAuthentication.AVAILABLE_MECHANISMS_FOR_SESSION, Set.of("TEST-MECHANISM"));
+        Element auth = DocumentHelper.createElement(QName.get("authenticate", "urn:xmpp:sasl:2"))
+            .addAttribute("mechanism", "TEST-MECHANISM");
+        auth.addElement(new QName("bind", new Namespace("", "urn:xmpp:bind:0"))).addElement("tag").setText("MyClient");
+        final List<String> events = new CopyOnWriteArrayList<>();
+        doAnswer(invocation -> { if (((String) invocation.getArgument(0)).startsWith("<success")) { events.add("success"); } return null; }).when(clientSession).deliverRawText(anyString());
+        doAnswer(invocation -> { events.add("hand over"); return null; }).when(sessionManager).handleStanzasOfReplacedDetachedSession(clientSession);
+
+        // Execute system under test.
+        SASLAuthentication.handle(clientSession, auth, true);
+
+        // Verify result.
+        assertEquals(List.of("success", "hand over"), events, "The stanzas of a replaced session must be handed over once, after the SASL2 success with the result of the bind was delivered.");
     }
 
     @Test

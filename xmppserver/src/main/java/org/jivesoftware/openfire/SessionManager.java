@@ -129,6 +129,11 @@ public class SessionManager extends BasicModule implements ClusterEventListener
 
     public static final int NEVER_KICK = -1;
 
+    /**
+     * Key of the session data that holds the detached session that a bind of a resource to a session replaced.
+     */
+    private static final String REPLACED_DETACHED_SESSION = "openfire.bind.replaced-detached-session";
+
     private XMPPServer server;
     private PacketRouter router;
     private String serverName;
@@ -1546,6 +1551,8 @@ public class SessionManager extends BasicModule implements ClusterEventListener
 
         try
         {
+            LocalClientSession kickedDetachedSession = null;
+
             // Re-obtain ClientRoute, now under the lock: The closed session may have just been cleared; a live session
             // may have raced in. Decide based on what the route is NOW, not what it was before the lock.
             final ClientSession oldSession = routingTable.getClientRoute(desiredJid);
@@ -1575,14 +1582,18 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                 oldSession.close(new StreamError(StreamError.Condition.conflict));
 
                 // OF-1923: a kicked session must never be resumed.
-                if (oldSession instanceof LocalClientSession) {
-                    removeDetached((LocalClientSession) oldSession);
+                if (oldSession instanceof LocalClientSession localOldSession && removeDetached(localOldSession)) {
+                    kickedDetachedSession = localOldSession;
                 }
             }
             // else: oldSession == null (cleared, or never existed) or isClosed (will be gone): safe to install the new session's route..
 
             // Install the new session's route.
             session.setAuthToken(authToken, resource);
+            if (kickedDetachedSession != null) {
+                // OF-3442: The kicked session has no connection whose close handles its unacknowledged stanzas. They are handled once the client has the result of this bind.
+                session.setSessionData(REPLACED_DETACHED_SESSION, kickedDetachedSession);
+            }
             return BindResult.BOUND;
         }
         catch (final RuntimeException e)
@@ -1594,6 +1605,36 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         {
             lock.unlock();
         }
+    }
+
+    /**
+     * Handles the unacknowledged stanzas of the detached session that a successful bind of a resource to the provided
+     * session replaced, if any, like those of any other session that closes without being resumed (XEP-0198 § 4).
+     * Messages are routed to the provided session, which now owns the resource, and IQ requests get an error.
+     *
+     * Invoke this after the result of the bind was delivered to the client, so that the client receives that result
+     * before these stanzas. The stanzas are handled asynchronously, unless the replaced session was resumed in the
+     * meantime, as it then delivers them itself.
+     *
+     * @param session the session to which a resource was bound.
+     */
+    public void handleStanzasOfReplacedDetachedSession(@Nonnull final LocalClientSession session)
+    {
+        if (!(session.removeSessionData(REPLACED_DETACHED_SESSION) instanceof LocalClientSession replaced)) {
+            return;
+        }
+        TaskEngine.getInstance().submit(() -> {
+            if (replaced.getConnection() != null) {
+                // OF-3442: A resumption that raced the bind reattached the session, which then delivers its stanzas itself.
+                Log.debug("Not handling the unacknowledged stanzas of session '{}' ({}), which was resumed after a bind replaced it.", replaced.getAddress(), replaced.getStreamID());
+                return;
+            }
+            try {
+                replaced.getStreamManager().onClose(router, serverAddress);
+            } catch (final Throwable t) {
+                Log.warn("Unable to handle the unacknowledged stanzas of detached session '{}' ({}), which was replaced by session '{}' for the same resource.", replaced.getAddress(), replaced.getStreamID(), session.getStreamID(), t);
+            }
+        });
     }
 
     /**

@@ -112,7 +112,12 @@ public class IQBindHandler extends IQHandler {
                     else if (result == SessionManager.BindResult.BOUND)
                     {
                         Log.debug("Successful resource bind for '{}'.", desiredJid);
-                        sendBindSuccess(session, packet);
+                        try {
+                            sendBindSuccess(session, packet);
+                        } finally {
+                            // OF-3442: Only now that the client has the result can it receive the stanzas of a detached session that the bind replaced.
+                            sessionManager.handleStanzasOfReplacedDetachedSession(session);
+                        }
                     }
                     else
                     {

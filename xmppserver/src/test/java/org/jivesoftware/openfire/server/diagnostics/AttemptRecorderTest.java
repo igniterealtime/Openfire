@@ -451,10 +451,26 @@ public class AttemptRecorderTest
     }
 
     @Test
-    public void testCloseAfterAnUnencryptedStreamAddsNothing()
+    public void testCloseAfterEncryptionRequiredButDisabledAddsNothing()
     {
-        // Setup test fixture: the connection is not encrypted, which can be why this server closes it (its policy forbids
-        // encryption, while the remote requires it).
+        // Setup test fixture: this server's policy disables encryption, while the remote requires it, so this server
+        // closes the connection itself.
+        final AttemptRecorder recorder = new AttemptRecorder("example.com", "remote.example.org");
+        recorder.stream(AttemptMilestones.Stream.opened("remote.example.org"));
+        recorder.tls(Tls.requiredButDisabled());
+
+        // Execute system under test.
+        recorder.connectionClosed();
+
+        // Verify results.
+        assertTrue(recorder.snapshot().getAuthentication().isEmpty(), "this server's own close, after its policy refused the connection, must not be blamed on authentication");
+    }
+
+    @Test
+    public void testCloseByTheRemoteDuringAuthenticationOnAnUnencryptedConnectionFailsAuthentication()
+    {
+        // Setup test fixture: the connection went ahead unencrypted, as this server's policy allows, and the remote
+        // closed it while authentication was under way.
         final AttemptRecorder recorder = new AttemptRecorder("example.com", "remote.example.org");
         recorder.stream(AttemptMilestones.Stream.opened("remote.example.org"));
         recorder.tls(Tls.unencrypted());
@@ -463,7 +479,7 @@ public class AttemptRecorderTest
         recorder.connectionClosed();
 
         // Verify results.
-        assertTrue(recorder.snapshot().getAuthentication().isEmpty(), "a close after an unencrypted stream may be this server's own, so authentication must not be blamed");
+        assertEquals(Authentication.closed(), recorder.snapshot().getAuthentication().orElse(null), "an unencrypted connection that this server allowed did not fail, so a close that follows must be recorded against authentication, the step under way");
     }
 
     @Test

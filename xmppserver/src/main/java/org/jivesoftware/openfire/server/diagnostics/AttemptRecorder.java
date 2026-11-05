@@ -389,13 +389,13 @@ public final class AttemptRecorder
 
     /**
      * @return whether every step recorded so far succeeded, so that a close cannot be this server ending the attempt
-     *         after a failure. An unencrypted connection counts as a failure here, as this server closes it when its own
-     *         policy forbids encryption while the remote requires it.
+     *         after a failure. An unencrypted connection that this server's policy allows did not fail; one that its policy
+     *         refused, as the remote requires the encryption the policy disables, did.
      */
     private static boolean nothingFailedSoFar(final AttemptMilestones recorded)
     {
         return recorded.getStream().map(stream -> stream.outcome() == Stream.Outcome.OPENED).orElse(true)
-            && recorded.getTls().map(tls -> tls.outcome() == Tls.Outcome.NEGOTIATED).orElse(true)
+            && recorded.getTls().map(tls -> tls.outcome() == Tls.Outcome.NEGOTIATED || tls.outcome() == Tls.Outcome.UNENCRYPTED).orElse(true)
             && recorded.getCertificate().map(certificate -> certificate.outcome() == Certificate.Outcome.VALID).orElse(true);
     }
 

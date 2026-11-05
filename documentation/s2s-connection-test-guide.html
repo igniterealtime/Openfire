@@ -167,7 +167,9 @@
 
                 <dt style="color: #767676">Not reached</dt>
                 <dd>The step did not take place, or did not succeed, because an earlier check failed. The detail reads:
-                    <q data-key="server2server.settings.testing.check.not_reached">The test stopped at an earlier check.</q></dd>
+                    <q data-key="server2server.settings.testing.check.not_reached">The test stopped at an earlier check.</q>
+                    On a connection that went ahead without encryption, <a href="#check-6">check 6</a> (the remote
+                    certificate) also shows "Not reached", with its own reason.</dd>
 
                 <dt style="color: #767676">Not observed</dt>
                 <dd>The test has no record of this step from this test's connection attempt, although no earlier check
@@ -200,6 +202,7 @@
             </figure>
 
         </section>
+
 
     </section>
 
@@ -581,14 +584,22 @@
                         gives the reason.</td>
                 </tr>
                 <tr>
+                    <td>Warning</td>
+                    <td><q data-key="server2server.settings.testing.check.tls.warning.unencrypted">The connection works,
+                        but is not encrypted. The STARTTLS policy of this server allows server-to-server connections
+                        without TLS, and TLS was not set up.</q></td>
+                    <td>The remote server did not offer TLS and this server's STARTTLS policy is Optional, or this
+                        server's STARTTLS policy is Disabled and the remote server does not require TLS. The attempt
+                        carries on without encryption: <a href="#check-6">check 6</a> (the remote certificate) shows
+                        "Not reached", as no certificate is exchanged, and the later checks show their own results.</td>
+                </tr>
+                <tr>
                     <td>Failed</td>
-                    <td><q data-key="server2server.settings.testing.check.tls.fail.unencrypted">The connection is not
-                        encrypted.</q></td>
-                    <td>TLS was not set up: the remote server did not offer it and this server's STARTTLS policy is
-                        Optional, or this server's STARTTLS policy is Disabled. The attempt usually carries on without
-                        encryption, and the later checks show their own results. When this server's STARTTLS policy is
-                        Disabled and the remote server requires TLS, the attempt ends here, and the later checks show
-                        "Not reached".</td>
+                    <td><q data-key="server2server.settings.testing.check.tls.fail.disabled">The remote server requires
+                        TLS encryption, but the STARTTLS policy of this server disables it, so this server closed the
+                        connection.</q></td>
+                    <td>This server's STARTTLS policy is Disabled, and the remote server requires TLS. The attempt ends
+                        here, and the later checks show "Not reached".</td>
                 </tr>
                 <tr>
                     <td>Failed</td>
@@ -649,6 +660,13 @@
                     <td><q data-key="server2server.settings.testing.check.certificate.pass">The remote certificate is valid,
                         trusted and issued for this domain.</q></td>
                     <td>All four properties hold.</td>
+                </tr>
+                <tr>
+                    <td>Not reached</td>
+                    <td><q data-key="server2server.settings.testing.check.certificate.not_reached.unencrypted">No
+                        certificate is exchanged on an unencrypted connection.</q></td>
+                    <td>The connection went ahead without TLS, as this server's STARTTLS policy allows
+                        (<a href="#check-5">check 5</a> shows a warning).</td>
                 </tr>
                 <tr>
                     <td>Failed</td>
@@ -1059,20 +1077,25 @@
         <h2>How a failure affects later checks</h2>
 
         <p>
-            Openfire carries on past some failures. When TLS is optional, it can authenticate over a connection
-            that is not encrypted; after a failed TLS handshake, or after it rejects the remote certificate, it can
-            still go on to authentication under some settings (<a href="#check-5">check 5</a> and
+            Openfire carries on past some failures: after a failed TLS handshake, or after it rejects the remote
+            certificate, it can still go on to authentication under some settings (<a href="#check-5">check 5</a> and
             <a href="#check-6">check 6</a> describe when). A step that still ran after a failure shows its own result, so a table can show a
             failed check followed by checks that pass.
+        </p>
+
+        <p>
+            A connection that goes ahead without encryption, as this server's STARTTLS policy allows, works, so
+            <a href="#check-5">check 5</a> shows a warning, and <a href="#check-6">check 6</a> shows "Not reached", as no certificate is
+            exchanged.
         </p>
 
         <p>
             Checks 8 to 10 (<a href="#check-8">the session</a>, <a href="#check-9">the ping</a> and
             <a href="#check-10">the reply</a>) work differently. Each shows "Not reached" instead of failing when
             the check just before it failed or was not reached, and the table then highlights only the earlier
-            failure. A step that passes or warns after a failure clears this. For example, when the connection is
-            not encrypted (check 5 fails), Server Dialback succeeds (check 7 shows a warning) and the ping then
-            times out, check 9 shows its own failure.
+            failure. A step that passes or warns after a failure clears this. For example, when this server rejects
+            the remote certificate (check 6 fails), Server Dialback succeeds (check 7 shows a warning) and the ping
+            then times out, check 9 shows its own failure.
         </p>
 
         <p>

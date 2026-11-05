@@ -1041,16 +1041,18 @@ public class LocalClientSession extends LocalSession implements ClientSession {
         if (!streamManager.isEnabled()) {
             // Push stanzas to the client.
             for (final Packet stanzaToPush : stanzasToPush) {
-                if (conn != null) {
-                    conn.deliver(stanzaToPush);
+                final Connection connection = conn; // Read once, as the session can be detached at any time.
+                if (connection != null) {
+                    connection.deliver(stanzaToPush);
                 }
             }
         } else {
             synchronized (streamManager) {
                 // Push stanzas to the client.
                 for (final Packet stanzaToPush : stanzasToPush) {
-                    if (conn != null) {
-                        conn.deliver(stanzaToPush);
+                    final Connection connection = conn; // Read once, as the session can be detached at any time.
+                    if (connection != null) {
+                        connection.deliver(stanzaToPush);
                     }
                     streamManager.sentStanza(stanzaToPush);
                 }

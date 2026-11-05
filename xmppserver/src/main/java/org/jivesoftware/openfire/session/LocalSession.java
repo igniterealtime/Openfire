@@ -77,8 +77,11 @@ public abstract class LocalSession implements Session {
 
     /**
      * The connection that this session represents.
+     *
+     * It is changed under {@code lock} when the session is detached or resumed on another connection, and read
+     * without that lock by threads that process data, including those of a connection that the session no longer uses.
      */
-    protected Connection conn;
+    protected volatile Connection conn;
 
     protected SessionManager sessionManager;
 

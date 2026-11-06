@@ -222,10 +222,10 @@ public class SidebarTag extends BodyTagSupport {
                             pluginName = item.attributeValue("plugin");
                             String value = getBodyContent().getString();
                             if (value != null) {
-                                value = value.replaceAll("\\[id]", clean(subitemID));
-                                value = value.replaceAll("\\[name]", clean(AdminConsole.getAdminText(subitemName, pluginName)));
-                                value = value.replaceAll("\\[description]", clean(AdminConsole.getAdminText(subitemDescr, pluginName)));
-                                value = value.replaceAll("\\[url]",request.getContextPath() + "/" + clean(subitemURL));
+                                value = value.replace("[id]", clean(subitemID));
+                                value = value.replace("[name]", clean(AdminConsole.getAdminText(subitemName, pluginName)));
+                                value = value.replace("[description]", clean(AdminConsole.getAdminText(subitemDescr, pluginName)));
+                                value = value.replace("[url]", request.getContextPath() + "/" + clean(subitemURL));
                             }
                             String css = getCss();
                             boolean isCurrent = item.equals(current);
@@ -268,10 +268,10 @@ public class SidebarTag extends BodyTagSupport {
                                     }
                                     String svalue = getSubsidebarTag().getBody();
                                     if (svalue != null) {
-                                        svalue = svalue.replaceAll("\\[id]", clean(sibID));
-                                        svalue = svalue.replaceAll("\\[name]", clean(AdminConsole.getAdminText(sibName, pluginName)));
-                                        svalue = svalue.replaceAll("\\[description]", clean(AdminConsole.getAdminText(sibDescr, pluginName)));
-                                        svalue = svalue.replaceAll("\\[url]",request.getContextPath() + "/" + clean(sibURL));
+                                        svalue = svalue.replace("[id]", clean(sibID));
+                                        svalue = svalue.replace("[name]", clean(AdminConsole.getAdminText(sibName, pluginName)));
+                                        svalue = svalue.replace("[description]", clean(AdminConsole.getAdminText(sibDescr, pluginName)));
+                                        svalue = svalue.replace("[url]", request.getContextPath() + "/" + clean(sibURL));
                                     }
                                     buf.append("<li class=\"").append(subcss).append("\">").append(svalue).append("</li>\n");
                                 }

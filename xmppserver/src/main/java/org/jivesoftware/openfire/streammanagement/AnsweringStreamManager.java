@@ -23,6 +23,7 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.xmpp.packet.*;
@@ -105,8 +106,12 @@ public class AnsweringStreamManager extends StreamManager
      * Leaving delivery to the caller allows an inline caller to embed the element in its enclosing response, as
      * XEP-0198 § 9.1 requires of a Bind2 inline request.
      *
+     * Stream management cannot be enabled before the session is authenticated. On a session with a server that
+     * connected to Openfire, it can only be enabled when {@link #SERVER_ACTIVE} is set, and once at least one domain
+     * of that server is authenticated. Resumption is not offered on such a session.
+     *
      * @param namespace the SM namespace to use
-     * @param resume    whether the client requests a resumable session
+     * @param resume    whether the peer requests a resumable session
      * @return the {@code <enabled/>} element
      * @throws StreamManagementException when stream management could not be enabled, carrying the condition to report
      */
@@ -119,6 +124,17 @@ public class AnsweringStreamManager extends StreamManager
         if (!session.isAuthenticated()) {
             throw new StreamManagementException(PacketError.Condition.unexpected_request,
                 "Stream management cannot be enabled before the session is authenticated.");
+        }
+        if (session instanceof LocalIncomingServerSession serverSession) {
+            if (!StreamManager.SERVER_ACTIVE.getValue()) {
+                throw new StreamManagementException(PacketError.Condition.unexpected_request,
+                    "Stream management is not offered to servers.");
+            }
+            // OF-2425: The feature is advertised before dialback authenticates a domain, as dialback does not restart the stream.
+            if (serverSession.getValidatedDomains().isEmpty()) {
+                throw new StreamManagementException(PacketError.Condition.unexpected_request,
+                    "Stream management cannot be enabled before a domain is authenticated.");
+            }
         }
 
         synchronized ( this )

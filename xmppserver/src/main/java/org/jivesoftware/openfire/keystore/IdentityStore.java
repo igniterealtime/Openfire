@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package org.jivesoftware.openfire.keystore;
 
+import org.bouncycastle.asn1.x500.X500NameBuilder;
+import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.operator.OperatorCreationException;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerInfo;
@@ -54,6 +56,11 @@ import java.util.stream.Collectors;
 public class IdentityStore extends CertificateStore
 {
     private static final Logger Log = LoggerFactory.getLogger( IdentityStore.class );
+
+    /**
+     * The number of days for which a self-signed certificate is valid after its issuer details have been updated.
+     */
+    private static final int REISSUED_SELF_SIGNED_CERTIFICATE_VALIDITY_DAYS = 60;
 
     public IdentityStore( CertificateStoreConfiguration configuration, boolean createIfAbsent ) throws CertificateStoreConfigException
     {
@@ -579,6 +586,73 @@ public class IdentityStore extends CertificateStore
         }
 
         // TODO Notify listeners that a new certificate has been created
+    }
+
+    /**
+     * Replaces every self-signed certificate in this store with a new self-signed certificate that carries the provided
+     * issuer details, so that a Certificate Signing Request generated from it identifies this organisation.
+     *
+     * Each new certificate is signed with the private key of the entry it replaces, and keeps that key pair. Its issuer
+     * and subject are both the XMPP domain as common name, with the provided details. Entries of which the certificate
+     * is not self-signed are left unchanged.
+     *
+     * The change is persisted. When it cannot be completed, the store is reloaded from disk, discarding any change made
+     * in memory.
+     *
+     * @param organizationalUnit the organisational unit (OU) of the issuer (must not be null).
+     * @param organization the organisation (O) of the issuer (must not be null).
+     * @param city the locality (L) of the issuer (must not be null).
+     * @param state the state or province (ST) of the issuer (must not be null).
+     * @param countryCode the two-letter country code (C) of the issuer (must not be null).
+     * @throws CertificateStoreConfigException if the certificates could not be replaced, or the change could not be persisted
+     * @throws NullPointerException if any argument is null
+     */
+    public synchronized void updateIssuerOfSelfSignedCertificates( String organizationalUnit, String organization, String city, String state, String countryCode ) throws CertificateStoreConfigException
+    {
+        Objects.requireNonNull( organizationalUnit, "Argument 'organizationalUnit' cannot be null." );
+        Objects.requireNonNull( organization, "Argument 'organization' cannot be null." );
+        Objects.requireNonNull( city, "Argument 'city' cannot be null." );
+        Objects.requireNonNull( state, "Argument 'state' cannot be null." );
+        Objects.requireNonNull( countryCode, "Argument 'countryCode' cannot be null." );
+
+        final String domain = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
+
+        final X500NameBuilder builder = new X500NameBuilder();
+        builder.addRDN( BCStyle.CN, domain );
+        builder.addRDN( BCStyle.OU, organizationalUnit );
+        builder.addRDN( BCStyle.O, organization );
+        builder.addRDN( BCStyle.L, city );
+        builder.addRDN( BCStyle.ST, state );
+        builder.addRDN( BCStyle.C, countryCode );
+
+        try
+        {
+            for ( final String alias : Collections.list( store.aliases() ) )
+            {
+                final X509Certificate certificate = (X509Certificate) store.getCertificate( alias );
+
+                // Update only self-signed certificates.
+                if ( CertificateManager.isSelfSignedCertificate( certificate ) )
+                {
+                    final PrivateKey privateKey = (PrivateKey) store.getKey( alias, configuration.getPassword() );
+                    final PublicKey publicKey = certificate.getPublicKey();
+
+                    final String signAlgorithm = "SHA256WITH" + publicKey.getAlgorithm();
+
+                    // Regenerate the self-signed certificate, with the new details as both issuer and subject.
+                    final Set<String> sanDnsNames = CertificateManager.determineSubjectAlternateNameDnsNameValues();
+                    final X509Certificate newCertificate = CertificateManager.createX509V3Certificate( new KeyPair( publicKey, privateKey ), REISSUED_SELF_SIGNED_CERTIFICATE_VALIDITY_DAYS, builder, builder, domain, signAlgorithm, sanDnsNames );
+                    store.setKeyEntry( alias, privateKey, configuration.getPassword(), new X509Certificate[] { newCertificate } );
+                }
+            }
+
+            persist();
+        }
+        catch ( CertificateStoreConfigException | IOException | GeneralSecurityException | RuntimeException e )
+        {
+            reload(); // reset state of the store.
+            throw new CertificateStoreConfigException( "Unable to update the issuer of the self-signed certificates in an identity store.", e );
+        }
     }
 
     /**

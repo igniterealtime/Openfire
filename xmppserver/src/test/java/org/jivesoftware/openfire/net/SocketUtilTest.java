@@ -438,6 +438,43 @@ public class SocketUtilTest
     }
 
     @Test
+    public void testAttemptCutOffByTheDeadlineIsATimeout()
+    {
+        // Setup test fixture: the resolution deadline cancelled a connection that had started but not yet finished.
+        final SocketUtil.ConnectionAttempt cutOff = SocketUtil.ConnectionAttempt.cutOff("192.0.2.10:5269", 0);
+
+        // Execute system under test.
+        final Tcp tcp = SocketUtil.summariseConnectionAttempts(List.of(), List.of(cutOff));
+
+        // Verify results.
+        assertEquals(Tcp.allFailed(List.of(AddressFailure.timedOut("192.0.2.10:5269"))), tcp, "a connection that was under way when the deadline passed did not connect in time, so it must not read as no connection attempted");
+    }
+
+    @Test
+    public void testAttemptsCutOffByTheDeadlineFollowTheFailures()
+    {
+        // Setup test fixture: one address refused, then the deadline cancelled the connection to the next.
+        final SocketUtil.ConnectionAttempt refused = new SocketUtil.ConnectionAttempt("192.0.2.10:5269", Tcp.Outcome.REFUSED, null);
+        final SocketUtil.ConnectionAttempt cutOff = SocketUtil.ConnectionAttempt.cutOff("192.0.2.11:5269", 1);
+
+        // Execute system under test.
+        final Tcp tcp = SocketUtil.summariseConnectionAttempts(List.of(refused), List.of(cutOff));
+
+        // Verify results.
+        assertEquals(List.of(AddressFailure.refused("192.0.2.10:5269"), AddressFailure.timedOut("192.0.2.11:5269")), tcp.failures().values(), "every address tried must be listed, the one the deadline cut off as timed out");
+    }
+
+    @Test
+    public void testFailedNettyConnectionIsAFailedTcpConnection()
+    {
+        // Execute system under test: the probe socket connected, but the connection that the session uses was refused.
+        final Tcp tcp = SocketUtil.connectionFailed(new InetSocketAddress(InetAddress.getLoopbackAddress(), 5269), new ConnectException("Connection refused"));
+
+        // Verify results.
+        assertEquals(Tcp.allFailed(List.of(AddressFailure.refused("127.0.0.1:5269"))), tcp, "the connection that the session uses must be recorded as refused, in place of the probe that connected");
+    }
+
+    @Test
     public void testEndpointsAreFormattedForReading()
     {
         assertEquals("127.0.0.1:5269", SocketUtil.endpoint(new InetSocketAddress(InetAddress.getLoopbackAddress(), 5269)), "an IPv4 endpoint must read as address and port");

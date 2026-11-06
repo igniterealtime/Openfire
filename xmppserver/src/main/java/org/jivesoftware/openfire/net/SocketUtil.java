@@ -147,6 +147,9 @@ public class SocketUtil
         Log.debug( "Creating a socket connection to XMPP domain '{}' ...", xmppDomain );
         final AtomicBoolean anyAddressResolved = new AtomicBoolean(false);
         final List<ConnectionAttempt> failedAttempts = new CopyOnWriteArrayList<>();
+        // Only for the recorder: attempts that have started and neither connected nor failed. Those still here when no
+        // address connected were cancelled by the resolution deadline.
+        final Set<ConnectionAttempt> attemptsUnderWay = ConcurrentHashMap.newKeySet();
         final Set<SocketChannel> fallbackConnections = ConcurrentHashMap.newKeySet();
         final Map<SocketChannel, Integer> connectedPrioritySets = new ConcurrentHashMap<>();
 
@@ -207,6 +210,10 @@ public class SocketUtil
 
                         final Callable<Map.Entry<SocketChannel, Boolean>> callable = () -> {
                             final int socketTimeout = RemoteServerManager.getSocketTimeout();
+                            final ConnectionAttempt underWay = recorder == null ? null : AttemptRecorder.safely(() -> ConnectionAttempt.cutOff(endpoint(resolvedAddress.generateSocketAddress()), prioritySetIndex), null);
+                            if (underWay != null) {
+                                attemptsUnderWay.add(underWay);
+                            }
                             SocketChannel socketChannel = null;
                             try {
                                 socketChannel = SocketChannel.open();
@@ -221,6 +228,9 @@ public class SocketUtil
                                 }
                                 if (recorder != null) {
                                     connectedPrioritySets.put(socketChannel, prioritySetIndex);
+                                }
+                                if (underWay != null) {
+                                    attemptsUnderWay.remove(underWay);
                                 }
 
                                 return new AbstractMap.SimpleEntry<>(socketChannel, resolvedAddress.isDirectTLS());
@@ -240,8 +250,13 @@ public class SocketUtil
                                 // Recorded after the socket is closed, and guarded, so that recording cannot leak it.
                                 AttemptRecorder.safely(() -> {
                                     final ConnectionAttempt failure = classifyFailure(endpoint(resolvedAddress.generateSocketAddress()), e);
+                                    // An interrupted attempt stays under way: it was cancelled, either because another
+                                    // address connected (when it does not count) or by the deadline (when it timed out).
                                     if (failure != null) {
                                         failedAttempts.add(failure.inPrioritySet(prioritySetIndex));
+                                        if (underWay != null) {
+                                            attemptsUnderWay.remove(underWay);
+                                        }
                                     }
                                 });
                             }
@@ -331,7 +346,7 @@ public class SocketUtil
                     // Nothing to connect to: the failure is DNS, and no TCP connection was attempted.
                     recorder.dns(Dns.noAddress());
                 } else {
-                    recorder.tcp(summariseConnectionAttempts(failedAttempts));
+                    recorder.tcp(summariseConnectionAttempts(failedAttempts, attemptsUnderWay));
                 }
             });
         }
@@ -376,6 +391,18 @@ public class SocketUtil
         ConnectionAttempt inPrioritySet(final int prioritySet)
         {
             return new ConnectionAttempt(endpoint, outcome, reason, prioritySet);
+        }
+
+        /**
+         * An attempt that had started when the resolution deadline cancelled it: it did not connect in time.
+         *
+         * @param endpoint the address and port.
+         * @param prioritySet the index of the priority set the address is in.
+         * @return the attempt, as timed out.
+         */
+        static ConnectionAttempt cutOff(final String endpoint, final int prioritySet)
+        {
+            return new ConnectionAttempt(endpoint, Tcp.Outcome.TIMED_OUT, null, prioritySet);
         }
     }
 
@@ -445,10 +472,40 @@ public class SocketUtil
      */
     static Tcp summariseConnectionAttempts(final List<ConnectionAttempt> failedAttempts)
     {
-        if (failedAttempts.isEmpty()) {
+        return summariseConnectionAttempts(failedAttempts, List.of());
+    }
+
+    /**
+     * Summarises the connection attempts as {@link #summariseConnectionAttempts(List)} does, also counting the attempts
+     * that were still under way when the resolution deadline cancelled them, as timed out. Without them, a deadline
+     * shorter than the socket timeout would leave no failure recorded, which reads as no connection attempted.
+     *
+     * @param failedAttempts the failed attempts, in the order they were made.
+     * @param cutOffAttempts the attempts that the deadline cancelled after they started.
+     * @return the TCP milestone.
+     */
+    static Tcp summariseConnectionAttempts(final List<ConnectionAttempt> failedAttempts, final Collection<ConnectionAttempt> cutOffAttempts)
+    {
+        final List<ConnectionAttempt> all = new ArrayList<>(failedAttempts);
+        all.addAll(cutOffAttempts);
+        if (all.isEmpty()) {
             return Tcp.noneAttempted();
         }
-        return Tcp.allFailed(failures(failedAttempts));
+        return Tcp.allFailed(failures(all));
+    }
+
+    /**
+     * Describes a connection that failed after the address was chosen, such as the connection that the session uses,
+     * which is made again after the probe connection that chose the address.
+     *
+     * @param address the address and port connected to.
+     * @param cause what the connection attempt threw.
+     * @return the TCP milestone, or null when the attempt was interrupted rather than failed.
+     */
+    public static Tcp connectionFailed(final InetSocketAddress address, final Throwable cause)
+    {
+        final ConnectionAttempt failure = classifyFailure(endpoint(address), cause);
+        return failure == null ? null : summariseConnectionAttempts(List.of(failure));
     }
 
     /**

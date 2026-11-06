@@ -79,7 +79,7 @@
     <head>
         <title><fmt:message key="muc.room.clear_chat.title"/></title>
         <meta name="subPageID" content="muc-room-clear-chat"/>
-        <meta name="extraParams" content="roomJID=${admin:escapeHTMLTags(roomBareJid)}"/>
+        <meta name="extraParams" content="roomJID=${admin:urlEncode(roomBareJid)}"/>
     </head>
     <body>
         <p>

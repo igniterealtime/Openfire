@@ -55,6 +55,12 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
     private final CompletableFuture<Void> attemptedAllAuthenticationMethods = new CompletableFuture<>();
 
     /**
+     * Set when the remote server reports that SASL EXTERNAL succeeded. Authentication is reported as completed only
+     * when the remote server has restarted the stream, so that it is reported for the session of that stream (OF-3447).
+     */
+    private volatile boolean saslExternalSucceeded = false;
+
+    /**
      * Creates a dedicated reader for a socket.
      *
      * @param router     the router for sending packets that were read.
@@ -95,8 +101,11 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
 
     /**
-     * Transfer an existing connection to a new session when a new streamID is detected. Also transfers existing
-     * authentication method if previously set.
+     * Transfer an existing connection to a new session when a new streamID is detected. When SASL EXTERNAL succeeded
+     * on the previous stream, the new session is authenticated with the authentication method that was used previously.
+     *
+     * This does not add the new session as a server route.
+     *
      * @param newStreamId new stream ID for the new session
      * @param existingAuthMethod authentication method used previously (possibly null)
      */
@@ -105,8 +114,8 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
         // Transfer new session to existing connection
         connection.reinit(session);
-        if (isSessionAuthenticated.isDone()) {
-            ((LocalOutgoingServerSession) session).addOutgoingDomainPair(domainPair);
+        if (saslExternalSucceeded && existingAuthMethod != null) {
+            session.setAddress(new JID(null, domainPair.getRemote(), null));
             ((LocalOutgoingServerSession) session).setAuthenticationMethod(existingAuthMethod);
         } else {
             LOG.debug("Session not authenticated yet, unable to setAuthenticationMethod().");
@@ -116,6 +125,12 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
     @Override
     protected void initiateSession(String stanza, XMPPPacketReader reader) throws Exception {
         boolean startOfStream = isStartOfStream(stanza);
+
+        // OF-3447: once session initiation is abandoned (e.g. the connection closed after SASL success), a stream header that still arrives is ignored.
+        if (startOfStream && sessionCreated && session == null) {
+            LOG.debug("Ignoring stream header from remote domain '{}', as session initiation was abandoned. Connection: {}", domainPair.getRemote(), connection);
+            return;
+        }
 
         if (startOfStream) {
             // Capture the prefixed namespaces declared on the peer's stream header so that prefixed content in
@@ -145,6 +160,17 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                         : null;
                     transferConnectionToNewSession(streamHeaderId, existingAuthMethod);
                 }
+
+                // OF-3447: after SASL success, the restarted stream (and its session) is the one to report.
+                if (saslExternalSucceeded && !isSessionAuthenticated.isDone()) {
+                    if (session.isAuthenticated()) {
+                        reportSessionAuthenticated();
+                    } else {
+                        // OF-3447: authentication was lost, e.g. as the connection was closed by another thread before the stream was restarted.
+                        LOG.debug("Session with stream ID '{}' of remote domain '{}' is not authenticated after the stream was restarted. Session initiation failed. Session: {}", session.getStreamID(), domainPair.getRemote(), session);
+                        abandonSessionInitiation();
+                    }
+                }
             } catch (XmlPullParserException | IOException e) {
                 LOG.error("Failed to extract namespaces and stream ID from the peer's stream header", e);
             }
@@ -170,6 +196,12 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
     @Override
     boolean processUnknowPacket(Element doc) {
         String rootTagName = doc.getName();
+
+        // OF-3447: once session initiation is abandoned (e.g. the connection closed after SASL success), a negotiation element that still arrives is ignored.
+        if (session == null) {
+            LOG.debug("Ignoring <{}/> from remote domain '{}', as session initiation was abandoned. Connection: {}", rootTagName, domainPair.getRemote(), connection);
+            return true;
+        }
 
         // Handle features
         if ("features".equals(rootTagName)) {
@@ -246,7 +278,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 }
 
                 // Make sure to set 'authenticated' only after the internal state of 'session' itself is updated, to avoid race conditions.
-                isSessionAuthenticated.complete(null);
+                reportSessionAuthenticated();
 
                 return true;
             } else {
@@ -280,6 +312,12 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
         // Handles SASL success
         if ("success".equals(rootTagName)) {
+            // OF-3447: a repeated <success/> must not restart the stream again, nor add another close callback.
+            if (saslExternalSucceeded) {
+                LOG.debug("Ignoring a repeated <success/> from remote domain '{}', as SASL EXTERNAL already succeeded. Session: {}", domainPair.getRemote(), session);
+                return true;
+            }
+
             LOG.debug("Remote domain '{}' reports that EXTERNAL SASL was successful.", domainPair.getRemote());
 
             // SASL was successful so initiate a new stream
@@ -304,8 +342,15 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 return true;
             }
 
-            // Make sure to set 'authenticated' only after the internal state of 'session' itself is updated, to avoid race conditions.
-            isSessionAuthenticated.complete(null);
+            // OF-3447: authentication is reported when the remote server restarts the stream. Should the connection close
+            // before that, tell the caller now, rather than leaving it to wait for the session initialisation to time out.
+            saslExternalSucceeded = true;
+            connection.getCloseFuture().thenRun(() -> {
+                if (!isSessionAuthenticated.isDone()) {
+                    LOG.debug("Connection to remote domain '{}' closed after SASL EXTERNAL succeeded, before the stream was restarted. Session initiation failed. Connection: {}", domainPair.getRemote(), connection);
+                    abandonSessionInitiation();
+                }
+            });
             return true;
         }
 
@@ -326,6 +371,14 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
         }
 
         return false;
+    }
+
+    /**
+     * Reports that the session of the current stream is authenticated.
+     */
+    private void reportSessionAuthenticated() {
+        LOG.debug("Authentication with remote domain '{}' completed for session with stream ID '{}': {}", domainPair.getRemote(), session.getStreamID(), session);
+        isSessionAuthenticated.complete(null);
     }
 
     private void abandonSessionInitiation() {
@@ -369,6 +422,13 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
         return session;
     }
 
+    /**
+     * Returns a future that completes when the session is authenticated. For SASL EXTERNAL, that is when the remote
+     * server has restarted the stream after reporting success; {@link #getSession()} then returns the session of the
+     * restarted stream.
+     *
+     * @return a future that completes when the session is authenticated.
+     */
     public CompletableFuture<Void> isSessionAuthenticated() {
         return isSessionAuthenticated;
     }

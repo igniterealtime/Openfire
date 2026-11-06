@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,13 @@ import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.ConnectionManager;
 import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.*;
 import org.jivesoftware.openfire.net.DNSUtil;
 import org.jivesoftware.openfire.net.SrvRecord;
+import org.jivesoftware.openfire.server.diagnostics.AttemptMilestones;
+import org.jivesoftware.openfire.server.diagnostics.AttemptRecorder;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionListener;
 import org.jivesoftware.openfire.spi.ConnectionType;
@@ -31,6 +34,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -41,6 +45,7 @@ import org.mockito.stubbing.Answer;
 
 import java.io.File;
 import java.security.Key;
+import java.time.Duration;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.*;
@@ -65,6 +70,11 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 public class LocalOutgoingServerSessionTest
 {
+    /**
+     * How long the tests that expect no stream wait for one, kept short so that they finish quickly.
+     */
+    private static final Duration SHORT_INITIALISE_TIMEOUT = Duration.ofSeconds(2);
+
     private static Key FIXTURE_VALID_KEY;
     private static Certificate[] FIXTURE_VALID_CERTIFICATE_CHAIN;
     private RemoteReceivingServerDummy remoteReceivingServerDummy;
@@ -178,7 +188,8 @@ public class LocalOutgoingServerSessionTest
             final Connection.TLSPolicy tlsPolicy = Connection.TLSPolicy.valueOf(JiveGlobals.getProperty(ConnectionSettings.Server.TLS_POLICY, Connection.TLSPolicy.optional.toString()));
             final Set<String> suites = Set.of("TLS_AES_256_GCM_SHA384","TLS_AES_128_GCM_SHA256","TLS_CHACHA20_POLY1305_SHA256","TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384","TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256","TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256","TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384","TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256","TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256","TLS_DHE_RSA_WITH_AES_256_GCM_SHA384","TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256","TLS_DHE_DSS_WITH_AES_256_GCM_SHA384","TLS_DHE_RSA_WITH_AES_128_GCM_SHA256","TLS_DHE_DSS_WITH_AES_128_GCM_SHA256","TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA384","TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA384","TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256","TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256","TLS_DHE_RSA_WITH_AES_256_CBC_SHA256","TLS_DHE_DSS_WITH_AES_256_CBC_SHA256","TLS_DHE_RSA_WITH_AES_128_CBC_SHA256","TLS_DHE_DSS_WITH_AES_128_CBC_SHA256","TLS_ECDH_ECDSA_WITH_AES_256_GCM_SHA384","TLS_ECDH_RSA_WITH_AES_256_GCM_SHA384","TLS_ECDH_ECDSA_WITH_AES_128_GCM_SHA256","TLS_ECDH_RSA_WITH_AES_128_GCM_SHA256","TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA384","TLS_ECDH_RSA_WITH_AES_256_CBC_SHA384","TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA256","TLS_ECDH_RSA_WITH_AES_128_CBC_SHA256","TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA","TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA","TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA","TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA","TLS_DHE_RSA_WITH_AES_256_CBC_SHA","TLS_DHE_DSS_WITH_AES_256_CBC_SHA","TLS_DHE_RSA_WITH_AES_128_CBC_SHA","TLS_DHE_DSS_WITH_AES_128_CBC_SHA","TLS_ECDH_ECDSA_WITH_AES_256_CBC_SHA","TLS_ECDH_RSA_WITH_AES_256_CBC_SHA","TLS_ECDH_ECDSA_WITH_AES_128_CBC_SHA","TLS_ECDH_RSA_WITH_AES_128_CBC_SHA","TLS_RSA_WITH_AES_256_GCM_SHA384","TLS_RSA_WITH_AES_128_GCM_SHA256","TLS_RSA_WITH_AES_256_CBC_SHA256","TLS_RSA_WITH_AES_128_CBC_SHA256","TLS_RSA_WITH_AES_256_CBC_SHA","TLS_RSA_WITH_AES_128_CBC_SHA","TLS_EMPTY_RENEGOTIATION_INFO_SCSV");
             final Set<String> protocols = Set.of("TLSv1.3", "TLSv1.2");
-            return new ConnectionConfiguration(ConnectionType.SOCKET_S2S, true, 10, -1, Connection.ClientAuth.wanted, null, 9999, tlsPolicy, identityStoreConfig, trustStoreConfig, true, true, false, protocols, suites, Connection.CompressionPolicy.optional, true );
+            final boolean verifyValidity = JiveGlobals.getBooleanProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY_VALIDITY, true);
+            return new ConnectionConfiguration(ConnectionType.SOCKET_S2S, true, 10, -1, Connection.ClientAuth.wanted, null, 9999, tlsPolicy, identityStoreConfig, trustStoreConfig, true, verifyValidity, false, protocols, suites, Connection.CompressionPolicy.optional, true );
         }
     }
 
@@ -296,11 +307,13 @@ public class LocalOutgoingServerSessionTest
 
             // Execute system under test.
             AbstractRemoteServerDummy.log("Execute system under test: (start with execution)");
-            LocalOutgoingServerSession result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port);
+            AttemptRecorder recorder = new AttemptRecorder(domainPair.getLocal(), domainPair.getRemote());
+            LocalOutgoingServerSession result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port, recorder);
             // Retry once if null is returned unexpectedly: transient connection failures (e.g. Netty bootstrap race) should not permanently fail the test.
             if (result == null && expected.getConnectionState() != ExpectedOutcome.ConnectionState.NO_CONNECTION) {
                 AbstractRemoteServerDummy.log("Execute system under test: first attempt returned null unexpectedly; retrying.");
-                result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port);
+                recorder = new AttemptRecorder(domainPair.getLocal(), domainPair.getRemote());
+                result = LocalOutgoingServerSession.createOutgoingSession(domainPair, port, recorder);
             }
             AbstractRemoteServerDummy.log("Execute system under test: (done with execution)");
 
@@ -336,12 +349,502 @@ public class LocalOutgoingServerSessionTest
                     assertEquals( "TLSv1.3", result.getConnection().getTLSProtocolName().get());
                     break;
             }
+            final AttemptRecorder.Outcome expectedOutcome = result == null ? AttemptRecorder.Outcome.FAILED : AttemptRecorder.Outcome.NEW_SESSION;
+            assertEquals(expectedOutcome, recorder.getOutcome(), "the attempt's recorder must record whether a new session resulted");
+            assertNotNull(recorder.getStarted(), "the attempt's recorder must record when the attempt started");
+            assertTrue(recorder.snapshot().getDns().isPresent(), "every attempt must record what DNS returned");
+            if (result != null) {
+                assertEquals(AttemptMilestones.Tcp.Outcome.CONNECTED, recorder.snapshot().getTcp().orElseThrow().outcome(), "an attempt that produced a session must record its TCP connection");
+            }
+            assertStreamTlsAndCertificateMilestones(localServerSettings, remoteServerSettings, recorder.snapshot());
+            assertAuthenticationMilestone(expected.getConnectionState(), localServerSettings, remoteServerSettings, recorder.snapshot());
             AbstractRemoteServerDummy.log("Verify results (done)");
         } finally {
             // Teardown test fixture.
             AbstractRemoteServerDummy.log("Teardown test fixture (start)");
             trustStore.delete("unit-test");
             AbstractRemoteServerDummy.log("Teardown test fixture (start)");
+        }
+    }
+
+    @Test
+    public void testRemoteCertificateFromUnknownAuthorityIsRecordedAsUntrusted() throws Exception
+    {
+        // Setup test fixture: a valid chain whose authority is not in the local trust store.
+        remoteReceivingServerDummy.preparePKIX();
+
+        // Execute system under test.
+        final AttemptRecorder recorder = attemptOverOptionalTls(false);
+
+        // Verify results.
+        assertEquals(AttemptMilestones.Tls.certificateRejected(), recorder.snapshot().getTls().orElse(null), "the handshake is stopped by this server's trust manager, so TLS must be recorded as stopped by a certificate rejection");
+        assertEquals(AttemptMilestones.Certificate.untrusted(), recorder.snapshot().getCertificate().orElse(null), "a certificate from an authority that is not trusted must be recorded as untrusted");
+    }
+
+    @Test
+    public void testAcceptingSelfSignedCertificatesDoesNotMakeOneValid() throws Exception
+    {
+        // Setup test fixture: a self-signed certificate that the trust store does not hold, with self-signed
+        // certificates accepted for server-to-server connections.
+        remoteReceivingServerDummy.setUseSelfSignedCertificate(true);
+        remoteReceivingServerDummy.preparePKIX();
+        JiveGlobals.setProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS, "true");
+        final AttemptRecorder recorder;
+        try {
+            // Execute system under test.
+            recorder = attemptOverOptionalTls(false);
+        } finally {
+            JiveGlobals.deleteProperty(ConnectionSettings.Server.TLS_ACCEPT_SELFSIGNED_CERTS);
+        }
+
+        // Verify results.
+        assertEquals(AttemptMilestones.Tls.Outcome.NEGOTIATED, recorder.snapshot().getTls().map(AttemptMilestones.Tls::outcome).orElse(null), "accepting self-signed certificates lets the handshake complete");
+        assertEquals(AttemptMilestones.Certificate.untrusted(), recorder.snapshot().getCertificate().orElse(null), "the check for certificate login ignores the setting, so the certificate must still be recorded as untrusted");
+    }
+
+    @Test
+    public void testNotVerifyingValidityDatesDoesNotMakeAnExpiredCertificateValid() throws Exception
+    {
+        // Setup test fixture: an expired certificate from a trusted authority, with validity dates not verified.
+        remoteReceivingServerDummy.setUseExpiredEndEntityCertificate(true);
+        remoteReceivingServerDummy.preparePKIX();
+        final X509Certificate[] chain = trustRemoteAuthority();
+        JiveGlobals.setProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY_VALIDITY, "false");
+        final AttemptRecorder recorder;
+        try {
+            // Execute system under test.
+            recorder = attemptOverOptionalTls(false);
+        } finally {
+            JiveGlobals.deleteProperty(ConnectionSettings.Server.TLS_CERTIFICATE_VERIFY_VALIDITY);
+        }
+
+        // Verify results.
+        assertEquals(AttemptMilestones.Tls.Outcome.NEGOTIATED, recorder.snapshot().getTls().map(AttemptMilestones.Tls::outcome).orElse(null), "not verifying validity dates lets the handshake complete");
+        assertEquals(AttemptMilestones.Certificate.expired(chain[0].getNotAfter().toInstant()), recorder.snapshot().getCertificate().orElse(null), "the check for certificate login ignores the setting, so the certificate must still be recorded as expired, with its end date");
+    }
+
+    @Test
+    public void testReusedSessionIsRecordedWithoutMilestones()
+    {
+        // Setup test fixture: an outgoing session that already authenticates this domain pair.
+        final DomainPair domainPair = new DomainPair(Fixtures.XMPP_DOMAIN, RemoteReceivingServerDummy.XMPP_DOMAIN);
+        final OutgoingServerSession existing = mock(OutgoingServerSession.class, withSettings().lenient());
+        doReturn(true).when(existing).checkOutgoingDomainPair(domainPair);
+        final SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
+        doReturn(existing).when(sessionManager).getOutgoingServerSession(domainPair);
+        final AttemptRecorder recorder = new AttemptRecorder(domainPair.getLocal(), domainPair.getRemote());
+
+        // Execute system under test.
+        final DomainAuthResult result = LocalOutgoingServerSession.authenticateDomain(domainPair, recorder);
+
+        // Verify results.
+        assertTrue(result.isSuccess(), "an existing session for the domain pair must be used");
+        assertEquals(AttemptRecorder.Outcome.REUSED_SESSION, recorder.getOutcome(), "an attempt that made no connection must be recorded as reusing a session");
+        final AttemptMilestones recorded = recorder.snapshot();
+        assertTrue(recorded.getDns().isEmpty() && recorded.getTcp().isEmpty() && recorded.getStream().isEmpty() && recorded.getTls().isEmpty() && recorded.getCertificate().isEmpty() && recorded.getAuthentication().isEmpty(), "no connection step took place, so none may be recorded, or the checklist would show passes this attempt did not earn");
+    }
+
+    @Test
+    public void testFailureToDescribeMilestonesDoesNotChangeTheResult()
+    {
+        // Setup test fixture: an outgoing session that already authenticates this domain pair, and a recorder that
+        // fails when asked to describe what it recorded.
+        final DomainPair domainPair = new DomainPair(Fixtures.XMPP_DOMAIN, RemoteReceivingServerDummy.XMPP_DOMAIN);
+        final OutgoingServerSession existing = mock(OutgoingServerSession.class, withSettings().lenient());
+        doReturn(true).when(existing).checkOutgoingDomainPair(domainPair);
+        final SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
+        doReturn(existing).when(sessionManager).getOutgoingServerSession(domainPair);
+        final AttemptRecorder recorder = spy(new AttemptRecorder(domainPair.getLocal(), domainPair.getRemote()));
+        doThrow(new IllegalStateException("Simulated recording failure")).when(recorder).describe();
+
+        // Execute system under test.
+        final DomainAuthResult result = LocalOutgoingServerSession.authenticateDomain(domainPair, recorder);
+
+        // Verify results.
+        assertTrue(result.isSuccess(), "a failure while recording must not change the outcome of the connection attempt");
+        assertTrue(recorder.getLoggedProblems().isPresent(), "the diagnostic log must still be recorded, so that anyone waiting for the attempt to finish is released");
+    }
+
+    @Test
+    public void testFailureToFinishTheRecordDoesNotChangeTheResult()
+    {
+        // Setup test fixture: an outgoing session that already authenticates this domain pair, and a recorder that
+        // fails when told how the attempt ended.
+        final DomainPair domainPair = new DomainPair(Fixtures.XMPP_DOMAIN, RemoteReceivingServerDummy.XMPP_DOMAIN);
+        final OutgoingServerSession existing = mock(OutgoingServerSession.class, withSettings().lenient());
+        doReturn(true).when(existing).checkOutgoingDomainPair(domainPair);
+        final SessionManager sessionManager = XMPPServer.getInstance().getSessionManager();
+        doReturn(existing).when(sessionManager).getOutgoingServerSession(domainPair);
+        final AttemptRecorder recorder = spy(new AttemptRecorder(domainPair.getLocal(), domainPair.getRemote()));
+        doThrow(new IllegalStateException("Simulated recording failure")).when(recorder).finish(any());
+
+        // Execute system under test.
+        final DomainAuthResult result = LocalOutgoingServerSession.authenticateDomain(domainPair, recorder);
+
+        // Verify results.
+        assertTrue(result.isSuccess(), "a failure while recording must not change the outcome of the connection attempt");
+    }
+
+    @Test
+    public void testExpiredRemoteCertificateIsRecordedWithItsEndDate() throws Exception
+    {
+        // Setup test fixture.
+        remoteReceivingServerDummy.setUseExpiredEndEntityCertificate(true);
+        remoteReceivingServerDummy.preparePKIX();
+        final X509Certificate[] chain = trustRemoteAuthority();
+
+        // Execute system under test.
+        final AttemptRecorder recorder = attemptOverOptionalTls(false);
+
+        // Verify results.
+        assertEquals(AttemptMilestones.Tls.certificateRejected(), recorder.snapshot().getTls().orElse(null), "the handshake is stopped by this server's trust manager, so TLS must be recorded as stopped by a certificate rejection");
+        assertEquals(AttemptMilestones.Certificate.expired(chain[0].getNotAfter().toInstant()), recorder.snapshot().getCertificate().orElse(null), "an expired certificate must be recorded as expired, with the end of its validity period");
+    }
+
+    @Test
+    public void testNotYetValidRemoteCertificateIsRecordedWithItsStartDate() throws Exception
+    {
+        // Setup test fixture.
+        remoteReceivingServerDummy.setPKIX(KeystoreTestUtils.generateCertificateChainWithNotYetValidEndEntityCert(RemoteReceivingServerDummy.XMPP_DOMAIN));
+        final X509Certificate[] chain = trustRemoteAuthority();
+
+        // Execute system under test.
+        final AttemptRecorder recorder = attemptOverOptionalTls(false);
+
+        // Verify results.
+        assertEquals(AttemptMilestones.Tls.certificateRejected(), recorder.snapshot().getTls().orElse(null), "the handshake is stopped by this server's trust manager, so TLS must be recorded as stopped by a certificate rejection");
+        assertEquals(AttemptMilestones.Certificate.notYetValid(chain[0].getNotBefore().toInstant()), recorder.snapshot().getCertificate().orElse(null), "a certificate that is not valid yet must be recorded as such, with the start of its validity period");
+    }
+
+    @Test
+    public void testRemoteCertificateForAnotherDomainIsRecordedAsNameMismatchAfterTls() throws Exception
+    {
+        // Setup test fixture: a trusted, current certificate, issued for another domain.
+        remoteReceivingServerDummy.setPKIX(KeystoreTestUtils.generateValidCertificateChain("other.example.org"));
+        trustRemoteAuthority();
+
+        // Execute system under test.
+        final AttemptRecorder recorder = attemptOverOptionalTls(false);
+
+        // Verify results.
+        assertEquals(AttemptMilestones.Tls.Outcome.NEGOTIATED, recorder.snapshot().getTls().map(AttemptMilestones.Tls::outcome).orElse(null), "the trust manager does not check names, so TLS must be recorded as negotiated");
+        assertEquals(AttemptMilestones.Certificate.nameMismatch(List.of("other.example.org")), recorder.snapshot().getCertificate().orElse(null), "a certificate issued for another domain must be recorded as a name mismatch, naming the domain it is issued for");
+        assertEquals(AttemptRecorder.Outcome.FAILED, recorder.getOutcome(), "with strict certificate validation, a name mismatch must stop the attempt");
+    }
+
+    @Test
+    public void testWarningLoggedOutsideTheDiagnosticLogIsCountedForTheAttempt() throws Exception
+    {
+        // Setup test fixture: a certificate issued for another domain, with strict validation off, so that the
+        // connection carries on with Server Dialback after the connection handler logs a warning about the certificate.
+        remoteReceivingServerDummy.setPKIX(KeystoreTestUtils.generateValidCertificateChain("other.example.org"));
+        trustRemoteAuthority();
+        JiveGlobals.setProperty(ConnectionSettings.Server.STRICT_CERTIFICATE_VALIDATION, "false");
+        final AttemptRecorder recorder;
+        try {
+            // Execute system under test.
+            recorder = attemptOverOptionalTls(true);
+        } finally {
+            JiveGlobals.deleteProperty(ConnectionSettings.Server.STRICT_CERTIFICATE_VALIDATION);
+        }
+        recorder.diagnosticLog(List.of());
+
+        // Verify results.
+        assertEquals(AttemptRecorder.Outcome.NEW_SESSION, recorder.getOutcome(), "without strict validation, the connection must carry on with Server Dialback");
+        assertTrue(recorder.getLoggedProblems().orElseThrow().warnings() >= 1, "the warning the connection handler logs about the certificate must count for this attempt, or the log check would pass a connection that logged one");
+    }
+
+    @Test
+    public void testStreamErrorFromRemoteIsRecordedWithItsCondition() throws Exception
+    {
+        // Setup test fixture: the remote refuses the stream, as a server does that does not serve the requested domain.
+        remoteReceivingServerDummy.setStreamErrorAfterHeader("host-unknown");
+
+        // Execute system under test.
+        final AttemptRecorder recorder = attemptOverOptionalTls(false);
+
+        // Verify results.
+        assertEquals(AttemptMilestones.Stream.streamError("host-unknown"), recorder.snapshot().getStream().orElse(null), "a stream refused by the remote must be recorded with the condition it sent");
+        assertTrue(recorder.snapshot().getTls().isEmpty(), "the attempt ended before TLS, so nothing must be recorded for TLS");
+    }
+
+    @Test
+    public void testRemoteClosingBeforeTheStreamIsRecordedAsClosed() throws Exception
+    {
+        // Setup test fixture: the remote accepts the connection, then closes it when this server opens a stream, as a
+        // service other than XMPP can do.
+        remoteReceivingServerDummy.setStreamResponse(AbstractRemoteServerDummy.StreamResponse.CLOSE);
+
+        // Execute system under test.
+        final AttemptRecorder recorder = attemptOverOptionalTls(false, SHORT_INITIALISE_TIMEOUT);
+
+        // Verify results.
+        assertEquals(AttemptMilestones.Stream.closedByRemote(), recorder.snapshot().getStream().orElse(null), "a remote that closes the connection before opening a stream must be recorded as having closed it");
+        assertEquals(AttemptRecorder.Outcome.FAILED, recorder.getOutcome(), "no session can be made without a stream");
+    }
+
+    @Test
+    public void testSilentRemoteIsRecordedAsTimedOut() throws Exception
+    {
+        // Setup test fixture: the remote accepts the connection and never answers.
+        remoteReceivingServerDummy.setStreamResponse(AbstractRemoteServerDummy.StreamResponse.STAY_SILENT);
+
+        // Execute system under test.
+        final AttemptRecorder recorder = attemptOverOptionalTls(false, SHORT_INITIALISE_TIMEOUT);
+
+        // Verify results.
+        assertEquals(AttemptMilestones.Stream.timedOut(SHORT_INITIALISE_TIMEOUT), recorder.snapshot().getStream().orElse(null), "a remote that never opens a stream must be recorded as timed out, with how long this server waited");
+    }
+
+    @Test
+    public void testStreamHeaderWithoutIdIsRecorded() throws Exception
+    {
+        // Setup test fixture: the remote answers with a stream header that has no stream ID (OF-2692).
+        remoteReceivingServerDummy.setStreamResponse(AbstractRemoteServerDummy.StreamResponse.ANSWER_WITHOUT_ID);
+
+        // Execute system under test.
+        final AttemptRecorder recorder = attemptOverOptionalTls(false, SHORT_INITIALISE_TIMEOUT);
+
+        // Verify results.
+        assertEquals(AttemptMilestones.Stream.missingId(), recorder.snapshot().getStream().orElse(null), "a stream header without a stream ID must be recorded as such, as this server closes the connection for it");
+    }
+
+    @Test
+    public void testStartTlsRefusedByRemoteIsRecordedAsRefused() throws Exception
+    {
+        // Setup test fixture: the remote offers STARTTLS but answers the request with a failure.
+        remoteReceivingServerDummy.setRefuseStartTls(true);
+        remoteReceivingServerDummy.preparePKIX();
+        trustRemoteAuthority();
+
+        // Execute system under test.
+        final AttemptRecorder recorder = attemptOverOptionalTls(false);
+
+        // Verify results.
+        assertEquals(AttemptMilestones.Tls.refused(), recorder.snapshot().getTls().orElse(null), "a STARTTLS request answered with a failure must be recorded as refused");
+    }
+
+    /**
+     * Installs the authority that issued the remote dummy's certificate in the local trust store.
+     *
+     * @return the remote dummy's certificate chain.
+     */
+    private X509Certificate[] trustRemoteAuthority() throws Exception
+    {
+        final X509Certificate[] chain = remoteReceivingServerDummy.getGeneratedPKIX().getCertificateChain();
+        trustStore.installCertificate("unit-test", KeystoreTestUtils.toPemFormat(chain[chain.length - 1]));
+        return chain;
+    }
+
+    @Test
+    public void testSaslExternalIsRecordedAsCertificateLogin() throws Exception
+    {
+        // Setup test fixture.
+        remoteReceivingServerDummy.preparePKIX();
+        trustRemoteAuthority();
+
+        // Execute system under test.
+        final AttemptRecorder recorder = attemptOverOptionalTls(true);
+
+        // Verify results.
+        assertEquals(AttemptMilestones.Authentication.saslExternal(), recorder.snapshot().getAuthentication().orElse(null), "a successful SASL EXTERNAL exchange must be recorded as certificate login");
+    }
+
+    @Test
+    public void testDialbackAfterExternalRefusedIsRecordedWithItsReason() throws Exception
+    {
+        // Setup test fixture: the remote offers SASL EXTERNAL but refuses it, as a server does that does not trust this server's certificate.
+        remoteReceivingServerDummy.setRefuseSaslExternal(true);
+        remoteReceivingServerDummy.preparePKIX();
+        trustRemoteAuthority();
+
+        // Execute system under test.
+        final AttemptRecorder recorder = attemptOverOptionalTls(true);
+
+        // Verify results.
+        assertEquals(AttemptMilestones.Authentication.dialbackAfterExternalRefused(), recorder.snapshot().getAuthentication().orElse(null), "dialback used because the remote refused certificate login must be recorded with that reason");
+        assertEquals(AttemptRecorder.Outcome.NEW_SESSION, recorder.getOutcome(), "the dialback fallback must still establish a session");
+    }
+
+    @Test
+    public void testExternalRefusedWithDialbackDisabledIsRecordedAsSuch() throws Exception
+    {
+        // Setup test fixture.
+        remoteReceivingServerDummy.setRefuseSaslExternal(true);
+        remoteReceivingServerDummy.preparePKIX();
+        trustRemoteAuthority();
+
+        // Execute system under test.
+        final AttemptRecorder recorder = attemptOverOptionalTls(false);
+
+        // Verify results.
+        assertEquals(AttemptMilestones.Authentication.externalRefusedDialbackDisabled(), recorder.snapshot().getAuthentication().orElse(null), "a refused certificate login with no dialback to fall back to must be recorded as such");
+        assertEquals(AttemptRecorder.Outcome.FAILED, recorder.getOutcome(), "with nothing to fall back to, the attempt must fail");
+    }
+
+    @Test
+    public void testDialbackRefusedIsRecordedAsRefused() throws Exception
+    {
+        // Setup test fixture: no TLS, so dialback is the only method, and the remote refuses it.
+        remoteReceivingServerDummy.setEncryptionPolicy(Connection.TLSPolicy.disabled);
+        remoteReceivingServerDummy.setRefuseDialback(true);
+
+        // Execute system under test.
+        final AttemptRecorder recorder = attemptOverOptionalTls(true);
+
+        // Verify results.
+        assertEquals(AttemptMilestones.Authentication.dialbackRefused(), recorder.snapshot().getAuthentication().orElse(null), "a dialback key answered with 'invalid' must be recorded as dialback refused");
+    }
+
+    @Test
+    public void testNoUsableMechanismIsRecorded() throws Exception
+    {
+        // Setup test fixture: no TLS, so no certificate login, and no dialback on the remote.
+        remoteReceivingServerDummy.setEncryptionPolicy(Connection.TLSPolicy.disabled);
+        remoteReceivingServerDummy.setDisableDialback(true);
+
+        // Execute system under test.
+        final AttemptRecorder recorder = attemptOverOptionalTls(true);
+
+        // Verify results.
+        assertEquals(AttemptMilestones.Authentication.noCommonMechanism(), recorder.snapshot().getAuthentication().orElse(null), "a remote that offers no method this server can use must be recorded as such");
+    }
+
+    @Test
+    public void testStreamErrorDuringAuthenticationIsRecordedAgainstAuthentication() throws Exception
+    {
+        // Setup test fixture.
+        remoteReceivingServerDummy.setStreamErrorOnAuth("not-authorized");
+        remoteReceivingServerDummy.preparePKIX();
+        trustRemoteAuthority();
+
+        // Execute system under test.
+        final AttemptRecorder recorder = attemptOverOptionalTls(false);
+
+        // Verify results.
+        assertEquals(AttemptMilestones.Authentication.streamError("not-authorized"), recorder.snapshot().getAuthentication().orElse(null), "a stream error in answer to authentication must fail authentication, with its condition");
+        assertEquals(AttemptMilestones.Stream.opened(RemoteReceivingServerDummy.XMPP_DOMAIN), recorder.snapshot().getStream().orElse(null), "the stream opened, so a later stream error must not fail the stream check");
+    }
+
+    @Test
+    public void testFailedDialbackFallbackAfterTlsFailureIsRecorded() throws Exception
+    {
+        // Setup test fixture: the remote has no certificate, so the handshake fails; this server then tries dialback over
+        // a new plain connection, which the remote refuses.
+        remoteReceivingServerDummy.setRefuseDialback(true);
+
+        // Execute system under test.
+        final AttemptRecorder recorder = attemptOverOptionalTls(true);
+
+        // Verify results.
+        assertEquals(AttemptMilestones.Tls.Outcome.HANDSHAKE_FAILED, recorder.snapshot().getTls().map(AttemptMilestones.Tls::outcome).orElse(null), "the handshake with a remote that has no certificate must be recorded as failed");
+        assertEquals(AttemptMilestones.Authentication.dialbackFallbackFailed(), recorder.snapshot().getAuthentication().orElse(null), "a dialback fallback over a plain connection that fails must be recorded as such");
+    }
+
+    /**
+     * Makes one outbound attempt with TLS optional on both sides, a valid local certificate and strict certificate
+     * validation.
+     *
+     * @param dialbackEnabled whether Server Dialback is enabled locally; disable it so that a certificate problem is not
+     *                        hidden by a fallback.
+     * @return the recorder of the attempt.
+     */
+    private AttemptRecorder attemptOverOptionalTls(final boolean dialbackEnabled) throws Exception
+    {
+        return attemptOverOptionalTls(dialbackEnabled, Duration.ofSeconds(10));
+    }
+
+    /**
+     * Makes one outbound attempt as {@link #attemptOverOptionalTls(boolean)} does, waiting at most the given time for a
+     * session.
+     *
+     * @param dialbackEnabled whether Server Dialback is enabled locally.
+     * @param initialiseTimeout how long this server waits for the session; whole seconds.
+     * @return the recorder of the attempt.
+     */
+    private AttemptRecorder attemptOverOptionalTls(final boolean dialbackEnabled, final Duration initialiseTimeout) throws Exception
+    {
+        JiveGlobals.setProperty("xmpp.domain", Fixtures.XMPP_DOMAIN);
+        JiveGlobals.setProperty("xmpp.server.session.initialise-timeout", Long.toString(initialiseTimeout.toSeconds()));
+        JiveGlobals.setProperty(ConnectionSettings.Server.TLS_POLICY, Connection.TLSPolicy.optional.toString());
+        JiveGlobals.setProperty(ConnectionSettings.Server.DIALBACK_ENABLED, Boolean.toString(dialbackEnabled));
+        identityStore.getStore().setKeyEntry("selfsignedkey", FIXTURE_VALID_KEY, "secret".toCharArray(), FIXTURE_VALID_CERTIFICATE_CHAIN);
+        try {
+            final DomainPair domainPair = new DomainPair(Fixtures.XMPP_DOMAIN, RemoteReceivingServerDummy.XMPP_DOMAIN);
+            final AttemptRecorder recorder = new AttemptRecorder(domainPair.getLocal(), domainPair.getRemote());
+            final LocalOutgoingServerSession session = LocalOutgoingServerSession.createOutgoingSession(domainPair, remoteReceivingServerDummy.getPort(), recorder);
+            if (session != null) {
+                session.close();
+            }
+            return recorder;
+        } finally {
+            trustStore.delete("unit-test");
+        }
+    }
+
+    /**
+     * Verifies what the attempt recorded about the stream, TLS and the remote certificate (checks 4 to 6 of the S2S
+     * connection test), given what each side supports. The remote dummy always opens a stream; whether TLS is set up,
+     * and what is recorded about the certificate, follows from the TLS policies and the remote's certificate.
+     */
+    private static void assertStreamTlsAndCertificateMilestones(final ServerSettings local, final ServerSettings remote, final AttemptMilestones recorded)
+    {
+        assertEquals(AttemptMilestones.Stream.opened(RemoteReceivingServerDummy.XMPP_DOMAIN), recorded.getStream().orElse(null), "the stream the remote opened must be recorded with the name it answered as");
+
+        final AttemptMilestones.Tls tls = recorded.getTls().orElse(null);
+        final AttemptMilestones.Certificate certificate = recorded.getCertificate().orElse(null);
+        final boolean bothSupportTls = local.encryptionPolicy != Connection.TLSPolicy.disabled && remote.encryptionPolicy != Connection.TLSPolicy.disabled;
+        if (local.encryptionPolicy == Connection.TLSPolicy.required && remote.encryptionPolicy == Connection.TLSPolicy.disabled) {
+            assertEquals(AttemptMilestones.Tls.notOffered(), tls, "a remote that does not offer TLS to a server that requires it must be recorded as not offering it");
+            assertNull(certificate, "without TLS there is no certificate to judge");
+        } else if (local.encryptionPolicy == Connection.TLSPolicy.disabled && remote.encryptionPolicy == Connection.TLSPolicy.required) {
+            assertEquals(AttemptMilestones.Tls.requiredButDisabled(), tls, "a remote that requires TLS from a server whose policy disables it must be recorded as such, as this server then closes the connection");
+            assertNull(certificate, "without TLS there is no certificate to judge");
+        } else if (!bothSupportTls) {
+            assertEquals(AttemptMilestones.Tls.unencrypted(), tls, "when either side cannot use TLS, the connection must be recorded as unencrypted");
+            assertNull(certificate, "without TLS there is no certificate to judge");
+        } else {
+            switch (remote.certificateState) {
+                case VALID -> {
+                    assertEquals(AttemptMilestones.Tls.Outcome.NEGOTIATED, tls == null ? null : tls.outcome(), "TLS with a remote that has a valid certificate must be recorded as negotiated");
+                    assertEquals("TLSv1.3", tls.protocol(), "the negotiated protocol must be recorded");
+                    assertNotNull(tls.cipherSuite(), "the negotiated cipher suite must be recorded");
+                    assertEquals(AttemptMilestones.Certificate.valid(), certificate, "a trusted, current certificate for the remote domain must be recorded as valid");
+                }
+                case INVALID -> {
+                    assertEquals(AttemptMilestones.Tls.certificateRejected(), tls, "a handshake stopped because the remote certificate is expired must be recorded as a certificate rejection");
+                    assertEquals(AttemptMilestones.Certificate.Outcome.EXPIRED, certificate == null ? null : certificate.outcome(), "the expired remote certificate must be recorded as expired");
+                }
+                case MISSING -> {
+                    assertEquals(AttemptMilestones.Tls.Outcome.HANDSHAKE_FAILED, tls == null ? null : tls.outcome(), "a handshake with a remote that has no certificate must be recorded as failed");
+                    assertNull(certificate, "a handshake that failed before any certificate was presented has no certificate to judge");
+                }
+            }
+        }
+    }
+
+    /**
+     * Verifies what the attempt recorded about authentication (check 7 of the S2S connection test) for every
+     * combination that results in a session. The remote dummy offers SASL EXTERNAL only over TLS, and only to a peer
+     * that presents a current certificate, so dialback over TLS is always used because EXTERNAL was not offered. Dialback
+     * without TLS is either the same, or the fallback over a new plain connection after a failed TLS handshake.
+     */
+    private static void assertAuthenticationMilestone(final ExpectedOutcome.ConnectionState expected, final ServerSettings local, final ServerSettings remote, final AttemptMilestones recorded)
+    {
+        final AttemptMilestones.Authentication authentication = recorded.getAuthentication().orElse(null);
+        switch (expected) {
+            case ENCRYPTED_WITH_SASLEXTERNAL_AUTH ->
+                assertEquals(AttemptMilestones.Authentication.saslExternal(), authentication, "a session authenticated with SASL EXTERNAL must be recorded as certificate login");
+            case ENCRYPTED_WITH_DIALBACK_AUTH ->
+                assertEquals(AttemptMilestones.Authentication.dialbackAfterExternalNotOffered(), authentication, "dialback over TLS is used here only because the remote did not offer SASL EXTERNAL, and must be recorded with that reason");
+            case NON_ENCRYPTED_WITH_DIALBACK_AUTH -> {
+                final boolean handshakeFailed = recorded.getTls().map(tls -> tls.outcome() == AttemptMilestones.Tls.Outcome.HANDSHAKE_FAILED).orElse(false);
+                assertEquals(handshakeFailed ? AttemptMilestones.Authentication.dialback() : AttemptMilestones.Authentication.dialbackAfterExternalNotOffered(), authentication,
+                    "dialback without TLS must be recorded as the fallback after a failed handshake, or as used because SASL EXTERNAL was not offered");
+            }
+            case NO_CONNECTION -> {
+                // The reasons vary with where the attempt stopped; the focused tests cover each.
+            }
         }
     }
 

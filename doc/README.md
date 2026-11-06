@@ -24,6 +24,10 @@ Documents significant architectural decisions made during Openfire development. 
 
 See [`adr/README.md`](adr/README.md) for the full ADR format and guidelines.
 
+### `plans/` - Implementation plans
+
+Plans for changes in progress: the problem, the design decisions, and the work broken into sessions that can each be picked up and completed on their own. A plan lives on the branch whose work it describes and is named `YYYY-MM-DD-kebab-case-title.md`.
+
 ## When to add documentation here
 
 Add documentation to this directory when:

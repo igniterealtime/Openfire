@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2025 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2023-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,6 +57,11 @@ public class AbstractRemoteServerDummy
     protected boolean disableDialback;
     protected Connection.TLSPolicy encryptionPolicy = Connection.TLSPolicy.optional;
     protected KeystoreTestUtils.ResultHolder generatedPKIX;
+    protected String streamErrorAfterHeader;
+    protected boolean refuseStartTls;
+    protected boolean refuseSaslExternal;
+    protected boolean refuseDialback;
+    protected String streamErrorOnAuth;
 
     static {
         // Generating certificates is expensive. For performance, it's best to generate each set once, and then reuse those during the execution of the tests.
@@ -128,6 +133,111 @@ public class AbstractRemoteServerDummy
      */
     public void setDisableDialback(boolean disableDialback) {
         this.disableDialback = disableDialback;
+    }
+
+    /**
+     * Makes this instance identify itself with the given key and certificate chain, instead of one chosen by
+     * {@link #preparePKIX()}, for example a chain issued for another domain. Use instead of {@link #preparePKIX()}.
+     *
+     * @param pkix the key and certificate chain to use.
+     */
+    public void setPKIX(KeystoreTestUtils.ResultHolder pkix)
+    {
+        if (generatedPKIX != null) {
+            throw new IllegalStateException("PKIX already prepared.");
+        }
+        this.generatedPKIX = pkix;
+    }
+
+    /**
+     * How this instance answers a new stream.
+     */
+    public enum StreamResponse
+    {
+        /**
+         * With a stream header, as a server does.
+         */
+        ANSWER,
+
+        /**
+         * By closing the connection, as a service other than XMPP can do.
+         */
+        CLOSE,
+
+        /**
+         * Not at all, leaving the connection open.
+         */
+        STAY_SILENT,
+
+        /**
+         * With a stream header that has no stream ID, followed by a stream error, as some servers do when they refuse a
+         * stream (OF-2692).
+         */
+        ANSWER_WITHOUT_ID
+    }
+
+    protected StreamResponse streamResponse = StreamResponse.ANSWER;
+
+    /**
+     * @param streamResponse how this instance answers a new stream.
+     */
+    public void setStreamResponse(StreamResponse streamResponse)
+    {
+        this.streamResponse = streamResponse;
+    }
+
+    /**
+     * When set, this instance answers a new stream with its stream header followed by a stream error with this
+     * condition, and then closes the stream, as a server does that refuses the stream (for example with 'host-unknown').
+     *
+     * @param streamErrorCondition the stream error condition to send, or null to accept streams.
+     */
+    public void setStreamErrorAfterHeader(String streamErrorCondition)
+    {
+        this.streamErrorAfterHeader = streamErrorCondition;
+    }
+
+    /**
+     * When set to 'true', this instance offers STARTTLS, but answers a request to start TLS with a failure.
+     *
+     * @param refuseStartTls 'true' to refuse STARTTLS when asked.
+     */
+    public void setRefuseStartTls(boolean refuseStartTls)
+    {
+        this.refuseStartTls = refuseStartTls;
+    }
+
+    /**
+     * When set to 'true', this instance offers SASL EXTERNAL as usual, but answers every attempt with a failure, as a
+     * server does that does not trust the certificate of its peer.
+     *
+     * @param refuseSaslExternal 'true' to refuse SASL EXTERNAL.
+     */
+    public void setRefuseSaslExternal(boolean refuseSaslExternal)
+    {
+        this.refuseSaslExternal = refuseSaslExternal;
+    }
+
+    /**
+     * When set to 'true', this instance offers Server Dialback as usual, but answers every dialback key with an
+     * 'invalid' result, as a server does that cannot verify its peer.
+     *
+     * @param refuseDialback 'true' to refuse Server Dialback.
+     */
+    public void setRefuseDialback(boolean refuseDialback)
+    {
+        this.refuseDialback = refuseDialback;
+    }
+
+    /**
+     * When set, this instance answers a SASL authentication attempt with a stream error with this condition, and then
+     * closes the stream.
+     *
+     * @param streamErrorOnAuth the stream error condition to send, or null to process authentication.
+     */
+    public void setStreamErrorOnAuth(String streamErrorOnAuth)
+    {
+        this.streamErrorOnAuth = streamErrorOnAuth;
     }
 
     /**

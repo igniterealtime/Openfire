@@ -32,6 +32,7 @@ import org.dom4j.*;
 import org.jivesoftware.openfire.net.RespondingServerStanzaHandler;
 import org.jivesoftware.openfire.net.SocketUtil;
 import org.jivesoftware.openfire.server.ServerDialback;
+import org.jivesoftware.openfire.server.diagnostics.AttemptMilestones;
 import org.jivesoftware.openfire.server.diagnostics.AttemptRecorder;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.DomainPair;
@@ -52,6 +53,7 @@ import javax.annotation.concurrent.GuardedBy;
 import javax.net.ssl.SSLException;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketAddress;
 import java.nio.charset.StandardCharsets;
@@ -417,7 +419,23 @@ public class NettySessionInitializer {
                 }
             });
 
-            this.channel = b.connect(socketAddress).sync().channel();
+            try {
+                this.channel = b.connect(socketAddress).sync().channel();
+            } catch (final InterruptedException e) {
+                throw e;
+            } catch (final Exception e) {
+                // The probe socket above connected, so TCP was recorded as passed; this is the connection the session
+                // uses, made again, and it failed, so it is recorded in place of the probe.
+                if (socketAddress instanceof InetSocketAddress address) {
+                    AttemptRecorder.safely(() -> {
+                        final AttemptMilestones.Tcp failed = SocketUtil.connectionFailed(address, e);
+                        if (failed != null) {
+                            recorder.tcp(failed);
+                        }
+                    });
+                }
+                throw e;
+            }
 
             // Make sure we free up resources (worker group MultiThreadIoEventLoopGroup) when the channel is closed. A close
             // that this initialiser did not start is recorded as the connection closing.

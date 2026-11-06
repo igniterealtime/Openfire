@@ -32,6 +32,7 @@ import org.jivesoftware.openfire.nio.XMLLightweightParser;
 import org.jivesoftware.openfire.privacy.PrivacyList;
 import org.jivesoftware.openfire.privacy.PrivacyListManager;
 import org.jivesoftware.openfire.roster.RosterManager;
+import org.jivesoftware.openfire.streammanagement.AnsweringStreamManager;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.openfire.user.PresenceEventDispatcher;
 import org.jivesoftware.openfire.user.UserNotFoundException;
@@ -828,6 +829,17 @@ public class LocalClientSession extends LocalSession implements ClientSession {
             Cache<String,ClientSessionInfo> cache = SessionManager.getInstance().getSessionInfoCache();
             cache.put(getAddress().toString(), new ClientSessionInfo(this));
         }
+    }
+
+    /**
+     * Get XEP-0198 Stream manager for session. On this type of session, Openfire answers requests of the peer.
+     *
+     * @return The StreamManager for the session.
+     */
+    @Override
+    public AnsweringStreamManager getStreamManager() {
+        // OF-2425: StreamManager#forSession creates an AnsweringStreamManager for this type of session.
+        return (AnsweringStreamManager) super.getStreamManager();
     }
 
     @Override

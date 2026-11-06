@@ -21,6 +21,7 @@ import org.dom4j.Namespace;
 import org.dom4j.QName;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.streammanagement.StreamManagementException;
+import org.jivesoftware.openfire.streammanagement.AnsweringStreamManager;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -36,14 +37,14 @@ public class Bind2StreamManagementHandlerTest {
 
     private Bind2StreamManagementHandler handler;
     private LocalClientSession mockSession;
-    private StreamManager mockStreamManager;
+    private AnsweringStreamManager mockStreamManager;
     private Element boundElement;
 
     @BeforeEach
     public void setUp() {
         handler = new Bind2StreamManagementHandler();
         mockSession = mock(LocalClientSession.class);
-        mockStreamManager = mock(StreamManager.class);
+        mockStreamManager = mock(AnsweringStreamManager.class);
         when(mockSession.getStreamManager()).thenReturn(mockStreamManager);
         boundElement = DocumentHelper.createElement(new QName("bound", new Namespace("", "urn:xmpp:bind:0")));
     }
@@ -144,7 +145,7 @@ public class Bind2StreamManagementHandlerTest {
     @Test
     public void testEnableFailurePropagatesWithoutStandaloneDelivery() {
         // Setup test fixture: a session that has not authenticated.
-        final StreamManager streamManager = new StreamManager(mockSession);
+        final AnsweringStreamManager streamManager = (AnsweringStreamManager) StreamManager.forSession(mockSession);
         when(mockSession.getStreamManager()).thenReturn(streamManager);
         when(mockSession.isAuthenticated()).thenReturn(false);
         final Element enable = DocumentHelper.createElement(QName.get("enable", StreamManager.NAMESPACE_V3));

@@ -37,6 +37,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
@@ -49,6 +50,8 @@ import org.xmpp.packet.StreamError;
 
 import java.lang.reflect.Field;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
@@ -71,6 +74,7 @@ public class StreamManagerTest
     private static final JID FULL_JID = new JID("johndoe", Fixtures.XMPP_DOMAIN, "test-resource", true);
     private static final JID SERVER_ADDRESS = new JID(Fixtures.XMPP_DOMAIN);
     private static final String STREAM_ID = "test-stream-id";
+    private static final int DETACH_TIME_MILLIS = 120_000;
 
     // OF-3433: Names of private fields, used to reach the roll-over at 2^32 without sending that many stanzas.
     private static final String HANDLED_COUNTER_FIELD = "serverProcessedStanzas";
@@ -90,6 +94,7 @@ public class StreamManagerTest
     {
         final XMPPServer server = Fixtures.mockXMPPServer();
         sessionManager = server.getSessionManager();
+        doReturn(DETACH_TIME_MILLIS).when(sessionManager).getSessionDetachTime();
 
         //noinspection deprecation
         XMPPServer.setInstance(server);
@@ -478,6 +483,352 @@ public class StreamManagerTest
     }
 
     /**
+     * Verifies that enabling Stream Management without requesting resumption results in an {@code <enabled/>} element
+     * in the namespace of the request, without any of the attributes that relate to resumption.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {StreamManager.NAMESPACE_V2, StreamManager.NAMESPACE_V3})
+    void enableWithoutResume(final String namespace) throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = new StreamManager(session);
+
+        // Execute system under test.
+        sm.process(smElement("enable", namespace));
+
+        // Verify result.
+        final Element enabled = lastDelivered(session);
+        assertEquals(QName.get("enabled", namespace), enabled.getQName(), "The response must be an 'enabled' element in the namespace of the request.");
+        assertTrue(enabled.attributes().isEmpty(), "No resumption attributes are expected when resumption was not requested, but got: " + enabled.asXML());
+        assertTrue(sm.isEnabled(), "Stream Management must be enabled after a successful request.");
+        assertFalse(sm.getResume(), "The stream must not be resumable when resumption was not requested.");
+    }
+
+    /**
+     * Verifies that enabling Stream Management with resumption results in an {@code <enabled/>} element that contains
+     * a resumption ID (based on the resource and stream ID), the cluster node to resume on, and the maximum resumption
+     * time in seconds.
+     */
+    @Test
+    void enableWithResumeV3() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = new StreamManager(session);
+        final Element enable = smElement("enable", StreamManager.NAMESPACE_V3);
+        enable.addAttribute("resume", "true");
+
+        // Execute system under test.
+        sm.process(enable);
+
+        // Verify result.
+        final Element enabled = lastDelivered(session);
+        assertEquals(QName.get("enabled", StreamManager.NAMESPACE_V3), enabled.getQName(), "The response must be an 'enabled' element in the namespace of the request.");
+        assertEquals("true", enabled.attributeValue("resume"), "The response must confirm that the stream is resumable.");
+        assertEquals(Base64.getEncoder().encodeToString((FULL_JID.getResource() + "\0" + STREAM_ID).getBytes(StandardCharsets.UTF_8)), enabled.attributeValue("id"), "The resumption ID must be based on the resource and stream ID.");
+        assertEquals(Fixtures.HOSTNAME, enabled.attributeValue("location"), "The response must identify the cluster node to resume on.");
+        assertEquals(String.valueOf(DETACH_TIME_MILLIS / 1000), enabled.attributeValue("max"), "The response must report the session detach time, in seconds.");
+        assertTrue(sm.isEnabled(), "Stream Management must be enabled after a successful request.");
+        assertTrue(sm.getResume(), "The stream must be resumable.");
+    }
+
+    /**
+     * Verifies that the location hint is not sent in the older version of the protocol, while the other attributes
+     * that relate to resumption are.
+     */
+    @Test
+    void enableWithResumeV2HasNoLocation() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = new StreamManager(session);
+        final Element enable = smElement("enable", StreamManager.NAMESPACE_V2);
+        enable.addAttribute("resume", "true");
+
+        // Execute system under test.
+        sm.process(enable);
+
+        // Verify result.
+        final Element enabled = lastDelivered(session);
+        assertEquals(QName.get("enabled", StreamManager.NAMESPACE_V2), enabled.getQName(), "The response must be an 'enabled' element in the namespace of the request.");
+        assertEquals("true", enabled.attributeValue("resume"), "The response must confirm that the stream is resumable.");
+        assertNotNull(enabled.attributeValue("id"), "The response must contain a resumption ID.");
+        assertNull(enabled.attributeValue("location"), "The location hint must not be sent in version 2 of the protocol.");
+        assertEquals(String.valueOf(DETACH_TIME_MILLIS / 1000), enabled.attributeValue("max"), "The response must report the session detach time, in seconds.");
+        assertTrue(sm.getResume(), "The stream must be resumable.");
+    }
+
+    /**
+     * Verifies that the location hint is left out when it is disabled by configuration.
+     */
+    @Test
+    void enableWithResumeOmitsLocationWhenDisabled() throws Exception
+    {
+        // Setup test fixture.
+        StreamManager.LOCATION_ENABLED.setValue(false);
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = new StreamManager(session);
+        final Element enable = smElement("enable", StreamManager.NAMESPACE_V3);
+        enable.addAttribute("resume", "true");
+
+        // Execute system under test.
+        sm.process(enable);
+
+        // Verify result.
+        assertNull(lastDelivered(session).attributeValue("location"), "The location hint must not be sent when it is disabled by configuration.");
+    }
+
+    /**
+     * Verifies that the maximum resumption time is left out when it is disabled by configuration.
+     */
+    @Test
+    void enableWithResumeOmitsMaxWhenDisabled() throws Exception
+    {
+        // Setup test fixture.
+        StreamManager.MAX_SERVER_ENABLED.setValue(false);
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = new StreamManager(session);
+        final Element enable = smElement("enable", StreamManager.NAMESPACE_V3);
+        enable.addAttribute("resume", "true");
+
+        // Execute system under test.
+        sm.process(enable);
+
+        // Verify result.
+        assertNull(lastDelivered(session).attributeValue("max"), "The maximum resumption time must not be sent when it is disabled by configuration.");
+    }
+
+    /**
+     * Verifies which values of the 'resume' attribute request resumption.
+     */
+    @ParameterizedTest
+    @CsvSource({"true,true", "TRUE,true", "yes,true", "YES,true", "1,true", "false,false", "0,false", "no,false", "foobar,false"})
+    void enableInterpretsResumeAttribute(final String value, final boolean expected) throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = new StreamManager(session);
+        final Element enable = smElement("enable", StreamManager.NAMESPACE_V3);
+        enable.addAttribute("resume", value);
+
+        // Execute system under test.
+        sm.process(enable);
+
+        // Verify result.
+        assertEquals(expected, sm.getResume(), "Unexpected interpretation of resume attribute value '" + value + "'.");
+        assertEquals(expected ? "true" : null, lastDelivered(session).attributeValue("resume"), "The response must reflect the interpretation of resume attribute value '" + value + "'.");
+    }
+
+    /**
+     * Verifies that an anonymous session can enable Stream Management, but does not get a resumable stream.
+     */
+    @Test
+    void enableWithResumeForAnonymousSessionIsNotResumable() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = authenticatedClientSession();
+        final AuthToken authToken = session.getAuthToken();
+        doReturn(true).when(authToken).isAnonymous();
+        final StreamManager sm = new StreamManager(session);
+        final Element enable = smElement("enable", StreamManager.NAMESPACE_V3);
+        enable.addAttribute("resume", "true");
+
+        // Execute system under test.
+        sm.process(enable);
+
+        // Verify result.
+        final Element enabled = lastDelivered(session);
+        assertEquals("enabled", enabled.getName(), "An anonymous session must be able to enable Stream Management.");
+        assertTrue(enabled.attributes().isEmpty(), "No resumption attributes are expected for an anonymous session, but got: " + enabled.asXML());
+        assertTrue(sm.isEnabled(), "Stream Management must be enabled after a successful request.");
+        assertFalse(sm.getResume(), "The stream of an anonymous session must not be resumable.");
+    }
+
+    /**
+     * Verifies that a session that is not a client session can enable Stream Management, but does not get a resumable
+     * stream.
+     */
+    @Test
+    void enableWithResumeForNonClientSessionIsNotResumable() throws Exception
+    {
+        // Setup test fixture.
+        final LocalSession session = mock(LocalSession.class);
+        doReturn(true).when(session).isAuthenticated();
+        final StreamManager sm = new StreamManager(session);
+        final Element enable = smElement("enable", StreamManager.NAMESPACE_V3);
+        enable.addAttribute("resume", "true");
+
+        // Execute system under test.
+        sm.process(enable);
+
+        // Verify result.
+        final Element enabled = lastDelivered(session);
+        assertEquals("enabled", enabled.getName(), "A session that is not a client session must be able to enable Stream Management.");
+        assertTrue(enabled.attributes().isEmpty(), "No resumption attributes are expected for a session that is not a client session, but got: " + enabled.asXML());
+        assertFalse(sm.getResume(), "The stream of a session that is not a client session must not be resumable.");
+    }
+
+    /**
+     * Verifies that Stream Management cannot be enabled before the session is authenticated.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {StreamManager.NAMESPACE_V2, StreamManager.NAMESPACE_V3})
+    void enableBeforeAuthenticationFails(final String namespace) throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = authenticatedClientSession();
+        doReturn(false).when(session).isAuthenticated();
+        final StreamManager sm = new StreamManager(session);
+
+        // Execute system under test.
+        sm.process(smElement("enable", namespace));
+
+        // Verify result.
+        assertFailedWithUnexpectedRequest(lastDelivered(session), namespace);
+        assertFalse(sm.isEnabled(), "Stream Management must not be enabled on a session that is not authenticated.");
+    }
+
+    /**
+     * Verifies that a second request to enable Stream Management fails, leaving the state from the first request intact.
+     */
+    @Test
+    void enableTwiceFails() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        sm.incrementServerProcessedStanzas();
+
+        // Execute system under test.
+        sm.process(smElement("enable", StreamManager.NAMESPACE_V2));
+
+        // Verify result.
+        assertFailedWithUnexpectedRequest(lastDelivered(session), StreamManager.NAMESPACE_V2);
+        assertTrue(sm.isEnabled(), "Stream Management must remain enabled after a second request failed.");
+
+        clearInvocations(session);
+        sm.process(smElement("r", StreamManager.NAMESPACE_V3));
+        final Element ack = lastDelivered(session);
+        assertEquals(QName.get("a", StreamManager.NAMESPACE_V3), ack.getQName(), "The namespace of the first request must remain in use.");
+        assertEquals("1", ack.attributeValue("h"), "The count of handled stanzas must not be affected by a second request.");
+    }
+
+    /**
+     * Verifies that an {@code <r/>} is answered with the number of stanzas that were handled since enabling.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {StreamManager.NAMESPACE_V2, StreamManager.NAMESPACE_V3})
+    void requestIsAnsweredWithCountOfHandledStanzas(final String namespace) throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = enabledStreamManager(session, namespace);
+        sm.incrementServerProcessedStanzas();
+        sm.incrementServerProcessedStanzas();
+        sm.incrementServerProcessedStanzas();
+
+        // Execute system under test.
+        sm.process(smElement("r", namespace));
+
+        // Verify result.
+        final Element ack = lastDelivered(session);
+        assertEquals(QName.get("a", namespace), ack.getQName(), "An 'a' element must be sent, in the namespace of the stream.");
+        assertEquals("3", ack.attributeValue("h"), "The count must equal the number of handled stanzas.");
+    }
+
+    /**
+     * Verifies that an {@code <r/>} is answered with zero when no stanzas have been handled.
+     */
+    @Test
+    void requestIsAnsweredWithZeroWhenNoStanzasWereHandled() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+
+        // Execute system under test.
+        sm.process(smElement("r", StreamManager.NAMESPACE_V3));
+
+        // Verify result.
+        assertEquals("0", lastDelivered(session).attributeValue("h"), "The count must be zero when no stanzas were handled.");
+    }
+
+    /**
+     * Verifies that the count of handled stanzas is cumulative: it is not reset by reporting it.
+     */
+    @Test
+    void countOfHandledStanzasIsCumulative() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        sm.incrementServerProcessedStanzas();
+        sm.process(smElement("r", StreamManager.NAMESPACE_V3));
+        sm.incrementServerProcessedStanzas();
+
+        // Execute system under test.
+        sm.process(smElement("r", StreamManager.NAMESPACE_V3));
+
+        // Verify result.
+        assertEquals("2", lastDelivered(session).attributeValue("h"), "The count must include stanzas handled before the previous acknowledgement.");
+    }
+
+    /**
+     * Verifies that stanzas handled before Stream Management was enabled are not counted.
+     */
+    @Test
+    void stanzasHandledBeforeEnablingAreNotCounted() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = new StreamManager(session);
+        sm.incrementServerProcessedStanzas();
+        sm.process(smElement("enable", StreamManager.NAMESPACE_V3));
+
+        // Execute system under test.
+        sm.process(smElement("r", StreamManager.NAMESPACE_V3));
+
+        // Verify result.
+        assertEquals("0", lastDelivered(session).attributeValue("h"), "Stanzas handled before enabling Stream Management must not be counted.");
+    }
+
+    /**
+     * Verifies that an {@code <r/>} is silently ignored when Stream Management is not enabled.
+     */
+    @Test
+    void requestIsIgnoredWhenNotEnabled()
+    {
+        // Setup test fixture.
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = new StreamManager(session);
+
+        // Execute system under test.
+        sm.process(smElement("r", StreamManager.NAMESPACE_V3));
+
+        // Verify result.
+        verify(session, never().description("Nothing is to be sent in response to a request when Stream Management is not enabled.")).deliverRawText(anyString());
+    }
+
+    /**
+     * Verifies that no acknowledgement is sent on a detached session.
+     */
+    @Test
+    void requestIsNotAnsweredOnDetachedSession()
+    {
+        // Setup test fixture.
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        doReturn(true).when(session).isDetached();
+
+        // Execute system under test.
+        sm.process(smElement("r", StreamManager.NAMESPACE_V3));
+
+        // Verify result.
+        verify(session, never().description("Nothing can be sent on a detached session.")).deliverRawText(anyString());
+    }
+
+    /**
      * Verifies that an {@code <a/>} removes the stanzas that it acknowledges, and no others.
      */
     @Test
@@ -515,6 +866,25 @@ public class StreamManagerTest
 
         // Verify result.
         assertEquals(List.of(), unacknowledgedMessageIds(sm), "No stanzas must remain after all of them were acknowledged.");
+        assertFalse(session.isClosed(), "A valid acknowledgement must not close the session.");
+    }
+
+    /**
+     * Verifies that an {@code <a/>} with a value of zero does not remove any stanzas.
+     */
+    @Test
+    void acknowledgementOfZeroRemovesNothing() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        sm.sentStanza(message("1"));
+
+        // Execute system under test.
+        sm.process(ack(StreamManager.NAMESPACE_V3, "0"));
+
+        // Verify result.
+        assertEquals(List.of("1"), unacknowledgedMessageIds(sm), "A stanza must remain when no stanzas were acknowledged.");
         assertFalse(session.isClosed(), "A valid acknowledgement must not close the session.");
     }
 
@@ -558,6 +928,63 @@ public class StreamManagerTest
 
         // Verify result.
         assertFalse(session.isClosed(), "Repeating an acknowledgement must not close the session.");
+    }
+
+    /**
+     * Verifies that stanzas that are sent before Stream Management is enabled are not tracked.
+     */
+    @Test
+    void stanzasSentBeforeEnablingAreNotTracked() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = new StreamManager(session);
+        sm.sentStanza(message("before"));
+        sm.process(smElement("enable", StreamManager.NAMESPACE_V3));
+
+        // Execute system under test.
+        sm.sentStanza(message("after"));
+
+        // Verify result.
+        assertEquals(List.of("after"), unacknowledgedMessageIds(sm), "Only stanzas sent after enabling Stream Management must be tracked.");
+    }
+
+    /**
+     * Verifies that an {@code <a/>} is silently ignored when Stream Management is not enabled, whatever its value.
+     */
+    @Test
+    void acknowledgementIsIgnoredWhenNotEnabled()
+    {
+        // Setup test fixture.
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = new StreamManager(session);
+
+        // Execute system under test.
+        sm.process(ack(StreamManager.NAMESPACE_V3, "not-a-number"));
+
+        // Verify result.
+        verify(session, never().description("Nothing is to be sent in response to an acknowledgement when Stream Management is not enabled.")).deliverRawText(anyString());
+        assertFalse(session.isClosed(), "An acknowledgement must not close the session when Stream Management is not enabled.");
+    }
+
+    /**
+     * Verifies that an {@code <a/>} without a 'h' attribute is silently ignored.
+     */
+    @Test
+    void acknowledgementWithoutValueIsIgnored() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        sm.sentStanza(message("1"));
+
+        // Execute system under test.
+        sm.process(smElement("a", StreamManager.NAMESPACE_V3));
+
+        // Verify result.
+        verify(session, never().description("An acknowledgement without a value does not cause anything to be sent.")).deliverRawText(anyString());
+        assertFalse(session.isClosed(), "An acknowledgement without a value does not close the session.");
+        assertEquals(List.of("1"), unacknowledgedMessageIds(sm), "An acknowledgement without a value must not remove any stanzas.");
     }
 
     /**
@@ -745,6 +1172,89 @@ public class StreamManagerTest
         // Verify result.
         assertFalse(session.isClosed(), "A lower acknowledgement is not too high, so it must not close the session.");
         assertEquals(List.of("4"), unacknowledgedMessageIds(sm), "A lower acknowledgement must not affect the numbers of the stanzas that follow.");
+    }
+
+    /**
+     * Verifies that an {@code <r/>} is sent each time the number of unacknowledged stanzas reaches a multiple of the
+     * default request frequency.
+     */
+    @Test
+    void acknowledgementIsRequestedAtDefaultFrequency() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        for (int i = 1; i <= 4; i++) {
+            sm.sentStanza(message(String.valueOf(i)));
+        }
+        verify(session, never().description("No acknowledgement is to be requested below the default frequency of 5.")).deliverRawText(anyString());
+
+        // Execute system under test.
+        sm.sentStanza(message("5"));
+
+        // Verify result.
+        assertEquals(QName.get("r", StreamManager.NAMESPACE_V3), lastDelivered(session).getQName(), "An acknowledgement is to be requested at the default frequency of 5, in the namespace of the stream.");
+    }
+
+    /**
+     * Verifies that the frequency at which an {@code <r/>} is sent can be configured.
+     */
+    @Test
+    void acknowledgementIsRequestedAtConfiguredFrequency()
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("stream.management.requestFrequency", "2");
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+
+        // Execute system under test.
+        for (int i = 1; i <= 4; i++) {
+            sm.sentStanza(message(String.valueOf(i)));
+        }
+
+        // Verify result.
+        verify(session, times(2).description("An acknowledgement is to be requested for every second unacknowledged stanza.")).deliverRawText(anyString());
+    }
+
+    /**
+     * Verifies that the request frequency is based on the number of stanzas that are unacknowledged, rather than the
+     * number of stanzas that were sent.
+     */
+    @Test
+    void acknowledgementRequestDependsOnNumberOfUnacknowledgedStanzas()
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("stream.management.requestFrequency", "2");
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        sm.sentStanza(message("1"));
+        sm.process(ack(StreamManager.NAMESPACE_V3, "1"));
+
+        // Execute system under test.
+        sm.sentStanza(message("2"));
+
+        // Verify result.
+        verify(session, never().description("No acknowledgement is to be requested when only one stanza is unacknowledged.")).deliverRawText(anyString());
+    }
+
+    /**
+     * Verifies that no {@code <r/>} is sent on a detached session, while stanzas are still tracked.
+     */
+    @Test
+    void acknowledgementIsNotRequestedOnDetachedSession() throws Exception
+    {
+        // Setup test fixture.
+        JiveGlobals.setProperty("stream.management.requestFrequency", "1");
+        final LocalClientSession session = authenticatedClientSession();
+        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        doReturn(true).when(session).isDetached();
+
+        // Execute system under test.
+        sm.sentStanza(message("1"));
+
+        // Verify result.
+        verify(session, never().description("Nothing can be sent on a detached session.")).deliverRawText(anyString());
+        assertEquals(List.of("1"), unacknowledgedMessageIds(sm), "A stanza must be tracked on a detached session.");
     }
 
     /**
@@ -1551,13 +2061,16 @@ public class StreamManagerTest
     }
 
     /**
-     * A mock of an authenticated client session that has a connection, a full JID and a stream ID.
+     * A mock of an authenticated, non-anonymous client session that has a connection, a full JID and a stream ID.
      *
      * The session will set its closed flag when it is closed through invocation of either close() or close(StreamError)
      */
     private static LocalClientSession authenticatedClientSession()
     {
         final LocalClientSession session = mock(LocalClientSession.class);
+        final AuthToken authToken = mock(AuthToken.class);
+        doReturn(false).when(authToken).isAnonymous();
+        doReturn(authToken).when(session).getAuthToken();
         doReturn(closableConnection()).when(session).getConnection();
         doReturn(true).when(session).isAuthenticated();
         doReturn(FULL_JID).when(session).getAddress();

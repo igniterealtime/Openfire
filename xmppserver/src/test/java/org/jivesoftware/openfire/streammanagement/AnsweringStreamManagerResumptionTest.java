@@ -22,17 +22,11 @@ import org.dom4j.QName;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
-import org.jivesoftware.openfire.RoutingTable;
-import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.RemoteClientSession;
-import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.util.XMPPDateTimeFormat;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -40,7 +34,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.invocation.Invocation;
 import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
-import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.Presence;
@@ -51,7 +44,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Base64;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -62,40 +54,9 @@ import static org.mockito.Mockito.*;
  *
  * @author Guus der Kinderen, guus@goodbytes.nl
  */
-public class StreamManagerResumptionTest
+public class AnsweringStreamManagerResumptionTest extends AbstractStreamManagerTest
 {
-    private static final JID FULL_JID = new JID("johndoe", Fixtures.XMPP_DOMAIN, "test-resource", true);
     private static final JID OTHER_ENTITY = new JID("janedoe", Fixtures.XMPP_DOMAIN, "other-resource", true);
-    private static final JID SERVER_ADDRESS = new JID(Fixtures.XMPP_DOMAIN);
-    private static final String STREAM_ID = "test-stream-id";
-
-    private RoutingTable routingTable;
-
-    @BeforeAll
-    public static void setUpClass() throws Exception
-    {
-        Fixtures.reconfigureOpenfireHome();
-        Fixtures.disableDatabasePersistence();
-    }
-
-    @BeforeEach
-    public void setUp()
-    {
-        final XMPPServer server = Fixtures.mockXMPPServer();
-        routingTable = mock(RoutingTable.class);
-        doReturn(routingTable).when(server).getRoutingTable();
-
-        //noinspection deprecation
-        XMPPServer.setInstance(server);
-    }
-
-    @AfterEach
-    public void tearDown()
-    {
-        Fixtures.clearExistingProperties();
-        //noinspection deprecation
-        XMPPServer.setInstance(null);
-    }
 
     /**
      * Verifies that a resume request for a detached session that can be resumed reattaches that session to the
@@ -797,54 +758,6 @@ public class StreamManagerResumptionTest
     }
 
     /**
-     * A mock of a detached client session that can be resumed: it has a full JID, a stream ID and a non-anonymous
-     * authentication token, and is the route for its full JID.
-     */
-    private LocalClientSession resumableClientSession()
-    {
-        final LocalClientSession session = mock(LocalClientSession.class);
-        final AuthToken authToken = mock(AuthToken.class);
-        doReturn(FULL_JID.getNode()).when(authToken).getUsername();
-        doReturn(authToken).when(session).getAuthToken();
-        doReturn(true).when(session).isAuthenticated();
-        doReturn(true).when(session).isDetached();
-        doReturn(FULL_JID).when(session).getAddress();
-        doReturn(BasicStreamIDFactory.createStreamID(STREAM_ID)).when(session).getStreamID();
-        doReturn(session).when(routingTable).getClientRoute(FULL_JID);
-        mockCloseTracking(session);
-        return session;
-    }
-
-    /**
-     * A mock of a new client session from which a resumption is requested: it authenticated as the same user, but did
-     * not bind a resource.
-     */
-    private static LocalClientSession resumingClientSession()
-    {
-        final LocalClientSession session = mock(LocalClientSession.class);
-        final AuthToken authToken = mock(AuthToken.class);
-        doReturn(FULL_JID.getNode()).when(authToken).getUsername();
-        doReturn(authToken).when(session).getAuthToken();
-        doReturn(false).when(session).isAuthenticated();
-        doReturn(Fixtures.XMPP_DOMAIN).when(session).getServerName();
-        doReturn(BasicStreamIDFactory.createStreamID("resuming-stream-id")).when(session).getStreamID();
-        mockCloseTracking(session);
-        return session;
-    }
-
-    /**
-     * Makes the session report itself as closed once it is closed, through either close() or close(StreamError). A mock
-     * does not have one of these invoke the other, so verifying only one of them would miss a close through the other.
-     */
-    private static void mockCloseTracking(final LocalClientSession session)
-    {
-        final AtomicBoolean closed = new AtomicBoolean(false);
-        doAnswer(invocation -> { closed.set(true); return null; }).when(session).close();
-        doAnswer(invocation -> { closed.set(true); return null; }).when(session).close(nullable(StreamError.class));
-        doAnswer(invocation -> closed.get()).when(session).isClosed();
-    }
-
-    /**
      * Enables Stream Management with resumption on a session, and returns the SM-ID from the {@code <enabled/>} element.
      * The stream manager is then available from the session.
      */
@@ -877,20 +790,6 @@ public class StreamManagerResumptionTest
         return DocumentHelper.createElement(QName.get("resume", namespace)).addAttribute("previd", previd).addAttribute("h", String.valueOf(h));
     }
 
-    private static Element ack(final String namespace, final String h)
-    {
-        return DocumentHelper.createElement(QName.get("a", namespace)).addAttribute("h", h);
-    }
-
-    private static Message message(final String id)
-    {
-        final Message message = new Message();
-        message.setID(id);
-        message.setFrom(OTHER_ENTITY);
-        message.setTo(FULL_JID);
-        return message;
-    }
-
     private static Presence presence(final String id)
     {
         final Presence presence = new Presence();
@@ -909,16 +808,6 @@ public class StreamManagerResumptionTest
             iq.setChildElement("query", "jabber:iq:version");
         }
         return iq;
-    }
-
-    /**
-     * Returns the last element that was delivered to the session as raw text.
-     */
-    private static Element lastDelivered(final LocalSession session) throws DocumentException
-    {
-        final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(session, atLeastOnce().description("Expected something to be delivered to the session.")).deliverRawText(captor.capture());
-        return DocumentHelper.parseText(captor.getValue()).getRootElement();
     }
 
     /**
@@ -981,17 +870,6 @@ public class StreamManagerResumptionTest
     private static List<String> routedIds(final PacketRouter router)
     {
         return routed(router).stream().map(Packet::getID).toList();
-    }
-
-    /**
-     * Returns the IDs of the messages that are unacknowledged, in order. This closes the stream manager, as it uses the
-     * routing of unacknowledged messages on close to observe them.
-     */
-    private static List<String> unacknowledgedMessageIds(final StreamManager sm)
-    {
-        final PacketRouter router = mock(PacketRouter.class);
-        sm.onClose(router, SERVER_ADDRESS);
-        return routedIds(router);
     }
 
     private static void assertFailed(final Element failed, final String namespace, final PacketError.Condition condition)

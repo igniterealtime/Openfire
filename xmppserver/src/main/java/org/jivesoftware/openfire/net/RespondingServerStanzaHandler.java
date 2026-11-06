@@ -21,6 +21,7 @@ import org.dom4j.io.XMPPPacketReader;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.server.ServerDialback;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
@@ -148,6 +149,19 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                     LOG.info("Closing connection {}. As the initiating party in a server-to-server connection, we require the receiving party to supply a stream ID value. The peer that sent this stream element did not: {}", connection, stanza);
                     connection.close(new StreamError(StreamError.Condition.invalid_xml, "Expected a stream ID value, but none was received."));
                     return;
+                }
+
+                // OF-3447: RFC 6120 requires a new stream ID when the stream is restarted after TLS or SASL negotiation.
+                if (sessionCreated && !isNewStreamId(streamHeaderId)) {
+                    if (!ConnectionSettings.Server.OUTGOING_ACCEPT_REUSED_STREAM_ID.getValue()) {
+                        LOG.info("Closing connection {}. As the initiating party in a server-to-server connection, we require the receiving party (remote domain '{}') to supply a new stream ID when it restarts the stream. The peer reused stream ID '{}' of the previous stream: {}", connection, domainPair.getRemote(), streamHeaderId, stanza);
+                        // OF-3447: after TLS, the session is not yet bound to the connection, which then would not send the stream error.
+                        connection.init(session);
+                        abandonSessionInitiation();
+                        connection.close(new StreamError(StreamError.Condition.invalid_xml, "Expected a new stream ID for the restarted stream, but the stream ID of the previous stream was reused."));
+                        return;
+                    }
+                    LOG.debug("Remote domain '{}' restarted the stream reusing stream ID '{}' of the previous stream. Accepted, as '{}' is enabled.", domainPair.getRemote(), streamHeaderId, ConnectionSettings.Server.OUTGOING_ACCEPT_REUSED_STREAM_ID.getKey());
                 }
 
                 // Create a new session with a new ID if a new stream has started on an existing connection

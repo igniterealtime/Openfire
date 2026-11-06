@@ -228,7 +228,7 @@ public class NettyConnection extends AbstractConnection
             if (session != null) {
                 // If the stream ended because of an error, it should not be possible to resume it (OF-2751).
                 // Exception: if the session is already detached by the time this runs, the error isn't reporting a
-                // genuine failure of this stream. It's StreamManager#detachIfNeeded() closing a connection that has
+                // genuine failure of this stream. It's AnsweringStreamManager#detachIfNeeded() closing a connection that has
                 // already been handed off to a newly resumed session, choosing to still send a 'conflict' StreamError
                 // only because XEP-0198 §5 recommends that for a superseded former stream that is still open.
                 // detachIfNeeded() always detaches the session before closing its connection, so a detached session

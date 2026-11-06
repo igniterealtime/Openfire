@@ -141,7 +141,7 @@ public abstract class LocalSession implements Session {
         this.serverName = serverName;
         this.address = new JID(null, serverName, UUID.randomUUID().toString(), true);
         this.sessionManager = SessionManager.getInstance();
-        this.streamManager = new StreamManager(this);
+        this.streamManager = StreamManager.forSession(this);
         this.language = language;
         this.lastActiveDate = startDate;
 
@@ -215,7 +215,7 @@ public abstract class LocalSession implements Session {
 
     /**
      * Completes an inline SASL2 resumption, after the caller has delivered the SASL2 {@code <success/>} response
-     * carrying the {@code <resumed/>} element built by StreamManager#buildResumedElement().
+     * carrying the {@code <resumed/>} element built by AnsweringStreamManager#buildResumedElement().
      *
      * This performs the second half of what {@link StreamManager#onResume(JID, long)} does for the traditional flow:
      * it processes the client's acknowledgement, retransmits anything still unacknowledged, and then invokes

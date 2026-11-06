@@ -11,7 +11,7 @@ session_status:
   session_3_rename_inbound_outbound: completed (2026-11-04)
   session_4_extract_unacked_queue: completed (2026-11-04)
   session_5_isolate_client_resumption: completed (2026-11-04)
-  session_5b_separate_negotiation: not-started (revised; first version completed 2026-11-06)
+  session_5b_separate_negotiation: completed (2026-11-06)
   session_5c_reorganise_tests: not-started
   session_6_server_settings: replay after session 5b (first completed 2026-11-06)
   session_7_advertise_incoming: rework after session 5b (first completed 2026-11-06)
@@ -473,7 +473,7 @@ When you're done, set this session's entry in the plan's session_status frontmat
 
 ### Session 5b: One subclass of StreamManager for each end of a stream
 
-**Status: draft for review, revised 2026-11-06.** The branch holds an earlier version of this session, which moved the negotiation into separate classes held by `StreamManager` (rejected in decision 9). This draft replaces it. It is not implemented.
+A first version of this session moved the negotiation into separate classes held by `StreamManager`, which decision 9 rejects. This version replaced it.
 
 This session was added after a first version of session 9, which put the code for Openfire asking a remote server to enable Stream Management in `StreamManager`, next to the code that answers such requests from the peer. Nothing ties a `StreamManager` to one end of the stream, so a remote server can also enable Stream Management on a connection that Openfire opened, whatever the settings. Sessions 3 to 5 separated `StreamManager` by direction, by the queue of unacknowledged stanzas and by type of session, but not by which end of the stream asks for Stream Management.
 

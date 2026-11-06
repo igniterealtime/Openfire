@@ -2165,7 +2165,7 @@ public class SASLAuthenticationTest
 
     /**
      * Builds an authenticated, SM-resumable session and registers it in the (mocked) routing table, so that
-     * {@link org.jivesoftware.openfire.streammanagement.StreamManager#processSasl2Resume} can locate it as an
+     * {@link org.jivesoftware.openfire.streammanagement.AnsweringStreamManager#processSasl2Resume} can locate it as an
      * existing session to resume.
      *
      * @return the previd (SM-ID) a client would use to resume the returned session.

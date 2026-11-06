@@ -18,6 +18,7 @@ package org.jivesoftware.openfire;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.openfire.streammanagement.AnsweringStreamManager;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.JiveGlobals;
 import org.junit.jupiter.api.AfterEach;
@@ -232,7 +233,7 @@ public class SessionManagerDetachedSessionTest
         doReturn(false).when(session).isDetached();
         doReturn(session).when(routingTable).getClientRoute(FULL_JID);
 
-        final StreamManager streamManager = mock(StreamManager.class, withSettings().strictness(Strictness.LENIENT));
+        final StreamManager streamManager = mock(AnsweringStreamManager.class, withSettings().strictness(Strictness.LENIENT));
         doReturn(resumable).when(streamManager).getResume();
         doReturn(streamManager).when(session).getStreamManager();
         return session;

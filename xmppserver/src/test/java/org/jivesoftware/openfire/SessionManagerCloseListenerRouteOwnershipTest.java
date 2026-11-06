@@ -18,6 +18,7 @@ package org.jivesoftware.openfire;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.openfire.streammanagement.AnsweringStreamManager;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -100,7 +101,7 @@ public class SessionManagerCloseListenerRouteOwnershipTest
         doReturn(false).when(session).isDetached();
 
         // Stream management must report "no resume" so the listener proceeds to teardown rather than detaching.
-        final StreamManager streamManager = mock(StreamManager.class, withSettings().strictness(Strictness.LENIENT));
+        final StreamManager streamManager = mock(AnsweringStreamManager.class, withSettings().strictness(Strictness.LENIENT));
         doReturn(false).when(streamManager).getResume();
         doReturn(streamManager).when(session).getStreamManager();
         return session;

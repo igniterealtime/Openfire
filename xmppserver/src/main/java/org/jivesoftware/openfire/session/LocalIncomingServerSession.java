@@ -17,6 +17,7 @@ package org.jivesoftware.openfire.session;
 
 import org.dom4j.*;
 import org.dom4j.io.XMPPPacketReader;
+import org.jivesoftware.openfire.streammanagement.AnsweringStreamManager;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.StreamID;
@@ -398,6 +399,17 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      */
     public void verifyReceivedKey(Element doc) {
         ServerDialback.verifyReceivedKey(doc, getConnection());
+    }
+
+    /**
+     * Get XEP-0198 Stream manager for session. On this type of session, Openfire answers requests of the peer.
+     *
+     * @return The StreamManager for the session.
+     */
+    @Override
+    public AnsweringStreamManager getStreamManager() {
+        // OF-2425: StreamManager#forSession creates an AnsweringStreamManager for this type of session.
+        return (AnsweringStreamManager) super.getStreamManager();
     }
 
     @Override

@@ -417,7 +417,7 @@ public class StreamManagerTest
     }
 
     /**
-     * Verifies that {@link StreamManager#detachIfNeeded(LocalSession)} closes the pre-existing session's
+     * Verifies that {@link AnsweringStreamManager#detachIfNeeded(LocalSession)} closes the pre-existing session's
      * connection with a 'conflict' {@link StreamError}, as recommended by XEP-0198 §5 for a former stream that is still
      * open when it is superseded by a resumed session.
      */
@@ -430,7 +430,7 @@ public class StreamManagerTest
         when(otherSession.isDetached()).thenReturn(false);
         when(otherSession.getConnection()).thenReturn(oldConnection);
         final LocalSession tempSession = mock(LocalSession.class); // owns this StreamManager
-        final StreamManager sm = new StreamManager(tempSession);
+        final AnsweringStreamManager sm = new AnsweringStreamManager(tempSession);
 
         // Execute system under test.
         sm.detachIfNeeded(otherSession);
@@ -446,7 +446,7 @@ public class StreamManagerTest
     }
 
     /**
-     * Verifies that {@link StreamManager#detachIfNeeded(LocalSession)} is a no-op for a session
+     * Verifies that {@link AnsweringStreamManager#detachIfNeeded(LocalSession)} is a no-op for a session
      * that is already detached, leaving its (already absent) connection untouched.
      */
     @Test
@@ -455,7 +455,7 @@ public class StreamManagerTest
         // Setup test fixture.
         final LocalClientSession otherSession = mock(LocalClientSession.class);
         when(otherSession.isDetached()).thenReturn(true);
-        final StreamManager sm = new StreamManager(mock(LocalSession.class));
+        final AnsweringStreamManager sm = new AnsweringStreamManager(mock(LocalSession.class));
 
         // Execute system under test.
         sm.detachIfNeeded(otherSession);
@@ -466,7 +466,7 @@ public class StreamManagerTest
     }
 
     /**
-     * Verifies that {@link StreamManager#detachIfNeeded(LocalSession)} marks the pre-existing session as detached
+     * Verifies that {@link AnsweringStreamManager#detachIfNeeded(LocalSession)} marks the pre-existing session as detached
      * strictly before closing its connection. This ordering is not incidental: it is what lets
      * NettyConnection#close(StreamError) tell a benign resumption hand-off (session already detached when close() runs)
      * apart from a genuine stream failure (session not yet detached), and so decide whether to disable resumption
@@ -481,7 +481,7 @@ public class StreamManagerTest
         final Connection oldConnection = mock(Connection.class);
         when(otherSession.isDetached()).thenReturn(false);
         when(otherSession.getConnection()).thenReturn(oldConnection);
-        final StreamManager sm = new StreamManager(mock(LocalSession.class));
+        final AnsweringStreamManager sm = new AnsweringStreamManager(mock(LocalSession.class));
 
         // Execute system under test.
         sm.detachIfNeeded(otherSession);
@@ -502,7 +502,7 @@ public class StreamManagerTest
     {
         // Setup test fixture.
         final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = new StreamManager(session);
+        final AnsweringStreamManager sm = new AnsweringStreamManager(session);
 
         // Execute system under test.
         sm.process(smElement("enable", namespace));
@@ -525,7 +525,7 @@ public class StreamManagerTest
     {
         // Setup test fixture.
         final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = new StreamManager(session);
+        final AnsweringStreamManager sm = new AnsweringStreamManager(session);
         final Element enable = smElement("enable", StreamManager.NAMESPACE_V3);
         enable.addAttribute("resume", "true");
 
@@ -552,7 +552,7 @@ public class StreamManagerTest
     {
         // Setup test fixture.
         final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = new StreamManager(session);
+        final AnsweringStreamManager sm = new AnsweringStreamManager(session);
         final Element enable = smElement("enable", StreamManager.NAMESPACE_V2);
         enable.addAttribute("resume", "true");
 
@@ -578,7 +578,7 @@ public class StreamManagerTest
         // Setup test fixture.
         StreamManager.LOCATION_ENABLED.setValue(false);
         final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = new StreamManager(session);
+        final AnsweringStreamManager sm = new AnsweringStreamManager(session);
         final Element enable = smElement("enable", StreamManager.NAMESPACE_V3);
         enable.addAttribute("resume", "true");
 
@@ -598,7 +598,7 @@ public class StreamManagerTest
         // Setup test fixture.
         StreamManager.MAX_SERVER_ENABLED.setValue(false);
         final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = new StreamManager(session);
+        final AnsweringStreamManager sm = new AnsweringStreamManager(session);
         final Element enable = smElement("enable", StreamManager.NAMESPACE_V3);
         enable.addAttribute("resume", "true");
 
@@ -618,7 +618,7 @@ public class StreamManagerTest
     {
         // Setup test fixture.
         final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = new StreamManager(session);
+        final AnsweringStreamManager sm = new AnsweringStreamManager(session);
         final Element enable = smElement("enable", StreamManager.NAMESPACE_V3);
         enable.addAttribute("resume", value);
 
@@ -640,7 +640,7 @@ public class StreamManagerTest
         final LocalClientSession session = authenticatedClientSession();
         final AuthToken authToken = session.getAuthToken();
         doReturn(true).when(authToken).isAnonymous();
-        final StreamManager sm = new StreamManager(session);
+        final AnsweringStreamManager sm = new AnsweringStreamManager(session);
         final Element enable = smElement("enable", StreamManager.NAMESPACE_V3);
         enable.addAttribute("resume", "true");
 
@@ -665,7 +665,7 @@ public class StreamManagerTest
         // Setup test fixture.
         final LocalSession session = mock(LocalSession.class);
         doReturn(true).when(session).isAuthenticated();
-        final StreamManager sm = new StreamManager(session);
+        final AnsweringStreamManager sm = new AnsweringStreamManager(session);
         final Element enable = smElement("enable", StreamManager.NAMESPACE_V3);
         enable.addAttribute("resume", "true");
 
@@ -689,7 +689,7 @@ public class StreamManagerTest
         // Setup test fixture.
         final LocalClientSession session = authenticatedClientSession();
         doReturn(false).when(session).isAuthenticated();
-        final StreamManager sm = new StreamManager(session);
+        final AnsweringStreamManager sm = new AnsweringStreamManager(session);
 
         // Execute system under test.
         sm.process(smElement("enable", namespace));
@@ -792,7 +792,7 @@ public class StreamManagerTest
     {
         // Setup test fixture.
         final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = new StreamManager(session);
+        final AnsweringStreamManager sm = new AnsweringStreamManager(session);
         sm.incrementHandledInboundStanzas();
         sm.process(smElement("enable", StreamManager.NAMESPACE_V3));
 
@@ -811,7 +811,7 @@ public class StreamManagerTest
     {
         // Setup test fixture.
         final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = new StreamManager(session);
+        final AnsweringStreamManager sm = new AnsweringStreamManager(session);
 
         // Execute system under test.
         sm.process(smElement("r", StreamManager.NAMESPACE_V3));
@@ -948,7 +948,7 @@ public class StreamManagerTest
     {
         // Setup test fixture.
         final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = new StreamManager(session);
+        final AnsweringStreamManager sm = new AnsweringStreamManager(session);
         sm.sentStanza(message("before"));
         sm.process(smElement("enable", StreamManager.NAMESPACE_V3));
 
@@ -967,7 +967,7 @@ public class StreamManagerTest
     {
         // Setup test fixture.
         final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = new StreamManager(session);
+        final AnsweringStreamManager sm = new AnsweringStreamManager(session);
 
         // Execute system under test.
         sm.process(ack(StreamManager.NAMESPACE_V3, "not-a-number"));
@@ -1305,7 +1305,7 @@ public class StreamManagerTest
     {
         // Setup test fixture.
         final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final AnsweringStreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         setCounter(sm, HANDLED_COUNTER_FIELD, StreamManager.MASK);
         sm.incrementHandledInboundStanzas();
 
@@ -1497,7 +1497,7 @@ public class StreamManagerTest
         final LocalClientSession resuming = resumingClientSession();
 
         // Execute system under test.
-        new StreamManager(resuming).process(resume(previd, 1));
+        new AnsweringStreamManager(resuming).process(resume(previd, 1));
 
         // Verify result.
         verify(original, times(1).description("The session must be resumed, as a lower value of 'h' is not too high.")).reattach(resuming, 1L);
@@ -1521,7 +1521,7 @@ public class StreamManagerTest
         sm.sentStanza(message("3"));
         sm.process(ack(StreamManager.NAMESPACE_V3, "2"));
         final LocalClientSession resuming = resumingClientSession();
-        new StreamManager(resuming).process(resume(previd, 1));
+        new AnsweringStreamManager(resuming).process(resume(previd, 1));
         verify(original, times(1).description("Test fixture expects the session to be resumed.")).reattach(resuming, 1L);
         final Connection newConnection = mock(Connection.class);
         doReturn(newConnection).when(original).getConnection();
@@ -1556,7 +1556,7 @@ public class StreamManagerTest
         final LocalClientSession resuming = resumingClientSession();
 
         // Execute system under test.
-        new StreamManager(resuming).process(resume(previd, 5));
+        new AnsweringStreamManager(resuming).process(resume(previd, 5));
 
         // Verify result.
         verify(original, never().description("The session must not be resumed with a value of 'h' that is too high.")).reattach(any(), anyLong());
@@ -1581,7 +1581,7 @@ public class StreamManagerTest
         final LocalClientSession resuming = resumingClientSession();
 
         // Execute system under test.
-        new StreamManager(resuming).process(resume(previd, StreamManager.MASK));
+        new AnsweringStreamManager(resuming).process(resume(previd, StreamManager.MASK));
 
         // Verify result.
         verify(original, times(1).description("The session must be resumed, as a value from before the roll-over is not too high.")).reattach(resuming, StreamManager.MASK);
@@ -1672,7 +1672,7 @@ public class StreamManagerTest
         final LocalClientSession session = authenticatedClientSession();
         final AuthToken authToken = mock(AuthToken.class);
         doReturn(authToken).when(session).getAuthToken();
-        final StreamManager sm = new StreamManager(session);
+        final AnsweringStreamManager sm = new AnsweringStreamManager(session);
         final Element enable = smElement("enable", StreamManager.NAMESPACE_V3);
         enable.addAttribute("resume", "true");
         sm.process(enable);
@@ -2093,9 +2093,9 @@ public class StreamManagerTest
      * Creates a stream manager with Stream Management enabled, and clears the interaction with the session that resulted
      * from enabling it.
      */
-    private static StreamManager enabledStreamManager(final LocalSession session, final String namespace)
+    private static AnsweringStreamManager enabledStreamManager(final LocalSession session, final String namespace)
     {
-        final StreamManager sm = new StreamManager(session);
+        final AnsweringStreamManager sm = new AnsweringStreamManager(session);
         sm.process(smElement("enable", namespace));
         assertTrue(sm.isEnabled(), "Test fixture expects Stream Management to be enabled.");
         clearInvocations(session);
@@ -2146,7 +2146,7 @@ public class StreamManagerTest
      */
     private static StreamManager streamManagerWithResumption(final LocalClientSession session)
     {
-        final StreamManager sm = new StreamManager(session);
+        final AnsweringStreamManager sm = new AnsweringStreamManager(session);
         doReturn(sm).when(session).getStreamManager();
         final Element enable = smElement("enable", StreamManager.NAMESPACE_V3);
         enable.addAttribute("resume", "true");
@@ -2292,9 +2292,16 @@ public class StreamManagerTest
 
     private static Field field(final Object holder, final String name) throws NoSuchFieldException
     {
-        final Field field = holder.getClass().getDeclaredField(name);
-        field.setAccessible(true);
-        return field;
+        for (Class<?> type = holder.getClass(); type != null; type = type.getSuperclass()) {
+            try {
+                final Field field = type.getDeclaredField(name);
+                field.setAccessible(true);
+                return field;
+            } catch (NoSuchFieldException e) {
+                // Declared on a superclass.
+            }
+        }
+        throw new NoSuchFieldException(name);
     }
 
     /**
@@ -2400,7 +2407,7 @@ public class StreamManagerTest
     void terminationDelegatesCanBeObtainedWhileDelegateIsAdded()
     {
         // Setup test fixture.
-        final StreamManager sm = new StreamManager(authenticatedClientSession());
+        final StreamManager sm = new AnsweringStreamManager(authenticatedClientSession());
         final AtomicReference<Runnable> onHashCode = new AtomicReference<>();
         final TerminationDelegate first = new DelegateWithHashCode(1, onHashCode);
         final TerminationDelegate second = new DelegateWithHashCode(2, onHashCode);
@@ -2431,7 +2438,7 @@ public class StreamManagerTest
     void replacedTerminationDelegateIsNotMissedTogetherWithItsReplacement()
     {
         // Setup test fixture.
-        final StreamManager sm = new StreamManager(authenticatedClientSession());
+        final StreamManager sm = new AnsweringStreamManager(authenticatedClientSession());
         final AtomicReference<Runnable> onHashCode = new AtomicReference<>();
         final TerminationDelegate first = new DelegateWithHashCode(1, onHashCode);
         final TerminationDelegate second = new DelegateWithHashCode(2, onHashCode);
@@ -2460,7 +2467,7 @@ public class StreamManagerTest
     void addingNullTerminationDelegateIsRefused()
     {
         // Setup test fixture.
-        final StreamManager sm = new StreamManager(authenticatedClientSession());
+        final StreamManager sm = new AnsweringStreamManager(authenticatedClientSession());
 
         // Execute system under test.
         assertThrows(NullPointerException.class, () -> sm.addTerminationDelegate(null), "Adding a termination delegate of null must be refused.");
@@ -2476,7 +2483,7 @@ public class StreamManagerTest
     void removingNullTerminationDelegateIsRefused()
     {
         // Setup test fixture.
-        final StreamManager sm = new StreamManager(authenticatedClientSession());
+        final StreamManager sm = new AnsweringStreamManager(authenticatedClientSession());
         final TerminationDelegate delegate = allowableInactivity -> false;
         sm.addTerminationDelegate(delegate);
 

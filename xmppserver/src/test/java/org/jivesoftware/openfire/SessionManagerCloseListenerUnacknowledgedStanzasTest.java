@@ -566,7 +566,7 @@ public class SessionManagerCloseListenerUnacknowledgedStanzasTest
         doReturn(new Presence()).when(session).getPresence();
         doReturn(true).when(session).isAuthenticated();
 
-        final StreamManager streamManager = new StreamManager(session);
+        final StreamManager streamManager = StreamManager.forSession(session);
         streamManager.process(DocumentHelper.createElement(QName.get("enable", StreamManager.NAMESPACE_V3)));
         assertTrue(streamManager.isEnabled(), "Test fixture expects Stream Management to be enabled.");
         doReturn(streamManager).when(session).getStreamManager();

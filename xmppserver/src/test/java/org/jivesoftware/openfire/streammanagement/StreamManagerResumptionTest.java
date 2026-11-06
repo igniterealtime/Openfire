@@ -110,7 +110,7 @@ public class StreamManagerResumptionTest
         final LocalClientSession resuming = resumingClientSession();
 
         // Execute system under test.
-        new StreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previd, 0));
+        new AnsweringStreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previd, 0));
 
         // Verify result.
         verify(original, times(1).description("The session must be reattached to the connection of the session that requested the resumption.")).reattach(resuming, 0L);
@@ -133,7 +133,7 @@ public class StreamManagerResumptionTest
         final LocalClientSession resuming = resumingClientSession();
 
         // Execute system under test.
-        new StreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previd, 0));
+        new AnsweringStreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previd, 0));
 
         // Verify result.
         final ArgumentCaptor<StreamError> captor = ArgumentCaptor.forClass(StreamError.class);
@@ -356,7 +356,7 @@ public class StreamManagerResumptionTest
         final LocalClientSession resuming = resumingClientSession();
 
         // Execute system under test.
-        new StreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previd, 0));
+        new AnsweringStreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previd, 0));
 
         // Verify result.
         assertFailed(lastDelivered(resuming), StreamManager.NAMESPACE_V3, PacketError.Condition.item_not_found);
@@ -378,7 +378,7 @@ public class StreamManagerResumptionTest
         final LocalClientSession resuming = resumingClientSession();
 
         // Execute system under test.
-        new StreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previdOfOtherStream, 0));
+        new AnsweringStreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previdOfOtherStream, 0));
 
         // Verify result.
         assertFailed(lastDelivered(resuming), StreamManager.NAMESPACE_V3, PacketError.Condition.item_not_found);
@@ -399,7 +399,7 @@ public class StreamManagerResumptionTest
         final LocalClientSession resuming = resumingClientSession();
 
         // Execute system under test.
-        new StreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, "not base64!", 0));
+        new AnsweringStreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, "not base64!", 0));
 
         // Verify result.
         assertFailed(lastDelivered(resuming), StreamManager.NAMESPACE_V3, PacketError.Condition.unexpected_request);
@@ -422,7 +422,7 @@ public class StreamManagerResumptionTest
         final LocalClientSession resuming = resumingClientSession();
 
         // Execute system under test.
-        new StreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previd, 0));
+        new AnsweringStreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previd, 0));
 
         // Verify result.
         assertFailed(lastDelivered(resuming), StreamManager.NAMESPACE_V3, PacketError.Condition.unexpected_request);
@@ -444,7 +444,7 @@ public class StreamManagerResumptionTest
         doReturn(true).when(authToken).isAnonymous();
 
         // Execute system under test.
-        new StreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previd, 0));
+        new AnsweringStreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previd, 0));
 
         // Verify result.
         assertFailed(lastDelivered(resuming), StreamManager.NAMESPACE_V3, PacketError.Condition.unexpected_request);
@@ -466,7 +466,7 @@ public class StreamManagerResumptionTest
         doReturn(false).when(resuming).isAuthenticated();
 
         // Execute system under test.
-        new StreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previd, 0));
+        new AnsweringStreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previd, 0));
 
         // Verify result.
         assertFailed(lastDelivered(resuming), StreamManager.NAMESPACE_V3, PacketError.Condition.unexpected_request);
@@ -488,7 +488,7 @@ public class StreamManagerResumptionTest
         doReturn(false).when(resuming).isAuthenticated();
 
         // Execute system under test.
-        final Sasl2ResumeResult result = new StreamManager(resuming).processSasl2Resume(ResumeRequest.from(resume(StreamManager.NAMESPACE_V3, previd, 0)));
+        final Sasl2ResumeResult result = new AnsweringStreamManager(resuming).processSasl2Resume(ResumeRequest.from(resume(StreamManager.NAMESPACE_V3, previd, 0)));
 
         // Verify result.
         assertFalse(result.isSuccess(), "An inline resume request from a session that is not a client session must be refused.");
@@ -512,7 +512,7 @@ public class StreamManagerResumptionTest
         doReturn(null).when(resuming).getAuthToken();
 
         // Execute system under test.
-        new StreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previd, 0));
+        new AnsweringStreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previd, 0));
 
         // Verify result.
         assertFailed(lastDelivered(resuming), StreamManager.NAMESPACE_V3, PacketError.Condition.unexpected_request);
@@ -534,7 +534,7 @@ public class StreamManagerResumptionTest
         doReturn(true).when(resuming).isAuthenticated();
 
         // Execute system under test.
-        new StreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previd, 0));
+        new AnsweringStreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previd, 0));
 
         // Verify result.
         assertFailed(lastDelivered(resuming), StreamManager.NAMESPACE_V3, PacketError.Condition.unexpected_request);
@@ -555,7 +555,7 @@ public class StreamManagerResumptionTest
         final LocalClientSession resuming = resumingClientSession();
 
         // Execute system under test.
-        new StreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previd, 0));
+        new AnsweringStreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previd, 0));
 
         // Verify result.
         assertFailed(lastDelivered(resuming), StreamManager.NAMESPACE_V3, PacketError.Condition.unexpected_request);
@@ -576,7 +576,7 @@ public class StreamManagerResumptionTest
         final LocalClientSession resuming = resumingClientSession();
 
         // Execute system under test.
-        new StreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previd, 0));
+        new AnsweringStreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previd, 0));
 
         // Verify result.
         assertFailed(lastDelivered(resuming), StreamManager.NAMESPACE_V3, PacketError.Condition.unexpected_request);
@@ -596,7 +596,7 @@ public class StreamManagerResumptionTest
         final LocalClientSession resuming = resumingClientSession();
 
         // Execute system under test.
-        new StreamManager(resuming).process(resume(StreamManager.NAMESPACE_V2, previd, 0));
+        new AnsweringStreamManager(resuming).process(resume(StreamManager.NAMESPACE_V2, previd, 0));
 
         // Verify result.
         assertFailed(lastDelivered(resuming), StreamManager.NAMESPACE_V2, PacketError.Condition.unexpected_request);
@@ -619,7 +619,7 @@ public class StreamManagerResumptionTest
         final LocalClientSession resuming = resumingClientSession();
 
         // Execute system under test.
-        new StreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previd, 3));
+        new AnsweringStreamManager(resuming).process(resume(StreamManager.NAMESPACE_V3, previd, 3));
 
         // Verify result.
         assertFailed(lastDelivered(resuming), StreamManager.NAMESPACE_V3, PacketError.Condition.unexpected_request);
@@ -639,7 +639,7 @@ public class StreamManagerResumptionTest
         final String previd = enableResumption(original, StreamManager.NAMESPACE_V3);
         doReturn(null).when(routingTable).getClientRoute(FULL_JID);
         final LocalClientSession resuming = resumingClientSession();
-        final StreamManager sm = new StreamManager(resuming);
+        final AnsweringStreamManager sm = new AnsweringStreamManager(resuming);
 
         // Execute system under test.
         sm.process(resume(StreamManager.NAMESPACE_V3, previd, 0));
@@ -665,7 +665,7 @@ public class StreamManagerResumptionTest
         final LocalClientSession resuming = resumingClientSession();
 
         // Execute system under test.
-        final Sasl2ResumeResult result = new StreamManager(resuming).processSasl2Resume(ResumeRequest.from(resume(StreamManager.NAMESPACE_V3, previd, 0)));
+        final Sasl2ResumeResult result = new AnsweringStreamManager(resuming).processSasl2Resume(ResumeRequest.from(resume(StreamManager.NAMESPACE_V3, previd, 0)));
 
         // Verify result.
         assertFalse(result.isSuccess(), "The inline resume request must be refused.");
@@ -850,7 +850,7 @@ public class StreamManagerResumptionTest
      */
     private static String enableResumption(final LocalClientSession session, final String namespace) throws DocumentException
     {
-        final StreamManager sm = new StreamManager(session);
+        final AnsweringStreamManager sm = new AnsweringStreamManager(session);
         doReturn(sm).when(session).getStreamManager();
         final Element enable = DocumentHelper.createElement(QName.get("enable", namespace));
         enable.addAttribute("resume", "true");

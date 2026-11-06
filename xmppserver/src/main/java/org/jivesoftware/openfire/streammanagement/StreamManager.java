@@ -79,6 +79,12 @@ public class StreamManager {
     private final Logger Log;
     private boolean resume = false;
 
+    /**
+     * An outbound stanza that the peer has not acknowledged yet.
+     *
+     * @deprecated Stream Management no longer uses this class, which has no replacement.
+     */
+    @Deprecated(forRemoval = true, since = "5.2.0") // Remove in or after Openfire 5.3.0
     public static class UnackedPacket {
         public final long x;
         public final Date timestamp = new Date();
@@ -116,17 +122,6 @@ public class StreamManager {
     private AtomicLong handledInboundStanzas = new AtomicLong( 0 );
 
     /**
-     * Count of how many outbound stanzas/packets the peer has acknowledged as handled
-     */
-    private AtomicLong acknowledgedOutboundStanzas = new AtomicLong( 0 );
-
-    /**
-     * Whether the count of outbound stanzas that the peer has acknowledged as handled has rolled over from (2^32)-1 to
-     * zero at least once.
-     */
-    private boolean acknowledgedOutboundStanzasRolledOver = false;
-
-    /**
      * Whether the number of unacknowledged stanzas exceeded the maximum, which causes the session to be closed.
      */
     private boolean exceededMaximumUnacknowledgedStanzas = false;
@@ -137,9 +132,9 @@ public class StreamManager {
     static final long MASK = new BigInteger( "2" ).pow( 32 ).longValue() - 1;
 
     /**
-     * Collection of outbound stanzas/packets that haven't been acknowledged.
+     * Outbound stanzas/packets that haven't been acknowledged, and the count of those that have been.
      */
-    private Deque<UnackedPacket> unacknowledgedOutboundStanzas = new LinkedList<>();
+    private final UnacknowledgedStanzaQueue unacknowledgedOutboundStanzas;
 
     /**
      * Delegates that can determine if a detached session can be terminated.
@@ -164,6 +159,7 @@ public class StreamManager {
         }
 
         this.Log = LoggerFactory.getLogger(StreamManager.class + "["+ (address == null ? "(unknown address)" : address) +"]" );
+        this.unacknowledgedOutboundStanzas = new UnacknowledgedStanzaQueue( Log, this::getMaximumUnacknowledgedStanzas );
         this.session = session;
     }
 
@@ -202,7 +198,7 @@ public class StreamManager {
                     resumeRequest = ResumeRequest.from(element);
                 } catch (MalformedResumeRequestException e) {
                     Log.info( "Closing client session that sent a malformed 'resume' request. Error message: {}. Affected session: {}", e.getMessage(), session );
-                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, e.getMessage() + " Our last unacknowledged stanza: " + (unacknowledgedOutboundStanzas.isEmpty() ? "(none)" : unacknowledgedOutboundStanzas.getLast().x) );
+                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, e.getMessage() + " Our last unacknowledged stanza: " + unacknowledgedOutboundStanzas.describeLast() );
                     // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).
                     session.close( error );
                     return;
@@ -601,116 +597,15 @@ public class StreamManager {
      * Checks if the amount of stanzas that the peer acknowledges is not higher than the amount of stanzas that we've
      * sent to the peer.
      *
+     * This holds the lock of this instance, so that the check does not see the queue of unacknowledged stanzas halfway
+     * through a sequence of changes that this instance makes under that lock. It is safe to invoke on the stream
+     * manager of another session.
+     *
      * @param h Then number of stanzas that the peer acknowledges it has received from us.
      * @return false if we sent fewer stanzas to the peer than the number it is acknowledging.
      */
     private synchronized boolean validateOutboundAcknowledgement(long h) {
-        if (h < 0) {
-            throw new IllegalArgumentException("Argument 'h' cannot be negative, but was: " + h);
-        }
-        if (h > MASK) {
-            throw new IllegalArgumentException("Argument 'h' cannot be larger than 2^32 -1, but was: " + h);
-        }
-        final long oldH = acknowledgedOutboundStanzas.get();
-        final Long lastUnackedX = unacknowledgedOutboundStanzas.isEmpty() ? null : unacknowledgedOutboundStanzas.getLast().x;
-        return validateOutboundAcknowledgement(h, oldH, lastUnackedX, acknowledgedOutboundStanzasRolledOver);
-    }
-
-    /**
-     * Checks a value of 'h' against the stanzas that were sent, on a stream on which the acknowledged count has not
-     * rolled over.
-     *
-     * @param h The value to check.
-     * @param oldH The last acknowledged value.
-     * @param lastUnackedX The number of the last stanza sent, or null if all stanzas that were sent are acknowledged.
-     * @return false if the value is higher than the number of stanzas that were sent.
-     * @see #validateOutboundAcknowledgement(long, long, Long, boolean)
-     */
-    @VisibleForTesting
-    static boolean validateOutboundAcknowledgement(final long h, final long oldH, final Long lastUnackedX) {
-        return validateOutboundAcknowledgement(h, oldH, lastUnackedX, false);
-    }
-
-    /**
-     * Checks a value of 'h' against the stanzas that were sent, taking into account that stanza numbers and 'h' roll
-     * over from 2^32-1 to zero (XEP-0198 § 4).
-     *
-     * A value from the last acknowledged value up to and including the number of the last stanza sent is valid. A value
-     * lower than the last acknowledged value is valid too, as it is not higher than the number of stanzas that were sent
-     * (XEP-0198 § 6), but it does not acknowledge any new stanzas (XEP-0198 § 4).
-     *
-     * A value counts as lower when it is at most half of the range below the last acknowledged value, counting back
-     * across the roll-over. Until the acknowledged count has rolled over, it can't be below zero either, as the values
-     * that would be reached by counting back across the roll-over were never sent.
-     *
-     * @param h The value to check.
-     * @param oldH The last acknowledged value.
-     * @param lastUnackedX The number of the last stanza sent, or null if all stanzas that were sent are acknowledged.
-     * @param rolledOver Whether the acknowledged count has rolled over at least once.
-     * @return false if the value is higher than the number of stanzas that were sent.
-     */
-    @VisibleForTesting
-    static boolean validateOutboundAcknowledgement(final long h, final long oldH, final Long lastUnackedX, final boolean rolledOver) {
-        final long lastSentX = lastUnackedX == null ? oldH : lastUnackedX;
-        if (isInRange(h, oldH, lastSentX)) {
-            return true;
-        }
-        final long earliestLowerH = rolledOver ? (oldH - (MASK >> 1)) & MASK : Math.max(0, oldH - (MASK >> 1));
-        return isInRange(h, earliestLowerH, oldH);
-    }
-
-    /**
-     * Checks if a value is in a range, taking into account that the range can include the roll-over from 2^32-1 to zero
-     * (XEP-0198 § 4).
-     *
-     * @param value The value to check.
-     * @param first The first value of the range.
-     * @param last The last value of the range.
-     * @return true if the value is in the range.
-     */
-    private static boolean isInRange(final long value, final long first, final long last) {
-        return ((value - first) & MASK) <= ((last - first) & MASK);
-    }
-
-    /**
-     * Process acknowledgements of outbound stanzas for a given value of h.
-     *
-     * @param h Last handled stanza to be acknowledged.
-     */
-    private void processOutboundAcknowledgement(long h) {
-        synchronized (this) {
-
-            if ( !validateOutboundAcknowledgement(h) ) {
-                // All paths leading up to here should have checked for this. Race condition?
-                throw new IllegalStateException( "Peer acknowledges stanzas that we didn't send! Peer Ack h: "+h+", our last unacknowledged stanza: " + (unacknowledgedOutboundStanzas.isEmpty() ? "(none)" : unacknowledgedOutboundStanzas.getLast().x) );
-            }
-
-            final long oldH = acknowledgedOutboundStanzas.get();
-            final long lastSentX = unacknowledgedOutboundStanzas.isEmpty() ? oldH : unacknowledgedOutboundStanzas.getLast().x;
-            if ( !isInRange( h, oldH, lastSentX ) )
-            {
-                // OF-3433: A value lower than an earlier one does not acknowledge anything new (XEP-0198 § 4).
-                Log.debug( "Ignoring peer Ack (h={}), as it is lower than an earlier one: {}", h, oldH );
-                return;
-            }
-
-            if ( h < oldH ) {
-                // OF-3433: This acknowledges new stanzas, so a smaller value means that the count rolled over.
-                acknowledgedOutboundStanzasRolledOver = true;
-            }
-            acknowledgedOutboundStanzas.set( h );
-
-            // Remove stanzas from temporary storage as now acknowledged
-            Log.trace( "Before processing peer Ack (h={}): {} unacknowledged stanzas.", h, unacknowledgedOutboundStanzas.size() );
-
-            // Pop all acknowledged stanzas.
-            while( !unacknowledgedOutboundStanzas.isEmpty() && isInRange( unacknowledgedOutboundStanzas.getFirst().x, oldH, h ) )
-            {
-                unacknowledgedOutboundStanzas.removeFirst();
-            }
-
-            Log.trace( "After processing peer Ack (h={}): {} unacknowledged stanzas.", h, unacknowledgedOutboundStanzas.size());
-        }
+        return unacknowledgedOutboundStanzas.isValidAcknowledgement(h);
     }
 
     /**
@@ -726,21 +621,21 @@ public class StreamManager {
                     h = Long.parseLong(hValue);
                 } catch (NumberFormatException e) {
                     Log.warn( "Closing session. Peer sends non-numeric value for SM 'h': {}, affected session: {}", hValue, session );
-                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a 'h' value that is not a number (which is illegal). Your Ack h: " + hValue + ", our last unacknowledged stanza: " + (unacknowledgedOutboundStanzas.isEmpty() ? "(none)" : unacknowledgedOutboundStanzas.getLast().x) );
+                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a 'h' value that is not a number (which is illegal). Your Ack h: " + hValue + ", our last unacknowledged stanza: " + unacknowledgedOutboundStanzas.describeLast() );
                     // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).
                     session.close( error );
                     return;
                 }
                 if (h < 0) {
                     Log.warn( "Closing session. Peer sends negative value for SM 'h': {}, affected session: {}", h, session );
-                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a negative value (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedOutboundStanzas.isEmpty() ? "(none)" : unacknowledgedOutboundStanzas.getLast().x) );
+                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a negative value (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + unacknowledgedOutboundStanzas.describeLast() );
                     // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).
                     session.close( error );
                     return;
                 }
                 if (h > MASK) {
                     Log.warn( "Closing session. Peer sends value for SM 'h' that is larger than 2^32-1: {}, affected session: {}", h, session );
-                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a value larger than 2^32-1 (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedOutboundStanzas.isEmpty() ? "(none)" : unacknowledgedOutboundStanzas.getLast().x) );
+                    final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas using a value larger than 2^32-1 (which is illegal). Your Ack h: " + h + ", our last unacknowledged stanza: " + unacknowledgedOutboundStanzas.describeLast() );
                     // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).
                     session.close( error );
                     return;
@@ -750,16 +645,16 @@ public class StreamManager {
 
                 synchronized ( this ) {
                     if (!validateOutboundAcknowledgement(h)) {
-                        Log.warn( "Closing session. Peer acknowledges stanzas that we didn't send! Peer Ack h: {}, our last unacknowledged stanza: {}, affected session: {}", h, unacknowledgedOutboundStanzas.isEmpty() ? "(none)" : unacknowledgedOutboundStanzas.getLast().x, session );
-                        final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas that we didn't send. Your Ack h: " + h + ", our last unacknowledged stanza: " + (unacknowledgedOutboundStanzas.isEmpty() ? "(none)" : unacknowledgedOutboundStanzas.getLast().x) );
-                        final long sendCount = unacknowledgedOutboundStanzas.isEmpty() ? acknowledgedOutboundStanzas.get() : unacknowledgedOutboundStanzas.getLast().x;
+                        Log.warn( "Closing session. Peer acknowledges stanzas that we didn't send! Peer Ack h: {}, our last unacknowledged stanza: {}, affected session: {}", h, unacknowledgedOutboundStanzas.describeLast(), session );
+                        final StreamError error = new StreamError( StreamError.Condition.undefined_condition, "You acknowledged stanzas that we didn't send. Your Ack h: " + h + ", our last unacknowledged stanza: " + unacknowledgedOutboundStanzas.describeLast() );
+                        final long sendCount = unacknowledgedOutboundStanzas.getLastSentNumber();
                         error.getElement().addElement( QName.get( "handled-count-too-high", namespace ) ).addAttribute( "h", String.valueOf( h ) ).addAttribute( "send-count", String.valueOf( sendCount ) );
                         // OF-3443: Unlike close(), this also makes the stream non-resumable (OF-2751).
                         session.close( error );
                         return;
                     }
 
-                    processOutboundAcknowledgement(h);
+                    unacknowledgedOutboundStanzas.acknowledge( h );
                 }
             }
         }
@@ -785,16 +680,14 @@ public class StreamManager {
                     return;
                 }
 
-                // The next ID is one higher than the last stanza that was sent (which might be unacknowledged!), rolling over after 2^32-1 (XEP-0198 § 4).
-                final long x = ( 1 + ( unacknowledgedOutboundStanzas.isEmpty() ? acknowledgedOutboundStanzas.get() : unacknowledgedOutboundStanzas.getLast().x ) ) & MASK;
-                unacknowledgedOutboundStanzas.addLast( new StreamManager.UnackedPacket( x, packet.createCopy() ) );
+                final long x = unacknowledgedOutboundStanzas.add( packet.createCopy() );
 
                 size = unacknowledgedOutboundStanzas.size();
 
                 Log.trace( "Added stanza of type '{}' to collection of unacknowledged stanzas (x={}). Collection size is now {}.", packet.getElement().getName(), x, size );
 
                 // Prevent keeping to many stanzas in memory. OF-3434: the stanzas are kept, to be handled when the session closes.
-                closeForExceedingMaximum = size > getMaximumUnacknowledgedStanzas() && !exceededMaximumUnacknowledgedStanzas;
+                closeForExceedingMaximum = unacknowledgedOutboundStanzas.exceedsMaximum() && !exceededMaximumUnacknowledgedStanzas;
                 if ( closeForExceedingMaximum ) {
                     exceededMaximumUnacknowledgedStanzas = true;
                 }
@@ -864,18 +757,18 @@ public class StreamManager {
         synchronized (this) {
             if(isEnabled()) {
                 namespace = null; // disable stream management.
-                for (StreamManager.UnackedPacket unacked : unacknowledgedOutboundStanzas) {
+                for (final UnacknowledgedStanzaQueue.Entry unacked : unacknowledgedOutboundStanzas.getEntries()) {
                     // OF-3442: A failure to handle one stanza must not prevent the others from being handled.
                     try {
-                        if (unacked.packet instanceof Message) {
-                            Message m = (Message) unacked.packet;
+                        if (unacked.getPacket() instanceof Message) {
+                            Message m = (Message) unacked.getPacket();
                             if (m.getExtension("delay", "urn:xmpp:delay") == null) {
                                 Element delayInformation = m.addChildElement("delay", "urn:xmpp:delay");
-                                delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.timestamp));
+                                delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.getTimestamp()));
                                 delayInformation.addAttribute("from", serverAddress.toBareJID());
                             }
-                            router.route(unacked.packet);
-                        } else if (unacked.packet instanceof IQ iq && iq.isRequest()) {
+                            router.route(unacked.getPacket());
+                        } else if (unacked.getPacket() instanceof IQ iq && iq.isRequest()) {
                             // OF-3442: Every IQ request needs a response (RFC 6120 § 8.2.3), here the one for an unavailable resource (RFC 6121 § 8.5.3.2.3).
                             final IQ error = IQ.createResultIQ(iq);
                             if (error.getFrom() == null) {
@@ -887,7 +780,7 @@ public class StreamManager {
                         }
                     } catch (Exception e) {
                         // The stanza itself is not logged, as it can have private content.
-                        Log.warn("Unable to handle an unacknowledged '{}' stanza of type '{}' with ID '{}', of session {} that closed.", unacked.packet.getElement().getName(), unacked.packet.getElement().attributeValue("type"), unacked.packet.getID(), session, e);
+                        Log.warn("Unable to handle an unacknowledged '{}' stanza of type '{}' with ID '{}', of session {} that closed.", unacked.getPacket().getElement().getName(), unacked.getPacket().getElement().attributeValue("type"), unacked.getPacket().getID(), session, e);
                     }
                 }
             }
@@ -935,7 +828,9 @@ public class StreamManager {
      */
     public void redeliverUnackedStanzas(@Nonnull final JID serverAddress, final long h) {
         Log.debug("Resuming session: Ack for {}", h);
-        processOutboundAcknowledgement(h);
+        synchronized (this) {
+            unacknowledgedOutboundStanzas.acknowledge( h );
+        }
         synchronized (this) {
             if (exceededMaximumUnacknowledgedStanzas) {
                 // OF-3434: The maximum was exceeded while detached. Closing under this lock keeps a stanza that LocalClientSession#pushPackets() delivers from going untracked.
@@ -948,26 +843,26 @@ public class StreamManager {
             assert connection != null; // While the client is resuming a session, the connection on which the session is resumed can't be null.
             // Re-deliver unacknowledged stanzas from broken stream (XEP-0198)
             if(isEnabled()) {
-                for (StreamManager.UnackedPacket unacked : unacknowledgedOutboundStanzas) {
+                for (final UnacknowledgedStanzaQueue.Entry unacked : unacknowledgedOutboundStanzas.getEntries()) {
                     try {
-                        if (unacked.packet instanceof Message) {
-                            Message m = (Message) unacked.packet;
+                        if (unacked.getPacket() instanceof Message) {
+                            Message m = (Message) unacked.getPacket();
                             if (m.getExtension("delay", "urn:xmpp:delay") == null) {
                                 Element delayInformation = m.addChildElement("delay", "urn:xmpp:delay");
-                                delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.timestamp));
+                                delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.getTimestamp()));
                                 delayInformation.addAttribute("from", serverAddress.toBareJID());
                             }
                             connection.deliver(m);
-                        } else if (unacked.packet instanceof Presence) {
-                            Presence p = (Presence) unacked.packet;
+                        } else if (unacked.getPacket() instanceof Presence) {
+                            Presence p = (Presence) unacked.getPacket();
                             if (p.getExtension("delay", "urn:xmpp:delay") == null) {
                                 Element delayInformation = p.addChildElement("delay", "urn:xmpp:delay");
-                                delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.timestamp));
+                                delayInformation.addAttribute("stamp", XMPPDateTimeFormat.format(unacked.getTimestamp()));
                                 delayInformation.addAttribute("from", serverAddress.toBareJID());
                             }
                             connection.deliver(p);
                         } else {
-                            connection.deliver(unacked.packet);
+                            connection.deliver(unacked.getPacket());
                         }
                     } catch (UnauthorizedException e) {
                         Log.warn("Caught unauthorized exception, which seems worrying: ", e);

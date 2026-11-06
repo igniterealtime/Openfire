@@ -78,7 +78,7 @@ public class StreamManagerTest
 
     // OF-3433: Names of private fields, used to reach the roll-over at 2^32 without sending that many stanzas.
     private static final String HANDLED_COUNTER_FIELD = "handledInboundStanzas";
-    private static final String ACKNOWLEDGED_COUNTER_FIELD = "acknowledgedOutboundStanzas";
+    private static final String ACKNOWLEDGED_COUNTER_FIELD = "unacknowledgedOutboundStanzas.acknowledged";
 
     private SessionManager sessionManager;
 
@@ -117,7 +117,7 @@ public class StreamManagerTest
         final Long lastUnackedX = null;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -132,7 +132,7 @@ public class StreamManagerTest
         final Long lastUnackedX = 1L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -147,7 +147,7 @@ public class StreamManagerTest
         final Long lastUnackedX = 12L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -162,7 +162,7 @@ public class StreamManagerTest
         final Long lastUnackedX = null;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertFalse(result);
@@ -177,7 +177,7 @@ public class StreamManagerTest
         final Long lastUnackedX = 2L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertFalse(result);
@@ -193,7 +193,7 @@ public class StreamManagerTest
         final Long lastUnackedX = null;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -209,7 +209,7 @@ public class StreamManagerTest
         final Long lastUnackedX = null;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertFalse(result);
@@ -226,7 +226,7 @@ public class StreamManagerTest
         final Long lastUnackedX = MAX;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -242,7 +242,7 @@ public class StreamManagerTest
         final Long lastUnackedX = null;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -258,7 +258,7 @@ public class StreamManagerTest
         final Long lastUnackedX = MAX;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -273,7 +273,7 @@ public class StreamManagerTest
         final Long lastUnackedX = 0L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -289,7 +289,7 @@ public class StreamManagerTest
         final Long lastUnackedX = 4L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -305,7 +305,7 @@ public class StreamManagerTest
         final Long lastUnackedX = null;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertFalse(result);
@@ -321,7 +321,7 @@ public class StreamManagerTest
         final Long lastUnackedX = 0L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -337,7 +337,7 @@ public class StreamManagerTest
         final Long lastUnackedX = 3L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -352,7 +352,7 @@ public class StreamManagerTest
         final Long lastUnackedX = null;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertFalse(result);
@@ -368,7 +368,7 @@ public class StreamManagerTest
         final Long lastUnackedX = 4L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -384,7 +384,7 @@ public class StreamManagerTest
         final Long lastUnackedX = 4L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertTrue(result);
@@ -400,7 +400,7 @@ public class StreamManagerTest
         final Long lastUnackedX = 4L;
 
         // Execute system under test.
-        final boolean result = StreamManager.validateOutboundAcknowledgement(h, oldH, lastUnackedX);
+        final boolean result = UnacknowledgedStanzaQueue.isValidAcknowledgement(h, oldH, lastUnackedX);
 
         // Verify results.
         assertFalse(result);
@@ -2262,12 +2262,28 @@ public class StreamManagerTest
     }
 
     /**
-     * Sets a private counter of a stream manager, as sending 2^32 stanzas is not feasible in a unit test.
+     * Sets a private counter of a stream manager, as sending 2^32 stanzas is not feasible in a unit test. The name of the
+     * field can be a path of field names separated by dots, to reach a counter in an object that the stream manager holds.
      */
     private static void setCounter(final StreamManager sm, final String fieldName, final long value) throws Exception
     {
-        final Field field = StreamManager.class.getDeclaredField(fieldName);
+        Object holder = sm;
+        final String[] names = fieldName.split("\\.");
+        for (int i = 0; i < names.length - 1; i++) {
+            holder = field(holder, names[i]).get(holder);
+        }
+        final Field counter = field(holder, names[names.length - 1]);
+        if (counter.getType() == long.class) {
+            counter.setLong(holder, value);
+        } else {
+            ((AtomicLong) counter.get(holder)).set(value);
+        }
+    }
+
+    private static Field field(final Object holder, final String name) throws NoSuchFieldException
+    {
+        final Field field = holder.getClass().getDeclaredField(name);
         field.setAccessible(true);
-        ((AtomicLong) field.get(sm)).set(value);
+        return field;
     }
 }

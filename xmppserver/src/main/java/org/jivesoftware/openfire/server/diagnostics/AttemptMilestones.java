@@ -785,12 +785,14 @@ public final class AttemptMilestones
 
         /**
          * @param presentedNames the names in the certificate, of which the first {@link #MAX_LISTED_VALUES} are kept,
-         *                       with the number of the rest: the remote decides how many names its certificate holds.
+         *                       with the number of the rest: the remote decides how many names its certificate holds,
+         *                       and what they say, so each is kept as {@link #remoteText(String)}.
          * @return the milestone.
          */
         public static Certificate nameMismatch(final List<String> presentedNames)
         {
-            return new Certificate(Outcome.NAME_MISMATCH, CappedList.of(presentedNames), null);
+            final CappedList<String> kept = CappedList.of(presentedNames);
+            return new Certificate(Outcome.NAME_MISMATCH, new CappedList<>(kept.values().stream().map(AttemptMilestones::remoteText).toList(), kept.leftOut()), null);
         }
     }
 

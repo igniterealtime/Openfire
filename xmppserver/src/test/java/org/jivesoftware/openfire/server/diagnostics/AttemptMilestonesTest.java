@@ -87,6 +87,20 @@ public class AttemptMilestonesTest
     }
 
     @Test
+    public void testNameMismatchKeepsTheNamesAsRemoteText()
+    {
+        // Setup test fixture: names in the certificate, which the remote controls, can hold line breaks and be long.
+        final String forgedLine = "other.example.org\n2026-11-06 12:00:00 INFO  Connection succeeded";
+        final String longName = "x".repeat(AttemptMilestones.MAX_REMOTE_TEXT_LENGTH + 50);
+
+        // Execute system under test.
+        final Certificate certificate = Certificate.nameMismatch(List.of(forgedLine, longName));
+
+        // Verify results.
+        assertEquals(List.of(AttemptMilestones.remoteText(forgedLine), AttemptMilestones.remoteText(longName)), certificate.presentedNames().values(), "each name must be kept as other text from the remote is, so that it cannot start what looks like a new line of the diagnostic log, nor be kept at any length");
+    }
+
+    @Test
     public void testAllFailedClassifiesTheFailures()
     {
         // Setup test fixture.

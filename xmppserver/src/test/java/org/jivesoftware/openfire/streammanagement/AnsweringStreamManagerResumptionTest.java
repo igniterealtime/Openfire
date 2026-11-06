@@ -62,7 +62,7 @@ import static org.mockito.Mockito.*;
  *
  * @author Guus der Kinderen, guus@goodbytes.nl
  */
-public class StreamManagerResumptionTest
+public class AnsweringStreamManagerResumptionTest
 {
     private static final JID FULL_JID = new JID("johndoe", Fixtures.XMPP_DOMAIN, "test-resource", true);
     private static final JID OTHER_ENTITY = new JID("janedoe", Fixtures.XMPP_DOMAIN, "other-resource", true);

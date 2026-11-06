@@ -12,7 +12,7 @@ session_status:
   session_4_extract_unacked_queue: completed (2026-11-04)
   session_5_isolate_client_resumption: completed (2026-11-04)
   session_5b_separate_negotiation: completed (2026-11-06)
-  session_5c_reorganise_tests: not-started
+  session_5c_reorganise_tests: completed (2026-11-06)
   session_6_server_settings: replay after session 5b (first completed 2026-11-06)
   session_7_advertise_incoming: rework after session 5b (first completed 2026-11-06)
   session_8_incoming_ack_tests: replay after session 5b (first completed 2026-11-06)
@@ -540,8 +540,6 @@ When you're done, set this session's entry in the plan's session_status frontmat
 
 ### Session 5c: Arrange the tests by the class they test
 
-**Status: draft for review, 2026-11-06.** Not implemented.
-
 Session 5b moves the answering end of Stream Management into its own class, but leaves the tests where they were, so that a test diff with only changed references shows that the move kept behaviour. After it, `StreamManagerTest` mixes tests of what both ends share with tests of the answering end, and all of `StreamManagerResumptionTest` tests the answering end, including its tests of `onClose`, which is implemented per end (decision 9). Someone who changes `AnsweringStreamManager` does not find its tests by name. The tests of the validation of acknowledgements also still carry the client/server naming that session 3 removed from the code, as the tests had to stay unchanged then.
 
 **Goal:** Arrange the tests of Stream Management by the class they test, and name them after direction, without changing what they test (decision 9).
@@ -560,6 +558,8 @@ Session 5b moves the answering end of Stream Management into its own class, but 
 5. Do not change the setup, the steps or the assertions of any test, other than what the move requires (such as the class under test in a helper). Every test that exists before this session exists after it.
 
 **Exit:** No test of `StreamManagerTest` or `StreamManagerDetachedSessionTest` tests code that is only in `AnsweringStreamManager`; no test of `StreamManagerTest` needs a resumption or a detached session that is ended; no test name uses client/server for direction; the number of tests is the same as before; all tests pass.
+
+**Outcome:** The fixture and the helpers of `StreamManagerTest` moved to a package-private `AbstractStreamManagerTest`, which the three test classes extend, so that the tests themselves moved unchanged. The tests named `testValidateClientAcknowledgement_clientAcks…` are named `testValidateOutboundAcknowledgement_peerAcks…`.
 
 **Notes:** `git blame` does not follow tests that move between files by default; `git blame -C` does. The tests of what both ends share need a concrete subclass to run against, and use `AnsweringStreamManager`. Once session 9 adds `RequestingStreamManager`, session 11 runs `StreamManagerTest` against both subclasses, and session 22 does the same for `StreamManagerDetachedSessionTest`, which shows that what is shared behaves the same at both ends.
 

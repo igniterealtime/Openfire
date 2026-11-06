@@ -75,6 +75,17 @@ public abstract class StreamManager {
         .setDynamic(true)
         .build();
 
+    /**
+     * Whether Stream Management is used on connections with other servers: offered to servers that connect to
+     * Openfire, and enabled on connections that Openfire opens to other servers. This is separate from
+     * {@link #ACTIVE}, which applies to clients.
+     */
+    public static SystemProperty<Boolean> SERVER_ACTIVE = SystemProperty.Builder.ofType( Boolean.class )
+        .setKey("stream.management.server.active")
+        .setDefaultValue(false)
+        .setDynamic(true)
+        .build();
+
     final Logger Log;
 
     /**

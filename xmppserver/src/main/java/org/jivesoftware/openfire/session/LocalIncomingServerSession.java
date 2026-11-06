@@ -27,6 +27,7 @@ import org.jivesoftware.openfire.nio.XMLLightweightParser;
 import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.server.ServerDialbackErrorException;
 import org.jivesoftware.openfire.server.ServerDialbackKeyInvalidException;
+import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.StreamErrorException;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
@@ -467,6 +468,12 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
             final Element dialback = DocumentHelper.createElement(QName.get("dialback", "urn:xmpp:features:dialback"));
             dialback.addElement("errors");
             result.add(dialback);
+        }
+
+        // OF-2425: Also offered before authentication, as dialback authenticates without restarting the stream.
+        if (StreamManager.SERVER_ACTIVE.getValue()) {
+            result.add(DocumentHelper.createElement(QName.get("sm", StreamManager.NAMESPACE_V2)));
+            result.add(DocumentHelper.createElement(QName.get("sm", StreamManager.NAMESPACE_V3)));
         }
 
         if (!ConnectionSettings.Server.STREAM_LIMITS_ADVERTISEMENT_DISABLED.getValue()) {

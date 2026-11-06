@@ -31,6 +31,8 @@ import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.spi.ConnectionListener;
 import org.jivesoftware.openfire.spi.ConnectionType;
+import org.jivesoftware.openfire.streammanagement.RequestingStreamManager;
+import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
 import org.slf4j.Logger;
@@ -48,6 +50,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -65,11 +68,11 @@ import java.util.stream.Collectors;
  * to the remote server. The remote server will reject and close the connection if a
  * non-authenticated domain tries to send a packet through this connection.<p>
  *
- * Once the connection has been established with the remote server and at least a domain has been
- * authenticated then a new route will be added to the routing table for this connection. For
- * optimization reasons the same outgoing connection will be used even if the remote server has
- * several hostnames. However, different routes will be created in the routing table for each
- * hostname of the remote server.
+ * Once the connection has been established with the remote server, at least a domain has been
+ * authenticated, and negotiation of Stream Management has finished, then a new route will be added
+ * to the routing table for this connection. For optimization reasons the same outgoing connection
+ * will be used even if the remote server has several hostnames. However, different routes will be
+ * created in the routing table for each hostname of the remote server.
  *
  * @author Gaston Dombiak
  */
@@ -87,6 +90,18 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         .setDefaultValue(Duration.ofSeconds(10))
         .setMinValue(Duration.ZERO)
         .setChronoUnit(ChronoUnit.SECONDS)
+        .setDynamic(true)
+        .build();
+
+    /**
+     * Maximum time to wait, after authentication of a new outgoing server session, for the remote server to answer a
+     * request to enable Stream Management. The session is not used before it answers or this time has passed.
+     */
+    public static final SystemProperty<Duration> STREAM_MANAGEMENT_NEGOTIATION_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.server.session.stream-management-negotiation-timeout")
+        .setDefaultValue(Duration.ofSeconds(5))
+        .setMinValue(Duration.ZERO)
+        .setChronoUnit(ChronoUnit.MILLIS)
         .setDynamic(true)
         .build();
 
@@ -336,7 +351,12 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         try {
             // Wait for the future to give us a session...
             // Set a read timeout so that we don't keep waiting forever
-            return (LocalOutgoingServerSession) sessionInitialiser.init(listener).get(INITIALISE_TIMEOUT_SECONDS.getValue().getSeconds(), TimeUnit.SECONDS);
+            final LocalOutgoingServerSession session = (LocalOutgoingServerSession) sessionInitialiser.init(listener).get(INITIALISE_TIMEOUT_SECONDS.getValue().getSeconds(), TimeUnit.SECONDS);
+            if (session != null && !awaitStreamManagementNegotiation(session, log, diagnosticLog)) {
+                sessionInitialiser.stop();
+                return null;
+            }
+            return session;
         } catch (NetworkEntityUnreachableException e) {
             Log.warn("Cannot connect to XMPP domain '{}' (from '{}'): Unable to create a socket connection to a host that associated " +
                 "to the domain. This is typically caused by an outage (the remote server may be turned off) or a network configuration " +
@@ -357,6 +377,54 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         }
 
         return null;
+    }
+
+    /**
+     * Waits until negotiation of Stream Management on a new, authenticated session has finished, so that the session is
+     * not used before then: until the remote server enabled or refused Stream Management, or Openfire decided not to ask
+     * for it, for example because the remote server does not offer it. The wait ends early when the connection closes,
+     * and ends after {@link #STREAM_MANAGEMENT_NEGOTIATION_TIMEOUT} otherwise.
+     *
+     * When Stream Management is disabled for servers, and has not been requested on the session, this does not wait.
+     *
+     * @param session       the new session.
+     * @param log           the logger to log the outcome to.
+     * @param diagnosticLog mutable list to which human-readable, level-prefixed diagnostic entries are appended.
+     * @return false if the connection closed before negotiation finished, otherwise true.
+     * @throws InterruptedException if the thread is interrupted while waiting.
+     */
+    private static boolean awaitStreamManagementNegotiation(@Nonnull final LocalOutgoingServerSession session, @Nonnull final Logger log, @Nonnull final List<String> diagnosticLog) throws InterruptedException
+    {
+        final RequestingStreamManager streamManager = session.getStreamManager();
+        final CompletableFuture<RequestingStreamManager.EnableRequestStatus> outcome = streamManager.getNegotiationOutcome();
+        // OF-2425: after SASL EXTERNAL, the features that tell whether Stream Management is offered may not have arrived yet. Without the setting, there is no need to know.
+        if (!outcome.isDone() && !StreamManager.SERVER_ACTIVE.getValue() && streamManager.getEnableRequestStatus() == RequestingStreamManager.EnableRequestStatus.NOT_SENT) {
+            log.trace("Not waiting for negotiation of Stream Management on session {}, as it is disabled for servers and was not requested.", session);
+            return true;
+        }
+
+        final Duration timeout = STREAM_MANAGEMENT_NEGOTIATION_TIMEOUT.getValue();
+        final CompletableFuture<Void> closed = session.getConnection().getCloseFuture().toCompletableFuture();
+        try {
+            CompletableFuture.anyOf(outcome, closed).get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            log.debug("Negotiation of Stream Management did not finish within {} (request status: {}). Using session {} without waiting further.", timeout, streamManager.getEnableRequestStatus(), session);
+            diagnosticLog.add("DEBUG: " + fmt("Negotiation of Stream Management did not finish within {} (request status: {}). Using the session without waiting further.", timeout, streamManager.getEnableRequestStatus()));
+            return true;
+        } catch (ExecutionException e) {
+            // Only the close future can complete exceptionally. That also means that the connection closed.
+            log.trace("The close future of session {} completed exceptionally.", session, e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw e;
+        }
+
+        if (!outcome.isDone()) {
+            log.debug("The connection of session {} closed before negotiation of Stream Management finished (request status: {}). The session is not used.", session, streamManager.getEnableRequestStatus());
+            diagnosticLog.add("DEBUG: " + fmt("The connection closed before negotiation of Stream Management finished (request status: {}). The session is not used.", streamManager.getEnableRequestStatus()));
+            return false;
+        }
+        return true;
     }
 
     private static boolean configDoesNotRequireTls(ConnectionConfiguration listenerConfiguration) {
@@ -508,6 +576,17 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 Log.error("Error returning error to sender. Original packet: {}", packet, e);
             }
         });
+    }
+
+    /**
+     * Get XEP-0198 Stream manager for session. On this type of session, Openfire asks the peer for Stream Management.
+     *
+     * @return The StreamManager for the session.
+     */
+    @Override
+    public RequestingStreamManager getStreamManager() {
+        // OF-2425: StreamManager#forSession creates a RequestingStreamManager for this type of session.
+        return (RequestingStreamManager) super.getStreamManager();
     }
 
     @Override

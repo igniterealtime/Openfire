@@ -264,6 +264,8 @@ public class ServerDialback {
                     session.setAuthenticationMethod(ServerSession.AuthenticationMethod.DIALBACK);
                     // Set the remote domain as the address of the session.
                     session.setAddress(new JID(null, domainPair.getRemote(), null));
+                    // OF-2425: this stream has no features, so Stream Management cannot be offered on it, and the session need not wait for its negotiation.
+                    session.getStreamManager().skipEnable();
                     log.debug( "Successfully created new outgoing session!" );
                     return session;
                 }

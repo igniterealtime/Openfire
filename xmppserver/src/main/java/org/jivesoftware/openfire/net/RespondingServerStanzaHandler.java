@@ -27,6 +27,7 @@ import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.ServerSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,6 +36,7 @@ import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.StreamError;
 
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
@@ -60,6 +62,13 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
      * when the remote server has restarted the stream, so that it is reported for the session of that stream (OF-3447).
      */
     private volatile boolean saslExternalSucceeded = false;
+
+    /**
+     * The namespace of the version of Stream Management that the remote server offered in the stream features that
+     * were received last, or null if it did not offer Stream Management.
+     */
+    @Nullable
+    private String offeredStreamManagementNamespace;
 
     /**
      * Creates a dedicated reader for a socket.
@@ -98,6 +107,43 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
     private static boolean isDialbackOffered(Element doc) {
         return doc.element("dialback") != null;
+    }
+
+    /**
+     * Returns the namespace of the version of Stream Management offered in stream features, preferring the most recent
+     * version.
+     *
+     * @param doc the stream features.
+     * @return the namespace of the offered version, or null if Stream Management is not offered.
+     */
+    @Nullable
+    private static String getOfferedStreamManagementNamespace(Element doc) {
+        if (doc.element(QName.get("sm", StreamManager.NAMESPACE_V3)) != null) {
+            return StreamManager.NAMESPACE_V3;
+        }
+        if (doc.element(QName.get("sm", StreamManager.NAMESPACE_V2)) != null) {
+            return StreamManager.NAMESPACE_V2;
+        }
+        return null;
+    }
+
+    /**
+     * Asks the remote server to enable Stream Management on the session, if Stream Management is enabled for servers
+     * and the remote server offered it in the stream features that were received last. Otherwise, records on the
+     * session that it is not asked, which finishes negotiation. This must only be invoked once the session is
+     * authenticated.
+     */
+    private void requestStreamManagementIfOffered() {
+        if (!(session instanceof LocalOutgoingServerSession outgoingSession)) {
+            LOG.debug("Not asking remote domain '{}' to enable Stream Management, as session {} is not an outgoing server session.", domainPair.getRemote(), session);
+            return;
+        }
+        if (!StreamManager.SERVER_ACTIVE.getValue() || offeredStreamManagementNamespace == null) {
+            LOG.debug("Not asking remote domain '{}' to enable Stream Management on session {}. Enabled for servers: {}, offered by the remote domain: {}", domainPair.getRemote(), session, StreamManager.SERVER_ACTIVE.getValue(), offeredStreamManagementNamespace);
+            outgoingSession.getStreamManager().skipEnable();
+            return;
+        }
+        outgoingSession.getStreamManager().requestEnable(offeredStreamManagementNamespace);
     }
 
 
@@ -219,9 +265,13 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
 
         // Handle features
         if ("features".equals(rootTagName)) {
+            // OF-2425: Dialback does not restart the stream, so the features before authentication tell whether Stream Management is offered.
+            offeredStreamManagementNamespace = getOfferedStreamManagementNamespace(doc);
 
             // Prevent falling back to dialback if we are already authenticated
             if (session.isAuthenticated()) {
+                // OF-2425: These features follow the stream restart after SASL authentication.
+                requestStreamManagementIfOffered();
                 return true;
             }
 
@@ -290,6 +340,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
                 if (session instanceof LocalOutgoingServerSession) {
                     ((LocalOutgoingServerSession) session).setAuthenticationMethod(ServerSession.AuthenticationMethod.DIALBACK);
                 }
+                requestStreamManagementIfOffered();
 
                 // Make sure to set 'authenticated' only after the internal state of 'session' itself is updated, to avoid race conditions.
                 reportSessionAuthenticated();

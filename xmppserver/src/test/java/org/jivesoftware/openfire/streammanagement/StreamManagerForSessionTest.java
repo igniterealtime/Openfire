@@ -17,6 +17,7 @@ package org.jivesoftware.openfire.streammanagement;
 
 import org.jivesoftware.openfire.http.HttpSession;
 import org.jivesoftware.openfire.session.*;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -35,11 +36,11 @@ import static org.mockito.Mockito.mock;
 public class StreamManagerForSessionTest
 {
     /**
-     * Verifies that every type of session gets a stream manager that answers requests of the peer, as Openfire does not
-     * ask for Stream Management on any of them.
+     * Verifies that every type of session other than a connection that Openfire opened to another server gets a stream
+     * manager that answers requests of the peer.
      */
     @ParameterizedTest
-    @ValueSource(classes = {LocalClientSession.class, HttpSession.class, LocalIncomingServerSession.class, LocalOutgoingServerSession.class, LocalComponentSession.class, LocalConnectionMultiplexerSession.class})
+    @ValueSource(classes = {LocalClientSession.class, HttpSession.class, LocalIncomingServerSession.class, LocalComponentSession.class, LocalConnectionMultiplexerSession.class})
     public void sessionGetsAnsweringStreamManager(final Class<? extends LocalSession> sessionType)
     {
         // Setup test fixture.
@@ -50,5 +51,22 @@ public class StreamManagerForSessionTest
 
         // Verify result.
         assertInstanceOf(AnsweringStreamManager.class, result, "A session of type " + sessionType.getSimpleName() + " must get a stream manager that answers requests of the peer.");
+    }
+
+    /**
+     * Verifies that a connection that Openfire opened to another server gets a stream manager that asks the peer for
+     * Stream Management.
+     */
+    @Test
+    public void outgoingServerSessionGetsRequestingStreamManager()
+    {
+        // Setup test fixture.
+        final LocalSession session = mock(LocalOutgoingServerSession.class);
+
+        // Execute system under test.
+        final StreamManager result = StreamManager.forSession(session);
+
+        // Verify result.
+        assertInstanceOf(RequestingStreamManager.class, result, "A connection that Openfire opened to another server must get a stream manager that asks the peer for Stream Management.");
     }
 }

@@ -44,8 +44,8 @@ import java.util.concurrent.atomic.AtomicLong;
  * outbound stanzas are those that Openfire sends to the peer.
  *
  * This class holds what both ends of a stream share. What the end that answers requests of the peer does is implemented
- * by {@link AnsweringStreamManager}. {@link #forSession(LocalSession)} creates the stream manager for a session, which
- * is an {@link AnsweringStreamManager} for every type of session.
+ * by {@link AnsweringStreamManager}, and what the end that asks for Stream Management does by
+ * {@link RequestingStreamManager}. {@link #forSession(LocalSession)} creates the stream manager for a session.
  *
  * @author jonnyheavey
  */
@@ -190,14 +190,18 @@ public abstract class StreamManager {
     }
 
     /**
-     * Creates the stream manager that matches the end of the stream that Openfire is on in a session: every session
-     * gets one that answers requests of the peer.
+     * Creates the stream manager that matches the end of the stream that Openfire is on in a session: on a connection
+     * that Openfire opened to another server, Openfire asks for Stream Management; on all other sessions, it answers
+     * requests of the peer.
      *
      * @param session The session (cannot be null).
      * @return the stream manager for the session (never null).
      */
     @Nonnull
     public static StreamManager forSession(@Nonnull final LocalSession session) {
+        if (session instanceof LocalOutgoingServerSession) {
+            return new RequestingStreamManager(session);
+        }
         return new AnsweringStreamManager(session);
     }
 

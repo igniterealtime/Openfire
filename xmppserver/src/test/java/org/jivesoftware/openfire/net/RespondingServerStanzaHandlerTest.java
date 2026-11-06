@@ -21,6 +21,7 @@ import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
@@ -85,6 +86,8 @@ public class RespondingServerStanzaHandlerTest
 
     private CompletableFuture<Void> closeFuture;
 
+    private AtomicReference<LocalSession> sessionBoundOnClose;
+
     private RespondingServerStanzaHandler handler;
 
     private CompletableFuture<LocalSession> authenticatedSession;
@@ -121,6 +124,7 @@ public class RespondingServerStanzaHandlerTest
     @AfterEach
     public void tearDown()
     {
+        JiveGlobals.deleteProperty(ConnectionSettings.Server.OUTGOING_ACCEPT_REUSED_STREAM_ID.getKey());
         XMPPServer.setInstance(null);
     }
 
@@ -410,6 +414,80 @@ public class RespondingServerStanzaHandlerTest
     }
 
     /**
+     * Asserts that, by default, a stream that the remote server restarts after TLS negotiation is refused when it
+     * reuses the stream ID of the previous stream, and that the failure to initiate a session is reported.
+     */
+    @Test
+    public void testRestartedStreamReusingIdAfterTlsIsRefused() throws Exception
+    {
+        // Setup test fixture.
+        handler.process(streamHeader("stream-1"), reader);
+        handler.process(FEATURES_WITH_STARTTLS, reader);
+        handler.process(TLS_PROCEED, reader);
+        final LocalSession previousSession = handler.getSession();
+
+        // Execute system under test.
+        handler.process(streamHeader("stream-1"), reader);
+
+        // Verify result.
+        verify(connection, description("The connection must be closed with an 'invalid-xml' stream error.")).close(argThat((StreamError error) -> error != null && error.getCondition() == StreamError.Condition.invalid_xml));
+        assertSame(previousSession, sessionBoundOnClose.get(), "The connection must be bound to the session of the previous stream when it is closed, so that the stream error is sent.");
+        assertFalse(authenticatedSession.isDone(), "Authentication must not be reported for a restarted stream that was refused.");
+        assertTrue(handler.haveAttemptedAllAuthenticationMethods().isDone(), "The failure to initiate a session must be reported when the restarted stream is refused.");
+        assertNull(handler.getSession(), "No session must be available when session initiation failed.");
+    }
+
+    /**
+     * Asserts that, by default, a stream that the remote server restarts after SASL success is refused when it reuses
+     * the stream ID of the previous stream, and that the failure to initiate a session is reported.
+     */
+    @Test
+    public void testRestartedStreamReusingIdAfterSaslIsRefused() throws Exception
+    {
+        // Setup test fixture.
+        handler.process(streamHeader("stream-1"), reader);
+        handler.process(FEATURES_WITH_SASL_EXTERNAL, reader);
+        handler.process(SASL_SUCCESS, reader);
+        final LocalSession previousSession = handler.getSession();
+
+        // Execute system under test.
+        handler.process(streamHeader("stream-1"), reader);
+
+        // Verify result.
+        verify(connection, description("The connection must be closed with an 'invalid-xml' stream error.")).close(argThat((StreamError error) -> error != null && error.getCondition() == StreamError.Condition.invalid_xml));
+        assertSame(previousSession, sessionBoundOnClose.get(), "The connection must be bound to the session of the previous stream when it is closed, so that the stream error is sent.");
+        assertFalse(authenticatedSession.isDone(), "Authentication must not be reported for a restarted stream that was refused.");
+        assertTrue(handler.haveAttemptedAllAuthenticationMethods().isDone(), "The failure to initiate a session must be reported when the restarted stream is refused.");
+        assertNull(handler.getSession(), "No session must be available when session initiation failed.");
+    }
+
+    /**
+     * Asserts that, when configured to accept it, a stream that the remote server restarts after SASL success while
+     * reusing the stream ID of the previous stream is accepted, and that authentication is reported for the session of
+     * the previous stream, which continues.
+     */
+    @Test
+    public void testRestartedStreamReusingIdAfterSaslIsAcceptedWhenConfigured() throws Exception
+    {
+        // Setup test fixture.
+        ConnectionSettings.Server.OUTGOING_ACCEPT_REUSED_STREAM_ID.setValue(true);
+        handler.process(streamHeader("stream-1"), reader);
+        handler.process(FEATURES_WITH_SASL_EXTERNAL, reader);
+        handler.process(SASL_SUCCESS, reader);
+        final LocalSession previousSession = handler.getSession();
+
+        // Execute system under test.
+        handler.process(streamHeader("stream-1"), reader);
+
+        // Verify result.
+        verify(connection, never().description("The connection must not be closed when a reused stream ID is accepted by configuration.")).close(nullable(StreamError.class));
+        assertTrue(authenticatedSession.isDone(), "Authentication must be reported once the remote server has restarted the stream after SASL success.");
+        final LocalSession result = authenticatedSession.join();
+        assertSame(previousSession, result, "As the stream ID was reused, the session of the previous stream must continue and be reported.");
+        assertEquals(ServerSession.AuthenticationMethod.SASL_EXTERNAL, ((LocalOutgoingServerSession) result).getAuthenticationMethod(), "The session must be authenticated with SASL EXTERNAL.");
+    }
+
+    /**
      * Returns a stream header as sent by the remote server.
      *
      * @param streamId the stream ID, or null to send a header without one.
@@ -424,8 +502,10 @@ public class RespondingServerStanzaHandlerTest
     }
 
     /**
-     * Returns a connection that keeps the namespaces that are set on it, and that completes its close future when it
-     * is closed, as a real connection does.
+     * Returns a connection that keeps the namespaces that are set on it, that keeps the session that it is bound to,
+     * and that completes its close future when it is closed, as a real connection does. The session that the
+     * connection is bound to when it is closed with a stream error is recorded in {@link #sessionBoundOnClose}, as a
+     * real connection sends the stream error only when it is bound to a session.
      *
      * @return a connection.
      */
@@ -441,9 +521,14 @@ public class RespondingServerStanzaHandlerTest
         doAnswer(invocation -> { namespaces.set(new HashSet<>(invocation.getArgument(0))); return null; }).when(result).setAdditionalNamespaces(any());
         doAnswer(invocation -> namespaces.get()).when(result).getAdditionalNamespaces();
 
+        final AtomicReference<LocalSession> boundSession = new AtomicReference<>();
+        doAnswer(invocation -> { boundSession.set(invocation.getArgument(0)); return null; }).when(result).init(any());
+        doAnswer(invocation -> { boundSession.set(invocation.getArgument(0)); return null; }).when(result).reinit(any());
+
+        sessionBoundOnClose = new AtomicReference<>();
         closeFuture = new CompletableFuture<>();
         doReturn(closeFuture).when(result).getCloseFuture();
-        doAnswer(invocation -> closeFuture.complete(null)).when(result).close(nullable(StreamError.class));
+        doAnswer(invocation -> { sessionBoundOnClose.set(boundSession.get()); return closeFuture.complete(null); }).when(result).close(nullable(StreamError.class));
         doAnswer(invocation -> closeFuture.complete(null)).when(result).close();
         return result;
     }

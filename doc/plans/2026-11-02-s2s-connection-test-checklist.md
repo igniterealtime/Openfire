@@ -107,11 +107,11 @@ Relaxed certificate settings (accepting self-signed certificates, not checking v
 
 ## Build and test
 
-Inside a git worktree, Maven needs `-Dmaven.gitcommitid.skip=true`.
+Inside a git worktree, Maven needs `-Dmaven.gitcommitid.skip=true`. Both commands build `i18n` with `xmppserver`, so that the tests read the current messages rather than an installed copy.
 
 ```
-./mvnw -pl xmppserver test -Dmaven.gitcommitid.skip=true -Dtest='<TestClass>'      # focused tests
-./mvnw -pl xmppserver verify -Dmaven.gitcommitid.skip=true                          # all xmppserver tests
+./mvnw -pl i18n,xmppserver test -Dmaven.gitcommitid.skip=true -Dtest='<TestClass>' -Dsurefire.failIfNoSpecifiedTests=false   # focused tests
+./mvnw -pl i18n,xmppserver verify -Dmaven.gitcommitid.skip=true                                                              # all xmppserver tests
 ```
 
 Manual testing uses the `federation` environment of openfire-docker-compose. Build the image from a `git archive` export of the commit (a worktree's `.git` file breaks the image build), tag it `openfire:s2s-checklist`, and start it with `federation/start.sh -n s2s-checklist`. The environment's certificates must be current for certificate-based authentication to succeed. It enables trace logging by default; turn it off (`log.trace.enabled=false`) to see what a default installation shows.

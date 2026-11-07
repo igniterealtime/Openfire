@@ -107,14 +107,23 @@ public class Bind2Request {
     /**
      * Process feature request elements using registered handlers.
      *
+     * Each inline feature (identified by its namespace) is processed at most once: only the first element in a
+     * namespace is offered to a handler, any further elements in that namespace are ignored.
+     *
      * @return Element for <bound/>
      */
     public Element processFeatureRequests(LocalClientSession clientSession, Element successElement) {
         Element bound = successElement.addElement(new QName("bound", new Namespace("", NAMESPACE)));
         final Set<String> succeeded = new LinkedHashSet<>();
+        final Set<String> processed = new HashSet<>();
 
         for (Element element : featureRequests) {
             String namespace = element.getNamespaceURI();
+            if (!processed.add(namespace)) {
+                // The peer must not control how often a handler is invoked (and how much it adds to the response and logs).
+                Log.debug("Ignoring repeated inline feature request for namespace: {} for session: {}", namespace, clientSession);
+                continue;
+            }
             Bind2InlineHandler handler = elementHandlers.get(namespace);
 
             if (handler != null && handler.isEnabled()) {

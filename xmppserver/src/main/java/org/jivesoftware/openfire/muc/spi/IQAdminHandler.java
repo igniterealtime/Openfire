@@ -180,6 +180,13 @@ public class IQAdminHandler {
                             && Affiliation.owner != senderAffiliation) {
                         throw new ForbiddenException();
                     }
+                    // In a semi-anonymous room the list (which exposes the real JID of each member) can only be
+                    // retrieved by admins and owners
+                    if (!room.canAnyoneDiscoverJID()
+                            && Affiliation.admin != senderAffiliation
+                            && Affiliation.owner != senderAffiliation) {
+                        throw new ForbiddenException();
+                    }
                     for (JID jid : room.getMembers()) {
                         if (GroupJID.isGroup(jid)) {
                             try {

@@ -315,6 +315,10 @@ public class PEPService implements PubSubService, Cacheable {
 
     @Override
     public void broadcast(Node node, Message message, Collection<JID> jids) {
+        // Do nothing if server is not enabled (nodes remain in use as storage, eg: for private data and vCard avatars).
+        if (!IQPEPHandler.ENABLED.getValue()) {
+            return;
+        }
         if ( Log.isTraceEnabled() ) {
             Log.trace( "Service '{}' is broadcasting a notification on node '{}' to a collection of JIDs: {}", this.getServiceID(), node.getUniqueIdentifier().getNodeId(), jids.stream().map(JID::toString).collect(Collectors.joining(", ")) );
         }
@@ -328,6 +332,10 @@ public class PEPService implements PubSubService, Cacheable {
 
     @Override
     public void sendNotification(Node node, Message orig, JID recipientJID) {
+        // Do nothing if server is not enabled (nodes remain in use as storage, eg: for private data and vCard avatars).
+        if (!IQPEPHandler.ENABLED.getValue()) {
+            return;
+        }
         Log.trace( "Recipient '{}' is an intended recipient of service '{}' sending a notification for node '{}': {}", recipientJID, this.getServiceID(), node.getUniqueIdentifier().getNodeId(), orig.toXML() );
 
         final boolean recipientIsOwner = serviceOwner.asBareJID().equals(recipientJID.asBareJID());

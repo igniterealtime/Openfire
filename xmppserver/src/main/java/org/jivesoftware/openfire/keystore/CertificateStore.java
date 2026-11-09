@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,17 @@ public abstract class CertificateStore
     protected final KeyStore store;
     protected final CertificateStoreConfiguration configuration;
 
+    /**
+     * Loads a store from its file, creating the file first if requested and it does not exist.
+     *
+     * When Openfire is configured not to modify its certificate stores ({@link CertificateStoreManager#READ_ONLY}), a
+     * missing file is not created: a {@link CertificateStoreReadOnlyException} is thrown instead.
+     *
+     * @param configuration the configuration of the store (cannot be null).
+     * @param createIfAbsent true to create the file when it does not exist.
+     * @throws CertificateStoreConfigException if the store could not be loaded or created
+     * @throws CertificateStoreReadOnlyException if the file would have to be created while the stores are read-only
+     */
     public CertificateStore( CertificateStoreConfiguration configuration, boolean createIfAbsent ) throws CertificateStoreConfigException
     {
         if (configuration == null)
@@ -76,6 +87,8 @@ public abstract class CertificateStore
 
             if ( createIfAbsent && !file.exists() )
             {
+                checkWritable();
+
                 try ( final FileOutputStream os = new FileOutputStream( file.getPath() ) )
                 {
                     store = KeyStore.getInstance( configuration.getType() );
@@ -119,10 +132,33 @@ public abstract class CertificateStore
     /**
      * Saves the current state of the store to disk. Useful when certificates have been added or removed from the
      * store.
+     *
+     * When Openfire is configured not to modify its certificate stores ({@link CertificateStoreManager#READ_ONLY}),
+     * nothing is saved: the store is reloaded from disk, discarding any change made in memory, and a
+     * {@link CertificateStoreReadOnlyException} is thrown. The methods of this class that change the store refuse before
+     * changing anything; this covers changes made directly to the {@link KeyStore} from {@link #getStore()}.
+     *
      * @throws CertificateStoreConfigException of the configuration could not be persisted
+     * @throws CertificateStoreReadOnlyException if the stores are read-only
      */
     public void persist() throws CertificateStoreConfigException
     {
+        if ( isReadOnly() )
+        {
+            final CertificateStoreReadOnlyException refusal = readOnlyRefusal();
+            try
+            {
+                reload(); // discard changes made in memory, so that memory matches the file.
+            }
+            catch ( CertificateStoreConfigException e )
+            {
+                // The store in memory may now be empty, so say so: the refusal alone would hide it.
+                Log.warn( "Unable to reload {} after refusing to persist it (the certificate stores are read-only).", configuration.getFile(), e );
+                refusal.addSuppressed( e );
+            }
+            throw refusal;
+        }
+
         try ( final FileOutputStream os = new FileOutputStream( configuration.getFile() ) )
         {
             store.store( os, configuration.getPassword() );
@@ -186,10 +222,12 @@ public abstract class CertificateStore
      * Deletes an entry (by entry) in this store. All information related to this entry will be removed, including
      * certificates and keys.
      *
-     * When the store does not contain an entry that matches the provided alias, this method does nothing.
+     * When the store does not contain an entry that matches the provided alias, this method does nothing, unless the
+     * stores are read-only, in which case it is refused like any other change.
      *
      * @param alias The alias for which to delete an entry (cannot be null or empty).
      * @throws CertificateStoreConfigException if the entry could not be deleted
+     * @throws CertificateStoreReadOnlyException if the stores are read-only
      */
     public void delete( String alias ) throws CertificateStoreConfigException
     {
@@ -198,6 +236,7 @@ public abstract class CertificateStore
         {
             throw new IllegalArgumentException( "Argument 'alias' cannot be null or an empty String." );
         }
+        checkWritable();
 
         try
         {
@@ -209,6 +248,10 @@ public abstract class CertificateStore
 
             store.deleteEntry( alias );
             persist();
+        }
+        catch ( CertificateStoreReadOnlyException e )
+        {
+            throw e; // persist() has already reloaded the store; report the refusal as such.
         }
         catch ( CertificateStoreConfigException | KeyStoreException e )
         {
@@ -226,5 +269,36 @@ public abstract class CertificateStore
     public CertificateStoreConfiguration getConfiguration()
     {
         return configuration;
+    }
+
+    /**
+     * Refuses a change to this store when Openfire is configured not to modify its certificate stores
+     * ({@link CertificateStoreManager#READ_ONLY}). Methods that change the store call this before changing anything, in
+     * memory or on disk. The setting is read on every call, so a change of the setting takes effect at once.
+     *
+     * @throws CertificateStoreReadOnlyException if the stores are read-only
+     */
+    protected final void checkWritable() throws CertificateStoreReadOnlyException
+    {
+        if ( isReadOnly() )
+        {
+            throw readOnlyRefusal();
+        }
+    }
+
+    /**
+     * Returns whether Openfire is configured not to modify its certificate stores
+     * ({@link CertificateStoreManager#READ_ONLY}). The setting is read on every call.
+     *
+     * @return true if the certificate stores are read-only
+     */
+    protected static boolean isReadOnly()
+    {
+        return CertificateStoreManager.READ_ONLY.getValue();
+    }
+
+    private CertificateStoreReadOnlyException readOnlyRefusal()
+    {
+        return new CertificateStoreReadOnlyException( "The store in '" + configuration.getFile() + "' is read-only: Openfire is configured not to modify the certificate stores it uses (" + CertificateStoreManager.READ_ONLY.getKey() + ")." );
     }
 }

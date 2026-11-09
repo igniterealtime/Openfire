@@ -157,6 +157,7 @@ public class IdentityStore extends CertificateStore
      * @param alias the certificate alias
      * @param pemCertificates a PEM representation of the certificate or certificate chain (cannot be null or empty).
      * @throws CertificateStoreConfigException if there was a problem installing the certificate
+     * @throws CertificateStoreReadOnlyException if the stores are read-only
      */
     public void installCSRReply( String alias, String pemCertificates ) throws CertificateStoreConfigException
     {
@@ -171,6 +172,9 @@ public class IdentityStore extends CertificateStore
         }
         alias = alias.trim();
         pemCertificates = pemCertificates.trim();
+
+        // This method does not persist the store, so this check is what keeps the store unchanged in memory.
+        checkWritable();
 
         try
         {
@@ -254,6 +258,7 @@ public class IdentityStore extends CertificateStore
      * @param passPhrase      optional pass phrase (must be present if the private key is encrypted).
      * @return The alias that was used (never null).
      * @throws CertificateStoreConfigException if there was a problem replacing the certificate
+     * @throws CertificateStoreReadOnlyException if the stores are read-only
      */
     public String replaceCertificate( String pemCertificates, String pemPrivateKey, String passPhrase ) throws CertificateStoreConfigException
     {
@@ -266,6 +271,7 @@ public class IdentityStore extends CertificateStore
             throw new IllegalArgumentException( "Argument 'pemPrivateKey' cannot be null or an empty String." );
         }
         pemCertificates = pemCertificates.trim();
+        checkWritable();
 
         try
         {
@@ -321,9 +327,11 @@ public class IdentityStore extends CertificateStore
      * @param passPhrase      optional pass phrase (must be present if the private key is encrypted).
      * @return The alias that was used (never null).
      * @throws CertificateStoreConfigException if there was a problem installing the certificate
+     * @throws CertificateStoreReadOnlyException if the stores are read-only
      */
     public String installCertificate( String pemCertificates, String pemPrivateKey, String passPhrase ) throws CertificateStoreConfigException
     {
+        checkWritable();
         final String alias = generateUniqueAlias();
 
         // Perform the installation using the generated alias.
@@ -343,6 +351,7 @@ public class IdentityStore extends CertificateStore
      * @param pemPrivateKey   a PEM representation of the private key (cannot be null or empty).
      * @param passPhrase      optional pass phrase (must be present if the private key is encrypted).
      * @throws CertificateStoreConfigException if there was a problem installing the certificate
+     * @throws CertificateStoreReadOnlyException if the stores are read-only
      */
     public void installCertificate( String alias, String pemCertificates, String pemPrivateKey, String passPhrase ) throws CertificateStoreConfigException
     {
@@ -361,6 +370,7 @@ public class IdentityStore extends CertificateStore
         }
         alias = alias.trim();
         pemCertificates = pemCertificates.trim();
+        checkWritable();
 
         // Check that there is a certificate for the specified alias
         try
@@ -523,9 +533,11 @@ public class IdentityStore extends CertificateStore
      * Populates the key store with a self-signed certificate for the domain of this XMPP service.
      *
      * @throws CertificateStoreConfigException if a self-signed certificate could not be created
+     * @throws CertificateStoreReadOnlyException if the stores are read-only
      */
     public synchronized void addSelfSignedDomainCertificate() throws CertificateStoreConfigException
     {
+        checkWritable();
         String algorithm = JiveGlobals.getProperty( "cert.algorithm", "RSA" );
 
         final int keySize;
@@ -578,6 +590,10 @@ public class IdentityStore extends CertificateStore
 
             // Persist the changes in the store to disk.
             persist();
+        }
+        catch ( CertificateStoreReadOnlyException ex )
+        {
+            throw ex; // persist() has already reloaded the store; report the refusal as such.
         }
         catch ( CertificateStoreConfigException | IOException | GeneralSecurityException ex )
         {

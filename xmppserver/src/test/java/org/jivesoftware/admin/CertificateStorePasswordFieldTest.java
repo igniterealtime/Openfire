@@ -22,6 +22,7 @@ import org.jivesoftware.openfire.keystore.TrustStore;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.File;
@@ -30,8 +31,10 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyStore;
+import java.security.UnrecoverableKeyException;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -152,6 +155,41 @@ public class CertificateStorePasswordFieldTest
         final CertificateStoreConfigException failure = openFailure( "JKS", dir.resolve( "missing" ).toFile(), "changeit", dir );
 
         assertFalse( CertificateStorePasswordField.isWrongPassword( failure ), "a missing store file must not be reported as a wrong password" );
+    }
+
+    @Test
+    public void testKeyPasswordMismatchIsNotReportedAsWrongPassword()
+    {
+        // IdentityStore wraps an UnrecoverableKeyException from its key manager directly, when a key's password differs
+        // from the store's password. The store password is right in that case, so it must keep its own message.
+        final Exception failure = new CertificateStoreConfigException( "Unable to initialize identity store", new UnrecoverableKeyException( "Cannot recover key" ) );
+
+        assertFalse( CertificateStorePasswordField.isWrongPassword( failure ), "a key whose password differs from the store's must not be reported as a wrong store password" );
+    }
+
+    @Test
+    public void testWrongEnteredPasswordIsClassifiedAsWrongPasswordEntered( @TempDir final Path dir ) throws Exception
+    {
+        final CertificateStoreConfigException failure = openFailure( "JKS", writeEmptyStore( dir, "JKS", "changeit" ), "wrong-password", dir );
+
+        assertEquals( CertificateStorePasswordField.SaveFailure.WRONG_PASSWORD_ENTERED, CertificateStorePasswordField.classifyFailure( "wrong-password", failure ), "a password the administrator entered that does not open the file must be reported as such" );
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    public void testCurrentPasswordThatDoesNotOpenFileIsClassifiedAsSuch( final String submitted, @TempDir final Path dir ) throws Exception
+    {
+        final CertificateStoreConfigException failure = openFailure( "JKS", writeEmptyStore( dir, "JKS", "changeit" ), "current-password", dir );
+
+        assertEquals( CertificateStorePasswordField.SaveFailure.CURRENT_PASSWORD_DOES_NOT_OPEN_FILE, CertificateStorePasswordField.classifyFailure( submitted, failure ), "when no password was entered, the failure must be blamed on the current password, not on one the administrator typed" );
+    }
+
+    @Test
+    public void testOtherFailureIsClassifiedAsOther( @TempDir final Path dir )
+    {
+        final CertificateStoreConfigException failure = openFailure( "JKS", dir.resolve( "missing" ).toFile(), "changeit", dir );
+
+        assertEquals( CertificateStorePasswordField.SaveFailure.OTHER, CertificateStorePasswordField.classifyFailure( "changeit", failure ), "a failure that is not a wrong password must keep the generic message, even when a password was entered" );
     }
 
     @Test

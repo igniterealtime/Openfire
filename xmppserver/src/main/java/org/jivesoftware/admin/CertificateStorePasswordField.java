@@ -16,6 +16,7 @@
 
 package org.jivesoftware.admin;
 
+import java.io.IOException;
 import java.security.UnrecoverableKeyException;
 import java.util.Objects;
 
@@ -41,8 +42,9 @@ public final class CertificateStorePasswordField
      * Indicates whether a certificate store has a password, without revealing anything else about it. The admin
      * console uses this (through the admin tag library) to choose between "Update password" and "Set password".
      *
-     * This is a Java method rather than an EL expression because the EL 'empty' operator treats only arrays of objects
-     * as empty when they have no elements, so an empty char array is not empty to it.
+     * This is a Java method rather than an EL expression because the 'empty' operator of the EL implementation that
+     * Openfire uses (Jasper) treats only arrays of objects as empty when they have no elements, so an empty char array
+     * is not empty to it.
      *
      * @param password the store's current password (can be null).
      * @return true when the password is not null and not empty.
@@ -57,8 +59,10 @@ public final class CertificateStorePasswordField
      * admin console can say so instead of showing the raw failure. Other failures, such as a missing or corrupt file,
      * are not reported as a wrong password.
      *
-     * The JKS and PKCS12 implementations report a wrong password as an IOException caused by an
-     * UnrecoverableKeyException, so this looks for that anywhere in the chain of causes.
+     * The JKS and PKCS12 implementations report a wrong password from KeyStore.load as an IOException caused by an
+     * UnrecoverableKeyException, so this looks for that pair anywhere in the chain of causes. An
+     * UnrecoverableKeyException on its own is not enough: IdentityStore also reports one, unwrapped, when the password
+     * of a key differs from the password of the store, and the store password is right in that case.
      *
      * @param failure the failure to load the store (can be null).
      * @return true when the failure was caused by a wrong password.
@@ -67,12 +71,57 @@ public final class CertificateStorePasswordField
     {
         for ( Throwable cause = failure; cause != null; cause = cause.getCause() )
         {
-            if ( cause instanceof UnrecoverableKeyException )
+            if ( cause instanceof IOException && cause.getCause() instanceof UnrecoverableKeyException )
             {
                 return true;
             }
         }
         return false;
+    }
+
+    /**
+     * The reasons the admin console distinguishes when saving a store's settings fails.
+     */
+    public enum SaveFailure
+    {
+        /**
+         * The password the administrator entered does not open the store file.
+         */
+        WRONG_PASSWORD_ENTERED,
+
+        /**
+         * No password was entered, and the store's current password does not open the file (typically after the
+         * store was moved to a file that has a different password).
+         */
+        CURRENT_PASSWORD_DOES_NOT_OPEN_FILE,
+
+        /**
+         * Any other failure, such as a missing or corrupt file.
+         */
+        OTHER
+    }
+
+    /**
+     * Determines why saving a store's settings failed, so that the admin console can say whether the password the
+     * administrator entered, or the store's current password, does not open the file.
+     *
+     * @param submitted the value of the store's password field as submitted by the browser (null when it was not
+     *                  submitted).
+     * @param failure the failure to replace the store (can be null).
+     * @return the reason for the failure (never null).
+     */
+    public static SaveFailure classifyFailure( final String submitted, final Throwable failure )
+    {
+        if ( !isWrongPassword( failure ) )
+        {
+            return SaveFailure.OTHER;
+        }
+        return isEntered( submitted ) ? SaveFailure.WRONG_PASSWORD_ENTERED : SaveFailure.CURRENT_PASSWORD_DOES_NOT_OPEN_FILE;
+    }
+
+    private static boolean isEntered( final String submitted )
+    {
+        return submitted != null && !submitted.isEmpty();
     }
 
     /**
@@ -86,7 +135,7 @@ public final class CertificateStorePasswordField
     public static char[] passwordToSave( final String submitted, final char[] current )
     {
         Objects.requireNonNull( current, "Argument 'current' cannot be null." );
-        if ( submitted != null && !submitted.isEmpty() )
+        if ( isEntered( submitted ) )
         {
             return submitted.toCharArray();
         }

@@ -22,6 +22,10 @@
     <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 
     <jsp:directive.attribute name="connectionType" required="true" type="org.jivesoftware.openfire.spi.ConnectionType"/>
+    <!-- The location to show in the File box instead of the current one, such as the one submitted in a save that failed. -->
+    <jsp:directive.attribute name="location" required="false" type="java.lang.String"/>
+
+    <c:set var="displayedLocation" value="${empty location ? webManager.XMPPServer.certificateStoreManager.getTrustStoreConfiguration(connectionType).file : location}"/>
 
     <!-- Store passwords are never sent to the browser: see storePasswordConfig.tagx. -->
     <c:choose>
@@ -37,7 +41,7 @@
                 <tbody>
                 <tr>
                     <td><label for="loc-trust-c2s"><fmt:message key="ssl.certificates.store-management.file_label"/>:</label></td>
-                    <td><input id="loc-trust-c2s" name="loc-trust-c2s" type="text" size="80" value="${fn:escapeXml(webManager.XMPPServer.certificateStoreManager.getTrustStoreConfiguration(connectionType).file)}"/></td>
+                    <td><input id="loc-trust-c2s" name="loc-trust-c2s" type="text" size="80" value="${fn:escapeXml(displayedLocation)}"/></td>
                 </tr>
                 <admin:storePasswordConfig fieldName="pwd-trust-c2s" fieldId="pwd-trust-c2s-${connectionType}" passwordSet="${admin:isStorePasswordSet(webManager.XMPPServer.certificateStoreManager.getTrustStoreConfiguration(connectionType).password)}"/>
                 <tr>
@@ -59,7 +63,7 @@
                 <tbody>
                 <tr>
                     <td><label for="loc-trust-s2s"><fmt:message key="ssl.certificates.store-management.file_label"/>:</label></td>
-                    <td><input id="loc-trust-s2s" name="loc-trust-s2s" type="text" size="80" value="${fn:escapeXml(webManager.XMPPServer.certificateStoreManager.getTrustStoreConfiguration(connectionType).file)}"/></td>
+                    <td><input id="loc-trust-s2s" name="loc-trust-s2s" type="text" size="80" value="${fn:escapeXml(displayedLocation)}"/></td>
                 </tr>
                 <admin:storePasswordConfig fieldName="pwd-trust-s2s" fieldId="pwd-trust-s2s-${connectionType}" passwordSet="${admin:isStorePasswordSet(webManager.XMPPServer.certificateStoreManager.getTrustStoreConfiguration(connectionType).password)}"/>
                 <tr>

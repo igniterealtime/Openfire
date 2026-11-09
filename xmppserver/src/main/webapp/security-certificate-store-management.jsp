@@ -129,48 +129,45 @@
         }
 
         if ( errors.isEmpty() ) {
+            // The identity store and the trust store are replaced independently, so that one failing does not stop the
+            // other from being saved. A store that fails to load leaves the manager unchanged for that store.
             for ( final ConnectionType connectionType : toUpdate )
             {
-                String storeBeingReplaced = null;
-                boolean passwordEntered = false;
+                final String locTrust;
+                final String pwdTrust;
+                if ( connectionType.isClientOriented() )
+                {
+                    locTrust = locTrustC2S;
+                    pwdTrust = pwdTrustC2S;
+                }
+                else
+                {
+                    locTrust = locTrustS2S;
+                    pwdTrust = pwdTrustS2S;
+                }
+
                 try
                 {
-                    final String locTrust;
-                    final String pwdTrust;
-                    if ( connectionType.isClientOriented() )
-                    {
-                        locTrust = locTrustC2S;
-                        pwdTrust = pwdTrustC2S;
-                    }
-                    else
-                    {
-                        locTrust = locTrustS2S;
-                        pwdTrust = pwdTrustS2S;
-                    }
-
                     final char[] keyPassword = CertificateStorePasswordField.passwordToSave( pwdKey, certificateStoreManager.getIdentityStoreConfiguration( connectionType ).getPassword() );
-                    final char[] trustPassword = CertificateStorePasswordField.passwordToSave( pwdTrust, certificateStoreManager.getTrustStoreConfiguration( connectionType ).getPassword() );
-
                     final File backupKey = new File( CertificateStoreManager.getIdentityStoreBackupDirectory( connectionType ) );
-                    final File backupTrust = new File( CertificateStoreManager.getTrustStoreBackupDirectory( connectionType ) );
-
                     final CertificateStoreConfiguration configKey = new CertificateStoreConfiguration( CertificateStoreManager.getIdentityStoreType(connectionType), new File( locKey ), keyPassword, backupKey );
-                    final CertificateStoreConfiguration configTrust = new CertificateStoreConfiguration( CertificateStoreManager.getTrustStoreType(connectionType), new File( locTrust ), trustPassword, backupTrust );
-                    storeBeingReplaced = locKey;
-                    passwordEntered = pwdKey != null && !pwdKey.isEmpty();
                     certificateStoreManager.replaceIdentityStore( connectionType, configKey, false );
-                    storeBeingReplaced = locTrust;
-                    passwordEntered = pwdTrust != null && !pwdTrust.isEmpty();
+                }
+                catch ( Exception ex )
+                {
+                    reportSaveFailure( locKey, pwdKey, ex, wrongPasswordFiles, currentPasswordFailedFiles, errors );
+                }
+
+                try
+                {
+                    final char[] trustPassword = CertificateStorePasswordField.passwordToSave( pwdTrust, certificateStoreManager.getTrustStoreConfiguration( connectionType ).getPassword() );
+                    final File backupTrust = new File( CertificateStoreManager.getTrustStoreBackupDirectory( connectionType ) );
+                    final CertificateStoreConfiguration configTrust = new CertificateStoreConfiguration( CertificateStoreManager.getTrustStoreType(connectionType), new File( locTrust ), trustPassword, backupTrust );
                     certificateStoreManager.replaceTrustStore( connectionType, configTrust, false );
                 }
                 catch ( Exception ex )
                 {
-                    // A store that fails to load leaves the manager unchanged, so its previous settings stay in use.
-                    if ( storeBeingReplaced != null && CertificateStorePasswordField.isWrongPassword( ex ) ) {
-                        ( passwordEntered ? wrongPasswordFiles : currentPasswordFailedFiles ).add( storeBeingReplaced );
-                    } else {
-                        errors.put( "update", ex.getMessage() );
-                    }
+                    reportSaveFailure( locTrust, pwdTrust, ex, wrongPasswordFiles, currentPasswordFailedFiles, errors );
                 }
             }
 
@@ -188,6 +185,33 @@
             // the configuration as it is now.
             showAll = showAll || certificateStoreManager.usesDistinctConfigurationForEachType();
             pageContext.setAttribute( "showAll", showAll );
+        }
+
+        // The save did not succeed, so show the locations the administrator submitted in the form they submitted,
+        // rather than the current configuration, so that they need not be typed again. Passwords are never echoed.
+        pageContext.setAttribute( "keepSubmitted", true );
+        pageContext.setAttribute( "submittedConnectionType", cType );
+        pageContext.setAttribute( "submittedLocKey", locKey );
+        pageContext.setAttribute( "submittedLocTrustS2S", locTrustS2S );
+        pageContext.setAttribute( "submittedLocTrustC2S", locTrustC2S );
+    }
+%>
+<%!
+    // Records why replacing a store failed, under the message that fits the reason (see
+    // CertificateStorePasswordField.classifyFailure).
+    private static void reportSaveFailure( final String location, final String submittedPassword, final Exception failure, final Set<String> wrongPasswordFiles, final Set<String> currentPasswordFailedFiles, final Map<String, String> errors )
+    {
+        switch ( CertificateStorePasswordField.classifyFailure( submittedPassword, failure ) )
+        {
+            case WRONG_PASSWORD_ENTERED:
+                wrongPasswordFiles.add( location );
+                break;
+            case CURRENT_PASSWORD_DOES_NOT_OPEN_FILE:
+                currentPasswordFailedFiles.add( location );
+                break;
+            default:
+                errors.put( "update", failure.getMessage() );
+                break;
         }
     }
 %>
@@ -292,11 +316,16 @@
                         <c:out value="${description}"/>
                     </p>
 
-                    <admin:identityStoreConfig connectionType="${connectionType}"/>
+                    <%-- After a failed save, show the submitted locations in the form that was submitted. When the
+                         combined form was submitted and the save left the types with different stores, every form shows
+                         them, as the save applied them to every type. --%>
+                    <c:set var="formSubmitted" value="${keepSubmitted and (submittedConnectionType eq 'all' or submittedConnectionType eq connectionType.name())}"/>
+
+                    <admin:identityStoreConfig connectionType="${connectionType}" location="${formSubmitted ? submittedLocKey : ''}"/>
 
                     <br/>
 
-                    <admin:trustStoreConfig connectionType="${connectionType}"/>
+                    <admin:trustStoreConfig connectionType="${connectionType}" location="${formSubmitted ? (connectionType.clientOriented ? submittedLocTrustC2S : submittedLocTrustS2S) : ''}"/>
 
                     <br/>
 
@@ -328,18 +357,21 @@
                     <c:out value="${description}"/>
                 </p>
 
+                <%-- After a failed save, show the submitted locations only when this form was the one submitted. --%>
+                <c:set var="formSubmitted" value="${keepSubmitted and submittedConnectionType eq 'all'}"/>
+
                 <c:set var="connectionType" value="SOCKET_S2S"/>
-                <admin:identityStoreConfig connectionType="${connectionType}"/>
+                <admin:identityStoreConfig connectionType="${connectionType}" location="${formSubmitted ? submittedLocKey : ''}"/>
 
                 <br/>
 
                 <c:set var="connectionType" value="SOCKET_S2S"/>
-                <admin:trustStoreConfig connectionType="${connectionType}"/>
+                <admin:trustStoreConfig connectionType="${connectionType}" location="${formSubmitted ? submittedLocTrustS2S : ''}"/>
 
                 <br/>
 
                 <c:set var="connectionType" value="SOCKET_C2S"/>
-                <admin:trustStoreConfig connectionType="${connectionType}"/>
+                <admin:trustStoreConfig connectionType="${connectionType}" location="${formSubmitted ? submittedLocTrustC2S : ''}"/>
 
                 <br/>
 
@@ -353,8 +385,8 @@
 
 <script>
     // Each store's new-password field starts hidden and disabled, so it is not submitted and the current password is
-    // kept. "Update password" reveals and enables it; "Cancel" clears, disables and hides it again. Elements are found
-    // per table cell rather than by id, because the per-connection-type view repeats the same ids in every form.
+    // kept. "Update password" reveals and enables it; "Cancel" clears, disables and hides it again. Each password cell is
+    // handled on its own, finding its elements within the cell, so that every store's links act on that store's field.
     document.querySelectorAll( 'td.store-password' ).forEach( function ( cell ) {
         const status = cell.querySelector( '.store-password-status' );
         const edit = cell.querySelector( '.store-password-edit' );
@@ -367,6 +399,7 @@
             field.disabled = !editing;
             status.hidden = editing;
             edit.hidden = !editing;
+            change.setAttribute( 'aria-expanded', editing ? 'true' : 'false' );
             ( editing ? field : change ).focus();
         };
 

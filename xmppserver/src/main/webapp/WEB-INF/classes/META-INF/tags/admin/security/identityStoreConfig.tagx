@@ -22,6 +22,10 @@
     <jsp:useBean id="webManager" class="org.jivesoftware.util.WebManager" />
 
     <jsp:directive.attribute name="connectionType" required="true" type="org.jivesoftware.openfire.spi.ConnectionType"/>
+    <!-- The location to show in the File box instead of the current one, such as the one submitted in a save that failed. -->
+    <jsp:directive.attribute name="location" required="false" type="java.lang.String"/>
+
+    <c:set var="displayedLocation" value="${empty location ? webManager.XMPPServer.certificateStoreManager.getIdentityStoreConfiguration(connectionType).file : location}"/>
 
     <h4><fmt:message key="ssl.certificates.identity-store"/></h4>
 
@@ -34,7 +38,7 @@
         <tbody>
         <tr>
             <td><label for="loc-key"><fmt:message key="ssl.certificates.store-management.file_label"/>:</label></td>
-            <td><input id="loc-key" name="loc-key" type="text" size="80" value="${fn:escapeXml(webManager.XMPPServer.certificateStoreManager.getIdentityStoreConfiguration(connectionType).file)}"/></td>
+            <td><input id="loc-key" name="loc-key" type="text" size="80" value="${fn:escapeXml(displayedLocation)}"/></td>
         </tr>
         <admin:storePasswordConfig fieldName="pwd-key" fieldId="pwd-key-${connectionType}" passwordSet="${admin:isStorePasswordSet(webManager.XMPPServer.certificateStoreManager.getIdentityStoreConfiguration(connectionType).password)}"/>
         <tr>

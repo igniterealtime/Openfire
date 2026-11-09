@@ -41,8 +41,8 @@ public final class CertificateStorePasswordField
      * Indicates whether a certificate store has a password, without revealing anything else about it. The admin
      * console uses this (through the admin tag library) to choose between "Update password" and "Set password".
      *
-     * This is a Java method rather than an EL expression because the EL 'empty' operator does not treat an empty
-     * char array as empty.
+     * This is a Java method rather than an EL expression because the EL 'empty' operator treats only arrays of objects
+     * as empty when they have no elements, so an empty char array is not empty to it.
      *
      * @param password the store's current password (can be null).
      * @return true when the password is not null and not empty.

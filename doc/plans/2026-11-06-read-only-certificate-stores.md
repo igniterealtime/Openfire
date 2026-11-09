@@ -12,7 +12,7 @@ branch: OF-1878
 session_status:
   session_1_move_issuer_update: completed (2026-11-06)
   session_2_setting_and_refusal: completed (2026-11-09)
-  session_3_issuer_update_and_setup: not-started
+  session_3_issuer_update_and_setup: completed (2026-11-09)
   session_4_admin_console: not-started
   session_5_documentation_and_coverage: not-started
 ---

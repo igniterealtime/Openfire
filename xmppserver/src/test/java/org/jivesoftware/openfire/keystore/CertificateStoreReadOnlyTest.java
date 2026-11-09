@@ -15,6 +15,11 @@
  */
 package org.jivesoftware.openfire.keystore;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.Property;
 import org.bouncycastle.openssl.jcajce.JcaPEMWriter;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.XMPPServer;
@@ -38,7 +43,10 @@ import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -735,6 +743,155 @@ public class CertificateStoreReadOnlyTest
     }
 
     // -------------------------------------------------------------------------
+    // IdentityStore.updateIssuerOfSelfSignedCertificates
+    // -------------------------------------------------------------------------
+
+    /**
+     * Verifies that updating the issuer of the self-signed certificates in an identity store is refused when the setting
+     * is on, before any certificate is re-signed in memory, and leaves the store unchanged.
+     */
+    @Test
+    public void testIdentityStoreUpdateIssuerOfSelfSignedCertificatesWhenReadOnlyIsRefused() throws Exception
+    {
+        // Setup test fixture: a self-signed entry, which the update would re-sign.
+        final KeystoreTestUtils.ResultHolder selfSigned = addSelfSignedEntryToIdentityStoreFile();
+        final IdentityStore store = identityStore();
+        final byte[] fileBefore = Files.readAllBytes( identityStoreFile.toPath() );
+        setReadOnly( true );
+
+        // Execute system under test.
+        assertThrows( CertificateStoreReadOnlyException.class, () -> store.updateIssuerOfSelfSignedCertificates( "OU", "O", "City", "State", "GB" ),
+            "updating the issuer of the self-signed certificates must be refused when the setting is on" );
+
+        // Verify result.
+        assertRefusedBeforeChange();
+        assertArrayEquals( fileBefore, Files.readAllBytes( identityStoreFile.toPath() ), "the store file must be unchanged" );
+        assertEquals( selfSigned.getCertificate(), store.getStore().getCertificate( NEW_ALIAS ), "the self-signed certificate must not have been re-signed in memory" );
+        assertInMemoryMatchesFile( store );
+    }
+
+    /**
+     * Verifies that the issuer of the self-signed certificates in an identity store can still be updated when the setting
+     * is off.
+     */
+    @Test
+    public void testIdentityStoreUpdateIssuerOfSelfSignedCertificatesWhenWritableReSignsEntry() throws Exception
+    {
+        // Setup test fixture.
+        final KeystoreTestUtils.ResultHolder selfSigned = addSelfSignedEntryToIdentityStoreFile();
+        setReadOnly( false );
+        final IdentityStore store = new IdentityStore( configuration( identityStoreFile ), false );
+
+        // Execute system under test.
+        store.updateIssuerOfSelfSignedCertificates( "OU", "O", "City", "State", "GB" );
+
+        // Verify result.
+        assertNotEquals( selfSigned.getCertificate(), load( identityStoreFile ).getCertificate( NEW_ALIAS ), "the re-signed certificate must have been saved to disk" );
+    }
+
+    /**
+     * Verifies that when updating the issuer of the self-signed certificates is refused by persist(), the refusal reaches
+     * the caller as a {@link CertificateStoreReadOnlyException} rather than wrapped in a general failure, and the store
+     * is unchanged.
+     */
+    @Test
+    public void testIdentityStoreUpdateIssuerOfSelfSignedCertificatesReportsRefusalByPersistUnwrapped() throws Exception
+    {
+        // Setup test fixture.
+        final KeystoreTestUtils.ResultHolder selfSigned = addSelfSignedEntryToIdentityStoreFile();
+        final IdentityStore store = identityStoreThatBecomesReadOnlyOnPersist();
+        final byte[] fileBefore = Files.readAllBytes( identityStoreFile.toPath() );
+
+        // Execute system under test.
+        final CertificateStoreConfigException e = assertThrows( CertificateStoreConfigException.class, () -> store.updateIssuerOfSelfSignedCertificates( "OU", "O", "City", "State", "GB" ),
+            "the refusal must reach the caller" );
+
+        // Verify result.
+        assertInstanceOf( CertificateStoreReadOnlyException.class, e, "a refusal by persist() must be reported as a read-only refusal" );
+        assertArrayEquals( fileBefore, Files.readAllBytes( identityStoreFile.toPath() ), "the store file must be unchanged" );
+        assertEquals( selfSigned.getCertificate(), store.getStore().getCertificate( NEW_ALIAS ), "the re-signed certificate must have been discarded from memory" );
+        assertInMemoryMatchesFile( store );
+    }
+
+    // -------------------------------------------------------------------------
+    // IdentityStore.ensureDomainCertificate (used by the setup wizard)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Verifies that ensuring a domain certificate in an identity store that has none, when the setting is on, does not
+     * generate one and does not fail (so that setup carries on), leaves the store unchanged, and logs a warning that
+     * names the store file and the XMPP domain.
+     */
+    @Test
+    public void testEnsureDomainCertificateWhenReadOnlyWithoutDomainCertificateWarnsAndSkipsGeneration() throws Exception
+    {
+        // Setup test fixture.
+        writeEmptyIdentityStoreFile();
+        final IdentityStore store = identityStore();
+        final byte[] fileBefore = Files.readAllBytes( identityStoreFile.toPath() );
+        assertFalse( store.containsDomainCertificate(), "precondition: the store must not contain a domain certificate" );
+        setReadOnly( true );
+
+        // Execute system under test.
+        final List<LogEvent> warnings = captureWarnings( () -> assertDoesNotThrow( store::ensureDomainCertificate, "a missing domain certificate must not fail setup when the setting is on" ) );
+
+        // Verify result.
+        assertRefusedBeforeChange();
+        assertArrayEquals( fileBefore, Files.readAllBytes( identityStoreFile.toPath() ), "the store file must be unchanged" );
+        assertFalse( store.getStore().aliases().hasMoreElements(), "no certificate must have been generated in memory" );
+        assertInMemoryMatchesFile( store );
+        assertEquals( 1, warnings.size(), "exactly one warning must be logged about the missing domain certificate" );
+        final String warning = warnings.get( 0 ).getMessage().getFormattedMessage();
+        assertTrue( warning.contains( identityStoreFile.toString() ), "the warning must name the store file, but was: " + warning );
+        assertTrue( warning.contains( Fixtures.XMPP_DOMAIN ), "the warning must name the XMPP domain, but was: " + warning );
+        assertTrue( warning.contains( CertificateStoreManager.READ_ONLY.getKey() ), "the warning must name the setting that prevents generation, but was: " + warning );
+    }
+
+    /**
+     * Verifies that ensuring a domain certificate in an identity store that has one, when the setting is on, changes
+     * nothing and logs no warning.
+     */
+    @Test
+    public void testEnsureDomainCertificateWhenReadOnlyWithDomainCertificateDoesNothing() throws Exception
+    {
+        // Setup test fixture.
+        final IdentityStore store = identityStore();
+        final byte[] fileBefore = Files.readAllBytes( identityStoreFile.toPath() );
+        final Set<String> aliasesBefore = new HashSet<>( Collections.list( store.getStore().aliases() ) );
+        assertTrue( store.containsDomainCertificate(), "precondition: the store must contain a domain certificate" );
+        setReadOnly( true );
+
+        // Execute system under test.
+        final List<LogEvent> warnings = captureWarnings( () -> assertDoesNotThrow( store::ensureDomainCertificate, "a store with a domain certificate must not fail setup when the setting is on" ) );
+
+        // Verify result.
+        assertFalse( persistReached, "no change must be attempted when the store already has a domain certificate" );
+        assertArrayEquals( fileBefore, Files.readAllBytes( identityStoreFile.toPath() ), "the store file must be unchanged" );
+        assertEquals( aliasesBefore, new HashSet<>( Collections.list( store.getStore().aliases() ) ), "the entries in memory must be unchanged" );
+        assertTrue( warnings.isEmpty(), "no warning must be logged when the store has a domain certificate" );
+    }
+
+    /**
+     * Verifies that ensuring a domain certificate in an identity store that has none, when the setting is off, still
+     * generates a self-signed certificate and saves it.
+     */
+    @Test
+    public void testEnsureDomainCertificateWhenWritableWithoutDomainCertificateGeneratesOne() throws Exception
+    {
+        // Setup test fixture.
+        writeEmptyIdentityStoreFile();
+        setReadOnly( false );
+        final IdentityStore store = new IdentityStore( configuration( identityStoreFile ), false );
+
+        // Execute system under test.
+        store.ensureDomainCertificate();
+
+        // Verify result.
+        assertTrue( store.containsDomainCertificate(), "a domain certificate must have been generated" );
+        assertTrue( load( identityStoreFile ).containsAlias( Fixtures.XMPP_DOMAIN + "_rsa" ), "the generated certificate must have been saved to disk" );
+    }
+
+    // -------------------------------------------------------------------------
     // The exception
     // -------------------------------------------------------------------------
 
@@ -858,6 +1015,76 @@ public class CertificateStoreReadOnlyTest
                 super.persist();
             }
         };
+    }
+
+    /**
+     * Adds a self-signed private key entry for the XMPP domain, under {@link #NEW_ALIAS}, to the identity store file.
+     */
+    private KeystoreTestUtils.ResultHolder addSelfSignedEntryToIdentityStoreFile() throws Exception
+    {
+        final KeyStore keyStore = load( identityStoreFile );
+        final KeystoreTestUtils.ResultHolder selfSigned = KeystoreTestUtils.generateSelfSignedCertificate( Fixtures.XMPP_DOMAIN );
+        keyStore.setKeyEntry( NEW_ALIAS, selfSigned.getKeyPair().getPrivate(), PASSWORD, selfSigned.getCertificateChain() );
+        try ( final FileOutputStream os = new FileOutputStream( identityStoreFile ) )
+        {
+            keyStore.store( os, PASSWORD );
+        }
+        return selfSigned;
+    }
+
+    /**
+     * Replaces the identity store file with an empty store, which has no certificate for the XMPP domain.
+     */
+    private void writeEmptyIdentityStoreFile() throws Exception
+    {
+        final KeyStore empty = KeyStore.getInstance( STORE_TYPE );
+        empty.load( null, PASSWORD );
+        try ( final FileOutputStream os = new FileOutputStream( identityStoreFile ) )
+        {
+            empty.store( os, PASSWORD );
+        }
+    }
+
+    /**
+     * Runs the action and returns the warnings that {@link IdentityStore} logged while it ran.
+     */
+    private static List<LogEvent> captureWarnings( final Runnable action )
+    {
+        final org.apache.logging.log4j.core.Logger logger = (org.apache.logging.log4j.core.Logger) LogManager.getLogger( IdentityStore.class );
+        final CapturingAppender appender = new CapturingAppender();
+        appender.start();
+        logger.addAppender( appender );
+        try
+        {
+            action.run();
+        }
+        finally
+        {
+            logger.removeAppender( appender );
+            appender.stop();
+        }
+        return appender.events.stream()
+            .filter( event -> event.getLevel() == Level.WARN )
+            .collect( Collectors.toList() );
+    }
+
+    /**
+     * A log4j appender that keeps the events it receives, so that a test can check what was logged.
+     */
+    private static class CapturingAppender extends AbstractAppender
+    {
+        private final List<LogEvent> events = new CopyOnWriteArrayList<>();
+
+        CapturingAppender()
+        {
+            super( "CertificateStoreReadOnlyTest", null, null, true, Property.EMPTY_ARRAY );
+        }
+
+        @Override
+        public void append( final LogEvent event )
+        {
+            events.add( event.toImmutable() );
+        }
     }
 
     private void assertRefusedBeforeChange()

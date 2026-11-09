@@ -21,7 +21,10 @@ import org.bouncycastle.asn1.x500.style.IETFUtils;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.util.CertificateManager;
+import org.jivesoftware.util.JiveGlobals;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -69,9 +72,24 @@ public class IdentityStoreIssuerUpdateTest
     private KeystoreTestUtils.ResultHolder caSigned;
     private IdentityStore identityStore;
 
+    @BeforeAll
+    public static void setUpClass() throws Exception
+    {
+        Fixtures.reconfigureOpenfireHome();
+        Fixtures.disableDatabasePersistence();
+    }
+
+    @AfterAll
+    public static void tearDownClass()
+    {
+        Fixtures.clearExistingProperties();
+    }
+
     @BeforeEach
     public void setUp() throws Exception
     {
+        // These tests exercise the store with the read-only setting off, whatever an earlier test may have left behind.
+        JiveGlobals.deleteProperty( CertificateStoreManager.READ_ONLY.getKey() );
         XMPPServer.setInstance( Fixtures.mockXMPPServer() );
 
         // A store with one self-signed and one CA-signed private key entry, written to disk.
@@ -99,6 +117,7 @@ public class IdentityStoreIssuerUpdateTest
         {
             storeFile.setWritable( true );
         }
+        JiveGlobals.deleteProperty( CertificateStoreManager.READ_ONLY.getKey() );
         XMPPServer.setInstance( null );
     }
 

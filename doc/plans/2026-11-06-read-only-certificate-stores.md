@@ -5,7 +5,7 @@ model_version: claude-opus-5-5
 purpose: implementation_plan
 status: draft
 human_reviewer: matthewvivian
-implementation_tracking: in_progress
+implementation_tracking: completed
 tags: [certificates, keystore, truststore, admin-console, security]
 jira_ticket: OF-1878
 branch: OF-1878
@@ -14,7 +14,7 @@ session_status:
   session_2_setting_and_refusal: completed (2026-11-09)
   session_3_issuer_update_and_setup: completed (2026-11-09)
   session_4_admin_console: completed (2026-11-09)
-  session_5_documentation_and_coverage: not-started
+  session_5_documentation_and_coverage: completed (2026-11-09)
 ---
 
 # Read-only certificate stores: stop Openfire modifying the stores it uses
@@ -220,10 +220,10 @@ Tests are written before the code in each session. Use `-pl i18n,xmppserver` onc
 ## Verification Checklist
 
 ### Core (Sessions 1-3)
-- [ ] Every row of the write-paths table refuses with the setting on, file and in-memory store unchanged
-- [ ] Changes to the setting apply without a restart
-- [ ] Setup wizard skips self-signed generation with the setting on, with a warning
-- [ ] Full `xmppserver` test suite passes
+- [x] Every row of the write-paths table refuses with the setting on, file and in-memory store unchanged
+- [x] Changes to the setting apply without a restart
+- [x] Setup wizard skips self-signed generation with the setting on, with a warning
+- [x] Full `xmppserver` test suite passes
 
 ### Admin console (Session 4)
 - [x] The read-only section on the Certificate Stores page, in both views
@@ -231,8 +231,8 @@ Tests are written before the code in each session. Use `-pl i18n,xmppserver` onc
 - [x] Direct POSTs to write actions refused with a readable error
 
 ### Delivery (Session 5)
-- [ ] `ssl-guide.html` updated
-- [ ] Coverage of changed and added code measured
+- [x] `ssl-guide.html` updated
+- [x] Coverage of changed and added code measured: JaCoCo (`-Pcoverage`) covers every changed executable line (72 of 72) and branch (12 of 12)
 
 ---
 

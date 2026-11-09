@@ -13,7 +13,7 @@ session_status:
   session_1_move_issuer_update: completed (2026-11-06)
   session_2_setting_and_refusal: completed (2026-11-09)
   session_3_issuer_update_and_setup: completed (2026-11-09)
-  session_4_admin_console: not-started
+  session_4_admin_console: completed (2026-11-09)
   session_5_documentation_and_coverage: not-started
 ---
 
@@ -226,9 +226,9 @@ Tests are written before the code in each session. Use `-pl i18n,xmppserver` onc
 - [ ] Full `xmppserver` test suite passes
 
 ### Admin console (Session 4)
-- [ ] The read-only section on the Certificate Stores page, in both views
-- [ ] Every row of the screens table checked with the setting on and off
-- [ ] Direct POSTs to write actions refused with a readable error
+- [x] The read-only section on the Certificate Stores page, in both views
+- [x] Every row of the screens table checked with the setting on and off
+- [x] Direct POSTs to write actions refused with a readable error
 
 ### Delivery (Session 5)
 - [ ] `ssl-guide.html` updated

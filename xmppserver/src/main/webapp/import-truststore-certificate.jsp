@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2018-2025 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2018-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 --%>
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page errorPage="error.jsp"%>
+<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreManager"%>
+<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreReadOnlyException"%>
 <%@ page import="org.jivesoftware.openfire.keystore.TrustStore"%>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType"%>
 <%@ page import="org.jivesoftware.util.ParamUtils"%>
@@ -65,6 +67,11 @@
 
     pageContext.setAttribute( "connectionType", connectionType );
 
+    // When the certificate stores are read-only, the import form is not offered. A submitted import is still passed to
+    // the store, which refuses it.
+    final boolean readOnly = CertificateStoreManager.READ_ONLY.getValue();
+    pageContext.setAttribute( "readOnly", readOnly );
+
     if (save && errors.isEmpty())
     {
         final TrustStore trustStoreConfig = XMPPServer.getInstance().getCertificateStoreManager().getTrustStore( connectionType );
@@ -101,6 +108,10 @@
                 response.sendRedirect( "security-truststore.jsp?connectionType=" + storePurposeText + "&importsuccess=true" );
                 return;
             }
+            catch (CertificateStoreReadOnlyException e)
+            {
+                errors.put("readOnly", e.getMessage());
+            }
             catch (Throwable e)
             {
                 e.printStackTrace();
@@ -122,6 +133,10 @@
 <c:forEach var="err" items="${errors}">
     <admin:infobox type="error">
         <c:choose>
+            <c:when test="${err.key eq 'readOnly'}">
+                <fmt:message key="ssl.certificates.read-only.refused"/> <c:out value="${err.value}"/>
+            </c:when>
+
             <c:when test="${err.key eq 'connectionType'}">
                 <fmt:message key="ssl.import.certificate.truststore.error.connection-type"/>
             </c:when>
@@ -155,7 +170,11 @@
     </admin:infobox>
 </c:forEach>
 
-<c:if test="${not empty connectionType}">
+<c:if test="${readOnly}">
+    <admin:storeReadOnlyNotice/>
+</c:if>
+
+<c:if test="${not empty connectionType and not readOnly}">
     <p>
         <fmt:message key="ssl.import.certificate.truststore.intro"/>
     </p>

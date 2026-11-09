@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2017-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2017-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
 <%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreManager" %>
 <%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreConfiguration" %>
+<%@ page import="org.jivesoftware.admin.CertificateStoresReadOnlySetting" %>
 <%@ page import="java.io.File" %>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
@@ -55,18 +56,43 @@
     pageContext.setAttribute( "certificateStoreManager", certificateStoreManager );
 
     boolean update = request.getParameter("update") != null;
+    // The read-only setting changes only on a form submission (POST), never on a GET carrying the same parameters.
+    boolean saveReadOnly = "POST".equals( request.getMethod() ) && request.getParameter( CertificateStoresReadOnlySetting.SAVE_PARAMETER ) != null;
     Cookie csrfCookie = CookieUtils.getCookie(request, "csrf");
     String csrfParam = ParamUtils.getParameter(request, "csrf");
 
-    if (update) {
+    if (update || saveReadOnly) {
         if (csrfCookie == null || csrfParam == null || !csrfCookie.getValue().equals(csrfParam)) {
             update = false;
+            saveReadOnly = false;
             errors.put("csrf", "CSRF Failure!");
         }
     }
     csrfParam = StringUtils.randomString(15);
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
     pageContext.setAttribute("csrf", csrfParam);
+
+    // The read-only section has a form of its own, so that its result is not mixed with that of the store forms.
+    if ( saveReadOnly ) {
+        final boolean readOnly = ParamUtils.getBooleanParameter( request, CertificateStoresReadOnlySetting.CHECKBOX_PARAMETER, false );
+        try
+        {
+            if ( CertificateStoresReadOnlySetting.save( readOnly ) )
+            {
+                webManager.logEvent( "Updated the read-only setting of the certificate stores", CertificateStoreManager.READ_ONLY.getKey() + " = " + readOnly );
+            }
+            response.sendRedirect( "security-certificate-store-management.jsp?readOnlySaved=true&showAll=" + showAll );
+            return;
+        }
+        catch ( Exception ex )
+        {
+            errors.put( "readOnly", ex.getMessage() );
+        }
+    }
+    pageContext.setAttribute( "readOnly", CertificateStoreManager.READ_ONLY.getValue() );
+    pageContext.setAttribute( "readOnlySaveParameter", CertificateStoresReadOnlySetting.SAVE_PARAMETER );
+    pageContext.setAttribute( "readOnlyCheckboxParameter", CertificateStoresReadOnlySetting.CHECKBOX_PARAMETER );
+
     if ( update ) {
         final String cType = request.getParameter( "connectionType" );
         final boolean updateAll = "all".equals( cType );
@@ -196,6 +222,11 @@
         <fmt:message key="ssl.certificates.store-management.saved_successfully"/>
     </admin:infoBox>
 </c:if>
+<c:if test="${param.readOnlySaved and empty errors}">
+    <admin:infoBox type="success">
+        <fmt:message key="ssl.certificates.store-management.read-only.saved"/>
+    </admin:infoBox>
+</c:if>
 
 <p>
     <fmt:message key="ssl.certificates.store-management.info-1"/>
@@ -209,6 +240,37 @@
         <fmt:message key="ssl.certificates.store-management.info-4"/>
     </c:if>
 </p>
+
+<!-- BEGIN 'Read-only certificate stores'. Other pages link to this section by its id. -->
+<form id="read-only" action="security-certificate-store-management.jsp" method="post">
+    <input type="hidden" name="csrf" value="${csrf}">
+    <input type="hidden" name="showAll" value="${showAll}"/>
+
+    <fmt:message key="ssl.certificates.store-management.read-only.title" var="readOnlyTitle"/>
+    <admin:contentBox title="${readOnlyTitle}">
+        <p>
+            <fmt:message key="ssl.certificates.store-management.read-only.info"/>
+        </p>
+
+        <table>
+            <tbody>
+            <tr>
+                <td>
+                    <input type="checkbox" id="${readOnlyCheckboxParameter}" name="${readOnlyCheckboxParameter}" value="true" ${readOnly ? 'checked' : ''}/>
+                </td>
+                <td>
+                    <label for="${readOnlyCheckboxParameter}"><fmt:message key="ssl.certificates.store-management.read-only.label"/></label>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+
+        <br/>
+
+        <input type="submit" name="${readOnlySaveParameter}" value="<fmt:message key="global.save_settings" />">
+    </admin:contentBox>
+</form>
+<!-- END 'Read-only certificate stores' -->
 
 <c:choose>
     <c:when test="${showAll}">

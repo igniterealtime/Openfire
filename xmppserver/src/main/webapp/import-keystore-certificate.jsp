@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2007-2008 Jive Software, 2018-2022 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2007-2008 Jive Software, 2018-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -17,6 +17,8 @@
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page errorPage="error.jsp" %>
 <%@ page import="org.jivesoftware.openfire.XMPPServer" %>
+<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreManager" %>
+<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreReadOnlyException" %>
 <%@ page import="org.jivesoftware.openfire.keystore.IdentityStore" %>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
@@ -64,6 +66,11 @@
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
     pageContext.setAttribute("csrf", csrfParam);
 
+    // When the certificate stores are read-only, the import form is not offered. A submitted import is still passed to
+    // the store, which refuses it.
+    final boolean readOnly = CertificateStoreManager.READ_ONLY.getValue();
+    pageContext.setAttribute( "readOnly", readOnly );
+
     if (save) {
         if (privateKey == null || privateKey.trim().isEmpty() ) {
             errors.put("privateKey", "privateKey");
@@ -89,6 +96,9 @@
                 response.sendRedirect("security-keystore.jsp?connectionType="+connectionType+"&addupdatesuccess=true");
                 return;
             }
+            catch (CertificateStoreReadOnlyException e) {
+                errors.put("readOnly", e.getMessage());
+            }
             catch (Exception e) {
                 e.printStackTrace();
                 errors.put("import", e.getMessage());
@@ -111,6 +121,10 @@
 <c:forEach var="err" items="${errors}">
     <admin:infobox type="error">
         <c:choose>
+            <c:when test="${err.key eq 'readOnly'}">
+                <fmt:message key="ssl.certificates.read-only.refused"/> <c:out value="${err.value}"/>
+            </c:when>
+
             <c:when test="${err.key eq 'privateKey'}">
                 <fmt:message key="ssl.import.certificate.keystore.error.private-key"/>
             </c:when>
@@ -136,6 +150,11 @@
     </admin:infobox>
 </c:forEach>
 
+<c:choose>
+<c:when test="${readOnly}">
+    <admin:storeReadOnlyNotice/>
+</c:when>
+<c:otherwise>
 <p>
     <fmt:message key="ssl.import.certificate.keystore.info">
         <fmt:param value="<a href='http://java.sun.com/javase/downloads/index.jsp'>" />
@@ -188,6 +207,8 @@
     <input type="submit" name="save" value="<fmt:message key="global.save" />">
 </form>
 <!-- END 'Import Private Key and Certificate' -->
+</c:otherwise>
+</c:choose>
 
 </body>
 </html>

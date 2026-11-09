@@ -16,6 +16,8 @@
 --%>
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@page import="org.jivesoftware.openfire.XMPPServer"%>
+<%@page import="org.jivesoftware.openfire.keystore.CertificateStoreManager"%>
+<%@page import="org.jivesoftware.openfire.keystore.CertificateStoreReadOnlyException"%>
 <%@page import="org.jivesoftware.openfire.keystore.IdentityStore"%>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
 <%@ page import="org.jivesoftware.util.ParamUtils" %>
@@ -77,6 +79,11 @@
 
     pageContext.setAttribute( "connectionType", connectionType );
 
+    // When the certificate stores are read-only, the issuer form is not offered. A submitted form is still passed to
+    // the store, which refuses it.
+    final boolean readOnly = CertificateStoreManager.READ_ONLY.getValue();
+    pageContext.setAttribute( "readOnly", readOnly );
+
    if (save) {
 
        // Verify that fields were completed
@@ -110,6 +117,9 @@
                response.sendRedirect("security-keystore.jsp?connectionType="+connectionType);
                return;
            }
+           catch (CertificateStoreReadOnlyException e) {
+               errors.put("readOnly", e.getMessage());
+           }
            catch (Exception e) {
                e.printStackTrace();
                errors.put("general", "");
@@ -131,6 +141,9 @@
 <c:forEach var="err" items="${errors}">
     <admin:infobox type="error">
         <c:choose>
+            <c:when test="${err.key eq 'readOnly'}">
+                <fmt:message key="ssl.certificates.read-only.refused"/> <c:out value="${err.value}"/>
+            </c:when>
             <c:when test="${err.key eq 'organizationalUnit'}">
                 <fmt:message key="ssl.signing-request.enter_ou" />
             </c:when>
@@ -156,6 +169,11 @@
     </admin:infobox>
 </c:forEach>
 
+<c:choose>
+<c:when test="${readOnly}">
+    <admin:storeReadOnlyNotice/>
+</c:when>
+<c:otherwise>
 <!-- BEGIN 'Issuer information form' -->
 <form action="security-keystore-signing-request.jsp" method="post">
     <input type="hidden" name="csrf" value="${csrf}">
@@ -227,5 +245,7 @@
       </div>
   </form>
   <!-- END 'Issuer information form' -->
+</c:otherwise>
+</c:choose>
   </body>
 </html>

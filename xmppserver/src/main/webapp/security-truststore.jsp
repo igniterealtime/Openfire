@@ -1,6 +1,6 @@
 <%--
   -
-  - Copyright (C) 2018-2025 Ignite Realtime Foundation. All rights reserved.
+  - Copyright (C) 2018-2026 Ignite Realtime Foundation. All rights reserved.
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 --%>
 <%@ page contentType="text/html; charset=UTF-8" %>
 <%@ page errorPage="error.jsp"%>
+<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreManager"%>
+<%@ page import="org.jivesoftware.openfire.keystore.CertificateStoreReadOnlyException"%>
 <%@ page import="org.jivesoftware.openfire.keystore.TrustStore"%>
 <%@ page import="org.jivesoftware.openfire.spi.ConnectionType"%>
 <%@ page import="org.jivesoftware.util.CookieUtils" %>
@@ -56,6 +58,11 @@
     csrfParam = StringUtils.randomString(15);
     CookieUtils.setCookie(request, response, "csrf", csrfParam, -1);
     pageContext.setAttribute("csrf", csrfParam);
+
+    // When the certificate stores are read-only, the actions that change the store are not offered. A request for one
+    // is still passed to the store, which refuses it.
+    final boolean readOnly = CertificateStoreManager.READ_ONLY.getValue();
+    pageContext.setAttribute( "readOnly", readOnly );
 
     ConnectionType connectionType = null;
     TrustStore trustStore = null;
@@ -107,6 +114,10 @@
                     response.sendRedirect( "security-truststore.jsp?connectionType=" + connectionType+ "&deletesuccess=true" );
                     return;
                 }
+                catch ( CertificateStoreReadOnlyException e )
+                {
+                    errors.put( "readOnly", e.getMessage() );
+                }
                 catch ( Exception e )
                 {
                     errors.put( "delete", e.getMessage() );
@@ -128,6 +139,9 @@
         <c:forEach var="err" items="${errors}">
             <admin:infobox type="error">
                 <c:choose>
+                    <c:when test="${err.key eq 'readOnly'}">
+                        <fmt:message key="ssl.certificates.read-only.refused"/> <c:out value="${err.value}"/>
+                    </c:when>
                     <c:when test="${err.key eq 'type'}">
                         <c:out value="${err.key}"/>
                         <c:if test="${not empty err.value}">
@@ -152,17 +166,23 @@
             <admin:infobox type="success"><fmt:message key="ssl.certificates.added_updated"/></admin:infobox>
         </c:if>
 
+        <c:if test="${readOnly}">
+            <admin:storeReadOnlyNotice/>
+        </c:if>
+
         <c:if test="${connectionType != null}">
             <p>
                 <fmt:message key="ssl.certificates.truststore.info"/>
             </p>
 
-            <p>
-                <fmt:message key="ssl.certificates.truststore.link-to-import">
-                    <fmt:param value="<a href='import-truststore-certificate.jsp?connectionType=${connectionType}'>"/>
-                    <fmt:param value="</a>"/>
-                </fmt:message>
-            </p>
+            <c:if test="${not readOnly}">
+                <p>
+                    <fmt:message key="ssl.certificates.truststore.link-to-import">
+                        <fmt:param value="<a href='import-truststore-certificate.jsp?connectionType=${connectionType}'>"/>
+                        <fmt:param value="</a>"/>
+                    </fmt:message>
+                </p>
+            </c:if>
 
             <table class="jive-table" style="width: 100%">
                 <thead>
@@ -176,9 +196,11 @@
                         <th>
                             <fmt:message key="ssl.certificates.algorithm"/>
                         </th>
-                        <th style="width: 1%">
-                            <fmt:message key="global.delete"/>
-                        </th>
+                        <c:if test="${not readOnly}">
+                            <th style="width: 1%">
+                                <fmt:message key="global.delete"/>
+                            </th>
+                        </c:if>
                     </tr>
                 </thead>
 
@@ -250,18 +272,20 @@
                                     <td style="width: 2%">
                                         <c:out value="${certificate.publicKey.algorithm}"/>
                                     </td>
-                                    <td style="width: 1%; text-align: center">
-                                        <c:url var="url" value="security-truststore.jsp">
-                                            <c:param name="connectionType" value="${connectionType}"/>
-                                            <c:param name="alias" value="${alias}"/>
-                                            <c:param name="delete" value="true"/>
-                                            <c:param name="csrf" value="${csrf}"/>
-                                        </c:url>
-                                        <a href="<c:out value="${url}"/>"
-                                           title="<fmt:message key="global.click_delete"/>"
-                                           onclick="return confirm('<fmt:message key="ssl.certificates.confirm_delete"/>');"
-                                                ><img src="images/delete-16x16.gif" alt=""></a>
-                                    </td>
+                                    <c:if test="${not readOnly}">
+                                        <td style="width: 1%; text-align: center">
+                                            <c:url var="url" value="security-truststore.jsp">
+                                                <c:param name="connectionType" value="${connectionType}"/>
+                                                <c:param name="alias" value="${alias}"/>
+                                                <c:param name="delete" value="true"/>
+                                                <c:param name="csrf" value="${csrf}"/>
+                                            </c:url>
+                                            <a href="<c:out value="${url}"/>"
+                                               title="<fmt:message key="global.click_delete"/>"
+                                               onclick="return confirm('<fmt:message key="ssl.certificates.confirm_delete"/>');"
+                                                    ><img src="images/delete-16x16.gif" alt=""></a>
+                                        </td>
+                                    </c:if>
                                 </tr>
                             </c:forEach>
                         </c:otherwise>

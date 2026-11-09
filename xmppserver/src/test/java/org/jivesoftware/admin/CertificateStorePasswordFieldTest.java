@@ -17,14 +17,18 @@
 package org.jivesoftware.admin;
 
 import org.jivesoftware.openfire.keystore.CertificateStoreConfigException;
+import org.jivesoftware.openfire.keystore.CertificateStoreConfiguration;
+import org.jivesoftware.openfire.keystore.TrustStore;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.KeyStore;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -115,26 +119,37 @@ public class CertificateStorePasswordFieldTest
 
     @ParameterizedTest
     @ValueSource( strings = { "JKS", "PKCS12" } )
-    public void testStoreOpenedWithWrongPasswordIsReportedAsWrongPassword( final String storeType ) throws Exception
+    public void testStoreOpenedWithWrongPasswordIsReportedAsWrongPassword( final String storeType, @TempDir final Path dir ) throws Exception
     {
-        final Exception failure = loadFailure( storeType, storeBytes( storeType, "changeit" ), "wrong-password" );
+        // Arrange
+        final File file = writeEmptyStore( dir, storeType, "changeit" );
 
+        // Act
+        final CertificateStoreConfigException failure = openFailure( storeType, file, "wrong-password", dir );
+
+        // Assert
         assertTrue( CertificateStorePasswordField.isWrongPassword( failure ), "a " + storeType + " store opened with the wrong password must be reported as a wrong password" );
     }
 
     @ParameterizedTest
     @ValueSource( strings = { "JKS", "PKCS12" } )
-    public void testCorruptStoreIsNotReportedAsWrongPassword( final String storeType )
+    public void testCorruptStoreIsNotReportedAsWrongPassword( final String storeType, @TempDir final Path dir ) throws Exception
     {
-        final Exception failure = loadFailure( storeType, new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 }, "changeit" );
+        // Arrange
+        final File file = dir.resolve( "corrupt" ).toFile();
+        Files.write( file.toPath(), new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 } );
 
+        // Act
+        final CertificateStoreConfigException failure = openFailure( storeType, file, "changeit", dir );
+
+        // Assert
         assertFalse( CertificateStorePasswordField.isWrongPassword( failure ), "a corrupt " + storeType + " store must not be reported as a wrong password" );
     }
 
     @Test
-    public void testMissingStoreFileIsNotReportedAsWrongPassword()
+    public void testMissingStoreFileIsNotReportedAsWrongPassword( @TempDir final Path dir )
     {
-        final Exception failure = new CertificateStoreConfigException( "Unable to load store", new FileNotFoundException( "no such file" ) );
+        final CertificateStoreConfigException failure = openFailure( "JKS", dir.resolve( "missing" ).toFile(), "changeit", dir );
 
         assertFalse( CertificateStorePasswordField.isWrongPassword( failure ), "a missing store file must not be reported as a wrong password" );
     }
@@ -146,33 +161,29 @@ public class CertificateStorePasswordFieldTest
     }
 
     @Test
-    public void testMissingFailureIsNotReportedAsWrongPassword()
+    public void testNullFailureIsNotReportedAsWrongPassword()
     {
-        assertFalse( CertificateStorePasswordField.isWrongPassword( null ), "no failure must not be reported as a wrong password" );
+        assertFalse( CertificateStorePasswordField.isWrongPassword( null ), "a null failure must not be reported as a wrong password" );
     }
 
-    private static byte[] storeBytes( final String storeType, final String password ) throws Exception
+    private static File writeEmptyStore( final Path dir, final String storeType, final String password ) throws Exception
     {
+        final File file = dir.resolve( "store" ).toFile();
         final KeyStore store = KeyStore.getInstance( storeType );
         store.load( null, password.toCharArray() );
-        final ByteArrayOutputStream out = new ByteArrayOutputStream();
-        store.store( out, password.toCharArray() );
-        return out.toByteArray();
+        try ( final OutputStream out = new FileOutputStream( file ) )
+        {
+            store.store( out, password.toCharArray() );
+        }
+        return file;
     }
 
     /**
-     * Loads a store the way CertificateStore does and returns the failure wrapped as CertificateStore wraps it.
+     * Opens a store as the admin console does when it saves a store's settings, and returns the resulting failure.
      */
-    private static Exception loadFailure( final String storeType, final byte[] content, final String password )
+    private static CertificateStoreConfigException openFailure( final String storeType, final File file, final String password, final Path backupDir )
     {
-        try
-        {
-            KeyStore.getInstance( storeType ).load( new ByteArrayInputStream( content ), password.toCharArray() );
-        }
-        catch ( IOException | java.security.GeneralSecurityException ex )
-        {
-            return new CertificateStoreConfigException( "Unable to load store of type '" + storeType + "'", ex );
-        }
-        throw new AssertionError( "Loading the " + storeType + " store was expected to fail." );
+        final CertificateStoreConfiguration configuration = new CertificateStoreConfiguration( storeType, file, password.toCharArray(), backupDir.toFile() );
+        return assertThrows( CertificateStoreConfigException.class, () -> new TrustStore( configuration, false ), "opening the " + storeType + " store was expected to fail" );
     }
 }

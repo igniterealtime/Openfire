@@ -40,6 +40,9 @@
 
     final Map<String, String> errors = new HashMap<>();
     pageContext.setAttribute( "errors", errors );
+    // Store files that could not be opened with the password the administrator entered.
+    final Set<String> wrongPasswordFiles = new LinkedHashSet<>();
+    pageContext.setAttribute( "wrongPasswordFiles", wrongPasswordFiles );
 
     boolean showAll = certificateStoreManager.usesDistinctConfigurationForEachType();
     if ( !showAll )
@@ -124,6 +127,7 @@
         if ( errors.isEmpty() ) {
             for ( final ConnectionType connectionType : toUpdate )
             {
+                String storeBeingReplaced = null;
                 try
                 {
                     final String locTrust;
@@ -147,12 +151,19 @@
 
                     final CertificateStoreConfiguration configKey = new CertificateStoreConfiguration( CertificateStoreManager.getIdentityStoreType(connectionType), new File( locKey ), keyPassword, backupKey );
                     final CertificateStoreConfiguration configTrust = new CertificateStoreConfiguration( CertificateStoreManager.getTrustStoreType(connectionType), new File( locTrust ), trustPassword, backupTrust );
+                    storeBeingReplaced = locKey;
                     certificateStoreManager.replaceIdentityStore( connectionType, configKey, false );
+                    storeBeingReplaced = locTrust;
                     certificateStoreManager.replaceTrustStore( connectionType, configTrust, false );
                 }
                 catch ( Exception ex )
                 {
-                    errors.put( "update", ex.getMessage() );
+                    // A store that fails to load leaves the manager unchanged, so its previous password stays in use.
+                    if ( storeBeingReplaced != null && CertificateStorePasswordField.isWrongPassword( ex ) ) {
+                        wrongPasswordFiles.add( storeBeingReplaced );
+                    } else {
+                        errors.put( "update", ex.getMessage() );
+                    }
                 }
             }
 
@@ -161,7 +172,7 @@
 
             // Redirect only on success: a store that fails to load (for example a wrong password) must be reported,
             // not followed by a success message.
-            if ( errors.isEmpty() ) {
+            if ( errors.isEmpty() && wrongPasswordFiles.isEmpty() ) {
                 response.sendRedirect("security-certificate-store-management.jsp?updated=true&showAll=" + showAll );
                 return;
             }
@@ -203,8 +214,16 @@
     </admin:infobox>
 </c:forEach>
 
+<c:forEach var="wrongPasswordFile" items="${wrongPasswordFiles}">
+    <admin:infobox type="error">
+        <fmt:message key="ssl.certificates.store-management.password_wrong">
+            <fmt:param><c:out value="${wrongPasswordFile}"/></fmt:param>
+        </fmt:message>
+    </admin:infobox>
+</c:forEach>
+
 <!-- Display success report, but only if there were no errors. -->
-<c:if test="${param.updated and empty errors}">
+<c:if test="${param.updated and empty errors and empty wrongPasswordFiles}">
     <admin:infoBox type="success">
         <fmt:message key="ssl.certificates.store-management.saved_successfully"/>
     </admin:infoBox>

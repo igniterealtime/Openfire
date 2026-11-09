@@ -16,10 +16,13 @@
 
 package org.jivesoftware.admin;
 
+import java.security.UnrecoverableKeyException;
 import java.util.Objects;
 
 /**
  * Interprets the password field of a certificate store form in the admin console.
+ *
+ * The field holds the password Openfire uses to open the store file. Saving it does not re-encrypt the file.
  *
  * The admin console never sends a store's current password to the browser. The form offers an "Update password" link
  * ("Set password" when the store has none), which reveals an empty password field. That field is submitted only once it
@@ -36,7 +39,7 @@ public final class CertificateStorePasswordField
 
     /**
      * Indicates whether a certificate store has a password, without revealing anything else about it. The admin
-     * console uses this (through the admin tag library) to show "set" or "not set".
+     * console uses this (through the admin tag library) to choose between "Update password" and "Set password".
      *
      * This is a Java method rather than an EL expression because the EL 'empty' operator does not treat an empty
      * char array as empty.
@@ -47,6 +50,29 @@ public final class CertificateStorePasswordField
     public static boolean isSet( final char[] password )
     {
         return password != null && password.length > 0;
+    }
+
+    /**
+     * Indicates whether a certificate store failed to load because the password does not open the file, so that the
+     * admin console can say so instead of showing the raw failure. Other failures, such as a missing or corrupt file,
+     * are not reported as a wrong password.
+     *
+     * The JKS and PKCS12 implementations report a wrong password as an IOException caused by an
+     * UnrecoverableKeyException, so this looks for that anywhere in the chain of causes.
+     *
+     * @param failure the failure to load the store (can be null).
+     * @return true when the failure was caused by a wrong password.
+     */
+    public static boolean isWrongPassword( final Throwable failure )
+    {
+        for ( Throwable cause = failure; cause != null; cause = cause.getCause() )
+        {
+            if ( cause instanceof UnrecoverableKeyException )
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

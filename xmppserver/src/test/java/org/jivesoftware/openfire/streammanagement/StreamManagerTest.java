@@ -19,6 +19,7 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalSession;
@@ -33,10 +34,15 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.xmpp.packet.StreamError;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
 import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -1303,5 +1309,62 @@ public class StreamManagerTest extends AbstractStreamManagerTest
         // Verify result.
         assertTrue(connection.isClosed(), "Test fixture expects the stream to be closed for exceeding the maximum.");
         assertEquals(List.of("1", "2", "3"), unacknowledgedMessageIds(session.getStreamManager()), "A stanza that the closed connection drops, as it has no fallback, must be tracked, so that it is routed when the session closes.");
+    }
+
+    /**
+     * Verifies that a stanza that is sent while the session closes is not tracked once the stanzas that the peer did
+     * not acknowledge were handled, and Stream Management was disabled (OF-3420). Such a stanza would never be handled.
+     *
+     * The thread that sends the stanza finds Stream Management enabled, and then waits for the lock of the stream
+     * manager, which this test holds while the session closes.
+     */
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void stanzaSentWhileSessionClosesIsNotTrackedAfterUnacknowledgedStanzasWereHandled(final End end) throws Exception
+    {
+        // Setup test fixture.
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final PacketRouter router = mock(PacketRouter.class);
+        final AtomicReference<Throwable> failure = new AtomicReference<>();
+        final Thread sender = new Thread(() -> {
+            try {
+                sm.sentStanza(message("sent-while-closing"));
+            } catch (final Throwable t) {
+                failure.set(t);
+            }
+        }, "OF-3420-sender");
+
+        // Execute system under test.
+        synchronized (sm) {
+            sender.start();
+            awaitBlockedOn(sender, sm);
+            sm.onClose(router, SERVER_ADDRESS);
+        }
+        sender.join(TimeUnit.SECONDS.toMillis(10));
+
+        // Verify result.
+        assertFalse(sender.isAlive(), "The thread that sends the stanza must finish once the lock is released.");
+        assertNull(failure.get(), "Sending the stanza must not fail, but it threw: " + failure.get());
+        assertTrue(sm.getUnacknowledgedEntries().isEmpty(), "A stanza that is sent after the unacknowledged stanzas of the session were handled must not be tracked, as it would never be handled.");
+    }
+
+    /**
+     * Waits until a thread waits to obtain the lock of an object, failing when it ends before that, or does not wait
+     * within ten seconds.
+     */
+    private static void awaitBlockedOn(final Thread thread, final Object monitor)
+    {
+        final ThreadMXBean threads = ManagementFactory.getThreadMXBean();
+        final long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+        while (true) {
+            final ThreadInfo info = threads.getThreadInfo(thread.getId());
+            if (info != null && info.getThreadState() == Thread.State.BLOCKED && info.getLockInfo() != null && info.getLockInfo().getIdentityHashCode() == System.identityHashCode(monitor)) {
+                return;
+            }
+            assertTrue(thread.isAlive(), "Test fixture expects the thread to wait for the lock, but it ended.");
+            assertTrue(System.nanoTime() < deadline, "Test fixture expects the thread to wait for the lock within ten seconds.");
+            Thread.onSpinWait();
+        }
     }
 }

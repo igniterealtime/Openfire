@@ -567,6 +567,12 @@ public abstract class StreamManager {
 
             synchronized (this)
             {
+                if ( !isEnabled() ) {
+                    // OF-3420: Stream Management was disabled after the check above, for example by onClose(), which handled the unacknowledged stanzas already.
+                    // A stanza that is tracked after that would never be handled.
+                    Log.trace( "Not tracking stanza of type '{}' with ID '{}', as Stream Management was disabled while it was sent. Session: {}", packet.getElement().getName(), packet.getID(), session );
+                    return;
+                }
                 final Connection connection = session.getConnection();
                 if ( exceededMaximumUnacknowledgedStanzas && packet instanceof Message && connection != null && connection.isClosed() && connection.getPacketDeliverer() != null ) {
                     // OF-3434: The fallback of the closed connection stores this message offline. Tracking it as well would deliver it twice.

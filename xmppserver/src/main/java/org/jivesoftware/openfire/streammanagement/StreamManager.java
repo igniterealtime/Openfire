@@ -41,6 +41,7 @@ import java.math.BigInteger;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -148,9 +149,11 @@ public class StreamManager {
     private Deque<UnackedPacket> unacknowledgedServerStanzas = new LinkedList<>();
 
     /**
-     * Delegates that can determine if a detached session can be terminated.
+     * Delegates that can determine if a detached session can be terminated. They are added and removed by any thread,
+     * and read by the task that cleans up detached sessions. A copy of this set reflects it at a single moment, so that
+     * a delegate that is replaced while the copy is made cannot be missed together with its replacement.
      */
-    private final Set<TerminationDelegate> terminationDelegates = new HashSet<>();
+    private final Set<TerminationDelegate> terminationDelegates = new CopyOnWriteArraySet<>();
 
     public StreamManager(LocalSession session) {
         String address;
@@ -1012,6 +1015,9 @@ public class StreamManager {
     /**
      * Returns a defensive copy of all delegates that can determine if a detached session can be terminated.
      *
+     * The copy holds the delegates that were registered at a single moment. A delegate that is added before another
+     * delegate is removed is therefore never missing from the copy together with that other delegate.
+     *
      * @return all delegates that can determine if a detached session can be terminated.
      */
     public Set<TerminationDelegate> getTerminationDelegates()
@@ -1030,7 +1036,7 @@ public class StreamManager {
      */
     public void addTerminationDelegate(@Nonnull final TerminationDelegate delegate)
     {
-        terminationDelegates.add(delegate);
+        terminationDelegates.add(Objects.requireNonNull(delegate, "Argument 'delegate' cannot be null."));
     }
 
     /**
@@ -1043,7 +1049,7 @@ public class StreamManager {
      */
     public void removeTerminationDelegate(@Nonnull final TerminationDelegate delegate)
     {
-        terminationDelegates.remove(delegate);
+        terminationDelegates.remove(Objects.requireNonNull(delegate, "Argument 'delegate' cannot be null."));
     }
 
     /**

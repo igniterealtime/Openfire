@@ -137,6 +137,26 @@ public class UnacknowledgedStanzaQueueTest
     }
 
     /**
+     * Verifies that a stanza that is added as sent again is marked as such, and is numbered as any other stanza.
+     */
+    @Test
+    void stanzaAddedAsSentAgainIsMarked()
+    {
+        // Setup test fixture.
+        final UnacknowledgedStanzaQueue queue = new UnacknowledgedStanzaQueue(() -> MAXIMUM);
+        queue.add(message("1"));
+
+        // Execute system under test.
+        final long number = queue.add(message("2"), true);
+
+        // Verify result.
+        final List<UnacknowledgedStanzaQueue.Entry> entries = List.copyOf(queue.getEntries());
+        assertEquals(2, number, "A stanza that is added as sent again must be numbered one higher than the stanza that was added before it.");
+        assertFalse(entries.get(0).isSentAgain(), "A stanza that was added without the marker must not be marked as sent again.");
+        assertTrue(entries.get(1).isSentAgain(), "A stanza that was added as sent again must be marked as such.");
+    }
+
+    /**
      * Verifies that an acknowledgement removes the stanzas that it covers, and keeps the others.
      */
     @Test

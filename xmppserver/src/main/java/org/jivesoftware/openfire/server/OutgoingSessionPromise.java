@@ -27,6 +27,7 @@ import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.session.OutgoingServerSession;
 import org.jivesoftware.openfire.spi.RoutingTableImpl;
+import org.jivesoftware.openfire.streammanagement.RequestingStreamManager;
 import org.jivesoftware.util.NamedThreadFactory;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.TaskEngine;
@@ -580,7 +581,10 @@ public class OutgoingSessionPromise {
             // When queuing for async processing, ensure that the queued stanza is not modified by reference, by queuing
             // a defensive copy rather than the original. Modifications of the original can be expected in broadcast-like
             // scenarios (eg: MUC) where the same stanza is re-addressed for each intended recipient. See OF-2344.
-            if (!packetQueue.offer(packet.createCopy()))
+            final Packet copy = packet.createCopy();
+            // OF-2425: A stanza that is routed again after a connection broke must not be sent again a second time.
+            RequestingStreamManager.copyRoutedAgainMarker(packet, copy);
+            if (!packetQueue.offer(copy))
             {
                 Log.debug("Error sending packet in the outgoing session promise for {}. (outbound queue full): {}", domainPair, packet);
                 returnErrorToSender(packet);

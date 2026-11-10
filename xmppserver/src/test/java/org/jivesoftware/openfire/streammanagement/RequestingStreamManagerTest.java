@@ -24,6 +24,7 @@ import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.junit.jupiter.api.Test;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
 import org.xmpp.packet.StreamError;
 
 import java.util.ArrayList;
@@ -48,11 +49,12 @@ public class RequestingStreamManagerTest
     private static final JID SERVER_ADDRESS = new JID(Fixtures.XMPP_DOMAIN);
 
     /**
-     * Verifies that Stream Management is disabled when the session closes, without routing anything, as unacknowledged
-     * stanzas of connections that Openfire opened are not handled yet.
+     * Verifies that Stream Management is disabled when the session closes, and that nothing is routed when no stanzas
+     * are unacknowledged. How unacknowledged stanzas are handled is verified in
+     * LocalOutgoingServerSessionStreamManagementTest.
      */
     @Test
-    public void closeDisablesStreamManagementWithoutRouting()
+    public void closeDisablesStreamManagement()
     {
         // Setup test fixture.
         final RequestingStreamManager sm = enabledStreamManager();
@@ -63,7 +65,7 @@ public class RequestingStreamManagerTest
 
         // Verify result.
         assertFalse(sm.isEnabled(), "Stream Management must be disabled when the session closes.");
-        verifyNoInteractions(router);
+        assertTrue(mockingDetails(router).getInvocations().isEmpty(), "Nothing must be routed when no stanzas are unacknowledged.");
     }
 
     /**
@@ -336,6 +338,83 @@ public class RequestingStreamManagerTest
         // Verify result.
         assertFalse(sm.isEnabled(), "Stream Management must not be enabled after the peer refused it.");
         assertEquals(List.of(), UnacknowledgedStanzas.ids(sm), "No stanzas must be tracked when the peer refused Stream Management.");
+    }
+
+    /**
+     * Verifies that a stanza that is routed again when the session closes is marked as such, and that a copy of it gets
+     * the marker when it is copied with {@link RequestingStreamManager#copyRoutedAgainMarker(Packet, Packet)}.
+     */
+    @Test
+    public void stanzaRoutedAgainOnCloseIsMarkedAndCopyKeepsMarker()
+    {
+        // Setup test fixture.
+        final RequestingStreamManager sm = enabledStreamManager();
+        sm.sentStanza(message("1"));
+        final PacketRouter router = mock(PacketRouter.class);
+        sm.onClose(router, SERVER_ADDRESS);
+        final Packet routedAgain = routed(router).get(0);
+        final Packet copy = routedAgain.createCopy();
+
+        // Execute system under test.
+        RequestingStreamManager.copyRoutedAgainMarker(routedAgain, copy);
+
+        // Verify result.
+        assertTrue(RequestingStreamManager.isRoutedAgain(routedAgain), "A stanza that is routed again when the session closes must be marked as routed again.");
+        assertTrue(RequestingStreamManager.isRoutedAgain(copy), "A copy of a stanza that is routed again must get the marker.");
+    }
+
+    /**
+     * Verifies that a copy of a stanza that is not routed again does not get the marker.
+     */
+    @Test
+    public void copyOfStanzaThatIsNotRoutedAgainIsNotMarked()
+    {
+        // Setup test fixture.
+        final Message original = message("1");
+        final Packet copy = original.createCopy();
+
+        // Execute system under test.
+        RequestingStreamManager.copyRoutedAgainMarker(original, copy);
+
+        // Verify result.
+        assertFalse(RequestingStreamManager.isRoutedAgain(copy), "A copy of a stanza that is not routed again must not be marked as routed again.");
+    }
+
+    /**
+     * Verifies that a stream manager tracks a stanza that another session routed again as sent again, and other stanzas
+     * as sent for the first time.
+     */
+    @Test
+    public void stanzaRoutedAgainIsTrackedAsSentAgain()
+    {
+        // Setup test fixture.
+        final RequestingStreamManager closing = enabledStreamManager();
+        closing.sentStanza(message("1"));
+        final PacketRouter router = mock(PacketRouter.class);
+        closing.onClose(router, SERVER_ADDRESS);
+        final Packet routedAgain = routed(router).get(0);
+        final RequestingStreamManager sm = enabledStreamManager();
+
+        // Execute system under test.
+        sm.sentStanza(routedAgain);
+        sm.sentStanza(message("2"));
+
+        // Verify result.
+        final List<UnacknowledgedStanzaQueue.Entry> entries = List.copyOf(sm.getUnacknowledgedEntries());
+        assertEquals(List.of("1", "2"), entries.stream().map(entry -> entry.getPacket().getID()).toList(), "Both stanzas must be tracked.");
+        assertTrue(entries.get(0).isSentAgain(), "A stanza that another session routed again must be tracked as sent again.");
+        assertFalse(entries.get(1).isSentAgain(), "A stanza that is sent for the first time must not be tracked as sent again.");
+    }
+
+    /**
+     * Returns the stanzas that were routed by the provided router, in order.
+     */
+    private static List<Packet> routed(final PacketRouter router)
+    {
+        return mockingDetails(router).getInvocations().stream()
+            .filter(invocation -> invocation.getMethod().getName().equals("route"))
+            .map(invocation -> (Packet) invocation.getArgument(0))
+            .toList();
     }
 
     private static Message message(final String id)

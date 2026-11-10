@@ -1811,7 +1811,13 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                 tasks.add(CompletableFuture.runAsync(() -> server.getRoutingTable().removeServerRoute(domainPair)));
             }
 
-            return result.thenCompose(e -> CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])));
+            return result.thenCompose(e -> CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])))
+                .whenComplete((v, t) -> {
+                    if (session instanceof LocalOutgoingServerSession localSession) {
+                        // OF-2425: Only once the routes are removed do unacknowledged stanzas that are sent again go out over a new connection.
+                        localSession.getStreamManager().onClose(router, serverAddress);
+                    }
+                });
         }
 
         @Override

@@ -215,7 +215,9 @@
                 currentPasswordFailedFiles.add( location );
                 break;
             default:
-                errors.put( "update", failure.getMessage() );
+                // Keep each distinct message, so that a save in which several stores fail names each of them. A null
+                // message is kept as an empty one, as merge does not accept null.
+                errors.merge( "update", java.util.Objects.toString( failure.getMessage(), "" ), ( earlier, later ) -> earlier.contains( later ) ? earlier : earlier + " " + later );
                 break;
         }
     }

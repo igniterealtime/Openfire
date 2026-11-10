@@ -25,6 +25,7 @@ import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.nio.NettySessionInitializer;
+import org.jivesoftware.openfire.server.OutgoingSessionPromise;
 import org.jivesoftware.openfire.server.RemoteServerManager;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.streammanagement.OutboundResumeRequest;
@@ -720,9 +721,9 @@ public class LocalOutgoingServerSessionStreamManagementTest
         assertEquals(List.of("message", "presence"), UnacknowledgedStanzas.sentAgainIds(secondSession.getStreamManager()), "The second session must track the stanzas that were routed again as sent again, and only those.");
 
         final List<Packet> routedAtSecondBreak = routed(secondRouter);
-        assertEquals(List.of("message", "fresh"), routedAtSecondBreak.stream().map(Packet::getID).toList(), "At the second break, each unacknowledged stanza must be handled once, in the order in which it was sent, and the presence that was sent again must be dropped.");
+        assertEquals(List.of("fresh", "message"), routedAtSecondBreak.stream().map(Packet::getID).toList(), "At the second break, each unacknowledged stanza must be handled once, the error for the message that was sent again after the stanza that is routed again, and the presence that was sent again must be dropped.");
 
-        final Message messageError = (Message) routedAtSecondBreak.get(0);
+        final Message messageError = (Message) routedAtSecondBreak.get(1);
         assertEquals(Message.Type.error, messageError.getType(), "A message that was sent again must be returned to its sender as an error, not routed again.");
         assertEquals(SENDER, messageError.getTo(), "The error must be addressed to the sender of the message.");
         assertEquals(new JID(REMOTE_DOMAIN), messageError.getFrom(), "The error must come from the recipient of the message.");
@@ -731,7 +732,7 @@ public class LocalOutgoingServerSessionStreamManagementTest
         assertEquals(PacketError.Type.cancel, messageError.getError().getType(), "The error must have the type 'cancel', the type that RFC 6120 associates with 'service-unavailable'.");
         assertNull(messageError.getBody(), "The error must not include the content of the message.");
 
-        final Packet fresh = routedAtSecondBreak.get(1);
+        final Packet fresh = routedAtSecondBreak.get(0);
         assertEquals(new JID(REMOTE_DOMAIN), fresh.getTo(), "A stanza that was first sent on the second connection must be routed again to its recipient.");
         assertNull(fresh.getError(), "A stanza that was first sent on the second connection must not be turned into an error.");
     }
@@ -978,8 +979,8 @@ public class LocalOutgoingServerSessionStreamManagementTest
         assertFalse(sessionManager.isDetached(resumable), "A session that was detached for longer than the server detach timeout must no longer be detached.");
         verify(routingTable, times(1).description("The route of a session that is ended must be removed.")).removeServerRoute(DOMAIN_PAIR);
         final List<Packet> routed = routed(packetRouter);
-        assertEquals(List.of("unacked", "unacked-request", "queued-1", "queued-2"), routed.stream().map(Packet::getID).toList(), "The unacknowledged stanzas must be handled first, then the queued stanzas must be routed again, in order.");
-        assertEquals(IQ.Type.error, ((IQ) routed.get(1)).getType(), "An unacknowledged IQ request must be returned to its sender as an error, as for a session that closes without being resumed.");
+        assertEquals(List.of("unacked", "queued-1", "queued-2", "unacked-request"), routed.stream().map(Packet::getID).toList(), "The unacknowledged stanza must be routed again first, then the queued stanzas, in order, and the IQ request must be returned as an error last.");
+        assertEquals(IQ.Type.error, ((IQ) routed.get(3)).getType(), "An unacknowledged IQ request must be returned to its sender as an error, as for a session that closes without being resumed.");
         assertEquals(List.of(true, true, true, true), routeRemovedWhenRouted, "Every stanza must be routed only after the route of the session was removed.");
         assertFalse(resumable.getStreamManager().isEnabled(), "Stream Management must be disabled once the session is ended.");
     }
@@ -1055,6 +1056,146 @@ public class LocalOutgoingServerSessionStreamManagementTest
 
         // Verify result.
         assertEquals(List.of(false, false), heldLock, "The route must be removed and the stanza routed, without holding the monitor of the session manager or the lock of the stream manager.");
+    }
+
+    /**
+     * Verifies that a detached session that is ended removes the route of its domain pair without holding the mutex with
+     * which stanzas for that domain pair are routed, as removing a route can wait for a cluster-wide lock, and then
+     * routes the stanzas of that domain pair again while holding that mutex, so that a stanza for the domain pair that
+     * is routed meanwhile cannot go out ahead of them. A stanza of another domain pair is routed after that, without
+     * holding that mutex.
+     */
+    @Test
+    public void detachedSessionRoutesStanzasAgainUnderMutexOfDomainPair() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        final LocalOutgoingServerSession resumable = resumableSession();
+        resumable.deliver(message("unacked"));
+        doReturn(true).when(connection).isClosed();
+        fireOutgoingConnectionClose(sessionManager, resumable);
+        resumable.deliver(message("queued"));
+        final Message unrelated = message("queued-unrelated");
+        unrelated.setTo("unrelated.example.com");
+        resumable.deliver(unrelated);
+
+        final Object mutex = OutgoingSessionPromise.getInstance().getMutex(DOMAIN_PAIR);
+        final List<String> events = new CopyOnWriteArrayList<>();
+        doAnswer(invocation -> { events.add("remove " + invocation.getArgument(0) + " " + Thread.holdsLock(mutex)); return true; }).when(routingTable).removeServerRoute(any(DomainPair.class));
+        doAnswer(invocation -> { events.add("route " + ((Packet) invocation.getArgument(0)).getID() + " " + Thread.holdsLock(mutex)); return null; }).when(packetRouter).route(any(Packet.class));
+
+        // Execute system under test.
+        sessionManager.terminateDetached(resumable);
+
+        // Verify result.
+        assertEquals(List.of("remove " + DOMAIN_PAIR + " false", "route unacked true", "route queued true", "route queued-unrelated false"), events, "The route of the domain pair must be removed without holding its mutex, and then its unacknowledged and queued stanzas routed again while holding it, after which a stanza of another domain pair must be routed without holding it.");
+    }
+
+    /**
+     * Verifies that a stanza that is delivered to a detached session while it is ended, before the route of its domain
+     * pair is removed, is handled after the stanzas that were queued before it, and once. This guards the order of the
+     * stanzas of a session that is ended; it does not reproduce two threads that route stanzas for the domain pair at
+     * the same time.
+     */
+    @Test
+    public void stanzaDeliveredWhileDetachedSessionIsEndedIsRoutedAfterEarlierStanzas() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        final LocalOutgoingServerSession resumable = detachedSession(sessionManager);
+        resumable.deliver(message("queued"));
+        doAnswer(invocation -> { resumable.deliver(message("late")); return true; }).when(routingTable).removeServerRoute(DOMAIN_PAIR);
+
+        // Execute system under test.
+        sessionManager.terminateDetached(resumable);
+
+        // Verify result.
+        assertEquals(List.of("queued", "late"), routed(packetRouter).stream().map(Packet::getID).toList(), "A stanza that is delivered while the session is ended must be routed again once, after the stanza that was queued before it.");
+    }
+
+    /**
+     * Verifies that the close listener for outgoing server sessions, for a session that is not detached, removes the
+     * route of each domain pair without holding the mutex with which stanzas for that domain pair are routed, and then
+     * routes the unacknowledged stanzas of that domain pair again while holding that mutex.
+     */
+    @Test
+    public void closeListenerRemovesRouteThenRoutesStanzasAgainUnderMutexOfDomainPair() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        session.addOutgoingDomainPair(DOMAIN_PAIR);
+        enableStreamManagement();
+        session.deliver(message("1"));
+        session.deliver(message("2"));
+        doReturn(true).when(connection).isClosed();
+
+        final Object mutex = OutgoingSessionPromise.getInstance().getMutex(DOMAIN_PAIR);
+        final List<String> events = new CopyOnWriteArrayList<>();
+        doAnswer(invocation -> { events.add("remove " + Thread.holdsLock(mutex)); return true; }).when(routingTable).removeServerRoute(DOMAIN_PAIR);
+        doAnswer(invocation -> { events.add("route " + ((Packet) invocation.getArgument(0)).getID() + " " + Thread.holdsLock(mutex)); return null; }).when(packetRouter).route(any(Packet.class));
+
+        // Execute system under test.
+        fireOutgoingConnectionClose(sessionManager);
+
+        // Verify result.
+        assertEquals(List.of("remove false", "route 1 true", "route 2 true"), events, "The route must be removed without holding the mutex of the domain pair, and then the unacknowledged stanzas routed again in order while holding it.");
+    }
+
+    /**
+     * Verifies that the stanzas of a session that is closed are handled once when the session is closed again while
+     * the first close is still handling them, as when a detached session is ended while its close listener runs.
+     */
+    @Test
+    public void closingAgainWhileClosingDoesNotHandleStanzasTwice() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        session.addOutgoingDomainPair(DOMAIN_PAIR);
+        enableStreamManagement();
+        session.deliver(message("1"));
+        session.deliver(message("2"));
+        doReturn(true).when(connection).isClosed();
+        doAnswer(invocation -> { session.getStreamManager().onClose(packetRouter, SERVER_ADDRESS, List.of(DOMAIN_PAIR), domainPair -> {}); return true; }).when(routingTable).removeServerRoute(DOMAIN_PAIR);
+
+        // Execute system under test.
+        fireOutgoingConnectionClose(sessionManager);
+
+        // Verify result.
+        assertEquals(List.of("1", "2"), routed(packetRouter).stream().map(Packet::getID).toList(), "Each unacknowledged stanza must be routed again once, also when the session is closed again while its stanzas are being handled.");
+    }
+
+    /**
+     * Verifies that the close listener for outgoing server sessions routes the error that returns an unacknowledged IQ
+     * request to its sender without holding the mutex of the domain pair, after the stanzas that are routed again under
+     * that mutex. The error goes to a local sender, which can route other stanzas on the same thread, to another remote
+     * domain, of which another thread can hold the mutex while it waits for this one.
+     */
+    @Test
+    public void closeListenerRoutesErrorsWithoutHoldingMutexOfDomainPair() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        session.addOutgoingDomainPair(DOMAIN_PAIR);
+        enableStreamManagement();
+        session.deliver(iq("request", IQ.Type.get));
+        session.deliver(message("message"));
+        doReturn(true).when(connection).isClosed();
+
+        final Object mutex = OutgoingSessionPromise.getInstance().getMutex(DOMAIN_PAIR);
+        final List<String> events = new CopyOnWriteArrayList<>();
+        doAnswer(invocation -> { events.add("route " + ((Packet) invocation.getArgument(0)).getID() + " " + Thread.holdsLock(mutex)); return null; }).when(packetRouter).route(any(Packet.class));
+
+        // Execute system under test.
+        fireOutgoingConnectionClose(sessionManager);
+
+        // Verify result.
+        assertEquals(List.of("route message true", "route request false"), events, "The message must be routed again while holding the mutex of the domain pair, and the error for the IQ request routed after it, without holding that mutex.");
+        assertEquals(IQ.Type.error, ((IQ) routed(packetRouter).get(1)).getType(), "The unacknowledged IQ request must be returned to its sender as an error.");
     }
 
     /**
@@ -1884,5 +2025,23 @@ public class LocalOutgoingServerSessionStreamManagementTest
         final Field lastActiveDate = LocalSession.class.getDeclaredField("lastActiveDate");
         lastActiveDate.setAccessible(true);
         lastActiveDate.set(target, moment.toEpochMilli());
+    }
+    /**
+     * Invokes {@link LocalOutgoingServerSession#authenticateDomain(DomainPair)} for the provided domain pair, where
+     * opening a new connection gives the provided session.
+     */
+    private DomainAuthResult authenticateDomain(final DomainPair domainPair, final LocalOutgoingServerSession newConnectionSession)
+    {
+        try (final MockedStatic<RemoteServerManager> remoteServers = mockStatic(RemoteServerManager.class);
+             final MockedConstruction<NettySessionInitializer> constructed = mockConstruction(NettySessionInitializer.class,
+                 (initialiser, context) -> doReturn(CompletableFuture.completedFuture(newConnectionSession)).when(initialiser).init(any())))
+        {
+            remoteServers.when(() -> RemoteServerManager.canAccess(anyString())).thenReturn(true);
+            remoteServers.when(() -> RemoteServerManager.getPortForServer(anyString())).thenReturn(5269);
+
+            final DomainAuthResult result = LocalOutgoingServerSession.authenticateDomain(domainPair);
+            initialisers.addAll(constructed.constructed());
+            return result;
+        }
     }
 }

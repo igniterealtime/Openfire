@@ -596,6 +596,83 @@ public class RespondingServerStanzaHandlerStreamManagementTest
     }
 
     /**
+     * Verifies that an answer of the remote server to a request to resume a stream that Openfire gave up on is ignored:
+     * the detached session is not resumed on the connection.
+     */
+    @Test
+    public void resumedAfterResumeWasAbandonedIsIgnored() throws Exception
+    {
+        // Setup test fixture.
+        final LocalOutgoingServerSession target = detachedSession();
+        handler = new RespondingServerStanzaHandler(mock(PacketRouter.class), connection, new DomainPair(Fixtures.XMPP_DOMAIN, REMOTE_DOMAIN), target);
+        doAnswer(invocation -> { handler.setSession(invocation.getArgument(0)); return null; }).when(connection).reinit(any());
+        authenticate(ServerSession.AuthenticationMethod.DIALBACK, SM_FEATURE_V3);
+        final OutboundResumeRequest.Status statusBeforeAbandoning = streamManager().getResumeRequest().getStatus();
+        final boolean abandoned = handler.abandonResume();
+
+        // Execute system under test.
+        handler.process("<resumed xmlns='" + StreamManager.NAMESPACE_V3 + "' previd='sm-id-former' h='1'/>", reader);
+
+        // Verify result.
+        assertEquals(OutboundResumeRequest.Status.PENDING, statusBeforeAbandoning, "Test fixture expects the request to resume the stream to have been sent, and to await an answer, before it is given up.");
+        assertTrue(abandoned, "A request that awaits an answer must be reported as given up.");
+        assertEquals(OutboundResumeRequest.Status.ABANDONED, streamManager().getResumeRequest().getStatus(), "The request must be recorded as given up.");
+        assertTrue(XMPPServer.getInstance().getSessionManager().isDetached(target), "The detached session must not be resumed by an answer that arrives after the request was given up.");
+        assertNotSame(target, handler.getSession(), "The connection must not be attached to the detached session.");
+    }
+
+    /**
+     * Verifies that, once Openfire gave up on resuming a stream on a connection, no request to resume it is sent on the
+     * session that the restart of the stream after SASL EXTERNAL creates later.
+     */
+    @Test
+    public void resumeIsNotSentAfterStreamRestartWhenAbandonedBefore() throws Exception
+    {
+        // Setup test fixture.
+        final LocalOutgoingServerSession target = detachedSession();
+        handler = new RespondingServerStanzaHandler(mock(PacketRouter.class), connection, new DomainPair(Fixtures.XMPP_DOMAIN, REMOTE_DOMAIN), target);
+        handler.process(streamHeader("stream-1"), reader);
+        handler.process(features("<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'><mechanism>EXTERNAL</mechanism></mechanisms>"), reader);
+        handler.process("<success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>", reader);
+
+        // Execute system under test.
+        final boolean abandoned = handler.abandonResume();
+        handler.process(streamHeader("stream-2"), reader);
+        handler.process(features(SM_FEATURE_V3), reader);
+
+        // Verify result.
+        assertTrue(abandoned, "A request that was not sent must be reported as given up.");
+        assertEquals("stream-2", handler.getSession().getStreamID().getID(), "Test fixture expects the stream to have been restarted with a new session.");
+        assertTrue(allDelivered().stream().noneMatch(text -> text.startsWith("<resume")), "No request to resume the stream must be sent after Openfire gave up on it, but these were delivered: " + allDelivered());
+    }
+
+    /**
+     * Verifies that giving up on resuming a stream after the remote server answered the request reports that it was
+     * answered, so that the processing of that answer takes care of the detached session.
+     */
+    @Test
+    public void abandonAfterAnswerReportsAnswered() throws Exception
+    {
+        // Setup test fixture.
+        final LocalOutgoingServerSession target = detachedSession();
+        handler = new RespondingServerStanzaHandler(mock(PacketRouter.class), connection, new DomainPair(Fixtures.XMPP_DOMAIN, REMOTE_DOMAIN), target);
+        authenticate(ServerSession.AuthenticationMethod.DIALBACK, SM_FEATURE_V3);
+        final RequestingStreamManager providerStreamManager = streamManager();
+        // The refusal ends the detached session on another thread, which is awaited below, before the server is reset.
+        final SessionManager sessionManager = mock(SessionManager.class);
+        doReturn(sessionManager).when(XMPPServer.getInstance()).getSessionManager();
+        handler.process("<failed xmlns='" + StreamManager.NAMESPACE_V3 + "'><item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></failed>", reader);
+
+        // Execute system under test.
+        final boolean abandoned = handler.abandonResume();
+
+        // Verify result.
+        assertEquals(OutboundResumeRequest.Status.ANSWERED, providerStreamManager.getResumeRequest().getStatus(), "Test fixture expects the request to have been answered.");
+        assertFalse(abandoned, "A request that the remote server answered must not be reported as given up.");
+        verify(sessionManager, timeout(5000).times(1).description("The detached session must be ended when the remote server refuses to resume its stream.")).terminateDetached(target);
+    }
+
+    /**
      * Creates a detached outgoing server session, on a connection of its own, of which the stream can be resumed. It
      * tracks three stanzas, of which the remote server acknowledged the first, and queued one. A session manager is used
      * that holds the detached sessions.

@@ -24,6 +24,8 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.server.OutgoingSessionPromise;
+import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.util.SystemProperty;
@@ -45,9 +47,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * XEP-0198 Stream Management at the end of a stream that asks for it, and that the peer answers, such as a connection
@@ -188,6 +193,13 @@ public class RequestingStreamManager extends StreamManager
      * instance.
      */
     private boolean queueLimitExceeded = false;
+
+    /**
+     * Whether the stanzas of the session are being handled, or were handled, as the session closed without being resumed
+     * (see {@link #onClose(PacketRouter, JID, Collection, Consumer)}). Guarded by the lock of this instance.
+     */
+    private boolean closing = false;
+
 
     /**
      * Stanzas that are routed again after the session on which they were unacknowledged closed, so that the session that
@@ -603,10 +615,11 @@ public class RequestingStreamManager extends StreamManager
      * Stanzas that were queued while the connection of the session was broken (see {@link #queue(Packet, boolean)})
      * were never sent. They are routed again after the unacknowledged stanzas, in the order in which they were queued,
      * without a delay stamp, and keep the marker of a stanza that was routed again before. No stanza is queued after
-     * this.
+     * this. The errors that return stanzas to their senders are routed after all other stanzas.
      *
      * This must be invoked after the routes of the session are removed. While the session is a route, a stanza that is
-     * routed again reaches that session rather than another connection.
+     * routed again reaches that session rather than another connection. To have the routes removed as part of this,
+     * use {@link #onClose(PacketRouter, JID, Collection, Consumer)}.
      *
      * @param router the router used to route the stanzas.
      * @param serverAddress this server's bare-domain address, used to stamp delay information on messages and presences.
@@ -614,19 +627,155 @@ public class RequestingStreamManager extends StreamManager
     @Override
     public void onClose(PacketRouter router, JID serverAddress)
     {
-        final Collection<UnacknowledgedStanzaQueue.Entry> unacknowledged;
+        onClose( router, serverAddress, List.of(), domainPair -> {} );
+    }
+
+    /**
+     * Removes the routes of the provided domain pairs of the session, and handles the stanzas of the session as
+     * {@link #onClose(PacketRouter, JID)} describes, for a session that closed without being resumed.
+     *
+     * This is done one domain pair at a time: the route of the domain pair is removed, and then, while holding the mutex
+     * with which stanzas for a domain pair are routed ({@link OutgoingSessionPromise#getMutex(DomainPair)}), its
+     * stanzas are handled, its unacknowledged ones first. A stanza for the domain pair that is routed while they are
+     * handled waits for that mutex, and then follows them to another connection. The route is removed without holding
+     * that mutex, as removing it can wait for a cluster-wide lock, which another cluster node can hold while it
+     * connects for the same domain pair: a stanza that is routed after the route is removed, but before the mutex is
+     * taken, can go out ahead of them. Stanzas that this stream manager queued until then are among the stanzas that
+     * are handled. The stanzas that belong to none of the provided domain pairs are handled after that, without
+     * holding a mutex. The routes are removed also when Stream Management is not enabled, in which case no stanzas are
+     * handled.
+     *
+     * The errors that are returned to the senders of stanzas are routed last, without holding a mutex: they go to local
+     * senders, which can route other stanzas in turn, for example to another remote domain, of which the mutex can be
+     * held by another thread that waits for one held here.
+     *
+     * This must be invoked without holding the lock of this instance.
+     *
+     * @param router the router used to route the stanzas.
+     * @param serverAddress this server's bare-domain address, used to stamp delay information on messages and presences.
+     * @param domainPairs the domain pairs of the session, of which the routes are to be removed.
+     * @param removeRoute removes the route of a domain pair. A failure to remove one does not keep the stanzas of that
+     *                    domain pair from being handled, or the other routes from being removed.
+     */
+    public void onClose(@Nonnull final PacketRouter router, @Nonnull final JID serverAddress, @Nonnull final Collection<DomainPair> domainPairs, @Nonnull final Consumer<DomainPair> removeRoute)
+    {
+        final List<UnacknowledgedStanzaQueue.Entry> unacknowledged = new ArrayList<>();
+        final boolean handleStanzas;
+        synchronized ( this ) {
+            // OF-2425: Stays enabled until all domain pairs are done, so that stanzas that are queued meanwhile are handled below.
+            handleStanzas = isEnabled() && !closing;
+            if ( handleStanzas ) {
+                closing = true;
+                unacknowledged.addAll( getUnacknowledgedEntries() );
+            }
+        }
+        final int unacknowledgedCount = unacknowledged.size();
+
+        Handled handled = new Handled( 0, 0, 0 );
+        int queuedCount = 0;
+        final List<Packet> errors = new ArrayList<>();
+        for ( final DomainPair domainPair : domainPairs ) {
+            // OF-2425: Not under the mutex: removing a route can wait for a cluster lock, held by a node that connects meanwhile.
+            try {
+                removeRoute.accept( domainPair );
+            } catch ( Exception e ) {
+                Log.warn( "Unable to remove route {} of session {}, which closed without being resumed.", domainPair, session, e );
+            }
+            if ( !handleStanzas ) {
+                continue;
+            }
+            // OF-2425: One mutex at a time, never nested. The lock of this instance is taken inside it.
+            synchronized ( OutgoingSessionPromise.getInstance().getMutex( domainPair ) ) {
+                final List<Packet> queued;
+                synchronized ( this ) {
+                    queued = takeOf( queuedStanzas, domainPair );
+                }
+                handled = handled.plus( routeAgainOrReturn( takeOf( unacknowledged, domainPair, UnacknowledgedStanzaQueue.Entry::getPacket ), router, serverAddress, errors ) );
+                routeQueued( queued, router );
+                queuedCount += queued.size();
+            }
+        }
+        if ( !handleStanzas ) {
+            return;
+        }
+
         final List<Packet> queued;
         synchronized ( this ) {
-            if ( !isEnabled() ) {
-                return;
-            }
-            unacknowledged = getUnacknowledgedEntries();
             queued = new ArrayList<>( queuedStanzas );
             queuedStanzas.clear();
             setNamespace( null );
         }
-
         // OF-2425: The stanzas are routed without holding the lock, as routing can deliver them to another session.
+        handled = handled.plus( routeAgainOrReturn( unacknowledged, router, serverAddress, errors ) );
+        routeQueued( queued, router );
+        queuedCount += queued.size();
+        routeErrors( errors, router );
+        if ( unacknowledgedCount > 0 || queuedCount > 0 ) {
+            Log.debug( "Session {} closed without being resumed, with {} unacknowledged stanza(s): {} routed again, {} returned to the sender as an error, {} dropped as no error can be returned for them. Queued stanzas that were never sent, routed again: {}. Routes removed first: {}", session, unacknowledgedCount, handled.sentAgain(), handled.returned(), handled.dropped(), queuedCount, domainPairs );
+        }
+    }
+
+    /**
+     * Removes the stanzas of a domain pair from a collection, and returns them.
+     *
+     * @param stanzas The stanzas, from which those of the domain pair are removed.
+     * @param domainPair The domain pair.
+     * @return the stanzas of the domain pair, in the order of the collection.
+     */
+    @Nonnull
+    private static List<Packet> takeOf(@Nonnull final Collection<Packet> stanzas, @Nonnull final DomainPair domainPair)
+    {
+        return takeOf( stanzas, domainPair, packet -> packet );
+    }
+
+    /**
+     * Removes the elements of a collection of which the stanza belongs to a domain pair, and returns them.
+     *
+     * @param elements The elements, from which those of the domain pair are removed.
+     * @param domainPair The domain pair.
+     * @param stanzaOf Gives the stanza of an element.
+     * @return the elements of the domain pair, in the order of the collection.
+     */
+    @Nonnull
+    private static <T> List<T> takeOf(@Nonnull final Collection<T> elements, @Nonnull final DomainPair domainPair, @Nonnull final Function<T, Packet> stanzaOf)
+    {
+        final List<T> result = new ArrayList<>();
+        for ( final Iterator<T> iterator = elements.iterator(); iterator.hasNext(); ) {
+            final T element = iterator.next();
+            if ( domainPair.equals( pairOf( stanzaOf.apply( element ) ) ) ) {
+                iterator.remove();
+                result.add( element );
+            }
+        }
+        return result;
+    }
+
+    /**
+     * The number of unacknowledged stanzas that were routed again, returned to their sender as an error, or dropped.
+     */
+    private record Handled(int sentAgain, int returned, int dropped)
+    {
+        private Handled plus(@Nonnull final Handled other)
+        {
+            return new Handled( sentAgain + other.sentAgain, returned + other.returned, dropped + other.dropped );
+        }
+    }
+
+    /**
+     * Handles stanzas that the peer did not acknowledge, and that are not sent again on this stream: each is routed
+     * again, or returned to its sender as an error, or dropped, as described in {@link #onClose(PacketRouter, JID)}.
+     * The errors are not routed, but added to the provided list, to be routed with {@link #routeErrors(List, PacketRouter)}.
+     * This must be invoked without holding the lock of this instance.
+     *
+     * @param unacknowledged The unacknowledged stanzas, in the order in which they were sent.
+     * @param router the router used to route the stanzas.
+     * @param serverAddress this server's bare-domain address, used to stamp delay information on messages and presences.
+     * @param errors the list to which the errors that are to be returned to the senders of stanzas are added.
+     * @return how the stanzas were handled.
+     */
+    @Nonnull
+    private Handled routeAgainOrReturn(@Nonnull final Collection<UnacknowledgedStanzaQueue.Entry> unacknowledged, @Nonnull final PacketRouter router, @Nonnull final JID serverAddress, @Nonnull final List<Packet> errors)
+    {
         int sentAgain = 0;
         int returned = 0;
         int dropped = 0;
@@ -644,7 +793,7 @@ public class RequestingStreamManager extends StreamManager
                 final Packet error = createErrorResponse( packet );
                 Log.trace( "Not routing unacknowledged '{}' stanza of type '{}' with ID '{}' of session {} again (sent again before: {}). Returning it to its sender as an error: {}", packet.getElement().getName(), packet.getElement().attributeValue( "type" ), packet.getID(), session, entry.isSentAgain(), error != null );
                 if ( error != null ) {
-                    router.route( error );
+                    errors.add( error );
                     returned++;
                 } else {
                     dropped++;
@@ -654,6 +803,38 @@ public class RequestingStreamManager extends StreamManager
                 Log.warn( "Unable to handle an unacknowledged '{}' stanza of type '{}' with ID '{}', of session {} that closed.", packet.getElement().getName(), packet.getElement().attributeValue( "type" ), packet.getID(), session, e );
             }
         }
+        return new Handled( sentAgain, returned, dropped );
+    }
+
+    /**
+     * Routes errors that return stanzas to their senders, in order. This must be invoked without holding the lock of this
+     * instance or a mutex of {@link OutgoingSessionPromise#getMutex(DomainPair)}: the errors go to local senders, which
+     * can route other stanzas in turn, for example to a remote domain of which another thread holds the mutex while it
+     * waits for one held here.
+     *
+     * @param errors The errors.
+     * @param router the router used to route the errors.
+     */
+    private void routeErrors(@Nonnull final List<Packet> errors, @Nonnull final PacketRouter router)
+    {
+        for ( final Packet error : errors ) {
+            try {
+                router.route( error );
+            } catch ( Exception e ) {
+                Log.warn( "Unable to route the '{}' error with ID '{}' that returns an unacknowledged stanza of session {} to its sender.", error.getElement().getName(), error.getID(), session, e );
+            }
+        }
+    }
+
+    /**
+     * Routes stanzas that were queued, and never sent, again, in order, so that they go out over another
+     * connection. This must be invoked without holding the lock of this instance.
+     *
+     * @param queued The stanzas, in the order in which they were delivered.
+     * @param router the router used to route the stanzas.
+     */
+    private void routeQueued(@Nonnull final Collection<Packet> queued, @Nonnull final PacketRouter router)
+    {
         // OF-2425: Queued stanzas were never sent, so they go out over a new connection after the unacknowledged ones (decision 7).
         for ( final Packet packet : queued ) {
             try {
@@ -661,9 +842,6 @@ public class RequestingStreamManager extends StreamManager
             } catch ( Exception e ) {
                 Log.warn( "Unable to route a queued '{}' stanza of type '{}' with ID '{}', of session {} that closed.", packet.getElement().getName(), packet.getElement().attributeValue( "type" ), packet.getID(), session, e );
             }
-        }
-        if ( !unacknowledged.isEmpty() || !queued.isEmpty() ) {
-            Log.debug( "Session {} closed without being resumed, with {} unacknowledged stanza(s): {} routed again, {} returned to the sender as an error, {} dropped as no error can be returned for them. Queued stanzas that were never sent, routed again: {}", session, unacknowledged.size(), sentAgain, returned, dropped, queued.size() );
         }
     }
 
@@ -846,6 +1024,20 @@ public class RequestingStreamManager extends StreamManager
                 }
             }
         }
+    }
+
+    /**
+     * Returns the domain pair of a stanza: the domain of its sender and the domain of its recipient.
+     *
+     * @param packet The stanza.
+     * @return the domain pair, or null when the stanza is not addressed.
+     */
+    @Nullable
+    private static DomainPair pairOf(@Nonnull final Packet packet)
+    {
+        final JID from = packet.getFrom();
+        final JID to = packet.getTo();
+        return from == null || to == null ? null : new DomainPair( from.getDomain(), to.getDomain() );
     }
 
     /**

@@ -152,6 +152,8 @@ public final class Fixtures {
     public static SessionManager mockSessionManager() {
         final SessionManager sessionManager = mock(SessionManager.class, withSettings().lenient());
         when(sessionManager.nextStreamID()).thenReturn(new BasicStreamIDFactory().createStreamID());
+        // The timeout for the type of a session is derived from the settings, and from getSessionDetachTime(), which tests can stub.
+        doCallRealMethod().when(sessionManager).getDetachTimeout(any());
         return sessionManager;
     }
 

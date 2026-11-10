@@ -89,8 +89,10 @@ public abstract class StreamManager {
 
     /**
      * Whether streams on connections with other servers can be resumed after their connection broke (XEP-0198 § 5).
-     * When this is not set, a server session is ended when its connection breaks, even when its stream was made
-     * resumable. Applies only to connections on which Stream Management is used (see {@link #SERVER_ACTIVE}).
+     * When this is set, resumption is offered to a server that connected to Openfire and requests it, and such a
+     * server can resume its stream on a new connection. When this is not set, resumption is not offered or accepted,
+     * and a server session is ended when its connection breaks, even when its stream was made resumable. Applies only
+     * to connections on which Stream Management is used (see {@link #SERVER_ACTIVE}).
      */
     public static SystemProperty<Boolean> SERVER_RESUME_ENABLED = SystemProperty.Builder.ofType( Boolean.class )
         .setKey("stream.management.server.resume.enabled")

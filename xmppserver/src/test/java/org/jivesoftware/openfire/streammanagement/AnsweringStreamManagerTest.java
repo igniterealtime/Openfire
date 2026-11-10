@@ -67,6 +67,7 @@ public class AnsweringStreamManagerTest extends AbstractStreamManagerTest
         final Connection oldConnection = mock(Connection.class);
         when(otherSession.isDetached()).thenReturn(false);
         when(otherSession.getConnection()).thenReturn(oldConnection);
+        when(otherSession.setDetachedIfConnectionIs(oldConnection)).thenReturn(true);
         final LocalSession tempSession = mock(LocalSession.class); // owns this StreamManager
         final AnsweringStreamManager sm = new AnsweringStreamManager(tempSession);
 
@@ -74,7 +75,7 @@ public class AnsweringStreamManagerTest extends AbstractStreamManagerTest
         sm.detachIfNeeded(otherSession);
 
         // Verify results.
-        verify(otherSession, times(1).description("The pre-existing session must be marked detached before its connection is handed off to the resumed session.")).setDetached();
+        verify(otherSession, times(1).description("The pre-existing session must be marked detached before its connection is handed off to the resumed session.")).setDetachedIfConnectionIs(oldConnection);
 
         final ArgumentCaptor<StreamError> errorCaptor = ArgumentCaptor.forClass(StreamError.class);
         verify(oldConnection, times(1).description("The pre-existing connection must be closed exactly once as part of the hand-off.")).close(errorCaptor.capture());
@@ -100,7 +101,80 @@ public class AnsweringStreamManagerTest extends AbstractStreamManagerTest
 
         // Verify results.
         verify(otherSession, never().description("An already-detached session has no connection to obtain; detachIfNeeded() must not attempt to read it.")).getConnection();
-        verify(otherSession, never().description("An already-detached session must not be detached again.")).setDetached();
+        verify(otherSession, never().description("An already-detached session must not be detached again.")).setDetachedIfConnectionIs(any());
+    }
+
+    /**
+     * Verifies that {@link AnsweringStreamManager#detachIfNeeded(LocalSession)} reports that a session that is neither
+     * detached nor has a connection cannot be resumed, and does not detach it again. Such a session was taken from the
+     * detached sessions by another resumption, or because it was ended.
+     */
+    @Test
+    void refusesSessionThatIsNeitherDetachedNorConnected()
+    {
+        // Setup test fixture.
+        final LocalClientSession otherSession = mock(LocalClientSession.class);
+        when(otherSession.isDetached()).thenReturn(false);
+        when(otherSession.getConnection()).thenReturn(null);
+        final AnsweringStreamManager sm = new AnsweringStreamManager(mock(LocalSession.class));
+
+        // Execute system under test.
+        final boolean result = sm.detachIfNeeded(otherSession);
+
+        // Verify results.
+        assertFalse(result, "A session that is neither detached nor has a connection must be reported as one that cannot be resumed.");
+        verify(otherSession, never().description("A session that was taken from the detached sessions must not be detached again.")).setDetachedIfConnectionIs(any());
+    }
+
+    /**
+     * Verifies that {@link AnsweringStreamManager#detachIfNeeded(LocalSession)} reports that a session that another
+     * resumption moved to a new connection, after its connection was read, cannot be resumed, and that the connection
+     * that was read is not closed then. The new connection of the session is left as it is.
+     */
+    @Test
+    void refusesSessionThatWasMovedToAnotherConnectionMeanwhile()
+    {
+        // Setup test fixture.
+        final LocalClientSession otherSession = mock(LocalClientSession.class);
+        final Connection oldConnection = mock(Connection.class);
+        when(otherSession.isDetached()).thenReturn(false);
+        when(otherSession.getConnection()).thenReturn(oldConnection);
+        when(otherSession.setDetachedIfConnectionIs(oldConnection)).thenReturn(false);
+        final AnsweringStreamManager sm = new AnsweringStreamManager(mock(LocalSession.class));
+
+        // Execute system under test.
+        final boolean result = sm.detachIfNeeded(otherSession);
+
+        // Verify results.
+        assertFalse(result, "A session that another resumption moved to a new connection must be reported as one that cannot be resumed.");
+        verify(oldConnection, never().description("The connection that was read must not be closed by a request that does not resume the session.")).close(any(StreamError.class));
+    }
+
+    /**
+     * Verifies that {@link AnsweringStreamManager#detachIfNeeded(LocalSession)} detaches the session only while it uses
+     * the connection that was read, and closes that connection, rather than one that the session uses later.
+     */
+    @Test
+    void detachesAndClosesTheConnectionThatWasRead()
+    {
+        // Setup test fixture.
+        final LocalClientSession otherSession = mock(LocalClientSession.class);
+        final Connection readConnection = mock(Connection.class);
+        final Connection laterConnection = mock(Connection.class);
+        when(otherSession.isDetached()).thenReturn(false);
+        when(otherSession.getConnection()).thenReturn(readConnection, laterConnection);
+        when(otherSession.setDetachedIfConnectionIs(any())).thenReturn(true);
+        final AnsweringStreamManager sm = new AnsweringStreamManager(mock(LocalSession.class));
+
+        // Execute system under test.
+        final boolean result = sm.detachIfNeeded(otherSession);
+
+        // Verify results.
+        assertTrue(result, "A session that still uses the connection that was read must be reported as one that can be resumed.");
+        verify(otherSession, times(1).description("The session must be detached on the condition that it still uses the connection that was read.")).setDetachedIfConnectionIs(readConnection);
+        verify(otherSession, never().description("The session must not be detached on the condition of a connection that was read later.")).setDetachedIfConnectionIs(laterConnection);
+        verify(readConnection, times(1).description("The connection that was read must be closed, as the session is resumed on a new one.")).close(any(StreamError.class));
+        verify(laterConnection, never().description("A connection that was read later must not be closed.")).close(any(StreamError.class));
     }
 
     /**
@@ -119,6 +193,7 @@ public class AnsweringStreamManagerTest extends AbstractStreamManagerTest
         final Connection oldConnection = mock(Connection.class);
         when(otherSession.isDetached()).thenReturn(false);
         when(otherSession.getConnection()).thenReturn(oldConnection);
+        when(otherSession.setDetachedIfConnectionIs(oldConnection)).thenReturn(true);
         final AnsweringStreamManager sm = new AnsweringStreamManager(mock(LocalSession.class));
 
         // Execute system under test.
@@ -126,7 +201,7 @@ public class AnsweringStreamManagerTest extends AbstractStreamManagerTest
 
         // Verify results.
         final InOrder inOrder = inOrder(otherSession, oldConnection);
-        inOrder.verify(otherSession).setDetached();
+        inOrder.verify(otherSession).setDetachedIfConnectionIs(oldConnection);
         inOrder.verify(oldConnection).close(any(StreamError.class));
     }
 

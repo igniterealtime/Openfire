@@ -130,6 +130,41 @@ public class ServerDialbackValidateRemoteDomainTest
     }
 
     /**
+     * Asserts that a detached session for the same domains does not prevent a new session from being authenticated,
+     * when only one session per domain is allowed: the detached session has no connection, and the remote server can
+     * only resume it on a new connection after that is authenticated.
+     */
+    @Test
+    public void testDetachedSessionIsNotCountedAsExistingSession() throws Exception
+    {
+        // Setup test fixture.
+        final IncomingServerSession detached = mock(IncomingServerSession.class, withSettings().lenient());
+        doReturn(Fixtures.XMPP_DOMAIN).when(detached).getLocalDomain();
+        doReturn(true).when(detached).isDetached();
+        doReturn(List.of(detached)).when(sessionManager).getIncomingServerSessions(REMOTE_DOMAIN);
+        doReturn(false).when(sessionManager).isMultipleServerConnectionsAllowed();
+
+        final Element dbResult = DocumentHelper.createElement("result");
+        dbResult.addAttribute("from", REMOTE_DOMAIN);
+        dbResult.addAttribute("to", Fixtures.XMPP_DOMAIN);
+        dbResult.setText("key");
+
+        final String result;
+        try (final MockedStatic<RemoteServerManager> remoteServers = mockStatic(RemoteServerManager.class);
+             final MockedStatic<SASLAuthentication> sasl = mockStatic(SASLAuthentication.class))
+        {
+            remoteServers.when(() -> RemoteServerManager.canAccess(anyString())).thenReturn(true);
+            sasl.when(() -> SASLAuthentication.verifyCertificates(any(), anyString(), anyBoolean())).thenReturn(true);
+
+            // Execute system under test.
+            result = dialback.validateRemoteDomain(dbResult, new BasicStreamIDFactory().createStreamID());
+        }
+
+        // Verify result.
+        assertEquals(Fixtures.XMPP_DOMAIN, result, "A new session must be authenticated when the only other session for the same domains is detached.");
+    }
+
+    /**
      * Asserts that, once accepted, the domain that a remote server asks to be authenticated for is returned in
      * normalised form, so that the session is created for, and the result is reported from, the normalised domain.
      */

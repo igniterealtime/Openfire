@@ -131,6 +131,7 @@
         if ( errors.isEmpty() ) {
             // The identity store and the trust store are replaced independently, so that one failing does not stop the
             // other from being saved. A store that fails to load leaves the manager unchanged for that store.
+            boolean anySaved = false;
             for ( final ConnectionType connectionType : toUpdate )
             {
                 final String locTrust;
@@ -152,6 +153,7 @@
                     final File backupKey = new File( CertificateStoreManager.getIdentityStoreBackupDirectory( connectionType ) );
                     final CertificateStoreConfiguration configKey = new CertificateStoreConfiguration( CertificateStoreManager.getIdentityStoreType(connectionType), new File( locKey ), keyPassword, backupKey );
                     certificateStoreManager.replaceIdentityStore( connectionType, configKey, false );
+                    anySaved = true;
                 }
                 catch ( Exception ex )
                 {
@@ -164,6 +166,7 @@
                     final File backupTrust = new File( CertificateStoreManager.getTrustStoreBackupDirectory( connectionType ) );
                     final CertificateStoreConfiguration configTrust = new CertificateStoreConfiguration( CertificateStoreManager.getTrustStoreType(connectionType), new File( locTrust ), trustPassword, backupTrust );
                     certificateStoreManager.replaceTrustStore( connectionType, configTrust, false );
+                    anySaved = true;
                 }
                 catch ( Exception ex )
                 {
@@ -171,8 +174,10 @@
                 }
             }
 
-            // Log the event
-            webManager.logEvent("Updated certificate store configuration", Arrays.toString( toUpdate.toArray() ) );
+            // Log the event only when a store was saved, so that the audit log does not record a change that did not happen.
+            if ( anySaved ) {
+                webManager.logEvent("Updated certificate store configuration", Arrays.toString( toUpdate.toArray() ) );
+            }
 
             // Redirect only on success: a store that fails to load (for example a wrong password) must be reported,
             // not followed by a success message.

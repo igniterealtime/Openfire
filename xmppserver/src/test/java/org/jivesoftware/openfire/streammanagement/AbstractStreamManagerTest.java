@@ -100,6 +100,18 @@ abstract class AbstractStreamManagerTest
             {
                 sm.process(smElement("enable", namespace));
             }
+
+            @Override
+            void enableResumable(final StreamManager sm, final String namespace)
+            {
+                sm.process(smElement("enable", namespace).addAttribute("resume", "true"));
+            }
+
+            @Override
+            void resume(final StreamManager sm, final long h)
+            {
+                sm.redeliverUnackedStanzas(SERVER_ADDRESS, h);
+            }
         },
 
         /**
@@ -124,6 +136,20 @@ abstract class AbstractStreamManagerTest
                 ((RequestingStreamManager) sm).requestEnable(namespace);
                 sm.process(smElement("enabled", namespace));
             }
+
+            @Override
+            void enableResumable(final StreamManager sm, final String namespace)
+            {
+                StreamManager.SERVER_RESUME_ENABLED.setValue(true);
+                ((RequestingStreamManager) sm).requestEnable(namespace);
+                sm.process(smElement("enabled", namespace).addAttribute("resume", "true").addAttribute("id", "test-sm-id"));
+            }
+
+            @Override
+            void resume(final StreamManager sm, final long h)
+            {
+                sm.onResume(SERVER_ADDRESS, h);
+            }
         };
 
         /**
@@ -141,6 +167,18 @@ abstract class AbstractStreamManagerTest
          * Enables Stream Management in the way that this end does.
          */
         abstract void enable(StreamManager sm, String namespace);
+
+        /**
+         * Enables Stream Management with a stream that can be resumed, in the way that this end does.
+         */
+        abstract void enableResumable(StreamManager sm, String namespace);
+
+        /**
+         * Completes the resumption of the stream on a new connection, which the session reports as its connection, in
+         * the way that this end does once the peer agreed to resume it, with the provided value of 'h' that the peer
+         * reported.
+         */
+        abstract void resume(StreamManager sm, long h);
 
         /**
          * Creates a stream manager for this end with Stream Management enabled, and clears the interaction with the

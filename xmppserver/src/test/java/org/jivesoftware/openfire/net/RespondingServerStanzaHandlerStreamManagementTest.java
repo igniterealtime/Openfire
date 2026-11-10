@@ -23,11 +23,14 @@ import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.ServerSession;
+import org.jivesoftware.openfire.session.Session;
+import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.streammanagement.RequestingStreamManager;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
@@ -40,8 +43,12 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.xmlpull.v1.XmlPullParserFactory;
+import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.Packet;
 import org.xmpp.packet.StreamError;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -57,7 +64,8 @@ import static org.mockito.Mockito.*;
  *
  * The connection is a mock. The remote server is simulated by the data passed to the handler: it authenticates
  * Openfire with dialback (a valid dialback result, without verification of the key) or with SASL EXTERNAL (a SASL
- * success, followed by a restart of the stream).
+ * success, followed by a restart of the stream). On a connection that is opened to resume the stream of a detached
+ * session, Openfire asks the remote server to resume that stream instead of enabling Stream Management.
  *
  * @author Guus der Kinderen, guus@goodbytes.nl
  */
@@ -112,7 +120,8 @@ public class RespondingServerStanzaHandlerStreamManagementTest
 
     /**
      * Verifies that Openfire asks a remote server that offers Stream Management to enable it once Openfire is
-     * authenticated, without requesting resumption, for either method of authentication.
+     * authenticated, without requesting resumption while resumption on server connections is disabled, for either method
+     * of authentication.
      */
     @ParameterizedTest
     @EnumSource(value = ServerSession.AuthenticationMethod.class, names = {"DIALBACK", "SASL_EXTERNAL"})
@@ -131,6 +140,30 @@ public class RespondingServerStanzaHandlerStreamManagementTest
         assertNull(enables.get(0).attributeValue("resume"), "Resumption must not be requested, but the request was: " + enables.get(0).asXML());
         assertEquals(RequestingStreamManager.EnableRequestStatus.PENDING, streamManager().getEnableRequestStatus(), "The request must await an answer of the remote server.");
         assertFalse(streamManager().isEnabled(), "Stream Management must not be enabled before the remote server agrees to it.");
+    }
+
+    /**
+     * Verifies that Openfire requests a stream that can be resumed when resumption on server connections is enabled,
+     * and that the stream can be resumed once the remote server allows that, for either method of authentication.
+     */
+    @ParameterizedTest
+    @EnumSource(value = ServerSession.AuthenticationMethod.class, names = {"DIALBACK", "SASL_EXTERNAL"})
+    public void resumptionIsRequestedWhenEnabled(final ServerSession.AuthenticationMethod method) throws Exception
+    {
+        // Setup test fixture.
+        StreamManager.SERVER_ACTIVE.setValue(true);
+        StreamManager.SERVER_RESUME_ENABLED.setValue(true);
+        authenticate(method, SM_FEATURE_V3);
+
+        // Execute system under test.
+        handler.process("<enabled xmlns='" + StreamManager.NAMESPACE_V3 + "' resume='true' id='some-id' max='60'/>", reader);
+
+        // Verify result.
+        final List<Element> enables = deliveredEnableElements();
+        assertEquals(1, enables.size(), "Exactly one request to enable Stream Management was expected, but these were delivered: " + enables);
+        assertEquals("true", enables.get(0).attributeValue("resume"), "Resumption must be requested, but the request was: " + enables.get(0).asXML());
+        assertTrue(streamManager().getResume(), "The stream must be resumable once the remote server allows it.");
+        assertEquals(Duration.ofSeconds(60), streamManager().getPeerMaximumResumptionTime(), "The preferred maximum resumption time of the remote server must be recorded.");
     }
 
     /**
@@ -292,7 +325,8 @@ public class RespondingServerStanzaHandlerStreamManagementTest
 
     /**
      * Verifies that Stream Management is enabled on the session when the remote server agrees to the request, without
-     * resumption, even when the remote server offers it, for either method of authentication.
+     * resumption, even when the remote server offers it, as resumption on server connections is disabled, for either
+     * method of authentication.
      */
     @ParameterizedTest
     @EnumSource(value = ServerSession.AuthenticationMethod.class, names = {"DIALBACK", "SASL_EXTERNAL"})
@@ -480,6 +514,122 @@ public class RespondingServerStanzaHandlerStreamManagementTest
         assertEquals(QName.get("failed", StreamManager.NAMESPACE_V3), lastDelivered().getQName(), "The element must be refused, but the response was: " + lastDelivered().asXML());
         assertFalse(streamManager().isEnabled(), "Stream Management must not be enabled without a request of Openfire.");
         assertEquals(RequestingStreamManager.EnableRequestStatus.SKIPPED, streamManager().getEnableRequestStatus(), "No request must be recorded.");
+    }
+
+    /**
+     * Verifies that, on a connection that is opened to resume the stream of a detached session, Openfire asks the remote
+     * server to resume that stream once Openfire is authenticated, instead of enabling Stream Management, for either
+     * method of authentication.
+     */
+    @ParameterizedTest
+    @EnumSource(value = ServerSession.AuthenticationMethod.class, names = {"DIALBACK", "SASL_EXTERNAL"})
+    public void resumeIsSentInsteadOfEnableOnConnectionForResumption(final ServerSession.AuthenticationMethod method) throws Exception
+    {
+        // Setup test fixture.
+        final LocalOutgoingServerSession target = detachedSession();
+        handler = new RespondingServerStanzaHandler(mock(PacketRouter.class), connection, new DomainPair(Fixtures.XMPP_DOMAIN, REMOTE_DOMAIN), target);
+
+        // Execute system under test.
+        authenticate(method, SM_FEATURE_V3);
+
+        // Verify result.
+        assertEquals(List.of(), deliveredEnableElements(), "Stream Management must not be enabled on a connection that is opened to resume a stream.");
+        final Element resume = lastDelivered();
+        assertEquals(QName.get("resume", StreamManager.NAMESPACE_V3), resume.getQName(), "The remote server must be asked to resume the stream, but this was delivered: " + resume.asXML());
+        assertEquals("sm-id-former", resume.attributeValue("previd"), "The request must name the SM-ID of the stream of the detached session.");
+        assertEquals(RequestingStreamManager.ResumeRequestStatus.PENDING, streamManager().getResumeRequestStatus(), "The request must await an answer of the remote server.");
+        assertNotSame(target, handler.getSession(), "The connection must not be attached to the detached session before the remote server resumed the stream.");
+    }
+
+    /**
+     * Verifies that Openfire does not ask the remote server to resume a stream of which the version of Stream
+     * Management is not offered on the new connection, and does not enable Stream Management on it either.
+     */
+    @Test
+    public void resumeIsNotSentWhenVersionOfStreamIsNotOffered() throws Exception
+    {
+        // Setup test fixture.
+        final LocalOutgoingServerSession target = detachedSession();
+        handler = new RespondingServerStanzaHandler(mock(PacketRouter.class), connection, new DomainPair(Fixtures.XMPP_DOMAIN, REMOTE_DOMAIN), target);
+
+        // Execute system under test.
+        authenticate(ServerSession.AuthenticationMethod.DIALBACK, SM_FEATURE_V2);
+
+        // Verify result.
+        assertTrue(allDelivered().stream().noneMatch(text -> text.startsWith("<resume") || text.startsWith("<enable")), "Neither resumption nor Stream Management must be requested, but these were delivered: " + allDelivered());
+        assertEquals(RequestingStreamManager.ResumeRequestStatus.NOT_SENT, streamManager().getResumeRequestStatus(), "No request must be recorded.");
+        assertTrue(streamManager().getResumeRequestFinished().isDone(), "A request that is not sent must be reported as finished, so that the detached session can be ended without waiting.");
+    }
+
+    /**
+     * Verifies that, when the remote server resumes the stream, the connection is attached to the detached session,
+     * which sends the stanzas that the remote server did not receive, followed by the stanzas that were queued, in
+     * order, for either method of authentication.
+     */
+    @ParameterizedTest
+    @EnumSource(value = ServerSession.AuthenticationMethod.class, names = {"DIALBACK", "SASL_EXTERNAL"})
+    public void resumedAttachesConnectionAndSendsMissingStanzasInOrder(final ServerSession.AuthenticationMethod method) throws Exception
+    {
+        // Setup test fixture.
+        final LocalOutgoingServerSession target = detachedSession();
+        handler = new RespondingServerStanzaHandler(mock(PacketRouter.class), connection, new DomainPair(Fixtures.XMPP_DOMAIN, REMOTE_DOMAIN), target);
+        // As NettyConnection#reinit does, the stanza handler continues with the session that takes over the connection.
+        doAnswer(invocation -> { handler.setSession(invocation.getArgument(0)); return null; }).when(connection).reinit(any());
+        authenticate(method, SM_FEATURE_V3);
+
+        // Execute system under test.
+        handler.process("<resumed xmlns='" + StreamManager.NAMESPACE_V3 + "' previd='sm-id-former' h='1'/>", reader);
+
+        // Verify result.
+        final ArgumentCaptor<Packet> captor = ArgumentCaptor.forClass(Packet.class);
+        verify(connection, atLeastOnce().description("Stanzas were expected to be delivered on the connection.")).deliver(captor.capture());
+        assertEquals(List.of("unacked-1", "unacked-2", "queued"), captor.getAllValues().stream().map(Packet::getID).toList(), "The stanzas that the remote server did not receive must be sent first, then the queued stanza, in order.");
+        assertSame(target, handler.getSession(), "The connection must be attached to the session of which the stream is resumed.");
+        assertSame(connection, target.getConnection(), "The resumed session must use the connection.");
+        assertFalse(XMPPServer.getInstance().getSessionManager().isDetached(target), "The resumed session must no longer be detached.");
+        assertEquals(method, target.getAuthenticationMethod(), "The resumed session must report the authentication method of the connection.");
+        verify(connection, never().description("The connection must not be closed.")).close(any(StreamError.class));
+        verify(connection, never().description("The connection must not be closed.")).close();
+    }
+
+    /**
+     * Creates a detached outgoing server session, on a connection of its own, of which the stream can be resumed. It
+     * tracks three stanzas, of which the remote server acknowledged the first, and queued one. A session manager is used
+     * that holds the detached sessions.
+     */
+    private static LocalOutgoingServerSession detachedSession() throws Exception
+    {
+        StreamManager.SERVER_ACTIVE.setValue(true);
+        StreamManager.SERVER_RESUME_ENABLED.setValue(true);
+        final XMPPServer xmppServer = XMPPServer.getInstance();
+        final SessionManager sessionManager = new SessionManager();
+        sessionManager.initialize(xmppServer);
+        doReturn(sessionManager).when(xmppServer).getSessionManager();
+
+        final Connection formerConnection = mock(Connection.class, withSettings().lenient());
+        doReturn(new CompletableFuture<Void>()).when(formerConnection).getCloseFuture();
+        final LocalOutgoingServerSession target = new LocalOutgoingServerSession(Fixtures.XMPP_DOMAIN, formerConnection, BasicStreamIDFactory.createStreamID("stream-former"));
+        target.setAddress(new JID(null, REMOTE_DOMAIN, null));
+        target.setAuthenticationMethod(ServerSession.AuthenticationMethod.SASL_EXTERNAL);
+        final RequestingStreamManager streamManager = target.getStreamManager();
+        streamManager.requestEnable(StreamManager.NAMESPACE_V3);
+        streamManager.process(DocumentHelper.createElement(QName.get("enabled", StreamManager.NAMESPACE_V3)).addAttribute("resume", "true").addAttribute("id", "sm-id-former"));
+        streamManager.sentStanza(message("acked"));
+        streamManager.sentStanza(message("unacked-1"));
+        streamManager.sentStanza(message("unacked-2"));
+        streamManager.process(DocumentHelper.createElement(QName.get("a", StreamManager.NAMESPACE_V3)).addAttribute("h", "1"));
+        target.setStatus(Session.Status.CLOSED); // As the connection does when it closes, which clears the authentication method.
+        target.setDetached();
+        streamManager.queue(message("queued"), true);
+        assertTrue(sessionManager.isDetached(target), "Test fixture expects the session to be detached.");
+        return target;
+    }
+
+    private static Message message(final String id)
+    {
+        final Message message = new Message();
+        message.setID(id);
+        return message;
     }
 
     /**

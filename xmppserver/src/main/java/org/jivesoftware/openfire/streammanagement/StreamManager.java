@@ -90,9 +90,11 @@ public abstract class StreamManager {
     /**
      * Whether streams on connections with other servers can be resumed after their connection broke (XEP-0198 § 5).
      * When this is set, resumption is offered to a server that connected to Openfire and requests it, and such a
-     * server can resume its stream on a new connection. When this is not set, resumption is not offered or accepted,
-     * and a server session is ended when its connection breaks, even when its stream was made resumable. Applies only
-     * to connections on which Stream Management is used (see {@link #SERVER_ACTIVE}).
+     * server can resume its stream on a new connection. On connections that Openfire opens to other servers, Openfire
+     * requests a stream that can be resumed, and keeps the session, and its routes, when the connection of such a
+     * stream breaks. When this is not set, resumption is not offered, requested or accepted, and a server session is
+     * ended when its connection breaks, even when its stream was made resumable. Applies only to connections on which
+     * Stream Management is used (see {@link #SERVER_ACTIVE}).
      */
     public static SystemProperty<Boolean> SERVER_RESUME_ENABLED = SystemProperty.Builder.ofType( Boolean.class )
         .setKey("stream.management.server.resume.enabled")
@@ -395,7 +397,7 @@ public abstract class StreamManager {
     /**
      * Sends XEP-0198 request <r /> to the peer, for an acknowledgement of outbound stanzas
      */
-    private void requestOutboundAcknowledgement() {
+    void requestOutboundAcknowledgement() {
         // Read once, as another thread can disable Stream Management at any time.
         final String currentNamespace = namespace;
         if(currentNamespace != null) {
@@ -462,6 +464,47 @@ public abstract class StreamManager {
      */
     String describeLastUnacknowledged() {
         return unacknowledgedOutboundStanzas.describeLast();
+    }
+
+    /**
+     * The number of the outbound stanza that was sent last, whether or not the peer acknowledged it, as reported in the
+     * 'send-count' of a {@code <handled-count-too-high/>} error.
+     *
+     * @return the number of the stanza that was sent last.
+     */
+    synchronized long getLastSentNumber() {
+        return unacknowledgedOutboundStanzas.getLastSentNumber();
+    }
+
+    /**
+     * Processes an acknowledgement of outbound stanzas that the caller validated already (see
+     * {@link #validateOutboundAcknowledgement(long)}), removing the stanzas that it covers.
+     *
+     * @param h The number of stanzas that the peer acknowledges it has handled.
+     */
+    synchronized void acknowledgeOutboundStanzas(final long h) {
+        unacknowledgedOutboundStanzas.acknowledge(h);
+    }
+
+    /**
+     * Prepares the unacknowledged stanzas to be sent again on a resumed stream: those that were sent again before are
+     * removed and returned, and the others are marked as sent again and numbered as the peer counts them when they are
+     * sent again in order (see {@link UnacknowledgedStanzaQueue#removeSentAgainAndRenumber()}).
+     *
+     * @return the stanzas that were removed, in the order in which they were sent.
+     */
+    @Nonnull
+    synchronized List<UnacknowledgedStanzaQueue.Entry> removeSentAgainAndRenumber() {
+        return unacknowledgedOutboundStanzas.removeSentAgainAndRenumber();
+    }
+
+    /**
+     * Checks whether the number of unacknowledged stanzas exceeded the maximum, which causes the session to be closed.
+     *
+     * @return true if the maximum was exceeded.
+     */
+    synchronized boolean hasExceededMaximumUnacknowledgedStanzas() {
+        return exceededMaximumUnacknowledgedStanzas;
     }
 
     /**
@@ -633,7 +676,7 @@ public abstract class StreamManager {
      *
      * @param size The number of unacknowledged stanzas.
      */
-    private void closeForExceedingMaximum( final int size )
+    void closeForExceedingMaximum( final int size )
     {
         Log.warn( "Closing session, as too many stanzas go unacknowledged: {}, the maximum is {}. Affected session: {}", size, getMaximumUnacknowledgedStanzas(), session );
         formalClose();

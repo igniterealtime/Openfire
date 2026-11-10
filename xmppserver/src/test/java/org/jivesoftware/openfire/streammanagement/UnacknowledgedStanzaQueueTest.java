@@ -516,6 +516,37 @@ public class UnacknowledgedStanzaQueueTest
     }
 
     /**
+     * Verifies that, when preparing to send the stanzas again on a resumed stream, the stanzas that were sent again
+     * before are removed, and the others keep their order and the time at which they were first sent, are not marked
+     * as sent again before they are sent, and are numbered directly after the acknowledged stanzas, across the
+     * roll-over at 2^32.
+     */
+    @Test
+    void sentAgainStanzasAreRemovedAndOthersRenumberedAcrossRollOver() throws Exception
+    {
+        // Setup test fixture.
+        final UnacknowledgedStanzaQueue queue = new UnacknowledgedStanzaQueue(() -> MAXIMUM);
+        setAcknowledged(queue, StreamManager.MASK - 1);
+        queue.add(message("a"));
+        queue.add(message("sent-again"), true);
+        queue.add(message("b"));
+        queue.add(message("c"));
+        final List<Instant> timestamps = queue.getEntries().stream().map(UnacknowledgedStanzaQueue.Entry::getTimestamp).toList();
+
+        // Execute system under test.
+        final List<UnacknowledgedStanzaQueue.Entry> removed = queue.removeSentAgainAndRenumber();
+
+        // Verify result.
+        assertEquals(List.of("sent-again"), removed.stream().map(entry -> entry.getPacket().getID()).toList(), "Only the stanza that was sent again before must be removed.");
+        final List<UnacknowledgedStanzaQueue.Entry> remaining = List.copyOf(queue.getEntries());
+        assertEquals(List.of("a", "b", "c"), remaining.stream().map(entry -> entry.getPacket().getID()).toList(), "The other stanzas must remain, in order.");
+        assertEquals(List.of(StreamManager.MASK, 0L, 1L), remaining.stream().map(UnacknowledgedStanzaQueue.Entry::getNumber).toList(), "The remaining stanzas must be numbered directly after the acknowledged ones, rolling over after 2^32-1.");
+        assertTrue(remaining.stream().noneMatch(UnacknowledgedStanzaQueue.Entry::isSentAgain), "The remaining stanzas must not be marked as sent again before they are sent.");
+        assertEquals(List.of(timestamps.get(0), timestamps.get(2), timestamps.get(3)), remaining.stream().map(UnacknowledgedStanzaQueue.Entry::getTimestamp).toList(), "The remaining stanzas must keep the time at which they were first sent.");
+        assertTrue(queue.isValidAcknowledgement(1), "An acknowledgement of all remaining stanzas must be valid.");
+    }
+
+    /**
      * Verifies that stanzas cannot be skipped while stanzas are unacknowledged, as the skipped ones would then be
      * numbered before stanzas that were sent earlier.
      */

@@ -16,9 +16,10 @@
 package org.jivesoftware.openfire.streammanagement;
 
 import org.jivesoftware.openfire.Connection;
-import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.util.JiveGlobals;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.xmpp.packet.Packet;
 import org.xmpp.packet.StreamError;
@@ -35,7 +36,8 @@ import static org.mockito.Mockito.*;
 
 /**
  * Unit tests that verify what {@link StreamManager} implements for both ends of a stream, for a session that is
- * resumed, or that is detached and ended.
+ * resumed, or that is detached and ended. Each test runs against both {@link AnsweringStreamManager} and
+ * {@link RequestingStreamManager}, which each complete a resumption in their own way (see {@link End#resume}).
  *
  * @author Guus der Kinderen, guus@goodbytes.nl
  */
@@ -45,13 +47,14 @@ public class StreamManagerDetachedSessionTest extends AbstractStreamManagerTest
      * Verifies that stanzas that are sent to a detached session after exceeding the maximum number of unacknowledged
      * stanzas are still tracked. A detached session has no connection to hand them to, so they would otherwise be lost.
      */
-    @Test
-    void stanzasSentToDetachedSessionAfterExceedingMaximumAreTracked() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void stanzasSentToDetachedSessionAfterExceedingMaximumAreTracked(final End end) throws Exception
     {
         // Setup test fixture.
         JiveGlobals.setProperty("stream.management.max-unacked", "1");
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         doReturn(true).when(session).isDetached();
         doReturn(null).when(session).getConnection();
         final CountDownLatch terminated = new CountDownLatch(1);
@@ -75,16 +78,17 @@ public class StreamManagerDetachedSessionTest extends AbstractStreamManagerTest
      * maximum number of unacknowledged stanzas. That happens when the connection was already closing, and its close
      * listener found the session to be resumable before resumption was disabled.
      */
-    @Test
-    void sessionDetachedWhileClosingForExceedingMaximumIsEnded() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void sessionDetachedWhileClosingForExceedingMaximumIsEnded(final End end) throws Exception
     {
         // Setup test fixture.
         JiveGlobals.setProperty("stream.management.max-unacked", "1");
-        final LocalClientSession session = authenticatedClientSession();
+        final LocalSession session = end.newSession();
         final Connection connection = session.getConnection();
         final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
         doReturn(closeFuture).when(connection).getCloseFuture();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         final CountDownLatch terminated = new CountDownLatch(1);
         doAnswer(invocation -> { terminated.countDown(); return null; }).when(sessionManager).terminateDetached(session);
         sm.sentStanza(message("1"));
@@ -102,16 +106,17 @@ public class StreamManagerDetachedSessionTest extends AbstractStreamManagerTest
      * Verifies that a session that is not detached when its connection finished closing, after it was closed for
      * exceeding the maximum number of unacknowledged stanzas, is not ended as a detached session, as it has been closed.
      */
-    @Test
-    void sessionNotDetachedWhenClosedForExceedingMaximumIsNotEndedAgain() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void sessionNotDetachedWhenClosedForExceedingMaximumIsNotEndedAgain(final End end) throws Exception
     {
         // Setup test fixture.
         JiveGlobals.setProperty("stream.management.max-unacked", "1");
-        final LocalClientSession session = authenticatedClientSession();
+        final LocalSession session = end.newSession();
         final Connection connection = session.getConnection();
         final CompletableFuture<Void> closeFuture = new CompletableFuture<>();
         doReturn(closeFuture).when(connection).getCloseFuture();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         final CountDownLatch terminated = new CountDownLatch(1);
         doAnswer(invocation -> { terminated.countDown(); return null; }).when(sessionManager).terminateDetached(session);
         sm.sentStanza(message("1"));
@@ -128,13 +133,14 @@ public class StreamManagerDetachedSessionTest extends AbstractStreamManagerTest
      * Verifies that a detached session, which has no stream to close, is ended when the maximum number of unacknowledged
      * stanzas is exceeded, rather than after its detach timeout.
      */
-    @Test
-    void exceedingMaximumOfUnacknowledgedStanzasOnDetachedSessionEndsSession() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void exceedingMaximumOfUnacknowledgedStanzasOnDetachedSessionEndsSession(final End end) throws Exception
     {
         // Setup test fixture.
         JiveGlobals.setProperty("stream.management.max-unacked", "1");
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         doReturn(true).when(session).isDetached();
         doReturn(null).when(session).getConnection();
         sm.sentStanza(message("1"));
@@ -156,13 +162,14 @@ public class StreamManagerDetachedSessionTest extends AbstractStreamManagerTest
      * number of unacknowledged stanzas was exceeded. That happens when a detached session that exceeded the maximum is
      * resumed: its new connection delivers the stanza before the resumed stream is closed, so no fallback handles it.
      */
-    @Test
-    void stanzaDeliveredOnResumedConnectionAfterExceedingMaximumIsTracked() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void stanzaDeliveredOnResumedConnectionAfterExceedingMaximumIsTracked(final End end) throws Exception
     {
         // Setup test fixture.
         JiveGlobals.setProperty("stream.management.max-unacked", "1");
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         doReturn(true).when(session).isDetached();
         doReturn(null).when(session).getConnection();
         final CountDownLatch terminated = new CountDownLatch(1);
@@ -186,13 +193,14 @@ public class StreamManagerDetachedSessionTest extends AbstractStreamManagerTest
      * Verifies that a detached session that exceeded the maximum number of unacknowledged stanzas is closed when it is
      * resumed before it could be ended, rather than continuing on the new connection without a limit.
      */
-    @Test
-    void resumptionAfterExceedingMaximumOfUnacknowledgedStanzasClosesStream() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void resumptionAfterExceedingMaximumOfUnacknowledgedStanzasClosesStream(final End end) throws Exception
     {
         // Setup test fixture.
         JiveGlobals.setProperty("stream.management.max-unacked", "1");
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         doReturn(true).when(session).isDetached();
         doReturn(null).when(session).getConnection();
         // Hold the task that ends the detached session until the session was resumed, so that the resumption runs first.
@@ -210,7 +218,7 @@ public class StreamManagerDetachedSessionTest extends AbstractStreamManagerTest
         doReturn(newConnection).when(session).getConnection();
 
         // Execute system under test.
-        sm.redeliverUnackedStanzas(SERVER_ADDRESS, 0);
+        end.resume(sm, 0);
         resumed.countDown();
 
         // Verify result.
@@ -227,13 +235,14 @@ public class StreamManagerDetachedSessionTest extends AbstractStreamManagerTest
      * while the lock of the stream manager is held. The session delivers and tracks stanzas under that lock. Closing the
      * stream between those two steps would leave a stanza that was delivered on the open stream untracked.
      */
-    @Test
-    void resumedStreamIsClosedForExceedingMaximumWhileHoldingLock() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void resumedStreamIsClosedForExceedingMaximumWhileHoldingLock(final End end) throws Exception
     {
         // Setup test fixture.
         JiveGlobals.setProperty("stream.management.max-unacked", "1");
-        final LocalClientSession session = authenticatedClientSession();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         doReturn(true).when(session).isDetached();
         doReturn(null).when(session).getConnection();
         final CountDownLatch terminated = new CountDownLatch(1);
@@ -248,7 +257,7 @@ public class StreamManagerDetachedSessionTest extends AbstractStreamManagerTest
         doReturn(newConnection).when(session).getConnection();
 
         // Execute system under test.
-        sm.redeliverUnackedStanzas(SERVER_ADDRESS, 0);
+        end.resume(sm, 0);
 
         // Verify result.
         verify(newConnection, times(1).description("The resumed stream must be closed, as the maximum number of unacknowledged stanzas was exceeded.")).close(any());
@@ -261,14 +270,15 @@ public class StreamManagerDetachedSessionTest extends AbstractStreamManagerTest
      * The closed stream would hand the re-delivered stanzas to its fallback, while they are also routed again when the
      * session closes.
      */
-    @Test
-    void stanzaExceedingMaximumDuringResumptionDoesNotCloseStreamBeforeRedelivery() throws Exception
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void stanzaExceedingMaximumDuringResumptionDoesNotCloseStreamBeforeRedelivery(final End end) throws Exception
     {
         // Setup test fixture.
         JiveGlobals.setProperty("stream.management.max-unacked", "2");
-        final LocalClientSession session = authenticatedClientSession();
+        final LocalSession session = end.newSession();
         final Connection connection = session.getConnection();
-        final StreamManager sm = enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
         sm.sentStanza(message("1"));
         sm.sentStanza(message("2"));
         final List<String> deliveredWhileClosed = new CopyOnWriteArrayList<>();
@@ -291,7 +301,7 @@ public class StreamManagerDetachedSessionTest extends AbstractStreamManagerTest
         }).when(session).getConnection();
 
         // Execute system under test.
-        sm.redeliverUnackedStanzas(SERVER_ADDRESS, 0);
+        end.resume(sm, 0);
 
         // Verify result.
         sender[0].join(5000);

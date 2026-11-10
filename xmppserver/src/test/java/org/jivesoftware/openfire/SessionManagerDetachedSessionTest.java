@@ -137,6 +137,35 @@ public class SessionManagerDetachedSessionTest
     }
 
     /**
+     * Verifies that sessions with the same stream ID are registered as detached each in their own right: removing one
+     * leaves the other detached, and each is removed only once.
+     */
+    @Test
+    void detachedSessionsWithSameStreamIdAreRegisteredSeparately()
+    {
+        // Setup test fixture.
+        final LocalSession first = mock(LocalSession.class, withSettings().strictness(Strictness.LENIENT));
+        final LocalSession second = mock(LocalSession.class, withSettings().strictness(Strictness.LENIENT));
+        doReturn(BasicStreamIDFactory.createStreamID("same-stream-id")).when(first).getStreamID();
+        doReturn(BasicStreamIDFactory.createStreamID("same-stream-id")).when(second).getStreamID();
+        sessionManager.addDetached(first);
+        sessionManager.addDetached(second);
+
+        // Execute system under test.
+        final boolean firstRemoved = sessionManager.removeDetached(first);
+        final boolean firstRemovedAgain = sessionManager.removeDetached(first);
+        final boolean secondDetachedAfterFirstRemoved = sessionManager.isDetached(second);
+        final boolean secondRemoved = sessionManager.removeDetached(second);
+
+        // Verify result.
+        assertTrue(firstRemoved, "The first session must be removed from the detached sessions.");
+        assertFalse(firstRemovedAgain, "A session must be removed from the detached sessions only once.");
+        assertFalse(sessionManager.isDetached(first), "The first session must no longer be detached once removed.");
+        assertTrue(secondDetachedAfterFirstRemoved, "The second session must stay detached when the first, with the same stream ID, is removed.");
+        assertTrue(secondRemoved, "The second session must be removed from the detached sessions in its own right.");
+    }
+
+    /**
      * Verifies that a detached session is ended once it has been detached for longer than xmpp.session.detach.timeout:
      * it is no longer detached, its unacknowledged stanzas are handled, and its route is removed.
      */

@@ -27,6 +27,7 @@ import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.ServerSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
+import org.jivesoftware.openfire.streammanagement.RequestingStreamManager;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.util.StringUtils;
 import org.slf4j.Logger;
@@ -36,12 +37,15 @@ import org.xmlpull.v1.XmlPullParserException;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.StreamError;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -64,11 +68,29 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
     private volatile boolean saslExternalSucceeded = false;
 
     /**
-     * The namespace of the version of Stream Management that the remote server offered in the stream features that
-     * were received last, or null if it did not offer Stream Management.
+     * The namespaces of the versions of Stream Management that the remote server offered in the stream features that
+     * were received last, the most recent version first. Empty if it did not offer Stream Management.
+     */
+    @Nonnull
+    private List<String> offeredStreamManagementNamespaces = List.of();
+
+    /**
+     * The detached session of which the stream is to be resumed on this connection, instead of enabling Stream
+     * Management on it, or null for a connection that is not used to resume a stream.
      */
     @Nullable
-    private String offeredStreamManagementNamespace;
+    private final LocalOutgoingServerSession resumeTarget;
+
+    /**
+     * Guards the decision to ask the remote server to resume the stream of {@link #resumeTarget}, and giving up on that.
+     */
+    private final Object resumeMutex = new Object();
+
+    /**
+     * Whether Openfire gave up on resuming the stream of {@link #resumeTarget} on this connection (see
+     * {@link #abandonResume()}). Guarded by {@link #resumeMutex}.
+     */
+    private boolean resumeAbandoned = false;
 
     /**
      * Creates a dedicated reader for a socket.
@@ -78,8 +100,24 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
      * @param domainPair the local and remote domains
      */
     public RespondingServerStanzaHandler(PacketRouter router, Connection connection, DomainPair domainPair) {
+        this(router, connection, domainPair, null);
+    }
+
+    /**
+     * Creates a dedicated reader for a socket, of a connection that can be used to resume the stream of a detached
+     * session. The session of this connection is not made a route: when the stream is resumed, the connection is
+     * attached to the detached session.
+     *
+     * @param router       the router for sending packets that were read.
+     * @param connection   the connection being read.
+     * @param domainPair   the local and remote domains
+     * @param resumeTarget the detached session of which the stream is to be resumed on this connection, instead of
+     *                     enabling Stream Management on it, or null when no stream is to be resumed.
+     */
+    public RespondingServerStanzaHandler(PacketRouter router, Connection connection, DomainPair domainPair, @Nullable LocalOutgoingServerSession resumeTarget) {
         super(router, connection);
         this.domainPair = domainPair;
+        this.resumeTarget = resumeTarget;
     }
 
     private static boolean remoteFeaturesContainsStartTLS(Element doc) {
@@ -110,21 +148,22 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
     }
 
     /**
-     * Returns the namespace of the version of Stream Management offered in stream features, preferring the most recent
-     * version.
+     * Returns the namespaces of the versions of Stream Management offered in stream features, the most recent version
+     * first.
      *
      * @param doc the stream features.
-     * @return the namespace of the offered version, or null if Stream Management is not offered.
+     * @return the namespaces of the offered versions, empty if Stream Management is not offered.
      */
-    @Nullable
-    private static String getOfferedStreamManagementNamespace(Element doc) {
+    @Nonnull
+    private static List<String> getOfferedStreamManagementNamespaces(Element doc) {
+        final List<String> result = new ArrayList<>();
         if (doc.element(QName.get("sm", StreamManager.NAMESPACE_V3)) != null) {
-            return StreamManager.NAMESPACE_V3;
+            result.add(StreamManager.NAMESPACE_V3);
         }
         if (doc.element(QName.get("sm", StreamManager.NAMESPACE_V2)) != null) {
-            return StreamManager.NAMESPACE_V2;
+            result.add(StreamManager.NAMESPACE_V2);
         }
-        return null;
+        return List.copyOf(result);
     }
 
     /**
@@ -132,20 +171,62 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
      * and the remote server offered it in the stream features that were received last. Otherwise, records on the
      * session that it is not asked, which finishes negotiation. This must only be invoked once the session is
      * authenticated.
+     *
+     * On a connection that is used to resume the stream of a detached session, the remote server is asked to resume
+     * that stream instead (see {@link org.jivesoftware.openfire.streammanagement.RequestingStreamManager#requestResume}).
      */
     private void requestStreamManagementIfOffered() {
         if (!(session instanceof LocalOutgoingServerSession outgoingSession)) {
             LOG.debug("Not asking remote domain '{}' to enable Stream Management, as session {} is not an outgoing server session.", domainPair.getRemote(), session);
             return;
         }
-        if (!StreamManager.SERVER_ACTIVE.getValue() || offeredStreamManagementNamespace == null) {
-            LOG.debug("Not asking remote domain '{}' to enable Stream Management on session {}. Enabled for servers: {}, offered by the remote domain: {}", domainPair.getRemote(), session, StreamManager.SERVER_ACTIVE.getValue(), offeredStreamManagementNamespace);
+        if (resumeTarget != null) {
+            synchronized (resumeMutex) {
+                if (resumeAbandoned) {
+                    LOG.debug("Not asking remote domain '{}' to resume the stream of session {} on session {}, as Openfire gave up on resuming it on this connection.", domainPair.getRemote(), resumeTarget, session);
+                    return;
+                }
+                // OF-2425: <resume/> replaces <enable/> on this connection, of which the session is never made a route.
+                outgoingSession.getStreamManager().requestResume(resumeTarget, offeredStreamManagementNamespaces);
+            }
+            return;
+        }
+        final String preferredNamespace = offeredStreamManagementNamespaces.isEmpty() ? null : offeredStreamManagementNamespaces.get(0);
+        if (!StreamManager.SERVER_ACTIVE.getValue() || preferredNamespace == null) {
+            LOG.debug("Not asking remote domain '{}' to enable Stream Management on session {}. Enabled for servers: {}, offered by the remote domain: {}", domainPair.getRemote(), session, StreamManager.SERVER_ACTIVE.getValue(), preferredNamespace);
             outgoingSession.getStreamManager().skipEnable();
             return;
         }
-        outgoingSession.getStreamManager().requestEnable(offeredStreamManagementNamespace);
+        outgoingSession.getStreamManager().requestEnable(preferredNamespace);
     }
 
+
+    /**
+     * Gives up on resuming the stream of the detached session for which this connection was opened, if any: a request
+     * to resume it that awaits an answer is abandoned (see
+     * {@link RequestingStreamManager#abandonResume()}), so that an answer
+     * that arrives after this is ignored, and no request is sent after this, also not on a session that a restart of
+     * the stream creates later.
+     *
+     * @return false if the remote server answered the request already, in which case the processing of that answer
+     * takes care of the detached session; otherwise true.
+     */
+    public boolean abandonResume() {
+        if (resumeTarget == null) {
+            return true;
+        }
+        synchronized (resumeMutex) {
+            resumeAbandoned = true;
+            if (session instanceof LocalOutgoingServerSession outgoingSession) {
+                final RequestingStreamManager streamManager = outgoingSession.getStreamManager();
+                if (!streamManager.abandonResume() && streamManager.getResumeRequestStatus() == RequestingStreamManager.ResumeRequestStatus.ANSWERED) {
+                    LOG.debug("Not giving up on resuming the stream of session {} on session {}, as remote domain '{}' answered the request already.", resumeTarget, session, domainPair.getRemote());
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
 
     /**
      * Transfer an existing connection to a new session when a new streamID is detected. When SASL EXTERNAL succeeded
@@ -266,7 +347,7 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
         // Handle features
         if ("features".equals(rootTagName)) {
             // OF-2425: Dialback does not restart the stream, so the features before authentication tell whether Stream Management is offered.
-            offeredStreamManagementNamespace = getOfferedStreamManagementNamespace(doc);
+            offeredStreamManagementNamespaces = getOfferedStreamManagementNamespaces(doc);
 
             // Prevent falling back to dialback if we are already authenticated
             if (session.isAuthenticated()) {

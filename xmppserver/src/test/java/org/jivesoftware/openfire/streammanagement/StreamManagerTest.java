@@ -20,7 +20,6 @@ import org.dom4j.QName;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
-import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.session.LocalClientSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.session.Session;
@@ -56,8 +55,8 @@ import static org.mockito.Mockito.*;
  * detached session that is ended.
  *
  * Tests that use a stream manager run against both {@link AnsweringStreamManager} and {@link RequestingStreamManager},
- * each with a session of a type that it is used for. A few tests need a step that only the end that answers has, such
- * as enabling resumption, or exercise how client sessions deliver stanzas, and run against that end only.
+ * each with a session of a type that it is used for. A few tests exercise how client sessions deliver stanzas, and run
+ * against the end that answers only.
  *
  * @author Guus der Kinderen, guus@goodbytes.nl
  */
@@ -1218,18 +1217,15 @@ public class StreamManagerTest extends AbstractStreamManagerTest
      * Verifies that exceeding the maximum number of unacknowledged stanzas disables resumption, so that the session closes
      * and its unacknowledged stanzas are handled, rather than being kept for a peer that does not acknowledge them.
      */
-    @Test
-    void exceedingMaximumOfUnacknowledgedStanzasDisablesResumption()
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void exceedingMaximumOfUnacknowledgedStanzasDisablesResumption(final End end)
     {
         // Setup test fixture.
         JiveGlobals.setProperty("stream.management.max-unacked", "1");
-        final LocalClientSession session = authenticatedClientSession();
-        final AuthToken authToken = mock(AuthToken.class);
-        doReturn(authToken).when(session).getAuthToken();
-        final AnsweringStreamManager sm = new AnsweringStreamManager(session);
-        final Element enable = smElement("enable", StreamManager.NAMESPACE_V3);
-        enable.addAttribute("resume", "true");
-        sm.process(enable);
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.newStreamManager(session);
+        end.enableResumable(sm, StreamManager.NAMESPACE_V3);
         assertTrue(sm.getResume(), "Test fixture expects a resumable stream.");
         sm.sentStanza(message("1"));
 

@@ -46,11 +46,12 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -95,7 +96,10 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
 
     /**
      * Maximum time to wait, after authentication of a new outgoing server session, for the remote server to answer a
-     * request to enable Stream Management. The session is not used before it answers or this time has passed.
+     * request to enable Stream Management. The session is not used before it answers or this time has passed. This is
+     * also the time to wait for the remote server to answer a request to resume the stream of a detached session on a
+     * new connection, after which that connection is closed and another attempt is made, until the detach timeout of
+     * the session has passed (see {@link #resumeOnNewConnection()}).
      */
     public static final SystemProperty<Duration> STREAM_MANAGEMENT_NEGOTIATION_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
         .setKey("xmpp.server.session.stream-management-negotiation-timeout")
@@ -116,8 +120,18 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         .setDynamic(true)
         .build();
 
+    /**
+     * Runs the attempts to resume the stream of a detached session on a new connection (see {@link #startResumption()}).
+     */
+    @VisibleForTesting
+    static volatile Executor resumptionExecutor = task -> TaskEngine.getInstance().submit(task);
+
     private OutgoingServerSocketReader socketReader;
-    private final Collection<DomainPair> outgoingDomainPairs = new HashSet<>();
+    /**
+     * The domain pairs that are authenticated on this session. They are added by the threads that authenticate them, and
+     * read by other threads, such as those that route stanzas, the close listener and cluster tasks (OF-3420).
+     */
+    private final Collection<DomainPair> outgoingDomainPairs = ConcurrentHashMap.newKeySet();
 
     /**
      * Authenticates the local domain to the remote domain. Once authenticated the remote domain can be expected to
@@ -457,22 +471,41 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         return processed;
     }
 
+    /**
+     * Delivers a stanza to the remote server.
+     *
+     * While the connection of the session is broken and its stream can be resumed, and while the session is detached,
+     * the stanza is queued on the stream manager, behind the unacknowledged stanzas, rather than sent (see
+     * {@link RequestingStreamManager#queue(Packet, boolean)}), until the stream is resumed and the queued stanzas are
+     * sent (see {@link RequestingStreamManager#onResume(JID, long)}). Otherwise, a stanza for a connection that is closed, or
+     * for a session that has ended, is routed again once the connection is torn down.
+     *
+     * @param packet the stanza to deliver.
+     * @throws UnauthorizedException if the connection refuses the stanza.
+     */
     @Override
     void deliver(Packet packet) throws UnauthorizedException {
-        if (!conn.isClosed()) {
-            final RequestingStreamManager streamManager = getStreamManager();
-            // OF-2425: as for clients (OF-2921), the lock is only taken while sent stanzas are counted, so that they are numbered in the order in which they are sent.
-            // Also while Stream Management can still be requested, so that a stanza is counted exactly when the peer counts it: when it follows <enable/>.
-            final RequestingStreamManager.EnableRequestStatus status = streamManager.getEnableRequestStatus();
-            if (!streamManager.isEnabled() && (status == RequestingStreamManager.EnableRequestStatus.REFUSED || status == RequestingStreamManager.EnableRequestStatus.SKIPPED)) {
-                conn.deliver(packet);
+        final RequestingStreamManager streamManager = getStreamManager();
+        // OF-2425: read once, as detaching the session sets it to null.
+        final Connection connection = conn;
+        final boolean open = connection != null && !connection.isClosed();
+        // OF-2425: as for clients (OF-2921), the lock is only taken while sent stanzas are counted, so that they are numbered in the order in which they are sent.
+        // Also while Stream Management can still be requested, so that a stanza is counted exactly when the peer counts it: when it follows <enable/>.
+        final RequestingStreamManager.EnableRequestStatus status = streamManager.getEnableRequestStatus();
+        if (open && !streamManager.isEnabled() && (status == RequestingStreamManager.EnableRequestStatus.REFUSED || status == RequestingStreamManager.EnableRequestStatus.SKIPPED)) {
+            connection.deliver(packet);
+            return;
+        }
+        synchronized (streamManager) {
+            // OF-2425: decided under the lock, so that no stanza is sent once stanzas are queued (decision 7).
+            if (streamManager.queue(packet, !open)) {
                 return;
             }
-            synchronized (streamManager) {
-                conn.deliver(packet);
+            if (open) {
+                connection.deliver(packet);
                 streamManager.sentStanza(packet);
+                return;
             }
-            return;
         }
 
         // Guard against a double bounce: if re-routing this error stanza fails (i.e. the remote server is still
@@ -492,7 +525,8 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         final Packet stanza = packet.createCopy(); // Make a defensive copy before scheduling the callback to ensure that the original data gets rescheduled.
         RequestingStreamManager.copyRoutedAgainMarker(packet, stanza); // OF-2425: a stanza that was sent again must not be sent again a second time.
         final long timeoutSeconds = REDELIVERY_TIMEOUT_SECONDS.getValue().toSeconds();
-        final CompletableFuture<Void> closeFuture = conn.getCloseFuture().toCompletableFuture();
+        // OF-2425: a session that was detached and then ended has no connection, and its routes are removed already.
+        final CompletableFuture<Void> closeFuture = connection == null ? CompletableFuture.completedFuture(null) : connection.getCloseFuture().toCompletableFuture();
         final CompletableFuture<Void> timeoutFuture = new CompletableFuture<>();
         CompletableFuture.delayedExecutor(timeoutSeconds, TimeUnit.SECONDS)
             .execute(() -> timeoutFuture.completeExceptionally(new TimeoutException("Timed out waiting for connection teardown.")));
@@ -526,7 +560,12 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
              */
             return false;
         }
-        ServerDialback method = new ServerDialback(getConnection(), domainPair);
+        final Connection connection = getConnection();
+        if (connection == null || connection.isClosed()) {
+            Log.debug("Unable to authenticate domain pair {} on session {}, as the session has no open connection.", domainPair, this);
+            return false;
+        }
+        ServerDialback method = new ServerDialback(connection, domainPair);
         if (method.authenticateDomain(socketReader, getStreamID().getID())) {
             // Add the validated domain as an authenticated domain
             addOutgoingDomainPair(domainPair);
@@ -590,30 +629,155 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         });
     }
 
+    /**
+     * Sets the session to detached mode, indicating that the underlying connection has been closed. From then on,
+     * stanzas that are delivered to the session are queued rather than sent. The routes of the session are kept.
+     */
     @Override
     public void setDetached() {
-        // TODO Implement resumption for outgoing server sessions (OF-2425). Remove this override when it is.
-        throw new UnsupportedOperationException("Stream resumption is not supported for outgoing server-to-server connections");
-    }
-
-    @Override
-    public void reattach(LocalSession connectionProvider, long h) {
-        // TODO Implement resumption for outgoing server sessions (OF-2425). Remove this override when it is.
-        throw new UnsupportedOperationException("Stream resumption is not supported for outgoing server-to-server connections");
+        // OF-2425: Started before the connection is released, so that no stanza that is delivered meanwhile is sent instead of queued.
+        getStreamManager().startQueueing();
+        super.setDetached();
     }
 
     /**
-     * Returns the connection associated with this Session.
+     * Sets the session to detached mode, as {@link #setDetached()} does, but only when the session still uses the
+     * provided connection, which must be closed (see {@link LocalSession#setDetachedIfConnectionIs(Connection)}).
+     * Stanzas are queued from the moment at which the session is detached.
      *
-     * @return The connection for this session
+     * @param connection the closed connection that the session must still use to be detached.
+     * @return true if the session is detached, false if it no longer uses the provided connection.
      */
-    @Nonnull
     @Override
-    public Connection getConnection() {
-        final Connection connection = super.getConnection();
-        // Valid only as long as outgoing server sessions are not detached (OF-2425). Remove this override when they are.
-        assert connection != null; // Openfire does not detach outgoing server sessions. Therefore, the connection cannot be null.
-        return connection;
+    public boolean setDetachedIfConnectionIs(@Nonnull final Connection connection) {
+        if (!super.setDetachedIfConnectionIs(connection)) {
+            return false;
+        }
+        // OF-2425: Started after detaching, as the stream manager lock is not taken under the session lock. Until then, stanzas are queued as the connection is closed.
+        getStreamManager().startQueueing();
+        return true;
+    }
+
+    /**
+     * Starts an attempt to resume the stream of this session, which is detached, on a new connection, on another thread
+     * (see {@link #resumeOnNewConnection()}).
+     */
+    public void startResumption()
+    {
+        Log.debug("Starting an attempt to resume the stream of detached session {} on a new connection.", this);
+        resumptionExecutor.execute(this::resumeOnNewConnection);
+    }
+
+    /**
+     * Attempts to resume the stream of this session, which is detached, on a new connection (XEP-0198 § 5).
+     *
+     * A new connection is opened from this cluster node to the remote domain of this session, and the domain pair of the
+     * local and remote domain for which this session was created is authenticated on it, as for a new session. The
+     * remote server is then asked to resume the stream of this session, instead of enabling Stream Management (see
+     * {@link RequestingStreamManager#requestResume(LocalOutgoingServerSession, Collection)}). The session of the new
+     * connection is not made a route, and no event is dispatched for it: when the stream is resumed, the connection is
+     * attached to this session (see {@link #resumeWithConnectionOf(LocalOutgoingServerSession, long)}).
+     *
+     * When the remote domain is not accessible, no connection can be authenticated, the remote server does not offer the
+     * version of Stream Management of this stream, or does not answer within
+     * {@link #STREAM_MANAGEMENT_NEGOTIATION_TIMEOUT}, the new connection is closed, and this session is ended, as when it
+     * is not resumed in time (see {@link SessionManager#terminateDetached(LocalSession)}). When the remote server answers,
+     * the processing of that answer takes care of this session.
+     */
+    @VisibleForTesting
+    void resumeOnNewConnection()
+    {
+        final DomainPair domainPair = new DomainPair(getServerName(), getAddress().getDomain());
+        NettySessionInitializer initialiser = null;
+        boolean endSession = true;
+        try {
+            if (!RemoteServerManager.canAccess(domainPair.getRemote())) {
+                Log.debug("Not resuming detached session {}, as remote domain '{}' is not accessible according to the configuration.", this, domainPair.getRemote());
+                return;
+            }
+            final int port = RemoteServerManager.getPortForServer(domainPair.getRemote());
+            final ConnectionListener listener = XMPPServer.getInstance().getConnectionManager().getListener(ConnectionType.SOCKET_S2S, false);
+            initialiser = new NettySessionInitializer(domainPair, port, this);
+            final LocalSession provider = initialiser.init(listener).get(INITIALISE_TIMEOUT_SECONDS.getValue().getSeconds(), TimeUnit.SECONDS);
+            if (!(provider instanceof LocalOutgoingServerSession connectionProvider)) {
+                Log.debug("Unable to resume detached session {}, as no new connection for {} could be authenticated: {}", this, domainPair, provider);
+                return;
+            }
+            endSession = awaitResumption(connectionProvider);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            Log.debug("Interrupted while resuming detached session {} on a new connection for {}.", this, domainPair, e);
+        } catch (Exception e) {
+            Log.debug("Unable to resume detached session {} on a new connection for {}.", this, domainPair, e);
+        } finally {
+            if (endSession) {
+                if (initialiser != null) {
+                    initialiser.stop();
+                }
+                Log.debug("Ending detached session {}, as its stream was not resumed on a new connection.", this);
+                sessionManager.terminateDetached(this);
+            }
+        }
+    }
+
+    /**
+     * Waits for the remote server to answer the request to resume the stream of this session on the connection of
+     * another session, and gives up on that request when it is not answered in time, or not sent.
+     *
+     * @param connectionProvider the session of the new connection.
+     * @return true when the request was given up, after which the caller ends this session; false when the remote server
+     * answered it, in which case the processing of that answer takes care of this session.
+     * @throws InterruptedException if the thread is interrupted while waiting.
+     */
+    private boolean awaitResumption(@Nonnull final LocalOutgoingServerSession connectionProvider) throws InterruptedException
+    {
+        final RequestingStreamManager streamManager = connectionProvider.getStreamManager();
+        // OF-2425: A connection that this session took over already is no longer the connection of the provider.
+        final Connection connection = connectionProvider.getConnection();
+        final CompletableFuture<Void> closed = connection == null ? CompletableFuture.completedFuture(null) : connection.getCloseFuture().toCompletableFuture();
+        final Duration timeout = STREAM_MANAGEMENT_NEGOTIATION_TIMEOUT.getValue();
+        try {
+            CompletableFuture.anyOf(streamManager.getResumeRequestFinished(), closed).get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            Log.debug("The remote server did not answer the request to resume the stream of session {} on the connection of session {} within {} (request status: {}).", this, connectionProvider, timeout, streamManager.getResumeRequestStatus());
+        } catch (ExecutionException e) {
+            // Only the close future can complete exceptionally. That also means that the connection closed.
+            Log.trace("The close future of the connection of session {} completed exceptionally.", connectionProvider, e);
+        }
+        return streamManager.abandonResume();
+    }
+
+    /**
+     * Resumes the stream of this session, which is detached, with the connection of another session, of which the
+     * remote server resumed the stream with {@code <resumed/>}: this session takes over that connection, and sends the
+     * stanzas that the remote server did not receive, followed by the stanzas that were queued while it was detached
+     * (see {@link RequestingStreamManager#onResume(JID, long)}). The other session is not used after this.
+     *
+     * This session is first taken from the detached sessions, so that it is not ended while it is resumed. When that
+     * fails, because it was ended meanwhile, nothing is changed. Once resumed, this session reports the authentication
+     * method of the connection that it took over, and a close listener is registered on that connection, as for a new
+     * session.
+     *
+     * @param connectionProvider the session of the connection on which the stream is resumed.
+     * @param h the number of stanzas that the remote server reports to have handled, which the caller validated.
+     * @return true if the stream is resumed, false if this session could not be taken from the detached sessions.
+     */
+    public boolean resumeWithConnectionOf(@Nonnull final LocalOutgoingServerSession connectionProvider, final long h)
+    {
+        // OF-3420: Claimed before the connection is moved, so that SessionManager#terminateDetached does not end a session that is resumed.
+        if (!sessionManager.removeDetached(this)) {
+            Log.debug("Not resuming session {} on the connection of session {}, as it is no longer detached.", this, connectionProvider);
+            return false;
+        }
+        final AuthenticationMethod method = connectionProvider.getAuthenticationMethod();
+        Log.debug("Resuming session {} on the connection of session {}, authenticated with {} (h: {}).", this, connectionProvider, method, h);
+        if (method != null) {
+            // OF-2425: The method was cleared when the former connection closed (LocalServerSession#setStatus).
+            setAuthenticationMethod(method);
+        }
+        reattach(connectionProvider, h);
+        sessionManager.outgoingServerSessionCreated(this);
+        return true;
     }
 
     /**

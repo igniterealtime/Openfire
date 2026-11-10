@@ -40,6 +40,7 @@ import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.openfire.handler.Bind2StreamManagementHandler;
 import org.jivesoftware.openfire.net.Bind2Request;
+import org.jivesoftware.openfire.streammanagement.RequestingStreamManager;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.openfire.streammanagement.TerminationDelegate;
 import org.jivesoftware.util.*;
@@ -275,11 +276,14 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     private ConnectionMultiplexerSessionListener multiplexerSessionListener = new ConnectionMultiplexerSessionListener();
 
     /**
-     * Sessions contained in this Map are (client?) sessions which are detached.
+     * Sessions contained in this set are sessions which are detached.
      * Sessions remaining here too long will be reaped, but they will be checked
      * to see if they have in fact resumed since.
+     *
+     * Sessions are compared by identity (LocalSession does not override equals), not by stream ID: the stream ID of an
+     * outgoing server session is chosen by the remote server, so that two sessions can have the same one (OF-2425).
      */
-    private final Map<StreamID, LocalSession> detachedSessions = new ConcurrentHashMap<>();
+    private final Set<LocalSession> detachedSessions = ConcurrentHashMap.newKeySet();
 
     /**
      * Local session manager responsible for keeping sessions connected to this JVM that are not
@@ -349,7 +353,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      */
     public void addDetached(LocalSession localSession) {
         Log.trace( "Marking session '{}' ({}) as detached.", localSession.getAddress(), localSession.getStreamID() );
-        this.detachedSessions.put(localSession.getStreamID(), localSession);
+        this.detachedSessions.add(localSession);
     }
 
     /**
@@ -360,16 +364,18 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * @return true if the session is currently in 'detached' state, otherwise 'false'.
      */
     public boolean isDetached(LocalSession localSession) {
-        return this.detachedSessions.containsKey(localSession.getStreamID());
+        return this.detachedSessions.contains(localSession);
     }
 
     /**
      * Terminate a session that is detached.
      *
      * For a client session, a presence 'unavailable' is broadcast for the session that's being terminated. The session
-     * will be removed from the routing table. For an incoming server session, the domains that were validated for the
-     * session are unregistered, as when its connection closes while it cannot be resumed. Sessions of other types are
-     * ignored.
+     * will be removed from the routing table. For an incoming server session, the session is unregistered, with all of
+     * the domains that were validated for it. For an outgoing server
+     * session, its routes are removed, after which the stanzas that it holds are handled, as when its connection closes
+     * while it cannot be resumed (see {@link #endDetachedOutgoingServerSession(LocalOutgoingServerSession)}). Sessions
+     * of other types are ignored.
      *
      * When the provided session is not recognized as a detached session (on this cluster node), then this method will
      * log a message but not apply any changes.
@@ -381,7 +387,56 @@ public class SessionManager extends BasicModule implements ClusterEventListener
             terminateDetachedIncomingServerSession(serverSession);
             return;
         }
+        if (session instanceof LocalOutgoingServerSession serverSession) {
+            terminateDetachedOutgoingServerSession(serverSession);
+            return;
+        }
         terminateDetachedClientSession(session);
+    }
+
+    /**
+     * Terminates a detached outgoing server session, of which the routes stay in the routing table while it is
+     * detached. Only the caller that removes the session from the detached sessions ends it, which it does without
+     * holding the monitor of this instance.
+     *
+     * @param session The (detached) session to be terminated.
+     */
+    private void terminateDetachedOutgoingServerSession(@Nonnull final LocalOutgoingServerSession session) {
+        if (!removeDetached(session)) {
+            Log.debug("Not terminating outgoing server session '{}' ({}), as it is not registered as being detached.", session.getAddress(), session.getStreamID());
+            return;
+        }
+        endDetachedOutgoingServerSession(session);
+    }
+
+    /**
+     * Ends an outgoing server session that was detached, and that is not resumed, as when its connection closes while it
+     * cannot be resumed: its routes are removed, after which the stanzas that the remote server did not acknowledge are
+     * handled as described in {@link RequestingStreamManager#onClose(PacketRouter, JID)}, and the stanzas that were
+     * queued while it was detached, which were never sent, are routed again, so that they go out over a new connection.
+     *
+     * The session must be removed from the detached sessions before this is invoked, so that it is ended once. This
+     * holds no lock of this instance or of the stream manager of the session while it removes the routes or routes
+     * stanzas.
+     *
+     * @param session The session to end, which is no longer registered as detached.
+     */
+    private void endDetachedOutgoingServerSession(@Nonnull final LocalOutgoingServerSession session) {
+        final Collection<DomainPair> domainPairs = List.copyOf(session.getOutgoingDomainPairs());
+        Log.debug("Ending detached outgoing server session '{}' ({}), which was not resumed. Removing its routes: {}", session.getAddress(), session.getStreamID(), domainPairs);
+        try {
+            for (final DomainPair domainPair : domainPairs) {
+                // OF-2425: A failure to remove one route must not prevent the others from being removed.
+                try {
+                    routingTable.removeServerRoute(domainPair);
+                } catch (Exception e) {
+                    Log.warn("Unable to remove route {} of detached outgoing server session '{}' ({}) that is ended.", domainPair, session.getAddress(), session.getStreamID(), e);
+                }
+            }
+        } finally {
+            // OF-2425: Only once the routes are removed do the stanzas that are routed again go out over a new connection.
+            session.getStreamManager().onClose(router, serverAddress);
+        }
     }
 
     /**
@@ -455,10 +510,9 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * @param localSession the LocalSession (this) which has been resumed or closed.
      */
     public synchronized boolean removeDetached(LocalSession localSession) {
-        LocalSession other = this.detachedSessions.get(localSession.getStreamID());
-        if (other == localSession) {
+        if (this.detachedSessions.remove(localSession)) {
             Log.trace( "Removing detached session '{}' ({}).", localSession.getAddress(), localSession.getStreamID() );
-            return this.detachedSessions.remove(localSession.getStreamID()) != null;
+            return true;
         }
         return false;
     }
@@ -1904,6 +1958,38 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         {
             final OutgoingServerSession session = (OutgoingServerSession)handback;
 
+            if (session instanceof LocalOutgoingServerSession localSession) {
+                if (localSession.isDetached()) {
+                    Log.debug("Closing outgoing server session with address {} and streamID {} is detached already; this is a no-op.", session.getAddress(), session.getStreamID());
+                    return CompletableFuture.completedFuture(null);
+                }
+                // OF-2425: When the session is resumed, the connection that closed can be one that it no longer uses. Read once, as resumption changes it.
+                final Connection currentConnection = localSession.getConnection();
+                if (currentConnection == null) {
+                    // Only a session that a resumption took from the detached sessions, or that was ended, has no connection while not detached.
+                    Log.debug("Ignoring close notification for outgoing server session with address {} and streamID {}: it is not detached, and has no connection, as it is being resumed or was ended.", session.getAddress(), session.getStreamID());
+                    return CompletableFuture.completedFuture(null);
+                }
+                if (!currentConnection.isClosed()) {
+                    Log.debug("Ignoring stale close notification for outgoing server session with address {} and streamID {}: it already has a different, live connection.", session.getAddress(), session.getStreamID());
+                    return CompletableFuture.completedFuture(null);
+                }
+                // OF-2425: A session that can be resumed keeps its routes until terminateDetached() ends it (decision 7).
+                if (localSession.getStreamManager().getResume()) {
+                    if (StreamManager.SERVER_RESUME_ENABLED.getValue()) {
+                        // OF-2425: Detached only while it still uses the connection that closed, as it can have been resumed since the checks above.
+                        if (!localSession.setDetachedIfConnectionIs(currentConnection)) {
+                            Log.debug("Ignoring close notification for outgoing server session with address {} and streamID {}: it no longer uses the connection that closed, as its stream was resumed meanwhile.", session.getAddress(), session.getStreamID());
+                            return CompletableFuture.completedFuture(null);
+                        }
+                        Log.debug("Closing outgoing server session with address {} and streamID {} can be resumed; detached, and resuming it on a new connection. Its routes are kept: {}", session.getAddress(), session.getStreamID(), session.getOutgoingDomainPairs());
+                        localSession.startResumption();
+                        return CompletableFuture.completedFuture(null);
+                    }
+                    Log.debug("Closing outgoing server session with address {} and streamID {} is not detached, although its stream can be resumed, as resumption on server connections is disabled.", session.getAddress(), session.getStreamID());
+                }
+            }
+
             CompletableFuture<Void> result = CompletableFuture.runAsync(() -> Log.debug("Closing outgoing server session with address {} and streamID {}.", session.getAddress(), session.getStreamID()));
 
             // Remove all the domains that were registered for this server session.
@@ -2619,7 +2705,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         @Override
         public void run() {
             final Instant now = Instant.now();
-            for (LocalSession session : detachedSessions.values()) {
+            for (LocalSession session : detachedSessions) {
                 try {
                     final Duration allowableInactivity = getDetachTimeout(session);
                     if (allowableInactivity.isNegative()) {

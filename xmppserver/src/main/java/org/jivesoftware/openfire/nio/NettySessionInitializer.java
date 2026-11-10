@@ -16,6 +16,7 @@
 
 package org.jivesoftware.openfire.nio;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
 import io.netty.channel.MultiThreadIoEventLoopGroup;
@@ -28,10 +29,12 @@ import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import io.netty.util.concurrent.EventExecutorGroup;
 import org.dom4j.*;
+import org.jivesoftware.openfire.net.RespondingServerStanzaHandler;
 import org.jivesoftware.openfire.net.SocketUtil;
 import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.DomainPair;
+import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.spi.ConnectionAcceptor;
 import org.jivesoftware.openfire.spi.ConnectionListener;
@@ -43,6 +46,7 @@ import org.jivesoftware.util.SystemProperty;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.annotation.concurrent.GuardedBy;
 import javax.net.ssl.SSLException;
 import java.io.IOException;
@@ -180,13 +184,40 @@ public class NettySessionInitializer {
 
     private final DomainPair domainPair;
     private final int port;
+
+    /**
+     * The detached session of which the stream is to be resumed on the new connection, instead of enabling Stream
+     * Management on it, or null for a connection that is not used to resume a stream.
+     */
+    @Nullable
+    private final LocalOutgoingServerSession resumeTarget;
     private boolean directTLS = false;
     private final AtomicBoolean isStopped = new AtomicBoolean(false);
     private Channel channel;
 
+    /**
+     * The handler of the connection that was opened most recently, or null when none was opened yet.
+     */
+    @Nullable
+    @VisibleForTesting
+    volatile NettyOutboundConnectionHandler connectionHandler;
+
     public NettySessionInitializer(DomainPair domainPair, int port) {
+        this(domainPair, port, null);
+    }
+
+    /**
+     * Creates an initialiser for a new connection, which can be used to resume the stream of a detached session.
+     *
+     * @param domainPair the local and remote domain for which the connection is opened.
+     * @param port default port to use to open the connection.
+     * @param resumeTarget the detached session of which the stream is to be resumed on the new connection, instead of
+     *                     enabling Stream Management on it, or null when no stream is to be resumed.
+     */
+    public NettySessionInitializer(DomainPair domainPair, int port, @Nullable LocalOutgoingServerSession resumeTarget) {
         this.domainPair = domainPair;
         this.port = port;
+        this.resumeTarget = resumeTarget;
 
         synchronized (sharedResourceLock) {
             if (ioWorkerGroup == null || ioWorkerGroup.isShuttingDown()) {
@@ -229,7 +260,8 @@ public class NettySessionInitializer {
                     // Disable auto-read to prevent incoming data before pipeline is ready (which leads to race-conditions, sometimes preventing data from a new socket from being processed).
                     ch.config().setAutoRead(false);
 
-                    NettyOutboundConnectionHandler businessLogicHandler = new NettyOutboundConnectionHandler(listener.generateConnectionConfiguration(), domainPair, port);
+                    NettyOutboundConnectionHandler businessLogicHandler = new NettyOutboundConnectionHandler(listener.generateConnectionConfiguration(), domainPair, port, resumeTarget);
+                    connectionHandler = businessLogicHandler;
 
                     // Make the remote domain available for the channel's whole lifetime, independent of pipeline membership, so that
                     // startTLS can obtain it for SNI without racing the removal of the outbound connection handler (OF-3332).
@@ -349,6 +381,26 @@ public class NettySessionInitializer {
     }
 
     /**
+     * Gives up on resuming the stream of the detached session for which the connection was opened, if any, so that an
+     * answer of the remote server to a request to resume it that arrives after this is ignored, and no such request is
+     * sent after this (see {@link RespondingServerStanzaHandler#abandonResume()}).
+     *
+     * @return false if the remote server answered a request to resume the stream already, in which case the processing
+     * of that answer takes care of the detached session; otherwise true.
+     */
+    public boolean abandonResume() {
+        final NettyOutboundConnectionHandler handler = connectionHandler;
+        final CompletableFuture<RespondingServerStanzaHandler> future = handler == null ? null : handler.getStanzaHandlerFuture();
+        final RespondingServerStanzaHandler stanzaHandler = future == null || future.isCompletedExceptionally() ? null : future.getNow(null);
+        if (stanzaHandler == null) {
+            // OF-2425: Without a stanza handler, nothing is read from the connection, so no request was sent.
+            Log.trace("Nothing to give up on resuming the stream of session {} on the connection for {}, as the connection has no stanza handler.", resumeTarget, domainPair);
+            return true;
+        }
+        return stanzaHandler.abandonResume();
+    }
+
+    /**
      * Returns a {@link Future} that completes when the outbound server-to-server session for the given Netty
      * {@link Channel} has either been authenticated or when all authentication mechanisms have been attempted.
      *
@@ -401,6 +453,7 @@ public class NettySessionInitializer {
         return "NettySessionInitializer{" +
             "domainPair=" + domainPair +
             ", port=" + port +
+            ", resumeTarget=" + resumeTarget +
             ", directTLS=" + directTLS +
             ", workerGroup=" + ioWorkerGroup +
             ", channel=" + channel +

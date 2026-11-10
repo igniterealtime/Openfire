@@ -167,6 +167,7 @@ public class ServerStanzaHandlerSaslRestartTest
         assertTrue(restarted.isAuthenticated(), "The session of the restarted stream must be authenticated.");
         assertEquals(Fixtures.XMPP_DOMAIN, restarted.getLocalDomain(), "The session of the restarted stream must keep the local domain.");
         assertEquals(new JID(REMOTE_DOMAIN), restarted.getClaimedIdentity().orElse(null), "The session of the restarted stream must keep the identity that the remote server claimed.");
+        assertEquals(original.getFirstAuthentication(), restarted.getFirstAuthentication(), "The session of the restarted stream must keep the record of the first authentication.");
         verify(connection, times(1).description("The connection must be handed to the session of the restarted stream.")).reinit(restarted);
     }
 

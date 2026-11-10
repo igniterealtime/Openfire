@@ -21,6 +21,7 @@ import org.dom4j.Element;
 import org.dom4j.QName;
 import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.Connection;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
@@ -35,6 +36,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.xmpp.packet.StreamError;
 
+import java.time.Duration;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -224,10 +226,11 @@ public class LocalIncomingServerSessionStreamManagementTest
     }
 
     /**
-     * Verifies that a server that requests resumption gets Stream Management without resumption.
+     * Verifies that a server that requests resumption gets Stream Management without resumption, when resumption is
+     * not enabled for servers, which is the default.
      */
     @Test
-    public void resumptionIsNotOffered() throws Exception
+    public void resumptionIsNotOfferedWhenServerResumptionIsDisabled() throws Exception
     {
         // Setup test fixture.
         StreamManager.SERVER_ACTIVE.setValue(true);
@@ -242,17 +245,65 @@ public class LocalIncomingServerSessionStreamManagementTest
         final Element enabled = lastDelivered();
         assertEquals(QName.get("enabled", StreamManager.NAMESPACE_V3), enabled.getQName(), "The server must be told that Stream Management is enabled.");
         assertTrue(enabled.attributes().isEmpty(), "No resumption attributes are expected for a server session, but got: " + enabled.asXML());
-        assertFalse(session.getStreamManager().getResume(), "The stream of a server session must not be resumable.");
+        assertFalse(session.getStreamManager().getResume(), "The stream of a server session must not be resumable while resumption is disabled for servers.");
     }
 
     /**
-     * Verifies that a request from a server to resume a stream is refused.
+     * Verifies that a server that requests resumption gets a resumable stream when resumption is enabled for servers,
+     * with an SM-ID, and with the time for which a detached server session is kept as the maximum resumption time.
      */
     @Test
-    public void resumeIsRefused() throws Exception
+    public void resumptionIsOfferedWhenServerResumptionIsEnabled() throws Exception
     {
         // Setup test fixture.
         StreamManager.SERVER_ACTIVE.setValue(true);
+        StreamManager.SERVER_RESUME_ENABLED.setValue(true);
+        SessionManager.SERVER_SESSION_DETACH_TIMEOUT.setValue(Duration.ofSeconds(90));
+        authenticate(ServerSession.AuthenticationMethod.DIALBACK);
+        final Element enable = smElement("enable", StreamManager.NAMESPACE_V3);
+        enable.addAttribute("resume", "true");
+
+        // Execute system under test.
+        session.getStreamManager().process(enable);
+
+        // Verify result.
+        final Element enabled = lastDelivered();
+        assertEquals(QName.get("enabled", StreamManager.NAMESPACE_V3), enabled.getQName(), "The server must be told that Stream Management is enabled.");
+        assertEquals("true", enabled.attributeValue("resume"), "The server must be told that its stream can be resumed, but got: " + enabled.asXML());
+        assertNotNull(enabled.attributeValue("id"), "The server must be given an SM-ID, but got: " + enabled.asXML());
+        assertEquals("90", enabled.attributeValue("max"), "The maximum resumption time must be the time for which a detached server session is kept, in seconds, but got: " + enabled.asXML());
+        assertTrue(session.getStreamManager().getResume(), "The stream of a server session must be resumable while resumption is enabled for servers.");
+    }
+
+    /**
+     * Verifies that a request from an authenticated server to resume a stream is refused when Stream Management is
+     * enabled for servers, but resumption is not.
+     */
+    @Test
+    public void resumeIsRefusedWhenServerResumptionIsDisabled() throws Exception
+    {
+        // Setup test fixture.
+        StreamManager.SERVER_ACTIVE.setValue(true);
+        authenticate(ServerSession.AuthenticationMethod.DIALBACK);
+        final Element resume = smElement("resume", StreamManager.NAMESPACE_V3).addAttribute("previd", "some-id").addAttribute("h", "0");
+
+        // Execute system under test.
+        session.getStreamManager().process(resume);
+
+        // Verify result.
+        assertFailedWithUnexpectedRequest(lastDelivered(), StreamManager.NAMESPACE_V3);
+    }
+
+    /**
+     * Verifies that a request from a server to resume a stream is refused before any of its domains is authenticated,
+     * as XEP-0198 § 10 does not allow resumption before authentication.
+     */
+    @Test
+    public void resumeBeforeAuthenticationIsRefused() throws Exception
+    {
+        // Setup test fixture.
+        StreamManager.SERVER_ACTIVE.setValue(true);
+        StreamManager.SERVER_RESUME_ENABLED.setValue(true);
         final Element resume = smElement("resume", StreamManager.NAMESPACE_V3).addAttribute("previd", "some-id").addAttribute("h", "0");
 
         // Execute system under test.

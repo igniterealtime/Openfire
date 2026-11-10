@@ -81,6 +81,17 @@ final class ClientResumption implements Resumption<LocalClientSession>
     }
 
     /**
+     * Checks whether the session has bound a resource, which a successful resumption replaces.
+     *
+     * @return true if the session can no longer resume another session.
+     */
+    @Override
+    public boolean isTooLateToResume()
+    {
+        return session.isAuthenticated();
+    }
+
+    /**
      * Creates the SM-ID, which is the Base64 encoding of the resource of the session and its stream ID, separated by a
      * NUL character.
      *
@@ -148,5 +159,19 @@ final class ClientResumption implements Resumption<LocalClientSession>
         Log.debug("Found existing session for '{}', checking status", fullJid);
 
         return ResumeRequestValidationResult.success(otherSession);
+    }
+
+    /**
+     * Does not take a client session from the detached sessions: {@link LocalClientSession#reattach(org.jivesoftware.openfire.session.LocalSession, long)}
+     * removes it from them once the connection is replaced. A client session can therefore be resumed while it is
+     * ended (OF-3420).
+     *
+     * @param target the detached session that is to be resumed (cannot be null).
+     * @return true
+     */
+    @Override
+    public boolean claim(@Nonnull final LocalClientSession target)
+    {
+        return true;
     }
 }

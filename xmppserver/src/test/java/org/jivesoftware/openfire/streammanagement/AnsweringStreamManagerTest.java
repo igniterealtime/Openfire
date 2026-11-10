@@ -104,6 +104,28 @@ public class AnsweringStreamManagerTest extends AbstractStreamManagerTest
     }
 
     /**
+     * Verifies that {@link AnsweringStreamManager#detachIfNeeded(LocalSession)} reports that a session that is neither
+     * detached nor has a connection cannot be resumed, and does not detach it again. Such a session was taken from the
+     * detached sessions by another resumption, or because it was ended.
+     */
+    @Test
+    void refusesSessionThatIsNeitherDetachedNorConnected()
+    {
+        // Setup test fixture.
+        final LocalClientSession otherSession = mock(LocalClientSession.class);
+        when(otherSession.isDetached()).thenReturn(false);
+        when(otherSession.getConnection()).thenReturn(null);
+        final AnsweringStreamManager sm = new AnsweringStreamManager(mock(LocalSession.class));
+
+        // Execute system under test.
+        final boolean result = sm.detachIfNeeded(otherSession);
+
+        // Verify results.
+        assertFalse(result, "A session that is neither detached nor has a connection must be reported as one that cannot be resumed.");
+        verify(otherSession, never().description("A session that was taken from the detached sessions must not be detached again.")).setDetached();
+    }
+
+    /**
      * Verifies that {@link AnsweringStreamManager#detachIfNeeded(LocalSession)} marks the pre-existing session as detached
      * strictly before closing its connection. This ordering is not incidental: it is what lets
      * NettyConnection#close(StreamError) tell a benign resumption hand-off (session already detached when close() runs)

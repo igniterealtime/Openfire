@@ -1848,11 +1848,26 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                 Log.debug("Closing incoming server session with address {} and streamID {} is detached already; this is a no-op.", session.getAddress(), session.getStreamID());
                 return CompletableFuture.completedFuture(null);
             }
+            // OF-2425: When the session is resumed, the connection that closed can be one that it no longer uses. Read once, as resumption changes it.
+            final Connection currentConnection = session.getConnection();
+            if (currentConnection == null) {
+                // Only a session that a resumption took from the detached sessions, or that was ended, has no connection while not detached.
+                Log.debug("Ignoring close notification for incoming server session with address {} and streamID {}: it is not detached, and has no connection, as it is being resumed or was ended.", session.getAddress(), session.getStreamID());
+                return CompletableFuture.completedFuture(null);
+            }
+            if (!currentConnection.isClosed()) {
+                Log.debug("Ignoring stale close notification for incoming server session with address {} and streamID {}: it already has a different, live connection.", session.getAddress(), session.getStreamID());
+                return CompletableFuture.completedFuture(null);
+            }
             // OF-2425: A session that can be resumed keeps its validated domains registered until terminateDetached() ends it.
             if (session.getStreamManager().getResume()) {
                 if (StreamManager.SERVER_RESUME_ENABLED.getValue()) {
-                    Log.debug("Closing incoming server session with address {} and streamID {} can be resumed; detaching. Its validated domains stay registered: {}", session.getAddress(), session.getStreamID(), session.getValidatedDomains());
-                    session.setDetached();
+                    // OF-2425: Detached only while it still uses the connection that closed, as it can have been resumed since the checks above.
+                    if (!session.setDetachedIfConnectionIs(currentConnection)) {
+                        Log.debug("Ignoring close notification for incoming server session with address {} and streamID {}: it no longer uses the connection that closed, as its stream was resumed meanwhile.", session.getAddress(), session.getStreamID());
+                        return CompletableFuture.completedFuture(null);
+                    }
+                    Log.debug("Closing incoming server session with address {} and streamID {} can be resumed; detached. Its validated domains stay registered: {}", session.getAddress(), session.getStreamID(), session.getValidatedDomains());
                     return CompletableFuture.completedFuture(null);
                 }
                 Log.debug("Closing incoming server session with address {} and streamID {} is not detached, although its stream can be resumed, as resumption on server connections is disabled.", session.getAddress(), session.getStreamID());

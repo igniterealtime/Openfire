@@ -38,32 +38,6 @@ public abstract class LocalServerSession extends LocalSession implements ServerS
     }
 
     @Override
-    public void setDetached() {
-        // TODO Implement stream management for s2s (OF-2425). Remove this override when it is.
-        throw new UnsupportedOperationException("Stream management is not supported for server-to-server connections");
-    }
-
-    @Override
-    public void reattach(LocalSession connectionProvider, long h) {
-        // TODO Implement stream management for s2s (OF-2425). Remove this override when it is.
-        throw new UnsupportedOperationException("Stream management is not supported for server-to-server connections");
-    }
-
-    /**
-     * Returns the connection associated with this Session.
-     *
-     * @return The connection for this session
-     */
-    @Nonnull
-    @Override
-    public Connection getConnection() {
-        final Connection connection = super.getConnection();
-        // valid only as long as stream management for s2s is not implemented (OF-2425). Remove this override when it is.
-        assert connection != null; // Openfire does not implement stream management for s2s (OF-2425). Therefor, the connection cannot be null.
-        return connection;
-    }
-
-    @Override
     public void setStatus(Status status) {
         super.setStatus(status);
         if (status != Status.AUTHENTICATED) {

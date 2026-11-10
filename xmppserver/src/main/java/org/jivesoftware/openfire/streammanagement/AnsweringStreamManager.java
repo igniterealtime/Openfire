@@ -29,6 +29,7 @@ import org.jivesoftware.util.XMPPDateTimeFormat;
 import org.xmpp.packet.*;
 
 import javax.annotation.Nonnull;
+import java.time.Duration;
 
 /**
  * XEP-0198 Stream Management at the end of a stream that answers requests of the peer: the peer asks to enable Stream
@@ -74,7 +75,7 @@ public class AnsweringStreamManager extends StreamManager
                     session.close( error );
                     return true;
                 }
-                processResume( resumeRequest );
+                processResume( resumption, resumeRequest );
                 return true;
             default:
                 return false;
@@ -108,7 +109,11 @@ public class AnsweringStreamManager extends StreamManager
      *
      * Stream management cannot be enabled before the session is authenticated. On a session with a server that
      * connected to Openfire, it can only be enabled when {@link #SERVER_ACTIVE} is set, and once at least one domain
-     * of that server is authenticated. Resumption is not offered on such a session.
+     * of that server is authenticated. Resumption is offered on such a session when {@link #SERVER_RESUME_ENABLED} is
+     * set as well.
+     *
+     * The 'max' attribute, when sent, is the time for which a detached session of the type of the session is kept
+     * (see {@link org.jivesoftware.openfire.SessionManager#getDetachTimeout(LocalSession)}).
      *
      * @param namespace the SM namespace to use
      * @param resume    whether the peer requests a resumable session
@@ -162,15 +167,15 @@ public class AnsweringStreamManager extends StreamManager
             enabled.addAttribute("resume", "true");
             enabled.addAttribute("id", getSmId());
             if ( !namespace.equals(NAMESPACE_V2) && LOCATION_ENABLED.getValue() ) {
-                // OF-1925: Hint clients to do resumes at the same cluster node.
+                // OF-1925, OF-2425: Hint the peer (a client or a server) to resume at this cluster node.
                 enabled.addAttribute("location", XMPPServer.getInstance().getServerInfo().getHostname());
             }
 
-            // OF-1926: Tell clients how long they can be detached.
+            // OF-1926: Tell clients how long they can be detached. OF-2425: servers use a timeout of their own.
             if ( MAX_SERVER_ENABLED.getValue() ) {
-                final int sessionDetachTime = XMPPServer.getInstance().getSessionManager().getSessionDetachTime();
-                if ( sessionDetachTime > 0 ) {
-                    enabled.addAttribute("max", String.valueOf(sessionDetachTime/1000));
+                final Duration detachTimeout = XMPPServer.getInstance().getSessionManager().getDetachTimeout(session);
+                if ( !detachTimeout.isNegative() && !detachTimeout.isZero() ) {
+                    enabled.addAttribute("max", String.valueOf(detachTimeout.toSeconds()));
                 }
             }
         }
@@ -184,22 +189,33 @@ public class AnsweringStreamManager extends StreamManager
      * effects of {@link LocalSession#reattach(LocalSession, long)}) directly to the connection, rather than
      * returning a result to the caller.
      *
+     * The session to resume is detached, when it is not detached already, and then taken from the detached sessions
+     * ({@link Resumption#claim}), before the connection is moved to it. When that is not possible, because the session
+     * was ended or is resumed on another connection, the request is refused with 'item-not-found', as for a session
+     * that is not found.
+     *
+     * @param resumption the parts of resumption that depend on the type of the session (cannot be null).
      * @param request the parsed resume request (cannot be null).
+     * @param <S> the type of the session that is to be resumed.
      */
-    private void processResume(@Nonnull final ResumeRequest request)
+    private <S extends LocalSession> void processResume(@Nonnull final Resumption<S> resumption, @Nonnull final ResumeRequest request)
     {
         setNamespace(request.getNamespace());
 
-        final ResumeRequestValidationResult<?> validation = validateResumeRequest(resumption, request);
+        final ResumeRequestValidationResult<S> validation = validateResumeRequest(resumption, request);
         if (!validation.isSuccess()) {
             assert validation.getFailureCondition() != null; // Per definition of the method contract.
             sendError(new PacketError(validation.getFailureCondition()));
             return;
         }
 
-        final LocalSession otherSession = validation.getTarget();
+        final S otherSession = validation.getTarget();
         assert otherSession != null; // Per definition of the method contract.
-        detachIfNeeded(otherSession);
+        // OF-3420: Without the claim, a session that SessionManager#terminateDetached is ending could still be resumed.
+        if (!detachIfNeeded(otherSession) || !resumption.claim(otherSession)) {
+            sendError(new PacketError(PacketError.Condition.item_not_found));
+            return;
+        }
 
         // If we're all happy, re-attach the connection from the pre-existing session to the new session, discarding the old session.
         Log.debug("Attaching to other session '{}'.", otherSession.getStreamID());
@@ -211,7 +227,7 @@ public class AnsweringStreamManager extends StreamManager
      * Attempts to process (validate and perform) an inline SASL2 (XEP-0388) resume request, as defined by XEP-0198
      * § 9.2 ("Inline Stream Resumption").
      *
-     * Unlike {@link #processResume(ResumeRequest)}, this does not write its response to the connection. Instead, the
+     * Unlike {@link #processResume(Resumption, ResumeRequest)}, this does not write its response to the connection. Instead, the
      * outcome is returned as a {@link Sasl2ResumeResult}, for the caller to embed in the SASL2 {@code <success/>}
      * response that it is constructing.
      *
@@ -248,7 +264,9 @@ public class AnsweringStreamManager extends StreamManager
 
         final LocalClientSession otherSession = validation.getTarget();
         assert otherSession != null; // Per definition of the method contract.
-        detachIfNeeded(otherSession);
+        if (!detachIfNeeded(otherSession)) {
+            return Sasl2ResumeResult.failure(buildFailedElement(request.getNamespace(), PacketError.Condition.item_not_found));
+        }
 
         Log.debug("Attaching to other session '{}' via inline SASL2 resume.", otherSession.getStreamID());
         otherSession.reattachForSasl2(session);
@@ -260,24 +278,32 @@ public class AnsweringStreamManager extends StreamManager
     /**
      * Detaches the connection of a to-be-resumed session, unless it is already detached.
      *
+     * A session that is not detached, but has no connection, is not detached: it was taken from the detached sessions
+     * by another resumption or because it was ended, and cannot be resumed.
+     *
      * @param otherSession the pre-existing session that is about to be resumed.
+     * @return false if the session cannot be resumed, as it is neither detached nor has a connection.
      */
     @VisibleForTesting
-    void detachIfNeeded(@Nonnull final LocalSession otherSession)
+    boolean detachIfNeeded(@Nonnull final LocalSession otherSession)
     {
         if (!otherSession.isDetached()) {
-            Log.debug("Existing session {} is not detached; detaching.", otherSession.getStreamID());
             final Connection oldConnection = otherSession.getConnection();
+            if (oldConnection == null) {
+                Log.debug("Existing session {} is neither detached nor has a connection, as it is being resumed or was ended. It cannot be resumed.", otherSession.getStreamID());
+                return false;
+            }
+            Log.debug("Existing session {} is not detached; detaching.", otherSession.getStreamID());
             otherSession.setDetached();
-            assert oldConnection != null; // If the other session is not detached, the connection can't be null.
             Log.debug("Closing superseded connection {} for session {}", oldConnection, otherSession.getStreamID());
             oldConnection.close(new StreamError(StreamError.Condition.conflict, "The stream previously served over this connection is resumed on a new connection."));
         }
+        return true;
     }
 
     /**
      * Validates a stream resumption request (traditional or inline SASL2), without performing any of the state
-     * changes (detaching/reattaching) needed to actually resume the session. This is shared by {@link #processResume(ResumeRequest)}
+     * changes (detaching/reattaching) needed to actually resume the session. This is shared by {@link #processResume(Resumption, ResumeRequest)}
      * and {@link #processSasl2Resume(ResumeRequest)}, so that the two flows agree on what is (and is not) an
      * acceptable resumption attempt.
      *
@@ -295,14 +321,14 @@ public class AnsweringStreamManager extends StreamManager
 
         Log.debug("Attempting resumption for {}, h={}", previd, h);
 
-        // Ensure that resource binding has NOT occurred.
         if (!resumption.isAllowed()) {
             Log.debug("Unable to process session resumption attempt, as session {} is in a state where session resumption is not allowed.", session);
             return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
         }
 
-        if (session.isAuthenticated()) {
-            Log.debug("Unable to process session resumption attempt, as session {} is already authenticated.", session);
+        // Ensure that what resumption replaces, such as resource binding for a client, has NOT occurred.
+        if (resumption.isTooLateToResume()) {
+            Log.debug("Unable to process session resumption attempt, as session {} is past the point at which it can resume a session.", session);
             return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
         }
 

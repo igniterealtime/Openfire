@@ -16,6 +16,7 @@
 package org.jivesoftware.openfire.streammanagement;
 
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.slf4j.Logger;
 import org.xmpp.packet.PacketError;
@@ -24,7 +25,8 @@ import javax.annotation.Nonnull;
 
 /**
  * The parts of XEP-0198 stream resumption (§ 5) that depend on the type of session: whether a session may resume, the
- * SM-ID that identifies the stream of a session, and how the session that a resume request refers to is found.
+ * SM-ID that identifies the stream of a session, how the session that a resume request refers to is found, and how it
+ * is taken from the detached sessions before it is resumed.
  *
  * Each instance of an implementation that supports resumption is bound to one session: the session that enables
  * resumption for its own stream, or that requests to resume the stream of another session. An implementation that
@@ -49,6 +51,9 @@ interface Resumption<S extends LocalSession>
         if (session instanceof LocalClientSession clientSession) {
             return new ClientResumption(log, clientSession);
         }
+        if (session instanceof LocalIncomingServerSession serverSession) {
+            return new ServerResumption(log, serverSession);
+        }
         return Unsupported.INSTANCE;
     }
 
@@ -58,6 +63,14 @@ interface Resumption<S extends LocalSession>
      * @return true if the session may enable resumption, or resume another session.
      */
     boolean isAllowed();
+
+    /**
+     * Checks whether the stream of the session has gone past the point at which it can resume another session, for
+     * example because the session has done what resumption would replace.
+     *
+     * @return true if the session can no longer resume another session.
+     */
+    boolean isTooLateToResume();
 
     /**
      * Creates the SM-ID that identifies the stream of the session, for the 'id' attribute of {@code <enabled/>}.
@@ -86,6 +99,17 @@ interface Resumption<S extends LocalSession>
     ResumeRequestValidationResult<S> locate(@Nonnull String previd);
 
     /**
+     * Takes the session that a resume request refers to from the detached sessions, after it has been detached, and
+     * before its connection is replaced. A session that is taken this way is no longer ended because it was detached
+     * for too long, and cannot be taken by another resume request.
+     *
+     * @param target the detached session that is to be resumed (cannot be null).
+     * @return false if the session cannot be resumed, as it is no longer detached: it was ended, or taken by another
+     *         resume request.
+     */
+    boolean claim(@Nonnull S target);
+
+    /**
      * Resumption for types of session that do not support it.
      */
     final class Unsupported implements Resumption<LocalSession>
@@ -102,6 +126,12 @@ interface Resumption<S extends LocalSession>
             return false;
         }
 
+        @Override
+        public boolean isTooLateToResume()
+        {
+            return true;
+        }
+
         @Nonnull
         @Override
         public String createId()
@@ -114,6 +144,12 @@ interface Resumption<S extends LocalSession>
         public ResumeRequestValidationResult<LocalSession> locate(@Nonnull final String previd)
         {
             return ResumeRequestValidationResult.failure(PacketError.Condition.unexpected_request);
+        }
+
+        @Override
+        public boolean claim(@Nonnull final LocalSession target)
+        {
+            return false;
         }
     }
 }

@@ -433,7 +433,7 @@ public class ServerDialback {
                         LocalIncomingServerSession session = sessionManager.
                             createIncomingServerSession(connection, streamID, hostname);
                         // Add the validated domain as a valid domain
-                        session.addValidatedDomain(hostname);
+                        session.addValidatedDomain(hostname, ServerSession.AuthenticationMethod.DIALBACK);
                         session.setAuthenticationMethod(ServerSession.AuthenticationMethod.DIALBACK);
                         // Set the domain or subdomain of the local server used when
                         // validating the session
@@ -549,6 +549,11 @@ public class ServerDialback {
             boolean alreadyExists = false;
             for (IncomingServerSession session : sessionManager.getIncomingServerSessions(remoteDomain)) {
                 if (recipient.equals(session.getLocalDomain())) {
+                    // OF-2425: A detached session has no connection. It can only be resumed on a new connection, after that is authenticated.
+                    if (!sessionManager.isMultipleServerConnectionsAllowed() && session.isDetached()) {
+                        log.debug( "Not counting detached session {} as an existing connection.", session.getStreamID() );
+                        continue;
+                    }
                     alreadyExists = true;
                 }
             }

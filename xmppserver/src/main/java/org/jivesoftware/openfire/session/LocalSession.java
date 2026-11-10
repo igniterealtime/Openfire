@@ -172,14 +172,55 @@ public abstract class LocalSession implements Session {
     public void setDetached() {
         lock.lock();
         try {
-            Log.debug("Setting session with address {} and streamID {} in detached mode.", this.address, this.streamID );
-            // OF-3459: Recorded before the session is registered as detached, so that the cleanup task measures from this detach, not an earlier one.
-            this.lastDetachedDate = Instant.now();
-            this.sessionManager.addDetached(this);
-            this.conn = null;
+            detach();
         }finally {
             lock.unlock();
         }
+    }
+
+    /**
+     * Sets the session to detached mode, as {@link #setDetached()} does, but only when the session still uses the
+     * provided connection. The check and the detach are done under the same lock with which the connection of the
+     * session is changed, so that a session that was resumed on another connection meanwhile is not detached.
+     *
+     * Work that is specific to the type of session and takes no other lock is done in {@link #beforeDetached()}. Work
+     * that takes another lock is done by an override of this method, after the session is detached, as no other lock is
+     * taken under the lock of the session.
+     *
+     * @param connection the connection that the session must still use to be detached, typically one that closed.
+     * @return true if the session is detached, false if it no longer uses the provided connection.
+     */
+    public boolean setDetachedIfConnectionIs(@Nonnull final Connection connection) {
+        lock.lock();
+        try {
+            if (this.conn != connection) {
+                Log.debug("Not detaching session with address {} and streamID {}, as it no longer uses connection {}, but {}.", this.address, this.streamID, connection, this.conn);
+                return false;
+            }
+            detach();
+            return true;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Registers the session as detached and releases its connection. The caller holds {@code lock}.
+     */
+    private void detach() {
+        Log.debug("Setting session with address {} and streamID {} in detached mode.", this.address, this.streamID );
+        // OF-3459: Recorded before the session is registered as detached, so that the cleanup task measures from this detach, not an earlier one.
+        this.lastDetachedDate = Instant.now();
+        beforeDetached();
+        this.sessionManager.addDetached(this);
+        this.conn = null;
+    }
+
+    /**
+     * Invoked under the lock with which the connection of the session is changed, when the session is about to be
+     * registered as detached, after which its connection is released. Takes no other lock. Does nothing by default.
+     */
+    protected void beforeDetached() {
     }
 
     Connection releaseConnection()
@@ -201,13 +242,21 @@ public abstract class LocalSession implements Session {
      * by the older, pre-existing session). The connection must already be initialized as a running XML Stream, normally
      * by having run through XEP-0198 resumption.
      *
+     * The session that provides the connection is removed afterwards: a client session as when it closes, and an
+     * incoming server session by unregistering the domains that were validated for it. The domains that were validated
+     * for this session stay registered. Sessions of other types are not removed.
+     *
+     * This session is removed from the detached sessions, unless it is an incoming server session: that must be
+     * removed from them before this is invoked ({@link SessionManager#removeDetached(LocalSession)}), so that it is not
+     * ended while it is resumed.
+     *
      * @param connectionProvider Session from which to obtain the connection from.
      * @param h the sequence number of the last handled stanza sent over the former stream
      */
     public void reattach(LocalSession connectionProvider, long h) {
         reattachConnection(connectionProvider);
         this.streamManager.onResume(new JID(null, this.serverName, null, true), h);
-        this.sessionManager.removeSession((LocalClientSession) connectionProvider);
+        removeConnectionProvider(connectionProvider);
         onReattached();
     }
 
@@ -225,7 +274,7 @@ public abstract class LocalSession implements Session {
      */
     public void reattachForSasl2(LocalSession connectionProvider) {
         reattachConnection(connectionProvider);
-        this.sessionManager.removeSession((LocalClientSession) connectionProvider);
+        removeConnectionProvider(connectionProvider);
     }
 
     /**
@@ -265,8 +314,28 @@ public abstract class LocalSession implements Session {
             lock.unlock();
         }
         this.status = Session.Status.AUTHENTICATED;
-        this.sessionManager.removeDetached(this);
+        // OF-2425: An incoming server session was taken from the detached sessions before this (ServerResumption#claim); another resumption can have detached it since.
+        if (!(this instanceof LocalIncomingServerSession)) {
+            this.sessionManager.removeDetached(this);
+        }
         Log.debug("Reattach complete for session with address {} and streamID {}: status={}, resumable={}, detached={}.", this.address, this.streamID, this.status, this.streamManager.getResume(), this.isDetached());
+    }
+
+    /**
+     * Removes the session that provided the connection on which this session is resumed, which ends with the
+     * resumption, as described in {@link #reattach(LocalSession, long)}.
+     *
+     * @param connectionProvider Session from which the connection was obtained.
+     */
+    private void removeConnectionProvider(@Nonnull final LocalSession connectionProvider) {
+        if (connectionProvider instanceof LocalClientSession clientSession) {
+            this.sessionManager.removeSession(clientSession);
+        } else if (connectionProvider instanceof LocalIncomingServerSession serverSession) {
+            Log.debug("Session with address {} and streamID {} is resumed. Unregistering the session with streamID {} that provided its connection, and the domains validated for that: {}", this.address, this.streamID, serverSession.getStreamID(), serverSession.getValidatedDomains());
+            this.sessionManager.unregisterIncomingServerSession(serverSession.getStreamID());
+        } else {
+            Log.debug("Session with address {} and streamID {} is resumed. Not removing the session that provided its connection, of an unexpected type: {}", this.address, this.streamID, connectionProvider);
+        }
     }
 
     /**

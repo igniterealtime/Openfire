@@ -590,6 +590,32 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         });
     }
 
+    @Override
+    public void setDetached() {
+        // TODO Implement resumption for outgoing server sessions (OF-2425). Remove this override when it is.
+        throw new UnsupportedOperationException("Stream resumption is not supported for outgoing server-to-server connections");
+    }
+
+    @Override
+    public void reattach(LocalSession connectionProvider, long h) {
+        // TODO Implement resumption for outgoing server sessions (OF-2425). Remove this override when it is.
+        throw new UnsupportedOperationException("Stream resumption is not supported for outgoing server-to-server connections");
+    }
+
+    /**
+     * Returns the connection associated with this Session.
+     *
+     * @return The connection for this session
+     */
+    @Nonnull
+    @Override
+    public Connection getConnection() {
+        final Connection connection = super.getConnection();
+        // Valid only as long as outgoing server sessions are not detached (OF-2425). Remove this override when they are.
+        assert connection != null; // Openfire does not detach outgoing server sessions. Therefore, the connection cannot be null.
+        return connection;
+    }
+
     /**
      * Get XEP-0198 Stream manager for session. On this type of session, Openfire asks the peer for Stream Management.
      *

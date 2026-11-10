@@ -17,6 +17,7 @@ package org.jivesoftware.openfire.streammanagement;
 
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
@@ -30,7 +31,7 @@ import static org.mockito.Mockito.*;
 
 /**
  * Unit tests that verify {@link Resumption}, {@link ClientResumption} and {@link Resumption.Unsupported}, apart from
- * the {@link StreamManager} that uses them.
+ * the {@link StreamManager} that uses them. {@link ServerResumptionTest} verifies {@link ServerResumption}.
  *
  * @author Guus der Kinderen, guus@goodbytes.nl
  */
@@ -59,10 +60,28 @@ public class ResumptionTest
     }
 
     /**
-     * Verifies that a session that is not a client session gets the implementation that does not support resumption.
+     * Verifies that a session with a server that connected to Openfire gets an implementation that supports
+     * resumption.
      */
     @Test
-    void nonClientSessionGetsUnsupported()
+    void incomingServerSessionGetsServerResumption()
+    {
+        // Setup test fixture.
+        final LocalIncomingServerSession session = mock(LocalIncomingServerSession.class);
+
+        // Execute system under test.
+        final Resumption<?> result = Resumption.forSession(session, LoggerFactory.getLogger(ResumptionTest.class));
+
+        // Verify result.
+        assertInstanceOf(ServerResumption.class, result, "An incoming server session must get the implementation for incoming server sessions.");
+    }
+
+    /**
+     * Verifies that a session that is neither a client session nor an incoming server session gets the implementation
+     * that does not support resumption.
+     */
+    @Test
+    void otherSessionGetsUnsupported()
     {
         // Setup test fixture.
         final LocalSession session = mock(LocalSession.class);
@@ -71,7 +90,61 @@ public class ResumptionTest
         final Resumption<?> result = Resumption.forSession(session, LoggerFactory.getLogger(ResumptionTest.class));
 
         // Verify result.
-        assertSame(Resumption.Unsupported.INSTANCE, result, "A session that is not a client session must get the implementation that does not support resumption.");
+        assertSame(Resumption.Unsupported.INSTANCE, result, "A session that is neither a client session nor an incoming server session must get the implementation that does not support resumption.");
+    }
+
+    /**
+     * Verifies that a client session that has not bound a resource can still resume, as resumption replaces resource
+     * binding.
+     */
+    @Test
+    void clientSessionWithoutBoundResourceIsNotTooLateToResume()
+    {
+        // Setup test fixture.
+        final LocalClientSession session = mock(LocalClientSession.class);
+        doReturn(false).when(session).isAuthenticated();
+
+        // Execute system under test.
+        final boolean result = new ClientResumption(session).isTooLateToResume();
+
+        // Verify result.
+        assertFalse(result, "A client session that has not bound a resource must be able to resume.");
+    }
+
+    /**
+     * Verifies that a client session that has bound a resource can no longer resume.
+     */
+    @Test
+    void clientSessionWithBoundResourceIsTooLateToResume()
+    {
+        // Setup test fixture.
+        final LocalClientSession session = mock(LocalClientSession.class);
+        doReturn(true).when(session).isAuthenticated();
+
+        // Execute system under test.
+        final boolean result = new ClientResumption(session).isTooLateToResume();
+
+        // Verify result.
+        assertTrue(result, "A client session that has bound a resource must no longer be able to resume.");
+    }
+
+    /**
+     * Verifies that a client session that is to be resumed is not taken from the detached sessions before it is
+     * reattached, which removes it from them.
+     */
+    @Test
+    void clientClaimLeavesDetachedSessionAsItIs()
+    {
+        // Setup test fixture.
+        final LocalClientSession session = mock(LocalClientSession.class);
+        final LocalClientSession target = mock(LocalClientSession.class);
+
+        // Execute system under test.
+        final boolean result = new ClientResumption(session).claim(target);
+
+        // Verify result.
+        assertTrue(result, "The resumption of a client session must be allowed to continue.");
+        assertTrue(mockingDetails(target).getInvocations().isEmpty(), "A client session that is to be resumed must be left as it is.");
     }
 
     /**
@@ -180,6 +253,38 @@ public class ResumptionTest
 
         // Verify result.
         assertFalse(result, "A session that does not support resumption must not be allowed to resume.");
+    }
+
+    /**
+     * Verifies that a session that does not support resumption is always past the point at which it can resume.
+     */
+    @Test
+    void unsupportedIsTooLateToResume()
+    {
+        // Setup test fixture.
+        final Resumption<LocalSession> resumption = Resumption.Unsupported.INSTANCE;
+
+        // Execute system under test.
+        final boolean result = resumption.isTooLateToResume();
+
+        // Verify result.
+        assertTrue(result, "A session that does not support resumption must never be able to resume.");
+    }
+
+    /**
+     * Verifies that a session that does not support resumption cannot take another session for resumption.
+     */
+    @Test
+    void unsupportedClaimsNothing()
+    {
+        // Setup test fixture.
+        final Resumption<LocalSession> resumption = Resumption.Unsupported.INSTANCE;
+
+        // Execute system under test.
+        final boolean result = resumption.claim(mock(LocalSession.class));
+
+        // Verify result.
+        assertFalse(result, "A session that does not support resumption must not take another session for resumption.");
     }
 
     /**

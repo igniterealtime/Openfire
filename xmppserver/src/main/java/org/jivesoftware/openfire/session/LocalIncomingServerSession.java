@@ -39,11 +39,13 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.StreamError;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -80,6 +82,15 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      * the one that closes the session.
      */
     private final Set<String> validatedDomains = ConcurrentHashMap.newKeySet();
+
+    /**
+     * The first domain that was validated for this session, and how it was authenticated. Set once, and kept when that
+     * domain is removed from the validated domains.
+     *
+     * Set by the thread that processes data from the remote server, and read by other threads, such as the one of a
+     * connection on which the stream of this session is resumed.
+     */
+    private final AtomicReference<DomainAuthentication> firstAuthentication = new AtomicReference<>();
 
     /**
      * Domains or subdomain of this server that was used by the remote server
@@ -259,7 +270,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
 
             // Add the validated domain as a valid domain. Do this before notifying the remote domain of success! (OF-2626)
             setAuthenticationMethod(AuthenticationMethod.DIALBACK);
-            addValidatedDomain(remoteDomain);
+            addValidatedDomain(remoteDomain, AuthenticationMethod.DIALBACK);
 
             // Report success to the peer.
             final Namespace ns = Namespace.get("db", "jabber:server:dialback");
@@ -341,10 +352,33 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      * Adds a new validated domain, subdomain or virtual host to the list of
      * validated domains for the remote server.
      *
+     * When this is the first domain that is validated for the session, it is recorded as such
+     * ({@link #getFirstAuthentication()}), together with the authentication method of the session at the time of this
+     * invocation, which is null when none was set yet. {@link #addValidatedDomain(String, AuthenticationMethod)} names
+     * the method explicitly.
+     *
      * @param domain the new validated domain, subdomain or virtual host to add.
      */
     public void addValidatedDomain(@Nonnull final String domain) {
+        addValidatedDomain(domain, getAuthenticationMethod());
+    }
+
+    /**
+     * Adds a new validated domain, subdomain or virtual host to the list of validated domains for the remote server,
+     * which was authenticated with the provided method.
+     *
+     * When this is the first domain that is validated for the session, it is recorded as such, together with the
+     * method ({@link #getFirstAuthentication()}). This does not set the authentication method of the session
+     * ({@link #setAuthenticationMethod(AuthenticationMethod)}).
+     *
+     * @param domain the new validated domain, subdomain or virtual host to add.
+     * @param method the method with which the domain was authenticated (null when it is not known).
+     */
+    public void addValidatedDomain(@Nonnull final String domain, @Nullable final AuthenticationMethod method) {
         if (validatedDomains.add(domain)) {
+            if (firstAuthentication.compareAndSet(null, new DomainAuthentication(domain, method))) {
+                Log.debug("Domain '{}' is the first that is validated for session with stream ID '{}', using authentication method {}.", domain, getStreamID(), method);
+            }
             // Set the first validated domain as the address of the session
             if (validatedDomains.size() < 2) {
                 setAddress(new JID(null, domain, null));
@@ -358,10 +392,11 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
     /**
      * Creates the session for the stream that the remote server restarts on the connection of this session, after SASL
      * negotiation succeeded on it. The restarted stream gets a new stream ID, as RFC 6120 § 6.4.6 requires. The new
-     * session takes over what was negotiated on this one: its validated domains, its authentication method, the local
-     * domain and the identity that the remote server claimed. The new session is registered under the new stream ID,
-     * and this session is then unregistered, so that the validated domains remain registered throughout. This session
-     * is unregistered also when registering the new one fails.
+     * session takes over what was negotiated on this one: its validated domains, its authentication method, the record
+     * of its first authentication ({@link #getFirstAuthentication()}), the local domain and the identity that the remote
+     * server claimed. The new session is registered under the new stream ID, and this session is then unregistered, so
+     * that the validated domains remain registered throughout. This session is unregistered also when registering the
+     * new one fails.
      *
      * @return the session for the restarted stream.
      * @throws UnauthorizedException if the server is not initialised.
@@ -377,6 +412,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         if (authenticationMethod != null) {
             restarted.setAuthenticationMethod(authenticationMethod);
         }
+        restarted.firstAuthentication.set(firstAuthentication.get());
         // OF-3447: register before unregistering, so that blocking a domain in between cannot miss this connection.
         // Unregister also when registering fails, as the connection's close listener now refers to the new session.
         try {
@@ -387,6 +423,27 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         Log.debug("Session with stream ID '{}' of validated domain(s) {} continues as session with stream ID '{}', as the remote server restarted the stream after SASL negotiation.", streamID, validatedDomains, restartedStreamID);
         return restarted;
     }
+
+    /**
+     * Returns the first domain that was validated for this session, and the method with which it was authenticated.
+     * This does not change after that, also when that domain is removed from the validated domains, or other domains
+     * are validated with another method. It is the domain that the remote server authenticated as, which can differ
+     * from the domain that it claimed in its stream header ({@link #getDefaultIdentity()}).
+     *
+     * @return the authentication of the first validated domain, or null when no domain was validated yet.
+     */
+    @Nullable
+    public DomainAuthentication getFirstAuthentication() {
+        return firstAuthentication.get();
+    }
+
+    /**
+     * A domain of the remote server that was validated for a session, and the method with which it was authenticated.
+     *
+     * @param domain the domain that was validated (never null).
+     * @param method the method with which the domain was authenticated (null when it is not known).
+     */
+    public record DomainAuthentication(@Nonnull String domain, @Nullable AuthenticationMethod method) {}
 
     /**
      * Removes the previously validated domain from the list of validated domains. The remote

@@ -93,6 +93,15 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
     private final AtomicReference<DomainAuthentication> firstAuthentication = new AtomicReference<>();
 
     /**
+     * The stream ID that Openfire sent in the stream header on the current connection of this session. This is the
+     * stream ID of this session, unless its stream was resumed on a connection of which the stream header carried the
+     * stream ID of another session.
+     *
+     * Set by the thread of the connection on which the stream is resumed, and read by other threads.
+     */
+    private volatile StreamID connectionStreamID;
+
+    /**
      * Domains or subdomain of this server that was used by the remote server
      * when validating the new connection. This information is useful to prevent
      * many connections from the same remote server to the same local domain.
@@ -233,6 +242,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
     public LocalIncomingServerSession(String serverName, Connection connection, StreamID streamID, String fromDomain) {
         super(serverName, connection, streamID);
         this.fromDomain = fromDomain;
+        this.connectionStreamID = streamID;
     }
     
     public String getDefaultIdentity() {
@@ -258,6 +268,10 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      * For optimization reasons, the same session may be servicing several domains of a
      * remote server.
      *
+     * The key is verified with the stream ID that Openfire sent in the stream header on the current connection
+     * ({@link #getConnectionStreamID()}), with which the remote server generated it (XEP-0185). A domain that was
+     * validated for this session already can be validated again.
+     *
      * @param dbResult the DOM stanza requesting the domain validation.
      * @return true if the requested domain was valid.
      */
@@ -265,7 +279,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
         final DomainPair domainPair = new DomainPair(getServerName(), fromDomain);
         ServerDialback method = new ServerDialback(getConnection(), domainPair);
         try {
-            final String recipient = method.validateRemoteDomain(dbResult, getStreamID());
+            final String recipient = method.validateRemoteDomain(dbResult, getConnectionStreamID());
             final String remoteDomain = dbResult.attributeValue("from");
 
             // Add the validated domain as a valid domain. Do this before notifying the remote domain of success! (OF-2626)
@@ -444,6 +458,44 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      * @param method the method with which the domain was authenticated (null when it is not known).
      */
     public record DomainAuthentication(@Nonnull String domain, @Nullable AuthenticationMethod method) {}
+
+    /**
+     * Returns the stream ID that Openfire sent in the stream header on the current connection of this session. The
+     * remote server uses it to generate the dialback keys that it sends on that connection (XEP-0185).
+     *
+     * This is the stream ID of this session ({@link #getStreamID()}), which identifies the session, also in the SM-ID of
+     * its stream and in its registrations. When the stream of this session is resumed on another connection, it is the
+     * stream ID of the session that provided that connection, as the stream header on that connection carried that ID.
+     *
+     * @return the stream ID of the stream header on the current connection (never null).
+     */
+    @Nonnull
+    public StreamID getConnectionStreamID() {
+        return connectionStreamID;
+    }
+
+    /**
+     * Reattaches this session to the connection of another session, as {@link LocalSession#reattach(LocalSession, long)}
+     * describes. From then on, dialback on that connection uses the stream ID of the stream header on it
+     * ({@link #getConnectionStreamID()}), while this session keeps its own stream ID and validated domains. This session
+     * reports the authentication method with which the remote server authenticated on that connection, which is that of
+     * the other session.
+     *
+     * @param connectionProvider Session from which to obtain the connection from.
+     * @param h the sequence number of the last handled stanza sent over the former stream
+     */
+    @Override
+    public void reattach(LocalSession connectionProvider, long h) {
+        final StreamID streamIdOfConnection = connectionProvider instanceof LocalIncomingServerSession serverSession ? serverSession.getConnectionStreamID() : connectionProvider.getStreamID();
+        final AuthenticationMethod method = connectionProvider instanceof LocalServerSession provider ? provider.getAuthenticationMethod() : null;
+        Log.debug("Session with stream ID '{}' is resumed on the connection of session with stream ID '{}', authenticated with {}. Dialback on that connection uses stream ID '{}'. Validated domains are kept: {}", getStreamID(), connectionProvider.getStreamID(), method, streamIdOfConnection, validatedDomains);
+        this.connectionStreamID = streamIdOfConnection;
+        if (method != null) {
+            // OF-2425: The method was cleared when the former connection closed (LocalServerSession#setStatus).
+            setAuthenticationMethod(method);
+        }
+        super.reattach(connectionProvider, h);
+    }
 
     /**
      * Removes the previously validated domain from the list of validated domains. The remote

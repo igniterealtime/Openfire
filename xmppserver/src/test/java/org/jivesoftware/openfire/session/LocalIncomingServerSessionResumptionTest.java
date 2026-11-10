@@ -26,11 +26,14 @@ import org.jivesoftware.openfire.ConnectionCloseListener;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.XMPPServerInfo;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.keystore.IdentityStore;
 import org.jivesoftware.openfire.net.MXParser;
 import org.jivesoftware.openfire.net.ServerStanzaHandler;
+import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
@@ -40,7 +43,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
+import org.mockito.MockedConstruction;
 import org.xmlpull.v1.XmlPullParserFactory;
+import org.xmpp.packet.Message;
 import org.xmpp.packet.StreamError;
 
 import java.lang.reflect.Field;
@@ -48,13 +53,15 @@ import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStoreException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -73,10 +80,12 @@ import static org.mockito.Mockito.*;
 public class LocalIncomingServerSessionResumptionTest
 {
     private static final String REMOTE_DOMAIN = "remote.example.org";
+    private static final String OTHER_DOMAIN = "other.example.org";
+    private static final String EXTRA_DOMAIN = "extra.example.org";
+    private static final String NEW_DOMAIN = "new.example.org";
     private static final String NODE_HOSTNAME = "node1.example.com";
 
     private static final String STREAM_HEADER = "<stream:stream xmlns:stream='http://etherx.jabber.org/streams' xmlns='jabber:server' xmlns:db='jabber:server:dialback' from='" + REMOTE_DOMAIN + "' to='" + Fixtures.XMPP_DOMAIN + "' version='1.0'>";
-    private static final String OTHER_DOMAIN = "other.example.org";
 
     private XMPPServer server;
     private SessionManager sessionManager;
@@ -444,6 +453,31 @@ public class LocalIncomingServerSessionResumptionTest
     }
 
     /**
+     * Verifies that a resumed session reports the authentication method with which the remote server authenticated on
+     * the new connection, also after the method was cleared when the former connection closed.
+     */
+    @Test
+    void resumedSessionReportsAuthenticationMethodOfNewConnection() throws Exception
+    {
+        // Setup test fixture.
+        final Connection formerConnection = connection();
+        final LocalIncomingServerSession original = authenticatedSession(formerConnection, REMOTE_DOMAIN, REMOTE_DOMAIN, ServerSession.AuthenticationMethod.DIALBACK);
+        final String previd = enableResumption(original, formerConnection);
+        original.setStatus(Session.Status.CLOSED); // As the former connection does when it closes.
+        original.setDetached();
+        assertNull(original.getAuthenticationMethod(), "Test fixture expects the authentication method to be cleared when the former connection closes.");
+        final LocalIncomingServerSession resuming = authenticatedSession(connection(), REMOTE_DOMAIN, REMOTE_DOMAIN, ServerSession.AuthenticationMethod.SASL_EXTERNAL);
+
+        // Execute system under test.
+        resuming.getStreamManager().process(resume(previd, 0));
+
+        // Verify result.
+        assertEquals(ServerSession.AuthenticationMethod.SASL_EXTERNAL, original.getAuthenticationMethod(), "A resumed session must report the authentication method used on the new connection.");
+        assertTrue(original.isUsingSaslExternal(), "A resumed session must report that it uses the authentication method of the new connection.");
+        assertEquals(Session.Status.AUTHENTICATED, original.getStatus(), "A resumed session must be authenticated.");
+    }
+
+    /**
      * Verifies that a session that was authenticated with a certificate cannot be resumed by the same domain with
      * dialback, which is a weaker method, and that this is refused with 'item-not-found'.
      */
@@ -592,6 +626,178 @@ public class LocalIncomingServerSessionResumptionTest
         // Verify result.
         assertResumed(rawTextDelivered(newConnection).get(0));
         assertSame(newConnection, original.getConnection(), "The kept session must use the connection on which the domain that was authenticated on it resumed it.");
+    }
+
+    /**
+     * Verifies that stanzas from every domain that was validated on the original connection are accepted on the new
+     * connection after resumption, without the remote server authenticating any of them again (decision 2 of
+     * OF-2425).
+     */
+    @Test
+    void stanzasFromAllValidatedDomainsAreAcceptedAfterResumption() throws Exception
+    {
+        // Setup test fixture.
+        final LocalIncomingServerSession original = keptSessionWithExtraDomains();
+        final ResumedConnection resumed = resumeOnNewConnection(enabledPrevid);
+
+        // Execute system under test.
+        resumed.handler().process(message(REMOTE_DOMAIN), resumed.reader());
+        resumed.handler().process(message(OTHER_DOMAIN), resumed.reader());
+        resumed.handler().process(message(EXTRA_DOMAIN), resumed.reader());
+
+        // Verify result.
+        assertEquals(Set.of(REMOTE_DOMAIN, OTHER_DOMAIN, EXTRA_DOMAIN), sendersOfRoutedMessages(resumed.router()), "Stanzas from all domains that were validated on the original connection must be accepted after resumption.");
+        assertSame(resumed.connection(), original.getConnection(), "The kept session must use the connection on which its stream is resumed.");
+        verify(resumed.connection(), never().description("The connection must not be closed when stanzas arrive from domains that were validated on the original connection.")).close(any(StreamError.class));
+    }
+
+    /**
+     * Verifies that a stanza from a domain that was not validated on the original connection, nor on the new one, is
+     * still refused after resumption.
+     */
+    @Test
+    void stanzaFromDomainThatWasNotValidatedIsRefusedAfterResumption() throws Exception
+    {
+        // Setup test fixture.
+        keptSessionWithExtraDomains();
+        final ResumedConnection resumed = resumeOnNewConnection(enabledPrevid);
+
+        // Execute system under test.
+        UnauthorizedException refusal = null;
+        try {
+            resumed.handler().process(message(NEW_DOMAIN), resumed.reader());
+        } catch (UnauthorizedException e) {
+            refusal = e;
+        }
+
+        // Verify result.
+        assertNotNull(refusal, "A stanza from a domain that was never validated must be refused after resumption.");
+        assertTrue(rawTextsDelivered(resumed.connection()).stream().anyMatch(text -> text.contains("invalid-from")), "A stanza from a domain that was never validated must be answered with an 'invalid-from' stream error.");
+        verify(resumed.router(), never().description("A stanza from a domain that was never validated must not be routed.")).route(any(Message.class));
+    }
+
+    /**
+     * Verifies that the remote server can authenticate a domain that was validated on the original connection again
+     * after resumption, which Openfire accepts and confirms, and that stanzas from that domain are accepted after that
+     * (decision 2 of OF-2425).
+     */
+    @Test
+    void domainAuthenticatedAgainAfterResumptionIsAccepted() throws Exception
+    {
+        // Setup test fixture.
+        final LocalIncomingServerSession original = keptSessionWithExtraDomains();
+        final ResumedConnection resumed = resumeOnNewConnection(enabledPrevid);
+
+        try (final MockedConstruction<ServerDialback> ignored = mockConstruction(ServerDialback.class, (mock, context) -> doReturn(Fixtures.XMPP_DOMAIN).when(mock).validateRemoteDomain(any(), any())))
+        {
+            // Execute system under test.
+            resumed.handler().process(dialbackResult(OTHER_DOMAIN), resumed.reader());
+            resumed.handler().process(message(OTHER_DOMAIN), resumed.reader());
+        }
+
+        // Verify result.
+        final List<Element> results = dialbackResultsDelivered(resumed.connection());
+        assertEquals(1, results.size(), "Exactly one dialback result must be reported to the remote server, but got: " + results);
+        assertEquals("valid", results.get(0).attributeValue("type"), "Authenticating a domain again after resumption must be reported as valid, but got: " + results.get(0).asXML());
+        assertEquals(OTHER_DOMAIN, results.get(0).attributeValue("to"), "The dialback result must be addressed to the domain that was authenticated again.");
+        assertEquals(Set.of(OTHER_DOMAIN), sendersOfRoutedMessages(resumed.router()), "Stanzas from the domain that was authenticated again must be accepted.");
+        assertEquals(Set.of(REMOTE_DOMAIN, OTHER_DOMAIN, EXTRA_DOMAIN), Set.copyOf(original.getValidatedDomains()), "Authenticating a domain again must not change the validated domains of the resumed session.");
+        assertEquals(List.of(original), sessionManager.getIncomingServerSessions(OTHER_DOMAIN), "The domain that was authenticated again must remain registered for the resumed session only.");
+    }
+
+    /**
+     * Verifies that dialback on the connection on which a stream is resumed verifies keys with the stream ID that
+     * Openfire sent in the stream header on that connection, with which the remote server generated them (XEP-0185,
+     * XEP-0220 § 2.1.2), and not with the stream ID of the resumed session.
+     */
+    @Test
+    void dialbackAfterResumptionUsesStreamIdOfStreamHeaderOnNewConnection() throws Exception
+    {
+        // Setup test fixture.
+        final LocalIncomingServerSession original = keptSessionWithExtraDomains();
+        final ResumedConnection resumed = resumeOnNewConnection(enabledPrevid);
+        final String streamIdInHeader = streamIdOfLastStreamHeader(resumed.connection());
+
+        final ServerDialback dialback;
+        try (final MockedConstruction<ServerDialback> constructed = mockConstruction(ServerDialback.class, (mock, context) -> doReturn(Fixtures.XMPP_DOMAIN).when(mock).validateRemoteDomain(any(), any())))
+        {
+            // Execute system under test.
+            resumed.handler().process(dialbackResult(OTHER_DOMAIN), resumed.reader());
+            dialback = constructed.constructed().get(0);
+        }
+
+        // Verify result.
+        final ArgumentCaptor<StreamID> captor = ArgumentCaptor.forClass(StreamID.class);
+        verify(dialback, description("The dialback key was expected to be verified; without that this test proves nothing.")).validateRemoteDomain(any(), captor.capture());
+        final StreamID used = captor.getValue();
+        assertNotEquals(original.getStreamID().getID(), streamIdInHeader, "Test fixture expects the stream header on the new connection to carry another stream ID than that of the resumed session.");
+        assertEquals(streamIdInHeader, used.getID(), "The dialback key must be verified with the stream ID of the stream header on the connection on which it was sent.");
+    }
+
+    /**
+     * Verifies that a domain that the remote server authenticates for the first time after resumption is validated for,
+     * and registered with, the resumed session.
+     */
+    @Test
+    void domainAuthenticatedForFirstTimeAfterResumptionIsRegisteredForResumedSession() throws Exception
+    {
+        // Setup test fixture.
+        final LocalIncomingServerSession original = keptSessionWithExtraDomains();
+        final ResumedConnection resumed = resumeOnNewConnection(enabledPrevid);
+
+        try (final MockedConstruction<ServerDialback> ignored = mockConstruction(ServerDialback.class, (mock, context) -> doReturn(Fixtures.XMPP_DOMAIN).when(mock).validateRemoteDomain(any(), any())))
+        {
+            // Execute system under test.
+            resumed.handler().process(dialbackResult(NEW_DOMAIN), resumed.reader());
+            resumed.handler().process(message(NEW_DOMAIN), resumed.reader());
+        }
+
+        // Verify result.
+        assertTrue(original.isValidDomain(NEW_DOMAIN), "A domain that is authenticated after resumption must be validated for the resumed session.");
+        assertEquals(List.of(original), sessionManager.getIncomingServerSessions(NEW_DOMAIN), "A domain that is authenticated after resumption must be registered for the resumed session.");
+        assertEquals(Set.of(NEW_DOMAIN), sendersOfRoutedMessages(resumed.router()), "Stanzas from a domain that is authenticated after resumption must be accepted.");
+    }
+
+    /**
+     * Verifies that a resumed session keeps its own stream ID, by which it and all of its validated domains stay
+     * registered, while the stream ID of the stream header on its new connection is that of the session that provided
+     * the connection.
+     */
+    @Test
+    void resumedSessionKeepsItsStreamIdAndRegistrations() throws Exception
+    {
+        // Setup test fixture.
+        final LocalIncomingServerSession original = keptSessionWithExtraDomains();
+        final StreamID streamIdBefore = original.getStreamID();
+
+        // Execute system under test.
+        final ResumedConnection resumed = resumeOnNewConnection(enabledPrevid);
+
+        // Verify result.
+        assertEquals(streamIdBefore, original.getStreamID(), "A resumed session must keep its own stream ID.");
+        assertEquals(streamIdOfLastStreamHeader(resumed.connection()), original.getConnectionStreamID().getID(), "The stream ID of the connection of a resumed session must be the one in the stream header on that connection.");
+        assertEquals(resumed.provider().getStreamID(), original.getConnectionStreamID(), "The stream ID of the stream header on the new connection must be that of the session that provided the connection.");
+        assertSame(original, sessionManager.getIncomingServerSession(streamIdBefore), "The resumed session must stay registered by its own stream ID.");
+        assertNull(sessionManager.getIncomingServerSession(resumed.provider().getStreamID()), "Nothing must be registered by the stream ID of the session that provided the connection.");
+        for (final String domain : List.of(REMOTE_DOMAIN, OTHER_DOMAIN, EXTRA_DOMAIN)) {
+            assertEquals(List.of(original), sessionManager.getIncomingServerSessions(domain), "Domain '" + domain + "' must be registered for the resumed session only.");
+        }
+    }
+
+    /**
+     * Verifies that the stream ID of the connection of a session that was not resumed is the stream ID of the session.
+     */
+    @Test
+    void connectionStreamIdOfSessionThatWasNotResumedIsItsOwn()
+    {
+        // Setup test fixture.
+        final LocalIncomingServerSession session = authenticatedSession(connection());
+
+        // Execute system under test.
+        final StreamID result = session.getConnectionStreamID();
+
+        // Verify result.
+        assertEquals(session.getStreamID(), result, "The stream ID of the connection of a session that was not resumed must be the stream ID of the session.");
     }
 
     /**
@@ -754,6 +960,59 @@ public class LocalIncomingServerSessionResumptionTest
     }
 
     /**
+     * The SM-ID of the stream of the session that {@link #keptSessionWithExtraDomains()} created.
+     */
+    private String enabledPrevid;
+
+    /**
+     * Creates a kept (detached) session of which the stream can be resumed, on which the domain of the remote server
+     * and two extra domains were authenticated with dialback. Its SM-ID is stored in {@link #enabledPrevid}.
+     */
+    private LocalIncomingServerSession keptSessionWithExtraDomains() throws DocumentException
+    {
+        final Connection formerConnection = connection();
+        final LocalIncomingServerSession original = authenticatedSession(formerConnection);
+        original.addValidatedDomain(OTHER_DOMAIN, ServerSession.AuthenticationMethod.DIALBACK);
+        original.addValidatedDomain(EXTRA_DOMAIN, ServerSession.AuthenticationMethod.DIALBACK);
+        enabledPrevid = enableResumption(original, formerConnection);
+        original.setDetached();
+        return original;
+    }
+
+    /**
+     * A new connection, with the stanza handler that processes its data, the router to which that handler routes
+     * stanzas, and the session that the handler created for the stream on that connection, which provided the
+     * connection for the resumption.
+     */
+    private record ResumedConnection(Connection connection, ServerStanzaHandler handler, XMPPPacketReader reader, PacketRouter router, LocalIncomingServerSession provider) {}
+
+    /**
+     * Opens a stream on a new connection, authenticates the domain of the remote server on it with dialback, and
+     * resumes the stream that the SM-ID identifies, all through the stanza handler of the connection, as a remote
+     * server would.
+     */
+    private static ResumedConnection resumeOnNewConnection(final String previd) throws Exception
+    {
+        final Connection connection = connection();
+        final PacketRouter router = mock(PacketRouter.class);
+        final ServerStanzaHandler handler = new ServerStanzaHandler(router, connection, false);
+        // As the connection does when it is moved to another session.
+        doAnswer(invocation -> { handler.setSession(invocation.getArgument(0)); return null; }).when(connection).reinit(any());
+        final XMPPPacketReader reader = newPacketReader();
+
+        handler.process(STREAM_HEADER, reader);
+        final ArgumentCaptor<LocalSession> created = ArgumentCaptor.forClass(LocalSession.class);
+        verify(connection, description("Test fixture expects the handler to create a session for the stream.")).init(created.capture());
+        final LocalIncomingServerSession provider = (LocalIncomingServerSession) created.getValue();
+        provider.addValidatedDomain(REMOTE_DOMAIN, ServerSession.AuthenticationMethod.DIALBACK);
+        provider.setAuthenticationMethod(ServerSession.AuthenticationMethod.DIALBACK);
+
+        handler.process("<resume xmlns='" + StreamManager.NAMESPACE_V3 + "' previd='" + previd + "' h='0'/>", reader);
+        assertTrue(rawTextDelivered(connection).stream().anyMatch(element -> element.getQName().equals(QName.get("resumed", StreamManager.NAMESPACE_V3))), "Test fixture expects the stream to be resumed on the new connection.");
+        return new ResumedConnection(connection, handler, reader, router, provider);
+    }
+
+    /**
      * A stream that a remote server opened on a connection, with the stanza handler that processes the data of that
      * connection, the session that the handler created for the stream, and the SM-ID of the stream.
      */
@@ -858,23 +1117,75 @@ public class LocalIncomingServerSessionResumptionTest
     }
 
     /**
-     * Returns the elements that were delivered to the connection as raw text, in order.
+     * Returns the elements that were delivered to the connection as raw text, in order. Stream headers and dialback
+     * elements, which are not complete XML documents on their own, are left out.
      */
     private static List<Element> rawTextDelivered(final Connection connection) throws DocumentException
     {
-        final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
-        verify(connection, atLeastOnce().description("Expected something to be delivered to the connection.")).deliverRawText(captor.capture());
-        final List<String> texts = captor.getAllValues();
         final List<Element> result = new ArrayList<>();
-        for (final String text : texts) {
+        for (final String text : rawTextsDelivered(connection)) {
+            if (text.contains("<stream:stream") || text.startsWith("<db:")) {
+                continue;
+            }
             result.add(DocumentHelper.parseText(text).getRootElement());
         }
         return result;
     }
 
-    private static void assertResumed(final Element resumed)
+    /**
+     * Returns everything that was delivered to the connection as raw text, in order.
+     */
+    private static List<String> rawTextsDelivered(final Connection connection)
     {
-        assertEquals(QName.get("resumed", StreamManager.NAMESPACE_V3), resumed.getQName(), "The resumption must be confirmed with a 'resumed' element, but got: " + resumed.asXML());
+        final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(connection, atLeastOnce().description("Expected something to be delivered to the connection.")).deliverRawText(captor.capture());
+        return captor.getAllValues();
+    }
+
+    /**
+     * Returns the stream ID in the last stream header that was delivered to the connection.
+     */
+    private static String streamIdOfLastStreamHeader(final Connection connection) throws DocumentException
+    {
+        final List<String> headers = rawTextsDelivered(connection).stream().filter(text -> text.contains("<stream:stream")).toList();
+        assertFalse(headers.isEmpty(), "Test fixture expects a stream header to be delivered to the connection.");
+        return DocumentHelper.parseText(headers.get(headers.size() - 1) + "</stream:stream>").getRootElement().attributeValue("id");
+    }
+
+    /**
+     * Returns the dialback results that were delivered to the connection, in order. These are delivered without a
+     * declaration of their namespace prefix, which the stream header declares.
+     */
+    private static List<Element> dialbackResultsDelivered(final Connection connection) throws DocumentException
+    {
+        final List<Element> result = new ArrayList<>();
+        for (final String text : rawTextsDelivered(connection)) {
+            if (text.startsWith("<db:result")) {
+                final Element root = DocumentHelper.parseText("<root xmlns:db='jabber:server:dialback'>" + text + "</root>").getRootElement();
+                result.add(root.elements().get(0));
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns the domains of the senders of the messages that were routed.
+     */
+    private static Set<String> sendersOfRoutedMessages(final PacketRouter router)
+    {
+        final ArgumentCaptor<Message> captor = ArgumentCaptor.forClass(Message.class);
+        verify(router, atLeastOnce().description("Expected messages to be routed.")).route(captor.capture());
+        return captor.getAllValues().stream().map(message -> message.getFrom().getDomain()).collect(Collectors.toSet());
+    }
+
+    private static String message(final String fromDomain)
+    {
+        return "<message xmlns='jabber:server' from='user@" + fromDomain + "/resource' to='user@" + Fixtures.XMPP_DOMAIN + "' id='message-from-" + fromDomain + "'><body>test</body></message>";
+    }
+
+    private static String dialbackResult(final String fromDomain)
+    {
+        return "<db:result xmlns:db='jabber:server:dialback' from='" + fromDomain + "' to='" + Fixtures.XMPP_DOMAIN + "'>key</db:result>";
     }
 
     private static XMPPPacketReader newPacketReader() throws Exception
@@ -884,6 +1195,11 @@ public class LocalIncomingServerSessionResumptionTest
         final XMPPPacketReader reader = new XMPPPacketReader();
         reader.setXPPFactory(factory);
         return reader;
+    }
+
+    private static void assertResumed(final Element resumed)
+    {
+        assertEquals(QName.get("resumed", StreamManager.NAMESPACE_V3), resumed.getQName(), "The resumption must be confirmed with a 'resumed' element, but got: " + resumed.asXML());
     }
 
     private static void assertFailed(final Element failed, final String condition)

@@ -23,6 +23,7 @@ import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.keystore.IdentityStore;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
@@ -45,6 +46,7 @@ import org.xmpp.packet.Presence;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -241,6 +243,30 @@ public class ServerStanzaHandlerStreamManagementTest
         assertNull(enabled.attributeValue("resume"), "Resumption must not be offered to a server, but the response was: " + enabled.asXML());
         assertNull(enabled.attributeValue("id"), "No stream to resume must be identified to a server, but the response was: " + enabled.asXML());
         assertFalse(session.getStreamManager().getResume(), "The stream of a server session must not be resumable.");
+    }
+
+    /**
+     * Verifies that a stream header that restarts the stream on a connection on which another stream was resumed
+     * carries the stream ID of the stream header that was sent on that connection before, with which the remote server
+     * generates dialback keys, rather than the stream ID of the resumed session.
+     */
+    @Test
+    public void streamHeaderAfterResumptionCarriesStreamIdOfConnection() throws Exception
+    {
+        // Setup test fixture.
+        handler.process(STREAM_HEADER, reader);
+        final StreamID connectionStreamID = new BasicStreamIDFactory().createStreamID();
+        final LocalIncomingServerSession resumed = mock(LocalIncomingServerSession.class, withSettings().lenient());
+        doReturn(new BasicStreamIDFactory().createStreamID()).when(resumed).getStreamID();
+        doReturn(connectionStreamID).when(resumed).getConnectionStreamID();
+        doReturn(Locale.ENGLISH).when(resumed).getLanguage();
+        handler.setSession(resumed);
+
+        // Execute system under test.
+        final Element header = handler.getStreamHeader().getRootElement();
+
+        // Verify result.
+        assertEquals(connectionStreamID.getID(), header.attributeValue("id"), "The stream header must carry the stream ID of the stream header on the connection, not that of the resumed session.");
     }
 
     /**

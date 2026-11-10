@@ -554,6 +554,11 @@ public class ServerDialback {
                         log.debug( "Not counting detached session {} as an existing connection.", session.getStreamID() );
                         continue;
                     }
+                    // OF-2425: The remote server can authenticate a domain again on the connection that it already uses for it, for example after resumption.
+                    if (!sessionManager.isMultipleServerConnectionsAllowed() && session instanceof LocalSession localSession && localSession.getConnection() == connection) {
+                        log.debug( "Not counting session {}, which uses this connection, as an existing connection.", session.getStreamID() );
+                        continue;
+                    }
                     alreadyExists = true;
                 }
             }

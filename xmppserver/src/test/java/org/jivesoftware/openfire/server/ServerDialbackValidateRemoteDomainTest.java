@@ -24,6 +24,7 @@ import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.net.SASLAuthentication;
 import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.IncomingServerSession;
+import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.spi.ConnectionConfiguration;
 import org.jivesoftware.util.JiveGlobals;
@@ -62,6 +63,8 @@ public class ServerDialbackValidateRemoteDomainTest
 
     private SessionManager sessionManager;
 
+    private Connection connection;
+
     private ServerDialback dialback;
 
     @BeforeAll
@@ -90,7 +93,7 @@ public class ServerDialbackValidateRemoteDomainTest
 
         final ConnectionConfiguration configuration = mock(ConnectionConfiguration.class, withSettings().lenient());
         doReturn(Connection.TLSPolicy.optional).when(configuration).getTlsPolicy();
-        final Connection connection = mock(Connection.class, withSettings().lenient());
+        connection = mock(Connection.class, withSettings().lenient());
         doReturn(configuration).when(connection).getConfiguration();
         doReturn(new Certificate[0]).when(connection).getPeerCertificates();
 
@@ -162,6 +165,42 @@ public class ServerDialbackValidateRemoteDomainTest
 
         // Verify result.
         assertEquals(Fixtures.XMPP_DOMAIN, result, "A new session must be authenticated when the only other session for the same domains is detached.");
+    }
+
+    /**
+     * Asserts that the session that uses the connection on which a domain is authenticated does not prevent that domain
+     * from being authenticated again, when only one session per domain is allowed: the remote server does not open
+     * another connection, for example when it authenticates a domain again on a connection on which it resumed a
+     * stream.
+     */
+    @Test
+    public void testSessionOnSameConnectionIsNotCountedAsExistingSession() throws Exception
+    {
+        // Setup test fixture.
+        final LocalIncomingServerSession sameConnection = mock(LocalIncomingServerSession.class, withSettings().lenient());
+        doReturn(Fixtures.XMPP_DOMAIN).when(sameConnection).getLocalDomain();
+        doReturn(connection).when(sameConnection).getConnection();
+        doReturn(List.of(sameConnection)).when(sessionManager).getIncomingServerSessions(REMOTE_DOMAIN);
+        doReturn(false).when(sessionManager).isMultipleServerConnectionsAllowed();
+
+        final Element dbResult = DocumentHelper.createElement("result");
+        dbResult.addAttribute("from", REMOTE_DOMAIN);
+        dbResult.addAttribute("to", Fixtures.XMPP_DOMAIN);
+        dbResult.setText("key");
+
+        final String result;
+        try (final MockedStatic<RemoteServerManager> remoteServers = mockStatic(RemoteServerManager.class);
+             final MockedStatic<SASLAuthentication> sasl = mockStatic(SASLAuthentication.class))
+        {
+            remoteServers.when(() -> RemoteServerManager.canAccess(anyString())).thenReturn(true);
+            sasl.when(() -> SASLAuthentication.verifyCertificates(any(), anyString(), anyBoolean())).thenReturn(true);
+
+            // Execute system under test.
+            result = dialback.validateRemoteDomain(dbResult, new BasicStreamIDFactory().createStreamID());
+        }
+
+        // Verify result.
+        assertEquals(Fixtures.XMPP_DOMAIN, result, "A domain must be authenticated again when the only session for it uses the same connection.");
     }
 
     /**

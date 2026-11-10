@@ -20,6 +20,7 @@ import org.dom4j.*;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.SessionManager;
+import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.server.ServerDialback;
@@ -207,7 +208,9 @@ public class ServerStanzaHandler extends StanzaHandler {
         }
         stream.addAttribute("from", domainPair.getLocal());
         stream.addAttribute("to", domainPair.getRemote());
-        stream.addAttribute("id", session.getStreamID().getID());
+        // OF-2425: After resumption, the connection keeps the stream ID of its stream header, with which the remote server generates dialback keys.
+        final StreamID streamID = session instanceof LocalIncomingServerSession serverSession ? serverSession.getConnectionStreamID() : session.getStreamID();
+        stream.addAttribute("id", streamID.getID());
         stream.addAttribute(QName.get("lang", Namespace.XML_NAMESPACE), session.getLanguage().toLanguageTag());
         stream.addAttribute("version", Session.MAJOR_VERSION + "." + Session.MINOR_VERSION);
         return document;

@@ -20,6 +20,7 @@ import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.StreamID;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
@@ -407,7 +408,9 @@ public class ServerStanzaHandlerHostValidationTest
         {
             sessionsCreated++;
             final LocalIncomingServerSession stub = mock(LocalIncomingServerSession.class, withSettings().lenient());
-            doReturn(new BasicStreamIDFactory().createStreamID()).when(stub).getStreamID();
+            final StreamID streamID = new BasicStreamIDFactory().createStreamID();
+            doReturn(streamID).when(stub).getStreamID();
+            doReturn(streamID).when(stub).getConnectionStreamID();
             doReturn(Locale.ENGLISH).when(stub).getLanguage();
             doReturn(List.of()).when(stub).getAvailableStreamFeatures();
             session = stub;

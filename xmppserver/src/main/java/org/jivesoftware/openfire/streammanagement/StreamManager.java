@@ -599,9 +599,17 @@ public abstract class StreamManager {
                     }
 
                     unacknowledgedOutboundStanzas.acknowledge( h );
+                    outboundAcknowledgementProcessed();
                 }
             }
         }
+    }
+
+    /**
+     * Invoked under the lock of this instance after a valid acknowledgement of outbound stanzas ({@code <a/>}) from the
+     * peer was processed. This does nothing by default.
+     */
+    void outboundAcknowledgementProcessed() {
     }
 
     /**

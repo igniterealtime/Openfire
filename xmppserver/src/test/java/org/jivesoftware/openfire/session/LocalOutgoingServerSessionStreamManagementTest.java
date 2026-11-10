@@ -61,6 +61,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -140,7 +141,15 @@ public class LocalOutgoingServerSessionStreamManagementTest
      */
     private final List<Runnable> resumptionAttempts = new CopyOnWriteArrayList<>();
 
+    /**
+     * The delays after which another attempt to resume a detached session was scheduled, after an attempt failed. Such
+     * an attempt is added to {@link #resumptionAttempts}.
+     */
+    private final List<Duration> retryDelays = new CopyOnWriteArrayList<>();
+
     private Executor originalResumptionExecutor;
+
+    private BiConsumer<Runnable, Duration> originalRetryScheduler;
 
     private Executor originalVerificationExecutor;
 
@@ -190,6 +199,8 @@ public class LocalOutgoingServerSessionStreamManagementTest
 
         originalResumptionExecutor = LocalOutgoingServerSession.resumptionExecutor;
         LocalOutgoingServerSession.resumptionExecutor = resumptionAttempts::add;
+        originalRetryScheduler = LocalOutgoingServerSession.resumptionRetryScheduler;
+        LocalOutgoingServerSession.resumptionRetryScheduler = (task, delay) -> { retryDelays.add(delay); resumptionAttempts.add(task); };
         originalVerificationExecutor = LocalOutgoingServerSession.verificationExecutor;
         LocalOutgoingServerSession.verificationExecutor = Runnable::run;
         socketTimeoutMillis = (int) Duration.ofHours(1).toMillis();
@@ -199,6 +210,7 @@ public class LocalOutgoingServerSessionStreamManagementTest
     public void tearDown()
     {
         LocalOutgoingServerSession.resumptionExecutor = originalResumptionExecutor;
+        LocalOutgoingServerSession.resumptionRetryScheduler = originalRetryScheduler;
         LocalOutgoingServerSession.verificationExecutor = originalVerificationExecutor;
         Fixtures.clearExistingProperties();
         //noinspection deprecation
@@ -981,7 +993,7 @@ public class LocalOutgoingServerSessionStreamManagementTest
         fireOutgoingConnectionClose(sessionManager, resumable);
         resumable.deliver(message("queued-1"));
         resumable.deliver(message("queued-2"));
-        setLastDetachedDate(resumable, Instant.now().minus(Duration.ofMinutes(2)));
+        setDetachedSince(resumable, Instant.now().minus(Duration.ofMinutes(2)));
 
         final AtomicBoolean routeRemoved = new AtomicBoolean(false);
         doAnswer(invocation -> { routeRemoved.set(true); return true; }).when(routingTable).removeServerRoute(DOMAIN_PAIR);
@@ -1481,8 +1493,9 @@ public class LocalOutgoingServerSessionStreamManagementTest
     }
 
     /**
-     * Verifies that a detached session is ended when no new connection can be authenticated to resume it: its routes are
-     * removed, its unacknowledged stanzas are handled, and its queued stanzas are routed again.
+     * Verifies that a detached session is ended when no new connection can be authenticated to resume it, and no other
+     * attempt can be made before its detach timeout passes: its routes are removed, its unacknowledged stanzas are
+     * handled, and its queued stanzas are routed again.
      */
     @Test
     public void detachedSessionIsEndedWhenNoNewConnectionIsAuthenticated() throws Exception
@@ -1490,6 +1503,7 @@ public class LocalOutgoingServerSessionStreamManagementTest
         // Setup test fixture.
         final PacketRouter packetRouter = mock(PacketRouter.class);
         final SessionManager sessionManager = useSessionManager(packetRouter);
+        SessionManager.SERVER_SESSION_DETACH_TIMEOUT.setValue(Duration.ofMillis(500));
         final LocalOutgoingServerSession resumable = resumableSession();
         resumable.deliver(message("unacked"));
         breakConnection(sessionManager, resumable);
@@ -1503,6 +1517,211 @@ public class LocalOutgoingServerSessionStreamManagementTest
         verify(routingTable, times(1).description("The route of a session that could not be resumed must be removed.")).removeServerRoute(DOMAIN_PAIR);
         assertEquals(List.of("unacked", "queued"), routed(packetRouter).stream().map(Packet::getID).toList(), "The unacknowledged stanza must be routed again first, then the queued stanza.");
         verify(initialisers.get(0), times(1).description("The attempt to open a new connection must be stopped.")).stop();
+        assertEquals(List.of(), resumptionAttempts, "No other attempt must be made when it would start after the detach timeout passed.");
+    }
+
+    /**
+     * Verifies that another attempt to resume a detached session is made when no new connection could be authenticated,
+     * after a delay that doubles after each failed attempt, while the session, its routes and its stanzas are kept, and
+     * that a later attempt can resume the stream.
+     */
+    @Test
+    public void failedAttemptToResumeIsMadeAgainWithIncreasingDelay() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        final LocalOutgoingServerSession resumable = resumableSession();
+        resumable.deliver(message("unacked"));
+        breakConnection(sessionManager, resumable);
+        resumable.deliver(message("queued"));
+        final LocalOutgoingServerSession provider = newSessionForResumption("stream-new");
+        final Connection newConnection = provider.getConnection();
+
+        // Execute system under test.
+        runResumptionAttempt(null, p -> {});
+        runResumptionAttempt(null, p -> {});
+        final boolean detachedAfterFailures = sessionManager.isDetached(resumable);
+        runResumptionAttempt(provider, remoteServerThatResumes(resumable, "0"));
+
+        // Verify result.
+        assertTrue(detachedAfterFailures, "A session must stay detached while another attempt to resume it can be made.");
+        assertEquals(List.of(Duration.ofSeconds(1), Duration.ofSeconds(2)), retryDelays, "Another attempt must be made after each failed attempt, with a delay that doubles.");
+        assertFalse(sessionManager.isDetached(resumable), "A session that a later attempt resumed must no longer be detached.");
+        assertEquals(List.of("unacked", "queued"), deliveredIds(newConnection), "The stanzas must be sent on the connection of the attempt that resumed the stream, in order.");
+        verify(routingTable, never().description("The routes of a session must be kept while attempts to resume it are made.")).removeServerRoute(any(DomainPair.class));
+        verify(packetRouter, never().description("No stanza must be routed again while attempts to resume the session are made.")).route(any(Packet.class));
+    }
+
+    /**
+     * Verifies that the delay before another attempt to resume a detached session stops doubling once it reaches its
+     * maximum of 30 seconds, and stays at that maximum for later attempts.
+     */
+    @Test
+    public void delayBetweenAttemptsToResumeIsLimited() throws Exception
+    {
+        // Setup test fixture.
+        final SessionManager sessionManager = useSessionManager(mock(PacketRouter.class));
+        SessionManager.SERVER_SESSION_DETACH_TIMEOUT.setValue(Duration.ofHours(1));
+        final LocalOutgoingServerSession resumable = resumableSession();
+        breakConnection(sessionManager, resumable);
+
+        // Execute system under test.
+        for (int i = 0; i < 8; i++) {
+            runResumptionAttempt(null, p -> {});
+        }
+
+        // Verify result.
+        final List<Duration> expected = List.of(Duration.ofSeconds(1), Duration.ofSeconds(2), Duration.ofSeconds(4), Duration.ofSeconds(8), Duration.ofSeconds(16), Duration.ofSeconds(30), Duration.ofSeconds(30), Duration.ofSeconds(30));
+        assertEquals(expected, retryDelays, "The delay between attempts must double after each failed attempt, up to 30 seconds, and stay at 30 seconds after that.");
+        assertTrue(sessionManager.isDetached(resumable), "A session must stay detached while another attempt to resume it can be made.");
+    }
+
+    /**
+     * Verifies that, when the server detach timeout is negative, another attempt to resume a detached session is still
+     * made after many failed attempts, long after the session was detached, at the maximum delay.
+     */
+    @Test
+    public void attemptsToResumeAreMadeWithoutDeadlineWhenDetachTimeoutIsNegative() throws Exception
+    {
+        // Setup test fixture.
+        final SessionManager sessionManager = useSessionManager(mock(PacketRouter.class));
+        SessionManager.SERVER_SESSION_DETACH_TIMEOUT.setValue(Duration.ofMillis(-1));
+        final LocalOutgoingServerSession resumable = resumableSession();
+        breakConnection(sessionManager, resumable);
+        setDetachedSince(resumable, Instant.now().minus(Duration.ofDays(30)));
+
+        // Execute system under test.
+        for (int i = 0; i < 40; i++) {
+            runResumptionAttempt(null, p -> {});
+        }
+
+        // Verify result.
+        assertEquals(40, retryDelays.size(), "Another attempt must be scheduled after each failed attempt when the server detach timeout is negative.");
+        assertEquals(Duration.ofSeconds(30), retryDelays.get(retryDelays.size() - 1), "An attempt after many failed attempts must be scheduled at the maximum delay.");
+        assertEquals(1, resumptionAttempts.size(), "Another attempt must be scheduled after the last failed attempt.");
+        assertTrue(sessionManager.isDetached(resumable), "A session must stay detached while attempts to resume it are made without a deadline.");
+    }
+
+    /**
+     * Verifies that a request to resume the stream that was sent on a new connection that was not authenticated in time
+     * is given up before that connection is closed and another attempt is scheduled, so that an answer that arrives on
+     * it later does not resume the session.
+     */
+    @Test
+    public void lateAnswerOnConnectionThatWasNotAuthenticatedInTimeIsIgnored() throws Exception
+    {
+        // Setup test fixture.
+        final SessionManager sessionManager = useSessionManager(mock(PacketRouter.class));
+        final LocalOutgoingServerSession resumable = resumableSession();
+        breakConnection(sessionManager, resumable);
+        final LocalOutgoingServerSession provider = newSessionForResumption("stream-new");
+        runResumptionAttempt(provider, p -> p.getStreamManager().requestResume(resumable, List.of(StreamManager.NAMESPACE_V3)), CompletableFuture.failedFuture(new TimeoutException("Not authenticated in time.")));
+
+        // Execute system under test.
+        provider.getStreamManager().process(resumed("sm-id-1", "0"));
+
+        // Verify result.
+        assertEquals(RequestingStreamManager.ResumeRequestStatus.ABANDONED, provider.getStreamManager().getResumeRequestStatus(), "The request on the connection of the failed attempt must be given up.");
+        final List<String> calls = mockingDetails(initialisers.get(0)).getInvocations().stream().map(invocation -> invocation.getMethod().getName()).filter(name -> name.equals("abandonResume") || name.equals("stop")).toList();
+        assertEquals(List.of("abandonResume", "stop"), calls, "The request must be given up before the connection of the failed attempt is closed.");
+        assertTrue(sessionManager.isDetached(resumable), "A late answer on the connection of the failed attempt must not resume the session.");
+        assertNotSame(provider.getConnection(), resumable.getConnection(), "The session must not take over the connection of the failed attempt.");
+        assertEquals(List.of(Duration.ofSeconds(1)), retryDelays, "Another attempt must be scheduled after the failed attempt.");
+    }
+
+    /**
+     * Verifies that an attempt to resume the stream that failed while the remote server answered the request on its
+     * connection anyway leaves the session to the processing of that answer: the connection is not closed, and no other
+     * attempt is made.
+     */
+    @Test
+    public void attemptThatFailedAfterRemoteServerResumedLeavesSessionResumed() throws Exception
+    {
+        // Setup test fixture.
+        final SessionManager sessionManager = useSessionManager(mock(PacketRouter.class));
+        final LocalOutgoingServerSession resumable = resumableSession();
+        breakConnection(sessionManager, resumable);
+        final LocalOutgoingServerSession provider = newSessionForResumption("stream-new");
+        final Connection newConnection = provider.getConnection();
+
+        // Execute system under test.
+        runResumptionAttempt(provider, remoteServerThatResumes(resumable, "0"), CompletableFuture.failedFuture(new TimeoutException("Not authenticated in time.")));
+
+        // Verify result.
+        assertFalse(sessionManager.isDetached(resumable), "Test fixture expects the remote server to have resumed the session.");
+        assertSame(newConnection, resumable.getConnection(), "The resumed session must keep the connection on which its stream was resumed.");
+        verify(initialisers.get(0), never().description("The connection on which the stream was resumed must not be closed.")).stop();
+        assertEquals(List.of(), retryDelays, "No other attempt must be scheduled for a session that was resumed.");
+        assertEquals(List.of(), resumptionAttempts, "No other attempt must be made for a session that was resumed.");
+    }
+
+    /**
+     * Verifies that no attempt to resume a session is made once the session is no longer detached, for example because
+     * it was ended while an attempt was scheduled.
+     */
+    @Test
+    public void noAttemptToResumeIsMadeForSessionThatIsNoLongerDetached() throws Exception
+    {
+        // Setup test fixture.
+        final SessionManager sessionManager = useSessionManager(mock(PacketRouter.class));
+        final LocalOutgoingServerSession resumable = resumableSession();
+        breakConnection(sessionManager, resumable);
+        runResumptionAttempt(null, p -> {});
+        sessionManager.terminateDetached(resumable);
+        final int initialisersBefore = initialisers.size();
+
+        // Execute system under test.
+        runResumptionAttempt(null, p -> {});
+
+        // Verify result.
+        assertEquals(initialisersBefore, initialisers.size(), "No new connection must be opened for a session that is no longer detached.");
+        assertEquals(List.of(), resumptionAttempts, "No other attempt must be scheduled for a session that is no longer detached.");
+    }
+
+    /**
+     * Verifies that no other attempt to resume a session is made when the remote server refused to resume its stream
+     * with {@code <failed/>}, which is final: the session is ended at once.
+     */
+    @Test
+    public void refusalToResumeIsNotRetried() throws Exception
+    {
+        // Setup test fixture.
+        final SessionManager sessionManager = useSessionManager(mock(PacketRouter.class));
+        final LocalOutgoingServerSession resumable = resumableSession();
+        breakConnection(sessionManager, resumable);
+
+        // Execute system under test.
+        runResumptionAttempt(newSessionForResumption("stream-new"), p -> {
+            p.getStreamManager().requestResume(resumable, List.of(StreamManager.NAMESPACE_V3));
+            p.getStreamManager().process(failed(null));
+        });
+
+        // Verify result.
+        verify(routingTable, timeout(5000).times(1).description("The route of a session of which the stream is refused must be removed.")).removeServerRoute(DOMAIN_PAIR);
+        assertEquals(List.of(), resumptionAttempts, "No other attempt must be made after the remote server refused to resume the stream.");
+        assertEquals(List.of(), retryDelays, "No other attempt must be scheduled after the remote server refused to resume the stream.");
+    }
+
+    /**
+     * Verifies that no other attempt to resume a session is made when the remote server does not offer the version of
+     * Stream Management of its stream, as another connection would not either: the session is ended at once.
+     */
+    @Test
+    public void streamThatCannotBeResumedOnNewConnectionIsNotRetried() throws Exception
+    {
+        // Setup test fixture.
+        final SessionManager sessionManager = useSessionManager(mock(PacketRouter.class));
+        final LocalOutgoingServerSession resumable = resumableSession();
+        breakConnection(sessionManager, resumable);
+
+        // Execute system under test.
+        runResumptionAttempt(newSessionForResumption("stream-new"), p -> p.getStreamManager().requestResume(resumable, List.of(StreamManager.NAMESPACE_V2)));
+
+        // Verify result.
+        assertFalse(sessionManager.isDetached(resumable), "A session of which the stream cannot be resumed on a new connection must be ended.");
+        verify(routingTable, times(1).description("The route of a session of which the stream cannot be resumed must be removed.")).removeServerRoute(DOMAIN_PAIR);
+        assertEquals(List.of(), resumptionAttempts, "No other attempt must be made when the remote server does not offer the version of the stream.");
     }
 
     /**
@@ -1544,6 +1763,7 @@ public class LocalOutgoingServerSessionStreamManagementTest
     {
         // Setup test fixture.
         LocalOutgoingServerSession.STREAM_MANAGEMENT_NEGOTIATION_TIMEOUT.setValue(Duration.ofMillis(100));
+        SessionManager.SERVER_SESSION_DETACH_TIMEOUT.setValue(Duration.ofMillis(500));
         final SessionManager sessionManager = useSessionManager(mock(PacketRouter.class));
         final LocalOutgoingServerSession resumable = resumableSession();
         breakConnection(sessionManager, resumable);
@@ -1929,6 +2149,378 @@ public class LocalOutgoingServerSessionStreamManagementTest
     }
 
     /**
+     * Verifies that a detached session that is not resumed within the server detach timeout is ended, and that each of
+     * its stanzas is then handled once, as decision 4 of OF-2425 describes: the unacknowledged message is routed again,
+     * the unacknowledged IQ request is returned as an error, the queued stanza is routed again, and the acknowledged
+     * stanza is not handled.
+     */
+    @Test
+    public void givingUpAfterServerDetachTimeoutHandlesEachStanzaOnce() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        SessionManager.SERVER_SESSION_DETACH_TIMEOUT.setValue(Duration.ofMinutes(1));
+        final LocalOutgoingServerSession resumable = brokenSessionWithStanzas(sessionManager, null);
+        setDetachedSince(resumable, Instant.now().minus(Duration.ofMinutes(2)));
+
+        // Execute system under test.
+        runDetachedCleanupTask(sessionManager);
+
+        // Verify result.
+        assertFalse(sessionManager.isDetached(resumable), "A session that was detached for longer than the server detach timeout must be ended.");
+        assertEachStanzaHandledOnce(packetRouter, List.of("unacked-message", "queued", "unacked-request"));
+    }
+
+    /**
+     * Verifies that a detached session is ended once the preferred maximum resumption time of the remote server passed,
+     * when that is shorter than the server detach timeout, and that each of its stanzas is then handled once.
+     */
+    @Test
+    public void givingUpAfterPeerMaximumResumptionTimeHandlesEachStanzaOnce() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        SessionManager.SERVER_SESSION_DETACH_TIMEOUT.setValue(Duration.ofMinutes(2));
+        final LocalOutgoingServerSession resumable = brokenSessionWithStanzas(sessionManager, "30");
+        setDetachedSince(resumable, Instant.now().minus(Duration.ofMinutes(1)));
+
+        // Execute system under test.
+        runDetachedCleanupTask(sessionManager);
+
+        // Verify result.
+        assertFalse(sessionManager.isDetached(resumable), "A session that was detached for longer than the preferred maximum resumption time of the remote server must be ended.");
+        assertEachStanzaHandledOnce(packetRouter, List.of("unacked-message", "queued", "unacked-request"));
+    }
+
+    /**
+     * Verifies that a detached session is kept while the preferred maximum resumption time of the remote server has not
+     * passed.
+     */
+    @Test
+    public void detachedSessionIsKeptWithinPeerMaximumResumptionTime() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        final LocalOutgoingServerSession resumable = brokenSessionWithStanzas(sessionManager, "300");
+        setDetachedSince(resumable, Instant.now().minus(Duration.ofMinutes(1)));
+
+        // Execute system under test.
+        runDetachedCleanupTask(sessionManager);
+
+        // Verify result.
+        assertTrue(sessionManager.isDetached(resumable), "A session must be kept while neither the preferred maximum resumption time of the remote server nor the server detach timeout passed.");
+        verify(packetRouter, never().description("No stanza of a session that is kept must be routed.")).route(any(Packet.class));
+    }
+
+    /**
+     * Verifies that the time that an outgoing server session is kept while detached is the shorter of the server detach
+     * timeout and the preferred maximum resumption time of the remote server, and that a negative server detach timeout
+     * does not keep a session beyond the latter.
+     */
+    @Test
+    public void detachTimeoutOfOutgoingSessionIsLimitedByPeerMaximumResumptionTime() throws Exception
+    {
+        // Setup test fixture.
+        final SessionManager sessionManager = useSessionManager(mock(PacketRouter.class));
+        final LocalOutgoingServerSession withMaximum = resumableSession("30");
+        final LocalOutgoingServerSession withoutMaximum = resumableSession(null);
+        SessionManager.SERVER_SESSION_DETACH_TIMEOUT.setValue(Duration.ofMinutes(2));
+
+        // Execute system under test.
+        final Duration peerShorter = sessionManager.getDetachTimeout(withMaximum);
+        final Duration noPeerMaximum = sessionManager.getDetachTimeout(withoutMaximum);
+        SessionManager.SERVER_SESSION_DETACH_TIMEOUT.setValue(Duration.ofSeconds(10));
+        final Duration serverShorter = sessionManager.getDetachTimeout(withMaximum);
+        SessionManager.SERVER_SESSION_DETACH_TIMEOUT.setValue(Duration.ofMillis(-1));
+        final Duration serverNegative = sessionManager.getDetachTimeout(withMaximum);
+
+        // Verify result.
+        assertEquals(Duration.ofSeconds(30), peerShorter, "The preferred maximum resumption time of the remote server must be used when it is shorter than the server detach timeout.");
+        assertEquals(Duration.ofMinutes(2), noPeerMaximum, "The server detach timeout must be used when the remote server reported no preferred maximum resumption time.");
+        assertEquals(Duration.ofSeconds(10), serverShorter, "The server detach timeout must be used when it is shorter than the preferred maximum resumption time of the remote server.");
+        assertEquals(Duration.ofSeconds(30), serverNegative, "The preferred maximum resumption time of the remote server must be used when the server detach timeout is negative.");
+    }
+
+    /**
+     * Verifies that a detached session is ended when the remote server refuses to resume its stream with
+     * {@code <failed/>}, and that each of its stanzas is then handled once.
+     */
+    @Test
+    public void givingUpOnFailedHandlesEachStanzaOnce() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        final LocalOutgoingServerSession resumable = brokenSessionWithStanzas(sessionManager, null);
+
+        // Execute system under test.
+        runResumptionAttempt(newSessionForResumption("stream-new"), remoteServerThatRefuses(resumable, null));
+
+        // Verify result.
+        verify(packetRouter, timeout(5000).times(3).description("Each stanza of a session of which the stream is refused must be handled.")).route(any(Packet.class));
+        assertFalse(sessionManager.isDetached(resumable), "A session of which the stream is refused must be ended.");
+        assertEachStanzaHandledOnce(packetRouter, List.of("unacked-message", "queued", "unacked-request"));
+    }
+
+    /**
+     * Verifies that a detached session is ended once more stanzas are queued than the maximum allows, and that each of
+     * its stanzas is then handled once.
+     */
+    @Test
+    public void givingUpOnFullQueueHandlesEachStanzaOnce() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        RequestingStreamManager.MAX_QUEUED_WHILE_BROKEN.setValue(1);
+        final LocalOutgoingServerSession resumable = brokenSessionWithStanzas(sessionManager, null);
+
+        // Execute system under test.
+        resumable.deliver(message("queued-2"));
+
+        // Verify result.
+        verify(packetRouter, timeout(5000).times(4).description("Each stanza of a session of which the queue is full must be handled.")).route(any(Packet.class));
+        assertFalse(sessionManager.isDetached(resumable), "A session of which the queue is full must be ended.");
+        assertEachStanzaHandledOnce(packetRouter, List.of("unacked-message", "queued", "queued-2", "unacked-request"));
+    }
+
+    /**
+     * Verifies that the stanzas that the remote server reports to have received in the 'h' of the {@code <failed/>}
+     * with which it refuses to resume a stream (XEP-0198 § 5) are not routed again or returned as an error when the
+     * session is ended.
+     */
+    @Test
+    public void hOfFailedAcknowledgesStanzasBeforeFallback() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        final LocalOutgoingServerSession resumable = brokenSessionWithStanzas(sessionManager, null);
+
+        // Execute system under test.
+        runResumptionAttempt(newSessionForResumption("stream-new"), remoteServerThatRefuses(resumable, "2"));
+
+        // Verify result.
+        verify(packetRouter, timeout(5000).times(2).description("The stanzas that the 'h' of <failed/> does not acknowledge must be handled.")).route(any(Packet.class));
+        verify(packetRouter, after(200).times(2).description("The stanza that the 'h' of <failed/> acknowledges must not be handled.")).route(any(Packet.class));
+        assertEachStanzaHandledOnce(packetRouter, List.of("queued", "unacked-request"));
+    }
+
+    /**
+     * Verifies that an invalid 'h' of the {@code <failed/>} with which the remote server refuses to resume a stream, which
+     * acknowledges stanzas that were not sent, is ignored: the session is ended, and all its stanzas are handled.
+     */
+    @Test
+    public void invalidHOfFailedIsIgnored() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        final LocalOutgoingServerSession resumable = brokenSessionWithStanzas(sessionManager, null);
+
+        // Execute system under test.
+        runResumptionAttempt(newSessionForResumption("stream-new"), remoteServerThatRefuses(resumable, "7"));
+
+        // Verify result.
+        verify(packetRouter, timeout(5000).times(3).description("Each stanza must be handled when the 'h' of <failed/> is invalid.")).route(any(Packet.class));
+        assertFalse(sessionManager.isDetached(resumable), "A session of which the stream is refused must be ended, also when the 'h' of <failed/> is invalid.");
+        assertEachStanzaHandledOnce(packetRouter, List.of("unacked-message", "queued", "unacked-request"));
+    }
+
+    /**
+     * Verifies that a 'h' of {@code <failed/>} that is not a number is ignored, and that each stanza is handled.
+     */
+    @Test
+    public void nonNumericHOfFailedIsIgnored() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        final LocalOutgoingServerSession resumable = brokenSessionWithStanzas(sessionManager, null);
+
+        // Execute system under test.
+        runResumptionAttempt(newSessionForResumption("stream-new"), remoteServerThatRefuses(resumable, "many"));
+
+        // Verify result.
+        verify(packetRouter, timeout(5000).times(3).description("Each stanza must be handled when the 'h' of <failed/> is not a number.")).route(any(Packet.class));
+        assertEachStanzaHandledOnce(packetRouter, List.of("unacked-message", "queued", "unacked-request"));
+    }
+
+    /**
+     * Verifies that a session that is resumed, and detached again before the remote server acknowledged anything on the
+     * resumed stream, is kept only until the detach timeout passes since it was first detached, so that a stream that
+     * breaks each time it is resumed is not kept indefinitely.
+     */
+    @Test
+    public void sessionDetachedAgainBeforeAcknowledgementKeepsDeadlineOfFirstDetach() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        SessionManager.SERVER_SESSION_DETACH_TIMEOUT.setValue(Duration.ofMinutes(2));
+        final LocalOutgoingServerSession resumable = resumableSession();
+        resumable.deliver(message("unacked"));
+        breakConnection(sessionManager, resumable);
+        final Instant firstDetach = Instant.now().minus(Duration.ofMinutes(3));
+        setDetachedSince(resumable, firstDetach);
+        final LocalOutgoingServerSession provider = newSessionForResumption("stream-new");
+        final Connection newConnection = provider.getConnection();
+        runResumptionAttempt(provider, remoteServerThatResumes(resumable, "0"));
+        doReturn(true).when(newConnection).isClosed();
+        fireOutgoingConnectionClose(sessionManager, resumable);
+        assertTrue(sessionManager.isDetached(resumable), "Test fixture expects the session to be detached again.");
+
+        // Execute system under test.
+        runDetachedCleanupTask(sessionManager);
+
+        // Verify result.
+        assertEquals(firstDetach, resumable.getDetachedSince(), "A session that is detached again before its resumed stream was acknowledged must be kept while detached from its first detach.");
+        assertFalse(sessionManager.isDetached(resumable), "A session that is detached again before its resumed stream was acknowledged must be ended once the detach timeout passed since its first detach.");
+        assertEquals(List.of("unacked"), routed(packetRouter).stream().map(Packet::getID).toList(), "The stanza that was sent again on the resumed stream must be handled once.");
+        assertEquals(IQ.Type.error.toString(), routed(packetRouter).get(0).getElement().attributeValue("type"), "A stanza that was sent again on the resumed stream, and is unacknowledged again, must be returned as an error (decision 4).");
+    }
+
+    /**
+     * Verifies that a session that is resumed, and detached again after the remote server acknowledged stanzas on the
+     * resumed stream, gets a new detach timeout, measured from that detach.
+     */
+    @Test
+    public void sessionDetachedAgainAfterAcknowledgementGetsNewDeadline() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        SessionManager.SERVER_SESSION_DETACH_TIMEOUT.setValue(Duration.ofMinutes(2));
+        final LocalOutgoingServerSession resumable = resumableSession();
+        breakConnection(sessionManager, resumable);
+        final Instant firstDetach = Instant.now().minus(Duration.ofMinutes(3));
+        setDetachedSince(resumable, firstDetach);
+        final LocalOutgoingServerSession provider = newSessionForResumption("stream-new");
+        final Connection newConnection = provider.getConnection();
+        runResumptionAttempt(provider, remoteServerThatResumes(resumable, "0"));
+        resumable.deliver(message("after"));
+        resumable.getStreamManager().process(ack("1"));
+        doReturn(true).when(newConnection).isClosed();
+        fireOutgoingConnectionClose(sessionManager, resumable);
+        assertTrue(sessionManager.isDetached(resumable), "Test fixture expects the session to be detached again.");
+
+        // Execute system under test.
+        runDetachedCleanupTask(sessionManager);
+
+        // Verify result.
+        assertTrue(resumable.getDetachedSince().isAfter(firstDetach), "A session that is detached again after its resumed stream was acknowledged must be kept while detached from its new detach.");
+        assertTrue(sessionManager.isDetached(resumable), "A session that is detached again after its resumed stream was acknowledged must be kept within the detach timeout since its new detach.");
+    }
+
+    /**
+     * Verifies that an acknowledgement is requested on a resumed stream, also when no stanza is sent on it, so that the
+     * remote server confirms that the resumed stream works.
+     */
+    @Test
+    public void acknowledgementIsRequestedOnResumedStream() throws Exception
+    {
+        // Setup test fixture.
+        final SessionManager sessionManager = useSessionManager(mock(PacketRouter.class));
+        final LocalOutgoingServerSession resumable = resumableSession();
+        breakConnection(sessionManager, resumable);
+        final LocalOutgoingServerSession provider = newSessionForResumption("stream-new");
+        final Connection newConnection = provider.getConnection();
+
+        // Execute system under test.
+        runResumptionAttempt(provider, remoteServerThatResumes(resumable, "0"));
+
+        // Verify result.
+        final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(newConnection, atLeastOnce().description("Expected raw text to be delivered on the new connection.")).deliverRawText(captor.capture());
+        assertTrue(captor.getAllValues().stream().anyMatch(text -> text.startsWith("<r ")), "An acknowledgement must be requested on the resumed stream, but this was delivered: " + captor.getAllValues());
+        assertFalse(resumable.getStreamManager().isAcknowledgedSinceResumption(), "The resumed stream must not be taken to work before the remote server acknowledged anything on it.");
+    }
+
+    /**
+     * Verifies that another attempt to resume a detached session is made when the remote server does not answer the
+     * request to resume its stream in time, while the detach timeout has not passed.
+     */
+    @Test
+    public void unansweredRequestToResumeIsMadeAgain() throws Exception
+    {
+        // Setup test fixture.
+        LocalOutgoingServerSession.STREAM_MANAGEMENT_NEGOTIATION_TIMEOUT.setValue(Duration.ofMillis(100));
+        final SessionManager sessionManager = useSessionManager(mock(PacketRouter.class));
+        final LocalOutgoingServerSession resumable = resumableSession();
+        breakConnection(sessionManager, resumable);
+
+        // Execute system under test.
+        runResumptionAttempt(newSessionForResumption("stream-new"), p -> p.getStreamManager().requestResume(resumable, List.of(StreamManager.NAMESPACE_V3)));
+
+        // Verify result.
+        assertTrue(sessionManager.isDetached(resumable), "A session must stay detached while another attempt to resume it can be made.");
+        assertEquals(List.of(Duration.ofSeconds(1)), retryDelays, "Another attempt must be scheduled after a request that was not answered in time.");
+        verify(initialisers.get(0), times(1).description("The connection of the attempt that was not answered must be closed.")).stop();
+    }
+
+    /**
+     * Creates a session as {@link #resumableSession(String)} does, with the provided preferred maximum resumption time of
+     * the remote server, on which a stanza is acknowledged, a message and an IQ request are unacknowledged, of which the
+     * connection breaks, and on which a stanza is queued after that.
+     */
+    private LocalOutgoingServerSession brokenSessionWithStanzas(final SessionManager sessionManager, final String max) throws Exception
+    {
+        final LocalOutgoingServerSession resumable = resumableSession(max);
+        resumable.deliver(message("acked"));
+        resumable.getStreamManager().process(ack("1"));
+        resumable.deliver(message("unacked-message"));
+        resumable.deliver(iq("unacked-request", IQ.Type.get));
+        breakConnection(sessionManager, resumable);
+        resumable.deliver(message("queued"));
+        return resumable;
+    }
+
+    /**
+     * Verifies that exactly the stanzas with the provided IDs were routed, each once, in order, and that an IQ request
+     * among them was returned to its sender as an error while the others were routed again (decision 4 of OF-2425). The
+     * errors are routed after the stanzas that are routed again.
+     */
+    private void assertEachStanzaHandledOnce(final PacketRouter packetRouter, final List<String> expectedIds)
+    {
+        final List<Packet> routed = routed(packetRouter);
+        assertEquals(expectedIds, routed.stream().map(Packet::getID).toList(), "Exactly these stanzas must be handled, each once, in order, the errors last.");
+        for (final Packet packet : routed) {
+            if (packet instanceof IQ iq) {
+                assertEquals(IQ.Type.error, iq.getType(), "An unacknowledged IQ request must be returned to its sender as an error: " + iq.getID());
+            } else {
+                assertNull(packet.getError(), "A message must be routed again, not returned as an error: " + packet.getID());
+            }
+        }
+        verify(routingTable, times(1).description("The route of a session that is ended must be removed once.")).removeServerRoute(DOMAIN_PAIR);
+    }
+
+    /**
+     * Returns what the stanza handler of a new connection and a remote server that refuses to resume the stream of the
+     * provided session do: the handler asks to resume the stream, and the remote server answers with {@code <failed/>},
+     * with the provided value of 'h', if any.
+     */
+    private static Consumer<LocalOutgoingServerSession> remoteServerThatRefuses(final LocalOutgoingServerSession target, final String h)
+    {
+        return provider -> {
+            provider.getStreamManager().requestResume(target, List.of(StreamManager.NAMESPACE_V3));
+            provider.getStreamManager().process(failed(h));
+        };
+    }
+
+    private static Element failed(final String h)
+    {
+        final Element failed = DocumentHelper.createElement(QName.get("failed", StreamManager.NAMESPACE_V3));
+        failed.addElement(QName.get("item-not-found", "urn:ietf:params:xml:ns:xmpp-stanzas"));
+        if (h != null) {
+            failed.addAttribute("h", h);
+        }
+        return failed;
+    }
+
+    /**
      * Creates a session as {@link #resumableSession()} does, which also has {@link #OTHER_DOMAIN_PAIR}, as a session that
      * was authenticated with dialback, on which another domain pair was authenticated.
      */
@@ -2185,11 +2777,24 @@ public class LocalOutgoingServerSessionStreamManagementTest
      */
     private LocalOutgoingServerSession resumableSession()
     {
+        return resumableSession(null);
+    }
+
+    /**
+     * Creates a session as {@link #resumableSession()} does, of which the remote server reported the provided preferred
+     * maximum resumption time, in seconds, if any.
+     */
+    private LocalOutgoingServerSession resumableSession(final String max)
+    {
         StreamManager.SERVER_RESUME_ENABLED.setValue(true);
         final LocalOutgoingServerSession resumable = newSession("stream-resumable");
         resumable.addOutgoingDomainPair(DOMAIN_PAIR);
         resumable.getStreamManager().requestEnable(StreamManager.NAMESPACE_V3);
-        resumable.getStreamManager().process(DocumentHelper.createElement(QName.get("enabled", StreamManager.NAMESPACE_V3)).addAttribute("resume", "true").addAttribute("id", "sm-id-1"));
+        final Element enabled = DocumentHelper.createElement(QName.get("enabled", StreamManager.NAMESPACE_V3)).addAttribute("resume", "true").addAttribute("id", "sm-id-1");
+        if (max != null) {
+            enabled.addAttribute("max", max);
+        }
+        resumable.getStreamManager().process(enabled);
         assertTrue(resumable.getStreamManager().getResume(), "Test fixture expects the stream to be resumable.");
         clearInvocations(connection, routingTable);
         return resumable;
@@ -2209,18 +2814,17 @@ public class LocalOutgoingServerSessionStreamManagementTest
     }
 
     /**
-     * Sets the moment at which the provided session was most recently detached, so that a test can have a session
-     * that was detached in the past.
+     * Sets the moment at which the provided session was most recently detached, and the moment from which the time that
+     * it is kept while detached is measured, so that a test can have a session that was detached in the past.
      */
-    private static void setLastDetachedDate(final LocalSession target, final Instant moment) throws Exception
+    private static void setDetachedSince(final LocalOutgoingServerSession target, final Instant moment) throws Exception
     {
-        final Field field = LocalSession.class.getDeclaredField("lastDetachedDate");
-        field.setAccessible(true);
-        field.set(target, moment);
-
-        final Field lastActiveDate = LocalSession.class.getDeclaredField("lastActiveDate");
-        lastActiveDate.setAccessible(true);
-        lastActiveDate.set(target, moment.toEpochMilli());
+        final Field lastDetachedDate = LocalSession.class.getDeclaredField("lastDetachedDate");
+        lastDetachedDate.setAccessible(true);
+        lastDetachedDate.set(target, moment);
+        final Field detachedSince = LocalOutgoingServerSession.class.getDeclaredField("detachedSince");
+        detachedSince.setAccessible(true);
+        detachedSince.set(target, moment);
     }
 
     /**
@@ -2357,18 +2961,6 @@ public class LocalOutgoingServerSessionStreamManagementTest
             initialisers.addAll(constructed.constructed());
             return result;
         }
-    }
-    /**
-     * Sets the moment at which the provided session detached, and its last activity, as if it detached at that moment.
-     */
-    private static void setDetachedSince(final LocalOutgoingServerSession target, final Instant moment) throws Exception
-    {
-        final Field lastDetachedDate = LocalSession.class.getDeclaredField("lastDetachedDate");
-        lastDetachedDate.setAccessible(true);
-        lastDetachedDate.set(target, moment);
-        final Field lastActiveDate = LocalSession.class.getDeclaredField("lastActiveDate");
-        lastActiveDate.setAccessible(true);
-        lastActiveDate.set(target, moment.toEpochMilli());
     }
     /**
      * Invokes {@link LocalOutgoingServerSession#authenticateDomain(DomainPair)} for the provided domain pair, where

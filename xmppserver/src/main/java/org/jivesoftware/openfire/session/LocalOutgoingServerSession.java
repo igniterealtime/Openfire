@@ -43,12 +43,14 @@ import org.xmpp.packet.*;
 
 import javax.annotation.Nonnull;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CompletionException;
@@ -56,6 +58,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 /**
@@ -129,6 +132,29 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     static volatile Executor resumptionExecutor = task -> TaskEngine.getInstance().submit(task);
 
     /**
+     * The time to wait after the first failed attempt to resume the stream of a detached session on a new connection,
+     * before the next attempt. It doubles after each failed attempt, up to {@link #RESUMPTION_RETRY_MAXIMUM_DELAY}.
+     */
+    private static final Duration RESUMPTION_RETRY_INITIAL_DELAY = Duration.ofSeconds(1);
+
+    /**
+     * The longest time to wait after a failed attempt to resume the stream of a detached session, before the next attempt.
+     */
+    private static final Duration RESUMPTION_RETRY_MAXIMUM_DELAY = Duration.ofSeconds(30);
+
+    /**
+     * Runs a task once the provided time has passed: the next attempt to resume the stream of a detached session on a
+     * new connection, after an attempt failed (see {@link #resumeOnNewConnection()}).
+     */
+    @VisibleForTesting
+    static volatile BiConsumer<Runnable, Duration> resumptionRetryScheduler = (task, delay) -> TaskEngine.getInstance().schedule(new TimerTask() {
+        @Override
+        public void run() {
+            task.run();
+        }
+    }, delay);
+
+    /**
      * Runs what follows the outcome of an attempt to verify a domain pair again after the stream of a session was resumed
      * (see {@link #verifyAgain(DomainPair)}).
      */
@@ -164,6 +190,19 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
      * authenticate them again.
      */
     private final Collection<DomainPair> givenUpDomainPairs = ConcurrentHashMap.newKeySet();
+
+    /**
+     * The moment from which the time that this session is kept while it is detached is measured (see
+     * {@link #getDetachedSince()}), or null when it has never been detached.
+     */
+    private volatile Instant detachedSince;
+
+    /**
+     * The number of attempts to resume the stream of this session that failed since it was most recently detached.
+     * Reset when the first attempt starts, and otherwise changed only by the thread that runs an attempt, as one attempt
+     * runs at a time.
+     */
+    private volatile int failedResumptionAttempts;
 
     /**
      * Authenticates the local domain to the remote domain. Once authenticated the remote domain can be expected to
@@ -674,6 +713,10 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     /**
      * Sets the session to detached mode, indicating that the underlying connection has been closed. From then on,
      * stanzas that are delivered to the session are queued rather than sent. The routes of the session are kept.
+     *
+     * The time that the session is kept while detached is measured from this moment, unless the session was resumed
+     * before, and the remote server did not acknowledge anything on the resumed stream (see
+     * {@link #getDetachedSince()}).
      */
     @Override
     public void setDetached() {
@@ -700,6 +743,33 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         return true;
     }
 
+    @Override
+    protected void beforeDetached() {
+        // OF-2425: Set before the session is registered as detached, as the cleanup task measures from it (decision 7).
+        if (detachedSince == null || getStreamManager().isAcknowledgedSinceResumption()) {
+            detachedSince = Instant.now();
+        } else {
+            Log.debug("Session '{}' ({}) is detached again before its resumed stream was acknowledged. It is kept while detached for as long as when it was detached at {}.", address, streamID, detachedSince);
+        }
+    }
+
+    /**
+     * Returns the moment from which the time that this session is kept while it is detached is measured, which also
+     * limits the attempts to resume its stream (see {@link SessionManager#getDetachTimeout(LocalSession)}).
+     *
+     * This is the moment at which the session was most recently detached, unless it was resumed before that, and the
+     * remote server did not acknowledge anything on the resumed stream before it broke again (see
+     * {@link RequestingStreamManager#isAcknowledgedSinceResumption()}). It is then the moment at which it was detached
+     * before it was resumed, so that a stream that is resumed and breaks again before it works is not kept for longer
+     * than one detach timeout in total.
+     *
+     * @return the moment from which the time that this session is detached is measured, or null if it was never detached.
+     */
+    public Instant getDetachedSince()
+    {
+        return detachedSince;
+    }
+
     /**
      * Starts an attempt to resume the stream of this session, which is detached, on a new connection, on another thread
      * (see {@link #resumeOnNewConnection()}).
@@ -707,7 +777,31 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     public void startResumption()
     {
         Log.debug("Starting an attempt to resume the stream of detached session {} on a new connection.", this);
+        failedResumptionAttempts = 0;
         resumptionExecutor.execute(this::resumeOnNewConnection);
+    }
+
+    /**
+     * The outcome of an attempt to resume the stream of a detached session on a new connection.
+     */
+    private enum ResumptionOutcome {
+        /**
+         * The remote server answered the request to resume the stream, and the processing of that answer takes care of
+         * the session.
+         */
+        ANSWERED,
+
+        /**
+         * The attempt failed in a way that another attempt may not, such as a connection that could not be opened or
+         * authenticated, or a request that the remote server did not answer in time.
+         */
+        TRY_AGAIN,
+
+        /**
+         * The attempt failed in a way that another attempt would too, such as a remote domain that may not be accessed,
+         * or a remote server that does not offer the version of Stream Management of the stream.
+         */
+        GIVE_UP
     }
 
     /**
@@ -720,21 +814,31 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
      * connection is not made a route, and no event is dispatched for it: when the stream is resumed, the connection is
      * attached to this session (see {@link #resumeWithConnectionOf(LocalOutgoingServerSession, long)}).
      *
-     * When the remote domain is not accessible, no connection can be authenticated, the remote server does not offer the
-     * version of Stream Management of this stream, or does not answer within
-     * {@link #STREAM_MANAGEMENT_NEGOTIATION_TIMEOUT}, the new connection is closed, and this session is ended, as when it
-     * is not resumed in time (see {@link SessionManager#terminateDetached(LocalSession)}). When the remote server answers,
-     * the processing of that answer takes care of this session.
+     * When no connection can be opened or authenticated, or the remote server does not answer within
+     * {@link #STREAM_MANAGEMENT_NEGOTIATION_TIMEOUT}, the new connection is closed, and another attempt is made after a
+     * delay that doubles after each failed attempt (see {@link #scheduleNextResumptionAttempt()}). When the remote domain
+     * is not accessible, or the remote server does not offer the version of Stream Management of this stream, the new
+     * connection is closed, and this session is ended, as when it is not resumed in time (see
+     * {@link SessionManager#terminateDetached(LocalSession)}). When the remote server answers, the processing of that
+     * answer takes care of this session: {@code <failed/>} ends it, without another attempt. Before the new connection
+     * is closed after a failed attempt, the request to resume the stream on it is given up (see
+     * {@link NettySessionInitializer#abandonResume()}), so that an answer that arrives later is ignored. An attempt is
+     * not made for a session that is no longer detached.
      */
     @VisibleForTesting
     void resumeOnNewConnection()
     {
+        if (!isDetached()) {
+            Log.debug("Not attempting to resume session {}, as it is no longer detached: it was resumed or ended.", this);
+            return;
+        }
         final DomainPair domainPair = getMainDomainPair();
         NettySessionInitializer initialiser = null;
-        boolean endSession = true;
+        ResumptionOutcome outcome = ResumptionOutcome.TRY_AGAIN;
         try {
             if (!RemoteServerManager.canAccess(domainPair.getRemote())) {
                 Log.debug("Not resuming detached session {}, as remote domain '{}' is not accessible according to the configuration.", this, domainPair.getRemote());
+                outcome = ResumptionOutcome.GIVE_UP;
                 return;
             }
             final int port = RemoteServerManager.getPortForServer(domainPair.getRemote());
@@ -745,21 +849,55 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                 Log.debug("Unable to resume detached session {}, as no new connection for {} could be authenticated: {}", this, domainPair, provider);
                 return;
             }
-            endSession = awaitResumption(connectionProvider);
+            outcome = awaitResumption(connectionProvider);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             Log.debug("Interrupted while resuming detached session {} on a new connection for {}.", this, domainPair, e);
+            outcome = ResumptionOutcome.GIVE_UP;
         } catch (Exception e) {
             Log.debug("Unable to resume detached session {} on a new connection for {}.", this, domainPair, e);
         } finally {
-            if (endSession) {
+            // OF-2425: Given up before the connection is closed or another attempt is made, so that a late answer on this connection is ignored.
+            if (outcome != ResumptionOutcome.ANSWERED && initialiser != null && !initialiser.abandonResume()) {
+                Log.debug("The remote server answered the request to resume detached session {} after the attempt failed (outcome: {}). The processing of that answer takes care of the session.", this, outcome);
+                outcome = ResumptionOutcome.ANSWERED;
+            }
+            if (outcome != ResumptionOutcome.ANSWERED) {
                 if (initialiser != null) {
                     initialiser.stop();
                 }
-                Log.debug("Ending detached session {}, as its stream was not resumed on a new connection.", this);
-                sessionManager.terminateDetached(this);
+                if (outcome != ResumptionOutcome.TRY_AGAIN || !scheduleNextResumptionAttempt()) {
+                    Log.debug("Ending detached session {}, as its stream was not resumed on a new connection (outcome: {}, failed attempts: {}).", this, outcome, failedResumptionAttempts);
+                    sessionManager.terminateDetached(this);
+                }
             }
         }
+    }
+
+    /**
+     * Schedules another attempt to resume the stream of this session after an attempt failed, unless that attempt would
+     * start after the session is to be ended: once the detach timeout of this session (see
+     * {@link SessionManager#getDetachTimeout(LocalSession)}) has passed since {@link #getDetachedSince()}. The first
+     * attempt is made after {@link #RESUMPTION_RETRY_INITIAL_DELAY}, and the delay doubles after each failed attempt, up
+     * to {@link #RESUMPTION_RETRY_MAXIMUM_DELAY}. When the detach timeout is negative, attempts are made until the
+     * session is resumed or ended otherwise.
+     *
+     * @return true if another attempt is scheduled, false if the caller is to end this session.
+     */
+    private boolean scheduleNextResumptionAttempt()
+    {
+        final int failed = ++failedResumptionAttempts;
+        final Duration delay = RESUMPTION_RETRY_INITIAL_DELAY.multipliedBy(1L << Math.min(failed - 1, 30));
+        final Duration nextDelay = delay.compareTo(RESUMPTION_RETRY_MAXIMUM_DELAY) > 0 ? RESUMPTION_RETRY_MAXIMUM_DELAY : delay;
+        final Duration timeout = sessionManager.getDetachTimeout(this);
+        final Instant since = detachedSince;
+        if (!timeout.isNegative() && since != null && !Instant.now().plus(nextDelay).isBefore(since.plus(timeout))) {
+            Log.debug("Not attempting again to resume detached session {} after {} failed attempt(s), as the next attempt, in {}, would start after the session is to be ended: {} after {}.", this, failed, nextDelay, timeout, since);
+            return false;
+        }
+        Log.debug("Attempting again to resume detached session {} in {}, after {} failed attempt(s).", this, nextDelay, failed);
+        resumptionRetryScheduler.accept(this::resumeOnNewConnection, nextDelay);
+        return true;
     }
 
     /**
@@ -767,11 +905,14 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
      * another session, and gives up on that request when it is not answered in time, or not sent.
      *
      * @param connectionProvider the session of the new connection.
-     * @return true when the request was given up, after which the caller ends this session; false when the remote server
-     * answered it, in which case the processing of that answer takes care of this session.
+     * @return {@link ResumptionOutcome#ANSWERED} when the remote server answered the request, in which case the processing
+     * of that answer takes care of this session; otherwise, the request was given up: {@link ResumptionOutcome#GIVE_UP}
+     * when it was not sent, as the stream cannot be resumed on the new connection, or {@link ResumptionOutcome#TRY_AGAIN}
+     * when it was not answered in time, or the connection closed first.
      * @throws InterruptedException if the thread is interrupted while waiting.
      */
-    private boolean awaitResumption(@Nonnull final LocalOutgoingServerSession connectionProvider) throws InterruptedException
+    @Nonnull
+    private ResumptionOutcome awaitResumption(@Nonnull final LocalOutgoingServerSession connectionProvider) throws InterruptedException
     {
         final RequestingStreamManager streamManager = connectionProvider.getStreamManager();
         // OF-2425: A connection that this session took over already is no longer the connection of the provider.
@@ -786,7 +927,12 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
             // Only the close future can complete exceptionally. That also means that the connection closed.
             Log.trace("The close future of the connection of session {} completed exceptionally.", connectionProvider, e);
         }
-        return streamManager.abandonResume();
+        // OF-2425: A request that was not sent, while the handler finished with it, cannot be sent on another connection either.
+        final boolean notSent = streamManager.getResumeRequestFinished().isDone() && streamManager.getResumeRequestStatus() == RequestingStreamManager.ResumeRequestStatus.NOT_SENT;
+        if (!streamManager.abandonResume()) {
+            return ResumptionOutcome.ANSWERED;
+        }
+        return notSent ? ResumptionOutcome.GIVE_UP : ResumptionOutcome.TRY_AGAIN;
     }
 
     /**

@@ -23,18 +23,22 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.junit.jupiter.api.Test;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Message;
+import org.xmpp.packet.StreamError;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
  * Unit tests that verify what {@link RequestingStreamManager}, the end of a stream that asks for Stream Management,
- * does when its session closes or would be resumed, and when it reports that negotiation has finished. How it asks for Stream Management, and how it answers the peer, is
+ * does when its session closes or would be resumed, when it reports that negotiation has finished, and how it counts
+ * stanzas that are sent while a request to enable Stream Management awaits an answer. How it asks for Stream Management, and how it answers the peer, is
  * verified through the stanza handler of outgoing server connections, in RespondingServerStanzaHandlerStreamManagementTest.
  *
  * @author Guus der Kinderen, guus@goodbytes.nl
@@ -244,6 +248,101 @@ public class RequestingStreamManagerTest
 
         // Verify result.
         assertFalse(sm.getNegotiationOutcome().isDone(), "Negotiation must not be reported as finished by completing a future that was returned.");
+    }
+
+    /**
+     * Verifies that stanzas that are sent while a request to enable Stream Management awaits an answer are not tracked,
+     * while those that are sent once the peer enabled it are.
+     */
+    @Test
+    public void stanzasSentWhileRequestIsPendingAreNotTracked()
+    {
+        // Setup test fixture.
+        final RequestingStreamManager sm = newStreamManager();
+        sm.requestEnable(StreamManager.NAMESPACE_V3);
+        sm.sentStanza(message("pending-1"));
+        sm.sentStanza(message("pending-2"));
+
+        // Execute system under test.
+        sm.process(DocumentHelper.createElement(QName.get("enabled", StreamManager.NAMESPACE_V3)));
+        sm.sentStanza(message("enabled-1"));
+
+        // Verify result.
+        assertEquals(List.of("enabled-1"), UnacknowledgedStanzas.ids(sm), "Only the stanza that was sent after the peer enabled Stream Management must be tracked.");
+    }
+
+    /**
+     * Verifies that an acknowledgement that counts the stanzas that were sent while a request to enable Stream Management
+     * awaited an answer is valid, as the peer counts them from the request on (XEP-0198 § 4), and that it removes the
+     * tracked stanzas that it covers.
+     */
+    @Test
+    public void acknowledgementThatCountsStanzasSentWhileRequestWasPendingIsValid()
+    {
+        // Setup test fixture.
+        final RequestingStreamManager sm = newStreamManager();
+        sm.requestEnable(StreamManager.NAMESPACE_V3);
+        sm.sentStanza(message("pending-1"));
+        sm.sentStanza(message("pending-2"));
+        sm.process(DocumentHelper.createElement(QName.get("enabled", StreamManager.NAMESPACE_V3)));
+        sm.sentStanza(message("enabled-1"));
+        sm.sentStanza(message("enabled-2"));
+
+        // Execute system under test.
+        sm.process(DocumentHelper.createElement(QName.get("a", StreamManager.NAMESPACE_V3)).addAttribute("h", "3"));
+
+        // Verify result.
+        verify(sm.session, never().description("An acknowledgement that counts the stanzas sent while the request awaited an answer must not close the session.")).close(any(StreamError.class));
+        assertEquals(List.of("enabled-2"), UnacknowledgedStanzas.ids(sm), "Only the stanza that the acknowledgement does not cover must remain.");
+    }
+
+    /**
+     * Verifies that an acknowledgement of more stanzas than were sent since the request to enable Stream Management
+     * closes the session, also when stanzas were sent while the request awaited an answer.
+     */
+    @Test
+    public void acknowledgementOfMoreStanzasThanSentSinceRequestClosesSession()
+    {
+        // Setup test fixture.
+        final RequestingStreamManager sm = newStreamManager();
+        sm.requestEnable(StreamManager.NAMESPACE_V3);
+        sm.sentStanza(message("pending-1"));
+        sm.process(DocumentHelper.createElement(QName.get("enabled", StreamManager.NAMESPACE_V3)));
+        sm.sentStanza(message("enabled-1"));
+
+        // Execute system under test.
+        sm.process(DocumentHelper.createElement(QName.get("a", StreamManager.NAMESPACE_V3)).addAttribute("h", "3"));
+
+        // Verify result.
+        verify(sm.session, times(1).description("An acknowledgement of more stanzas than were sent must close the session with a stream error.")).close(any(StreamError.class));
+    }
+
+    /**
+     * Verifies that no stanzas are tracked when the peer refuses to enable Stream Management, neither those that were
+     * sent while the request awaited an answer, nor those that are sent after.
+     */
+    @Test
+    public void stanzasAreNotTrackedWhenRefused()
+    {
+        // Setup test fixture.
+        final RequestingStreamManager sm = newStreamManager();
+        sm.requestEnable(StreamManager.NAMESPACE_V3);
+        sm.sentStanza(message("pending-1"));
+
+        // Execute system under test.
+        sm.process(DocumentHelper.createElement(QName.get("failed", StreamManager.NAMESPACE_V3)));
+        sm.sentStanza(message("refused-1"));
+
+        // Verify result.
+        assertFalse(sm.isEnabled(), "Stream Management must not be enabled after the peer refused it.");
+        assertEquals(List.of(), UnacknowledgedStanzas.ids(sm), "No stanzas must be tracked when the peer refused Stream Management.");
+    }
+
+    private static Message message(final String id)
+    {
+        final Message message = new Message();
+        message.setID(id);
+        return message;
     }
 
     /**

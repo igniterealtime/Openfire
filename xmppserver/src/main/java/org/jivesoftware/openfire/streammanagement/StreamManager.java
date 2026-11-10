@@ -449,6 +449,17 @@ public abstract class StreamManager {
     }
 
     /**
+     * Records that a number of outbound stanzas were sent that the peer counts, but that are not tracked, so that the
+     * stanzas that are tracked after them are numbered as the peer counts them. This must only be invoked while no
+     * stanzas are unacknowledged.
+     *
+     * @param count the number of outbound stanzas that were sent without being tracked.
+     */
+    synchronized void skipOutboundStanzas(final long count) {
+        unacknowledgedOutboundStanzas.skip(count);
+    }
+
+    /**
      * Returns the stanzas that the peer has not acknowledged, as an unmodifiable copy that does not reflect later
      * changes.
      *

@@ -21,6 +21,7 @@ import org.dom4j.QName;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.xmpp.packet.JID;
+import org.xmpp.packet.Packet;
 import org.xmpp.packet.PacketError;
 
 import javax.annotation.Nonnull;
@@ -33,6 +34,11 @@ import java.util.concurrent.CompletableFuture;
  * Only Openfire asks on such a stream. Every Stream Management element of the peer that this end does not process,
  * including a request to enable Stream Management or to resume a stream, is answered with {@code <failed/>}, without
  * changing the state of Stream Management.
+ *
+ * Once the peer enabled Stream Management, the stanzas that Openfire sends are tracked until the peer acknowledges
+ * them, and acknowledgements are requested, as at the end that answers. Stanzas that are sent while a request to enable
+ * Stream Management awaits an answer are counted, as the peer counts them from the request on (XEP-0198 § 4), but are
+ * not tracked.
  *
  * @author Guus der Kinderen, guus@goodbytes.nl
  */
@@ -87,6 +93,12 @@ public class RequestingStreamManager extends StreamManager
      * when Openfire decided not to ask.
      */
     private final CompletableFuture<EnableRequestStatus> negotiationOutcome = new CompletableFuture<>();
+
+    /**
+     * The number of stanzas that Openfire sent while a request to enable Stream Management awaited an answer. Guarded by
+     * the lock of this instance.
+     */
+    private long sentWhilePending = 0;
 
     RequestingStreamManager(@Nonnull final LocalSession session)
     {
@@ -201,6 +213,8 @@ public class RequestingStreamManager extends StreamManager
             // A peer that answers in a version other than the one requested is not taken to have enabled that version.
             enabled = answersRequest && "enabled".equals( element.getName() ) && element.getNamespaceURI().equals( requested );
             if ( enabled ) {
+                // OF-2425: The peer counts the stanzas that were sent since the request (XEP-0198 § 4), so those that follow are numbered after them.
+                skipOutboundStanzas( sentWhilePending );
                 setNamespace( requested );
                 enableRequestStatus = EnableRequestStatus.ENABLED;
             } else if ( answersRequest ) {
@@ -216,11 +230,30 @@ public class RequestingStreamManager extends StreamManager
 
         if ( enabled ) {
             // Resumption was not requested, so an offer of it in the answer is ignored.
-            Log.debug( "The peer of session {} enabled Stream Management ({}). Offered resumption, which is not used: {}", session, requested, element.attributeValue( "resume" ) );
+            Log.debug( "The peer of session {} enabled Stream Management ({}). Stanzas sent while the request awaited an answer, which are counted but not tracked: {}. Offered resumption, which is not used: {}", session, requested, sentWhilePending, element.attributeValue( "resume" ) );
         } else {
             Log.debug( "The peer of session {} did not enable Stream Management ({}). It answered with '{}' in namespace '{}', reporting: {}", session, requested, element.getName(), element.getNamespaceURI(), element.elements().stream().map( Element::getName ).findFirst().orElse( "(no condition)" ) );
         }
         negotiationOutcome.complete( enabled ? EnableRequestStatus.ENABLED : EnableRequestStatus.REFUSED );
+    }
+
+    /**
+     * Registers that Openfire sends a stanza to the peer. While a request to enable Stream Management awaits an answer,
+     * the stanza is only counted, as the peer counts it once it enables Stream Management. Otherwise, this behaves as
+     * {@link StreamManager#sentStanza(Packet)}: the stanza is tracked while Stream Management is enabled.
+     *
+     * @param packet The stanza that is sent.
+     */
+    @Override
+    public void sentStanza(Packet packet)
+    {
+        synchronized ( this ) {
+            if ( enableRequestStatus == EnableRequestStatus.PENDING ) {
+                sentWhilePending++;
+                return;
+            }
+            super.sentStanza( packet );
+        }
     }
 
     /**

@@ -460,7 +460,18 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
     @Override
     void deliver(Packet packet) throws UnauthorizedException {
         if (!conn.isClosed()) {
-            conn.deliver(packet);
+            final RequestingStreamManager streamManager = getStreamManager();
+            // OF-2425: as for clients (OF-2921), the lock is only taken while sent stanzas are counted, so that they are numbered in the order in which they are sent.
+            // Also while Stream Management can still be requested, so that a stanza is counted exactly when the peer counts it: when it follows <enable/>.
+            final RequestingStreamManager.EnableRequestStatus status = streamManager.getEnableRequestStatus();
+            if (!streamManager.isEnabled() && (status == RequestingStreamManager.EnableRequestStatus.REFUSED || status == RequestingStreamManager.EnableRequestStatus.SKIPPED)) {
+                conn.deliver(packet);
+                return;
+            }
+            synchronized (streamManager) {
+                conn.deliver(packet);
+                streamManager.sentStanza(packet);
+            }
             return;
         }
 

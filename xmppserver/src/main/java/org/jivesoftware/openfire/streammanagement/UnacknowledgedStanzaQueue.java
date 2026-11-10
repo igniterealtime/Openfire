@@ -179,6 +179,30 @@ class UnacknowledgedStanzaQueue
     }
 
     /**
+     * Records that a number of stanzas were sent to the peer without being added to the queue, as if the peer had
+     * acknowledged them: stanzas that are added later are numbered after them, and an acknowledgement that covers them
+     * is valid. This is for stanzas that the peer counts, but that are not tracked.
+     *
+     * @param count the number of stanzas that were sent without being added.
+     * @throws IllegalArgumentException when 'count' is negative.
+     * @throws IllegalStateException when the queue holds stanzas.
+     */
+    synchronized void skip(final long count)
+    {
+        if (count < 0) {
+            throw new IllegalArgumentException("Argument 'count' cannot be negative, but was: " + count);
+        }
+        if (!entries.isEmpty()) {
+            throw new IllegalStateException("Stanzas can only be skipped while none are unacknowledged, but " + entries.size() + " are.");
+        }
+        final long total = acknowledged + count;
+        if (total > StreamManager.MASK) {
+            rolledOver = true;
+        }
+        acknowledged = total & StreamManager.MASK;
+    }
+
+    /**
      * Checks whether the queue holds more stanzas than its maximum.
      *
      * @return true if the queue holds more stanzas than its maximum.

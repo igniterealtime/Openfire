@@ -28,6 +28,7 @@ import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.AuthToken;
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.junit.jupiter.api.AfterEach;
@@ -56,6 +57,7 @@ import static org.mockito.Mockito.*;
 abstract class AbstractStreamManagerTest
 {
     static final JID FULL_JID = new JID("johndoe", Fixtures.XMPP_DOMAIN, "test-resource", true);
+    static final JID REMOTE_SERVER_ADDRESS = new JID("remote.example.org");
     static final JID SERVER_ADDRESS = new JID(Fixtures.XMPP_DOMAIN);
     static final String STREAM_ID = "test-stream-id";
     static final int DETACH_TIME_MILLIS = 120_000;
@@ -70,6 +72,89 @@ abstract class AbstractStreamManagerTest
      * The routing table of the mocked server, in which tests can stub the route of a session.
      */
     RoutingTable routingTable;
+
+    /**
+     * The end of a stream that a stream manager is on, for tests of what both ends share. Each end provides a session
+     * of a type that it is used for, and the steps that only that end has, such as enabling Stream Management.
+     */
+    enum End
+    {
+        /**
+         * The end that answers requests of the peer, as on client sessions.
+         */
+        ANSWERING {
+            @Override
+            LocalSession newSession()
+            {
+                return authenticatedClientSession();
+            }
+
+            @Override
+            StreamManager newStreamManager(final LocalSession session)
+            {
+                return new AnsweringStreamManager(session);
+            }
+
+            @Override
+            void enable(final StreamManager sm, final String namespace)
+            {
+                sm.process(smElement("enable", namespace));
+            }
+        },
+
+        /**
+         * The end that asks the peer for Stream Management, as on connections that Openfire opens to other servers.
+         */
+        REQUESTING {
+            @Override
+            LocalSession newSession()
+            {
+                return authenticatedOutgoingServerSession();
+            }
+
+            @Override
+            StreamManager newStreamManager(final LocalSession session)
+            {
+                return new RequestingStreamManager(session);
+            }
+
+            @Override
+            void enable(final StreamManager sm, final String namespace)
+            {
+                ((RequestingStreamManager) sm).requestEnable(namespace);
+                sm.process(smElement("enabled", namespace));
+            }
+        };
+
+        /**
+         * Creates a mock of an authenticated session of a type that this end is used for, which has a connection, an
+         * address and a stream ID, and which tracks whether it is closed.
+         */
+        abstract LocalSession newSession();
+
+        /**
+         * Creates a stream manager for this end, with Stream Management not enabled.
+         */
+        abstract StreamManager newStreamManager(LocalSession session);
+
+        /**
+         * Enables Stream Management in the way that this end does.
+         */
+        abstract void enable(StreamManager sm, String namespace);
+
+        /**
+         * Creates a stream manager for this end with Stream Management enabled, and clears the interaction with the
+         * session that resulted from enabling it.
+         */
+        StreamManager enabledStreamManager(final LocalSession session, final String namespace)
+        {
+            final StreamManager sm = newStreamManager(session);
+            enable(sm, namespace);
+            assertTrue(sm.isEnabled(), "Test fixture expects Stream Management to be enabled.");
+            clearInvocations(session);
+            return sm;
+        }
+    }
 
     @BeforeAll
     public static void setUpClass() throws Exception
@@ -128,6 +213,23 @@ abstract class AbstractStreamManagerTest
         doReturn(closableConnection()).when(session).getConnection();
         doReturn(true).when(session).isAuthenticated();
         doReturn(FULL_JID).when(session).getAddress();
+        doReturn(BasicStreamIDFactory.createStreamID(STREAM_ID)).when(session).getStreamID();
+        mockCloseTracking(session);
+        return session;
+    }
+
+    /**
+     * A mock of an outgoing server session that is authenticated, with a connection, the address of the remote server and
+     * a stream ID.
+     *
+     * The session will set its closed flag when it is closed through invocation of either close() or close(StreamError)
+     */
+    static LocalOutgoingServerSession authenticatedOutgoingServerSession()
+    {
+        final LocalOutgoingServerSession session = mock(LocalOutgoingServerSession.class);
+        doReturn(closableConnection()).when(session).getConnection();
+        doReturn(true).when(session).isAuthenticated();
+        doReturn(REMOTE_SERVER_ADDRESS).when(session).getAddress();
         doReturn(BasicStreamIDFactory.createStreamID(STREAM_ID)).when(session).getStreamID();
         mockCloseTracking(session);
         return session;
@@ -293,7 +395,7 @@ abstract class AbstractStreamManagerTest
      *
      * @param session the session to mock.
      */
-    static void mockCloseTracking(final LocalClientSession session)
+    static void mockCloseTracking(final LocalSession session)
     {
         final AtomicBoolean closed = new AtomicBoolean(false);
 

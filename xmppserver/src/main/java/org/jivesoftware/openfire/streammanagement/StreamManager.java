@@ -548,6 +548,17 @@ public abstract class StreamManager {
      * @param packet The stanza that is sent.
      */
     public void sentStanza(Packet packet) {
+        sentStanza(packet, false);
+    }
+
+    /**
+     * Registers that Openfire sends a stanza to the peer (which is expected to be acknowledged later).
+     *
+     * @param packet The stanza that is sent.
+     * @param sentAgain whether the stanza was sent before, on a connection that broke before the stanza was
+     *                  acknowledged.
+     */
+    void sentStanza(@Nonnull final Packet packet, final boolean sentAgain) {
 
         if(isEnabled()) {
             final long requestFrequency = JiveGlobals.getLongProperty( "stream.management.requestFrequency", 5 );
@@ -563,11 +574,11 @@ public abstract class StreamManager {
                     return;
                 }
 
-                final long x = unacknowledgedOutboundStanzas.add( packet.createCopy() );
+                final long x = unacknowledgedOutboundStanzas.add( packet.createCopy(), sentAgain );
 
                 size = unacknowledgedOutboundStanzas.size();
 
-                Log.trace( "Added stanza of type '{}' to collection of unacknowledged stanzas (x={}). Collection size is now {}.", packet.getElement().getName(), x, size );
+                Log.trace( "Added stanza of type '{}' to collection of unacknowledged stanzas (x={}, sent again: {}). Collection size is now {}.", packet.getElement().getName(), x, sentAgain, size );
 
                 // Prevent keeping to many stanzas in memory. OF-3434: the stanzas are kept, to be handled when the session closes.
                 closeForExceedingMaximum = unacknowledgedOutboundStanzas.exceedsMaximum() && !exceededMaximumUnacknowledgedStanzas;

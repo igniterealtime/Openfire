@@ -22,6 +22,7 @@ import org.jivesoftware.Fixtures;
 import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutingTable;
+import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.nio.NettySessionInitializer;
 import org.jivesoftware.openfire.server.RemoteServerManager;
@@ -38,16 +39,22 @@ import org.junit.jupiter.api.Timeout;
 import org.mockito.ArgumentCaptor;
 import org.mockito.MockedConstruction;
 import org.mockito.MockedStatic;
+import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
+import org.xmpp.packet.PacketError;
+import org.xmpp.packet.Presence;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -64,7 +71,8 @@ import static org.mockito.Mockito.*;
  * authenticateDomain returns.
  *
  * Once the remote server enabled Stream Management, the stanzas that the session delivers are tracked until the remote
- * server acknowledges them, and acknowledgements are requested.
+ * server acknowledges them, and acknowledgements are requested. When the session closes without being resumed, the
+ * stanzas that the remote server did not acknowledge are routed again, or returned to their sender as an error.
  *
  * The connection is a mock, and the code that opens it is replaced by one that returns a session that is already
  * authenticated. The remote server is simulated by passing its answers and acknowledgements to the stream manager of
@@ -78,6 +86,10 @@ public class LocalOutgoingServerSessionStreamManagementTest
     private static final String REMOTE_DOMAIN = "remote.example.org";
 
     private static final DomainPair DOMAIN_PAIR = new DomainPair(Fixtures.XMPP_DOMAIN, REMOTE_DOMAIN);
+
+    private static final JID SERVER_ADDRESS = new JID(Fixtures.XMPP_DOMAIN);
+
+    private static final JID SENDER = new JID("johndoe", Fixtures.XMPP_DOMAIN, "test-resource");
 
     private XMPPServer xmppServer;
 
@@ -450,6 +462,393 @@ public class LocalOutgoingServerSessionStreamManagementTest
     }
 
     /**
+     * Verifies that, when the session closes without being resumed, unacknowledged messages, presences and IQ responses
+     * are routed again, in the order in which they were sent, so that they can go out over a new connection (decision 4
+     * of OF-2425).
+     */
+    @Test
+    public void unacknowledgedMessagesPresencesAndIqResponsesAreRoutedAgainOnClose() throws Exception
+    {
+        // Setup test fixture.
+        enableStreamManagement();
+        session.deliver(message("message"));
+        session.deliver(presence("presence"));
+        session.deliver(iq("result", IQ.Type.result));
+        session.deliver(iq("error", IQ.Type.error));
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+
+        // Execute system under test.
+        session.getStreamManager().onClose(packetRouter, SERVER_ADDRESS);
+
+        // Verify result.
+        final List<Packet> routed = routed(packetRouter);
+        assertEquals(List.of("message", "presence", "result", "error"), routed.stream().map(Packet::getID).toList(), "Each unacknowledged message, presence and IQ response must be routed again, in the order in which it was sent.");
+        assertEquals(List.of(REMOTE_DOMAIN, REMOTE_DOMAIN, REMOTE_DOMAIN, REMOTE_DOMAIN), routed.stream().map(packet -> packet.getTo().toString()).toList(), "Each stanza that is routed again must still be addressed to its recipient.");
+        assertEquals(IQ.Type.error, ((IQ) routed.get(3)).getType(), "An IQ error must be routed again as it was sent.");
+        assertFalse(session.getStreamManager().isEnabled(), "Stream Management must be disabled when the session closes.");
+    }
+
+    /**
+     * Verifies that messages and presences that are routed again when the session closes get a delay stamp from this
+     * server, while IQ responses do not.
+     */
+    @Test
+    public void messagesAndPresencesRoutedAgainOnCloseGetDelayStamp() throws Exception
+    {
+        // Setup test fixture.
+        enableStreamManagement();
+        session.deliver(message("message"));
+        session.deliver(presence("presence"));
+        session.deliver(iq("result", IQ.Type.result));
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+
+        // Execute system under test.
+        session.getStreamManager().onClose(packetRouter, SERVER_ADDRESS);
+
+        // Verify result.
+        final List<Packet> routed = routed(packetRouter);
+        for (final Packet packet : routed.subList(0, 2)) {
+            final Element delay = packet.getElement().element(QName.get("delay", "urn:xmpp:delay"));
+            assertNotNull(delay, "A " + packet.getElement().getName() + " that is routed again must have a delay stamp.");
+            assertEquals(Fixtures.XMPP_DOMAIN, delay.attributeValue("from"), "The delay stamp must name this server as the entity that delayed the stanza.");
+            assertNotNull(delay.attributeValue("stamp"), "The delay stamp must record the time at which the stanza was first sent.");
+        }
+        assertNull(routed.get(2).getElement().element(QName.get("delay", "urn:xmpp:delay")), "An IQ response that is routed again must not get a delay stamp.");
+    }
+
+    /**
+     * Verifies that, when the session closes without being resumed, the sender of an unacknowledged IQ request receives
+     * a 'service-unavailable' error, and the request is not routed again, as it can have side effects (decision 4 of
+     * OF-2425).
+     */
+    @Test
+    public void unacknowledgedIqRequestsAreReturnedAsErrorOnClose() throws Exception
+    {
+        // Setup test fixture.
+        enableStreamManagement();
+        session.deliver(iq("get", IQ.Type.get));
+        session.deliver(iq("set", IQ.Type.set));
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+
+        // Execute system under test.
+        session.getStreamManager().onClose(packetRouter, SERVER_ADDRESS);
+
+        // Verify result.
+        final List<Packet> routed = routed(packetRouter);
+        assertEquals(List.of("get", "set"), routed.stream().map(Packet::getID).toList(), "Each unacknowledged IQ request must be answered, in the order in which it was sent.");
+        for (final Packet packet : routed) {
+            final IQ error = (IQ) packet;
+            assertEquals(IQ.Type.error, error.getType(), "An unacknowledged IQ request must be answered with an error, not routed again.");
+            assertEquals(SENDER, error.getTo(), "The error must be addressed to the sender of the request.");
+            assertEquals(new JID(REMOTE_DOMAIN), error.getFrom(), "The error must come from the recipient of the request.");
+            assertEquals(PacketError.Condition.service_unavailable, error.getError().getCondition(), "The error must report the 'service-unavailable' condition.");
+            assertEquals(PacketError.Type.cancel, error.getError().getType(), "The error must have the type 'cancel', the type that RFC 6120 associates with 'service-unavailable'.");
+        }
+    }
+
+    /**
+     * Verifies that stanzas that the remote server acknowledged are not handled when the session closes.
+     */
+    @Test
+    public void acknowledgedStanzasAreNotHandledOnClose() throws Exception
+    {
+        // Setup test fixture.
+        enableStreamManagement();
+        session.deliver(message("1"));
+        session.deliver(iq("2", IQ.Type.get));
+        session.deliver(message("3"));
+        session.getStreamManager().process(ack("2"));
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+
+        // Execute system under test.
+        session.getStreamManager().onClose(packetRouter, SERVER_ADDRESS);
+
+        // Verify result.
+        assertEquals(List.of("3"), routed(packetRouter).stream().map(Packet::getID).toList(), "Only the stanza that was not acknowledged must be routed again.");
+    }
+
+    /**
+     * Verifies that nothing is routed when a session on which Stream Management is not enabled closes, as its stanzas are
+     * not tracked.
+     */
+    @Test
+    public void nothingIsHandledOnCloseWhenNotEnabled() throws Exception
+    {
+        // Setup test fixture.
+        session.getStreamManager().skipEnable();
+        session.deliver(message("1"));
+        session.deliver(iq("2", IQ.Type.get));
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+
+        // Execute system under test.
+        session.getStreamManager().onClose(packetRouter, SERVER_ADDRESS);
+
+        // Verify result.
+        assertEquals(List.of(), routed(packetRouter), "Nothing must be routed when Stream Management is not enabled.");
+    }
+
+    /**
+     * Verifies that a stanza that is delivered before negotiation of Stream Management finished is sent while holding
+     * the lock of the stream manager, under which the request to enable Stream Management is sent, so that whether the
+     * stanza is counted matches whether the remote server counts it, and that a stanza is sent without that lock once
+     * Openfire decided not to ask for Stream Management.
+     */
+    @Test
+    public void stanzaIsSentUnderLockUntilStreamManagementIsSkipped() throws Exception
+    {
+        // Setup test fixture.
+        final RequestingStreamManager streamManager = session.getStreamManager();
+        final List<String> lockHeld = new CopyOnWriteArrayList<>();
+        doAnswer(invocation -> { lockHeld.add(((Packet) invocation.getArgument(0)).getID() + " " + Thread.holdsLock(streamManager)); return null; }).when(connection).deliver(any(Packet.class));
+
+        // Execute system under test.
+        session.deliver(message("before-negotiation"));
+        streamManager.skipEnable();
+        session.deliver(message("after-skip"));
+
+        // Verify result.
+        assertEquals(List.of("before-negotiation true", "after-skip false"), lockHeld, "A stanza must be sent under the lock of the stream manager until Openfire decided not to ask for Stream Management, and without it after that.");
+    }
+
+    /**
+     * Verifies that stanzas that were sent while the request to enable Stream Management awaited an answer are not
+     * handled when the session closes, as they are counted but not tracked, while those sent after it are.
+     */
+    @Test
+    public void stanzasSentWhileRequestWasPendingAreNotHandledOnClose() throws Exception
+    {
+        // Setup test fixture.
+        session.getStreamManager().requestEnable(StreamManager.NAMESPACE_V3);
+        session.deliver(message("pending"));
+        session.getStreamManager().process(DocumentHelper.createElement(QName.get("enabled", StreamManager.NAMESPACE_V3)));
+        session.deliver(message("enabled"));
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+
+        // Execute system under test.
+        session.getStreamManager().onClose(packetRouter, SERVER_ADDRESS);
+
+        // Verify result.
+        assertEquals(List.of("enabled"), routed(packetRouter).stream().map(Packet::getID).toList(), "Only the stanza that was tracked must be routed again.");
+    }
+
+    /**
+     * Verifies that the close listener for outgoing server sessions handles the unacknowledged stanzas of the session,
+     * and does so only after the routes of the session were removed, so that the stanzas that are routed again do not
+     * reach the session that closed.
+     */
+    @Test
+    public void closeListenerHandlesUnacknowledgedStanzasAfterRoutesAreRemoved() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        doReturn(packetRouter).when(xmppServer).getPacketRouter();
+        final SessionManager sessionManager = new SessionManager();
+        sessionManager.initialize(xmppServer);
+        session.addOutgoingDomainPair(DOMAIN_PAIR);
+        enableStreamManagement();
+        session.deliver(message("1"));
+
+        final AtomicBoolean routeRemoved = new AtomicBoolean(false);
+        doAnswer(invocation -> { routeRemoved.set(true); return null; }).when(routingTable).removeServerRoute(DOMAIN_PAIR);
+        final List<Boolean> routeRemovedWhenRouted = new CopyOnWriteArrayList<>();
+        doAnswer(invocation -> { routeRemovedWhenRouted.add(routeRemoved.get()); return null; }).when(packetRouter).route(any(Packet.class));
+
+        // Execute system under test.
+        fireOutgoingConnectionClose(sessionManager);
+
+        // Verify result.
+        assertEquals(List.of(true), routeRemovedWhenRouted, "The unacknowledged stanza must be routed again once, after the route of the session was removed.");
+        assertFalse(session.getStreamManager().isEnabled(), "Stream Management must be disabled when the session closes.");
+    }
+
+    /**
+     * Verifies that a stanza that is unacknowledged when two connections in a row break is sent again once, on the
+     * second connection, and is then returned to its sender as an error, or dropped when it is a presence, while a
+     * stanza that was first sent on the second connection is routed again (decision 4 of OF-2425).
+     */
+    @Test
+    public void stanzaUnacknowledgedAtTwoBreaksInARowIsReturnedAsErrorAfterOneRetry() throws Exception
+    {
+        // Setup test fixture.
+        enableStreamManagement();
+        final Message message = message("message");
+        message.setFrom(SENDER);
+        message.setType(Message.Type.chat);
+        message.setThread("thread-1");
+        session.deliver(message);
+        session.deliver(presence("presence"));
+        final PacketRouter firstRouter = mock(PacketRouter.class);
+        session.getStreamManager().onClose(firstRouter, SERVER_ADDRESS);
+        final List<Packet> routedAtFirstBreak = routed(firstRouter);
+
+        final LocalOutgoingServerSession secondSession = newSessionWithStreamManagement("stream-2");
+        deliverAsQueued(routedAtFirstBreak, secondSession);
+        secondSession.deliver(message("fresh"));
+        final PacketRouter secondRouter = mock(PacketRouter.class);
+
+        // Execute system under test.
+        secondSession.getStreamManager().onClose(secondRouter, SERVER_ADDRESS);
+
+        // Verify result.
+        assertEquals(List.of("message", "presence"), routedAtFirstBreak.stream().map(Packet::getID).toList(), "At the first break, each unacknowledged stanza must be routed again.");
+        assertEquals(List.of("message", "presence"), UnacknowledgedStanzas.sentAgainIds(secondSession.getStreamManager()), "The second session must track the stanzas that were routed again as sent again, and only those.");
+
+        final List<Packet> routedAtSecondBreak = routed(secondRouter);
+        assertEquals(List.of("message", "fresh"), routedAtSecondBreak.stream().map(Packet::getID).toList(), "At the second break, each unacknowledged stanza must be handled once, in the order in which it was sent, and the presence that was sent again must be dropped.");
+
+        final Message messageError = (Message) routedAtSecondBreak.get(0);
+        assertEquals(Message.Type.error, messageError.getType(), "A message that was sent again must be returned to its sender as an error, not routed again.");
+        assertEquals(SENDER, messageError.getTo(), "The error must be addressed to the sender of the message.");
+        assertEquals(new JID(REMOTE_DOMAIN), messageError.getFrom(), "The error must come from the recipient of the message.");
+        assertEquals("thread-1", messageError.getThread(), "The error must keep the thread of the message.");
+        assertEquals(PacketError.Condition.service_unavailable, messageError.getError().getCondition(), "The error must report the 'service-unavailable' condition.");
+        assertEquals(PacketError.Type.cancel, messageError.getError().getType(), "The error must have the type 'cancel', the type that RFC 6120 associates with 'service-unavailable'.");
+        assertNull(messageError.getBody(), "The error must not include the content of the message.");
+
+        final Packet fresh = routedAtSecondBreak.get(1);
+        assertEquals(new JID(REMOTE_DOMAIN), fresh.getTo(), "A stanza that was first sent on the second connection must be routed again to its recipient.");
+        assertNull(fresh.getError(), "A stanza that was first sent on the second connection must not be turned into an error.");
+    }
+
+    /**
+     * Verifies that a stanza that was sent again, and is unacknowledged when the second connection breaks, is neither
+     * routed again nor answered with an error when no error may be returned for it: an IQ result, a stanza of type
+     * 'error' (RFC 6120 § 8.2.3 and § 8.3.1), and a presence of any type, which RFC 6121 § 8.5.3.2.2 says to ignore
+     * silently when it has no type or is of type 'unavailable'.
+     */
+    @Test
+    public void stanzaSentAgainIsDroppedAtSecondBreakWhenNoErrorMayBeReturned() throws Exception
+    {
+        // Setup test fixture.
+        enableStreamManagement();
+        session.deliver(iq("result", IQ.Type.result));
+        session.deliver(iq("iq-error", IQ.Type.error));
+        final Message messageError = message("message-error");
+        messageError.setType(Message.Type.error);
+        session.deliver(messageError);
+        final Presence presenceError = presence("presence-error");
+        presenceError.setType(Presence.Type.error);
+        session.deliver(presenceError);
+        session.deliver(presence("available"));
+        final Presence unavailable = presence("unavailable");
+        unavailable.setType(Presence.Type.unavailable);
+        session.deliver(unavailable);
+        final Presence probe = presence("probe");
+        probe.setType(Presence.Type.probe);
+        probe.setFrom(SENDER.asBareJID());
+        session.deliver(probe);
+        final Presence subscribe = presence("subscribe");
+        subscribe.setType(Presence.Type.subscribe);
+        subscribe.setFrom(SENDER.asBareJID());
+        session.deliver(subscribe);
+        final PacketRouter firstRouter = mock(PacketRouter.class);
+        session.getStreamManager().onClose(firstRouter, SERVER_ADDRESS);
+
+        final LocalOutgoingServerSession secondSession = newSessionWithStreamManagement("stream-2");
+        deliverAsQueued(routed(firstRouter), secondSession);
+        final PacketRouter secondRouter = mock(PacketRouter.class);
+
+        // Execute system under test.
+        secondSession.getStreamManager().onClose(secondRouter, SERVER_ADDRESS);
+
+        // Verify result.
+        assertEquals(List.of("result", "iq-error", "message-error", "presence-error", "available", "unavailable", "probe", "subscribe"), UnacknowledgedStanzas.sentAgainIds(secondSession.getStreamManager()), "Test fixture expects each stanza to be tracked as sent again on the second session.");
+        assertEquals(List.of(), routed(secondRouter), "No stanza must be routed again, and no error must be returned, for stanzas that may not be answered with an error.");
+    }
+
+    /**
+     * Verifies that a stanza that was routed again, and that reaches a session of which the connection is closed, keeps
+     * the marker when that session routes it once more, so that the session that sends it next tracks it as sent again.
+     */
+    @Test
+    public void stanzaRoutedFromClosedConnectionKeepsMarker() throws Exception
+    {
+        // Setup test fixture.
+        enableStreamManagement();
+        session.deliver(presence("presence"));
+        final PacketRouter firstRouter = mock(PacketRouter.class);
+        session.getStreamManager().onClose(firstRouter, SERVER_ADDRESS);
+        final Packet routedAgain = routed(firstRouter).get(0);
+
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        doReturn(packetRouter).when(xmppServer).getPacketRouter();
+        final Connection closedConnection = mock(Connection.class, withSettings().lenient());
+        doReturn(true).when(closedConnection).isClosed();
+        doReturn(CompletableFuture.completedFuture(null)).when(closedConnection).getCloseFuture();
+        final LocalOutgoingServerSession closedSession = new LocalOutgoingServerSession(Fixtures.XMPP_DOMAIN, closedConnection, BasicStreamIDFactory.createStreamID("stream-closed"));
+
+        // Execute system under test.
+        closedSession.deliver(routedAgain);
+
+        // Verify result.
+        final ArgumentCaptor<Packet> captor = ArgumentCaptor.forClass(Packet.class);
+        verify(packetRouter, timeout(5000).description("The session of which the connection is closed must route the stanza once more.")).route(captor.capture());
+        final LocalOutgoingServerSession nextSession = newSessionWithStreamManagement("stream-next");
+        nextSession.deliver(captor.getValue());
+        assertEquals(List.of("presence"), UnacknowledgedStanzas.sentAgainIds(nextSession.getStreamManager()), "The session that sends the stanza next must track it as sent again.");
+    }
+
+    /**
+     * Creates an authenticated outgoing session for {@link #DOMAIN_PAIR} on a mocked connection of its own, on which the
+     * remote server enabled Stream Management, as a new connection that replaces {@link #session}.
+     */
+    private static LocalOutgoingServerSession newSessionWithStreamManagement(final String streamId)
+    {
+        final Connection newConnection = mock(Connection.class, withSettings().lenient());
+        doReturn(new CompletableFuture<Void>()).when(newConnection).getCloseFuture();
+        final LocalOutgoingServerSession newSession = new LocalOutgoingServerSession(Fixtures.XMPP_DOMAIN, newConnection, BasicStreamIDFactory.createStreamID(streamId));
+        newSession.setAddress(new JID(null, REMOTE_DOMAIN, null));
+        newSession.setAuthenticationMethod(ServerSession.AuthenticationMethod.SASL_EXTERNAL);
+        newSession.getStreamManager().requestEnable(StreamManager.NAMESPACE_V3);
+        newSession.getStreamManager().process(DocumentHelper.createElement(QName.get("enabled", StreamManager.NAMESPACE_V3)));
+        assertTrue(newSession.getStreamManager().isEnabled(), "Test fixture expects Stream Management to be enabled on the new session.");
+        return newSession;
+    }
+
+    /**
+     * Has the provided session deliver the stanzas that were routed again, as OutgoingSessionPromise does when it sends
+     * the stanzas that it queued for a new connection: each is a copy, which keeps the marker of the stanza.
+     */
+    private static void deliverAsQueued(final List<Packet> routedAgain, final LocalOutgoingServerSession target) throws Exception
+    {
+        for (final Packet packet : routedAgain) {
+            final Packet copy = packet.createCopy();
+            RequestingStreamManager.copyRoutedAgainMarker(packet, copy);
+            target.deliver(copy);
+        }
+    }
+
+    /**
+     * Invokes the private close listener for outgoing server sessions of the provided session manager for
+     * {@link #session}, and waits for it to complete.
+     */
+    private void fireOutgoingConnectionClose(final SessionManager sessionManager) throws Exception
+    {
+        final Field listenerField = SessionManager.class.getDeclaredField("outgoingServerListener");
+        listenerField.setAccessible(true);
+        final Object listener = listenerField.get(sessionManager);
+
+        final Method method = listener.getClass().getDeclaredMethod("onConnectionClosing", Object.class);
+        method.setAccessible(true);
+
+        final Object result = method.invoke(listener, session);
+        if (result instanceof CompletableFuture) {
+            ((CompletableFuture<?>) result).join();
+        }
+    }
+
+    /**
+     * Returns the stanzas that were routed by the provided router, through any of its methods, in order.
+     */
+    private static List<Packet> routed(final PacketRouter packetRouter)
+    {
+        return mockingDetails(packetRouter).getInvocations().stream()
+            .filter(invocation -> invocation.getMethod().getName().equals("route"))
+            .map(invocation -> (Packet) invocation.getArgument(0))
+            .toList();
+    }
+
+    /**
      * Asks the remote server to enable Stream Management on {@link #session}, and passes its answer that enabled it,
      * after which the interaction with the connection is cleared.
      */
@@ -468,6 +867,23 @@ public class LocalOutgoingServerSessionStreamManagementTest
         message.setFrom(Fixtures.XMPP_DOMAIN);
         message.setTo(REMOTE_DOMAIN);
         return message;
+    }
+
+    private static Presence presence(final String id)
+    {
+        final Presence presence = new Presence();
+        presence.setID(id);
+        presence.setFrom(SENDER);
+        presence.setTo(REMOTE_DOMAIN);
+        return presence;
+    }
+
+    private static IQ iq(final String id, final IQ.Type type)
+    {
+        final IQ iq = new IQ(type, id);
+        iq.setFrom(SENDER);
+        iq.setTo(REMOTE_DOMAIN);
+        return iq;
     }
 
     private static Element ack(final String h)

@@ -490,6 +490,7 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
         Log.info("Connection to {} is closed; will attempt re-delivery once teardown completes.", packet.getTo());
 
         final Packet stanza = packet.createCopy(); // Make a defensive copy before scheduling the callback to ensure that the original data gets rescheduled.
+        RequestingStreamManager.copyRoutedAgainMarker(packet, stanza); // OF-2425: a stanza that was sent again must not be sent again a second time.
         final long timeoutSeconds = REDELIVERY_TIMEOUT_SECONDS.getValue().toSeconds();
         final CompletableFuture<Void> closeFuture = conn.getCloseFuture().toCompletableFuture();
         final CompletableFuture<Void> timeoutFuture = new CompletableFuture<>();

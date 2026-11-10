@@ -200,6 +200,11 @@ public class RequestingStreamManager extends StreamManager
      */
     private boolean closing = false;
 
+    /**
+     * Whether the stream was resumed, and the peer has not sent a valid acknowledgement on it since it was most recently
+     * resumed (see {@link #isAcknowledgedSinceResumption()}).
+     */
+    private volatile boolean resumedWithoutAcknowledgement = false;
 
     /**
      * Stanzas that are routed again after the session on which they were unacknowledged closed, so that the session that
@@ -429,6 +434,27 @@ public class RequestingStreamManager extends StreamManager
     public Duration getPeerMaximumResumptionTime()
     {
         return peerMaximumResumptionTime;
+    }
+
+    /**
+     * Checks whether the peer sent a valid acknowledgement ({@code <a/>}) on the stream since it was most recently
+     * resumed (see {@link #onResume(JID, long)}), which shows that the resumed stream works. This is also true when the
+     * stream was never resumed.
+     *
+     * @return false if the stream was resumed and the peer has not acknowledged anything on it since, otherwise true.
+     */
+    public boolean isAcknowledgedSinceResumption()
+    {
+        return !resumedWithoutAcknowledgement;
+    }
+
+    @Override
+    void outboundAcknowledgementProcessed()
+    {
+        if ( resumedWithoutAcknowledgement ) {
+            Log.debug( "The peer of session {} acknowledged stanzas on the resumed stream.", session );
+            resumedWithoutAcknowledgement = false;
+        }
     }
 
     /**
@@ -939,7 +965,9 @@ public class RequestingStreamManager extends StreamManager
      * at which they were first sent, if they do not have one. A stanza is sent again at most once (decision 4 of OF-2425): a stanza that was
      * sent again before is not sent again, but returned to its sender as an error, or dropped, as when the session closes
      * without being resumed (see {@link #onClose(PacketRouter, JID)}). The stanzas that were queued while the connection
-     * was broken are sent after that, in order, and are tracked as they are sent. Then queueing stops.
+     * was broken are sent after that, in order, and are tracked as they are sent. Then queueing stops, and an
+     * acknowledgement is requested, also when nothing was sent, so that the peer confirms that the resumed stream works
+     * (see {@link #isAcknowledgedSinceResumption()}).
      *
      * This holds the lock of this instance until queueing stops. A stanza that is delivered to the session meanwhile is
      * queued, under the same lock, so it is sent after the queued stanzas, and no stanza is sent on the new connection
@@ -971,6 +999,7 @@ public class RequestingStreamManager extends StreamManager
                 Log.debug( "Not sending stanzas on resumed session {}, as Stream Management is not enabled ({}) or it has no connection ({}).", session, isEnabled(), connection );
                 return;
             }
+            resumedWithoutAcknowledgement = true;
 
             notSentAgain = removeSentAgainAndRenumber();
             int sentAgain = 0;
@@ -1001,10 +1030,9 @@ public class RequestingStreamManager extends StreamManager
             if ( queuedStanzas.isEmpty() ) {
                 queueing = false;
             }
-            Log.debug( "Resumed session {} (h: {}): sent again {} unacknowledged stanza(s), not sent again {} that were sent again before, sent {} queued stanza(s). Stanzas that remain queued, as the connection closed: {}", session, h, sentAgain, notSentAgain.size(), sentQueued, queuedStanzas.size() );
-            if ( sentAgain > 0 || sentQueued > 0 ) {
-                requestOutboundAcknowledgement();
-            }
+            Log.debug( "Resumed session {} (h: {}): sent again {} unacknowledged stanza(s), not sent again {} that were sent again before, sent {} queued stanza(s). Stanzas that remain unacknowledged without being sent again, and that remain queued, as the connection closed: {}, {}", session, h, sentAgain, notSentAgain.size(), sentQueued, getUnacknowledgedEntries().size() - sentAgain, queuedStanzas.size() );
+            // OF-2425: Also when nothing was sent, so that an acknowledgement shows that the resumed stream works (see isAcknowledgedSinceResumption).
+            requestOutboundAcknowledgement();
         }
 
         // OF-2425: Routed without holding the lock, as routing can deliver them to another session.

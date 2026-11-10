@@ -204,7 +204,9 @@ public final class OutboundResumeRequest
      * When the peer resumed the stream, with the SM-ID of that stream and a valid 'h', the detached session is resumed
      * with the connection of the session of {@link #owner}. When it cannot be taken from the detached sessions, because
      * it was ended meanwhile, the connection is closed. In all other cases, the connection is closed, with a stream
-     * error when the answer is invalid, and the detached session is ended.
+     * error when the answer is invalid, and the detached session is ended. Before that, the stanzas that a valid 'h' of
+     * a {@code <failed/>} in the namespace of the request acknowledges are removed from the detached session (see
+     * {@link #acknowledgeOnFailedResumption(LocalOutgoingServerSession, String)}).
      *
      * @param element The answer of the peer.
      */
@@ -231,6 +233,12 @@ public final class OutboundResumeRequest
         try {
             if ( "failed".equals( element.getName() ) ) {
                 owner.Log.debug( "The peer of session {} did not resume the stream of session {}, reporting: {} (h: {}).", owner.session, resumeTarget, element.elements().stream().map( Element::getName ).findFirst().orElse( "(no condition)" ), element.attributeValue( "h" ) );
+                // OF-2425: As for 'resumed', an answer in another namespace than that of the request is not trusted to count stanzas as that request does.
+                if ( requested.equals( element.getNamespaceURI() ) ) {
+                    acknowledgeOnFailedResumption( resumeTarget, element.attributeValue( "h" ) );
+                } else {
+                    owner.Log.debug( "Ignoring the 'h' of the 'failed' with which the peer of session {} answered, as its namespace ({}) is not that of the request to resume the stream of session {} ({}).", owner.session, element.getNamespaceURI(), resumeTarget, requested );
+                }
                 endFailedResumption( resumeTarget, null );
                 return;
             }
@@ -266,6 +274,32 @@ public final class OutboundResumeRequest
         } finally {
             finished.complete( null );
         }
+    }
+
+    /**
+     * Removes the stanzas of a detached session that the peer reports to have received in the 'h' attribute of the
+     * {@code <failed/>} with which it refused to resume the stream of that session (XEP-0198 § 5), so that they are not
+     * sent again or returned to their sender as an error when the session is ended. A value of 'h' that is missing, is
+     * not a valid value, or acknowledges stanzas that were not sent, is ignored.
+     *
+     * @param resumeTarget The detached session of which the stream was not resumed.
+     * @param hValue The value of the 'h' attribute of the {@code <failed/>} (possibly null).
+     */
+    private void acknowledgeOnFailedResumption(@Nonnull final LocalOutgoingServerSession resumeTarget, @Nullable final String hValue)
+    {
+        if ( hValue == null ) {
+            return;
+        }
+        final RequestingStreamManager targetStreamManager = resumeTarget.getStreamManager();
+        final Long h = parseH( hValue );
+        synchronized ( targetStreamManager ) {
+            if ( h == null || !targetStreamManager.validateOutboundAcknowledgement( h ) ) {
+                owner.Log.debug( "Ignoring the 'h' of the 'failed' with which the peer refused to resume the stream of session {}, as it is not valid: {} (send-count: {}).", resumeTarget, hValue, targetStreamManager.getLastSentNumber() );
+                return;
+            }
+            targetStreamManager.acknowledgeOutboundStanzas( h );
+        }
+        owner.Log.debug( "The peer refused to resume the stream of session {}, reporting that it received stanzas up to h: {}. Those are not handled again when the session is ended.", resumeTarget, h );
     }
 
     /**

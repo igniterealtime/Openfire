@@ -2367,11 +2367,24 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      * of the session: server sessions use {@link #SERVER_SESSION_DETACH_TIMEOUT}, all other sessions use
      * {@link #getSessionDetachTime()}.
      *
+     * For an outgoing server session of which the remote server reported a preferred maximum resumption time (see
+     * {@link RequestingStreamManager#getPeerMaximumResumptionTime()}), this is the shorter of that time and the server
+     * timeout, as the remote server need not resume the stream after its maximum (decision 7 of OF-2425). When the
+     * server timeout is negative, it is the preferred maximum resumption time of the remote server.
+     *
      * @param session the session for which to return the timeout.
      * @return the time that the session is kept while detached. A negative duration means that it is kept until it is resumed.
      */
     @Nonnull
     public Duration getDetachTimeout(@Nonnull final LocalSession session) {
+        if (session instanceof LocalOutgoingServerSession outgoingSession && outgoingSession.getStreamManager() != null) {
+            final Duration serverTimeout = SERVER_SESSION_DETACH_TIMEOUT.getValue();
+            final Duration peerMaximum = outgoingSession.getStreamManager().getPeerMaximumResumptionTime();
+            if (peerMaximum != null && (serverTimeout.isNegative() || peerMaximum.compareTo(serverTimeout) < 0)) {
+                return peerMaximum;
+            }
+            return serverTimeout;
+        }
         if (session instanceof LocalServerSession) {
             return SERVER_SESSION_DETACH_TIMEOUT.getValue();
         }
@@ -2691,8 +2704,11 @@ public class SessionManager extends BasicModule implements ClusterEventListener
      */
     private class DetachedCleanupTask extends TimerTask {
         /**
-         * Close detached sessions that have been detached for longer than the detach timeout of their type, measured
-         * from the moment at which they were most recently detached, or from their last activity when that is later.
+         * Close detached sessions that have been detached for longer than the detach timeout of their type (see
+         * {@link #getDetachTimeout(LocalSession)}), measured from the moment at which they were most recently detached,
+         * or from their last activity when that is later. For an outgoing server session, it is measured from
+         * {@link LocalOutgoingServerSession#getDetachedSince()}, which is an earlier detach when the session was detached
+         * again before its resumed stream was acknowledged.
          */
         @Override
         public void run() {
@@ -2713,10 +2729,14 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                             Log.trace("Detached session '{}' ({}) uses termination delegation, that does not want to have this session cleaned up yet.", session.getAddress(), session.getStreamID());
                         }
                     } else {
+                        // OF-2425: A series of detaches of an outgoing server session whose resumed streams were never acknowledged shares one deadline, which activity does not move.
+                        final Instant sharedDetachedSince = session instanceof LocalOutgoingServerSession outgoingSession ? outgoingSession.getDetachedSince() : null;
                         final Instant lastDetached = session.getLastDetachedDate();
                         final Instant lastActive = session.getLastActiveDate().toInstant();
                         final Instant detachedSince;
-                        if (lastDetached != null && !lastActive.isAfter(lastDetached)) {
+                        if (sharedDetachedSince != null) {
+                            detachedSince = sharedDetachedSince;
+                        } else if (lastDetached != null && !lastActive.isAfter(lastDetached)) {
                             detachedSince = lastDetached;
                         } else {
                             // OF-3459: No detach moment, or one before the last activity: registered without LocalSession#setDetached(), or a stanza was still in flight when it detached.

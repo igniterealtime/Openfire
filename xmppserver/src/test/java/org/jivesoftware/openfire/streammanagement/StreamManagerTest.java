@@ -534,6 +534,30 @@ public class StreamManagerTest extends AbstractStreamManagerTest
     }
 
     /**
+     * Verifies that the number of unacknowledged stanzas counts the stanzas that were sent, minus those that the peer
+     * acknowledged.
+     */
+    @ParameterizedTest
+    @EnumSource(End.class)
+    void unacknowledgedStanzaCountExcludesAcknowledgedStanzas(final End end) throws Exception
+    {
+        // Setup test fixture.
+        final LocalSession session = end.newSession();
+        final StreamManager sm = end.enabledStreamManager(session, StreamManager.NAMESPACE_V3);
+        sm.sentStanza(message("1"));
+        sm.sentStanza(message("2"));
+        sm.sentStanza(message("3"));
+        final int countBeforeAcknowledgement = sm.getUnacknowledgedStanzaCount();
+
+        // Execute system under test.
+        sm.process(ack(StreamManager.NAMESPACE_V3, "2"));
+
+        // Verify result.
+        assertEquals(3, countBeforeAcknowledgement, "All stanzas that were sent must be counted before the peer acknowledges any.");
+        assertEquals(1, sm.getUnacknowledgedStanzaCount(), "Only the stanza that the peer did not acknowledge must be counted.");
+    }
+
+    /**
      * Verifies that an {@code <a/>} with a value of zero does not remove any stanzas.
      */
     @ParameterizedTest

@@ -775,6 +775,15 @@ public abstract class StreamManager {
     }
 
     /**
+     * Returns the number of outbound stanzas that were sent to the peer, and that the peer has not acknowledged yet.
+     *
+     * @return the number of unacknowledged outbound stanzas.
+     */
+    public int getUnacknowledgedStanzaCount() {
+        return unacknowledgedOutboundStanzas.size();
+    }
+
+    /**
      * Increments the count of inbound stanzas that Openfire has handled since
      * Stream Management was enabled.
      *

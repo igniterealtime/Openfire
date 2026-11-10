@@ -20,12 +20,17 @@
    -     * 'count', an int representing the row number we're on.
  --%>
 
-<% // Show the secured icon only if ALL sessions are secure
-    boolean isEncrypted = true;
+<% // OF-2425: a detached session has no connection, so it is left out of what describes the connections.
+    final List<IncomingServerSession> connectedInSessions = inSessions.stream().filter(s -> !s.isDetached()).collect(java.util.stream.Collectors.toList());
+    final List<OutgoingServerSession> connectedOutSessions = outSessions.stream().filter(s -> !s.isDetached()).collect(java.util.stream.Collectors.toList());
+    final int detachedCount = inSessions.size() + outSessions.size() - connectedInSessions.size() - connectedOutSessions.size();
+
+    // Show the secured icon only if ALL sessions that have a connection are secure
+    boolean isEncrypted = !connectedInSessions.isEmpty() || !connectedOutSessions.isEmpty();
     Set<String> tlsProtocolNames = new HashSet<>();
     Set<String> cipherSuiteNames = new HashSet<>();
     // Check if all incoming sessions are secured
-    for (org.jivesoftware.openfire.session.IncomingServerSession inSession : inSessions) {
+    for (org.jivesoftware.openfire.session.IncomingServerSession inSession : connectedInSessions) {
         if (!inSession.isEncrypted()) {
             isEncrypted = false;
             break;
@@ -35,7 +40,7 @@
     }
     // Check if outgoing session is secured (only if incoming sessions are secured)
     if (isEncrypted) {
-        for (org.jivesoftware.openfire.session.OutgoingServerSession outSession : outSessions) {
+        for (org.jivesoftware.openfire.session.OutgoingServerSession outSession : connectedOutSessions) {
             if (!outSession.isEncrypted()) {
                 isEncrypted = false;
                 break;
@@ -59,6 +64,9 @@
                 <a href="<%= detailsPage %>?hostname=<%= URLEncoder.encode(host, StandardCharsets.UTF_8) %>" title="<fmt:message key='session.row.click' />"><%= StringUtils.escapeHTMLTags(host) %></a>
                 <% if (isFailedSession) { %>
                     <span style="color: #a94442; margin-left: 0.5em;">(<fmt:message key="server.session.connection.failed" />)</span>
+                <% } %>
+                <% if (detachedCount > 0) { %>
+                    <span class="jive-description" style="margin-left: 0.5em;">(<fmt:message key="server.session.summary.detached"><fmt:param value="<%= detachedCount %>"/></fmt:message>)</span>
                 <% } %>
             </td>
             </tr>
@@ -98,14 +106,14 @@
     <% } %>
 
     <%
-        final boolean hasInIPv4 = inSessions.stream().anyMatch(s-> {
+        final boolean hasInIPv4 = connectedInSessions.stream().anyMatch(s-> {
             try {
                 return InetAddress.getByName(s.getHostAddress()) instanceof Inet4Address;
             } catch (UnknownHostException e) {
                 return false;
             }
         });
-        final boolean hasOutIPv4 = outSessions.stream().anyMatch(s-> {
+        final boolean hasOutIPv4 = connectedOutSessions.stream().anyMatch(s-> {
             try {
                 return InetAddress.getByName(s.getHostAddress()) instanceof Inet4Address;
             } catch (UnknownHostException e) {
@@ -113,14 +121,14 @@
             }
         });
 
-        final boolean hasInIPv6 = inSessions.stream().anyMatch(s-> {
+        final boolean hasInIPv6 = connectedInSessions.stream().anyMatch(s-> {
             try {
                 return InetAddress.getByName(s.getHostAddress()) instanceof Inet6Address;
             } catch (UnknownHostException e) {
                 return false;
             }
         });
-        final boolean hasOutIPv6 = outSessions.stream().anyMatch(s-> {
+        final boolean hasOutIPv6 = connectedOutSessions.stream().anyMatch(s-> {
             try {
                 return InetAddress.getByName(s.getHostAddress()) instanceof Inet6Address;
             } catch (UnknownHostException e) {

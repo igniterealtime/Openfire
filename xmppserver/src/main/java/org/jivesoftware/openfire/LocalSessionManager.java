@@ -211,9 +211,15 @@ class LocalSessionManager {
             final long deadline = System.currentTimeMillis() - idleTime;
             for (LocalIncomingServerSession session : incomingServerSessions.values()) {
                 try {
+                    if (session.isDetached()) {
+                        // OF-2425: A detached session has no connection; its detach timeout decides when it is ended.
+                        Log.trace( "ServerCleanupTask is not closing incoming server session {}, as it is detached.", session );
+                        continue;
+                    }
                     if (session.getLastActiveDate().getTime() < deadline) {
                         Log.debug( "ServerCleanupTask is closing an incoming server session that has been idle for a long time. Last active: {}. Session to be closed: {}", session.getLastActiveDate(), session );
-                        session.close();
+                        // OF-2425: Made non-resumable, so that it is ended rather than kept to be resumed.
+                        SessionManager.getInstance().closeWithoutResumption(session);
                     }
                 }
                 catch (Throwable e) {

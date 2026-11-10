@@ -16,6 +16,7 @@
 package org.jivesoftware.openfire.streammanagement;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 
@@ -452,6 +453,65 @@ public class UnacknowledgedStanzaQueueTest
         // Verify result.
         assertTrue(queue.isValidAcknowledgement(StreamManager.MASK - 1), "An acknowledgement from before the roll-over must be valid as a lower value.");
         assertFalse(queue.isValidAcknowledgement(2), "An acknowledgement of more stanzas than were sent must not be valid after the roll-over.");
+    }
+
+    /**
+     * Verifies that stanzas that are added after stanzas were skipped are numbered after the skipped ones, and that an
+     * acknowledgement that covers the skipped stanzas is valid.
+     */
+    @Test
+    void stanzasAddedAfterSkippingAreNumberedAfterSkippedStanzas()
+    {
+        // Setup test fixture.
+        final UnacknowledgedStanzaQueue queue = new UnacknowledgedStanzaQueue(() -> MAXIMUM);
+
+        // Execute system under test.
+        queue.skip(3);
+        final long result = queue.add(message("4"));
+
+        // Verify result.
+        assertEquals(4, result, "A stanza that is added after three were skipped must be numbered 4.");
+        assertTrue(queue.isValidAcknowledgement(4), "An acknowledgement that covers the skipped stanzas and the added one must be valid.");
+        assertTrue(queue.isValidAcknowledgement(2), "An acknowledgement of some of the skipped stanzas must be valid, as a lower value.");
+        assertFalse(queue.isValidAcknowledgement(5), "An acknowledgement of more stanzas than were sent must not be valid.");
+    }
+
+    /**
+     * Verifies that skipping stanzas rolls the count over from 2^32-1 to zero, as XEP-0198 § 4 requires of 'h'.
+     */
+    @Test
+    void skippingStanzasRollsOver() throws Exception
+    {
+        // Setup test fixture.
+        final UnacknowledgedStanzaQueue queue = new UnacknowledgedStanzaQueue(() -> MAXIMUM);
+        setAcknowledged(queue, StreamManager.MASK - 1);
+
+        // Execute system under test.
+        queue.skip(2);
+        final long result = queue.add(message("peer-counts-1"));
+
+        // Verify result.
+        assertEquals(1, result, "Skipping past 2^32-1 must roll the count over to zero.");
+        assertTrue(queue.isValidAcknowledgement(StreamManager.MASK), "An acknowledgement from before the roll-over must be valid as a lower value.");
+    }
+
+    /**
+     * Verifies that stanzas cannot be skipped while stanzas are unacknowledged, as the skipped ones would then be
+     * numbered before stanzas that were sent earlier.
+     */
+    @Test
+    void skippingIsRefusedWhileStanzasAreUnacknowledged()
+    {
+        // Setup test fixture.
+        final UnacknowledgedStanzaQueue queue = new UnacknowledgedStanzaQueue(() -> MAXIMUM);
+        queue.add(message("1"));
+
+        // Execute system under test.
+        final Executable skip = () -> queue.skip(1);
+
+        // Verify result.
+        assertThrows(IllegalStateException.class, skip, "Skipping stanzas must be refused while stanzas are unacknowledged.");
+        assertEquals(List.of("1"), ids(queue), "A refused skip must leave the queue unchanged.");
     }
 
     private static Message message(final String id)

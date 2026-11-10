@@ -967,8 +967,9 @@ public class SASLAuthentication {
         else if (session instanceof LocalIncomingServerSession serverSession) {
             clientAuthToken = null;
             authorizationIdentity = username;
-            serverSession.addValidatedDomain(username);
-            serverSession.setAuthenticationMethod(ServerSession.AuthenticationMethod.fromSaslMechanismName(mechanismName));
+            final ServerSession.AuthenticationMethod method = ServerSession.AuthenticationMethod.fromSaslMechanismName(mechanismName);
+            serverSession.addValidatedDomain(username, method);
+            serverSession.setAuthenticationMethod(method);
             Log.info("Inbound Server {} authenticated using SASL mechanism {}", username, mechanismName);
         }
         else {

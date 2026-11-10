@@ -91,6 +91,7 @@ public class AnsweringStreamManagerResumptionTest extends AbstractStreamManagerT
         final Connection formerConnection = mock(Connection.class);
         doReturn(false).when(original).isDetached();
         doReturn(formerConnection).when(original).getConnection();
+        doReturn(true).when(original).setDetachedIfConnectionIs(formerConnection);
         final LocalClientSession resuming = resumingClientSession();
 
         // Execute system under test.

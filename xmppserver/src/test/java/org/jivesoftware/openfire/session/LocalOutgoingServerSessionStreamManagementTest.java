@@ -2616,6 +2616,100 @@ public class LocalOutgoingServerSessionStreamManagementTest
     }
 
     /**
+     * Verifies that a detached session that Openfire closes on purpose is ended now, rather than kept until its detach
+     * timeout, and that each of its stanzas is then handled once.
+     */
+    @Test
+    public void detachedSessionThatIsClosedOnPurposeIsEnded() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        final LocalOutgoingServerSession resumable = brokenSessionWithStanzas(sessionManager, null);
+
+        // Execute system under test.
+        sessionManager.closeWithoutResumption(resumable);
+
+        // Verify result.
+        assertFalse(sessionManager.isDetached(resumable), "A detached session that is closed on purpose must be ended.");
+        assertFalse(resumable.getStreamManager().getResume(), "A session that is closed on purpose must not be resumable.");
+        assertEachStanzaHandledOnce(packetRouter, List.of("unacked-message", "queued", "unacked-request"));
+    }
+
+    /**
+     * Verifies that a session with an open connection that Openfire closes on purpose is not detached when its
+     * connection closes, but ended, as its stream is made non-resumable before the connection is closed.
+     */
+    @Test
+    public void connectedSessionThatIsClosedOnPurposeIsNotDetached() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        final LocalOutgoingServerSession resumable = resumableSession();
+        resumable.deliver(message("unacked"));
+
+        // Execute system under test.
+        sessionManager.closeWithoutResumption(resumable);
+        doReturn(true).when(connection).isClosed();
+        fireOutgoingConnectionClose(sessionManager, resumable);
+
+        // Verify result.
+        verify(connection, atLeastOnce().description("The connection of a session that is closed on purpose must be closed.")).close();
+        assertFalse(sessionManager.isDetached(resumable), "A session that is closed on purpose must not be detached when its connection closes.");
+        assertEquals(List.of(), resumptionAttempts, "No attempt must be made to resume a session that is closed on purpose.");
+        verify(routingTable, times(1).description("The route of a session that is closed on purpose must be removed.")).removeServerRoute(DOMAIN_PAIR);
+        assertEquals(List.of("unacked"), routed(packetRouter).stream().map(Packet::getID).toList(), "The unacknowledged stanza of a session that is closed on purpose must be routed again.");
+    }
+
+    /**
+     * Verifies that a detached session that another cluster node asks to close is ended now, rather than kept until its
+     * detach timeout.
+     */
+    @Test
+    public void detachedSessionThatAnotherClusterNodeClosesIsEnded() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        final LocalOutgoingServerSession resumable = brokenSessionWithStanzas(sessionManager, null);
+        doReturn(resumable).when(routingTable).getServerRoute(DOMAIN_PAIR);
+        final OutgoingServerSessionTask task = new OutgoingServerSessionTask(DOMAIN_PAIR, RemoteSessionTask.Operation.close);
+
+        // Execute system under test.
+        task.run();
+
+        // Verify result.
+        assertFalse(sessionManager.isDetached(resumable), "A detached session that another cluster node closes must be ended.");
+        assertEachStanzaHandledOnce(packetRouter, List.of("unacked-message", "queued", "unacked-request"));
+    }
+
+    /**
+     * Verifies that a detached session of a remote domain that a changed permission policy no longer allows is ended
+     * now, rather than kept until its detach timeout.
+     */
+    @Test
+    public void detachedSessionOfDomainThatIsNoLongerAllowedIsEnded() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        final LocalOutgoingServerSession resumable = brokenSessionWithStanzas(sessionManager, null);
+        doReturn(resumable).when(routingTable).getServerRoute(DOMAIN_PAIR);
+        doReturn(List.of(DOMAIN_PAIR)).when(routingTable).getServerRoutes();
+
+        // Execute system under test.
+        try (final MockedStatic<RemoteServerManager> remoteServers = mockStatic(RemoteServerManager.class, CALLS_REAL_METHODS)) {
+            remoteServers.when(() -> RemoteServerManager.canAccess(anyString())).thenReturn(false);
+            RemoteServerManager.setPermissionPolicy(RemoteServerManager.PermissionPolicy.whitelist);
+        }
+
+        // Verify result.
+        assertFalse(sessionManager.isDetached(resumable), "A detached session of a remote domain that is no longer allowed must be ended.");
+        assertEachStanzaHandledOnce(packetRouter, List.of("unacked-message", "queued", "unacked-request"));
+    }
+
+    /**
      * Creates a session as {@link #resumableSession(String)} does, with the provided preferred maximum resumption time of
      * the remote server, on which a stanza is acknowledged, a message and an IQ request are unacknowledged, of which the
      * connection breaks, and on which a stanza is queued after that.

@@ -395,6 +395,25 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     /**
+     * Closes a session that Openfire ends on purpose, such as one that is idle, or one of a remote domain that may no
+     * longer connect, so that it is not kept to be resumed (XEP-0198): the session is made non-resumable before it is
+     * closed. A server session on this cluster node that is detached has no connection to close: it is ended now, as
+     * when its detach timeout passes (see {@link #terminateDetached(LocalSession)}), which handles the stanzas that it
+     * holds. A detached session of another type is left as {@link Session#close()} leaves it.
+     *
+     * @param session The session to close.
+     */
+    public void closeWithoutResumption(@Nonnull final Session session) {
+        session.markNonResumable();
+        session.close();
+        // OF-2425: Checked after closing, so that a session that its close listener detached meanwhile is ended too.
+        if (session instanceof LocalServerSession serverSession && serverSession.isDetached()) {
+            Log.debug("Ending detached server session '{}' ({}), as it is closed on purpose and has no connection to close.", session.getAddress(), session.getStreamID());
+            terminateDetached(serverSession);
+        }
+    }
+
+    /**
      * Terminates a detached outgoing server session, of which the routes stay in the routing table while it is
      * detached. Only the caller that removes the session from the detached sessions ends it, which it does without
      * holding the monitor of this instance.

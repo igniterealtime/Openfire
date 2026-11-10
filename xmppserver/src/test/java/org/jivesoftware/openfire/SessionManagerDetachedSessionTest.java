@@ -16,7 +16,10 @@
 package org.jivesoftware.openfire;
 
 import org.jivesoftware.Fixtures;
+import org.jivesoftware.openfire.session.ConnectionSettings;
 import org.jivesoftware.openfire.session.LocalClientSession;
+import org.jivesoftware.openfire.session.LocalComponentSession;
+import org.jivesoftware.openfire.session.LocalConnectionMultiplexerSession;
 import org.jivesoftware.openfire.session.LocalIncomingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
@@ -28,6 +31,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.quality.Strictness;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Presence;
@@ -41,6 +47,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -759,6 +766,180 @@ public class SessionManagerDetachedSessionTest
     }
 
     /**
+     * Verifies that an incoming server session that had no activity for longer than xmpp.server.session.detach.timeout
+     * before its connection broke is kept after it is detached: the timeout is measured from the moment at which the
+     * session was detached, not from its last activity.
+     */
+    @Test
+    void serverSessionInactiveBeforeDetachingIsKeptWithinServerDetachTimeout() throws Exception
+    {
+        // Setup test fixture.
+        final SessionManager spiedSessionManager = spy(sessionManager);
+        final LocalIncomingServerSession session = realIncomingServerSessionInactiveFor(SERVER_DETACH_TIMEOUT.plusSeconds(30));
+        session.setDetached();
+
+        // Execute system under test.
+        runDetachedCleanupTask(spiedSessionManager);
+
+        // Verify result.
+        verify(spiedSessionManager, never().description("A server session that was just detached must not be ended, however long it had no activity before.")).terminateDetached(any());
+        assertTrue(sessionManager.isDetached(session), "A server session that was just detached must still be detached, however long it had no activity before.");
+    }
+
+    /**
+     * Verifies that a session that is detached, resumed and detached again is measured from the second detach: a
+     * session of which the first detach is longer ago than xmpp.server.session.detach.timeout is kept. The resumption
+     * is represented by taking the session from the detached sessions, as a resumption does before it moves the
+     * connection.
+     */
+    @Test
+    void detachingAgainAfterResumptionStartsNewDetachedPeriod() throws Exception
+    {
+        // Setup test fixture.
+        final SessionManager spiedSessionManager = spy(sessionManager);
+        final LocalIncomingServerSession session = realIncomingServerSessionInactiveFor(SERVER_DETACH_TIMEOUT.plusSeconds(30));
+        session.setDetached();
+        final Instant firstDetach = Instant.now().minus(SERVER_DETACH_TIMEOUT.plusSeconds(30));
+        setLastDetachedDate(session, firstDetach);
+        assertTrue(sessionManager.removeDetached(session), "Test fixture expects the session to be taken from the detached sessions when it is resumed.");
+        session.setDetached();
+
+        // Execute system under test.
+        runDetachedCleanupTask(spiedSessionManager);
+
+        // Verify result.
+        assertTrue(session.getLastDetachedDate().isAfter(firstDetach), "A session that is detached again must record the moment of its second detach.");
+        verify(spiedSessionManager, never().description("A session that was detached again must not be ended because its first detach is longer ago than the detach timeout.")).terminateDetached(any());
+        assertTrue(sessionManager.isDetached(session), "A session that was detached again must still be detached while its second detach is not longer ago than the detach timeout.");
+    }
+
+    /**
+     * Verifies that a detached incoming server session that Openfire closes on purpose is ended now, and its validated
+     * domain unregistered, rather than kept until its detach timeout.
+     */
+    @Test
+    void detachedIncomingServerSessionThatIsClosedOnPurposeIsEnded() throws Exception
+    {
+        // Setup test fixture.
+        StreamManager.SERVER_RESUME_ENABLED.setValue(true);
+        final LocalIncomingServerSession session = incomingServerSession(true);
+        fireIncomingServerConnectionClose(session);
+        assertTrue(sessionManager.isDetached(session), "Test fixture expects the incoming server session to be detached.");
+
+        // Execute system under test.
+        sessionManager.closeWithoutResumption(session);
+
+        // Verify result.
+        verify(session, times(1).description("A session that is closed on purpose must be made non-resumable.")).markNonResumable();
+        assertFalse(sessionManager.isDetached(session), "A detached incoming server session that is closed on purpose must be ended.");
+        assertTrue(sessionManager.getIncomingServerSessions(REMOTE_DOMAIN.getDomain()).isEmpty(), "The validated domain of an incoming server session that is closed on purpose must be unregistered.");
+    }
+
+    /**
+     * Verifies that a detached client session that is closed on purpose stays detached, as closing a client session
+     * does not end a detached one.
+     */
+    @Test
+    void detachedClientSessionThatIsClosedOnPurposeStaysDetached() throws Exception
+    {
+        // Setup test fixture.
+        final LocalClientSession session = detachedSession(Duration.ofSeconds(1));
+
+        // Execute system under test.
+        sessionManager.closeWithoutResumption(session);
+
+        // Verify result.
+        verify(session, times(1).description("A session that is closed on purpose must be made non-resumable.")).markNonResumable();
+        verify(session, times(1).description("A session that is closed on purpose must be closed.")).close();
+        assertTrue(sessionManager.isDetached(session), "A detached client session that is closed on purpose must stay detached.");
+    }
+
+    /**
+     * Verifies that an idle incoming server session is made non-resumable before it is closed, so that its close
+     * listener ends it rather than keeping it to be resumed.
+     */
+    @Test
+    void idleIncomingServerSessionIsMadeNonResumableBeforeItIsClosed() throws Exception
+    {
+        // Setup test fixture.
+        final LocalIncomingServerSession session = incomingServerSession(true);
+        doReturn(Date.from(Instant.now().minus(Duration.ofHours(1)))).when(session).getLastActiveDate();
+        ConnectionSettings.Server.IDLE_TIMEOUT_PROPERTY.setValue(Duration.ofMinutes(5));
+        doReturn(sessionManager).when(XMPPServer.getInstance()).getSessionManager();
+        final List<String> invoked = new CopyOnWriteArrayList<>();
+        doAnswer(invocation -> { invoked.add("markNonResumable"); return null; }).when(session).markNonResumable();
+        doAnswer(invocation -> { invoked.add("close"); return null; }).when(session).close();
+
+        // Execute system under test.
+        runIdleServerSessionCleanupTask();
+
+        // Verify result.
+        assertEquals(List.of("markNonResumable", "close"), invoked, "An idle session must be made non-resumable, and then closed.");
+    }
+
+    /**
+     * Verifies that an idle incoming server session that is detached is left to its detach timeout, rather than closed
+     * or ended because it is idle.
+     */
+    @Test
+    void detachedIdleIncomingServerSessionIsLeftToItsDetachTimeout() throws Exception
+    {
+        // Setup test fixture.
+        StreamManager.SERVER_RESUME_ENABLED.setValue(true);
+        final LocalIncomingServerSession session = incomingServerSession(true);
+        fireIncomingServerConnectionClose(session);
+        doReturn(Date.from(Instant.now().minus(Duration.ofHours(1)))).when(session).getLastActiveDate();
+        ConnectionSettings.Server.IDLE_TIMEOUT_PROPERTY.setValue(Duration.ofMinutes(5));
+        doReturn(sessionManager).when(XMPPServer.getInstance()).getSessionManager();
+
+        // Execute system under test.
+        runIdleServerSessionCleanupTask();
+
+        // Verify result.
+        verify(session, never().description("A detached session must not be made non-resumable because it is idle.")).markNonResumable();
+        assertTrue(sessionManager.isDetached(session), "A detached session must stay detached when it is idle.");
+    }
+
+    /**
+     * Verifies that a session that cannot be detached, as it does not support Stream Management, refuses to be detached
+     * also when it is asked to be detached only while it still uses a connection, and is not registered as detached.
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {"component", "multiplexer"})
+    void sessionWithoutStreamManagementIsNotDetachedWhileItUsesConnection(final String type) throws Exception
+    {
+        // Setup test fixture.
+        doReturn(sessionManager).when(XMPPServer.getInstance()).getSessionManager();
+        final Connection connection = mock(Connection.class, withSettings().strictness(Strictness.LENIENT));
+        final LocalSession session = switch (type) {
+            case "component" -> new LocalComponentSession(Fixtures.XMPP_DOMAIN, connection, BasicStreamIDFactory.createStreamID("test-component-stream-id"));
+            default -> new LocalConnectionMultiplexerSession(Fixtures.XMPP_DOMAIN, connection, BasicStreamIDFactory.createStreamID("test-multiplexer-stream-id"));
+        };
+
+        // Execute system under test.
+        final Executable detach = () -> session.setDetachedIfConnectionIs(connection);
+
+        // Verify result.
+        assertThrows(UnsupportedOperationException.class, detach, "A " + type + " session must refuse to be detached, as setDetached() does.");
+        assertFalse(sessionManager.isDetached(session), "A " + type + " session must not be registered as detached.");
+        assertSame(connection, session.getConnection(), "A " + type + " session must keep its connection.");
+    }
+
+    /**
+     * Runs the private task of the local session manager that closes idle incoming server sessions once.
+     */
+    private void runIdleServerSessionCleanupTask() throws Exception
+    {
+        final Field field = SessionManager.class.getDeclaredField("localSessionManager");
+        field.setAccessible(true);
+        final Object localSessionManager = field.get(sessionManager);
+        final Class<?> taskClass = Class.forName(LocalSessionManager.class.getName() + "$ServerCleanupTask");
+        final Constructor<?> constructor = taskClass.getDeclaredConstructor(LocalSessionManager.class);
+        constructor.setAccessible(true);
+        ((Runnable) constructor.newInstance(localSessionManager)).run();
+    }
+
+    /**
      * A mock of a client session that is the route for its full JID, and of which the stream can or cannot be resumed.
      */
     private LocalClientSession clientSession(final boolean resumable)
@@ -945,52 +1126,4 @@ public class SessionManagerDetachedSessionTest
         constructor.setAccessible(true);
         ((Runnable) constructor.newInstance(manager)).run();
     }
-    /**
-     * Verifies that an incoming server session that had no activity for longer than xmpp.server.session.detach.timeout
-     * before its connection broke is kept after it is detached: the timeout is measured from the moment at which the
-     * session was detached, not from its last activity.
-     */
-    @Test
-    void serverSessionInactiveBeforeDetachingIsKeptWithinServerDetachTimeout() throws Exception
-    {
-        // Setup test fixture.
-        final SessionManager spiedSessionManager = spy(sessionManager);
-        final LocalIncomingServerSession session = realIncomingServerSessionInactiveFor(SERVER_DETACH_TIMEOUT.plusSeconds(30));
-        session.setDetached();
-
-        // Execute system under test.
-        runDetachedCleanupTask(spiedSessionManager);
-
-        // Verify result.
-        verify(spiedSessionManager, never().description("A server session that was just detached must not be ended, however long it had no activity before.")).terminateDetached(any());
-        assertTrue(sessionManager.isDetached(session), "A server session that was just detached must still be detached, however long it had no activity before.");
-    }
-
-    /**
-     * Verifies that a session that is detached, resumed and detached again is measured from the second detach: a
-     * session of which the first detach is longer ago than xmpp.server.session.detach.timeout is kept. The resumption
-     * is represented by taking the session from the detached sessions, as a resumption does before it moves the
-     * connection.
-     */
-    @Test
-    void detachingAgainAfterResumptionStartsNewDetachedPeriod() throws Exception
-    {
-        // Setup test fixture.
-        final SessionManager spiedSessionManager = spy(sessionManager);
-        final LocalIncomingServerSession session = realIncomingServerSessionInactiveFor(SERVER_DETACH_TIMEOUT.plusSeconds(30));
-        session.setDetached();
-        final Instant firstDetach = Instant.now().minus(SERVER_DETACH_TIMEOUT.plusSeconds(30));
-        setLastDetachedDate(session, firstDetach);
-        assertTrue(sessionManager.removeDetached(session), "Test fixture expects the session to be taken from the detached sessions when it is resumed.");
-        session.setDetached();
-
-        // Execute system under test.
-        runDetachedCleanupTask(spiedSessionManager);
-
-        // Verify result.
-        assertTrue(session.getLastDetachedDate().isAfter(firstDetach), "A session that is detached again must record the moment of its second detach.");
-        verify(spiedSessionManager, never().description("A session that was detached again must not be ended because its first detach is longer ago than the detach timeout.")).terminateDetached(any());
-        assertTrue(sessionManager.isDetached(session), "A session that was detached again must still be detached while its second detach is not longer ago than the detach timeout.");
-    }
-
 }

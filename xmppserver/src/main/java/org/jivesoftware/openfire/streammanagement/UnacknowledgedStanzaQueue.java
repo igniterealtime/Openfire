@@ -58,15 +58,21 @@ class UnacknowledgedStanzaQueue
     static class Entry
     {
         private final long number;
-        private final Instant timestamp = Instant.now();
+        private final Instant timestamp;
         private final Packet packet;
         private volatile boolean sentAgain;
 
         Entry(final long number, @Nonnull final Packet packet, final boolean sentAgain)
         {
+            this(number, packet, sentAgain, Instant.now());
+        }
+
+        private Entry(final long number, @Nonnull final Packet packet, final boolean sentAgain, @Nonnull final Instant timestamp)
+        {
             this.number = number;
             this.packet = packet;
             this.sentAgain = sentAgain;
+            this.timestamp = timestamp;
         }
 
         /**
@@ -347,6 +353,37 @@ class UnacknowledgedStanzaQueue
         }
 
         Log.trace( "After processing peer Ack (h={}): {} unacknowledged stanzas.", h, entries.size());
+    }
+
+    /**
+     * Prepares the stanzas in the queue to be sent again on a resumed stream, after the acknowledgement that the peer
+     * reported when the stream was resumed was processed. A stanza is sent again at most once: the stanzas that were
+     * sent again before (see {@link Entry#isSentAgain()}) are removed from the queue and returned. The stanzas that
+     * remain keep their order and the time at which they were first sent, and are not marked as sent again: the caller
+     * marks each as it sends it again (see {@link Entry#markSentAgain()}). They are numbered again, directly after the
+     * number of acknowledged stanzas, as the peer counts them when they are sent again in that order.
+     *
+     * @return the stanzas that were removed, in the order in which they were sent.
+     */
+    @Nonnull
+    synchronized List<Entry> removeSentAgainAndRenumber()
+    {
+        final List<Entry> removed = new LinkedList<>();
+        final List<Entry> remaining = new LinkedList<>();
+        for (final Entry entry : entries) {
+            if (entry.isSentAgain()) {
+                removed.add(entry);
+            } else {
+                remaining.add(entry);
+            }
+        }
+        entries.clear();
+        long number = acknowledged;
+        for (final Entry entry : remaining) {
+            number = (number + 1) & StreamManager.MASK;
+            entries.addLast(new Entry(number, entry.getPacket(), entry.isSentAgain(), entry.getTimestamp()));
+        }
+        return removed;
     }
 
     /**

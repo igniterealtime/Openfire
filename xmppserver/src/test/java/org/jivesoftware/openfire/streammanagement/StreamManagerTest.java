@@ -48,13 +48,16 @@ import org.xmpp.packet.PacketError;
 import org.xmpp.packet.StreamError;
 
 import java.lang.reflect.Field;
+import javax.annotation.Nonnull;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadInfo;
 import java.lang.management.ThreadMXBean;
 import java.math.BigInteger;
+import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -1798,6 +1801,136 @@ public class StreamManagerTest
         assertFalse(sender.isAlive(), "The thread that sends the stanza must finish once the lock is released.");
         assertNull(failure.get(), "Sending the stanza must not fail, but it threw: " + failure.get());
         assertEquals(0, unacknowledgedStanzaCount(sm), "A stanza that is sent after the unacknowledged stanzas of the session were handled must not be tracked, as it would never be handled.");
+    }
+
+    /**
+     * Verifies that the termination delegates of a session can be obtained while a delegate is added (OF-3420). The
+     * task that cleans up detached sessions obtains them, while any thread can add or remove one.
+     *
+     * Obtaining the delegates computes the hash code of each delegate, while the delegates are iterated. One delegate
+     * adds another delegate when its hash code is computed, which stands in for a thread that adds a delegate at that
+     * moment.
+     */
+    @Test
+    void terminationDelegatesCanBeObtainedWhileDelegateIsAdded()
+    {
+        // Setup test fixture.
+        final StreamManager sm = new StreamManager(authenticatedClientSession());
+        final AtomicReference<Runnable> onHashCode = new AtomicReference<>();
+        final TerminationDelegate first = new DelegateWithHashCode(1, onHashCode);
+        final TerminationDelegate second = new DelegateWithHashCode(2, onHashCode);
+        final TerminationDelegate added = new DelegateWithHashCode(3, onHashCode);
+        sm.addTerminationDelegate(first);
+        sm.addTerminationDelegate(second);
+        onHashCode.set(() -> sm.addTerminationDelegate(added));
+
+        // Execute system under test.
+        final Set<TerminationDelegate> result = assertDoesNotThrow(sm::getTerminationDelegates, "Obtaining the termination delegates must not fail when a delegate is added at the same time.");
+
+        // Verify result.
+        assertNull(onHashCode.get(), "Test fixture expects a delegate to be added while the delegates were obtained.");
+        assertTrue(result.containsAll(Set.of(first, second)), "The delegates that were added before must be obtained, but were: " + result);
+        assertTrue(sm.getTerminationDelegates().contains(added), "The delegate that was added while the delegates were obtained must be kept.");
+    }
+
+    /**
+     * Verifies that a termination delegate that is replaced while the delegates are obtained is not missed together
+     * with its replacement (OF-3420). The task that cleans up detached sessions would otherwise decide without either
+     * of them, and could end a session that both would keep.
+     *
+     * The replacement is added before the replaced delegate is removed, at the moment that the hash code of the first
+     * delegate is computed. The hash codes place the replacement before, and the replaced delegate after, the
+     * delegates that are being iterated.
+     */
+    @Test
+    void replacedTerminationDelegateIsNotMissedTogetherWithItsReplacement()
+    {
+        // Setup test fixture.
+        final StreamManager sm = new StreamManager(authenticatedClientSession());
+        final AtomicReference<Runnable> onHashCode = new AtomicReference<>();
+        final TerminationDelegate first = new DelegateWithHashCode(1, onHashCode);
+        final TerminationDelegate second = new DelegateWithHashCode(2, onHashCode);
+        final TerminationDelegate replaced = new DelegateWithHashCode(5, onHashCode);
+        final TerminationDelegate replacement = new DelegateWithHashCode(0, onHashCode);
+        sm.addTerminationDelegate(first);
+        sm.addTerminationDelegate(second);
+        sm.addTerminationDelegate(replaced);
+        onHashCode.set(() -> {
+            sm.addTerminationDelegate(replacement);
+            sm.removeTerminationDelegate(replaced);
+        });
+
+        // Execute system under test.
+        final Set<TerminationDelegate> result = assertDoesNotThrow(sm::getTerminationDelegates, "Obtaining the termination delegates must not fail when a delegate is replaced at the same time.");
+
+        // Verify result.
+        assertNull(onHashCode.get(), "Test fixture expects a delegate to be replaced while the delegates were obtained.");
+        assertTrue(result.contains(replaced) || result.contains(replacement), "The replaced delegate or its replacement must be obtained, but the delegates were: " + result);
+    }
+
+    /**
+     * Verifies that a termination delegate of null is refused, rather than added (OF-3420).
+     */
+    @Test
+    void addingNullTerminationDelegateIsRefused()
+    {
+        // Setup test fixture.
+        final StreamManager sm = new StreamManager(authenticatedClientSession());
+
+        // Execute system under test.
+        assertThrows(NullPointerException.class, () -> sm.addTerminationDelegate(null), "Adding a termination delegate of null must be refused.");
+
+        // Verify result.
+        assertTrue(sm.getTerminationDelegates().isEmpty(), "No termination delegate must be registered after null was refused, but found: " + sm.getTerminationDelegates());
+    }
+
+    /**
+     * Verifies that removing a termination delegate of null is refused, and leaves the registered delegates in place (OF-3420).
+     */
+    @Test
+    void removingNullTerminationDelegateIsRefused()
+    {
+        // Setup test fixture.
+        final StreamManager sm = new StreamManager(authenticatedClientSession());
+        final TerminationDelegate delegate = allowableInactivity -> false;
+        sm.addTerminationDelegate(delegate);
+
+        // Execute system under test.
+        assertThrows(NullPointerException.class, () -> sm.removeTerminationDelegate(null), "Removing a termination delegate of null must be refused.");
+
+        // Verify result.
+        assertEquals(Set.of(delegate), sm.getTerminationDelegates(), "The registered termination delegate must be kept after removing null was refused.");
+    }
+
+    /**
+     * A termination delegate with a fixed hash code, which runs an action, once, when its hash code is computed.
+     */
+    private static final class DelegateWithHashCode implements TerminationDelegate
+    {
+        private final int hashCode;
+        private final AtomicReference<Runnable> onHashCode;
+
+        DelegateWithHashCode(final int hashCode, final AtomicReference<Runnable> onHashCode)
+        {
+            this.hashCode = hashCode;
+            this.onHashCode = onHashCode;
+        }
+
+        @Override
+        public boolean shouldTerminate(@Nonnull final Duration allowableInactivity)
+        {
+            return false;
+        }
+
+        @Override
+        public int hashCode()
+        {
+            final Runnable action = onHashCode.getAndSet(null);
+            if (action != null) {
+                action.run();
+            }
+            return hashCode;
+        }
     }
 
     /**

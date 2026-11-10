@@ -41,6 +41,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -72,8 +73,11 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      * List of domains, subdomains and virtual hostnames of the remote server that were
      * validated with this server. The remote server is allowed to send packets to this
      * server from any of the validated domains.
+     *
+     * Domains are added by the thread that processes data from the remote server, and read by other threads, such as
+     * the one that closes the session.
      */
-    private Set<String> validatedDomains = new HashSet<>();
+    private final Set<String> validatedDomains = ConcurrentHashMap.newKeySet();
 
     /**
      * Domains or subdomain of this server that was used by the remote server
@@ -337,7 +341,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      *
      * @param domain the new validated domain, subdomain or virtual host to add.
      */
-    public void addValidatedDomain(String domain) {
+    public void addValidatedDomain(@Nonnull final String domain) {
         if (validatedDomains.add(domain)) {
             // Set the first validated domain as the address of the session
             if (validatedDomains.size() < 2) {
@@ -357,7 +361,7 @@ public class LocalIncomingServerSession extends LocalServerSession implements In
      * @param domain the domain, subdomain or virtual host to remove from the list of
      *        validated domains.
      */
-    public void removeValidatedDomain(String domain) {
+    public void removeValidatedDomain(@Nonnull final String domain) {
         validatedDomains.remove(domain);
         // Unregister the validated domain for this server session in SessionManager
         SessionManager.getInstance().unregisterIncomingServerSession(domain, this);

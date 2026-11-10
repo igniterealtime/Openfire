@@ -60,12 +60,13 @@ class UnacknowledgedStanzaQueue
         private final long number;
         private final Instant timestamp = Instant.now();
         private final Packet packet;
-        private volatile boolean sentAgain = false;
+        private volatile boolean sentAgain;
 
-        Entry(final long number, @Nonnull final Packet packet)
+        Entry(final long number, @Nonnull final Packet packet, final boolean sentAgain)
         {
             this.number = number;
             this.packet = packet;
+            this.sentAgain = sentAgain;
         }
 
         /**
@@ -101,7 +102,8 @@ class UnacknowledgedStanzaQueue
         }
 
         /**
-         * Whether the stanza was sent again after it was first sent, for example on a resumed stream.
+         * Whether the stanza was sent again after it was first sent, on a resumed stream or on another connection,
+         * because the connection on which it was sent before broke while the stanza was unacknowledged.
          *
          * @return true if the stanza was sent again.
          */
@@ -172,9 +174,23 @@ class UnacknowledgedStanzaQueue
      */
     synchronized long add(@Nonnull final Packet packet)
     {
+        return add(packet, false);
+    }
+
+    /**
+     * Adds a stanza that is sent to the peer, numbering it one higher than the stanza that was sent before it. Numbers
+     * roll over from (2^32)-1 to zero, as 'h' does (XEP-0198 § 4).
+     *
+     * @param packet the stanza that is sent.
+     * @param sentAgain whether the stanza was sent before, on a connection that broke before the stanza was
+     *                  acknowledged (see {@link Entry#isSentAgain()}).
+     * @return the number of the stanza.
+     */
+    synchronized long add(@Nonnull final Packet packet, final boolean sentAgain)
+    {
         // The next ID is one higher than the last stanza that was sent (which might be unacknowledged!), rolling over after 2^32-1 (XEP-0198 § 4).
         final long number = ( 1 + getLastSentNumber() ) & StreamManager.MASK;
-        entries.addLast(new Entry(number, packet));
+        entries.addLast(new Entry(number, packet, sentAgain));
         return number;
     }
 

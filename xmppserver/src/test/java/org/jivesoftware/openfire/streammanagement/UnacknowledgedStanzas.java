@@ -42,4 +42,17 @@ public final class UnacknowledgedStanzas
     {
         return streamManager.getUnacknowledgedEntries().stream().map(UnacknowledgedStanzaQueue.Entry::getPacket).map(Packet::getID).toList();
     }
+
+    /**
+     * Returns the IDs of the stanzas that the peer has not acknowledged and that are tracked as sent again, in the order
+     * in which they were sent.
+     *
+     * @param streamManager the stream manager to inspect.
+     * @return the IDs of the unacknowledged stanzas that are tracked as sent again.
+     */
+    @Nonnull
+    public static List<String> sentAgainIds(@Nonnull final StreamManager streamManager)
+    {
+        return streamManager.getUnacknowledgedEntries().stream().filter(UnacknowledgedStanzaQueue.Entry::isSentAgain).map(UnacknowledgedStanzaQueue.Entry::getPacket).map(Packet::getID).toList();
+    }
 }

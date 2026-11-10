@@ -487,8 +487,8 @@ public abstract class StreamManager {
 
     /**
      * Prepares the unacknowledged stanzas to be sent again on a resumed stream: those that were sent again before are
-     * removed and returned, and the others are marked as sent again and numbered as the peer counts them when they are
-     * sent again in order (see {@link UnacknowledgedStanzaQueue#removeSentAgainAndRenumber()}).
+     * removed and returned, and the others are numbered as the peer counts them when they are sent again in order, and
+     * are marked as sent again only as they are sent (see {@link UnacknowledgedStanzaQueue#removeSentAgainAndRenumber()}).
      *
      * @return the stanzas that were removed, in the order in which they were sent.
      */

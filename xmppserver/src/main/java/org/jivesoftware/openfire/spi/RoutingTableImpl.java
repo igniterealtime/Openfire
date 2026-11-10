@@ -589,9 +589,16 @@ public class RoutingTableImpl extends BasicModule implements RoutingTable, Clust
                 NodeID nodeID = serversCache.get(domainPair);
                 if (nodeID != null) {
                     if (server.getNodeID().equals(nodeID)) {
+                        final LocalOutgoingServerSession route = localServerRoutingTable.getRoute(domainPair);
+                        if (route == null) {
+                            // OF-2425: the route was removed after the cache was read, as a closing session removes it without holding this mutex.
+                            Log.debug("The outgoing session for {} was removed while routing a '{}' stanza with ID '{}' to it. Instantiating a new queue for delivery over a new connection.", domainPair, packet.getElement().getName(), packet.getID());
+                            OutgoingSessionPromise.getInstance().createProcess(domainPair, packet);
+                            return true;
+                        }
                         Log.trace("An outgoing session for {} is available on the local cluster node. Delivering stanza.", domainPair);
                         try {
-                            localServerRoutingTable.getRoute(domainPair).process(packet);
+                            route.process(packet);
                             return true;
                         } catch (Throwable e) {
                             Log.error("Unable to route packet {}", packet.toXML(), e);

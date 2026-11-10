@@ -21,7 +21,8 @@ import javax.annotation.Nonnull;
 import java.util.List;
 
 /**
- * Gives tests in other packages a view of the stanzas that a stream manager tracks as unacknowledged.
+ * Gives tests in other packages a view of the stanzas that a stream manager tracks as unacknowledged, and of those that
+ * it queues while the connection of its session is broken.
  *
  * @author Guus der Kinderen, guus@goodbytes.nl
  */
@@ -54,5 +55,18 @@ public final class UnacknowledgedStanzas
     public static List<String> sentAgainIds(@Nonnull final StreamManager streamManager)
     {
         return streamManager.getUnacknowledgedEntries().stream().filter(UnacknowledgedStanzaQueue.Entry::isSentAgain).map(UnacknowledgedStanzaQueue.Entry::getPacket).map(Packet::getID).toList();
+    }
+
+    /**
+     * Returns the IDs of the stanzas that are queued, and not sent, while the connection of the session is broken, in
+     * the order in which they were queued.
+     *
+     * @param streamManager the stream manager to inspect.
+     * @return the IDs of the queued stanzas.
+     */
+    @Nonnull
+    public static List<String> queuedIds(@Nonnull final RequestingStreamManager streamManager)
+    {
+        return streamManager.getQueuedStanzas().stream().map(Packet::getID).toList();
     }
 }

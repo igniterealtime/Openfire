@@ -76,7 +76,12 @@ public class StreamManager {
         .build();
 
     private final Logger Log;
-    private boolean resume = false;
+
+    /**
+     * Whether the session can be resumed. It is read without a lock by threads other than the one that changes it, such
+     * as the thread of a connection that resumes the session, and the listener that handles the closing of a connection.
+     */
+    private volatile boolean resume = false;
 
     public static class UnackedPacket {
         public final long x;
@@ -769,6 +774,12 @@ public class StreamManager {
 
             synchronized (this)
             {
+                if ( !isEnabled() ) {
+                    // OF-3420: Stream Management was disabled after the check above, for example by onClose(), which handled the unacknowledged stanzas already.
+                    // A stanza that is tracked after that would never be handled.
+                    Log.trace( "Not tracking stanza of type '{}' with ID '{}', as Stream Management was disabled while it was sent. Session: {}", packet.getElement().getName(), packet.getID(), session );
+                    return;
+                }
                 final Connection connection = session.getConnection();
                 if ( exceededMaximumUnacknowledgedStanzas && packet instanceof Message && connection != null && connection.isClosed() && connection.getPacketDeliverer() != null ) {
                     // OF-3434: The fallback of the closed connection stores this message offline. Tracking it as well would deliver it twice.

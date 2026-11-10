@@ -73,8 +73,11 @@ public abstract class LocalSession implements Session {
 
     /**
      * The current session status.
+     *
+     * It is read without a lock by threads other than the one that changes it, such as those that deliver stanzas to
+     * the session, and the thread of a connection that resumes the session.
      */
-    protected Status status = Status.CONNECTED;
+    protected volatile Status status = Status.CONNECTED;
 
     /**
      * The connection that this session represents.
@@ -90,7 +93,10 @@ public abstract class LocalSession implements Session {
 
     protected final long startDate = System.currentTimeMillis();
 
-    private long lastActiveDate;
+    /**
+     * The time of the last activity of the session. It is read by the task that cleans up detached sessions.
+     */
+    private volatile long lastActiveDate;
 
     /**
      * The moment at which the session was most recently detached, or null when it has never been detached.

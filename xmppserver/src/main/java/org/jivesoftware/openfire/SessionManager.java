@@ -40,6 +40,7 @@ import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.spi.ConnectionType;
 import org.jivesoftware.openfire.handler.Bind2StreamManagementHandler;
 import org.jivesoftware.openfire.net.Bind2Request;
+import org.jivesoftware.openfire.streammanagement.StreamManager;
 import org.jivesoftware.openfire.streammanagement.TerminationDelegate;
 import org.jivesoftware.util.*;
 import org.jivesoftware.util.cache.*;
@@ -48,6 +49,7 @@ import org.slf4j.LoggerFactory;
 import org.xmpp.packet.*;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.management.ObjectName;
 import java.net.UnknownHostException;
 import java.time.Duration;
@@ -58,6 +60,7 @@ import java.util.LinkedList;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -119,6 +122,19 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         .setMinValue(Duration.ofMillis(0))
         .setDefaultValue(Duration.ofMinutes(1))
         .setDynamic(false)
+        .build();
+
+    /**
+     * How long a detached server session, of which the connection broke while its stream can be resumed (XEP-0198),
+     * is kept before it is ended. A negative value keeps such a session until it is resumed. Detached sessions of
+     * other types use {@link #getSessionDetachTime()}.
+     */
+    public static final SystemProperty<Duration> SERVER_SESSION_DETACH_TIMEOUT = SystemProperty.Builder.ofType(Duration.class)
+        .setKey("xmpp.server.session.detach.timeout")
+        .setDefaultValue(Duration.ofMinutes(2))
+        .setMinValue(Duration.ofMillis(-1))
+        .setChronoUnit(ChronoUnit.MILLIS)
+        .setDynamic(true)
         .build();
 
     public static final String COMPONENT_SESSION_CACHE_NAME = "Components Sessions";
@@ -280,6 +296,31 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     private Bind2StreamManagementHandler bind2StreamManagementHandler;
 
     /**
+     * Guards {@link #detachedCleanupTask} and {@link #detachedCleanupPeriod}.
+     */
+    private final Object detachedCleanupLock = new Object();
+
+    /**
+     * The task that ends detached sessions, or null while it is not scheduled. Guarded by {@link #detachedCleanupLock}.
+     */
+    private TimerTask detachedCleanupTask;
+
+    /**
+     * The time between two runs of {@link #detachedCleanupTask}. Guarded by {@link #detachedCleanupLock}.
+     */
+    private Duration detachedCleanupPeriod;
+
+    /**
+     * Reschedules the task that ends detached sessions when resumption on server connections is enabled or disabled.
+     */
+    private final Consumer<Boolean> serverResumeEnabledListener = enabled -> rescheduleDetachedCleanupTask();
+
+    /**
+     * Reschedules the task that ends detached sessions when the detach timeout of server sessions changes.
+     */
+    private final Consumer<Duration> serverDetachTimeoutListener = timeout -> rescheduleDetachedCleanupTask();
+
+    /**
      * Returns the instance of <CODE>SessionManagerImpl</CODE> being used by the XMPPServer.
      *
      * @return the instance of <CODE>SessionManagerImpl</CODE> being used by the XMPPServer.
@@ -325,15 +366,46 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     /**
      * Terminate a session that is detached.
      *
-     * A presence 'unavailable' is broadcast for the session that's being terminated. The session will be removed from
-     * the routing table.
+     * For a client session, a presence 'unavailable' is broadcast for the session that's being terminated. The session
+     * will be removed from the routing table. For an incoming server session, the domains that were validated for the
+     * session are unregistered, as when its connection closes while it cannot be resumed. Sessions of other types are
+     * ignored.
      *
      * When the provided session is not recognized as a detached session (on this cluster node), then this method will
      * log a message but not apply any changes.
      *
      * @param session The (detached) session to be terminated.
      */
-    public synchronized void terminateDetached(LocalSession session) {
+    public void terminateDetached(LocalSession session) {
+        if (session instanceof LocalIncomingServerSession serverSession) {
+            terminateDetachedIncomingServerSession(serverSession);
+            return;
+        }
+        terminateDetachedClientSession(session);
+    }
+
+    /**
+     * Terminates a detached incoming server session, which stays registered with its validated domains while it is
+     * detached, by unregistering the session as a whole, with all of those domains. Only the caller that removes the
+     * session from the detached sessions unregisters it, which it does without holding the monitor of this instance.
+     *
+     * @param session The (detached) session to be terminated.
+     */
+    private void terminateDetachedIncomingServerSession(@Nonnull final LocalIncomingServerSession session) {
+        if (!removeDetached(session)) {
+            Log.debug("Not terminating incoming server session '{}' ({}), as it is not registered as being detached.", session.getAddress(), session.getStreamID());
+            return;
+        }
+        Log.debug("Terminating detached incoming server session '{}' ({}). Unregistering it with its validated domains: {}", session.getAddress(), session.getStreamID(), session.getValidatedDomains());
+        unregisterIncomingServerSession(session.getStreamID());
+    }
+
+    /**
+     * Terminates a detached client session, as described in {@link #terminateDetached(LocalSession)}.
+     *
+     * @param session The (detached) session to be terminated.
+     */
+    private synchronized void terminateDetachedClientSession(LocalSession session) {
         if (!(session instanceof LocalClientSession clientSession)) {
             Log.trace("Silently ignoring a request to terminate a non LocalClientSession: {}", session);
             return;
@@ -1772,6 +1844,20 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         {
             final LocalIncomingServerSession session = (LocalIncomingServerSession)handback;
 
+            if (session.isDetached()) {
+                Log.debug("Closing incoming server session with address {} and streamID {} is detached already; this is a no-op.", session.getAddress(), session.getStreamID());
+                return CompletableFuture.completedFuture(null);
+            }
+            // OF-2425: A session that can be resumed keeps its validated domains registered until terminateDetached() ends it.
+            if (session.getStreamManager().getResume()) {
+                if (StreamManager.SERVER_RESUME_ENABLED.getValue()) {
+                    Log.debug("Closing incoming server session with address {} and streamID {} can be resumed; detaching. Its validated domains stay registered: {}", session.getAddress(), session.getStreamID(), session.getValidatedDomains());
+                    session.setDetached();
+                    return CompletableFuture.completedFuture(null);
+                }
+                Log.debug("Closing incoming server session with address {} and streamID {} is not detached, although its stream can be resumed, as resumption on server connections is disabled.", session.getAddress(), session.getStreamID());
+            }
+
             CompletableFuture<Void> result = CompletableFuture.runAsync(() -> Log.debug("Closing incoming server session with address {} and streamID {}.", session.getAddress(), session.getStreamID()));
 
             // Remove all the domains that were registered for this server session.
@@ -1975,22 +2061,87 @@ public class SessionManager extends BasicModule implements ClusterEventListener
         Bind2Request.registerElementHandler(localHandler);
         bind2StreamManagementHandler = localHandler; // Only dereference any previous handler after registration succeeds, otherwise that previous handler can never be removed again.
 
-        // Run through the server sessions every 10% of the time of the maximum time that a session is allowed to be
-        // detached, or every 3 minutes if the max time is outside the default boundaries.
-        // TODO Reschedule task if getSessionDetachTime value changes.
-        final int max = getSessionDetachTime();
-        final Duration period;
-        if ( max > Duration.ofMinutes(1).toMillis() && max < Duration.ofHours(1).toMillis() ) {
-            period = Duration.ofMillis(max).dividedBy(10);
-        } else {
-            period = Duration.ofMinutes(3);
+        startDetachedCleanup();
+    }
+
+    /**
+     * Schedules the task that ends detached sessions, to run often enough for the shortest of the detach timeouts per
+     * session type (see {@link #getDetachedCleanupPeriodForSettings()}), and reschedules it when resumption on server
+     * connections is enabled or disabled, or the detach timeout of server sessions changes.
+     */
+    @VisibleForTesting
+    void startDetachedCleanup() {
+        // TODO Reschedule the task also when the detach timeout of client sessions changes.
+        StreamManager.SERVER_RESUME_ENABLED.addListener(serverResumeEnabledListener);
+        SERVER_SESSION_DETACH_TIMEOUT.addListener(serverDetachTimeoutListener);
+        synchronized (detachedCleanupLock) {
+            scheduleDetachedCleanupTask();
         }
-        TaskEngine.getInstance().scheduleAtFixedRate(new DetachedCleanupTask(), period, period);
+    }
+
+    /**
+     * Stops the task that ends detached sessions, and stops rescheduling it when settings change.
+     */
+    @VisibleForTesting
+    void stopDetachedCleanup() {
+        StreamManager.SERVER_RESUME_ENABLED.removeListener(serverResumeEnabledListener);
+        SERVER_SESSION_DETACH_TIMEOUT.removeListener(serverDetachTimeoutListener);
+        synchronized (detachedCleanupLock) {
+            if (detachedCleanupTask != null) {
+                TaskEngine.getInstance().cancelScheduledTask(detachedCleanupTask);
+                detachedCleanupTask = null;
+                detachedCleanupPeriod = null;
+            }
+        }
+    }
+
+    /**
+     * Reschedules the task that ends detached sessions when the time between two of its runs no longer suits the
+     * settings, unless the task is not scheduled.
+     */
+    private void rescheduleDetachedCleanupTask() {
+        synchronized (detachedCleanupLock) {
+            if (detachedCleanupTask == null) {
+                Log.trace("Not rescheduling the task that ends detached sessions, as it is not scheduled.");
+                return;
+            }
+            if (getDetachedCleanupPeriodForSettings().equals(detachedCleanupPeriod)) {
+                return;
+            }
+            TaskEngine.getInstance().cancelScheduledTask(detachedCleanupTask);
+            scheduleDetachedCleanupTask();
+        }
+    }
+
+    /**
+     * Schedules a new task that ends detached sessions, at the time between two runs that suits the settings. The caller
+     * holds {@link #detachedCleanupLock}, and has cancelled any task that was scheduled before.
+     */
+    private void scheduleDetachedCleanupTask() {
+        final Duration period = getDetachedCleanupPeriodForSettings();
+        Log.debug("Checking detached sessions every {}, for a detach timeout of {} for client sessions and {} for server sessions (resumption on server connections enabled: {}).", period, Duration.ofMillis(getSessionDetachTime()), SERVER_SESSION_DETACH_TIMEOUT.getValue(), StreamManager.SERVER_RESUME_ENABLED.getValue());
+        detachedCleanupTask = new DetachedCleanupTask();
+        detachedCleanupPeriod = period;
+        TaskEngine.getInstance().scheduleAtFixedRate(detachedCleanupTask, period, period);
+    }
+
+    /**
+     * Returns the time between two runs of the task that ends detached sessions as it is scheduled.
+     *
+     * @return the time between two runs, or null when the task is not scheduled.
+     */
+    @VisibleForTesting
+    @Nullable
+    Duration getScheduledDetachedCleanupPeriod() {
+        synchronized (detachedCleanupLock) {
+            return detachedCleanupPeriod;
+        }
     }
 
     @Override
     public synchronized void stop() {
         Log.debug("SessionManager: Stopping server");
+        stopDetachedCleanup();
 
         if (bind2StreamManagementHandler != null) {
             Bind2Request.unregisterElementHandler(bind2StreamManagementHandler);
@@ -2116,6 +2267,61 @@ public class SessionManager extends BasicModule implements ClusterEventListener
 
     public int getSessionDetachTime() {
         return JiveGlobals.getIntProperty("xmpp.session.detach.timeout", 10 * 60 * 1000);
+    }
+
+    /**
+     * Returns how long the provided session is kept while it is detached, before it is ended. This depends on the type
+     * of the session: server sessions use {@link #SERVER_SESSION_DETACH_TIMEOUT}, all other sessions use
+     * {@link #getSessionDetachTime()}.
+     *
+     * @param session the session for which to return the timeout.
+     * @return the time that the session is kept while detached. A negative duration means that it is kept until it is resumed.
+     */
+    @Nonnull
+    public Duration getDetachTimeout(@Nonnull final LocalSession session) {
+        if (session instanceof LocalServerSession) {
+            return SERVER_SESSION_DETACH_TIMEOUT.getValue();
+        }
+        return Duration.ofMillis(getSessionDetachTime());
+    }
+
+    /**
+     * Returns the time between two runs of the task that ends detached sessions, for the detach timeouts that are
+     * configured (see {@link #getDetachedCleanupPeriod(Duration...)}): that of client sessions, and that of server
+     * sessions only when resumption on server connections is enabled, as server sessions are not detached otherwise.
+     *
+     * @return the time between two runs of the task.
+     */
+    @VisibleForTesting
+    Duration getDetachedCleanupPeriodForSettings() {
+        final Duration clientTimeout = Duration.ofMillis(getSessionDetachTime());
+        if (!StreamManager.SERVER_RESUME_ENABLED.getValue()) {
+            return getDetachedCleanupPeriod(clientTimeout);
+        }
+        return getDetachedCleanupPeriod(clientTimeout, SERVER_SESSION_DETACH_TIMEOUT.getValue());
+    }
+
+    /**
+     * Returns the time between two runs of the task that ends detached sessions: a tenth of the shortest of the
+     * provided timeouts, ignoring negative ones, but at least one second and at most three minutes. When all provided
+     * timeouts are negative, three minutes.
+     *
+     * @param timeouts the timeouts after which detached sessions are ended, for each type of session.
+     * @return the time between two runs of the task.
+     */
+    @VisibleForTesting
+    static Duration getDetachedCleanupPeriod(@Nonnull final Duration... timeouts) {
+        final Duration maximum = Duration.ofMinutes(3);
+        final Duration minimum = Duration.ofSeconds(1);
+        final Duration period = Arrays.stream(timeouts)
+            .filter(timeout -> !timeout.isNegative())
+            .min(Comparator.naturalOrder())
+            .map(timeout -> timeout.dividedBy(10))
+            .orElse(maximum);
+        if (period.compareTo(minimum) < 0) {
+            return minimum;
+        }
+        return period.compareTo(maximum) > 0 ? maximum : period;
     }
 
     // Note that, unlike other caches, this cache is populated only when clustering is enabled.
@@ -2388,23 +2594,23 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     }
 
     /**
-     * Task that closes detached client sessions.
+     * Task that closes detached sessions.
      */
     private class DetachedCleanupTask extends TimerTask {
         /**
-         * Close detached client sessions that have been detached for longer than the detach timeout, measured from the
-         * moment at which they were most recently detached, or from their last activity when that is later.
+         * Close detached sessions that have been detached for longer than the detach timeout of their type, measured
+         * from the moment at which they were most recently detached, or from their last activity when that is later.
          */
         @Override
         public void run() {
-            final int idleTime = getSessionDetachTime();
-            if (idleTime == -1) {
-                return;
-            }
-            final Duration allowableInactivity = Duration.ofMillis(idleTime);
             final Instant now = Instant.now();
             for (LocalSession session : detachedSessions.values()) {
                 try {
+                    final Duration allowableInactivity = getDetachTimeout(session);
+                    if (allowableInactivity.isNegative()) {
+                        Log.trace("Detached session '{}' ({}) is kept, as the detach timeout for its type of session ({}) is disabled.", session.getAddress(), session.getStreamID(), allowableInactivity);
+                        continue;
+                    }
                     final Set<TerminationDelegate> delegates = session.getStreamManager().getTerminationDelegates();
                     if (!delegates.isEmpty()) {
                         if (delegates.stream().allMatch(terminationDelegate -> terminationDelegate.shouldTerminate(allowableInactivity))) {

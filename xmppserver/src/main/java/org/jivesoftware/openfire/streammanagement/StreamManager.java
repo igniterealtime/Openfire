@@ -487,15 +487,17 @@ public abstract class StreamManager {
     }
 
     /**
-     * Prepares the unacknowledged stanzas to be sent again on a resumed stream: those that were sent again before are
-     * removed and returned, and the others are marked as sent again and numbered as the peer counts them when they are
-     * sent again in order (see {@link UnacknowledgedStanzaQueue#removeSentAgainAndRenumber()}).
+     * Prepares the unacknowledged stanzas to be sent again on a resumed stream: those that match the provided condition
+     * are removed and returned, and the others are numbered as the peer counts them when they are sent again in order,
+     * without the removed ones, and are marked as sent again only as they are sent (see
+     * {@link UnacknowledgedStanzaQueue#removeAndRenumber(java.util.function.Predicate)}).
      *
+     * @param toRemove the condition for the stanzas to remove, such as those that were sent again before.
      * @return the stanzas that were removed, in the order in which they were sent.
      */
     @Nonnull
-    synchronized List<UnacknowledgedStanzaQueue.Entry> removeSentAgainAndRenumber() {
-        return unacknowledgedOutboundStanzas.removeSentAgainAndRenumber();
+    synchronized List<UnacknowledgedStanzaQueue.Entry> removeAndRenumber(@Nonnull final java.util.function.Predicate<UnacknowledgedStanzaQueue.Entry> toRemove) {
+        return unacknowledgedOutboundStanzas.removeAndRenumber(toRemove);
     }
 
     /**

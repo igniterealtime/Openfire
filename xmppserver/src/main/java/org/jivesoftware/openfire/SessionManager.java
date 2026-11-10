@@ -411,9 +411,10 @@ public class SessionManager extends BasicModule implements ClusterEventListener
 
     /**
      * Ends an outgoing server session that was detached, and that is not resumed, as when its connection closes while it
-     * cannot be resumed: its routes are removed, after which the stanzas that the remote server did not acknowledge are
-     * handled as described in {@link RequestingStreamManager#onClose(PacketRouter, JID)}, and the stanzas that were
-     * queued while it was detached, which were never sent, are routed again, so that they go out over a new connection.
+     * cannot be resumed: per domain pair, its route is removed, after which the stanzas of that domain pair that the
+     * remote server did not acknowledge are handled, and those that were queued while it was detached, which were never
+     * sent, are routed again, so that they go out over a new connection, ahead of stanzas for that domain pair that are
+     * routed meanwhile (see {@link RequestingStreamManager#onClose(PacketRouter, JID, Collection, java.util.function.Consumer)}).
      *
      * The session must be removed from the detached sessions before this is invoked, so that it is ended once. This
      * holds no lock of this instance or of the stream manager of the session while it removes the routes or routes
@@ -424,19 +425,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
     private void endDetachedOutgoingServerSession(@Nonnull final LocalOutgoingServerSession session) {
         final Collection<DomainPair> domainPairs = List.copyOf(session.getOutgoingDomainPairs());
         Log.debug("Ending detached outgoing server session '{}' ({}), which was not resumed. Removing its routes: {}", session.getAddress(), session.getStreamID(), domainPairs);
-        try {
-            for (final DomainPair domainPair : domainPairs) {
-                // OF-2425: A failure to remove one route must not prevent the others from being removed.
-                try {
-                    routingTable.removeServerRoute(domainPair);
-                } catch (Exception e) {
-                    Log.warn("Unable to remove route {} of detached outgoing server session '{}' ({}) that is ended.", domainPair, session.getAddress(), session.getStreamID(), e);
-                }
-            }
-        } finally {
-            // OF-2425: Only once the routes are removed do the stanzas that are routed again go out over a new connection.
-            session.getStreamManager().onClose(router, serverAddress);
-        }
+        session.getStreamManager().onClose(router, serverAddress, domainPairs, routingTable::removeServerRoute);
     }
 
     /**
@@ -1990,6 +1979,15 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                 }
             }
 
+            if (session instanceof LocalOutgoingServerSession localSession) {
+                // OF-2425: Per domain pair, the route is removed and its stanzas are routed again under one mutex, so that newer stanzas follow them.
+                final Collection<DomainPair> domainPairs = List.copyOf(session.getOutgoingDomainPairs());
+                return CompletableFuture.runAsync(() -> {
+                    Log.debug("Closing outgoing server session with address {} and streamID {}. Removing its routes: {}", session.getAddress(), session.getStreamID(), domainPairs);
+                    localSession.getStreamManager().onClose(router, serverAddress, domainPairs, server.getRoutingTable()::removeServerRoute);
+                });
+            }
+
             CompletableFuture<Void> result = CompletableFuture.runAsync(() -> Log.debug("Closing outgoing server session with address {} and streamID {}.", session.getAddress(), session.getStreamID()));
 
             // Remove all the domains that were registered for this server session.
@@ -1998,13 +1996,7 @@ public class SessionManager extends BasicModule implements ClusterEventListener
                 tasks.add(CompletableFuture.runAsync(() -> server.getRoutingTable().removeServerRoute(domainPair)));
             }
 
-            return result.thenCompose(e -> CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])))
-                .whenComplete((v, t) -> {
-                    if (session instanceof LocalOutgoingServerSession localSession) {
-                        // OF-2425: Only once the routes are removed do unacknowledged stanzas that are sent again go out over a new connection.
-                        localSession.getStreamManager().onClose(router, serverAddress);
-                    }
-                });
+            return result.thenCompose(e -> CompletableFuture.allOf(tasks.toArray(new CompletableFuture[0])));
         }
 
         @Override

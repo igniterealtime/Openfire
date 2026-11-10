@@ -547,6 +547,35 @@ public class UnacknowledgedStanzaQueueTest
     }
 
     /**
+     * Verifies that, when preparing to send the stanzas again on a resumed stream, the stanzas that match the provided
+     * condition are removed with their original marker, and are not counted: the others are numbered directly after the
+     * acknowledged stanzas, so that an acknowledgement that also counts the removed ones is not valid.
+     */
+    @Test
+    void matchingStanzasAreRemovedAndNotCountedWhenRenumbered() throws Exception
+    {
+        // Setup test fixture.
+        final UnacknowledgedStanzaQueue queue = new UnacknowledgedStanzaQueue(() -> MAXIMUM);
+        queue.add(message("acked"));
+        queue.acknowledge(1);
+        queue.add(message("a"));
+        queue.add(message("held"));
+        queue.add(message("b"));
+
+        // Execute system under test.
+        final List<UnacknowledgedStanzaQueue.Entry> removed = queue.removeAndRenumber(entry -> "held".equals(entry.getPacket().getID()));
+
+        // Verify result.
+        assertEquals(List.of("held"), removed.stream().map(entry -> entry.getPacket().getID()).toList(), "Only the stanza that matches the condition must be removed.");
+        assertFalse(removed.get(0).isSentAgain(), "The removed stanza must keep its marker, as it was not sent again.");
+        final List<UnacknowledgedStanzaQueue.Entry> remaining = List.copyOf(queue.getEntries());
+        assertEquals(List.of("a", "b"), remaining.stream().map(entry -> entry.getPacket().getID()).toList(), "The other stanzas must remain, in order.");
+        assertEquals(List.of(2L, 3L), remaining.stream().map(UnacknowledgedStanzaQueue.Entry::getNumber).toList(), "The remaining stanzas must be numbered directly after the acknowledged ones, without the removed one.");
+        assertTrue(queue.isValidAcknowledgement(3), "An acknowledgement of all remaining stanzas must be valid.");
+        assertFalse(queue.isValidAcknowledgement(4), "An acknowledgement that also counts the removed stanza must not be valid.");
+    }
+
+    /**
      * Verifies that stanzas cannot be skipped while stanzas are unacknowledged, as the skipped ones would then be
      * numbered before stanzas that were sent earlier.
      */

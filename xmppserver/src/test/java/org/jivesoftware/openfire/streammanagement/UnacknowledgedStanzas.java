@@ -15,14 +15,16 @@
  */
 package org.jivesoftware.openfire.streammanagement;
 
+import org.jivesoftware.openfire.session.DomainPair;
 import org.xmpp.packet.Packet;
 
 import javax.annotation.Nonnull;
 import java.util.List;
 
 /**
- * Gives tests in other packages a view of the stanzas that a stream manager tracks as unacknowledged, and of those that
- * it queues while the connection of its session is broken.
+ * Gives tests in other packages a view of the stanzas that a stream manager tracks as unacknowledged, of those that it
+ * queues while the connection of its session is broken, and of those that it holds until their domain pair is verified
+ * again.
  *
  * @author Guus der Kinderen, guus@goodbytes.nl
  */
@@ -68,5 +70,19 @@ public final class UnacknowledgedStanzas
     public static List<String> queuedIds(@Nonnull final RequestingStreamManager streamManager)
     {
         return streamManager.getQueuedStanzas().stream().map(Packet::getID).toList();
+    }
+
+    /**
+     * Returns the IDs of the stanzas of a domain pair that are held until that domain pair is verified again after the
+     * stream was resumed: its unacknowledged stanzas, followed by the others, each in order.
+     *
+     * @param streamManager the stream manager to inspect.
+     * @param domainPair the domain pair.
+     * @return the IDs of the held stanzas.
+     */
+    @Nonnull
+    public static List<String> heldIds(@Nonnull final RequestingStreamManager streamManager, @Nonnull final DomainPair domainPair)
+    {
+        return streamManager.getHeldStanzas(domainPair).stream().map(Packet::getID).toList();
     }
 }

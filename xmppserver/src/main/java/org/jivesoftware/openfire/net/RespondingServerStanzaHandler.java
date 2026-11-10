@@ -411,6 +411,10 @@ public class RespondingServerStanzaHandler extends StanzaHandler {
         // Handle dialback result
         if ("db".equals(doc.getNamespacePrefix()) && "result".equals(rootTagName)) {
             LOG.debug("Received dialback result from remote domain '{}'", domainPair.getRemote());
+            // OF-2425: after resumption, the answer for another domain pair that the resumed session verifies again on this connection.
+            if (session instanceof LocalOutgoingServerSession outgoingSession && outgoingSession.processDialbackResult(doc)) {
+                return true;
+            }
             if ("valid".equals(doc.attributeValue("type"))) {
                 LOG.debug("Authentication succeeded!");
                 LOG.debug("Dialback was successful.");

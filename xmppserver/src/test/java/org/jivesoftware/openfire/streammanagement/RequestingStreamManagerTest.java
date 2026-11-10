@@ -23,6 +23,7 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
+import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -64,6 +66,12 @@ import static org.mockito.Mockito.*;
 public class RequestingStreamManagerTest
 {
     private static final JID SERVER_ADDRESS = new JID(Fixtures.XMPP_DOMAIN);
+
+    /**
+     * A domain pair of which the stanzas are held in some tests: another domain of the remote server of the stanzas that
+     * {@link #addressed(Packet)} addresses.
+     */
+    private static final DomainPair OTHER_DOMAIN_PAIR = new DomainPair(Fixtures.XMPP_DOMAIN, "conference.remote.example.org");
 
     @BeforeAll
     public static void setUpClass() throws Exception
@@ -270,6 +278,293 @@ public class RequestingStreamManagerTest
         assertEquals(List.of("queued-1"), UnacknowledgedStanzas.ids(sm), "Only the stanza that was sent before the connection closed must be tracked.");
         assertTrue(queuedAfterResumption, "Queueing must continue when not every queued stanza was sent.");
         assertEquals(List.of("queued-2", "after"), UnacknowledgedStanzas.queuedIds(sm), "The stanza that was not sent must stay queued, before the stanzas that are queued after it.");
+    }
+
+    /**
+     * Verifies that, on resumption, the unacknowledged and queued stanzas of a domain pair of which the stanzas are held
+     * are not sent, but held in order, and that the stanzas that are sent again are numbered without the held ones, as
+     * the peer counts only the stanzas that are sent (decision 2 of OF-2425).
+     */
+    @Test
+    public void heldStanzasAreNotSentOrCountedOnResumption() throws Exception
+    {
+        // Setup test fixture.
+        final RequestingStreamManager sm = resumableStreamManager();
+        sm.sentStanza(addressed(message("main-1")));
+        sm.sentStanza(other(message("other-1")));
+        sm.sentStanza(addressed(message("main-2")));
+        sm.startQueueing();
+        sm.queue(other(message("other-queued")), true);
+        sm.queue(addressed(message("main-queued")), true);
+        sm.holdUntilVerified(List.of(OTHER_DOMAIN_PAIR));
+        final Connection connection = sm.session.getConnection();
+        clearInvocations(connection);
+
+        // Execute system under test.
+        sm.onResume(SERVER_ADDRESS, 0);
+        final boolean heldAfterResumption = sm.queue(other(message("other-after")), false);
+        sm.process(DocumentHelper.createElement(QName.get("a", StreamManager.NAMESPACE_V3)).addAttribute("h", "3"));
+
+        // Verify result.
+        assertEquals(List.of("main-1", "main-2", "main-queued"), delivered(connection).stream().map(Packet::getID).toList(), "Only the stanzas of the domain pair of which the stanzas are not held must be sent, in order.");
+        assertTrue(heldAfterResumption, "A stanza of a domain pair of which the stanzas are held must be held, also when the connection is open.");
+        assertEquals(List.of("other-1", "other-queued", "other-after"), UnacknowledgedStanzas.heldIds(sm, OTHER_DOMAIN_PAIR), "The stanzas of the domain pair must be held, the unacknowledged ones first, in order.");
+        assertEquals(List.of(), UnacknowledgedStanzas.queuedIds(sm), "No stanza must remain queued.");
+        assertEquals(List.of(), UnacknowledgedStanzas.ids(sm), "An acknowledgement of the three stanzas that were sent must remove them all, as the held stanza is not counted.");
+        verify(sm.session, never().description("A valid acknowledgement must not close the session.")).close(any(StreamError.class));
+    }
+
+    /**
+     * Verifies that a held stanza of a domain pair that was sent again before, and that is unacknowledged when the stream
+     * is resumed again, is not held, but returned to its sender as an error, as for any other domain pair (decision 4 of
+     * OF-2425).
+     */
+    @Test
+    public void heldStanzaThatWasSentAgainBeforeIsReturnedAsErrorOnResumption() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter router = useServerWithRouter();
+        final RequestingStreamManager sm = resumableStreamManager();
+        sm.sentStanza(other(message("sent-again-before")));
+        sm.onResume(SERVER_ADDRESS, 0);
+        sm.holdUntilVerified(List.of(OTHER_DOMAIN_PAIR));
+
+        // Execute system under test.
+        sm.onResume(SERVER_ADDRESS, 0);
+
+        // Verify result.
+        final List<Packet> routed = routed(router);
+        assertEquals(List.of("sent-again-before"), routed.stream().map(Packet::getID).toList(), "The stanza that was sent again before must be returned to its sender.");
+        assertEquals("error", routed.get(0).getElement().attributeValue("type"), "The stanza that was sent again before must be returned as an error.");
+        assertEquals(List.of(), UnacknowledgedStanzas.heldIds(sm, OTHER_DOMAIN_PAIR), "The stanza that was sent again before must not be held.");
+    }
+
+    /**
+     * Verifies that, once a domain pair is verified again, its held stanzas are sent in order, while the lock of the
+     * stream manager is held, the unacknowledged ones as sent again, and numbered after the stanzas that were sent
+     * before, after which its stanzas are no longer held.
+     */
+    @Test
+    public void releasedStanzasAreSentAndNumberedAfterThoseSentBefore() throws Exception
+    {
+        // Setup test fixture.
+        final RequestingStreamManager sm = resumableStreamManager();
+        sm.sentStanza(addressed(message("main")));
+        sm.sentStanza(other(message("other-unacked")));
+        sm.startQueueing();
+        sm.queue(other(message("other-queued")), true);
+        sm.holdUntilVerified(List.of(OTHER_DOMAIN_PAIR));
+        sm.onResume(SERVER_ADDRESS, 0);
+        final Connection connection = sm.session.getConnection();
+        final RequestingStreamManager.VerificationAttempt attempt = sm.startVerification(OTHER_DOMAIN_PAIR, connection);
+        final List<Boolean> heldLock = new CopyOnWriteArrayList<>();
+        clearInvocations(connection);
+        doAnswer(invocation -> { heldLock.add(Thread.holdsLock(sm)); return null; }).when(connection).deliver(any(Packet.class));
+
+        // Execute system under test.
+        final boolean released = sm.releaseVerified(OTHER_DOMAIN_PAIR, attempt, SERVER_ADDRESS);
+        final boolean heldAfterRelease = sm.queue(other(message("other-after")), false);
+        sm.process(DocumentHelper.createElement(QName.get("a", StreamManager.NAMESPACE_V3)).addAttribute("h", "3"));
+
+        // Verify result.
+        assertTrue(released, "The held stanzas of a domain pair that is verified again must be released.");
+        assertEquals(List.of("other-unacked", "other-queued"), delivered(connection).stream().map(Packet::getID).toList(), "The held stanzas must be sent in order, the unacknowledged one first.");
+        assertEquals(List.of(true, true), heldLock, "Every held stanza must be sent while the lock of the stream manager is held.");
+        assertNotNull(delivered(connection).get(0).getExtension("delay", "urn:xmpp:delay"), "A message that is sent again must get a delay stamp.");
+        assertNull(delivered(connection).get(1).getExtension("delay", "urn:xmpp:delay"), "A held stanza that was never sent before must not get a delay stamp.");
+        assertFalse(heldAfterRelease, "A stanza of a domain pair that is verified again must be sent, rather than held.");
+        assertEquals(List.of(), UnacknowledgedStanzas.ids(sm), "An acknowledgement of the three stanzas that were sent must remove them all, as they are numbered in the order in which they were sent.");
+        verify(sm.session, never().description("A valid acknowledgement must not close the session.")).close(any(StreamError.class));
+    }
+
+    /**
+     * Verifies that a released unacknowledged stanza is tracked as sent again, and a released queued stanza is not.
+     */
+    @Test
+    public void releasedUnacknowledgedStanzaIsTrackedAsSentAgain() throws Exception
+    {
+        // Setup test fixture.
+        final RequestingStreamManager sm = resumableStreamManager();
+        sm.sentStanza(other(message("other-unacked")));
+        sm.startQueueing();
+        sm.queue(other(message("other-queued")), true);
+        sm.holdUntilVerified(List.of(OTHER_DOMAIN_PAIR));
+        sm.onResume(SERVER_ADDRESS, 0);
+        final RequestingStreamManager.VerificationAttempt attempt = sm.startVerification(OTHER_DOMAIN_PAIR, sm.session.getConnection());
+
+        // Execute system under test.
+        sm.releaseVerified(OTHER_DOMAIN_PAIR, attempt, SERVER_ADDRESS);
+
+        // Verify result.
+        assertEquals(List.of("other-unacked", "other-queued"), UnacknowledgedStanzas.ids(sm), "Every released stanza must be tracked.");
+        assertEquals(List.of("other-unacked"), UnacknowledgedStanzas.sentAgainIds(sm), "Only the released unacknowledged stanza must be tracked as sent again.");
+    }
+
+    /**
+     * Verifies that, when a domain pair is given up, the domain pair is removed first, and its held stanzas are then
+     * handled as when the session closes: an unacknowledged message is routed again, the queued stanza is routed again
+     * after it, and an unacknowledged IQ request is returned as an error last. The held stanzas stay uncounted.
+     */
+    @Test
+    public void givenUpStanzasAreHandledAsWhenSessionCloses() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter router = mock(PacketRouter.class);
+        final RequestingStreamManager sm = resumableStreamManager();
+        sm.sentStanza(addressed(message("main")));
+        sm.sentStanza(other(message("other-unacked")));
+        sm.sentStanza(other(new IQ(IQ.Type.set, "other-request")));
+        sm.startQueueing();
+        sm.queue(other(message("other-queued")), true);
+        sm.holdUntilVerified(List.of(OTHER_DOMAIN_PAIR));
+        sm.onResume(SERVER_ADDRESS, 0);
+        final RequestingStreamManager.VerificationAttempt attempt = sm.startVerification(OTHER_DOMAIN_PAIR, sm.session.getConnection());
+        final List<String> events = new CopyOnWriteArrayList<>();
+        doAnswer(invocation -> { events.add(((Packet) invocation.getArgument(0)).getID()); return null; }).when(router).route(any(Packet.class));
+
+        // Execute system under test.
+        final boolean givenUp = sm.giveUpUnverified(OTHER_DOMAIN_PAIR, attempt, true, () -> events.add("domain pair removed"), new Object(), router, SERVER_ADDRESS);
+        sm.process(DocumentHelper.createElement(QName.get("a", StreamManager.NAMESPACE_V3)).addAttribute("h", "2"));
+
+        // Verify result.
+        assertTrue(givenUp, "A refused domain pair must be given up.");
+        assertEquals(List.of("domain pair removed", "other-unacked", "other-queued", "other-request"), events, "The domain pair must be removed before its stanzas are routed: the unacknowledged message first, then the queued one, and the error for the IQ request last.");
+        final List<Packet> routed = routed(router);
+        assertNull(routed.get(0).getElement().attributeValue("type"), "The unacknowledged message must be routed again, rather than returned as an error.");
+        assertNotNull(routed.get(0).getExtension("delay", "urn:xmpp:delay"), "The unacknowledged message that is routed again must get a delay stamp.");
+        assertEquals("error", routed.get(2).getElement().attributeValue("type"), "The unacknowledged IQ request must be returned as an error.");
+        assertEquals(List.of(), UnacknowledgedStanzas.heldIds(sm, OTHER_DOMAIN_PAIR), "No stanza must stay held once the domain pair is given up.");
+        assertFalse(sm.queue(other(message("other-after")), false), "A stanza of a domain pair that is given up must no longer be held.");
+        verify(sm.session, times(1).description("An acknowledgement that counts the held stanzas acknowledges stanzas that were not sent, and must close the session.")).close(any(StreamError.class));
+    }
+
+    /**
+     * Verifies that, when a domain pair is given up, its held stanzas are routed again while holding the provided mutex,
+     * and the error that returns an unacknowledged IQ request to its sender is routed after that, without holding it.
+     * The error goes to a local sender, which can route other stanzas on the same thread, to another remote domain, of
+     * which another thread can hold the mutex while it waits for this one.
+     */
+    @Test
+    public void givenUpStanzasAreReturnedAsErrorWithoutHoldingMutex() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter router = mock(PacketRouter.class);
+        final RequestingStreamManager sm = resumableStreamManager();
+        sm.sentStanza(other(new IQ(IQ.Type.set, "other-request")));
+        sm.sentStanza(other(message("other-unacked")));
+        sm.holdUntilVerified(List.of(OTHER_DOMAIN_PAIR));
+        sm.onResume(SERVER_ADDRESS, 0);
+        final RequestingStreamManager.VerificationAttempt attempt = sm.startVerification(OTHER_DOMAIN_PAIR, sm.session.getConnection());
+        final Object mutex = new Object();
+        final List<String> events = new CopyOnWriteArrayList<>();
+        doAnswer(invocation -> { events.add(((Packet) invocation.getArgument(0)).getID() + " " + Thread.holdsLock(mutex)); return null; }).when(router).route(any(Packet.class));
+
+        // Execute system under test.
+        final boolean givenUp = sm.giveUpUnverified(OTHER_DOMAIN_PAIR, attempt, true, () -> events.add("domain pair removed " + Thread.holdsLock(mutex)), mutex, router, SERVER_ADDRESS);
+
+        // Verify result.
+        assertTrue(givenUp, "A refused domain pair must be given up.");
+        assertEquals(List.of("domain pair removed true", "other-unacked true", "other-request false"), events, "The domain pair must be removed, and its message routed again, while holding the mutex, and the error for the IQ request routed after that, without holding it.");
+        assertEquals("error", routed(router).get(1).getElement().attributeValue("type"), "The unacknowledged IQ request must be returned as an error.");
+    }
+
+    /**
+     * Verifies that an attempt to verify a domain pair that is not the most recent one neither releases nor gives up its
+     * stanzas, while the most recent one does.
+     */
+    @Test
+    public void onlyMostRecentAttemptReleasesOrGivesUp() throws Exception
+    {
+        // Setup test fixture.
+        final RequestingStreamManager sm = resumableStreamManager();
+        sm.sentStanza(other(message("other-unacked")));
+        sm.holdUntilVerified(List.of(OTHER_DOMAIN_PAIR));
+        sm.onResume(SERVER_ADDRESS, 0);
+        final Connection connection = sm.session.getConnection();
+        final RequestingStreamManager.VerificationAttempt earlier = sm.startVerification(OTHER_DOMAIN_PAIR, connection);
+        final RequestingStreamManager.VerificationAttempt later = sm.startVerification(OTHER_DOMAIN_PAIR, connection);
+        final PacketRouter router = mock(PacketRouter.class);
+
+        // Execute system under test.
+        final boolean releasedByEarlier = sm.releaseVerified(OTHER_DOMAIN_PAIR, earlier, SERVER_ADDRESS);
+        final boolean givenUpByEarlier = sm.giveUpUnverified(OTHER_DOMAIN_PAIR, earlier, true, () -> {}, new Object(), router, SERVER_ADDRESS);
+        final List<String> heldBefore = UnacknowledgedStanzas.heldIds(sm, OTHER_DOMAIN_PAIR);
+        final boolean releasedByLater = sm.releaseVerified(OTHER_DOMAIN_PAIR, later, SERVER_ADDRESS);
+
+        // Verify result.
+        assertFalse(releasedByEarlier, "An attempt that is not the most recent one must not release the held stanzas.");
+        assertFalse(givenUpByEarlier, "An attempt that is not the most recent one must not give up the domain pair.");
+        assertEquals(List.of("other-unacked"), heldBefore, "The stanzas must stay held after an attempt that is not the most recent one.");
+        assertTrue(releasedByLater, "The most recent attempt must release the held stanzas.");
+        assertTrue(mockingDetails(router).getInvocations().isEmpty(), "Nothing must be routed by an attempt that is not the most recent one.");
+    }
+
+    /**
+     * Verifies that, while stanzas are queued as the connection broke again, an attempt neither releases the held
+     * stanzas nor gives them up when the domain pair was not refused, so that they wait for the next resumption, while a
+     * refusal gives up the domain pair.
+     */
+    @Test
+    public void heldStanzasStayHeldWhileQueueingUnlessRefused() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter router = mock(PacketRouter.class);
+        final RequestingStreamManager sm = resumableStreamManager();
+        sm.sentStanza(other(message("other-unacked")));
+        sm.holdUntilVerified(List.of(OTHER_DOMAIN_PAIR));
+        sm.onResume(SERVER_ADDRESS, 0);
+        final RequestingStreamManager.VerificationAttempt attempt = sm.startVerification(OTHER_DOMAIN_PAIR, sm.session.getConnection());
+        sm.startQueueing();
+
+        // Execute system under test.
+        final boolean released = sm.releaseVerified(OTHER_DOMAIN_PAIR, attempt, SERVER_ADDRESS);
+        final boolean givenUpWithoutRefusal = sm.giveUpUnverified(OTHER_DOMAIN_PAIR, attempt, false, () -> {}, new Object(), router, SERVER_ADDRESS);
+        final List<String> heldBefore = UnacknowledgedStanzas.heldIds(sm, OTHER_DOMAIN_PAIR);
+        final boolean givenUpOnRefusal = sm.giveUpUnverified(OTHER_DOMAIN_PAIR, attempt, true, () -> {}, new Object(), router, SERVER_ADDRESS);
+
+        // Verify result.
+        assertFalse(released, "Held stanzas must not be sent while stanzas are queued.");
+        assertFalse(givenUpWithoutRefusal, "A domain pair that was not refused must not be given up while stanzas are queued.");
+        assertEquals(List.of("other-unacked"), heldBefore, "The stanzas must stay held while stanzas are queued.");
+        assertTrue(givenUpOnRefusal, "A refused domain pair must be given up, also while stanzas are queued.");
+        assertEquals(List.of("other-unacked"), routed(router).stream().map(Packet::getID).toList(), "The held stanza of the refused domain pair must be routed again.");
+    }
+
+    /**
+     * Verifies that, when the session closes, held stanzas are handled with the other stanzas: the held unacknowledged
+     * ones with the other unacknowledged ones, and the held stanzas that were never sent before the queued ones, so that
+     * the stanzas of each domain pair keep their order.
+     */
+    @Test
+    public void closeHandlesHeldStanzas() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter router = mock(PacketRouter.class);
+        final RequestingStreamManager sm = resumableStreamManager();
+        sm.sentStanza(other(message("other-unacked")));
+        sm.startQueueing();
+        sm.queue(other(message("other-held")), true);
+        sm.holdUntilVerified(List.of(OTHER_DOMAIN_PAIR));
+        sm.onResume(SERVER_ADDRESS, 0);
+        sm.startQueueing();
+        sm.queue(other(message("other-queued")), true);
+
+        // Execute system under test.
+        sm.onClose(router, SERVER_ADDRESS);
+
+        // Verify result.
+        assertEquals(List.of("other-unacked", "other-held", "other-queued"), routed(router).stream().map(Packet::getID).toList(), "Held stanzas must be routed again with the others, in order.");
+        assertEquals(List.of(), UnacknowledgedStanzas.heldIds(sm, OTHER_DOMAIN_PAIR), "No stanza must stay held after the session closed.");
+    }
+
+    /**
+     * Gives a stanza addresses of {@link #OTHER_DOMAIN_PAIR}.
+     */
+    private static Packet other(final Packet packet)
+    {
+        packet.setFrom(new JID("johndoe", OTHER_DOMAIN_PAIR.getLocal(), "resource"));
+        packet.setTo(new JID(OTHER_DOMAIN_PAIR.getRemote()));
+        return packet;
     }
 
     /**

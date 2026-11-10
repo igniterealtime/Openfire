@@ -25,7 +25,9 @@ import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.nio.NettySessionInitializer;
+import org.jivesoftware.openfire.server.OutgoingSessionPromise;
 import org.jivesoftware.openfire.server.RemoteServerManager;
+import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
 import org.jivesoftware.openfire.streammanagement.RequestingStreamManager;
 import org.jivesoftware.openfire.streammanagement.StreamManager;
@@ -92,6 +94,13 @@ public class LocalOutgoingServerSessionStreamManagementTest
 
     private static final DomainPair DOMAIN_PAIR = new DomainPair(Fixtures.XMPP_DOMAIN, REMOTE_DOMAIN);
 
+    /**
+     * Another domain of the remote server, which a session authenticated with dialback in addition to its own.
+     */
+    private static final String OTHER_REMOTE_DOMAIN = "conference." + REMOTE_DOMAIN;
+
+    private static final DomainPair OTHER_DOMAIN_PAIR = new DomainPair(Fixtures.XMPP_DOMAIN, OTHER_REMOTE_DOMAIN);
+
     private static final JID SERVER_ADDRESS = new JID(Fixtures.XMPP_DOMAIN);
 
     private static final JID SENDER = new JID("johndoe", Fixtures.XMPP_DOMAIN, "test-resource");
@@ -133,6 +142,14 @@ public class LocalOutgoingServerSessionStreamManagementTest
 
     private Executor originalResumptionExecutor;
 
+    private Executor originalVerificationExecutor;
+
+    /**
+     * The socket timeout, in milliseconds, while an attempt to resume a session runs, which limits the wait for the
+     * answer to a dialback request.
+     */
+    private int socketTimeoutMillis;
+
     @BeforeAll
     public static void setUpClass() throws Exception
     {
@@ -173,12 +190,16 @@ public class LocalOutgoingServerSessionStreamManagementTest
 
         originalResumptionExecutor = LocalOutgoingServerSession.resumptionExecutor;
         LocalOutgoingServerSession.resumptionExecutor = resumptionAttempts::add;
+        originalVerificationExecutor = LocalOutgoingServerSession.verificationExecutor;
+        LocalOutgoingServerSession.verificationExecutor = Runnable::run;
+        socketTimeoutMillis = (int) Duration.ofHours(1).toMillis();
     }
 
     @AfterEach
     public void tearDown()
     {
         LocalOutgoingServerSession.resumptionExecutor = originalResumptionExecutor;
+        LocalOutgoingServerSession.verificationExecutor = originalVerificationExecutor;
         Fixtures.clearExistingProperties();
         //noinspection deprecation
         XMPPServer.setInstance(null);
@@ -716,9 +737,9 @@ public class LocalOutgoingServerSessionStreamManagementTest
         assertEquals(List.of("message", "presence"), UnacknowledgedStanzas.sentAgainIds(secondSession.getStreamManager()), "The second session must track the stanzas that were routed again as sent again, and only those.");
 
         final List<Packet> routedAtSecondBreak = routed(secondRouter);
-        assertEquals(List.of("message", "fresh"), routedAtSecondBreak.stream().map(Packet::getID).toList(), "At the second break, each unacknowledged stanza must be handled once, in the order in which it was sent, and the presence that was sent again must be dropped.");
+        assertEquals(List.of("fresh", "message"), routedAtSecondBreak.stream().map(Packet::getID).toList(), "At the second break, each unacknowledged stanza must be handled once, the error for the message that was sent again after the stanza that is routed again, and the presence that was sent again must be dropped.");
 
-        final Message messageError = (Message) routedAtSecondBreak.get(0);
+        final Message messageError = (Message) routedAtSecondBreak.get(1);
         assertEquals(Message.Type.error, messageError.getType(), "A message that was sent again must be returned to its sender as an error, not routed again.");
         assertEquals(SENDER, messageError.getTo(), "The error must be addressed to the sender of the message.");
         assertEquals(new JID(REMOTE_DOMAIN), messageError.getFrom(), "The error must come from the recipient of the message.");
@@ -727,7 +748,7 @@ public class LocalOutgoingServerSessionStreamManagementTest
         assertEquals(PacketError.Type.cancel, messageError.getError().getType(), "The error must have the type 'cancel', the type that RFC 6120 associates with 'service-unavailable'.");
         assertNull(messageError.getBody(), "The error must not include the content of the message.");
 
-        final Packet fresh = routedAtSecondBreak.get(1);
+        final Packet fresh = routedAtSecondBreak.get(0);
         assertEquals(new JID(REMOTE_DOMAIN), fresh.getTo(), "A stanza that was first sent on the second connection must be routed again to its recipient.");
         assertNull(fresh.getError(), "A stanza that was first sent on the second connection must not be turned into an error.");
     }
@@ -974,8 +995,8 @@ public class LocalOutgoingServerSessionStreamManagementTest
         assertFalse(sessionManager.isDetached(resumable), "A session that was detached for longer than the server detach timeout must no longer be detached.");
         verify(routingTable, times(1).description("The route of a session that is ended must be removed.")).removeServerRoute(DOMAIN_PAIR);
         final List<Packet> routed = routed(packetRouter);
-        assertEquals(List.of("unacked", "unacked-request", "queued-1", "queued-2"), routed.stream().map(Packet::getID).toList(), "The unacknowledged stanzas must be handled first, then the queued stanzas must be routed again, in order.");
-        assertEquals(IQ.Type.error, ((IQ) routed.get(1)).getType(), "An unacknowledged IQ request must be returned to its sender as an error, as for a session that closes without being resumed.");
+        assertEquals(List.of("unacked", "queued-1", "queued-2", "unacked-request"), routed.stream().map(Packet::getID).toList(), "The unacknowledged stanza must be routed again first, then the queued stanzas, in order, and the IQ request must be returned as an error last.");
+        assertEquals(IQ.Type.error, ((IQ) routed.get(3)).getType(), "An unacknowledged IQ request must be returned to its sender as an error, as for a session that closes without being resumed.");
         assertEquals(List.of(true, true, true, true), routeRemovedWhenRouted, "Every stanza must be routed only after the route of the session was removed.");
         assertFalse(resumable.getStreamManager().isEnabled(), "Stream Management must be disabled once the session is ended.");
     }
@@ -1051,6 +1072,128 @@ public class LocalOutgoingServerSessionStreamManagementTest
 
         // Verify result.
         assertEquals(List.of(false, false), heldLock, "The route must be removed and the stanza routed, without holding the monitor of the session manager or the lock of the stream manager.");
+    }
+
+    /**
+     * Verifies that a detached session that is ended removes the route of each of its domain pairs, and routes the
+     * stanzas of that domain pair again, while holding the mutex with which stanzas for that domain pair are routed, so
+     * that a stanza for the domain pair that is routed meanwhile cannot go out ahead of them. Stanzas of no domain pair
+     * of the session are routed without holding such a mutex, and no two mutexes are held at once.
+     */
+    @Test
+    public void detachedSessionIsEndedPerDomainPairUnderItsMutex() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        final LocalOutgoingServerSession resumable = resumableSession();
+        resumable.addOutgoingDomainPair(OTHER_DOMAIN_PAIR);
+        resumable.deliver(message("unacked"));
+        doReturn(true).when(connection).isClosed();
+        fireOutgoingConnectionClose(sessionManager, resumable);
+        resumable.deliver(otherMessage("queued-other"));
+        resumable.deliver(message("queued"));
+        final Message unrelated = message("queued-unrelated");
+        unrelated.setTo("unrelated.example.com");
+        resumable.deliver(unrelated);
+
+        final Object mutex = OutgoingSessionPromise.getInstance().getMutex(DOMAIN_PAIR);
+        final Object otherMutex = OutgoingSessionPromise.getInstance().getMutex(OTHER_DOMAIN_PAIR);
+        final List<String> events = new CopyOnWriteArrayList<>();
+        doAnswer(invocation -> { events.add("remove " + invocation.getArgument(0) + " " + Thread.holdsLock(mutex) + "/" + Thread.holdsLock(otherMutex)); return true; }).when(routingTable).removeServerRoute(any(DomainPair.class));
+        doAnswer(invocation -> { events.add("route " + ((Packet) invocation.getArgument(0)).getID() + " " + Thread.holdsLock(mutex) + "/" + Thread.holdsLock(otherMutex)); return null; }).when(packetRouter).route(any(Packet.class));
+
+        // Execute system under test.
+        sessionManager.terminateDetached(resumable);
+
+        // Verify result.
+        final List<String> expectedMain = List.of("remove " + DOMAIN_PAIR + " true/false", "route unacked true/false", "route queued true/false");
+        final List<String> expectedOther = List.of("remove " + OTHER_DOMAIN_PAIR + " false/true", "route queued-other false/true");
+        assertTrue(events.containsAll(expectedMain) && events.containsAll(expectedOther), "For each domain pair, its route must be removed and its stanzas routed again while holding the mutex of that domain pair only, but the events were: " + events);
+        assertEquals(expectedMain, events.stream().filter(expectedMain::contains).toList(), "The route of the domain pair must be removed before its unacknowledged stanza and then its queued stanza are routed again.");
+        assertEquals("route queued-unrelated false/false", events.get(events.size() - 1), "A stanza of no domain pair of the session must be routed last, without holding a mutex of a domain pair.");
+    }
+
+    /**
+     * Verifies that a stanza that is delivered to a detached session while it is ended, before the route of its domain
+     * pair is removed, is handled after the stanzas that were queued before it, and once. This guards the order of the
+     * stanzas of a session that is ended; it does not reproduce two threads that route stanzas for the domain pair at
+     * the same time.
+     */
+    @Test
+    public void stanzaDeliveredWhileDetachedSessionIsEndedIsRoutedAfterEarlierStanzas() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        final LocalOutgoingServerSession resumable = detachedSession(sessionManager);
+        resumable.deliver(message("queued"));
+        doAnswer(invocation -> { resumable.deliver(message("late")); return true; }).when(routingTable).removeServerRoute(DOMAIN_PAIR);
+
+        // Execute system under test.
+        sessionManager.terminateDetached(resumable);
+
+        // Verify result.
+        assertEquals(List.of("queued", "late"), routed(packetRouter).stream().map(Packet::getID).toList(), "A stanza that is delivered while the session is ended must be routed again once, after the stanza that was queued before it.");
+    }
+
+    /**
+     * Verifies that the close listener for outgoing server sessions, for a session that is not detached, removes the
+     * route of each domain pair, and routes the unacknowledged stanzas of that domain pair again, while holding the
+     * mutex with which stanzas for that domain pair are routed.
+     */
+    @Test
+    public void closeListenerRemovesRouteAndRoutesStanzasAgainUnderMutexOfDomainPair() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        session.addOutgoingDomainPair(DOMAIN_PAIR);
+        enableStreamManagement();
+        session.deliver(message("1"));
+        session.deliver(message("2"));
+        doReturn(true).when(connection).isClosed();
+
+        final Object mutex = OutgoingSessionPromise.getInstance().getMutex(DOMAIN_PAIR);
+        final List<String> events = new CopyOnWriteArrayList<>();
+        doAnswer(invocation -> { events.add("remove " + Thread.holdsLock(mutex)); return true; }).when(routingTable).removeServerRoute(DOMAIN_PAIR);
+        doAnswer(invocation -> { events.add("route " + ((Packet) invocation.getArgument(0)).getID() + " " + Thread.holdsLock(mutex)); return null; }).when(packetRouter).route(any(Packet.class));
+
+        // Execute system under test.
+        fireOutgoingConnectionClose(sessionManager);
+
+        // Verify result.
+        assertEquals(List.of("remove true", "route 1 true", "route 2 true"), events, "The route must be removed, and then the unacknowledged stanzas routed again in order, while holding the mutex of the domain pair.");
+    }
+
+    /**
+     * Verifies that the close listener for outgoing server sessions routes the error that returns an unacknowledged IQ
+     * request to its sender without holding the mutex of the domain pair, after the stanzas that are routed again under
+     * that mutex. The error goes to a local sender, which can route other stanzas on the same thread, to another remote
+     * domain, of which another thread can hold the mutex while it waits for this one.
+     */
+    @Test
+    public void closeListenerRoutesErrorsWithoutHoldingMutexOfDomainPair() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        session.addOutgoingDomainPair(DOMAIN_PAIR);
+        enableStreamManagement();
+        session.deliver(iq("request", IQ.Type.get));
+        session.deliver(message("message"));
+        doReturn(true).when(connection).isClosed();
+
+        final Object mutex = OutgoingSessionPromise.getInstance().getMutex(DOMAIN_PAIR);
+        final List<String> events = new CopyOnWriteArrayList<>();
+        doAnswer(invocation -> { events.add("route " + ((Packet) invocation.getArgument(0)).getID() + " " + Thread.holdsLock(mutex)); return null; }).when(packetRouter).route(any(Packet.class));
+
+        // Execute system under test.
+        fireOutgoingConnectionClose(sessionManager);
+
+        // Verify result.
+        assertEquals(List.of("route message true", "route request false"), events, "The message must be routed again while holding the mutex of the domain pair, and the error for the IQ request routed after it, without holding that mutex.");
+        assertEquals(IQ.Type.error, ((IQ) routed(packetRouter).get(1)).getType(), "The unacknowledged IQ request must be returned to its sender as an error.");
     }
 
     /**
@@ -1500,6 +1643,360 @@ public class LocalOutgoingServerSessionStreamManagementTest
     }
 
     /**
+     * Verifies that, after a session with another domain pair is resumed, the stanzas of the domain pair for which the
+     * session was created are sent on the new connection, while those of the other domain pair, including the
+     * unacknowledged ones and those that are delivered after resumption, are held, and are not tracked. The other domain
+     * pair is verified again with dialback, with a key that is generated with the stream ID of the new connection
+     * (decision 2 of OF-2425).
+     */
+    @Test
+    public void stanzasOfOtherDomainPairAreHeldUntilVerifiedAgainAfterResumption() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        final LocalOutgoingServerSession resumable = brokenSessionWithOtherDomainPair(sessionManager);
+        final LocalOutgoingServerSession provider = newSessionForResumption("stream-new");
+        final Connection newConnection = provider.getConnection();
+
+        // Execute system under test.
+        runResumptionAttempt(provider, remoteServerThatResumes(resumable, "0"));
+        resumable.deliver(message("main-after"));
+        resumable.deliver(otherMessage("other-after"));
+
+        // Verify result.
+        assertEquals(List.of("main-unacked", "main-queued", "main-after"), deliveredIds(newConnection), "Only the stanzas of the domain pair for which the session was created must be sent on the new connection, in order.");
+        assertEquals(List.of("other-unacked", "other-queued", "other-after"), UnacknowledgedStanzas.heldIds(resumable.getStreamManager(), OTHER_DOMAIN_PAIR), "The stanzas of the other domain pair must be held, in order.");
+        assertEquals(List.of("main-unacked", "main-queued", "main-after"), UnacknowledgedStanzas.ids(resumable.getStreamManager()), "Held stanzas are not sent, so they must not be tracked.");
+        final List<Element> requests = dialbackRequests(newConnection);
+        assertEquals(1, requests.size(), "One dialback request must be sent on the new connection, for the other domain pair, but these were sent: " + requests);
+        assertEquals(Fixtures.XMPP_DOMAIN, requests.get(0).attributeValue("from"), "The dialback request must be for the local domain of the other domain pair.");
+        assertEquals(OTHER_REMOTE_DOMAIN, requests.get(0).attributeValue("to"), "The dialback request must be for the remote domain of the other domain pair.");
+        assertNotEquals(expectedDialbackKey(OTHER_DOMAIN_PAIR, "stream-resumable"), expectedDialbackKey(OTHER_DOMAIN_PAIR, "stream-new"), "Test fixture expects the keys for different stream IDs to differ.");
+        assertEquals(expectedDialbackKey(OTHER_DOMAIN_PAIR, "stream-new"), requests.get(0).getTextTrim(), "The dialback key must be generated with the stream ID of the stream header on the new connection, with which the remote server verifies it.");
+        assertEquals("stream-new", resumable.getConnectionStreamID().getID(), "The resumed session must report the stream ID of its new connection.");
+        assertEquals("stream-resumable", resumable.getStreamID().getID(), "The resumed session must keep its own stream ID.");
+        assertTrue(resumable.checkOutgoingDomainPair(OTHER_DOMAIN_PAIR), "The other domain pair must stay a domain pair of the session while it is verified again.");
+        verify(packetRouter, never().description("No stanza must be routed again while the other domain pair is verified again.")).route(any(Packet.class));
+    }
+
+    /**
+     * Verifies that, once the other domain pair is verified again, its held stanzas are sent in order, the unacknowledged
+     * ones as sent again, and are numbered after the stanzas that were sent before them, and that a stanza for that
+     * domain pair that is delivered after that is sent at once.
+     */
+    @Test
+    public void heldStanzasAreSentInOrderOnceOtherDomainPairIsVerifiedAgain() throws Exception
+    {
+        // Setup test fixture.
+        final SessionManager sessionManager = useSessionManager(mock(PacketRouter.class));
+        final LocalOutgoingServerSession resumable = brokenSessionWithOtherDomainPair(sessionManager);
+        final LocalOutgoingServerSession provider = newSessionForResumption("stream-new");
+        final Connection newConnection = provider.getConnection();
+        runResumptionAttempt(provider, remoteServerThatResumes(resumable, "0"));
+
+        // Execute system under test.
+        final boolean processed = resumable.processDialbackResult(dialbackResult(OTHER_DOMAIN_PAIR, "valid"));
+        resumable.deliver(otherMessage("other-after"));
+        resumable.getStreamManager().process(ack("5"));
+
+        // Verify result.
+        assertTrue(processed, "The answer to the dialback request must be processed by the session that sent it.");
+        assertEquals(List.of("main-unacked", "main-queued", "other-unacked", "other-queued", "other-after"), deliveredIds(newConnection), "The held stanzas must be sent in order once their domain pair is verified again, followed by the stanza that is delivered after that.");
+        assertEquals(List.of(), UnacknowledgedStanzas.heldIds(resumable.getStreamManager(), OTHER_DOMAIN_PAIR), "No stanza must stay held once its domain pair is verified again.");
+        assertEquals(List.of(), UnacknowledgedStanzas.ids(resumable.getStreamManager()), "An acknowledgement of every stanza that was sent on the resumed stream must remove them all, as they are numbered in the order in which they were sent.");
+        verify(newConnection, never().description("A valid acknowledgement must not close the connection.")).close();
+        assertTrue(resumable.checkOutgoingDomainPair(OTHER_DOMAIN_PAIR), "A domain pair that is verified again must stay a domain pair of the session.");
+        verify(routingTable, never().description("The routes of a domain pair that is verified again must be kept.")).removeServerRoute(any(DomainPair.class));
+    }
+
+    /**
+     * Verifies that the unacknowledged stanzas of a domain pair that is sent again once that is verified are tracked as
+     * sent again: when the stream breaks before the remote server acknowledges them, they are not sent a second time
+     * (decision 4 of OF-2425).
+     */
+    @Test
+    public void heldUnacknowledgedStanzaIsTrackedAsSentAgainOnceVerified() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        final LocalOutgoingServerSession resumable = brokenSessionWithOtherDomainPair(sessionManager);
+        runResumptionAttempt(newSessionForResumption("stream-new"), remoteServerThatResumes(resumable, "0"));
+        resumable.processDialbackResult(dialbackResult(OTHER_DOMAIN_PAIR, "valid"));
+
+        // Execute system under test.
+        resumable.getStreamManager().onClose(packetRouter, SERVER_ADDRESS);
+
+        // Verify result.
+        final List<Packet> routed = routed(packetRouter);
+        assertEquals(List.of("main-queued", "other-queued", "main-unacked", "other-unacked"), routed.stream().map(Packet::getID).toList(), "Every unacknowledged stanza must be handled once, the errors last.");
+        assertEquals("error", routed.get(2).getElement().attributeValue("type"), "A stanza that was sent again on the resumed stream must be returned as an error.");
+        assertEquals("error", routed.get(3).getElement().attributeValue("type"), "A held stanza that was sent again once its domain pair was verified must be returned as an error.");
+        assertNotEquals("error", routed.get(1).getElement().attributeValue("type"), "A held stanza that was queued was sent once only, and must be routed again.");
+    }
+
+    /**
+     * Verifies that, when the remote server refuses the other domain pair, its held unacknowledged stanzas are handled
+     * as when the session closes without being resumed (a message is routed again, an IQ request is returned as an
+     * error), its other held stanzas are routed again after them, and the domain pair is removed from the session, with
+     * its route, while the session and its connection stay as they are.
+     */
+    @Test
+    public void heldStanzasOfRefusedDomainPairAreHandledAsWhenNotResumed() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        final LocalOutgoingServerSession resumable = resumableSessionWithOtherDomainPair();
+        resumable.deliver(otherMessage("other-unacked"));
+        resumable.deliver(otherIq("other-request", IQ.Type.get));
+        breakConnection(sessionManager, resumable);
+        resumable.deliver(otherMessage("other-queued"));
+        final LocalOutgoingServerSession provider = newSessionForResumption("stream-new");
+        final Connection newConnection = provider.getConnection();
+        runResumptionAttempt(provider, remoteServerThatResumes(resumable, "0"));
+
+        // Execute system under test.
+        resumable.processDialbackResult(dialbackResult(OTHER_DOMAIN_PAIR, "invalid"));
+
+        // Verify result.
+        final List<Packet> routed = routed(packetRouter);
+        assertEquals(List.of("other-unacked", "other-queued", "other-request"), routed.stream().map(Packet::getID).toList(), "The held unacknowledged message must be routed again first, then the other held stanza, and the IQ request must be returned as an error last.");
+        assertNull(routed.get(0).getElement().attributeValue("type"), "The unacknowledged message must be routed again, rather than returned as an error.");
+        assertNotNull(routed.get(0).getExtension("delay", "urn:xmpp:delay"), "The unacknowledged message that is routed again must get a delay stamp.");
+        assertEquals("error", routed.get(2).getElement().attributeValue("type"), "The unacknowledged IQ request must be returned to its sender as an error.");
+        assertNull(routed.get(1).getExtension("delay", "urn:xmpp:delay"), "The held stanza that was never sent must not get a delay stamp.");
+        verify(routingTable, times(1).description("The route of the refused domain pair must be removed.")).removeServerRoute(OTHER_DOMAIN_PAIR);
+        verify(routingTable, never().description("The route of the domain pair for which the session was created must be kept.")).removeServerRoute(DOMAIN_PAIR);
+        assertFalse(resumable.checkOutgoingDomainPair(OTHER_DOMAIN_PAIR), "The refused domain pair must be removed from the session.");
+        assertTrue(resumable.isGivenUp(OTHER_DOMAIN_PAIR), "The session must report that it gave up the refused domain pair.");
+        assertEquals(List.of(), UnacknowledgedStanzas.heldIds(resumable.getStreamManager(), OTHER_DOMAIN_PAIR), "No stanza must stay held once its domain pair is given up.");
+        assertEquals(List.of(), deliveredIds(newConnection), "No stanza of the refused domain pair must be sent on the new connection.");
+        assertSame(newConnection, resumable.getConnection(), "The session must keep its connection.");
+        verify(newConnection, never().description("The connection must not be closed when another domain pair is refused.")).close();
+    }
+
+    /**
+     * Verifies that the held unacknowledged stanzas of a domain pair that is given up are not counted for Stream
+     * Management: the stanzas that are sent on the resumed stream are numbered without them, so that an acknowledgement
+     * that also counts them acknowledges stanzas that were not sent (XEP-0198 § 6).
+     */
+    @Test
+    public void heldStanzasOfRefusedDomainPairAreNotCounted() throws Exception
+    {
+        // Setup test fixture.
+        final SessionManager sessionManager = useSessionManager(mock(PacketRouter.class));
+        final LocalOutgoingServerSession resumable = brokenSessionWithOtherDomainPair(sessionManager);
+        final LocalOutgoingServerSession provider = newSessionForResumption("stream-new");
+        final Connection newConnection = provider.getConnection();
+        runResumptionAttempt(provider, remoteServerThatResumes(resumable, "0"));
+        resumable.processDialbackResult(dialbackResult(OTHER_DOMAIN_PAIR, "invalid"));
+
+        // Execute system under test.
+        resumable.getStreamManager().process(ack("3"));
+
+        // Verify result.
+        verify(newConnection, times(1).description("An acknowledgement that counts a stanza that was not sent must close the connection.")).close();
+        final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(newConnection, atLeastOnce().description("A stream error must be sent on the resumed stream.")).deliverRawText(captor.capture());
+        final Element streamError = DocumentHelper.parseText(captor.getValue()).getRootElement();
+        final Element handledCountTooHigh = streamError.element(QName.get("handled-count-too-high", StreamManager.NAMESPACE_V3));
+        assertNotNull(handledCountTooHigh, "The stream error must include a 'handled-count-too-high' element, but was: " + streamError.asXML());
+        assertEquals("2", handledCountTooHigh.attributeValue("send-count"), "Only the two stanzas that were sent on the resumed stream must be counted.");
+    }
+
+    /**
+     * Verifies that a domain pair that cannot be verified again, as the new connection is not authenticated with
+     * dialback, is given up at once, without a dialback request.
+     */
+    @Test
+    public void otherDomainPairIsGivenUpWhenNewConnectionIsNotAuthenticatedWithDialback() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        final LocalOutgoingServerSession resumable = brokenSessionWithOtherDomainPair(sessionManager);
+        final LocalOutgoingServerSession provider = newSessionForResumption("stream-new");
+        provider.setAuthenticationMethod(ServerSession.AuthenticationMethod.SASL_EXTERNAL);
+        final Connection newConnection = provider.getConnection();
+
+        // Execute system under test.
+        runResumptionAttempt(provider, remoteServerThatResumes(resumable, "0"));
+
+        // Verify result.
+        assertEquals(List.of(), dialbackRequests(newConnection), "No dialback request must be sent on a connection that is not authenticated with dialback.");
+        assertEquals(List.of("other-unacked", "other-queued"), routed(packetRouter).stream().map(Packet::getID).toList(), "The stanzas of the other domain pair must be routed again.");
+        verify(routingTable, times(1).description("The route of the other domain pair must be removed.")).removeServerRoute(OTHER_DOMAIN_PAIR);
+        assertFalse(resumable.checkOutgoingDomainPair(OTHER_DOMAIN_PAIR), "The other domain pair must be removed from the session.");
+        assertEquals(List.of("main-unacked", "main-queued"), deliveredIds(newConnection), "The stanzas of the domain pair for which the session was created must be sent.");
+    }
+
+    /**
+     * Verifies that the other domain pair is given up when the remote server does not answer the dialback request in
+     * time, and that an answer that arrives after that is taken for the answer to that request, rather than for one for
+     * the domain pair of the connection.
+     */
+    @Test
+    public void otherDomainPairIsGivenUpWhenRemoteServerDoesNotAnswerInTime() throws Exception
+    {
+        // Setup test fixture.
+        socketTimeoutMillis = 100;
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        final LocalOutgoingServerSession resumable = brokenSessionWithOtherDomainPair(sessionManager);
+        final LocalOutgoingServerSession provider = newSessionForResumption("stream-new");
+        final Connection newConnection = provider.getConnection();
+
+        // Execute system under test.
+        runResumptionAttempt(provider, remoteServerThatResumes(resumable, "0"));
+        // The domain pair is given up on another thread, which removes its route before it routes its stanzas.
+        verify(packetRouter, timeout(5000).times(2).description("Both held stanzas of a domain pair that is not verified in time must be routed again.")).route(any(Packet.class));
+        final boolean processed = resumable.processDialbackResult(dialbackResult(OTHER_DOMAIN_PAIR, "valid"));
+
+        // Verify result.
+        verify(routingTable, times(1).description("The route of a domain pair that is not verified in time must be removed.")).removeServerRoute(OTHER_DOMAIN_PAIR);
+        assertTrue(processed, "An answer that arrives after the timeout must be taken for the answer to the dialback request of the other domain pair.");
+        assertEquals(List.of("other-unacked", "other-queued"), routed(packetRouter).stream().map(Packet::getID).toList(), "The stanzas of the domain pair that is not verified in time must be routed again.");
+        assertEquals(List.of("main-unacked", "main-queued"), deliveredIds(newConnection), "No stanza of the domain pair that is not verified in time must be sent, also not after a late answer.");
+        assertFalse(resumable.checkOutgoingDomainPair(OTHER_DOMAIN_PAIR), "The domain pair that is not verified in time must be removed from the session.");
+    }
+
+    /**
+     * Verifies that the stanzas of the other domain pair stay held when the new connection closes before that domain pair
+     * is verified, and that they are handled, in order behind the earlier stanzas of their domain pair, when the session
+     * ends after that.
+     */
+    @Test
+    public void heldStanzasAreHandledWhenSessionEndsBeforeVerification() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        final LocalOutgoingServerSession resumable = brokenSessionWithOtherDomainPair(sessionManager);
+        final LocalOutgoingServerSession provider = newSessionForResumption("stream-new");
+        final Connection newConnection = provider.getConnection();
+        runResumptionAttempt(provider, remoteServerThatResumes(resumable, "0"));
+        doReturn(true).when(newConnection).isClosed();
+        newConnection.getCloseFuture().toCompletableFuture().complete(null);
+        fireOutgoingConnectionClose(sessionManager, resumable);
+        resumable.deliver(otherMessage("other-queued-again"));
+        final List<String> heldWhileDetached = UnacknowledgedStanzas.heldIds(resumable.getStreamManager(), OTHER_DOMAIN_PAIR);
+
+        // Execute system under test.
+        sessionManager.terminateDetached(resumable);
+
+        // Verify result.
+        assertEquals(List.of("other-unacked", "other-queued"), heldWhileDetached, "The stanzas of the other domain pair must stay held when the connection closes before it is verified.");
+        final List<String> routedIds = routed(packetRouter).stream().map(Packet::getID).toList();
+        assertEquals(List.of("main-queued", "other-unacked", "other-queued", "other-queued-again", "main-unacked"), routedIds, "Every stanza must be handled when the session ends, those of the other domain pair in order, and the error for the stanza that was sent again on the resumed stream last.");
+        verify(routingTable, times(1).description("The route of the other domain pair must be removed when the session ends.")).removeServerRoute(OTHER_DOMAIN_PAIR);
+    }
+
+    /**
+     * Verifies that a domain pair that a resumed session gave up gets a connection of its own, rather than being
+     * authenticated again on the connection of that session.
+     */
+    @Test
+    public void givenUpDomainPairGetsConnectionOfItsOwn() throws Exception
+    {
+        // Setup test fixture.
+        doReturn(mock(PacketRouter.class)).when(xmppServer).getPacketRouter();
+        final SessionManager sessionManager = spy(new SessionManager());
+        sessionManager.initialize(xmppServer);
+        doReturn(sessionManager).when(xmppServer).getSessionManager();
+        final LocalOutgoingServerSession resumable = brokenSessionWithOtherDomainPair(sessionManager);
+        final LocalOutgoingServerSession provider = newSessionForResumption("stream-new");
+        final Connection resumedConnection = provider.getConnection();
+        runResumptionAttempt(provider, remoteServerThatResumes(resumable, "0"));
+        resumable.processDialbackResult(dialbackResult(OTHER_DOMAIN_PAIR, "invalid"));
+        doReturn(resumable).when(routingTable).getServerRoute(DOMAIN_PAIR);
+        final IncomingServerSession incoming = mock(IncomingServerSession.class, withSettings().lenient());
+        doReturn(List.of(OTHER_REMOTE_DOMAIN, REMOTE_DOMAIN)).when(incoming).getValidatedDomains();
+        doReturn(List.of(incoming)).when(sessionManager).getIncomingServerSessions(OTHER_REMOTE_DOMAIN);
+        final LocalOutgoingServerSession newConnectionSession = newSessionWithStreamManagement("stream-other");
+        final int initialisersBefore = initialisers.size();
+
+        // Execute system under test.
+        final DomainAuthResult result = authenticateDomain(OTHER_DOMAIN_PAIR, newConnectionSession);
+
+        // Verify result.
+        assertTrue(result.isSuccess(), "Authentication of the given up domain pair was expected to succeed on a connection of its own. Diagnostic log: " + result.getDiagnosticLog());
+        assertEquals(initialisersBefore + 1, initialisers.size(), "A connection of its own must be opened for the given up domain pair.");
+        assertTrue(newConnectionSession.checkOutgoingDomainPair(OTHER_DOMAIN_PAIR), "The given up domain pair must be authenticated on the new connection.");
+        assertFalse(resumable.checkOutgoingDomainPair(OTHER_DOMAIN_PAIR), "The given up domain pair must not be added to the resumed session again.");
+        assertEquals(1, dialbackRequests(resumedConnection).size(), "No other dialback request must be sent on the connection of the resumed session.");
+    }
+
+    /**
+     * Creates a session as {@link #resumableSession()} does, which also has {@link #OTHER_DOMAIN_PAIR}, as a session that
+     * was authenticated with dialback, on which another domain pair was authenticated.
+     */
+    private LocalOutgoingServerSession resumableSessionWithOtherDomainPair()
+    {
+        final LocalOutgoingServerSession resumable = resumableSession();
+        resumable.setAuthenticationMethod(ServerSession.AuthenticationMethod.DIALBACK);
+        resumable.addOutgoingDomainPair(OTHER_DOMAIN_PAIR);
+        clearInvocations(connection, routingTable);
+        return resumable;
+    }
+
+    /**
+     * Creates a session as {@link #resumableSessionWithOtherDomainPair()} does, which sends a stanza for each of its
+     * domain pairs, of which the connection then breaks, after which a stanza for each domain pair is queued.
+     */
+    private LocalOutgoingServerSession brokenSessionWithOtherDomainPair(final SessionManager sessionManager) throws Exception
+    {
+        final LocalOutgoingServerSession resumable = resumableSessionWithOtherDomainPair();
+        resumable.deliver(message("main-unacked"));
+        resumable.deliver(otherMessage("other-unacked"));
+        breakConnection(sessionManager, resumable);
+        resumable.deliver(message("main-queued"));
+        resumable.deliver(otherMessage("other-queued"));
+        return resumable;
+    }
+
+    /**
+     * Returns the dialback requests (db:result elements with a key) that were delivered on the provided connection.
+     */
+    private static List<Element> dialbackRequests(final Connection target) throws Exception
+    {
+        final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(target, atLeast(0)).deliverRawText(captor.capture());
+        final List<Element> result = new ArrayList<>();
+        for (final String text : captor.getAllValues()) {
+            if (text.startsWith("<db:result")) {
+                result.add(DocumentHelper.parseText("<root xmlns:db='jabber:server:dialback'>" + text + "</root>").getRootElement().elements().get(0));
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Returns the dialback key that Openfire sends for the provided domain pair on a connection of which the stream
+     * header carries the provided stream ID.
+     */
+    private static String expectedDialbackKey(final DomainPair domainPair, final String streamId) throws Exception
+    {
+        final Connection other = mock(Connection.class);
+        new ServerDialback(other, domainPair).createAndSendDialbackKey(streamId);
+        final List<Element> requests = dialbackRequests(other);
+        assertEquals(1, requests.size(), "Test fixture expects one dialback request to be generated.");
+        return requests.get(0).getTextTrim();
+    }
+
+    /**
+     * Returns the answer of the remote server to a dialback request for the provided domain pair.
+     */
+    private static Element dialbackResult(final DomainPair domainPair, final String type)
+    {
+        return DocumentHelper.createElement(QName.get("result", "db", "jabber:server:dialback"))
+            .addAttribute("from", domainPair.getRemote())
+            .addAttribute("to", domainPair.getLocal())
+            .addAttribute("type", type);
+    }
+
+    /**
      * Breaks the connection of the provided session that can be resumed, as the connection does when it closes, and has
      * the close listener of the provided session manager detach it, which starts an attempt to resume it.
      */
@@ -1573,6 +2070,7 @@ public class LocalOutgoingServerSessionStreamManagementTest
         {
             remoteServers.when(() -> RemoteServerManager.canAccess(anyString())).thenReturn(true);
             remoteServers.when(() -> RemoteServerManager.getPortForServer(anyString())).thenReturn(5269);
+            remoteServers.when(RemoteServerManager::getSocketTimeout).thenReturn(socketTimeoutMillis);
 
             attempt.run();
             initialisers.addAll(constructed.constructed());
@@ -1796,6 +2294,20 @@ public class LocalOutgoingServerSessionStreamManagementTest
         return message;
     }
 
+    private static Message otherMessage(final String id)
+    {
+        final Message message = message(id);
+        message.setTo(OTHER_REMOTE_DOMAIN);
+        return message;
+    }
+
+    private static IQ otherIq(final String id, final IQ.Type type)
+    {
+        final IQ iq = iq(id, type);
+        iq.setTo(OTHER_REMOTE_DOMAIN);
+        return iq;
+    }
+
     private static Presence presence(final String id)
     {
         final Presence presence = new Presence();
@@ -1857,5 +2369,23 @@ public class LocalOutgoingServerSessionStreamManagementTest
         final Field lastActiveDate = LocalSession.class.getDeclaredField("lastActiveDate");
         lastActiveDate.setAccessible(true);
         lastActiveDate.set(target, moment.toEpochMilli());
+    }
+    /**
+     * Invokes {@link LocalOutgoingServerSession#authenticateDomain(DomainPair)} for the provided domain pair, where
+     * opening a new connection gives the provided session.
+     */
+    private DomainAuthResult authenticateDomain(final DomainPair domainPair, final LocalOutgoingServerSession newConnectionSession)
+    {
+        try (final MockedStatic<RemoteServerManager> remoteServers = mockStatic(RemoteServerManager.class);
+             final MockedConstruction<NettySessionInitializer> constructed = mockConstruction(NettySessionInitializer.class,
+                 (initialiser, context) -> doReturn(CompletableFuture.completedFuture(newConnectionSession)).when(initialiser).init(any())))
+        {
+            remoteServers.when(() -> RemoteServerManager.canAccess(anyString())).thenReturn(true);
+            remoteServers.when(() -> RemoteServerManager.getPortForServer(anyString())).thenReturn(5269);
+
+            final DomainAuthResult result = LocalOutgoingServerSession.authenticateDomain(domainPair);
+            initialisers.addAll(constructed.constructed());
+            return result;
+        }
     }
 }

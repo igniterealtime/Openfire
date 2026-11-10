@@ -25,6 +25,7 @@ import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.server.ServerDialback;
 import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
@@ -55,6 +56,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.*;
 
 /**
@@ -72,6 +74,8 @@ import static org.mockito.Mockito.*;
 public class RespondingServerStanzaHandlerStreamManagementTest
 {
     private static final String REMOTE_DOMAIN = "remote.example.org";
+
+    private static final DomainPair OTHER_DOMAIN_PAIR = new DomainPair(Fixtures.XMPP_DOMAIN, "conference." + REMOTE_DOMAIN);
 
     private static final String SM_FEATURE_V2 = "<sm xmlns='" + StreamManager.NAMESPACE_V2 + "'/>";
     private static final String SM_FEATURE_V3 = "<sm xmlns='" + StreamManager.NAMESPACE_V3 + "'/>";
@@ -593,6 +597,129 @@ public class RespondingServerStanzaHandlerStreamManagementTest
     }
 
     /**
+     * Verifies that an answer of the remote server to a request to resume a stream that Openfire gave up on is ignored:
+     * the detached session is not resumed on the connection.
+     */
+    @Test
+    public void resumedAfterResumeWasAbandonedIsIgnored() throws Exception
+    {
+        // Setup test fixture.
+        final LocalOutgoingServerSession target = detachedSession();
+        handler = new RespondingServerStanzaHandler(mock(PacketRouter.class), connection, new DomainPair(Fixtures.XMPP_DOMAIN, REMOTE_DOMAIN), target);
+        doAnswer(invocation -> { handler.setSession(invocation.getArgument(0)); return null; }).when(connection).reinit(any());
+        authenticate(ServerSession.AuthenticationMethod.DIALBACK, SM_FEATURE_V3);
+        final RequestingStreamManager.ResumeRequestStatus statusBeforeAbandoning = streamManager().getResumeRequestStatus();
+        final boolean abandoned = handler.abandonResume();
+
+        // Execute system under test.
+        handler.process("<resumed xmlns='" + StreamManager.NAMESPACE_V3 + "' previd='sm-id-former' h='1'/>", reader);
+
+        // Verify result.
+        assertEquals(RequestingStreamManager.ResumeRequestStatus.PENDING, statusBeforeAbandoning, "Test fixture expects the request to resume the stream to have been sent, and to await an answer, before it is given up.");
+        assertTrue(abandoned, "A request that awaits an answer must be reported as given up.");
+        assertEquals(RequestingStreamManager.ResumeRequestStatus.ABANDONED, streamManager().getResumeRequestStatus(), "The request must be recorded as given up.");
+        assertTrue(XMPPServer.getInstance().getSessionManager().isDetached(target), "The detached session must not be resumed by an answer that arrives after the request was given up.");
+        assertNotSame(target, handler.getSession(), "The connection must not be attached to the detached session.");
+    }
+
+    /**
+     * Verifies that, once Openfire gave up on resuming a stream on a connection, no request to resume it is sent on the
+     * session that the restart of the stream after SASL EXTERNAL creates later.
+     */
+    @Test
+    public void resumeIsNotSentAfterStreamRestartWhenAbandonedBefore() throws Exception
+    {
+        // Setup test fixture.
+        final LocalOutgoingServerSession target = detachedSession();
+        handler = new RespondingServerStanzaHandler(mock(PacketRouter.class), connection, new DomainPair(Fixtures.XMPP_DOMAIN, REMOTE_DOMAIN), target);
+        handler.process(streamHeader("stream-1"), reader);
+        handler.process(features("<mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'><mechanism>EXTERNAL</mechanism></mechanisms>"), reader);
+        handler.process("<success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>", reader);
+
+        // Execute system under test.
+        final boolean abandoned = handler.abandonResume();
+        handler.process(streamHeader("stream-2"), reader);
+        handler.process(features(SM_FEATURE_V3), reader);
+
+        // Verify result.
+        assertTrue(abandoned, "A request that was not sent must be reported as given up.");
+        assertEquals("stream-2", handler.getSession().getStreamID().getID(), "Test fixture expects the stream to have been restarted with a new session.");
+        assertTrue(allDelivered().stream().noneMatch(text -> text.startsWith("<resume")), "No request to resume the stream must be sent after Openfire gave up on it, but these were delivered: " + allDelivered());
+    }
+
+    /**
+     * Verifies that giving up on resuming a stream after the remote server answered the request reports that it was
+     * answered, so that the processing of that answer takes care of the detached session.
+     */
+    @Test
+    public void abandonAfterAnswerReportsAnswered() throws Exception
+    {
+        // Setup test fixture.
+        final LocalOutgoingServerSession target = detachedSession();
+        handler = new RespondingServerStanzaHandler(mock(PacketRouter.class), connection, new DomainPair(Fixtures.XMPP_DOMAIN, REMOTE_DOMAIN), target);
+        authenticate(ServerSession.AuthenticationMethod.DIALBACK, SM_FEATURE_V3);
+        final RequestingStreamManager providerStreamManager = streamManager();
+        // The refusal ends the detached session on another thread, which is awaited below, before the server is reset.
+        final SessionManager sessionManager = mock(SessionManager.class);
+        doReturn(sessionManager).when(XMPPServer.getInstance()).getSessionManager();
+        handler.process("<failed xmlns='" + StreamManager.NAMESPACE_V3 + "'><item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/></failed>", reader);
+
+        // Execute system under test.
+        final boolean abandoned = handler.abandonResume();
+
+        // Verify result.
+        assertEquals(RequestingStreamManager.ResumeRequestStatus.ANSWERED, providerStreamManager.getResumeRequestStatus(), "Test fixture expects the request to have been answered.");
+        assertFalse(abandoned, "A request that the remote server answered must not be reported as given up.");
+        verify(sessionManager, timeout(5000).times(1).description("The detached session must be ended when the remote server refuses to resume its stream.")).terminateDetached(target);
+    }
+
+    /**
+     * Verifies that, once the remote server resumed the stream of a session with another domain pair on a connection
+     * that is authenticated with dialback, Openfire verifies that domain pair again with dialback, with a key that is
+     * generated with the stream ID of the stream header on the connection, and that the answer of the remote server is
+     * passed to the resumed session, rather than taken for the result of the dialback for the domain pair of the
+     * connection: a valid answer sends the held stanza, an invalid one routes it again, and neither closes the connection
+     * (decision 2 of OF-2425).
+     */
+    @ParameterizedTest
+    @ValueSource(strings = {"valid", "invalid"})
+    public void dialbackAnswerForOtherDomainPairIsPassedToResumedSession(final String type) throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter router = mock(PacketRouter.class);
+        doReturn(router).when(XMPPServer.getInstance()).getPacketRouter();
+        final LocalOutgoingServerSession target = detachedSession();
+        target.addOutgoingDomainPair(OTHER_DOMAIN_PAIR);
+        final Message held = message("other-held");
+        held.setFrom(OTHER_DOMAIN_PAIR.getLocal());
+        held.setTo(OTHER_DOMAIN_PAIR.getRemote());
+        target.getStreamManager().queue(held, true);
+        handler = new RespondingServerStanzaHandler(mock(PacketRouter.class), connection, new DomainPair(Fixtures.XMPP_DOMAIN, REMOTE_DOMAIN), target);
+        // As NettyConnection#reinit does, the stanza handler continues with the session that takes over the connection.
+        doAnswer(invocation -> { handler.setSession(invocation.getArgument(0)); return null; }).when(connection).reinit(any());
+        authenticate(ServerSession.AuthenticationMethod.DIALBACK, SM_FEATURE_V3);
+        handler.process("<resumed xmlns='" + StreamManager.NAMESPACE_V3 + "' previd='sm-id-former' h='1'/>", reader);
+
+        // Execute system under test.
+        handler.process("<db:result xmlns:db='jabber:server:dialback' from='" + OTHER_DOMAIN_PAIR.getRemote() + "' to='" + OTHER_DOMAIN_PAIR.getLocal() + "' type='" + type + "'/>", reader);
+
+        // Verify result.
+        final List<String> requests = allDelivered().stream().filter(text -> text.startsWith("<db:result") && text.contains("to=\"" + OTHER_DOMAIN_PAIR.getRemote() + "\"")).toList();
+        assertEquals(List.of(dialbackRequest(OTHER_DOMAIN_PAIR, "stream-1")), requests, "The other domain pair must be verified again with one dialback request, with a key that is generated with the stream ID of the stream header on the connection.");
+        if ("valid".equals(type)) {
+            verify(connection, timeout(5000).times(1).description("The held stanza must be sent once its domain pair is verified again.")).deliver(argThat(packet -> "other-held".equals(packet.getID())));
+            assertTrue(target.checkOutgoingDomainPair(OTHER_DOMAIN_PAIR), "A domain pair that is verified again must stay a domain pair of the session.");
+        } else {
+            verify(router, timeout(5000).times(1).description("The held stanza of a refused domain pair must be routed again.")).route(argThat((Packet packet) -> "other-held".equals(packet.getID())));
+            assertFalse(target.checkOutgoingDomainPair(OTHER_DOMAIN_PAIR), "A refused domain pair must be removed from the session.");
+            verify(connection, never().description("No stanza of a refused domain pair must be sent.")).deliver(argThat(packet -> "other-held".equals(packet.getID())));
+        }
+        assertSame(target, handler.getSession(), "The connection must stay attached to the resumed session.");
+        verify(connection, never().description("The connection must not be closed.")).close(any(StreamError.class));
+        verify(connection, never().description("The connection must not be closed.")).close();
+    }
+
+    /**
      * Creates a detached outgoing server session, on a connection of its own, of which the stream can be resumed. It
      * tracks three stanzas, of which the remote server acknowledged the first, and queued one. A session manager is used
      * that holds the detached sessions.
@@ -651,6 +778,19 @@ public class RespondingServerStanzaHandlerStreamManagementTest
         }
         assertTrue(handler.isSessionAuthenticated().isDone(), "Openfire was expected to be authenticated; without that this test proves nothing.");
         assertEquals(method, ((ServerSession) handler.getSession()).getAuthenticationMethod(), "Openfire was expected to be authenticated with " + method + "; without that this test proves nothing.");
+    }
+
+    /**
+     * Returns the dialback request that Openfire sends for the provided domain pair on a connection of which the stream
+     * header carries the provided stream ID.
+     */
+    private static String dialbackRequest(final DomainPair domainPair, final String streamId)
+    {
+        final Connection other = mock(Connection.class);
+        new ServerDialback(other, domainPair).createAndSendDialbackKey(streamId);
+        final ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+        verify(other, description("Test fixture expects a dialback request to be sent.")).deliverRawText(captor.capture());
+        return captor.getValue();
     }
 
     private static String streamHeader(final String streamId)

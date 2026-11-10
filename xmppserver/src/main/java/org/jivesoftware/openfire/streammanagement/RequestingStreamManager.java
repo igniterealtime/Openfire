@@ -24,6 +24,8 @@ import org.jivesoftware.openfire.Connection;
 import org.jivesoftware.openfire.PacketRouter;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.server.OutgoingSessionPromise;
+import org.jivesoftware.openfire.session.DomainPair;
 import org.jivesoftware.openfire.session.LocalOutgoingServerSession;
 import org.jivesoftware.openfire.session.LocalSession;
 import org.jivesoftware.util.SystemProperty;
@@ -45,10 +47,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * XEP-0198 Stream Management at the end of a stream that asks for it, and that the peer answers, such as a connection
@@ -78,7 +85,8 @@ import java.util.concurrent.CompletableFuture;
  * Such a session is resumed on a new connection, of which the session asks the peer to resume the stream (see
  * {@link #requestResume(LocalOutgoingServerSession, Collection)}). When the peer agrees, the connection is attached to
  * the session that is resumed, which then sends the stanzas that the peer did not receive, followed by the queued
- * stanzas (see {@link #onResume(JID, long)}).
+ * stanzas (see {@link #onResume(JID, long)}). The stanzas of domain pairs that are to be verified again on the new
+ * connection are held until that is done (see {@link #holdUntilVerified(Collection)}).
  *
  * @author Guus der Kinderen, guus@goodbytes.nl
  */
@@ -235,6 +243,53 @@ public class RequestingStreamManager extends StreamManager
      * instance.
      */
     private boolean queueLimitExceeded = false;
+
+    /**
+     * The stanzas of the domain pairs that are held until each is verified again on the connection on which the stream
+     * is resumed (decision 2 of OF-2425), by domain pair. Guarded by the lock of this instance.
+     */
+    private final Map<DomainPair, HeldStanzas> held = new HashMap<>();
+
+    /**
+     * Whether the stanzas of the session are being handled, or were handled, as the session closed without being resumed
+     * (see {@link #onClose(PacketRouter, JID, Collection, Consumer)}). Guarded by the lock of this instance.
+     */
+    private boolean closing = false;
+
+
+    /**
+     * The stanzas of one domain pair that are held until the domain pair is verified again: the unacknowledged stanzas
+     * that were not sent again on the resumed stream, which are not counted, and the stanzas that were queued or
+     * delivered for it, which were never sent, each in the order in which they were sent or delivered.
+     */
+    private static final class HeldStanzas
+    {
+        private final List<UnacknowledgedStanzaQueue.Entry> unacknowledged = new ArrayList<>();
+        private final List<Packet> queued = new ArrayList<>();
+        @Nullable
+        private VerificationAttempt attempt;
+
+        private boolean isEmpty()
+        {
+            return unacknowledged.isEmpty() && queued.isEmpty();
+        }
+    }
+
+    /**
+     * An attempt to verify a domain pair again, of which the stanzas are held, on a connection of the session (see
+     * {@link #startVerification(DomainPair, Connection)}). Only the most recent attempt for a domain pair can release or
+     * give up its stanzas.
+     */
+    public static final class VerificationAttempt
+    {
+        @Nonnull
+        private final Connection connection;
+
+        private VerificationAttempt(@Nonnull final Connection connection)
+        {
+            this.connection = connection;
+        }
+    }
 
     /**
      * Stanzas that are routed again after the session on which they were unacknowledged closed, so that the session that
@@ -673,6 +728,10 @@ public class RequestingStreamManager extends StreamManager
      * When more stanzas are queued than {@link #MAX_QUEUED_WHILE_BROKEN} allows, the stanza is queued, and the session
      * is ended, which routes the queued stanzas again.
      *
+     * Otherwise, a copy of a stanza of a domain pair of which the stanzas are held (see
+     * {@link #holdUntilVerified(Collection)}) is held behind them, also when the connection of the session is open. Held
+     * stanzas do not count towards {@link #MAX_QUEUED_WHILE_BROKEN}.
+     *
      * The caller that holds the lock of this instance while it decides between this and sending a stanza, can rely on
      * a stanza not being sent once stanzas are queued.
      *
@@ -690,6 +749,15 @@ public class RequestingStreamManager extends StreamManager
                 return false;
             }
             if ( !queueing ) {
+                final HeldStanzas heldForPair = heldFor( packet );
+                if ( heldForPair != null ) {
+                    // OF-2425: held behind the earlier stanzas of its domain pair, until that is verified again (decision 2).
+                    final Packet copy = packet.createCopy();
+                    copyRoutedAgainMarker( packet, copy );
+                    heldForPair.queued.add( copy );
+                    Log.trace( "Holding '{}' stanza of type '{}' with ID '{}' for session {}, until domain pair {} is verified again.", packet.getElement().getName(), packet.getElement().attributeValue( "type" ), packet.getID(), session, pairOf( packet ) );
+                    return true;
+                }
                 if ( !connectionBroken || !getResume() || !StreamManager.SERVER_RESUME_ENABLED.getValue() ) {
                     return false;
                 }
@@ -835,10 +903,15 @@ public class RequestingStreamManager extends StreamManager
      * Stanzas that were queued while the connection of the session was broken (see {@link #queue(Packet, boolean)})
      * were never sent. They are routed again after the unacknowledged stanzas, in the order in which they were queued,
      * without a delay stamp, and keep the marker of a stanza that was routed again before. No stanza is queued after
-     * this.
+     * this. The errors that return stanzas to their senders are routed after all other stanzas.
+     *
+     * The stanzas of domain pairs that are held until they are verified again (see {@link #holdUntilVerified(Collection)})
+     * are handled in the same way: their unacknowledged stanzas with the other unacknowledged ones, and the stanzas that
+     * were never sent before the queued ones, so that the stanzas of each domain pair keep their order.
      *
      * This must be invoked after the routes of the session are removed. While the session is a route, a stanza that is
-     * routed again reaches that session rather than another connection.
+     * routed again reaches that session rather than another connection. To have the routes removed as part of this,
+     * use {@link #onClose(PacketRouter, JID, Collection, Consumer)}.
      *
      * @param router the router used to route the stanzas.
      * @param serverAddress this server's bare-domain address, used to stamp delay information on messages and presences.
@@ -846,19 +919,155 @@ public class RequestingStreamManager extends StreamManager
     @Override
     public void onClose(PacketRouter router, JID serverAddress)
     {
-        final Collection<UnacknowledgedStanzaQueue.Entry> unacknowledged;
-        final List<Packet> queued;
+        onClose( router, serverAddress, List.of(), domainPair -> {} );
+    }
+
+    /**
+     * Removes the routes of the provided domain pairs of the session, and handles the stanzas of the session as
+     * {@link #onClose(PacketRouter, JID)} describes, for a session that closed without being resumed.
+     *
+     * This is done one domain pair at a time: while holding the mutex with which stanzas for a domain pair are routed
+     * ({@link OutgoingSessionPromise#getMutex(DomainPair)}), the route of the domain pair is removed, and its stanzas are
+     * handled, its unacknowledged ones first. A stanza for the domain pair that is routed meanwhile waits for that mutex,
+     * and then follows them to another connection. Stanzas that are queued until then are among the stanzas that are
+     * handled. The stanzas that belong to none of the provided domain pairs are handled after that, without holding a
+     * mutex. The routes are removed also when Stream Management is not enabled, in which case no stanzas are handled.
+     *
+     * The errors that are returned to the senders of stanzas are routed last, without holding a mutex: they go to local
+     * senders, which can route other stanzas in turn, for example to another remote domain, of which the mutex can be
+     * held by another thread that waits for one held here.
+     *
+     * This must be invoked without holding the lock of this instance.
+     *
+     * @param router the router used to route the stanzas.
+     * @param serverAddress this server's bare-domain address, used to stamp delay information on messages and presences.
+     * @param domainPairs the domain pairs of the session, of which the routes are to be removed.
+     * @param removeRoute removes the route of a domain pair. A failure to remove one does not keep the stanzas of that
+     *                    domain pair from being handled, or the other routes from being removed.
+     */
+    public void onClose(@Nonnull final PacketRouter router, @Nonnull final JID serverAddress, @Nonnull final Collection<DomainPair> domainPairs, @Nonnull final Consumer<DomainPair> removeRoute)
+    {
+        final List<UnacknowledgedStanzaQueue.Entry> unacknowledged = new ArrayList<>();
+        final List<Packet> heldQueued = new ArrayList<>();
+        final boolean handleStanzas;
         synchronized ( this ) {
-            if ( !isEnabled() ) {
-                return;
+            // OF-2425: Stays enabled until all domain pairs are done, so that stanzas delivered meanwhile are queued, and handled below.
+            handleStanzas = isEnabled() && !closing;
+            if ( handleStanzas ) {
+                closing = true;
+                unacknowledged.addAll( getUnacknowledgedEntries() );
+                for ( final HeldStanzas heldForPair : held.values() ) {
+                    unacknowledged.addAll( heldForPair.unacknowledged );
+                    heldQueued.addAll( heldForPair.queued );
+                }
+                held.clear();
             }
-            unacknowledged = getUnacknowledgedEntries();
-            queued = new ArrayList<>( queuedStanzas );
+        }
+        final int unacknowledgedCount = unacknowledged.size();
+
+        Handled handled = new Handled( 0, 0, 0 );
+        int queuedCount = 0;
+        final List<Packet> errors = new ArrayList<>();
+        for ( final DomainPair domainPair : domainPairs ) {
+            // OF-2425: One mutex at a time, never nested. The lock of this instance is taken inside it, as giveUpUnverified does.
+            synchronized ( OutgoingSessionPromise.getInstance().getMutex( domainPair ) ) {
+                try {
+                    removeRoute.accept( domainPair );
+                } catch ( Exception e ) {
+                    Log.warn( "Unable to remove route {} of session {}, which closed without being resumed.", domainPair, session, e );
+                }
+                if ( handleStanzas ) {
+                    final List<Packet> queued = takeOf( heldQueued, domainPair );
+                    synchronized ( this ) {
+                        queued.addAll( takeOf( queuedStanzas, domainPair ) );
+                    }
+                    handled = handled.plus( routeAgainOrReturn( takeOf( unacknowledged, domainPair, UnacknowledgedStanzaQueue.Entry::getPacket ), router, serverAddress, errors ) );
+                    routeQueued( queued, router );
+                    queuedCount += queued.size();
+                }
+            }
+        }
+        if ( !handleStanzas ) {
+            return;
+        }
+
+        final List<Packet> queued = new ArrayList<>( heldQueued );
+        synchronized ( this ) {
+            queued.addAll( queuedStanzas );
             queuedStanzas.clear();
             setNamespace( null );
         }
-
         // OF-2425: The stanzas are routed without holding the lock, as routing can deliver them to another session.
+        handled = handled.plus( routeAgainOrReturn( unacknowledged, router, serverAddress, errors ) );
+        routeQueued( queued, router );
+        queuedCount += queued.size();
+        routeErrors( errors, router );
+        if ( unacknowledgedCount > 0 || queuedCount > 0 ) {
+            Log.debug( "Session {} closed without being resumed, with {} unacknowledged stanza(s): {} routed again, {} returned to the sender as an error, {} dropped as no error can be returned for them. Queued stanzas that were never sent, routed again: {}. Routes removed first: {}", session, unacknowledgedCount, handled.sentAgain(), handled.returned(), handled.dropped(), queuedCount, domainPairs );
+        }
+    }
+
+    /**
+     * Removes the stanzas of a domain pair from a collection, and returns them.
+     *
+     * @param stanzas The stanzas, from which those of the domain pair are removed.
+     * @param domainPair The domain pair.
+     * @return the stanzas of the domain pair, in the order of the collection.
+     */
+    @Nonnull
+    private static List<Packet> takeOf(@Nonnull final Collection<Packet> stanzas, @Nonnull final DomainPair domainPair)
+    {
+        return takeOf( stanzas, domainPair, packet -> packet );
+    }
+
+    /**
+     * Removes the elements of a collection of which the stanza belongs to a domain pair, and returns them.
+     *
+     * @param elements The elements, from which those of the domain pair are removed.
+     * @param domainPair The domain pair.
+     * @param stanzaOf Gives the stanza of an element.
+     * @return the elements of the domain pair, in the order of the collection.
+     */
+    @Nonnull
+    private static <T> List<T> takeOf(@Nonnull final Collection<T> elements, @Nonnull final DomainPair domainPair, @Nonnull final Function<T, Packet> stanzaOf)
+    {
+        final List<T> result = new ArrayList<>();
+        for ( final Iterator<T> iterator = elements.iterator(); iterator.hasNext(); ) {
+            final T element = iterator.next();
+            if ( domainPair.equals( pairOf( stanzaOf.apply( element ) ) ) ) {
+                iterator.remove();
+                result.add( element );
+            }
+        }
+        return result;
+    }
+
+    /**
+     * The number of unacknowledged stanzas that were routed again, returned to their sender as an error, or dropped.
+     */
+    private record Handled(int sentAgain, int returned, int dropped)
+    {
+        private Handled plus(@Nonnull final Handled other)
+        {
+            return new Handled( sentAgain + other.sentAgain, returned + other.returned, dropped + other.dropped );
+        }
+    }
+
+    /**
+     * Handles stanzas that the peer did not acknowledge, and that are not sent again on this stream: each is routed
+     * again, or returned to its sender as an error, or dropped, as described in {@link #onClose(PacketRouter, JID)}.
+     * The errors are not routed, but added to the provided list, to be routed with {@link #routeErrors(List, PacketRouter)}.
+     * This must be invoked without holding the lock of this instance.
+     *
+     * @param unacknowledged The unacknowledged stanzas, in the order in which they were sent.
+     * @param router the router used to route the stanzas.
+     * @param serverAddress this server's bare-domain address, used to stamp delay information on messages and presences.
+     * @param errors the list to which the errors that are to be returned to the senders of stanzas are added.
+     * @return how the stanzas were handled.
+     */
+    @Nonnull
+    private Handled routeAgainOrReturn(@Nonnull final Collection<UnacknowledgedStanzaQueue.Entry> unacknowledged, @Nonnull final PacketRouter router, @Nonnull final JID serverAddress, @Nonnull final List<Packet> errors)
+    {
         int sentAgain = 0;
         int returned = 0;
         int dropped = 0;
@@ -876,26 +1085,55 @@ public class RequestingStreamManager extends StreamManager
                 final Packet error = createErrorResponse( packet );
                 Log.trace( "Not routing unacknowledged '{}' stanza of type '{}' with ID '{}' of session {} again (sent again before: {}). Returning it to its sender as an error: {}", packet.getElement().getName(), packet.getElement().attributeValue( "type" ), packet.getID(), session, entry.isSentAgain(), error != null );
                 if ( error != null ) {
-                    router.route( error );
+                    errors.add( error );
                     returned++;
                 } else {
                     dropped++;
                 }
             } catch ( Exception e ) {
                 // The stanza itself is not logged, as it can have private content.
-                Log.warn( "Unable to handle an unacknowledged '{}' stanza of type '{}' with ID '{}', of session {} that closed.", packet.getElement().getName(), packet.getElement().attributeValue( "type" ), packet.getID(), session, e );
+                Log.warn( "Unable to handle an unacknowledged '{}' stanza of type '{}' with ID '{}', of session {}.", packet.getElement().getName(), packet.getElement().attributeValue( "type" ), packet.getID(), session, e );
             }
         }
+        return new Handled( sentAgain, returned, dropped );
+    }
+
+    /**
+     * Routes errors that return stanzas to their senders, in order. This must be invoked without holding the lock of this
+     * instance or a mutex of {@link OutgoingSessionPromise#getMutex(DomainPair)}: the errors go to local senders, which
+     * can route other stanzas in turn, for example to a remote domain of which another thread holds the mutex while it
+     * waits for one held here.
+     *
+     * @param errors The errors.
+     * @param router the router used to route the errors.
+     */
+    private void routeErrors(@Nonnull final List<Packet> errors, @Nonnull final PacketRouter router)
+    {
+        for ( final Packet error : errors ) {
+            try {
+                router.route( error );
+            } catch ( Exception e ) {
+                Log.warn( "Unable to route the '{}' error with ID '{}' that returns an unacknowledged stanza of session {} to its sender.", error.getElement().getName(), error.getID(), session, e );
+            }
+        }
+    }
+
+    /**
+     * Routes stanzas that were queued or held, and never sent, again, in order, so that they go out over another
+     * connection. This must be invoked without holding the lock of this instance.
+     *
+     * @param queued The stanzas, in the order in which they were delivered.
+     * @param router the router used to route the stanzas.
+     */
+    private void routeQueued(@Nonnull final Collection<Packet> queued, @Nonnull final PacketRouter router)
+    {
         // OF-2425: Queued stanzas were never sent, so they go out over a new connection after the unacknowledged ones (decision 7).
         for ( final Packet packet : queued ) {
             try {
                 router.route( packet );
             } catch ( Exception e ) {
-                Log.warn( "Unable to route a queued '{}' stanza of type '{}' with ID '{}', of session {} that closed.", packet.getElement().getName(), packet.getElement().attributeValue( "type" ), packet.getID(), session, e );
+                Log.warn( "Unable to route a queued '{}' stanza of type '{}' with ID '{}', of session {}.", packet.getElement().getName(), packet.getElement().attributeValue( "type" ), packet.getID(), session, e );
             }
-        }
-        if ( !unacknowledged.isEmpty() || !queued.isEmpty() ) {
-            Log.debug( "Session {} closed without being resumed, with {} unacknowledged stanza(s): {} routed again, {} returned to the sender as an error, {} dropped as no error can be returned for them. Queued stanzas that were never sent, routed again: {}", session, unacknowledged.size(), sentAgain, returned, dropped, queued.size() );
         }
     }
 
@@ -1001,6 +1239,11 @@ public class RequestingStreamManager extends StreamManager
      * stanzas that were not sent again stay unacknowledged, without being marked as sent again. When it closes while the
      * queued stanzas are sent, the stanzas that were not sent stay queued, and queueing continues.
      *
+     * The stanzas of domain pairs of which the stanzas are held (see {@link #holdUntilVerified(Collection)}) are not
+     * sent, but held, in order: the unacknowledged ones that are to be sent again, which are then not counted, so that
+     * the others are numbered as the peer counts them, and the queued ones. A stanza of such a domain pair that was sent
+     * again before is returned to its sender as an error, or dropped, as for any other domain pair.
+     *
      * When the maximum number of unacknowledged stanzas was exceeded while the session was detached, the stream is
      * closed instead, after which the session closes as one that cannot be resumed.
      *
@@ -1026,20 +1269,39 @@ public class RequestingStreamManager extends StreamManager
                 return;
             }
 
-            notSentAgain = removeSentAgainAndRenumber();
+            // OF-2425: Held stanzas are removed before the others are numbered again, as they are not sent now (decision 2).
+            notSentAgain = new ArrayList<>();
+            int heldUnacknowledged = 0;
+            for ( final UnacknowledgedStanzaQueue.Entry entry : removeAndRenumber( entry -> entry.isSentAgain() || heldFor( entry.getPacket() ) != null ) ) {
+                if ( entry.isSentAgain() ) {
+                    notSentAgain.add( entry );
+                } else {
+                    Objects.requireNonNull( heldFor( entry.getPacket() ) ).unacknowledged.add( entry );
+                    heldUnacknowledged++;
+                }
+            }
+            int heldQueued = 0;
+            for ( final Iterator<Packet> iterator = queuedStanzas.iterator(); iterator.hasNext(); ) {
+                final Packet packet = iterator.next();
+                final HeldStanzas heldForPair = heldFor( packet );
+                if ( heldForPair != null ) {
+                    iterator.remove();
+                    heldForPair.queued.add( packet );
+                    heldQueued++;
+                }
+            }
+            if ( !held.isEmpty() ) {
+                Log.debug( "Holding stanzas of domain pairs {} on resumed session {} until they are verified again: {} unacknowledged, {} queued.", held.keySet(), session, heldUnacknowledged, heldQueued );
+            }
+
             int sentAgain = 0;
             for ( final UnacknowledgedStanzaQueue.Entry entry : getUnacknowledgedEntries() ) {
                 if ( connection.isClosed() ) {
                     // OF-2425: The stanzas that are not sent keep their number, and have not used their one retry (decision 4).
                     break;
                 }
-                final Packet packet = entry.getPacket();
-                if ( ( packet instanceof Message || packet instanceof Presence ) && packet.getExtension( "delay", "urn:xmpp:delay" ) == null ) {
-                    final Element delayInformation = packet.getElement().addElement( "delay", "urn:xmpp:delay" );
-                    delayInformation.addAttribute( "stamp", XMPPDateTimeFormat.format( entry.getTimestamp() ) );
-                    delayInformation.addAttribute( "from", serverAddress.toBareJID() );
-                }
-                deliverOnResumedConnection( connection, packet );
+                addDelayStamp( entry, serverAddress );
+                deliverOnResumedConnection( connection, entry.getPacket() );
                 entry.markSentAgain();
                 sentAgain++;
             }
@@ -1078,6 +1340,240 @@ public class RequestingStreamManager extends StreamManager
                 }
             }
         }
+    }
+
+    /**
+     * Gives a message or presence that is sent again a delay stamp (XEP-0203) with the time at which it was first sent,
+     * unless it has one already.
+     *
+     * @param entry The unacknowledged stanza that is sent again.
+     * @param serverAddress this server's bare-domain address, which is recorded as the entity that delayed the stanza.
+     */
+    private static void addDelayStamp(@Nonnull final UnacknowledgedStanzaQueue.Entry entry, @Nonnull final JID serverAddress)
+    {
+        final Packet packet = entry.getPacket();
+        if ( ( packet instanceof Message || packet instanceof Presence ) && packet.getExtension( "delay", "urn:xmpp:delay" ) == null ) {
+            final Element delayInformation = packet.getElement().addElement( "delay", "urn:xmpp:delay" );
+            delayInformation.addAttribute( "stamp", XMPPDateTimeFormat.format( entry.getTimestamp() ) );
+            delayInformation.addAttribute( "from", serverAddress.toBareJID() );
+        }
+    }
+
+    /**
+     * Holds the stanzas of the provided domain pairs, which are to be verified again on the connection on which the
+     * stream of the session is resumed, before stanzas are sent for them (decision 2 of OF-2425). From then on, until a
+     * domain pair is verified again or given up, its stanzas are not sent: the unacknowledged ones are not sent again when
+     * the stream is resumed (see {@link #onResume(JID, long)}), and the queued ones and those that are delivered after
+     * that are held behind them (see {@link #queue(Packet, boolean)}). When the session closes, they are handled as the
+     * unacknowledged and queued stanzas of the session are (see {@link #onClose(PacketRouter, JID)}).
+     *
+     * The stanzas of a domain pair are those that are sent from its local domain to its remote domain. Stanzas of a
+     * domain pair that are held already stay held, also on a stream that is resumed again.
+     *
+     * @param domainPairs The domain pairs of which to hold the stanzas.
+     */
+    public synchronized void holdUntilVerified(@Nonnull final Collection<DomainPair> domainPairs)
+    {
+        for ( final DomainPair domainPair : domainPairs ) {
+            held.computeIfAbsent( domainPair, pair -> new HeldStanzas() );
+        }
+        if ( !domainPairs.isEmpty() ) {
+            Log.debug( "Holding the stanzas of domain pairs {} of session {} until each is verified again. Domain pairs held: {}", domainPairs, session, held.keySet() );
+        }
+    }
+
+    /**
+     * Starts an attempt to verify a domain pair of which the stanzas are held (see {@link #holdUntilVerified(Collection)})
+     * on the provided connection of the session. The attempt replaces an earlier one for the same domain pair, which can
+     * then no longer release or give up its stanzas.
+     *
+     * @param domainPair The domain pair to verify.
+     * @param connection The connection of the session on which the domain pair is verified.
+     * @return the attempt, or null when the stanzas of the domain pair are not held.
+     */
+    @Nullable
+    public synchronized VerificationAttempt startVerification(@Nonnull final DomainPair domainPair, @Nonnull final Connection connection)
+    {
+        final HeldStanzas heldForPair = held.get( domainPair );
+        if ( heldForPair == null ) {
+            return null;
+        }
+        heldForPair.attempt = new VerificationAttempt( connection );
+        return heldForPair.attempt;
+    }
+
+    /**
+     * Sends the held stanzas of a domain pair that was verified again on the connection of the session, and stops
+     * holding the stanzas of that domain pair: first its unacknowledged stanzas, which are tracked as sent again, then its
+     * queued stanzas, in order. Messages and presences that are sent again get a delay stamp (XEP-0203) with the time at
+     * which they were first sent, if they do not have one. A stanza that is delivered meanwhile is held under the lock of
+     * this instance, which is held while the stanzas are sent, so that it is sent after them.
+     *
+     * Nothing is sent when the attempt is not the most recent one for the domain pair, when the session no longer uses
+     * the connection of the attempt, when that connection is closed, or when stanzas are queued. The stanzas then stay
+     * held, to be verified on the connection on which the stream is resumed next, or handled when the session closes.
+     * When the connection closes while the stanzas are sent, the stanzas that were not sent stay held.
+     *
+     * @param domainPair The domain pair that was verified.
+     * @param attempt The attempt that verified it.
+     * @param serverAddress this server's bare-domain address, used to stamp delay information on stanzas sent again.
+     * @return true if the held stanzas of the domain pair were sent, and its stanzas are no longer held.
+     */
+    public boolean releaseVerified(@Nonnull final DomainPair domainPair, @Nonnull final VerificationAttempt attempt, @Nonnull final JID serverAddress)
+    {
+        synchronized ( this ) {
+            final HeldStanzas heldForPair = held.get( domainPair );
+            if ( heldForPair == null || !isCurrent( heldForPair, attempt ) ) {
+                Log.debug( "Not sending the held stanzas of domain pair {} on session {}, as it was verified by an attempt that is not the most recent one, or on a connection that the session no longer uses or that is closed (held: {}, queueing: {}).", domainPair, session, heldForPair != null, queueing );
+                return false;
+            }
+            heldForPair.attempt = null;
+            final Connection connection = attempt.connection;
+            int sentAgain = 0;
+            for ( final Iterator<UnacknowledgedStanzaQueue.Entry> iterator = heldForPair.unacknowledged.iterator(); iterator.hasNext() && !connection.isClosed(); ) {
+                final UnacknowledgedStanzaQueue.Entry entry = iterator.next();
+                iterator.remove();
+                addDelayStamp( entry, serverAddress );
+                deliverOnResumedConnection( connection, entry.getPacket() );
+                // OF-2425: Numbered now, as it was not counted when the stream was resumed.
+                sentStanza( entry.getPacket(), true );
+                sentAgain++;
+            }
+            int sentQueued = 0;
+            for ( final Iterator<Packet> iterator = heldForPair.queued.iterator(); iterator.hasNext() && !connection.isClosed(); ) {
+                final Packet packet = iterator.next();
+                iterator.remove();
+                deliverOnResumedConnection( connection, packet );
+                sentStanza( packet, isRoutedAgain( packet ) );
+                sentQueued++;
+            }
+            final boolean released = heldForPair.isEmpty();
+            if ( released ) {
+                held.remove( domainPair );
+            }
+            Log.debug( "Domain pair {} of session {} is verified again: sent again {} unacknowledged stanza(s), sent {} held stanza(s). Stanzas that remain held, as the connection closed: {}", domainPair, session, sentAgain, sentQueued, heldForPair.unacknowledged.size() + heldForPair.queued.size() );
+            if ( sentAgain > 0 || sentQueued > 0 ) {
+                requestOutboundAcknowledgement();
+            }
+            return released;
+        }
+    }
+
+    /**
+     * Stops holding the stanzas of a domain pair that could not be verified again, and handles them as when the session
+     * closes without being resumed (decision 4 of OF-2425, see {@link #onClose(PacketRouter, JID)}): its unacknowledged
+     * stanzas are routed again, or returned to their sender as an error, and its other held stanzas, which were never
+     * sent, are routed again after them, in order. The provided action, which removes the domain pair from the session
+     * and its route, so that the stanzas reach another connection, runs before the stanzas are routed.
+     *
+     * The action runs, and the stanzas are routed again, while holding the provided mutex, with which stanzas for the
+     * domain pair are routed ({@link OutgoingSessionPromise#getMutex(DomainPair)}), so that a stanza for the domain pair
+     * that is routed meanwhile, which then reaches another connection, follows them. The errors that return stanzas to
+     * their senders are routed after that, without holding the mutex (see {@link #routeErrors(List, PacketRouter)}).
+     *
+     * Nothing is done when the attempt is not the most recent one for the domain pair. When the remote server did not
+     * refuse the domain pair, for example when it did not answer in time, nothing is done either when the session no
+     * longer uses the connection of the attempt, when that connection is closed, or when stanzas are queued: the stanzas
+     * then stay held, to be verified on the connection on which the stream is resumed next, or handled when the session
+     * closes.
+     *
+     * This must be invoked without holding the lock of this instance, or the provided mutex.
+     *
+     * @param domainPair The domain pair that could not be verified.
+     * @param attempt The attempt that did not verify it.
+     * @param refused Whether the remote server refused the domain pair, or it cannot be verified on the connection.
+     * @param removeDomainPair Removes the domain pair from the session, and its route.
+     * @param mutex The mutex with which stanzas for the domain pair are routed.
+     * @param router the router used to route the stanzas.
+     * @param serverAddress this server's bare-domain address, used to stamp delay information on messages and presences.
+     * @return true if the stanzas of the domain pair were handled, and are no longer held.
+     */
+    public boolean giveUpUnverified(@Nonnull final DomainPair domainPair, @Nonnull final VerificationAttempt attempt, final boolean refused, @Nonnull final Runnable removeDomainPair, @Nonnull final Object mutex, @Nonnull final PacketRouter router, @Nonnull final JID serverAddress)
+    {
+        final HeldStanzas heldForPair;
+        final Handled handled;
+        final List<Packet> errors = new ArrayList<>();
+        synchronized ( mutex ) {
+            synchronized ( this ) {
+                final HeldStanzas candidate = held.get( domainPair );
+                if ( candidate == null || candidate.attempt != attempt || ( !refused && !isCurrent( candidate, attempt ) ) ) {
+                    Log.debug( "Not giving up domain pair {} of session {}, as the attempt to verify it is not the most recent one, or it was not refused while the session no longer uses the connection of the attempt, or that is closed (held: {}, refused: {}, queueing: {}).", domainPair, session, candidate != null, refused, queueing );
+                    return false;
+                }
+                held.remove( domainPair );
+                heldForPair = candidate;
+            }
+            removeDomainPair.run();
+            handled = routeAgainOrReturn( heldForPair.unacknowledged, router, serverAddress, errors );
+            routeQueued( heldForPair.queued, router );
+        }
+        routeErrors( errors, router );
+        Log.debug( "Gave up domain pair {} of session {}, as it was not verified again (refused: {}), with {} unacknowledged stanza(s): {} routed again, {} returned to the sender as an error, {} dropped as no error can be returned for them. Held stanzas that were never sent, routed again: {}", domainPair, session, refused, heldForPair.unacknowledged.size(), handled.sentAgain(), handled.returned(), handled.dropped(), heldForPair.queued.size() );
+        return true;
+    }
+
+    /**
+     * Checks whether an attempt to verify a domain pair is the most recent one, on the connection that the session uses,
+     * which is open, while no stanzas are queued. The caller holds the lock of this instance.
+     *
+     * @param heldForPair The held stanzas of the domain pair.
+     * @param attempt The attempt.
+     * @return true if the attempt is the most recent one, on the open connection that the session uses.
+     */
+    private boolean isCurrent(@Nonnull final HeldStanzas heldForPair, @Nonnull final VerificationAttempt attempt)
+    {
+        return heldForPair.attempt == attempt && !queueing && isEnabled() && session.getConnection() == attempt.connection && !attempt.connection.isClosed();
+    }
+
+    /**
+     * Returns the held stanzas of the domain pair of a stanza, if the stanzas of that domain pair are held. The caller
+     * holds the lock of this instance.
+     *
+     * @param packet The stanza.
+     * @return the held stanzas of its domain pair, or null when they are not held.
+     */
+    @Nullable
+    private HeldStanzas heldFor(@Nonnull final Packet packet)
+    {
+        if ( held.isEmpty() ) {
+            return null;
+        }
+        final DomainPair domainPair = pairOf( packet );
+        return domainPair == null ? null : held.get( domainPair );
+    }
+
+    /**
+     * Returns the domain pair of a stanza: the domain of its sender and the domain of its recipient.
+     *
+     * @param packet The stanza.
+     * @return the domain pair, or null when the stanza is not addressed.
+     */
+    @Nullable
+    private static DomainPair pairOf(@Nonnull final Packet packet)
+    {
+        final JID from = packet.getFrom();
+        final JID to = packet.getTo();
+        return from == null || to == null ? null : new DomainPair( from.getDomain(), to.getDomain() );
+    }
+
+    /**
+     * Returns the stanzas that are held for a domain pair: its unacknowledged stanzas, followed by the others,
+     * as an unmodifiable copy that does not reflect later changes.
+     *
+     * @param domainPair The domain pair.
+     * @return the held stanzas, or an empty list when the stanzas of the domain pair are not held.
+     */
+    @Nonnull
+    synchronized List<Packet> getHeldStanzas(@Nonnull final DomainPair domainPair)
+    {
+        final HeldStanzas heldForPair = held.get( domainPair );
+        if ( heldForPair == null ) {
+            return List.of();
+        }
+        final List<Packet> result = new ArrayList<>();
+        heldForPair.unacknowledged.forEach( entry -> result.add( entry.getPacket() ) );
+        result.addAll( heldForPair.queued );
+        return List.copyOf( result );
     }
 
     /**

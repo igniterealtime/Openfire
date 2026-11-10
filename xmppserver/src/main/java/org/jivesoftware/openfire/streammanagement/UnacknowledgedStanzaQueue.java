@@ -28,6 +28,7 @@ import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.IntSupplier;
+import java.util.function.Predicate;
 
 /**
  * The outbound stanzas of a stream that the peer has not acknowledged yet (XEP-0198 § 4), in the order in which they
@@ -368,10 +369,25 @@ class UnacknowledgedStanzaQueue
     @Nonnull
     synchronized List<Entry> removeSentAgainAndRenumber()
     {
+        return removeAndRenumber(Entry::isSentAgain);
+    }
+
+    /**
+     * Prepares the stanzas in the queue to be sent again on a resumed stream, as {@link #removeSentAgainAndRenumber()}
+     * does, but removes the stanzas that match the provided condition instead of those that were sent again before. The
+     * stanzas that are removed are not counted: the stanzas that remain are numbered directly after the number of
+     * acknowledged stanzas, as the peer counts them when only those are sent again, in that order.
+     *
+     * @param toRemove the condition for the stanzas to remove.
+     * @return the stanzas that were removed, in the order in which they were sent.
+     */
+    @Nonnull
+    synchronized List<Entry> removeAndRenumber(@Nonnull final Predicate<Entry> toRemove)
+    {
         final List<Entry> removed = new LinkedList<>();
         final List<Entry> remaining = new LinkedList<>();
         for (final Entry entry : entries) {
-            if (entry.isSentAgain()) {
+            if (toRemove.test(entry)) {
                 removed.add(entry);
             } else {
                 remaining.add(entry);

@@ -1379,6 +1379,89 @@ public class LocalOutgoingServerSessionStreamManagementTest
     }
 
     /**
+     * Verifies that authenticating a domain pair of a detached session succeeds without opening a new connection, as the
+     * detached session stays the route for it (decision 7).
+     */
+    @Test
+    public void authenticateDomainForDomainPairOfDetachedSessionOpensNoConnection() throws Exception
+    {
+        // Setup test fixture.
+        final SessionManager sessionManager = useSessionManager(mock(PacketRouter.class));
+        final LocalOutgoingServerSession resumable = detachedSession(sessionManager);
+        doReturn(resumable).when(routingTable).getServerRoute(DOMAIN_PAIR);
+
+        // Execute system under test.
+        final DomainAuthResult result = authenticateDomain(DOMAIN_PAIR, newSessionWithStreamManagement("stream-new"));
+
+        // Verify result.
+        assertTrue(result.isSuccess(), "Authentication of a domain pair of a detached session was expected to succeed. Diagnostic log: " + result.getDiagnosticLog());
+        assertEquals(List.of(), initialisers, "No new connection must be opened for a domain pair of a detached session.");
+        verify(routingTable, never().description("No other session must be added as a route for a domain pair of a detached session.")).addServerRoute(any(DomainPair.class), any(LocalOutgoingServerSession.class));
+        assertTrue(sessionManager.isDetached(resumable), "The session must stay detached.");
+    }
+
+    /**
+     * Verifies that a detached session is not used to authenticate another domain of the same remote server with
+     * dialback, whatever authentication method it reports, as it has no connection on which to do so: the other domain
+     * pair gets a connection of its own, and the detached session keeps only its own domain pairs.
+     */
+    @Test
+    public void authenticateDomainForOtherDomainOfRemoteServerDoesNotUseDetachedSession() throws Exception
+    {
+        // Setup test fixture.
+        doReturn(mock(PacketRouter.class)).when(xmppServer).getPacketRouter();
+        final SessionManager sessionManager = spy(new SessionManager());
+        sessionManager.initialize(xmppServer);
+        doReturn(sessionManager).when(xmppServer).getSessionManager();
+        final LocalOutgoingServerSession resumable = resumableSession();
+        resumable.setDetached();
+        resumable.setAuthenticationMethod(ServerSession.AuthenticationMethod.DIALBACK);
+        doReturn(resumable).when(routingTable).getServerRoute(DOMAIN_PAIR);
+
+        final String otherRemoteDomain = "conference." + REMOTE_DOMAIN;
+        final DomainPair otherPair = new DomainPair(Fixtures.XMPP_DOMAIN, otherRemoteDomain);
+        final IncomingServerSession incoming = mock(IncomingServerSession.class, withSettings().lenient());
+        doReturn(List.of(otherRemoteDomain, REMOTE_DOMAIN)).when(incoming).getValidatedDomains();
+        doReturn(List.of(incoming)).when(sessionManager).getIncomingServerSessions(otherRemoteDomain);
+        final LocalOutgoingServerSession newConnectionSession = newSessionWithStreamManagement("stream-other");
+
+        // Execute system under test.
+        final DomainAuthResult result = authenticateDomain(otherPair, newConnectionSession);
+
+        // Verify result.
+        assertTrue(result.isSuccess(), "Authentication of the other domain pair was expected to succeed on a connection of its own. Diagnostic log: " + result.getDiagnosticLog());
+        assertEquals(1, initialisers.size(), "A connection of its own must be opened for a domain pair that the detached session does not have.");
+        assertTrue(newConnectionSession.checkOutgoingDomainPair(otherPair), "The other domain pair must be authenticated on the new connection.");
+        assertFalse(resumable.checkOutgoingDomainPair(otherPair), "The other domain pair must not be added to the detached session.");
+        assertTrue(sessionManager.isDetached(resumable), "The session must stay detached.");
+    }
+
+    /**
+     * Verifies that a domain pair of another local domain gets a connection of its own while a session for the same
+     * remote domain is detached, as it does while that session is connected, and is not added to the detached session.
+     */
+    @Test
+    public void authenticateDomainForOtherLocalDomainOpensConnectionOfItsOwn() throws Exception
+    {
+        // Setup test fixture.
+        final SessionManager sessionManager = useSessionManager(mock(PacketRouter.class));
+        final LocalOutgoingServerSession resumable = detachedSession(sessionManager);
+        doReturn(resumable).when(routingTable).getServerRoute(DOMAIN_PAIR);
+        final DomainPair otherPair = new DomainPair("conference." + Fixtures.XMPP_DOMAIN, REMOTE_DOMAIN);
+        final LocalOutgoingServerSession newConnectionSession = newSessionWithStreamManagement("stream-other");
+
+        // Execute system under test.
+        final DomainAuthResult result = authenticateDomain(otherPair, newConnectionSession);
+
+        // Verify result.
+        assertTrue(result.isSuccess(), "Authentication of the domain pair of another local domain was expected to succeed on a connection of its own. Diagnostic log: " + result.getDiagnosticLog());
+        assertEquals(1, initialisers.size(), "A connection of its own must be opened for the domain pair of another local domain.");
+        assertTrue(newConnectionSession.checkOutgoingDomainPair(otherPair), "The domain pair of the other local domain must be authenticated on the new connection.");
+        assertFalse(resumable.checkOutgoingDomainPair(otherPair), "The domain pair of the other local domain must not be added to the detached session.");
+        assertTrue(sessionManager.isDetached(resumable), "The session must stay detached.");
+    }
+
+    /**
      * Verifies that a session that is detached when its connection breaks is resumed on a new connection, of which the
      * session is not made a route: Openfire asks the remote server to resume the stream, and once it did, the stanzas
      * that the remote server did not receive are sent first, then the queued stanzas, in order, and then the stanzas that
@@ -2950,18 +3033,9 @@ public class LocalOutgoingServerSessionStreamManagementTest
      */
     private DomainAuthResult authenticateDomain()
     {
-        try (final MockedStatic<RemoteServerManager> remoteServers = mockStatic(RemoteServerManager.class);
-             final MockedConstruction<NettySessionInitializer> constructed = mockConstruction(NettySessionInitializer.class,
-                 (initialiser, context) -> doReturn(CompletableFuture.completedFuture(session)).when(initialiser).init(any())))
-        {
-            remoteServers.when(() -> RemoteServerManager.canAccess(anyString())).thenReturn(true);
-            remoteServers.when(() -> RemoteServerManager.getPortForServer(anyString())).thenReturn(5269);
-
-            final DomainAuthResult result = LocalOutgoingServerSession.authenticateDomain(DOMAIN_PAIR);
-            initialisers.addAll(constructed.constructed());
-            return result;
-        }
+        return authenticateDomain(DOMAIN_PAIR, session);
     }
+
     /**
      * Invokes {@link LocalOutgoingServerSession#authenticateDomain(DomainPair)} for the provided domain pair, where
      * opening a new connection gives the provided session.

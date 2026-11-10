@@ -211,11 +211,15 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
      * This implementation will attempt to re-use an existing connection. A connection is deemed re-usable when it is either:
      * <ul>
      *     <li>authenticated to the remote domain itself, or:</li>
-     *     <li>authenticated to a sub- or superdomain of the remote domain AND offers dialback AND did not give up the
-     *     domain pair after its stream was resumed.</li>
+     *     <li>authenticated to a sub- or superdomain of the remote domain AND offers dialback AND is not detached AND
+     *     did not give up the domain pair after its stream was resumed.</li>
      * </ul>
      *
      * When no re-usable connection exists, a new connection will be created.
+     *
+     * A session that is detached, while its stream can be resumed, stays the route for the domain pairs that it has, so
+     * a domain pair that it has is authenticated already. A detached session has no connection, so it cannot be used to
+     * authenticate another domain pair: for such a domain pair, a new connection is created.
      *
      * DNS will be used to find hosts for the remote domain. When DNS records do not specify a port, port 5269 will be
      * used unless this default is overridden by the <b>xmpp.server.socket.remotePort</b> property.
@@ -292,8 +296,15 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
                             log.debug( "An outgoing session to a different domain ('{}') hosted on the remote domain was found.", otherRemoteDomain );
                             diagnosticLog.add("DEBUG: " + fmt("An outgoing session to a different domain ('{}') hosted on the remote domain was found.", otherRemoteDomain));
 
+                            // OF-2425: a detached session has no connection on which to authenticate another domain, and keeps only the domain pairs that it has (decision 7).
+                            if ( session.isDetached() )
+                            {
+                                log.debug( "The session for '{}' is detached, and waits to be resumed. It cannot be used to authenticate another domain pair, and is not re-used.", otherRemoteDomain );
+                                diagnosticLog.add("DEBUG: " + fmt("The session for '{}' is detached, and waits to be resumed. It cannot be used to authenticate another domain pair, and is not re-used.", otherRemoteDomain));
+                                session = null;
+                            }
                             // OF-2425: the remote server did not accept this domain pair again on the connection of that session (decision 2).
-                            if ( session instanceof LocalOutgoingServerSession localSession && localSession.isGivenUp(domainPair) )
+                            else if ( session instanceof LocalOutgoingServerSession localSession && localSession.isGivenUp(domainPair) )
                             {
                                 log.debug( "The session for '{}' gave up domain pair {}, as it was not verified again after its stream was resumed. It is not re-used.", otherRemoteDomain, domainPair );
                                 diagnosticLog.add("DEBUG: " + fmt("The session for '{}' gave up domain pair {}, as it was not verified again after its stream was resumed. It is not re-used.", otherRemoteDomain, domainPair));

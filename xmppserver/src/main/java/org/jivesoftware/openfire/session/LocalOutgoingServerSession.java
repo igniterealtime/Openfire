@@ -175,6 +175,9 @@ public class LocalOutgoingServerSession extends LocalServerSession implements Ou
      * An existing connection is re-used when it is authenticated for the domain pair. Otherwise, a new connection is
      * created: a connection is not used to authenticate a domain pair other than those it was authenticated for.
      *
+     * A session that is detached, while its stream can be resumed, stays the route for its domain pair, which is then
+     * authenticated already. Any other domain pair gets a new connection, as it does while that session is connected.
+     *
      * DNS will be used to find hosts for the remote domain. When DNS records do not specify a port, port 5269 will be
      * used unless this default is overridden by the <b>xmpp.server.socket.remotePort</b> property.
      *

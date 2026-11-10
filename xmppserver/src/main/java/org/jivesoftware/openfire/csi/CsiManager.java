@@ -195,9 +195,18 @@ public class CsiManager
 
     /**
      * Switch to the client state of 'inactive'.
+     *
+     * This is ignored when Client State Indication is not available to the session (the functionality is disabled by
+     * configuration, or the session has not been authenticated), which mirrors the conditions under which the stream
+     * feature is advertised. Not advertising the feature does not stop a client from using it.
      */
     public synchronized void deactivate()
     {
+        if (!ENABLED.getValue() || session.getAuthToken() == null) {
+            Log.debug("Not switching session for '{}' to CSI 'inactive', as the functionality is not available to it.", session.getAddress());
+            return;
+        }
+
         Log.trace("Session for '{}' to CSI 'inactive'", session.getAddress());
         active = false;
     }
@@ -234,7 +243,8 @@ public class CsiManager
         queue.add(packet);
 
         final boolean mustPush = !flushingOnActivate // Never flush while activation is in progress, as this can cause out-of-order delivery.
-            && (   !DELAY_ENABLED.getValue() // The feature is disabled by configuration. Always send stanzas immediately.
+            && (   !ENABLED.getValue() // CSI is disabled by configuration (possibly after the client became inactive). Always send stanzas immediately.
+                || !DELAY_ENABLED.getValue() // The feature is disabled by configuration. Always send stanzas immediately.
                 || active // The client is active! Do not delay.
                 || queue.size() >= DELAY_QUEUE_CAPACITY.getValue() // The delay queue has reached its capacity. Flush the entire thing.
                 || Instant.now().isAfter(lastPush.plus(DELAY_MAX_DURATION.getValue())) // Ensure that periodically, delayed data is sent anyway.

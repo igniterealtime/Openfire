@@ -86,15 +86,16 @@ public class S2STestService {
 
         // Tear down existing routes.
         final SessionManager sessionManager = SessionManager.getInstance();
+        // OF-2425: Made non-resumable, so that the sessions are ended rather than kept to be resumed.
         for (final Session incomingServerSession : sessionManager.getIncomingServerSessions( domain.getDomain() ) )
         {
-            incomingServerSession.close();
+            sessionManager.closeWithoutResumption( incomingServerSession );
         }
 
         final Session outgoingServerSession = sessionManager.getOutgoingServerSession( pair );
         if ( outgoingServerSession != null )
         {
-            outgoingServerSession.close();
+            sessionManager.closeWithoutResumption( outgoingServerSession );
         }
 
         final IQ pingRequest = new IQ( Type.get );

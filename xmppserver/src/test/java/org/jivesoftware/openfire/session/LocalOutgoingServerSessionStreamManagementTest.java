@@ -25,6 +25,7 @@ import org.jivesoftware.openfire.RoutingTable;
 import org.jivesoftware.openfire.SessionManager;
 import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.nio.NettySessionInitializer;
+import org.jivesoftware.openfire.nio.NetworkEntityUnreachableException;
 import org.jivesoftware.openfire.server.OutgoingSessionPromise;
 import org.jivesoftware.openfire.server.RemoteServerManager;
 import org.jivesoftware.openfire.spi.BasicStreamIDFactory;
@@ -58,6 +59,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -1588,6 +1590,115 @@ public class LocalOutgoingServerSessionStreamManagementTest
     }
 
     /**
+     * Verifies that an attempt to resume a detached session that is interrupted while it connects, for example as
+     * Openfire shuts down, ends the session instead of scheduling another attempt, and keeps the interrupt. Connecting
+     * keeps the interrupt, and reports it as a remote domain that cannot be reached.
+     */
+    @Test
+    public void detachedSessionIsEndedWhenAttemptIsInterruptedWhileConnecting() throws Exception
+    {
+        // Setup test fixture.
+        final PacketRouter packetRouter = mock(PacketRouter.class);
+        final SessionManager sessionManager = useSessionManager(packetRouter);
+        final LocalOutgoingServerSession resumable = resumableSession();
+        resumable.deliver(message("unacked"));
+        breakConnection(sessionManager, resumable);
+        final CompletableFuture<LocalSession> interruptedWhileConnecting = new CompletableFuture<>() {
+            @Override
+            public LocalSession get(final long timeout, final TimeUnit unit) throws ExecutionException
+            {
+                Thread.currentThread().interrupt();
+                throw new ExecutionException(new NetworkEntityUnreachableException("Interrupted while connecting."));
+            }
+        };
+
+        // Execute system under test.
+        final boolean interrupted;
+        try {
+            runResumptionAttempt(null, provider -> {}, interruptedWhileConnecting);
+        } finally {
+            interrupted = Thread.interrupted();
+        }
+
+        // Verify result.
+        assertTrue(interrupted, "The interrupt must be kept.");
+        assertEquals(List.of(), resumptionAttempts, "No other attempt must be made after an attempt was interrupted.");
+        assertFalse(sessionManager.isDetached(resumable), "A session of which the attempt to resume was interrupted must no longer be detached.");
+        assertEquals(List.of("unacked"), routed(packetRouter).stream().map(Packet::getID).toList(), "The unacknowledged stanza must be routed again.");
+    }
+
+    /**
+     * Verifies that the first attempt to resume a detached session connects to the location that the remote server named
+     * when it enabled Stream Management first (XEP-0198 § 3), and that an attempt after that one failed connects to the
+     * hosts of the remote domain only, as for any new connection.
+     */
+    @Test
+    public void firstAttemptToResumeConnectsToLocationOfRemoteServer() throws Exception
+    {
+        // Setup test fixture.
+        final SessionManager sessionManager = useSessionManager(mock(PacketRouter.class));
+        final LocalOutgoingServerSession resumable = resumableSession(null, "node2.example.com:5270");
+        breakConnection(sessionManager, resumable);
+
+        // Execute system under test.
+        runResumptionAttempt(null, p -> {});
+        runResumptionAttempt(null, p -> {});
+
+        // Verify result.
+        assertEquals(2, initialiserArguments.size(), "Test fixture expects a new connection to be opened for each attempt.");
+        assertEquals("node2.example.com:5270", initialiserArguments.get(0).get(3), "The first attempt must connect to the location that the remote server named first.");
+        assertNull(initialiserArguments.get(1).get(3), "An attempt after the first one failed must not connect to the location that the remote server named.");
+    }
+
+    /**
+     * Verifies that the first attempt to resume a session that was resumed and then detached again connects to the
+     * location that the remote server named, also when an earlier attempt, before the session was resumed, did not.
+     */
+    @Test
+    public void firstAttemptAfterDetachingAgainConnectsToLocationOfRemoteServer() throws Exception
+    {
+        // Setup test fixture.
+        final SessionManager sessionManager = useSessionManager(mock(PacketRouter.class));
+        final LocalOutgoingServerSession resumable = resumableSession(null, "node2.example.com:5270");
+        breakConnection(sessionManager, resumable);
+        runResumptionAttempt(null, p -> {});
+        final LocalOutgoingServerSession provider = newSessionForResumption("stream-new");
+        final Connection newConnection = provider.getConnection();
+        runResumptionAttempt(provider, remoteServerThatResumes(resumable, "0"));
+        assertFalse(sessionManager.isDetached(resumable), "Test fixture expects the session to be resumed.");
+        assertNull(initialiserArguments.get(1).get(3), "Test fixture expects the attempt after the first one not to connect to the location.");
+        doReturn(true).when(newConnection).isClosed();
+        fireOutgoingConnectionClose(sessionManager, resumable);
+
+        // Execute system under test.
+        runResumptionAttempt(null, p -> {});
+
+        // Verify result.
+        assertEquals(3, initialiserArguments.size(), "Test fixture expects a new connection to be opened for each attempt.");
+        assertEquals("node2.example.com:5270", initialiserArguments.get(2).get(3), "The first attempt after the session was detached again must connect to the location that the remote server named.");
+    }
+
+    /**
+     * Verifies that an attempt to resume a detached session connects to the hosts of the remote domain only when the
+     * remote server named no location for reconnecting.
+     */
+    @Test
+    public void attemptToResumeWithoutLocationConnectsToRemoteDomain() throws Exception
+    {
+        // Setup test fixture.
+        final SessionManager sessionManager = useSessionManager(mock(PacketRouter.class));
+        final LocalOutgoingServerSession resumable = resumableSession();
+        breakConnection(sessionManager, resumable);
+
+        // Execute system under test.
+        runResumptionAttempt(null, p -> {});
+
+        // Verify result.
+        assertEquals(1, initialiserArguments.size(), "Test fixture expects a new connection to be opened for the attempt.");
+        assertNull(initialiserArguments.get(0).get(3), "An attempt must not connect to a location when the remote server named none.");
+    }
+
+    /**
      * Verifies that another attempt to resume a detached session is made when no new connection could be authenticated,
      * after a delay that doubles after each failed attempt, while the session, its routes and its stanzas are kept, and
      * that a later attempt can resume the stream.
@@ -2388,7 +2499,7 @@ public class LocalOutgoingServerSessionStreamManagementTest
         try (final MockedStatic<RemoteServerManager> remoteServers = mockStatic(RemoteServerManager.class);
              final MockedConstruction<NettySessionInitializer> constructed = mockConstruction(NettySessionInitializer.class,
                  (initialiser, context) -> {
-                     initialiserArguments.add(List.copyOf(context.arguments()));
+                     initialiserArguments.add(new ArrayList<>(context.arguments())); // May hold null, which List.copyOf refuses.
                      doAnswer(invocation -> {
                          if (provider != null) {
                              handlerAndRemoteServer.accept(provider);
@@ -2523,6 +2634,15 @@ public class LocalOutgoingServerSessionStreamManagementTest
      */
     private LocalOutgoingServerSession resumableSession(final String max)
     {
+        return resumableSession(max, null);
+    }
+
+    /**
+     * Creates a session as {@link #resumableSession()} does, of which the remote server reported the provided preferred
+     * maximum resumption time, in seconds, and location for reconnecting, if any.
+     */
+    private LocalOutgoingServerSession resumableSession(final String max, final String location)
+    {
         StreamManager.SERVER_RESUME_ENABLED.setValue(true);
         final LocalOutgoingServerSession resumable = newSession("stream-resumable");
         resumable.addOutgoingDomainPair(DOMAIN_PAIR);
@@ -2530,6 +2650,9 @@ public class LocalOutgoingServerSessionStreamManagementTest
         final Element enabled = DocumentHelper.createElement(QName.get("enabled", StreamManager.NAMESPACE_V3)).addAttribute("resume", "true").addAttribute("id", "sm-id-1");
         if (max != null) {
             enabled.addAttribute("max", max);
+        }
+        if (location != null) {
+            enabled.addAttribute("location", location);
         }
         resumable.getStreamManager().process(enabled);
         assertTrue(resumable.getStreamManager().getResume(), "Test fixture expects the stream to be resumable.");

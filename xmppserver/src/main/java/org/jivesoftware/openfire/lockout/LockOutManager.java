@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2008 Jive Software, 2017-2021 Ignite Realtime Foundation. All rights reserved.
+ * Copyright (C) 2005-2008 Jive Software, 2017-2026 Ignite Realtime Foundation. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 package org.jivesoftware.openfire.lockout;
 
 import java.util.Date;
+import java.util.concurrent.locks.Lock;
+import java.util.function.Supplier;
 
-import com.google.common.collect.Interner;
-import com.google.common.collect.Interners;
-import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.util.CacheableOptional;
 import org.jivesoftware.util.SystemProperty;
 import org.jivesoftware.util.cache.Cache;
 import org.jivesoftware.util.cache.CacheFactory;
@@ -32,6 +32,11 @@ import org.xmpp.packet.JID;
  * whether accounts are disabled or enabled, and provides a single point of entry for handling
  * locked/disabled accounts.
  *
+ * Unless the provider says that its data should not be cached, both outcomes of a lookup are cached, as one entry per
+ * account: the lock of a locked account, or the fact that an account is not locked. A lock set or lifted through this
+ * class replaces the cached entry at once, across a cluster. A lock set or lifted outside Openfire (directly in the
+ * provider's store) is seen only when the cached entry expires, which can take up to the lifetime of the cache.
+ *
  * The provider can be specified in system properties by adding:
  *
  * <ul>
@@ -42,7 +47,15 @@ import org.xmpp.packet.JID;
  */
 public class LockOutManager {
 
-    private static final Interner<JID> userBaseMutex = Interners.newWeakInterner();
+    /**
+     * The name of the cache of what is known of each account's lock: its lock, or that it has none.
+     *
+     * This must not be "Locked Out Accounts", the name earlier versions use for a cache whose values are
+     * {@code LockOutFlag}s. This cache's values are {@code CacheableOptional<LockOutFlag>}s, and during a rolling
+     * upgrade nodes of both versions would share one cache and fail with a {@code ClassCastException} reading each
+     * other's entries.
+     */
+    public static final String LOCKED_OUT_CACHE_NAME = "Account Lock States";
 
     public static final SystemProperty<Class> LOCKOUT_PROVIDER = SystemProperty.Builder.ofType(Class.class)
         .setKey("provider.lockout.className")
@@ -54,8 +67,6 @@ public class LockOutManager {
 
     private static final Logger Log = LoggerFactory.getLogger(LockOutManager.class);
 
-    private static final String MUTEX_SUFFIX = " lck";
-    
     // Wrap this guy up so we can mock out the LockOutManager class.
     private static class LockOutManagerContainer {
         private static LockOutManager instance = new LockOutManager();
@@ -82,20 +93,36 @@ public class LockOutManager {
         return LockOutManagerContainer.instance;
     }
 
-    /* Cache of locked out accounts */
-    private Cache<String,LockOutFlag> lockOutCache;
+    /**
+     * Cache of what is known of each account's lock: a present value is the account's lock, and an absent value means
+     * the account was found not to be locked, so that looking it up again needs no query. An account with no entry has
+     * not been looked up since its entry expired.
+     */
+    private final Cache<String,CacheableOptional<LockOutFlag>> lockOutCache;
+
+    private final Supplier<LockOutProvider> providerSupplier;
+
     private static LockOutProvider provider;
 
     /**
      * Constructs a LockOutManager, setting up it's cache, property listener, and setting up the provider.
      */
     private LockOutManager() {
-        // Initialize the lockout cache.
-        lockOutCache = CacheFactory.createCache("Locked Out Accounts");
+        this(CacheFactory.createCache(LOCKED_OUT_CACHE_NAME), () -> provider);
 
         // Load an lockout provider.
         initProvider(LOCKOUT_PROVIDER.getValue());
+    }
 
+    /**
+     * Constructs a LockOutManager with the cache and provider it uses (for tests).
+     *
+     * @param lockOutCache the cache of what is known of each account's lock.
+     * @param providerSupplier supplies the lockout provider to use.
+     */
+    LockOutManager(final Cache<String,CacheableOptional<LockOutFlag>> lockOutCache, final Supplier<LockOutProvider> providerSupplier) {
+        this.lockOutCache = lockOutCache;
+        this.providerSupplier = providerSupplier;
     }
 
     /**
@@ -163,14 +190,24 @@ public class LockOutManager {
      * @throws UnsupportedOperationException if the provider is readonly.
      */
     public void disableAccount(String username, Date startTime, Date endTime) throws UnsupportedOperationException {
+        final LockOutProvider provider = providerSupplier.get();
         if (provider.isReadOnly()) {
             throw new UnsupportedOperationException();
         }
         LockOutFlag flag = new LockOutFlag(username, startTime, endTime);
-        provider.setDisabledStatus(flag);
-        if (!provider.shouldNotBeCached()) {
-            // Add lockout data to cache.
-            lockOutCache.put(username, flag);
+        if (provider.shouldNotBeCached()) {
+            provider.setDisabledStatus(flag);
+        } else {
+            // Under the account's cluster lock, so that a lookup cannot cache 'not locked' from a read made before
+            // the lock was stored.
+            final Lock lock = lockOutCache.getLock(username);
+            lock.lock();
+            try {
+                provider.setDisabledStatus(flag);
+                lockOutCache.put(username, CacheableOptional.of(flag));
+            } finally {
+                lock.unlock();
+            }
         }
         // Fire event.
         LockOutEventDispatcher.accountLocked(flag);
@@ -185,13 +222,22 @@ public class LockOutManager {
      * @throws UnsupportedOperationException if the provider is readonly.
      */
     public void enableAccount(String username) throws UnsupportedOperationException {
+        final LockOutProvider provider = providerSupplier.get();
         if (provider.isReadOnly()) {
             throw new UnsupportedOperationException();
         }
-        provider.unsetDisabledStatus(username);
-        if (!provider.shouldNotBeCached()) {
-            // Remove lockout data from cache.
-            lockOutCache.remove(username);
+        if (provider.shouldNotBeCached()) {
+            provider.unsetDisabledStatus(username);
+        } else {
+            // Under the account's cluster lock, so that a lookup cannot cache a lock read before it was lifted.
+            final Lock lock = lockOutCache.getLock(username);
+            lock.lock();
+            try {
+                provider.unsetDisabledStatus(username);
+                lockOutCache.put(username, CacheableOptional.of(null));
+            } finally {
+                lock.unlock();
+            }
         }
         // Fire event.
         LockOutEventDispatcher.accountUnlocked(username);
@@ -206,50 +252,84 @@ public class LockOutManager {
         // Fire event.
         LockOutEventDispatcher.lockedAccountDenied(username);
     }
-    
+
     /**
-     * Gets the user lock out.
+     * Gets the user lock out, from the cache where possible.
+     *
+     * An answer from the cache, either way, takes no lock. A lookup that has to query the provider does so under the
+     * account's cluster lock, as do {@link #disableAccount(String, Date, Date)} and {@link #enableAccount(String)},
+     * so that what it caches cannot overwrite or outlive a lock set or lifted while it was querying, on any node.
      *
      * @param username
      *            the username
-     * @return the user lock out
+     * @return the user lock out, or null if the account has none
      */
     private LockOutFlag getUserLockOut(String username) {
+        final LockOutProvider provider = providerSupplier.get();
         if (provider.shouldNotBeCached()) {
             return provider.getDisabledStatus(username);
         }
-        LockOutFlag flag = lockOutCache.get(username);
-        // If ID wan't found in cache, load it up and put it there.
-        if (flag == null) {
-            synchronized (userBaseMutex.intern(XMPPServer.getInstance().createJID(username, null))) {
-                flag = lockOutCache.get(username);
-                // If group wan't found in cache, load it up and put it there.
-                if (flag == null) {
-                    flag = provider.getDisabledStatus(username);
-                    if (flag != null) lockOutCache.put(username, flag);
-                }
-            }
+        final CacheableOptional<LockOutFlag> cached = lockOutCache.get(username);
+        if (cached != null) {
+            return cached.get();
         }
-        return flag;
+        // A username that cannot name an account is refused, as it always has been, rather than cached.
+        JID.nodeprep(username);
+        final Lock lock = lockOutCache.getLock(username);
+        lock.lock();
+        try {
+            final CacheableOptional<LockOutFlag> loaded = lockOutCache.get(username);
+            if (loaded != null) {
+                return loaded.get();
+            }
+            final LockOutFlag flag = provider.getDisabledStatus(username);
+            lockOutCache.put(username, CacheableOptional.of(flag));
+            return flag;
+        } finally {
+            lock.unlock();
+        }
     }
 
     /**
-     * Check if lockout flag is expired.
+     * Returns the flag, or null if it has ended, in which case it is removed and the account is recorded as not locked.
      *
      * @param flag
      *            the flag
+     * @return the flag, a lock set since it was read, or null if the account is no longer locked
      */
     private LockOutFlag getUnExpiredLockout(LockOutFlag flag) {
-        if (flag != null) {
-            Date curDate = new Date();
-            if (flag.getEndTime() != null && curDate.after(flag.getEndTime())) {
-                // Remove expired lockout entry
-                lockOutCache.remove(flag.getUsername());
-                provider.unsetDisabledStatus(flag.getUsername());
-                return null;
-            }
+        if (flag == null || !hasEnded(flag)) {
+            return flag;
         }
-        return flag;
+        final LockOutProvider provider = providerSupplier.get();
+        final String username = flag.getUsername();
+        if (provider.shouldNotBeCached()) {
+            provider.unsetDisabledStatus(username);
+            return null;
+        }
+        final Lock lock = lockOutCache.getLock(username);
+        lock.lock();
+        try {
+            // A lock set since the ended one was read replaces it, and must not be removed with it.
+            final CacheableOptional<LockOutFlag> cached = lockOutCache.get(username);
+            final LockOutFlag current = cached == null ? null : cached.get();
+            if (current != null && !hasEnded(current)) {
+                return current;
+            }
+            // Remove expired lockout entry
+            provider.unsetDisabledStatus(username);
+            lockOutCache.put(username, CacheableOptional.of(null));
+            return null;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * Returns whether a lock's end time has passed.
+     */
+    private static boolean hasEnded(final LockOutFlag flag) {
+        return flag.getEndTime() != null && new Date().after(flag.getEndTime());
     }
 
 }

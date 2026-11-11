@@ -226,6 +226,23 @@ public class RespondingServerStanzaHandlerRecordingTest
     }
 
     @Test
+    public void testStreamErrorAfterSaslSuccessIsRecordedOverTheClose() throws Exception
+    {
+        // Setup test fixture.
+        handler.process(streamHeader("stream-1"), reader);
+        handler.process(FEATURES_WITH_SASL_EXTERNAL, reader);
+        handler.process(SASL_SUCCESS, reader);
+
+        // Execute system under test: the remote ends the stream with an error instead of restarting it, and the
+        // connection closes.
+        handler.process("<stream:error xmlns:stream='http://etherx.jabber.org/streams'><internal-server-error xmlns='urn:ietf:params:xml:ns:xmpp-streams'/></stream:error>", reader);
+        connection.close();
+
+        // Verify results.
+        assertEquals(Authentication.streamError("internal-server-error"), recorder.snapshot().getAuthentication().orElse(null), "the error the remote sent after accepting the certificate must be recorded, and not be replaced by the close that follows");
+    }
+
+    @Test
     public void testSessionThatLostAuthenticationBeforeTheRestartIsRecorded() throws Exception
     {
         // Setup test fixture: the session is closed by another thread before the remote restarts the stream.

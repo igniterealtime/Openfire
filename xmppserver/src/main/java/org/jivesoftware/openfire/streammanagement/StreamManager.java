@@ -41,6 +41,7 @@ import java.math.BigInteger;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -76,7 +77,12 @@ public class StreamManager {
         .build();
 
     private final Logger Log;
-    private boolean resume = false;
+
+    /**
+     * Whether the session can be resumed. It is read without a lock by threads other than the one that changes it, such
+     * as the thread of a connection that resumes the session, and the listener that handles the closing of a connection.
+     */
+    private volatile boolean resume = false;
 
     public static class UnackedPacket {
         public final long x;
@@ -143,9 +149,11 @@ public class StreamManager {
     private Deque<UnackedPacket> unacknowledgedServerStanzas = new LinkedList<>();
 
     /**
-     * Delegates that can determine if a detached session can be terminated.
+     * Delegates that can determine if a detached session can be terminated. They are added and removed by any thread,
+     * and read by the task that cleans up detached sessions. A copy of this set reflects it at a single moment, so that
+     * a delegate that is replaced while the copy is made cannot be missed together with its replacement.
      */
-    private final Set<TerminationDelegate> terminationDelegates = new HashSet<>();
+    private final Set<TerminationDelegate> terminationDelegates = new CopyOnWriteArraySet<>();
 
     public StreamManager(LocalSession session) {
         String address;
@@ -769,6 +777,12 @@ public class StreamManager {
 
             synchronized (this)
             {
+                if ( !isEnabled() ) {
+                    // OF-3420: Stream Management was disabled after the check above, for example by onClose(), which handled the unacknowledged stanzas already.
+                    // A stanza that is tracked after that would never be handled.
+                    Log.trace( "Not tracking stanza of type '{}' with ID '{}', as Stream Management was disabled while it was sent. Session: {}", packet.getElement().getName(), packet.getID(), session );
+                    return;
+                }
                 final Connection connection = session.getConnection();
                 if ( exceededMaximumUnacknowledgedStanzas && packet instanceof Message && connection != null && connection.isClosed() && connection.getPacketDeliverer() != null ) {
                     // OF-3434: The fallback of the closed connection stores this message offline. Tracking it as well would deliver it twice.
@@ -1001,6 +1015,9 @@ public class StreamManager {
     /**
      * Returns a defensive copy of all delegates that can determine if a detached session can be terminated.
      *
+     * The copy holds the delegates that were registered at a single moment. A delegate that is added before another
+     * delegate is removed is therefore never missing from the copy together with that other delegate.
+     *
      * @return all delegates that can determine if a detached session can be terminated.
      */
     public Set<TerminationDelegate> getTerminationDelegates()
@@ -1019,7 +1036,7 @@ public class StreamManager {
      */
     public void addTerminationDelegate(@Nonnull final TerminationDelegate delegate)
     {
-        terminationDelegates.add(delegate);
+        terminationDelegates.add(Objects.requireNonNull(delegate, "Argument 'delegate' cannot be null."));
     }
 
     /**
@@ -1032,7 +1049,7 @@ public class StreamManager {
      */
     public void removeTerminationDelegate(@Nonnull final TerminationDelegate delegate)
     {
-        terminationDelegates.remove(delegate);
+        terminationDelegates.remove(Objects.requireNonNull(delegate, "Argument 'delegate' cannot be null."));
     }
 
     /**
